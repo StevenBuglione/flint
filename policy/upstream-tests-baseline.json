@@ -5655,8 +5655,6 @@
       "java/util/concurrent/CompletableFuture/ThenComposeAsyncTest.java",
       "java/util/concurrent/CompletableFuture/ThenComposeExceptionTest.java",
       "java/util/concurrent/ExecutorCompletionService/ExecutorCompletionServiceLoops.java",
-      "java/util/concurrent/ExecutorService/CloseTest.java",
-      "java/util/concurrent/ExecutorService/Invoke.java",
       "java/util/concurrent/Executors/AutoShutdown.java",
       "java/util/concurrent/Executors/PrivilegedCallables.java",
       "java/util/concurrent/Executors/Throws.java",
@@ -5703,6 +5701,10 @@
       "java/util/concurrent/forkjoin/ThrowingRunnable.java",
       "java/util/concurrent/forkjoin/Uniprocessor.java",
       "java/util/concurrent/tck/JSR166TestCase.java"
+    ],
+    "java-concurrent-service": [
+      "java/util/concurrent/ExecutorService/CloseTest.java",
+      "java/util/concurrent/ExecutorService/Invoke.java"
     ],
     "java-concurrent-sync": [
       "java/util/concurrent/ArrayBlockingQueue/WhiteBox.java",

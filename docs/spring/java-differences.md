@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,939 | 697 | 0 | 1,921 | 13,864 |
+| framework | openjdk@21.0.13 | 1,943 | 702 | 0 | 1,921 | 13,855 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2945,6 +2945,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.ExecutionException#<init>(String,Throwable)` | `flint.java.util.concurrent.executionexception.ExecutionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.Executor` | `flint.java.util.concurrent.executor.Executor` | [R1](api-mapping.md#r1-packages-and-names) | Import the nominal interface from flint.java.util.concurrent.executor. |
 | `java.util.concurrent.Executor#execute(Runnable)` | `flint.java.util.concurrent.executor.Executor.execute` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) | Accepts an owned @safe D delegate in addition to Runnable. Untyped null selects the original Runnable overload. |
+| `java.util.concurrent.ExecutorService` | `flint.java.util.concurrent.executorservice.ExecutorService` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import the partial ExecutorService interface from this leaf. The initial contract covers execution and shutdown lifecycle and uses an explicit reactor driver. |
+| `java.util.concurrent.ExecutorService#shutdownNow()` | `flint.java.util.concurrent.executorservice.ExecutorService.shutdownNow` | [R8](api-mapping.md#r8-exceptions), [R10](api-mapping.md#r10-streams-and-collections) | Returns the original never-started commands in a List!Runnable. Active commands remain on the offload pool until they finish. Java Thread interruption is deferred. |
 | `java.util.concurrent.Future` | `flint.java.util.concurrent.future.Future` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import from flint.java.util.concurrent.future until the JDK aggregate is available. |
 | `java.util.concurrent.Future#cancel(boolean)` | `flint.java.util.concurrent.future.Future.cancel` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `java.util.concurrent.Future#exceptionNow()` | `flint.java.util.concurrent.future.Future.exceptionNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | Moved into `mixin template Future.Defaults` as R3 requires; an implementor mixes it in and may override it as CompletableFuture does. |
@@ -2966,6 +2968,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.FutureTask#get(long,TimeUnit)` | `flint.java.util.concurrent.futuretask.FutureTask.get` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) | Same D name as the no-argument overload; TimeUnit is passed by value and cannot be null. |
 | `java.util.concurrent.FutureTask#resultNow()` | `flint.java.util.concurrent.futuretask.FutureTask.resultNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | Provided by `mixin template Future.Defaults` as R3 requires. |
 | `java.util.concurrent.FutureTask#state()` | `flint.java.util.concurrent.futuretask.FutureTask.state` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R13](api-mapping.md#r13-nested-and-inner-classes) | Provided by `mixin template Future.Defaults`; returns the hoisted FutureState. |
+| `java.util.concurrent.RejectedExecutionException` | `flint.java.util.concurrent.rejectedexecutionexception.RejectedExecutionException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Import the nominal exception from this leaf. An empty D detail is absent under R26. |
+| `java.util.concurrent.RejectedExecutionException#<init>(String)` | `flint.java.util.concurrent.rejectedexecutionexception.RejectedExecutionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.concurrent.RejectedExecutionException#<init>(String,Throwable)` | `flint.java.util.concurrent.rejectedexecutionexception.RejectedExecutionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.RunnableFuture` | `flint.java.util.concurrent.future.RunnableFuture` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Declared in the Future leaf; import it from flint.java.util.concurrent.future. |
 | `java.util.concurrent.RunnableFuture#run()` | `flint.java.util.concurrent.future.RunnableFuture.run` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `java.util.concurrent.TimeUnit#convert(Duration)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
@@ -11047,7 +11052,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,899 | 0 |
-| java.util.concurrent | 1,201 | 0 |
+| java.util.concurrent | 1,192 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
@@ -12367,7 +12372,17 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.UUID#fromString(String)` | 2 | The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion. |
 | framework | `java.util.UUID#nameUUIDFromBytes(byte[])` | 2 | Version 3 name-based UUIDs await the canonical Java MessageDigest MD5 provider. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
+| framework | `java.util.concurrent.ExecutorService#awaitTermination(long,TimeUnit)` | 2 | Requires canonical Java Thread interruption and an interruptible termination wait. |
+| framework | `java.util.concurrent.ExecutorService#close()` | 2 | Requires AutoCloseable integration and an interruptible termination wait. |
+| framework | `java.util.concurrent.ExecutorService#invokeAll(Collection)` | 2 | Requires owned Futures, timed waiting and canonical Java interruption. |
+| framework | `java.util.concurrent.ExecutorService#invokeAll(Collection,long,TimeUnit)` | 2 | Requires owned Futures, timed waiting and canonical Java interruption. |
+| framework | `java.util.concurrent.ExecutorService#invokeAny(Collection)` | 2 | Requires owned Futures, timed waiting and canonical Java interruption. |
+| framework | `java.util.concurrent.ExecutorService#invokeAny(Collection,long,TimeUnit)` | 2 | Requires owned Futures, timed waiting and canonical Java interruption. |
+| framework | `java.util.concurrent.ExecutorService#submit(Callable)` | 2 | Requires the owned Future completion contract. |
+| framework | `java.util.concurrent.ExecutorService#submit(Runnable)` | 2 | Requires the owned Future completion contract. |
+| framework | `java.util.concurrent.ExecutorService#submit(Runnable,T)` | 2 | Requires the owned Future completion contract. |
 | framework | `java.util.concurrent.FutureTask#toString()` | 2 | D object.Object.toString is @system and no Java identity-hash helper is ported yet; the inherited D text stands. |
+| framework | `java.util.concurrent.RejectedExecutionException#<init>(Throwable)` | 2 | Preserves the cause. Exact detail derivation requires virtual rendering for arbitrary checked Throwable subclasses. |
 | framework | `java.util.concurrent.atomic.AtomicReference#updateAndGet(UnaryOperator)` | 2 | The null callback check needs a separately linkable canonical NullPointerException (R8). The current constructor retains unrelated Java module records and the callback exceeds the AtomicReference leaf budget. |
 | framework | `java.util.function.BiConsumer#andThen(BiConsumer)` | 2 | The existing interface exposes accept and lacks Java's overridable composition default (R3). |
 | framework | `java.util.function.BiFunction#andThen(Function)` | 2 | The existing interface exposes apply and has no composition method. Java's default is overridable and rejects a null function before invocation (R3, R8). |

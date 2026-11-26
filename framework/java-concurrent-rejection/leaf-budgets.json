@@ -1,0 +1,7 @@
+{
+  "flint.java.util.concurrent.rejectedexecutionexception": {
+    "incremental_linked_bytes": 1008,
+    "template_instances": 248,
+    "control": "framework/java-concurrent-rejection/closure/rejectedexecutionexception_provider.d"
+  }
+}
