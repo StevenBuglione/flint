@@ -309,7 +309,7 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertIn(f'git checkout -q -f --detach "{tip}"', script)
         for needed in ('source "$HOME/flint-work/posidon.env"', 'export FLINT_HOME="$WT"', 'measure_queue.py hold --',
                        '--emit-dub', '--step apps --apps gs-rest-service,petclinic-rest', 'trap cleanup EXIT',
-                       'SHIMS="--shims-only"', '--repeat 5', 'decision 6478897a',
+                       'SHIMS="--shims-only"', '--repeat 5', 'decision 6478897a', '[ "full" = budget ]',
                        'rm -rf "$FLINT_CACHE"', 'benchmarks/spring/flint/*/.flint "$WT"'):
             self.assertIn(needed, script)
         self.assertIn('refs/heads/train-', git(bare, 'for-each-ref', '--format=%(refname)'))
@@ -424,6 +424,45 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
         self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e'], ['sol-f']))
         self.assertEqual(len(posidon.seen), 3)  # the deepest candidate, the prefix once, one step inside the red group
+
+    class ModalVerifier(SlowAwareVerifier):
+        """posidon with modes: records (mode, apps) per call; its red verdicts carry a flint budget report."""
+        supports_modes = True
+
+        def __call__(self, commit, repo, mode='full', apps=None, tight=None):
+            ok, log = super().__call__(commit, repo)
+            self.modes = getattr(self, 'modes', []) + [(mode, tuple(apps or ()))]
+            if not ok:
+                report = {'schema': 'flint.budget/1-report', 'failed': False,
+                          'problems': ["petclinic-rest: 'list vets': instructions 407,377 -> 412,348 (+1.22%, tolerance +1.00%)"]}
+                log += '\n' + json.dumps(report)
+            return ok, log
+
+    def test_a_budget_only_failure_is_bisected_with_flint_budget_alone(self):
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e', 'sol-f')):
+            self.lane(role, {'src/SLOW' if role == 'sol-b' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a'], ['sol-b']))
+        self.assertEqual(posidon.modes[0][0], 'full')  # the deepest candidate
+        self.assertEqual(posidon.modes[1], ('budget', tuple(merge_train.APPS)))  # the prefix, once
+        self.assertTrue(all(mode == ('budget', ('petclinic-rest',)) for mode in posidon.modes[2:]), posidon.modes)
+        mail = self.store.inbox('sol-b', True, False)
+        self.assertIn("petclinic-rest 'list vets' 407,377 -> 412,348 (+1.22%, tolerance 1.00%)", mail)
+
+    def test_budget_logs_are_parsed(self):
+        dod = json.dumps({'steps': [{'step': 'apps', 'details': {'petclinic-rest allocation tests': 'pass',
+                                                                  'petclinic-rest flint budget': 'regression'},
+                                     'messages': ["  budget: petclinic-rest: 'wrong method': instructions 169,195 -> 174,773 (+3.30%, tolerance +1.00%)"]}]})
+        self.assertEqual(merge_train.budget_only_apps('noise ' + dod), ['petclinic-rest'])
+        mixed = dod.replace('"pass"', '"exit 3"')
+        self.assertIsNone(merge_train.budget_only_apps(mixed))
+        self.assertEqual(merge_train.budget_misses(dod), [('petclinic-rest', 'wrong method', '169,195', '174,773', 3.3, 1.0)])
+        (self.store.root / 'train').mkdir(exist_ok=True)
+        (self.store.root / 'train' / 'budget-spread.json').write_text(json.dumps(
+            {'spread': {'petclinic-rest': {'list vets': 0.0003, 'create owner: telephone with letters': 0.012}}}))
+        self.assertEqual(merge_train.tight_endpoints(self.store), {'petclinic-rest': ['list vets']})
 
     def test_returned_lanes_do_not_block_the_scheduler(self):
         self.store.queue('apps-landing', 'front', 'sol-x')  # returned by a train, not resubmitted yet

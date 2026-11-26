@@ -106,7 +106,7 @@ cleanup() {
   for pid in $(pgrep -u "$USER" -f 'dmd' || true); do
     if tr '\0' '\n' < /proc/$pid/environ 2>/dev/null | grep -qx "FLINT_CACHE=$FLINT_CACHE"; then kill "$pid" 2>/dev/null; fi
   done
-  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
+  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$FLINT_CACHE.budget.json" "$FLINT_CACHE.tight.json" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
   # Each app's whole .flint (its dub cache grew to 5 GB on posidon) and the CLI's build tree; the natives stay.
   rm -rf "$WT"/benchmarks/spring/flint/*/.flint "$WT"/benchmarks/spring/flint/*/.dub "$WT/apps/flint/.flint/build"
   find "$WT" -xdev -name .dub -type d -prune -exec rm -rf {} + 2>/dev/null
@@ -161,36 +161,64 @@ echo "== native blocks ${SHIMS:-full build}"
 $H python3 tools/native_build.py --profile ci --target linux-x86_64-glibc --phase build $SHIMS --emit-dub || exit 4
 echo "$INPUTS" > .native/train-native-inputs
 echo "== flint"; $H python3 tools/install_toolchains.py --compiler flint || exit 4
-echo "== api gate"; $H python3 tools/gates.py --gate api > "$FLINT_CACHE.api.json" 2>&1 || { tail -40 "$FLINT_CACHE.api.json"; rm -f "$FLINT_CACHE.api.json"; exit 1; }
-rm -f "$FLINT_CACHE.api.json"
-echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ @DOD_FLAGS@ --json > "$FLINT_CACHE.dod.json"; rc=$?
-cat "$FLINT_CACHE.dod.json"
+if [ "@MODE@" = budget ]; then
+  # A budget-only step (bisecting a failure that was flint budget's alone): acceptance is already proven.
+  echo "== budget only: @BUDGET_APPS@"
+  set -- ; for app in @BUDGET_APPS@; do set -- "$@" --app "$app"; done
+  $H flint budget "$@" --report "$FLINT_CACHE.budget.json" > "$FLINT_CACHE.dod.json" 2>&1; rc=$?
+  cat "$FLINT_CACHE.budget.json" >> "$FLINT_CACHE.dod.json" 2>/dev/null
+  cat "$FLINT_CACHE.dod.json"
+else
+  echo "== api gate"; $H python3 tools/gates.py --gate api > "$FLINT_CACHE.api.json" 2>&1 || { tail -40 "$FLINT_CACHE.api.json"; rm -f "$FLINT_CACHE.api.json"; exit 1; }
+  rm -f "$FLINT_CACHE.api.json"
+  echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ @DOD_FLAGS@ --json > "$FLINT_CACHE.dod.json"; rc=$?
+  cat "$FLINT_CACHE.dod.json"
+fi
 if [ $rc -ne 0 ]; then
   # Decision 6478897a: a borderline flint budget miss (every failure an instruction miss under twice its tolerance)
-  # is re-measured, and the median of 5 runs is judged; anything else stays red.
-  apps=$(python3 - "$FLINT_CACHE.dod.json" <<'PY'
+  # is re-measured and the median of 5 runs judged; a miss on an endpoint whose measured spread is under 0.2% is real
+  # at once (coordinator, 2026-11-26); anything else stays red.
+  cat > "$FLINT_CACHE.tight.json" <<'TIGHT'
+@TIGHT@
+TIGHT
+  apps=$(python3 - "$FLINT_CACHE.dod.json" "$FLINT_CACHE.tight.json" <<'PY'
 import json, re, sys
-text, report, at = open(sys.argv[1]).read(), None, 0
-while report is None and text.find('{', at) >= 0:
+text, tight = open(sys.argv[1]).read(), json.load(open(sys.argv[2]))
+objects, at = [], 0
+while text.find('{', at) >= 0:
     at = text.find('{', at)
     try:
         found, end = json.JSONDecoder().raw_decode(text[at:])
-        report = found if isinstance(found, dict) and 'steps' in found else None
+        objects.append(found)
         at += max(end, 1)
     except ValueError:
         at += 1
-step = next((s for s in (report or {}).get('steps', []) if s['step'] == 'apps'), None)
-if step is None:
-    sys.exit(1)
-bad = [k for k, v in step['details'].items() if k != 'apps' and not str(v).startswith(('pass', 'skip'))]
-lines = [m for m in step['messages'] if m.strip().startswith('budget:')]
-if not bad or not lines or any(not k.endswith(' flint budget') for k in bad):
-    sys.exit(1)
-for line in lines:
-    found = re.search(r': instructions [0-9,]+ -> [0-9,]+ \(\+([0-9.]+)%, tolerance \+([0-9.]+)%\)', line)
-    if not found or float(found.group(1)) >= 2 * float(found.group(2)):
+MISS = re.compile(r"([\w.-]+): '([^']+)': instructions [0-9,]+ -> [0-9,]+ \(\+([0-9.]+)%, tolerance \+([0-9.]+)%\)")
+dod = next((o for o in objects if isinstance(o, dict) and 'steps' in o), None)
+report = next((o for o in objects if isinstance(o, dict) and str(o.get('schema', '')).startswith('flint.budget/')), None)
+if dod is not None:
+    step = next((s for s in dod['steps'] if s['step'] == 'apps'), None)
+    if step is None:
         sys.exit(1)
-print(' '.join(sorted(k[:-len(' flint budget')] for k in bad)))
+    bad = [k for k, v in step['details'].items() if k != 'apps' and not str(v).startswith(('pass', 'skip'))]
+    if not bad or any(not k.endswith(' flint budget') for k in bad):
+        sys.exit(1)
+    problems = [m.strip()[len('budget:'):].strip() for m in step['messages'] if m.strip().startswith('budget:')]
+elif report is not None:
+    problems = list(report.get('problems', []))
+else:
+    sys.exit(1)
+if not problems:
+    sys.exit(1)
+apps = set()
+for problem in problems:
+    found = MISS.search(problem)
+    if not found or float(found.group(3)) >= 2 * float(found.group(4)):
+        sys.exit(1)
+    if found.group(2) in tight.get(found.group(1), []):
+        sys.exit(1)
+    apps.add(found.group(1))
+print(' '.join(sorted(apps)))
 PY
 ) || exit $rc
   echo "== borderline flint budget miss: re-measuring $apps (median of 5, decision 6478897a)"
@@ -201,6 +229,60 @@ fi
 """
 POSIDON_SCRIPT = VERIFY_SCRIPT  # the name earlier tests and notes use
 UNAVAILABLE = (3, 5, 255)  # git setup, a receipt mismatch, ssh itself
+
+
+MISS_LINE = re.compile(r"([\w.-]+): '([^']+)': instructions ([0-9,]+) -> ([0-9,]+) \(\+([0-9.]+)%, tolerance \+([0-9.]+)%\)")
+
+
+def budget_misses(log):
+    """[(app, endpoint, before, after, percent, tolerance)] for every flint budget instruction miss in a log."""
+    seen, found = set(), []
+    for match in MISS_LINE.finditer(log or ''):
+        key = (match.group(1), match.group(2))
+        if key not in seen:
+            seen.add(key)
+            found.append((match.group(1), match.group(2), match.group(3), match.group(4), float(match.group(5)),
+                          float(match.group(6))))
+    return found
+
+
+def budget_only_apps(log):
+    """The apps whose flint budget alone failed a verification, or None when anything else failed too (or the log
+    shows no flint budget failure): then a bisect step needs the full verification."""
+    if not log:
+        return None
+    decoder, at, objects = json.JSONDecoder(), 0, []
+    while log.find('{', at) >= 0:
+        at = log.find('{', at)
+        try:
+            found, end = decoder.raw_decode(log[at:])
+            objects.append(found)
+            at += max(end, 1)
+        except ValueError:
+            at += 1
+    for found in objects:
+        if isinstance(found, dict) and 'steps' in found:
+            step = next((s for s in found['steps'] if s.get('step') == 'apps'), None)
+            if step is None:
+                return None
+            bad = [k for k, v in step['details'].items() if k != 'apps' and not str(v).startswith(('pass', 'skip'))]
+            if not bad or any(not k.endswith(' flint budget') for k in bad):
+                return None
+            return sorted(k[:-len(' flint budget')] for k in bad)
+        if isinstance(found, dict) and str(found.get('schema', '')).startswith('flint.budget/'):
+            apps = sorted({m[0] for m in budget_misses('\n'.join(found.get('problems', [])))})
+            if not apps or len(apps) != len({p.split(':', 1)[0] for p in found.get('problems', [])}):
+                return None
+            return apps
+    return None
+
+
+def tight_endpoints(store):
+    """{app: [endpoints]} whose measured spread is under 0.2% (coordination/train/budget-spread.json, {app:
+    {endpoint: spread fraction}}): a borderline miss there is real without a median re-measure."""
+    path = store.root / 'train' / 'budget-spread.json'
+    spreads = json.loads(path.read_text()).get('spread', {}) if path.is_file() else {}
+    return {app: sorted(e for e, value in endpoints.items() if value < 0.002) for app, endpoints in spreads.items()}
 
 
 def load_verifiers(store):
@@ -222,7 +304,9 @@ class RemoteVerifier:
         self.ssh = list(ssh or entry.get('ssh') or SSH)
         self.url = url or entry.get('url') or f"{self.host}:{entry['push_to']}"
 
-    def script(self, commit, ref, stamp):
+    supports_modes = True
+
+    def script(self, commit, ref, stamp, mode='full', apps=None, tight=None):
         e = self.entry
         receipts = ''.join(f'{digest}  {path}\n' for path, digest in sorted(e.get('receipts', {}).items()))
         values = {'@PRELUDE@': e.get('prelude', ''), '@BARE@': e['bare'], '@REPO@': e.get('repo', e['bare']),
@@ -232,13 +316,14 @@ class RemoteVerifier:
                   '@FULL_NATIVE@': 'yes' if e.get('full_native', True) else 'no',
                   '@CACHE_ROOT@': e.get('cache_root', '$HOME'), '@RECEIPTS@': receipts,
                   '@DOD_FLAGS@': '' if self.budget else '--no-flint-budget', '@APPS@': ','.join(APPS),
+                  '@MODE@': mode, '@BUDGET_APPS@': ' '.join(apps or APPS), '@TIGHT@': json.dumps(tight or {}),
                   '@COMMIT@': commit, '@REF@': ref, '@STAMP@': stamp}
         text = VERIFY_SCRIPT
         for token, value in values.items():
             text = text.replace(token, value)
         return text
 
-    def __call__(self, commit, repo):
+    def __call__(self, commit, repo, mode='full', apps=None, tight=None):
         stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()) + '-' + commit[:8]
         ref = f'train-{stamp}'
         env = dict(os.environ, GIT_SSH_COMMAND=shlex.join(self.ssh))
@@ -246,7 +331,7 @@ class RemoteVerifier:
                                 cwd=repo, env=env, capture_output=True, text=True)
         if pushed.returncode != 0:
             return None, f'{self.name}: pushing the candidate failed:\n{pushed.stderr}'
-        done = subprocess.run([*self.ssh, self.host, 'bash', '-s'], input=self.script(commit, ref, stamp),
+        done = subprocess.run([*self.ssh, self.host, 'bash', '-s'], input=self.script(commit, ref, stamp, mode, apps, tight),
                               capture_output=True, text=True)
         log = f'{self.name} ({self.host}), {self.entry["worktree"]} at {commit} ({ref}):\n{done.stdout}{done.stderr}'
         if done.returncode in UNAVAILABLE:
@@ -410,11 +495,15 @@ class Train:
         git(['checkout', '-q', '--detach', tip], self.worktree)
         return applied, failed
 
-    def verify(self, commit, verifier=None):
-        """(ok, log): True green, False red, None the verifier could not run."""
+    def verify(self, commit, verifier=None, mode='full', apps=None):
+        """(ok, log): True green, False red, None the verifier could not run. `mode` 'budget' runs flint budget alone
+        for `apps` (bisecting a budget-only failure; acceptance is already proven)."""
         self.verifications += 1
         if self.verifiers:
-            return (verifier or self.verifiers[-1])(commit, self.worktree)
+            chosen = verifier or self.verifiers[-1]
+            if getattr(chosen, 'supports_modes', False):
+                return chosen(commit, self.worktree, mode=mode, apps=apps, tight=tight_endpoints(self.store))
+            return chosen(commit, self.worktree)
         git(['checkout', '-q', '--detach', commit], self.worktree)
         log = []
         for command in self.verify_commands:
@@ -512,7 +601,7 @@ class Train:
                 # Red on the budget verifier, but the green candidates before it were checked without flint budget:
                 # that green is no budget baseline. Budget-check the green prefix once; if it holds, only the red
                 # group is bisected, otherwise the culprit is in the prefix, which is bisected instead.
-                prefix_ok, prefix_log = self.verify(applied[ends[first - 1] - 1][1])
+                prefix_ok, prefix_log = self.verify(applied[ends[first - 1] - 1][1], mode='budget', apps=list(APPS))
                 self.store.event('train-budget-prefix', candidates=first, prefix_green=prefix_ok)
                 if not prefix_ok:
                     # Red (bisect the prefix, from nothing landed) or unavailable (land nothing): either way the
@@ -528,9 +617,11 @@ class Train:
                     verified_tip = applied[good - 1][1] if good else None
                     self.store.event('train-verifier-failed', log=bad_log[-2000:])
                 else:
+                    only = budget_only_apps(bad_log)  # a budget-only failure is bisected with flint budget alone
+                    step = dict(mode='budget', apps=only) if only else {}
                     while bad - good > 1:  # bisect the red group on top of the green candidates before it
                         middle = (good + bad) // 2
-                        ok, middle_log = self.verify(applied[middle - 1][1])
+                        ok, middle_log = self.verify(applied[middle - 1][1], **step)
                         if ok is None:
                             bad = None
                             break
@@ -540,7 +631,7 @@ class Train:
                             bad, bad_log = middle, middle_log
                     if bad is None:
                         self.store.event('train-verifier-failed', log=middle_log[-2000:])
-                    elif bad == 1 and self.verify(base)[0] is not True:
+                    elif bad == 1 and self.verify(base, **step)[0] is not True:
                         # Main itself is red: blame nobody; every submission waits for main to be fixed.
                         self.store.event('train-main-red', base=base)
                         return {'landed': [], 'failed': [], 'pushed': None, 'logs': {}, 'main_red': base,
@@ -621,6 +712,11 @@ class Train:
                                  f'{pushed[:12]}).{later}')
             for role, path in logs.items():
                 later = (' Your newer submission is queued and goes next.' if role in newer else ' Fix it and resubmit.')
+                misses = budget_misses(Path(path).read_text())
+                if misses:
+                    later += ' flint budget misses: ' + '; '.join(
+                        f"{app} '{endpoint}' {before} -> {after} (+{pct:.2f}%, tolerance {tol:.2f}%)"
+                        for app, endpoint, before, after, pct, tol in misses[:12]) + '.'
                 self._send(role, f'merge train: your submission did not land; you are back at the head of the {SLOT} '
                                  f'queue.{later} Log: {path}')
         return {'landed': sorted(landed_roles), 'failed': sorted(r for r, _ in failed_logs), 'pushed': pushed,
@@ -668,6 +764,7 @@ def serve(store, train, agent='merge-train', poll=15, once=False, log=print):
         fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         log(f'{agent_utc()} another scheduler holds {guard.name}; exiting')
+        guard.close()
         return
     guard.seek(0); guard.truncate(); guard.write(f'{os.getpid()}\n'); guard.flush()
     while True:
@@ -691,6 +788,7 @@ def serve(store, train, agent='merge-train', poll=15, once=False, log=print):
                     store.release(SLOT, agent, 'merge train')
                     train.verifications = 0
         if once:
+            guard.close()
             return
         time.sleep(poll)
 
