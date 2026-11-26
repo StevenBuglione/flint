@@ -362,9 +362,7 @@ class BitSet
         {
             if (!set)
                 return fromIndex;
-            if (forward)
-                return -1;
-            word = liveWords - 1;
+            word = forward ? -1 : liveWords - 1;
         }
         else
         {
