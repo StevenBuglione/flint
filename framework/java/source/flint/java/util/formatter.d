@@ -830,9 +830,15 @@ private string integralText(const ref Spec spec, Any argument)
 /// Apply the sign flags and zero padding to `body`, the magnitude's digits.
 private string signed(const ref Spec spec, string body, bool negative) pure nothrow
 {
-    string prefix = negative ? (spec.has(Flag.parentheses) ? "(" : "-") : spec.has(Flag.plus)
+    const prefix = negative ? (spec.has(Flag.parentheses) ? "(" : "-") : spec.has(Flag.plus)
         ? "+" : spec.has(Flag.space) ? " " : "";
     const suffix = negative && spec.has(Flag.parentheses) ? ")" : "";
+    return paddedNumber(spec, prefix, body, suffix);
+}
+
+/// Zero padding follows a sign or radix indicator and precedes the digits.
+private string paddedNumber(const ref Spec spec, string prefix, string body, string suffix) pure nothrow
+{
     if (spec.has(Flag.zero) && spec.width > 0)
     {
         const used = prefix.length + body.length + suffix.length;
@@ -849,11 +855,14 @@ private string signed(const ref Spec spec, string body, bool negative) pure noth
 private string radixText(const ref Spec spec, Any argument)
 {
     if (argument.isNull)
-        return "null";
-    if (!isIntegral(argument.typeName))
-        throw new IllegalFormatConversionException(spec.conversion, javaTypeName(argument));
+        return cased(spec, "null");
+    const conversion = asciiLower(spec.conversion);
+    const typeName = argument.typeName;
+    if (!isIntegral(typeName))
+        throw new IllegalFormatConversionException(conversion, javaTypeName(argument));
+    rejectFlags(spec, Flag.plus | Flag.space | Flag.parentheses, conversion);
     ulong bits = cast(ulong) argument.get!long;
-    switch (argument.typeName)
+    switch (typeName)
     {
     case "byte":
         bits &= 0xFF;
@@ -867,11 +876,10 @@ private string radixText(const ref Spec spec, Any argument)
     default:
         break;
     }
-    const octal = spec.conversion == 'o';
-    auto body = digits(bits, octal ? 8 : 16, false);
-    if (spec.has(Flag.alternate))
-        body = (octal ? "0" : "0x") ~ body;
-    return cased(spec, signed(spec, body, false));
+    const octal = conversion == 'o';
+    const magnitude = digits(bits, octal ? 8 : 16, false);
+    const prefix = spec.has(Flag.alternate) ? (octal ? "0" : "0x") : "";
+    return cased(spec, paddedNumber(spec, prefix, magnitude, ""));
 }
 
 private string fixedText(const ref Spec spec, Any argument)
