@@ -1665,7 +1665,6 @@
       "org/springframework/data/mapping/model/PersistentPropertyAccessorTests.java",
       "org/springframework/data/mapping/model/PropertyAccessorClassGeneratorUnitTests.java",
       "org/springframework/data/mapping/model/PropertyUnitTests.java",
-      "org/springframework/data/mapping/model/ReflectionEntityInstantiatorUnitTests.java",
       "org/springframework/data/mapping/model/SimplePersistentPropertyPathAccessorUnitTests.java",
       "org/springframework/data/mapping/model/SnakeCaseFieldNamingStrategyUnitTests.java",
       "org/springframework/data/mapping/model/ValueExpressionParameterValueProviderUnitTests.java",

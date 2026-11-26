@@ -8,6 +8,7 @@ module flint.data.mapping.model.entity_instantiator;
 import flint.data.mapping : InstanceCreatorMetadata, PersistentEntity, PersistentProperty, PreferredConstructor;
 import flint.data.mapping.model.parameter_value_provider : ParameterValueProvider;
 import flint.engine.aot.any : Any;
+import flint.engine.aot.descriptor : ConstructorDescriptor;
 import flint.engine.aot.objects : statelessInstance;
 import flint.java.classref : ClassRef;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, RuntimeException;
@@ -45,20 +46,23 @@ class MappingInstantiationException : RuntimeException
     /// Reports a failure for an entity with registered type metadata.
     this(T, P)(PersistentEntity!(T, P) entity, List!Any arguments, Exception cause)
     {
-        this(entity is null ? ClassRef.init : entity.getType(), entity is null
-                ? null : entity.getInstanceCreatorMetadata(), arguments, cause);
+        auto metadata = entity is null ? null : entity.getInstanceCreatorMetadata();
+        auto creator = cast(PreferredConstructor!(T, P)) metadata;
+        const descriptor = creator is null ? ConstructorDescriptor.init : creator.getConstructor();
+        this(entity is null ? ClassRef.init : entity.getType(), metadata, creator is null
+                ? null : &descriptor, arguments, cause);
     }
 
     /// Reports a failure without an entity type.
     this(List!Any arguments, Exception cause)
     {
-        this(ClassRef.init, null, arguments, cause);
+        this(ClassRef.init, null, null, arguments, cause);
     }
 
-    private this(ClassRef entityType, InstanceCreatorMetadata!() entityCreator, List!Any arguments, Exception cause)
+    private this(ClassRef entityType, InstanceCreatorMetadata!() entityCreator,
+            scope const(ConstructorDescriptor)* constructor, List!Any arguments, Exception cause)
     {
-        super(entityType.name is null
-                ? null : "Failed to instantiate " ~ entityType.name ~ " with arguments " ~ arguments.toString(), cause);
+        super(instantiationMessage(entityType, constructor, arguments), cause);
         this.entityType = entityType;
         this.entityCreator = entityCreator;
         this.constructorArguments = arguments;
@@ -83,6 +87,35 @@ class MappingInstantiationException : RuntimeException
     }
 }
 
+private string instantiationMessage(ClassRef entityType,
+        scope const(ConstructorDescriptor)* constructor, List!Any arguments)
+{
+    if (entityType.name is null)
+        return null;
+
+    char[] message;
+    message ~= "Failed to instantiate ";
+    message ~= entityType.name;
+    message ~= " using constructor ";
+    if (constructor is null)
+        message ~= "NO_CONSTRUCTOR";
+    else
+    {
+        message ~= entityType.name;
+        message ~= '(';
+        foreach (index, ref parameter; constructor.parameters)
+        {
+            if (index != 0)
+                message ~= ", ";
+            message ~= parameter.type;
+        }
+        message ~= ')';
+    }
+    message ~= " with arguments ";
+    message ~= arguments.toString();
+    return message.idup;
+}
+
 private final class RegisteredEntityInstantiator(T, P) : EntityInstantiator!(T, P)
 {
     override T createInstance(PersistentEntity!(T, P) entity, ParameterValueProvider!(T, P) provider)
@@ -92,11 +125,13 @@ private final class RegisteredEntityInstantiator(T, P) : EntityInstantiator!(T, 
 
         auto metadata = entity.getInstanceCreatorMetadata();
         auto creator = cast(PreferredConstructor!(T, P)) metadata;
-        const invoke = creator is null ? null : creator.getConstructor().invoke;
+        const descriptor = creator is null ? ConstructorDescriptor.init : creator.getConstructor();
+        const invoke = descriptor.invoke;
         if (invoke is null)
         {
             const type = entity.getType();
-            throw new MappingInstantiationException(type, metadata, Collections.emptyList!Any(),
+            throw new MappingInstantiationException(type, metadata, creator is null ? null : &descriptor,
+                    Collections.emptyList!Any(),
                     new IllegalStateException("No registered constructor invocation for " ~ type.name));
         }
 
@@ -115,7 +150,8 @@ private final class RegisteredEntityInstantiator(T, P) : EntityInstantiator!(T, 
         }
         catch (Exception cause)
         {
-            throw new MappingInstantiationException(entity.getType(), metadata, new ArrayList!Any(arguments), cause);
+            throw new MappingInstantiationException(entity.getType(), metadata, &descriptor,
+                    new ArrayList!Any(arguments), cause);
         }
     }
 }

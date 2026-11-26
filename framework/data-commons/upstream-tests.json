@@ -846,8 +846,20 @@
       "status": "deferred"
     },
     "org/springframework/data/mapping/model/ReflectionEntityInstantiatorUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/entity_instantiator_tests.d",
+      "methods": {
+        "ported": [
+          "capturesContextOnInstantiationException"
+        ],
+        "skipped": {
+          "createsInnerClassInstanceCorrectly": "Enclosing-class constructor metadata remains deferred.",
+          "instantiatesArrayCorrectly": "Array instantiation remains deferred.",
+          "instantiatesSimpleObjectCorrectly": "The specific no-argument construction fixture remains deferred.",
+          "instantiatesTypeWithPreferredConstructorUsingParameterValueProvider": "The successful non-transient parameter provider fixture remains deferred.",
+          "throwsExceptionOnBeanInstantiationException": "The bean-level reflection exception fixture remains deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/mapping/model/SimplePersistentPropertyPathAccessorUnitTests.java": {
       "phase": "2",

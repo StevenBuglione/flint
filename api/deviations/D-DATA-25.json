@@ -1,5 +1,5 @@
 {
  "id": "D-DATA-25",
  "deviation": "EntityInstantiator binds the entity and property pair on the interface. EntityInstantiators selects its default typed strategy from the supplied PersistentEntity. The strategy invokes the selected ConstructorDescriptor. MappingInstantiationException records the entity name token, wildcard creator metadata and ordered arguments when available.",
- "reason": "D cannot dispatch a generic virtual method. Closed-world construction uses the registered safe callback with the typed parameter provider. Diagnostics preserve the type, values and cause using existing descriptor and Any metadata."
+ "reason": "D cannot dispatch a generic virtual method. Closed-world construction uses the registered safe callback with the typed parameter provider. Diagnostics render the selected signature using the declared D type names and preserve the supplied values and cause."
 }
