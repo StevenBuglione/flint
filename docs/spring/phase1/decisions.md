@@ -1309,3 +1309,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - set each endpoint's tolerance to max(current tolerance, 3× its measured spread), capped at 2%;
     - one commit carries every endpoint's samples and cites this decision.
   - **Unchanged:** the budgets (instruction counts) themselves, the certified workloads, and the rule that real regressions bisect to their submission. Endpoints above the 2% cap need their own decision, with the cause of the noise.
+- 2026-11-26 08:30Z, coordinator, under the owner's standing approval: **faster merge-train attribution** (proof-harness). The train's bounces since 05:49Z are real 1–3% petclinic-rest instruction regressions on shared request paths, not noise. For example, 'list vets' is 407,208 on main (spread 0.03%) and +1.26% on a candidate prefix. The cost is the bisect, at 10–30 minutes per posidon step. Approved, in order:
+  - **(a) Budget-only bisect steps:** once a candidate has failed only `flint budget`, bisect steps run only `flint budget` for the failing app.
+  - **(b) No median re-measure for tight endpoints:** endpoints whose recorded spread is under 0.2% skip the re-measure.
+  - **(c) Per-submission budget pre-screen:** posidon measures main plus each submission alone, in parallel with the stacked candidates. A submission that regresses alone bounces at once, with its per-endpoint numbers.
+
+  Budgets and tolerances are unchanged. The 07:40Z calibration stays for genuinely noisy endpoints only.
