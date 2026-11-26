@@ -1,0 +1,6 @@
+name "probe-aspectj-baseline"
+license "EPL-2.0"
+targetType "executable"
+sourcePaths "source"
+targetPath "build"
+dflags "-preview=dip1000"

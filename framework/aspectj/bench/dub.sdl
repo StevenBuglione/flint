@@ -1,0 +1,7 @@
+name "probe-aspectj"
+license "EPL-2.0"
+targetType "executable"
+sourcePaths "source"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:aspectj" path="../../.."

@@ -1,0 +1,17 @@
+name "aspectj"
+description "AspectJ runtime API annotations for use with Flint AOT"
+license "EPL-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "flint:java" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+}
