@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,128 | 335 | 1,871 | 15,087 |
+| framework | openjdk@21.0.13 | 1,125 | 338 | 1,871 | 15,087 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 88 | 11,744 |
@@ -2587,8 +2587,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Objects#toString(Object)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Objects#toString(Object,String)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Optional` | `flint.java.util.Optional` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.Properties` | `flint.java.util.Properties` | [R26](api-mapping.md#r26-null-arrays) | A null string slice passed as a property key or as a value to setProperty counts as empty. |
+| `java.util.Properties#getProperty(String)` | `flint.java.util.Properties.getProperty` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Properties#getProperty(String,String)` | `flint.java.util.Properties.getProperty` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Properties#load(InputStream)` | `flint.java.util.Properties.load` | [R14](api-mapping.md#r14-strings-and-text) | Decodes ISO-8859-1 and leaves the stream open. An isolated UTF-16 surrogate escape becomes U+FFFD in the D UTF-8 string. |
-| `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.StringJoiner` | `flint.java.util.stringjoiner.StringJoiner` | [R1](api-mapping.md#r1-packages-and-names) | Import the leaf flint.java.util.stringjoiner. Null separator, framing and empty-value slices count as empty under R26. |
