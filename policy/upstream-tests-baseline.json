@@ -1500,7 +1500,6 @@
       "org/springframework/util/ClassUtilsTests.java",
       "org/springframework/util/CollectionUtilsTests.java",
       "org/springframework/util/CompositeCollectionTests.java",
-      "org/springframework/util/CompositeIteratorTests.java",
       "org/springframework/util/CompositeMapTests.java",
       "org/springframework/util/CompositeSetTests.java",
       "org/springframework/util/ConcurrentLruCacheTests.java",

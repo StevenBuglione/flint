@@ -47,10 +47,12 @@ module flint.util;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.objects : objectEquals, objectToString;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, IndexOutOfBoundsException,
-    NumberFormatException, RuntimeException, UnsupportedOperationException, javaHashCode, valueOf;
+    NullPointerException, NumberFormatException, RuntimeException, UnsupportedOperationException,
+    javaHashCode, valueOf;
 import flint.java.nio.charset : Charset, UnsupportedCharsetException;
 import flint.java.util : ArrayList, Arrays, Collection, Collections, Comparator, HashMap, HashSet,
-    Iterator, LinkedHashMap, LinkedHashSet, List, Map, MapEntry, Optional, RawCollection, RawMap, Set, stableSort;
+    Iterator, LinkedHashMap, LinkedHashSet, List, Map, MapEntry, NoSuchElementException, Optional,
+    RawCollection, RawMap, Set, stableSort;
 import flint.java.util.function_ : Supplier;
 
 @safe:
@@ -6367,4 +6369,54 @@ private int javaHash(scope const(char)[] text) pure nothrow @nogc
     foreach (c; text)
         hash = 31 * hash + c; // ASCII tokens; MIME tokens are ASCII by construction
     return hash;
+}
+
+// Ported from spring-framework v7.1.0, spring-core/src/main/java/org/springframework/util/CompositeIterator.java
+// Modified by the Flint authors.
+
+/// Iterates over a sequence of registered iterators in insertion order.
+class CompositeIterator(T) : Iterator!T
+{
+    private Iterator!T[] iterators;
+    private bool inUse;
+
+    /// Adds an iterator before iteration begins. Throws if the iterator was already added.
+    void add(Iterator!T iterator)
+    {
+        Assert.state(!inUse, "You can no longer add iterators to a composite iterator that's already in use");
+        foreach (registered; iterators)
+            if (objectEquals(cast(Object) iterator, cast(Object) registered))
+                throw new IllegalArgumentException("You cannot add the same iterator twice");
+        iterators ~= iterator;
+    }
+
+    override bool hasNext()
+    {
+        return availableIterator() !is null;
+    }
+
+    override T next()
+    {
+        if (auto iterator = availableIterator())
+            return iterator.next();
+        throw new NoSuchElementException("All iterators exhausted");
+    }
+
+    override void remove()
+    {
+        throw new UnsupportedOperationException("CompositeIterator does not support remove()");
+    }
+
+    private Iterator!T availableIterator()
+    {
+        inUse = true;
+        foreach (iterator; iterators)
+        {
+            if (iterator is null)
+                throw new NullPointerException("Composite iterator contains a null iterator");
+            if (iterator.hasNext())
+                return iterator;
+        }
+        return null;
+    }
 }

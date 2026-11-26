@@ -640,8 +640,18 @@
       "status": "deferred"
     },
     "org/springframework/util/CompositeIteratorTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/core/tests/util_composite_iterator_test.d",
+      "methods": {
+        "ported": [
+          "duplicateIterators",
+          "inUse",
+          "multipleIterators",
+          "noIterators",
+          "nullable",
+          "singleIterator"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/util/CompositeMapTests.java": {
       "phase": "2",
