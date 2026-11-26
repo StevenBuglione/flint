@@ -716,6 +716,8 @@ request wrapper is constructed. Both apps' request-allocation gates cover this c
 
 Resource filename decoding uses Flint's UTF-8 decoder and encoder. It copies valid UTF-8 sequences and preserves replacement characters for malformed input. With the matched S-77 dependency closure, dropping `std.utf.encode` removes the `utf.o` to `curl.o` archive edge. The stock LDC O3 Web probe goes from 529,241 to 70,644 linked bytes, against 70,388 bytes before the Web batch. The system library dependencies are identical across those three probes.
 
+HTTP date parsing keeps up to six trimmed tokens on the stack. It rejects extra nonempty tokens and preserves the existing RFC 1123, RFC 850, asctime, and structured-field branches. In the warmed public `HttpHeaders.getFirstDate` witness, 128 RFC 1123 reads fall from 22,528 GC bytes on DMD to zero with the bounded scan on DMD and LDC.
+
 The final `ResourceHttpRequestHandler.setLocations` installs the classpath serving
 implementation through a private interface. The stock empty handler freezes its
 configuration during the 404 proof. Method and path hooks remain virtual. The matched

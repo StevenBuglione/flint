@@ -4195,7 +4195,7 @@ private long daysFromCivil(long y, int m, int d) pure nothrow @nogc
 }
 
 /// A servlet date header in milliseconds, or `-1` if it cannot be parsed.
-package(flint) long parseServletDate(string value) pure nothrow
+package(flint) long parseServletDate(string value) pure nothrow @nogc
 {
     long millis;
     return value.length >= 3 && value[0] != '@' && parseHttpDate(value, millis) ? millis : -1;
@@ -4203,7 +4203,7 @@ package(flint) long parseServletDate(string value) pure nothrow
 
 // RFC 1123 (`Sun, 06 Nov 1994 08:49:37 GMT`) and RFC 9651 (`@784111777`); the other legacy forms Spring
 // accepts (RFC 850, asctime) are parsed too.
-private bool parseHttpDate(string value, out long millis) pure nothrow
+private bool parseHttpDate(string value, out long millis) pure nothrow @nogc
 {
     static immutable string[12] months = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -4250,17 +4250,30 @@ private bool parseHttpDate(string value, out long millis) pure nothrow
         millis = seconds * 1000;
         return true;
     }
-    auto parts = tokenizeToStringArray(value, " ");
+    string[6] parts;
+    size_t count, start;
+    foreach (i; 0 .. value.length + 1)
+    {
+        if (i != value.length && value[i] != ' ')
+            continue;
+        const token = trimmedAscii(value[start .. i]);
+        start = i + 1;
+        if (token.length == 0)
+            continue;
+        if (count == parts.length)
+            return false;
+        parts[count++] = token;
+    }
     long y, d, secondOfDay;
     int m;
-    if (parts.length == 6 && parts[0].length == 4 && parts[0][3] == ',' && parts[5] == "GMT")
+    if (count == 6 && parts[0].length == 4 && parts[0][3] == ',' && parts[5] == "GMT")
     {
         // RFC 1123
         if (!number(parts[1], d) || (m = monthOf(parts[2])) == 0 || !number(parts[3], y)
                 || !time(parts[4], secondOfDay))
             return false;
     }
-    else if (parts.length == 4 && parts[3] == "GMT" && parts[1].length == 9 && parts[1][2] == '-' && parts[1][6] == '-')
+    else if (count == 4 && parts[3] == "GMT" && parts[1].length == 9 && parts[1][2] == '-' && parts[1][6] == '-')
     {
         // RFC 850: Sunday, 06-Nov-94 08:49:37 GMT
         if (!number(parts[1][0 .. 2], d) || (m = monthOf(parts[1][3 .. 6])) == 0
@@ -4268,7 +4281,7 @@ private bool parseHttpDate(string value, out long millis) pure nothrow
             return false;
         y += y < 70 ? 2000 : 1900;
     }
-    else if (parts.length == 5)
+    else if (count == 5)
     {
         // asctime: Sun Nov  6 08:49:37 1994
         if ((m = monthOf(parts[1])) == 0 || !number(parts[2], d) || !time(parts[3], secondOfDay)
