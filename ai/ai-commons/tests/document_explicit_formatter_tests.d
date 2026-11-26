@@ -110,6 +110,21 @@ unittest
     checkInvalid(new Document("fixture", Text.init, original), "exactly one of text or media must be specified");
 }
 
+@("metadataImmutability")
+unittest
+{
+    // Supply the ID explicitly because this test exercises the metadata snapshot.
+    auto original = new HashMap!(string, Any)();
+    original.put("key", Any.of("value"));
+    auto document = new Document("fixture", Text("test"), original);
+    original.put("newKey", Any.of("newValue"));
+
+    auto metadata = document.getMetadata();
+    assert(metadata.size() == 1);
+    assert(metadata.get("key").get!string() == "value");
+    assert(!metadata.containsKey("newKey"));
+}
+
 @("document IDs distinguish Java whitespace from nonbreaking spaces")
 unittest
 {
