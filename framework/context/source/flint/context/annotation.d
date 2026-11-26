@@ -19,7 +19,7 @@
  *
  * Modified by the Flint authors: ported from spring-framework v7.1.0,
  * spring-context/src/main/java/org/springframework/context/annotation/{Configuration,Bean,Profile,Primary,
- * Fallback,Lazy,Scope,ScopedProxyMode,DependsOn,Description,Role,ComponentScan,Import,PropertySource,
+ * Fallback,Lazy,Scope,ScopedProxyMode,DependsOn,Description,Role,ComponentScan,Import,AdviceMode,PropertySource,
  * AnnotationConfigApplicationContext}.java. Annotations are D UDA structs (rulebook R2), merged and acted on by
  * Flint AOT (AOT contract section 2.2); Class-valued attributes are ClassRef.
  */
@@ -169,6 +169,15 @@ struct Import
 {
     /// The classes.
     ClassRef[] value;
+}
+
+/// Selects proxy-based advice or AspectJ weaving (Spring's constants-only enum).
+enum AdviceMode
+{
+    /// Proxy-based advice.
+    PROXY,
+    /// AspectJ weaving-based advice.
+    ASPECTJ,
 }
 
 /// Adds a property source to the environment (resolved at startup).

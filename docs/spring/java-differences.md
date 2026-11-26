@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,607 | 1,474 | 4,870 | 29,883 |
+| framework | spring-framework@v7.1.0 | 3,610 | 1,474 | 4,870 | 29,880 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -10214,7 +10214,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.cache.support | 40 | 0 |
 | org.springframework.cache.transaction | 28 | 0 |
 | org.springframework.context | 27 | 0 |
-| org.springframework.context.annotation | 240 | 0 |
+| org.springframework.context.annotation | 237 | 0 |
 | org.springframework.context.aot | 43 | 0 |
 | org.springframework.context.config | 3 | 0 |
 | org.springframework.context.event | 104 | 0 |
