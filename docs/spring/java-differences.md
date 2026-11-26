@@ -11942,7 +11942,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.YearMonth#with(TemporalField,long)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.ZoneId#normalized()` | 2 | The D return type is ZoneOffset. Java normalizes fixed-rule regions to an offset and preserves the original ZoneId for regions with variable rules. |
 | framework | `java.time.format.DateTimeFormatter#ISO_DATE_TIME` | 2 | The optional numeric offset now matches Java. Regional IDs such as Europe/Paris still require the region zone provider. |
-| framework | `java.time.format.DateTimeFormatter#withZone(ZoneId)` | 2 | The override applies when printing instant-backed values and local values without an offset. An absent Nullable!ZoneId clears it under R5. A temporal with an offset but no instant still lacks Java's override zone and incompatible fixed-offset check. Parse resolution remains deferred. |
+| framework | `java.time.format.DateTimeFormatter#withZone(ZoneId)` | 2 | Parsing uses the override zone when the input omits a zone ID. ZonedDateTime uses an explicit offset to determine the instant when present. Full parsed-temporal queries and printing temporals with only an offset remain deferred. |
 | framework | `java.time.temporal.ChronoField#adjustInto(R,long)` | 2 | Requires the TemporalAccessor family and compatible temporal value types. |
 | framework | `java.time.temporal.ChronoField#checkValidIntValue(long)` | 2 | Requires field-aware ValueRange checks. |
 | framework | `java.time.temporal.ChronoField#checkValidValue(long)` | 2 | Requires field-aware ValueRange checks. |

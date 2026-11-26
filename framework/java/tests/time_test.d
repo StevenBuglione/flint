@@ -647,3 +647,30 @@ unittest
     assert(zulu.withZone(Nullable!ZoneId.init).getZone().isNull);
     assert(original.withZone(Nullable!ZoneId.init).toString() == original.toString());
 }
+
+@("DateTimeFormatter uses a parsed or override zone to resolve zoned date-time")
+unittest
+{
+    import std.exception : collectException;
+    import std.typecons : Nullable;
+
+    const text = "2024-03-31T02:15:30";
+    const overrideZone = ZoneId.of("+05:45");
+    const local = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(overrideZone);
+    const fields = local.parse(text);
+    assert(fields.zoneId() == "+05:45" && !fields.hasOffset());
+    assert(ZonedDateTime.parse(text, local).toString() == text ~ "+05:45");
+
+    const offset = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(overrideZone);
+    assert(ZonedDateTime.parse(text ~ "+02:00", offset).toString() == "2024-03-31T06:00:30+05:45");
+    const explicitZone = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss VV");
+    assert(ZonedDateTime.parse(text ~ " UTC", explicitZone.withZone(overrideZone)).toString() == text ~ "Z[UTC]");
+    assert(ZonedDateTime.parse(text ~ " UTC", explicitZone).toString() == text ~ "Z[UTC]");
+    const explicitBoth = DateTimeFormatter.ISO_ZONED_DATE_TIME.withZone(overrideZone);
+    assert(ZonedDateTime.parse(text ~ "+02:00[UTC]", explicitBoth).toString() == "2024-03-31T00:15:30Z[UTC]");
+    const instant = DateTimeFormatter.ISO_INSTANT.withZone(overrideZone);
+    assert(ZonedDateTime.parse("2024-03-31T00:15:30Z", instant).toString() == "2024-03-31T06:00:30+05:45");
+
+    const cleared = local.withZone(Nullable!ZoneId.init);
+    assert(collectException!DateTimeParseException(ZonedDateTime.parse(text, cleared)) !is null);
+}

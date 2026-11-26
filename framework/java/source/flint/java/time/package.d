@@ -1678,11 +1678,14 @@ struct ZonedDateTime
         auto fields = formatter.parse(text);
         const dateTime = LocalDateTime(fields.toLocalDate(text, "ZonedDateTime"),
                 fields.toLocalTime(text, "ZonedDateTime"));
+        const zoneId = fields.zoneId();
+        if (zoneId.length && !fields.hasOffset())
+            return of(dateTime, ZoneId.of(zoneId));
         const offset = fields.toOffset(text, "ZonedDateTime");
-        if (fields.zoneId.length == 0)
+        if (!zoneId.length)
             return ZonedDateTime(dateTime, offset, offset.toZoneId());
-        // As Java resolves a parsed offset and zone: the instant is kept, at the zone's own offset.
-        return dateTime.toInstant(offset).atZone(ZoneId.of(fields.zoneId));
+        // The explicit offset determines the instant before conversion to the effective zone.
+        return dateTime.toInstant(offset).atZone(ZoneId.of(zoneId));
     }
 
     /// The local date-time part.
