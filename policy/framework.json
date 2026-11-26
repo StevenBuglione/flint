@@ -545,6 +545,7 @@
     "java.util.concurrent.CountDownLatch",
     "java.util.concurrent.CyclicBarrier",
     "java.util.concurrent.DelayQueue",
+    "java.util.concurrent.Delayed",
     "java.util.concurrent.Exchanger",
     "java.util.concurrent.LinkedBlockingQueue",
     "java.util.concurrent.LinkedTransferQueue",
@@ -568,6 +569,7 @@
    ],
    "also": [
     "flint.java.util.concurrent.brokenbarrierexception",
+    "flint.java.util.concurrent.delayed",
     "flint.java.util.concurrent.locks.contracts"
    ],
    "repo": "framework",
