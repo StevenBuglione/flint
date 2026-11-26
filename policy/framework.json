@@ -1187,7 +1187,8 @@
    "directory": "ai/ai-commons",
    "module": "flint.ai.content",
    "also": [
-    "flint.ai.observation.conventions"
+    "flint.ai.observation.conventions",
+    "flint.ai.template_"
    ],
    "repo": "ai",
    "licence": "Apache-2.0",
