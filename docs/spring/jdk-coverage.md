@@ -7,7 +7,7 @@ Overall: types 145/1307 (11%), members 1170/15237 (8%).
 | Package | Owners | Types done / in scope | Members done / in scope | Members % | Unconfirmed | Leaf only |
 |---|---|---|---|---|---|---|
 | `java.io` | sol-test | 14 / 69 | 82 / 734 | 11% | 86 | 1 |
-| `java.lang` | sol-framework, sol-boot, sol-jdk-math-regex (Character) | 15 / 118 | 24 / 1937 | 1% | 37 |  |
+| `java.lang` | sol-framework, sol-boot, sol-jdk-math-regex (Character) | 15 / 118 | 24 / 1937 | 1% | 31 |  |
 | `java.lang.annotation` | sol-framework | 0 / 12 | 0 / 31 | 0% |  |  |
 | `java.lang.ref` | sol-boot | 0 / 7 | 0 / 22 | 0% |  |  |
 | `java.math` | sol-jdk-math-regex | 2 / 4 | 38 / 173 | 22% | 1 |  |
