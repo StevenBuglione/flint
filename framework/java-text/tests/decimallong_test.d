@@ -108,3 +108,37 @@ unittest
     check("#,##0.00%", 123, -2, "-246.00%");
     check("'p'0's';'n'0'z'", 0, -2, "p0s");
 }
+
+@("Integer width keeps the low digits and couples maximum and minimum")
+unittest
+{
+    auto symbols = decimalSymbolData("", "", "");
+    DecimalFixedPattern pattern;
+    pattern.groupingSize = 3;
+    pattern.minimumFractionDigits = 2;
+    char[320] output;
+    output[] = 'x';
+    pattern.setMinimumIntegerDigits(5);
+    pattern.setMaximumIntegerDigits(3);
+    assert(pattern.minimumIntegerDigits == 3);
+    const required = renderDecimalLong(-12_345, pattern, *symbols, output[0 .. 1]);
+    assert(required == 7 && output[0] == 'x');
+    auto written = renderDecimalLong(-12_345, pattern, *symbols, output[]);
+    assert(output[0 .. written] == "-345.00" && output[written] == 'x');
+
+    pattern.setMaximumIntegerDigits(-1);
+    assert(pattern.minimumIntegerDigits == 0 && pattern.maximumIntegerDigits == 0);
+    written = renderDecimalLong(12_345, pattern, *symbols, output[]);
+    assert(output[0 .. written] == ".00");
+    pattern.minimumFractionDigits = 0;
+    written = renderDecimalLong(-12_345, pattern, *symbols, output[]);
+    assert(output[0 .. written] == "-0");
+
+    pattern.groupingSize = 0;
+    pattern.setMinimumIntegerDigits(500);
+    assert(pattern.maximumIntegerDigits == 500);
+    written = renderDecimalLong(42, pattern, *symbols, output[]);
+    assert(written == 309 && output[307 .. 309] == "42");
+    foreach (digit; output[0 .. 307])
+        assert(digit == '0');
+}

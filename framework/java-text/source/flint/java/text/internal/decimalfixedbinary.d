@@ -42,10 +42,8 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref s
         return true;
     }
 
-    // These are the floating-point limits of Java's DecimalFormat, independent of long padding.
+    // Bound the fractional digit calculation before invoking the binary64 conversion.
     scope DecimalFixedPattern effective = pattern;
-    if (effective.minimumIntegerDigits > 309)
-        effective.minimumIntegerDigits = 309;
     if (effective.minimumFractionDigits > 340)
         effective.minimumFractionDigits = 340;
     if (effective.maximumFractionDigits > 340)
@@ -173,6 +171,6 @@ private bool usesGroupedFastPath(ulong bits, ref scope const DecimalFixedPattern
     const magnitudeBits = bits & (ulong.max >> 1);
     // 0x41df... is the binary64 representation of Integer.MAX_VALUE.
     return magnitudeBits <= 0x41df_ffff_ffc0_0000 && pattern.groupingSize == 3 && pattern.minimumIntegerDigits == 1
-        && pattern.minimumFractionDigits == 0 && pattern.maximumFractionDigits == 3
-        && !pattern.decimalSeparatorAlwaysShown;
+        && pattern.maximumIntegerDigits >= 10 && pattern.minimumFractionDigits == 0
+        && pattern.maximumFractionDigits == 3 && !pattern.decimalSeparatorAlwaysShown;
 }

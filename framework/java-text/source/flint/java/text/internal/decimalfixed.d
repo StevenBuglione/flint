@@ -19,12 +19,27 @@ struct DecimalFixedPattern
     DecimalAffixes positive;
     DecimalAffixes negative = DecimalAffixes("-", null);
     uint minimumIntegerDigits = 1;
+    uint maximumIntegerDigits = int.max;
     uint minimumFractionDigits;
     uint maximumFractionDigits = 3;
     uint groupingSize;
     // A percent pattern adds two decimal places, and a per-mille pattern adds three.
     ubyte scale;
     bool decimalSeparatorAlwaysShown;
+
+    void setMinimumIntegerDigits(int width) pure nothrow @nogc
+    {
+        minimumIntegerDigits = width < 0 ? 0 : cast(uint) width;
+        if (maximumIntegerDigits < minimumIntegerDigits)
+            maximumIntegerDigits = minimumIntegerDigits;
+    }
+
+    void setMaximumIntegerDigits(int width) pure nothrow @nogc
+    {
+        maximumIntegerDigits = width < 0 ? 0 : cast(uint) width;
+        if (minimumIntegerDigits > maximumIntegerDigits)
+            minimumIntegerDigits = maximumIntegerDigits;
+    }
 }
 
 /// Writes using the ASCII numeric symbols of the explicit ROOT and English profiles.
@@ -104,9 +119,12 @@ pure nothrow @nogc size_t renderFixedDigits(scope const(char)[] digits, int deci
     const fractionDigits = visibleFraction > 0 ? cast(size_t) visibleFraction : 0;
     const fractionCount = fractionDigits > pattern.minimumFractionDigits ? fractionDigits : pattern
         .minimumFractionDigits;
-    size_t integerCount = integralDigits > pattern.minimumIntegerDigits ? integralDigits : pattern.minimumIntegerDigits;
-    if (integerCount == 0 && fractionCount == 0)
-        integerCount = 1;
+    size_t integerCount = primitiveWidth(integralDigits, pattern);
+    const fallbackZero = integerCount == 0 && fractionCount == 0;
+    // A negative start pads with zeros. A positive start skips truncated leading digits.
+    // For the digitless fallback, start after the stored digits to emit a zero.
+    const first = fallbackZero ? cast(int) digits.length : cast(int) integralDigits - cast(int) integerCount;
+    integerCount += fallbackZero;
     const groups = integerCount && pattern.groupingSize ? (integerCount - 1) / pattern.groupingSize : 0;
     const decimalPoint = fractionCount != 0 || pattern.decimalSeparatorAlwaysShown;
     const required = cast(ulong) affixes.prefix.length + integerCount + groups + decimalPoint
@@ -117,8 +135,7 @@ pure nothrow @nogc size_t renderFixedDigits(scope const(char)[] digits, int deci
     const prefixEnd = affixes.prefix.length;
     output[0 .. prefixEnd] = affixes.prefix;
     size_t at = prefixEnd + integerCount + groups;
-    writeInteger(digits, integerCount - integralDigits, integerCount, pattern.groupingSize, symbols,
-            output[prefixEnd .. at]);
+    writeInteger(digits, first, integerCount, pattern.groupingSize, symbols, output[prefixEnd .. at]);
     if (decimalPoint)
         output[at++] = cast(char) symbols.decimalSeparator;
     writeFraction(digits, decimalAt, cast(char) symbols.zeroDigit, output[at .. at + fractionCount]);
@@ -135,7 +152,15 @@ private void writeFraction(scope const(char)[] digits, int point, char zero, sco
     }
 }
 
-private void writeInteger(scope const(char)[] digits, size_t padding, size_t integerCount,
+private size_t primitiveWidth(size_t integralDigits, ref scope const DecimalFixedPattern pattern) pure nothrow @nogc
+{
+    enum primitiveLimit = 309;
+    const maximum = pattern.maximumIntegerDigits < primitiveLimit ? pattern.maximumIntegerDigits : primitiveLimit;
+    const width = integralDigits > pattern.minimumIntegerDigits ? integralDigits : pattern.minimumIntegerDigits;
+    return width < maximum ? width : maximum;
+}
+
+private void writeInteger(scope const(char)[] digits, int firstDigit, size_t integerCount,
         uint groupingSize, ref scope const DecimalSymbolData symbols, scope char[] output) pure nothrow @nogc
 {
     size_t at;
@@ -143,8 +168,9 @@ private void writeInteger(scope const(char)[] digits, size_t padding, size_t int
     {
         if (i != 0 && groupingSize && (integerCount - i) % groupingSize == 0)
             output[at++] = cast(char) symbols.groupingSeparator;
-        if (i >= padding && i - padding < digits.length)
-            output[at++] = digits[i - padding];
+        const index = firstDigit + cast(int) i;
+        if (index >= 0 && index < digits.length)
+            output[at++] = digits[cast(size_t) index];
         else
             output[at++] = cast(char) symbols.zeroDigit;
     }

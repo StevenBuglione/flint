@@ -153,3 +153,25 @@ unittest
     check("0.000000000000000000", int.min, 0x3ff0_0000_0000_0001, "-2147483648.000000500000000000");
     check("0.000000000000000000", int.max, 0x3fff_ffff_ffff_ffff, "4294967293.999999500000000000");
 }
+
+@("Binary64 integer width retains fractional digits and controls grouped fast-path eligibility")
+unittest
+{
+    static void check(string text, int width, ulong bits, string expected)
+    {
+        DecimalFixedPattern pattern;
+        assert(compileFixedDecimalPattern(text, pattern) == DecimalCompileStatus.accepted);
+        pattern.setMaximumIntegerDigits(width);
+        DecimalSymbolData symbols;
+        char[48] output;
+        size_t required;
+        assert(tryRenderDecimalDouble(bits, pattern, symbols, output[], required));
+        assert(output[0 .. required] == expected);
+    }
+
+    check("#,##0.###", 9, 0x3f40_624d_d2f1_a9fc, "0");
+    check("#,##0.###", 10, 0x3f40_624d_d2f1_a9fc, "0.001");
+    check("0.00", 3, 0x40c8_1cc0_0000_0000, "345.50");
+    check("0.00", 0, 0x40c8_1cc0_0000_0000, ".50");
+    check("0.", 0, 0x40c8_1cc0_0000_0000, "0.");
+}
