@@ -18,6 +18,9 @@
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/GlobalObservationConvention.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationConvention.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/KeyValuesConvention.java
+// Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationFilter.java
+// Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationHandler.java
+// Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationPredicate.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationView.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/SimpleEvent.java
 // Modified by the Flint authors.
@@ -30,6 +33,7 @@ import flint.engine.aot.objects : statelessInstance;
 import flint.engine.aot.text : decimal;
 import flint.java.lang : Iterable, NullPointerException;
 import flint.java.util.formatter : formatJava;
+import flint.java.util.function_ : BiPredicate;
 import flint.micrometer.common : KeyValue, KeyValues;
 import std.typecons : Nullable;
 
@@ -506,4 +510,76 @@ private final class EmptyObservationConvention : ContextConvention
     }
 
     mixin ContextConvention.Defaults;
+}
+
+/// Rewrites the context before stop handlers receive it.
+interface ObservationFilter
+{
+    /// Return the context to pass to subsequent filters and handlers.
+    Observation.Context map(Observation.Context context);
+}
+
+/// Decides whether observations with a given name and context should be created.
+interface ObservationPredicate : BiPredicate!(string, Observation.Context)
+{
+}
+
+/// Hooks into an observation's lifecycle for a particular context type.
+interface ObservationHandler(T) if (isObservationContext!T)
+{
+    /// React to the start of an observation.
+    void onStart(T context);
+
+    /// React to a reported error.
+    void onError(T context);
+
+    /// React to a signaled event.
+    void onEvent(Observation.Event event, T context);
+
+    /// React to the opening of an observation scope.
+    void onScopeOpened(T context);
+
+    /// React to the closing of an observation scope.
+    void onScopeClosed(T context);
+
+    /// React to a reset of the current scope (added in Micrometer 1.10.4).
+    deprecated("Use onScopeClosed for cleanup when a scope is closed.") void onScopeReset(T context);
+
+    /// React to the stop of an observation.
+    void onStop(T context);
+
+    /// Check whether this handler applies to the supplied context.
+    bool supportsContext(Observation.Context context);
+
+    /// Supply Micrometer's no-op default callbacks (R3).
+    mixin template Defaults(alias Context = T, alias Event = Observation.Event)
+    {
+        override void onStart(Context context)
+        {
+        }
+
+        override void onError(Context context)
+        {
+        }
+
+        override void onEvent(Event event, Context context)
+        {
+        }
+
+        override void onScopeOpened(Context context)
+        {
+        }
+
+        override void onScopeClosed(Context context)
+        {
+        }
+
+        deprecated("Use onScopeClosed for cleanup when a scope is closed.") override void onScopeReset(Context context)
+        {
+        }
+
+        override void onStop(Context context)
+        {
+        }
+    }
 }

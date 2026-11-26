@@ -192,7 +192,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | micrometer-core@1.18.0 | 130 | 123 | 0 | 2,137 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 0 | 0 | 0 | 4,452 |
-| framework | micrometer-observation@1.18.0 | 34 | 24 | 0 | 254 |
+| framework | micrometer-observation@1.18.0 | 39 | 31 | 0 | 242 |
 | framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 16,240 |
 | framework | aspectj@1.9.27 | 0 | 31 | 191 | 88 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
@@ -909,6 +909,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.observation.ObservationConvention#getHighCardinalityKeyValues(T)` | `flint.micrometer.observation.ObservationConvention.getHighCardinalityKeyValues` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.observation.ObservationConvention#getLowCardinalityKeyValues(T)` | `flint.micrometer.observation.ObservationConvention.getLowCardinalityKeyValues` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.observation.ObservationConvention#getName()` | `flint.micrometer.observation.ObservationConvention.getName` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `io.micrometer.observation.ObservationHandler#onError(T)` | `flint.micrometer.observation.ObservationHandler.onError` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.observation.ObservationHandler#onEvent(Observation.Event,T)` | `flint.micrometer.observation.ObservationHandler.onEvent` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.observation.ObservationHandler#onScopeClosed(T)` | `flint.micrometer.observation.ObservationHandler.onScopeClosed` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.observation.ObservationHandler#onScopeOpened(T)` | `flint.micrometer.observation.ObservationHandler.onScopeOpened` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.observation.ObservationHandler#onScopeReset(T)` | `flint.micrometer.observation.ObservationHandler.onScopeReset` | [R2](api-mapping.md#r2-annotations), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.observation.ObservationHandler#onStart(T)` | `flint.micrometer.observation.ObservationHandler.onStart` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.observation.ObservationHandler#onStop(T)` | `flint.micrometer.observation.ObservationHandler.onStop` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 
 #### jakarta.annotation
 
@@ -9021,7 +9028,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.step | 72 | 0 |
 | io.micrometer.core.instrument.util | 37 | 0 |
 | io.micrometer.core.ipc.http | 56 | 0 |
-| io.micrometer.observation | 149 | 0 |
+| io.micrometer.observation | 137 | 0 |
 | io.micrometer.observation.annotation | 12 | 0 |
 | io.micrometer.observation.aop | 17 | 0 |
 | io.micrometer.observation.contextpropagation | 14 | 0 |
