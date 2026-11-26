@@ -42,6 +42,35 @@ private final class FixtureMessage : AbstractMessage
     {
         super(role, parts, metadata);
     }
+
+    void checkProtectedFields(MessageType role, Text text)
+    {
+        static assert(!__traits(compiles, this.messageType = MessageType.TOOL));
+        static assert(!__traits(compiles, this.textContent = Text.init));
+        static assert(!__traits(compiles, this.metadata = getMetadata()));
+
+        assert(this.messageType == role);
+        assert(this.textContent.isNull == text.isNull);
+        assert(text.isNull || this.textContent.get() == text.get());
+        assert(this.metadata is getMetadata());
+        this.metadata.put("fromSubclass", Any.of("visible"));
+    }
+}
+
+@("subclasses can read protected final message fields and mutate their metadata")
+unittest
+{
+    auto input = new MutableMetadata();
+    auto absent = new FixtureMessage(MessageType.ASSISTANT, Text.init, input);
+    absent.checkProtectedFields(MessageType.ASSISTANT, Text.init);
+    assert(absent.getMetadata().get("fromSubclass").get!string() == "visible");
+    assert(!input.containsKey("fromSubclass"));
+
+    auto empty = new FixtureMessage(MessageType.SYSTEM, Text(""), input);
+    empty.checkProtectedFields(MessageType.SYSTEM, Text(""));
+
+    auto joined = new FixtureMessage(MessageType.USER, Parts.of(TextPart.of("a"), TextPart.of("b")), input);
+    joined.checkProtectedFields(MessageType.USER, Text("ab"));
 }
 
 @("legacy message construction distinguishes absent and present empty text")

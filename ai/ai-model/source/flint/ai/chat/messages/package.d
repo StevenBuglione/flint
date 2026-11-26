@@ -146,6 +146,24 @@ abstract class AbstractMessage : Message
         metadata_.put(MESSAGE_TYPE, Any.of(messageType));
     }
 
+    /// The role supplied at construction.
+    protected final MessageType messageType() const pure nothrow @nogc
+    {
+        return messageType_;
+    }
+
+    /// The text derived from the ordered message parts.
+    deprecated("Use getText()") protected final MessageText textContent() const pure nothrow @nogc
+    {
+        return text_;
+    }
+
+    /// The message's live metadata map.
+    protected final MessageMetadata metadata() pure nothrow @nogc
+    {
+        return metadata_;
+    }
+
     /// Converts legacy nullable text into zero or one part.
     protected static MessageParts legacyParts(MessageText text)
     {
