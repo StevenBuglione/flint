@@ -336,8 +336,6 @@
       "org/springframework/boot/actuate/info/BuildInfoContributorTests.java",
       "org/springframework/boot/actuate/info/EnvironmentInfoContributorTests.java",
       "org/springframework/boot/actuate/info/GitInfoContributorTests.java",
-      "org/springframework/boot/actuate/info/InfoEndpointTests.java",
-      "org/springframework/boot/actuate/info/InfoTests.java",
       "org/springframework/boot/actuate/info/JavaInfoContributorTests.java",
       "org/springframework/boot/actuate/info/OsInfoContributorTests.java",
       "org/springframework/boot/actuate/info/ProcessInfoContributorTests.java",

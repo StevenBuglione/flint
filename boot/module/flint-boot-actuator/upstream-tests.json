@@ -392,12 +392,24 @@
       "status": "deferred"
     },
     "org/springframework/boot/actuate/info/InfoEndpointTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/module/flint-boot-actuator/tests/info_endpoint_test.d",
+      "methods": {
+        "ported": [
+          "info",
+          "infoWithNoContributorsProducesEmptyMap"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/boot/actuate/info/InfoTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/module/flint-boot-actuator/tests/info_endpoint_test.d",
+      "methods": {
+        "ported": [
+          "infoIsImmutable",
+          "infoTakesCopyOfMap"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/boot/actuate/info/JavaInfoContributorTests.java": {
       "phase": "2",
