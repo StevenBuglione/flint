@@ -7,7 +7,7 @@
 module flint.engine.jpa.mapping;
 
 import flint.arena : Error, Result, Status;
-import flint.jakarta.persistence : GenerationType;
+import flint.jakarta.persistence : EnumType, GenerationType;
 import flint.java.sql : Types;
 
 @safe:
@@ -21,6 +21,11 @@ enum AttributeKind
     boolean,
     text,
     binary,
+    date,
+    time,
+    timestamp,
+    timestampWithOffset,
+    decimal,
 }
 
 /// A transient value for an entity read or write. Arena snapshots copy text and bytes into owned storage.
@@ -28,7 +33,7 @@ struct AttributeValue
 {
     /// Identifies the value stored below.
     AttributeKind kind;
-    /// A signed integer value.
+    /// A signed integer, epoch day, nanoseconds since midnight, epoch microseconds, or unscaled decimal.
     long integer;
     /// A floating-point value.
     double floatingPoint;
@@ -38,6 +43,10 @@ struct AttributeValue
     string text;
     /// The binary slice for this operation.
     const(ubyte)[] bytes;
+    /// UTC offset in seconds for timestampWithOffset.
+    int offsetSeconds;
+    /// Decimal scale. A non-null text value holds the exact decimal when it exceeds integer range.
+    int scale;
 }
 
 /// One persistent attribute. Ordinals include inherited persistent attributes in order.
@@ -67,6 +76,8 @@ struct AttributeMapping
     uint columnLength;
     /// The JDBC type code used by the dialect and binders.
     int sqlType = Types.OTHER;
+    /// Storage representation of an enum attribute.
+    EnumType enumeration = EnumType.ORDINAL;
 }
 
 /// A lifecycle callback, invoked at the public boundary after row values are owned.
@@ -130,11 +141,31 @@ private Error validateAttributes(scope const(AttributeMapping)[] attributes) not
     foreach (index, ref attribute; attributes)
     {
         if (attribute.ordinal != index || attribute.name.length == 0 || attribute.column.length == 0
-                || attribute.kind < AttributeKind.integer || attribute.kind > AttributeKind.binary
+                || attribute.kind < AttributeKind.integer || attribute.kind > AttributeKind.decimal
                 || attribute.sqlType == Types.NULL || attribute.read is null || attribute.write is null)
             return Error(Status.invalidArgument, "invalid persistent attribute mapping", index);
+        const issue = unsupportedKind(attribute.kind);
+        if (issue.length != 0)
+            return Error(Status.unsupported, issue, index);
     }
     return Error.init;
+}
+
+private string unsupportedKind(AttributeKind kind) pure nothrow @nogc
+{
+    switch (kind)
+    {
+    case AttributeKind.time:
+        return "JPA JDBC materialization for TIME is unavailable";
+    case AttributeKind.timestamp:
+        return "JPA JDBC materialization for TIMESTAMP is unavailable";
+    case AttributeKind.timestampWithOffset:
+        return "JDBC driver support for TIMESTAMP WITH TIME ZONE is unavailable";
+    case AttributeKind.decimal:
+        return "JDBC driver support for NUMERIC is unavailable";
+    default:
+        return null;
+    }
 }
 
 private Error validateIdentifiers(scope const ref EntityMapping mapping) nothrow @nogc

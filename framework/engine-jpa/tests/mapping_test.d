@@ -81,3 +81,32 @@ unittest
             mapping.write(null, value);
         }));
 }
+
+@("unsupported JDBC kinds identify the mapped attribute before query execution")
+unittest
+{
+    EntityMapping mapping = recordMapping;
+    auto attributes = mapping.attributes.dup;
+    attributes[0].kind = AttributeKind.timestampWithOffset;
+    mapping.attributes = attributes.idup;
+    const offset = validateMapping(mapping);
+    assert(offset.code == Status.unsupported && offset.offset == 0);
+    assert(offset.message == "JDBC driver support for TIMESTAMP WITH TIME ZONE is unavailable");
+
+    attributes[0].kind = AttributeKind.decimal;
+    mapping.attributes = attributes.idup;
+    const decimal = validateMapping(mapping);
+    assert(decimal.code == Status.unsupported && decimal.offset == 0);
+    assert(decimal.message == "JDBC driver support for NUMERIC is unavailable");
+}
+
+@("a date projection requires a typed reader at registration")
+unittest
+{
+    static immutable EntityMapping dates = EntityMapping("Record", "flint.engine.jpa.mapping_test.Record", "records",
+            [AttributeMapping(0, "id", "id", AttributeKind.date, &readId, &writeId)],
+            &constructRecord, [], &isExactRecordType, [0]);
+    const missing = planResult(&dates, [ResultBinding(0, 1)]);
+    assert(missing.error.code == Status.invalidArgument && missing.error.offset == 0);
+    assert(missing.error.message == "missing typed JDBC reader");
+}

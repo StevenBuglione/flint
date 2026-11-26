@@ -8,6 +8,7 @@ module flint.engine.jpa;
 
 public import flint.engine.jpa.mapping : AttributeKind, AttributeMapping, AttributeValue,
     EntityMapping, LifecycleCallback, validateEntity, validateMapping;
-public import flint.engine.jpa.result_binding : ResultBinding, RowMaterializationPlan, materializeRow, planResult;
+public import flint.engine.jpa.result_binding : ResultBinding, RowMaterializationPlan,
+    TypedColumnCodec, TypedColumnReader, TypedColumnWriter, materializeRow, planResult;
 
 @safe:

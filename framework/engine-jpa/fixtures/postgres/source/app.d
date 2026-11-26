@@ -5,13 +5,16 @@
 
 module app;
 
+import core.memory : GC;
 import flint.arena : Error, Result, Status;
 import flint.conc : Deadline;
-import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping,
-    ResultBinding, RowMaterializationPlan, materializeRow, planResult, validateEntity, validateMapping;
+import flint.engine.aot.any : Any;
+import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding,
+    RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult, validateEntity, validateMapping;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
 import flint.engine.reactor : Backend, Reactor, ReactorOptions, TaskContext, TaskDelegate;
-import flint.java.sql : SQLException, Types;
+import flint.java.sql : PreparedStatement, ResultSet, SQLException, Types;
+import flint.java.time : LocalDate;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
 import flint.jdbc.datasource : ConnectionHolder, DataSourceTransactionManager, DataSourceUtils;
@@ -48,6 +51,7 @@ private class OwnerBase
 private class Owner : OwnerBase
 {
     string name;
+    LocalDate birthDate;
 }
 
 private final class DerivedOwner : Owner
@@ -96,10 +100,38 @@ private void writeName(Object object, const ref AttributeValue value)
     (cast(Owner) object).name = value.kind == AttributeKind.nullValue ? null : value.text;
 }
 
+private Result!AttributeValue readBirthDate(Object object) nothrow @nogc
+{
+    auto owner = cast(Owner) object;
+    if (owner is null)
+        return Result!AttributeValue(AttributeValue.init, Error(Status.invalidArgument, "expected Owner"));
+    return Result!AttributeValue(AttributeValue(AttributeKind.date, owner.birthDate.toEpochDay()));
+}
+
+private AttributeValue readTypedColumn(ResultSet row, int column, AttributeKind kind)
+{
+    assert(kind == AttributeKind.date);
+    return AttributeValue(kind, row.getObject!LocalDate(column).toEpochDay());
+}
+
+private void writeTypedColumn(PreparedStatement statement, int parameter, scope const ref AttributeValue value)
+{
+    assert(value.kind == AttributeKind.date);
+    statement.setObject(parameter, Any.of(LocalDate.ofEpochDay(value.integer)));
+}
+
+private immutable ownerCodec = TypedColumnCodec(&readTypedColumn, &writeTypedColumn);
+
+private void writeBirthDate(Object object, const ref AttributeValue value)
+{
+    (cast(Owner) object).birthDate = LocalDate.ofEpochDay(value.integer);
+}
+
 private void postLoadListener(Object object)
 {
     auto owner = cast(Owner) object;
     assert(owner.id == 1 && owner.name == "One" && owner.loadOrder == 0);
+    assert(owner.birthDate == LocalDate.of(1968, 2, 29));
     owner.loadOrder = 1;
 }
 
@@ -122,6 +154,8 @@ private immutable AttributeMapping[] ownerAttributes = [
             false, 0, Types.BIGINT),
     AttributeMapping(1, "name", "name", AttributeKind.text, &readName, &writeName, false, true,
             true, true, 0, Types.LONGVARCHAR),
+    AttributeMapping(2, "birthDate", "birth_date", AttributeKind.date, &readBirthDate,
+            &writeBirthDate, false, false, true, true, 0, Types.DATE),
 ];
 
 private immutable EntityMapping ownerMapping = EntityMapping("Owner", "app.Owner", "jpa_seam_probe", ownerAttributes,
@@ -136,9 +170,11 @@ private void requireExpectedEntity(Object entity)
         throw new Exception(error.message);
 }
 
-private immutable ResultBinding[] ownerBindings = [ResultBinding(1, 1), ResultBinding(0, 2),];
+private immutable ResultBinding[] ownerBindings = [
+    ResultBinding(1, 1), ResultBinding(2, 2), ResultBinding(0, 3)
+];
 
-private enum selectOwner = "select name, id from jpa_seam_probe where id = ?";
+private enum selectOwner = "select name, birth_date, id from jpa_seam_probe where id = ?";
 
 private Owner providerLoadOwner(DataSource dataSource, scope const ref RowMaterializationPlan plan,
         long id, string sql = selectOwner)
@@ -155,6 +191,13 @@ private Owner providerLoadOwner(DataSource dataSource, scope const ref RowMateri
         rows.close();
     assert(rows.next());
 
+    if (sql == selectOwner)
+    {
+        const before = GC.stats().allocatedInCurrentThread;
+        const date = ownerCodec.read(rows, 2, AttributeKind.date);
+        assert(GC.stats().allocatedInCurrentThread == before);
+        assert(date.integer == LocalDate.of(1968, 2, 29).toEpochDay());
+    }
     auto loaded = materializeRow(plan, rows);
     if (!loaded.ok)
     {
@@ -166,23 +209,39 @@ private Owner providerLoadOwner(DataSource dataSource, scope const ref RowMateri
     return cast(Owner) loaded.value;
 }
 
+private void requireNullRejection(DataSource dataSource, scope const ref RowMaterializationPlan plan,
+        string sql, string attribute)
+{
+    try
+        cast(void) providerLoadOwner(dataSource, plan, 1, sql);
+    catch (Exception failure)
+    {
+        assert(failure.msg == "Cannot map SQL NULL to " ~ attribute);
+        return;
+    }
+    assert(false, "SQL NULL must be rejected");
+}
+
 private void providerInsert(DataSource dataSource, long id, string name)
 {
     auto owner = new Owner;
     owner.id = id;
     owner.name = name;
+    owner.birthDate = LocalDate.of(1968, 2, 29);
     requireExpectedEntity(owner);
     auto connection = DataSourceUtils.getConnection(dataSource);
     scope (exit)
         DataSourceUtils.releaseConnection(connection, dataSource);
-    auto statement = connection.prepareStatement("insert into jpa_seam_probe values (?, ?)");
+    auto statement = connection.prepareStatement("insert into jpa_seam_probe (id, name, birth_date) values (?, ?, ?)");
     scope (exit)
         statement.close();
     auto idValue = ownerMapping.attributes[0].read(owner);
     auto nameValue = ownerMapping.attributes[1].read(owner);
-    assert(idValue.ok && nameValue.ok);
+    const birthDate = ownerMapping.attributes[2].read(owner);
+    assert(idValue.ok && nameValue.ok && birthDate.ok);
     statement.setLong(1, idValue.value.integer);
     statement.setString(2, nameValue.value.text);
+    ownerCodec.write(statement, 3, birthDate.value);
     assert(statement.executeUpdate() == 1);
 }
 
@@ -281,9 +340,11 @@ private RowMaterializationPlan verifyMappingContract()
 {
     assert(planResult(null, ownerBindings).error.code == Status.invalidArgument);
     assert(planResult(&ownerMapping, [ResultBinding(1, 1)]).error.code == Status.invalidArgument);
-    assert(planResult(&ownerMapping, [ResultBinding(1, 1), ResultBinding(1, 2)]).error.code == Status.invalidArgument);
-    assert(planResult(&ownerMapping, [ResultBinding(1, 1), ResultBinding(0, 0)]).error.code == Status.invalidArgument);
-    const planned = planResult(&ownerMapping, ownerBindings);
+    assert(planResult(&ownerMapping, [ResultBinding(1, 1), ResultBinding(1, 2), ResultBinding(0, 3)], ownerCodec)
+            .error.code == Status.invalidArgument);
+    assert(planResult(&ownerMapping, [ResultBinding(1, 1), ResultBinding(2, 2), ResultBinding(0, 0)], ownerCodec)
+            .error.code == Status.invalidArgument);
+    const planned = planResult(&ownerMapping, ownerBindings, ownerCodec);
     assert(planned.ok);
     assert(validateMapping(ownerMapping).code == Status.ok);
     assert(validateEntity(ownerMapping, new Owner).code == Status.ok);
@@ -292,14 +353,14 @@ private RowMaterializationPlan verifyMappingContract()
     assert(validateEntity(ownerMapping, null).code == Status.invalidArgument);
 
     EntityMapping broken = ownerMapping;
-    broken.idOrdinals = [2];
+    broken.idOrdinals = [3];
     assert(validateMapping(broken).code == Status.invalidArgument);
     broken.idOrdinals = [0, 0];
     assert(validateMapping(broken).code == Status.invalidArgument);
     broken.idOrdinals = [0];
     broken.versionOrdinal = 0;
     assert(validateMapping(broken).code == Status.invalidArgument);
-    broken.versionOrdinal = 2;
+    broken.versionOrdinal = 3;
     assert(validateMapping(broken).code == Status.invalidArgument);
     return planned.value;
 }
@@ -495,7 +556,8 @@ void main() @system
         dataSource.close();
 
     auto jdbc = new JdbcTemplate(dataSource);
-    jdbc.execute("create table jpa_seam_probe (id bigint primary key, name text not null)");
+    jdbc.execute(
+            "create table jpa_seam_probe (id bigint primary key, name text not null, " ~ "birth_date date not null)");
     auto manager = new DataSourceTransactionManager(dataSource);
     auto outer = new TransactionTemplate(manager);
     auto inner = new TransactionTemplate(manager);
@@ -513,18 +575,10 @@ void main() @system
         providerInsert(dataSource, 1, "One");
         materialized = providerLoadOwner(dataSource, ownerPlan, 1);
         assert(materialized.loadOrder == 3);
-        bool rejectedNull;
-        try
-        {
-            cast(void) providerLoadOwner(dataSource, ownerPlan, 1,
-                "select name, null::bigint from jpa_seam_probe where id = ?");
-        }
-        catch (Exception failure)
-        {
-            assert(failure.msg == "Cannot map SQL NULL to id");
-            rejectedNull = true;
-        }
-        assert(rejectedNull);
+        requireNullRejection(dataSource, ownerPlan,
+            "select name, birth_date, null::bigint from jpa_seam_probe where id = ?", "id");
+        requireNullRejection(dataSource, ownerPlan,
+            "select name, null::date, id from jpa_seam_probe where id = ?", "birthDate");
         assert(jdbc.queryForObject!long("select count(*) from jpa_seam_probe") == 1);
 
         inner.executeWithoutResult((TransactionStatus nested) {
@@ -543,6 +597,9 @@ void main() @system
     });
 
     assert(materialized.id == 1 && materialized.name == "One");
+    assert(materialized.birthDate == LocalDate.of(1968, 2, 29));
+    const birthDate = ownerMapping.attributes[2].read(materialized);
+    assert(birthDate.ok && birthDate.value.integer == materialized.birthDate.toEpochDay());
     assert(outerContext.flushed && outerContext.completion == TransactionSynchronization.STATUS_COMMITTED);
     assert(!TransactionSynchronizationManager.hasResource(key));
     assert(!TransactionSynchronizationManager.hasResource(cast(Object) dataSource));
