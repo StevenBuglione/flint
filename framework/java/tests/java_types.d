@@ -644,9 +644,9 @@ unittest
     assert(Locale.forLanguageTag("en-US-u-x-lvariant-ABC") == Locale.US);
     assert(Locale.forLanguageTag("en-US-0-01-x-lvariant-ABC") == Locale.US);
     assert(Locale.forLanguageTag("x-notgood!-lvariant-ABC") == Locale.ROOT);
-    assert(Locale.forLanguageTag("x-lvariant") == Locale.ROOT);
+    assert(Locale.forLanguageTag("x-lvariant").getExtension('x').get() == "lvariant");
     assert(Locale.forLanguageTag("i-KLinGon") == Locale("tlh"));
-    assert(Locale.forLanguageTag("i-default") == Locale.ENGLISH);
+    assert(Locale.forLanguageTag("i-default").toLanguageTag() == "en-x-i-default");
     assert(Locale.forLanguageTag("sgn-BE-FR") == Locale("sfb"));
     assert(Locale.forLanguageTag("no-bok") == Locale("nb"));
     assert(Locale.forLanguageTag("zh-min-nan") == Locale("nan"));
@@ -877,4 +877,29 @@ unittest
 
     static assert(is(typeof(Locale.PRIVATE_USE_EXTENSION) == wchar) && Locale.PRIVATE_USE_EXTENSION == 'x');
     static assert(is(typeof(Locale.UNICODE_LOCALE_EXTENSION) == wchar) && Locale.UNICODE_LOCALE_EXTENSION == 'u');
+}
+
+@("Locale canonical extensions")
+unittest
+{
+    import flint.java.lang : IllegalArgumentException;
+    import flint.java.util : Locale;
+    import std.exception : assertThrown;
+
+    const locale = Locale.forLanguageTag("en-Latn-US-1996-b-BBB-u-ATTR-nu-thai-ca-ca-nu-arab-a-AAA-x-ABC-lvariant-Xy");
+    assert(locale.hasExtensions());
+    assert(locale.toLanguageTag() == "en-Latn-US-1996-a-aaa-b-bbb-u-attr-ca-nu-thai-x-abc-lvariant-Xy");
+    assert(locale.toString() == "en_US_1996_Xy_#Latn_a-aaa-b-bbb-u-attr-ca-nu-thai-x-abc");
+    assert(locale.getExtension('A').get() == "aaa");
+    assert(locale.getExtension('X').get() == "abc");
+    assert(locale.getExtension('z').isNull);
+    assert(locale.getUnicodeLocaleType("NU").get() == "thai");
+    assert(locale.getUnicodeLocaleType("ca").get() == "");
+    assert(locale.getUnicodeLocaleType("rg").isNull);
+    assertThrown!IllegalArgumentException(locale.getUnicodeLocaleType(null));
+    assertThrown!IllegalArgumentException(locale.getExtension('0'));
+    const stripped = locale.stripExtensions();
+    assert(!stripped.hasExtensions());
+    assert(stripped.toLanguageTag() == "en-Latn-US-1996-x-lvariant-Xy");
+    assert(locale != stripped);
 }

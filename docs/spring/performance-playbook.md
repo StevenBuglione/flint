@@ -643,6 +643,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Preserve the script-free Locale hash path.** Parsed scripts are normalized once and participate in equality and hashing. A title-cased script keeps the original tag slice. On venus against `50ee99785`, the Java module probe stayed at 129,496 O3 and 122,144 Oz incremental loadable bytes with LDC 1.43.0. DMD template instances rose from 4,451 to 4,460 against the 7,350 cap. The Locale value grew from 48 to 64 bytes on x86_64. Matched canonical DMD dev builds regenerated identical AOT source for gs-rest-service and petclinic-rest.
 
+- **Store Locale extensions in one canonical suffix.** The parser normalizes singleton and Unicode ordering once. Lookups read slices from the suffix and R5 preserves an absent type separately from an empty type. Empty-extension values retain their existing hashes. On venus against `c861fca85`, the Java module probe stayed at 129,496 O3 and 122,144 Oz incremental loadable bytes with LDC 1.43.0. DMD templates rose from 4,460 to 4,540 against 7,350. The x86_64 Locale value grew from 64 to 80 bytes. Canonical DMD dev builds regenerated identical AOT sources for gs-rest-service and petclinic-rest.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:
