@@ -28,6 +28,9 @@
 "micrometer-core@1.18.0":{"unclassified":0,"modules":{
 "micrometer-core":0
 }},
+"micrometer-observation@1.18.0":{"unclassified":0,"modules":{
+"micrometer-observation":0
+}},
 "slf4j-api@2.0.20":{"unclassified":0,"modules":{
 "slf4j-api":0
 }},
