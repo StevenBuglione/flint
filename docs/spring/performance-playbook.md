@@ -153,6 +153,8 @@ The largest costs are per-request allocation and the collector pauses it causes.
 
 | R-128 | **Convert fractional time using one unit ratio.** Divide toward coarser units, multiply toward finer units, and return the value directly for matching units. Share the nanosecond conversion across histogram readers. | On venus, the parent probe at `b1c948f2` measured 122,920 incremental loadable bytes and 3,015 DMD template instances. The probe exercising TimeUtils measured 122,976 bytes and 3,016 instances within caps of 131,072 and 3,251. | `framework/micrometer-core/tests/time_utils_test.d` and the Micrometer module probe. |
 
+| R-129 | **Share one no-op histogram when bucket and percentile collection is disabled.** Its recording methods do no work. A requested snapshot uses the count, total and maximum supplied by the meter. | On venus, DMD and LDC verified zero GC bytes for singleton lookup and recording. The parent probe at `448e195e` measured 122,976 incremental loadable bytes and 3,016 DMD template instances. Exercising the no-op histogram measured 124,376 bytes and 3,021 instances against caps of 131,072 and 3,251. | `framework/micrometer-core/tests/noop_histogram_test.d` and the Micrometer module probe. |
+
 ## 2. Binary size
 
 | ID | Rule | Evidence | Enforced by |

@@ -7,7 +7,7 @@ import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.function_ : Supplier;
 import flint.micrometer.core.instrument : Clock, MockClock, Tags, Timer;
 import flint.micrometer.core.instrument.distribution : CountAtBucket, DistributionStatisticConfig,
-    HistogramSnapshot, TimeWindowMax, ValueAtPercentile;
+    Histogram, NoopHistogram, TimeWindowMax, ValueAtPercentile;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 import flint.micrometer.core.instrument.util : TimeUtils;
 
@@ -59,7 +59,11 @@ private bool verifyHistogramValues()
 
 private bool verifyEmptySnapshot()
 {
-    auto snapshot = HistogramSnapshot.empty(2, 5_000_000.0, 3_000_000.0);
+    Histogram histogram = NoopHistogram.INSTANCE;
+    histogram.recordLong(7);
+    histogram.recordDouble(1.5);
+    histogram.close();
+    auto snapshot = histogram.takeSnapshot(2, 5_000_000.0, 3_000_000.0);
     return snapshot.mean(TimeUnit.MILLISECONDS) == 2.5 && snapshot.max(TimeUnit.MILLISECONDS) == 3.0
         && snapshot.percentileValues().length == 0 && snapshot.histogramCounts().length == 0
         && snapshot.toString() == "HistogramSnapshot{count=2, total=5000000.0, mean=2500000.0, max=3000000.0}";

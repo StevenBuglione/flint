@@ -18,13 +18,16 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/CountAtBucket.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/ValueAtPercentile.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/HistogramSnapshot.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/Histogram.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/NoopHistogram.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.distribution;
 
 import core.atomic : atomicLoad, atomicStore, cas;
 import core.sync.mutex : Mutex;
-import flint.java.lang : ArithmeticException, Double, IllegalArgumentException, Integer, JavaObject,
-    Long, NullPointerException;
+import flint.engine.aot.objects : statelessInstance;
+import flint.java.lang : ArithmeticException, AutoCloseable, Double, IllegalArgumentException,
+    Integer, JavaObject, Long, NullPointerException;
 import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.micrometer.core.instrument : Clock;
@@ -145,6 +148,57 @@ final class ValueAtPercentile
     }
 
     mixin JavaObject;
+}
+
+/// Record distribution measurements and combine them with the meter's totals.
+interface Histogram : AutoCloseable
+{
+    /// Record an integral measurement.
+    void recordLong(long value) nothrow @nogc;
+
+    /// Record a fractional measurement.
+    void recordDouble(double value) nothrow @nogc;
+
+    /// Capture distribution statistics with the supplied totals.
+    HistogramSnapshot takeSnapshot(long count, double total, double max);
+
+    /// Micrometer's default close method (R3).
+    mixin template Defaults()
+    {
+        override void close() nothrow @nogc
+        {
+        }
+    }
+}
+
+/// A histogram for meters that have disabled bucket and percentile collection.
+final class NoopHistogram : Histogram
+{
+    // The shared stateless-instance helper constructs this once for all threads.
+    package(flint) this() pure nothrow @nogc
+    {
+    }
+
+    /// The shared histogram (R3).
+    static @property NoopHistogram INSTANCE() nothrow @nogc
+    {
+        return statelessInstance!NoopHistogram();
+    }
+
+    override void recordLong(long value) nothrow @nogc
+    {
+    }
+
+    override void recordDouble(double value) nothrow @nogc
+    {
+    }
+
+    override HistogramSnapshot takeSnapshot(long count, double total, double max)
+    {
+        return HistogramSnapshot.empty(count, total, max);
+    }
+
+    mixin Histogram.Defaults;
 }
 
 /// A point-in-time view of distribution statistics.

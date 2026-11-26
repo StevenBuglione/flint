@@ -175,7 +175,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-databind@3.1.8 | 597 | 52 | 5 | 9,813 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 119 | 112 | 0 | 2,159 |
+| framework | micrometer-core@1.18.0 | 127 | 114 | 0 | 2,149 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 0 | 0 | 0 | 4,452 |
 | framework | micrometer-observation@1.18.0 | 0 | 0 | 0 | 312 |
@@ -748,8 +748,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.distribution.DistributionStatisticConfig.Builder#serviceLevelObjectives(double...)` | `flint.micrometer.core.instrument.distribution.DistributionStatisticConfig.Builder.serviceLevelObjectives` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `io.micrometer.core.instrument.distribution.DistributionStatisticConfig.Builder#sla(double...)` | `flint.micrometer.core.instrument.distribution.DistributionStatisticConfig.Builder.sla` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `io.micrometer.core.instrument.distribution.DistributionStatisticConfig.Builder#sla(long...)` | `flint.micrometer.core.instrument.distribution.DistributionStatisticConfig.Builder.sla` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `io.micrometer.core.instrument.distribution.Histogram#close()` | `flint.micrometer.core.instrument.distribution.Histogram.Defaults.close` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Implementors get the default close method by mixing in Histogram.Defaults. |
 | `io.micrometer.core.instrument.distribution.HistogramSnapshot#histogramCounts()` | `flint.micrometer.core.instrument.distribution.HistogramSnapshot.histogramCounts` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `io.micrometer.core.instrument.distribution.HistogramSnapshot#percentileValues()` | `flint.micrometer.core.instrument.distribution.HistogramSnapshot.percentileValues` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `io.micrometer.core.instrument.distribution.NoopHistogram#INSTANCE` | `flint.micrometer.core.instrument.distribution.NoopHistogram.INSTANCE` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | A read-only property returns the process-wide instance. Its constructor is visible within the Flint package to the shared singleton helper. |
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile#equals(Object)` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile#hashCode()` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
@@ -8665,7 +8667,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.config | 50 | 0 |
 | io.micrometer.core.instrument.config.validate | 93 | 0 |
 | io.micrometer.core.instrument.cumulative | 30 | 0 |
-| io.micrometer.core.instrument.distribution | 53 | 0 |
+| io.micrometer.core.instrument.distribution | 43 | 0 |
 | io.micrometer.core.instrument.distribution.pause | 8 | 0 |
 | io.micrometer.core.instrument.docs | 10 | 0 |
 | io.micrometer.core.instrument.dropwizard | 45 | 0 |
