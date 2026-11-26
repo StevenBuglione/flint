@@ -1,0 +1,958 @@
+{
+  "classes": {
+    "perf/ManualCharAccessTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "perf/RecyclerPoolTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/Base64VariantTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/ComponentVersionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/ErrorReportConfigurationMaxRawContentLengthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/ErrorReportConfigurationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/ExceptionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/JDKSerializabilityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/JsonpCharacterEscapesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/TokenStreamLocationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/VersionClassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/WrapWithPath1724Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/async/AsyncEscapedMultiByteChar1756Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/async/AsyncSplitSurrogateInFieldName1742Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/base/FactoryBaseImplsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/base/FailedConstructionHelpersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/base/FailedParserConstructionCloseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/base/ParserBaseNumberConversionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/base64/Base64BinaryParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/base64/Base64CodecTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/base64/Base64GenerationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/base64/Base64Padding912Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/AsyncLargeNumberReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/DeeplyNestedContentReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/DeeplyNestedContentViaDataInputTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/LargeDocReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/LargeNameReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/LargeNumberReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/LargeNumberWriteTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/StreamReadConstraintsDefaultsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/StreamWriteConstraintsDefaultsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/constraints/TokenCountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/dos/PerfBigDecimalParser967Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/dos/PerfBigDecimalToInteger968Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/BasicGeneratorFilteringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/BasicParserFilteringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/GeneratorFiltering609Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/GeneratorFiltering890Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/GeneratorFilteringValueWritesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/JsonPointerGeneratorFilteringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/JsonPointerParserFilteringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/ParserFilterEmpty1418Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/ParserFilterEmpty708Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/filter/ParserFiltering700Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/fuzz/Fuzz32208UTF32ParseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/fuzz/Fuzz34435ParseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/fuzz/Fuzz52688ParseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/fuzz/Fuzz61198_1169_NumberParseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/BigDecimalParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/BigIntegerParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/BufferRecyclerPoolTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/MergedStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/NumberInputTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/NumberOutputTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/SegmentedStringWriterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/UTF32ReaderSurrogate1713Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/UTF8WriterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/schubfach/DoubleToDecimalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/schubfach/DoubleToStringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/schubfach/FloatToDecimalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/schubfach/FloatToStringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/schubfach/MathUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/schubfach/SchubfachDoubleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/schubfach/SchubfachFloatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/BoundsChecksWithJsonFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/CustomEscaping1668Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/CustomQuoteCharTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/FailedConstructionRecyclerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/FailedGeneratorConstructionCloseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/GeneratorFailFromReaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/GeneratorFailTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/JsonFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/JsonParserClosedCaseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/JsonReadContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/JsonReadFeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/JsonWriteContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/OutputStreamInitTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/ParserOverridesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/RawValueWithSurrogatesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/StreamWriteFeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/StringGenerationFromReaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/StringGenerationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/SupplementaryCharDesc1728Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncAposUnescapedControlChars1750Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncBinaryParseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncCharEscapingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncCommentParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncConcurrencyByteBufferTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncConcurrencyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncEOFMessagesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncEscapedSurrogateInFieldName1541Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncExponentAtEOFTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncInvalidCharsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncLeadingDecimalPoint1746Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncLeadingZeroSignTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncLocation1412Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncLocationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncMissingValuesInArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncMissingValuesInObjectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncNaNHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncNonStandardNumberParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncNonStdNumberHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncNonStdParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncNumberCoercionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncNumberDeferredReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncNumberDotWithoutDigitsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncParserConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncParserInvalidKeywordsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncParserNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncParserRootToken1506Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncPointerFromContext563Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncPropertyNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncRootNumberSeparationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncRootNumbersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncRootValuesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncScalarArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncScopeMatchingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncSignedNumberTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncSimpleNestedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncSimpleObjectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncStringArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncStringObjectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncTokenFilterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/async/AsyncUnicodeHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/jsonptr/Fuzz51806JsonPointerParse818Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/jsonptr/JsonPointer1168Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/jsonptr/JsonPointer1328Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/jsonptr/JsonPointer1425Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/jsonptr/JsonPointerOOME736Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/jsonptr/JsonPointerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/jsonptr/PointerFromContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/AposUnescapedControlChars1750Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ArrayParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/CommentParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/DataInputTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/EscapedMultiByteChar1756Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/EscapedSurrogateInFieldName1541Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/EscapedSurrogateInFieldName1683Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/EscapedSurrogateInFieldName1744Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/FastParserNonStandardNumberParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/FastParserNumberParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/FloatParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/LongName1516Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NextNameParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NextNameWithMatcherTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NextXxxAccessTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NonStandardAllowRSTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NonStandardAposQuotedNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NonStandardJsonReadFeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NonStandardLeadingPlusSign784Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NonStandardNumberParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NonStandardUnquotedNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NumberCoercionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NumberDeferredReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NumberDotWithoutDigitsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NumberOverflowTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NumberParsing1397Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NumberParsingDb4917Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NumberParsingGetType1433Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/NumberParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserClosingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserDupHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserErrorHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserErrorRecovery1173Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserLinefeedsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserPrecisionLoss730Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserScopeMatchingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserSymbolHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ParserWithObjectsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ReadStringStreamingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/SimpleParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/TrailingCommas616Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/TrailingCommasTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/UTF32ParseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/UTF8NamesParseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/UTF8ParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/UTF8SurrogateValidation363Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/UnquotedNameSymbolCollision1748Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/UnquotedNonAsciiNames1748Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/ValueConversionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/loc/LocationDuringReaderParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/loc/LocationDuringStreamParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/loc/LocationInArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/loc/LocationInObjectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/loc/LocationOfError1173Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/loc/LocationOfError1180Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/loc/LocationOffsets455Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/read/loc/LocationOffsetsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/BinaryNameHashTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/BinaryNameMatcherTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/ByteQuadsCanonicalizerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/PlaceholderSymbolTableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/PropertyNameMatcher1491Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/PropertyNameMatchersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/SymbolTableMergingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/SymbolsViaParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/TextualNameHashTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/tofix/ParserErrorHandling679Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/tofix/ParserErrorHandlingBytes105Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/tofix/ParserErrorHandlingChars105Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/tofix/ParserErrorHandlingDataInput105Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/tofix/async/AsyncTokenBranchNumberErrorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/type/TypeReferenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/ByteArrayBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/CharTypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/DefaultIndenterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/DefaultPrettyPrinterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/DelegatesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/JsonBufferRecyclersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/JsonParserSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/ReadConstrainedTextBufferTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/SeparatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/SerializedStringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/SimpleStreamReadContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/SimpleStreamWriteContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/TextBufferTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/util/VersionUtilTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/ArrayGenerationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/ArrayWriteTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/BoundsChecksWithGeneratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/FastDoubleArrayGenerationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/FastDoubleObjectWriteTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/GeneratorBasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/GeneratorCloseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/GeneratorCopyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/GeneratorDupHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/GeneratorMiscTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/JsonWriteFeatureEscapeForwardSlashTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/ObjectWriteTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/PrettyPrinterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/RawStringWriteTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/SerializedStringWriteTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/SurrogateWrite223Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/UTF8GeneratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/WriteTypeIdTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/write/WriterBasedJsonGeneratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "jackson-core",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":jackson-core"
+  ],
+  "upstream": "jackson-core@3.1.8"
+}
