@@ -1,6 +1,6 @@
 {
   "flint.java.nio.charbuffer": {
-    "incremental_linked_bytes": 24012,
+    "incremental_linked_bytes": 24692,
     "template_instances": 560,
     "control": "framework/java-nio-char-buffer/bench/baseline/source/app.d",
     "template_compile": "separate"
