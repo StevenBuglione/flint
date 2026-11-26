@@ -14,5 +14,9 @@
   "flint.java.time.temporal.chronounit": {
     "incremental_linked_bytes": 2548,
     "template_instances": 960
+  },
+  "flint.java.time.yearmonth": {
+    "incremental_linked_bytes": 14309,
+    "template_instances": 487
   }
 }

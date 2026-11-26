@@ -6,21 +6,17 @@ import flint.java.time.period : Period;
 import flint.java.time.temporal.chronofield : ChronoField, getBaseUnit, range;
 import flint.java.time.temporal.chronounit : getDuration;
 import flint.java.time.temporal.valuerange : ValueRange;
+import flint.java.time.yearmonth : YearMonth;
 
 @safe:
 
 int main(string[] args)
 {
-    if (args.length == 8 && args[7] == "chrono-unit")
+    if (args.length == 8)
     {
-        const field = (args[1].length & 1) != 0 ? ChronoField.DAY_OF_MONTH : ChronoField.NANO_OF_DAY;
-        return cast(int)(field.getBaseUnit().getDuration().getSeconds() % 127);
-    }
-
-    if (args.length == 8 && args[7] == "chrono-field")
-    {
-        const field = (args[1].length & 1) != 0 ? ChronoField.DAY_OF_MONTH : ChronoField.NANO_OF_DAY;
-        return cast(int)(field.range().getMaximum() % 127);
+        const result = metadataProbe(args[7], (args[1].length & 1) != 0);
+        if (result >= 0)
+            return result;
     }
 
     if (args.length > 5)
@@ -57,4 +53,20 @@ int main(string[] args)
         fputc(c, stdout);
     fputc('\n', stdout);
     return 0;
+}
+
+private int metadataProbe(string name, bool odd)
+{
+    const field = odd ? ChronoField.DAY_OF_MONTH : ChronoField.NANO_OF_DAY;
+    switch (name)
+    {
+    case "year-month":
+        return YearMonth.of(odd ? 2000 : 1900, 2).atEndOfMonth().getDayOfMonth();
+    case "chrono-unit":
+        return cast(int)(field.getBaseUnit().getDuration().getSeconds() % 127);
+    case "chrono-field":
+        return cast(int)(field.range().getMaximum() % 127);
+    default:
+        return -1;
+    }
 }

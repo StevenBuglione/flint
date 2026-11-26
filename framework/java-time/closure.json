@@ -1,6 +1,18 @@
 {
   "schema": "flint.jdk-closure/1",
   "probes": {
+    "flint.java.time.yearmonth": {
+      "parse-render": {
+        "source": "closure/year-month-text.d",
+        "leaves": ["flint.java.lang", "flint.java.time", "flint.java.time.format"],
+        "data": []
+      },
+      "arithmetic": {
+        "source": "closure/year-month-arithmetic.d",
+        "leaves": ["flint.java.lang", "flint.java.time"],
+        "data": []
+      }
+    },
     "flint.java.time.temporal.chronounit": {
       "duration": {
         "source": "closure/chrono-unit-duration.d",

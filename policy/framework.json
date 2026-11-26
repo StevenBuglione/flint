@@ -563,7 +563,8 @@
    "also": [
     "flint.java.time.temporal.valuerange",
     "flint.java.time.temporal.chronofield",
-    "flint.java.time.temporal.chronounit"
+    "flint.java.time.temporal.chronounit",
+    "flint.java.time.yearmonth"
    ],
    "repo": "framework",
    "licence": "Apache-2.0",
@@ -582,9 +583,9 @@
     "dmd_incremental_seconds": 0.6,
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
-    "incremental_linked_bytes": 28294,
+    "incremental_linked_bytes": 42603,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 3903
+    "template_instances": 4390
    },
    "provisional": [
     "dmd_cold_seconds",
