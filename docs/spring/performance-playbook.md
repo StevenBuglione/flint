@@ -792,6 +792,13 @@ loadable bytes for Web and 1,796,226 O3 and 1,712,258 Oz for framework-test.
 Web templates went from 6,924 to 6,978. Framework-test stayed at 8,486.
 The stock maps show the inherited Phobos objects covered by `6c9e5f49`.
 
+Multipart size exceptions use the existing error-response resolver to report
+HTTP 413. Matched venus probes at `339da7a55` and `15d9c5f33` retained
+528,953 O3 and 522,513 Oz loadable bytes for Web and 1,796,226 O3 and
+1,712,258 Oz for framework-test. Web templates went from 6,978 to 6,991.
+Framework-test stayed at 8,486. The stock maps retain the inherited Phobos
+objects covered by `6c9e5f49`.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

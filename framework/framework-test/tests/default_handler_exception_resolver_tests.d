@@ -247,22 +247,18 @@ unittest
     assert(f.response.getStatus() == 503, "Invalid status code");
 }
 
-// MaxUploadSizeExceededException, like the rest of Spring's multipart support, is not ported.
-version (FlintWebMultipart)
+@("DefaultHandlerExceptionResolverTests.handleMaxUploadSizeExceededException")
+unittest
 {
-    @("DefaultHandlerExceptionResolverTests.handleMaxUploadSizeExceededException")
-    unittest
-    {
-        import flint.web.multipart : MaxUploadSizeExceededException;
+    import flint.web.multipart : MaxUploadSizeExceededException;
 
-        auto f = setup();
-        auto ex = new MaxUploadSizeExceededException(1000);
-        ModelAndView mav = f.exceptionResolver.resolveException(f.request, f.response, null, ex);
-        assert(mav !is null, "No ModelAndView returned");
-        assert(mav.isEmpty(), "No Empty ModelAndView returned");
-        assert(f.response.getStatus() == 413, "Invalid status code");
-        assert(f.response.getErrorMessage() == "Maximum upload size exceeded");
-    }
+    auto f = setup();
+    auto ex = new MaxUploadSizeExceededException(1000);
+    ModelAndView mav = f.exceptionResolver.resolveException(f.request, f.response, null, ex);
+    assert(mav !is null, "No ModelAndView returned");
+    assert(mav.isEmpty(), "No Empty ModelAndView returned");
+    assert(f.response.getStatus() == 413, "Invalid status code");
+    assert(f.response.getErrorMessage() == "Maximum upload size exceeded");
 }
 
 // DefaultHandlerExceptionResolver has no per-exception protected hooks (handleHttpRequestMethodNotSupported and
