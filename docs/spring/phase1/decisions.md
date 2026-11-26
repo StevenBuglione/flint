@@ -1071,3 +1071,10 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Why it's equivalent:** users can neither subclass nor construct it, and the static API is unchanged.
   - **What it buys:** an allocation-free canonical empty set (R-109).
   - **Null overloads** use typed null under D-7.
+- 2026-11-26 01:05Z, coordinator, under the owner's standing approval: **sol-template's upstream-tests baseline for the expression module is approved.** It records 49 classes:
+  - LiteralTests, partial;
+  - 44 deferred to phase 2;
+  - 1 abstract fixture, excluded;
+  - 3 SpelCompiler classes, excluded because they test JVM bytecode generation.
+
+  **Condition:** their behavioural cases (compiled result equals interpreted result) must be ported against Flint AOT's SpEL compilation when it lands.
