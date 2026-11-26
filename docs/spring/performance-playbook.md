@@ -712,6 +712,8 @@ web fixture at `2b28d1bb` and `bc22cde3` measures 536,737 loadable bytes at O3 a
 LDC allocation probe shows the GC block growing from 48 to 64 bytes where a servlet
 request wrapper is constructed. Both apps' request-allocation gates cover this cost.
 
+`ServletWebRequest` scans conditional entity tags without constructing an `ArrayList!ETag`. The public list parser shares the scanner and still returns tags in wire order. On Venus, 128 nonmatching checks in a warmed GET request dropped from 22,528 GC bytes to zero in the DMD witness. LDC also allocated zero bytes with the scanner. The matched S-77 Web stack's stock MVC probe dropped from 1,630,306 to 1,600,142 linked bytes and Framework Test from 1,800,866 to 1,770,710. No template count changed in these two modules. The LDC MVC link map no longer contains the 40 `ArrayList!ETag` symbols retained by the original probe.
+
 The final `ResourceHttpRequestHandler.setLocations` installs the classpath serving
 implementation through a private interface. The stock empty handler freezes its
 configuration during the 404 proof. Method and path hooks remain virtual. The matched

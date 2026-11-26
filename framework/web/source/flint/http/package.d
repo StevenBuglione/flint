@@ -720,11 +720,7 @@ struct ETag
             throw new NullPointerException("source");
 
         auto result = new ArrayList!ETag();
-        anyMatch(source, (tag)
-        {
-            result.add(tag);
-            return false;
-        });
+        anyMatch(source, (tag) { result.add(tag); return false; });
         return result;
     }
 
