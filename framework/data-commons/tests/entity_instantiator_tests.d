@@ -116,7 +116,7 @@ private PersistentEntityParameterValueProvider!(T, ConstructorProperty) valuesFo
 {
     auto unexpected = delegate Any(ConstructorProperty property) @safe {
         assert(property !is null);
-        throw new IllegalStateException("Transient parameters must bypass property lookup");
+        throw new IllegalStateException("Unexpected constructor property lookup");
     };
     return new PersistentEntityParameterValueProvider!(T, ConstructorProperty)(entity, unexpected, Any.init);
 }
@@ -149,6 +149,20 @@ unittest
     auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
     const result = instantiator.createInstance(entity, valuesFor(entity));
     assert(result.foo is null && result.bar == 0);
+}
+
+@("instantiatesSimpleObjectCorrectly")
+unittest
+{
+    auto table = DescriptorTable.withBuiltins();
+    table.add(descriptorOf!Object());
+    PersistentEntity!(Object, ConstructorProperty) entity = new BasicPersistentEntity!(Object, ConstructorProperty)(
+            TypeInformation.of!Object(table));
+    auto creator = entity.getInstanceCreatorMetadata();
+    assert(creator !is null && !creator.hasParameters());
+    auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
+    const result = instantiator.createInstance(entity, valuesFor(entity));
+    assert(result !is null && typeid(result) is typeid(Object));
 }
 
 private Any failInvocation(scope Any[])
@@ -215,6 +229,37 @@ private Any invokeDiagnosticSample(scope Any[] arguments)
     return Any.of(new DiagnosticSample(arguments[0].get!(Nullable!long), arguments[1].get!string));
 }
 
+private PersistentEntity!(DiagnosticSample, ConstructorProperty) registeredDiagnosticSample()
+{
+    auto table = DescriptorTable.withBuiltins();
+    table.add(descriptorOf!(Nullable!long)());
+    auto constructor = ConstructorDescriptor([
+        ParameterDescriptor("id", classOf!(Nullable!long).name),
+        ParameterDescriptor("name", classOf!string.name)
+    ], invoke: &invokeDiagnosticSample);
+    return registeredEntity!DiagnosticSample(constructor, table);
+}
+
+@("instantiatesTypeWithPreferredConstructorUsingParameterValueProvider")
+unittest
+{
+    auto entity = registeredDiagnosticSample();
+    string[] requested;
+    auto propertyValue = delegate Any(ConstructorProperty property) @safe {
+        const name = property.getName();
+        assert(property is entity.getRequiredPersistentProperty(name));
+        requested ~= name;
+        return name == "id" ? Any.of(Nullable!long(7L)) : Any.of("Ada");
+    };
+    auto provider = new PersistentEntityParameterValueProvider!(DiagnosticSample, ConstructorProperty)(entity,
+            propertyValue, Any.init);
+    auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
+    const result = instantiator.createInstance(entity, provider);
+    assert(result !is null && typeid(result) is typeid(DiagnosticSample));
+    assert(!result.id.isNull && result.id.get == 7L && result.name == "Ada");
+    assert(requested == ["id", "name"]);
+}
+
 private final class IncompatibleValues : ParameterValueProvider!(DiagnosticSample, ConstructorProperty)
 {
     override Any getParameterValue(Parameter!(DiagnosticSample, ConstructorProperty))
@@ -226,13 +271,7 @@ private final class IncompatibleValues : ParameterValueProvider!(DiagnosticSampl
 @("capturesContextOnInstantiationException")
 unittest
 {
-    auto table = DescriptorTable.withBuiltins();
-    table.add(descriptorOf!(Nullable!long)());
-    auto constructor = ConstructorDescriptor([
-        ParameterDescriptor("id", classOf!(Nullable!long).name),
-        ParameterDescriptor("name", classOf!string.name)
-    ], invoke: &invokeDiagnosticSample);
-    auto entity = registeredEntity!DiagnosticSample(constructor, table);
+    auto entity = registeredDiagnosticSample();
     auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
     auto error = collectException!MappingInstantiationException(instantiator.createInstance(entity,
             new IncompatibleValues));

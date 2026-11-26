@@ -849,13 +849,13 @@
       "d": "framework/data-commons/tests/entity_instantiator_tests.d",
       "methods": {
         "ported": [
-          "capturesContextOnInstantiationException"
+          "capturesContextOnInstantiationException",
+          "instantiatesSimpleObjectCorrectly",
+          "instantiatesTypeWithPreferredConstructorUsingParameterValueProvider"
         ],
         "skipped": {
           "createsInnerClassInstanceCorrectly": "Enclosing-class constructor metadata remains deferred.",
           "instantiatesArrayCorrectly": "Array instantiation remains deferred.",
-          "instantiatesSimpleObjectCorrectly": "The specific no-argument construction fixture remains deferred.",
-          "instantiatesTypeWithPreferredConstructorUsingParameterValueProvider": "The successful non-transient parameter provider fixture remains deferred.",
           "throwsExceptionOnBeanInstantiationException": "The bean-level reflection exception fixture remains deferred."
         }
       },
