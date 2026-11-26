@@ -11035,11 +11035,13 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#<init>(Writer)` | 2 | Java rejects a null writer during construction. The existing constructor accepts one. |
 | framework | `java.io.PrintWriter#<init>(Writer,boolean)` | 2 | Missing constructor with selectable auto-flush for println, printf and format. An ordinary print containing a newline does not trigger it. |
 | framework | `java.io.PrintWriter#append(CharSequence)` | 2 | Java appends literal null for an absent character sequence. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
-| framework | `java.io.PrintWriter#checkError()` | 2 | Error tracking and the public checkError accessor are pending. |
-| framework | `java.io.PrintWriter#close()` | 2 | Java records checked close failures in the error state and ignores repeated closes after success. The existing method forwards every close and propagates checked failures. |
+| framework | `java.io.PrintWriter#checkError()` | 2 | Missing error query that flushes while open and returns a nested PrintWriter or captured PrintStream error when present, otherwise the local error flag. |
+| framework | `java.io.PrintWriter#clearError()` | 2 | Missing protected hook that resets the local error flag without clearing a nested sink error. |
+| framework | `java.io.PrintWriter#close()` | 2 | Java records checked close failures and retains the sink for retry. A successful close clears the sink and subsequent closes do nothing. The existing method forwards every close and propagates checked failures. |
 | framework | `java.io.PrintWriter#flush()` | 2 | A checked flush failure or a flush after closure sets Java's error state. The existing method forwards flush and propagates checked failures. |
 | framework | `java.io.PrintWriter#format(Locale,String,Object[])` | 2 | Missing explicit-locale formatting and writer return. Java disables localization for a null locale, honors auto-flush, records checked sink errors, and restores interruption for InterruptedIOException. |
 | framework | `java.io.PrintWriter#format(String,Object[])` | 2 | Missing formatting using the current default locale and returning this writer. Java honors auto-flush and records checked sink errors while invalid conversions propagate. |
+| framework | `java.io.PrintWriter#out` | 2 | Missing subclass access to the protected Writer target, which Java clears after a successful close. |
 | framework | `java.io.PrintWriter#print(Object)` | 2 | Java records checked errors in the PrintWriter error state. The existing Object overload propagates the sink's write failure. |
 | framework | `java.io.PrintWriter#print(String)` | 2 | Java prints literal null for an absent string. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
 | framework | `java.io.PrintWriter#print(boolean)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
@@ -11061,6 +11063,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#println(float)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#println(int)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#println(long)` | 2 | The platform line separator and checked write error state contracts are pending. |
+| framework | `java.io.PrintWriter#setError()` | 2 | Missing protected hook that sets the local error flag. A nested sink error query takes precedence over that flag. |
 | framework | `java.io.PrintWriter#write(String)` | 2 | Java forwards to the virtual UTF-16 ranged write and records checked errors. The existing method writes the slice directly and propagates errors. |
 | framework | `java.io.StringWriter#<init>()` | 2 | The writer starts empty, but it has no mutable StringBuffer bound to the inherited lock or exposed through getBuffer. |
 | framework | `java.io.StringWriter#<init>(int)` | 2 | Missing constructor that sets the initial buffer capacity, accepts zero and rejects negative capacity. |
