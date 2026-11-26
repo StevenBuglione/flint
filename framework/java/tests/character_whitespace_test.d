@@ -1,7 +1,7 @@
 /// Flint tests for Java Character's whitespace classification.
 module flint.java.character_whitespace_test;
 
-import flint.java.lang.internal.characterwhitespace : isWhitespace;
+import flint.java.lang.character : isWhitespace;
 
 @safe:
 
