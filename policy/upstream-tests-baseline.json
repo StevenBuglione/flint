@@ -3249,7 +3249,6 @@
       "tools/jackson/databind/ser/JsonValueSerializationTest.java",
       "tools/jackson/databind/ser/SerializationAnnotationsTest.java",
       "tools/jackson/databind/ser/SerializationFeaturesTest.java",
-      "tools/jackson/databind/ser/dos/CyclicDataSerTest.java",
       "tools/jackson/databind/ser/enums/EnumAsFormatObject4564Test.java",
       "tools/jackson/databind/ser/enums/EnumAsMapKeySerializationTest.java",
       "tools/jackson/databind/ser/enums/EnumNamingSerializationTest.java",

@@ -2917,8 +2917,17 @@
       "status": "partial"
     },
     "tools/jackson/databind/ser/dos/CyclicDataSerTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/self_reference_test.d",
+      "methods": {
+        "ported": [
+          "testListWithSelfReference"
+        ],
+        "skipped": {
+          "testLinkedAndCyclic": "The existing bean self-reference fixture checks that the diagnostic contains the message rather than requiring the Java prefix."
+        }
+      },
+      "note": "The same self-containing list reaches the default write nesting limit and raises StreamConstraintsException with the pinned prefix.",
+      "status": "partial"
     },
     "tools/jackson/databind/ser/enums/EnumAsFormatObject4564Test.java": {
       "phase": "2",
