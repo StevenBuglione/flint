@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 282 | 275 | 0 | 3,425 |
+| data-commons | spring-data-commons@4.2.0 | 289 | 280 | 0 | 3,413 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1041,6 +1041,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.PersistentPropertyAccessor#getBean()` | `flint.data.mapping.PersistentPropertyAccessor.getBean` | [D-DATA-13](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.PersistentPropertyAccessor#getProperty(PersistentProperty)` | `flint.data.mapping.PersistentPropertyAccessor.getProperty` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-13](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.PersistentPropertyAccessor#setProperty(PersistentProperty,Object)` | `flint.data.mapping.PersistentPropertyAccessor.setProperty` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-13](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.PersistentPropertyPath` | `flint.data.mapping.PersistentPropertyPath` | [D-DATA-26](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.PersistentPropertyPath#getParentPath()` | `flint.data.mapping.PersistentPropertyPath.getParentPath` | [D-8](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.PersistentPropertyPath#isRootPath()` | `flint.data.mapping.PersistentPropertyPath.isRootPath` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.data.mapping.PersistentPropertyPath#toDotPath(Converter)` | `flint.data.mapping.PersistentPropertyPath.toDotPath` | [R9](api-mapping.md#r9-functional-interfaces), [D-DATA-26](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.PersistentPropertyPath#toPath(String,Converter)` | `flint.data.mapping.PersistentPropertyPath.toPath` | [R9](api-mapping.md#r9-functional-interfaces), [D-DATA-26](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.PreferredConstructor` | `flint.data.mapping.PreferredConstructor` | [D-DATA-23](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.PreferredConstructor#<init>(Constructor,Parameter...)` | `flint.data.mapping.PreferredConstructor.this` | [D-DATA-23](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.PreferredConstructor#getConstructor()` | `flint.data.mapping.PreferredConstructor.getConstructor` | [D-DATA-23](api-mapping.md#deviations) |  |
@@ -10208,7 +10213,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.geo.format | 11 | 0 |
 | org.springframework.data.history | 42 | 0 |
 | org.springframework.data.javapoet | 69 | 0 |
-| org.springframework.data.mapping | 104 | 0 |
+| org.springframework.data.mapping | 92 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
 | org.springframework.data.mapping.model | 148 | 0 |

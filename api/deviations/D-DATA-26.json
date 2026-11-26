@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-26",
+ "deviation": "PersistentPropertyPath keeps ordered Iterable traversal. Its Converter overload binds the concrete property type and also accepts a D delegate. Parent and extension paths use Flint's List.subList snapshots.",
+ "reason": "Streamable is still deferred. D has no Java lower-bounded generic wildcard, and an R9 delegate covers callable converters."
+}

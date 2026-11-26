@@ -1638,7 +1638,6 @@
       "org/springframework/data/mapping/callback/EntityCallbackDiscovererUnitTests.java",
       "org/springframework/data/mapping/context/AbstractMappingContextIntegrationTests.java",
       "org/springframework/data/mapping/context/AbstractMappingContextUnitTests.java",
-      "org/springframework/data/mapping/context/DefaultPersistentPropertyPathUnitTests.java",
       "org/springframework/data/mapping/context/EntityProjectionIntrospectorUnitTests.java",
       "org/springframework/data/mapping/context/MappingContextEventUnitTests.java",
       "org/springframework/data/mapping/context/PersistentEntitiesUnitTests.java",

@@ -10,6 +10,8 @@
 // Modified by the Flint authors.
 module flint.data.mapping;
 
+public import flint.data.mapping.persistent_property_path : PersistentPropertyPath;
+
 import flint.beans.factory.annotation : Value;
 import flint.core.annotation.types : MergedAnnotations, SearchStrategy;
 import flint.data.annotation : PersistenceCreator, Transient;

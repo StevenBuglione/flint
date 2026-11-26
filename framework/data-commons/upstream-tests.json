@@ -677,8 +677,26 @@
       "status": "deferred"
     },
     "org/springframework/data/mapping/context/DefaultPersistentPropertyPathUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/default_persistent_property_path_tests.d",
+      "methods": {
+        "ported": [
+          "calculatesExtensionCorrectly",
+          "detectsBasePathCorrectly",
+          "pathReturnsCorrectSize",
+          "rejectsNullProperties",
+          "returnsCorrectBaseProperty",
+          "returnsCorrectLeafProperty",
+          "returnsNullForRootLevelProperty",
+          "returnsTheCorrectParentPath",
+          "skipsMappedPropertyNameIfConverterReturnsEmptyStrings",
+          "skipsMappedPropertyNameIfConverterReturnsNull",
+          "throwsExceptionForBasePropertyOnEmptyPath",
+          "throwsExceptionForLeafPropertyOnEmptyPath",
+          "usesConverterToCreatePropertyPath",
+          "usesPropertyNameForSimpleDotPath"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/mapping/context/EntityProjectionIntrospectorUnitTests.java": {
       "phase": "2",
