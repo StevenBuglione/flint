@@ -1,0 +1,65 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "module": "java-regex",
+  "upstream": "openjdk@21.0.13",
+  "test_packages": [
+    ":java-regex"
+  ],
+  "classes": {
+    "classlib/modules/regex/src/test/java/org/apache/harmony/tests/java/util/regex/MatcherTest.java": {
+      "d": "framework/java-regex/tests/harmony_matcher_test.d",
+      "status": "partial",
+      "methods": {
+        "ported": [
+          "testGroupCount",
+          "testPattern"
+        ],
+        "skipped": {
+          "test3360": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testAllCodePoints": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testAppendReplacement": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testAppendReplacementRef": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testAppendSlashes": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testEndint": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testEnhancedFind": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testFind": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testFindDollar": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testFindRegionChanged": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testFindRegionChanged2": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testFindint": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testGeneralPunctuationCategory": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testGroup": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testGroupPossessive": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testGroupint": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testHitEndAfterFind": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testIgnoreCase": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testLookingAt": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testMatchesMisc": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testMatchesQuantifiers": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testMatchesRegionChanged": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testOverFlow": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testPatternMatcher": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testPosAltGroup": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testPosCompositeGroup": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testQuantVsGroup": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testQuoteReplacement": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testRegionsIntInt": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testRelAltGroup": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testRelCompGroup": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testRelactantQuantifiers": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testReplaceAll": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testReplaceFirst": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testReset": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testResetCharSequence": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testSEOLsymbols": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testSplitEmpty": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testStart": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testStartint": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testToString": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testUnicode": "Deferred pending the corresponding Java 21 behavior and parity check.",
+          "testUnicodeCategory": "Deferred pending the corresponding Java 21 behavior and parity check."
+        }
+      }
+    }
+  }
+}

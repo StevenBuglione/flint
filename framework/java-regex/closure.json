@@ -1,0 +1,12 @@
+{
+  "schema": "flint.jdk-closure/1",
+  "probes": {
+    "flint.java.util.regex.pattern": {
+      "whole-input": {
+        "source": "bench/source/app.d",
+        "leaves": ["flint.java.lang", "flint.java.util.regex.internal.engine"],
+        "data": []
+      }
+    }
+  }
+}
