@@ -169,6 +169,7 @@ The release check fails with any violation still present.
 
 **Packages added after the reconciliation (coordinator, 2026-11-26 16:40Z):** the coverage table (docs/spring/jdk-coverage.md) listed in-scope packages with no owner. Each goes to the lane that owns the closest package, after that lane's first items:
 - `java.lang.annotation` (`Annotation`, `ElementType`, `RetentionPolicy` and the meta-annotations, as R2 UDAs and enums) → sol-framework.
+- `java.lang.StringBuffer` (sharing `StringBuilder`'s engine, with Java's synchronized operations kept as fiber-safe; first consumer sol-template's `Format` and `SimpleDateFormat`) → sol-framework, after its cap, cause, `CharSequence` and boxed-type items. Coordinator, 2026-11-26 19:40Z.
 - `java.lang.ref` (`WeakReference`, `SoftReference`, `PhantomReference`, `ReferenceQueue`, `Cleaner`, over the GC's weak references) → sol-boot.
 - `javax.sql` (`DataSource`, `ConnectionPoolDataSource`, `RowSet` basics; Spring JDBC uses `DataSource` everywhere) → sol-data, **first priority among these**.
 - `java.nio.channels` and `java.nio.channels.spi` (channels over Flint's engines and `flint:os`) → sol-jackson, after `java.nio` buffers.
