@@ -96,4 +96,51 @@ struct ValueRange
         return minimum == other.minimum && largestMinimum == other.largestMinimum
             && smallestMaximum == other.smallestMaximum && maximum == other.maximum;
     }
+
+    /// Display each varying endpoint as its two bounds separated by a slash.
+    string toString() const pure nothrow
+    {
+        // Four signed longs of up to 20 characters, two slashes and " - ".
+        char[85] buffer = void;
+        size_t start = buffer.length;
+        prependDecimal(buffer, start, maximum);
+        if (smallestMaximum != maximum)
+        {
+            buffer[--start] = '/';
+            prependDecimal(buffer, start, smallestMaximum);
+        }
+        buffer[--start] = ' ';
+        buffer[--start] = '-';
+        buffer[--start] = ' ';
+        if (minimum != largestMinimum)
+        {
+            prependDecimal(buffer, start, largestMinimum);
+            buffer[--start] = '/';
+        }
+        prependDecimal(buffer, start, minimum);
+        return copyText(buffer[start .. $]);
+    }
+}
+
+// Keep the copy non-templated so the archive can link it with this leaf alone.
+private char[] copyText(scope const(char)[] source) pure nothrow
+{
+    auto text = new char[source.length];
+    text[] = source;
+    return text;
+}
+
+private void prependDecimal(ref scope char[85] buffer, ref size_t start, long value) pure nothrow @nogc
+{
+    ulong magnitude = cast(ulong) value;
+    if (value < 0)
+        magnitude = 0UL - magnitude;
+    do
+    {
+        buffer[--start] = cast(char)('0' + magnitude % 10);
+        magnitude /= 10;
+    }
+    while (magnitude != 0);
+    if (value < 0)
+        buffer[--start] = '-';
 }

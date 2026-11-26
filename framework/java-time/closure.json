@@ -6,6 +6,11 @@
         "source": "closure/value-range.d",
         "leaves": ["flint.java.lang"],
         "data": []
+      },
+      "display": {
+        "source": "closure/value-range-display.d",
+        "leaves": ["flint.java.lang"],
+        "data": []
       }
     },
     "flint.java.time.period": {

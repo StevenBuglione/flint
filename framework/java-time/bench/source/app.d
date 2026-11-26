@@ -16,6 +16,12 @@ int main(string[] args)
         const smallestMaximum = largestMinimum + cast(long) args[3].length;
         const maximum = smallestMaximum + cast(long) args[4].length;
         const range = ValueRange.of(minimum, largestMinimum, smallestMaximum, maximum);
+        if (args.length > 6)
+        {
+            foreach (c; range.toString())
+                fputc(c, stdout);
+            fputc('\n', stdout);
+        }
         return range.isValidIntValue(cast(long) args[5].length) ? 0 : 1;
     }
 
