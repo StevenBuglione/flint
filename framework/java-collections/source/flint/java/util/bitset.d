@@ -279,8 +279,8 @@ class BitSet
         const count = set.wordsInUse;
         if (count > wordsInUse)
             expandTo(cast(uint) count - 1);
-        foreach (index; 0 .. count)
-            words[index] |= set.words[index];
+        foreach (index, incoming; set.words[0 .. count])
+            words[index] |= incoming;
     }
 
     /// Clears the bits that are also set in the supplied mask.
