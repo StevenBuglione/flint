@@ -2496,8 +2496,31 @@
       "status": "deferred"
     },
     "tools/jackson/databind/ser/filter/JsonIncludeTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/json_include_test.d",
+      "methods": {
+        "ported": [
+          "test1327ClassDefaultsForAlways",
+          "test1327ClassDefaultsForEmpty",
+          "testDefaultForBooleans",
+          "testDefaultForEmptyList",
+          "testDefaultForIntegers",
+          "testEmptyInclusionScalars",
+          "testGlobal",
+          "testIssue1351",
+          "testIssue5570BooleanWrapper",
+          "testMixedMethod",
+          "testNonDefaultByClass",
+          "testNonDefaultByClassNoCtor",
+          "testNonEmptyDefaultArray",
+          "testNonNullByClass",
+          "testSerialization4741"
+        ],
+        "skipped": {
+          "testInclusionOfCalendar": "The Calendar timestamp inclusion fixture is absent from the D port.",
+          "testInclusionOfDate": "The Date timestamp inclusion fixture is absent from the D port."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/databind/ser/filter/JsonValueIgnore3647Test.java": {
       "phase": "2",

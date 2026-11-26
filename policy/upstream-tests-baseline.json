@@ -3195,7 +3195,6 @@
       "tools/jackson/databind/ser/filter/JsonIncludeEmptyAtEveryLevel5548Test.java",
       "tools/jackson/databind/ser/filter/JsonIncludeMapContentFilter6101Test.java",
       "tools/jackson/databind/ser/filter/JsonIncludeOverrideTest.java",
-      "tools/jackson/databind/ser/filter/JsonIncludeTest.java",
       "tools/jackson/databind/ser/filter/JsonValueIgnore3647Test.java",
       "tools/jackson/databind/ser/filter/MapInclusionTest.java",
       "tools/jackson/databind/ser/filter/SerializationIgnoreTest.java",
