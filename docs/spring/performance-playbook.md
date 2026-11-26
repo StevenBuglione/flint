@@ -404,6 +404,7 @@ The Spring Beans factory exception types reuse the existing `BeanCreationExcepti
 
 BeanDefinitionDefaults stores optional defaults with rule R5's `Nullable`. The Beans probe on venus against `ca49d9d85` moved from 257,478 to 257,550 loadable bytes and from 1,632 to 1,762 DMD template instances against the 3,000 cap.
 | B-62 | **Keep unsupported charset failures in a standalone Java I/O leaf.** A caller can throw and catch the checked exception using the existing IOException contract. | Stock LDC O3 and Oz probes on venus add 3,260 and 2,084 loadable bytes. The provider-equivalent module probe adds 3,228 loadable bytes and the DMD library and probe use 436 template instances. The first leaf and package ceilings are 3,586 bytes and 480 instances. | The standalone throw/catch probe, link closure and the typed exception tests. |
+| B-62 | **Keep unsupported charset failures in a standalone Java I/O leaf.** A caller can throw and catch the checked exception using the existing IOException contract. | Stock LDC O3 and Oz probes on venus add 3,260 and 2,084 loadable bytes. The provider-equivalent module probe adds 3,228 loadable bytes and the DMD library and probe use 436 template instances. The first leaf and package ceilings are 3,551 bytes and 480 instances. | The standalone throw/catch probe, link closure and the typed exception tests. |
 
 ## 4. Measuring honestly
 
