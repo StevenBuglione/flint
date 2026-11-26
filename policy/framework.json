@@ -533,6 +533,39 @@
   "java-concurrent-sync": {
    "directory": "framework/java-concurrent-sync",
    "module": "flint.java.util.concurrent.locks",
+   "java_types": [
+    "java.util.concurrent.ArrayBlockingQueue",
+    "java.util.concurrent.BlockingQueue",
+    "java.util.concurrent.BrokenBarrierException",
+    "java.util.concurrent.ConcurrentHashMap",
+    "java.util.concurrent.ConcurrentLinkedQueue",
+    "java.util.concurrent.ConcurrentMap",
+    "java.util.concurrent.CopyOnWriteArrayList",
+    "java.util.concurrent.CopyOnWriteArraySet",
+    "java.util.concurrent.CountDownLatch",
+    "java.util.concurrent.CyclicBarrier",
+    "java.util.concurrent.DelayQueue",
+    "java.util.concurrent.Exchanger",
+    "java.util.concurrent.LinkedBlockingQueue",
+    "java.util.concurrent.LinkedTransferQueue",
+    "java.util.concurrent.Phaser",
+    "java.util.concurrent.PriorityBlockingQueue",
+    "java.util.concurrent.Semaphore",
+    "java.util.concurrent.SynchronousQueue",
+    "java.util.concurrent.locks.AbstractOwnableSynchronizer",
+    "java.util.concurrent.locks.AbstractQueuedLongSynchronizer",
+    "java.util.concurrent.locks.AbstractQueuedSynchronizer",
+    "java.util.concurrent.locks.Condition",
+    "java.util.concurrent.locks.Lock",
+    "java.util.concurrent.locks.LockSupport",
+    "java.util.concurrent.locks.ReadWriteLock",
+    "java.util.concurrent.locks.ReentrantLock",
+    "java.util.concurrent.locks.ReentrantReadWriteLock",
+    "java.util.concurrent.locks.StampedLock"
+   ],
+   "jtreg_paths": [
+    "java/util/concurrent/ConcurrentQueues"
+   ],
    "also": [
     "flint.java.util.concurrent.brokenbarrierexception",
     "flint.java.util.concurrent.locks.contracts"

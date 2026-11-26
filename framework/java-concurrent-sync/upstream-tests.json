@@ -1,5 +1,197 @@
 {
   "classes": {
+    "java/util/concurrent/ArrayBlockingQueue/WhiteBox.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/BlockingQueue/CancelledProducerConsumerLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/BlockingQueue/DrainToFails.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/BlockingQueue/Interrupt.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/BlockingQueue/LastElement.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/BlockingQueue/MultipleProducersSingleConsumerLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/BlockingQueue/OfferDrainToLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/BlockingQueue/PollMemoryLeak.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/BlockingQueue/ProducerConsumerLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/BlockingQueue/SingleProducerMultipleConsumerLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentHashMap/ConcurrentAssociateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentHashMap/ConcurrentContainsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentHashMap/DistinctEntrySetElements.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentHashMap/MapCheck.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentHashMap/MapLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentHashMap/ToArray.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentHashMap/WhiteBox.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentLinkedQueue/RemoveLeak.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentLinkedQueue/WhiteBox.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentMap/ConcurrentModification.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentMap/ConcurrentRemoveIf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentQueues/ConcurrentQueueLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentQueues/GCRetention.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentQueues/IteratorWeakConsistency.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentQueues/OfferRemoveLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ConcurrentQueues/RemovePollRace.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/CopyOnWriteArrayList/COWSubList.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/CopyOnWriteArrayList/EqualsRace.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/CopyOnWriteArraySet/RacingCows.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/CopyOnWriteArraySet/SerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/CountDownLatch/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/CyclicBarrier/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/DelayQueue/Iterate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/DelayQueue/PollUnexpired.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/Exchanger/ExchangeLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/LinkedBlockingQueue/ToArray.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/LinkedTransferQueue/SpliteratorTraverseAddRemoveTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/LinkedTransferQueue/SubclassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/LinkedTransferQueue/WhiteBox.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/Phaser/Arrive.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/Phaser/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/Phaser/FickleRegister.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/Phaser/PhaseOverflow.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/Phaser/TieredArriveLoops.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/PriorityBlockingQueue/WhiteBox.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/Semaphore/PermitOverflow.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/Semaphore/RacingReleases.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/SynchronousQueue/Fairness.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "java/util/concurrent/locks/Lock/CheckedLockLoops.java": {
       "phase": "2",
       "status": "deferred"
