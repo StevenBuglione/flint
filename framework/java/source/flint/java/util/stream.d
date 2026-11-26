@@ -186,9 +186,23 @@ final class Stream(T)
     /// The elements in natural order (stable).
     Stream!T sorted()
     {
-        auto items = toArray();
-        stableSort(items, (T a, T b) => compareNatural(a, b));
-        return ofArray(items);
+        auto source = take();
+        T[] items;
+        size_t position;
+        return new Stream!T((out T next) {
+            if (source !is null)
+            {
+                auto input = source;
+                source = null;
+                auto loaded = drain(input);
+                stableSort(loaded, (T a, T b) => compareNatural(a, b));
+                items = loaded;
+            }
+            if (position >= items.length)
+                return false;
+            next = items[position++];
+            return true;
+        });
     }
 
     /// The elements ordered by `comparator` (stable).
@@ -283,7 +297,11 @@ final class Stream(T)
     /// The elements as a new D array.
     T[] toArray()
     {
-        auto source = take();
+        return drain(take());
+    }
+
+    private static T[] drain(scope bool delegate(out T) @safe source)
+    {
         T[] result;
         T next;
         while (source(next))
