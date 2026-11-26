@@ -3,6 +3,7 @@ module proxy_configuration_tests;
 import std.exception : assertThrown;
 
 import flint.aop : Advisor, Pointcut, PointcutAdvisor, TargetClassAware, TargetSource;
+import flint.aop.framework.autoproxy : TargetSourceCreator;
 import flint.aop.support : AbstractGenericPointcutAdvisor, DefaultPointcutAdvisor,
     NameMatchMethodPointcut, Pointcuts, StaticMethodMatcherPointcutAdvisor;
 import flint.aopalliance.aop : Advice;
@@ -89,6 +90,33 @@ private final class ConfiguredTarget : TargetSource
     {
         return target;
     }
+}
+
+private final class NamedTargetSourceCreator : TargetSourceCreator
+{
+    private TargetSource target;
+
+    this(TargetSource target)
+    {
+        this.target = target;
+    }
+
+    TargetSource getTargetSource(const Descriptor beanClass, string beanName)
+    {
+        return beanClass is target.getTargetClass() && beanName == "pooledService" ? target : null;
+    }
+}
+
+@("Target source creators select by bean type and name and can decline a bean") unittest
+{
+    auto service = new Descriptor("example.Service", TypeKind.class_);
+    auto other = new Descriptor("example.Other", TypeKind.class_);
+    auto target = new ConfiguredTarget(service, Any.init);
+    TargetSourceCreator creator = new NamedTargetSourceCreator(target);
+
+    assert(creator.getTargetSource(service, "pooledService") is target);
+    assert(creator.getTargetSource(service, "plainService") is null);
+    assert(creator.getTargetSource(other, "pooledService") is null);
 }
 
 @("Pointcut and advice defaults survive bean-style configuration") unittest

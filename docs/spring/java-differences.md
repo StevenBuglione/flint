@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 194 | 322 | 0 | 15,280 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,489 | 1,389 | 4,849 | 30,107 |
+| framework | spring-framework@v7.1.0 | 3,490 | 1,390 | 4,849 | 30,105 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2151,6 +2151,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.framework.autoproxy.AutoProxyUtils#EXPOSED_INTERFACES_ATTRIBUTE` | `flint.aop.framework.autoproxy.AutoProxyUtils.EXPOSED_INTERFACES_ATTRIBUTE` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `org.springframework.aop.framework.autoproxy.AutoProxyUtils#ORIGINAL_TARGET_CLASS_ATTRIBUTE` | `flint.aop.framework.autoproxy.AutoProxyUtils.ORIGINAL_TARGET_CLASS_ATTRIBUTE` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `org.springframework.aop.framework.autoproxy.AutoProxyUtils#PRESERVE_TARGET_CLASS_ATTRIBUTE` | `flint.aop.framework.autoproxy.AutoProxyUtils.PRESERVE_TARGET_CLASS_ATTRIBUTE` | [R1](api-mapping.md#r1-packages-and-names) |  |
+| `org.springframework.aop.framework.autoproxy.TargetSourceCreator#getTargetSource(Class,String)` | `flint.aop.framework.autoproxy.TargetSourceCreator.getTargetSource` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.aop.interceptor
 
@@ -9385,7 +9386,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.config | 70 | 0 |
 | org.springframework.aop.framework | 169 | 0 |
 | org.springframework.aop.framework.adapter | 16 | 0 |
-| org.springframework.aop.framework.autoproxy | 77 | 0 |
+| org.springframework.aop.framework.autoproxy | 75 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
 | org.springframework.aop.interceptor | 91 | 0 |
 | org.springframework.aop.scope | 12 | 0 |
