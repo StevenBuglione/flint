@@ -260,7 +260,7 @@ private void verifyManagedLoadFailure(ResultSet rows, scope ref ManagedEntities 
     assert(managed.find(EntityIdentity(0, 1)).ok);
 }
 
-private final class PostLoadReattachment
+private final class PostLoadContext
 {
     IdentitySlot[1] identities;
     Object[1] roots;
@@ -282,7 +282,7 @@ private final class PostLoadReattachment
 
 private void reattachAndFailPostLoad(Object entity)
 {
-    auto retry = cast(PostLoadReattachment) TransactionSynchronizationManager.getResource(typeid(PostLoadReattachment));
+    auto retry = cast(PostLoadContext) TransactionSynchronizationManager.getResource(typeid(PostLoadContext));
     auto owner = cast(Owner) entity;
     const key = EntityIdentity(0, owner.id);
     const original = retry.managed.lazyHandle(key);
@@ -297,29 +297,38 @@ private void reattachAndFailPostLoad(Object entity)
     throw new Exception("intentional reattaching PostLoad failure");
 }
 
-private void verifyReattachedPostLoadFailure(ResultSet rows)
+private PostLoadContext expectPostLoadFailure(ResultSet rows, immutable(EntityMapping)* mapping,
+        immutable(ResultBinding)[] bindings, string message)
 {
-    static immutable EntityMapping mapped = EntityMapping("Owner", "app.Owner", "jpa_seam_probe",
-            ownerAttributes, &constructOwner, [&reattachAndFailPostLoad], &isExactOwnerType, [0]);
-    const loaded = planLoadedSnapshot(&mapped);
-    const plan = planManagedResult(&mapped, ownerBindings, 0, ownerCodec);
+    const loaded = planLoadedSnapshot(mapping);
+    const plan = planManagedResult(mapping, bindings, 0, ownerCodec);
     assert(loaded.ok && plan.ok);
-    auto retry = new PostLoadReattachment(loaded.value);
-    scope (exit)
-        retry.managed.clear();
-    auto resourceKey = typeid(PostLoadReattachment);
-    TransactionSynchronizationManager.bindResource(resourceKey, retry);
+    auto context = new PostLoadContext(loaded.value);
+    scope (failure)
+        context.managed.clear();
+    auto resourceKey = typeid(PostLoadContext);
+    TransactionSynchronizationManager.bindResource(resourceKey, context);
     scope (exit)
         TransactionSynchronizationManager.unbindResource(resourceKey);
     try
     {
-        cast(void) materializeManagedRow(plan.value, rows, retry.managed);
-        assert(false, "reattaching PostLoad failure must propagate");
+        cast(void) materializeManagedRow(plan.value, rows, context.managed);
+        assert(false, "PostLoad failure must propagate");
     }
     catch (Exception failure)
     {
-        assert(failure.msg == "intentional reattaching PostLoad failure");
+        assert(failure.msg == message);
     }
+    return context;
+}
+
+private void verifyReattachedPostLoadFailure(ResultSet rows)
+{
+    static immutable EntityMapping mapped = EntityMapping("Owner", "app.Owner", "jpa_seam_probe",
+            ownerAttributes, &constructOwner, [&reattachAndFailPostLoad], &isExactOwnerType, [0]);
+    auto retry = expectPostLoadFailure(rows, &mapped, ownerBindings, "intentional reattaching PostLoad failure");
+    scope (exit)
+        retry.managed.clear();
     enum key = EntityIdentity(0, 1);
     const found = retry.managed.find(key);
     assert(found.ok && found.value is retry.replacement, "reattached owner was retired by earlier PostLoad cleanup");
@@ -329,6 +338,51 @@ private void verifyReattachedPostLoadFailure(ResultSet rows)
     uint[2] ordinals;
     const dirty = retry.managed.dirty(key, ordinals[]);
     assert(dirty.ok && dirty.value == 0);
+}
+
+private void writeBirthDateAndAttach(Object entity, const ref AttributeValue value)
+{
+    writeBirthDate(entity, value);
+    auto context = cast(PostLoadContext) TransactionSynchronizationManager.getResource(typeid(PostLoadContext));
+    auto owner = cast(Owner) entity;
+    assert(owner.id == 1 && owner.name == "One");
+    const key = EntityIdentity(0, owner.id);
+    assert(context.managed.manage(key, owner, context.plan).code == Status.ok);
+    const original = context.managed.lazyHandle(key);
+    assert(original.ok);
+    context.originalHandle = original.value;
+    context.replacement = owner;
+}
+
+private void failWriterAttachedPostLoad(Object entity)
+{
+    auto owner = cast(Owner) entity;
+    owner.name = "Changed";
+    throw new Exception("intentional writer-attached PostLoad failure");
+}
+
+private void verifyWriterAttachedPostLoadFailure(ResultSet rows)
+{
+    static immutable AttributeMapping[] attributes = [
+        ownerAttributes[0], ownerAttributes[1],
+        AttributeMapping(2, "birthDate", "birth_date", AttributeKind.date, &readBirthDate,
+                &writeBirthDateAndAttach, false, false, true, true, 0, Types.DATE)
+    ];
+    static immutable EntityMapping mapped = EntityMapping("Owner", "app.Owner", "jpa_seam_probe",
+            attributes, &constructOwner, [&failWriterAttachedPostLoad], &isExactOwnerType, [0]);
+    static immutable ResultBinding[] bindings = [
+        ResultBinding(1, 1), ResultBinding(0, 3), ResultBinding(2, 2)
+    ];
+    auto context = expectPostLoadFailure(rows, &mapped, bindings, "intentional writer-attached PostLoad failure");
+    scope (exit)
+        context.managed.clear();
+    enum key = EntityIdentity(0, 1);
+    const found = context.managed.find(key);
+    assert(found.ok && found.value is context.replacement, "PostLoad cleaned up the writer's attachment");
+    assert(context.managed.resolveLazyOwner(context.originalHandle).value is found.value);
+    uint[2] ordinals;
+    const dirty = context.managed.dirty(key, ordinals[]);
+    assert(dirty.ok && dirty.value == 1 && ordinals[0] == 1);
 }
 
 private void verifyManagedIdentity(DataSource dataSource)
@@ -347,6 +401,7 @@ private void verifyManagedIdentity(DataSource dataSource)
         rows.close();
     assert(rows.next());
     verifyReattachedPostLoadFailure(rows);
+    verifyWriterAttachedPostLoadFailure(rows);
 
     IdentitySlot[2] backing;
     Object[2] entities;

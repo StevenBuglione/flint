@@ -71,6 +71,15 @@ struct ManagedEntities
     /// An existing identity keeps its original entity and baseline.
     Error manage(EntityIdentity key, Object entity, LoadedSnapshotPlan plan = LoadedSnapshotPlan()) scope nothrow @nogc
     {
+        size_t publishedSlot;
+        return manage(key, entity, plan, publishedSlot);
+    }
+
+    /// Reports the slot only when this call publishes a new attachment.
+    package Error manage(EntityIdentity key, Object entity, LoadedSnapshotPlan snapshotPlan,
+            out size_t publishedAttachmentSlot) scope nothrow @nogc
+    {
+        publishedAttachmentSlot = size_t.max;
         if (entity is null)
             return Error(Status.invalidArgument, "cannot manage a null JPA entity");
         if (capturingAttachment)
@@ -85,7 +94,7 @@ struct ManagedEntities
             return roots[slot] is entity ? Error.init : Error(Status.conflict, "another JPA entity has this identity");
         if (snapshots.length != 0)
         {
-            const error = captureAttachment(slot, plan, entity, null);
+            const error = captureAttachment(slot, snapshotPlan, entity, null);
             if (!index.finishReservation(slot, error.code == Status.ok))
             {
                 snapshots[slot].clear();
@@ -95,6 +104,7 @@ struct ManagedEntities
                 return error;
         }
         roots[slot] = entity;
+        publishedAttachmentSlot = slot;
         return Error.init;
     }
 
@@ -243,9 +253,9 @@ struct ManagedEntities
         return EntityResult(roots[found.value]);
     }
 
-    package size_t beginPostLoad(EntityIdentity key) scope nothrow @nogc
+    package void beginPostLoad(size_t slot) scope nothrow @nogc
     {
-        return index.beginPostLoad(key);
+        index.beginPostLoad(slot);
     }
 
     package void finishPostLoad(size_t slot, EntityIdentity key, bool failed) scope nothrow @nogc

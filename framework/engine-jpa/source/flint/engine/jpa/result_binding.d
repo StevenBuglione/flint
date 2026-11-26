@@ -156,13 +156,15 @@ RowResult materializeManagedRow(const ref ManagedRowMaterializationPlan plan, Re
     auto loaded = hydrateRow!true(plan.row, row, plan.identity.ordinal, identifier);
     if (!loaded.ok)
         return loaded;
-    const error = entities.manage(key, loaded.value, plan.snapshot);
+    size_t slot;
+    const error = entities.manage(key, loaded.value, plan.snapshot, slot);
     if (error.code != Status.ok)
         return RowResult(null, error);
     if (plan.row.mapping.postLoad.length == 0)
         return loaded;
 
-    const slot = entities.beginPostLoad(key);
+    if (slot != size_t.max)
+        entities.beginPostLoad(slot);
     bool failed = true;
     scope (exit)
         entities.finishPostLoad(slot, key, failed);

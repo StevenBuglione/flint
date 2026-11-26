@@ -78,12 +78,16 @@ unittest
     IdentitySlot[1] slots;
     scope index = IdentityIndex(slots[]);
     enum key = EntityIdentity(0, 1);
-    assert(index.claim(key).ok);
-    const outer = index.beginPostLoad(key);
+    const first = index.claim(key);
+    assert(first.ok);
+    const outer = first.value.slot;
+    index.beginPostLoad(outer);
 
     assert(index.detach(key).ok);
-    assert(index.claim(key).ok);
-    const inner = index.beginPostLoad(key);
+    const second = index.claim(key);
+    assert(second.ok);
+    const inner = second.value.slot;
+    index.beginPostLoad(inner);
     assert(inner == outer);
     assert(index.finishPostLoad(inner));
     assert(!index.finishPostLoad(outer));
@@ -96,8 +100,10 @@ unittest
     IdentitySlot[1] slots;
     scope index = IdentityIndex(slots[]);
     enum key = EntityIdentity(0, 1);
-    assert(index.claim(key).ok);
-    const position = index.beginPostLoad(key);
+    const claim = index.claim(key);
+    assert(claim.ok);
+    const position = claim.value.slot;
+    index.beginPostLoad(position);
     destroy(index);
     assert(!index.finishPostLoad(position));
 }

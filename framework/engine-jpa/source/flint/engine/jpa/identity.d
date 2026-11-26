@@ -136,12 +136,11 @@ struct IdentityIndex
     }
 
     /// Marks the current attachment for a synchronous, possibly reentrant PostLoad call.
-    package size_t beginPostLoad(EntityIdentity key) scope nothrow @nogc
+    package void beginPostLoad(size_t position) scope nothrow @nogc
     {
-        const found = find(key);
-        assert(found.ok && !slots[found.value].postLoadPending);
-        slots[found.value].postLoadPending = true;
-        return found.value;
+        auto slot = &slots[position];
+        assert(slot.state == SlotState.live && !slot.postLoadPending);
+        slot.postLoadPending = true;
     }
 
     /// Nested callbacks settle before the outer callback resumes. Reusing a slot drops the previous marker.
