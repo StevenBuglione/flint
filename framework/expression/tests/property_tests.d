@@ -20,6 +20,7 @@ module flint.expression.property_tests;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
+import flint.expression : AccessException;
 import flint.expression : TypedValue;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
 import flint.expression.spel.standard : SpelExpressionParser;
@@ -27,6 +28,16 @@ import flint.expression.spel.support : StandardEvaluationContext;
 import flint.java.lang : IllegalStateException;
 
 @safe:
+
+@("an access failure preserves its message and optional cause")
+unittest
+{
+    auto cause = new IllegalStateException("getter failed");
+    auto error = new AccessException("property unavailable", cause);
+    assert(error.msg == "property unavailable");
+    assert(error.getCause() is cause);
+    assert((new AccessException("property unavailable")).getCause() is null);
+}
 
 private final class Place
 {

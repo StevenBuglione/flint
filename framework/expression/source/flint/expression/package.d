@@ -15,7 +15,7 @@
  *
  * Ported from spring-framework v7.1.0: spring-expression/src/main/java/org/springframework/expression/Expression.java
  * Also from ExpressionParser.java, ExpressionException.java, ParseException.java, EvaluationException.java,
- * EvaluationContext.java and TypedValue.java.
+ * EvaluationContext.java, TypedValue.java, TargetedAccessor.java, PropertyAccessor.java and AccessException.java.
  * Modified by the Flint authors.
  */
 module flint.expression;
@@ -60,6 +60,48 @@ interface EvaluationContext
 
     /// The bound value, or null if the name is absent.
     Any lookupVariable(string name);
+}
+
+/// An accessor that may be restricted to named AOT types (R4).
+interface TargetedAccessor
+{
+    /// Empty or null means the accessor may be consulted for any target.
+    string[] getSpecificTargetClasses();
+}
+
+/// A strategy for reading or writing a target's properties.
+interface PropertyAccessor : TargetedAccessor
+{
+    /// Whether the named property can be read from the given target.
+    bool canRead(EvaluationContext context, Any target, string name);
+
+    /// Read the named property from the given target.
+    TypedValue read(EvaluationContext context, Any target, string name);
+
+    /// Whether the named property can be written on the given target.
+    bool canWrite(EvaluationContext context, Any target, string name);
+
+    /// Write the named property on the given target.
+    void write(EvaluationContext context, Any target, string name, Any newValue);
+}
+
+/// An unexpected failure reported by an accessor.
+class AccessException : Exception
+{
+    private Exception cause;
+
+    /// Report a failure and optionally retain its cause.
+    this(string message, Exception cause = null)
+    {
+        super(message);
+        this.cause = cause;
+    }
+
+    /// The underlying failure, when one was supplied.
+    inout(Exception) getCause() inout pure nothrow @nogc
+    {
+        return cause;
+    }
 }
 
 /// A value in an evaluation context. D-SPEL-1 maps Java's wrapper to a value type.
