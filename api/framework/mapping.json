@@ -6019,6 +6019,8 @@
 "org.aspectj.lang.annotation.SuppressAjWarnings":{"status":"adapted","rules":["R2"],"d":"flint.aspectj.lang.annotation.SuppressAjWarnings"},
 "org.aspectj.lang.annotation.SuppressAjWarnings#value":{"status":"adapted","rules":["R2"],"d":"flint.aspectj.lang.annotation.SuppressAjWarnings.value"},
 "org.aspectj.lang.annotation.control.**":{"status":"excluded","category":"deferred","phase":"2"},
+"org.aspectj.lang.annotation.control.CodeGenerationHint":{"status":"adapted","rules":["R2"],"d":"flint.aspectj.lang.annotation.control.CodeGenerationHint"},
+"org.aspectj.lang.annotation.control.CodeGenerationHint#ifNameSuffix":{"status":"adapted","rules":["R2"],"d":"flint.aspectj.lang.annotation.control.CodeGenerationHint.ifNameSuffix"},
 "org.aspectj.lang.reflect.**":{"status":"excluded","category":"runtime-reflection"},
 "org.hibernate.validator.BaseHibernateValidatorConfiguration**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.hibernate.validator.HibernateValidator":{"status":"ported","d":"flint.hibernate.validator.HibernateValidator"},

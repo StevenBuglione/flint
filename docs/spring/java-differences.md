@@ -194,7 +194,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | thymeleaf@3.1.7.RELEASE | 3 | 7 | 0 | 4,442 |
 | framework | micrometer-observation@1.18.0 | 44 | 36 | 0 | 232 |
 | framework | openjdk@21.0.13 | 213 | 113 | 1,871 | 16,224 |
-| framework | aspectj@1.9.27 | 19 | 75 | 191 | 25 |
+| framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
 
@@ -1900,6 +1900,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.aspectj.lang.annotation.RequiredTypes#value` | `flint.aspectj.lang.annotation.RequiredTypes.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.SuppressAjWarnings` | `flint.aspectj.lang.annotation.SuppressAjWarnings` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.SuppressAjWarnings#value` | `flint.aspectj.lang.annotation.SuppressAjWarnings.value` | [R2](api-mapping.md#r2-annotations) |  |
+
+#### org.aspectj.lang.annotation.control
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.aspectj.lang.annotation.control.CodeGenerationHint` | `flint.aspectj.lang.annotation.control.CodeGenerationHint` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.control.CodeGenerationHint#ifNameSuffix` | `flint.aspectj.lang.annotation.control.CodeGenerationHint.ifNameSuffix` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.slf4j
 
@@ -9228,7 +9235,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | javax.security.cert | 0 | 39 |
 | javax.sql | 217 | 0 |
 | org.aspectj.lang | 23 | 0 |
-| org.aspectj.lang.annotation.control | 2 | 0 |
 | org.hibernate.validator | 82 | 0 |
 | org.hibernate.validator.cfg | 18 | 0 |
 | org.hibernate.validator.cfg.context | 49 | 0 |

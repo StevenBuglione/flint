@@ -7,6 +7,7 @@ module aspectj_annotation_tests;
 import flint.aspectj.lang.annotation : AdviceName, After, AfterReturning, AfterThrowing, Around, Aspect, Before,
     DeclareAnnotation, DeclareError, DeclareMixin, DeclareParents, DeclarePrecedence,
     DeclareWarning, Pointcut, RequiredTypes, SuppressAjWarnings;
+import flint.aspectj.lang.annotation.control : CodeGenerationHint;
 import flint.java.classref : ClassRef, classOf;
 import std.traits : getUDAs;
 
@@ -155,4 +156,24 @@ private final class DeclarationAspect
     static assert(explicit.value == "fixtures.Owner" && explicit.interfaces == [classOf!Auditable]);
     static assert(inferred.interfaces == [ClassRef.init]);
     static assert(empty.interfaces.length == 0);
+}
+
+@CodeGenerationHint()
+private bool inferredIf()
+{
+    return true;
+}
+
+@CodeGenerationHint("audit")
+private bool namedIf()
+{
+    return true;
+}
+
+@("AspectJ code generation hints retain the default and explicit if suffix") unittest
+{
+    enum inferred = getUDAs!(inferredIf, CodeGenerationHint)[0];
+    enum named = getUDAs!(namedIf, CodeGenerationHint)[0];
+    static assert(inferred.ifNameSuffix == "");
+    static assert(named.ifNameSuffix == "audit");
 }

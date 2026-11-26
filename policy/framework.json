@@ -54,7 +54,7 @@
    "bench": {
     "fixture": "framework/aspectj/bench",
     "baseline": "framework/aspectj/bench/baseline",
-    "edit_source": "framework/aspectj/source/flint/aspectj/lang/annotation.d"
+    "edit_source": "framework/aspectj/source/flint/aspectj/lang/annotation/package.d"
    },
    "budget": {
     "dmd_cold_seconds": 0.9,
