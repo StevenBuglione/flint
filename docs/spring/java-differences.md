@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 204 | 390 | 0 | 15,202 |
+| ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
 | framework | spring-framework@v7.1.0 | 3,607 | 1,474 | 4,870 | 29,883 |
@@ -528,7 +528,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.model.ModelDescription#getDescription()` | `flint.ai.model.ModelDescription.getDescription` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.ai.model.ModelDescription#getVersion()` | `flint.ai.model.ModelDescription.getVersion` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.ai.model.SimpleApiKey` | `flint.ai.model.SimpleApiKey` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.model.SpringAIModelProperties` | `flint.ai.model.FlintAIModelProperties` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `org.springframework.ai.model.SpringAIModelProperties#AUDIO_SPEECH_MODEL` | `flint.ai.model.FlintAIModelProperties.AUDIO_SPEECH_MODEL` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `org.springframework.ai.model.SpringAIModelProperties#AUDIO_TRANSCRIPTION_MODEL` | `flint.ai.model.FlintAIModelProperties.AUDIO_TRANSCRIPTION_MODEL` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `org.springframework.ai.model.SpringAIModelProperties#CHAT_MODEL` | `flint.ai.model.FlintAIModelProperties.CHAT_MODEL` | [R1](api-mapping.md#r1-packages-and-names) |  |
@@ -539,7 +538,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.model.SpringAIModelProperties#MODERATION_MODEL` | `flint.ai.model.FlintAIModelProperties.MODERATION_MODEL` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `org.springframework.ai.model.SpringAIModelProperties#MULTI_MODAL_EMBEDDING_MODEL` | `flint.ai.model.FlintAIModelProperties.MULTI_MODAL_EMBEDDING_MODEL` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `org.springframework.ai.model.SpringAIModelProperties#TEXT_EMBEDDING_MODEL` | `flint.ai.model.FlintAIModelProperties.TEXT_EMBEDDING_MODEL` | [R1](api-mapping.md#r1-packages-and-names) |  |
-| `org.springframework.ai.model.SpringAIModels` | `flint.ai.model.FlintAIModels` | [R1](api-mapping.md#r1-packages-and-names) |  |
 
 #### org.springframework.ai.observation
 
@@ -618,7 +616,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.observation.conventions.AiTokenType#INPUT` | `flint.ai.observation.conventions.AiTokenType.INPUT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.observation.conventions.AiTokenType#OUTPUT` | `flint.ai.observation.conventions.AiTokenType.OUTPUT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.observation.conventions.AiTokenType#TOTAL` | `flint.ai.observation.conventions.AiTokenType.TOTAL` | [R15](api-mapping.md#r15-enums-with-fields) |  |
-| `org.springframework.ai.observation.conventions.SpringAiKind` | `flint.ai.observation.conventions.FlintAiKind` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.springframework.ai.observation.conventions.SpringAiKind` | `flint.ai.observation.conventions.FlintAiKind` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.observation.conventions.SpringAiKind#ADVISOR` | `flint.ai.observation.conventions.FlintAiKind.ADVISOR` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.observation.conventions.SpringAiKind#CHAT_CLIENT` | `flint.ai.observation.conventions.FlintAiKind.CHAT_CLIENT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.observation.conventions.SpringAiKind#TOOL_CALL` | `flint.ai.observation.conventions.FlintAiKind.TOOL_CALL` | [R15](api-mapping.md#r15-enums-with-fields) |  |

@@ -496,12 +496,13 @@ private MappingEntry proposedMember(const ref TypeDecl decl, const ref Member me
     return MappingEntry.init;
 }
 
-/// A draft can put methods and constants together while a landed R1 map keeps a canonical re-export.
+/// Keep established same-name R1 re-exports when a draft puts methods and constants together.
 private bool preserveEnumReexport(const ref TypeDecl decl, const ref Classifier classifier, string dType)
 {
-    import std.algorithm.searching : any;
+    import std.algorithm.searching : any, endsWith;
 
-    if (decl.kind != TypeKind.enum_ || !decl.members.any!(member => member.kind == MemberKind.method))
+    if (decl.kind != TypeKind.enum_ || !dType.endsWith("." ~ decl.name)
+            || !decl.members.any!(member => member.kind == MemberKind.method))
         return false;
     const entry = classifier.classify(decl.id);
     return entry !is null && entry.match == decl.id && entry.symbol == dType
@@ -566,8 +567,6 @@ private MappingEntry mappingEntry(string symbol, string javaName, string dName, 
     entry.symbol = symbol;
     if (annotation)
         entry.rules = ["R2"];
-    if (javaName != renamed)
-        entry.rules ~= "R1";
     const baseType = attributeBaseType(javaType);
     if (baseType == "Class" || baseType == "java.lang.Class")
         entry.rules ~= "R4";
@@ -664,6 +663,15 @@ version (unittest)
     private enum candidateFixture = `{"symbol":"FlintHint","members":[{"name":"version","symbol":"version_"}]}`;
 }
 
+@("a rulebook identity rename stays ported")
+unittest
+{
+    const holder = mappingEntry("flint.ai.model.FlintAIModels", "SpringAIModels", "FlintAIModels", false);
+    assert(holder.status == Status.ported && holder.rules.length == 0);
+    const keyword = mappingEntry("flint.example.version_", "version", "version_", false);
+    assert(keyword.status == Status.adapted && keyword.rules == ["R19"]);
+}
+
 unittest
 {
     import flint_tool.api.coverage : Mapping, parseMapping;
@@ -707,9 +715,7 @@ unittest
     Mapping generated;
     assert(parseMapping(output, generated, error), error);
     assert(generated.entries.length == 2);
-    assert(generated.entries[0].match == annotation.decl.id && generated.entries[0].rules == [
-        "R2", "R1"
-    ]);
+    assert(generated.entries[0].match == annotation.decl.id && generated.entries[0].rules == ["R2"]);
     assert(generated.entries[1].match == annotation.decl.id ~ "#version");
     assert(generated.entries[1].rules == ["R2", "R19"]);
 }
@@ -809,7 +815,7 @@ unittest
     Mapping mapping;
     string error;
     assert(parseMapping(`{"elements":{
-        "org.springframework.example.SpringHint":{"status":"adapted","rules":["R2","R1"],
+        "org.springframework.example.SpringHint":{"status":"adapted","rules":["R2"],
             "d":"flint.example.FlintHint"},
         "org.springframework.example.SpringHint#version":{"status":"adapted","rules":["R2","R4","R19"],
             "d":"flint.example.FlintHint.version_"}
