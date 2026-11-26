@@ -1182,3 +1182,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 03:30Z, coordinator, under the owner's standing approval: **`metric-rebaseline`.**
   - **What it allows:** a byte cap set in the old stripped-file metric during Phase 2 may be re-baselined once in loadable bytes, at the measured value plus 10%. The same executables are measured in both metrics, and the commit carries the trailer `Budget-Raise-Approved: metric-rebaseline`.
   - **Not covered:** caps that predate Phase 2.
+- 2026-11-26 03:33Z, coordinator, under the owner's standing approval: **modules over their cap on main only because of the known Phobos cascade** (S-9: web, and any other module whose probe shows the std.socket, curl, regex or zip cascade) **use a base-relative ratchet until the cascade is gone.**
+  - **The test:** a slice passes the budgets step if its candidate's loadable bytes and templates are at most main's base plus the slice's own growth under the existing rules (`api-growth-rule` and the like), measured on the same machine and recorded in the commit message.
+  - **The caps are unchanged.**
+  - **Expiry:** the exception ends for a module when its probe no longer links the cascade, after which the module must fit its cap.
+  - **Why:** web's 126,976 B cap was set when the probe baseline also linked Phobos I/O. Probes switching to C output (55f6747c) exposed about 420 KB of cascade that the S-9 owners (boot, framework-core, data-access, web-http) are removing now.
