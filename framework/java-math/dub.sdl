@@ -1,6 +1,6 @@
 name "java-math"
 description "Java SE arbitrary-precision arithmetic"
-license "Apache-2.0"
+license "GPL-2.0-only WITH Classpath-exception-2.0"
 targetType "library"
 sourcePaths "source"
 importPaths "source"
@@ -14,4 +14,5 @@ configuration "unittest" {
     targetType "library"
     sourcePaths "source" "tests"
     importPaths "source" "tests"
+    stringImportPaths "tests"
 }

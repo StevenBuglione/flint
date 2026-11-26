@@ -32,3 +32,11 @@ import flint.java.math.biginteger : BigInteger;
     const unsignedWord = new BigInteger(1, [-128, 0, 0, 0]);
     assert(unsignedWord.hashCode() == int.min);
 }
+
+@("BigInteger equality handles null and other types") unittest
+{
+    auto value = BigInteger.valueOf(0x7FFF_FFED);
+    Object absent;
+    assert(!value.equals(absent));
+    assert(!value.equals(new Object));
+}

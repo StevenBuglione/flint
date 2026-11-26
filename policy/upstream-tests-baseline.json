@@ -3305,22 +3305,6 @@
       "tools/jackson/databind/views/ViewsWithCreatorTest.java",
       "tools/jackson/databind/views/ViewsWithSchemaTest.java"
     ],
-    "java-math": [
-      "org/apache/harmony/tests/java/math/BigDecimalArithmeticTest.java",
-      "org/apache/harmony/tests/java/math/BigDecimalCompareTest.java",
-      "org/apache/harmony/tests/java/math/BigDecimalConstructorsTest.java",
-      "org/apache/harmony/tests/java/math/BigDecimalConvertTest.java",
-      "org/apache/harmony/tests/java/math/BigDecimalScaleOperationsTest.java",
-      "org/apache/harmony/tests/java/math/BigIntegerAndTest.java",
-      "org/apache/harmony/tests/java/math/BigIntegerConstructorsTest.java",
-      "org/apache/harmony/tests/java/math/BigIntegerDivideTest.java",
-      "org/apache/harmony/tests/java/math/BigIntegerModPowTest.java",
-      "org/apache/harmony/tests/java/math/BigIntegerNotTest.java",
-      "org/apache/harmony/tests/java/math/BigIntegerOrTest.java",
-      "org/apache/harmony/tests/java/math/BigIntegerXorTest.java",
-      "tests/api/java/math/BigDecimalTest.java",
-      "tests/api/java/math/BigIntegerTest.java"
-    ],
     "jdbc": [
       "org/springframework/jdbc/config/InitializeDatabaseIntegrationTests.java",
       "org/springframework/jdbc/config/JdbcNamespaceIntegrationTests.java",
