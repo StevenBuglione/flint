@@ -1099,3 +1099,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Why:** main moves every few minutes with seven lanes, and a full app gate takes several, so lanes kept re-running full gates after each rebase.
   - **The rule:** a slice whose full definition of done passed before the rebase re-runs only the cheap steps when the incoming commits touch nothing in its dependency closure or its apps. The cheap steps are resolve, structural, quality, api, upstream-tests and its own DMD/LDC tests. If the incoming commits touch either, the full definition of done runs again.
   - **Recording:** the lane says which path it took.
+- 2026-11-26 01:20Z, coordinator, under the owner's standing approval: **`incremental_linked_bytes` measures loadable section bytes, not the stripped file size.**
+  - **Why:** file deltas are quantised to 4 KiB pages. framework-core showed ai-model's probe reading 56 → 4,152 B while its real loadable bytes went 264 → 272.
+  - **The caps are unchanged.** This corrects a measurement artefact; it does not loosen any cap. m7 implements it.
+- 2026-11-26 01:20Z, coordinator: **the 1.19× and 0.889 size gaps get a lever.** framework-core removes the remaining triggers of the Phobos link cascade (std.socket, std.uni, std.net.curl) from gs-rest and petclinic, one trigger per commit, measuring app Oz before and after.
+  - **Starting point:** cf17a00b's case tables currently add 16 KB to gs-rest and 8 KB to petclinic, duplicating std.uni. They will be halved.
