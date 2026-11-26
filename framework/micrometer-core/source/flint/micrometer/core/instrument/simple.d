@@ -224,7 +224,7 @@ unittest
     auto failingSupplier = DoubleSupplier.of(&fail);
     const allocatedBefore = GC.stats().allocatedInCurrentThread;
     assert(timer.record(supplier) == -0.25);
-    assert(timer.record(&supply) == -0.25);
+    assert(timer.record(() => supply()) == -0.25);
     assert(noop.record(supplier) == -0.25);
     assert(noop.record(&supply) == -0.25);
     assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
@@ -242,6 +242,54 @@ unittest
     assertThrown!NullPointerException(timer.record(cast(DoubleSupplier) null));
     assertThrown!NullPointerException(noop.record(cast(double delegate() @safe) null));
     assert(timer.count() == 4 && timer.totalTime(TimeUnit.NANOSECONDS) == 25);
+    assert(noop.count() == 0);
+}
+
+@("boolean supplier timing preserves both results for cumulative and closed registries")
+unittest
+{
+    import core.memory : GC;
+    import flint.java.util.function_ : BooleanSupplier;
+    import flint.micrometer.core.instrument : Tags;
+    import std.exception : assertThrown;
+
+    static final class TimedFlag : BooleanSupplier
+    {
+        private MockClock clock;
+        private bool enabled;
+
+        this(MockClock clock)
+        {
+            this.clock = clock;
+        }
+
+        override bool getAsBoolean()
+        {
+            clock.add(3, TimeUnit.NANOSECONDS);
+            enabled = !enabled;
+            return enabled;
+        }
+    }
+
+    auto clock = new MockClock;
+    auto id = new Meter.Id("flag", Tags.empty(), Nullable!string.init, Nullable!string.init, Meter.Type.TIMER);
+    Timer timer = new CumulativeTimer(id, clock);
+    auto registry = new SimpleMeterRegistry;
+    registry.close();
+    auto noop = registry.timer("flag");
+    BooleanSupplier supplier = new TimedFlag(clock);
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    assert(timer.record(supplier));
+    assert(!timer.record(() => supplier.getAsBoolean()));
+    assert(noop.record(supplier));
+    assert(!noop.record(&supplier.getAsBoolean));
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 2 && timer.totalTime(TimeUnit.NANOSECONDS) == 6);
+    assert(noop.count() == 0 && noop.totalTime(TimeUnit.NANOSECONDS) == 0);
+
+    assertThrown!NullPointerException(timer.record(cast(BooleanSupplier) null));
+    assertThrown!NullPointerException(noop.record(cast(bool delegate() @safe) null));
+    assert(timer.count() == 3 && timer.totalTime(TimeUnit.NANOSECONDS) == 6);
     assert(noop.count() == 0);
 }
 

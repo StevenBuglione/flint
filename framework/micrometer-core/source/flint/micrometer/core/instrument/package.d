@@ -39,7 +39,7 @@ import flint.java.lang : ClassCastException, Comparable, IllegalArgumentExceptio
 import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit, toMillis, toNanos;
 import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
-import flint.java.util.function_ : Consumer, DoubleSupplier, Supplier;
+import flint.java.util.function_ : BooleanSupplier, Consumer, DoubleSupplier, Supplier;
 import flint.java.util.stream : Stream;
 import std.typecons : Nullable;
 
@@ -967,6 +967,12 @@ interface Timer : Meter
     /// Run and time a D delegate without retaining it (R9).
     void record(scope void delegate() @safe action);
 
+    /// Return a boolean result while recording the supplier's elapsed time (R9).
+    bool record(BooleanSupplier action);
+
+    /// Return a boolean result from a D delegate without retaining it (R9).
+    bool record(scope bool delegate() @safe action);
+
     /// Return a primitive result while recording the supplier's elapsed time (R9).
     double record(DoubleSupplier action);
 
@@ -1008,7 +1014,8 @@ interface Timer : Meter
     mixin template Defaults(alias Measurements = MeasurementIterable,
             alias samples = timerMeasurements, alias DurationType = Duration,
             alias Unit = TimeUnit, alias RunnableType = Runnable, alias makeTimedRunnable = timedRunnable,
-            alias DoubleSupplierType = DoubleSupplier, alias NullAction = NullPointerException)
+            alias DoubleSupplierType = DoubleSupplier,
+            alias BooleanSupplierType = BooleanSupplier, alias NullAction = NullPointerException)
     {
         override void record(DurationType duration)
         {
@@ -1020,6 +1027,24 @@ interface Timer : Meter
         {
             Timer timer = this;
             timer.record(action is null ? null : &action.run);
+        }
+
+        override bool record(BooleanSupplierType action)
+        {
+            Timer timer = this;
+            return timer.record(action is null ? null : &action.getAsBoolean);
+        }
+
+        override bool record(scope bool delegate() @safe action)
+        {
+            bool result;
+            Timer timer = this;
+            timer.record(() {
+                if (action is null)
+                    throw new NullAction("action");
+                result = action();
+            });
+            return result;
         }
 
         override double record(DoubleSupplierType action)

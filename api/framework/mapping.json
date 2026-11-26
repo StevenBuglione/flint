@@ -723,7 +723,7 @@
 "io.micrometer.core.instrument.Timer#mean(TimeUnit)":{"status":"adapted","d":"flint.micrometer.core.instrument.Timer.mean","rules":["R3"]},
 "io.micrometer.core.instrument.Timer#measure()":{"status":"adapted","d":"flint.micrometer.core.instrument.Timer.measure","rules":["R3","R10"]},
 "io.micrometer.core.instrument.Timer#percentile(double,TimeUnit)":{"status":"excluded","category":"deferred","phase":"2"},
-"io.micrometer.core.instrument.Timer#record(BooleanSupplier)":{"status":"excluded","category":"deferred","phase":"2"},
+"io.micrometer.core.instrument.Timer#record(BooleanSupplier)":{"status":"adapted","rules":["R9"],"d":"flint.micrometer.core.instrument.Timer.record"},
 "io.micrometer.core.instrument.Timer#record(DoubleSupplier)":{"status":"adapted","rules":["R9"],"d":"flint.micrometer.core.instrument.Timer.record"},
 "io.micrometer.core.instrument.Timer#record(Duration)":{"status":"adapted","d":"flint.micrometer.core.instrument.Timer.record","rules":["R3"]},
 "io.micrometer.core.instrument.Timer#record(IntSupplier)":{"status":"excluded","category":"deferred","phase":"2"},
