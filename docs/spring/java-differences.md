@@ -11102,7 +11102,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.NumberFormat#format(double)` | 2 | Loses the sign of negative zero and of negative values that round to zero. Floating-point scaling misrounds some half-even boundaries, and Double.MAX_VALUE loses its full width. |
 | framework | `java.text.NumberFormat#format(long)` | 2 | Uses ASCII digits for Arabic (Egypt) and for an explicit Devanagari numbering system. Java uses localized digits and the Arabic thousands separator for Arabic (Egypt). |
 | framework | `java.text.NumberFormat#getInstance()` | 2 | Uses the general environment-derived locale. Java uses the independent Locale.Category.FORMAT default for decimal formatting. |
+| framework | `java.text.NumberFormat#getInstance(Locale)` | 2 | The pinned US factory returns a mutable DecimalFormat subclass with fraction digit setters. Flint returns a NumberFormat value without those setters or the DecimalFormat subtype. |
 | framework | `java.text.NumberFormat#getIntegerInstance()` | 2 | Uses the general environment-derived locale. Java uses the independent Locale.Category.FORMAT default for integer formatting. |
+| framework | `java.text.NumberFormat#getIntegerInstance(Locale)` | 2 | The pinned US factory returns a mutable DecimalFormat subclass with fraction digit setters. Flint returns a NumberFormat value without those setters or the DecimalFormat subtype. |
 | framework | `java.text.SimpleDateFormat` | 2 | The Java class inherits the Format hierarchy and generic formatting contract through DateFormat. Flint has no Format supertype. |
 | framework | `java.text.SimpleDateFormat#<init>(String)` | 2 | Uses Locale.US for named fields instead of Java's default Locale.Category.FORMAT. |
 | framework | `java.text.SimpleDateFormat#<init>(String,Locale)` | 2 | Rejects named fields with a non-English locale. Java uses that locale's date and time names. |
