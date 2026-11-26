@@ -1034,20 +1034,32 @@ unittest
     assert(HttpHeaders.encodeBasicAuth("user", "p\u00e4ss") == "dXNlcjpw5HNz"); // ISO-8859-1, as Spring encodes it
 }
 
-/// Java's `Double.toString` for quality values: shortest round-trip digits, at least one fraction digit.
+/// Java's `Double.toString` for quality values: shortest round-trip digits, at least one fraction digit. NaN and
+/// infinity print as C's `nan` and `inf` (as std.format did); the quality check then rejects them, as Spring's does.
 package(flint) string javaDoubleToString(double value) pure
 {
-    import std.format : format;
+    import flint.engine.aot.text : fixed, general;
 
     if (value == cast(long) value && value < 1e7 && value > -1e7)
         return decimal(cast(long) value) ~ ".0";
     foreach (precision; 1 .. 18)
     {
-        auto text = format("%.*f", precision, value);
+        auto text = fixed(value, precision);
         if (parseJavaDouble(text) == value)
             return text;
     }
-    return format("%.17g", value);
+    return general(value, 17);
+}
+
+@("javaDoubleToString prints the shortest round-trip fixed digits, else 17 significant digits")
+unittest
+{
+    assert(javaDoubleToString(1.0) == "1.0" && javaDoubleToString(0.0) == "0.0");
+    assert(javaDoubleToString(0.5) == "0.5" && javaDoubleToString(0.8) == "0.8");
+    assert(javaDoubleToString(0.333) == "0.333");
+    // A literal, not 0.1 + 0.2: the compiler may fold that sum at a wider precision.
+    assert(javaDoubleToString(0.30000000000000004) == "0.30000000000000004");
+    assert(javaDoubleToString(1e-20) == "9.9999999999999995e-21");
 }
 
 // ---------------------------------------------------------------------------------------------------------

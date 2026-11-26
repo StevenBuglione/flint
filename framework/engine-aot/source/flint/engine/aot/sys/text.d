@@ -44,6 +44,38 @@ with one int and one double conversion, matching the two varargs passed.
 }
 
 /++
+`value` printed with C's `%.*f` and `precision` digits after the point into `buffer`; the number of characters
+written, or 0 if `buffer` is too small or `precision` is outside [0, 40].
+
+As `formatE`: snprintf writes at most `buffer.length` bytes including the NUL into `buffer`; the format is a literal
+with one int and one double conversion, matching the two varargs passed.
++/
+// SAFETY: bounded by buffer.length, NUL included; literal format with exactly an int and a double argument.
+@trusted size_t formatF(double value, int precision, scope char[] buffer) pure nothrow @nogc
+{
+    if (buffer.length == 0 || precision < 0 || precision > 40)
+        return 0;
+    const written = snprintf(&buffer[0], buffer.length, "%.*f", precision, value);
+    return written > 0 && written < buffer.length ? cast(size_t) written : 0;
+}
+
+/++
+`value` printed with C's `%.*g` and `precision` significant digits into `buffer`; the number of characters written,
+or 0 if `buffer` is too small or `precision` is outside [0, 40].
+
+As `formatE`: snprintf writes at most `buffer.length` bytes including the NUL into `buffer`; the format is a literal
+with one int and one double conversion, matching the two varargs passed.
++/
+// SAFETY: bounded by buffer.length, NUL included; literal format with exactly an int and a double argument.
+@trusted size_t formatGPrecision(double value, int precision, scope char[] buffer) pure nothrow @nogc
+{
+    if (buffer.length == 0 || precision < 0 || precision > 40)
+        return 0;
+    const written = snprintf(&buffer[0], buffer.length, "%.*g", precision, value);
+    return written > 0 && written < buffer.length ? cast(size_t) written : 0;
+}
+
+/++
 The float C's `strtof` reads from `text`, which must end in a NUL the caller added; `consumed` as for `readDouble`.
 
 As `readDouble`: strtof only reads up to the NUL the precondition guarantees, and only `end`'s distance from the
@@ -106,6 +138,20 @@ unittest
     // Negative: no room, too little room, or a precision outside the bounded range writes nothing.
     assert(formatE(1.5, 3, buffer[0 .. 0]) == 0 && formatE(1.5, 3, buffer[0 .. 4]) == 0);
     assert(formatE(1.5, -1, buffer[]) == 0 && formatE(1.5, 41, buffer[]) == 0);
+}
+
+unittest
+{
+    char[48] buffer;
+    assert(buffer[0 .. formatF(0.25, 1, buffer[])] == "0.2"); // the binary value's exact tie rounds to even
+    assert(buffer[0 .. formatF(-1.5, 3, buffer[])] == "-1.500");
+    assert(buffer[0 .. formatGPrecision(0.1, 17, buffer[])] == "0.10000000000000001");
+    assert(buffer[0 .. formatGPrecision(1e-20, 17, buffer[])] == "9.9999999999999995e-21");
+    // Negative: no room, too little room, or a precision outside the bounded range writes nothing.
+    assert(formatF(1.5, 3, buffer[0 .. 0]) == 0 && formatF(1.5, 3, buffer[0 .. 4]) == 0);
+    assert(formatF(1.5, -1, buffer[]) == 0 && formatF(1.5, 41, buffer[]) == 0);
+    assert(formatGPrecision(1.5, 3, buffer[0 .. 2]) == 0 && formatGPrecision(1.5, 41, buffer[]) == 0);
+    assert(formatF(1e300, 2, buffer[]) == 0); // 303 characters do not fit 48
 }
 
 unittest

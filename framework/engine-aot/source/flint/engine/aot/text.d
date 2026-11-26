@@ -7,7 +7,7 @@ templates and give the same results as those `std.conv` calls, which the unittes
 +/
 module flint.engine.aot.text;
 
-import flint.engine.aot.sys.text : formatE, formatG, readDouble, readFloat;
+import flint.engine.aot.sys.text : formatE, formatF, formatG, formatGPrecision, readDouble, readFloat;
 
 @safe:
 
@@ -466,6 +466,33 @@ string scientific(double value, int precision) pure nothrow
     char[64] buffer;
     const length = formatE(value, precision, buffer[]);
     return length ? buffer[0 .. length].idup : null;
+}
+
+/// `value` as `format("%.*f", precision, value)` prints it: C's `%f` with `precision` digits after the point, for
+/// `precision` in [0, 40]; null outside it. NaN and infinity print as C's `nan` and `inf` (not Java's `NaN` and
+/// `Infinity`), and the point is the C locale's: Flint never calls `setlocale`.
+string fixed(double value, int precision) pure nothrow
+{
+    char[400] buffer; // DBL_MAX has 309 integer digits
+    const length = formatF(value, precision, buffer[]);
+    return length ? buffer[0 .. length].idup : null;
+}
+
+/// `value` as `format("%.*g", precision, value)` prints it: C's `%g` with `precision` significant digits, for
+/// `precision` in [0, 40]; null outside it. NaN, infinity and the point as for `fixed`.
+string general(double value, int precision) pure nothrow
+{
+    char[64] buffer;
+    const length = formatGPrecision(value, precision, buffer[]);
+    return length ? buffer[0 .. length].idup : null;
+}
+
+@("fixed and general print as C's %.*f and %.*g")
+unittest
+{
+    assert(fixed(0.8, 1) == "0.8" && fixed(0.123, 2) == "0.12" && fixed(double.max, 0).length == 309);
+    assert(fixed(1.0, 41) is null && general(1.0, -1) is null);
+    assert(general(0.1, 17) == "0.10000000000000001" && general(123_456.0, 3) == "1.23e+05");
 }
 
 /// A float parse result.
