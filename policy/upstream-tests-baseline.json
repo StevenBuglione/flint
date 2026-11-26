@@ -1635,7 +1635,6 @@
       "org/springframework/data/mapping/PersistentPropertyAccessorUnitTests.java",
       "org/springframework/data/mapping/PreferredConstructorDiscovererUnitTests.java",
       "org/springframework/data/mapping/SimpleTypeHolderUnitTests.java",
-      "org/springframework/data/mapping/TargetAwareIdentifierAccessorUnitTests.java",
       "org/springframework/data/mapping/callback/DefaultEntityCallbacksUnitTests.java",
       "org/springframework/data/mapping/callback/DefaultReactiveEntityCallbacksUnitTests.java",
       "org/springframework/data/mapping/callback/EntityCallbackDiscovererUnitTests.java",

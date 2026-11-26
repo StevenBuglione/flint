@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 218 | 157 | 0 | 3,607 |
+| data-commons | spring-data-commons@4.2.0 | 220 | 161 | 0 | 3,601 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -980,6 +980,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.domain.Window#isLast()` | `flint.data.domain.Window.isLast` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.domain.Window#map(Function)` | `flint.data.domain.Window.map` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.domain.Window#positionAt(T)` | `flint.data.domain.Window.positionAt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.data.mapping
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.data.mapping.IdentifierAccessor#getIdentifier()` | `flint.data.mapping.IdentifierAccessor.getIdentifier` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.IdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.IdentifierAccessor.getRequiredIdentifier` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.TargetAwareIdentifierAccessor#<init>(Object)` | `flint.data.mapping.TargetAwareIdentifierAccessor.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.TargetAwareIdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.TargetAwareIdentifierAccessor.getRequiredIdentifier` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.data.repository
 
@@ -10080,7 +10089,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.geo.format | 11 | 0 |
 | org.springframework.data.history | 42 | 0 |
 | org.springframework.data.javapoet | 69 | 0 |
-| org.springframework.data.mapping | 206 | 0 |
+| org.springframework.data.mapping | 200 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
 | org.springframework.data.mapping.model | 220 | 0 |

@@ -610,8 +610,13 @@
       "status": "deferred"
     },
     "org/springframework/data/mapping/TargetAwareIdentifierAccessorUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/identifier_accessor_tests.d",
+      "methods": {
+        "ported": [
+          "throwsExceptionContainingInformationAboutTargetIfIdentifierAbsent"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/mapping/callback/DefaultEntityCallbacksUnitTests.java": {
       "phase": "2",
