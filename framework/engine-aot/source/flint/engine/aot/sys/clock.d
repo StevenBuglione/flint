@@ -12,15 +12,41 @@ version (Windows)
 
     private extern (Windows) void GetSystemTimePreciseAsFileTime(FILETIME* time) nothrow @nogc @system;
 
-    /// 100 ns ticks since 1970-01-01T00:00Z, or -1 if the clock reads before the epoch.
+    private enum ulong fileTimeUnixEpoch = 116_444_736_000_000_000;
+
     // SAFETY: GetSystemTimePreciseAsFileTime only writes into the local FILETIME.
-    @trusted long epochTicks() nothrow @nogc
+    private @trusted ulong readFileTime() nothrow @nogc
     {
-        enum ulong unixEpoch = 116_444_736_000_000_000; // 1970-01-01 in 100 ns ticks since 1601-01-01.
         FILETIME clock;
         GetSystemTimePreciseAsFileTime(&clock);
-        const ticks = (cast(ulong) clock.dwHighDateTime << 32) | clock.dwLowDateTime;
-        return ticks < unixEpoch ? -1 : cast(long)(ticks - unixEpoch);
+        return (cast(ulong) clock.dwHighDateTime << 32) | clock.dwLowDateTime;
+    }
+
+    /// 100 ns ticks since 1970-01-01T00:00Z, or -1 if the clock reads before the epoch.
+    long epochTicks() nothrow @nogc
+    {
+        const ticks = readFileTime();
+        return ticks < fileTimeUnixEpoch ? -1 : cast(long)(ticks - fileTimeUnixEpoch);
+    }
+
+    /// Signed milliseconds since 1970-01-01T00:00Z.
+    long epochMillis() nothrow @nogc
+    {
+        return millisFromFileTime(readFileTime());
+    }
+
+    private long millisFromFileTime(ulong ticks) pure nothrow @nogc
+    {
+        return (cast(long) ticks - cast(long) fileTimeUnixEpoch) / 10_000;
+    }
+
+    unittest
+    {
+        assert(millisFromFileTime(fileTimeUnixEpoch - 10_001) == -1);
+        assert(millisFromFileTime(fileTimeUnixEpoch - 10_000) == -1);
+        assert(millisFromFileTime(fileTimeUnixEpoch - 9_999) == 0);
+        assert(millisFromFileTime(fileTimeUnixEpoch) == 0);
+        assert(millisFromFileTime(fileTimeUnixEpoch + 10_000) == 1);
     }
 
     /// The local zone's current offset from UTC in seconds (east positive), as std.datetime's `LocalTime` reads
@@ -51,14 +77,41 @@ else
     else
         import core.sys.posix.time : CLOCK_REALTIME, clock_gettime, timespec;
 
+    // SAFETY: clock_gettime writes only to the caller's typed out parameter and never retains its address.
+    private @trusted bool readRealtime(out timespec clock) nothrow @nogc
+    {
+        return clock_gettime(CLOCK_REALTIME, &clock) == 0;
+    }
+
     /// 100 ns ticks since 1970-01-01T00:00Z, or -1 if the clock is unavailable or reads before the epoch.
-    // SAFETY: clock_gettime only writes into the local typed timespec.
-    @trusted long epochTicks() nothrow @nogc
+    long epochTicks() nothrow @nogc
     {
         timespec clock;
-        if (clock_gettime(CLOCK_REALTIME, &clock) != 0 || clock.tv_sec < 0)
+        if (!readRealtime(clock) || clock.tv_sec < 0)
             return -1;
         return cast(long) clock.tv_sec * 10_000_000 + cast(long) clock.tv_nsec / 100;
+    }
+
+    /// Signed milliseconds since 1970-01-01T00:00Z, or 0 if the clock is unavailable.
+    long epochMillis() nothrow @nogc
+    {
+        timespec clock;
+        return readRealtime(clock) ? millisFromRealtime(clock.tv_sec, clock.tv_nsec) : 0;
+    }
+
+    private long millisFromRealtime(long seconds, long nanos) pure nothrow @nogc
+    {
+        return seconds * 1000 + nanos / 1_000_000;
+    }
+
+    unittest
+    {
+        assert(millisFromRealtime(-1, 998_999_999) == -2);
+        assert(millisFromRealtime(-1, 999_000_000) == -1);
+        assert(millisFromRealtime(-1, 999_999_999) == -1);
+        assert(millisFromRealtime(0, 0) == 0);
+        assert(millisFromRealtime(0, 1_000_000) == 1);
+        assert(millisFromRealtime(2_147_483_648L, 999_999_999) == 2_147_483_648_999L);
     }
 
     /// The local zone's offset from UTC in seconds (east positive) at `epochSeconds`, as std.datetime's
