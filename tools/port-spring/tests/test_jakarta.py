@@ -51,6 +51,14 @@ def rejects(flint, args, diagnostic):
 
 
 def check_cli(flint, helper, cache, scratch):
+    for type_name in ("Temporal", "MapKeyTemporal"):
+        result = run(flint, *command(PROJECT, TAG, PACKAGE + "." + type_name, helper, cache))
+        assert result.returncode == 0, (result.stdout, result.stderr)
+        output = json.loads(result.stdout)
+        assert ('deprecated("since 3.2. Newly-written code should use the date/time types defined in java.time.")\n'
+                f"struct {type_name}\n") in output["source"], output
+        assert not json.loads(output["mapping"])["elements"], output
+
     for type_name, field in {
         "PersistenceContext": '    string name = "";',
         "PersistenceProperty": "    string value;",

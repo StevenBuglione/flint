@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+#include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -40,6 +41,7 @@ typedef struct {
     bool is_enum;
     bool inherited;
     bool class_ref;
+    bool implicit_deprecated;
 } JavaFile;
 
 typedef struct {
@@ -257,8 +259,10 @@ static Slice last_name(Slice name)
 }
 
 static bool resolves(const JavaFile *annotation, Slice spelling, const char *qualified,
-                     bool implicit_java_lang)
+                     bool allow_implicit, bool *implicit)
 {
+    if (implicit)
+        *implicit = false;
     Slice target = literal(qualified);
     if (equal(spelling, target))
         return true;
@@ -281,26 +285,42 @@ static bool resolves(const JavaFile *annotation, Slice spelling, const char *qua
             return equal(path, target) && !static_import;
         }
     }
-    return implicit_java_lang && !ambiguous;
+    const bool from_java_lang = allow_implicit && !ambiguous;
+    if (implicit)
+        *implicit = from_java_lang;
+    return from_java_lang;
 }
 
-static int check_meta(JavaFile *annotation, TSNode modifiers)
+static int check_meta(JavaFile *annotation, TSNode modifiers, bool attribute, TSNode *deprecated)
 {
     static const char *const metadata[] = {
         "java.lang.annotation.Target", "java.lang.annotation.Retention",
         "java.lang.annotation.Documented", "java.lang.annotation.Repeatable",
         "java.lang.annotation.Inherited",
     };
+    *deprecated = (TSNode){0};
+    if (ts_node_is_null(modifiers))
+        return 0;
     for (uint32_t index = 0; index < ts_node_child_count(modifiers); ++index) {
         TSNode node = ts_node_child(modifiers, index);
-        if (ts_node_is_extra(node) || kind(node, "public"))
+        if (ts_node_is_extra(node) || (!attribute && kind(node, "public")))
             continue;
         if (!kind(node, "annotation") && !kind(node, "marker_annotation"))
             return diagnostic(annotation, node, "unsupported annotation modifier");
         Slice name = node_text(annotation, member(node, "name"));
+        bool implicit;
+        if (!annotation->is_enum && resolves(annotation, name, "java.lang.Deprecated", true, &implicit)) {
+            if (!ts_node_is_null(*deprecated))
+                return diagnostic(annotation, node, "unsupported repeated Java deprecation");
+            *deprecated = node;
+            annotation->implicit_deprecated |= implicit;
+            continue;
+        }
+        if (attribute)
+            return diagnostic(annotation, node, "unsupported annotation attribute modifier");
         size_t match = 0;
         while (match < sizeof metadata / sizeof *metadata &&
-               !resolves(annotation, name, metadata[match], false))
+               !resolves(annotation, name, metadata[match], false, NULL))
             ++match;
         if (match == sizeof metadata / sizeof *metadata)
             return diagnostic(annotation, node, "unsupported meta-annotation");
@@ -319,13 +339,13 @@ static const Type *identify_type(const JavaFile *annotation, TSNode node)
     };
     static const Type class_type = {"Class", "ClassRef"};
     TSNode base = kind(node, "generic_type") ? ts_node_named_child(node, 0) : node;
-    if (resolves(annotation, node_text(annotation, base), "java.lang.Class", true))
+    if (resolves(annotation, node_text(annotation, base), "java.lang.Class", true, NULL))
         return &class_type;
     Slice name = node_text(annotation, node);
     for (size_t index = 0; index < sizeof types / sizeof *types; ++index) {
         const Type *type = &types[index];
         if (!strcmp(type->java, "String")) {
-            if (resolves(annotation, name, "java.lang.String", true))
+            if (resolves(annotation, name, "java.lang.String", true, NULL))
                 return type;
         } else if (is(name, type->java)) {
             return type;
@@ -345,6 +365,152 @@ static bool text_literal(Slice value)
             return false;
     }
     return true;
+}
+
+static bool deprecation_arguments(const JavaFile *java, TSNode annotation, Slice *since, bool *removal)
+{
+    TSNode arguments = member(annotation, "arguments");
+    if (ts_node_is_null(arguments))
+        return true;
+    bool saw_removal = false;
+    for (uint32_t index = 0; index < ts_node_named_child_count(arguments); ++index) {
+        TSNode argument = ts_node_named_child(arguments, index);
+        if (ts_node_is_extra(argument))
+            continue;
+        if (!kind(argument, "element_value_pair"))
+            return false;
+        Slice key = node_text(java, member(argument, "key"));
+        TSNode value = member(argument, "value");
+        Slice text = node_text(java, value);
+        if (!since->bytes && is(key, "since") && kind(value, "string_literal") && text_literal(text)) {
+            *since = (Slice){text.bytes + 1, text.length - 2};
+        } else if (!saw_removal && is(key, "forRemoval") && (is(text, "true") || is(text, "false"))) {
+            *removal = is(text, "true");
+            saw_removal = true;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
+static Slice trim_space(Slice text)
+{
+    while (text.length && isspace((unsigned char)text.bytes[0])) {
+        ++text.bytes;
+        --text.length;
+    }
+    while (text.length && isspace((unsigned char)text.bytes[text.length - 1]))
+        --text.length;
+    return text;
+}
+
+static bool starts_with(Slice text, const char *prefix)
+{
+    size_t length = strlen(prefix);
+    return text.length >= length && !memcmp(text.bytes, prefix, length);
+}
+
+/* Copy the adjacent Javadoc block tag, joining wrapped lines. */
+static Text deprecation_hint(const JavaFile *java, TSNode declaration)
+{
+    Text hint = {0};
+    TSNode comment = ts_node_prev_named_sibling(declaration);
+    Slice doc = node_text(java, comment);
+    if (!kind(comment, "block_comment") || !starts_with(doc, "/**") || doc.length < 5)
+        return hint;
+    doc = (Slice){doc.bytes + 3, doc.length - 5};
+    bool in_deprecation = false;
+    while (doc.length) {
+        const char *newline = memchr(doc.bytes, '\n', doc.length);
+        size_t end = newline ? (size_t)(newline - doc.bytes) : doc.length;
+        Slice line = trim_space((Slice){doc.bytes, end});
+        size_t consumed = end + (newline != NULL);
+        doc = (Slice){doc.bytes + consumed, doc.length - consumed};
+        if (line.length && line.bytes[0] == '*')
+            line = trim_space((Slice){line.bytes + 1, line.length - 1});
+        if (line.length && line.bytes[0] == '@') {
+            const size_t tag = sizeof "@deprecated" - 1;
+            if (!starts_with(line, "@deprecated") ||
+                (line.length > tag && !isspace((unsigned char)line.bytes[tag]))) {
+                if (in_deprecation)
+                    break;
+                continue;
+            }
+            in_deprecation = true;
+            line = trim_space((Slice){line.bytes + tag, line.length - tag});
+        }
+        if (in_deprecation && line.length) {
+            if (hint.length)
+                add(&hint, " ");
+            append(&hint, line);
+        }
+    }
+    return hint;
+}
+
+static void append_hint(Text *output, Slice hint)
+{
+    const char *link_end = NULL;
+    for (size_t index = 0; index < hint.length; ++index) {
+        if (hint.bytes + index == link_end) {
+            link_end = NULL;
+            continue;
+        }
+        if (!link_end && starts_with((Slice){hint.bytes + index, hint.length - index}, "{@link ")) {
+            size_t start = index + sizeof "{@link " - 1;
+            link_end = memchr(hint.bytes + start, '}', hint.length - start);
+            if (link_end) {
+                index = start - 1;
+                continue;
+            }
+        }
+        char byte = hint.bytes[index];
+        if (byte == '"' || byte == '\\')
+            add(output, "\\");
+        if (isspace((unsigned char)byte))
+            add(output, " ");
+        else if ((unsigned char)byte >= 32)
+            append(output, (Slice){hint.bytes + index, 1});
+    }
+}
+
+static int emit_deprecation(const JavaFile *java, TSNode declaration, TSNode annotation, Text *output, const char *indent)
+{
+    if (ts_node_is_null(annotation))
+        return 0;
+    Slice since = {0};
+    bool removal = false;
+    if (!deprecation_arguments(java, annotation, &since, &removal))
+        return diagnostic(java, annotation, "unsupported Java deprecation arguments");
+    Text hint = deprecation_hint(java, declaration);
+    if (hint.failed) {
+        free(hint.bytes);
+        return diagnostic(java, declaration, "cannot allocate deprecation message");
+    }
+    add(output, indent);
+    add(output, "deprecated");
+    if (since.length || removal || hint.length) {
+        add(output, "(\"");
+        if (since.length) {
+            add(output, "since ");
+            append(output, since);
+        }
+        if (removal) {
+            if (since.length)
+                add(output, ". ");
+            add(output, "Scheduled for removal");
+        }
+        if (hint.length) {
+            if (since.length || removal)
+                add(output, ". ");
+            append_hint(output, contents(&hint));
+        }
+        add(output, "\")");
+    }
+    add(output, "\n");
+    free(hint.bytes);
+    return 0;
 }
 
 static unsigned integral_base(TSNode node)
@@ -559,9 +725,15 @@ static int emit_field(JavaFile *annotation, Field *field, Text *output)
         type_node = member(type_node, "element");
     }
     const Type *type = identify_type(annotation, type_node);
-    if ((array && !is(node_text(annotation, dimensions), "[]")) ||
-        !ts_node_is_null(child_of_kind(node, "modifiers")))
+    if (array && !is(node_text(annotation, dimensions), "[]"))
         return diagnostic(annotation, node, "unsupported annotation type");
+    TSNode deprecated;
+    int status = check_meta(annotation, child_of_kind(node, "modifiers"), true, &deprecated);
+    if (status)
+        return status;
+    status = emit_deprecation(annotation, node, deprecated, output, "    ");
+    if (status)
+        return status;
     field->array = array;
     if (!type)
         return emit_reference_field(annotation, field, type_node, output->length);
@@ -738,6 +910,8 @@ static void emit_candidate(const JavaFile *annotation, Slice name, const Text *s
     printf("],\"inherited\":%s,\"classRef\":%s,\"%s\":", annotation->inherited ? "true" : "false",
            annotation->class_ref ? "true" : "false", has_references ? "referenceBody" : "body");
     json_string(contents(body));
+    if (annotation->implicit_deprecated)
+        fputs(",\"implicitDeprecated\":true", stdout);
     if (has_references)
         emit_imports(annotation);
     puts("}");
@@ -762,7 +936,8 @@ static int translate(JavaFile *annotation, bool scope_only)
     }
     if (annotation->is_enum && !ts_node_is_null(member(annotation->declaration, "interfaces")))
         return diagnostic(annotation, annotation->declaration, "unsupported enum implementing an interface");
-    int status = check_meta(annotation, child_of_kind(annotation->declaration, "modifiers"));
+    TSNode deprecated;
+    int status = check_meta(annotation, child_of_kind(annotation->declaration, "modifiers"), false, &deprecated);
     if (status)
         return status;
 
@@ -780,6 +955,9 @@ static int translate(JavaFile *annotation, bool scope_only)
         goto cleanup;
     }
     status = collect_fields(annotation, body, fields, &count);
+    if (status)
+        goto cleanup;
+    status = emit_deprecation(annotation, annotation->declaration, deprecated, &output, "");
     if (status)
         goto cleanup;
     add(&output, annotation->is_enum ? "enum " : "struct ");

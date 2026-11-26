@@ -245,6 +245,50 @@ static assert(__traits(getAttributes, Example)[0].value.name == "flint.Foo");
         self.assertEqual(result.stdout, b"")
         self.assertIn(b"unsupported meta-annotation", result.stderr)
 
+    def test_deprecated_annotation_and_attribute_preserve_warnings(self):
+        annotation = self.run_helper('''package example;
+/** Documentation.
+ * @deprecated Use {@link java.time} and avoid "legacy" types.
+ * @see String
+ */
+@Deprecated(since = "3.2") public @interface Settings { }
+''')
+        self.assertEqual(annotation.returncode, 0, annotation.stderr.decode())
+        candidate = json.loads(annotation.stdout)
+        self.assertTrue(candidate["implicitDeprecated"])
+        source = candidate["body"]
+        self.assertIn(r'deprecated("since 3.2. Use java.time and avoid \"legacy\" types.")', source)
+        attribute = self.run_helper('''package example;
+import java.lang.Deprecated;
+public @interface Options {
+    @Deprecated(forRemoval = true, since = "2.0") String value();
+}
+''')
+        self.assertEqual(attribute.returncode, 0, attribute.stderr.decode())
+        candidate = json.loads(attribute.stdout)
+        self.assertNotIn("implicitDeprecated", candidate)
+        body = candidate["body"]
+        self.assertIn('    deprecated("since 2.0. Scheduled for removal")\n    string value;\n', body)
+        with tempfile.TemporaryDirectory() as scratch:
+            path = Path(scratch) / "warning.d"
+            path.write_text("module warning;\n@safe:\n" + source + body
+                            + "void useBoth() { Settings settings; Options options; auto value = options.value; }\n")
+            for compiler in ("dmd", "ldc2"):
+                result = subprocess.run([compiler, "-preview=dip1000", "-de", "-o-", "-c", path],
+                                        cwd=scratch, capture_output=True, check=False)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(b"since 3.2. Use java.time", result.stderr)
+                self.assertIn(b"since 2.0. Scheduled for removal", result.stderr)
+
+    def test_non_jdk_deprecated_is_not_translated(self):
+        result = self.run_helper('''package example;
+import example.metadata.Deprecated;
+@Deprecated public @interface Settings { }
+''')
+        self.assertEqual(result.returncode, 2)
+        self.assertFalse(result.stdout)
+        self.assertIn(b"unsupported meta-annotation", result.stderr)
+
     def test_jdk_annotation_enum_imports_do_not_shadow_java_lang_types(self):
         result = self.run_helper("""package example;
 import java.lang.annotation.Retention;

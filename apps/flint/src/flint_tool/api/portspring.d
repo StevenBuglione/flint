@@ -258,7 +258,9 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
     foreach (ref field; candidate["members"].arrayNoRef)
         if ("reference" in field)
             referenceFields ~= field["name"].str;
-    const shadow = shadowedAttributeType(manifest, type, referenceFields);
+    const implicitDeprecated = "implicitDeprecated" in candidate;
+    const shadow = shadowedAttributeType(manifest, type, referenceFields,
+            implicitDeprecated !is null && implicitDeprecated.boolean);
     if (shadow.length)
     {
         error = type.decl.id ~ ": unsupported annotation type: ambiguous same-package " ~ shadow;
@@ -313,11 +315,13 @@ private string attributeBaseType(string type)
 }
 
 private string shadowedAttributeType(const ref Manifest manifest, const ref ApiType annotation,
-        const(string)[] resolvedFields = null)
+        const(string)[] resolvedFields = null, bool implicitDeprecated = false)
 {
     import std.algorithm.searching : canFind;
 
     bool[string] names;
+    if (implicitDeprecated)
+        names["Deprecated"] = true;
     foreach (ref field; annotation.decl.members)
     {
         const name = attributeBaseType(field.type);
@@ -615,6 +619,9 @@ unittest
     assert(error.indexOf("not a supported public type") >= 0, error);
     assert(supportedType(manifest, pin, "org.springframework.example.Missing", error) is null);
     assert(shadowedAttributeType(manifest, annotation) == "String");
+    manifest.types[1].decl.name = "Deprecated";
+    assert(!shadowedAttributeType(manifest, annotation).length);
+    assert(shadowedAttributeType(manifest, annotation, null, true) == "Deprecated");
 }
 
 @("enum manifest excludes interfaces and non-constant members")
