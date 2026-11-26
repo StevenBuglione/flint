@@ -1581,7 +1581,8 @@
     },
     "java/io/StringWriter/NegativeBufferSize.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception. The explicit-capacity constructor remains deferred."
     },
     "java/io/SystemInAvailable.java": {
       "status": "deferred",

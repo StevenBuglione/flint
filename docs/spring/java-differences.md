@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,105 | 233 | 1,871 | 15,212 |
+| framework | openjdk@21.0.13 | 1,104 | 233 | 1,871 | 15,213 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -9977,7 +9977,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 708 | 0 |
+| java.io | 709 | 0 |
 | java.lang | 2,016 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10863,6 +10863,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `java.io.ByteArrayOutputStream#toString()` | 2 | The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input. |
 | framework | `java.io.IOException#<init>(Throwable)` | 2 | The current constructor accepts a message and an optional cause. Java's cause-only constructor is pending. |
+| framework | `java.io.StringWriter#write(String)` | 2 | Java appends the text null for a null string. The existing plain D slice treats null as empty. The distinct nullable string contract requires R5. |
 | framework | `java.text.MessageFormat#<init>(String)` | 2 | Accepts a null pattern and unknown format types. The default locale also needs Locale.Category.FORMAT. |
 | framework | `java.text.MessageFormat#<init>(String,Locale)` | 2 | Accepts unknown format types when applying the pattern. |
 | framework | `java.text.MessageFormat#format(String,Object...)` | 2 | Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type. |

@@ -5583,7 +5583,7 @@
 "java.io.StringWriter":{"d":"flint.java.io.StringWriter","status":"ported"},
 "java.io.StringWriter#<init>()":{"d":"flint.java.io.StringWriter.this","status":"ported"},
 "java.io.StringWriter#toString()":{"d":"flint.java.io.StringWriter.toString","status":"ported"},
-"java.io.StringWriter#write(String)":{"d":"flint.java.io.StringWriter.write","status":"ported"},
+"java.io.StringWriter#write(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java appends the text null for a null string. The existing plain D slice treats null as empty. The distinct nullable string contract requires R5."},
 "java.io.UncheckedIOException":{"d":"flint.java.io.UncheckedIOException","status":"ported"},
 "java.io.UncheckedIOException#<init>(IOException)":{"d":"flint.java.io.UncheckedIOException.this","status":"ported"},
 "java.io.UncheckedIOException#<init>(String,IOException)":{"d":"flint.java.io.UncheckedIOException.this","status":"ported"},
