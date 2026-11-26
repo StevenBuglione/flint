@@ -15,7 +15,7 @@ final class JpaApplication
 
 /// Declares the inherited identifier and the second callback.
 @MappedSuperclass
-class OwnerBase
+class OwnerIdentity
 {
     /// Assigned primary key.
     @Id
@@ -26,10 +26,27 @@ class OwnerBase
 
     /// Runs after the listener.
     @PostLoad
-    void baseLoaded()
+    void identityLoaded()
     {
         assert(phase == 1);
         phase = 2;
+    }
+}
+
+/// Adds a persistent field and callback between the identifier class and concrete entity.
+@MappedSuperclass
+class OwnerBase : OwnerIdentity
+{
+    /// External code carried through row materialization.
+    @Column(nullable: false)
+    string code;
+
+    /// Runs after the identifier class's callback.
+    @PostLoad
+    void baseLoaded()
+    {
+        assert(phase == 2 && code == "C1");
+        phase = 3;
     }
 }
 
@@ -38,10 +55,16 @@ final class OwnerListener
 {
     /// Records listener invocation.
     @PostLoad
-    void afterLoad(Owner owner)
+    void afterLoad(OwnerIdentity owner)
     {
         assert(owner.id == 1 && owner.phase == 0);
         owner.phase = 1;
+    }
+
+    /// An unannotated overload that the generated callback must skip.
+    void afterLoad(Owner owner)
+    {
+        assert(owner is null, "unexpected exact-type PostLoad overload");
     }
 }
 
@@ -62,8 +85,8 @@ final class Owner : OwnerBase
     @PostLoad
     void ownerLoaded()
     {
-        assert(phase == 2 && name == "One" && birthDate == LocalDate.of(1968, 2, 29));
-        phase = 3;
+        assert(phase == 3 && name == "One" && birthDate == LocalDate.of(1968, 2, 29));
+        phase = 4;
     }
 
     /// Final lifecycle phase observed by the linked test.

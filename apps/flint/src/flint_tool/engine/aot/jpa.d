@@ -36,7 +36,11 @@ struct JpaCallback
     /// Callback method name.
     string method;
     /// Listener type and its declaring module, or empty for entity methods.
-    string listener, module_, parameterType;
+    string listener, module_;
+    /// The declared listener parameter type.
+    string parameterType;
+    /// Modules needed to name that parameter in the generated call.
+    string[] parameterModules;
 }
 
 /// An entity's full mapping in inherited-first attribute order.
@@ -228,7 +232,11 @@ private void addJpaListeners(ref JpaMapping mapping, const Model model, const re
             continue;
         }
         if (const method = postLoadMethod(model, *type, entityType, report))
-            mapping.postLoad ~= JpaCallback(method.name, type.fqn, type.module_, method.parameters[0].type.name);
+        {
+            const parameter = method.parameters[0].type;
+            mapping.postLoad ~= JpaCallback(method.name, type.fqn, type.module_, parameter.name,
+                    parameter.modules.dup);
+        }
     }
 }
 
@@ -262,7 +270,7 @@ private const(Method)* postLoadMethod(const Model model, return ref const TypeDe
                     method.file, method.line);
             continue;
         }
-        if (entityType.length && !acceptsListenerParameter(method, entityType))
+        if (entityType.length && !acceptsListenerParameter(method, model, entityType))
         {
             report("FLINT-E1143", "Jakarta listener parameter must accept " ~ entityType, method.file, method.line);
             continue;
@@ -279,9 +287,10 @@ private bool isPostLoadSignature(const ref Method method, bool listener)
         && method.returns.name == "void" && method.parameters.length == arity;
 }
 
-private bool acceptsListenerParameter(const ref Method method, string entityType)
+private bool acceptsListenerParameter(const ref Method method, const Model model, string entityType)
 {
     const parameter = method.parameters[0];
-    return !parameter.storage.canFind("ref") && !parameter.storage.canFind("out")
-        && (parameter.type.name == entityType || parameter.type.name == "object.Object");
+    const entity = model.type(entityType);
+    return entity !is null && !parameter.storage.canFind("ref")
+        && !parameter.storage.canFind("out") && entity.isA(parameter.type.name);
 }

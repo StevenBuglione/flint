@@ -41,10 +41,10 @@ string renderJpa(const(JpaMapping)[] mappings)
             const name = "jpaPostLoad_" ~ suffix ~ "_" ~ number.to!string;
             callbacks ~= "&" ~ name;
             const receiver = "cast(" ~ mapping.type ~ ") object";
-            const argument = callback.parameterType == "object.Object" ? "object" : receiver;
-            const call = callback.listener.length ? "flint.engine.aot.objects.statelessInstance!("
-                ~ callback.listener ~ ")()." ~ callback.method ~ "(" ~ argument ~ ")" : "(" ~ receiver
-                ~ ")." ~ callback.method ~ "()";
+            const call = callback.listener.length
+                ? "flint.engine.aot.objects.statelessInstance!(" ~ callback.listener ~ ")()."
+                ~ callback.method ~ "(" ~ listenerArgument(mapping.type, callback.parameterType,
+                        receiver) ~ ")" : "(" ~ receiver ~ ")." ~ callback.method ~ "()";
             declarations ~= "private void " ~ name ~ "(Object object)\n{\n    " ~ call ~ ";\n}\n\n";
         }
         import std.array : join;
@@ -58,6 +58,15 @@ string renderJpa(const(JpaMapping)[] mappings)
     return declarations ~ "private immutable(EntityMapping)[] jpaTables = [\n" ~ tables ~ "];\n\n"
         ~ "immutable(EntityMapping)[] jpaMappings() nothrow @nogc\n{\n    return jpaTables;\n}\n\n" ~ (
                 usesJpaDate(mappings) ? dateCodec : "");
+}
+
+private string listenerArgument(string entityType, string parameterType, string receiver)
+{
+    if (parameterType == "object.Object")
+        return "object";
+    if (parameterType == entityType)
+        return receiver;
+    return "cast(" ~ parameterType ~ ") (" ~ receiver ~ ")";
 }
 
 private string kindName(JpaFieldKind kind)
@@ -119,13 +128,14 @@ private string renderField(string type, const ref JpaField field, string id)
     }
     const castEntity = "    auto entity = cast(" ~ type ~ ") object;\n";
     const wrongType = "Error(Status.invalidArgument, \"wrong JPA entity type\")";
+    const assertEntity = "    assert(entity !is null, \"wrong JPA entity type\");\n";
     const readThunk = "private Result!AttributeValue jpaRead_" ~ id
         ~ "(Object object) nothrow @nogc\n{\n" ~ castEntity
         ~ "    if (entity is null)\n        return Result!AttributeValue(AttributeValue.init, "
         ~ wrongType ~ ");\n" ~ "    AttributeValue value;\n    value.kind = AttributeKind." ~ kindName(
                 field.kind) ~ ";\n" ~ read ~ "    return Result!AttributeValue(value);\n}\n\n";
     return readThunk ~ "private void jpaWrite_" ~ id ~ "(Object object, const ref AttributeValue value)\n{\n"
-        ~ castEntity ~ "    " ~ member ~ " = " ~ write ~ ";\n}\n\n";
+        ~ castEntity ~ assertEntity ~ "    " ~ member ~ " = " ~ write ~ ";\n}\n\n";
 }
 
 private enum dateCodec = `

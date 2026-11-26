@@ -232,6 +232,8 @@ private struct Emitter
                     {
                         imports[callback.module_] = true;
                         imports["flint.engine.aot.objects"] = true;
+                        foreach (name; callback.parameterModules)
+                            imports[name] = true;
                     }
             declarations ~= renderJpa(plan.jpaMappings);
         }

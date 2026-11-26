@@ -730,6 +730,9 @@ The first slice supports one primary table, one `@Id`, public instance fields of
 `LocalDate`, and a reachable no-argument constructor. Field ordinals start at the oldest mapped superclass.
 `@Transient` fields do not have ordinals. SQL column nullability and D field null representability are recorded
 separately. A unit with a DATE mapping also exports `jpaTypedCodec()` for the standard JDBC DATE conversions.
+The default table name is the entity name, and the default column name is the persistent field name. These are
+Jakarta's identity defaults. A Boot naming strategy input is needed before generating physical names that rely on
+Boot's camel-case-to-underscores convention.
 
 Generated thunks use checked casts, and the provider's separate exact-type guard validates concrete entities.
 `PostLoad` invokes fieldless listeners first, then mapped-superclass and entity callbacks. Stateful listeners

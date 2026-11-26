@@ -13,7 +13,7 @@ import std.process : environment;
 @safe:
 
 private immutable ResultBinding[] projection = [
-    ResultBinding(1, 1), ResultBinding(2, 2), ResultBinding(0, 3)
+    ResultBinding(2, 1), ResultBinding(3, 2), ResultBinding(0, 3), ResultBinding(1, 4)
 ];
 
 private void checkMetadata(scope const ref EntityMapping mapping)
@@ -22,7 +22,7 @@ private void checkMetadata(scope const ref EntityMapping mapping)
     assert(mapping.entityName == "Owner" && mapping.typeName == "jpa_probe.entity.Owner");
     assert(mapping.table == "jpa_seam_probe" && mapping.idOrdinals == [0]);
     assert(mapping.versionOrdinal == uint.max && !mapping.generatesId);
-    assert(mapping.attributes.length == 3 && mapping.postLoad.length == 3);
+    assert(mapping.attributes.length == 4 && mapping.postLoad.length == 4);
 }
 
 private void checkAttributes(scope const ref EntityMapping mapping)
@@ -34,14 +34,16 @@ private void checkAttributes(scope const ref EntityMapping mapping)
         assert(!columnNullable && !acceptsNull && insertable && !updatable);
     }
     with (mapping.attributes[1])
+        assert(ordinal == 1 && name == "code" && column == "code");
+    with (mapping.attributes[2])
     {
-        assert(ordinal == 1 && name == "name" && column == "name");
+        assert(ordinal == 2 && name == "name" && column == "name");
         assert(kind == AttributeKind.text && sqlType == Types.VARCHAR && columnLength == 255);
         assert(!columnNullable && acceptsNull && insertable && updatable);
     }
-    with (mapping.attributes[2])
+    with (mapping.attributes[3])
     {
-        assert(ordinal == 2 && name == "birthDate" && column == "birth_date");
+        assert(ordinal == 3 && name == "birthDate" && column == "birth_date");
         assert(kind == AttributeKind.date && sqlType == Types.DATE);
     }
 }
@@ -61,7 +63,7 @@ void main()
     assert(validateEntity(*mapping, owner).code == Status.ok);
     assert(validateEntity(*mapping, new Object).code == Status.invalidArgument);
     owner.birthDate = date;
-    const encoded = mapping.attributes[2].read(owner);
+    const encoded = mapping.attributes[3].read(owner);
     assert(encoded.ok && encoded.value.integer == date.toEpochDay());
 
     enablePostgres();
@@ -73,17 +75,18 @@ void main()
     auto connection = dataSource.getConnection();
     scope (exit)
         connection.close();
-    auto create = connection.prepareStatement(
-            "create table jpa_seam_probe (id bigint primary key, name text not null, birth_date date not null)");
+    auto create = connection.prepareStatement("create table jpa_seam_probe "
+            ~ "(id bigint primary key, code text not null, name text not null, birth_date date not null)");
     scope (exit)
         create.close();
     create.executeUpdate();
-    auto insert = connection.prepareStatement("insert into jpa_seam_probe (id, name, birth_date) values (1, 'One', ?)");
+    auto insert = connection.prepareStatement(
+            "insert into jpa_seam_probe (id, code, name, birth_date) values (1, 'C1', 'One', ?)");
     scope (exit)
         insert.close();
     codec.write(insert, 1, encoded.value);
     assert(insert.executeUpdate() == 1);
-    auto query = connection.prepareStatement("select name, birth_date, id from jpa_seam_probe where id = 1");
+    auto query = connection.prepareStatement("select name, birth_date, id, code from jpa_seam_probe where id = 1");
     scope (exit)
         query.close();
     auto rows = query.executeQuery();
@@ -93,5 +96,6 @@ void main()
     const row = materializeRow(planned.value, rows);
     assert(row.ok);
     const loaded = cast(const Owner) row.value;
-    assert(loaded.id == 1 && loaded.name == "One" && loaded.birthDate == date && loaded.loadedPhase() == 3);
+    assert(loaded.id == 1 && loaded.code == "C1" && loaded.name == "One");
+    assert(loaded.birthDate == date && loaded.loadedPhase() == 4);
 }
