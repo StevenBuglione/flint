@@ -690,6 +690,13 @@ The matched venus web probe moved from 537,009 to 536,737 linked bytes and from 
 DMD template instances at `504ef130` and `bdd16d0e`. The converter tests pin multipart framing,
 overlapping ranges, deferred output and ownership of buffered streaming bodies.
 
+Ordinary resource output uses the bounded write buffer and the same deferred body adapter as
+region output. Buffered input is copied into the returned resource, which can outlive the HTTP
+message and report its length without consuming its one-shot stream. The matched venus web probe
+stayed at 536,737 linked bytes and moved from 11,212 to 11,284 DMD template instances at
+`4860be58` and `f1cd24f2`. The gs-rest Oz link map traces `uuid.o` to Phobos `process.o` and
+places the converter's UUID generator in discarded sections.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

@@ -4077,7 +4077,7 @@ package(flint) string[] tokenizeToStringArray(string str, string delimiters) pur
     return tokens;
 }
 
-private string trimmedAscii(string text) pure nothrow @nogc
+package(flint) string trimmedAscii(string text) pure nothrow @nogc
 {
     size_t start, end = text.length;
     while (start < end && text[start] <= ' ')

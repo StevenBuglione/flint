@@ -9060,7 +9060,6 @@
       "org/springframework/http/converter/DefaultHttpMessageConvertersTests.java",
       "org/springframework/http/converter/FormHttpMessageConverterTests.java",
       "org/springframework/http/converter/ObjectToStringHttpMessageConverterTests.java",
-      "org/springframework/http/converter/ResourceHttpMessageConverterTests.java",
       "org/springframework/http/converter/cbor/JacksonCborHttpMessageConverterTests.java",
       "org/springframework/http/converter/feed/AtomFeedHttpMessageConverterTests.java",
       "org/springframework/http/converter/feed/RssChannelHttpMessageConverterTests.java",

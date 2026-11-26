@@ -559,8 +559,24 @@
       "status": "deferred"
     },
     "org/springframework/http/converter/ResourceHttpMessageConverterTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/web/tests/resource_http_message_converter_tests.d",
+      "methods": {
+        "ported": [
+          "canReadResource",
+          "canWriteResource",
+          "shouldNotReadAsUnknownType",
+          "shouldNotReadInputStreamResource",
+          "shouldNotReadStreamResourceAsUnknownType",
+          "shouldReadImageResource",
+          "shouldReadInputStreamResource",
+          "shouldWriteImageResource",
+          "writeByteArrayNullMediaType",
+          "writeContentInputStreamThrowingNullPointerException",
+          "writeContentNotClosingInputStream",
+          "writeContentNotGettingInputStream"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/http/converter/ResourceRegionHttpMessageConverterTests.java": {
       "d": "framework/web/tests/resource_region_http_message_converter_tests.d",

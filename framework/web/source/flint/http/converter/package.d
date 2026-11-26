@@ -4,6 +4,7 @@
 Ported from spring-projects/spring-framework v7.1.0,
 spring-web/src/main/java/org/springframework/http/converter/ (HttpMessageConverter.java,
 AbstractHttpMessageConverter.java, StringHttpMessageConverter.java, ByteArrayHttpMessageConverter.java,
+ResourceHttpMessageConverter.java,
 HttpMessageConversionException.java, HttpMessageNotReadableException.java, HttpMessageNotWritableException.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
@@ -15,15 +16,16 @@ module flint.http.converter;
 
 import flint.core : NestedRuntimeException;
 import flint.core.convert : TypeDescriptor;
-import flint.core.io : InputStreamResource, Resource;
+import flint.core.io : AbstractResource, ByteArrayResource, ClassPathResource, DescriptiveResource,
+    FileSystemResource, InputStreamResource, InputStreamSource, Resource;
 import flint.core.io.support : ResourceRegion;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : typeNameOf;
 import flint.engine.aot.text : decodeUtf8;
 import flint.http : HttpHeaders, HttpInputMessage, HttpOutputMessage, MediaType, MediaTypeFactory,
-    StreamingHttpOutputMessage, decimal;
-import flint.java.io : IOException, InputStream, OutputStream;
-import flint.java.lang : IllegalArgumentException, UnsupportedOperationException;
+    StreamingHttpOutputMessage, decimal, equalsIgnoreAsciiCase, trimmedAscii;
+import flint.java.io : ByteArrayInputStream, FileNotFoundException, IOException, InputStream, OutputStream;
+import flint.java.lang : IllegalArgumentException, NullPointerException, UnsupportedOperationException;
 import flint.java.nio.charset : Charset, StandardCharsets;
 import flint.java.util : RawCollection;
 
@@ -146,6 +148,18 @@ abstract class AbstractHttpMessageConverter : HttpMessageConverter
         auto headers = outputMessage.getHeaders();
         addDefaultHeaders(headers, value, contentType);
         writeInternal(value, outputMessage);
+    }
+
+    /// Whether the value can be written more than once.
+    bool canWriteRepeatedly(Any value, scope const(MediaType)* contentType)
+    {
+        return false;
+    }
+
+    /// The legacy repeatability hook.
+    protected bool supportsRepeatableWrites(Any value)
+    {
+        return canWriteRepeatedly(value, null);
     }
 
     /// Spring's `addDefaultHeaders`: a concrete Content-Type with the default charset, and Content-Length when known.
@@ -281,12 +295,6 @@ abstract class AbstractGenericHttpMessageConverter : AbstractHttpMessageConverte
             writeInternal(value, type, output);
     }
 
-    /// Whether the value can be written more than once.
-    bool canWriteRepeatedly(Any value, scope const(MediaType)* contentType)
-    {
-        return false;
-    }
-
     protected override void writeInternal(Any value, HttpOutputMessage output)
     {
         writeInternal(value, null, output);
@@ -297,14 +305,14 @@ abstract class AbstractGenericHttpMessageConverter : AbstractHttpMessageConverte
 
 private final class ConverterStreamingBody : StreamingHttpOutputMessage.Body
 {
-    private AbstractGenericHttpMessageConverter converter;
+    private AbstractHttpMessageConverter converter;
     private HttpHeaders headers;
     private Any value;
     private const(TypeDescriptor) type;
     private MediaType mediaType;
     private bool hasMediaType;
 
-    this(AbstractGenericHttpMessageConverter converter, HttpHeaders headers, Any value,
+    this(AbstractHttpMessageConverter converter, HttpHeaders headers, Any value,
             const TypeDescriptor type, scope const(MediaType)* contentType)
     {
         this.converter = converter;
@@ -318,7 +326,11 @@ private final class ConverterStreamingBody : StreamingHttpOutputMessage.Body
 
     void writeTo(OutputStream output)
     {
-        converter.writeInternal(value, type, new StreamHttpOutputMessage(headers, output));
+        auto message = new StreamHttpOutputMessage(headers, output);
+        if (auto generic = cast(AbstractGenericHttpMessageConverter) converter)
+            generic.writeInternal(value, type, message);
+        else
+            converter.writeInternal(value, message);
     }
 
     bool repeatable()
@@ -412,7 +424,7 @@ class ResourceRegionHttpMessageConverter : AbstractGenericHttpMessageConverter
     }
 
     /// Spring's original repeatable-write hook.
-    protected bool supportsRepeatableWrites(Any value)
+    protected override bool supportsRepeatableWrites(Any value)
     {
         return canWriteRepeatedly(value, null);
     }
@@ -589,6 +601,330 @@ class ResourceRegionHttpMessageConverter : AbstractGenericHttpMessageConverter
             count -= n;
         }
     }
+}
+
+/// Converts to and from Spring's Resource types.
+class ResourceHttpMessageConverter : AbstractHttpMessageConverter
+{
+    private bool supportsReadStreaming;
+
+    this()
+    {
+        this(true);
+    }
+
+    this(bool supportsReadStreaming)
+    {
+        super(MediaType.ALL);
+        this.supportsReadStreaming = supportsReadStreaming;
+    }
+
+    protected override bool supports(string typeName)
+    {
+        return typeName == typeNameOf!Resource || typeName == typeNameOf!AbstractResource
+            || typeName == typeNameOf!ByteArrayResource
+            || typeName == typeNameOf!InputStreamResource
+            || typeName == typeNameOf!ClassPathResource || typeName == typeNameOf!FileSystemResource
+            || typeName == typeNameOf!DescriptiveResource;
+    }
+
+    protected override Any readInternal(string typeName, HttpInputMessage inputMessage)
+    {
+        const bool streaming = supportsReadStreaming && typeName == typeNameOf!InputStreamResource;
+        if (!streaming && typeName != typeNameOf!Resource && typeName != typeNameOf!AbstractResource
+                && typeName != typeNameOf!ByteArrayResource && typeName != typeNameOf!Object
+                && typeName != typeNameOf!InputStreamSource)
+            throw new HttpMessageNotReadableException("Unsupported resource class: " ~ typeName, null, inputMessage);
+
+        auto headers = inputMessage.getHeaders();
+        const name = dispositionFilename(headers.getFirst(HttpHeaders.CONTENT_DISPOSITION));
+        auto bytes = inputMessage.getBody().idup;
+        if (streaming)
+        {
+            const length = headers.getContentLength();
+            return Any.of(new UploadedStreamResource(bytes, name, length == -1 ? bytes.length : length));
+        }
+        return Any.of(new UploadedByteResource(bytes, name));
+    }
+
+    override void write(Any value, scope const(MediaType)* contentType, HttpOutputMessage output)
+    {
+        auto streaming = cast(StreamingHttpOutputMessage) output;
+        if (streaming is null)
+        {
+            super.write(value, contentType, output);
+            return;
+        }
+        auto headers = output.getHeaders();
+        super.addDefaultHeaders(headers, value, contentType);
+        streaming.setBody(new ConverterStreamingBody(this, headers, value, null, contentType));
+    }
+
+    /// Adds the resource's default headers without writing its body.
+    void addDefaultHeaders(HttpOutputMessage message, Resource resource, scope const(MediaType)* contentType)
+    {
+        super.addDefaultHeaders(message.getHeaders(), Any.of(resource), contentType);
+    }
+
+    protected override MediaType* getDefaultContentType(Any value)
+    {
+        auto result = new MediaType;
+        *result = MediaTypeFactory.getMediaType(asResource(value)).orElse(MediaType.APPLICATION_OCTET_STREAM);
+        return result;
+    }
+
+    protected override long getContentLength(Any value, scope const(MediaType)* contentType)
+    {
+        auto resource = asResource(value);
+        if (typeid(cast(Object) resource) is typeid(InputStreamResource))
+            return -1;
+        const length = resource.contentLength();
+        return length < 0 ? -1 : length;
+    }
+
+    override bool canWriteRepeatedly(Any value, scope const(MediaType)* contentType)
+    {
+        return cast(InputStreamResource) asResource(value) is null;
+    }
+
+    protected override void writeInternal(Any value, HttpOutputMessage output)
+    {
+        writeContent(asResource(value), output);
+    }
+
+    /// Writes the resource and releases the opened input even when a read fails.
+    protected void writeContent(Resource resource, HttpOutputMessage output)
+    {
+        try
+        {
+            auto input = resource.getInputStream();
+            if (input is null)
+                return;
+            scope (exit)
+                closeResource(input);
+            try
+            {
+                ubyte[4096] chunk;
+                for (;;)
+                {
+                    const count = input.read(chunk[]);
+                    if (count <= 0)
+                        break;
+                    output.writeBody(chunk[0 .. count]);
+                }
+            }
+            catch (NullPointerException)
+            {
+                // Preserve Spring's handling of streams that throw while reading (SPR-13620).
+            }
+        }
+        catch (FileNotFoundException)
+        {
+            // The resource may disappear between header preparation and opening it.
+        }
+    }
+
+    private static Resource asResource(Any value)
+    {
+        auto resource = cast(Resource) value.asObject();
+        if (resource is null)
+            throw new HttpMessageNotWritableException("Expected a Resource");
+        return resource;
+    }
+
+    private static void closeResource(InputStream input)
+    {
+        try
+            input.close();
+        catch (Exception)
+        {
+            // A close failure does not replace the original write outcome (SPR-12999).
+        }
+    }
+}
+
+private final class UploadedByteResource : ByteArrayResource
+{
+    private string filename;
+
+    this(immutable(ubyte)[] bytes, string filename)
+    {
+        super(bytes);
+        this.filename = filename;
+    }
+
+    override string getFilename()
+    {
+        return filename;
+    }
+}
+
+private final class UploadedStreamResource : InputStreamResource
+{
+    private string filename;
+    private long length;
+
+    this(immutable(ubyte)[] bytes, string filename, long length)
+    {
+        super(new ByteArrayInputStream(bytes));
+        this.filename = filename;
+        this.length = length;
+    }
+
+    override string getFilename()
+    {
+        return filename;
+    }
+
+    override long contentLength()
+    {
+        return length;
+    }
+}
+
+// The filename subset of ContentDisposition.java. The complete value and builder are a separate port.
+private string dispositionFilename(string header)
+{
+    if (header is null)
+        return null;
+    size_t offset = indexOfByte(header, ';');
+    if (trimmedAscii(header[0 .. offset]).length == 0)
+        throw new IllegalArgumentException("Content-Disposition header must not be empty");
+    string filename;
+    while (offset < header.length)
+    {
+        const start = ++offset;
+        offset = parameterEnd(header, offset);
+        const part = trimmedAscii(header[start .. offset]);
+        if (part.length == 0)
+            continue;
+        const split = indexOfByte(part, '=');
+        if (split == part.length)
+            throw new IllegalArgumentException("Invalid content disposition format");
+        const attribute = part[0 .. split];
+        auto value = part[split + 1 .. $];
+        if (value.length >= 2 && value[0] == '"' && value[$ - 1] == '"')
+            value = value[1 .. $ - 1];
+        if (equalsIgnoreAsciiCase(attribute, "filename*"))
+            filename = decodeExtendedFilename(value);
+        else if (filename is null && equalsIgnoreAsciiCase(attribute, "filename"))
+            filename = decodeQuotedFilename(value);
+    }
+    return filename;
+}
+
+private size_t parameterEnd(string header, size_t offset) pure nothrow @nogc
+{
+    bool quoted, escaped;
+    for (; offset < header.length; offset++)
+    {
+        const c = header[offset];
+        if (c == ';' && !quoted)
+            break;
+        if (c == '"' && !escaped)
+            quoted = !quoted;
+        escaped = c == '\\' && !escaped;
+    }
+    return offset;
+}
+
+private string decodeQuotedFilename(string value)
+{
+    foreach (offset, c; value)
+    {
+        if (c != '\\')
+            continue;
+        char[] name = value[0 .. offset].dup;
+        for (; offset < value.length; offset++)
+        {
+            if (value[offset] == '\\' && offset + 1 < value.length && (value[offset + 1] == '\\'
+                    || value[offset + 1] == '"'))
+                offset++;
+            name ~= value[offset];
+        }
+        return name.idup;
+    }
+    return value;
+}
+
+private string decodeExtendedFilename(string value)
+{
+    import std.utf : encode;
+
+    const charset = extractFilenameCharset(value);
+    auto bytes = decodeFilenamePercentEscapes(value);
+    char[] name;
+    if (charset == StandardCharsets.UTF_8)
+    {
+        size_t pos;
+        while (pos < bytes.length)
+            encode(name, decodeUtf8(bytes, pos));
+    }
+    else
+        foreach (c; bytes)
+            encode(name, charset == StandardCharsets.US_ASCII && c >= 128 ? '\uFFFD' : cast(dchar) c);
+    return name.length == 0 ? "" : name.idup;
+}
+
+private Charset extractFilenameCharset(ref string value)
+{
+    const first = indexOfByte(value, '\'');
+    if (first == value.length)
+        return StandardCharsets.US_ASCII;
+    const rest = value[first + 1 .. $];
+    const second = indexOfByte(rest, '\'');
+    if (second == rest.length)
+        return StandardCharsets.US_ASCII;
+    const charset = Charset.forName(trimmedAscii(value[0 .. first]));
+    if (charset != StandardCharsets.UTF_8 && charset != StandardCharsets.ISO_8859_1)
+        throw new IllegalArgumentException("Charset must be UTF-8 or ISO-8859-1");
+    value = rest[second + 1 .. $];
+    return charset;
+}
+
+private char[] decodeFilenamePercentEscapes(string value)
+{
+    char[] bytes;
+    for (size_t i = 0; i < value.length; i++)
+    {
+        const c = value[i];
+        if (c == '%')
+        {
+            if (value.length - i < 3 || hexDigit(value[i + 1]) < 0 || hexDigit(value[i + 2]) < 0)
+                throw new IllegalArgumentException("Invalid RFC 5987 filename");
+            bytes ~= cast(char)(hexDigit(value[i + 1]) * 16 + hexDigit(value[i + 2]));
+            i += 2;
+        }
+        else if (isFilenameAttributeChar(c))
+            bytes ~= c;
+        else
+            throw new IllegalArgumentException("Invalid RFC 5987 filename");
+    }
+
+    return bytes;
+}
+
+private bool isFilenameAttributeChar(char c) pure nothrow @nogc
+{
+    enum punctuation = "!#$&+-.^_\x60|~";
+    const lower = c | 0x20;
+    return (lower >= 'a' && lower <= 'z') || (c >= '0' && c <= '9') || indexOfByte(punctuation, c) < punctuation.length;
+}
+
+private size_t indexOfByte(string text, char target) pure nothrow @nogc
+{
+    foreach (offset, c; text)
+        if (c == target)
+            return offset;
+    return text.length;
+}
+
+private int hexDigit(char c) pure nothrow @nogc
+{
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    const lower = c | 0x20;
+    return lower >= 'a' && lower <= 'f' ? lower - 'a' + 10 : -1;
 }
 
 /// `StringHttpMessageConverter`: `string` bodies, `text/plain` and `*/*`.

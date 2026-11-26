@@ -1,0 +1,5 @@
+{
+ "id": "D-WEB-4",
+ "deviation": "`ResourceHttpMessageConverter` recognizes the built-in resource classes by their canonical D names. Reads snapshot the filename and own a copy of the HTTP body, including single-use stream resources. The filename reader handles ordinary and RFC 5987 parameters. RFC 2047 encoded-word decoding is deferred with the full `ContentDisposition` port.",
+ "reason": "Flint's message supplies bytes and its converter APIs take a class name. Owning those bytes lets a returned resource outlive the input message."
+}
