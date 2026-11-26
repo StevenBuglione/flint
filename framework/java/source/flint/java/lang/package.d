@@ -15,6 +15,8 @@ $(UL
 +/
 module flint.java.lang;
 
+public import flint.java.lang.boolean : Boolean;
+
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
 public import flint.java.classref : ClassRef, classOf; // a leaf, so annotation-only clients skip this module
 import flint.java.util : Iterator; // module scope: a template-scoped import breaks -i builds (forward references)
@@ -611,33 +613,6 @@ struct Long
     static int hashCode(long value) pure nothrow @nogc
     {
         return cast(int)(value ^ (cast(ulong) value >>> 32));
-    }
-}
-
-/// Java's `Boolean` statics.
-struct Boolean
-{
-    /// `true` exactly when `s` equals `"true"`, ignoring case; anything else, null included, is false.
-    static bool parseBoolean(string s) pure nothrow @nogc
-    {
-        if (s.length != 4)
-            return false;
-        foreach (i, c; "true")
-            if ((s[i] | 0x20) != c)
-                return false;
-        return true;
-    }
-
-    /// `"true"` or `"false"`.
-    static string toString(bool b) pure nothrow @nogc
-    {
-        return b ? "true" : "false";
-    }
-
-    /// Java's `Boolean.hashCode(boolean)`: 1231 or 1237.
-    static int hashCode(bool value) pure nothrow @nogc
-    {
-        return value ? 1231 : 1237;
     }
 }
 

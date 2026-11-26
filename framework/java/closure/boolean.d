@@ -1,6 +1,6 @@
 module app;
 
-import flint.java.lang : Boolean;
+import flint.java.lang.boolean : Boolean;
 
 @safe:
 

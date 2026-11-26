@@ -1,4 +1,8 @@
 {
+  "flint.java.lang.boolean": {
+    "incremental_linked_bytes": 150,
+    "template_instances": 2
+  },
   "flint.java.object": {
     "incremental_linked_bytes": 1184,
     "template_instances": 35

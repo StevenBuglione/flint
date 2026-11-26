@@ -38,11 +38,6 @@
       }
     },
     "flint.java.lang": {
-      "boolean": {
-        "data": [],
-        "leaves": [],
-        "source": "closure/boolean.d"
-      },
       "double": {
         "data": [],
         "leaves": [],
