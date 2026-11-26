@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/model/{ApiKey,ChatModelDescription,EmbeddingModelDescription,ModelDescription,ModelOptions,ModelRequest,ModelResult,NoopApiKey,ResultMetadata,SimpleApiKey}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/model/{ApiKey,ChatModelDescription,EmbeddingModelDescription,ModelDescription,ModelOptions,ModelRequest,ModelResult,NoopApiKey,ResultMetadata,SimpleApiKey,SpringAIModelProperties,SpringAIModels}.java
 // Modified by the Flint authors.
 module flint.ai.model;
 
@@ -102,6 +102,76 @@ interface ModelResult(T)
 /// Marker for metadata associated with the result of an AI model.
 interface ResultMetadata
 {
+}
+
+/// Property keys that select the provider for each type of AI model.
+final class FlintAIModelProperties
+{
+    @disable this();
+
+    /// Common prefix for model provider selection.
+    enum string MODEL_PREFIX = "flint.ai.model";
+    /// Selects a chat model provider.
+    enum string CHAT_MODEL = MODEL_PREFIX ~ ".chat";
+    /// Selects an embedding model provider.
+    enum string EMBEDDING_MODEL = MODEL_PREFIX ~ ".embedding";
+    /// Selects a text embedding model provider.
+    enum string TEXT_EMBEDDING_MODEL = MODEL_PREFIX ~ ".embedding.text";
+    /// Selects a multimodal embedding model provider.
+    enum string MULTI_MODAL_EMBEDDING_MODEL = MODEL_PREFIX ~ ".embedding.multimodal";
+    /// Selects an image generation model provider.
+    enum string IMAGE_MODEL = MODEL_PREFIX ~ ".image";
+    /// Selects an audio transcription model provider.
+    enum string AUDIO_TRANSCRIPTION_MODEL = MODEL_PREFIX ~ ".audio.transcription";
+    /// Selects a speech synthesis model provider.
+    enum string AUDIO_SPEECH_MODEL = MODEL_PREFIX ~ ".audio.speech";
+    /// Selects a moderation model provider.
+    enum string MODERATION_MODEL = MODEL_PREFIX ~ ".moderation";
+    /// Selects a decision model provider.
+    enum string DECISION_MODEL = MODEL_PREFIX ~ ".decision";
+}
+
+/// Provider identifiers used in model selection properties.
+final class FlintAIModels
+{
+    @disable this();
+
+    /// Values used in model provider selection properties.
+    enum string ANTHROPIC = "anthropic";
+    /// ditto
+    enum string AZURE_OPENAI = "azure-openai";
+    /// ditto
+    enum string BEDROCK_COHERE = "bedrock-cohere";
+    /// ditto
+    enum string BEDROCK_CONVERSE = "bedrock-converse";
+    /// ditto
+    enum string BEDROCK_TITAN = "bedrock-titan";
+    /// ditto
+    enum string MISTRAL = "mistral";
+    /// ditto
+    enum string OCI_GENAI = "oci-genai";
+    /// ditto
+    enum string OLLAMA = "ollama";
+    /// ditto
+    enum string OPENAI = "openai";
+    /// ditto
+    enum string OPENAI_SDK = "openai-sdk";
+    /// ditto
+    enum string POSTGRESML = "postgresml";
+    /// ditto
+    enum string STABILITY_AI = "stabilityai";
+    /// ditto
+    enum string TRANSFORMERS = "transformers";
+    /// ditto
+    enum string VERTEX_AI = "vertexai";
+    /// ditto
+    enum string GOOGLE_GEN_AI = "google-genai";
+    /// ditto
+    enum string DEEPSEEK = "deepseek";
+    /// ditto
+    enum string ELEVEN_LABS = "elevenlabs";
+    /// ditto
+    enum string SYSTEMONE = "systemone";
 }
 
 /// Supplies the current credential for a model request.

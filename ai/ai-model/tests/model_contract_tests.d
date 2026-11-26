@@ -1,8 +1,29 @@
 module model_contract_tests;
 
-import flint.ai.model : ModelOptions, ModelRequest, ModelResult, ResultMetadata;
+import flint.ai.model : FlintAIModelProperties, FlintAIModels, ModelOptions, ModelRequest,
+    ModelResult, ResultMetadata;
 
 @safe:
+
+@("model property keys use the Flint prefix and preserve nested options")
+unittest
+{
+    static assert(!__traits(compiles, new FlintAIModelProperties()));
+    assert(FlintAIModelProperties.MODEL_PREFIX == "flint.ai.model");
+    assert(FlintAIModelProperties.EMBEDDING_MODEL == "flint.ai.model.embedding");
+    assert(FlintAIModelProperties.TEXT_EMBEDDING_MODEL == "flint.ai.model.embedding.text");
+    assert(FlintAIModelProperties.MULTI_MODAL_EMBEDDING_MODEL == "flint.ai.model.embedding.multimodal");
+    assert(FlintAIModelProperties.AUDIO_TRANSCRIPTION_MODEL == "flint.ai.model.audio.transcription");
+}
+
+@("provider selectors preserve external identifiers")
+unittest
+{
+    static assert(!__traits(compiles, new FlintAIModels()));
+    assert(FlintAIModels.BEDROCK_CONVERSE == "bedrock-converse");
+    assert(FlintAIModels.OPENAI_SDK == "openai-sdk");
+    assert(FlintAIModels.STABILITY_AI == "stabilityai");
+}
 
 @("model requests expose typed instructions and optional model options")
 unittest
