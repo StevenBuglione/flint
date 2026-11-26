@@ -32,6 +32,30 @@ def package_path(package):
     """A package's directory: in its repo's checkout with --workspace, else under ROOT."""
     return WORKSPACE.package_dir(package, ROOT) if WORKSPACE.file else ROOT/'packages'/package
 
+def native_packages(rows, root=None):
+    """The packages a native DUB block may go to, by name: every policy/packages.json package, and each
+    policy/framework.json module that a native-lock library names among its consumers (framework/java-zip over the
+    pinned zlib, the javax.crypto facades over OpenSSL). Each value has the package's `repo`, its home-relative
+    `directory`, its bench `baseline` directory (None when it declares none) and its flint `dependencies`."""
+    root = root or ROOT
+    packages = json.loads((root/'policy/packages.json').read_text())['packages']
+    found = {name: {'repo': meta.get('repo', 'flint'), 'directory': 'packages/' + name,
+                    'baseline': 'packages/' + name + '/bench/baseline', 'dependencies': list(meta.get('dependencies', []))}
+             for name, meta in packages.items()}
+    framework = root/'policy/framework.json'
+    modules = json.loads(framework.read_text())['modules'] if framework.is_file() else {}
+    consumers = {consumer for row in rows.values() for consumer in row['consumers']}
+    for name in sorted(consumers & set(modules) - set(found)):
+        meta = modules[name]
+        found[name] = {'repo': meta.get('repo', 'framework'), 'directory': meta['directory'],
+                       'baseline': (meta.get('bench') or {}).get('baseline'),
+                       'dependencies': list(meta.get('dependencies', []))}
+    return found
+
+def native_directory(package):
+    """A native_packages() entry's directory: in its repo's checkout with --workspace, else under ROOT."""
+    return WORKSPACE.locate(package['repo'], package['directory'], ROOT) if WORKSPACE.file else ROOT/package['directory']
+
 def flint_checkout():
     """The flint repo's checkout, which holds native/ffi and the Conan recipe index."""
     return WORKSPACE.checkout('flint') if WORKSPACE.file else ROOT
@@ -635,7 +659,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
     def dub_blocks(self):
         """Return deterministic, verified provider/linker blocks without mutating files."""
         blocks={}
-        packages=json.loads((ROOT/'policy/packages.json').read_text())['packages'];available=set(self.receipt['libraries'])
+        packages=native_packages(self.rows);available=set(self.receipt['libraries'])
         tag=self.dub_platform()
         for package in packages:
             direct=sorted(n for n in available if package in self.rows[n]['consumers'])
@@ -647,7 +671,7 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                     if digest(Path(reference['path'])) != reference['sha256']:
                         raise RuntimeError('Installed mail reference archive changed')
                     flags.append(reference['path'])
-            for part in ffi_archives_for(packages[package].get('repo','flint')):
+            for part in ffi_archives_for(packages[package]['repo']):
                 ffi=self.receipt['ffi_archives'][part]
                 if digest(Path(ffi['path']))!=ffi['sha256']:raise RuntimeError('Installed Flint FFI archive changed: '+ffi['path'])
                 flags.append(ffi['path'])
@@ -685,8 +709,9 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
     def dub_recipe_blocks(self):
         """Return exact generated blocks by repository-relative recipe path."""
         recipes = {}
+        packages = native_packages(self.rows)
         for package, block in self.dub_blocks().items():
-            root = 'packages/' + package
+            root = packages[package]['directory']
             recipes[root + '/dub.sdl'] = block
             if package == 'engine-rpc':
                 # Both executables call fixture symbols. Place the fixture before
@@ -698,17 +723,19 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
                 if not reference or reference != self.wasi_reference_archive_receipt():
                     raise RuntimeError('Installed WASI reference archive changed; rebuild the native shims')
                 block = before_first_link_line(block, self.link_line(reference['path']))
-            recipes[root + '/bench/baseline/dub.sdl'] = block
+            if packages[package]['baseline']:
+                recipes[packages[package]['baseline'] + '/dub.sdl'] = block
         return recipes
 
     def emit_dub(self):
         if self.a.phase != 'build':
             self.plan.append({'emit_dub': 'verified installed archives only'})
             return
+        packages = native_packages(self.rows)
         for relative, block in self.dub_recipe_blocks().items():
-            # packages/<name>/... lives in the checkout of the package's repo.
-            package = relative.split('/')[1]
-            path = package_path(package) / '/'.join(relative.split('/')[2:])
+            # A package's recipes live in the checkout of the package's repo.
+            package = next(meta for meta in packages.values() if relative.startswith(meta['directory'] + '/'))
+            path = native_directory(package) / relative[len(package['directory']) + 1:]
             text = re.sub(r'\n// BEGIN FLINT NATIVE\n.*?// END FLINT NATIVE\n', '\n', path.read_text(), flags=re.S)
             if relative == 'packages/engine-rpc/dub.sdl':
                 text = self.emit_rpc_test_archive(text)
@@ -716,12 +743,13 @@ install(FILES "{runtime}/protobuf-c.h" DESTINATION include/protobuf-c)
 
 RETARGET_MARKER = 'dub-target'
 
-def native_recipes():
-    """Every dub.sdl under the packages' directories that holds a native block (the package and its benches)."""
-    packages = json.loads((ROOT/'policy/packages.json').read_text())['packages']
+def native_recipes(lock=None):
+    """Every dub.sdl under the native packages' directories that holds a native block (the package and its benches)."""
+    lock = lock or json.loads((ROOT/'policy/native-lock.json').read_text())
+    packages = native_packages({row['name']: row for row in lock['libraries']})
     found = []
     for name in sorted(packages):
-        directory = package_path(name)
+        directory = native_directory(packages[name])
         for recipe in sorted(directory.rglob('dub.sdl')) if directory.is_dir() else []:
             if not ({'.dub', '.flint'} & set(recipe.relative_to(directory).parts)) and \
                     '// BEGIN FLINT NATIVE' in recipe.read_text(encoding='utf-8'):
@@ -830,7 +858,7 @@ def main():
     if args.profile in ('rest','http','sql','mq') and args.target.startswith('linux'):names.append('liburing')
     if not names:parser.error('Select --profile or --library')
     if args.target.startswith('linux'):
-        packages=json.loads((ROOT/'policy/packages.json').read_text())['packages']
+        packages=native_packages(builder.rows)
         def needs_reactor(package, seen=None):
             seen=set() if seen is None else seen
             if package=='engine-reactor':return True
