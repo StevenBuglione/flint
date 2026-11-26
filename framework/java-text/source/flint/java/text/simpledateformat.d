@@ -417,7 +417,11 @@ private Element[] compilePattern(string pattern)
             ++j;
         const count = cast(int)(j - i);
         if (c == 'X' && count > 3)
-            throw new IllegalArgumentException("invalid ISO 8601 format: length=" ~ cast(char)('0' + count % 10));
+        {
+            import flint.engine.aot.text : decimal;
+
+            throw new IllegalArgumentException("invalid ISO 8601 format: length=" ~ decimal(count));
+        }
         elements ~= Element(c, count, null);
         i = j;
     }

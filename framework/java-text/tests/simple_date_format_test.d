@@ -321,3 +321,19 @@ unittest
     auto format = new ExplicitFormat;
     assert(format.getCalendar() is null);
 }
+
+@("SimpleDateFormat: an invalid ISO zone count reports its full width")
+unittest
+{
+    auto format = new SimpleDateFormat("'stable:'yyyy", Locale.US);
+    format.setTimeZone(TimeZone.getTimeZone("UTC"));
+    try
+    {
+        format.applyPattern("XXXXXXXXXX");
+        assert(false, "invalid ISO zone pattern was accepted");
+    }
+    catch (IllegalArgumentException failure)
+        assert(failure.msg == "invalid ISO 8601 format: length=10");
+    assert(format.toPattern() == "'stable:'yyyy");
+    assert(format.format(new Date(0)) == "stable:1970");
+}
