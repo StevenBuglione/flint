@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 164 | 272 | 0 | 15,360 |
+| ai | spring-ai@v2.1.0 | 168 | 278 | 0 | 15,350 |
 | boot | spring-boot@v4.2.0 | 43 | 28 | 2,133 | 13,399 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,464 | 1,379 | 4,848 | 30,143 |
@@ -357,6 +357,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#<init>(String,ModalityType,MimeType,Object)` | `flint.ai.embedding.EmbeddingResultMetadata.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#getDocumentData()` | `flint.ai.embedding.EmbeddingResultMetadata.getDocumentData` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata.ModalityUtils#getModalityType(MimeType)` | `flint.ai.embedding.EmbeddingResultMetadata.ModalityUtils.getModalityType` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.ai.evaluation
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,float,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#equals(Object)` | `flint.ai.evaluation.EvaluationResponse.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#getMetadata()` | `flint.ai.evaluation.EvaluationResponse.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#hashCode()` | `flint.ai.evaluation.EvaluationResponse.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#toString()` | `flint.ai.evaluation.EvaluationResponse.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.springframework.ai.image
 
@@ -8192,7 +8203,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.elevenlabs.api | 0 | 290 |
 | org.springframework.ai.embedding | 50 | 0 |
 | org.springframework.ai.embedding.observation | 37 | 0 |
-| org.springframework.ai.evaluation | 23 | 0 |
+| org.springframework.ai.evaluation | 13 | 0 |
 | org.springframework.ai.google.genai | 0 | 150 |
 | org.springframework.ai.google.genai.aot | 0 | 3 |
 | org.springframework.ai.google.genai.cache | 0 | 80 |

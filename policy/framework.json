@@ -1262,6 +1262,7 @@
    "module": "flint.ai.content",
    "also": [
     "flint.ai.document",
+    "flint.ai.evaluation",
     "flint.ai.observation",
     "flint.ai.observation.conventions",
     "flint.ai.template_",
