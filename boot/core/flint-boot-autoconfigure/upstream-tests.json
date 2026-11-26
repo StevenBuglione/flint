@@ -14,6 +14,7 @@
     },
     "org/springframework/boot/autoconfigure/AutoConfigurationImportSelectorTests.java": {
       "phase": "2",
+      "reason": "The import event payload and listener contract still need verification.",
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/AutoConfigurationMetadataLoaderTests.java": {

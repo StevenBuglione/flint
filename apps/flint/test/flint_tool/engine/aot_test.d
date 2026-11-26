@@ -1494,7 +1494,31 @@ unittest
     ]);
 }
 
-private void expectAutoConfigurationRanks(const string[] imports, const string[] expected)
+@("FlintBootApplication excludes a listed auto-configuration by class or by name")
+unittest
+{
+    immutable imports = ["OrderLowest", "OrderHighest", "OrderUnspecified"];
+    immutable expected = ["OrderUnspecified", "OrderLowest"];
+    expectAutoConfigurationRanks(imports, expected,
+            `@FlintBootApplication(exclude: [ClassRef("auto_order_candidates.configs.OrderHighest")])`, "OrderHighest");
+    expectAutoConfigurationRanks(imports, expected,
+            `@FlintBootApplication(excludeName: ["auto_order_candidates.configs.OrderHighest"])`, "OrderHighest");
+}
+
+@("EnableAutoConfiguration on the Boot application excludes a listed class or name")
+unittest
+{
+    immutable imports = ["OrderLowest", "OrderHighest", "OrderUnspecified"];
+    immutable expected = ["OrderUnspecified", "OrderLowest"];
+    expectAutoConfigurationRanks(imports, expected, "@FlintBootApplication\n"
+            ~ `@EnableAutoConfiguration(exclude: [ClassRef("auto_order_candidates.configs.OrderHighest")])`,
+            "OrderHighest");
+    expectAutoConfigurationRanks(imports, expected, "@FlintBootApplication\n"
+            ~ `@EnableAutoConfiguration(excludeName: ["auto_order_candidates.configs.OrderHighest"])`, "OrderHighest");
+}
+
+private void expectAutoConfigurationRanks(const string[] imports, const string[] expected,
+        string applicationAnnotations = "", string excluded = "")
 {
     import std.algorithm.searching : count;
     import std.file : mkdirRecurse, readText, write;
@@ -1504,6 +1528,8 @@ private void expectAutoConfigurationRanks(const string[] imports, const string[]
     const project = copyFixture("auto-order");
     scope (exit)
         remove(project);
+    if (applicationAnnotations.length)
+        edit(buildPath(project, "src", "auto_order", "app.d"), "@FlintBootApplication", applicationAnnotations);
     const candidates = buildPath(project, "candidates");
     const manifest = buildPath(candidates, "META-INF", "flint", "flint.boot.autoconfigure.AutoConfiguration.imports");
     mkdirRecurse(dirName(manifest));
@@ -1527,6 +1553,11 @@ private void expectAutoConfigurationRanks(const string[] imports, const string[]
     foreach (ref diagnostic; outcome.diagnostics)
         assert(false, diagnostic.code ~ " " ~ diagnostic.message);
     assert(outcome.ok && outcome.active);
+    if (excluded.length)
+    {
+        const removal = moduleName ~ "." ~ excluded ~ ": excluded by the application's exclude or excludeName";
+        assert(outcome.removed == [removal], "unexpected auto-configuration exclusions");
+    }
 
     const generated = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
             "auto_order_candidates", "configs.d"));

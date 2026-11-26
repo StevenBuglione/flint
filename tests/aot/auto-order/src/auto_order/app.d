@@ -1,6 +1,7 @@
 module auto_order.app;
 
-import flint.boot.autoconfigure : FlintBootApplication;
+import flint.boot.autoconfigure : EnableAutoConfiguration, FlintBootApplication;
+import flint.boot.context.properties : ClassRef;
 
 @safe:
 
