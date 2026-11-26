@@ -1,0 +1,5 @@
+{
+  "data": [],
+  "leaves": ["flint.java.lang.character.decimaldigits", "flint.java.lang.internal.asciidigits", "flint.java.lang.internal.bmpdigits"],
+  "source": "closure/character-digit-bmp.d"
+}
