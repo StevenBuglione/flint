@@ -47,7 +47,7 @@ private string renderRecord(string prefix, string first, string secondLabel, str
     return joinRecord(parts[]);
 }
 
-package(flint.ai.chat) char[] joinRecord(scope const(string)[] parts) pure
+package(flint.ai) char[] joinRecord(scope const(string)[] parts) pure
 {
     size_t length;
     foreach (part; parts)
@@ -96,24 +96,24 @@ private string payloadText(ref const NullablePayload value)
 }
 
 // Java has one null string value. A present empty string stays distinct (R5).
-private NullableText normalizeText(NullableText value) pure nothrow @nogc
+package(flint.ai) NullableText normalizeText(NullableText value) pure nothrow @nogc
 {
     return value.isNull || value.get() is null ? NullableText.init : value;
 }
 
-private bool sameText(ref const NullableText left, ref const NullableText right)
+package(flint.ai) bool sameText(ref const NullableText left, ref const NullableText right)
 {
     if (left.isNull)
         return right.isNull;
     return !right.isNull && left.get() == right.get();
 }
 
-private int textHash(ref const NullableText value)
+package(flint.ai) int textHash(ref const NullableText value)
 {
     return value.isNull ? 0 : stringHashCode(value.get());
 }
 
-private string recordText(ref const NullableText value)
+package(flint.ai) string recordText(ref const NullableText value)
 {
     return value.isNull ? "null" : value.get();
 }
