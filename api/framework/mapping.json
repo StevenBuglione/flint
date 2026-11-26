@@ -3,10 +3,10 @@
 "elements":{
 "java.util.concurrent.Executor":{"status":"adapted","d":"flint.java.util.concurrent.executor.Executor","rules":["R1"],"note":"Import the nominal interface from flint.java.util.concurrent.executor."},
 "java.util.concurrent.Executor#execute(Runnable)":{"status":"adapted","d":"flint.java.util.concurrent.executor.Executor.execute","rules":["R7","R9"],"note":"Accepts an owned @safe D delegate in addition to Runnable. Untyped null selects the original Runnable overload."},
-"java.util.concurrent.ExecutionException":{"status":"adapted","rules":["R1","R8"],"d":"flint.java.util.concurrent.executionexception.ExecutionException","note":"Import the checked exception from flint.java.util.concurrent.executionexception."},
+"java.util.concurrent.ExecutionException":{"status":"adapted","rules":["R1","R8","R26"],"d":"flint.java.util.concurrent.executionexception.ExecutionException","note":"Import the checked exception from flint.java.util.concurrent.executionexception. An empty detail is absent in Flint. Java preserves an explicitly empty String."},
 "java.util.concurrent.ExecutionException#<init>()":{"status":"ported","d":"flint.java.util.concurrent.executionexception.ExecutionException.this"},
-"java.util.concurrent.ExecutionException#<init>(String)":{"status":"ported","d":"flint.java.util.concurrent.executionexception.ExecutionException.this"},
-"java.util.concurrent.ExecutionException#<init>(String,Throwable)":{"status":"ported","d":"flint.java.util.concurrent.executionexception.ExecutionException.this"},
+"java.util.concurrent.ExecutionException#<init>(String)":{"status":"adapted","d":"flint.java.util.concurrent.executionexception.ExecutionException.this","rules":["R26"]},
+"java.util.concurrent.ExecutionException#<init>(String,Throwable)":{"status":"adapted","d":"flint.java.util.concurrent.executionexception.ExecutionException.this","rules":["R26"]},
 "java.util.concurrent.ExecutionException#<init>(Throwable)":{"status":"ported","d":"flint.java.util.concurrent.executionexception.ExecutionException.this"},
 "java.io.InterruptedIOException":{"status":"adapted","rules":["R1"],"d":"flint.java.io.interruptedioexception.InterruptedIOException","note":"Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it."},
 "java.io.InterruptedIOException#<init>()":{"status":"ported","d":"flint.java.io.interruptedioexception.InterruptedIOException.this"},

@@ -41,6 +41,30 @@ unittest
     assert(detail.getMessage() == "detail" && detail.getCause() is null);
 }
 
+@("empty execution exception details are absent and display the dynamic class name")
+unittest
+{
+    string text = "deliberate detail";
+    string emptySlice = text[0 .. 0];
+    assert(emptySlice !is null);
+    auto original = new IllegalArgumentException("original");
+    foreach (message; [cast(string) null, "", emptySlice])
+    {
+        auto derived = new DerivedExecutionException(message);
+        assert(derived.getMessage() is null);
+        assert(derived.toString() == typeid(derived).name);
+        assert(derived.initCause(original) is derived);
+
+        auto explicitCause = new ExecutionException(message, original);
+        assert(explicitCause.getMessage() is null);
+        assert(explicitCause.toString() == typeid(explicitCause).name);
+        assert(explicitCause.getCause() is original);
+    }
+    auto detailed = new ExecutionException(text, original);
+    assert(detailed.getMessage() == text);
+    assert(detailed.toString() == typeid(detailed).name ~ ": " ~ text);
+}
+
 @("explicit causes preserve identity and are already initialized")
 unittest
 {

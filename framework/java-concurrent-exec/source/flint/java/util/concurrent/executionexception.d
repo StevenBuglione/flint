@@ -18,16 +18,16 @@ class ExecutionException : Exception
         this(cast(string) null);
     }
 
-    /// Construct a failure with a detail message and an unset cause.
+    /// Construct a failure with an unset cause. Empty detail is absent (R26).
     protected this(string message)
     {
-        super(message);
+        super(message.length == 0 ? null : message);
     }
 
-    /// Construct a failure with a message and an explicit cause.
+    /// Construct a failure with an explicit cause. Empty detail is absent (R26).
     this(string message, Throwable cause)
     {
-        super(message);
+        super(message.length == 0 ? null : message);
         this.cause = cause;
         causeInitialized = true;
     }
@@ -67,6 +67,12 @@ class ExecutionException : Exception
             throw new IllegalStateException("Can't overwrite cause with " ~ (replacement is null
                     ? "a null" : describeCause(replacement)), this);
         throw new IllegalArgumentException("Self-causation not permitted", this);
+    }
+
+    /// Return the dynamic class name and its detail, if present.
+    override string toString() const
+    {
+        return javaToString(this);
     }
 
     private static string describeCause(Throwable cause)
