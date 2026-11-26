@@ -16,7 +16,7 @@ decimal rounding beyond 15 significant digits.
 module flint.java.util.formatter;
 
 import flint.engine.aot.any : Any;
-import flint.engine.aot.text : decodeUtf8;
+import flint.engine.aot.text : decimal, decodeUtf8, utf8;
 import flint.java.lang : IllegalArgumentException;
 
 @safe:
@@ -47,6 +47,110 @@ class DuplicateFormatFlagsException : IllegalFormatException
     string getFlags() const pure nothrow @nogc
     {
         return flags;
+    }
+}
+
+/// Java's `FormatFlagsConversionMismatchException`: flags that a conversion does not accept.
+class FormatFlagsConversionMismatchException : IllegalFormatException
+{
+    private string flags;
+    private wchar conversion;
+
+    /// The rejected flags and the UTF-16 conversion unit (R14). Null flags count as empty (R26).
+    this(string flags, wchar conversion, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        const text = utf8(conversion);
+        super("Conversion = " ~ (text is null ? "\uFFFD" : text) ~ ", Flags = " ~ flags, file, line);
+        this.flags = flags;
+        this.conversion = conversion;
+    }
+
+    /// The rejected flags.
+    string getFlags() const pure nothrow @nogc
+    {
+        return flags;
+    }
+
+    /// The UTF-16 conversion unit.
+    wchar getConversion() const pure nothrow @nogc
+    {
+        return conversion;
+    }
+}
+
+/// Java's `IllegalFormatFlagsException`: incompatible formatting flags.
+class IllegalFormatFlagsException : IllegalFormatException
+{
+    private string flags;
+
+    /// The incompatible flags. A null slice counts as empty (R26).
+    this(string flags, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super("Flags = '" ~ flags ~ "'", file, line);
+        this.flags = flags;
+    }
+
+    /// The incompatible flags.
+    string getFlags() const pure nothrow @nogc
+    {
+        return flags;
+    }
+}
+
+/// Java's `IllegalFormatPrecisionException`: a precision that is out of range or disallowed.
+class IllegalFormatPrecisionException : IllegalFormatException
+{
+    private int precision;
+
+    /// The invalid precision.
+    this(int precision, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(decimal(precision), file, line);
+        this.precision = precision;
+    }
+
+    /// The invalid precision.
+    int getPrecision() const pure nothrow @nogc
+    {
+        return precision;
+    }
+}
+
+/// Java's `IllegalFormatWidthException`: a width that is out of range or disallowed.
+class IllegalFormatWidthException : IllegalFormatException
+{
+    private int width;
+
+    /// The invalid width.
+    this(int width, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(decimal(width), file, line);
+        this.width = width;
+    }
+
+    /// The invalid width.
+    int getWidth() const pure nothrow @nogc
+    {
+        return width;
+    }
+}
+
+/// Java's `MissingFormatWidthException`: a flag requires a width.
+class MissingFormatWidthException : IllegalFormatException
+{
+    private string specifier;
+
+    /// The incomplete specifier. A null slice counts as empty (R26).
+    this(string specifier, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(specifier, file, line);
+        this.specifier = specifier;
+    }
+
+    /// The incomplete specifier.
+    string getFormatSpecifier() const pure nothrow @nogc
+    {
+        return specifier;
     }
 }
 
@@ -180,15 +284,36 @@ private struct Pieces
     }
 }
 
+private enum Flag : uint
+{
+    left = 1 << 0,
+    uppercase = 1 << 1,
+    alternate = 1 << 2,
+    plus = 1 << 3,
+    space = 1 << 4,
+    zero = 1 << 5,
+    group = 1 << 6,
+    parentheses = 1 << 7,
+    previous = 1 << 8,
+}
+
+// Diagnostics list flags in this order. '^' is internal and cannot be written in a specifier.
+private enum flagOrder = "-^#+ 0,(<";
+
 private struct Spec
 {
     string text; // the specifier as written, for messages
     size_t start;
     ptrdiff_t index = -1; // explicit 1-based index, 0 for `<`, -1 for ordinary
-    bool leftJustify, alternate, plus, space, zeroPad, group, parentheses;
+    uint flags;
     int width = -1;
     int precision = -1;
     char conversion;
+
+    bool has(Flag flag) const pure nothrow @nogc
+    {
+        return (flags & flag) != 0;
+    }
 }
 
 /// Parse the specifier at `format[start]` (a `%`); returns the index after it.
@@ -223,15 +348,18 @@ private size_t parseSpec(string format, size_t start, out Spec spec)
 
     if (hasIndex)
         spec.index = argumentIndex(format[indexStart .. indexEnd]);
-    parseFlags(format[flagsStart .. widthStart], spec);
+    spec.flags = parseFlags(format[flagsStart .. widthStart]);
+    if (spec.has(Flag.previous))
+        spec.index = 0;
     if (widthEnd > widthStart)
-        spec.width = cast(int) number(format[widthStart .. widthEnd]);
+        spec.width = formatWidth(format[widthStart .. widthEnd]);
     if (precisionStart != widthEnd)
-        spec.precision = cast(int) number(format[precisionStart .. conversionStart]);
+        spec.precision = formatPrecision(format[precisionStart .. conversionStart]);
 
-    spec.conversion = checkedConversion(format[conversionStart .. end]);
+    spec.conversion = format[conversionStart];
     spec.start = start;
     spec.text = format[start .. end];
+    validateSpec(spec, format[conversionStart .. end]);
     return end;
 }
 
@@ -244,16 +372,144 @@ private size_t conversionEnd(string format, size_t end, size_t indexStart)
     return end + 1;
 }
 
-private char checkedConversion(string conversion)
+private void validateSpec(const ref Spec spec, string conversion)
 {
-    if (conversion.length == 1)
+    if (conversion.length == 2)
     {
-        if (!validConversion(conversion[0]))
-            throw new UnknownFormatConversionException(conversion);
+        validateDate(spec, conversion);
+        return;
     }
-    else if (!includes("HIklMSLNpzZsQBbhAaCYyjmdeRTrDFc", conversion[1]))
+    if (!validConversion(spec.conversion))
+        throw new UnknownFormatConversionException(conversion);
+    const lower = asciiLower(spec.conversion);
+    switch (lower)
+    {
+    case 'b', 'h', 's':
+        validateGeneral(spec, lower, conversion);
+        break;
+    case 'c':
+        requireNoPrecision(spec);
+        rejectFlags(spec, characterFlags, lower);
+        requireWidth(spec, Flag.left, conversion);
+        break;
+    case 'n', '%':
+        validateText(spec, conversion);
+        break;
+    default:
+        validateNumeric(spec, lower, conversion);
+    }
+}
+
+private enum generalFlags = Flag.plus | Flag.space | Flag.zero | Flag.group | Flag.parentheses;
+private enum characterFlags = generalFlags | Flag.alternate;
+
+private void validateGeneral(const ref Spec spec, char lower, string conversion)
+{
+    if (lower != 's')
+        rejectFlags(spec, Flag.alternate, lower);
+    requireWidth(spec, Flag.left, conversion);
+    rejectFlags(spec, generalFlags, lower);
+}
+
+private void validateDate(const ref Spec spec, string conversion)
+{
+    requireNoPrecision(spec);
+    if (!includes("HIklMSLNpzZsQBbhAaCYyjmdeRTrDFc", conversion[1]))
         throw new UnknownFormatConversionException("t" ~ conversion[1 .. $]);
-    return conversion[0];
+    rejectFlags(spec, characterFlags, conversion[1]);
+    requireWidth(spec, Flag.left, conversion);
+}
+
+private void validateText(const ref Spec spec, string conversion)
+{
+    requireNoPrecision(spec);
+    if (spec.conversion == 'n')
+    {
+        if (spec.width >= 0)
+            throw new IllegalFormatWidthException(spec.width);
+        if (spec.flags != 0)
+            throw new IllegalFormatFlagsException(flagsText(spec.flags));
+        return;
+    }
+    if ((spec.flags & ~Flag.left) != 0)
+        throw new IllegalFormatFlagsException(flagsText(spec.flags));
+    requireWidth(spec, Flag.left, conversion);
+}
+
+private void validateNumeric(const ref Spec spec, char lower, string conversion)
+{
+    requireWidth(spec, Flag.left | Flag.zero, conversion);
+    if (containsFlags(spec.flags, Flag.plus | Flag.space) || containsFlags(spec.flags, Flag.left | Flag.zero))
+    {
+        const diagnostic = spec.flags | (lower == spec.conversion ? 0u : Flag.uppercase);
+        throw new IllegalFormatFlagsException(flagsText(diagnostic));
+    }
+    if (includes("dox", lower))
+        requireNoPrecision(spec);
+    switch (lower)
+    {
+    case 'd', 'g':
+        rejectFlags(spec, Flag.alternate, lower);
+        break;
+    case 'o', 'x', 'e':
+        rejectFlags(spec, Flag.group, lower);
+        break;
+    case 'a':
+        rejectFlags(spec, Flag.parentheses | Flag.group, lower);
+        break;
+    default:
+        break;
+    }
+}
+
+private bool containsFlags(uint flags, uint required) pure nothrow @nogc
+{
+    return (flags & required) == required;
+}
+
+private void requireNoPrecision(const ref Spec spec)
+{
+    if (spec.precision >= 0)
+        throw new IllegalFormatPrecisionException(spec.precision);
+}
+
+private void rejectFlags(const ref Spec spec, uint rejected, char conversion)
+{
+    const invalid = spec.flags & rejected;
+    if (invalid != 0)
+        throw new FormatFlagsConversionMismatchException(flagsText(invalid), conversion);
+}
+
+private void requireWidth(const ref Spec spec, uint flags, string conversion)
+{
+    if (spec.width >= 0 || (spec.flags & flags) == 0)
+        return;
+    const prefix = "%" ~ flagsText(spec.flags);
+    const index = spec.index > 0 ? decimal(cast(int) spec.index) ~ "$" : "";
+    const precision = spec.precision >= 0 ? "." ~ decimal(spec.precision) : "";
+    if (conversion.length == 2 && conversion[0] == 'T')
+        conversion = "T" ~ [asciiUpper(conversion[1])];
+    throw new MissingFormatWidthException(prefix ~ index ~ precision ~ conversion);
+}
+
+private char asciiLower(char c) pure nothrow @nogc
+{
+    return c >= 'A' && c <= 'Z' ? cast(char)(c + 'a' - 'A') : c;
+}
+
+private char asciiUpper(char c) pure nothrow @nogc
+{
+    return c >= 'a' && c <= 'z' ? cast(char)(c + 'A' - 'a') : c;
+}
+
+private string flagsText(uint flags) pure nothrow
+{
+    char[flagOrder.length] buffer;
+    size_t length;
+    foreach (position, flag; flagOrder)
+        if ((flags & (1u << position)) != 0)
+            buffer[length++] = flag;
+    return buffer[0 .. length].idup;
 }
 
 private size_t digitsEnd(scope const(char)[] format, size_t i) pure nothrow @nogc
@@ -300,63 +556,62 @@ private void invalidSpecifier(string format, size_t index)
 
 private int argumentIndex(scope const(char)[] digits)
 {
-    int value;
-    foreach (c; digits)
-    {
-        const digit = c - '0';
-        if (value > (int.max - digit) / 10)
-            throw new IllegalFormatArgumentIndexException("Format argument index: (not representable as int)");
-        value = value * 10 + digit;
-    }
+    const value = parseFormatInt(digits);
+    if (value == int.min)
+        throw new IllegalFormatArgumentIndexException("Format argument index: (not representable as int)");
     if (value == 0)
         throw new IllegalFormatArgumentIndexException("Illegal format argument index = 0");
     return value;
 }
 
-private void parseFlags(string flags, ref Spec spec)
+private int formatWidth(scope const(char)[] digits)
 {
-    foreach (i, flag; flags)
-    {
-        const text = flags[i .. i + 1];
-        switch (flag)
-        {
-        case '-':
-            setFlag(spec.leftJustify, text);
-            break;
-        case '#':
-            setFlag(spec.alternate, text);
-            break;
-        case '+':
-            setFlag(spec.plus, text);
-            break;
-        case ' ':
-            setFlag(spec.space, text);
-            break;
-        case '0':
-            setFlag(spec.zeroPad, text);
-            break;
-        case ',':
-            setFlag(spec.group, text);
-            break;
-        case '(':
-            setFlag(spec.parentheses, text);
-            break;
-        case '<':
-            if (spec.index == 0)
-                throw new DuplicateFormatFlagsException(text);
-            spec.index = 0;
-            break;
-        default:
-            assert(0, "parseFlags requires a validated flag");
-        }
-    }
+    const value = parseFormatInt(digits);
+    if (value == int.min)
+        throw new IllegalFormatWidthException(value);
+    return value;
 }
 
-private void setFlag(ref bool present, string flag)
+private int formatPrecision(scope const(char)[] digits)
 {
-    if (present)
-        throw new DuplicateFormatFlagsException(flag);
-    present = true;
+    const value = parseFormatInt(digits);
+    if (value == int.min)
+        throw new IllegalFormatPrecisionException(value);
+    return value;
+}
+
+private int parseFormatInt(scope const(char)[] digits) pure nothrow @nogc
+{
+    int value;
+    foreach (c; digits)
+    {
+        const digit = c - '0';
+        if (value > (int.max - digit) / 10)
+            return int.min;
+        value = value * 10 + digit;
+    }
+    return value;
+}
+
+private uint parseFlags(string flags)
+{
+    uint parsed;
+    foreach (i, flag; flags)
+    {
+        const bit = flagBit(flag);
+        if ((parsed & bit) != 0)
+            throw new DuplicateFormatFlagsException(flags[i .. i + 1]);
+        parsed |= bit;
+    }
+    return parsed;
+}
+
+private uint flagBit(char flag) pure nothrow @nogc
+{
+    foreach (position, candidate; flagOrder)
+        if (flag == candidate)
+            return 1u << position;
+    assert(0, "parseFlags requires a validated flag");
 }
 
 private long number(string digits) pure nothrow @nogc
@@ -448,7 +703,7 @@ private string pad(const ref Spec spec, string text) pure nothrow
         return text;
     auto spaces = new char[](spec.width - prefix.units);
     spaces[] = ' ';
-    return spec.leftJustify ? text ~ spaces : spaces ~ text;
+    return spec.has(Flag.left) ? text ~ spaces : spaces ~ text;
 }
 
 private struct TextPrefix
@@ -569,15 +824,16 @@ private string integralText(const ref Spec spec, Any argument)
     const value = argument.get!long;
     const negative = !unsigned && value < 0;
     const magnitude = negative ? -cast(ulong) value : cast(ulong) value;
-    return signed(spec, digits(magnitude, 10, spec.group), negative);
+    return signed(spec, digits(magnitude, 10, spec.has(Flag.group)), negative);
 }
 
 /// Apply the sign flags and zero padding to `body`, the magnitude's digits.
 private string signed(const ref Spec spec, string body, bool negative) pure nothrow
 {
-    string prefix = negative ? (spec.parentheses ? "(" : "-") : spec.plus ? "+" : spec.space ? " " : "";
-    const suffix = negative && spec.parentheses ? ")" : "";
-    if (spec.zeroPad && spec.width > 0)
+    string prefix = negative ? (spec.has(Flag.parentheses) ? "(" : "-") : spec.has(Flag.plus)
+        ? "+" : spec.has(Flag.space) ? " " : "";
+    const suffix = negative && spec.has(Flag.parentheses) ? ")" : "";
+    if (spec.has(Flag.zero) && spec.width > 0)
     {
         const used = prefix.length + body.length + suffix.length;
         if (used < spec.width)
@@ -613,7 +869,7 @@ private string radixText(const ref Spec spec, Any argument)
     }
     const octal = spec.conversion == 'o';
     auto body = digits(bits, octal ? 8 : 16, false);
-    if (spec.alternate)
+    if (spec.has(Flag.alternate))
         body = (octal ? "0" : "0x") ~ body;
     return cased(spec, signed(spec, body, false));
 }
@@ -632,8 +888,8 @@ private string fixedText(const ref Spec spec, Any argument)
     string whole, fraction;
     decimalDigits(negative ? -value : value, whole, fraction);
     roundHalfUp(whole, fraction, precision);
-    auto body = spec.group ? grouped(whole) : whole;
-    if (precision > 0 || spec.alternate)
+    auto body = spec.has(Flag.group) ? grouped(whole) : whole;
+    if (precision > 0 || spec.has(Flag.alternate))
         body ~= "." ~ fraction;
     return signed(spec, body, negative);
 }
@@ -644,8 +900,8 @@ private string nonFinite(const ref Spec spec, double value, bool negative) pure 
     if (value != value)
         return "NaN";
     if (negative)
-        return spec.parentheses ? "(Infinity)" : "-Infinity";
-    return spec.plus ? "+Infinity" : "Infinity";
+        return spec.has(Flag.parentheses) ? "(Infinity)" : "-Infinity";
+    return spec.has(Flag.plus) ? "+Infinity" : "Infinity";
 }
 
 /// The whole and fraction digits of `magnitude` from Java's shortest representation (`Double.toString`), which
