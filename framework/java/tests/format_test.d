@@ -168,3 +168,30 @@ unittest
     assert((new IllegalFormatFlagsException(null)).getMessage() == "Flags = ''");
     assert((new MissingFormatWidthException(null)).getFormatSpecifier().length == 0);
 }
+
+@("String.format keeps radix indicators before zeros and preserves integer bit widths")
+unittest
+{
+    assert(String.format("%#08x|%#08X|%#06o", 255, 255, 8) == "0x0000ff|0X0000FF|000010");
+    assert(String.format("%#X|%#o|%#02x", 0, 0, 255) == "0X0|00|0xff");
+    assert(String.format("[%#8X][%-#8X]", 255, 255) == "[    0XFF][0XFF    ]");
+    assert(String.format("%#06X|%#08x", cast(byte)-1, cast(short)-1) == "0X00FF|0x00ffff");
+    assert(String.format("%#012x|%#020x", -1, -1L) == "0x00ffffffff|0x00ffffffffffffffff");
+    assert(String.format("[%#08X][%#08x]", cast(Object) null, cast(Object) null) == "[    NULL][    null]");
+    assert(String.format("%(08d|%+08.2f", -42, 1.5) == "(000042)|+0001.50");
+}
+
+@("String.format rejects sign flags after checking the radix argument type")
+unittest
+{
+    import flint.java.util.formatter : FormatFlagsConversionMismatchException;
+    import std.exception : collectException;
+
+    const mismatch = collectException!FormatFlagsConversionMismatchException(String.format("%(+X", 17));
+    assert(mismatch.getConversion() == 'x' && mismatch.getFlags() == "+(");
+    const wrongType = collectException!IllegalFormatConversionException(String.format("%(+X", "bad"));
+    assert(wrongType.getMessage() == "x != java.lang.String");
+    const staticMismatch = collectException!FormatFlagsConversionMismatchException(String.format("%,+X", "bad"));
+    assert(staticMismatch.getFlags() == ",");
+    assert(String.format("%+(8X", cast(Object) null) == "    NULL");
+}
