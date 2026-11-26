@@ -78,5 +78,9 @@
   "flint.java.util.inputmismatchexception": {
     "incremental_linked_bytes": 7124,
     "template_instances": 244
+  },
+  "flint.java.util.eventobject": {
+    "incremental_linked_bytes": 6895,
+    "template_instances": 260
   }
 }
