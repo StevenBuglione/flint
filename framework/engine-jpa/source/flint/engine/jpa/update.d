@@ -13,8 +13,8 @@ module flint.engine.jpa.update;
 
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa.identity : EntityIdentity;
-import flint.engine.jpa.managed_entities : DirtyTarget, ManagedEntities;
-import flint.engine.jpa.mapping : AttributeKind, AttributeValue, EntityMapping;
+import flint.engine.jpa.managed_entities : ManagedTarget, ManagedEntities;
+import flint.engine.jpa.mapping : AttributeKind, AttributeValue, EntityMapping, checkIdentifier;
 import flint.engine.jpa.parameter_binding : ParameterBinding, ParameterBindingPlan, bindMappedValues, planParameters;
 import flint.engine.jpa.result_binding : TypedColumnCodec;
 import flint.java.sql : Connection, Types;
@@ -241,7 +241,7 @@ private VersionResult executeStaticUpdate(const ref UpdatePlan plan, Connection 
     if (plan.mapping is null || connection is null)
         return VersionResult(VersionedUpdate.init, Error(Status.invalidArgument, "missing update plan or connection"));
 
-    DirtyTarget target;
+    ManagedTarget target;
     const dirty = entities.dirtyTarget(key, plan.mapping, dirtyOrdinals, target, plan.versions.next != 0);
     if (!dirty.ok)
         return VersionResult(VersionedUpdate.init, dirty.error);
@@ -265,8 +265,8 @@ private VersionResult executeStaticUpdate(const ref UpdatePlan plan, Connection 
 }
 
 private VersionResult executeWithRefresh(const ref UpdatePlan plan, Connection connection,
-        scope ref ManagedEntities entities, DirtyTarget target, EntityIdentity key, long nextRevision,
-        AttributeValue[] values)
+        scope ref ManagedEntities entities, ManagedTarget target, EntityIdentity key,
+        long nextRevision, AttributeValue[] values)
 {
     const count = plan.mapping.attributes.length;
     if (values.length < count)
@@ -308,7 +308,7 @@ private VersionResult refreshConflict() pure nothrow @nogc
 }
 
 private VersionResult executeStatement(const ref UpdatePlan plan, Connection connection,
-        DirtyTarget target, long id, long nextRevision, const(AttributeValue)[] captured = null)
+        ManagedTarget target, long id, long nextRevision, const(AttributeValue)[] captured = null)
 {
     auto statement = connection.prepareStatement(plan.sql);
     scope (exit)
@@ -330,15 +330,4 @@ private VersionResult executeStatement(const ref UpdatePlan plan, Connection con
         return VersionResult(VersionedUpdate.init, Error(Status.ioError,
                 "managed update affected an unexpected number of rows"));
     return VersionResult(VersionedUpdate(true, nextRevision));
-}
-
-private Error checkIdentifier(scope const ref EntityMapping mapping, Object entity, long identifier) nothrow @nogc
-{
-    const id = mapping.idOrdinals[0];
-    const current = mapping.attributes[id].read(entity);
-    if (!current.ok)
-        return Error(current.error.code, current.error.message, id);
-    if (current.value.kind != AttributeKind.integer || current.value.integer != identifier)
-        return Error(Status.invalidArgument, "managed entity identifier changed", id);
-    return Error.init;
 }

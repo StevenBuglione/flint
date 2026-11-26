@@ -8,6 +8,7 @@ module jpa_version_update;
 import core.memory : GC;
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding;
+import flint.engine.jpa.delete_row : DeletePlan, executeManagedDelete, planDelete;
 import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
 import flint.engine.jpa.loaded_state : ManagedSnapshotSlot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
@@ -16,7 +17,7 @@ import flint.engine.jpa.result_binding : ManagedRowMaterializationPlan, material
 import flint.engine.jpa.snapshot : AttributeSnapshot;
 import flint.engine.jpa.update : UpdateAction, VersionBindings, executeManagedUpdate,
     executeVersionedUpdate, UpdatePlan, flushManagedUpdate, flushManagedUpdates, planUpdate;
-import flint.java.sql : Connection, Types;
+import flint.java.sql : Connection, SQLException, Types;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
 import flint.jdbc.datasource : ConnectionHolder, DataSourceTransactionManager, DataSourceUtils;
@@ -612,4 +613,121 @@ private void assertReleased(ManagedUpdateContext context, DataSource dataSource,
     assert(context.detached());
     assert(!TransactionSynchronizationManager.hasResource(key));
     assert(!TransactionSynchronizationManager.hasResource(cast(Object) dataSource));
+}
+
+/// Checks versioned and unversioned deletion, including retirement and rollback.
+void verifyManagedDeletes(DataSource dataSource, JdbcTemplate jdbc)
+{
+    enum deleteOwner = "delete from jpa_version_probe where version = ? and id = ?";
+    const planned = planDelete(&mapping, deleteOwner, 2, 1);
+    const multiple = planDelete(&mapping,
+            "delete from jpa_version_probe where id >= ? and ?::bigint is not null", 1, 2);
+    const broken = planDelete(&mapping, "delete from missing_jpa_fixture where version = ? and id = ?", 2, 1);
+    const read = planManagedResult(&mapping, projection, 0);
+    assert(planned.ok && multiple.ok && broken.ok && read.ok);
+    assert(planDelete(&mapping, deleteOwner, 1, 1).error.code == Status.invalidArgument);
+    assert(planDelete(&mapping, deleteOwner, 1).error.code == Status.invalidArgument);
+
+    auto connection = dataSource.getConnection();
+    scope (exit)
+        connection.close();
+    connection.setAutoCommit(false);
+    scope (exit)
+        connection.rollback();
+    auto fields = new AttributeSnapshot[3];
+    auto bytes = new ubyte[16];
+    ManagedSnapshotSlot[1] snapshot = [ManagedSnapshotSlot(fields, bytes)];
+    IdentitySlot[1] identity;
+    Object[1] roots;
+    Error error;
+    scope managed = ManagedEntities(identity[], roots[], error, snapshot[]);
+    assert(error.code == Status.ok);
+    loadRows(read.value, connection, managed);
+
+    auto owner = cast(VersionedOwner) managed.find(ownerKey).value;
+    owner.id = 2;
+    const changed = executeManagedDelete(planned.value, connection, managed, ownerKey);
+    assert(changed.code == Status.invalidArgument && changed.offset == 0);
+    owner.id = 1;
+    {
+        auto independent = dataSource.getConnection();
+        scope (exit)
+            independent.close();
+        assert(independent.getAutoCommit());
+        assert(executeManagedDelete(planned.value, independent, managed, ownerKey).code == Status.invalidArgument);
+    }
+    assertStored(connection, "Outer", 11);
+
+    assert(executeManagedDelete(multiple.value, connection, managed, ownerKey).code == Status.ioError);
+    assert(managed.find(ownerKey).value is owner);
+    assertDeleteAbsent(connection);
+    connection.rollback();
+    assertStored(connection, "Outer", 11);
+    verifyDeleteDriverFailure(broken.value, connection, managed, owner);
+    connection.rollback();
+    assertStored(connection, "Outer", 11);
+
+    owner.revision = 100;
+    assert(executeManagedDelete(planned.value, connection, managed, ownerKey).code == Status.ok);
+    assert(managed.find(ownerKey).error.code == Status.notFound);
+    assert(executeManagedDelete(planned.value, connection, managed, ownerKey).code == Status.notFound);
+    assertDeleteAbsent(connection);
+    connection.rollback();
+    assertStored(connection, "Outer", 11);
+
+    loadRows(read.value, connection, managed);
+    owner = cast(VersionedOwner) managed.find(ownerKey).value;
+    jdbc.execute("update jpa_version_probe set name = 'Delete winner', version = 12 where id = 1");
+    const stale = executeManagedDelete(planned.value, connection, managed, ownerKey);
+    assert(stale.code == Status.conflict && managed.find(ownerKey).value is owner);
+    assert(owner.revision == 11);
+    assertStored(connection, "Delete winner", 12);
+    connection.rollback();
+
+    verifyUnversionedDelete(connection, managed);
+    connection.rollback();
+    assertStored(connection, "Delete winner", 12);
+}
+
+private void assertDeleteAbsent(Connection connection)
+{
+    auto statement = connection.prepareStatement("select count(*) from jpa_version_probe where id = 1");
+    scope (exit)
+        statement.close();
+    auto rows = statement.executeQuery();
+    scope (exit)
+        rows.close();
+    assert(rows.next() && rows.getLong(1) == 0);
+}
+
+private void verifyDeleteDriverFailure(const ref DeletePlan plan, Connection connection,
+        scope ref ManagedEntities managed, VersionedOwner owner)
+{
+    try
+    {
+        executeManagedDelete(plan, connection, managed, ownerKey);
+        assert(false, "driver DELETE failure must propagate");
+    }
+    catch (SQLException failure)
+    {
+        assert(failure.getSQLState() == "42P01");
+    }
+    assert(managed.find(ownerKey).value is owner);
+}
+
+private void verifyUnversionedDelete(Connection connection, scope ref ManagedEntities managed)
+{
+    static immutable EntityMapping unversioned = EntityMapping("UnversionedOwner", ownerType,
+            "jpa_version_probe", mapping.attributes, mapping.construct, [], mapping.isExactType, [0]);
+    enum sql = "delete from jpa_version_probe where id = ?";
+    const plan = planDelete(&unversioned, sql, 1);
+    assert(planDelete(&unversioned, sql, 1, 2).error.code == Status.invalidArgument);
+    const read = planManagedResult(&unversioned, projection, 0);
+    assert(plan.ok && read.ok);
+    assert(executeManagedDelete(plan.value, connection, managed, ownerKey).code == Status.invalidArgument);
+    assert(managed.detach(ownerKey).ok);
+    loadRows(read.value, connection, managed);
+    assert(executeManagedDelete(plan.value, connection, managed, ownerKey).code == Status.ok);
+    assert(managed.find(ownerKey).error.code == Status.notFound);
+    assertDeleteAbsent(connection);
 }

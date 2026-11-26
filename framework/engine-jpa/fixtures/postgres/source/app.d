@@ -30,7 +30,7 @@ import flint.transaction : CannotCreateTransactionException, TransactionDefiniti
     TransactionStatus, UnexpectedRollbackException;
 import flint.transaction.support : TransactionSynchronization, TransactionSynchronizationManager, TransactionTemplate;
 import jpa_timestamp : verifyTimestampMapping;
-import jpa_version_update : verifyTransactionalUpdates, verifyVersionedUpdate;
+import jpa_version_update : verifyManagedDeletes, verifyTransactionalUpdates, verifyVersionedUpdate;
 import std.process : environment;
 
 @safe:
@@ -928,6 +928,7 @@ void main() @system
     verifyManagedUpdate(dataSource, jdbc, outer);
     verifyVersionedUpdate(dataSource, jdbc);
     verifyTransactionalUpdates(dataSource, jdbc, manager);
+    verifyManagedDeletes(dataSource, jdbc);
     verifyFlushFailure(dataSource, outer, true);
     verifyFlushFailure(dataSource, outer, false);
     verifySynchronizationOnly(dataSource, manager, jdbc);

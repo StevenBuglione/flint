@@ -15,8 +15,8 @@ import flint.engine.jpa.mapping : EntityMapping;
 
 private alias EntityResult = Result!Object;
 
-/// A checked managed entity and, when requested for a dirty row, its loaded version.
-package struct DirtyTarget
+/// A resolved managed entity, its context slot and an optional loaded version.
+package struct ManagedTarget
 {
     Object entity;
     long loadedVersion;
@@ -98,24 +98,34 @@ struct ManagedEntities
     /// Reports changed updatable ordinals for a managed identity with a captured baseline.
     Result!size_t dirty(EntityIdentity key, scope uint[] ordinals) scope nothrow @nogc
     {
-        DirtyTarget target;
+        ManagedTarget target;
         return dirtyTarget(key, null, ordinals, target);
     }
 
-    /// Resolves and type-checks the target with its loaded descriptor in one identity lookup.
-    package Result!size_t dirtyTarget(EntityIdentity key, scope immutable(EntityMapping)* mapping,
-            scope uint[] ordinals, out DirtyTarget target, bool versioned = false) scope nothrow @nogc
+    /// Resolves an identity and verifies descriptor ownership before a mutation.
+    package Error resolveTarget(EntityIdentity key, scope immutable(EntityMapping)* expectedMapping,
+            out ManagedTarget target) scope nothrow @nogc
     {
         const found = index.find(key);
         if (!found.ok)
-            return found;
+            return found.error;
         if (snapshots.length == 0)
-            return Result!size_t(0, Error(Status.unsupported, "JPA context has no snapshot storage"));
-        auto snapshot = &snapshots[found.value];
-        if (mapping !is null && !snapshot.usesMapping(mapping))
-            return Result!size_t(0, Error(Status.invalidArgument, "update plan does not match the loaded mapping"));
+            return Error(Status.unsupported, "JPA context has no snapshot storage");
+        if (expectedMapping !is null && !snapshots[found.value].usesMapping(expectedMapping))
+            return Error(Status.invalidArgument, "mutation plan does not match the loaded mapping");
         target.slot = found.value;
         target.entity = roots[target.slot];
+        return Error.init;
+    }
+
+    /// Checks the resolved target and collects dirty fields with one identity lookup.
+    package Result!size_t dirtyTarget(EntityIdentity key, scope immutable(EntityMapping)* mapping,
+            scope uint[] ordinals, out ManagedTarget target, bool versioned = false) scope nothrow @nogc
+    {
+        const resolved = resolveTarget(key, mapping, target);
+        if (resolved.code != Status.ok)
+            return Result!size_t(0, resolved);
+        auto snapshot = &snapshots[target.slot];
         const dirty = snapshot.dirty(target.entity, ordinals);
         if (dirty.ok && dirty.value != 0 && versioned)
         {
@@ -127,7 +137,7 @@ struct ManagedEntities
     }
 
     /// Borrows the checked target slot while its original entity is still managed.
-    package ManagedSnapshotSlot* snapshotFor(scope const ref DirtyTarget target) return scope nothrow @nogc
+    package ManagedSnapshotSlot* snapshotFor(scope const ref ManagedTarget target) return scope nothrow @nogc
     {
         if (target.slot >= snapshots.length || roots[target.slot]!is target.entity)
             return null;

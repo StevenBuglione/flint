@@ -120,6 +120,18 @@ Error validateEntity(scope const ref EntityMapping mapping, scope Object entity)
     return Error.init;
 }
 
+/// Checks a simple integer key after validating the plan's mapping and the entity's exact type.
+package Error checkIdentifier(scope const ref EntityMapping mapping, Object entity, long identifier) nothrow @nogc
+{
+    const id = mapping.idOrdinals[0];
+    const current = mapping.attributes[id].read(entity);
+    if (!current.ok)
+        return Error(current.error.code, current.error.message, id);
+    if (current.value.kind != AttributeKind.integer || current.value.integer != identifier)
+        return Error(Status.invalidArgument, "managed entity identifier changed", id);
+    return Error.init;
+}
+
 /// Checks the mapping shape before publishing it to the provider.
 Error validateMapping(scope const ref EntityMapping mapping) nothrow @nogc
 {
