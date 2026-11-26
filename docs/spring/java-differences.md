@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 156 | 268 | 0 | 15,372 |
 | boot | spring-boot@v4.2.0 | 40 | 22 | 2,133 | 13,408 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,450 | 1,366 | 4,848 | 30,170 |
+| framework | spring-framework@v7.1.0 | 3,461 | 1,372 | 4,848 | 30,153 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1931,6 +1931,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.framework.adapter.MethodBeforeAdviceInterceptor#invoke(MethodInvocation)` | `flint.aop.framework.adapter.MethodBeforeAdviceInterceptor.invoke` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.aop.framework.adapter.UnknownAdviceTypeException#<init>(Object)` | `flint.aop.framework.adapter.UnknownAdviceTypeException` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
+#### org.springframework.aop.interceptor
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler#handleUncaughtException(Throwable,Method,Object...)` | `flint.aop.interceptor.AsyncUncaughtExceptionHandler.handleUncaughtException` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R23](api-mapping.md#r23-object-typed-values), [D-AOT-MEMBER](api-mapping.md#deviations) |  |
+
+#### org.springframework.aop.scope
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.aop.scope.ScopedObject` | `flint.aop.scope_.ScopedObject` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.aop.scope.ScopedObject#getTargetObject()` | `flint.aop.scope_.ScopedObject.getTargetObject` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.aop.scope.ScopedObject#removeFromScope()` | `flint.aop.scope_.ScopedObject.removeFromScope` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+
 #### org.springframework.aop.support
 
 | Java | Flint | Rules | Note |
@@ -2007,6 +2021,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.support.annotation.AnnotationMatchingPointcut#forClassAnnotation(Class)` | `flint.aop.support.annotation.AnnotationMatchingPointcut.forClassAnnotation` | [R4](api-mapping.md#r4-classt-parameters) | Uses the annotation ClassRef token, such as classOf!Order. |
 | `org.springframework.aop.support.annotation.AnnotationMatchingPointcut#hashCode()` | `flint.aop.support.annotation.AnnotationMatchingPointcut.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.annotation.AnnotationMatchingPointcut#toString()` | `flint.aop.support.annotation.AnnotationMatchingPointcut.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+
+#### org.springframework.aop.target
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.aop.target.PoolingConfig#getActiveCount()` | `flint.aop.target.PoolingConfig.getActiveCount` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.springframework.aop.target.PoolingConfig#getIdleCount()` | `flint.aop.target.PoolingConfig.getIdleCount` | [R8](api-mapping.md#r8-exceptions) |  |
 
 #### org.springframework.beans
 
@@ -9068,12 +9089,12 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.framework.adapter | 16 | 0 |
 | org.springframework.aop.framework.autoproxy | 83 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
-| org.springframework.aop.interceptor | 97 | 0 |
-| org.springframework.aop.scope | 20 | 0 |
+| org.springframework.aop.interceptor | 95 | 0 |
+| org.springframework.aop.scope | 17 | 0 |
 | org.springframework.aop.support | 95 | 0 |
 | org.springframework.aop.support.annotation | 10 | 0 |
-| org.springframework.aop.target | 116 | 0 |
-| org.springframework.aop.target.dynamic | 20 | 0 |
+| org.springframework.aop.target | 108 | 0 |
+| org.springframework.aop.target.dynamic | 16 | 0 |
 | org.springframework.aot | 4 | 0 |
 | org.springframework.aot.nativex | 8 | 0 |
 | org.springframework.beans | 334 | 0 |
