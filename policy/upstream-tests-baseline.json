@@ -8979,7 +8979,6 @@
       "org/springframework/transaction/support/SimpleTransactionScopeTests.java"
     ],
     "web": [
-      "org/springframework/http/CacheControlTests.java",
       "org/springframework/http/ContentDispositionTests.java",
       "org/springframework/http/HttpMethodTests.java",
       "org/springframework/http/HttpRangeTests.java",

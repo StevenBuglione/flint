@@ -2,7 +2,7 @@
 `org.springframework.http`: HTTP status codes, methods, headers, media types and entities.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/http/
-(HttpStatusCode.java, DefaultHttpStatusCode.java, HttpStatus.java, HttpMethod.java, HttpHeaders.java,
+(CacheControl.java, HttpStatusCode.java, DefaultHttpStatusCode.java, HttpStatus.java, HttpMethod.java, HttpHeaders.java,
 MediaType.java, MediaTypeFactory.java, HttpEntity.java, ResponseEntity.java, RequestEntity.java, ProblemDetail.java) and
 spring-core/src/main/java/org/springframework/util/MimeType.java.
 
@@ -15,12 +15,15 @@ are structs (ADR-030 section 5); Java enums with methods follow proposed rule R1
 module flint.http;
 
 import flint.core.io : Resource;
-import flint.java.lang : IllegalArgumentException, NumberFormatException, UnsupportedOperationException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, NullPointerException,
+    NumberFormatException, UnsupportedOperationException;
 import flint.java.net : URI;
 import flint.engine.aot.any : Any;
 import flint.http.mime_registry : mimeRegistrations, registeredMimeTypeIndices, registeredMimeTypeNames;
 import flint.java.nio.charset : Charset;
+import flint.java.time : Duration;
 import flint.java.util : ArrayList, Collections, List, Optional;
+import flint.java.util.concurrent : TimeUnit, toSeconds;
 import flint.util : InvalidMimeTypeException, MimeType, MimeTypeParameter, MimeTypeUtils, StringUtils;
 
 @safe:
@@ -1157,6 +1160,216 @@ unittest
 }
 
 // ---------------------------------------------------------------------------------------------------------
+// CacheControl
+
+/// Builds the Cache-Control response header in Spring's directive order.
+class CacheControl
+{
+    private string maxAgeDirective, sharedMaxAgeDirective, staleIfErrorDirective, staleWhileRevalidateDirective;
+    private bool requireValidation, disallowStorage, requireUnderstanding, revalidate, preserveRepresentation;
+    private bool publicCache, privateCache, revalidateProxy, immutableRepresentation;
+
+    /// For subclasses that customize a cache policy.
+    protected this() pure nothrow @nogc
+    {
+    }
+
+    /// An empty cache policy.
+    static CacheControl empty() pure nothrow
+    {
+        return new CacheControl();
+    }
+
+    /// A maximum age in the given unit.
+    static CacheControl maxAge(long age, TimeUnit unit) pure nothrow
+    {
+        return maxAge(Duration.ofSeconds(unit.toSeconds(age)));
+    }
+
+    /// A maximum age, emitted in whole seconds.
+    static CacheControl maxAge(Duration age) pure nothrow
+    {
+        auto control = empty();
+        control.maxAgeDirective = "max-age=" ~ decimal(age.getSeconds());
+        return control;
+    }
+
+    /// Requires caches to validate the response before reusing it.
+    static CacheControl noCache() pure nothrow
+    {
+        auto control = empty();
+        control.requireValidation = true;
+        return control;
+    }
+
+    /// Instructs caches to avoid storing the response.
+    static CacheControl noStore() pure nothrow
+    {
+        auto control = empty();
+        control.disallowStorage = true;
+        return control;
+    }
+
+    /// Limits caching to clients that understand the response status.
+    CacheControl mustUnderstand()
+    {
+        if (!disallowStorage)
+            throw new IllegalStateException("The \"no-store\" directive should be set as a fallback, "
+                    ~ "use CacheControl.noStore().mustUnderstand() instead");
+        requireUnderstanding = true;
+        return this;
+    }
+
+    /// Requires caches to validate stale responses before reuse.
+    CacheControl mustRevalidate()
+    {
+        revalidate = true;
+        return this;
+    }
+
+    /// Instructs intermediaries to preserve the response representation.
+    CacheControl noTransform()
+    {
+        preserveRepresentation = true;
+        return this;
+    }
+
+    /// Allows shared caches to store the response.
+    CacheControl cachePublic()
+    {
+        if (privateCache)
+            throw new IllegalStateException(
+                    "The \"private\" directive has already been set, " ~ "which is mutually exclusive with \"public\"");
+        if (disallowStorage)
+            throw new IllegalStateException(
+                    "The \"no-store\" directive has already been set, " ~ "which contradicts \"public\"");
+        publicCache = true;
+        return this;
+    }
+
+    /// Limits storage to private caches.
+    CacheControl cachePrivate()
+    {
+        if (publicCache)
+            throw new IllegalStateException(
+                    "The \"public\" directive has already been set, " ~ "which is mutually exclusive with \"private\"");
+        privateCache = true;
+        return this;
+    }
+
+    /// Requires shared caches to validate stale responses before reuse.
+    CacheControl proxyRevalidate()
+    {
+        revalidateProxy = true;
+        return this;
+    }
+
+    /// Sets the shared-cache maximum age.
+    CacheControl sMaxAge(long age, TimeUnit unit)
+    {
+        return sMaxAge(Duration.ofSeconds(unit.toSeconds(age)));
+    }
+
+    /// ditto
+    CacheControl sMaxAge(Duration age)
+    {
+        sharedMaxAgeDirective = "s-maxage=" ~ decimal(age.getSeconds());
+        return this;
+    }
+
+    /// Sets how long a cache may reuse a stale response during revalidation.
+    CacheControl staleWhileRevalidate(long age, TimeUnit unit)
+    {
+        return staleWhileRevalidate(Duration.ofSeconds(unit.toSeconds(age)));
+    }
+
+    /// ditto
+    CacheControl staleWhileRevalidate(Duration age)
+    {
+        staleWhileRevalidateDirective = "stale-while-revalidate=" ~ decimal(age.getSeconds());
+        return this;
+    }
+
+    /// Sets how long a cache may reuse a stale response after an error.
+    CacheControl staleIfError(long age, TimeUnit unit)
+    {
+        return staleIfError(Duration.ofSeconds(unit.toSeconds(age)));
+    }
+
+    /// ditto
+    CacheControl staleIfError(Duration age)
+    {
+        staleIfErrorDirective = "stale-if-error=" ~ decimal(age.getSeconds());
+        return this;
+    }
+
+    /// Marks the response immutable during its freshness lifetime (R19).
+    CacheControl immutable_()
+    {
+        immutableRepresentation = true;
+        return this;
+    }
+
+    /// The header value, or `null` when no directive is configured.
+    string getHeaderValue() const
+    {
+        auto header = toHeaderValue();
+        return header.length == 0 ? null : header.text[0 .. header.length].idup;
+    }
+
+    override string toString() const
+    {
+        enum prefix = "CacheControl [";
+        const header = toHeaderValue();
+        char[prefix.length + header.text.length + 1] text;
+        const end = prefix.length + header.length;
+        text[0 .. prefix.length] = prefix;
+        text[prefix.length .. end] = header.text[0 .. header.length];
+        text[end] = ']';
+        return text[0 .. end + 1].idup;
+    }
+
+    private HeaderValue toHeaderValue() const pure nothrow @nogc
+    {
+        HeaderValue header;
+        header.append(maxAgeDirective);
+        header.append(requireValidation ? "no-cache" : null);
+        header.append(disallowStorage ? "no-store" : null);
+        header.append(requireUnderstanding ? "must-understand" : null);
+        header.append(revalidate ? "must-revalidate" : null);
+        header.append(preserveRepresentation ? "no-transform" : null);
+        header.append(publicCache ? "public" : null);
+        header.append(privateCache ? "private" : null);
+        header.append(revalidateProxy ? "proxy-revalidate" : null);
+        header.append(sharedMaxAgeDirective);
+        header.append(staleIfErrorDirective);
+        header.append(staleWhileRevalidateDirective);
+        header.append(immutableRepresentation ? "immutable" : null);
+        return header;
+    }
+
+    private struct HeaderValue
+    {
+        // The directive names, separators and four signed 64-bit second values fit in 255 bytes.
+        char[256] text;
+        size_t length;
+
+        void append(string directive) pure nothrow @nogc
+        {
+            if (directive is null)
+                return;
+            if (length != 0)
+            {
+                text[length .. length + 2] = ", ";
+                length += 2;
+            }
+            text[length .. length + directive.length] = directive;
+            length += directive.length;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------
 // HttpHeaders
 
 /++
@@ -1815,6 +2028,20 @@ struct HttpHeaders
     void setCacheControl(string cacheControl) pure
     {
         setOrRemove(CACHE_CONTROL, cacheControl);
+    }
+
+    /// Sets the policy's header value, or removes the header for an empty policy.
+    void setCacheControl(CacheControl cacheControl)
+    {
+        if (cacheControl is null)
+            throw new NullPointerException("CacheControl");
+        setCacheControl(cacheControl.getHeaderValue());
+    }
+
+    /// A bare `null` selects the string overload.
+    void setCacheControl(typeof(null)) pure
+    {
+        setCacheControl(cast(string) null);
     }
 
     /// The `Cache-Control` values joined, or `null`.
@@ -2490,11 +2717,24 @@ struct ResponseEntity
             return this;
         }
 
-        /// Sets `Cache-Control` (Java takes a `CacheControl`; its header value here).
+        /// Sets the textual `Cache-Control` value.
         ref B cacheControl(string cacheControl) return
         {
             builderHeaders.setCacheControl(cacheControl);
             return this;
+        }
+
+        /// Sets the policy's `Cache-Control` value.
+        ref B cacheControl(CacheControl cacheControl) return
+        {
+            builderHeaders.setCacheControl(cacheControl);
+            return this;
+        }
+
+        /// A bare `null` selects the string overload.
+        ref B cacheControl(typeof(null)) return
+        {
+            return cacheControl(cast(string) null);
         }
 
         /// Sets `Vary`.

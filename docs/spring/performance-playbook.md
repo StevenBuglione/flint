@@ -667,6 +667,11 @@ allocate their merged list only when a resolver supplies a result. The same web 
 measured 547,393 linked bytes for both `8b049392` and `78cc0303`, with 11,852 to 11,887 DMD template
 instances. Tests cover registration order, duplicate resolvers and independently mutable results.
 
+Cache-Control renders numeric directives during policy configuration. The header reader joins the
+configured directives into a bounded stack buffer and returns the header string. The matched web
+probe on venus measured 536,673 to 536,729 linked bytes and 11,890 to 11,906 DMD template instances
+at `0aa68434` and `f5ae5163`. Tests pin directive order, signed bounds and the header writers.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

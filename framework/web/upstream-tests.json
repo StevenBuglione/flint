@@ -1,8 +1,29 @@
 {
   "classes": {
     "org/springframework/http/CacheControlTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/web/tests/cache_control_tests.d",
+      "methods": {
+        "ported": [
+          "cachePublicAndCachePrivateRejected",
+          "cachePublicWithNoStoreRejected",
+          "emptyCacheControl",
+          "immutable",
+          "maxAge",
+          "maxAgeAndDirectives",
+          "maxAgeAndSMaxAge",
+          "maxAgeAndSMaxAge_duration",
+          "maxAge_duration",
+          "mustUnderstand",
+          "mustUnderstandWithoutNoStoreRejected",
+          "noCachePrivate",
+          "noStore",
+          "staleIfError",
+          "staleIfError_duration",
+          "staleWhileRevalidate",
+          "staleWhileRevalidate_duration"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/http/ContentDispositionTests.java": {
       "phase": "2",
