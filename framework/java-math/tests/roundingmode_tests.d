@@ -44,5 +44,5 @@ import flint.java.math.roundingmode : RoundingMode, compareTo, name, ordinal, to
     assertThrown!IllegalArgumentException(valueOf(-1));
     assertThrown!IllegalArgumentException(valueOf(8));
     assertThrown!NullPointerException(valueOf(null));
-    assertThrown!NullPointerException(RoundingMode.UP.compareTo(null));
+    static assert(!__traits(compiles, RoundingMode.UP.compareTo(null)));
 }

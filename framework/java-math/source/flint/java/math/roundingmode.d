@@ -46,11 +46,6 @@ int compareTo(RoundingMode left, RoundingMode right) pure nothrow @nogc
     return ordinal(left) - ordinal(right);
 }
 
-int compareTo(RoundingMode, typeof(null))
-{
-    throw new NullPointerException();
-}
-
 /// Return a fresh array of the modes in declaration order.
 RoundingMode[] values() pure nothrow
 {
