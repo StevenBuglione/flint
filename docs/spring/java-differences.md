@@ -185,8 +185,8 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 498 | 22 | 1 | 2,774 |
-| framework | jackson-databind@3.1.8 | 513 | 49 | 5 | 9,900 |
+| framework | jackson-core@3.1.8 | 495 | 22 | 1 | 2,777 |
+| framework | jackson-databind@3.1.8 | 511 | 49 | 5 | 9,902 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 200 | 162 | 0 | 2,028 |
@@ -10392,7 +10392,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
-| tools.jackson.core | 606 | 0 |
+| tools.jackson.core | 609 | 0 |
 | tools.jackson.core.async | 7 | 0 |
 | tools.jackson.core.base | 363 | 0 |
 | tools.jackson.core.exc | 11 | 0 |
@@ -10407,7 +10407,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.util | 460 | 0 |
 | tools.jackson.databind | 1,568 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
-| tools.jackson.databind.cfg | 764 | 0 |
+| tools.jackson.databind.cfg | 765 | 0 |
 | tools.jackson.databind.deser | 587 | 0 |
 | tools.jackson.databind.deser.bean | 343 | 0 |
 | tools.jackson.databind.deser.impl | 211 | 0 |
@@ -10425,7 +10425,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.databind.ext.javatime.util | 10 | 0 |
 | tools.jackson.databind.ext.jdk8 | 60 | 0 |
 | tools.jackson.databind.ext.sql | 40 | 0 |
-| tools.jackson.databind.introspect | 925 | 0 |
+| tools.jackson.databind.introspect | 926 | 0 |
 | tools.jackson.databind.json | 22 | 0 |
 | tools.jackson.databind.jsonFormatVisitors | 119 | 0 |
 | tools.jackson.databind.jsontype | 138 | 0 |
@@ -10918,6 +10918,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.JsonGenerator#writeNumberProperty(String,BigDecimal)` | 2 | The Java overload accepts BigDecimal. Flint's numeric property writers take primitive numbers. |
 | framework | `tools.jackson.core.JsonGenerator#writeString(Reader,int)` | 2 | The Java overload reads from java.io.Reader. Flint writes strings and character-buffer slices. |
 | framework | `tools.jackson.core.JsonParser#nextName(SerializableString)` | 2 | The overload requires the deferred SerializableString API. |
+| framework | `tools.jackson.core.StreamReadConstraints#<init>(int,long,long,int,int,int)` | 2 | The D read constraints expose four limit fields. The Java protected six-parameter constructor includes document length and token count limits and is deferred. |
+| framework | `tools.jackson.core.StreamWriteConstraints#<init>(int)` | 2 | Flint constructs write constraints through the public builder. The Java protected subclass constructor is deferred. |
+| framework | `tools.jackson.core.StreamWriteConstraints#_maxNestingDepth` | 2 | The D struct keeps the backing field private and exposes the getter. Java's protected subclass field is deferred. |
 | framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
 | framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
 | framework | `tools.jackson.core.TokenStreamLocation#toString(StringBuilder)` | 2 | The Java overload appends to a StringBuilder. Flint exposes a zero-argument formatter returning a string. |
@@ -11024,6 +11027,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.ObjectWriter#isEnabled(MapperFeature)` | 2 | Flint exposes feature queries on ObjectMapper. This Java ObjectWriter overload remains deferred. |
 | framework | `tools.jackson.databind.ObjectWriter#isEnabled(SerializationFeature)` | 2 | Flint exposes feature queries on ObjectMapper. This Java ObjectWriter overload remains deferred. |
 | framework | `tools.jackson.databind.ObjectWriter#writeValue(DataOutput,Object)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
+| framework | `tools.jackson.databind.cfg.ConstructorDetector#EXPLICIT_ONLY` | 2 | Jackson requires an explicit mode for ambiguous single-argument creators and still allows implicit multi-argument creators. Flint's option requires a JsonCreator annotation and disables implicit creator discovery. Boot tracks the parity test under FlintJacksonExplicitOnlyDetector. |
 | framework | `tools.jackson.databind.cfg.MapperConfig#isEnabled(DatatypeFeature)` | 2 | Flint exposes typed DateTimeFeature and EnumFeature queries under R18. The Java overload takes the shared DatatypeFeature interface. |
 | framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonGenerator,String,BeanDescription,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
 | framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonGenerator,String,JavaType)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
@@ -11042,6 +11046,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.exc.ValueInstantiationException#from(JsonParser,String,JavaType)` | 2 | Flint's constructor takes a message, diagnostic type name and cause. The Java overload uses a parser and JavaType. |
 | framework | `tools.jackson.databind.exc.ValueInstantiationException#from(JsonParser,String,JavaType,Throwable)` | 2 | Flint's constructor takes a message, diagnostic type name and cause. The Java overload uses a parser and JavaType. |
 | framework | `tools.jackson.databind.exc.ValueInstantiationException#getType()` | 2 | Flint returns the type's diagnostic name as a string. JavaType remains deferred. |
+| framework | `tools.jackson.databind.introspect.POJOPropertiesCollector` | 2 | Flint's descriptor-driven collector takes an AOT descriptor and creates a new BeanDescription. Jackson's stateful runtime-introspection class is deferred. |
 | framework | `tools.jackson.databind.introspect.POJOPropertiesCollector#<init>(MapperConfig,boolean,JavaType,AnnotatedClass,AccessorNamingStrategy)` | 2 | Flint configures the collector aggregate and supplies an AOT descriptor to collect. The Java constructor takes runtime type and naming metadata. |
 | framework | `tools.jackson.databind.node.ArrayNode#add(BigDecimal)` | 2 | Flint adds an existing JsonNode or a primitive number. |
 | framework | `tools.jackson.databind.node.ArrayNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |

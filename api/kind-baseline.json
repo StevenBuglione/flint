@@ -4,8 +4,7 @@
   "org.springframework.security.web.authentication.www.BasicAuthenticationConverter": "security: Java class, D struct",
   "tools.jackson.core.StreamReadConstraints": "framework: Java class, D struct",
   "tools.jackson.core.StreamWriteConstraints": "framework: Java class, D struct",
-  "tools.jackson.databind.cfg.ConstructorDetector": "framework: Java class, D enum/struct",
-  "tools.jackson.databind.introspect.POJOPropertiesCollector": "framework: Java class, D struct"
+  "tools.jackson.databind.cfg.ConstructorDetector": "framework: Java class, D enum/struct"
  },
  "note": "Ported types whose D declaration kind differs from the Java kind, recorded when the check landed (coordinator, 2026-11-26, da29538cb). Shrink-only: classify each adapted with the rule or deviation that allows the kind, or declare the Java kind; then run python3 tools/api_differences.py --write.",
  "schema": 1
