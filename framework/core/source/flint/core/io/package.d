@@ -653,7 +653,7 @@ class DefaultResourceLoader : ResourceLoader
             return new ClassPathResource(location[CLASSPATH_URL_PREFIX.length .. $]);
         enum filePrefix = "file:";
         if (location.length > filePrefix.length && location[0 .. filePrefix.length] == filePrefix)
-            return new FileSystemResource(location[filePrefix.length .. $]);
+            return new FileSystemResource(fileUrlPath(location[filePrefix.length .. $]));
         return getResourceByPath(location);
     }
 
@@ -662,6 +662,43 @@ class DefaultResourceLoader : ResourceLoader
     {
         return new ClassPathResource(path);
     }
+}
+
+private string fileUrlPath(string location)
+{
+    foreach (index, character; location)
+    {
+        if (character == '?' || character == '#')
+        {
+            location = location[0 .. index];
+            break;
+        }
+    }
+
+    enum localhost = "//localhost";
+    if (StringUtils.startsWithIgnoreCase(location, localhost ~ '/'))
+        location = location[localhost.length .. $];
+    else if (location.length >= 3 && location[0 .. 3] == "///")
+        location = location[2 .. $];
+
+    try
+        return nativeFileUrlPath(StringUtils.uriDecode(location));
+    catch (IllegalArgumentException)
+        return nativeFileUrlPath(location); // ResourceUtils.getFile falls back to the literal URL path.
+}
+
+private string nativeFileUrlPath(string path) pure nothrow @nogc
+{
+    version (Windows)
+    {
+        if (path.length >= 3 && path[0] == '/' && path[2] == ':')
+        {
+            const drive = path[1] | 0x20;
+            if (drive >= 'a' && drive <= 'z')
+                return path[1 .. $];
+        }
+    }
+    return path;
 }
 
 // Ported from spring-framework v7.1.0, spring-core/src/main/java/org/springframework/core/io/InputStreamResource.java

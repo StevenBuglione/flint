@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
 | boot | spring-boot@v4.2.0 | 44 | 97 | 2,133 | 13,329 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,595 | 1,449 | 4,870 | 29,920 |
+| framework | spring-framework@v7.1.0 | 3,594 | 1,450 | 4,870 | 29,920 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2719,6 +2719,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.core.io.ClassPathResource#<init>(String,Class)` | `flint.core.io.ClassPathResource.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.core.io.DefaultResourceLoader#getResource(String)` | `flint.core.io.DefaultResourceLoader.getResource` | [D-CORE-1](api-mapping.md#deviations) |  |
 | `org.springframework.core.io.InputStreamResource#<init>(InputStreamSource)` | `flint.core.io.InputStreamResource.this` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.core.io.InputStreamResource#<init>(InputStreamSource,String)` | `flint.core.io.InputStreamResource.this` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.core.io.InputStreamResource#equals(Object)` | `flint.core.io.InputStreamResource.opEquals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |

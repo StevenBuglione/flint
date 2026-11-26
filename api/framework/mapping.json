@@ -14687,7 +14687,7 @@
 "org.springframework.core.io.DefaultResourceLoader#clearResourceCaches()":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.core.io.DefaultResourceLoader#getClassLoader()":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.core.io.DefaultResourceLoader#getProtocolResolvers()":{"d":"flint.core.io.DefaultResourceLoader.getProtocolResolvers","status":"ported"},
-"org.springframework.core.io.DefaultResourceLoader#getResource(String)":{"d":"flint.core.io.DefaultResourceLoader.getResource","status":"ported"},
+"org.springframework.core.io.DefaultResourceLoader#getResource(String)":{"d":"flint.core.io.DefaultResourceLoader.getResource","rules":["D-CORE-1"],"status":"adapted"},
 "org.springframework.core.io.DefaultResourceLoader#getResourceByPath(String)":{"d":"flint.core.io.DefaultResourceLoader.getResourceByPath","status":"ported"},
 "org.springframework.core.io.DefaultResourceLoader#getResourceCache(Class)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.core.io.DefaultResourceLoader#setClassLoader(ClassLoader)":{"category":"deferred","phase":"2","status":"excluded"},

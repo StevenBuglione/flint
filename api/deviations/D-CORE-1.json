@@ -1,0 +1,5 @@
+{
+  "id": "D-CORE-1",
+  "deviation": "`DefaultResourceLoader` resolves `file:` locations to `FileSystemResource` until the Java URL contracts land. It percent-decodes the path as Spring does and preserves the literal path when an escape is malformed.",
+  "reason": "The Java URL contracts needed for `FileUrlResource` are pending. The existing file resource can open the resolved local path."
+}
