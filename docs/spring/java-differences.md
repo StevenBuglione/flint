@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 527 | 17 | 1 | 2,750 |
+| framework | jackson-core@3.1.8 | 518 | 17 | 1 | 2,759 |
 | framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -9948,14 +9948,14 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
-| tools.jackson.core | 600 | 0 |
+| tools.jackson.core | 604 | 0 |
 | tools.jackson.core.async | 7 | 0 |
 | tools.jackson.core.base | 363 | 0 |
 | tools.jackson.core.exc | 11 | 0 |
 | tools.jackson.core.filter | 183 | 0 |
 | tools.jackson.core.io | 277 | 0 |
 | tools.jackson.core.io.schubfach | 34 | 0 |
-| tools.jackson.core.json | 452 | 0 |
+| tools.jackson.core.json | 457 | 0 |
 | tools.jackson.core.json.async | 168 | 0 |
 | tools.jackson.core.sym | 147 | 0 |
 | tools.jackson.core.tree | 2 | 0 |
