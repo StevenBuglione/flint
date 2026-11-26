@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,110 | 313 | 1,871 | 15,127 |
+| framework | openjdk@21.0.13 | 1,109 | 313 | 1,871 | 15,128 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10074,7 +10074,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 771 | 0 |
+| java.io | 772 | 0 |
 | java.lang | 1,993 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10995,8 +10995,13 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
 | framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
 | framework | `java.io.IOException#<init>(Throwable)` | 2 | The current constructor accepts a message and an optional cause. Java's cause-only constructor is pending. |
+| framework | `java.io.InputStream` | 2 | The abstract source exists. The nominal Closeable interface required by Java is missing from the class. |
+| framework | `java.io.InputStream#available()` | 2 | Missing virtual base method that returns zero by default. |
+| framework | `java.io.InputStream#mark(int)` | 2 | Missing virtual mark operation with a no-op base implementation. |
+| framework | `java.io.InputStream#markSupported()` | 2 | Missing virtual mark support query with a false base result. |
 | framework | `java.io.InputStream#readNBytes(byte[],int,int)` | 2 | Missing bounded read into a caller-supplied array range. Java returns zero at EOF. |
 | framework | `java.io.InputStream#readNBytes(int)` | 2 | Missing bounded read that returns a new byte array. Java uses this virtual overload to implement readAllBytes(). |
+| framework | `java.io.InputStream#reset()` | 2 | Missing virtual reset method that throws IOException with detail mark/reset not supported by default. |
 | framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java distinguishes absent detail from an empty detail message. The current raw string constructor and inherited accessor need the R5 nullable message contract. |
 | framework | `java.io.OutputStream` | 2 | The abstract sink exists. The Java type also implements the Closeable and Flushable interfaces, which are pending. |
 | framework | `java.io.OutputStream#write(byte[])` | 2 | Java forwards a whole-array write to the virtual ranged overload. The existing method calls the single-byte overload directly. |
