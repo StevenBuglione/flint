@@ -4,7 +4,7 @@
 Ported from spring-projects/spring-framework v7.1.0,
 spring-test/src/main/java/org/springframework/test/web/servlet/result/ (MockMvcResultMatchers.java,
 StatusResultMatchers.java, ContentResultMatchers.java, HeaderResultMatchers.java, JsonPathResultMatchers.java,
-ModelResultMatchers.java, ViewResultMatchers.java,
+ModelResultMatchers.java, ViewResultMatchers.java, HandlerResultMatchers.java,
 MockMvcResultHandlers.java, PrintingResultHandler.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
@@ -16,6 +16,7 @@ module flint.test.web.servlet.result;
 
 import flint.http : HttpHeaders, HttpStatus, MediaType;
 import flint.engine.aot.any : Any;
+import flint.engine.aot.name : canonicalTypeName, typeNameOf;
 import flint.java.lang : AssertionError, IllegalStateException, Integer, Long, String, valueOf;
 import flint.java.nio.charset : Charset;
 import flint.test.json : JsonComparator, JsonCompareMode, JsonComparison;
@@ -23,6 +24,7 @@ import flint.test.util : AssertionErrors, JsonPathExpectationsHelper;
 import flint.test.web.servlet : MvcResult, ResultHandler, ResultMatcher;
 import flint.util : AntPathMatcher;
 import flint.validation : BindingResult, Errors;
+import flint.web.method : HandlerMethod;
 import flint.web.servlet : ModelAndView;
 import flint.web.util : UriComponentsBuilder;
 import std.typecons : Nullable;
@@ -68,6 +70,12 @@ struct MockMvcResultMatchers
     static ViewResultMatchers view()
     {
         return new ViewResultMatchers;
+    }
+
+    /// Matchers on the handler that served the request.
+    static HandlerResultMatchers handler()
+    {
+        return new HandlerResultMatchers;
     }
 
     /// Asserts the forwarded URL.
@@ -156,6 +164,44 @@ private ModelAndView requireModelAndView(MvcResult result)
     auto modelAndView = result.getModelAndView();
     AssertionErrors.assertNotNull("No ModelAndView found", modelAndView is null);
     return modelAndView;
+}
+
+/// `HandlerResultMatchers`.
+class HandlerResultMatchers
+{
+    /// Obtain the standard instance through `MockMvcResultMatchers.handler()`.
+    protected this() pure nothrow @nogc
+    {
+    }
+
+    /// Asserts the exact handler type. The Java class token is a template parameter (R4).
+    ResultMatcher handlerType(T)()
+    {
+        return handlerTypeNamed(typeNameOf!T);
+    }
+
+    private ResultMatcher handlerTypeNamed(string expected)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            auto handler = result.getHandler();
+            AssertionErrors.assertNotNull("No handler", handler is null);
+            auto method = cast(HandlerMethod) handler;
+            const actual = method is null ? typeid(handler).name : method.getBeanType();
+            assertTextEquals("Handler type", nullableText(expected), canonicalTypeName(actual));
+        });
+    }
+
+    /// Asserts the name of the mapped controller method.
+    ResultMatcher methodName(string name)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            auto handler = result.getHandler();
+            auto method = cast(HandlerMethod) handler;
+            if (method is null)
+                AssertionErrors.fail("Not a HandlerMethod: " ~ valueOf(handler));
+            assertTextEquals("Handler method", nullableText(name), method.getMethodName());
+        });
+    }
 }
 
 /// `ViewResultMatchers`.

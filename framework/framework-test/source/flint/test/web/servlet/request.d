@@ -3,12 +3,13 @@
 
 Ported from spring-projects/spring-framework v7.1.0,
 spring-test/src/main/java/org/springframework/test/web/servlet/request/ (MockMvcRequestBuilders.java,
-MockHttpServletRequestBuilder.java, AbstractMockHttpServletRequestBuilder.java).
+MockHttpServletRequestBuilder.java, AbstractMockHttpServletRequestBuilder.java, ConfigurableSmartRequestBuilder.java,
+RequestPostProcessor.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: `Object... uriVariables` is a template parameter pack (R7). The concrete
-builder supplies the fluent methods (R12). The headers consumer is a delegate (R9). Query parameters
-are decoded as UTF-8 (R14).
+builder supplies the fluent methods (R12). The headers consumer and request callbacks accept delegates (R9).
+Query parameters are decoded as UTF-8 (R14).
 +/
 module flint.test.web.servlet.request;
 
@@ -20,19 +21,59 @@ import flint.jakarta.servlet.http : Cookie;
 import flint.java.lang : IllegalArgumentException, valueOf;
 import flint.java.net : URI;
 import flint.java.nio.charset : Charset;
-import flint.java.util : RawCollection;
+import flint.java.util : Locale, RawCollection;
 import flint.java.util.date : Date;
 import flint.mock.web : MockHttpServletRequest;
-import flint.test.web.servlet : RequestBuilder;
+import flint.test.web.servlet : SmartRequestBuilder;
 import flint.util : Assert, MultiValueMap, StringUtils;
 import flint.web.util : UriComponentsBuilder, UriComponentType, UriUtils;
 import std.typecons : Nullable;
 
 @safe:
 
-/// `MockHttpServletRequestBuilder`.
-final class MockHttpServletRequestBuilder : RequestBuilder
+/// `RequestPostProcessor`.
+interface RequestPostProcessor
 {
+    /// Returns the initialized request or a replacement.
+    MockHttpServletRequest postProcessRequest(MockHttpServletRequest request);
+}
+
+/// `ConfigurableSmartRequestBuilder`.
+interface ConfigurableSmartRequestBuilder(B) : SmartRequestBuilder
+{
+    /// Adds the request post-processor. `with` is a D keyword (R1).
+    B with_(RequestPostProcessor postProcessor);
+
+    /// ditto, with a delegate (R9)
+    B with_(MockHttpServletRequest delegate(MockHttpServletRequest) @safe postProcessor);
+
+    /// Resolves a null literal to the Java interface overload.
+    final B with_(typeof(null))
+    {
+        return with_(cast(RequestPostProcessor) null);
+    }
+}
+
+private final class DelegateRequestPostProcessor : RequestPostProcessor
+{
+    private MockHttpServletRequest delegate(MockHttpServletRequest) @safe process;
+
+    this(MockHttpServletRequest delegate(MockHttpServletRequest) @safe process) pure nothrow @nogc
+    {
+        this.process = process;
+    }
+
+    override MockHttpServletRequest postProcessRequest(MockHttpServletRequest request)
+    {
+        return process(request);
+    }
+}
+
+/// `MockHttpServletRequestBuilder`.
+final class MockHttpServletRequestBuilder : ConfigurableSmartRequestBuilder!MockHttpServletRequestBuilder
+{
+    alias with_ = ConfigurableSmartRequestBuilder!MockHttpServletRequestBuilder.with_;
+
     private struct Parameter
     {
         string name;
@@ -56,6 +97,9 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     private string contentTypeValue;
     private string characterEncodingValue;
     private Cookie[] cookies;
+    private Locale[] preferredLocales;
+    private string remoteAddressValue;
+    private RequestPostProcessor[] postProcessors;
     private Any[string] attributes;
     private string[] attributeOrder;
     private bool secureValue;
@@ -317,6 +361,56 @@ final class MockHttpServletRequestBuilder : RequestBuilder
         return this;
     }
 
+    /// Replaces the preferred locales with one locale.
+    MockHttpServletRequestBuilder locale(Locale locale)
+    {
+        return this.locale(Nullable!Locale(locale));
+    }
+
+    /// Replaces the preferred locales or resets them if the locale is absent (R5).
+    MockHttpServletRequestBuilder locale(Nullable!Locale locale)
+    {
+        preferredLocales = locale.isNull ? null : [locale.get()];
+        return this;
+    }
+
+    /// Appends the supplied locales in preference order.
+    MockHttpServletRequestBuilder locale(Locale[] locales...)
+    {
+        Assert.notEmpty(locales, "'locales' must not be empty");
+        preferredLocales ~= locales;
+        return this;
+    }
+
+    /// Sets the remote address.
+    MockHttpServletRequestBuilder remoteAddress(string remoteAddress)
+    {
+        Assert.hasText(remoteAddress, "'remoteAddress' must not be null or blank");
+        remoteAddressValue = remoteAddress;
+        return this;
+    }
+
+    override MockHttpServletRequestBuilder with_(RequestPostProcessor postProcessor)
+    {
+        Assert.notNull(postProcessor, "postProcessor is required");
+        postProcessors ~= postProcessor;
+        return this;
+    }
+
+    override MockHttpServletRequestBuilder with_(
+            MockHttpServletRequest delegate(MockHttpServletRequest) @safe postProcessor)
+    {
+        Assert.notNull(postProcessor, "postProcessor is required");
+        return with_(new DelegateRequestPostProcessor(postProcessor));
+    }
+
+    override MockHttpServletRequest postProcessRequest(MockHttpServletRequest request)
+    {
+        foreach (postProcessor; postProcessors)
+            request = postProcessor.postProcessRequest(request);
+        return request;
+    }
+
     /// Sets a request attribute.
     MockHttpServletRequestBuilder requestAttr(string name, Any value)
     {
@@ -391,6 +485,8 @@ final class MockHttpServletRequestBuilder : RequestBuilder
             request.setServerName(host);
         if (port >= 0)
             request.setServerPort(port);
+        if (remoteAddressValue !is null)
+            request.setRemoteAddr(remoteAddressValue);
         updatePath(request);
 
         string query = rawQuery;
@@ -409,6 +505,8 @@ final class MockHttpServletRequestBuilder : RequestBuilder
         foreach (parameter; parameters)
             request.addParameter(parameter.name, parameter.values);
         applyHeadersAndBody(request);
+        if (preferredLocales.length != 0)
+            request.setPreferredLocales(preferredLocales);
         foreach (name; attributeOrder)
             request.setAttribute(name, attributes[name]);
         return request;

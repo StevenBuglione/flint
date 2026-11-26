@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 137 | 254 | 0 | 15,405 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,367 | 1,302 | 4,848 | 30,317 |
+| framework | spring-framework@v7.1.0 | 3,375 | 1,310 | 4,848 | 30,301 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2936,15 +2936,22 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#headers(Consumer)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.headers` | [R9](api-mapping.md#r9-functional-interfaces), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#headers(HttpHeaders)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.headers` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#ifNoneMatch(String...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.ifNoneMatch` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#locale(Locale)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.locale` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#locale(Locale...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.locale` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#param(String,String...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.param` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#params(MultiValueMap)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.params` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#pathInfo(String)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.pathInfo` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#postProcessRequest(MockHttpServletRequest)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.postProcessRequest` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#queryParam(String,String...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.queryParam` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#queryParams(MultiValueMap)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.queryParams` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#remoteAddress(String)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.remoteAddress` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#requestAttr(String,Object)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.requestAttr` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R23](api-mapping.md#r23-object-typed-values) | Object values use Flint's erased Any. The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#servletPath(String)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.servletPath` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#uri(String,Object...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.uri` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#uri(URI)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.uri` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#with(RequestPostProcessor)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.with_` | [R1](api-mapping.md#r1-packages-and-names), [R9](api-mapping.md#r9-functional-interfaces), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
+| `org.springframework.test.web.servlet.request.ConfigurableSmartRequestBuilder` | `flint.test.web.servlet.request.ConfigurableSmartRequestBuilder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The fluent self type is a D template parameter. |
+| `org.springframework.test.web.servlet.request.ConfigurableSmartRequestBuilder#with(RequestPostProcessor)` | `flint.test.web.servlet.request.ConfigurableSmartRequestBuilder.with_` | [R1](api-mapping.md#r1-packages-and-names), [R9](api-mapping.md#r9-functional-interfaces) | The D keyword uses a trailing underscore. The functional interface also accepts a D delegate. |
 | `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#delete(String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.delete_` | [R1](api-mapping.md#r1-packages-and-names), [R7](api-mapping.md#r7-overloads) | delete is a reserved D keyword. |
 | `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#delete(URI)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.delete_` | [R1](api-mapping.md#r1-packages-and-names) | delete is a reserved D keyword. |
 | `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#get(String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.get` | [R7](api-mapping.md#r7-overloads) |  |
@@ -2960,6 +2967,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.test.web.servlet.result.ContentResultMatchers#json(String,JsonComparator)` | `flint.test.web.servlet.result.ContentResultMatchers.json` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.test.web.servlet.result.HandlerResultMatchers#handlerType(Class)` | `flint.test.web.servlet.result.HandlerResultMatchers.handlerType` | [R4](api-mapping.md#r4-classt-parameters) | The template type token resolves to the same canonical type name used by HandlerMethod. |
 | `org.springframework.test.web.servlet.result.HeaderResultMatchers#stringValues(String,String...)` | `flint.test.web.servlet.result.HeaderResultMatchers.stringValues` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.test.web.servlet.result.JsonPathResultMatchers` | `flint.test.web.servlet.result.JsonPathResultMatchers` | [R1](api-mapping.md#r1-packages-and-names) | Jackson-backed path selection under D-TEST-2 |
 | `org.springframework.test.web.servlet.result.JsonPathResultMatchers#<init>(String,Object...)` | `flint.test.web.servlet.result.JsonPathResultMatchers` | [R7](api-mapping.md#r7-overloads) |  |
@@ -9137,14 +9145,14 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.test.web.client.response | 40 | 0 |
 | org.springframework.test.web.reactive.server | 0 | 187 |
 | org.springframework.test.web.reactive.server.assertj | 0 | 40 |
-| org.springframework.test.web.servlet | 34 | 0 |
+| org.springframework.test.web.servlet | 32 | 0 |
 | org.springframework.test.web.servlet.assertj | 114 | 0 |
 | org.springframework.test.web.servlet.client | 170 | 0 |
 | org.springframework.test.web.servlet.client.assertj | 27 | 0 |
 | org.springframework.test.web.servlet.htmlunit | 40 | 0 |
 | org.springframework.test.web.servlet.htmlunit.webdriver | 20 | 0 |
-| org.springframework.test.web.servlet.request | 42 | 0 |
-| org.springframework.test.web.servlet.result | 111 | 0 |
+| org.springframework.test.web.servlet.request | 33 | 0 |
+| org.springframework.test.web.servlet.result | 106 | 0 |
 | org.springframework.test.web.servlet.setup | 85 | 0 |
 | org.springframework.test.web.support | 118 | 0 |
 | org.springframework.transaction | 5 | 0 |

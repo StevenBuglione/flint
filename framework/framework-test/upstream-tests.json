@@ -563,6 +563,7 @@
           "emptyPath",
           "header",
           "headers",
+          "locale",
           "method",
           "noCookies",
           "pathInfoIsDecoded",
@@ -572,6 +573,7 @@
           "queryParameterWithListValues",
           "queryParameterWithoutValues",
           "queryStringWithoutValues",
+          "remoteAddress",
           "requestAttribute",
           "requestParameter",
           "requestParameterFromMultiValueMap",
@@ -592,10 +594,8 @@
           "formFieldWithContent": "Requires form request fields or request-body parameter processing",
           "formFieldWithIncompatibleMediaType": "Requires form request fields or request-body parameter processing",
           "formFieldsAreEncoded": "Requires form request fields or request-body parameter processing",
-          "locale": "Outside the URI and path slice. Request identity and locale behavior are deferred.",
           "mergeInvokesDefaultRequestPostProcessorFirst": "Requires request-builder merge and default request behavior",
           "principal": "Outside the URI and path slice. Request identity and locale behavior are deferred.",
-          "remoteAddress": "Outside the URI and path slice. Request identity and locale behavior are deferred.",
           "requestParameterFromRequestBodyFormData": "Requires form request fields or request-body parameter processing",
           "session": "Requires session or flash request state",
           "sessionAttribute": "Requires session or flash request state",
@@ -965,8 +965,15 @@
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/samples/standalone/FrameworkExtensionTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/mock_mvc_framework_extension_tests.d",
+      "methods": {
+        "ported": [
+          "barHeader",
+          "fooHeader"
+        ]
+      },
+      "note": "The fixture applies a prerequisite request attribute directly and uses distinct paths with header predicates.",
+      "status": "ported"
     },
     "org/springframework/test/web/servlet/samples/standalone/MultipartControllerTests.java": {
       "phase": "2",
@@ -1017,8 +1024,20 @@
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/samples/standalone/resultmatchers/HandlerAssertionTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/handler_assertion_tests.d",
+      "methods": {
+        "ported": [
+          "handlerType",
+          "methodName"
+        ],
+        "skipped": {
+          "method": "Requires the AOT method member reference (D-AOT-MEMBER).",
+          "methodCall": "Requires an AOT adaptation for MvcUriComponentsBuilder.on.",
+          "methodCallOnNonMock": "Requires an AOT adaptation for MvcUriComponentsBuilder.on.",
+          "methodNameMatchers": "Requires the separate Hamcrest matcher overload."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/test/web/servlet/samples/standalone/resultmatchers/HeaderAssertionTests.java": {
       "phase": "2",

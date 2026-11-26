@@ -3,8 +3,8 @@
 
 Ported from spring-projects/spring-framework v7.1.0,
 spring-test/src/main/java/org/springframework/test/web/servlet/ (MockMvc.java, MvcResult.java,
-DefaultMvcResult.java, ResultActions.java, RequestBuilder.java, ResultMatcher.java, ResultHandler.java,
-TestDispatcherServlet.java) and org/springframework/mock/web/MockFilterChain.java.
+DefaultMvcResult.java, ResultActions.java, RequestBuilder.java, SmartRequestBuilder.java, ResultMatcher.java,
+ResultHandler.java, TestDispatcherServlet.java) and org/springframework/mock/web/MockFilterChain.java.
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook. `ResultMatcher` and `ResultHandler` also take
@@ -26,6 +26,13 @@ interface RequestBuilder
 {
     /// The request.
     MockHttpServletRequest buildRequest(ServletContext servletContext);
+}
+
+/// `SmartRequestBuilder`: applies post-processing after building the request.
+interface SmartRequestBuilder : RequestBuilder
+{
+    /// Applies post-processors and returns the request to use for dispatch.
+    MockHttpServletRequest postProcessRequest(MockHttpServletRequest request);
 }
 
 /// `ResultMatcher`: an assertion on a result.
@@ -307,6 +314,8 @@ final class MockMvc
     {
         auto request = requestBuilder.buildRequest(servletContext);
         auto response = new MockHttpServletResponse;
+        if (auto smartBuilder = cast(SmartRequestBuilder) requestBuilder)
+            request = smartBuilder.postProcessRequest(request);
         auto result = new DefaultMvcResult(request, response);
         servlet.setCurrent(result);
         scope (exit)

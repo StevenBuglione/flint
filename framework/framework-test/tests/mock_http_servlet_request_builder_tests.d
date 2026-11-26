@@ -14,15 +14,43 @@ import flint.jakarta.servlet.http : Cookie;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.net : URI;
 import flint.java.nio.charset : StandardCharsets;
-import flint.java.util : ArrayList, Collection;
+import flint.java.util : ArrayList, Collection, Locale;
 import flint.java.util.date : Date;
 import flint.mock.web : MockHttpServletRequest, MockServletContext;
 import flint.test.web.servlet.request : MockHttpServletRequestBuilder, MockMvcRequestBuilders;
 import flint.util : LinkedMultiValueMap;
+import std.typecons : Nullable;
 
 @safe:
 
 private alias Builders = MockMvcRequestBuilders;
+
+@("MockHttpServletRequestBuilderTests.locale")
+unittest
+{
+    const locale = Locale("nl", "nl");
+    assert(build(Builders.get("/").locale(locale)).getLocale() == locale);
+}
+
+@("MockHttpServletRequestBuilderTests.remoteAddress")
+unittest
+{
+    enum ip = "10.0.0.1";
+    assert(build(Builders.get("/").remoteAddress(ip)).getRemoteAddr() == ip);
+    rejects(() { Builders.get("/").remoteAddress(" "); }, "'remoteAddress' must not be null or blank");
+}
+
+unittest
+{
+    auto builder = Builders.get("/").header(HttpHeaders.ACCEPT_LANGUAGE, "de").locale(Locale.FRENCH, Locale.US);
+    assert(build(builder).getLocales() == [Locale.FRENCH, Locale.US]);
+    builder.locale(Locale.JAPANESE).locale(Locale.US, Locale.FRANCE);
+    assert(build(builder).getLocales() == [Locale.JAPANESE, Locale.US, Locale.FRANCE]);
+    builder.locale(Locale.ROOT);
+    assert(build(builder).getLocales() == [Locale.ROOT]);
+    builder.locale(Nullable!Locale.init);
+    assert(build(builder).getLocales() == [Locale.GERMAN]);
+}
 
 @("MockHttpServletRequestBuilderTests.acceptHeader")
 unittest
