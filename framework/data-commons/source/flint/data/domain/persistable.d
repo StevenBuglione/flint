@@ -14,7 +14,7 @@ package(flint.data) interface PersistableState
     bool isNew();
 }
 
-private template NullableId(ID)
+package(flint.data) template NullableId(ID)
 {
     static if (is(ID == class) || is(ID == interface))
         alias NullableId = ID;

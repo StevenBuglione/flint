@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 210 | 148 | 0 | 3,624 |
+| data-commons | spring-data-commons@4.2.0 | 216 | 155 | 0 | 3,611 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1011,6 +1011,23 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.repository.RepositoryDefinition` | `flint.data.repository.RepositoryDefinition` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.data.repository.RepositoryDefinition#domainClass` | `flint.data.repository.RepositoryDefinition.domainClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.repository.RepositoryDefinition#idClass` | `flint.data.repository.RepositoryDefinition.idClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### org.springframework.data.repository.core
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.data.repository.core.EntityInformation#getId(T)` | `flint.data.repository.core.EntityInformation.getId` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.data.repository.core.EntityInformation#getIdType()` | `flint.data.repository.core.EntityInformation.getIdType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.data.repository.core.EntityInformation#getRequiredId(T)` | `flint.data.repository.core.EntityInformation.getRequiredId` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.data.repository.core.EntityMetadata#getJavaType()` | `flint.data.repository.core.EntityMetadata.getJavaType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### org.springframework.data.repository.core.support
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.data.repository.core.support.DelegatingEntityInformation#getId(T)` | `flint.data.repository.core.support.DelegatingEntityInformation.getId` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.data.repository.core.support.DelegatingEntityInformation#getIdType()` | `flint.data.repository.core.support.DelegatingEntityInformation.getIdType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.data.repository.core.support.DelegatingEntityInformation#getJavaType()` | `flint.data.repository.core.support.DelegatingEntityInformation.getJavaType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.data.support
 
@@ -10071,8 +10088,8 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.repository.aot.generate | 115 | 0 |
 | org.springframework.data.repository.cdi | 46 | 0 |
 | org.springframework.data.repository.config | 273 | 0 |
-| org.springframework.data.repository.core | 78 | 0 |
-| org.springframework.data.repository.core.support | 279 | 0 |
+| org.springframework.data.repository.core | 71 | 0 |
+| org.springframework.data.repository.core.support | 273 | 0 |
 | org.springframework.data.repository.history | 5 | 0 |
 | org.springframework.data.repository.history.support | 4 | 0 |
 | org.springframework.data.repository.init | 55 | 0 |
