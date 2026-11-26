@@ -1,6 +1,13 @@
 {
   "schema": "flint.jdk-closure/1",
   "probes": {
+    "flint.java.time.temporal.valuerange": {
+      "bounds": {
+        "source": "closure/value-range.d",
+        "leaves": ["flint.java.lang"],
+        "data": []
+      }
+    },
     "flint.java.time.period": {
       "parse-render": {
         "source": "closure/period.d",

@@ -1,6 +1,10 @@
 {
   "flint.java.time.period": {
-    "incremental_linked_bytes": 15040,
+    "incremental_linked_bytes": 14991,
     "template_instances": 1000
+  },
+  "flint.java.time.temporal.valuerange": {
+    "incremental_linked_bytes": 7318,
+    "template_instances": 968
   }
 }

@@ -3,11 +3,22 @@ module app;
 import core.stdc.stdio : fputc, stdout;
 import flint.java.time : LocalDate;
 import flint.java.time.period : Period;
+import flint.java.time.temporal.valuerange : ValueRange;
 
 @safe:
 
 int main(string[] args)
 {
+    if (args.length > 5)
+    {
+        const minimum = cast(long) args[1].length;
+        const largestMinimum = minimum + cast(long) args[2].length;
+        const smallestMaximum = largestMinimum + cast(long) args[3].length;
+        const maximum = smallestMaximum + cast(long) args[4].length;
+        const range = ValueRange.of(minimum, largestMinimum, smallestMaximum, maximum);
+        return range.isValidIntValue(cast(long) args[5].length) ? 0 : 1;
+    }
+
     const offset = args.length > 1 ? "P2M3D" : "P6Y3M1D";
     Period period;
     if (args.length > 2)
