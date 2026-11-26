@@ -211,6 +211,8 @@
 "org.springframework.ai.document.MetadataMode#INFERENCE":{"d":"flint.ai.document.MetadataMode.INFERENCE","status":"ported"},
 "org.springframework.ai.document.MetadataMode#NONE":{"d":"flint.ai.document.MetadataMode.NONE","status":"ported"},
 "org.springframework.ai.document.id.**":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.ai.document.id.IdGenerator":{"d":"flint.ai.document.id.IdGenerator","status":"ported"},
+"org.springframework.ai.document.id.IdGenerator#generateId(Object...)":{"d":"flint.ai.document.id.IdGenerator.generateId","rules":["R7"],"status":"adapted"},
 "org.springframework.ai.elevenlabs.**":{"status":"excluded","category":"deferred","phase":"3"},
 "org.springframework.ai.elevenlabs.aot.**":{"status":"excluded","category":"deferred","phase":"3"},
 "org.springframework.ai.elevenlabs.api.**":{"status":"excluded","category":"deferred","phase":"3"},

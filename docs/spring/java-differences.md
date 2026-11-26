@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 163 | 271 | 0 | 15,362 |
+| ai | spring-ai@v2.1.0 | 164 | 272 | 0 | 15,360 |
 | boot | spring-boot@v4.2.0 | 40 | 22 | 2,133 | 13,408 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,461 | 1,378 | 4,848 | 30,147 |
@@ -327,6 +327,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.document.DocumentMetadata` | `flint.ai.document.DocumentMetadata` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#CONTENT_REF` | `flint.ai.document.DocumentMetadata.CONTENT_REF` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#DISTANCE` | `flint.ai.document.DocumentMetadata.DISTANCE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+
+#### org.springframework.ai.document.id
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.document.id.IdGenerator#generateId(Object...)` | `flint.ai.document.id.IdGenerator.generateId` | [R7](api-mapping.md#r7-overloads) |  |
 
 #### org.springframework.ai.embedding
 
@@ -8156,7 +8162,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.deepseek.api.common | 0 | 5 |
 | org.springframework.ai.docker.compose.service.connection.typesense | 0 | 3 |
 | org.springframework.ai.document | 60 | 0 |
-| org.springframework.ai.document.id | 9 | 0 |
+| org.springframework.ai.document.id | 7 | 0 |
 | org.springframework.ai.elevenlabs | 0 | 61 |
 | org.springframework.ai.elevenlabs.aot | 0 | 3 |
 | org.springframework.ai.elevenlabs.api | 0 | 290 |
