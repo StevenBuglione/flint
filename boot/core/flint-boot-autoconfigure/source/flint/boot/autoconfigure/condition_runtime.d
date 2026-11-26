@@ -11,7 +11,7 @@ import flint.beans.factory.config : ConfigurableListableBeanFactory;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : simpleTypeName, typeNameOf;
 import flint.java.lang : Boolean, IllegalArgumentException, JavaObject, NullPointerException, String, stringHashCode;
-import flint.java.util : ArrayList, Collection, RawCollection;
+import flint.java.util : ArrayList, Collection, Collections, HashSet, List, RawCollection, Set;
 import flint.java.util.formatter : formatJava;
 import std.typecons : Nullable;
 
@@ -419,9 +419,43 @@ final class ConditionEvaluationReport
 {
     private enum BEAN_NAME = "autoConfigurationReport";
     private ConditionEvaluationReport parent;
+    private List!string exclusions;
+    private Set!string unconditionalClasses;
 
     private this()
     {
+        exclusions = new ArrayList!string;
+        unconditionalClasses = new HashSet!string;
+    }
+
+    /// Record configuration classes excluded from evaluation.
+    void recordExclusions(Collection!string exclusions)
+    {
+        if (exclusions is null)
+            throw new IllegalArgumentException("'exclusions' must not be null");
+        this.exclusions.addAll(exclusions);
+    }
+
+    /// Record the configuration classes that are candidates for evaluation.
+    void recordEvaluationCandidates(List!string evaluationCandidates)
+    {
+        if (evaluationCandidates is null)
+            throw new IllegalArgumentException("'evaluationCandidates' must not be null");
+        unconditionalClasses.addAll(evaluationCandidates);
+    }
+
+    /// A read-only view of the exclusions, in recording order.
+    List!string getExclusions()
+    {
+        return Collections.unmodifiableList(exclusions);
+    }
+
+    /// A read-only snapshot of the unconditional classes after applying exclusions.
+    Set!string getUnconditionalClasses()
+    {
+        auto filtered = new HashSet!string(unconditionalClasses);
+        filtered.removeAll(exclusions);
+        return Collections.unmodifiableSet!string(filtered);
     }
 
     /// The report already registered with the parent bean factory, if present.
