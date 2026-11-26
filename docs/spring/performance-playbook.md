@@ -651,6 +651,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Build Locale key diagnostics only for invalid input.** The extension key and Unicode locale key appear in their Java diagnostic strings. The Java module probe on venus against `7833ec684` stayed at 129,496 O3 and 122,144 Oz incremental loadable bytes with LDC 1.43.0. DMD instances rose from 4,540 to 4,542 against 7,350.
 
+- **Build Locale extension set snapshots at the getter boundary.** The locale keeps one canonical extension suffix, with frozen sets created only when callers ask for the keys or attributes. On venus against `af8b300f5`, LDC 1.43.0 Java module probes moved from 129,496 to 129,440 O3 and 122,144 to 122,088 Oz incremental loadable bytes. DMD template instances rose from 4,542 to 4,803 against 7,350.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

@@ -3379,6 +3379,43 @@ struct Locale
         return payload.length ? Nullable!string(payload) : Nullable!string.init;
     }
 
+    /// The unmodifiable set of canonical extension singleton keys.
+    Set!wchar getExtensionKeys() const
+    {
+        wchar[] keys;
+        for (size_t start; start < extensions.length; start = extensionEnd(start) + 1)
+            keys ~= cast(wchar) extensions[start];
+        return Set!wchar.of(keys);
+    }
+
+    /// The unmodifiable set of canonical Unicode attributes.
+    Set!string getUnicodeLocaleAttributes() const
+    {
+        return unicodeLocaleItems(false);
+    }
+
+    /// The unmodifiable set of canonical Unicode keys, including typeless keys.
+    Set!string getUnicodeLocaleKeys() const
+    {
+        return unicodeLocaleItems(true);
+    }
+
+    private Set!string unicodeLocaleItems(bool keywords) const
+    {
+        string[] items;
+        string remaining = extensionPayload(cast(char) UNICODE_LOCALE_EXTENSION);
+        while (remaining.length)
+        {
+            const part = takeTagSubtag(remaining);
+            const keyword = part.length == 2;
+            if (keyword && !keywords)
+                break;
+            if (keyword == keywords)
+                items ~= part;
+        }
+        return Set!string.of(items);
+    }
+
     /// The type of a two-character Unicode key. A present typeless key has an empty value.
     Nullable!string getUnicodeLocaleType(string key) const
     {
