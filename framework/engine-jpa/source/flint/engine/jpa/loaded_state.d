@@ -69,6 +69,12 @@ struct ManagedSnapshotSlot
         return Error.init;
     }
 
+    /// Tests descriptor identity before another plan uses this snapshot's entity.
+    package bool usesMapping(scope immutable(EntityMapping)* mapping) const scope nothrow @nogc
+    {
+        return plan.mapping is mapping;
+    }
+
     /// Checks the live baseline against its managed entity.
     package Result!size_t dirty(Object entity, scope uint[] ordinals) scope nothrow @nogc
     {

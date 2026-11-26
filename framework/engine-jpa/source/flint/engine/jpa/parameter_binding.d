@@ -76,7 +76,12 @@ Error bindParameters(scope const ref ParameterBindingPlan plan, PreparedStatemen
     const error = validateEntity(*plan.mapping, entity);
     if (error.code != Status.ok)
         return error;
+    return bindMappedValues(plan, statement, entity);
+}
 
+/// Binds after the provider has type-checked the entity against this plan's exact mapping.
+package Error bindMappedValues(scope const ref ParameterBindingPlan plan, PreparedStatement statement, Object entity)
+{
     foreach (ref binding; plan.bindings)
     {
         const attribute = &plan.mapping.attributes[binding.ordinal];

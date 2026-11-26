@@ -18,6 +18,7 @@ import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, pl
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jpa.result_binding : materializeManagedRow, planManagedResult;
 import flint.engine.jpa.snapshot : AttributeSnapshot;
+import flint.engine.jpa.update : executeManagedUpdate, planUpdate;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
 import flint.engine.reactor : Backend, Reactor, ReactorOptions, TaskContext, TaskDelegate;
 import flint.java.sql : PreparedStatement, ResultSet, SQLException, Types;
@@ -327,6 +328,102 @@ private void verifyManagedIdentity(DataSource dataSource)
     }
     foreach (entity; entities)
         assert(entity is null);
+}
+
+private enum updateOwner = "update jpa_seam_probe set birth_date = ?, name = ? where id = ?";
+private immutable ParameterBinding[] ownerUpdateBindings = [
+    ParameterBinding(2, 1), ParameterBinding(1, 2)
+];
+
+private void verifyManagedUpdate(DataSource dataSource, JdbcTemplate jdbc, TransactionTemplate transaction)
+{
+    const plan = planUpdate(&ownerMapping, updateOwner, ownerUpdateBindings, 3, ownerCodec);
+    const clean = planUpdate(&ownerMapping, "invalid update SQL", ownerUpdateBindings, 3, ownerCodec);
+    const missing = planUpdate(&ownerMapping, updateOwner ~ " and false", ownerUpdateBindings, 3, ownerCodec);
+    const multiple = planUpdate(&ownerMapping,
+            "update jpa_seam_probe set birth_date = ?, name = ? where id >= ?", ownerUpdateBindings, 3, ownerCodec);
+    static immutable EntityMapping alternate = EntityMapping("OtherOwner", "app.Owner",
+            "jpa_seam_probe", ownerAttributes, &constructOwner, [], &isExactOwnerType, [0]);
+    const other = planUpdate(&alternate, updateOwner, ownerUpdateBindings, 3, ownerCodec);
+    const load = planManagedResult(&ownerMapping, ownerBindings, 0, ownerCodec);
+    assert(plan.ok && clean.ok && missing.ok && multiple.ok && other.ok && load.ok);
+    assert(planUpdate(&ownerMapping, updateOwner, ownerUpdateBindings, 1, ownerCodec)
+            .error.code == Status.invalidArgument);
+
+    assert(planUpdate(&ownerMapping, updateOwner, ownerUpdateBindings[0 .. 1], 2, ownerCodec)
+            .error.code == Status.invalidArgument);
+    static immutable ParameterBinding[] duplicate = [ParameterBinding(1, 1), ParameterBinding(1, 2)];
+    assert(planUpdate(&ownerMapping, updateOwner, duplicate, 3, ownerCodec).error.code == Status.invalidArgument);
+
+    transaction.executeWithoutResult((TransactionStatus status) {
+        auto connection = DataSourceUtils.getConnection(dataSource);
+        scope (exit)
+            DataSourceUtils.releaseConnection(connection, dataSource);
+        IdentitySlot[1] identities;
+        Object[1] roots;
+        auto fields = new AttributeSnapshot[3];
+        auto bytes = new ubyte[8];
+        ManagedSnapshotSlot[1] snapshots = [ManagedSnapshotSlot(fields, bytes)];
+        Error error;
+        scope managed = ManagedEntities(identities[], roots[], error, snapshots[]);
+        assert(error.code == Status.ok);
+
+        Owner owner;
+        {
+            auto statement = connection.prepareStatement(selectOwner);
+            scope (exit)
+                statement.close();
+            statement.setLong(1, 1);
+            auto rows = statement.executeQuery();
+            scope (exit)
+                rows.close();
+            assert(rows.next());
+            auto row = materializeManagedRow(load.value, rows, managed);
+            assert(row.ok);
+            owner = cast(Owner) row.value;
+        }
+
+        const key = EntityIdentity(0, 1);
+        uint[2] ordinals;
+        const unchanged = executeManagedUpdate(clean.value, connection, managed, key, ordinals[]);
+        assert(unchanged.ok && !unchanged.value);
+        assert(executeManagedUpdate(other.value, connection, managed, key, ordinals[])
+            .error.code == Status.invalidArgument);
+
+        owner.id = 2;
+        const changedId = executeManagedUpdate(plan.value, connection, managed, key, ordinals[]);
+        assert(changedId.error.code == Status.invalidArgument && changedId.error.offset == 0);
+        owner.id = 1;
+
+        owner.name = null;
+        const rejected = executeManagedUpdate(plan.value, connection, managed, key, ordinals[]);
+        assert(rejected.error.code == Status.invalidArgument && rejected.error.offset == 1);
+        assert(jdbc.queryForObject!long("select count(*) from jpa_seam_probe where name = 'One'") == 1);
+        const afterFailure = managed.dirty(key, ordinals[]);
+        assert(afterFailure.ok && afterFailure.value == 1 && ordinals[0] == 1);
+
+        owner.name = "Edited";
+        owner.birthDate = LocalDate.of(1968, 3, 1);
+        {
+            auto independent = dataSource.getConnection();
+            scope (exit)
+                independent.close();
+            assert(independent.getAutoCommit());
+            assert(executeManagedUpdate(plan.value, independent, managed, key, ordinals[])
+                .error.code == Status.invalidArgument);
+        }
+        const updated = executeManagedUpdate(plan.value, connection, managed, key, ordinals[]);
+        assert(updated.ok && updated.value);
+        assert(jdbc.queryForObject!long("select count(*) from jpa_seam_probe "
+            ~ "where id = 1 and name = 'Edited' and birth_date = date '1968-03-01'") == 1);
+        assert(executeManagedUpdate(missing.value, connection, managed, key, ordinals[]).error.code == Status.conflict);
+        assert(executeManagedUpdate(multiple.value, connection, managed, key, ordinals[]).error.code == Status.ioError);
+        const afterWrite = managed.dirty(key, ordinals[]);
+        assert(afterWrite.ok && afterWrite.value == 2);
+        status.setRollbackOnly();
+    });
+    assert(jdbc.queryForObject!long("select count(*) from jpa_seam_probe where id = 1 and name = 'One'") == 1);
+    assert(jdbc.queryForObject!long("select count(*) from jpa_seam_probe where name = 'Edited'") == 0);
 }
 
 private void verifyDirtySnapshots(Owner owner)
@@ -820,6 +917,7 @@ void main() @system
     assert(!TransactionSynchronizationManager.hasResource(key));
     assert(!TransactionSynchronizationManager.hasResource(cast(Object) dataSource));
     assert(jdbc.queryForObject!long("select sum(id)::bigint from jpa_seam_probe") == 3);
+    verifyManagedUpdate(dataSource, jdbc, outer);
     verifyFlushFailure(dataSource, outer, true);
     verifyFlushFailure(dataSource, outer, false);
     verifySynchronizationOnly(dataSource, manager, jdbc);

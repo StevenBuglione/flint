@@ -9,6 +9,7 @@ module flint.engine.jpa.managed_entities;
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa.identity : EntityIdentity, IdentityIndex, IdentitySlot;
 import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, ManagedSnapshotSlot;
+import flint.engine.jpa.mapping : EntityMapping;
 
 @safe:
 
@@ -89,12 +90,24 @@ struct ManagedEntities
     /// Reports changed updatable ordinals for a managed identity with a captured baseline.
     Result!size_t dirty(EntityIdentity key, scope uint[] ordinals) scope nothrow @nogc
     {
+        Object entity;
+        return dirtyTarget(key, null, ordinals, entity);
+    }
+
+    /// Resolves and type-checks the target with its loaded descriptor in one identity lookup.
+    package Result!size_t dirtyTarget(EntityIdentity key, scope immutable(EntityMapping)* mapping,
+            scope uint[] ordinals, out Object entity) scope nothrow @nogc
+    {
         const found = index.find(key);
         if (!found.ok)
             return found;
         if (snapshots.length == 0)
             return Result!size_t(0, Error(Status.unsupported, "JPA context has no snapshot storage"));
-        return snapshots[found.value].dirty(roots[found.value], ordinals);
+        auto snapshot = &snapshots[found.value];
+        if (mapping !is null && !snapshot.usesMapping(mapping))
+            return Result!size_t(0, Error(Status.invalidArgument, "update plan does not match the loaded mapping"));
+        entity = roots[found.value];
+        return snapshot.dirty(entity, ordinals);
     }
 
     /// Releases the entity's root and baseline, then returns the detached instance.
