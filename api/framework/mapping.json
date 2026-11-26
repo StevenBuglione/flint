@@ -42600,6 +42600,8 @@
 "org.thymeleaf.templateresolver.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.thymeleaf.templateresource.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.thymeleaf.util.**":{"status":"excluded","category":"deferred","phase":"2"},
+"org.thymeleaf.util.ObjectUtils":{"status":"ported","d":"flint.thymeleaf.util.ObjectUtils"},
+"org.thymeleaf.util.ObjectUtils#nullSafe(T,T)":{"status":"adapted","d":"flint.thymeleaf.util.ObjectUtils.nullSafe","rules":["R5","R23"],"note":"A default-initialized D string or slice remains empty. Use Nullable when null must select the fallback."},
 "org.thymeleaf.util.temporal.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.thymeleaf.web.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.thymeleaf.web.servlet.**":{"status":"excluded","category":"deferred","phase":"2"},

@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 154 | 142 | 0 | 2,094 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 53 | 64 | 0 | 4,335 |
+| framework | thymeleaf@3.1.7.RELEASE | 54 | 65 | 0 | 4,333 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 231 | 134 | 1,871 | 16,185 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -4044,6 +4044,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.thymeleaf.templatemode.TemplateMode#RAW` | `flint.thymeleaf.templatemode.TemplateMode.RAW` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.thymeleaf.templatemode.TemplateMode#TEXT` | `flint.thymeleaf.templatemode.TemplateMode.TEXT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.thymeleaf.templatemode.TemplateMode#XML` | `flint.thymeleaf.templatemode.TemplateMode.XML` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+
+#### org.thymeleaf.util
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.util.ObjectUtils#nullSafe(T,T)` | `flint.thymeleaf.util.ObjectUtils.nullSafe` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) | A default-initialized D string or slice remains empty. Use Nullable when null must select the fallback. |
 
 #### tools.jackson.core
 
@@ -10035,7 +10041,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.templateparser.text | 60 | 0 |
 | org.thymeleaf.templateresolver | 128 | 0 |
 | org.thymeleaf.templateresource | 44 | 0 |
-| org.thymeleaf.util | 372 | 0 |
+| org.thymeleaf.util | 370 | 0 |
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
