@@ -21,6 +21,8 @@ int main(string[] args)
         return 1;
     if (bits.nextClearBit(start) != start + 1 || bits.previousClearBit(start) != start - 1)
         return 1;
+    if (!BitSet.valueOf(bits.toLongArray()).get(start))
+        return 1;
     bits.clear();
     return bits.isEmpty() ? 0 : 1;
 }

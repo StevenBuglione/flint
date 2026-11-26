@@ -53,6 +53,21 @@ class BitSet
         words = new ulong[1];
     }
 
+    private this(ulong[] ownedWords) pure nothrow
+    {
+        words = ownedWords;
+        wordsInUse = cast(int) ownedWords.length;
+    }
+
+    /// Copies the signed words, lowest bit indices first, and drops unused capacity.
+    static BitSet valueOf(scope const(long)[] values) pure nothrow
+    {
+        auto count = values.length;
+        while (count != 0 && values[count - 1] == 0)
+            --count;
+        return new BitSet(copyWords(cast(const(ulong)[]) values[0 .. count]));
+    }
+
     /// Tests the bit at the given index. Unallocated bits are clear.
     bool get(int bitIndex) const pure
     {
@@ -178,7 +193,7 @@ class BitSet
     /// Returns the live bits as an owned little-endian byte array without trailing zero bytes.
     byte[] toByteArray() const pure nothrow
     {
-        auto copy = copyWords();
+        auto copy = copyWords(words[0 .. wordsInUse]);
         if (copy.length == 0)
             return null;
 
@@ -196,13 +211,13 @@ class BitSet
     /// Returns the set bits as an owned array of signed words, lowest indices first.
     long[] toLongArray() const pure nothrow
     {
-        return cast(long[]) copyWords();
+        return cast(long[]) copyWords(words[0 .. wordsInUse]);
     }
 
-    pragma(inline, false) private ulong[] copyWords() const pure nothrow
+    pragma(inline, false) private static ulong[] copyWords(scope const(ulong)[] source) pure nothrow
     {
-        auto copy = new ulong[wordsInUse];
-        copy[] = words[0 .. wordsInUse];
+        auto copy = new ulong[source.length];
+        copy[] = source;
         return copy;
     }
 

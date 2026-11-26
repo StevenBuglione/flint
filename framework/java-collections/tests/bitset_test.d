@@ -8,6 +8,50 @@ import std.exception : assertThrown;
 
 @safe:
 
+@("valueOf copies signed words and trims trailing zero capacity")
+unittest
+{
+    long[] words = [long.min, 0, -1, 0, 0];
+    auto bits = BitSet.valueOf(words);
+    assert(bits.size() == 192 && bits.length() == 192 && bits.cardinality() == 65);
+    assert(bits.get(63) && !bits.get(64) && bits.get(128) && bits.get(191));
+    words[0] = 0;
+    assert(bits.get(63));
+    bits.clear();
+    assert(words[2] == -1 && bits.size() == 192);
+
+    foreach (input; [cast(long[]) null, new long[0], [0L, 0L]])
+    {
+        auto empty = BitSet.valueOf(input);
+        assert(empty.isEmpty() && empty.size() == 0);
+        empty.set(63);
+        assert(empty.get(63) && empty.size() == 64);
+    }
+}
+
+@("valueOf long words agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    uint state = 0x2e48_75cf;
+    uint digest;
+    foreach (step; 0 .. 512)
+    {
+        auto words = new long[step & 7];
+        foreach (index; 0 .. (step & 3))
+        {
+            state = state * 1_664_525 + 1_013_904_223;
+            words[index] = cast(long)((cast(ulong) state << 32) | (state ^ 0x5ba7_2df1));
+        }
+        auto bits = BitSet.valueOf(words);
+        digest = 31 * digest + cast(uint) bits.size();
+        digest = 31 * digest + cast(uint) bits.length();
+        digest = 31 * digest + cast(uint) bits.cardinality();
+        foreach (word; bits.toLongArray())
+            digest = 31 * digest + cast(uint)(word ^ (word >>> 32));
+    }
+    assert(digest == 1_096_939_031);
+}
+
 @("toByteArray copies the minimal little-endian bytes")
 unittest
 {
