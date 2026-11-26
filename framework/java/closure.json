@@ -71,8 +71,12 @@
         "source": "closure/string-hash.d"
       },
       "valueof-array": {
-        "data": [],
-        "leaves": [],
+        "data": [
+          "flint.java.data.stringliteral"
+        ],
+        "leaves": [
+          "flint.java.internal.stringliteral"
+        ],
         "source": "closure/valueof-array.d"
       }
     },

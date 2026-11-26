@@ -432,6 +432,13 @@ string valueOf(T)(T value)
         return doubleToString(value);
     else static if (is(T == struct) && is(typeof(value.toString()) : string))
         return value.toString(); // not std.conv, whose struct path instantiates all of std.format
+    else static if (is(T : const(string)[]))
+    {
+        import flint.java.internal.stringliteral : stringArrayLiteral;
+
+        // Keep the compiler's idup instance in the caller so it does not pull unrelated Java archive members.
+        return stringArrayLiteral(value).idup;
+    }
     else
         return scalarValueOf(value);
 }

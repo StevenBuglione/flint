@@ -157,6 +157,16 @@ unittest
     assert(valueOf(nobody) == "null" && valueOf(42) == "42");
 }
 
+@("String.valueOf retains the D string-array display")
+unittest
+{
+    const string[] values = [null, "", "léopard\u2028", "\t\"\\", "a\xFFb", "\uFFFD"];
+    assert(valueOf(
+            values) == `["", "", "léopard\u2028", "\t\"\\", [cast(char) 0x61, cast(char) 0xFF, cast(char) 0x62], "�"]`);
+    assert(valueOf(cast(string[]) null) == "[]");
+    assert(valueOf(["🦋", "\uFFFF"]) == `["🦋", [cast(char) 0xEF, cast(char) 0xBF, cast(char) 0xBF]]`);
+}
+
 unittest
 {
     // String.valueOf's scalars and Double.parseDouble go through flint.engine.aot.text; they print and parse as
