@@ -12,8 +12,8 @@ import flint.data.annotation : CreatedBy, CreatedDate, Immutable, LastModifiedBy
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
 import flint.data.mapping : Alias, Association, AssociationHandler, MappingException,
-    PersistentEntity, PersistentProperty, PropertyHandler;
-import flint.data.mapping.model : BasicPersistentEntity, MutablePersistentEntity;
+    PersistentEntity, PersistentProperty, PersistentPropertyAccessor, PropertyHandler;
+import flint.data.mapping.model : BasicPersistentEntity, MutablePersistentEntity, PersistentPropertyAccessorFactory;
 import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
@@ -196,6 +196,33 @@ private final class RecordingAssociationHandler : AssociationHandler!Property
     override void doWithAssociation(Association!Property association)
     {
         seen ~= association;
+    }
+}
+
+private final class RecordingAccessorFactory : PersistentPropertyAccessorFactory!(Person, Property)
+{
+    private PersistentPropertyAccessor!(Person, Property) accessor;
+    private PersistentEntity!(Person, Property) seenEntity;
+    private Any seenBean;
+    private int calls;
+
+    this(PersistentPropertyAccessor!(Person, Property) accessor)
+    {
+        this.accessor = accessor;
+    }
+
+    override PersistentPropertyAccessor!(Person, Property) getPropertyAccessor(PersistentEntity!(Person,
+            Property) entity, Any bean)
+    {
+        seenEntity = entity;
+        seenBean = bean;
+        ++calls;
+        return accessor;
+    }
+
+    override bool isSupported(PersistentEntity!(Person, Property) entity)
+    {
+        return entity.getType() == classOf!Person;
     }
 }
 
@@ -699,6 +726,26 @@ unittest
     assertThrown!MappingException(accessor.setProperty(label, Any.of("updated")));
     assertThrown!MappingException(accessor.getProperty(new Property("missing")));
     assertThrown!IllegalArgumentException(accessor.getProperty(null));
+}
+
+@("mutable entities return the injected factory accessor after validating the bean")
+unittest
+{
+    MutablePersistentEntity!(Person, Property) entity = mapped!Person();
+    auto bean = new Employee;
+    auto accessor = entity.getPropertyAccessor(Any.of(bean));
+    auto factory = new RecordingAccessorFactory(accessor);
+    assert(factory.isSupported(entity));
+    entity.setPersistentPropertyAccessorFactory(factory);
+
+    assertThrown!IllegalArgumentException(entity.getPropertyAccessor(Any.of(new Object)));
+    assert(factory.calls == 0);
+    assert(entity.getPropertyAccessor(Any.of(bean)) is accessor);
+    assert(factory.calls == 1 && factory.seenEntity is entity && factory.seenBean.get!Person is bean);
+    accessor.setProperty(new Property("revision"), Any.of(19L));
+    assert(bean.revision == 19L && accessor.getBean() is bean);
+    assertThrown!IllegalArgumentException(entity.setPersistentPropertyAccessorFactory(null));
+    assert(entity.getPropertyAccessor(Any.of(bean)) is accessor && factory.calls == 2);
 }
 
 @("descriptor access owns a copy of a boxed struct bean")

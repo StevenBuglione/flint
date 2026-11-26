@@ -1,5 +1,6 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/model/{BasicPersistentEntity,MutablePersistentEntity}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/model/{BasicPersistentEntity,MutablePersistentEntity,PersistentPropertyAccessorFactory}.java
 // Copyright 2011-present the original author or authors.
+// PersistentPropertyAccessorFactory: Copyright 2016-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 module flint.data.mapping.model;
@@ -37,6 +38,19 @@ interface MutablePersistentEntity(T, P) : PersistentEntity!(T, P), EnvironmentAw
 
     /// Verifies and prepares the registered entity metadata.
     void verify();
+
+    /// Supplies a non-null factory for property accessors.
+    void setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory!(T, P) factory);
+}
+
+/// Creates property accessors for the given entity and property types.
+interface PersistentPropertyAccessorFactory(T, P) if (is(P : PersistentProperty!P))
+{
+    /// Creates an accessor for the supplied entity and bean.
+    PersistentPropertyAccessor!(T, P) getPropertyAccessor(PersistentEntity!(T, P) entity, Any bean);
+
+    /// Whether the factory can create accessors for this entity metadata.
+    bool isSupported(PersistentEntity!(T, P) entity);
 }
 
 /// Mutable persistent metadata built from explicit property registration before serving requests.
@@ -47,6 +61,7 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
     private TypeInformation information;
     private const(Descriptor) descriptor;
     private Environment environment;
+    private PersistentPropertyAccessorFactory!(T, P) propertyAccessorFactory;
     private Comparator!P comparator;
     private List!P properties;
     private List!P propertyView;
@@ -321,11 +336,21 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
     override PersistentPropertyAccessor!(T, P) getPropertyAccessor(Any bean)
     {
         verifyBeanType(bean);
-        if (descriptor is null)
+        auto factory = propertyAccessorFactory;
+        if (factory is null && descriptor is null)
             throw new MappingException(Nullable!string("No registered descriptor for " ~ getName()));
         static if (is(T == struct))
             bean = Any.of(bean.get!T);
+        if (factory !is null)
+            return factory.getPropertyAccessor(this, bean);
         return new DescriptorPropertyAccessor!(T, P)(descriptor, bean);
+    }
+
+    override void setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory!(T, P) factory)
+    {
+        if (factory is null)
+            throw new IllegalArgumentException("PropertyAccessorFactory must not be null");
+        propertyAccessorFactory = factory;
     }
 
     override bool isNew(Any bean)

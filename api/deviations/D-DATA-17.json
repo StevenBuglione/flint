@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-17",
+ "deviation": "PersistentPropertyAccessorFactory is typed to the entity and property types and receives an erased bean. The configuration method rejects a null factory.",
+ "reason": "D cannot dispatch generic virtual methods or represent a wildcard entity. The entity validates the bean before it delegates, and invalid configuration leaves the current accessor factory in place."
+}
