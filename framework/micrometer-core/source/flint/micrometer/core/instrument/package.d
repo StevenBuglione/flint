@@ -36,7 +36,7 @@ import flint.engine.aot.objects : objectToString, statelessInstance;
 import flint.engine.aot.text : decodeUtf8;
 import flint.java.lang : ArithmeticException, ClassCastException, Comparable,
     IllegalArgumentException, Iterable, JavaObject,
-    NullPointerException, UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode, valueOf;
+    NullPointerException, Runnable, UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode, valueOf;
 import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit, toMillis, toNanos;
 import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
@@ -969,6 +969,12 @@ interface Timer : Meter
     /// Record an event with a duration representable as signed nanoseconds.
     void record(Duration duration);
 
+    /// Run a task and record its elapsed time, including when it throws.
+    void record(Runnable action);
+
+    /// Run and time a D delegate without retaining it (R9).
+    void record(scope void delegate() @safe action);
+
     /// The number of recorded events.
     long count() nothrow @nogc;
 
@@ -991,12 +997,19 @@ interface Timer : Meter
 
     /// Micrometer's default duration conversion, mean and live measurements (R3).
     mixin template Defaults(alias Measurements = MeasurementIterable, alias samples = timerMeasurements,
-            alias DurationType = Duration, alias Unit = TimeUnit, alias nanos = checkedNanos)
+            alias DurationType = Duration, alias Unit = TimeUnit, alias nanos = checkedNanos,
+            alias RunnableType = Runnable)
     {
         override void record(DurationType duration)
         {
             Timer timer = this;
             timer.record(nanos(duration), Unit.NANOSECONDS);
+        }
+
+        override void record(RunnableType action)
+        {
+            Timer timer = this;
+            timer.record(action is null ? null : &action.run);
         }
 
         override double mean(Unit unit) nothrow @nogc
@@ -1286,6 +1299,13 @@ private final class NoopTimer : Timer, MeasurementIterable
 
     override void record(long, TimeUnit) nothrow @nogc
     {
+    }
+
+    override void record(scope void delegate() @safe action)
+    {
+        if (action is null)
+            throw new NullPointerException("action");
+        action();
     }
 
     override long count() nothrow @nogc

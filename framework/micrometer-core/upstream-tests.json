@@ -641,8 +641,23 @@
       "status": "deferred"
     },
     "io/micrometer/core/instrument/noop/NoopTimerTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/timer_runnable_test.d",
+      "methods": {
+        "ported": [
+          "recordRunnable"
+        ],
+        "skipped": {
+          "recordCallable": "Deferred with the Callable overload.",
+          "recordSupplier": "Deferred with the Supplier overload.",
+          "returnsBaseTimeUnit": "Deferred as a direct test of the public NoopTimer type.",
+          "returnsCountAsZero": "Deferred as a direct test of the public NoopTimer type.",
+          "returnsEmptySnapshot": "Deferred with histogram snapshots.",
+          "returnsId": "Deferred as a direct test of the public NoopTimer type.",
+          "returnsMaxAsZero": "Deferred as a direct test of the public NoopTimer type.",
+          "returnsTotalTimeAsZero": "Deferred as a direct test of the public NoopTimer type."
+        }
+      },
+      "status": "partial"
     },
     "io/micrometer/core/instrument/observation/DefaultMeterObservationHandlerTest.java": {
       "phase": "2",

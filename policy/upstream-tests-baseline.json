@@ -3239,7 +3239,6 @@
       "io/micrometer/core/instrument/noop/NoopLongTaskTimerTest.java",
       "io/micrometer/core/instrument/noop/NoopMeterTest.java",
       "io/micrometer/core/instrument/noop/NoopTimeGaugeTest.java",
-      "io/micrometer/core/instrument/noop/NoopTimerTest.java",
       "io/micrometer/core/instrument/observation/DefaultMeterObservationHandlerTest.java",
       "io/micrometer/core/instrument/observation/ObservationOrTimerCompatibleInstrumentationTest.java",
       "io/micrometer/core/instrument/push/PushMeterRegistryTest.java",

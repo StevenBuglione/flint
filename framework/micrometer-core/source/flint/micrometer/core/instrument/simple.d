@@ -16,10 +16,12 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/simple/SimpleMeterRegistry.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/cumulative/CumulativeCounter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/cumulative/CumulativeTimer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/AbstractTimer.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.simple;
 
 import core.atomic : atomicLoad, atomicOp, cas;
+import flint.java.lang : NullPointerException;
 import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.micrometer.core.instrument : Clock, Counter, Meter, MeterRegistry, Timer;
 import flint.micrometer.core.instrument.distribution : TimeWindowMax;
@@ -50,6 +52,7 @@ class SimpleMeterRegistry : MeterRegistry
 private final class CumulativeTimer : Timer
 {
     private Meter.Id id;
+    private Clock clock;
     private TimeWindowMax window;
     private shared long events;
     private shared long totalNanos;
@@ -57,6 +60,7 @@ private final class CumulativeTimer : Timer
     this(Meter.Id id, Clock clock)
     {
         this.id = id;
+        this.clock = clock;
         // SimpleConfig's one-minute step overrides the default expiry. The default ring has three buckets.
         window = new TimeWindowMax(clock, 60_000, 3);
     }
@@ -74,6 +78,16 @@ private final class CumulativeTimer : Timer
         atomicOp!"+="(events, 1L);
         atomicOp!"+="(totalNanos, nanos);
         window.record(cast(double) nanos, TimeUnit.NANOSECONDS);
+    }
+
+    override void record(scope void delegate() @safe action)
+    {
+        const start = clock.monotonicTime();
+        scope (exit)
+            record(clock.monotonicTime() - start, TimeUnit.NANOSECONDS);
+        if (action is null)
+            throw new NullPointerException("action");
+        action();
     }
 
     override long count() nothrow @nogc
@@ -113,6 +127,62 @@ unittest
     clock.addSeconds(1);
     assert(timer.max(TimeUnit.SECONDS) == 0);
     assert(timer.count() == 1 && timer.totalTime(TimeUnit.SECONDS) == 2);
+}
+
+@("runnable timing records success and exceptions from the timer's monotonic clock")
+unittest
+{
+    import core.memory : GC;
+    import flint.java.lang : IllegalStateException, Runnable;
+    import flint.micrometer.core.instrument : MockClock, Tags;
+    import std.exception : assertThrown;
+
+    static final class AdvanceClock : Runnable
+    {
+        private MockClock clock;
+
+        this(MockClock clock)
+        {
+            this.clock = clock;
+        }
+
+        override void run()
+        {
+            clock.add(10, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    // The successful 10 ns recording follows recordWithRunnable in the pinned Micrometer registry TCK.
+    auto clock = new MockClock;
+    auto id = new Meter.Id("myTimer", Tags.empty(), Nullable!string.init, Nullable!string.init, Meter.Type.TIMER);
+    Timer timer = new CumulativeTimer(id, clock);
+    auto action = new AdvanceClock(clock);
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    timer.record(action);
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 1 && timer.totalTime(TimeUnit.NANOSECONDS) == 10);
+
+    timer.record(() { clock.add(5, TimeUnit.NANOSECONDS); });
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 2 && timer.totalTime(TimeUnit.NANOSECONDS) == 15);
+
+    auto failure = new IllegalStateException("task failed");
+    void failAfterAdvancingClock()
+    {
+        clock.add(15, TimeUnit.NANOSECONDS);
+        throw failure;
+    }
+
+    bool caught;
+    try
+        timer.record(&failAfterAdvancingClock);
+    catch (IllegalStateException error)
+        caught = error is failure;
+    assert(caught);
+    assert(timer.count() == 3 && timer.totalTime(TimeUnit.NANOSECONDS) == 30);
+
+    assertThrown!NullPointerException(timer.record(cast(Runnable) null));
+    assert(timer.count() == 4 && timer.totalTime(TimeUnit.NANOSECONDS) == 30);
 }
 
 private final class CumulativeCounter : Counter
