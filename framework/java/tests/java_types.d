@@ -992,3 +992,26 @@ unittest
     assert(stripped.toLanguageTag() == "ja-JP-x-lvariant-JP");
     assert(Locale.forLanguageTag(stripped.toLanguageTag()) == japanese);
 }
+
+@("Locale.of overloads share constructor normalization and compatibility extensions")
+unittest
+{
+    import flint.java.util : Locale;
+
+    assert(Locale.of("EN") == Locale.ENGLISH);
+    assert(Locale.of("EN", "us") == Locale.US);
+    assert(Locale.of("IW", "il", "POSIX").toString() == "he_IL_POSIX");
+    assert(Locale.of("JA", "jp", "JP").getUnicodeLocaleType("ca").get() == "japanese");
+    assert(Locale.of("th", "th", "TH").getUnicodeLocaleType("nu").get() == "thai");
+    assert(!Locale.of("ja", "JP", "jp").hasExtensions());
+    assert(Locale.of(null) == Locale.ROOT);
+    assert(Locale.of("en", null) == Locale.ENGLISH);
+    assert(Locale.of("en", "US", null) == Locale.US);
+
+    Locale function(string) @safe pure nothrow one = &Locale.of;
+    Locale function(string, string) @safe pure nothrow two = &Locale.of;
+    Locale function(string, string, string) @safe pure nothrow three = &Locale.of;
+    assert(one("en") == Locale.ENGLISH);
+    assert(two("en", "US") == Locale.US);
+    assert(three("en", "US", "POSIX").getVariant() == "POSIX");
+}
