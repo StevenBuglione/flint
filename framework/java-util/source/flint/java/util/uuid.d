@@ -1,15 +1,14 @@
 /// Java SE 21 UUID values (R1, R5, R8, R11). Import this leaf directly from flint:java-util.
 module flint.java.util.uuid;
 
-import flint.java.lang : Comparable, JavaObject, NullPointerException;
+import flint.engine.aot.objects : assumeClass;
+import flint.java.lang : Comparable, NullPointerException;
 
 @safe:
 
 /// An immutable 128-bit universally unique identifier.
 final class UUID : Comparable!UUID
 {
-    mixin JavaObject;
-
     private immutable ulong most;
     private immutable ulong least;
 
@@ -100,16 +99,50 @@ final class UUID : Comparable!UUID
     {
         if (other is null)
             throw new NullPointerException();
+        return compareWords(other);
+    }
+
+    override int opCmp(Object other)
+    {
+        const value = checkedUuid(other);
+        return value is null ? 0 : compareWords(value);
+    }
+
+    private int compareWords(scope const UUID other) const pure nothrow @nogc
+    {
         if (most != other.most)
             return cast(long) most < cast(long) other.most ? -1 : 1;
         return (cast(long) least > cast(long) other.least) - (cast(long) least < cast(long) other.least);
     }
 
+    private static const(UUID) checkedUuid(return scope const Object other) pure nothrow @nogc
+    {
+        // UUID is final. An exact type check permits the cast without a shared runtime cast thunk.
+        if (other is null || typeid(other) !is typeid(UUID))
+            return null;
+        return assumeClass!UUID(other);
+    }
+
     /// Compare the UUID's complete bit pattern.
     bool equals(scope const Object other) const pure nothrow @nogc
     {
-        const value = cast(const UUID) other;
+        const value = checkedUuid(other);
         return value !is null && most == value.most && least == value.least;
+    }
+
+    override bool opEquals(Object other) pure nothrow @nogc
+    {
+        return equals(other);
+    }
+
+    bool opEquals(UUID other) const pure nothrow @nogc
+    {
+        return other !is null && most == other.most && least == other.least;
+    }
+
+    override size_t toHash() pure nothrow @nogc
+    {
+        return cast(uint) hashCode();
     }
 
     /// Fold the four 32-bit words with XOR.

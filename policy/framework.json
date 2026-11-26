@@ -598,11 +598,15 @@
   "java-util": {
    "directory": "framework/java-util",
    "module": "flint.java.util.uuid",
+   "also": [
+    "flint.java.util.hexformat"
+   ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
    "upstream": "openjdk@21.0.13",
    "dependencies": [
     "conc",
+    "engine-aot",
     "java"
    ],
    "bench": {

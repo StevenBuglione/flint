@@ -5,8 +5,9 @@
   "test_packages": [
     ":java-util"
   ],
-  "note": "UUIDOracle.java generates the UUID corpus using public Java SE 21 APIs. The random UUID layout and entropy smoke test is an original Flint test.",
+  "note": "UUIDOracle.java generates the UUID corpus using public Java SE 21 APIs. The random UUID layout and entropy smoke test is an original Flint test. HexFormatOracle.java generates the primitive hexadecimal width and case cases.",
   "flint_tests": [
+    "framework/java-util/tests/hexformat_test.d",
     "framework/java-util/tests/uuid_java21_test.d",
     "framework/java-util/tests/uuid_order_test.d",
     "framework/java-util/tests/uuid_test.d"

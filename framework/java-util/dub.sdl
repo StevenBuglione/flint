@@ -6,6 +6,7 @@ sourcePaths "source"
 importPaths "source"
 dflags "-preview=dip1000"
 dependency "flint:java" version="*"
+dependency "flint:engine-aot" version="*"
 dependency "flint:conc" version="*"
 
 configuration "library" {
