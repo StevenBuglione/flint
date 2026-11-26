@@ -3,6 +3,7 @@ module flint.java.math.biginteger;
 
 import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsException, JavaObject,
     NullPointerException, NumberFormatException;
+import flint.java.lang.number : Number;
 import flint.java.math.internal.floating : roundedFloating;
 import flint.java.math.internal.limbs : combineLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
     magnitudeBitLength, signedLength, significantBytes, significantLimbs, storeSignedBytes;
@@ -12,7 +13,7 @@ import flint.java.math.internal.radix : formatRadix;
 @safe:
 
 /// A signed integer with an owned, normalized magnitude.
-class BigInteger : Comparable!BigInteger
+class BigInteger : Number, Comparable!BigInteger
 {
     mixin JavaObject;
 
@@ -95,39 +96,39 @@ class BigInteger : Comparable!BigInteger
     }
 
     /// Return the low 64 bits in two's complement.
-    long longValue() const pure nothrow @nogc
+    override long longValue() const pure nothrow @nogc
     {
         const ulong low = lowMagnitude();
         return cast(long)(sign < 0 ? 0UL - low : low);
     }
 
     /// Return the low 32 bits in two's complement.
-    int intValue() const pure nothrow @nogc
+    override int intValue() const pure nothrow @nogc
     {
         const uint low = magnitude.length ? magnitude[0] : 0;
         return cast(int)(sign < 0 ? 0U - low : low);
     }
 
     /// Return the low 16 bits in two's complement.
-    short shortValue() const pure nothrow @nogc
+    override short shortValue() const pure nothrow @nogc
     {
         return cast(short) intValue();
     }
 
     /// Return the low eight bits in two's complement.
-    byte byteValue() const pure nothrow @nogc
+    override byte byteValue() const pure nothrow @nogc
     {
         return cast(byte) intValue();
     }
 
     /// Convert to binary32, rounding once at the target precision.
-    float floatValue() const pure nothrow @nogc
+    override float floatValue() const pure nothrow @nogc
     {
         return cast(float) roundedFloating(magnitude, sign < 0, 24, 128);
     }
 
     /// Convert to binary64, rounding halfway values to even.
-    double doubleValue() const pure nothrow @nogc
+    override double doubleValue() const pure nothrow @nogc
     {
         return roundedFloating(magnitude, sign < 0, 53, 1_024);
     }
