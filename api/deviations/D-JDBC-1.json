@@ -1,0 +1,5 @@
+{
+ "id": "D-JDBC-1",
+ "deviation": "A JDBC driver package (`flint:postgresql`, `flint:sqlite-jdbc`) is linked through its `META-INF/services/flint.java.sql.Driver` listing, which Flint AOT turns into a `static import` in the application's registry (`30cebc6a`); the driver module's `shared static this()` registers it with the `DriverManager`, and constructing it enables the engine driver. Flint AOT runs only for `@FlintBootApplication` projects, so a plain `flint:jdbc` or `DriverManager` program without Boot enables its driver itself: `flint.engine.jdbc.enablePostgres()`/`enableSqlite()`, or by importing and constructing the driver class.",
+ "reason": "In a static link nothing references an unimported module, so Java's class-path autoloading has no equivalent without a build step; the engine links a native driver only when it is enabled (performance playbook S-1a)."
+}

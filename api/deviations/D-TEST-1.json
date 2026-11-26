@@ -1,0 +1,5 @@
+{
+ "id": "D-TEST-1",
+ "deviation": "`JsonComparator.of` uses the Jackson tree for Spring's strict and lenient JSON comparison modes. `ContentResultMatchers.json` accepts an explicit comparator or delegate.",
+ "reason": "Spring 7.1 discovers JsonUnit or JSONassert on the classpath. Flint's closed world uses one built-in comparator, with an explicit hook for custom behavior."
+}

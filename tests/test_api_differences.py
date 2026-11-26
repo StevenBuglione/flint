@@ -115,5 +115,29 @@ class ApiDifferencesTest(unittest.TestCase):
         self.assertEqual(api_differences.main(['--check', '--root', str(self.root)]), 1)
 
 
+    def test_deviation_table_is_rendered_from_files(self):
+        self.mapping({'**': {'status': 'excluded', 'category': 'deferred', 'phase': '2'},
+                      'p.A#get()': {'status': 'adapted', 'rules': ['D-JPA-2'], 'd': 'flint.p.A.get'}})
+        rulebook = self.root / 'docs' / 'spring' / 'api-mapping.md'
+        rulebook.write_text(RULEBOOK.replace('| ID | Deviation | Reason |\n| --- | --- | --- |\n| D-7 | Typed null | overloads |\n',
+                                             api_differences.BEGIN + '\n' + api_differences.END + '\n'))
+        deviations = self.root / 'api' / 'deviations'
+        deviations.mkdir()
+        for ident, text in (('D-JPA-2', 'option enums'), ('D-7', 'typed null'), ('D-14', 'UTF-8')):
+            (deviations / f'{ident}.json').write_text(json.dumps({'id': ident, 'deviation': text, 'reason': 'why'}))
+        self.assertEqual(api_differences.main(['--check', '--root', str(self.root)]), 1)
+        self.assertEqual(api_differences.main(['--write', '--root', str(self.root)]), 0)
+        table = rulebook.read_text()
+        self.assertLess(table.index('| D-7 |'), table.index('| D-14 |'))
+        self.assertLess(table.index('| D-14 |'), table.index('| D-JPA-2 |'))
+        self.assertEqual(api_differences.main(['--check', '--root', str(self.root)]), 0)
+        (deviations / 'D-JPA-3.json').write_text(json.dumps({'id': 'D-JPA-3', 'deviation': 'x', 'reason': 'y'}))
+        self.assertEqual(api_differences.main(['--check', '--root', str(self.root)]), 1)
+        (deviations / 'D-JPA-3.json').write_text(json.dumps({'id': 'D-JPA-4', 'deviation': 'x', 'reason': 'y'}))
+        problems = []
+        api_differences.load_deviations(self.root, problems)
+        self.assertIn('match the file name', problems[0])
+
+
 if __name__ == '__main__':
     unittest.main()

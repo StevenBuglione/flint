@@ -1,0 +1,5 @@
+{
+ "id": "D-SLF4J-1",
+ "deviation": "`LoggerFactory.installProvider` binds a provider; the default writes through `flint.log`",
+ "reason": "Closed world: no `ServiceLoader`; Java's default would be the NOP logger"
+}

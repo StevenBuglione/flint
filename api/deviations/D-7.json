@@ -1,0 +1,5 @@
+{
+ "id": "D-7",
+ "deviation": "Typed `null` constants for unrelated overload pairs, including `ClassFilter.NULL` for class filters and delegates",
+ "reason": "D resolves `null` differently for unrelated types"
+}

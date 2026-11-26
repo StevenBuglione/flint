@@ -1,0 +1,5 @@
+{
+ "id": "D-SLF4J-2",
+ "deviation": "`Logger.debug` is `debug_`",
+ "reason": "`debug` is a D keyword"
+}

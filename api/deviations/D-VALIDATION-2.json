@@ -1,0 +1,5 @@
+{
+ "id": "D-VALIDATION-2",
+ "deviation": "`ConstraintViolation<T>` is erased: beans and values are `Any`, classes are Flint type names",
+ "reason": "Erased core (ADR-030 section 5, R4)"
+}

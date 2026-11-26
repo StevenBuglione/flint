@@ -1,0 +1,5 @@
+{
+ "id": "D-JPA-2",
+ "deviation": "Jakarta built-in option enums such as `LockModeType` remain D enums. `EntityManager` option overloads accept them at the API boundary, as in `em.find!Owner(id, LockModeType.PESSIMISTIC_WRITE)`. Provider-defined options use `FindOption` and `RefreshOption`.",
+ "reason": "D enums cannot implement interfaces. The enum keeps `NamedQuery.lockMode` a compile-time UDA value."
+}

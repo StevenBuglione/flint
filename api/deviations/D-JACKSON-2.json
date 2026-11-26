@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-2",
+ "deviation": "`JsonNode.properties()`, `propertyNames()` and `values()` return D arrays",
+ "reason": "Cheaper than `flint.java.util` sets; R10 allows conversion"
+}

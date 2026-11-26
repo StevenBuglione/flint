@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-2",
+ "deviation": "Initial offset and keyset positions compare by value. The zero-start position function and the initial positions are created by their factories.",
+ "reason": "The Java implementation caches these stateful objects. Flint's process-wide instance helper accepts classes with no fields."
+}

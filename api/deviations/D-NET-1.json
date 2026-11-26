@@ -1,0 +1,5 @@
+{
+ "id": "D-NET-1",
+ "deviation": "`java.net.URL.equals` and `hashCode` compare the normalised URL and never resolve DNS; `URI` keeps Java's semantics (coordinator, 2026-11-26 01:55Z)",
+ "reason": "Java's DNS-based equality blocks on network I/O inside `equals`, which fibers cannot allow, and makes hashing nondeterministic"
+}

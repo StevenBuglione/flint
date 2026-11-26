@@ -1,0 +1,5 @@
+{
+ "id": "D-AOT-MEMBER",
+ "deviation": "Java's `AccessibleObject` and `Member` map to engine-aot's `MemberDescriptorRef`: the declaring descriptor, the kind, a safe pointer for a method, constructor or property, and `.init` when absent. Only metadata Flint AOT generates is exposed; a missing category throws `UnsupportedOperationException` until the generator adds it. framework-core owns the type, and every lane cites this deviation (coordinator, 2026-11-26).",
+ "reason": "Flint has no runtime reflection"
+}

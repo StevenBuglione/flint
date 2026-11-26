@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-1",
+ "deviation": "Java's `null` `JsonToken` (no token, end of input) is `JsonToken.NOT_AVAILABLE`",
+ "reason": "A D enum has no null; blocking parsers never otherwise report `NOT_AVAILABLE`"
+}

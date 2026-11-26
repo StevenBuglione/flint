@@ -1,0 +1,5 @@
+{
+ "id": "D-MICROMETER-1",
+ "deviation": "`Tags` has a private constructor and private concrete implementations. The null overloads of `Tags.of`, `Tags.and` and `Tags.concat` use typed null values (D-7).",
+ "reason": "The fieldless empty implementation reuses Flint's allocation-free Java constant support. D's overload resolution needs an explicit type for null across unrelated string, tag and iterable overloads."
+}

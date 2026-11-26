@@ -1,0 +1,5 @@
+{
+ "id": "D-VALIDATION-1",
+ "deviation": "Hibernate Validator registers itself with `Validation` when linked in",
+ "reason": "Replaces `META-INF/services` discovery"
+}

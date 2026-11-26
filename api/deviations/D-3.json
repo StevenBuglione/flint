@@ -1,0 +1,5 @@
+{
+ "id": "D-3",
+ "deviation": "All-default callback interfaces are abstract classes",
+ "reason": "D interfaces have no default method bodies"
+}

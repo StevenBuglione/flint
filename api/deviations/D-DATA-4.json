@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-4",
+ "deviation": "In `Window!int`, `positionAt(index)` selects by index and `positionAt!int(item)` selects by value.",
+ "reason": "R5 represents Java's boxed `Integer` as `int`, so the Java overloads otherwise have identical D signatures."
+}

@@ -1,0 +1,5 @@
+{
+ "id": "D-TEST-2",
+ "deviation": "`JsonPathExpectationsHelper` is a value holding a compiled path. `evaluateJsonPath` returns a Jackson `JsonNode`. The Flint-specific `evaluate` method now returns `JsonNode[]`.",
+ "reason": "The test API uses Flint's Jackson tree and supports root, member, index, wildcard, and named recursive-descent selections. Jayway filters, provider configuration, and typed provider binding are deferred."
+}

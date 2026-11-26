@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-6",
+ "deviation": "A null D array writes as `[]` (`\"\"` for Base64 `byte[]`), not `null`",
+ "reason": "D's `[]` is null; an empty array and a null one can't be told apart"
+}

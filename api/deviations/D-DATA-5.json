@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-5",
+ "deviation": "`Range.unbounded()` and `Bound.unbounded()` return value-equal instances rather than one shared object (coordinator, 2026-11-26 01:50Z). R17 now states this generally; new entries cite R17.",
+ "reason": "D shares no object across instantiations of a class template"
+}

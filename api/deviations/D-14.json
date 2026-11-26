@@ -1,0 +1,5 @@
+{
+ "id": "D-14",
+ "deviation": "String indices in UTF-8 internally (R14)",
+ "reason": "D strings are UTF-8"
+}

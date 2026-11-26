@@ -1,0 +1,5 @@
+{
+ "id": "D-SPEL-1",
+ "deviation": "Java's `new TypedValue(value)` becomes `TypedValue(value)`. `TypedValue.NULL` remains a member. `BooleanTypedValue.forValue` returns a `TypedValue` directly when that factory is ported.",
+ "reason": "A `TypedValue` is copied by value so small values and null require no wrapper allocation during expression evaluation. D structs have no subclasses."
+}

@@ -1,0 +1,5 @@
+{
+ "id": "D-JDBC-2",
+ "deviation": "JDBC health (`DataSourceHealthIndicator`, `DataSourceHealthIndicatorProperties`, `DataSourceHealthContributorAutoConfiguration`) lives in the glue library `flint:boot-jdbc-health` under its Spring names, which the resolver adds whenever `flint:boot-jdbc` and `flint:boot-health` are both resolved (docs/spring/phase1/boot.md)",
+ "reason": "Flint has no optional dependencies, and `@ConditionalOnClass` asks about the dependency closure, so boot-jdbc cannot depend on boot-health"
+}

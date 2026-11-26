@@ -1,0 +1,5 @@
+{
+ "id": "D-VALIDATION-3",
+ "deviation": "Whole-input regex matching stops after 20,000,000 VM steps with a budget exception. Hibernate Validator maps the exhausted match budget to HV000028.",
+ "reason": "The bounded engine keeps a backtracking match from stalling a request thread. Java does not impose this bound."
+}

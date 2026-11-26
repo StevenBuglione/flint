@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-3",
+ "deviation": "Typed property paths and the legacy typed sort resolve named D getter aliases. For example, `Sort.sort!Person().by!(Person.getAddress)().by!(Address.getCity)()` sorts by `address.city`. The same chain uses `then!(Address.getCity)()` on a typed property path. A missing intermediate object yields the D result type's `init`, which is null for class references and the type's default value for value types.",
+ "reason": "Spring reads serialized lambdas or records getter calls through a runtime proxy. Compile-time aliases provide the getter name and return type in Flint's closed world. Java can represent a missing result as null even when the getter's value type is boxed."
+}

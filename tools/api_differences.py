@@ -13,8 +13,11 @@ not show (for example, that Java's null-argument exceptions are not reproduced);
 Elements are classified exactly as `flint api coverage` does: an exact id wins, then the pattern with the longest
 literal prefix, then fewer '**', then the longer pattern; '*' stays within one name and '**' crosses everything.
 
---write rewrites the page; --check (the API gate) fails when the page is stale, or when an adapted entry cites a
-rule or deviation that docs/spring/api-mapping.md does not define.
+It also renders the Deviations table of docs/spring/api-mapping.md from api/deviations/D-*.json (one file per
+deviation: id, deviation, reason), so parallel lanes add deviations without touching the same lines.
+
+--write rewrites the page and the table; --check (the API gate) fails when either is stale, or when an adapted entry
+cites a rule or deviation that is not defined.
 """
 import argparse
 import collections
@@ -27,7 +30,48 @@ ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = Path('docs/spring/java-differences.md')
 INTRO = Path('api/java-differences-intro.md')
 RULEBOOK = Path('docs/spring/api-mapping.md')
+DEVIATIONS = Path('api/deviations')
+BEGIN = '<!-- BEGIN GENERATED deviations: tools/api_differences.py --write from api/deviations/*.json -->'
+END = '<!-- END GENERATED deviations -->'
 SEPARATORS = '.#(),'
+DEVIATION_ID = re.compile(r'^D-[A-Z0-9]+(-[A-Z0-9]+)*$')
+
+
+def deviation_key(ident):
+    """D-1 < D-14 < D-AOT-MEMBER < D-DATA-2 < D-DATA-10: core numbers first, then by area and number."""
+    parts = ident[2:].split('-')
+    return [(0, int(p), '') if p.isdigit() else (1, 0, p) for p in parts]
+
+
+def load_deviations(root, problems):
+    """The deviation files, sorted; malformed files are reported in `problems`."""
+    found = []
+    for path in sorted((root / DEVIATIONS).glob('*.json')):
+        try:
+            item = json.loads(path.read_text())
+        except ValueError as failure:
+            problems.append(f'{DEVIATIONS / path.name}: {failure}')
+            continue
+        ident = item.get('id', '')
+        if not DEVIATION_ID.match(ident) or path.stem != ident:
+            problems.append(f'{DEVIATIONS / path.name}: id must be D-<AREA>-<n> and match the file name')
+            continue
+        if not item.get('deviation') or not item.get('reason'):
+            problems.append(f'{DEVIATIONS / path.name}: needs non-empty deviation and reason')
+            continue
+        found.append(item)
+    return sorted(found, key=lambda i: deviation_key(i['id']))
+
+
+def with_deviation_table(text, deviations):
+    """api-mapping.md with its generated Deviations table replaced; None when the markers are missing."""
+    if BEGIN not in text or END not in text:
+        return None
+    head, rest = text.split(BEGIN, 1)
+    _, tail = rest.split(END, 1)
+    rows = ['| ID | Deviation | Reason |', '| --- | --- | --- |']
+    rows += [f"| {d['id']} | {d['deviation']} | {d['reason']} |" for d in deviations]
+    return head + BEGIN + '\n' + '\n'.join(rows) + '\n' + END + '\n\n' + tail.lstrip('\n')
 
 
 def anchor(heading):
@@ -142,10 +186,12 @@ def note_of(entry):
     return ' '.join(cell(str(entry[k])) for k in ('note', 'reason') if entry.get(k))
 
 
-def render(root):
+def render(root, problems=None):
+    problems = [] if problems is None else problems
     text = (root / RULEBOOK).read_text()
-    rules, deviations, categories = rulebook(text)
-    problems = []
+    rules, table_deviations, categories = rulebook(text)
+    files = load_deviations(root, problems)
+    deviations = {d['id'] for d in files} if (root / DEVIATIONS).is_dir() else table_deviations
     out = [(root / INTRO).read_text().rstrip('\n'), '']
     summary, adapted, excluded, deferred, reasons = [], {}, {}, {}, {}
     for repo, (elements, manifests) in repos(root).items():
@@ -264,7 +310,19 @@ def main(argv=None):
     mode.add_argument('--check', action='store_true', help='fail when the page is stale or a citation is unknown')
     p.add_argument('--root', type=Path, default=ROOT)
     a = p.parse_args(argv)
-    page, problems = render(a.root)
+    problems = []
+    rulebook_path = a.root / RULEBOOK
+    if (a.root / DEVIATIONS).is_dir():
+        current = rulebook_path.read_text()
+        expected = with_deviation_table(current, load_deviations(a.root, []))
+        if expected is None:
+            problems.append(f'{RULEBOOK} lacks the generated deviations markers')
+        elif a.write and expected != current:
+            rulebook_path.write_text(expected)
+        elif not a.write and expected != current:
+            problems.append(f'{RULEBOOK}: the Deviations table does not match {DEVIATIONS}/; '
+                            'run: python3 tools/api_differences.py --write')
+    page, problems = render(a.root, problems)
     target = a.root / OUTPUT
     if a.write:
         target.write_text(page)

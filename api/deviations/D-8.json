@@ -1,0 +1,5 @@
+{
+ "id": "D-8",
+ "deviation": "No `throws` clauses",
+ "reason": "D has no checked exceptions"
+}

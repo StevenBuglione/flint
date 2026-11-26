@@ -1,0 +1,5 @@
+{
+ "id": "D-4",
+ "deviation": "`Class<T>` tokens are template parameters (R4)",
+ "reason": "D types are not runtime values"
+}

@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-3",
+ "deviation": "`JsonMapper.Builder.changeDefaultPropertyInclusion(valueInclusion, contentInclusion)` takes the two settings instead of an operator over `JsonInclude.Value`",
+ "reason": "`JsonInclude.Value` is not ported; Boot sets exactly these two"
+}

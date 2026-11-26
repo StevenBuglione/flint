@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-4",
+ "deviation": "`JsonFormat.with` is `with_`",
+ "reason": "`with` is a D keyword"
+}

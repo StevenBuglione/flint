@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-5",
+ "deviation": "Generators write to an `OutputSink` delegate (or a `ByteArrayBuilder`)",
+ "reason": "Stands in for `java.io.OutputStream` (R9)"
+}

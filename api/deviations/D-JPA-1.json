@@ -1,0 +1,5 @@
+{
+ "id": "D-JPA-1",
+ "deviation": "The Jakarta Persistence and Criteria public modules selectively re-export mutually referencing interfaces from the internal `flint.jakarta.persistence.contracts` module. Mapping annotations are declared in a leaf and available from `flint.jakarta.persistence`.",
+ "reason": "Java packages may reference each other. Flint requires an acyclic D import graph and keeps the original public import paths."
+}

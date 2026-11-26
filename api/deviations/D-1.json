@@ -1,0 +1,5 @@
+{
+ "id": "D-1",
+ "deviation": "`mixin FlintMain!App;` beside the application class",
+ "reason": "D's entry point must be a free function"
+}

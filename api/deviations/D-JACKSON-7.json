@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-7",
+ "deviation": "`@JsonNaming` binds only `PropertyNamingStrategies`' standard strategies",
+ "reason": "No construction from a class name (closed world); a custom strategy needs an explicit binding API first"
+}

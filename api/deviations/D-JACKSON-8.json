@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-8",
+ "deviation": "`StreamWriteConstraints.overrideDefaultStreamWriteConstraints` is not ported, and `Builder.maxNestingDepth(-1)` throws `Exception`, not `IllegalArgumentException`",
+ "reason": "Framework packages keep no mutable module-level state; jackson-core does not depend on `flint.java`"
+}

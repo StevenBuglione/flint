@@ -1,0 +1,5 @@
+{
+ "id": "D-SPEL-3",
+ "deviation": "`StandardEvaluationContext.setDescriptorTable(const DescriptorTable)` configures property and array index reads before sharing the context (R4). Spring API callers can receive a context configured by application composition.",
+ "reason": "Property and array index reads use the application's generated descriptor table. Flint has no runtime class discovery."
+}

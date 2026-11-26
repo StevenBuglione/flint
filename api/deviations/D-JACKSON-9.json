@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-9",
+ "deviation": "A `java.util.Date` `@JsonFormat` `timezone` must be UTC, GMT or a fixed `GMT±hh:mm` offset; any other ID throws `InvalidDefinitionException` instead of falling back to GMT as `TimeZone.getTimeZone` does. Dates format and parse with English names, and a pattern with names in a non-English `locale` throws",
+ "reason": "Region zones need the time-zone database, which Flint has not ported; refusing is safer than writing a wrong offset. Non-English names would need locale data"
+}
