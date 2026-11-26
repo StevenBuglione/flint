@@ -2273,10 +2273,12 @@ unittest
 @("Jakarta entities expose typed JPA mapping tables from their generated module")
 unittest
 {
+    import std.algorithm.searching : startsWith;
     import std.file : dirEntries, readText, SpanMode;
     import std.path : buildPath;
     import flint_tool.engine.aot.driver : AotRequest, runAot;
     import flint_tool.support.process : Launch, capture;
+    import flint_tool.toolchain.toolchain : versionLine;
 
     const project = copyFixture("jpa");
     scope (exit)
@@ -2313,7 +2315,8 @@ unittest
 
     verifyGeneratedJpaWithPostgres(project);
 
-    request.flags ~= "-version=JpaUnreachableConstructor";
+    const versionFlag = versionLine(request.compiler).startsWith("LDC") ? "-d-version=" : "-version=";
+    request.flags ~= versionFlag ~ "JpaUnreachableConstructor";
     request.environmentKey = "test-private-jpa-constructor";
     outcome = runAot(request);
     expect(outcome.extractionErrors).toEqual("");
@@ -2321,7 +2324,7 @@ unittest
     expect(outcome.diagnostics.length).toEqual(1);
     expect(outcome.diagnostics[0].code).toEqual("FLINT-E1140");
 
-    request.flags[$ - 1] = "-version=JpaStatefulListener";
+    request.flags[$ - 1] = versionFlag ~ "JpaStatefulListener";
     request.environmentKey = "test-stateful-jpa-listener";
     outcome = runAot(request);
     expect(outcome.extractionErrors).toEqual("");
