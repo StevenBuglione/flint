@@ -20,6 +20,7 @@
  * Modified by the Flint authors: ported from spring-framework v7.1.0,
  * spring-beans/src/main/java/org/springframework/beans/factory/support/{BeanDefinitionRegistry,
  * AbstractBeanDefinition,RootBeanDefinition,GenericBeanDefinition,BeanDefinitionOverrideException,
+ * BeanDefinitionValidationException,
  * DefaultSingletonBeanRegistry,AbstractBeanFactory,AbstractAutowireCapableBeanFactory,
  * DefaultListableBeanFactory}.java. Instances are created by Flint AOT's generated factories
  * (flint.engine.aot.bean.BeanDefinition) instead of reflection; candidate resolution, primary/fallback selection,
@@ -40,7 +41,7 @@ module flint.beans.factory.support;
 
 public import flint.beans.factory.bean_definition_defaults : BeanDefinitionDefaults;
 
-import flint.beans : BeansException;
+import flint.beans : BeansException, FatalBeanException;
 import flint.beans.factory : BeanCreationException,
     BeanCurrentlyInCreationException, BeanDefinitionStoreException,
     BeanFactory, BeanFactoryAware, BeanIsNotAFactoryException, BeanNameAware,
@@ -114,6 +115,16 @@ class BeanDefinitionOverrideException : BeanDefinitionStoreException
     private static string describe(BeanDefinition definition)
     {
         return valueOf(cast(Object) definition);
+    }
+}
+
+/// Thrown when a bean definition fails validation.
+class BeanDefinitionValidationException : FatalBeanException
+{
+    /// The detail message and optional underlying failure.
+    this(string message, Throwable cause = null) pure nothrow
+    {
+        super(message, cause);
     }
 }
 

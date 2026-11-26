@@ -21,7 +21,8 @@
  * spring-beans/src/main/java/org/springframework/beans/factory/{BeanFactory,ListableBeanFactory,
  * HierarchicalBeanFactory,ObjectFactory,ObjectProvider,Aware,BeanNameAware,BeanFactoryAware,InitializingBean,
  * DisposableBean,SmartInitializingSingleton,NoSuchBeanDefinitionException,NoUniqueBeanDefinitionException,
- * BeanCreationException,BeanCurrentlyInCreationException,BeanNotOfRequiredTypeException,
+ * BeanCreationException,BeanCreationNotAllowedException,BeanCurrentlyInCreationException,BeanInitializationException,
+ * BeanIsAbstractException,BeanNotOfRequiredTypeException,FactoryBeanNotInitializedException,
  * UnsatisfiedDependencyException,BeanDefinitionStoreException}.java. Class-typed lookups are template façades (R4)
  * over erased primitives (deviation D-22); bean types are canonical D names.
  */
@@ -463,6 +464,52 @@ class BeanCreationException : FatalBeanException
     string getResourceDescription() const pure nothrow @nogc
     {
         return resourceDescription;
+    }
+}
+
+/// Thrown when new bean creation is disallowed, such as during shutdown.
+class BeanCreationNotAllowedException : BeanCreationException
+{
+    /// Describes why the named bean cannot be created.
+    this(string beanName, string message)
+    {
+        super(beanName, message, null);
+    }
+}
+
+/// Thrown when creation is requested for an abstract bean definition.
+class BeanIsAbstractException : BeanCreationException
+{
+    /// Reports the requested abstract bean.
+    this(string beanName)
+    {
+        super(beanName, "Bean definition is abstract", null);
+    }
+}
+
+/// Thrown when initialization fails before a bean is fully configured.
+class BeanInitializationException : FatalBeanException
+{
+    /// The detail message and optional underlying failure.
+    this(string message, Throwable cause = null) pure nothrow
+    {
+        super(message, cause);
+    }
+}
+
+/// Thrown when a FactoryBean is asked for its object before it is ready.
+class FactoryBeanNotInitializedException : FatalBeanException
+{
+    /// Uses Spring's standard detail message.
+    this() pure nothrow
+    {
+        this("FactoryBean is not fully initialized yet");
+    }
+
+    /// Uses the supplied detail message.
+    this(string message) pure nothrow
+    {
+        super(message);
     }
 }
 
