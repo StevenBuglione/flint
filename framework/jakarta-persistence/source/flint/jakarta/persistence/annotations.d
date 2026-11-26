@@ -42,7 +42,9 @@
  *   ExcludeSuperclassListeners.java, PersistenceUnits.java
  *
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
- *   LockModeType.java, NamedQuery.java, NamedQueries.java
+ *   ColumnResult.java, ConstructorResult.java, EntityResult.java, FieldResult.java, LockModeType.java,
+ *   NamedNativeQuery.java, NamedNativeQueries.java, NamedQuery.java, NamedQueries.java, SqlResultSetMapping.java,
+ *   SqlResultSetMappings.java
  *
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  *   CascadeType.java, ElementCollection.java, EntityListeners.java, FlushModeType.java, IdClass.java, ManyToMany.java,
@@ -1057,6 +1059,96 @@ struct NamedQueries
 {
     /// The query declarations.
     NamedQuery[] value;
+}
+
+// Native SQL and result mappings
+
+/// Declares a native SQL query scoped to the persistence unit.
+struct NamedNativeQuery
+{
+    /// Name supplied to EntityManager.createNamedQuery.
+    string name;
+    /// Native SQL query text.
+    string query;
+    /// Provider query hints.
+    QueryHint[] hints = [];
+    /// Optional declared result type. An unset value leaves the type to inference.
+    ClassRef resultClass = ClassRef.init;
+    /// Name of a separately declared result mapping, in place of inline mappings.
+    string resultSetMapping = "";
+    /// Entity mappings declared inline.
+    EntityResult[] entities = [];
+    /// Constructor mappings declared inline.
+    ConstructorResult[] classes = [];
+    /// Scalar columns declared inline.
+    ColumnResult[] columns = [];
+}
+
+/// Groups named native queries on an entity or mapped superclass.
+struct NamedNativeQueries
+{
+    /// The native query declarations.
+    NamedNativeQuery[] value;
+}
+
+/// Names a mapping from a native SQL result set to entity, constructor and scalar results.
+struct SqlResultSetMapping
+{
+    /// Name used to reference the result mapping.
+    string name;
+    /// Entity mappings in result order.
+    EntityResult[] entities = [];
+    /// Constructor mappings in result order.
+    ConstructorResult[] classes = [];
+    /// Scalar columns in result order.
+    ColumnResult[] columns = [];
+}
+
+/// Groups named SQL result set mappings on a declaration.
+struct SqlResultSetMappings
+{
+    /// The result mappings.
+    SqlResultSetMapping[] value;
+}
+
+/// Maps native SQL columns to an entity result.
+struct EntityResult
+{
+    /// Entity class to materialize.
+    ClassRef entityClass;
+    /// Lock mode obtained by the query.
+    LockModeType lockMode = LockModeType.OPTIMISTIC;
+    /// Fields or properties whose columns are specified explicitly.
+    FieldResult[] fields = [];
+    /// Column or alias that determines the entity subtype.
+    string discriminatorColumn = "";
+}
+
+/// Specifies a SQL column for an entity field or property.
+struct FieldResult
+{
+    /// Entity field or property path.
+    string name;
+    /// SQL column name or alias in the SELECT list.
+    string column;
+}
+
+/// Maps selected columns to arguments of a result class constructor.
+struct ConstructorResult
+{
+    /// Class whose constructor builds the result.
+    ClassRef targetClass;
+    /// Selected columns in constructor argument order.
+    ColumnResult[] columns;
+}
+
+/// Maps one SQL column to a scalar or constructor argument.
+struct ColumnResult
+{
+    /// SQL column name or alias in the SELECT list.
+    string name;
+    /// Optional result type. An unset value uses the default JDBC type mapping.
+    ClassRef type = ClassRef.init;
 }
 
 // Named fetch graphs
