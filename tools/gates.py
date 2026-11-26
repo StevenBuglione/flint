@@ -543,6 +543,12 @@ def api_gate(repos,flint,release=False):
                 if coverage.get('improvements'):entry['lower_the_baseline']=coverage['improvements']
                 if not coverage.get('ok'):failures.append(f'{repo}: '+'; '.join(d['message'] for d in coverage.get('diagnostics',[]) if d['severity']=='error'))
         report[repo]=entry
+    # The user-facing log of every Java difference (docs/spring/java-differences.md) is generated from the mappings and
+    # must match them; every adapted entry must cite a rule or deviation api-mapping.md defines.
+    if (home/'tools'/'api_differences.py').is_file() and (home/'api'/'java-differences-intro.md').is_file():
+        differences=subprocess.run([sys.executable,str(home/'tools'/'api_differences.py'),'--check','--root',str(home)],capture_output=True,text=True)
+        report['differences']='ok' if differences.returncode==0 else 'stale or invalid'
+        if differences.returncode!=0:failures.append('java differences: '+' | '.join(l for l in differences.stderr.splitlines() if l)[:2000])
     return report,failures
 
 def main():
