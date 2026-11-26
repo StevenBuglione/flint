@@ -4,6 +4,7 @@ The web layer passes URIs around (`ResponseEntity.created`, `HttpHeaders.setLoca
 +/
 module flint.java.net;
 
+import flint.engine.aot.text : decimal, decodeUtf8;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.net.internal.ipv6literal : isScopeCharacter, validIpv6;
 
@@ -25,8 +26,9 @@ struct URI
                 throw new IllegalArgumentException("Illegal character in URI: " ~ str);
             if (c == '%' && !escapesChecked)
             {
-                if (!validPercentEscapes(str, index))
-                    throw new IllegalArgumentException("Invalid percent syntax in URI: " ~ str);
+                const issue = percentIssue(str, index);
+                if (issue.reason !is null)
+                    throw new IllegalArgumentException(issue.message(str));
                 escapesChecked = true;
             }
         }
@@ -108,18 +110,39 @@ struct URI
     }
 }
 
+private struct UriIssue
+{
+    string reason;
+    size_t offset = size_t.max;
+
+    string message(string input) const pure nothrow
+    {
+        if (offset == size_t.max)
+            return reason ~ ": " ~ input;
+
+        // Java reports an index in UTF-16 code units.
+        const prefix = input[0 .. offset];
+        size_t read;
+        size_t units;
+        while (read < prefix.length)
+            units += decodeUtf8(prefix, read) > 0xFFFF ? 2 : 1;
+        return reason ~ " at index " ~ decimal(cast(ulong) units) ~ ": " ~ input;
+    }
+}
+
 private struct ScopedAddress
 {
     size_t marker = size_t.max;
-    bool valid;
+    UriIssue issue;
 }
 
-private bool validPercentEscapes(string text, size_t firstPercent) pure nothrow @nogc
+private UriIssue percentIssue(string text, size_t firstPercent) pure nothrow @nogc
 {
     const headEnd = delimiter(text, ":/?#");
     const hasScheme = headEnd < text.length && text[headEnd] == ':';
+    const scheme = hasScheme ? schemeIssue(text[0 .. headEnd]) : UriIssue.init;
     if (hasScheme && firstPercent < headEnd)
-        return false; // Percent escapes are never allowed in a scheme name.
+        return scheme; // Percent escapes are never allowed in a scheme name.
 
     const start = hasScheme ? headEnd + 1 : 0;
     const scoped = scopedAddress(text, start);
@@ -130,13 +153,20 @@ private bool validPercentEscapes(string text, size_t firstPercent) pure nothrow 
         const index = firstPercent + relativeIndex;
         if (index == scoped.marker)
         {
-            if (!scoped.valid || (hasScheme && !validScheme(text[0 .. headEnd])))
-                return false;
+            if (scheme.reason !is null)
+                return scheme;
+            if (scoped.issue.reason !is null)
+                return scoped.issue;
         }
-        else if (text.length - index < 3 || !isHex(text[index + 1]) || !isHex(text[index + 2]))
-            return false;
+        else if (!validEscape(text[index .. $]))
+            return scheme.reason is null ? UriIssue("Malformed escape pair", index) : scheme;
     }
-    return true;
+    return UriIssue.init;
+}
+
+private bool validEscape(scope const(char)[] escape) pure nothrow @nogc
+{
+    return escape.length >= 3 && isHex(escape[1]) && isHex(escape[2]);
 }
 
 private ScopedAddress scopedAddress(string text, size_t start) pure nothrow @nogc
@@ -150,45 +180,57 @@ private ScopedAddress scopedAddress(string text, size_t start) pure nothrow @nog
     if (hostStart == authority.length || authority[hostStart] != '[')
         return ScopedAddress.init;
 
+    const hostOffset = authorityStart + hostStart + 1;
     const host = authority[hostStart + 1 .. $];
     const close = delimiter(host, "]");
     const marker = delimiter(host[0 .. close], "%");
     if (marker == close)
         return ScopedAddress.init;
-    const absoluteIndex = authorityStart + hostStart + 1 + marker;
-    if (close == host.length || !validIpv6(host[0 .. close]))
-        return ScopedAddress(absoluteIndex, false);
-    foreach (byte_; host[marker + 1 .. close])
+    const absoluteMarker = hostOffset + marker;
+    if (close == host.length)
+        return ScopedAddress(absoluteMarker, UriIssue("Expected closing bracket for IPv6 address", hostOffset + close));
+    if (marker + 1 == close)
+        return ScopedAddress(absoluteMarker, UriIssue("scope id expected"));
+    if (!validIpv6(host[0 .. close]))
+        return ScopedAddress(absoluteMarker, UriIssue("Malformed IPv6 address", hostOffset));
+    foreach (offset, byte_; host[marker + 1 .. close])
         if (!isScopeCharacter(byte_))
-            return ScopedAddress(absoluteIndex, false);
-    return ScopedAddress(absoluteIndex, validPortSuffix(host[close + 1 .. $]));
+        {
+            const issue = UriIssue("Illegal character in scope id", absoluteMarker + 1 + offset);
+            return ScopedAddress(absoluteMarker, issue);
+        }
+    return ScopedAddress(absoluteMarker, portIssue(host[close + 1 .. $], hostOffset + close + 1));
 }
 
-private bool validPortSuffix(string suffix) pure nothrow @nogc
+private UriIssue portIssue(string suffix, size_t start) pure nothrow @nogc
 {
     if (suffix.length == 0)
-        return true;
+        return UriIssue.init;
     if (suffix[0] != ':')
-        return false;
+        return UriIssue("Expected port number", start);
     int port;
-    foreach (byte_; suffix[1 .. $])
+    foreach (offset, byte_; suffix[1 .. $])
     {
         const digit = byte_ - '0';
-        if (digit < 0 || digit > 9 || port > (int.max - digit) / 10)
-            return false;
+        if (digit < 0 || digit > 9)
+            return UriIssue("Illegal character in port number", start + 1 + offset);
+        if (port > (int.max - digit) / 10)
+            return UriIssue("Malformed port number", start + 1);
         port = port * 10 + digit;
     }
-    return true;
+    return UriIssue.init;
 }
 
-private bool validScheme(string part) pure nothrow @nogc
+private UriIssue schemeIssue(string part) pure nothrow @nogc
 {
-    if (part.length == 0 || !isAsciiLetter(part[0]))
-        return false;
-    foreach (byte_; part[1 .. $])
+    if (part.length == 0)
+        return UriIssue("Expected scheme name", 0);
+    if (!isAsciiLetter(part[0]))
+        return UriIssue("Illegal character in scheme name", 0);
+    foreach (offset, byte_; part[1 .. $])
         if (!isAsciiLetter(byte_) && (byte_ < '0' || byte_ > '9') && byte_ != '+' && byte_ != '-' && byte_ != '.')
-            return false;
-    return true;
+            return UriIssue("Illegal character in scheme name", offset + 1);
+    return UriIssue.init;
 }
 
 private size_t delimiter(string text, string choices) pure nothrow @nogc

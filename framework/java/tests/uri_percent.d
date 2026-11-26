@@ -39,3 +39,22 @@ private bool rejects(string input) pure
         return true;
     return false;
 }
+
+@("URI.create reports malformed escape positions in UTF-16 units")
+unittest
+{
+    assert(failureMessage("/p%th") == "Malformed escape pair at index 2: /p%th");
+    assert(failureMessage("?query=foo%%x") == "Malformed escape pair at index 10: ?query=foo%%x");
+    assert(failureMessage("/😀%2G") == "Malformed escape pair at index 3: /😀%2G");
+    assert(failureMessage("//[::%eth0]?x=/p%GG") == "Malformed escape pair at index 16: //[::%eth0]?x=/p%GG");
+    assert(failureMessage("//[::%25en%30]/") == "Illegal character in scope id at index 10: //[::%25en%30]/");
+}
+
+private string failureMessage(string input) pure
+{
+    try
+        URI.create(input);
+    catch (IllegalArgumentException failure)
+        return failure.getMessage();
+    assert(false, "Expected an invalid URI");
+}

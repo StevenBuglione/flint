@@ -637,6 +637,8 @@ Before a ported module lands:
 
    The `URI.create` closure probe on venus with LDC 1.43.0 grew from 6,220 to 10,444 incremental loadable bytes at O3 and from 4,716 to 7,908 at Oz against `0208210db`. The existing character scan dispatches to the percent validator only when it finds a percent marker. The validator checks ASCII triplets and shares the IPv6 literal parser with the URL port. It uses borrowed slices. Both profiles retained their declared link closure.
 
+   The `URI.create` message follow-up measures UTF-16 indices with the shared text engine only on the error path. Against `415dbdc38`, URI incremental loadable bytes went from 10,444 to 13,820 at O3 and 7,908 to 10,172 at Oz under the same venus probe. Both profiles passed the link-closure audit.
+
 6. **Exceptions** used for control flow skip backtraces (R-11).
 7. **Shared state.** Anything created once and shared is immutable after warm-up, or protected, and has a concurrent test (R-4).
 8. **Generated code.** Anything the module asks Flint AOT to generate instantiates nothing per type it can look up (B-3).
