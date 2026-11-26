@@ -1,0 +1,5 @@
+{
+ "id": "D-WEB-7",
+ "deviation": "`SemanticApiVersionParser.Version` is a public alias to the module-private `flint.web.accept.SemanticApiVersion` class.",
+ "reason": "D resolves the generic base interface before the nested class. The alias preserves the public name and lets the parser implement the typed interface."
+}

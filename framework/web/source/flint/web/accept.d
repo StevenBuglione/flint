@@ -4,8 +4,8 @@
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/accept/
 (ContentNegotiationStrategy.java, ContentNegotiationManager.java, FixedContentNegotiationStrategy.java,
 HeaderContentNegotiationStrategy.java, MediaTypeFileExtensionResolver.java, ApiVersionResolver.java,
-HeaderApiVersionResolver.java, QueryApiVersionResolver.java, InvalidApiVersionException.java,
-MissingApiVersionException.java, NotAcceptableApiVersionException.java).
+HeaderApiVersionResolver.java, QueryApiVersionResolver.java, ApiVersionParser.java, SemanticApiVersionParser.java,
+InvalidApiVersionException.java, MissingApiVersionException.java, NotAcceptableApiVersionException.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook. Spring Boot's default manager has only the
@@ -13,11 +13,13 @@ header strategy.
 +/
 module flint.web.accept;
 
+import flint.engine.aot.text : decodeUtf8;
 import flint.http : HttpHeaders, HttpStatus, InvalidMediaTypeException, MediaType;
 import flint.jakarta.servlet.http : HttpServletRequest;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : Comparable, IllegalArgumentException, Integer, JavaObject;
+import flint.java.lang.character.decimaldigits : javaDecimalDigit;
 import flint.java.util : ArrayList, Collections, List, Objects;
-import flint.util : InvalidMimeTypeException, MimeTypeUtils, StringUtils;
+import flint.util : Assert, InvalidMimeTypeException, MimeTypeUtils, StringUtils;
 import flint.web : HttpMediaTypeNotAcceptableException;
 import flint.web.context.request : NativeWebRequest;
 import flint.web.server : ResponseStatusException;
@@ -76,6 +78,133 @@ class QueryApiVersionResolver : ApiVersionResolver
         }
         return Nullable!string.init;
     }
+}
+
+/// Converts the requested API version to a value with a natural ordering.
+interface ApiVersionParser(V) if (is(V : Comparable!V))
+{
+    /// Parses a value for comparison with other versions.
+    V parseVersion(string value);
+}
+
+/// Parses a major version with optional minor and patch components.
+class SemanticApiVersionParser : ApiVersionParser!SemanticApiVersion
+{
+    /// The normalized major, minor and patch components (D-WEB-7).
+    alias Version = SemanticApiVersion;
+
+    ///
+    this() pure nothrow @nogc
+    {
+    }
+
+    /// Skips leading characters before the first digit and defaults omitted components to zero.
+    override Version parseVersion(string value)
+    {
+        Assert.notNull(value, "'version' is required");
+        const components = versionComponents(value[firstVersionDigit(value) .. $]);
+        Assert.state(components[0]!is null, "Invalid API version format");
+        const major = Integer.parseInt(components[0]);
+        const minor = components[1] is null ? 0 : Integer.parseInt(components[1]);
+        const patch = components[2] is null ? 0 : Integer.parseInt(components[2]);
+        return new Version(major, minor, patch);
+    }
+
+    private static size_t firstVersionDigit(scope const(char)[] value) pure nothrow @nogc
+    {
+        size_t index;
+        while (index < value.length)
+        {
+            const start = index;
+            // Java checks each UTF-16 code unit, so supplementary digits are skipped.
+            if (javaDecimalDigit(decodeUtf8(value, index)) <= 9)
+                return start;
+        }
+        return index;
+    }
+
+    private static string[3] versionComponents(string value) pure nothrow @nogc
+    {
+        string[3] components;
+        size_t index;
+        foreach (ref component; components)
+        {
+            const start = index;
+            while (index < value.length && cast(uint) value[index] - '0' <= 9)
+                index++;
+            if (index == start)
+                return typeof(components).init;
+            component = value[start .. index];
+            if (index == value.length)
+                return components;
+            if (value[index++] != '.')
+                return typeof(components).init;
+        }
+        return typeof(components).init;
+    }
+}
+
+private final class SemanticApiVersion : Comparable!SemanticApiVersion
+{
+    private immutable int major;
+    private immutable int minor;
+    private immutable int patch;
+
+    private this(int major, int minor, int patch) pure nothrow @nogc
+    {
+        this.major = major;
+        this.minor = minor;
+        this.patch = patch;
+    }
+
+    /// The major component.
+    int getMajor() const pure nothrow @nogc
+    {
+        return major;
+    }
+
+    /// The minor component.
+    int getMinor() const pure nothrow @nogc
+    {
+        return minor;
+    }
+
+    /// The patch component.
+    int getPatch() const pure nothrow @nogc
+    {
+        return patch;
+    }
+
+    /// Compares the major, minor and patch components in that order.
+    override int compareTo(SemanticApiVersion other)
+    {
+        Objects.requireNonNull(other);
+        int result = Integer.compare(major, other.major);
+        if (result == 0)
+            result = Integer.compare(minor, other.minor);
+        return result == 0 ? Integer.compare(patch, other.patch) : result;
+    }
+
+    /// Compares the three normalized components.
+    bool equals(Object other) pure nothrow @nogc
+    {
+        auto that = cast(SemanticApiVersion) other;
+        return that !is null && major == that.major && minor == that.minor && patch == that.patch;
+    }
+
+    /// Hashes the three normalized components.
+    int hashCode() const pure nothrow @nogc
+    {
+        return cast(int)((cast(uint) major * 31 + cast(uint) minor) * 31 + cast(uint) patch);
+    }
+
+    /// Formats all three normalized components.
+    override string toString() const
+    {
+        return Integer.toString(major) ~ "." ~ Integer.toString(minor) ~ "." ~ Integer.toString(patch);
+    }
+
+    mixin JavaObject;
 }
 
 /// A version that cannot be parsed or is outside the supported set.

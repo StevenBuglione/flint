@@ -889,6 +889,15 @@ framework-test and held Oz at 1,553,762 and 1,713,818 bytes respectively.
 DMD templates moved from 6,144 to 6,159 in Web MVC and held at 8,559 in
 framework-test. Decision `6c9e5f49` covers the inherited Phobos overage.
 
+The standalone semantic API version parser scans the prefix and numeric
+components without allocating intermediate strings or using a regex. It
+reuses Java's decimal digit and integer parsers. Matched native probes at
+`426ce75dc` and `f3d451430` added 56 loadable bytes to Web in both profiles.
+Web MVC and framework-test held their linked sizes. DMD template counts
+moved from 6,363 to 6,391 in Web, 6,159 to 6,165 in Web MVC, and 8,559 to
+8,565 in framework-test. Decision `6c9e5f49` covers the inherited Phobos
+overage. The parser has no route integration.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

@@ -1038,8 +1038,14 @@
       "status": "ported"
     },
     "org/springframework/web/accept/SemanticApiVersionParserTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/web/tests/semantic_api_version_parser_tests.d",
+      "methods": {
+        "ported": [
+          "parse",
+          "parseInvalid"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/web/accept/StandardApiVersionDeprecationHandlerTests.java": {
       "phase": "2",
