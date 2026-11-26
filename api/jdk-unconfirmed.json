@@ -524,7 +524,6 @@
   "java.util.HashSet#remove(Object)",
   "java.util.HashSet#size()",
   "java.util.HashSet#toArray()",
-  "java.util.HexFormat#parseHex(char[],int,int)",
   "java.util.IllegalFormatConversionException",
   "java.util.IllegalFormatException",
   "java.util.Iterator",

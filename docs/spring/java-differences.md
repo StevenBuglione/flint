@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,073 | 310 | 1,871 | 15,167 |
+| framework | openjdk@21.0.13 | 1,072 | 310 | 1,871 | 15,168 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10097,7 +10097,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,918 | 0 |
+| java.util | 1,919 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 285 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -11193,6 +11193,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Collections#singletonList(T)` | 2 | Java’s singleton list returns false when removing an absent element. The current list throws UnsupportedOperationException. |
 | framework | `java.util.Collections#unmodifiableMap(Map)` | 2 | Java returns a live read-only view. The current snapshot misses changes to existing values and new entries in the backing map. |
 | framework | `java.util.Collections#unmodifiableSet(Set)` | 2 | Java returns a live read-only view. The current snapshot misses additions and removals in the backing set. |
+| framework | `java.util.HexFormat#parseHex(char[],int,int)` | 2 | Requires a UTF-16 code-unit array overload. |
 | framework | `java.util.IllegalFormatConversionException#<init>(char,Class)` | 2 | Flint currently accepts a string name. Java retains the argument Class and exposes it through getArgumentClass(). |
 | framework | `java.util.List#subList(int,int)` | 2 | Java returns a backed range and invalidates it after structural modification of the parent. The current implementation returns a copy and throws IndexOutOfBoundsException for a reversed range. |
 | framework | `java.util.Locale#<init>(String)` | 2 | Flint still needs legacy language alias normalization and Java startup selection of old ISO language codes. A null String is the empty slice under R26. |
