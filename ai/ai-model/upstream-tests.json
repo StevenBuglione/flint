@@ -166,8 +166,23 @@
       "status": "deferred"
     },
     "org/springframework/ai/chat/metadata/ChatGenerationMetadataTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-model/tests/chat_generation_metadata_tests.d",
+      "methods": {
+        "ported": [
+          "thirdPartyImplementationKeepsRawReasonAndUsesDefaultCategory"
+        ],
+        "skipped": {
+          "nullMetadataShouldReturnUnknownCategory": "ChatGenerationMetadata.NULL is pending.",
+          "shouldBuildMetadataWithFinishReason": "ChatGenerationMetadata.builder is pending.",
+          "shouldKeepAnthropicContextWindowReasonUnchanged": "ChatGenerationMetadata.builder is pending.",
+          "shouldPreserveBlankFinishReasonAsAbsent": "ChatGenerationMetadata.builder is pending.",
+          "shouldPreserveOriginalFinishReasonString": "ChatGenerationMetadata.builder is pending.",
+          "shouldReturnCorrectCategoryForDifferentReasons": "ChatGenerationMetadata.builder is pending.",
+          "shouldReturnOtherForUnrecognizedReason": "ChatGenerationMetadata.builder is pending.",
+          "shouldReturnUnknownForNullFinishReason": "ChatGenerationMetadata.builder is pending."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/ai/chat/metadata/ChatResponseMetadataTests.java": {
       "phase": "2",

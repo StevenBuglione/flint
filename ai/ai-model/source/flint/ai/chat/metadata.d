@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/metadata/{EmptyRateLimit,FinishReasonCategory,RateLimit}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/metadata/{ChatGenerationMetadata,EmptyRateLimit,FinishReasonCategory,RateLimit}.java
 // Modified by the Flint authors.
 module flint.ai.chat.metadata;
 
+import flint.ai.model : ResultMetadata;
 import flint.java.time : Duration;
 import std.typecons : Nullable;
 
@@ -162,5 +163,26 @@ private FinishReasonCategory finishReasonAlias(scope const(char)[] reason) pure 
             return FinishReasonCategory.FILTERED;
     default:
         return FinishReasonCategory.OTHER;
+    }
+}
+
+/// Metadata associated with the generation of a chat response.
+interface ChatGenerationMetadata : ResultMetadata
+{
+    /// The provider's raw finish reason, which may be absent.
+    Nullable!string getFinishReason();
+
+    /// The provider-neutral finish reason.
+    FinishReasonCategory getFinishReasonCategory();
+
+    /// Fallback for implementations without a provider-specific category (R3).
+    mixin template Defaults()
+    {
+        override FinishReasonCategory getFinishReasonCategory()
+        {
+            import flint.ai.chat.metadata : categorize;
+
+            return categorize(getFinishReason());
+        }
     }
 }

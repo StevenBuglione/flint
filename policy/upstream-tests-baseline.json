@@ -33,7 +33,6 @@
       "org/springframework/ai/chat/messages/part/MessagePartJsonTests.java",
       "org/springframework/ai/chat/messages/part/StreamingPartIndexerTests.java",
       "org/springframework/ai/chat/metadata/ChatGenerationMetadataCategoryTests.java",
-      "org/springframework/ai/chat/metadata/ChatGenerationMetadataTests.java",
       "org/springframework/ai/chat/metadata/ChatResponseMetadataTests.java",
       "org/springframework/ai/chat/metadata/DefaultUsageTests.java",
       "org/springframework/ai/chat/metadata/EmptyUsageTests.java",
