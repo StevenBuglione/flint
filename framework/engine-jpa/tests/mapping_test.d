@@ -8,6 +8,7 @@ module flint.engine.jpa.mapping_test;
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping,
     ResultBinding, planResult, validateEntity, validateMapping;
+import flint.engine.jpa.parameter_binding : ParameterBinding, ParameterBindingPlan, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.java.sql : Types;
 
@@ -127,6 +128,42 @@ unittest
     assert(planResult(&recordMapping, []).error.code == Status.invalidArgument);
     assert(planResult(&recordMapping, [ResultBinding(1, 1)]).error.code == Status.invalidArgument);
     assert(planResult(&recordMapping, [ResultBinding(0, 0)]).error.code == Status.invalidArgument);
+}
+
+@("parameter plans validate positions independently of attribute ordinals")
+unittest
+{
+    assert(planParameters(&recordMapping, [ParameterBinding(0, 2), ParameterBinding(0, 1)]).ok);
+    assert(planParameters(null, [ParameterBinding(0, 1)]).error.code == Status.invalidArgument);
+    assert(planParameters(&recordMapping, [ParameterBinding(1, 1)]).error.code == Status.invalidArgument);
+    assert(planParameters(&recordMapping, [ParameterBinding(0, 0)]).error.code == Status.invalidArgument);
+    const duplicate = planParameters(&recordMapping, [
+        ParameterBinding(0, 1), ParameterBinding(0, 1)
+    ]);
+    assert(duplicate.error.code == Status.invalidArgument && duplicate.error.offset == 1);
+    static assert(!__traits(compiles, ParameterBindingPlan(&recordMapping, [], null)));
+}
+
+@("typed parameter plans require a writer for the specific declared kind")
+unittest
+{
+    import flint.engine.jpa : TypedColumnCodec;
+    import flint.java.sql : PreparedStatement;
+
+    static immutable EntityMapping timestamps = EntityMapping("Record",
+            "flint.engine.jpa.mapping_test.Record", "records",
+            [AttributeMapping(0, "id", "id", AttributeKind.timestamp, &readId, &writeId)],
+            &constructRecord, [], &isExactRecordType, [0]);
+    static void write(PreparedStatement, int, scope const ref AttributeValue)
+    {
+    }
+
+    const dateOnly = TypedColumnCodec(write: &write);
+    const withoutWriter = TypedColumnCodec(kinds: 1u << AttributeKind.timestamp);
+    const timestampWriter = TypedColumnCodec(write: &write, kinds: 1u << AttributeKind.timestamp);
+    assert(planParameters(&timestamps, [ParameterBinding(0, 1)], dateOnly).error.code == Status.invalidArgument);
+    assert(planParameters(&timestamps, [ParameterBinding(0, 1)], withoutWriter).error.code == Status.invalidArgument);
+    assert(planParameters(&timestamps, [ParameterBinding(0, 1)], timestampWriter).ok);
 }
 
 @("attribute writers cannot take borrowed text that may outlive the caller")

@@ -11,6 +11,7 @@ import flint.conc : Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding,
     RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult, validateEntity, validateMapping;
+import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
 import flint.engine.reactor : Backend, Reactor, ReactorOptions, TaskContext, TaskDelegate;
@@ -245,6 +246,55 @@ private void providerInsert(DataSource dataSource, long id, string name)
     statement.setString(2, nameValue.value.text);
     ownerCodec.write(statement, 3, birthDate.value);
     assert(statement.executeUpdate() == 1);
+}
+
+private void verifyOwnerParameters(DataSource dataSource)
+{
+    static immutable ParameterBinding[] bindings = [
+        ParameterBinding(0, 3), ParameterBinding(1, 2), ParameterBinding(2, 1)
+    ];
+    const required = planParameters(&ownerMapping, bindings, ownerCodec);
+    assert(required.ok);
+
+    EntityMapping nullableMapping = ownerMapping;
+    auto attributes = nullableMapping.attributes.dup;
+    attributes[1].columnNullable = true;
+    nullableMapping.attributes = attributes.idup;
+    const mappings = [nullableMapping].idup;
+    const nullable = planParameters(&mappings[0], bindings, ownerCodec);
+    assert(nullable.ok);
+
+    auto connection = dataSource.getConnection();
+    scope (exit)
+        connection.close();
+    enum sql = "select cast(? as date), cast(? as text), cast(? as bigint)";
+    auto owner = new Owner;
+    owner.id = 17;
+    owner.birthDate = LocalDate.of(1968, 2, 29);
+    {
+        auto rejected = connection.prepareStatement(sql);
+        scope (exit)
+            rejected.close();
+        assert(bindParameters(required.value, rejected, new DerivedOwner).code == Status.invalidArgument);
+        const error = bindParameters(required.value, rejected, owner);
+        assert(error.code == Status.invalidArgument && error.offset == 1);
+    }
+
+    auto statement = connection.prepareStatement(sql);
+    scope (exit)
+        statement.close();
+    foreach (name; [null, "Seventeen"])
+    {
+        owner.name = name;
+        assert(bindParameters(nullable.value, statement, owner).code == Status.ok);
+        auto rows = statement.executeQuery();
+        scope (exit)
+            rows.close();
+        assert(rows.next());
+        assert(rows.getObject!LocalDate(1) == owner.birthDate);
+        assert(rows.getString(2) == name && rows.wasNull() == (name is null));
+        assert(rows.getLong(3) == owner.id);
+    }
 }
 
 private final class ContextProbe : TransactionSynchronization
@@ -563,6 +613,7 @@ void main() @system
         dataSource.close();
 
     verifyTimestampMapping(dataSource);
+    verifyOwnerParameters(dataSource);
     auto jdbc = new JdbcTemplate(dataSource);
     jdbc.execute(
             "create table jpa_seam_probe (id bigint primary key, name text not null, " ~ "birth_date date not null)");

@@ -8,6 +8,7 @@ import flint.arena : Result, Status;
 import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping,
     ResultBinding, TypedColumnCodec, materializeRow, planResult;
+import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.java.sql : PreparedStatement, ResultSet, Types;
 import flint.java.time : LocalDateTime, ZoneOffset;
 import flint.javax.sql : DataSource;
@@ -100,7 +101,12 @@ void verifyTimestampMapping(DataSource dataSource)
         statement.close();
     const expected = LocalDateTime.of(1969, 12, 31, 23, 59, 59, 123_456_000);
     const encoded = AttributeValue(AttributeKind.timestamp, -876_544);
-    codec.write(statement, 1, encoded);
+    static immutable ParameterBinding[] parameters = [ParameterBinding(1, 1)];
+    const writePlan = planParameters(&mapping, parameters, codec);
+    assert(writePlan.ok);
+    auto writeRecord = new AuditRecord;
+    writeRecord.recordedAt = expected;
+    assert(bindParameters(writePlan.value, statement, writeRecord).code == Status.ok);
     auto rows = statement.executeQuery();
     scope (exit)
         rows.close();
