@@ -3519,7 +3519,6 @@
       "io/micrometer/observation/FirstMatchingCompositeObservationHandlerTests.java",
       "io/micrometer/observation/NoopContextTests.java",
       "io/micrometer/observation/ObservationConventionTest.java",
-      "io/micrometer/observation/ObservationEventTests.java",
       "io/micrometer/observation/ObservationNoopTests.java",
       "io/micrometer/observation/ObservationRegistryTest.java",
       "io/micrometer/observation/ObservationTests.java",

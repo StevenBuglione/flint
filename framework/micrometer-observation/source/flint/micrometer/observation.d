@@ -1,5 +1,6 @@
 /*
  * Copyright 2022 VMware, Inc.
+ * Copyright 2023 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +16,22 @@
  */
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/Observation.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationView.java
+// Ported from micrometer-observation 1.18.0: io/micrometer/observation/SimpleEvent.java
 // Modified by the Flint authors.
 module flint.micrometer.observation;
 
 import core.sync.mutex : Mutex;
-import flint.java.lang : NullPointerException;
+import flint.engine.aot.any : Any;
+import flint.engine.aot.clock : currentTimeMillis;
+import flint.engine.aot.text : decimal;
+import flint.java.lang : Iterable, NullPointerException;
+import flint.java.util.formatter : formatJava;
 import flint.micrometer.common : KeyValue, KeyValues;
 import std.typecons : Nullable;
 
 @safe:
+
+private alias EventKeyValues = Iterable!KeyValue;
 
 /// Read-only view of the observation metadata and cardinality keys.
 private interface ObservationContextView
@@ -50,6 +58,100 @@ interface Observation : ObservationView
 {
     /// Read-only view of the observation metadata and cardinality keys.
     alias ContextView = ObservationContextView;
+
+    /// A timestamped event with optional observation metadata.
+    interface Event
+    {
+        string getName();
+        string getContextualName();
+        long getWallTime();
+        KeyValues getLowCardinalityKeyValues();
+        KeyValues getHighCardinalityKeyValues();
+        KeyValues getKeyValues();
+        /// Virtual formatting implementation for the Java-named overloads.
+        Event formatErased(scope Any[] entries);
+
+        /// Format the contextual name with the conversions supported by Flint's Java formatter.
+        final Event format(scope Any[] entries)
+        {
+            return formatErased(entries);
+        }
+
+        /// Create an event whose contextual name is its name.
+        static Event of(string name)
+        {
+            return of(name, name);
+        }
+
+        /// Create an event with the current epoch time in milliseconds.
+        static Event of(string name, string contextualName)
+        {
+            return of(name, contextualName, currentTimeMillis());
+        }
+
+        /// Create an event with an explicit epoch time in milliseconds.
+        static Event of(string name, string contextualName, long wallTime)
+        {
+            return of(name, contextualName, wallTime, KeyValues.empty());
+        }
+
+        /// Create an event with an explicit time and high-cardinality keys.
+        static Event of(string name, string contextualName, long wallTime, EventKeyValues highCardinality)
+        {
+            return of(name, contextualName, wallTime, highCardinality, KeyValues.empty());
+        }
+
+        /// Create an event with an explicit time and both sets of keys.
+        static Event of(string name, string contextualName, long wallTime,
+                EventKeyValues highCardinality, EventKeyValues lowCardinality)
+        {
+            return new SimpleEvent(name, contextualName, wallTime, highCardinality, lowCardinality);
+        }
+
+        /// Format the contextual name with R7 stack-boxed Java arguments.
+        Event format(Args...)(Args entries)
+        {
+            Any[Args.length] boxed;
+            static foreach (i; 0 .. Args.length)
+                boxed[i] = Any.of(entries[i]);
+            return formatErased(boxed[]);
+        }
+
+        /// Java default methods for implementations that supply an event name (R3).
+        mixin template Defaults(alias EventType = Event, alias formatImpl = formatEvent)
+        {
+            override string getContextualName()
+            {
+                return getName();
+            }
+
+            override long getWallTime()
+            {
+                return 0;
+            }
+
+            override KeyValues getLowCardinalityKeyValues()
+            {
+                return KeyValues.empty();
+            }
+
+            override KeyValues getHighCardinalityKeyValues()
+            {
+                return KeyValues.empty();
+            }
+
+            override KeyValues getKeyValues()
+            {
+                EventType event = this;
+                return event.getLowCardinalityKeyValues().and(event.getHighCardinalityKeyValues());
+            }
+
+            override EventType formatErased(scope Any[] entries)
+            {
+                return formatImpl(this, entries);
+            }
+        }
+    }
 
     /// Mutable metadata and cardinality keys for a single observation.
     static class Context : ContextView
@@ -252,5 +354,77 @@ interface Observation : ObservationView
             if (key is null)
                 throw new NullPointerException("key");
         }
+    }
+}
+
+// Keep the erased Java formatting body shared across Event implementations.
+private Observation.Event formatEvent(Observation.Event event, scope Any[] entries)
+{
+    string name = event.getName();
+    string contextualName = event.getContextualName();
+    if (contextualName is null)
+        throw new NullPointerException("contextualName");
+    string text = formatJava(contextualName, entries);
+    return Observation.Event.of(name, text is null ? "" : text, event.getWallTime(),
+            event.getHighCardinalityKeyValues(), event.getLowCardinalityKeyValues());
+}
+
+private final class SimpleEvent : Observation.Event
+{
+    private string name;
+    private string contextualName;
+    private long wallTime;
+    private KeyValues highCardinality;
+    private KeyValues lowCardinality;
+
+    this(string name, string contextualName, long wallTime, EventKeyValues highCardinality,
+            EventKeyValues lowCardinality)
+    {
+        this.name = name;
+        this.contextualName = contextualName;
+        this.wallTime = wallTime;
+        this.highCardinality = KeyValues.of(highCardinality);
+        this.lowCardinality = KeyValues.of(lowCardinality);
+    }
+
+    override string getName() nothrow @nogc
+    {
+        return name;
+    }
+
+    override string getContextualName() nothrow @nogc
+    {
+        return contextualName;
+    }
+
+    override long getWallTime() nothrow @nogc
+    {
+        return wallTime;
+    }
+
+    override KeyValues getHighCardinalityKeyValues() nothrow @nogc
+    {
+        return highCardinality;
+    }
+
+    override KeyValues getLowCardinalityKeyValues() nothrow @nogc
+    {
+        return lowCardinality;
+    }
+
+    override string toString() const
+    {
+        return "event.name='" ~ (name is null ? "null" : name) ~ "', event.contextualName='" ~ (contextualName is null
+                ? "null" : contextualName) ~ "', event.wallTime=" ~ decimal(wallTime);
+    }
+
+    override KeyValues getKeyValues()
+    {
+        return lowCardinality.and(highCardinality);
+    }
+
+    override Observation.Event formatErased(scope Any[] entries)
+    {
+        return formatEvent(this, entries);
     }
 }

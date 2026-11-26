@@ -50,8 +50,21 @@
       "status": "deferred"
     },
     "io/micrometer/observation/ObservationEventTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-observation/tests/observation_event_tests.d",
+      "methods": {
+        "ported": [
+          "defaultGetKeyValuesReturnsEmptyKeyValues",
+          "eventOfNameAndContextualNameHasDefaultKeyValues",
+          "eventOfNameContextualNameAndWallTimeHasDefaultKeyValues",
+          "eventOfNameHasDefaultKeyValuesAndWallTime",
+          "eventWithHighAndLowCardinalityKeyValues",
+          "eventWithHighCardinalityKeyValues",
+          "eventWithIterableKeyValues",
+          "formatPreservesWallTimeAndKeyValues",
+          "toStringExcludesKeyValues"
+        ]
+      },
+      "status": "ported"
     },
     "io/micrometer/observation/ObservationNoopTests.java": {
       "phase": "2",

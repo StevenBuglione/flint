@@ -707,6 +707,7 @@
    "licence": "Apache-2.0",
    "upstream": "micrometer-observation@1.18.0",
    "dependencies": [
+    "engine-aot",
     "java",
     "micrometer-commons"
    ],
