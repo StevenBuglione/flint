@@ -833,8 +833,37 @@
       "status": "deferred"
     },
     "tools/jackson/databind/deser/jdk/CollectionDeserializationTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/collection_deserialization_test.d",
+      "methods": {
+        "ported": [
+          "testExactStringCollection"
+        ],
+        "skipped": {
+          "testAbstractListAndSet": "The abstract collection target fixture is version-gated.",
+          "testArrayBlockingQueue": "ArrayBlockingQueue is version-gated.",
+          "testArrayIndexForExceptions1": "The collection element error and reference path fixture is version-gated.",
+          "testArrayIndexForExceptions2": "The collection element error and reference path fixture is version-gated.",
+          "testArrayIndexForExceptions3": "The collection element error and reference path fixture is version-gated.",
+          "testCustomDeserializer": "Custom deserializer registration is version-gated.",
+          "testCustomNumberCollectionDeserialize5522": "Custom numeric collection creation is version-gated.",
+          "testCustomStringCollectionDeserialize5522": "Custom string collection creation is version-gated.",
+          "testFromEmptyString": "The fixture's configured ObjectReader is version-gated.",
+          "testHashSet": "The set target fixture is version-gated.",
+          "testImplicitArrays": "The test combines scalar-to-array coercion with version-gated target types.",
+          "testIterableWithBeans": "The generic Iterable bean target is version-gated.",
+          "testIterableWithStrings": "The generic Iterable string target is version-gated.",
+          "testJava6Types": "Deque and NavigableSet targets are version-gated.",
+          "testNullsWithTreeSet": "TreeSet is version-gated.",
+          "testSingletonCollections": "The singleton collection implementation fixtures are version-gated.",
+          "testStringCollectionDeserializeInField5522": "Custom string collection creation in a bean property is version-gated.",
+          "testUnmodifiableSet": "The unmodifiable set implementation fixture is version-gated.",
+          "testUntypedList": "The fixture expects an untyped ArrayList where Flint returns a JsonNode.",
+          "testWrapExceptions": "ObjectReader exception wrapping overrides are version-gated.",
+          "testWrapExceptions3068": "The custom deserializer and exception wrapping fixture is version-gated."
+        }
+      },
+      "note": "The typed mapper preserves the explicit ArrayList implementation and its elements under the D template adaptation.",
+      "status": "partial"
     },
     "tools/jackson/databind/deser/jdk/CustomMapKeyDeserializationTest.java": {
       "phase": "2",
@@ -2668,8 +2697,31 @@
       "status": "deferred"
     },
     "tools/jackson/databind/ser/jdk/CollectionSerializationTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/collection_serialization_test.d",
+      "methods": {
+        "ported": [
+          "testEmptyListOrArray",
+          "testNullBeanCollection"
+        ],
+        "skipped": {
+          "testBigCollection": "The active byte sink replaces the Java character Writer path.",
+          "testCollections": "The active array and ArrayList variants omit the version-gated LinkedList and TreeSet variants.",
+          "testEmptyBeanCollection": "The fixture expects an untyped collection where Flint returns a JsonNode.",
+          "testEmptyBeanEnumMap": "The EnumMap property fixture is version-gated.",
+          "testEnumMap": "EnumMap support is version-gated.",
+          "testIterable": "Standalone Iterable serialization is version-gated.",
+          "testIterable358": "The fixture's custom serialization is version-gated.",
+          "testIterableWithAnnotation": "The fixture's Iterable typing annotation is version-gated.",
+          "testIterator": "Standalone Iterator serialization is version-gated.",
+          "testListSerializer": "The custom list serializer is version-gated.",
+          "testNullBeanEnumMap": "The EnumMap property fixture is version-gated.",
+          "testStaticList": "The active plain serialization assertion omits the version-gated default typing branch.",
+          "testWithIterable": "The fixture's Iterable property variants are version-gated.",
+          "testWithIterator": "The fixture's Iterator property variants are version-gated."
+        }
+      },
+      "note": "Both ordinary and suppressed empty list and array properties are exercised, alongside a null collection property.",
+      "status": "partial"
     },
     "tools/jackson/databind/ser/jdk/JDKTypeSerializationTest.java": {
       "phase": "2",
