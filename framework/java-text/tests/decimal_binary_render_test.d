@@ -124,3 +124,31 @@ unittest
     check("#,##0.###", 0x41df_ffff_ffc0_0000, "2,147,483,647");
     check("#,##0.###", 0x8000_0000_0000_0000, "-0");
 }
+
+@("Java explicit binary multipliers handle signed zeros, infinity and wide products")
+unittest
+{
+    static void check(string text, int multiplier, ulong bits, string expected)
+    {
+        DecimalFixedPattern pattern;
+        assert(compileFixedDecimalPattern(text, pattern) == DecimalCompileStatus.accepted);
+        DecimalSymbolData symbols;
+        char[64] output;
+        output[] = 'x';
+        size_t required;
+        assert(tryRenderDecimalDouble(bits, multiplier, pattern, symbols, output[0 .. 0], required));
+        assert(required == expected.length && output[0] == 'x');
+        assert(tryRenderDecimalDouble(bits, multiplier, pattern, symbols, output[], required));
+        assert(output[0 .. required] == expected && output[required] == 'x');
+    }
+
+    check("0.00%", -2, 0x3ff8_0000_0000_0000, "-3.00%");
+    check("0.00%", -2, 0, "-0.00%");
+    check("0.00%", -2, 0x8000_0000_0000_0000, "0.00%");
+    check("0.00%", 0, 0x8000_0000_0000_0000, "-0.00%");
+    check("0.00%", 0, 0x7ff0_0000_0000_0000, "NaN");
+    check("0.00%", -1, 0x7ff0_0000_0000_0000, "-∞%");
+    check("#,##0.###‰", 1, 0x3f40_624d_d2f1_a9fc, "0.001‰");
+    check("0.000000000000000000", int.min, 0x3ff0_0000_0000_0001, "-2147483648.000000500000000000");
+    check("0.000000000000000000", int.max, 0x3fff_ffff_ffff_ffff, "4294967293.999999500000000000");
+}
