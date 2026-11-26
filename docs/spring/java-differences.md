@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 498 | 22 | 1 | 2,774 |
-| framework | jackson-databind@3.1.8 | 532 | 56 | 5 | 9,874 |
+| framework | jackson-databind@3.1.8 | 513 | 49 | 5 | 9,900 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 182 | 155 | 0 | 2,053 |
@@ -4347,17 +4347,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.databind.JsonNode#requireNonNull()` | `flint.jackson.databind.node.JsonNode.requireNonNull` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requiredAt(String)` | `flint.jackson.databind.node.JsonNode.requiredAt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [D-JACKSON-11](api-mapping.md#deviations) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,Class)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `tools.jackson.databind.ObjectMapper#convertValue(Object,JavaType)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R7](api-mapping.md#r7-overloads) |  |
-| `tools.jackson.databind.ObjectMapper#convertValue(Object,TypeReference)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R7](api-mapping.md#r7-overloads) |  |
-| `tools.jackson.databind.ObjectMapper#readValue(File,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `tools.jackson.databind.ObjectMapper#readValue(InputStream,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(JsonParser,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `tools.jackson.databind.ObjectMapper#readValue(Path,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(String,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(byte[],Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `tools.jackson.databind.ObjectMapper#readValue(byte[],int,int,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#treeToValue(JsonNode,Class)` | `flint.jackson.databind.ObjectMapper.treeToValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `tools.jackson.databind.ObjectMapper#treeToValue(TreeNode,Class)` | `flint.jackson.databind.ObjectMapper.treeToValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#valueToTree(Object)` | `flint.jackson.databind.ObjectMapper.valueToTree` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectMapper#writeValue(File,Object)` | `flint.jackson.databind.ObjectMapper.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectMapper#writeValue(JsonGenerator,Object)` | `flint.jackson.databind.ObjectMapper.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
@@ -10360,7 +10353,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.tree | 2 | 0 |
 | tools.jackson.core.type | 48 | 0 |
 | tools.jackson.core.util | 460 | 0 |
-| tools.jackson.databind | 1,542 | 0 |
+| tools.jackson.databind | 1,568 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
 | tools.jackson.databind.cfg | 764 | 0 |
 | tools.jackson.databind.deser | 587 | 0 |
@@ -10907,6 +10900,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.JsonNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.ObjectMapper#<init>(MapperBuilder)` | 2 | The protected D implementation constructor accepts MapperConfig. The generic Java MapperBuilder constructor is deferred. |
 | framework | `tools.jackson.databind.ObjectMapper#<init>(TokenStreamFactory)` | 2 | The D base mapper has a no-argument constructor. The Java TokenStreamFactory constructor is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#convertValue(Object,JavaType)` | 2 | The Java JavaType target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
+| framework | `tools.jackson.databind.ObjectMapper#convertValue(Object,TypeReference)` | 2 | The Java TypeReference target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
 | framework | `tools.jackson.databind.ObjectMapper#createGenerator(DataOutput)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
 | framework | `tools.jackson.databind.ObjectMapper#createGenerator(File,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
 | framework | `tools.jackson.databind.ObjectMapper#createGenerator(OutputStream,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
@@ -10920,15 +10915,39 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.ObjectMapper#readValue(DataInput,Class)` | 2 | The Java overload uses DataInput. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(DataInput,JavaType)` | 2 | The Java overload uses DataInput. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(DataInput,TypeReference)` | 2 | The Java overload uses DataInput. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(File,Class)` | 2 | The typed D reader takes text, a byte slice or an existing parser. The Java File overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(File,JavaType)` | 2 | Flint's typed readValue accepts content or an existing parser. This source and runtime target-type overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(File,TypeReference)` | 2 | Flint's typed readValue accepts content or an existing parser. This source and runtime target-type overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(InputStream,Class)` | 2 | The typed D reader takes text, a byte slice or an existing parser. The Java InputStream overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(InputStream,JavaType)` | 2 | Flint's typed readValue accepts content or an existing parser. This source and runtime target-type overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(InputStream,TypeReference)` | 2 | Flint's typed readValue accepts content or an existing parser. This source and runtime target-type overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(JsonParser,JavaType)` | 2 | The Java JavaType target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(JsonParser,ResolvedType)` | 2 | The Java ResolvedType target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(JsonParser,TypeReference)` | 2 | The Java TypeReference target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(Path,Class)` | 2 | The typed D reader takes text, a byte slice or an existing parser. The Java Path overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(Path,JavaType)` | 2 | Flint's typed readValue accepts content or an existing parser. This source and runtime target-type overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(Path,TypeReference)` | 2 | Flint's typed readValue accepts content or an existing parser. This source and runtime target-type overload is deferred. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(Reader,Class)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(Reader,JavaType)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(Reader,TypeReference)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(String,JavaType)` | 2 | The Java JavaType target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(String,TypeReference)` | 2 | The Java TypeReference target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,Class)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,JavaType)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,TypeReference)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(byte[],JavaType)` | 2 | The Java JavaType target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(byte[],TypeReference)` | 2 | The Java TypeReference target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(byte[],int,int,Class)` | 2 | The typed byte-array reader takes a D slice. The Java offset and length overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(byte[],int,int,JavaType)` | 2 | Flint's typed readValue accepts content or an existing parser. This source and runtime target-type overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(byte[],int,int,TypeReference)` | 2 | Flint's typed readValue accepts content or an existing parser. This source and runtime target-type overload is deferred. |
 | framework | `tools.jackson.databind.ObjectMapper#rebuild()` | 2 | The D rebuild operation is on JsonMapper and returns its concrete builder. The generic ObjectMapper method is deferred. |
 | framework | `tools.jackson.databind.ObjectMapper#serializationConfig()` | 2 | The existing D getter returns Flint's aggregate MapperConfig. The Java SerializationConfig return contract is deferred. |
 | framework | `tools.jackson.databind.ObjectMapper#tokenStreamFactory()` | 2 | The existing D getter returns JsonFactory. The Java TokenStreamFactory return contract is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#treeToValue(JsonNode,JavaType)` | 2 | The Java JavaType target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
+| framework | `tools.jackson.databind.ObjectMapper#treeToValue(JsonNode,TypeReference)` | 2 | The Java TypeReference target-type overload is deferred. Flint's mapped Class form uses a D template and its erased implementation uses a registered descriptor name. |
+| framework | `tools.jackson.databind.ObjectMapper#treeToValue(TreeNode,Class)` | 2 | The D tree conversion accepts the Databind JsonNode class. The distinct Jackson Core TreeNode overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#treeToValue(TreeNode,JavaType)` | 2 | The D tree conversion accepts the Databind JsonNode class. The distinct Jackson Core TreeNode overload is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#treeToValue(TreeNode,TypeReference)` | 2 | The D tree conversion accepts the Databind JsonNode class. The distinct Jackson Core TreeNode overload is deferred. |
 | framework | `tools.jackson.databind.ObjectMapper#writeValue(DataOutput,Object)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
 | framework | `tools.jackson.databind.ObjectMapper#writer(Base64Variant)` | 2 | Flint constructs writers from the mapper's existing configuration. The Java overload accepts per-writer options. |
 | framework | `tools.jackson.databind.ObjectMapper#writer(CharacterEscapes)` | 2 | Flint constructs writers from the mapper's existing configuration. The Java overload accepts per-writer options. |
