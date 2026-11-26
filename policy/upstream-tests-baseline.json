@@ -3117,7 +3117,6 @@
       "tools/jackson/databind/node/NumberToIntegralConversionTest.java",
       "tools/jackson/databind/node/ObjectNodeTest.java",
       "tools/jackson/databind/node/POJONodeTest.java",
-      "tools/jackson/databind/node/RequiredAccessorTest.java",
       "tools/jackson/databind/node/StringNodeNumberLengthTest.java",
       "tools/jackson/databind/node/StringNodeTest.java",
       "tools/jackson/databind/node/ToStringForNodesTest.java",

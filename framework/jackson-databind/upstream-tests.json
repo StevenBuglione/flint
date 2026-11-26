@@ -2004,8 +2004,23 @@
       "status": "deferred"
     },
     "tools/jackson/databind/node/RequiredAccessorTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/json_node_required_test.d",
+      "methods": {
+        "ported": [
+          "testSimpleRequireFail"
+        ],
+        "skipped": {
+          "testIMPORTANT": "Requires JsonPointer and the requiredAt overloads.",
+          "testRequiredAtArrayOk": "Requires JsonPointer and the requiredAt overloads.",
+          "testRequiredAtFailOnArray": "Requires JsonPointer and the requiredAt overloads.",
+          "testRequiredAtFailOnObjectBasic": "Requires JsonPointer and the requiredAt overloads.",
+          "testRequiredAtFailOnObjectScalar3005": "Requires JsonPointer and the requiredAt overloads.",
+          "testRequiredAtObjectOk": "Requires JsonPointer and the requiredAt overloads.",
+          "testSimpleRequireAtFailure": "Requires JsonPointer and the requiredAt overloads.",
+          "testSimpleRequireOk": "Requires node-level require and requireNonNull plus requiredAt."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/databind/node/StringNodeNumberLengthTest.java": {
       "phase": "2",

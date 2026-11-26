@@ -204,6 +204,8 @@ The first-match experiment added 672 bytes of allocated ELF sections at Oz to bo
 
 The `hasNonNull` accessors look up a child once and inspect its node type. Tests port the presence assertions from Jackson's ArrayNodeTest and ObjectNodeTest, including the change from explicit null to a value. The same module probe on venus measured 419,469 to 419,989 loadable bytes from `5658e261` to `0f76aad2`, with 4,088 DMD template instances in both builds.
 
+Direct `required` access returns an existing child immediately and formats an index or runtime type name only on failure. The exact exception text distinguishes a wrong container from a missing property or index. From `36d984ed` to `636c7b16`, the jackson-databind probe on venus moved from 419,989 to 420,277 loadable bytes and from 4,088 to 4,096 DMD template instances.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

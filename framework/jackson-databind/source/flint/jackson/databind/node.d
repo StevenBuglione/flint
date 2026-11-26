@@ -276,10 +276,12 @@ abstract class JsonNode
     /// Like `get(propertyName)`, but throws when the property is absent.
     JsonNode required(string propertyName)
     {
-        auto node = get(propertyName);
-        if (node is null)
-            throw new JsonNodeException("No value for property '" ~ propertyName ~ "' of `" ~ className() ~ "`");
-        return node;
+        if (auto node = get(propertyName))
+            return node;
+        if (!isObject())
+            throw new JsonNodeException("Node of type `" ~ typeid(this).name ~ "` has no fields");
+        const name = propertyName is null ? "null" : propertyName;
+        throw new JsonNodeException("No value for property '" ~ name ~ "' of `" ~ className() ~ "`");
     }
 
     /// Like `get(index)`, but throws when there is no such element.
@@ -287,11 +289,12 @@ abstract class JsonNode
     {
         import flint.engine.aot.text : decimal;
 
-        auto node = get(index);
-        const at = decimal(cast(long) index);
-        if (node is null)
-            throw new JsonNodeException("No value at index #" ~ at ~ " of `" ~ className() ~ "`");
-        return node;
+        if (auto node = get(index))
+            return node;
+        if (!isArray())
+            throw new JsonNodeException("Node of type `" ~ typeid(this).name ~ "` has no indexed values");
+        throw new JsonNodeException("No value at index #" ~ decimal(
+                cast(long) index) ~ " [0, " ~ decimal(cast(long) size()) ~ ") of `" ~ className() ~ "`");
     }
 
     /// Whether an Object node has property `propertyName` (even if its value is null).
