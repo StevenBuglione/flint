@@ -1265,6 +1265,7 @@
     "flint.ai.evaluation",
     "flint.ai.observation",
     "flint.ai.observation.conventions",
+    "flint.ai.reader",
     "flint.ai.template_",
     "flint.ai.tokenizer"
    ],

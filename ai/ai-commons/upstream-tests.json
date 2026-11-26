@@ -115,6 +115,27 @@
       },
       "status": "ported"
     },
+    "org/springframework/ai/reader/ExtractedTextFormatterTests.java": {
+      "d": "ai/ai-commons/tests/extracted_text_formatter_tests.d",
+      "methods": {
+        "ported": [
+          "alignToLeftMatchesPreviousBehavior",
+          "formatWithLeftAlignmentMatchesPreviousBehavior",
+          "formatWithoutLeftAlignmentMatchesPreviousBehavior",
+          "largeRunsOfBlankLinesDoNotFailAndStillCollapse",
+          "trimAdjacentBlankLinesMatchesPreviousBehavior"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/ai/reader/JsonReaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/reader/TextReaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/ai/template/NoOpTemplateRendererTests.java": {
       "d": "ai/ai-commons/tests/no_op_template_renderer_tests.d",
       "methods": {

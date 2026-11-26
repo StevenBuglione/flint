@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 170 | 279 | 0 | 15,347 |
+| ai | spring-ai@v2.1.0 | 176 | 290 | 0 | 15,330 |
 | boot | spring-boot@v4.2.0 | 43 | 28 | 2,133 | 13,399 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,469 | 1,387 | 4,848 | 30,130 |
@@ -540,6 +540,22 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.observation.conventions.VectorStoreSimilarityMetric#DOT` | `flint.ai.observation.conventions.VectorStoreSimilarityMetric.DOT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.observation.conventions.VectorStoreSimilarityMetric#EUCLIDEAN` | `flint.ai.observation.conventions.VectorStoreSimilarityMetric.EUCLIDEAN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.observation.conventions.VectorStoreSimilarityMetric#MANHATTAN` | `flint.ai.observation.conventions.VectorStoreSimilarityMetric.MANHATTAN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+
+#### org.springframework.ai.reader
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.reader.ExtractedTextFormatter#builder()` | `flint.ai.reader.ExtractedTextFormatter.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.reader.ExtractedTextFormatter#deleteBottomTextLines(String,int,String)` | `flint.ai.reader.ExtractedTextFormatter.deleteBottomTextLines` | [R14](api-mapping.md#r14-strings-and-text) | An empty separator counts UTF-16 units and emits U+FFFD for a surviving lone surrogate. |
+| `org.springframework.ai.reader.ExtractedTextFormatter#deleteTopTextLines(String,int,String)` | `flint.ai.reader.ExtractedTextFormatter.deleteTopTextLines` | [R14](api-mapping.md#r14-strings-and-text) | An empty separator counts UTF-16 units and emits U+FFFD for a surviving lone surrogate. |
+| `org.springframework.ai.reader.ExtractedTextFormatter.Builder` | `flint.ai.reader.ExtractedTextFormatter.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.reader.ExtractedTextFormatter.Builder#<init>()` | `flint.ai.reader.ExtractedTextFormatter.Builder.init` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.reader.ExtractedTextFormatter.Builder#build()` | `flint.ai.reader.ExtractedTextFormatter.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.reader.ExtractedTextFormatter.Builder#overrideLineSeparator(String)` | `flint.ai.reader.ExtractedTextFormatter.Builder.overrideLineSeparator` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withLeftAlignment(boolean)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withLeftAlignment` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfBottomTextLinesToDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfBottomTextLinesToDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopPagesToSkipBeforeDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopPagesToSkipBeforeDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopTextLinesToDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopTextLinesToDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 
 #### org.springframework.ai.template
 
@@ -8353,7 +8369,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.rag.retrieval.join | 6 | 0 |
 | org.springframework.ai.rag.retrieval.search | 15 | 0 |
 | org.springframework.ai.rag.util | 2 | 0 |
-| org.springframework.ai.reader | 39 | 0 |
+| org.springframework.ai.reader | 22 | 0 |
 | org.springframework.ai.reader.jsoup | 0 | 6 |
 | org.springframework.ai.reader.jsoup.config | 0 | 23 |
 | org.springframework.ai.reader.markdown | 0 | 6 |
