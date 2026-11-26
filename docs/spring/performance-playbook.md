@@ -771,6 +771,14 @@ templates. The stock link still uses the inherited Phobos rule in `6c9e5f49`.
 The matched framework-test probe also retained 1,801,218 O3 and 1,713,594 Oz
 loadable bytes while its template count went from 8,475 to 8,485.
 
+Web application context lookup reads one servlet attribute and returns the
+stored context by identity. The LDC release probe recorded zero GC bytes
+across 2,000 root and named lookups. Matched venus Web probes at
+`7922120e2` and `8709d5a62` added 40 loadable bytes at both O3 and Oz and
+increased DMD templates from 6,899 to 6,914. The inherited Phobos overage
+uses the base-relative rule in `6c9e5f49`. The matched framework-test probe
+also added 40 bytes in both profiles and retained 8,486 templates.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
