@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 142 | 256 | 0 | 15,398 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,391 | 1,335 | 4,848 | 30,260 |
+| framework | spring-framework@v7.1.0 | 3,403 | 1,339 | 4,848 | 30,244 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1845,6 +1845,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.aop.framework.AopConfigException#<init>(String,Throwable)` | `flint.aop.framework.AopConfigException` | [R8](api-mapping.md#r8-exceptions) |  |
 | `org.springframework.aop.framework.ProxyConfig#toString()` | `flint.aop.framework.ProxyConfig.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+
+#### org.springframework.aop.framework.adapter
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.aop.framework.adapter.AdvisorAdapterRegistry#wrap(Object)` | `flint.aop.framework.adapter.AdvisorAdapterRegistry.wrap` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.aop.framework.adapter.AfterReturningAdviceInterceptor#invoke(MethodInvocation)` | `flint.aop.framework.adapter.AfterReturningAdviceInterceptor.invoke` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.aop.framework.adapter.MethodBeforeAdviceInterceptor#invoke(MethodInvocation)` | `flint.aop.framework.adapter.MethodBeforeAdviceInterceptor.invoke` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.aop.framework.adapter.UnknownAdviceTypeException#<init>(Object)` | `flint.aop.framework.adapter.UnknownAdviceTypeException` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.aop.support
 
@@ -8963,7 +8972,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.aspectj.autoproxy | 7 | 0 |
 | org.springframework.aop.config | 70 | 0 |
 | org.springframework.aop.framework | 196 | 0 |
-| org.springframework.aop.framework.adapter | 32 | 0 |
+| org.springframework.aop.framework.adapter | 16 | 0 |
 | org.springframework.aop.framework.autoproxy | 83 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
 | org.springframework.aop.interceptor | 97 | 0 |
