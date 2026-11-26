@@ -21,6 +21,24 @@ It is `$FLINT_COORD_DIR`, or by default the `coordination` folder beside the mai
 
 Always use `tools/agentctl.py`. Never edit these files by hand: every write takes a file lock, so concurrent agents never lose or interleave entries.
 
+## Queued slots (apps-landing)
+
+A slot that many agents take in turn, such as `apps-landing`, is registered with `--queued` and has a first-in, first-out queue:
+
+```bash
+python3 tools/agentctl.py queue apps-landing join --agent <name>    # take a place
+python3 tools/agentctl.py queue apps-landing show                   # holder, and the queue in order
+python3 tools/agentctl.py claim apps-landing --agent <name> --harness <h> --ttl-min 40
+python3 tools/agentctl.py release apps-landing --agent <name>       # right after you push
+python3 tools/agentctl.py queue apps-landing leave --agent <name>   # if you no longer need it
+```
+
+**Who may claim:** only the agent at the head of the queue, or anyone while the slot is free and the queue empty. Claiming takes you out of the queue.
+
+**Skips:** a head that hasn't claimed within 10 minutes of the slot freeing (a release or a lapsed lease) is skipped. The skip is logged in `events.jsonl`, and the next agent becomes head. Join again if you were skipped.
+
+`board` lists each queue under the roles. `--force REASON` still overrides, and it's logged; use it only when the holder or head has stopped.
+
 ## The protocol: every agent, every turn
 
 ```bash

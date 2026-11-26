@@ -6,8 +6,9 @@ can move between harnesses without losing context. Nothing here depends on a har
 
     agentctl.py roles                                   every role, its holder, heartbeat, unread mail and state age
     agentctl.py board                                   the same, plus each role's "Next" line
-    agentctl.py register ROLE --area TEXT [--worktree PATH] [--claude-session ID]
+    agentctl.py register ROLE --area TEXT [--worktree PATH] [--claude-session ID] [--queued]
     agentctl.py claim ROLE --agent NAME --harness NAME [--force REASON] [--ttl-min N]
+    agentctl.py queue ROLE join|leave|show [--agent NAME]   a FIFO queue for a slot such as apps-landing
     agentctl.py heartbeat ROLE --agent NAME
     agentctl.py release ROLE --agent NAME [--note TEXT]
     agentctl.py send --from ROLE --to ROLE[,ROLE...|all] [MESSAGE | -]
@@ -23,6 +24,7 @@ The shared directory is $FLINT_COORD_DIR, or the `coordination` folder beside th
 
     roles.json            role -> area, worktree, Claude session id (informational)
     leases.json           role -> the agent that holds it now, its harness and last heartbeat
+    queues.json           role -> its FIFO queue of agents waiting to claim it, and when the slot last freed
     inbox/<role>.md       append-only mail, one "- <UTC time> <from> -> <to>: text" entry per message
     cursors/<role>.json   how far the role has read its inbox
     state/<role>.md       the role's hand-off state, rewritten at the end of every turn
@@ -31,6 +33,11 @@ The shared directory is $FLINT_COORD_DIR, or the `coordination` folder beside th
     logs/<role>/          output of agents started by `launch`
 
 Every write takes an exclusive flock on .agentctl.lock, so concurrent agents never interleave or lose entries.
+
+A queued role (registered with --queued, such as apps-landing) or any role with a non-empty queue can be claimed only
+by the agent at the head of its queue, or by anyone while the slot is free and the queue empty. A head that has not
+claimed within QUEUE_HEAD_MIN minutes of the slot freeing (a release or a lapsed lease) is skipped and the next agent
+becomes head. --force still overrides, and says so in events.jsonl.
 """
 from __future__ import annotations
 
@@ -47,6 +54,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 DEFAULT_TTL_MIN = 45
+QUEUE_HEAD_MIN = 10
 HARNESSES = ('claude', 'codex', 'human', 'other')
 PLACEHOLDER_BODIES = frozenset({'noop', 'no-op', 'test', 'ping', 'x', '.'})
 
@@ -124,11 +132,14 @@ class Store:
             out.write(json.dumps(record, sort_keys=True) + '\n')
 
     # Roles and leases.
-    def register(self, role: str, area: str, worktree: str | None, claude_session: str | None) -> None:
+    def register(self, role: str, area: str, worktree: str | None, claude_session: str | None,
+                 queued: bool = False) -> None:
         with self.locked():
             roles = self.roles()
             entry = roles.get(role, {})
             entry['area'] = area
+            if queued:
+                entry['queued'] = True
             if worktree is not None:
                 entry['worktree'] = worktree
             if claude_session is not None:
@@ -142,6 +153,79 @@ class Store:
         now = time.time() if now is None else now
         return now - parse_utc(lease['heartbeat']) < lease.get('ttl_min', DEFAULT_TTL_MIN) * 60
 
+    # Queues.
+    def queues(self) -> dict:
+        return self._read_json('queues.json', {})
+
+    def queued(self, role: str, queues: dict | None = None) -> bool:
+        queues = self.queues() if queues is None else queues
+        return bool(self.roles().get(role, {}).get('queued')) or bool(queues.get(role, {}).get('members'))
+
+    def free_since(self, role: str, leases: dict, queue: dict) -> float | None:
+        """When the slot became free, or None while a live lease holds it."""
+        held = leases.get(role)
+        if held and self.lease_live(held):
+            return None
+        times = [parse_utc(queue['freed'])] if queue.get('freed') else []
+        if held:  # a lapsed lease frees the slot when it lapses
+            times.append(parse_utc(held['heartbeat']) + held.get('ttl_min', DEFAULT_TTL_MIN) * 60)
+        return max(times) if times else 0.0
+
+    def queue_view(self, role: str, now: float | None = None, queues: dict | None = None,
+                   leases: dict | None = None) -> tuple[dict, list[str], float | None]:
+        """The role's queue with timed-out heads skipped: (queue, skipped agents, the head's claim deadline)."""
+        now = time.time() if now is None else now
+        queue = dict((self.queues() if queues is None else queues).get(role, {}))
+        members = list(queue.get('members', []))
+        leases = self.leases() if leases is None else leases
+        freed = self.free_since(role, leases, queue)
+        skipped = []
+        deadline = None
+        if members and freed is not None:
+            start = max(freed, parse_utc(queue['head_since']) if queue.get('head_since') else 0.0)
+            while members and now >= start + QUEUE_HEAD_MIN * 60:
+                skipped.append(members.pop(0)['agent'])
+                start += QUEUE_HEAD_MIN * 60
+                queue['head_since'] = _dt.datetime.fromtimestamp(start, _dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+            deadline = start + QUEUE_HEAD_MIN * 60 if members else None
+        queue['members'] = members
+        return queue, skipped, deadline
+
+    def _settle_queue(self, role: str, queues: dict, leases: dict) -> dict:
+        """Apply skips to the stored queue (call under the lock); returns the role's queue."""
+        queue, skipped, _ = self.queue_view(role, queues=queues, leases=leases)
+        for agent in skipped:
+            self.event('queue-skip', role=role, agent=agent, minutes=QUEUE_HEAD_MIN)
+        queues[role] = queue
+        return queue
+
+    def queue(self, role: str, action: str, agent: str | None) -> dict:
+        with self.locked():
+            if not self.known(role):
+                raise SystemExit(f'agentctl: unknown role {role!r}; register it first (agentctl.py register)')
+            queues, leases = self.queues(), self.leases()
+            queue = self._settle_queue(role, queues, leases)
+            members = queue['members']
+            names = [m['agent'] for m in members]
+            if action == 'join':
+                if agent in names:
+                    raise SystemExit(f'agentctl: {agent} is already in the {role} queue, position {names.index(agent) + 1}')
+                members.append({'agent': agent, 'joined': utc_now()})
+                if len(members) == 1:
+                    queue['head_since'] = utc_now()
+                self.event('queue-join', role=role, agent=agent, position=len(members))
+            elif action == 'leave':
+                if agent not in names:
+                    raise SystemExit(f'agentctl: {agent} is not in the {role} queue')
+                if names.index(agent) == 0:
+                    queue['head_since'] = utc_now()
+                members.pop(names.index(agent))
+                self.event('queue-leave', role=role, agent=agent)
+            if not members:
+                queue.pop('head_since', None)
+            self._write_json('queues.json', queues)
+            return queue
+
     def claim(self, role: str, agent: str, harness: str, force: str | None, ttl_min: int) -> dict:
         with self.locked():
             if not self.known(role):
@@ -152,6 +236,22 @@ class Store:
                 raise SystemExit(f"agentctl: {role} is held by {held['agent']} ({held['harness']}), last heartbeat "
                                  f"{held['heartbeat']}. Wait for it to release or lapse, or pass --force REASON after "
                                  f"confirming that agent has stopped.")
+            queues = self.queues()
+            if self.queued(role, queues):
+                queue = self._settle_queue(role, queues, leases)
+                names = [m['agent'] for m in queue['members']]
+                renewing = held and held['agent'] == agent and self.lease_live(held)
+                if names and names[0] != agent and not force and not renewing:
+                    where = (f'you are number {names.index(agent) + 1}' if agent in names else
+                             f'join it: agentctl.py queue {role} join --agent {agent}')
+                    self._write_json('queues.json', queues)
+                    raise SystemExit(f'agentctl: {role} is queued and {names[0]} is next ({len(names)} waiting); {where}')
+                if names and names[0] == agent:
+                    queue['members'].pop(0)
+                    queue['head_since'] = utc_now()
+                    if not queue['members']:
+                        queue.pop('head_since', None)
+                self._write_json('queues.json', queues)
             now = utc_now()
             lease = {'agent': agent, 'harness': harness, 'since': now, 'heartbeat': now, 'ttl_min': ttl_min}
             leases[role] = lease
@@ -177,6 +277,10 @@ class Store:
                 raise SystemExit(f'agentctl: {agent} does not hold {role}')
             del leases[role]
             self._write_json('leases.json', leases)
+            queues = self.queues()
+            if self.queued(role, queues):
+                queues.setdefault(role, {})['freed'] = utc_now()
+                self._write_json('queues.json', queues)
             self.event('release', role=role, agent=agent, **({'note': note} if note else {}))
 
     # Mail.
@@ -290,7 +394,29 @@ def table(store: Store, with_next: bool) -> str:
             row += (next_line(state.read_text(encoding='utf-8'))[:110] if state.exists() else '',)
         rows.append(row)
     widths = [max(len(r[i]) for r in rows) for i in range(len(rows[0]))]
-    return '\n'.join('  '.join(cell.ljust(widths[i]) for i, cell in enumerate(r)).rstrip() for r in rows)
+    text = '\n'.join('  '.join(cell.ljust(widths[i]) for i, cell in enumerate(r)).rstrip() for r in rows)
+    if with_next:
+        queued = [name for name in names if store.queued(name)]
+        if queued:
+            text += '\n\nqueues\n' + '\n'.join(queue_line(store, name) for name in queued)
+    return text
+
+
+def queue_line(store: Store, role: str, now: float | None = None) -> str:
+    """One line: the slot's holder or that it is free, then the queue in order with the head's claim deadline."""
+    now = time.time() if now is None else now
+    leases = store.leases()
+    queue, skipped, deadline = store.queue_view(role, now=now, leases=leases)
+    held = leases.get(role)
+    slot = f"held by {held['agent']}" if held and store.lease_live(held, now) else 'free'
+    members = [m['agent'] for m in queue['members']]
+    if not members:
+        waiting = 'queue empty'
+    else:
+        head = members[0] + (f" (claim by {_dt.datetime.fromtimestamp(deadline, _dt.timezone.utc).strftime('%H:%MZ')})"
+                             if deadline else ' (next)')
+        waiting = 'queue: ' + ', '.join(f'{i + 1}. {name}' for i, name in enumerate([head] + members[1:]))
+    return f'{role}: {slot}; {waiting}' + (f"; would skip {', '.join(skipped)}" if skipped else '')
 
 
 def worktree_for(store: Store, role: str) -> Path:
@@ -380,9 +506,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser('board')
     p = sub.add_parser('register'); p.add_argument('role'); p.add_argument('--area', required=True)
     p.add_argument('--worktree'); p.add_argument('--claude-session')
+    p.add_argument('--queued', action='store_true', help='claims follow the role\'s FIFO queue (agentctl queue)')
     p = sub.add_parser('claim'); p.add_argument('role'); p.add_argument('--agent', required=True)
     p.add_argument('--harness', required=True, choices=HARNESSES); p.add_argument('--force', metavar='REASON')
     p.add_argument('--ttl-min', type=int, default=DEFAULT_TTL_MIN)
+    p = sub.add_parser('queue'); p.add_argument('role'); p.add_argument('action', choices=('join', 'leave', 'show'))
+    p.add_argument('--agent')
     p = sub.add_parser('heartbeat'); p.add_argument('role'); p.add_argument('--agent', required=True)
     p = sub.add_parser('release'); p.add_argument('role'); p.add_argument('--agent', required=True)
     p.add_argument('--note')
@@ -410,7 +539,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.command in ('roles', 'board'):
         print(table(store, with_next=args.command == 'board'))
     elif args.command == 'register':
-        store.register(check_role(args.role), args.area, args.worktree, args.claude_session)
+        store.register(check_role(args.role), args.area, args.worktree, args.claude_session, args.queued)
+    elif args.command == 'queue':
+        if args.action != 'show':
+            if not args.agent:
+                parser.error(f'queue {args.action} needs --agent')
+            store.queue(check_role(args.role), args.action, args.agent)
+        print(queue_line(store, check_role(args.role)))
     elif args.command == 'claim':
         lease = store.claim(check_role(args.role), args.agent, args.harness, args.force, args.ttl_min)
         print(f"{args.role} held by {lease['agent']} ({lease['harness']}) since {lease['since']}")

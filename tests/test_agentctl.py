@@ -121,5 +121,123 @@ class AgentctlTests(unittest.TestCase):
         self.assertIn('resume --last', output)
 
 
+
+class QueueTests(unittest.TestCase):
+    """The FIFO queue for a slot such as apps-landing (coordinator, 2026-11-26)."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name) / 'coordination'
+        os.environ['FLINT_COORD_DIR'] = str(self.root)
+        self.addCleanup(os.environ.pop, 'FLINT_COORD_DIR', None)
+        self.run_cli('register', 'apps-landing', '--area', 'landing mutex', '--queued')
+        self.run_cli('register', 'web-http', '--area', 'servlet adapter')
+
+    run_cli = AgentctlTests.run_cli
+
+    def claim(self, agent):
+        return self.run_cli('claim', 'apps-landing', '--agent', agent, '--harness', 'codex', '--ttl-min', '40')
+
+    def refused(self, agent):
+        with self.assertRaises(SystemExit) as caught:
+            self.claim(agent)
+        return str(caught.exception)
+
+    def age(self, **minutes):
+        """Move the stored queue times back, as if that many minutes had passed."""
+        import time as clock
+        queues = json.loads((self.root / 'queues.json').read_text())
+        for key, value in minutes.items():
+            queues['apps-landing'][key] = agentctl._dt.datetime.fromtimestamp(
+                clock.time() - value * 60, agentctl._dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        (self.root / 'queues.json').write_text(json.dumps(queues))
+
+    def test_a_free_slot_with_an_empty_queue_is_anyone_s(self):
+        self.claim('sol-data')
+        self.assertEqual(json.loads((self.root / 'leases.json').read_text())['apps-landing']['agent'], 'sol-data')
+
+    def test_only_the_head_may_claim_and_claiming_leaves_the_queue(self):
+        for agent in ('sol-data', 'sol-security', 'sol-context'):
+            self.run_cli('queue', 'apps-landing', 'join', '--agent', agent)
+        self.assertIn('sol-data is next (3 waiting); you are number 2', self.refused('sol-security'))
+        self.assertIn('join it: agentctl.py queue apps-landing join --agent sol-ai', self.refused('sol-ai'))
+        self.claim('sol-data')
+        shown = self.run_cli('queue', 'apps-landing', 'show')
+        self.assertIn('apps-landing: held by sol-data; queue: 1. sol-security (next), 2. sol-context', shown)
+        self.assertIn('held by sol-data', self.refused('sol-security'))
+        self.run_cli('release', 'apps-landing', '--agent', 'sol-data')
+        self.assertIn('sol-security is next', self.refused('sol-context'))
+        self.claim('sol-security')
+
+    def test_a_head_that_does_not_claim_within_ten_minutes_of_the_slot_freeing_is_skipped(self):
+        self.claim('sol-data')
+        for agent in ('sol-security', 'sol-context', 'sol-jpa'):
+            self.run_cli('queue', 'apps-landing', 'join', '--agent', agent)
+        self.run_cli('release', 'apps-landing', '--agent', 'sol-data')
+        self.age(freed=11, head_since=60)  # freed 11 minutes ago; the head has waited longer, since joining
+        self.assertIn('sol-context is next', self.refused('sol-jpa'))
+        self.claim('sol-context')
+        events = [json.loads(line) for line in (self.root / 'events.jsonl').read_text().splitlines()]
+        self.assertIn({'role': 'apps-landing', 'agent': 'sol-security', 'event': 'queue-skip'},
+                      [{k: e[k] for k in ('role', 'agent', 'event')} for e in events if e['event'] == 'queue-skip'])
+
+    def test_skips_cascade_ten_minutes_per_head(self):
+        for agent in ('a', 'b', 'c'):
+            self.run_cli('queue', 'apps-landing', 'join', '--agent', agent)
+        self.age(freed=25, head_since=25)
+        self.assertIn('c is next (1 waiting)', self.refused('d'))
+
+    def test_the_clock_starts_when_the_slot_frees_not_when_the_head_joined(self):
+        self.claim('sol-data')
+        self.run_cli('queue', 'apps-landing', 'join', '--agent', 'sol-security')
+        self.run_cli('queue', 'apps-landing', 'join', '--agent', 'sol-context')
+        self.age(head_since=90)  # waited 90 minutes behind a held slot
+        self.run_cli('release', 'apps-landing', '--agent', 'sol-data')
+        self.assertIn('sol-security is next', self.refused('sol-context'))
+
+    def test_a_lapsed_lease_frees_the_slot_for_the_head(self):
+        self.run_cli('claim', 'apps-landing', '--agent', 'sol-data', '--harness', 'codex', '--ttl-min', '0')
+        self.run_cli('queue', 'apps-landing', 'join', '--agent', 'sol-security')
+        self.claim('sol-security')
+
+    def test_leaving_and_joining_twice(self):
+        self.run_cli('queue', 'apps-landing', 'join', '--agent', 'a')
+        with self.assertRaises(SystemExit):
+            self.run_cli('queue', 'apps-landing', 'join', '--agent', 'a')
+        self.run_cli('queue', 'apps-landing', 'join', '--agent', 'b')
+        self.run_cli('queue', 'apps-landing', 'leave', '--agent', 'a')
+        self.claim('b')
+        with self.assertRaises(SystemExit):
+            self.run_cli('queue', 'apps-landing', 'leave', '--agent', 'a')
+
+    def test_force_overrides_the_queue_and_is_logged(self):
+        self.run_cli('queue', 'apps-landing', 'join', '--agent', 'a')
+        self.run_cli('claim', 'apps-landing', '--agent', 'b', '--harness', 'codex', '--force', 'a is offline')
+        self.assertEqual(json.loads((self.root / 'leases.json').read_text())['apps-landing']['agent'], 'b')
+
+    def test_an_unqueued_role_claims_as_before(self):
+        self.run_cli('claim', 'web-http', '--agent', 'x', '--harness', 'codex')
+        self.assertFalse((self.root / 'queues.json').exists())
+
+    def test_the_board_shows_each_queue(self):
+        self.claim('sol-data')
+        self.run_cli('queue', 'apps-landing', 'join', '--agent', 'sol-security')
+        board = self.run_cli('board')
+        self.assertIn('queues\napps-landing: held by sol-data; queue: 1. sol-security (next)', board)
+        self.run_cli('release', 'apps-landing', '--agent', 'sol-data')
+        self.assertRegex(self.run_cli('board'), r'apps-landing: free; queue: 1\. sol-security \(claim by \d\d:\d\dZ\)')
+
+    def test_concurrent_joins_keep_one_entry_each_in_order_of_arrival(self):
+        store = agentctl.Store(self.root)
+        threads = [threading.Thread(target=store.queue, args=('apps-landing', 'join', f'lane{i}')) for i in range(12)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        members = [m['agent'] for m in json.loads((self.root / 'queues.json').read_text())['apps-landing']['members']]
+        self.assertEqual(sorted(members), sorted(f'lane{i}' for i in range(12)))
+
+
 if __name__ == '__main__':
     unittest.main()
