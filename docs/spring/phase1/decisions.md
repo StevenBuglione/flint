@@ -1058,3 +1058,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Why:** context was 12% over its 2026-11-23 cap before any Phase 2 code, so every sol-context slice failed the budgets step.
   - **The cap only goes down from here.** framework-core looks for recoverable growth, and lowers the cap to match what it recovers.
   - **The commit that raises the cap** carries `Budget-Raise-Approved: <this entry's commit>`.
+- 2026-11-26 01:00Z, owner: **standing approval for Phase 2 lanes' approval requests.** In the owner's words: "any time sol looks for an approval review it and if it good approve it."
+  - **Who decides:** the coordinator reviews each request that would otherwise wait for the owner (ADRs, budget raises with evidence, rulebook deviations, design and policy questions), and approves it on its merits.
+  - **Recording:** each approval is recorded here as "coordinator, under the owner's standing approval".
+  - **Still asked of the owner first:**
+    - creating or deleting repositories, and other outward-facing or irreversible actions;
+    - deleting another session's work;
+    - D language or shared-toolchain changes;
+    - changes to a certified workload, the TLS profile or a Go comparator.

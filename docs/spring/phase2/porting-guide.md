@@ -93,7 +93,7 @@ Stop, and ask the coordinator, before:
 - creating or deleting repositories;
 - any outward-facing action.
 
-The coordinator takes these to the owner.
+The coordinator takes these to the owner. Since 2026-11-26 the coordinator approves most of them itself, on review, under the owner's standing approval (decisions.md); repositories, outward-facing actions, deleting others' work, language or toolchain changes, and certified-workload changes still go to the owner.
 
 ## 6. Where to read more
 
