@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-builds-gs-relational",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "claim",
   "priority": 6,
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z); split per application by the coordinator, 2026-11-23 16:45Z",
@@ -17732,5 +17732,6 @@
       "commit": "be86e77f7651",
       "reason": "the harness froze the run's own Go compile for ~25 min (freezer race, 7ad165cc); VOID.json"
     }
-  ]
+  ],
+  "blocked_on": "cancelled at 23:50Z, owner decision relayed by the coordinator (23:48Z): Phase 1 closes now; certification stops spending venus. B7 ends with error-404-p99, error-validation-p99, phase1-http-petclinic and phase1-http-gs-rest; the builds close-out cites B5 and B6. Certification resumes only on request or in natural quiet (overnight)."
 }

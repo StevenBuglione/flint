@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "phase1-http-gs-rest",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "claim",
   "priority": 4,
   "claim_when": "B7 order 4 (the deciding 404 first)",
@@ -11735,5 +11735,6 @@
         }
       }
     }
-  ]
+  ],
+  "blocked_on": "cancelled at 00:17Z, owner decision relayed by the coordinator (23:48Z): Phase 1 closes now and certification stops spending venus. The B7 attempt (23:35-00:15Z) was busy, not evidence: an unheld python3 from worktree eloquent-yalow-66198e at 23:50:25Z (1 CPU tick). Per the decision it is not retried; the close-out cites gs-rest's B5 and B6 certifications."
 }

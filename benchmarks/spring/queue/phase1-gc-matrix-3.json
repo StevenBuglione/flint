@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "requested_by": "ADR-030 section 8, Phase 1 exit (coordinator's plan, 2026-11-23 15:20Z)",
   "builds": {
@@ -56,5 +56,6 @@
       "classification": "abandoned, superseded by the O3 fix (dd774a24)",
       "why": "B4 trees were ThinLTO-codegenned at O0 (coordinator 11:55Z on 2026-11-25); stopped at 11:50:17Z through the natural-window give-way rule (a hold-wrapped command), not a failure"
     }
-  ]
+  ],
+  "blocked_on": "cancelled at 23:50Z, owner decision relayed by the coordinator (23:48Z): Phase 1 closes now; certification stops spending venus. B7 ends with error-404-p99, error-validation-p99, phase1-http-petclinic and phase1-http-gs-rest; the builds close-out cites B5 and B6. Certification resumes only on request or in natural quiet (overnight)."
 }

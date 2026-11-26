@@ -1,7 +1,7 @@
 {
   "schema": "flint.measure-queue/1",
   "created": "2026-11-23",
-  "status": "pending",
+  "status": "blocked",
   "window": "natural",
   "requested_by": "the coordinator, via data-access (2026-11-23 17:07Z): the same three setting groups as petclinic-rest's",
   "builds": {
@@ -45,5 +45,6 @@
   },
   "tree_note": "B3: one private tree with a copy of shared v4.2 (4ac873d8: every compile client-served or client-local), mold, strict served compiles (0 client-local except c-source and forced), strict scratch; runtime parts interleaved with Go (the Go records' fingerprints predate the database protocol, so B3's tools refuse them as stale)",
   "pinned": "B7, 43db0cae5fbc57f5f6035ab97f3d6d6caf3ac5f6: after the seven gated parts; natural quiet only",
-  "priority": 8.5
+  "priority": 8.5,
+  "blocked_on": "cancelled at 23:50Z, owner decision relayed by the coordinator (23:48Z): Phase 1 closes now; certification stops spending venus. B7 ends with error-404-p99, error-validation-p99, phase1-http-petclinic and phase1-http-gs-rest; the builds close-out cites B5 and B6. Certification resumes only on request or in natural quiet (overnight)."
 }

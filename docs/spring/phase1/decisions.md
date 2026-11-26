@@ -1027,3 +1027,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - **`flint budget` no longer gates the start.** Phase 2 starts behind the definition of done, the allocation gates (now with the forced static trim) and the playbook.
     - m7 lands `flint budget` as soon as it is seeded; from then on every lane must pass it.
   - **Phase 2 runs on gpt-6.2-sol** in three parallel lanes: data, security, context and client ([../phase2/launch-plan.md](../phase2/launch-plan.md)). The existing Claude sessions review shared-engine changes.
+- 2026-11-26, proof-harness: **B7 closed partial; Phase 1 closes on performance** (owner decision relayed by the coordinator, 2026-11-25 23:48Z).
+    - **Certified at B7:** error-404-p99, error-validation-p99 and phase1-http-petclinic, all passing.
+    - **Not evidence:** phase1-http-gs-rest (23:35–00:15Z) was busy, from an unheld `python3` from worktree eloquent-yalow-66198e at 23:50:25Z (1 CPU tick). The coordinator's self-reported `agentctl roles` at 23:46Z does not appear in the samples. Per the decision it is not retried.
+    - **Cancelled and blocked in the queue:** phase1-builds ×3 and the six GC-matrix parts.
+    - **Close-out:** [closeout.md](closeout.md) (coordinator) cites B6 for builds and gs-rest's runtime and B7 for the rest; every gated metric passes at a certified baseline.
+    - **From now on:** venus claims no windows. MEASURING is released, and certification runs only on request or in natural quiet.
