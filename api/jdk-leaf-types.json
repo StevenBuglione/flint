@@ -98,6 +98,7 @@
   "java.time.zone.ZoneRules": "flint.java.time.zone.zonerules",
   "java.util.Base64": "flint.java.util.base64",
   "java.util.BitSet": "flint.java.util.bitset",
+  "java.util.DuplicateFormatFlagsException": "flint.java.util.formatter",
   "java.util.EnumSet": "flint.java.util.enumset",
   "java.util.HexFormat": "flint.java.util.hexformat",
   "java.util.IllegalFormatConversionException": "flint.java.util.formatter",
