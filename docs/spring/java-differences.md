@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,220 | 394 | 1,871 | 14,936 |
+| framework | openjdk@21.0.13 | 1,220 | 396 | 1,871 | 14,934 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 88 | 11,744 |
@@ -2462,9 +2462,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `java.time.format.DateTimeFormatter` | `flint.java.time.format.DateTimeFormatter` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable D value using concrete Flint temporal values and the existing parsed Fields representation. |
+| `java.time.format.DateTimeFormatter#ISO_DATE` | `flint.java.time.format.DateTimeFormatter.ISO_DATE` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
 | `java.time.format.DateTimeFormatter#ISO_OFFSET_DATE` | `flint.java.time.format.DateTimeFormatter.ISO_OFFSET_DATE` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
 | `java.time.format.DateTimeFormatter#ISO_OFFSET_TIME` | `flint.java.time.format.DateTimeFormatter.ISO_OFFSET_TIME` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
 | `java.time.format.DateTimeFormatter#ISO_ORDINAL_DATE` | `flint.java.time.format.DateTimeFormatter.ISO_ORDINAL_DATE` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
+| `java.time.format.DateTimeFormatter#ISO_TIME` | `flint.java.time.format.DateTimeFormatter.ISO_TIME` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
 | `java.time.format.DateTimeParseException` | `flint.java.time.format.DateTimeParseException` | [R26](api-mapping.md#r26-null-arrays) | A null parsed text counts as empty (R26). Java throws NullPointerException. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
@@ -10728,7 +10730,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
-| java.time.format | 126 | 0 |
+| java.time.format | 124 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,900 | 0 |
@@ -11938,9 +11940,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.YearMonth#with(TemporalAdjuster)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.YearMonth#with(TemporalField,long)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.ZoneId#normalized()` | 2 | The D return type is ZoneOffset. Java normalizes fixed-rule regions to an offset and preserves the original ZoneId for regions with variable rules. |
-| framework | `java.time.format.DateTimeFormatter#ISO_DATE` | 2 | The existing optional offset accepts hour-only values such as +01. Java requires a colon and minutes and rejects the incomplete offset at its beginning. |
-| framework | `java.time.format.DateTimeFormatter#ISO_DATE_TIME` | 2 | The existing optional offset accepts hour-only values such as +01. Java requires a colon and minutes and rejects the incomplete offset at its beginning. |
-| framework | `java.time.format.DateTimeFormatter#ISO_TIME` | 2 | The existing optional offset accepts hour-only values such as +01. Java requires a colon and minutes and rejects the incomplete offset at its beginning. |
+| framework | `java.time.format.DateTimeFormatter#ISO_DATE_TIME` | 2 | The optional numeric offset now matches Java. Regional IDs such as Europe/Paris still require the region zone provider. |
 | framework | `java.time.format.DateTimeFormatter#withZone(ZoneId)` | 2 | Formatting instant-backed values applies the override. The Java contract also clears the override with null and makes it available during parsing and local-only formatting. |
 | framework | `java.time.temporal.ChronoField#adjustInto(R,long)` | 2 | Requires the TemporalAccessor family and compatible temporal value types. |
 | framework | `java.time.temporal.ChronoField#checkValidIntValue(long)` | 2 | Requires field-aware ValueRange checks. |

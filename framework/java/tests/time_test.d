@@ -550,3 +550,45 @@ unittest
     const local = LocalDateTime.parse("2024-03-01T01:30:10.125");
     assert(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(zone).format(local) == "2024-03-01T01:30:10.125");
 }
+
+@("ISO date and time optional offsets require both minute digits")
+unittest
+{
+    import std.exception : collectException;
+
+    struct OptionalOffsetCase
+    {
+        DateTimeFormatter formatter;
+        string prefix;
+    }
+
+    const cases = [
+        OptionalOffsetCase(DateTimeFormatter.ISO_DATE, "2024-03-31"),
+        OptionalOffsetCase(DateTimeFormatter.ISO_TIME, "01:02:03"),
+        OptionalOffsetCase(DateTimeFormatter.ISO_DATE_TIME, "2024-03-31T01:02:03"),
+    ];
+    foreach (example; cases)
+    {
+        foreach (suffix; ["+01", "+0100", "+010030", "+00", "+01:", "+01:0"])
+        {
+            const text = example.prefix ~ suffix;
+            const error = collectException!DateTimeParseException(example.formatter.parse(text));
+            assert(error !is null && error.getErrorIndex() == example.prefix.length, text);
+        }
+
+        assert(!example.formatter.parse(example.prefix).hasOffset());
+        const zero = example.prefix ~ "z";
+        assert(example.formatter.parse(zero).toOffset(zero).getTotalSeconds() == 0);
+        const offset = example.prefix ~ "+01:00:30";
+        assert(example.formatter.parse(offset).toOffset(offset).getTotalSeconds() == 3_630);
+    }
+
+    const zoned = "2024-03-31T01:02:03+01:00[UTC]";
+    assert(DateTimeFormatter.ISO_DATE_TIME.parse(zoned).zoneId() == "UTC");
+
+    const offsetDateTime = "2024-03-31T01:02:03+01";
+    assert(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(offsetDateTime).toOffset(offsetDateTime)
+            .getTotalSeconds() == 3_600);
+    const basicDate = "20240331+0100";
+    assert(DateTimeFormatter.BASIC_ISO_DATE.parse(basicDate).toOffset(basicDate).getTotalSeconds() == 3_600);
+}
