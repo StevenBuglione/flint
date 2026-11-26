@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
 | boot | spring-boot@v4.2.0 | 44 | 97 | 2,133 | 13,329 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,615 | 1,455 | 4,870 | 29,894 |
+| framework | spring-framework@v7.1.0 | 3,612 | 1,461 | 4,870 | 29,891 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2485,6 +2485,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.beans.factory.BeanDefinitionStoreException#<init>(String,String)` | `flint.beans.factory.BeanDefinitionStoreException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.beans.factory.BeanDefinitionStoreException#<init>(String,String,String)` | `flint.beans.factory.BeanDefinitionStoreException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.beans.factory.BeanDefinitionStoreException#<init>(String,String,String,Throwable)` | `flint.beans.factory.BeanDefinitionStoreException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An existing string overload forwards to the Nullable constructor. |
+| `org.springframework.beans.factory.BeanDefinitionStoreException#<init>(String,String,Throwable)` | `flint.beans.factory.BeanDefinitionStoreException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.beans.factory.BeanDefinitionStoreException#getResourceDescription()` | `flint.beans.factory.BeanDefinitionStoreException.getResourceDescription` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.beans.factory.BeanFactory#getBean(Class)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanFactory#getBean(Class,Object...)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanFactory#getBean(String,Class)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -2515,6 +2520,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.support.BeanDefinitionDefaults#getLazyInit()` | `flint.beans.factory.support.BeanDefinitionDefaults.getLazyInit` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.beans.factory.support.BeanDefinitionDefaults#setDestroyMethodName(String)` | `flint.beans.factory.support.BeanDefinitionDefaults.setDestroyMethodName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.beans.factory.support.BeanDefinitionDefaults#setInitMethodName(String)` | `flint.beans.factory.support.BeanDefinitionDefaults.setInitMethodName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.beans.factory.support.BeanDefinitionOverrideException#getResourceDescription()` | `flint.beans.factory.support.BeanDefinitionOverrideException.getResourceDescription` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Uses the inherited Nullable return type and always returns a present string. |
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#determineHighestPriorityCandidate(Map,Class)` | `flint.beans.factory.support.DefaultListableBeanFactory.determineHighestPriorityCandidate` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#determinePrimaryCandidate(Map,Class)` | `flint.beans.factory.support.DefaultListableBeanFactory.determinePrimaryCandidate` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#findAnnotationOnBean(String,Class)` | `flint.beans.factory.support.DefaultListableBeanFactory.findAnnotationOnBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -9834,13 +9840,13 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aot | 4 | 0 |
 | org.springframework.aot.nativex | 8 | 0 |
 | org.springframework.beans | 334 | 0 |
-| org.springframework.beans.factory | 126 | 0 |
+| org.springframework.beans.factory | 125 | 0 |
 | org.springframework.beans.factory.annotation | 105 | 0 |
 | org.springframework.beans.factory.aot | 123 | 0 |
 | org.springframework.beans.factory.config | 486 | 0 |
 | org.springframework.beans.factory.parsing | 133 | 0 |
 | org.springframework.beans.factory.serviceloader | 19 | 0 |
-| org.springframework.beans.factory.support | 735 | 0 |
+| org.springframework.beans.factory.support | 733 | 0 |
 | org.springframework.beans.factory.wiring | 26 | 0 |
 | org.springframework.beans.factory.xml | 0 | 320 |
 | org.springframework.beans.propertyeditors | 155 | 0 |

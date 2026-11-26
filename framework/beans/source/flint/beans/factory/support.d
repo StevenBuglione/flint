@@ -62,6 +62,7 @@ import flint.engine.aot.name : canonicalTypeName, typeNameOf;
 import flint.java.lang : IllegalStateException, UnsupportedOperationException, valueOf;
 import flint.java.util : stableSort;
 import flint.util : Assert, StringValueResolver;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -90,15 +91,36 @@ class BeanDefinitionOverrideException : BeanDefinitionStoreException
     /// Spring's message for `beanName`.
     this(string beanName, BeanDefinition beanDefinition, BeanDefinition existingDefinition)
     {
-        super(beanDefinition.getResourceDescription(), beanName, "Cannot register bean definition [" ~ describe(
-                beanDefinition) ~ "] for bean '" ~ beanName ~ "' since there is already [" ~ describe(
+        const name = beanName is null ? "null" : beanName;
+        this(beanName, beanDefinition, existingDefinition, "Cannot register bean definition [" ~ describe(
+                beanDefinition) ~ "] for bean '" ~ name ~ "' since there is already [" ~ describe(
                 existingDefinition) ~ "] bound.");
+    }
+
+    /// A rejected override with the supplied detail message.
+    this(string beanName, BeanDefinition beanDefinition, BeanDefinition existingDefinition, string msg)
+    {
+        super(beanDefinition.getResourceDescription(), beanName, msg);
         this.beanDefinition = beanDefinition;
         this.existingDefinition = existingDefinition;
     }
 
     private BeanDefinition beanDefinition;
     private BeanDefinition existingDefinition;
+
+    /// The incoming resource description, with absent descriptions rendered as `"null"`.
+    override Nullable!string getResourceDescription() const pure nothrow @nogc
+    {
+        auto description = super.getResourceDescription();
+        return description.isNull ? Nullable!string("null") : description;
+    }
+
+    /// The bean name, with absent names rendered as `"null"`.
+    override string getBeanName() const pure nothrow @nogc
+    {
+        auto name = super.getBeanName();
+        return name is null ? "null" : name;
+    }
 
     /// The newly registered definition.
     BeanDefinition getBeanDefinition() pure nothrow @nogc

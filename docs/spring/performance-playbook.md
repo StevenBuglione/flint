@@ -266,6 +266,8 @@ ResourceRegion validates its coordinates without opening a stream. Its independe
 
 InputStreamResource reuses Java's stream and Object operations. On the same Core probe, 0016ed2e to a8182248 kept 8,708 loadable bytes and moved DMD templates from 6,389 to 6,407.
 
+BeanDefinitionStoreException retains the resource description as an R5 nullable value. The Beans probe on venus against `ad0405d8f` moved from 257,478 to 258,430 loadable bytes and from 1,632 to 1,688 DMD template instances against the 3,000 cap.
+
 LocalizedResourceHelper keeps locale fallback behind the Core resource support module. The same probe on venus, from its parent 0016ed2e to 05b6c659, kept 8,708 loadable bytes and moved DMD templates from 6,389 to 6,472, within the 8,550 cap. The ResourceRegion, InputStreamResource, CompositeIterator and LocalizedResourceHelper batch on 37c78eea kept the Core probe at 8,884 loadable bytes and moved DMD templates from 6,392 to 6,495.
 
 Multipart boundary generation uses `flint.conc.fillSecureRandom` from the method body. On venus, the Core size probe from `b360ec62` to this port moved from 8,844 to 19,197 loadable bytes and from 5,491 to 5,553 DMD templates. Both stay below their caps of 81,920 bytes and 8,550 templates. The Spring apps already link `conc` through the reactor. Their app budgets are checked by the merge train.

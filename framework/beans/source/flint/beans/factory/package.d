@@ -41,6 +41,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.name : typeNameOf;
 import flint.java.util : LinkedHashMap, Map;
 import flint.java.util.stream : Stream;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -649,6 +650,7 @@ class UnsatisfiedDependencyException : BeanCreationException
 class BeanDefinitionStoreException : FatalBeanException
 {
     private string beanName;
+    private Nullable!string resourceDescription;
 
     /// `msg`, and optionally a `cause`.
     this(string msg, Throwable cause = null)
@@ -656,17 +658,44 @@ class BeanDefinitionStoreException : FatalBeanException
         super(msg, cause);
     }
 
+    /// A resource reference with the supplied detail message and optional cause.
+    this(Nullable!string resourceDescription, string msg, Throwable cause = null)
+    {
+        super(msg, cause);
+        this.resourceDescription = resourceDescription;
+    }
+
     /// `Invalid bean definition with name 'beanName' defined in resource: msg`.
     this(string resourceDescription, string beanName, string msg, Throwable cause = null)
     {
-        super("Invalid bean definition with name '" ~ beanName ~ "' defined in " ~ resourceDescription ~ ": " ~ msg,
-                cause);
+        this(optionalText(resourceDescription), beanName, optionalText(msg), cause);
+    }
+
+    /// A named definition with an optional resource description and detail message.
+    this(Nullable!string resourceDescription, string beanName, Nullable!string msg, Throwable cause = null)
+    {
+        const name = beanName is null ? "null" : beanName;
+        const resource = resourceDescription.isNull ? "null" : resourceDescription.get();
+        const detail = msg.isNull ? "" : ": " ~ msg.get();
+        super("Invalid bean definition with name '" ~ name ~ "' defined in " ~ resource ~ detail, cause);
         this.beanName = beanName;
+        this.resourceDescription = resourceDescription;
+    }
+
+    /// The resource description, if available.
+    Nullable!string getResourceDescription() const pure nothrow @nogc
+    {
+        return resourceDescription;
     }
 
     /// The bean name, or null.
     string getBeanName() const pure nothrow @nogc
     {
         return beanName;
+    }
+
+    private static Nullable!string optionalText(string text) pure nothrow @nogc
+    {
+        return text is null ? Nullable!string.init : Nullable!string(text);
     }
 }
