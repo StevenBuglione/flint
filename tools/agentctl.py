@@ -214,6 +214,12 @@ class Store:
                 if len(members) == 1:
                     queue['head_since'] = utc_now()
                 self.event('queue-join', role=role, agent=agent, position=len(members))
+            elif action == 'front':  # the merge train returns a failed submission's agent to the head
+                if agent in names:
+                    members.pop(names.index(agent))
+                members.insert(0, {'agent': agent, 'joined': utc_now()})
+                queue['head_since'] = utc_now()
+                self.event('queue-front', role=role, agent=agent)
             elif action == 'leave':
                 if agent not in names:
                     raise SystemExit(f'agentctl: {agent} is not in the {role} queue')

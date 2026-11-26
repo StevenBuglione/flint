@@ -211,6 +211,14 @@ class QueueTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.run_cli('queue', 'apps-landing', 'leave', '--agent', 'a')
 
+    def test_front_puts_an_agent_back_at_the_head(self):
+        for agent in ('a', 'b', 'c'):
+            self.run_cli('queue', 'apps-landing', 'join', '--agent', agent)
+        agentctl.Store(self.root).queue('apps-landing', 'front', 'c')
+        agentctl.Store(self.root).queue('apps-landing', 'front', 'z')
+        members = [m['agent'] for m in json.loads((self.root / 'queues.json').read_text())['apps-landing']['members']]
+        self.assertEqual(members, ['z', 'c', 'a', 'b'])
+
     def test_force_overrides_the_queue_and_is_logged(self):
         self.run_cli('queue', 'apps-landing', 'join', '--agent', 'a')
         self.run_cli('claim', 'apps-landing', '--agent', 'b', '--harness', 'codex', '--force', 'a is offline')

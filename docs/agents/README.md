@@ -39,6 +39,24 @@ python3 tools/agentctl.py queue apps-landing leave --agent <name>   # if you no 
 
 `board` lists each queue under the roles. `--force REASON` still overrides, and it's logged; use it only when the holder or head has stopped.
 
+### The merge train
+
+Lanes don't each hold the slot for 7–10 minutes. A change that is green on its own module's definition of done is submitted to the train:
+
+```bash
+python3 tools/merge_train.py submit --role <role> --agent <name> --ref <your ready branch>   # then join the queue
+python3 tools/merge_train.py show
+```
+
+The agent holding `apps-landing` runs `python3 tools/merge_train.py run --agent <name>` (once: `merge_train.py setup` creates its worktree):
+1. It takes the first four submissions in queue order and rebases them onto `fp/main`, so commits already on main drop out.
+2. It runs one apps verification for all of them: the definition of done's apps step for both apps, under `hold`.
+3. **Green:** it pushes them all.
+4. **Red:** it bisects by submission, pushes the green prefix, and returns the failing role to the head of the queue. The log goes to `coordination/train/`, and the role gets mail.
+5. **Main moved meanwhile:** it rebases again. If the new commits touch the apps' closure, it verifies again first.
+
+A submission that conflicts fails alone.
+
 ## The protocol: every agent, every turn
 
 ```bash
