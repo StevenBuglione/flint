@@ -1095,3 +1095,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Owner's decision kept:** "only goes down" is respected; this simply removes the need to go up.
 
 - 2026-11-26 00:56Z, sol-observability: D-MICROMETER-1's empty-tag rule is now R-113. SpEL keeps R-109 after the parallel landings assigned the same number.
+- 2026-11-26 01:10Z, coordinator: **re-verification after a rebase.**
+  - **Why:** main moves every few minutes with seven lanes, and a full app gate takes several, so lanes kept re-running full gates after each rebase.
+  - **The rule:** a slice whose full definition of done passed before the rebase re-runs only the cheap steps when the incoming commits touch nothing in its dependency closure or its apps. The cheap steps are resolve, structural, quality, api, upstream-tests and its own DMD/LDC tests. If the incoming commits touch either, the full definition of done runs again.
+  - **Recording:** the lane says which path it took.

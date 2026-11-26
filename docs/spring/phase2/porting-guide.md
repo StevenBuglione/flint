@@ -34,7 +34,7 @@ Flint is a D port of Spring Framework and Spring Boot. It must behave like Sprin
 6. **Record what you learned** in `docs/spring/performance-playbook.md` in the same commit: a new R-, B- or S- rule with its evidence, or a correction.
 7. **Land small, verified slices.**
    - Never amend or force-push shared `main`.
-   - Rebase, re-run the checks, then push.
+   - Rebase, re-run the checks, then push. If the rebase brought in nothing that touches your module's dependency closure or its apps, re-running the cheap steps is enough (decisions.md, 2026-11-26 01:10Z).
    - Anything that touches a shared engine needs that engine owner's review before it lands: engine-reactor, engine-web, engine-servlet, engine-sql/jdbc, the arena/GC, Flint AOT, or Boot's autoconfigure core.
 
 ## 3. Performance: the rules that mattered most
