@@ -3321,6 +3321,12 @@ struct Locale
         return Locale(language, country, variant);
     }
 
+    /// A value copy of this locale.
+    Locale clone() const pure nothrow @nogc
+    {
+        return this;
+    }
+
     static immutable Locale ROOT = Locale(""); ///
     static immutable Locale ENGLISH = Locale("en"); ///
     static immutable Locale FRENCH = Locale("fr"); ///
