@@ -8,9 +8,9 @@ The owner asked on 2026-11-26 for an integration system that uses every machine,
 |---|---|---|---|
 | venus | 10.10.10.8 | 32 cores, 122 GB, AMD graphics | **Development.** All 15 Sol lanes and the Claude roles build and test here. Each lane runs its module's definition of done here. Git pushes to GitHub happen only from here. |
 | posidon | 10.10.10.12 | i7-11700K (16 threads), 31 GB, RTX 3080, about 17 GB free | **Verifier A,** and the only `flint budget` runner, because the budgets were seeded on it and instruction counts depend on the CPU. |
-| owner's desktop | 10.10.10.122 | runs Claude Desktop, RTX 3070 | **Verifier B,** once venus's key is authorized and the toolchain is copied over. |
-| 10.10.10.116 | 10.10.10.116 | unknown (not reachable from venus on 2026-11-26: no route to host) | **Verifier C,** once reachable. |
-| pluto | 10.10.10.13 | Mac mini M-series, 16 GB, 2 GB free | **macOS lane only.** Too little disk for verification; it keeps the macOS compile checks. |
+| owner's desktop | sbuglione@10.10.10.122 | NixOS with nix-ld, 24 threads, 125 GB, RTX 3070, gigabit link, 58 GB free after the owner cleared its uv and Go caches | **Verifier B.** Being provisioned in `~/flint-verifier/` (2026-11-26). |
+| neptune | steven@10.10.10.116 | NixOS laptop, 16 threads, 15 GB (mostly used by a VM), RTX 3050 Ti, link about 0.2 MB/s | **Not used.** The link is too slow to copy the toolchain (about 10 GB). It is reconsidered if it moves to wired Ethernet. |
+| pluto | 10.10.10.13 | Mac mini, 8 cores, 16 GB, 19 GB free after the owner-authorised cache cleanup | **macOS lane,** plus the Linux arm64 VM (lima). It can take post-merge macOS compile checks. |
 
 ## What a verifier checks
 
