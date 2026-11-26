@@ -110,8 +110,11 @@ class NoopDistributionSummary : NoopMeter, DistributionSummary
 /// A disabled timer that executes callbacks and keeps no timing statistics.
 class NoopTimer : NoopMeter, Timer
 {
+    // Use concrete defaults for direct calls and retain the interface's generic overloads.
+    alias record = callbackDefaults.record;
     alias record = Timer.record;
-    alias takeSnapshot = Timer.takeSnapshot;
+    alias takeSnapshot = callbackDefaults.takeSnapshot;
+    alias wrap = callbackDefaults.wrap;
     alias wrap = Timer.wrap;
 
     /// Retain the ID of the disabled timer.
@@ -172,7 +175,7 @@ class NoopTimer : NoopMeter, Timer
         return HistogramSnapshot.empty(0, 0, 0);
     }
 
-    mixin Timer.CallbackDefaults;
+    mixin Timer.NoopCallbackDefaults callbackDefaults;
 }
 
 /// A disabled function counter whose count is zero.

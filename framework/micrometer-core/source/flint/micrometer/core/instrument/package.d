@@ -1612,7 +1612,7 @@ interface Timer : HistogramSupport
             alias NullAction = NullPointerException, alias makeNullAction = nullCallback,
             alias SnapshotDefaults = HistogramSupport.Defaults,
             alias IntSupplierType = IntSupplier, alias LongSupplierType = LongSupplier,
-            alias timePrimitive = recordPrimitive)
+            alias timePrimitive = recordPrimitive, bool timePrimitiveDelegates = true)
     {
         mixin SnapshotDefaults;
 
@@ -1644,11 +1644,6 @@ interface Timer : HistogramSupport
             return timer.record(action is null ? null : &action.getAsBoolean);
         }
 
-        override bool record(scope bool delegate() @safe action)
-        {
-            return timePrimitive!(bool, nullAction)(this, action);
-        }
-
         override int record(IntSupplierType action)
         {
             if (action is null)
@@ -1669,9 +1664,17 @@ interface Timer : HistogramSupport
             return timer.record(action is null ? null : &action.getAsDouble);
         }
 
-        override double record(scope double delegate() @safe action)
+        static if (timePrimitiveDelegates)
         {
-            return timePrimitive!(double, nullAction)(this, action);
+            override bool record(scope bool delegate() @safe action)
+            {
+                return timePrimitive!(bool, nullAction)(this, action);
+            }
+
+            override double record(scope double delegate() @safe action)
+            {
+                return timePrimitive!(double, nullAction)(this, action);
+            }
         }
 
         override RunnableType wrap(RunnableType action)
@@ -1712,6 +1715,20 @@ interface Timer : HistogramSupport
         {
             return samples(this);
         }
+    }
+
+    package mixin template NoopCallbackDefaults(alias DurationType = Duration, alias Unit = TimeUnit,
+            alias RunnableType = Runnable,
+            alias makeTimedRunnable = timedRunnable,
+            alias DoubleSupplierType = DoubleSupplier, alias BooleanSupplierType = BooleanSupplier,
+            alias NullAction = NullPointerException, alias makeNullAction = nullCallback,
+            alias SnapshotDefaults = HistogramSupport.Defaults,
+            alias IntSupplierType = IntSupplier, alias LongSupplierType = LongSupplier,
+            alias timePrimitive = recordPrimitive, alias Callbacks = CallbackDefaults)
+    {
+        mixin Callbacks!(DurationType, Unit, RunnableType, makeTimedRunnable, DoubleSupplierType,
+                BooleanSupplierType, NullAction,
+                makeNullAction, SnapshotDefaults, IntSupplierType, LongSupplierType, timePrimitive, false);
     }
 }
 

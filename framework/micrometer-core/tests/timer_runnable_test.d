@@ -273,6 +273,44 @@ unittest
     assert(timer.takeSnapshot(true).count() == 0);
 }
 
+@("a final no-op timer subclass calls the concrete overloads")
+unittest
+{
+    static final class FinalTimer : NoopTimer
+    {
+        this(Meter.Id id) @safe
+        {
+            super(id);
+        }
+    }
+
+    static final class Action : Runnable
+    {
+        int calls;
+
+        override void run() @safe
+        {
+            ++calls;
+        }
+    }
+
+    auto timer = new FinalTimer(testId());
+    auto action = new Action;
+    auto supplier = IntSupplier.of(() => 12);
+    int delegate() @safe read = () => -5;
+    bool delegate() @safe readFlag = () => true;
+    double delegate() @safe readDouble = () => -1.25;
+    timer.record(1L, TimeUnit.SECONDS);
+    assert(timer.record(supplier) == 12);
+    assert(timer.record(read) == -5);
+    assert(timer.record(readFlag));
+    assert(timer.record(readDouble) == -1.25);
+    timer.wrap(action).run();
+    assert(timer.wrap(read)() == -5);
+    assert(action.calls == 1 && timer.count() == 0);
+    assert(timer.takeSnapshot(true).count() == 0);
+}
+
 @("snapshot descriptors agree with type names from the public import")
 unittest
 {
