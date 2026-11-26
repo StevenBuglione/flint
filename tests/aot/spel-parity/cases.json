@@ -145,5 +145,26 @@
     "expression": "null < 0",
     "runtimeOnly": "The compiled null path only handles equality and inequality. Spring orders null first.",
     "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "short-circuit-and",
+    "expression": "false && (1 / 0 > 0)",
+    "expected": {"type": "bool", "value": "false"}
+  },
+  {
+    "id": "short-circuit-or",
+    "expression": "true || (1 / 0 > 0)",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "boolean-precedence",
+    "expression": "false and false or not false",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "boolean-alias-case",
+    "expression": "NoT true Or false",
+    "runtimeOnly": "The AOT parser currently matches word operators case-sensitively.",
+    "expected": {"type": "bool", "value": "false"}
   }
 ]

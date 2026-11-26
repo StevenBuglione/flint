@@ -116,6 +116,11 @@ class SpelExpression : Expression
             return result.value;
         if (result.error.code == Status.invalidArgument)
             throw new ArithmeticException(result.error.message);
+        if (result.error.code == Status.conflict)
+        {
+            const position = cast(int) utf16Length(expressionString[0 .. result.error.offset]);
+            throw new SpelEvaluationException(position, SpelMessage.TYPE_CONVERSION_ERROR, result.error.message);
+        }
         throw new EvaluationException(result.error.message);
     }
 

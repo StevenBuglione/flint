@@ -9,8 +9,23 @@
       "status": "deferred"
     },
     "org/springframework/expression/spel/BooleanExpressionTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/expression/tests/boolean_tests.d",
+      "methods": {
+        "ported": [
+          "booleanTrue",
+          "booleanFalse",
+          "or",
+          "and",
+          "not",
+          "combinations01",
+          "writability",
+          "booleanErrors01"
+        ],
+        "skipped": {
+          "convertAndHandleNull": "Ternary expressions and the custom context type converter are deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/expression/spel/CachedMethodExecutorTests.java": {
       "phase": "2",

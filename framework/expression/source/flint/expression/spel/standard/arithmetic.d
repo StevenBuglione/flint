@@ -15,7 +15,8 @@
  *
  * Ported from spring-framework v7.1.0: spring-expression/src/main/java/org/springframework/expression/spel/ast/OpPlus.java
  * Also from OpMinus.java, OpMultiply.java, OpDivide.java, OpModulus.java, OperatorPower.java,
- * Operator.java, OpEQ.java, OpNE.java, OpLT.java, OpLE.java, OpGT.java and OpGE.java.
+ * Operator.java, OpEQ.java, OpNE.java, OpLT.java, OpLE.java, OpGT.java, OpGE.java,
+ * OpAnd.java, OpOr.java and OperatorNot.java.
  * Modified by the Flint authors.
  */
 module flint.expression.spel.standard.arithmetic;
@@ -61,11 +62,19 @@ struct ArithmeticExpression
     private Result!Any evaluateStack(scope Scalar[] stack) nothrow @nogc
     {
         size_t depth;
-        foreach (ref instruction; instructions)
+        for (size_t next; next < instructions.length;)
         {
+            const instruction = &instructions[next++];
             if (instruction.op == Op.literal)
             {
                 stack[depth++] = instruction.value;
+                continue;
+            }
+            if (instruction.op >= Op.and_)
+            {
+                const error = stepBoolean(*instruction, stack[depth - 1], depth, next);
+                if (error.code != Status.ok)
+                    return Result!Any(Any.init, error);
                 continue;
             }
             const right = stack[--depth];
@@ -84,7 +93,7 @@ ArithmeticExpression parseArithmetic(string source)
     parser.reader.skipWhitespace();
     if (parser.reader.position == source.length)
         throw new IllegalArgumentException("'expressionString' must not be null or blank");
-    parser.parse(1, 0);
+    parser.parse(orPrecedence, 0);
     const end = parser.reader.position;
     if (end < source.length)
         throw parser.reader.errorAt(end, SpelMessage.MORE_INPUT, source[end .. $]);
@@ -108,6 +117,10 @@ private enum Op : ubyte
     lessEqual,
     greater,
     greaterEqual,
+    and_,
+    or_,
+    not_,
+    requireBoolean,
 }
 
 private struct Instruction
@@ -115,6 +128,7 @@ private struct Instruction
     Op op;
     size_t position;
     Scalar value;
+    size_t jump;
 }
 
 private struct ArithmeticParser
@@ -125,53 +139,93 @@ private struct ArithmeticParser
     size_t firstPosition = size_t.max;
     string variable;
 
-    void parse(ubyte minimumPrecedence, uint nesting)
+    size_t parse(ubyte minimumPrecedence, uint nesting)
     {
-        primary(nesting);
-        reader.skipWhitespace();
-        if (reader.peek == '^' && variable is null)
-        {
-            const position = reader.position++;
-            primary(nesting);
-            instructions ~= Instruction(Op.power, position);
-        }
+        size_t left = parsePower(nesting);
+        ubyte maximumPrecedence = ubyte.max;
         while (true)
         {
             reader.skipWhitespace();
             const position = reader.position;
             const token = operatorToken(reader.text[position .. $]);
-            if (token.precedence < minimumPrecedence || variable !is null)
-                return;
+            if (token.precedence < minimumPrecedence || token.precedence > maximumPrecedence || variable !is null)
+                return left;
             reader.position += token.length;
-            parse(cast(ubyte)(token.precedence + 1), nesting);
-            instructions ~= Instruction(token.op, position);
-            if (token.precedence == comparisonPrecedence)
-                return;
+            const rhsPrecedence = cast(ubyte)(token.precedence + 1);
+            if (token.op == Op.and_ || token.op == Op.or_)
+                logical(token.op, left, rhsPrecedence, nesting);
+            else
+            {
+                parse(rhsPrecedence, nesting);
+                instructions ~= Instruction(token.op, position);
+            }
+            // A comparison may be followed by a lower-precedence boolean operator.
+            maximumPrecedence = token.precedence == comparisonPrecedence
+                ? cast(ubyte)(comparisonPrecedence - 1) : token.precedence;
+            left = position;
         }
     }
 
-    void primary(uint nesting)
+    size_t parsePower(uint nesting)
+    {
+        const left = primary(nesting);
+        reader.skipWhitespace();
+        if (reader.peek != '^' || variable !is null)
+            return left;
+        const position = reader.position++;
+        primary(nesting);
+        instructions ~= Instruction(Op.power, position);
+        return position;
+    }
+
+    void logical(Op op, size_t left, ubyte rhsPrecedence, uint nesting)
+    {
+        emitFirstLiteral();
+        const branch = instructions.length;
+        instructions ~= Instruction(op, left);
+        const right = parse(rhsPrecedence, nesting);
+        instructions ~= Instruction(Op.requireBoolean, right);
+        instructions[branch].jump = instructions.length;
+    }
+
+    size_t primary(uint nesting)
     {
         reader.skipWhitespace();
         const position = reader.position;
-        if (reader.peek != '(')
+        const negation = notOperator(reader.text[position .. $]);
+        if (negation)
         {
-            if (reader.peek == '#' && firstPosition == size_t.max)
-            {
-                variable = readVariableName();
-                firstPosition = position;
-            }
-            else
-                literal(position);
-            return;
+            checkNesting(nesting);
+            reader.position += negation;
+            const operand = primary(nesting + 1);
+            emitFirstLiteral();
+            instructions ~= Instruction(Op.not_, operand);
+            return position;
         }
+        if (reader.peek == '(')
+        {
+            checkNesting(nesting);
+            ++reader.position;
+            const inner = parse(orPrecedence, nesting + 1);
+            if (reader.peek != ')')
+                throw reader.errorAt(reader.position, SpelMessage.OOD);
+            ++reader.position;
+            return inner;
+        }
+        if (reader.peek == '#' && firstPosition == size_t.max)
+        {
+            variable = readVariableName();
+            firstPosition = position;
+        }
+        else
+            literal(position);
+        return position;
+    }
+
+    void checkNesting(uint nesting)
+    {
         if (nesting == maxNesting)
-            throw reader.errorAt(position, SpelMessage.MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED, "200");
-        ++reader.position;
-        parse(1, nesting + 1);
-        if (reader.peek != ')')
-            throw reader.errorAt(reader.position, SpelMessage.OOD);
-        ++reader.position;
+            throw reader.errorAt(reader.position, SpelMessage.MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED, "200");
     }
 
     string readVariableName()
@@ -201,10 +255,18 @@ private struct ArithmeticParser
             firstPosition = position;
             return;
         }
-        if (instructions.length == 0)
-            instructions ~= Instruction(Op.literal, firstPosition, Scalar.from(firstLiteral));
+        emitFirstLiteral();
         const scalar = reader.readLiteral();
         instructions ~= Instruction(Op.literal, position, Scalar.from(scalar));
+    }
+
+    void emitFirstLiteral()
+    {
+        if (instructions.length != 0)
+            return;
+        if (variable !is null)
+            throw reader.errorAt(firstPosition, SpelMessage.OOD);
+        instructions ~= Instruction(Op.literal, firstPosition, Scalar.from(firstLiteral));
     }
 }
 
@@ -214,9 +276,11 @@ private bool startsIdentifier(dchar c) pure nothrow @nogc
     return c == '_' || c == '$' || (c <= 0xFFFF && isLetter(c));
 }
 
-private enum ubyte comparisonPrecedence = 1;
-private enum ubyte sumPrecedence = 2;
-private enum ubyte productPrecedence = 3;
+private enum ubyte orPrecedence = 1;
+private enum ubyte andPrecedence = 2;
+private enum ubyte comparisonPrecedence = 3;
+private enum ubyte sumPrecedence = 4;
+private enum ubyte productPrecedence = 5;
 
 private struct OperatorToken
 {
@@ -238,6 +302,7 @@ private struct OperatorSpelling
 }
 
 private immutable OperatorSpelling[] symbolOperators = [
+    OperatorSpelling("||", Op.or_, orPrecedence), OperatorSpelling("&&", Op.and_, andPrecedence),
     OperatorSpelling("==", Op.equal, comparisonPrecedence),
     OperatorSpelling("!=", Op.notEqual, comparisonPrecedence),
     OperatorSpelling("<=", Op.lessEqual, comparisonPrecedence),
@@ -251,6 +316,7 @@ private immutable OperatorSpelling[] symbolOperators = [
 ];
 
 private immutable OperatorSpelling[] alternateOperators = [
+    OperatorSpelling("or", Op.or_, orPrecedence), OperatorSpelling("and", Op.and_, andPrecedence),
     OperatorSpelling("eq", Op.equal, comparisonPrecedence),
     OperatorSpelling("ne", Op.notEqual, comparisonPrecedence),
     OperatorSpelling("lt", Op.less, comparisonPrecedence),
@@ -260,6 +326,16 @@ private immutable OperatorSpelling[] alternateOperators = [
     OperatorSpelling("div", Op.divide, productPrecedence),
     OperatorSpelling("mod", Op.modulus, productPrecedence),
 ];
+
+private ubyte notOperator(scope const(char)[] tail) pure nothrow @nogc
+{
+    if (tail.length && tail[0] == '!' && (tail.length == 1 || tail[1] != '='))
+        return 1;
+    if (tail.length >= 3 && toLower(tail[0]) == 'n' && toLower(tail[1]) == 'o'
+            && toLower(tail[2]) == 't' && !continuesIdentifier(tail, 3))
+        return 3;
+    return 0;
+}
 
 private OperatorToken operatorToken(scope const(char)[] tail) pure nothrow @nogc
 {
@@ -388,6 +464,101 @@ private Result!Scalar applyOperator(Op op, Scalar left, Scalar right) nothrow @n
     if (kind == ValueKind.float_)
         return Result!Scalar(Scalar(kind, 0, arithmetic(op, left.asFloat(), right.asFloat())));
     return integerArithmetic(op, kind, left.integer, right.integer);
+}
+
+private enum BooleanValue : ubyte
+{
+    invalid,
+    missing,
+    no,
+    yes,
+}
+
+private Error stepBoolean(const ref Instruction step, ref Scalar top, ref size_t used, ref size_t pc) pure nothrow @nogc
+{
+    const value = asBoolean(top);
+    if (value < BooleanValue.no)
+    {
+        const type = value == BooleanValue.missing ? "null" : sourceType(top.kind);
+        return Error(Status.conflict, type, step.position);
+    }
+    const truth = value == BooleanValue.yes;
+    switch (step.op)
+    {
+    case Op.not_:
+        top = Scalar(ValueKind.bool_, !truth);
+        break;
+    case Op.requireBoolean:
+        top = Scalar(ValueKind.bool_, truth);
+        break;
+    default:
+        if (truth == (step.op == Op.or_))
+        {
+            top = Scalar(ValueKind.bool_, truth);
+            pc = step.jump;
+        }
+        else
+            --used;
+    }
+    return Error.init;
+}
+
+private BooleanValue asBoolean(const ref Scalar scalar) pure nothrow @nogc
+{
+    if (scalar.kind == ValueKind.bool_)
+        return scalar.integer ? BooleanValue.yes : BooleanValue.no;
+    if (scalar.kind == ValueKind.null_)
+        return BooleanValue.missing;
+    if (scalar.kind != ValueKind.string_)
+        return BooleanValue.invalid;
+    return textBoolean(scalar.text);
+}
+
+private BooleanValue textBoolean(scope const(char)[] text) pure nothrow @nogc
+{
+    while (text.length && text[0] <= ' ')
+        text = text[1 .. $];
+    while (text.length && text[$ - 1] <= ' ')
+        text = text[0 .. $ - 1];
+    if (text.length == 0)
+        return BooleanValue.missing;
+    char[5] word;
+    if (text.length > word.length)
+        return BooleanValue.invalid;
+    foreach (i, ch; text)
+        word[i] = toLower(ch);
+    switch (word[0 .. text.length])
+    {
+    case "true", "on", "yes", "1":
+        return BooleanValue.yes;
+    case "false", "off", "no", "0":
+        return BooleanValue.no;
+    default:
+        return BooleanValue.invalid;
+    }
+}
+
+private string sourceType(ValueKind kind) pure nothrow @nogc
+{
+    final switch (kind)
+    {
+    case ValueKind.other:
+        return "java.lang.Object";
+    case ValueKind.int_:
+        return "java.lang.Integer";
+    case ValueKind.long_:
+        return "java.lang.Long";
+    case ValueKind.float_:
+        return "java.lang.Float";
+    case ValueKind.double_:
+        return "java.lang.Double";
+    case ValueKind.null_:
+        return "null";
+    case ValueKind.bool_:
+        return "java.lang.Boolean";
+    case ValueKind.string_:
+        return "java.lang.String";
+    }
 }
 
 private bool isNumber(ValueKind kind) pure nothrow @nogc

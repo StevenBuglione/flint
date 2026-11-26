@@ -27,6 +27,7 @@ import flint.expression : EvaluationException, ParseException;
 /// Stable identifiers for SpEL diagnostics.
 enum SpelMessage
 {
+    TYPE_CONVERSION_ERROR = 1001,
     NOT_AN_INTEGER = 1035,
     NOT_A_LONG,
     NOT_A_REAL = 1040,
@@ -68,6 +69,12 @@ class SpelEvaluationException : EvaluationException
         messageCode = code;
     }
 
+    package(flint.expression) this(int position, SpelMessage code, string detail)
+    {
+        super(position, formatMessage(code, detail));
+        messageCode = code;
+    }
+
     SpelMessage getMessageCode() const pure nothrow @nogc
     {
         return messageCode;
@@ -90,6 +97,8 @@ private struct DiagnosticText
 }
 
 private immutable DiagnosticText[] diagnosticTexts = [
+    DiagnosticText(SpelMessage.TYPE_CONVERSION_ERROR, "Type conversion problem, cannot convert from ",
+            " to boolean"),
     DiagnosticText(SpelMessage.NOT_AN_INTEGER, "The value '", "' cannot be parsed as an int"),
     DiagnosticText(SpelMessage.NOT_A_LONG, "The value '", "' cannot be parsed as a long"),
     DiagnosticText(SpelMessage.NOT_A_REAL, "The value '", "' cannot be parsed as a double"),

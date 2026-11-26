@@ -203,4 +203,10 @@ class EvaluationException : ExpressionException
     {
         super(message);
     }
+
+    /// Report the UTF-16 position of an evaluation error.
+    this(int position, string message)
+    {
+        super(position, message);
+    }
 }
