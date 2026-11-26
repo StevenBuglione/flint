@@ -14,7 +14,8 @@ at reduced precision.
 The renderer uses the root locale's `.` and `,`. `%h` uses the Java boxed scalar hash. For object references it
 uses virtual `toHash` (R11). A `JavaObject` mixin calls `hashCode` and returns zero for an exception. A class
 without the mixin uses its D `toHash`. Erased native aggregates have no Java object to hash.
-Date/time conversions throw `UnknownFormatConversionException`.
+The epoch conversions `%tQ` and `%ts` accept a boxed `long`, with uppercase `T` equivalents.
+Other date/time conversions throw `UnknownFormatConversionException`.
 +/
 module flint.java.util.formatter;
 
@@ -701,9 +702,25 @@ private string convert(const ref Spec spec, Any argument)
         return radixText(spec, argument);
     case 'f', 'e', 'E', 'g', 'G', 'a', 'A':
         return floatingText(spec, argument);
+    case 't', 'T':
+        return epochText(spec, argument);
     default:
         throw new UnknownFormatConversionException([spec.conversion]);
     }
+}
+
+pragma(inline, false) private string epochText(const ref Spec spec, Any argument)
+{
+    const suffix = spec.text[$ - 1];
+    if (suffix != 'Q' && suffix != 's')
+        throw new UnknownFormatConversionException([spec.conversion]);
+    if (argument.isNull)
+        return spec.conversion == 'T' ? "NULL" : "null";
+
+    if (argument.typeName != "long")
+        throw new IllegalFormatConversionException(suffix, javaTypeName(argument));
+    const millis = argument.get!long;
+    return decimal(suffix == 's' ? millis / 1000 : millis);
 }
 
 private string truncate(const ref Spec spec, string text) pure nothrow
