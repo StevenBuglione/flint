@@ -6688,6 +6688,8 @@
 "java.util.Locale#getLanguage()":{"status":"ported","d":"flint.java.util.Locale.getLanguage"},
 "java.util.Locale#getCountry()":{"status":"ported","d":"flint.java.util.Locale.getCountry"},
 "java.util.Locale#getVariant()":{"status":"ported","d":"flint.java.util.Locale.getVariant"},
+"java.util.Locale#getISO3Language()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java maps recognized two-letter languages to ISO 639-2 terminology codes, including the legacy language aliases. A stored three-letter language passes through and an absent language yields an empty string. Unsupported codes raise MissingResourceException with key ShortLanguage. Flint needs the lookup data and method."},
+"java.util.Locale#getISO3Country()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java maps recognized ISO 3166 alpha-2 regions to uppercase alpha-3 codes and returns an empty string for an absent region. Unsupported regions, including numeric and alpha-3 inputs, raise MissingResourceException with key ShortCountry. Flint needs the lookup data and method."},
 "java.util.Locale#getScript()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java returns the title-cased four-letter script from a language tag, or an empty string when absent. Flint currently skips the script without storing it."},
 "java.util.Locale#CHINESE":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.CHINESE"},
 "java.util.Locale#FRANCE":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.FRANCE"},
