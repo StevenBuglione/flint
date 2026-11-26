@@ -90,3 +90,25 @@ unittest
     assert(GC.query(retained.values.ptr).base !is null);
     assert(retained.sum() == 43);
 }
+
+@("AtomicReference volatile operations return exact identities and witnesses")
+unittest
+{
+    auto reference = new AtomicReference!Reading;
+    auto first = new Sample(4);
+    auto equal = new Sample(4);
+    auto next = new Sample(5);
+    assert(first.sum() == equal.sum() && first !is equal);
+    assert(reference.get() is null);
+
+    reference.set(first);
+    assert(reference.getAcquire() is first);
+    assert(!reference.compareAndSet(equal, next));
+    assert(reference.compareAndExchange(equal, next) is first);
+    assert(reference.get() is first);
+    assert(reference.compareAndExchange(first, next) is first);
+    assert(reference.getAndSet(null) is next);
+    assert(reference.compareAndSet(null, first));
+    assert(reference.getAndSet(null) is first);
+    assert(reference.get() is null);
+}

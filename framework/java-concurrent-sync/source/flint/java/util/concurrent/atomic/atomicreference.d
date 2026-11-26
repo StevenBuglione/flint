@@ -59,6 +59,36 @@ class AtomicReference(T)
         slot.set(initialValue);
     }
 
+    /// Loads the reference with Java volatile ordering.
+    final T get() nothrow @nogc
+    {
+        return slot.getVolatile();
+    }
+
+    /// Publishes the reference with Java volatile ordering.
+    final void set(T newValue) nothrow @nogc
+    {
+        slot.setVolatile(newValue);
+    }
+
+    /// Replaces the reference if it has the expected identity.
+    final bool compareAndSet(T expected, T newValue) nothrow @nogc
+    {
+        return slot.compareAndSet(expected, newValue);
+    }
+
+    /// Attempts replacement and returns the reference observed at comparison.
+    final T compareAndExchange(T expected, T newValue) nothrow @nogc
+    {
+        return slot.compareAndExchange(expected, newValue);
+    }
+
+    /// Publishes the new reference and returns the previous reference.
+    final T getAndSet(T newValue) nothrow @nogc
+    {
+        return slot.getAndSet(newValue);
+    }
+
     /// Loads the reference with acquire ordering.
     final T getAcquire() nothrow @nogc
     {
