@@ -49,8 +49,17 @@ APPS = ('gs-rest-service', 'petclinic-rest')
 DEFAULT_WORKTREE = Path.home() / 'flint-work' / 'worktrees' / 'merge-train'
 MAX_TRAIN = 4
 # Paths outside every package's directory whose change can alter what the apps verification sees.
-SHARED_PATHS = ('benchmarks/spring/', 'policy/', 'apps/flint/', 'dub.sdl', 'dub.selections.json', 'platform.lock',
-                'toolchain/', 'native/', 'tools/definition_of_done.py', 'tools/spring_bench.py')
+SHARED_PATHS = ('benchmarks/spring/', 'apps/flint/', 'dub.sdl', 'dub.selections.json', 'platform.lock', 'toolchain/',
+                'native/', 'tools/definition_of_done.py', 'tools/spring_bench.py', 'policy/request-allocations.json',
+                'policy/profiles.toml', 'policy/native-lock.json', 'policy/native-c.toml', 'policy/peer-lock.json',
+                'policy/toolchains.json', 'policy/platform.toml', 'policy/budgets.json')
+# Package registries: a change counts only when it changes an entry of a package in the apps' closure (coordinator,
+# 02:14Z: shared policy files alone don't need the slot).
+REGISTRIES = {'policy/framework.json': 'modules', 'policy/packages.json': 'packages', 'policy/boot.json': 'libraries'}
+# Never build inputs: docs, the gates' baselines and inventories, and the flint CLI's tests and API-coverage code.
+NOT_BUILD = ('.md',)
+NOT_BUILD_NAMES = ('upstream-tests.json', 'closure-baseline.json', 'leaf-budgets.json', 'coverage-baseline.json')
+NOT_BUILD_PREFIXES = ('apps/flint/test/', 'apps/flint/src/flint_tool/api/', 'docs/')
 
 
 # Append-only logs every lane adds to: two lanes' entries at the end conflict textually but never in meaning, so the
@@ -218,8 +227,15 @@ def PosidonVerifier(host=POSIDON, ssh=None, bare='flint-work/flint.git', url=Non
 def closure_paths(root):
     """The directories of every package in the apps' dependency closure, plus SHARED_PATHS."""
     import workspace
-    edges = workspace.dependencies(root)
     directories = {name: meta[1] for name, meta in workspace.package_repos(root).items()}
+    names = closure_names(root)
+    return tuple(sorted(directories[n].rstrip('/') + '/' for n in names if n in directories)) + SHARED_PATHS
+
+
+def closure_names(root):
+    """Every package in the apps' dependency closure."""
+    import workspace
+    edges = workspace.dependencies(root)
     names, todo = set(), []
     for app in APPS:
         document = tomllib.loads((root / 'benchmarks' / 'spring' / 'flint' / app / 'flint.toml').read_text())
@@ -230,7 +246,29 @@ def closure_paths(root):
         if name not in names:
             names.add(name)
             todo += [d.removeprefix('flint:') for d in edges.get(name, [])]
-    return tuple(sorted(directories[n].rstrip('/') + '/' for n in names if n in directories)) + SHARED_PATHS
+    return names
+
+
+def build_relevant(paths, closure, names=None, show=None):
+    """The changed paths that can alter the apps verification: under the closure, not docs or gate metadata, and for
+    a package registry only when an entry of a closure package changed (`show(path)` -> (old text, new text))."""
+    relevant = []
+    for path in paths:
+        if path.endswith(NOT_BUILD) or path.rsplit('/', 1)[-1] in NOT_BUILD_NAMES or path.startswith(NOT_BUILD_PREFIXES):
+            continue
+        if path in REGISTRIES:
+            if names is None or show is None:
+                continue
+            old, new = show(path)
+            section = REGISTRIES[path]
+            entries = lambda text: (json.loads(text).get(section, {}) if text else {})
+            before, after = entries(old), entries(new)
+            if any(before.get(n) != after.get(n) for n in names):
+                relevant.append(path)
+            continue
+        if touches([path], closure):
+            relevant.append(path)
+    return relevant
 
 
 def touches(paths, prefixes):
@@ -343,11 +381,23 @@ class Train:
         with ThreadPoolExecutor(len(pairs)) as pool:
             return list(pool.map(lambda pair: self.verify(*pair), pairs))
 
+    def show(self, commit, path):
+        done = git(['show', f'{commit}:{path}'], self.worktree, check=False)
+        return done.stdout if done.returncode == 0 else ''
+
+    def closure_names(self):
+        if self.closure is not None:
+            return None  # tests give paths directly
+        try:
+            return closure_names(self.worktree)
+        except Exception:
+            return None
+
     def changed(self, old, new):
         return git(['diff', '--name-only', old, new], self.worktree).stdout.split()
 
     # The run.
-    def run(self, agent, max_train=MAX_TRAIN, dry_run=False, attempts=3):
+    def run(self, agent, max_train=MAX_TRAIN, dry_run=False, attempts=6):
         lease = self.store.leases().get(SLOT)
         if not lease or lease['agent'] != agent or not self.store.lease_live(lease):
             raise SystemExit(f'merge_train: run the train while holding {SLOT}: python3 tools/agentctl.py claim {SLOT} '
@@ -418,7 +468,8 @@ class Train:
             if done.returncode == 0:
                 return tip
             new_base = self._fetch()
-            moved = touches(self.changed(base, new_base), closure)
+            moved = build_relevant(self.changed(base, new_base), closure, self.closure_names(),
+                                   lambda path, old=base, new=new_base: (self.show(old, path), self.show(new, path)))
             applied, failed = self.build(submissions, new_base)
             if failed or len(applied) != len(submissions):
                 return None
@@ -502,6 +553,9 @@ def serve(store, train, agent='merge-train', poll=15, once=False, log=print):
     train, release. Runs on venus outside any lane's turn (coordinator, 2026-11-26)."""
     while True:
         if next_train(store, train.submissions()):
+            if train.verify_commands is None and train.verifiers and isinstance(train.verifiers[0], RemoteVerifier):
+                # verifiers.json is re-read before every train: enabling or disabling a verifier needs no restart.
+                train.verifiers = sorted(load_verifiers(store), key=lambda v: bool(getattr(v, 'budget', False)))
             store.queue(SLOT, 'front', agent)
             try:
                 store.claim(SLOT, agent, 'other', None, 120)

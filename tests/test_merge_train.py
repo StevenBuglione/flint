@@ -377,9 +377,29 @@ class TrainTests(unittest.TestCase):
             dict(merge_train.DEFAULT_VERIFIERS[0], name='neptune', enabled=False)]}))
         self.assertEqual([v.name for v in merge_train.load_verifiers(self.store)], ['posidon', 'desktop'])
 
+    def test_only_build_relevant_changes_count_as_moving_the_closure(self):
+        closure = merge_train.closure_paths(merge_train.ROOT)
+        names = merge_train.closure_names(merge_train.ROOT)
+        self.assertIn('web', names)
+        same = lambda path: ('{"modules": {"web": {"a": 1}, "ai-core": {"a": 1}}}',) * 2
+        ai_only = lambda path: ('{"modules": {"web": {"a": 1}}}', '{"modules": {"web": {"a": 1}, "ai-core": {}}}')
+        web = lambda path: ('{"modules": {"web": {"a": 1}}}', '{"modules": {"web": {"a": 2}}}')
+        quiet = ['policy/framework.json', 'policy/upstream-tests-baseline.json', 'policy/quality-baseline.json',
+                 'framework/java/closure-baseline.json', 'framework/web/upstream-tests.json', 'docs/spring/x.md',
+                 'apps/flint/test/flint_tool/api/api_test.d', 'apps/flint/src/flint_tool/api/coverage.d',
+                 'framework/web/README.md']
+        self.assertEqual(merge_train.build_relevant(quiet, closure, names, ai_only), [])
+        self.assertEqual(merge_train.build_relevant(['policy/framework.json'], closure, names, web),
+                         ['policy/framework.json'])
+        self.assertEqual(merge_train.build_relevant(['framework/web/source/flint/web/package.d',
+                                                     'policy/request-allocations.json', 'apps/flint/src/flint_tool/engine/builder.d'],
+                                                    closure, names, same),
+                         ['framework/web/source/flint/web/package.d', 'policy/request-allocations.json',
+                          'apps/flint/src/flint_tool/engine/builder.d'])
+
     def test_the_closure_covers_the_apps_packages_and_shared_paths(self):
         paths = merge_train.closure_paths(merge_train.ROOT)
-        for expected in ('framework/web/', 'framework/jdbc/', 'boot/core/flint-boot/', 'policy/', 'benchmarks/spring/'):
+        for expected in ('framework/web/', 'framework/jdbc/', 'boot/core/flint-boot/', 'policy/profiles.toml', 'benchmarks/spring/'):
             self.assertIn(expected, paths)
         self.assertEqual(merge_train.touches(['docs/x.md', 'framework/web/a.d'], paths), ['framework/web/a.d'])
 
