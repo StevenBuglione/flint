@@ -1,0 +1,15 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "module": "java-concurrent-service",
+  "upstream": "openjdk@21.0.13",
+  "classes": {
+    "java/util/concurrent/ExecutorService/CloseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/concurrent/ExecutorService/Invoke.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  }
+}

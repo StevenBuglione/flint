@@ -1,0 +1,8 @@
+Flint Java Rejected Execution Exception
+Copyright 2026 The Flint authors
+
+This package implements parts of the Java SE 21 java.util.concurrent API.
+Its tests use original cases with reference results from the public Java API.
+
+SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
+See LICENSE for the license and Classpath Exception.

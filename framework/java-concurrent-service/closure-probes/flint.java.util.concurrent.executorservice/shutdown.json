@@ -1,0 +1,14 @@
+{
+  "source": "closure/executorservice.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.lang.runnable",
+    "flint.java.util",
+    "flint.java.util.concurrent.executor",
+    "flint.java.util.concurrent.internal.executoradmissions",
+    "flint.java.util.concurrent.internal.executorrouting",
+    "flint.java.util.concurrent.internal.managedoffload",
+    "flint.java.util.concurrent.rejectedexecutionexception"
+  ],
+  "data": []
+}
