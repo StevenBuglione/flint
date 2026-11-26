@@ -11080,8 +11080,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.Reader` | 2 | Missing UTF-16 reader abstraction with Java Closeable. Its Readable implementation is deferred. Cross-package placement requires a java.lang type whose method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
 | framework | `java.io.Reader#<init>(Object)` | 2 | Missing protected constructor that uses the supplied monitor and rejects null eagerly. |
 | framework | `java.io.Reader#lock` | 2 | Missing protected monitor reference that defaults to the reader and may name a shared lock. |
-| framework | `java.io.Reader#nullReader()` | 2 | Missing empty reader with explicit closed state. CharBuffer reads return zero for an open empty target and EOF for an open nonempty target, even when read-only. Null is rejected before the closed-state check. |
+| framework | `java.io.Reader#nullReader()` | 2 | Missing empty reader with explicit closed state. CharBuffer reads return zero for an open empty target and EOF for an open nonempty target, even when read-only. Transfer to a non-null writer returns zero while open. Both operations reject null before checking whether the reader is closed. |
 | framework | `java.io.Reader#read(CharBuffer)` | 2 | Missing UTF-16 transfer into the buffer's remaining window. Java rejects read-only targets before reading, reads directly into accessible arrays, and copies into other targets after a successful read. The position advances only by the returned count. |
+| framework | `java.io.Reader#transferTo(Writer)` | 2 | Missing transfer via virtual UTF-16 ranged reads and writes. Java rejects a null sink before reading and counts code units. Sink failures propagate after the source advances. Neither stream is flushed or closed. |
 | framework | `java.io.StringWriter#<init>()` | 2 | The writer starts empty, but it has no mutable StringBuffer bound to the inherited lock or exposed through getBuffer. |
 | framework | `java.io.StringWriter#<init>(int)` | 2 | Missing constructor that sets the initial buffer capacity, accepts zero and rejects negative capacity. |
 | framework | `java.io.StringWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns StringWriter. The inherited D method accepts a plain slice and returns Writer. |
@@ -11104,6 +11105,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.Writer#close()` | 2 | Java requires subclasses to implement close. The existing method is a concrete no-op. |
 | framework | `java.io.Writer#flush()` | 2 | Java requires subclasses to implement flush. The existing method is a concrete no-op. |
 | framework | `java.io.Writer#write(String)` | 2 | Java forwards a whole string to the virtual string-range overload with UTF-16 length. The existing method is abstract and has no string-range overload. |
+| framework | `java.io.Writer#write(char[],int,int)` | 2 | Missing abstract UTF-16 array-range hook used by Reader.transferTo. The current abstract text overload accepts a whole UTF-8 slice. |
 | framework | `java.lang.AssertionError#<init>(Object)` | 2 | Requires converting an Object detail to its Java string and retaining a Throwable detail as the cause. |
 | framework | `java.lang.AssertionError#<init>(boolean)` | 2 | Missing primitive overload. Java makes the detail true or false and leaves the cause absent. |
 | framework | `java.lang.AssertionError#<init>(char)` | 2 | Missing primitive overload. Java preserves one UTF-16 code unit in the detail, including NUL or an unpaired surrogate. |
