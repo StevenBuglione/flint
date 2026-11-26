@@ -1458,7 +1458,6 @@
       "org/springframework/core/io/support/PropertySourceProcessorTests.java",
       "org/springframework/core/io/support/ResourceArrayPropertyEditorTests.java",
       "org/springframework/core/io/support/ResourcePropertySourceTests.java",
-      "org/springframework/core/io/support/ResourceRegionTests.java",
       "org/springframework/core/io/support/SpringFactoriesLoaderTests.java",
       "org/springframework/core/log/CompositeLogTests.java",
       "org/springframework/core/log/LogAccessorTests.java",

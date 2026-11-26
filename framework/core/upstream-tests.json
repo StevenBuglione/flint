@@ -413,8 +413,15 @@
       "status": "deferred"
     },
     "org/springframework/core/io/support/ResourceRegionTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/core/tests/core_io_resource_region_test.d",
+      "methods": {
+        "ported": [
+          "shouldThrowExceptionForNegativeCount",
+          "shouldThrowExceptionForNegativePosition",
+          "shouldThrowExceptionWithNullResource"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/core/io/support/SpringFactoriesLoaderTests.java": {
       "phase": "2",
