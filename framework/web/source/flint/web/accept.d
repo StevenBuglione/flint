@@ -1,9 +1,10 @@
 /++
-`org.springframework.web.accept`: content negotiation from the `Accept` header and configured defaults.
+`org.springframework.web.accept`: content negotiation and API version exceptions.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/accept/
 (ContentNegotiationStrategy.java, ContentNegotiationManager.java, FixedContentNegotiationStrategy.java,
-HeaderContentNegotiationStrategy.java, MediaTypeFileExtensionResolver.java).
+HeaderContentNegotiationStrategy.java, MediaTypeFileExtensionResolver.java, InvalidApiVersionException.java,
+MissingApiVersionException.java, NotAcceptableApiVersionException.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook. Spring Boot's default manager has only the
@@ -11,14 +12,70 @@ header strategy.
 +/
 module flint.web.accept;
 
-import flint.http : HttpHeaders, InvalidMediaTypeException, MediaType;
+import flint.http : HttpHeaders, HttpStatus, InvalidMediaTypeException, MediaType;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.util : ArrayList, Collections, List, Objects;
 import flint.util : InvalidMimeTypeException, MimeTypeUtils;
 import flint.web : HttpMediaTypeNotAcceptableException;
 import flint.web.context.request : NativeWebRequest;
+import flint.web.server : ResponseStatusException;
+import std.typecons : Nullable;
 
 @safe:
+
+/// A version that cannot be parsed or is outside the supported set.
+class InvalidApiVersionException : ResponseStatusException
+{
+    private string requestedVersion;
+
+    ///
+    this(string requestedVersion)
+    {
+        this(requestedVersion, Nullable!string.init, null);
+    }
+
+    /// An absent message uses the default reason (R5).
+    this(string requestedVersion, Nullable!string message, Exception cause)
+    {
+        super(HttpStatus.BAD_REQUEST, reasonFor(requestedVersion, message), cause);
+        this.requestedVersion = requestedVersion;
+    }
+
+    /// The requested version.
+    string getVersion() const pure nothrow @nogc
+    {
+        return requestedVersion;
+    }
+
+    private static string reasonFor(string requestedVersion, Nullable!string message) pure
+    {
+        if (message.isNull)
+            return "Invalid API version: '" ~ (requestedVersion is null ? "null" : requestedVersion) ~ "'.";
+        const text = message.get;
+        // The response exception distinguishes an absent reason by the slice pointer.
+        return text is null ? "" : text;
+    }
+}
+
+/// A request omitted its required API version.
+class MissingApiVersionException : ResponseStatusException
+{
+    ///
+    this()
+    {
+        super(HttpStatus.BAD_REQUEST, "API version is required.");
+    }
+}
+
+/// A valid API version had no matching mapping for the endpoint.
+class NotAcceptableApiVersionException : InvalidApiVersionException
+{
+    ///
+    this(string requestedVersion)
+    {
+        super(requestedVersion);
+    }
+}
 
 /// `ContentNegotiationStrategy`.
 interface ContentNegotiationStrategy

@@ -839,6 +839,17 @@ framework-test each grew by 3,444 O3 bytes and 2,524 Oz bytes. Their
 template counts held at 6,060 and 8,475. The coordinator approved the
 measured parity growth under `6c9e5f49`.
 
+The API version exceptions reuse ResponseStatusException's problem details,
+messages, and backtrace policy. The types are available to callers ahead of
+version routing. Matched venus probes at `c70e49b59` and `e51e53a5f`
+added 40 O3 and 40 Oz loadable bytes to Web, with 7,006 to 7,017 templates.
+Web MVC added 8 O3 bytes, held at 1,553,594 Oz bytes, and moved from 6,078 to
+6,082 templates. After the mock-header rebase, the framework-test probe at
+`9407f7f26` and `db812c257` added 8 O3 bytes, held at 1,713,594 Oz bytes,
+and moved from 8,493 to 8,497 templates. The inherited Phobos overage uses
+`6c9e5f49`. Direct DMD and LDC tests cover status, reasons, cause identity,
+and exception inheritance.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
