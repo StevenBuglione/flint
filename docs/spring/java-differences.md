@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 164 | 272 | 0 | 15,360 |
-| boot | spring-boot@v4.2.0 | 40 | 22 | 2,133 | 13,408 |
+| boot | spring-boot@v4.2.0 | 40 | 25 | 2,133 | 13,405 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,461 | 1,378 | 4,848 | 30,147 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -582,6 +582,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass` | `flint.boot.autoconfigure.condition.ConditionalOnMissingClass` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass#value` | `flint.boot.autoconfigure.condition.ConditionalOnMissingClass.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnNotWebApplication` | `flint.boot.autoconfigure.condition.ConditionalOnNotWebApplication` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnProperty#havingValue` | `flint.boot.autoconfigure.condition.ConditionalOnProperty.havingValue` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnProperty#matchIfMissing` | `flint.boot.autoconfigure.condition.ConditionalOnProperty.matchIfMissing` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnProperty#prefix` | `flint.boot.autoconfigure.condition.ConditionalOnProperty.prefix` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication` | `flint.boot.autoconfigure.condition.ConditionalOnWebApplication` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication#type` | `flint.boot.autoconfigure.condition.ConditionalOnWebApplication.type` | [R2](api-mapping.md#r2-annotations) |  |
 
@@ -8478,7 +8481,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.autoconfigure.aop | 2 | 0 |
 | org.springframework.boot.autoconfigure.availability | 2 | 0 |
 | org.springframework.boot.autoconfigure.cache | 11 | 0 |
-| org.springframework.boot.autoconfigure.condition | 161 | 0 |
+| org.springframework.boot.autoconfigure.condition | 158 | 0 |
 | org.springframework.boot.autoconfigure.container | 6 | 0 |
 | org.springframework.boot.autoconfigure.context | 34 | 0 |
 | org.springframework.boot.autoconfigure.data | 20 | 0 |

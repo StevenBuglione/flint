@@ -905,7 +905,18 @@ unittest
 @("Boot web-application conditions distinguish servlet, reactive and non-web contexts")
 unittest
 {
-    const project = copyFixture("web-conditions");
+    runGeneratedContextStartup("web-conditions");
+}
+
+@("Boot property conditions select beans from the application environment at refresh")
+unittest
+{
+    runGeneratedContextStartup("property-conditions");
+}
+
+private void runGeneratedContextStartup(string fixture)
+{
+    const project = copyFixture(fixture);
     scope (exit)
         remove(project);
     // The context is real. Use the fixture's Boot application marker so this test does not pull in

@@ -207,8 +207,52 @@
       "status": "ported"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnPropertyTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "tests/aot/property-conditions/main.d",
+      "methods": {
+        "ported": [
+          "allPropertiesAreDefined",
+          "defaultValueIsNotSet",
+          "defaultValueIsSet",
+          "defaultValueIsSetDifferentValue",
+          "disableIfNotConfiguredOtherwise",
+          "enabledIfNotConfiguredOtherwise",
+          "enabledIfNotConfiguredOtherwiseWithConfigDifferentCase",
+          "multiValuesAllSet",
+          "multiValuesOnlyOneSet",
+          "notAllPropertiesAreDefined",
+          "prefixWithoutPeriod",
+          "propertyValueEqualsFALSE",
+          "propertyValueEqualsFalse",
+          "usingValueAttribute"
+        ],
+        "skipped": {
+          "caseInsensitive": "Relaxed lookup across camel case and kebab case is deferred.",
+          "disableIfNotConfiguredOtherwiseWithConfig": "Relaxed lookup across camel case and kebab case is deferred.",
+          "disableIfNotConfiguredOtherwiseWithConfigDifferentCase": "Relaxed lookup across camel case and kebab case is deferred.",
+          "enabledIfNotConfiguredOtherwiseWithConfig": "Relaxed lookup across camel case and kebab case is deferred.",
+          "metaAndDirectAnnotationConditionDoesNotMatchWhenNeitherPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
+          "metaAndDirectAnnotationConditionDoesNotMatchWhenOnlyDirectPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
+          "metaAndDirectAnnotationConditionDoesNotMatchWhenOnlyMetaPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
+          "metaAndDirectAnnotationConditionMatchesWhenBothPropertiesAreSet": "Composed property conditions and alias overrides are deferred.",
+          "metaAndDirectAnnotationWithAliasConditionDoesNotMatchWhenOnlyDirectPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
+          "metaAndDirectAnnotationWithAliasConditionDoesNotMatchWhenOnlyMetaPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
+          "metaAndDirectAnnotationWithAliasConditionMatchesWhenBothPropertiesAreSet": "Composed property conditions and alias overrides are deferred.",
+          "metaAnnotationConditionDoesNotMatchWhenPropertyIsNotSet": "Composed property conditions and alias overrides are deferred.",
+          "metaAnnotationConditionMatchesWhenPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
+          "metaAnnotationWithAliasConditionMatchesWhenPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
+          "multiplePropertiesConditionReportWhenDoesNotMatch": "Condition evaluation report output is deferred.",
+          "multiplePropertiesConditionReportWhenMatched": "Condition evaluation report output is deferred.",
+          "nameAndValueMustNotBeSpecified": "Attribute validation has a separate AOT diagnostic port pending.",
+          "nameOrValueMustBeSpecified": "Attribute validation has a separate AOT diagnostic port pending.",
+          "prefix": "Relaxed lookup across camel case and kebab case is deferred.",
+          "relaxedEnabledByDefault": "Relaxed lookup across camel case and kebab case is deferred.",
+          "relaxedName": "Relaxed lookup across camel case and kebab case is deferred.",
+          "repeatablePropertiesConditionReportWhenDoesNotMatch": "Condition evaluation report output is deferred.",
+          "repeatablePropertiesConditionReportWhenMatched": "Condition evaluation report output is deferred.",
+          "simpleValueIsSet": "Relaxed lookup across camel case and kebab case is deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnResourceTests.java": {
       "phase": "2",
