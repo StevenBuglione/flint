@@ -696,4 +696,7 @@ immutable CodeInfo[] catalog = [
             ~ "java.util.ServiceLoader would load it, so a static link keeps the provider. The listed class's "
             ~ "module must be in a package of the closure: fix the listing, or add the package to flint.toml.",
             "META-INF/services/flint.java.sql.Driver listing flint.postgresql.Driver with flint:postgresql declared"),
+    CodeInfo("FLINT-E1118", ExitCode.user, "@ConditionalOnBooleanProperty needs exactly one of name or value",
+            "Set either name or value to the property names that the condition reads.",
+            `@ConditionalOnBooleanProperty(name: ["jobs.enabled"])`),
 ];

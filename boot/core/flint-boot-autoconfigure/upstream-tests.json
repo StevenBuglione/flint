@@ -103,8 +103,36 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnBooleanPropertyTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "apps/flint/test/flint_tool/engine/aot_boolean_property_test.d",
+      "methods": {
+        "ported": [
+          "nameAndValueMustNotBeSpecified",
+          "nameOrValueMustBeSpecified"
+        ],
+        "skipped": {
+          "conditionReportWhenDoesNotMatch": "ConditionEvaluationReport is deferred.",
+          "conditionReportWhenMatched": "ConditionEvaluationReport is deferred.",
+          "defaultsWhenFalse": "The upstream runtime property matrix is deferred.",
+          "defaultsWhenMissing": "The upstream runtime property matrix is deferred.",
+          "defaultsWhenTrue": "The upstream runtime property matrix is deferred.",
+          "havingValueFalseMatchIfMissingFalseWhenFalse": "The upstream runtime property matrix is deferred.",
+          "havingValueFalseMatchIfMissingFalseWhenMissing": "The upstream runtime property matrix is deferred.",
+          "havingValueFalseMatchIfMissingFalseWhenTrue": "The upstream runtime property matrix is deferred.",
+          "havingValueFalseMatchIfMissingTrueWhenFalse": "The upstream runtime property matrix is deferred.",
+          "havingValueFalseMatchIfMissingTrueWhenMissing": "The upstream runtime property matrix is deferred.",
+          "havingValueFalseMatchIfMissingTrueWhenTrue": "The upstream runtime property matrix is deferred.",
+          "havingValueTrueMatchIfMissingFalseWhenFalse": "The upstream runtime property matrix is deferred.",
+          "havingValueTrueMatchIfMissingFalseWhenMissing": "The upstream runtime property matrix is deferred.",
+          "havingValueTrueMatchIfMissingFalseWhenTrue": "The upstream runtime property matrix is deferred.",
+          "havingValueTrueMatchIfMissingTrueWhenFalse": "The upstream runtime property matrix is deferred.",
+          "havingValueTrueMatchIfMissingTrueWhenMissing": "The upstream runtime property matrix is deferred.",
+          "havingValueTrueMatchIfMissingTrueWhenTrue": "The upstream runtime property matrix is deferred.",
+          "repeatablePropertiesConditionReportWhenDoesNotMatch": "Repeatable condition evaluation and ConditionEvaluationReport are deferred.",
+          "repeatablePropertiesConditionReportWhenMatched": "Repeatable condition evaluation and ConditionEvaluationReport are deferred.",
+          "withPrefix": "Runtime registration with a prefixed property is deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnCheckpointRestoreTests.java": {
       "phase": "2",

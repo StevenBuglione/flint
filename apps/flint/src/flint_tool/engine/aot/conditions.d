@@ -5,6 +5,7 @@
 module flint_tool.engine.aot.conditions;
 
 import flint_tool.engine.aot.merge : MergedSet;
+import flint_tool.engine.aot.model : Annotation;
 
 @safe:
 
@@ -19,7 +20,7 @@ struct ConditionOutcome
     string[] terms;
     /// Class names whose presence is still unknown.
     string[] unknownClasses;
-    /// Messages for FLINT-E1102 and FLINT-E1107.
+    /// Messages for FLINT-E1102, FLINT-E1107 and FLINT-E1118.
     string[] errors;
     /// The codes of `errors`, parallel.
     string[] codes;
@@ -240,20 +241,31 @@ private void propertyTerms(const ref MergedSet merged, ref ConditionOutcome outc
                 ~ ")";
     }
     if (const annotation = merged.get(onBooleanProperty))
-    {
-        string prefix = annotation.text("prefix");
-        if (prefix.length && prefix[$ - 1] != '.')
-            prefix ~= ".";
-        auto names = annotation.get("name").strings;
-        if (names.length == 0)
-            names = annotation.get("value").strings;
-        foreach (name; names)
-            outcome.terms ~= "c.property(" ~ literal(prefix ~ name) ~ ", " ~ (annotation.flag("havingValue",
-                    true) ? "\"true\"" : "\"false\"") ~ ", " ~ (annotation.flag("matchIfMissing") ? "true" : "false")
-                ~ ")";
-    }
+        booleanPropertyTerms(*annotation, outcome);
     if (const annotation = merged.get(onConfig))
         outcome.terms ~= "c.property(" ~ literal(annotation.text("section")) ~ ", \"\", false)";
+}
+
+private void booleanPropertyTerms(const ref Annotation annotation, ref ConditionOutcome outcome)
+{
+    const names = annotation.get("name").strings;
+    const values = annotation.get("value").strings;
+    if ((names.length == 0) == (values.length == 0))
+    {
+        outcome.errors ~= names.length == 0
+            ? "The name or value attribute of @ConditionalOnBooleanProperty must be specified"
+            : "The name and value attributes of @ConditionalOnBooleanProperty are exclusive";
+        outcome.codes ~= "FLINT-E1118";
+        return;
+    }
+
+    string prefix = annotation.text("prefix");
+    if (prefix.length && prefix[$ - 1] != '.')
+        prefix ~= ".";
+    const expectedValue = annotation.flag("havingValue", true) ? "\"true\"" : "\"false\"";
+    const matchIfMissing = annotation.flag("matchIfMissing") ? "true" : "false";
+    foreach (name; names.length ? names : values)
+        outcome.terms ~= "c.property(" ~ literal(prefix ~ name) ~ ", " ~ expectedValue ~ ", " ~ matchIfMissing ~ ")";
 }
 
 private void beanTerms(const ref MergedSet merged, string beanType, ref ConditionOutcome outcome)

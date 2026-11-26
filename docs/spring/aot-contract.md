@@ -558,7 +558,7 @@ The generator also checks at build time that the constructor dependencies have n
 | `@ConditionalOnClass`, `@ConditionalOnMissingClass` | build time, in the extraction compile | the definition is emitted or left out; nothing at runtime |
 | `@Profile("prod & !cloud")` | startup | `(c.acceptsProfile("prod") && !c.acceptsProfile("cloud"))`, the profile expression compiled to D at build time; a malformed expression is FLINT-E1102 |
 | `@ConditionalOnProperty(prefix, name, havingValue, matchIfMissing)` | startup | one `c.property(...)` per name, joined with `&&` |
-| `@ConditionalOnBooleanProperty` | startup | `c.property(name, value ? "true" : "false", matchIfMissing)` |
+| `@ConditionalOnBooleanProperty` | build time validation and startup matching | Exactly one of `name` and `value` supplies the property names. Each name emits `c.property(name, havingValue ? "true" : "false", matchIfMissing)`. |
 | `@ConditionalOnBean`, `@ConditionalOnMissingBean` | startup, in definition order | `c.hasBeanOfType(...)` / `!c.hasBeanOfType(...)`; with no type on a `@Bean` method, its return type |
 | `@ConditionalOnSingleCandidate` | startup | `c.hasSingleCandidate(type)` |
 | `@ConditionalOnWebApplication` | startup | `c.isWebApplication("SERVLET")` |
@@ -719,6 +719,7 @@ through the descriptors it resolves once per advised method.
 | FLINT-E1115 | a bean (a `@Bean` method's return type) is not a class or interface |
 | FLINT-E1116 | a generated module for a module outside `src/` would import a project module |
 | FLINT-E1117 | a `META-INF/services` provider's module is not in the build closure |
+| FLINT-E1118 | `@ConditionalOnBooleanProperty` needs exactly one of `name` or `value` |
 
 Every diagnostic names the source file and line of the declaration that caused it.
 
