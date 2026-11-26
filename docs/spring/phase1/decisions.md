@@ -1142,3 +1142,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - **Why:** Java's DNS-based equality blocks on network I/O inside `equals`, which is incompatible with fibers, and makes hashing nondeterministic.
     - **Recorded as** a deviation by sol-jdk-concurrent-io. `URI` keeps Java's semantics.
   - **R5 now covers nullable value types** (for example `Persistable!long.getId()` returns `Nullable!long`). `Optional!T` stays reserved for `java.util.Optional`.
+- 2026-11-26 01:58Z, coordinator, under the owner's standing approval:
+  - **Pre-approved:** narrow `object_const_check` exclusions in `dscanner.ini` for Spring, Jakarta and Java API namespaces, each in its own commit with a reason.
+    - **Why:** Java's `toString`, `equals` and `hashCode` on Object references cannot be `const` in D.
+    - **Never excluded:** engines (`flint.engine.*`, arena, conc, `packages/*`).
+  - **JDK lanes don't hold slices for module-ref retention** that comes only from today's aggregate `flint.java.lang` import. It is baselined in the closure gate's ratchet, and sol-jdk-core's split removes it.
