@@ -1274,7 +1274,8 @@
    "dependencies": [
     "core",
     "engine-aot",
-    "java"
+    "java",
+    "java-util"
    ],
    "bench": {
     "fixture": "ai/ai-commons/bench",

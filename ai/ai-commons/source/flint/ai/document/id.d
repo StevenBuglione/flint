@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/document/id/IdGenerator.java
+// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/document/id/{IdGenerator,RandomIdGenerator}.java
 // Modified by the Flint authors.
 module flint.ai.document.id;
 
@@ -40,5 +40,24 @@ interface IdGenerator
                 boxed[i] = Any.of(contents[i]);
         }
         return generateId(boxed[0 .. Args.length]);
+    }
+}
+
+/// Generates a random UUID for a document.
+class RandomIdGenerator : IdGenerator
+{
+    alias generateId = IdGenerator.generateId;
+
+    /// Creates a random ID generator.
+    this() pure nothrow @nogc
+    {
+    }
+
+    /// Returns a version 4 UUID regardless of the supplied content.
+    override string generateId(scope Any[] contents)
+    {
+        import flint.java.util.uuid : UUID;
+
+        return UUID.randomUUID().toString();
     }
 }
