@@ -15,6 +15,7 @@ import flint.engine.jpa.mapping : AttributeValue, EntityMapping;
 
 private alias EntityResult = Result!Object;
 private alias TicketResult = Result!ulong;
+private alias LazyLoadResult = Result!LazyLoadStart;
 
 /// A resolved managed entity, its context slot and an optional loaded version.
 package struct ManagedTarget
@@ -313,5 +314,79 @@ struct ManagedEntities
         awaitingKey = false;
         foreach (ref snapshot; snapshots)
             snapshot.clear();
+    }
+}
+
+/// A validated owner and its active load attempt.
+struct LazyLoadStart
+{
+    /// GC-owned owner for the fetch.
+    Object entity;
+    /// Attempt number for the originating state.
+    uint attempt;
+}
+
+/// Single-fiber load state for one association. Its caller owns the typed payload and JDBC lease.
+struct LazyLoadState
+{
+    private enum Phase : ubyte
+    {
+        unloaded,
+        loading,
+        loaded,
+    }
+
+    private LazyHandle owner;
+    private uint serial;
+    private Phase phase;
+
+    @disable this(this);
+    @disable void opAssign(LazyLoadState replacement);
+
+    /// Read before consulting a context. An initialized null or empty payload is loaded too.
+    @property bool loaded() const scope nothrow @nogc
+    {
+        return phase == Phase.loaded;
+    }
+
+    /// Resolves the owner before JDBC acquisition. An attempt number belongs to this state alone.
+    /// Supply the handle captured on attachment, including for retries.
+    LazyLoadResult begin(scope ref ManagedEntities managed, LazyHandle handle) scope nothrow @nogc
+    {
+        if (phase != Phase.unloaded)
+            return LazyLoadResult(LazyLoadStart.init, Error(Status.conflict,
+                    "JPA lazy association has already started loading"));
+        if (serial == uint.max)
+            return LazyLoadResult(LazyLoadStart.init, Error(Status.resourceExhausted,
+                    "JPA lazy load attempts exhausted"));
+        auto resolved = managed.resolveLazyOwner(handle);
+        if (!resolved.ok)
+            return LazyLoadResult(LazyLoadStart.init, resolved.error);
+        owner = handle;
+        phase = Phase.loading;
+        return LazyLoadResult(LazyLoadStart(resolved.value, ++serial));
+    }
+
+    /// Completes a terminal successful fetch after rechecking its owner in the current context.
+    /// Publish the staged payload immediately on success, before invoking callbacks.
+    Error complete(scope ref ManagedEntities managed, uint attempt) scope nothrow @nogc
+    {
+        if (!owns(attempt))
+            return Error(Status.conflict, "JPA lazy load attempt is no longer active");
+        const resolved = managed.resolveLazyOwner(owner);
+        phase = resolved.ok ? Phase.loaded : Phase.unloaded;
+        return resolved.error;
+    }
+
+    /// Releases the matching failed attempt once its I/O is terminal.
+    void fail(uint attempt) scope nothrow @nogc
+    {
+        if (owns(attempt))
+            phase = Phase.unloaded;
+    }
+
+    private bool owns(uint attempt) const scope nothrow @nogc
+    {
+        return phase == Phase.loading && attempt == serial;
     }
 }

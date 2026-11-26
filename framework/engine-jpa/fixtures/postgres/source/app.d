@@ -13,7 +13,7 @@ import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, Entit
     RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult, validateEntity, validateMapping;
 import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
 import flint.engine.jpa.loaded_state : ManagedSnapshotSlot, captureLoadedState, dirtyOrdinals, planLoadedSnapshot;
-import flint.engine.jpa.managed_entities : ManagedEntities;
+import flint.engine.jpa.managed_entities : LazyLoadState, ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jpa.result_binding : materializeManagedRow, planManagedResult;
@@ -304,6 +304,12 @@ private void verifyManagedIdentity(DataSource dataSource)
         const before = GC.stats().allocatedInCurrentThread;
         const firstHandle = managed.lazyHandle(key);
         assert(firstHandle.ok && managed.resolveLazyOwner(firstHandle.value).value is first.value);
+        LazyLoadState loadedAssociation;
+        const started = loadedAssociation.begin(managed, firstHandle.value);
+        assert(started.ok && started.value.entity is first.value);
+        // The fixture models a façade publishing an initialized empty association.
+        assert(loadedAssociation.complete(managed, started.value.attempt).code == Status.ok);
+        const Owner[] published = [];
         const original = managed.dirty(key, ordinals[]);
         assert(original.ok && original.value == 0);
         (cast(Owner) first.value).name = "Edited";
@@ -333,9 +339,16 @@ private void verifyManagedIdentity(DataSource dataSource)
         const missing = materializeManagedRow(plan.value, rows, managed);
         assert(missing.error.code == Status.invalidArgument && missing.error.offset == 0);
         assert(managed.find(key).value is loadedAgain.value);
+        const beforeRetire = GC.stats().allocatedInCurrentThread;
+        LazyLoadState pendingAssociation;
+        const pending = pendingAssociation.begin(managed, reloadedHandle.value);
+        assert(pending.ok && pending.value.entity is loadedAgain.value);
         managed.clear();
+        assert(pendingAssociation.complete(managed, pending.value.attempt).code == Status.notFound);
+        assert(!pendingAssociation.loaded && loadedAssociation.loaded && published.length == 0);
         assert(managed.dirty(key, ordinals[]).error.code == Status.notFound);
         assert(managed.resolveLazyOwner(reloadedHandle.value).error.code == Status.notFound);
+        assert(GC.stats().allocatedInCurrentThread == beforeRetire);
     }
     foreach (entity; entities)
         assert(entity is null);
