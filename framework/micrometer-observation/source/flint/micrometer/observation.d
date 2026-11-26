@@ -33,7 +33,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.clock : currentTimeMillis;
 import flint.engine.aot.objects : statelessInstance;
 import flint.engine.aot.text : decimal;
-import flint.java.lang : Iterable, NullPointerException;
+import flint.java.lang : AutoCloseable, Iterable, NullPointerException;
 import flint.java.util.formatter : formatJava;
 import flint.java.util.function_ : BiPredicate;
 import flint.micrometer.common : KeyValue, KeyValues;
@@ -159,6 +159,42 @@ interface Observation : ObservationView
             override EventType formatErased(scope Any[] entries)
             {
                 return formatImpl(this, entries);
+            }
+        }
+    }
+
+    /// An observation bound to a context until its scope closes.
+    interface Scope : AutoCloseable
+    {
+        /// The observation associated with this scope.
+        Observation getCurrentObservation();
+
+        /// The previous scope, if this scope has a parent.
+        Scope getPreviousObservationScope();
+
+        /// Close the scope and release its resources.
+        override void close();
+
+        /// Clear the current scope.
+        deprecated("Use close to release the scope.") void reset();
+
+        /// Make this scope current after resetting previous scopes.
+        deprecated("Micrometer no longer calls makeCurrent.") void makeCurrent();
+
+        /// Report whether this scope is a no-op.
+        bool isNoop();
+
+        /// Defaults for a regular scope without a parent (R3).
+        mixin template Defaults(alias ScopeType = Scope)
+        {
+            override ScopeType getPreviousObservationScope()
+            {
+                return null;
+            }
+
+            override bool isNoop()
+            {
+                return false;
             }
         }
     }

@@ -192,7 +192,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | micrometer-core@1.18.0 | 130 | 123 | 0 | 2,137 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 7 | 26 | 0 | 4,419 |
-| framework | micrometer-observation@1.18.0 | 44 | 36 | 0 | 232 |
+| framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 213 | 113 | 1,871 | 16,224 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
@@ -946,6 +946,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.observation.Observation.Event#getWallTime()` | `flint.micrometer.observation.Observation.Event.getWallTime` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.observation.Observation.Event#of(String,String,long,Iterable)` | `flint.micrometer.observation.Observation.Event.of` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `io.micrometer.observation.Observation.Event#of(String,String,long,Iterable,Iterable)` | `flint.micrometer.observation.Observation.Event.of` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.observation.Observation.Scope#getPreviousObservationScope()` | `flint.micrometer.observation.Observation.Scope.getPreviousObservationScope` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.observation.Observation.Scope#isNoop()` | `flint.micrometer.observation.Observation.Scope.isNoop` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.observation.Observation.Scope#makeCurrent()` | `flint.micrometer.observation.Observation.Scope.makeCurrent` | [R2](api-mapping.md#r2-annotations) |  |
+| `io.micrometer.observation.Observation.Scope#reset()` | `flint.micrometer.observation.Observation.Scope.reset` | [R2](api-mapping.md#r2-annotations) |  |
 | `io.micrometer.observation.ObservationConvention#EMPTY` | `flint.micrometer.observation.ObservationConvention.EMPTY` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R17](api-mapping.md#r17-shared-constants-of-generic-classes) |  |
 | `io.micrometer.observation.ObservationConvention#getContextualName(T)` | `flint.micrometer.observation.ObservationConvention.getContextualName` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `io.micrometer.observation.ObservationConvention#getHighCardinalityKeyValues(T)` | `flint.micrometer.observation.ObservationConvention.getHighCardinalityKeyValues` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -9188,7 +9192,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.step | 72 | 0 |
 | io.micrometer.core.instrument.util | 37 | 0 |
 | io.micrometer.core.ipc.http | 56 | 0 |
-| io.micrometer.observation | 127 | 0 |
+| io.micrometer.observation | 120 | 0 |
 | io.micrometer.observation.annotation | 12 | 0 |
 | io.micrometer.observation.aop | 17 | 0 |
 | io.micrometer.observation.contextpropagation | 14 | 0 |
