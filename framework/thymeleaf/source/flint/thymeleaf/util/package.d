@@ -20,6 +20,7 @@
 module flint.thymeleaf.util;
 
 public import flint.thymeleaf.util.loggingutils : LoggingUtils;
+public import flint.thymeleaf.util.numberpointtype : NumberPointType;
 
 import flint.engine.aot.any : Any;
 import std.typecons : Nullable;
