@@ -8,6 +8,7 @@
   "java.lang.Number": "flint.java.lang.number",
   "java.lang.Short": "flint.java.lang.short_",
   "java.lang.StrictMath": "flint.java.lang.strictmath",
+  "java.math.BigDecimal": "flint.java.math.bigdecimal",
   "java.net.BindException": "flint.java.net.bindexception",
   "java.net.ConnectException": "flint.java.net.connectexception",
   "java.net.DatagramPacket": "flint.java.net.datagrampacket",
