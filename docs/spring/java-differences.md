@@ -196,7 +196,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | openjdk@21.0.13 | 236 | 151 | 1,871 | 16,163 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 555 | 23 | 88 | 11,747 |
+| security | spring-security@7.2.0 | 554 | 24 | 88 | 11,747 |
 
 ## Known gaps
 
@@ -4476,6 +4476,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.security.core.userdetails.UserDetailsPasswordService#NOOP` | `flint.security.core.userdetails.UserDetailsPasswordService.NOOP` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) | A property returns the shared stateless service. |
 | `org.springframework.security.core.userdetails.UserDetailsPasswordService#updatePassword(UserDetails,String)` | `flint.security.core.userdetails.UserDetailsPasswordService.updatePassword` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.security.crypto.bcrypt
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion` | `flint.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion` | [R15](api-mapping.md#r15-enums-with-fields) | The nested D enum uses the fixed Java version strings as backing values. |
 
 #### org.springframework.security.provisioning
 
@@ -11061,6 +11067,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(BCryptVersion,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(BCryptVersion,int,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(int,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
+| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#$2A` | 2 | The current D constant is _2A. The adaptation of dollar-prefixed Java names is pending. |
+| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#$2B` | 2 | The current D constant is _2B. The adaptation of dollar-prefixed Java names is pending. |
+| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#$2Y` | 2 | The current D constant is _2Y. The adaptation of dollar-prefixed Java names is pending. |
+| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#getVersion()` | 2 | Casting the D enum to string gives its backing value. The named accessor is deferred. |
 | security | `org.springframework.security.web.access.ExceptionTranslationFilter#<init>(AuthenticationEntryPoint,RequestCache)` | 2 | The request-caching overload requires the deferred RequestCache contract. |
 | security | `org.springframework.security.web.context.RequestAttributeSecurityContextRepository#loadContext(HttpRequestResponseHolder)` | 2 | The current Flint method accepts HttpServletRequest. The holder-based method waits on HttpRequestResponseHolder. |
 | security | `org.springframework.security.web.context.SecurityContextRepository#loadContext(HttpRequestResponseHolder)` | 2 | The current Flint interface accepts HttpServletRequest. The holder-based method waits on HttpRequestResponseHolder. |
