@@ -14,11 +14,12 @@ import flint.engine.reactor.sys.chunks : Chunked;
 import flint.engine.reactor.internal.queues : Mailbox, Message, Timers;
 import flint.engine.reactor.internal.wakes : Recorded, RemoteWakes, WakeLane, statusOf;
 import flint.engine.reactor.sys.fibers : createFiber, PoolFiber, releaseFiber, resetFiber, resumeFiber, yieldFiber;
-import flint.engine.reactor.sys.locals : cellStamp, loadCell, localStorable, localWords, storeCell;
+import flint.engine.reactor.fiber_local : taskCellResolver, threadLocalWords;
 import flint.engine.reactor.sys.offload : OffloadPool;
 import flint.engine.reactor.sys.workers : availableCpus, callerAffinity, joinWorker, pinWorker,
     restoreAffinity, startWorker, workerUsage, yieldWorker;
 
+public import flint.engine.reactor.fiber_local : FiberLocal, maxFiberLocalWords;
 public import flint.engine.reactor.types : AcceptDelegate, AcceptFn, Backend, Completion, CompletionDelegate,
     CompletionFn, ConnectionId, IoId, ListenOptions, NativeInterest, NativeReadyFn, OffloadInterrupt, OffloadWork,
     ReadDelegate, ReactorOptions, ReadFn, TaskContext, TaskDelegate, TaskFn, TaskWaker, TimerId, WorkerStats;
@@ -126,116 +127,31 @@ private bool validStorage(ReactorOptions options, uint workers) pure nothrow @no
         && cast(ulong) workers * options.maxPendingIoPerCore * options.ioBufferBytes <= 512UL * 1024 * 1024;
 }
 
-/// Words that all `FiberLocal` declarations of a process may claim together, one per local plus its value.
-enum uint maxFiberLocalWords = 128;
-
-private shared uint claimedLocalWords;
-// FiberLocal values read or written off any task fiber: on a loop callback, an offload thread or a thread
-// outside the reactor. Thread-local by design; the stamp is constant because the thread never retires.
-private void*[maxFiberLocalWords] threadLocalWords;
-private enum size_t threadStamp = 1;
-
-/// A value each task fiber sees separately, the fiber counterpart of a Java `ThreadLocal`. A task starts
-/// with `T.init`; what it sets is gone once it ends, even though its fiber slot is reused. Off a task fiber
-/// the value is thread-local. Declare it as `shared FiberLocal!T`: only its storage key is shared.
-///
-/// `T` is a class or interface reference or plain data without copy or destruction hooks, at most
-/// `maxFiberLocalWords - 1` words. A set value may not borrow stack or request storage.
-struct FiberLocal(T) if (localStorable!T && localWords!T < maxFiberLocalWords)
+/// The calling worker's active task fiber cell for `FiberLocal` (`flint.engine.reactor.fiber_local`): false off
+/// a task fiber, so the thread's own words serve; true with an empty cell when the fiber's storage is too small.
+private bool taskCell(size_t first, size_t end, bool writing, out void*[] cell, out size_t stamp) nothrow @nogc
 {
-    /// One past the first word claimed for this local, or zero before the first `set`.
-    private uint key;
-
-    /// The calling task's value, or `T.init` when it set none.
-    T get() shared nothrow @nogc
-    {
-        const offset = atomicLoad(key);
-        if (offset == 0)
-            return T.init;
-        size_t stamp;
-        auto cell = localCell(offset, localWords!T, stamp);
-        if (cell.length == 0 || cellStamp(cell) != stamp)
-            return T.init;
-        return loadCell!T(cell);
-    }
-
-    /// Replace the calling task's value. Fails with `resourceExhausted` when the process claimed
-    /// `maxFiberLocalWords` or the task fiber's `ReactorOptions.fiberLocalWords` is too small.
-    Error set(T value) shared nothrow @nogc
-    {
-        const offset = claimLocal(key, localWords!T);
-        if (offset == 0)
-            return Error(Status.resourceExhausted, "FiberLocal words exhausted for this process");
-        size_t stamp;
-        auto cell = localCell(offset, localWords!T, stamp, true);
-        if (cell.length == 0)
-            return Error(Status.resourceExhausted, "raise ReactorOptions.fiberLocalWords for this FiberLocal");
-        storeCell!T(cell, stamp, value);
-        return Error.init;
-    }
-
-    /// Forget the calling task's value, so `get` returns `T.init` and its references are released.
-    void remove() shared nothrow @nogc
-    {
-        const offset = atomicLoad(key);
-        if (offset == 0)
-            return;
-        size_t stamp;
-        auto cell = localCell(offset, localWords!T, stamp);
-        cell[] = null; // empty when the cell was never allocated
-    }
-}
-
-/// The offset of a local's cell, claiming `words` plus a stamp on first use. Zero when the process ran out.
-private uint claimLocal(ref shared uint key, size_t words) nothrow @nogc
-{
-    const current = atomicLoad(key);
-    if (current != 0)
-        return current;
-    for (;;)
-    {
-        const used = atomicLoad(claimedLocalWords);
-        if (used + 1 + words > maxFiberLocalWords)
-            return 0;
-        if (!cas(&claimedLocalWords, used, cast(uint)(used + 1 + words)))
-            continue;
-        // A racing first `set` may have published first; its claim wins and this one stays unused.
-        if (cas(&key, 0U, used + 1))
-            return used + 1;
-        return atomicLoad(key);
-    }
-}
-
-/// The calling context's cell for `offset`, with the stamp of its current owner. Empty when the active task
-/// fiber's storage is too small for this cell.
-private void*[] localCell(uint offset, size_t words, out size_t stamp, bool writing = false) nothrow @nogc
-{
-    const first = offset - 1;
-    const end = first + 1 + words;
     auto runtime = currentRuntime;
-    if (runtime !is null)
+    if (runtime is null)
+        return false;
+    auto worker = &runtime.workers[currentWorkerIndex];
+    if (worker.activeFiber == noSlot)
+        return false;
+    const stride = runtime.options.fiberLocalWords;
+    if (end > stride)
+        return true;
+    auto task = &worker.fibers[worker.activeFiber];
+    const base = cast(size_t) worker.activeFiber * stride;
+    if (writing)
     {
-        auto worker = &runtime.workers[currentWorkerIndex];
-        if (worker.activeFiber != noSlot)
-        {
-            const stride = runtime.options.fiberLocalWords;
-            if (end > stride)
-                return null;
-            auto task = &worker.fibers[worker.activeFiber];
-            const base = cast(size_t) worker.activeFiber * stride;
-            if (writing)
-            {
-                if (worker.localWords.ensure(base) != Status.ok)
-                    return null;
-                task.localsDirty = true;
-            }
-            stamp = cast(size_t) task.generation;
-            // Null before any fiber in this slot's chunk set a local: `get` then sees no value.
-            return worker.localWords.slice(base + first, base + end);
-        }
+        if (worker.localWords.ensure(base) != Status.ok)
+            return true;
+        task.localsDirty = true;
     }
-    stamp = threadStamp;
-    return threadLocalWords[first .. end];
+    stamp = cast(size_t) task.generation;
+    // Null before any fiber in this slot's chunk set a local: `get` then sees no value.
+    cell = worker.localWords.slice(base + first, base + end);
+    return true;
 }
 
 /// A handle that any thread can use to end one wait of a suspended task fiber: a resource released on another
@@ -1557,10 +1473,12 @@ private struct Worker
     {
         currentRuntime = runtime;
         currentWorkerIndex = index;
+        taskCellResolver = &taskCell;
         const previousWait = replaceWaitHook(&waitOnOwner);
         scope (exit)
         {
             replaceWaitHook(previousWait);
+            taskCellResolver = null;
             currentWorkerIndex = uint.max;
             currentRuntime = null;
         }

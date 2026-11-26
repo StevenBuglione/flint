@@ -14,7 +14,7 @@
 +/
 module flint.context.i18n;
 
-import flint.engine.reactor : FiberLocal;
+import flint.engine.reactor.fiber_local : FiberLocal;
 import flint.java.lang : IllegalStateException;
 import flint.java.util : Locale;
 
