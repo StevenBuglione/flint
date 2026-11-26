@@ -8,9 +8,14 @@ Modified by the Flint authors.
 +/
 module mock_http_servlet_request_builder_tests;
 
-import flint.http : HttpMethod;
+import flint.engine.aot.any : Any;
+import flint.http : HttpHeaders, HttpMethod, MediaType;
+import flint.jakarta.servlet.http : Cookie;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.net : URI;
+import flint.java.nio.charset : StandardCharsets;
+import flint.java.util : ArrayList, Collection;
+import flint.java.util.date : Date;
 import flint.mock.web : MockHttpServletRequest, MockServletContext;
 import flint.test.web.servlet.request : MockHttpServletRequestBuilder, MockMvcRequestBuilders;
 import flint.util : LinkedMultiValueMap;
@@ -18,6 +23,175 @@ import flint.util : LinkedMultiValueMap;
 @safe:
 
 private alias Builders = MockMvcRequestBuilders;
+
+@("MockHttpServletRequestBuilderTests.acceptHeader")
+unittest
+{
+    auto request = build(Builders.get("/").accept(MediaType.TEXT_HTML, MediaType.APPLICATION_XML));
+    auto values = request.getHeaders(HttpHeaders.ACCEPT);
+    assert(values.length == 1);
+    auto types = MediaType.parseMediaTypes(values[0]);
+    assert(types.length == 2);
+    assert(types[0].toString() == "text/html");
+    assert(types[1].toString() == "application/xml");
+}
+
+@("MockHttpServletRequestBuilderTests.acceptHeaderWithInvalidValues")
+unittest
+{
+    assert(build(Builders.get("/").accept("any", "any2")).getHeader(HttpHeaders.ACCEPT) == "any, any2");
+}
+
+@("MockHttpServletRequestBuilderTests.contentType")
+unittest
+{
+    auto request = build(Builders.get("/").contentType(MediaType.TEXT_HTML));
+    assert(request.getContentType() == "text/html");
+    assert(request.getHeaders(HttpHeaders.CONTENT_TYPE) == ["text/html"]);
+}
+
+@("MockHttpServletRequestBuilderTests.contentTypeViaString")
+unittest
+{
+    auto request = build(Builders.get("/").contentType("text/html"));
+    assert(request.getContentType() == "text/html");
+    assert(request.getHeaders(HttpHeaders.CONTENT_TYPE) == ["text/html"]);
+}
+
+@("MockHttpServletRequestBuilderTests.contentTypeWithInvalidValue")
+unittest
+{
+    assert(build(Builders.get("/").contentType("any")).getContentType() == "any");
+}
+
+@("MockHttpServletRequestBuilderTests.contentTypeViaHeader")
+unittest
+{
+    assert(build(Builders.get("/").header(HttpHeaders.CONTENT_TYPE, "text/html")).getContentType() == "text/html");
+}
+
+@("MockHttpServletRequestBuilderTests.contentTypeViaHeaderWithInvalidValue")
+unittest
+{
+    assert(build(Builders.get("/").header(HttpHeaders.CONTENT_TYPE, "yaml")).getContentType() == "yaml");
+}
+
+@("MockHttpServletRequestBuilderTests.contentTypeViaMultipleHeaderValues")
+unittest
+{
+    auto request = build(Builders.get("/").header("content-type", "text/html", "text/plain"));
+    assert(request.getContentType() == "text/plain");
+    assert(request.getHeaders(HttpHeaders.CONTENT_TYPE) == ["text/plain"]);
+}
+
+@("MockHttpServletRequestBuilderTests.body")
+unittest
+{
+    auto body = cast(const(ubyte)[]) "Hello World";
+    auto request = build(Builders.get("/").content(body));
+    assert(request.getInputStream().readAllBytes() == body);
+    assert(request.getContentLength() == body.length);
+}
+
+@("MockHttpServletRequestBuilderTests.header")
+unittest
+{
+    assert(build(Builders.get("/").header("foo", "bar", "baz")).getHeaders("foo") == ["bar", "baz"]);
+}
+
+@("MockHttpServletRequestBuilderTests.headers")
+unittest
+{
+    auto headers = HttpHeaders.create();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.put("foo", ["bar", "baz"]);
+    auto request = build(Builders.get("/").headers(headers));
+    assert(request.getHeaders("foo") == ["bar", "baz"]);
+    assert(request.getHeader(HttpHeaders.CONTENT_TYPE) == MediaType.APPLICATION_JSON.toString());
+}
+
+@("MockHttpServletRequestBuilderTests.cookie")
+unittest
+{
+    auto request = build(Builders.get("/").cookie(new Cookie("foo", "bar"), new Cookie("baz", "qux")));
+    auto cookies = request.getCookies();
+    assert(cookies.length == 2);
+    assert(cookies[0].getName() == "foo");
+    assert(cookies[0].getValue() == "bar");
+    assert(cookies[1].getName() == "baz");
+    assert(cookies[1].getValue() == "qux");
+}
+
+@("MockHttpServletRequestBuilderTests.noCookies")
+unittest
+{
+    assert(build(Builders.get("/")).getCookies() is null);
+}
+
+@("MockHttpServletRequestBuilderTests.characterEncoding")
+unittest
+{
+    auto builder = Builders.get("/").characterEncoding("UTF-8");
+    assert(build(builder).getCharacterEncoding() == "UTF-8");
+    builder.characterEncoding(StandardCharsets.ISO_8859_1);
+    assert(build(builder).getCharacterEncoding() == StandardCharsets.ISO_8859_1.name());
+}
+
+@("MockHttpServletRequestBuilderTests.requestAttribute")
+unittest
+{
+    assert(build(Builders.get("/").requestAttr("foo", Any.of("bar"))).getAttribute("foo").get!string() == "bar");
+}
+
+unittest
+{
+    auto builder = Builders.get("/").accept("text/plain").accept(MediaType.TEXT_HTML)
+        .header("x-remove", "old").headers((HttpHeaders headers) {
+        assert(headers.get(HttpHeaders.ACCEPT) == ["text/html"]);
+        headers.remove("X-Remove");
+        headers.set("X-Set", "new");
+    });
+    auto request = build(builder);
+    assert(request.getHeader("x-remove") is null);
+    assert(request.getHeader("X-Set") == "new");
+    rejects(() { builder.accept(cast(string[]) null); }, "'mediaTypes' must not be empty");
+    rejects(() { builder.contentType(cast(string) null); }, "'contentType' must not be null");
+    rejects(() { builder.cookie(); }, "'cookies' must not be empty");
+}
+
+unittest
+{
+    auto request = build(Builders.post("/").characterEncoding("UTF-8").contentType("text/plain")
+            .header("content-TYPE", "text/html;charset=ISO-8859-1").content("café"));
+    assert(request.getContentType() == "text/html;charset=ISO-8859-1");
+    assert(request.getCharacterEncoding() == "ISO-8859-1");
+    assert(request.getInputStream().readAllBytes() == [0x63, 0x61, 0x66, 0xC3, 0xA9]);
+    assert(request.getHeader(HttpHeaders.CONTENT_LENGTH) == "5");
+    request = build(Builders.post("/").content("").header(HttpHeaders.TRANSFER_ENCODING, "chunked"));
+    assert(request.getContentLength() == 0);
+    assert(request.getHeader(HttpHeaders.CONTENT_LENGTH) is null);
+    request = build(Builders.post("/").content("x").header(HttpHeaders.TRANSFER_ENCODING, "chunked"));
+    assert(request.getHeader(HttpHeaders.CONTENT_LENGTH) is null);
+    request = build(Builders.post("/").content("x").header("content-length", "2"));
+    assert(request.getHeader(HttpHeaders.CONTENT_LENGTH) == "2");
+}
+
+unittest
+{
+    Collection!string tags = new ArrayList!string;
+    tags.add("one");
+    tags.add("two");
+    auto request = build(Builders.get("/").header("X-Number", 42, true).header("X-Tags", tags)
+            .header("X-Date", new Date(0)).acceptCharset(StandardCharsets.UTF_8, StandardCharsets.ISO_8859_1)
+            .ifNoneMatch("\"one\"", "\"two\"").header("Cookie", "stale=value")
+            .cookie(new Cookie("new", "cookie"), new Cookie("other", "")));
+    assert(request.getHeaders("X-Number") == ["42", "true"]);
+    assert(request.getHeaders("X-Tags") == ["one", "two"]);
+    assert(request.getHeader("X-Date") == "Thu, 01 Jan 1970 00:00:00 GMT");
+    assert(request.getHeader(HttpHeaders.ACCEPT_CHARSET) == "utf-8, iso-8859-1");
+    assert(request.getHeader(HttpHeaders.IF_NONE_MATCH) == "\"one\",\"two\"");
+    assert(request.getHeaders(HttpHeaders.COOKIE) == ["new=cookie; other="]);
+}
 
 private MockHttpServletRequest build(MockHttpServletRequestBuilder builder)
 {

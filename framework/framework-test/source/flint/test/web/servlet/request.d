@@ -7,17 +7,21 @@ MockHttpServletRequestBuilder.java, AbstractMockHttpServletRequestBuilder.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: `Object... uriVariables` is a template parameter pack (R7). The concrete
-builder supplies the fluent URI and path methods (R12). Query parameters are decoded as UTF-8 (R14).
+builder supplies the fluent methods (R12). The headers consumer is a delegate (R9). Query parameters
+are decoded as UTF-8 (R14).
 +/
 module flint.test.web.servlet.request;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decimal;
-import flint.http : HttpHeaders, HttpMethod, MediaType;
+import flint.http : HttpHeaders, HttpMethod, MediaType, asciiLower, equalsIgnoreAsciiCase;
 import flint.jakarta.servlet : ServletContext;
 import flint.jakarta.servlet.http : Cookie;
 import flint.java.lang : IllegalArgumentException, valueOf;
 import flint.java.net : URI;
+import flint.java.nio.charset : Charset;
+import flint.java.util : RawCollection;
+import flint.java.util.date : Date;
 import flint.mock.web : MockHttpServletRequest;
 import flint.test.web.servlet : RequestBuilder;
 import flint.util : Assert, MultiValueMap, StringUtils;
@@ -45,7 +49,7 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     private string contextPathValue = "";
     private string servletPathValue = "";
     private Nullable!string pathInfoValue = Nullable!string("");
-    private string[2][] headers;
+    private HttpHeaders headerValues;
     private Parameter[] parameters;
     private Parameter[] queryParameters;
     private const(ubyte)[] contentValue;
@@ -61,6 +65,7 @@ final class MockHttpServletRequestBuilder : RequestBuilder
         if (method is null)
             throw new IllegalArgumentException("'httpMethod' is required");
         this.method = method;
+        headerValues = HttpHeaders.create();
     }
 
     /// Creates a builder using a method name and URI template.
@@ -169,35 +174,110 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     MockHttpServletRequestBuilder header(string name, string[] values...)
     {
         foreach (value; values)
-            headers ~= [name, value];
+            headerValues.add(name, value is null ? "null" : value);
+        return this;
+    }
+
+    /// Adds header values, formatting dates and expanding a single collection as Spring does (R7).
+    MockHttpServletRequestBuilder header(Args...)(string name, Args values)
+    {
+        Any[Args.length] arguments;
+        static foreach (i; 0 .. Args.length)
+            arguments[i] = Any.of(values[i]);
+        return addHeaderValues(name, arguments[]);
+    }
+
+    private MockHttpServletRequestBuilder addHeaderValues(string name, scope Any[] values)
+    {
+        if (values.length == 1)
+        {
+            auto value = values[0];
+            if (auto items = cast(RawCollection) value.asObject())
+                return appendHeaderValues(name, items.toAnyArray());
+        }
+        return appendHeaderValues(name, values);
+    }
+
+    private MockHttpServletRequestBuilder appendHeaderValues(string name, scope Any[] values)
+    {
+        foreach (value; values)
+            headerValues.add(name, formatHeaderValue(value));
+        return this;
+    }
+
+    private static string formatHeaderValue(Any value)
+    {
+        auto object = value.asObject();
+        if (auto date = cast(Date) object)
+            return HttpHeaders.formatDate(date.getTime());
+        if (object !is null)
+            return valueOf(object);
+        return value.isNull() ? "null" : value.toString();
+    }
+
+    /// Appends the supplied HTTP headers.
+    MockHttpServletRequestBuilder headers(HttpHeaders headers)
+    {
+        headerValues.addAll(headers);
+        return this;
+    }
+
+    /// Gives the caller access to the headers accumulated by this builder (R9).
+    MockHttpServletRequestBuilder headers(scope void delegate(HttpHeaders) @safe consumer)
+    {
+        consumer(headerValues);
         return this;
     }
 
     /// Sets `Accept`.
     MockHttpServletRequestBuilder accept(MediaType[] mediaTypes...)
     {
-        return header(HttpHeaders.ACCEPT, MediaType.toString(mediaTypes));
+        Assert.notEmpty(mediaTypes, "'mediaTypes' must not be empty");
+        headerValues.setAccept(mediaTypes);
+        return this;
     }
 
     /// Sets `Accept` from text.
     MockHttpServletRequestBuilder accept(string[] mediaTypes...)
     {
-        string joined;
-        foreach (i, m; mediaTypes)
-            joined ~= (i == 0 ? "" : ", ") ~ m;
-        return header(HttpHeaders.ACCEPT, joined);
+        Assert.notEmpty(mediaTypes, "'mediaTypes' must not be empty");
+        headerValues.set(HttpHeaders.ACCEPT, StringUtils.arrayToDelimitedString(mediaTypes, ", "));
+        return this;
+    }
+
+    /// Sets `Accept-Charset` to the canonical charset names in lowercase.
+    MockHttpServletRequestBuilder acceptCharset(Charset[] acceptableCharsets...)
+    {
+        char[] names;
+        foreach (i, charset; acceptableCharsets)
+        {
+            if (i != 0)
+                names ~= ", ";
+            foreach (c; charset.name())
+                names ~= asciiLower(c);
+        }
+        headerValues.set(HttpHeaders.ACCEPT_CHARSET, names.length == 0 ? "" : names.idup);
+        return this;
+    }
+
+    /// Sets the entity tags for `If-None-Match`.
+    MockHttpServletRequestBuilder ifNoneMatch(string[] ifNoneMatches...)
+    {
+        headerValues.set(HttpHeaders.IF_NONE_MATCH, StringUtils.arrayToCommaDelimitedString(ifNoneMatches));
+        return this;
     }
 
     /// Sets the content type.
     MockHttpServletRequestBuilder contentType(MediaType contentType)
     {
-        contentTypeValue = contentType.toString();
-        return this;
+        Assert.notNull(contentType.getType(), "'contentType' must not be null");
+        return this.contentType(contentType.toString());
     }
 
     /// ditto
     MockHttpServletRequestBuilder contentType(string contentType)
     {
+        Assert.notNull(contentType, "'contentType' must not be null");
         contentTypeValue = contentType;
         return this;
     }
@@ -217,6 +297,12 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     }
 
     /// Sets the character encoding.
+    MockHttpServletRequestBuilder characterEncoding(Charset encoding)
+    {
+        return characterEncoding(encoding.name());
+    }
+
+    /// ditto
     MockHttpServletRequestBuilder characterEncoding(string encoding)
     {
         characterEncodingValue = encoding;
@@ -226,6 +312,7 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     /// Adds cookies.
     MockHttpServletRequestBuilder cookie(Cookie[] cookies...)
     {
+        Assert.notEmpty(cookies, "'cookies' must not be empty");
         this.cookies ~= cookies;
         return this;
     }
@@ -233,6 +320,9 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     /// Sets a request attribute.
     MockHttpServletRequestBuilder requestAttr(string name, Any value)
     {
+        Assert.hasLength(name, "'name' must not be empty");
+        if (value.isNull())
+            throw new IllegalArgumentException("'value' must not be null");
         if (name !in attributes)
             attributeOrder ~= name;
         attributes[name] = value;
@@ -318,23 +408,43 @@ final class MockHttpServletRequestBuilder : RequestBuilder
         request.setQueryString(query);
         foreach (parameter; parameters)
             request.addParameter(parameter.name, parameter.values);
-        foreach (pair; headers)
-            request.addHeader(pair[0], pair[1]);
-        if (contentTypeValue !is null)
-            request.setContentType(contentTypeValue);
-        if (characterEncodingValue !is null)
-            request.setCharacterEncoding(characterEncodingValue);
-        if (contentValue !is null)
-        {
-            request.setContent(contentValue);
-            if (request.getHeader(HttpHeaders.CONTENT_LENGTH) is null)
-                request.addHeader(HttpHeaders.CONTENT_LENGTH, decimal(contentValue.length));
-        }
-        if (cookies.length != 0)
-            request.setCookies(cookies);
+        applyHeadersAndBody(request);
         foreach (name; attributeOrder)
             request.setAttribute(name, attributes[name]);
         return request;
+    }
+
+    private void applyHeadersAndBody(MockHttpServletRequest request)
+    {
+        if (characterEncodingValue !is null)
+            request.setCharacterEncoding(characterEncodingValue);
+        request.setContent(contentValue);
+        if (contentTypeValue !is null)
+            request.setContentType(contentTypeValue);
+        foreach (name, values; headerValues)
+        {
+            if (equalsIgnoreAsciiCase(name, HttpHeaders.CONTENT_TYPE))
+            {
+                foreach (value; values)
+                    request.setContentType(value);
+            }
+            else if (cookies.length == 0 || !equalsIgnoreAsciiCase(name, HttpHeaders.COOKIE))
+            {
+                foreach (value; values)
+                    request.addHeader(name, value);
+            }
+        }
+        if (contentValue.length != 0 && !headerValues.containsHeader(HttpHeaders.CONTENT_LENGTH)
+                && !headerValues.containsHeader(HttpHeaders.TRANSFER_ENCODING))
+            request.addHeader(HttpHeaders.CONTENT_LENGTH, decimal(contentValue.length));
+        if (cookies.length != 0)
+        {
+            request.setCookies(cookies);
+            string cookieHeader;
+            foreach (index, cookie; cookies)
+                cookieHeader ~= (index == 0 ? "" : "; ") ~ cookie.getName() ~ "=" ~ cookie.getValue();
+            request.addHeader(HttpHeaders.COOKIE, cookieHeader);
+        }
     }
 
     private void updatePath(MockHttpServletRequest request)
