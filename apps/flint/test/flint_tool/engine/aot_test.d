@@ -893,14 +893,34 @@ unittest
 @("Boot class-presence conditions control which configurations register beans")
 unittest
 {
-    import std.file : copy, dirEntries, mkdirRecurse, SpanMode;
-    import std.path : buildPath, dirName;
-    import flint_tool.engine.aot.driver : AotRequest, runAot;
-    import flint_tool.support.process : Launch, capture;
+    import std.path : buildPath;
 
     const project = copyFixture("class-conditions");
     scope (exit)
         remove(project);
+    runGeneratedStartup(project, bootConditionImports(project, ["-I" ~ runtimeSource()]),
+            ["-I" ~ buildPath(repositoryRoot(), "tests", "aot", "support")]);
+}
+
+@("Boot web-application conditions distinguish servlet, reactive and non-web contexts")
+unittest
+{
+    const project = copyFixture("web-conditions");
+    scope (exit)
+        remove(project);
+    // The context is real. Use the fixture's Boot application marker so this test does not pull in
+    // Boot's terminal and signal handling through the module that declares the real marker.
+    string[] linkFlags;
+    version (Windows)
+        linkFlags = ["-L=ws2_32.lib"]; // The context's reactor dependency links Winsock.
+    runGeneratedStartup(project, bootConditionImports(project, closureImports(["context"])), linkFlags);
+}
+
+private string[] bootConditionImports(string project, string[] runtimeImports)
+{
+    import std.file : copy, mkdirRecurse;
+    import std.path : buildPath, dirName;
+
     const root = repositoryRoot();
     const overlay = buildPath(project, "boot-annotations");
     const condition = buildPath(overlay, "flint", "boot", "autoconfigure", "condition.d");
@@ -912,12 +932,23 @@ unittest
             "autoconfigure", "condition.d"), condition);
     copy(buildPath(root, "boot", "core", "flint-boot", "source", "flint", "boot", "context",
             "properties", "package.d"), properties);
+    // Keep the real context modules ahead of the annotation stubs when a fixture supplies them.
+    return ["-I" ~ overlay] ~ runtimeImports ~ [
+        "-I" ~ buildPath(root, "tests", "aot", "annotations")
+    ];
+}
+
+private void runGeneratedStartup(string project, string[] imports, string[] extraCompileFlags)
+{
+    import std.file : dirEntries, SpanMode;
+    import std.path : baseName, buildPath;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+    import flint_tool.support.process : Launch, capture;
+
     AotRequest request;
     request.root = project;
     request.compiler = compiler();
-    request.importPaths = [
-        "-I" ~ overlay, "-I" ~ buildPath(root, "tests", "aot", "annotations"), "-I" ~ runtimeSource()
-    ];
+    request.importPaths = imports;
     request.flags = ["-preview=dip1000"];
     request.environmentKey = "test";
     const outcome = runAot(request);
@@ -932,13 +963,12 @@ unittest
     foreach (directory; [source, generated])
         foreach (entry; dirEntries(directory, "*.d", SpanMode.depth))
             sources ~= entry.name;
-    const binary = buildPath(project, "class-conditions");
+    const binary = buildPath(project, baseName(project));
     Launch launch;
     launch.directory = project;
     const built = capture([compiler(), "-preview=dip1000",
-        "-unittest"] ~ request.importPaths ~ [
-        "-I" ~ buildPath(root, "tests", "aot", "support"), "-I" ~ source, "-I" ~ generated, "-i",
-        "-of=" ~ binary, buildPath(project, "main.d")
+        "-unittest"] ~ imports ~ extraCompileFlags ~ [
+        "-I" ~ source, "-I" ~ generated, "-i", "-of=" ~ binary, buildPath(project, "main.d")
     ] ~ sources, launch);
     assert(built.ok, built.combined());
     const ran = capture([binary], launch);

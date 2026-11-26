@@ -1,0 +1,6 @@
+[project]
+name = "web-conditions"
+version = "0.1.0"
+flint = "1.0"
+type = "executable"
+description = "Flint AOT fixture for Boot's web-application conditions."

@@ -196,8 +196,15 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnNotWebApplicationTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "tests/aot/web-conditions/main.d",
+      "methods": {
+        "ported": [
+          "testNotWebApplication",
+          "testNotWebApplicationWithReactiveContext",
+          "testNotWebApplicationWithServletContext"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnPropertyTests.java": {
       "phase": "2",
@@ -220,8 +227,15 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnWebApplicationTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "tests/aot/web-conditions/main.d",
+      "methods": {
+        "ported": [
+          "testNonWebApplication",
+          "testWebApplicationWithReactiveContext",
+          "testWebApplicationWithServletContext"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/boot/autoconfigure/condition/NoneNestedConditionsTests.java": {
       "phase": "2",
