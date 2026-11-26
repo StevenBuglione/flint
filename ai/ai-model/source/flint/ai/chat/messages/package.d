@@ -21,6 +21,7 @@ module flint.ai.chat.messages;
 import flint.ai.chat.messages.part : MessagePart, TextPart;
 import flint.ai.content : Content, copyContentMetadata;
 import flint.engine.aot.any : Any;
+import flint.java.lang : JavaObject;
 import flint.java.util : List, Map;
 import std.typecons : Nullable;
 
@@ -184,6 +185,27 @@ abstract class AbstractMessage : Message
     {
         return messageType_;
     }
+
+    /// Compares the stored role, metadata and ordered parts across message subtypes.
+    bool equals(Object other)
+    {
+        if (other is this)
+            return true;
+        auto that = cast(AbstractMessage) other;
+        return that !is null && messageType_ == that.messageType_
+            && metadata_.equals(cast(Object) that.metadata_) && parts_.equals(cast(Object) that.parts_);
+    }
+
+    /// Hashes the role, metadata and ordered parts in Java field order.
+    int hashCode()
+    {
+        // The R15 value enum uses its stable ordinal where Java uses reference identity.
+        uint hash = 31 + cast(uint) messageType_.ordinal();
+        hash = 31 * hash + cast(uint) metadata_.hashCode();
+        return cast(int)(31 * hash + cast(uint) parts_.hashCode());
+    }
+
+    mixin JavaObject;
 }
 
 /// A system instruction for a model conversation.

@@ -16,7 +16,7 @@
 
 module abstract_message_contract_tests;
 
-import flint.ai.chat.messages : AbstractMessage, Message, MessageType;
+import flint.ai.chat.messages : AbstractMessage, Message, MessageType, SystemMessage;
 import flint.ai.chat.messages.part : MessagePart, TextPart, ReasoningPart;
 import flint.engine.aot.any : Any;
 import flint.java.lang : IllegalArgumentException, NullPointerException, UnsupportedOperationException;
@@ -106,4 +106,34 @@ unittest
     auto parts = new ArrayList!MessagePart();
     parts.add(null);
     assert(collectException!NullPointerException(new FixtureMessage(MessageType.ASSISTANT, parts, metadata)) !is null);
+}
+
+@("message equality works across subtypes and compares live metadata")
+unittest
+{
+    AbstractMessage normal = new SystemMessage(Text("instruction"));
+    AbstractMessage fixture = new FixtureMessage(MessageType.SYSTEM, Text("instruction"), new MutableMetadata());
+    assert(normal.equals(fixture) && fixture.equals(normal));
+    assert(normal.hashCode() == fixture.hashCode());
+    assert(normal.equals(normal) && !normal.equals(null) && !normal.equals(new Object()));
+
+    fixture.getMetadata().put("source", Any.of("different"));
+    assert(!normal.equals(fixture));
+}
+
+@("message equality distinguishes the role and ordered part values")
+unittest
+{
+    auto metadata = new MutableMetadata();
+    auto firstParts = Parts.of(TextPart.of("a"), TextPart.of("aa"));
+    auto secondParts = Parts.of(TextPart.of("aa"), TextPart.of("a"));
+    auto first = new FixtureMessage(MessageType.SYSTEM, firstParts, metadata);
+    auto second = new FixtureMessage(MessageType.SYSTEM, secondParts, metadata);
+    assert(first.getText().get() == second.getText().get());
+    assert(!first.equals(second));
+
+    auto samePartsOtherRole = new FixtureMessage(MessageType.USER, firstParts, metadata);
+    samePartsOtherRole.getMetadata().put(AbstractMessage.MESSAGE_TYPE, Any.of(MessageType.SYSTEM));
+    assert(first.getMetadata().equals(cast(Object) samePartsOtherRole.getMetadata()));
+    assert(!first.equals(samePartsOtherRole));
 }

@@ -101,10 +101,12 @@
           "systemMessageBuilderWithNullText",
           "systemMessageCopy",
           "systemMessageCopyPreservesImmutability",
+          "systemMessageEqualsAndHashCode",
           "systemMessageFromBuilderWithText",
           "systemMessageMutate",
           "systemMessageMutateChaining",
           "systemMessageMutateWithNewMetadata",
+          "systemMessageNotEqualsWithDifferentText",
           "systemMessageWithEmptyText",
           "systemMessageWithNullText",
           "systemMessageWithTextContent",
@@ -112,9 +114,7 @@
         ],
         "skipped": {
           "systemMessageBuilderWithNullResource": "Requires the Resource text overload and builder resource handling.",
-          "systemMessageEqualsAndHashCode": "Requires AbstractMessage value equality and hashing.",
           "systemMessageFromBuilderWithResource": "Requires the Resource text overload and builder resource handling.",
-          "systemMessageNotEqualsWithDifferentText": "Requires AbstractMessage value equality.",
           "systemMessageWithNullResource": "Requires the SystemMessage Resource constructor.",
           "systemMessageWithResource": "Requires the SystemMessage Resource constructor."
         }

@@ -215,3 +215,24 @@ unittest
     original.getMetadata().put("key", Any.of("after build"));
     assert(revised.getMetadata().get("key").get!string() == "before build");
 }
+
+@("systemMessageEqualsAndHashCode")
+unittest
+{
+    const text = "Test message";
+    auto metadata = Metadata.of("key", Any.of("value"));
+    auto first = SystemMessage.builder().text(text).metadata(metadata).build();
+    auto second = SystemMessage.builder().text(text).metadata(metadata).build();
+
+    assert(first == second);
+    assert(first.hashCode() == second.hashCode());
+}
+
+@("systemMessageNotEqualsWithDifferentText")
+unittest
+{
+    auto first = new SystemMessage(MessageText("Text 1"));
+    auto second = new SystemMessage(MessageText("Text 2"));
+
+    assert(first != second);
+}
