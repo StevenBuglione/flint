@@ -12,11 +12,12 @@ import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding,
     RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult, validateEntity, validateMapping;
 import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
+import flint.engine.jpa.loaded_state : captureLoadedState, dirtyOrdinals, planLoadedSnapshot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jpa.result_binding : materializeManagedRow, planManagedResult;
-import flint.engine.jpa.snapshot : captureAttribute, matchesAttribute;
+import flint.engine.jpa.snapshot : AttributeSnapshot;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
 import flint.engine.reactor : Backend, Reactor, ReactorOptions, TaskContext, TaskDelegate;
 import flint.java.sql : PreparedStatement, ResultSet, SQLException, Types;
@@ -300,36 +301,46 @@ private void verifyManagedIdentity(DataSource dataSource)
 
 private void verifyDirtySnapshots(Owner owner)
 {
+    const plan = planLoadedSnapshot(&ownerMapping);
+    assert(plan.ok);
     ubyte[64] backing;
     scope arena = RequestArena(backing[]);
+    AttributeSnapshot[3] snapshots;
+    uint[2] ordinals;
+    const priorId = owner.id;
     const priorName = owner.name;
     const priorBirthDate = owner.birthDate;
     const nextBirthDate = LocalDate.of(1968, 3, 1);
     scope (exit)
     {
+        owner.id = priorId;
         owner.name = priorName;
         owner.birthDate = priorBirthDate;
     }
 
     const before = GC.stats().allocatedInCurrentThread;
-    const name = ownerMapping.attributes[1].read(owner);
-    const birthDate = ownerMapping.attributes[2].read(owner);
-    assert(name.ok && birthDate.ok);
-    const nameSnapshot = captureAttribute(arena, name.value);
-    const dateSnapshot = captureAttribute(arena, birthDate.value);
-    assert(nameSnapshot.ok && dateSnapshot.ok);
-    assert(matchesAttribute(arena, nameSnapshot.value, name.value).value);
-    assert(matchesAttribute(arena, dateSnapshot.value, birthDate.value).value);
+    scope loaded = captureLoadedState(plan.value, owner, arena, snapshots[]);
+    assert(loaded.ok);
+    const clean = dirtyOrdinals(loaded.value, owner, arena, ordinals[]);
+    assert(clean.ok && clean.value == 0);
+    owner.name = null;
+    const nullName = dirtyOrdinals(loaded.value, owner, arena, ordinals[]);
+    assert(nullName.ok && nullName.value == 1 && ordinals[0] == 1);
 
+    owner.id = priorId + 1;
     owner.name = "Edited";
     owner.birthDate = nextBirthDate;
-    const newName = ownerMapping.attributes[1].read(owner);
-    const newBirthDate = ownerMapping.attributes[2].read(owner);
-    assert(newName.ok && newBirthDate.ok);
-    const dirtyName = matchesAttribute(arena, nameSnapshot.value, newName.value);
-    const dirtyDate = matchesAttribute(arena, dateSnapshot.value, newBirthDate.value);
-    assert(dirtyName.ok && !dirtyName.value);
-    assert(dirtyDate.ok && !dirtyDate.value);
+    ubyte[1] stagingBytes;
+    scope stagingArena = RequestArena(stagingBytes[]);
+    AttributeSnapshot[3] staging;
+    scope const failed = captureLoadedState(plan.value, owner, stagingArena, staging[]);
+    assert(failed.error.code == Status.outOfMemory && failed.error.offset == 1);
+    uint[1] insufficient = [uint.max];
+    assert(dirtyOrdinals(loaded.value, owner, arena, insufficient[]).error.code == Status.resourceExhausted);
+    assert(insufficient[0] == uint.max);
+    const dirty = dirtyOrdinals(loaded.value, owner, arena, ordinals[]);
+    assert(dirty.ok && dirty.value == 2);
+    assert(ordinals[0] == 1 && ordinals[1] == 2);
     assert(GC.stats().allocatedInCurrentThread == before);
 }
 

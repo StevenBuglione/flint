@@ -5,12 +5,14 @@
 
 module flint.engine.jpa.mapping_test;
 
-import flint.arena : Error, Result, Status;
+import flint.arena : Error, RequestArena, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping,
     ResultBinding, planResult, validateEntity, validateMapping;
+import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, captureLoadedState, planLoadedSnapshot;
 import flint.engine.jpa.parameter_binding : ParameterBinding, ParameterBindingPlan, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jpa.result_binding : planManagedResult;
+import flint.engine.jpa.snapshot : AttributeSnapshot;
 import flint.java.sql : Types;
 
 @safe:
@@ -67,6 +69,36 @@ private immutable EntityMapping recordMapping = EntityMapping("Record",
 private immutable EntityMapping otherRecordMapping = EntityMapping("OtherRecord",
         "flint.engine.jpa.mapping_test.OtherRecord",
         "records", recordMapping.attributes, &constructOtherRecord, [], &isExactOtherRecordType, [0]);
+
+@("loaded snapshot capture checks storage, exact entity type and mapped value kind")
+unittest
+{
+    static assert(!__traits(compiles, (LoadedSnapshotPlan plan, Object entity, ref RequestArena arena) @safe {
+            AttributeSnapshot[1] local;
+            return captureLoadedState(plan, entity, arena, local[]);
+        }));
+    ubyte[16] backing;
+    scope arena = RequestArena(backing[]);
+    AttributeSnapshot[1] slots;
+    const plan = planLoadedSnapshot(&recordMapping);
+    assert(plan.ok);
+    assert(planLoadedSnapshot(null).error.code == Status.invalidArgument);
+    assert(captureLoadedState(plan.value, new Record, arena, []).error.code == Status.resourceExhausted);
+    assert(captureLoadedState(plan.value, new OtherRecord, arena, slots[]).error.code == Status.invalidArgument);
+
+    static Result!AttributeValue readWrongKind(Object) nothrow @nogc
+    {
+        return Result!AttributeValue(AttributeValue(kind: AttributeKind.boolean, boolean: true));
+    }
+
+    static immutable EntityMapping wrong = EntityMapping("Record", "app.Record", "records", [
+        AttributeMapping(0, "id", "id", AttributeKind.integer, &readWrongKind, &writeId)
+    ], &constructRecord, [], &isExactRecordType, [0]);
+    const wrongPlan = planLoadedSnapshot(&wrong);
+    assert(wrongPlan.ok);
+    scope const invalid = captureLoadedState(wrongPlan.value, new Record, arena, slots[]);
+    assert(invalid.error.code == Status.invalidArgument && invalid.error.offset == 0);
+}
 
 @("the mapping index uses exact class identity and copies the side table")
 unittest
