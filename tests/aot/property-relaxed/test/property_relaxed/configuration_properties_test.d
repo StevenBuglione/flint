@@ -2,21 +2,28 @@
 module property_relaxed.configuration_properties_test;
 
 import flint.boot : FlintApplication, WebApplicationType;
-import flint.boot.context.properties : ClassRef;
+import flint.boot.context.properties : ClassRef, ConfigurationProperties;
+import flint.boot.context.properties.bind : BindException;
+import flint.boot.diagnostics : findCause;
 import property_relaxed.binding : NamedPrefixProperties, ValuePrefixProperties;
 
 @safe:
 
-@("ConfigurationProperties binds through both prefix spellings")
-unittest
+private auto runBinding(string[] properties...)
 {
     auto application = new FlintApplication(ClassRef("property_relaxed.app.PropertyRelaxedApplication"));
     application.setWebApplicationType(WebApplicationType.NONE);
     application.setOutput((string) {});
-    auto context = application.run([
-        "--flint.boot.enableautoconfiguration=false", "--proof.properties.enabled=true",
-        "--proof.named.level=12", "--proof.value.level=34"
-    ]);
+    return application.run([
+        "--flint.boot.enableautoconfiguration=false", "--proof.properties.enabled=true"
+    ] ~ properties);
+}
+
+@("ConfigurationProperties binds through both prefix spellings and ignores unknown fields by default")
+unittest
+{
+    static assert(ConfigurationProperties.init.ignoreUnknownFields);
+    auto context = runBinding("--proof.named.level=12", "--proof.value.level=34", "--proof.named.unmapped=unknown");
     scope (exit)
         context.close();
 
@@ -27,4 +34,27 @@ unittest
             "proof.value-property_relaxed.binding.ValuePrefixProperties");
     assert(named !is null && named.getLevel() == 12, "the named prefix binds level");
     assert(value !is null && value.getLevel() == 34, "the value prefix binds level");
+}
+
+@("ConfigurationProperties rejects invalid fields by default")
+unittest
+{
+    static assert(!ConfigurationProperties.init.ignoreInvalidFields);
+    try
+    {
+        auto context = runBinding("--proof.named.level=12", "--proof.value.level=not-a-number");
+        context.close();
+    }
+    catch (Exception failure)
+    {
+        auto bindingFailure = findCause!BindException(failure);
+        if (bindingFailure is null)
+            throw failure;
+
+        auto property = bindingFailure.getProperty();
+        assert(property !is null && property.getName().toString() == "proof.value.level",
+                "the invalid binding should identify the property");
+        return;
+    }
+    assert(false, "the invalid integer must fail startup");
 }
