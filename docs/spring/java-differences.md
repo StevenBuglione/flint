@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 130 | 123 | 0 | 2,137 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 7 | 26 | 0 | 4,419 |
+| framework | thymeleaf@3.1.7.RELEASE | 7 | 40 | 0 | 4,405 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 213 | 113 | 1,871 | 16,224 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -3774,6 +3774,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.thymeleaf.exceptions.AlreadyInitializedException` | `flint.thymeleaf.exceptions.AlreadyInitializedException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.AlreadyInitializedException#<init>(String)` | `flint.thymeleaf.exceptions.AlreadyInitializedException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.AlreadyInitializedException#<init>(String,Throwable)` | `flint.thymeleaf.exceptions.AlreadyInitializedException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.CacheConfigurationException` | `flint.thymeleaf.exceptions.CacheConfigurationException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.CacheConfigurationException#<init>(String)` | `flint.thymeleaf.exceptions.CacheConfigurationException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.CacheConfigurationException#<init>(String,Throwable)` | `flint.thymeleaf.exceptions.CacheConfigurationException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.ConfigurationException` | `flint.thymeleaf.exceptions.ConfigurationException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.ConfigurationException#<init>(String)` | `flint.thymeleaf.exceptions.ConfigurationException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.ConfigurationException#<init>(String,Throwable)` | `flint.thymeleaf.exceptions.ConfigurationException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.ParserInitializationException` | `flint.thymeleaf.exceptions.ParserInitializationException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.ParserInitializationException#<init>(String)` | `flint.thymeleaf.exceptions.ParserInitializationException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.ParserInitializationException#<init>(String,Throwable)` | `flint.thymeleaf.exceptions.ParserInitializationException` | [R8](api-mapping.md#r8-exceptions) |  |
 | `org.thymeleaf.exceptions.TemplateEngineException` | `flint.thymeleaf.exceptions.TemplateEngineException` | [R8](api-mapping.md#r8-exceptions) |  |
 | `org.thymeleaf.exceptions.TemplateEngineException#<init>(String)` | `flint.thymeleaf.exceptions.TemplateEngineException` | [R8](api-mapping.md#r8-exceptions) |  |
 | `org.thymeleaf.exceptions.TemplateEngineException#<init>(String,Throwable)` | `flint.thymeleaf.exceptions.TemplateEngineException` | [R8](api-mapping.md#r8-exceptions) |  |
@@ -3783,6 +3795,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.thymeleaf.exceptions.TemplateInputException#<init>(String,String,int,int)` | `flint.thymeleaf.exceptions.TemplateInputException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.thymeleaf.exceptions.TemplateInputException#<init>(String,String,int,int,Throwable)` | `flint.thymeleaf.exceptions.TemplateInputException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.thymeleaf.exceptions.TemplateInputException#<init>(String,Throwable)` | `flint.thymeleaf.exceptions.TemplateInputException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateOutputException` | `flint.thymeleaf.exceptions.TemplateOutputException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateOutputException#<init>(String,String,int,int,Throwable)` | `flint.thymeleaf.exceptions.TemplateOutputException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.thymeleaf.exceptions.TemplateProcessingException` | `flint.thymeleaf.exceptions.TemplateProcessingException` | [R8](api-mapping.md#r8-exceptions) |  |
 | `org.thymeleaf.exceptions.TemplateProcessingException#<init>(String)` | `flint.thymeleaf.exceptions.TemplateProcessingException` | [R8](api-mapping.md#r8-exceptions) |  |
 | `org.thymeleaf.exceptions.TemplateProcessingException#<init>(String,String,Throwable)` | `flint.thymeleaf.exceptions.TemplateProcessingException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -9690,7 +9704,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.context | 168 | 0 |
 | org.thymeleaf.dialect | 23 | 0 |
 | org.thymeleaf.engine | 448 | 0 |
-| org.thymeleaf.exceptions | 17 | 0 |
+| org.thymeleaf.exceptions | 3 | 0 |
 | org.thymeleaf.expression | 576 | 0 |
 | org.thymeleaf.extras.springsecurity6.auth | 0 | 22 |
 | org.thymeleaf.extras.springsecurity6.dialect | 0 | 10 |
@@ -10199,6 +10213,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.test.web.servlet.result.MockMvcResultMatchers#jsonPath(String,Matcher,Class)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#is(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#reason(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
+| framework | `org.thymeleaf.exceptions.TemplateAssertionException` | 2 | The positioned constructor uses locale-sensitive decimal formatting from Java String.format. |
 | framework | `org.thymeleaf.templatemode.TemplateMode#parse(String)` | 2 | Unknown-mode warnings use TemplateEngine.threadIndex and its logger. |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_JAVA_COMMENTS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |

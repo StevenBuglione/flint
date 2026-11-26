@@ -2,7 +2,9 @@
 module flint.thymeleaf.exception_tests;
 
 import flint.java.lang : IllegalStateException, RuntimeException;
-import flint.thymeleaf.exceptions : TemplateEngineException, TemplateInputException, TemplateProcessingException;
+import flint.thymeleaf.exceptions : AlreadyInitializedException, CacheConfigurationException,
+    ConfigurationException, ParserInitializationException,
+    TemplateEngineException, TemplateInputException, TemplateOutputException, TemplateProcessingException;
 import std.typecons : Nullable;
 
 @safe:
@@ -59,4 +61,44 @@ import std.typecons : Nullable;
     auto located = new TemplateInputException("message", Nullable!string("text.html"), 1, 0);
     auto cause = new RuntimeException("later");
     assert(located.initCause(cause) is located && located.getCause() is cause);
+}
+
+@("An output failure retains the cause through the processing-exception boundary") unittest
+{
+    enum message = "An error happened while flushing output writer";
+    auto cause = new RuntimeException("writer stopped");
+    auto templateName = Nullable!string("text.html");
+    try
+        throw new TemplateOutputException(message, templateName, -1, -1, cause);
+    catch (TemplateProcessingException failure)
+    {
+        assert(cast(TemplateOutputException) failure !is null && failure.getCause() is cause);
+        assert(failure.getMessage() == message ~ ` (template: "text.html")`);
+        assert(!failure.hasLineAndCol() && failure.getTemplateName() == templateName);
+        failure.setLineAndCol(3, 7);
+        assert(failure.getMessage() == message ~ ` (template: "text.html" - line 3, col 7)`);
+    }
+}
+
+@("Lifecycle and configuration exceptions preserve their Java parent and cause") unittest
+{
+    auto cause = new RuntimeException("underlying failure");
+    auto cache = new CacheConfigurationException("failed", cause);
+    assert(cast(ConfigurationException) cache !is null);
+    TemplateEngineException[] caused = [
+        new AlreadyInitializedException("failed", cause), new ConfigurationException("failed",
+                cause), cache, new ParserInitializationException("failed", cause),
+    ];
+    foreach (failure; caused)
+        assert(failure.getCause() is cause && failure.getMessage() == "failed");
+
+    TemplateEngineException[] plain = [
+        new AlreadyInitializedException("failed"), new ConfigurationException("failed"),
+        new CacheConfigurationException("failed"), new ParserInitializationException("failed"),
+    ];
+    foreach (failure; plain)
+    {
+        assert(failure.getCause() is null && failure.getMessage() == "failed");
+        assert(failure.initCause(cause) is failure && failure.getCause() is cause);
+    }
 }

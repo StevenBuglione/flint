@@ -15,7 +15,9 @@
  *
  * Ported from thymeleaf 3.1.7.RELEASE:
  * lib/thymeleaf/src/main/java/org/thymeleaf/exceptions/TemplateEngineException.java,
- * TemplateProcessingException.java and TemplateInputException.java in the same directory.
+ * AlreadyInitializedException.java, CacheConfigurationException.java, ConfigurationException.java,
+ * ParserInitializationException.java, TemplateInputException.java, TemplateOutputException.java and
+ * TemplateProcessingException.java in the same directory.
  * Modified by the Flint authors.
  */
 module flint.thymeleaf.exceptions;
@@ -40,6 +42,70 @@ abstract class TemplateEngineException : RuntimeException
         super(message, cause);
         if (cause is null)
             super.initCause(null);
+    }
+}
+
+/// An operation was attempted on an already initialized template engine (R8).
+class AlreadyInitializedException : TemplateEngineException
+{
+    /// Report the invalid operation.
+    this(string message)
+    {
+        super(message);
+    }
+
+    /// Report the invalid operation and its cause.
+    this(string message, Throwable cause)
+    {
+        super(message, cause);
+    }
+}
+
+/// An invalid template engine configuration (R8).
+class ConfigurationException : TemplateEngineException
+{
+    /// Report an invalid configuration.
+    this(string message)
+    {
+        super(message);
+    }
+
+    /// Report an invalid configuration and its cause.
+    this(string message, Throwable cause)
+    {
+        super(message, cause);
+    }
+}
+
+/// An invalid template cache configuration (R8).
+class CacheConfigurationException : ConfigurationException
+{
+    /// Report an invalid cache configuration.
+    this(string message)
+    {
+        super(message);
+    }
+
+    /// Report an invalid cache configuration and its cause.
+    this(string message, Throwable cause)
+    {
+        super(message, cause);
+    }
+}
+
+/// A template parser could not be initialized (R8).
+class ParserInitializationException : TemplateEngineException
+{
+    /// Report a parser initialization failure.
+    this(string message)
+    {
+        super(message);
+    }
+
+    /// Report a parser initialization failure and its cause.
+    this(string message, Throwable cause)
+    {
+        super(message, cause);
     }
 }
 
@@ -166,6 +232,16 @@ class TemplateInputException : TemplateProcessingException
     }
 
     /// Report a positioned input error and its cause.
+    this(string message, Nullable!string templateName, int line, int col, Throwable cause)
+    {
+        super(message, templateName, line, col, cause);
+    }
+}
+
+/// An error writing a template result (R5, R8).
+class TemplateOutputException : TemplateProcessingException
+{
+    /// Report an output failure, including its cause and any known position.
     this(string message, Nullable!string templateName, int line, int col, Throwable cause)
     {
         super(message, templateName, line, col, cause);
