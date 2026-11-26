@@ -1596,23 +1596,28 @@
     },
     "java/io/Writer/Append.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/Writer/Bug6856817.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/Writer/NullWriter.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/Writer/WriteFromString.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/Writer/WriteParams.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/charStreams/BCat.java": {
       "status": "deferred",
