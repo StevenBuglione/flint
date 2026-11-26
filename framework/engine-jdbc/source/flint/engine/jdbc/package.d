@@ -1153,10 +1153,21 @@ final class FlintPreparedStatement : PreparedStatement
         {
             if (extras !is null)
             {
+                // Each update replaces the statement's generated keys, so a batch that returns keys gathers every
+                // row's into one result, in order, as JDBC's getGeneratedKeys after executeBatch reports them.
+                FlintResultSet batchKeys;
                 foreach (text; extras.batchSql)
+                {
                     counts ~= update(text, null);
+                    batchKeys = gatherKeys(batchKeys);
+                }
                 foreach (values; extras.batch)
+                {
                     counts ~= update(sql, values);
+                    batchKeys = gatherKeys(batchKeys);
+                }
+                if (batchKeys !is null)
+                    extras.generatedKeys = batchKeys;
             }
         }
         catch (SQLException ex)
@@ -1168,6 +1179,19 @@ final class FlintPreparedStatement : PreparedStatement
         }
         clearBatch();
         return counts;
+    }
+
+    // The keys gathered so far with the last update's appended: the first update's result itself, or null when
+    // the statement returns no keys.
+    private FlintResultSet gatherKeys(FlintResultSet gathered)
+    {
+        auto latest = extras.generatedKeys;
+        if (latest is null)
+            return gathered;
+        if (gathered is null)
+            return latest;
+        gathered.appendRows(latest);
+        return gathered;
     }
 
     override Connection getConnection()
@@ -1507,6 +1531,14 @@ final class FlintResultSet : ResultSet
     private this(FlintPreparedStatement statement)
     {
         this.statement = statement;
+    }
+
+    /// Append `other`'s rows, which have the same columns (a batch's generated keys, row after row).
+    private void appendRows(FlintResultSet other) pure nothrow
+    {
+        assert(other.labels.length == labels.length, "appended rows must have the same columns");
+        cells ~= other.cells[0 .. other.rowCount_ * labels.length];
+        rowCount_ += other.rowCount_;
     }
 
     /// Copy `row` in: its cells read in one call to the engine, its text and bytes through a stack buffer, and its

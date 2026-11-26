@@ -264,6 +264,9 @@ unittest
         return;
     auto source = new FlintDataSource;
     source.setJdbcUrl(url);
+    // The same credentials as the test above; without them the pool logs in as the OS user.
+    source.setUsername(environment.get("FLINT_JDBC_PG_TEST_USER"));
+    source.setPassword(environment.get("FLINT_JDBC_PG_TEST_PASSWORD"));
     source.setMaximumPoolSize(1);
     scope (exit)
         source.close();
@@ -384,6 +387,22 @@ private void exercise(Connection connection, string table)
     assert(keyed.executeUpdate() == 1);
     auto keys = keyed.getGeneratedKeys();
     assert(keys.next() && keys.getLong(1) == 42);
+
+    // A batch's generated keys: one row per batched row, in order, as JdbcTemplate.batchUpdate(..., KeyHolder) reads
+    // them (each row's keys used to replace the previous row's).
+    foreach (id; [43, 44, 45])
+    {
+        keyed.setInt(1, id);
+        keyed.setString(2, "Batched " ~ cast(char)('0' + id % 10));
+        keyed.addBatch();
+    }
+    assert(keyed.executeBatch() == [1, 1, 1]);
+    keys = keyed.getGeneratedKeys();
+    long[] batchKeys;
+    while (keys.next())
+        batchKeys ~= keys.getLong(1);
+    assert(batchKeys == [43, 44, 45]);
+    assert(connection.createStatement().executeUpdate("DELETE FROM " ~ table ~ " WHERE id >= 43") == 3);
 
     // SQLSTATE subclasses.
     insert.setInt(1, 99);
