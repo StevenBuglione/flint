@@ -43789,6 +43789,7 @@
 "tools.jackson.databind.JacksonSerializable**":{"status":"excluded","category":"deferred","phase":"2"},
 "tools.jackson.databind.JacksonSerializable.Base**":{"status":"excluded","category":"deferred","phase":"2"},
 "tools.jackson.databind.JavaType**":{"status":"excluded","category":"deferred","phase":"2"},
+"tools.jackson.databind.JsonNode":{"status":"ported","d":"flint.jackson.databind.node.JsonNode"},
 "tools.jackson.databind.JsonNode#_at(JsonPointer)":{"status":"ported","d":"flint.jackson.databind.node.JsonNode._at"},
 "tools.jackson.databind.JsonNode#at(JsonPointer)":{"status":"ported","d":"flint.jackson.databind.node.JsonNode.at"},
 "tools.jackson.databind.JsonNode#at(String)":{"status":"ported","d":"flint.jackson.databind.node.JsonNode.at"},

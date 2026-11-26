@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 518 | 23 | 1 | 2,753 |
-| framework | jackson-databind@3.1.8 | 608 | 61 | 5 | 9,793 |
+| framework | jackson-databind@3.1.8 | 609 | 61 | 5 | 9,792 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 168 | 145 | 0 | 2,077 |
@@ -10183,7 +10183,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.tree | 2 | 0 |
 | tools.jackson.core.type | 48 | 0 |
 | tools.jackson.core.util | 458 | 0 |
-| tools.jackson.databind | 1,497 | 0 |
+| tools.jackson.databind | 1,496 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
 | tools.jackson.databind.cfg | 763 | 0 |
 | tools.jackson.databind.deser | 587 | 0 |
