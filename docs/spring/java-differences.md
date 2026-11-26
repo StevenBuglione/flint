@@ -207,6 +207,8 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `io.micrometer.observation.ObservationPredicate` | `flint.micrometer.observation.ObservationPredicate` | Inherits the test method from Flint's Java BiPredicate. Its combinators are deferred with the Java provider. |
 | framework | `java.io.ByteArrayInputStream#close()` | `flint.java.io.ByteArrayInputStream.close` | Inherits the no-op close. Repeated calls leave the read position unchanged and subsequent reads still work. |
 | framework | `java.io.ByteArrayOutputStream#close()` | `flint.java.io.ByteArrayOutputStream.close` | Inherits the no-op close. Repeated calls preserve the buffered bytes and writes remain valid. |
+| framework | `java.io.StringWriter#close()` | `flint.java.io.StringWriter.close` | Inherits the no-op close. Existing text and the ability to write survive repeated calls. |
+| framework | `java.io.StringWriter#flush()` | `flint.java.io.StringWriter.flush` | Inherits the no-op flush, preserving the stored text. |
 | framework | `java.lang.IllegalArgumentException#<init>(Throwable)` | `flint.java.lang.IllegalArgumentException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
 | framework | `java.lang.IllegalStateException#<init>(Throwable)` | `flint.java.lang.IllegalStateException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
 | framework | `java.lang.RuntimeException#<init>(Throwable)` | `flint.java.lang.RuntimeException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
@@ -11053,7 +11055,17 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#println(int)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#println(long)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#write(String)` | 2 | Java forwards to the virtual UTF-16 ranged write and records checked errors. The existing method writes the slice directly and propagates errors. |
+| framework | `java.io.StringWriter#<init>()` | 2 | The writer starts empty, but it has no mutable StringBuffer bound to the inherited lock or exposed through getBuffer. |
+| framework | `java.io.StringWriter#<init>(int)` | 2 | Missing constructor that sets the initial buffer capacity, accepts zero and rejects negative capacity. |
+| framework | `java.io.StringWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns StringWriter. The inherited D method accepts a plain slice and returns Writer. |
+| framework | `java.io.StringWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 sequence range append with a StringWriter result. Java applies the range to the text null when the sequence is absent. |
+| framework | `java.io.StringWriter#append(char)` | 2 | Missing single UTF-16 code-unit append with a StringWriter result. |
+| framework | `java.io.StringWriter#getBuffer()` | 2 | Missing access to the same live mutable StringBuffer that the writer uses as its lock. |
+| framework | `java.io.StringWriter#toString()` | 2 | Sequential snapshots preserve the text, but the method does not synchronize on the underlying buffer monitor as Java does. |
 | framework | `java.io.StringWriter#write(String)` | 2 | Java appends the text null for a null string. The existing plain D slice treats null as empty. The distinct nullable string contract requires R5. |
+| framework | `java.io.StringWriter#write(String,int,int)` | 2 | Missing ranged string write with Java UTF-16 offsets and length. |
+| framework | `java.io.StringWriter#write(char[],int,int)` | 2 | Missing ranged write of Java UTF-16 code units with checked array bounds. |
+| framework | `java.io.StringWriter#write(int)` | 2 | Java writes the low 16 bits as one UTF-16 code unit, including a lone surrogate. The inherited D overload encodes a Unicode code point or substitutes a replacement character. |
 | framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. Java derives the detail from the cause's virtual toString. The current formatter uses the cause's type name and raw detail. |
 | framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. The inherited Java detail accessor still needs R26 empty-string normalization. |
 | framework | `java.io.UncheckedIOException#getCause()` | 2 | The inherited accessor returns Throwable. Java overrides it to return IOException. |
