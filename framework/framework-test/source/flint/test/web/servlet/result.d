@@ -19,8 +19,9 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.name : canonicalTypeName, typeNameOf;
 import flint.engine.aot.text : decimal;
 import flint.jakarta.servlet.http : Cookie;
-import flint.java.io : IOException;
-import flint.java.lang : AssertionError, Boolean, IllegalStateException, Integer, Long, String, valueOf;
+import flint.java.io : IOException, OutputStream, OutputStreamWriter, Writer;
+import flint.java.lang : AssertionError, Boolean, IllegalStateException, Integer, Long,
+    NullPointerException, String, valueOf;
 import flint.java.nio.charset : Charset;
 import flint.test.json : JsonComparator, JsonCompareMode, JsonComparison;
 import flint.test.util : AssertionErrors, JsonPathExpectationsHelper;
@@ -1356,6 +1357,20 @@ struct MockMvcResultHandlers
         return new PrintingResultHandler(false);
     }
 
+    /// Prints the result as UTF-8 to the supplied stream.
+    static ResultHandler print(OutputStream stream)
+    {
+        if (stream is null)
+            throw new NullPointerException;
+        return print(new OutputStreamWriter(stream));
+    }
+
+    /// Prints the result to the supplied writer.
+    static ResultHandler print(Writer writer)
+    {
+        return new PrintingResultHandler(writer);
+    }
+
     /// Collects the same text without printing (for assertions on it).
     static PrintingResultHandler log()
     {
@@ -1367,12 +1382,20 @@ struct MockMvcResultHandlers
 final class PrintingResultHandler : ResultHandler
 {
     private bool quiet;
+    private Writer writer;
     private immutable(char)[] lastText;
 
     ///
     this(bool quiet) pure nothrow @nogc
     {
         this.quiet = quiet;
+    }
+
+    private this(Writer writer)
+    {
+        if (writer is null)
+            throw new NullPointerException;
+        this.writer = writer;
     }
 
     /// The text of the last result handled.
@@ -1445,8 +1468,27 @@ final class PrintingResultHandler : ResultHandler
         line("Redirected URL", response.getRedirectedUrl() is null ? "null" : response.getRedirectedUrl());
         line("Cookies", "[]");
         lastText = text;
-        if (!quiet && !writeStandardOutput(text))
-            throw new IOException("Could not write MockMvc result to standard output");
+        writeReport(text);
+    }
+
+    private void writeReport(string text)
+    {
+        if (writer is null)
+        {
+            if (!quiet && !writeStandardOutput(text))
+                throw new IOException("Could not write MockMvc result to standard output");
+            return;
+        }
+
+        try
+        {
+            writer.write(text);
+            writer.flush();
+        }
+        catch (IOException)
+        {
+            // Spring's PrintWriter records I/O failures in the writer without throwing from the handler.
+        }
     }
 
     private static immutable(char)[] handlerType(Object handler)

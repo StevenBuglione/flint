@@ -323,10 +323,10 @@ final class MockMvc
         auto chain = new MockFilterChain(servlet, filters);
         chain.doFilter(request, response);
         auto actions = new DefaultResultActions(result);
-        foreach (matcher; defaultResultMatchers)
-            actions.andExpect(matcher);
         foreach (handler; defaultResultHandlers)
             actions.andDo(handler);
+        foreach (matcher; defaultResultMatchers)
+            actions.andExpect(matcher);
         return actions;
     }
 }

@@ -2045,7 +2045,6 @@
       "org/springframework/test/web/servlet/samples/standalone/ResponseBodyTests.java",
       "org/springframework/test/web/servlet/samples/standalone/RouterFunctionTests.java",
       "org/springframework/test/web/servlet/samples/standalone/ViewResolutionTests.java",
-      "org/springframework/test/web/servlet/samples/standalone/resulthandlers/PrintingResultHandlerIntegrationTests.java",
       "org/springframework/test/web/servlet/samples/standalone/resulthandlers/PrintingResultHandlerSmokeTests.java",
       "org/springframework/test/web/servlet/samples/standalone/resultmatchers/ContentAssertionTests.java",
       "org/springframework/test/web/servlet/samples/standalone/resultmatchers/FlashAttributeAssertionTests.java",

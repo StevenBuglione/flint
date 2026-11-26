@@ -1004,8 +1004,15 @@
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/samples/standalone/resulthandlers/PrintingResultHandlerIntegrationTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/printing_result_handler_integration_tests.d",
+      "methods": {
+        "ported": [
+          "printMvcResultsToWriter",
+          "printMvcResultsToWriterWithFailingGlobalResultMatcher",
+          "printMvcResultsToWriterWithJsonResponseBodyInterpretedAsUtf8"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/test/web/servlet/samples/standalone/resulthandlers/PrintingResultHandlerSmokeTests.java": {
       "phase": "2",
