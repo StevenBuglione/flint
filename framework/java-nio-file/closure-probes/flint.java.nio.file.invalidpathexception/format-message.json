@@ -1,5 +1,7 @@
 {
-  "source": "bench/source/app.d",
-  "leaves": ["flint.java.lang"],
+  "source": "closure/invalid_path_message.d",
+  "leaves": [
+    "flint.java.lang"
+  ],
   "data": []
 }

@@ -834,7 +834,8 @@
    "directory": "framework/java-nio-file",
    "module": "flint.java.nio.file",
    "java_types": [
-    "java.nio.file.InvalidPathException"
+    "java.nio.file.InvalidPathException",
+    "java.nio.file.Path"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",

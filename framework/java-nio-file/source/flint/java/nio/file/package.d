@@ -2,5 +2,6 @@
 module flint.java.nio.file;
 
 public import flint.java.nio.file.invalidpathexception : InvalidPathException;
+public import flint.java.nio.file.path : Path;
 
 @safe:

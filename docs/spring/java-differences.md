@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,142 | 350 | 1,871 | 15,058 |
+| framework | openjdk@21.0.13 | 1,151 | 351 | 1,871 | 15,048 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -217,6 +217,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.math.RoundingMode` | `flint.java.math.roundingmode.RoundingMode` | A null name counts as empty text under R26. Java throws NullPointerException. |
 | framework | `java.nio.ByteBuffer#asCharBuffer()` | `flint.java.nio.bytebuffer.ByteBuffer.asCharBuffer` | Final in Flint because construction is package-internal in both Java and Flint. |
 | framework | `java.nio.file.InvalidPathException` | `flint.java.nio.file.InvalidPathException` | Null input and reason strings count as empty under R26. |
+| framework | `java.nio.file.Path` | `flint.java.nio.file.Path` | Lexical contract. Path inheritance from Comparable<Path>, Iterable<Path> and Watchable is deferred to Phase 2 with compareTo, iterator and register. Provider equality and hashing are also deferred to Phase 2. Null strings and an array of additional parts that is null count as empty under R26. |
 | framework | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.TimeDefinition` | A null name counts as empty (R26). Java throws NullPointerException. |
 | framework | `java.util.regex.Pattern` | `flint.java.util.regex.Pattern` | Under R26, a null expression or input slice counts as empty text. Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
@@ -2322,6 +2323,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.file.InvalidPathException#<init>(String,String)` | `flint.java.nio.file.InvalidPathException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.file.InvalidPathException#<init>(String,String,int)` | `flint.java.nio.file.InvalidPathException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.file.InvalidPathException#getMessage()` | `flint.java.nio.file.InvalidPathException.getMessage` | [D-JDK-3](api-mapping.md#deviations) |  |
+| `java.nio.file.Path#of(String,String...)` | `flint.java.nio.file.Path.of` | [R7](api-mapping.md#r7-overloads), [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.sql
 
@@ -10545,7 +10547,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 98 | 0 |
 | java.nio.charset.spi | 0 | 4 |
-| java.nio.file | 278 | 0 |
+| java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 137 | 0 |
 | java.nio.file.spi | 0 | 35 |
 | java.security | 663 | 0 |
@@ -11619,6 +11621,13 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.CharBuffer#chars()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence,int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
+| framework | `java.nio.file.Path#compareTo(Path)` | 2 | Default-provider ordering and Comparable<Path> inheritance are deferred. |
+| framework | `java.nio.file.Path#equals(Object)` | 2 | Provider-specific path equality is deferred with hashCode. |
+| framework | `java.nio.file.Path#hashCode()` | 2 | Provider-specific path hashing is deferred with equals. |
+| framework | `java.nio.file.Path#iterator()` | 2 | Name iteration and Iterable<Path> inheritance are deferred. |
+| framework | `java.nio.file.Path#register(WatchService,WatchEvent.Kind...)` | 2 | Filesystem watches and Watchable inheritance are deferred. |
+| framework | `java.nio.file.Path#register(WatchService,WatchEvent.Kind[],WatchEvent.Modifier...)` | 2 | Filesystem watches and Watchable inheritance are deferred. |
+| framework | `java.nio.file.Watchable` | 2 | The filesystem watch service is deferred. |
 | framework | `java.security.DigestException#<init>()` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
 | framework | `java.security.DigestException#<init>(String)` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
 | framework | `java.security.DigestException#<init>(String,Throwable)` | 2 | Java initializes the cause even when it is null. The checked Flint exception base carries a D exception chain and still needs Java cause access and initialization. |

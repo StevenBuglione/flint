@@ -2,5 +2,31 @@
   "schema": "flint.upstream-tests/1",
   "upstream": "openjdk@21.0.13",
   "module": "java-nio-file",
-  "classes": {}
+  "classes": {
+    "java/nio/file/Path/MacPathTest.java": {
+      "status": "deferred",
+      "phase": "2",
+      "reason": "plain-gpl: complete original coverage of this reference case remains pending."
+    },
+    "java/nio/file/Path/MacToRealPathWithSM.java": {
+      "status": "deferred",
+      "phase": "2",
+      "reason": "plain-gpl: complete original coverage of this reference case remains pending."
+    },
+    "java/nio/file/Path/PathOps.java": {
+      "status": "deferred",
+      "phase": "2",
+      "reason": "plain-gpl: complete original coverage remains pending. Null strings and arrays follow R26."
+    },
+    "java/nio/file/Path/ToRealPath.java": {
+      "status": "deferred",
+      "phase": "2",
+      "reason": "plain-gpl: complete original coverage of this reference case remains pending."
+    },
+    "java/nio/file/Path/UriImportExport.java": {
+      "status": "deferred",
+      "phase": "2",
+      "reason": "plain-gpl: complete original coverage of this reference case remains pending."
+    }
+  }
 }

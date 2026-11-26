@@ -1,0 +1,5 @@
+{
+  "source": "bench/lexical/source/app.d",
+  "leaves": ["flint.java.lang", "flint.java.nio.file.invalidpathexception"],
+  "data": []
+}

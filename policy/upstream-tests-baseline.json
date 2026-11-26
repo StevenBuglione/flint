@@ -6964,6 +6964,13 @@
       "java/nio/Buffer/ReachabilityTest.java",
       "java/nio/Buffer/StringCharBufferSliceTest.java"
     ],
+    "java-nio-file": [
+      "java/nio/file/Path/MacPathTest.java",
+      "java/nio/file/Path/MacToRealPathWithSM.java",
+      "java/nio/file/Path/PathOps.java",
+      "java/nio/file/Path/ToRealPath.java",
+      "java/nio/file/Path/UriImportExport.java"
+    ],
     "java-regex": [
       "java/util/regex/ImmutableMatchResultTest.java",
       "java/util/regex/NamedGroupsTests.java",
