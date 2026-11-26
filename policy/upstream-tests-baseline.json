@@ -1573,7 +1573,6 @@
       "org/springframework/data/domain/SearchResultsUnitTests.java",
       "org/springframework/data/domain/SimilarityUnitTests.java",
       "org/springframework/data/domain/VectorUnitTests.java",
-      "org/springframework/data/domain/WindowIteratorUnitTests.java",
       "org/springframework/data/domain/jaxb/SpringDataJaxbUnitTests.java",
       "org/springframework/data/expression/ValueEvaluationUnitTests.java",
       "org/springframework/data/geo/BoxUnitTests.java",

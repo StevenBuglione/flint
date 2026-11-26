@@ -367,8 +367,19 @@
       "status": "deferred"
     },
     "org/springframework/data/domain/WindowIteratorUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/window_iterator_tests.d",
+      "methods": {
+        "ported": [
+          "allowsToIterateAllWindows",
+          "considersBackwardKeysetScrolling",
+          "hasNextReturnsCorrectlyIfNextPageIsEmpty",
+          "hasNextReturnsFalseIfNoDataAvailable",
+          "hasNextReturnsTrueIfDataAvailableButOnlyOnePage",
+          "loadsDataOnNext",
+          "nextThrowsExceptionIfNoElementAvailable"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/WindowUnitTests.java": {
       "d": "framework/data-commons/tests/window_tests.d",
