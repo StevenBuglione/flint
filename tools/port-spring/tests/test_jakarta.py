@@ -51,6 +51,17 @@ def rejects(flint, args, diagnostic):
 
 
 def check_cli(flint, helper, cache, scratch):
+    for type_name, field in {
+        "PersistenceContext": '    string name = "";',
+        "PersistenceProperty": "    string value;",
+        "PersistenceUnit": '    string unitName = "";',
+    }.items():
+        result = run(flint, *command(PROJECT, TAG, PACKAGE + "." + type_name, helper, cache))
+        assert result.returncode == 0, (result.stdout, result.stderr)
+        output = json.loads(result.stdout)
+        assert field in output["source"], output
+        assert not json.loads(output["mapping"])["elements"], output
+
     for type_name in ("AssociationOverride", "MapKeyJoinColumn"):
         result = run(flint, *command(PROJECT, TAG, PACKAGE + "." + type_name, helper, cache))
         assert result.returncode == 0, (result.stdout, result.stderr)

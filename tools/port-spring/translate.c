@@ -270,11 +270,15 @@ static bool resolves(const JavaFile *annotation, Slice spelling, const char *qua
         if (!kind(node, "import_declaration"))
             continue;
         Slice path = import_path(annotation, node);
+        bool static_import = !ts_node_is_null(child_of_kind(node, "static"));
         if (!ts_node_is_null(child_of_kind(node, "asterisk"))) {
-            if (!is(path, "java.lang") && !is(path, "java.lang.annotation"))
+            /* These two JDK enums export constants and no member types. */
+            bool annotation_enum = static_import && (is(path, "java.lang.annotation.ElementType") ||
+                                                     is(path, "java.lang.annotation.RetentionPolicy"));
+            if (!annotation_enum && !is(path, "java.lang") && !is(path, "java.lang.annotation"))
                 ambiguous = true;
         } else if (equal(last_name(path), spelling)) {
-            return equal(path, target) && ts_node_is_null(child_of_kind(node, "static"));
+            return equal(path, target) && !static_import;
         }
     }
     return implicit_java_lang && !ambiguous;

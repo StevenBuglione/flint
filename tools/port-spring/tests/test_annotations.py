@@ -245,13 +245,35 @@ static assert(__traits(getAttributes, Example)[0].value.name == "flint.Foo");
         self.assertEqual(result.stdout, b"")
         self.assertIn(b"unsupported meta-annotation", result.stderr)
 
+    def test_jdk_annotation_enum_imports_do_not_shadow_java_lang_types(self):
+        result = self.run_helper("""package example;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.*;
+@Target(TYPE)
+@Retention(RUNTIME)
+public @interface Settings {
+    String value();
+    String name() default "";
+    Class<?> token() default void.class;
+}
+""")
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        candidate = json.loads(result.stdout)
+        self.assertIn('    string value;\n    string name = "";\n', candidate["body"])
+        self.assertIn("    ClassRef token = ClassRef.init;\n", candidate["body"])
+        self.assertTrue(candidate["classRef"])
+
     def test_ambiguous_implicit_string_type_is_rejected(self):
-        result = self.run_helper(
-            "package example; import example.types.*; public @interface Settings { String value(); }"
-        )
-        self.assertEqual(result.returncode, 2)
-        self.assertEqual(result.stdout, b"")
-        self.assertIn(b"unsupported annotation type", result.stderr)
+        for import_ in ("example.types.*", "static example.Types.*", "static example.Types.String"):
+            with self.subTest(import_=import_):
+                result = self.run_helper(
+                    f"package example; import {import_}; public @interface Settings {{ String value(); }}"
+                )
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, b"")
+                self.assertIn(b"unsupported annotation type", result.stderr)
 
     def test_malformed_java_yields_no_candidate(self):
         result = self.run_helper("package example; public @interface Settings { int value() default ; }")
