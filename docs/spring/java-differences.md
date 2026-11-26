@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 508 | 23 | 1 | 2,763 |
+| framework | jackson-core@3.1.8 | 503 | 22 | 1 | 2,769 |
 | framework | jackson-databind@3.1.8 | 611 | 61 | 5 | 9,790 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -4199,7 +4199,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `tools.jackson.core.json.JsonWriteContext#<init>(int,JsonWriteContext,DupDetector,Object)` | `flint.jackson.core.json.JsonWriteContext` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.json.JsonWriteContext#createChildArrayContext(Object)` | `flint.jackson.core.json.JsonWriteContext.createChildArrayContext` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.json.JsonWriteContext#createChildObjectContext(Object)` | `flint.jackson.core.json.JsonWriteContext.createChildObjectContext` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.json.UTF8JsonGenerator#writeStartArray(Object)` | `flint.jackson.core.json.UTF8JsonGenerator.writeStartArray` | [R7](api-mapping.md#r7-overloads) |  |
@@ -10183,7 +10182,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.filter | 183 | 0 |
 | tools.jackson.core.io | 277 | 0 |
 | tools.jackson.core.io.schubfach | 34 | 0 |
-| tools.jackson.core.json | 460 | 0 |
+| tools.jackson.core.json | 466 | 0 |
 | tools.jackson.core.json.async | 168 | 0 |
 | tools.jackson.core.sym | 147 | 0 |
 | tools.jackson.core.tree | 2 | 0 |
@@ -10682,6 +10681,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
 | framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
 | framework | `tools.jackson.core.TokenStreamLocation#toString(StringBuilder)` | 2 | The Java overload appends to a StringBuilder. Flint exposes a zero-argument formatter returning a string. |
+| framework | `tools.jackson.core.json.JsonFactoryBuilder#rootValueSeparator()` | 2 | The Java builder getter returns SerializableString. Flint exposes the builder's string setter and a separate JsonFactory getter. |
+| framework | `tools.jackson.core.json.JsonReadContext#<init>(JsonReadContext,int,DupDetector,int,int,int)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
+| framework | `tools.jackson.core.json.JsonReadContext#createRootContext(DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
+| framework | `tools.jackson.core.json.JsonReadContext#createRootContext(int,int,DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_JAVA_COMMENTS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
@@ -10696,6 +10699,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_UNESCAPED_CONTROL_CHARS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_UNQUOTED_PROPERTY_NAMES` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_YAML_COMMENTS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
+| framework | `tools.jackson.core.json.JsonWriteContext#<init>(int,JsonWriteContext,DupDetector,Object)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
+| framework | `tools.jackson.core.json.JsonWriteContext#createRootContext(DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char)` | 2 | Requires SerializableString and the explicit generator context and output configuration. |
 | framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char,byte[],int,boolean)` | 2 | Requires SerializableString and the constructor with a caller-provided byte buffer, offset and recycling flag. |
 | framework | `tools.jackson.core.json.UTF8StreamJsonParser#<init>(ObjectReadContext,IOContext,int,int,InputStream,ByteQuadsCanonicalizer,byte[],int,int,int,boolean)` | 2 | Requires the explicit IOContext, input stream, and caller-provided byte-buffer constructor. |
