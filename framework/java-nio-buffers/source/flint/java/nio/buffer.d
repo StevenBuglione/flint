@@ -153,8 +153,7 @@ abstract class Buffer
 
     protected final void advance(int count) scope pure nothrow @nogc
     {
-        const moved = cursor.setPosition(cursor.position() + count);
-        assert(moved);
+        cursor.advance(count);
     }
 }
 
@@ -172,7 +171,7 @@ pragma(inline, false) private noreturn throwArrayTooLarge() pure
 
 package(flint.java.nio) void checkRange(int index, int count, int limit) pure
 {
-    if (index < 0 || count < 0 || index > limit || count > limit - index)
+    if ((index | count | limit) < 0 || count > limit - index)
         throwRangeError(index, count, limit);
 }
 

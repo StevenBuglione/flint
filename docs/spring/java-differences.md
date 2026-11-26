@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,073 | 310 | 1,871 | 15,167 |
+| framework | openjdk@21.0.13 | 1,076 | 310 | 1,871 | 15,164 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10077,7 +10077,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 137 | 0 |
 | java.net | 817 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 305 | 0 |
+| java.nio | 302 | 0 |
 | java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 103 | 0 |
@@ -11042,7 +11042,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.ByteBuffer#asIntBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#asLongBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#asShortBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#compact()` | 2 | Bulk transfer and compaction follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#getChar()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#getChar(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#getDouble()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
@@ -11055,8 +11054,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.ByteBuffer#getLong(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#getShort()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#getShort(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#put(ByteBuffer)` | 2 | Bulk transfer and compaction follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#put(int,ByteBuffer,int,int)` | 2 | Bulk transfer and compaction follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#putChar(char)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#putChar(int,char)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#putDouble(double)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |

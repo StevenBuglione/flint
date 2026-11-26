@@ -196,6 +196,16 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
         return new ByteBuffer(backing, origin, cursor, true);
     }
 
+    ByteBuffer compact() pure
+    {
+        checkWritable();
+        const length = remaining();
+        copyFromBuffer(0, this, position(), length);
+        cursor.clear();
+        advance(length);
+        return this;
+    }
+
     byte get() pure
     {
         if (!hasRemaining())
@@ -287,6 +297,32 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
         return put(index, source, 0, arraySize(source.length));
     }
 
+    ByteBuffer put(scope ByteBuffer source) pure
+    {
+        checkWritable();
+        if (source is this)
+            throw new IllegalArgumentException("The source buffer is this buffer");
+        requireBuffer(source);
+        const length = source.cursor.remaining();
+        if (length > remaining())
+            throwOverflow();
+
+        copyFromBuffer(position(), source, source.cursor.position(), length);
+        advance(length);
+        source.advance(length);
+        return this;
+    }
+
+    ByteBuffer put(int index, scope ByteBuffer source, int offset, int length) pure
+    {
+        checkWritable();
+        checkRange(index, length, limit());
+        requireBuffer(source);
+        checkRange(offset, length, source.cursor.limit());
+        copyFromBuffer(index, source, offset, length);
+        return this;
+    }
+
     bool equals(Object other) pure nothrow @nogc
     {
         if (other is this)
@@ -323,6 +359,12 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     override string toString() pure nothrow
     {
         return summary(readOnly ? "java.nio.HeapByteBufferR" : "java.nio.HeapByteBuffer");
+    }
+
+    private void copyFromBuffer(int index, scope ByteBuffer source, int offset, int length) scope pure nothrow @nogc
+    {
+        pragma(inline, false);
+        copyBytes(backing, origin + index, source.backing, source.origin + offset, length);
     }
 
     private const(byte)[] remainingBytes() const pure nothrow @nogc
@@ -396,5 +438,10 @@ private int firstMismatch(scope const(byte)[] left, scope const(byte)[] right) p
 private void requireBuffer(scope ByteBuffer other) pure
 {
     if (other is null)
-        throw new NullPointerException;
+        throwNullBuffer();
+}
+
+pragma(inline, false) private noreturn throwNullBuffer() pure
+{
+    throw new NullPointerException;
 }

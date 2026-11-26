@@ -207,3 +207,56 @@ unittest
     assert(readOnly.position() == 3 && readOnly.reset().position() == 3);
     assert(storage == [0, 1, 2, 3, 4]);
 }
+
+@("Heap ByteBuffer transfers overlap and validate before changing either cursor")
+unittest
+{
+    byte[] storage = [0, 1, 2, 3, 4, 5, 6, 7];
+    auto destination = ByteBuffer.wrap(storage, 1, 6).slice().position(2).mark().limit(5);
+    auto source = ByteBuffer.wrap(storage, 1, 3).slice().asReadOnlyBuffer().mark();
+    assert(destination.put(source) is destination);
+    assert(storage == [0, 1, 2, 1, 2, 3, 6, 7]);
+    assert(destination.position() == 5 && source.position() == 3);
+    assert(destination.reset().position() == 2 && source.reset().position() == 0);
+    assert(destination.put(0, destination, 2, 3) is destination);
+    assert(storage == [0, 1, 2, 3, 2, 3, 6, 7]);
+    assert(destination.position() == 2 && source.position() == 0);
+
+    auto tooLarge = ByteBuffer.allocate(4).mark();
+    rejectsMessage!IllegalArgumentException(() { destination.put(destination); }, "The source buffer is this buffer");
+    assertThrown!NullPointerException(destination.put(cast(ByteBuffer) null));
+    assertThrown!BufferOverflowException(destination.put(tooLarge));
+    assert(tooLarge.position() == 0 && tooLarge.reset().position() == 0);
+    rejectsMessage!IndexOutOfBoundsException(() { destination.put(4, cast(ByteBuffer) null, 0, 2); },
+            "Range [4, 4 + 2) out of bounds for length 5");
+    assertThrown!NullPointerException(destination.put(0, cast(ByteBuffer) null, 0, 2));
+    rejectsMessage!IndexOutOfBoundsException(() { destination.put(0, source, 2, 2); },
+            "Range [2, 2 + 2) out of bounds for length 3");
+    assertThrown!ReadOnlyBufferException(source.put(source));
+    assertThrown!ReadOnlyBufferException(source.put(cast(ByteBuffer) null));
+    assertThrown!ReadOnlyBufferException(source.put(99, cast(ByteBuffer) null, 99, 3));
+    assertThrown!ReadOnlyBufferException(source.put(99, destination, 0, 1));
+    assertThrown!ReadOnlyBufferException(source.put(0, cast(ByteBuffer) null, 0, 1));
+    assertThrown!ReadOnlyBufferException(source.compact());
+    assert(destination.position() == 2 && destination.reset().position() == 2);
+    assert(source.position() == 0 && source.reset().position() == 0);
+    assert(storage == [0, 1, 2, 3, 2, 3, 6, 7]);
+}
+
+@("Heap ByteBuffer compact moves remaining bytes and clears the mark")
+unittest
+{
+    byte[] storage = [0, 1, 2, 3, 4, 5, 6, 7];
+    auto slice = ByteBuffer.wrap(storage, 1, 6).slice().order(ByteOrder.LITTLE_ENDIAN);
+    slice.position(2).limit(5).mark();
+    auto duplicate = slice.duplicate();
+    assert(slice.compact() is slice);
+    assert(storage == [0, 3, 4, 5, 4, 5, 6, 7]);
+    assert(slice.position() == 3 && slice.limit() == 6 && slice.order() == ByteOrder.LITTLE_ENDIAN);
+    assert(duplicate.position() == 2 && duplicate.limit() == 5 && duplicate.get(0) == 3);
+    assertThrown!InvalidMarkException(slice.reset());
+
+    slice.position(6).mark();
+    assert(slice.compact().position() == 0 && slice.limit() == 6);
+    assertThrown!InvalidMarkException(slice.reset());
+}

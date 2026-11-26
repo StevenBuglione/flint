@@ -67,6 +67,12 @@ package(flint.java.nio) struct BufferCursor
         return end - offset;
     }
 
+    void advance(int count) pure nothrow @nogc
+    {
+        assert(count >= 0 && count <= remaining());
+        offset += count;
+    }
+
     bool setPosition(int position) pure nothrow @nogc
     {
         if (position < 0 || position > end)
