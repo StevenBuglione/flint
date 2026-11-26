@@ -142,3 +142,32 @@ unittest
     foreach (digit; output[0 .. 307])
         assert(digit == '0');
 }
+
+@("Long fraction padding uses the coupled Java widths and a 340-digit primitive limit")
+unittest
+{
+    auto symbols = decimalSymbolData("", "", "");
+    DecimalFixedPattern pattern;
+    char[350] output;
+    output[] = 'x';
+
+    pattern.setMinimumFractionDigits(4);
+    assert(pattern.maximumFractionDigits == 4);
+    auto written = renderDecimalLong(42, pattern, *symbols, output[]);
+    assert(output[0 .. written] == "42.0000" && output[written] == 'x');
+
+    pattern.setMaximumFractionDigits(-1);
+    assert(pattern.minimumFractionDigits == 0 && pattern.maximumFractionDigits == 0);
+    written = renderDecimalLong(42, pattern, *symbols, output[]);
+    assert(output[0 .. written] == "42");
+
+    pattern.setMinimumFractionDigits(500);
+    assert(pattern.minimumFractionDigits == 500 && pattern.maximumFractionDigits == 500);
+    output[] = 'x';
+    const required = renderDecimalLong(42, pattern, *symbols, output[0 .. 1]);
+    assert(required == 343 && output[0] == 'x');
+    written = renderDecimalLong(42, pattern, *symbols, output[]);
+    assert(written == required && output[0 .. 3] == "42." && output[written] == 'x');
+    foreach (digit; output[3 .. written])
+        assert(digit == '0');
+}

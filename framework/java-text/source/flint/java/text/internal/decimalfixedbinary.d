@@ -3,7 +3,7 @@
 module flint.java.text.internal.decimalfixedbinary;
 
 import flint.java.text.internal.decimalfixed : DecimalAffixes, DecimalFixedPattern,
-    multiplyUnsignedWord, renderFixedDigits, writeUnsignedDigits;
+    multiplyUnsignedWord, primitiveFractionWidth, renderFixedDigits, writeUnsignedDigits;
 import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData;
 
 @safe:
@@ -42,20 +42,13 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref s
         return true;
     }
 
-    // Bound the fractional digit calculation before invoking the binary64 conversion.
-    scope DecimalFixedPattern effective = pattern;
-    if (effective.minimumFractionDigits > 340)
-        effective.minimumFractionDigits = 340;
-    if (effective.maximumFractionDigits > 340)
-        effective.maximumFractionDigits = 340;
-
     BinaryDecimal converted;
-    if (!tryFixedBinaryDecimal(bits, effective.maximumFractionDigits, converted))
+    if (!tryFixedBinaryDecimal(bits, primitiveFractionWidth(pattern.maximumFractionDigits), converted))
         return false;
 
     const decimalAt = converted.count != 0 ? converted.decimalAt : 0;
     required = renderFixedDigits(converted.digits[0 .. converted.count], decimalAt,
-            converted.negative, effective, symbols, output);
+            converted.negative, pattern, symbols, output);
     return true;
 }
 
