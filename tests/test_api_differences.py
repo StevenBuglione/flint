@@ -133,6 +133,12 @@ class ApiDifferencesTest(unittest.TestCase):
         self.assertEqual(api_differences.main(['--check', '--root', str(self.root)]), 0)
         (deviations / 'D-JPA-3.json').write_text(json.dumps({'id': 'D-JPA-3', 'deviation': 'x', 'reason': 'y'}))
         self.assertEqual(api_differences.main(['--check', '--root', str(self.root)]), 1)
+        (deviations / 'D-JPA-3.json').unlink()
+        rulebook.write_text(rulebook.read_text().replace('| D-7 | typed null |', '| D-7 | hand edited |'))
+        self.assertEqual(api_differences.table_problems(rulebook.read_text(), api_differences.with_deviation_table(
+            rulebook.read_text(), api_differences.load_deviations(self.root, []))), [
+            'docs/spring/api-mapping.md: the D-7 row differs from api/deviations/D-7.json; edit api/deviations/D-7.json, '
+            'not the table (it is generated), then run: python3 tools/api_differences.py --write'])
         (deviations / 'D-JPA-3.json').write_text(json.dumps({'id': 'D-JPA-4', 'deviation': 'x', 'reason': 'y'}))
         problems = []
         api_differences.load_deviations(self.root, problems)

@@ -74,6 +74,33 @@ def with_deviation_table(text, deviations):
     return head + BEGIN + '\n' + '\n'.join(rows) + '\n' + END + '\n\n' + tail.lstrip('\n')
 
 
+def table_rows(text):
+    """The generated table's rows by deviation ID."""
+    if BEGIN not in text or END not in text:
+        return {}
+    block = text.split(BEGIN, 1)[1].split(END, 1)[0]
+    return {m.group(1): line for line in block.splitlines() if (m := re.match(r'^\| (D-[A-Z0-9-]+) \|', line))}
+
+
+def table_problems(current, expected):
+    """Name each row of the generated table that differs from its file, and how to fix it."""
+    have, want = table_rows(current), table_rows(expected)
+    problems = []
+    for ident in sorted(set(have) | set(want), key=deviation_key):
+        source = f'{DEVIATIONS}/{ident}.json'
+        if ident not in want:
+            problems.append(f'{RULEBOOK}: the Deviations table has a row {ident} with no {source}; add that file '
+                            '(the table is generated), then run: python3 tools/api_differences.py --write')
+        elif ident not in have:
+            problems.append(f'{RULEBOOK}: {source} has no row in the Deviations table; '
+                            'run: python3 tools/api_differences.py --write')
+        elif have[ident] != want[ident]:
+            problems.append(f'{RULEBOOK}: the {ident} row differs from {source}; edit {source}, not the table '
+                            '(it is generated), then run: python3 tools/api_differences.py --write')
+    return problems or [f'{RULEBOOK}: the Deviations table does not match {DEVIATIONS}/; '
+                        'run: python3 tools/api_differences.py --write']
+
+
 def anchor(heading):
     """GitHub's anchor for a Markdown heading."""
     text = re.sub(r'[^\w\- ]', '', heading.strip().lower())
@@ -320,8 +347,7 @@ def main(argv=None):
         elif a.write and expected != current:
             rulebook_path.write_text(expected)
         elif not a.write and expected != current:
-            problems.append(f'{RULEBOOK}: the Deviations table does not match {DEVIATIONS}/; '
-                            'run: python3 tools/api_differences.py --write')
+            problems += table_problems(current, expected)
     page, problems = render(a.root, problems)
     target = a.root / OUTPUT
     if a.write:
