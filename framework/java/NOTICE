@@ -6,6 +6,7 @@ This package implements the Java SE 21 types that Spring's APIs expose
 is contributed under the package licence below by owner decision
 (docs/spring/phase1/decisions.md, flint:java* licence); conformance fixtures use
 reference results produced by executing the public Java SE 21 API.
+The specification and conformance test inventory are pinned to OpenJDK 21.0.13.
 
 Closeable and Flushable are ported from OpenJDK 21.0.13. Their source files
 retain the upstream copyright and license notices.
