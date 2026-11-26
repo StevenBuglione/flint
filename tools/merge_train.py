@@ -93,9 +93,9 @@ DEFAULT_VERIFIERS = [{
 # the candidate, so nobody is blamed.
 VERIFY_SCRIPT = r"""
 set -uo pipefail
-@PRELUDE@
 BARE="@BARE@"; REPO="@REPO@"; WT="@WORKTREE@"
 export FLINT_HOME="$WT" FLINT_CACHE="@CACHE_ROOT@/train-cache-@STAMP@"
+@PRELUDE@
 cleanup() {
   # Only this run's servers: DMD fork servers whose environment names this run's FLINT_CACHE.
   for pid in $(pgrep -u "$USER" -f 'dmd' || true); do
