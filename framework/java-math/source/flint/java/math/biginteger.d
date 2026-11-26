@@ -57,10 +57,96 @@ class BigInteger : Comparable!BigInteger
         this.sign = length ? sign : 0;
     }
 
+    /// Construct an integer from a signed 64-bit value.
+    static BigInteger valueOf(long value) pure nothrow
+    {
+        return new BigInteger(value);
+    }
+
+    private this(long value) pure nothrow
+    {
+        if (!value)
+            return;
+        sign = value < 0 ? -1 : 1;
+        const ulong absolute = value < 0 ? 0UL - cast(ulong) value : cast(ulong) value;
+        const uint high = cast(uint)(absolute >> 32);
+        auto words = new uint[high ? 2 : 1];
+        words[0] = cast(uint) absolute;
+        if (high)
+            words[1] = high;
+        magnitude = words;
+    }
+
     /// Return -1, 0, or 1 for a negative, zero, or positive value.
     int signum() const pure nothrow @nogc
     {
         return sign;
+    }
+
+    /// Return the low 64 bits in two's complement.
+    long longValue() const pure nothrow @nogc
+    {
+        const ulong low = lowMagnitude();
+        return cast(long)(sign < 0 ? 0UL - low : low);
+    }
+
+    /// Return the low 32 bits in two's complement.
+    int intValue() const pure nothrow @nogc
+    {
+        const uint low = magnitude.length ? magnitude[0] : 0;
+        return cast(int)(sign < 0 ? 0U - low : low);
+    }
+
+    /// Return the low 16 bits in two's complement.
+    short shortValue() const pure nothrow @nogc
+    {
+        return cast(short) intValue();
+    }
+
+    /// Return the low eight bits in two's complement.
+    byte byteValue() const pure nothrow @nogc
+    {
+        return cast(byte) intValue();
+    }
+
+    /// Convert to a long, throwing on overflow.
+    long longValueExact() const
+    {
+        return checkedValue(long.max, "BigInteger out of long range");
+    }
+
+    /// Convert to an int, throwing on overflow.
+    int intValueExact() const
+    {
+        return cast(int) checkedValue(int.max, "BigInteger out of int range");
+    }
+
+    /// Convert to a short, throwing on overflow.
+    short shortValueExact() const
+    {
+        return cast(short) checkedValue(short.max, "BigInteger out of short range");
+    }
+
+    /// Convert to a byte, throwing on overflow.
+    byte byteValueExact() const
+    {
+        return cast(byte) checkedValue(byte.max, "BigInteger out of byte range");
+    }
+
+    private long checkedValue(ulong positiveLimit, string message) const
+    {
+        const ulong low = lowMagnitude();
+        if (magnitude.length > 2 || low > positiveLimit + (sign < 0))
+            throw new ArithmeticException(message);
+        return cast(long)(sign < 0 ? 0UL - low : low);
+    }
+
+    private ulong lowMagnitude() const pure nothrow @nogc
+    {
+        if (!magnitude.length)
+            return 0;
+        const ulong high = magnitude.length > 1 ? magnitude[1] : 0;
+        return (high << 32) | magnitude[0];
     }
 
     /// Return a fresh, minimal big-endian two's-complement byte array.

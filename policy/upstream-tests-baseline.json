@@ -3043,7 +3043,6 @@
       "org/apache/harmony/tests/java/math/BigIntegerAndTest.java",
       "org/apache/harmony/tests/java/math/BigIntegerCompareTest.java",
       "org/apache/harmony/tests/java/math/BigIntegerConstructorsTest.java",
-      "org/apache/harmony/tests/java/math/BigIntegerConvertTest.java",
       "org/apache/harmony/tests/java/math/BigIntegerDivideTest.java",
       "org/apache/harmony/tests/java/math/BigIntegerHashCodeTest.java",
       "org/apache/harmony/tests/java/math/BigIntegerModPowTest.java",

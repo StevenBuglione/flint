@@ -1,5 +1,7 @@
 # java-math probe
 
-Construct two integers from signed bytes, add and subtract one operand, and
-print the resulting minimal byte length and low byte. The control prints the
-same values from the input. Both builds carry the same `flint:java` dependency.
+Construct one integer from signed bytes and one from a signed long. Add and
+subtract the second operand and print the resulting minimal byte length and
+low byte, checking the second operand's exact conversion back to long. The
+control prints the same values from the input. Both builds carry the same
+`flint:java` dependency.
