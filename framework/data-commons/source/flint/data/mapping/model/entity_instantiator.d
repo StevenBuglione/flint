@@ -14,27 +14,85 @@ import flint.engine.aot.descriptor : ConstructorDescriptor;
 import flint.engine.aot.objects : statelessInstance;
 import flint.java.classref : ClassRef;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, RuntimeException;
-import flint.java.util : ArrayList, Collections, List;
+import flint.java.util : ArrayList, Collections, List, Map;
 
 @safe:
 
+/// Wildcard view of an instantiator for a registry of heterogeneous types (D-DATA-25).
+interface EntityInstantiator()
+{
+}
+
 /// Constructs an entity from a source of creator parameter values (D-DATA-25).
-interface EntityInstantiator(T, P) if (is(P : PersistentProperty!P))
+interface EntityInstantiator(T, P) : EntityInstantiator!() if (is(P : PersistentProperty!P))
 {
     /// Invokes the creator of the given entity using the supplied values.
     T createInstance(PersistentEntity!(T, P) entity, ParameterValueProvider!(T, P) provider);
 }
 
-/// Supplies the default instantiator for registered constructor metadata.
+/// Supplies an exact type match or the fallback instantiator.
 class EntityInstantiators
 {
-    /// Finds the stateless instantiator for the given entity and property type.
+    private EntityInstantiator!() fallback;
+    private EntityInstantiator!() delegate(ClassRef) @safe lookupCustom;
+
+    /// Uses the registered constructor strategy when no custom strategy is selected.
+    this()
+    {
+    }
+
+    /// Uses a custom fallback.
+    this(EntityInstantiator!() fallback)
+    {
+        if (fallback is null)
+            throw new IllegalArgumentException("DefaultInstantiator must not be null");
+        this.fallback = fallback;
+    }
+
+    /// Uses the registered constructor strategy for types absent from the custom map.
+    this(M)(M customInstantiators) if (is(M : Map!(ClassRef, EntityInstantiator!())))
+    {
+        setCustomInstantiators(customInstantiators);
+    }
+
+    /// Uses the custom fallback for types absent from the custom map.
+    this(M)(EntityInstantiator!() fallback, M customInstantiators)
+            if (is(M : Map!(ClassRef, EntityInstantiator!())))
+    {
+        this(fallback);
+        setCustomInstantiators(customInstantiators);
+    }
+
+    /// Finds the strategy for the entity's exact type and checks its entity/property binding.
     EntityInstantiator!(T, P) getInstantiatorFor(T, P)(PersistentEntity!(T, P) entity)
             if (is(P : PersistentProperty!P))
     {
         if (entity is null)
             throw new IllegalArgumentException("Entity must not be null");
-        return statelessInstance!(RegisteredEntityInstantiator!(T, P))();
+        const type = entity.getType();
+        return bindInstantiator!(T, P)(findCustomOrFallback(type), type);
+    }
+
+    private static EntityInstantiator!(T, P) bindInstantiator(T, P)(EntityInstantiator!() selected, ClassRef type)
+    {
+        if (selected is null)
+            return statelessInstance!(RegisteredEntityInstantiator!(T, P))();
+        if (auto typed = cast(EntityInstantiator!(T, P)) selected)
+            return typed;
+        throw new IllegalArgumentException("Incompatible EntityInstantiator binding for " ~ type.name);
+    }
+
+    private EntityInstantiator!() findCustomOrFallback(ClassRef type)
+    {
+        auto custom = lookupCustom is null ? null : lookupCustom(type);
+        return custom is null ? fallback : custom;
+    }
+
+    private void setCustomInstantiators(M)(M customInstantiators)
+    {
+        if (customInstantiators is null)
+            throw new IllegalArgumentException("CustomInstantiators must not be null");
+        lookupCustom = &(cast(Map!(ClassRef, EntityInstantiator!())) customInstantiators).get;
     }
 }
 

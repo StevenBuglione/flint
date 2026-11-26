@@ -1654,7 +1654,6 @@
       "org/springframework/data/mapping/model/ClassGeneratingPropertyAccessorFactoryTests.java",
       "org/springframework/data/mapping/model/ConvertingPropertyAccessorUnitTests.java",
       "org/springframework/data/mapping/model/EntityCreatorMetadataDiscovererUnitTests.java",
-      "org/springframework/data/mapping/model/EntityInstantiatorsUnitTests.java",
       "org/springframework/data/mapping/model/FactoryMethodUnitTests.java",
       "org/springframework/data/mapping/model/IdPropertyIdentifierAccessorUnitTests.java",
       "org/springframework/data/mapping/model/InstanceCreatorMetadataDiscovererUnitTests.java",

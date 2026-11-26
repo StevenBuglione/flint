@@ -2,6 +2,8 @@
 // Copyright 2023-present the original author or authors.
 // Ported from spring-data-commons 4.2.0: src/test/java/org/springframework/data/mapping/model/ReflectionEntityInstantiatorUnitTests.java
 // ReflectionEntityInstantiatorUnitTests: Copyright 2012-present the original author or authors.
+// Ported from spring-data-commons 4.2.0: src/test/java/org/springframework/data/mapping/model/EntityInstantiatorsUnitTests.java
+// EntityInstantiatorsUnitTests: Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 module entity_instantiator_tests;
@@ -10,14 +12,14 @@ import flint.beans : BeanInstantiationException;
 import flint.data.annotation : Transient;
 import flint.data.core : TypeInformation;
 import flint.data.mapping : InstanceCreatorMetadata, Parameter, PersistentEntity, PersistentProperty;
-import flint.data.mapping.model : BasicPersistentEntity, EntityInstantiators,
+import flint.data.mapping.model : BasicPersistentEntity, EntityInstantiator, EntityInstantiators,
     MappingInstantiationException, ParameterValueProvider, PersistentEntityParameterValueProvider;
 import flint.engine.aot.any : Any, AnyTypeException;
 import flint.engine.aot.descriptor : ConstructorDescriptor, DescriptorTable, ParameterDescriptor,
     PropertyDescriptor, descriptorOf, findAnnotation;
 import flint.java.classref : ClassRef, classOf;
-import flint.java.lang : IllegalStateException;
-import flint.java.util : List;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
+import flint.java.util : HashMap, List, Map;
 import std.algorithm.searching : canFind;
 import std.exception : collectException;
 import std.typecons : Nullable;
@@ -359,4 +361,62 @@ unittest
     const signature = classOf!DiagnosticSample.name ~ "(" ~ classOf!(Nullable!long)
         .name ~ ", " ~ classOf!string.name ~ ")";
     assert(error.msg.canFind(signature));
+}
+
+private final class CustomInstantiator(T) : EntityInstantiator!(T, ConstructorProperty)
+{
+    override T createInstance(PersistentEntity!(T, ConstructorProperty),
+            ParameterValueProvider!(T, ConstructorProperty))
+    {
+        return T.init;
+    }
+}
+
+private PersistentEntity!(T, ConstructorProperty) entityForType(T)()
+{
+    auto table = DescriptorTable.withBuiltins();
+    table.add(descriptorOf!T());
+    return new BasicPersistentEntity!(T, ConstructorProperty)(TypeInformation.of!T(table));
+}
+
+@("rejectsNullFallbackInstantiator")
+unittest
+{
+    alias Instantiator = EntityInstantiator!();
+    assert(collectException!IllegalArgumentException(new EntityInstantiators(cast(Instantiator) null)) !is null);
+}
+
+@("returnsCustomInstantiatorForTypeIfRegistered")
+unittest
+{
+    auto custom = new CustomInstantiator!string();
+    auto map = new HashMap!(ClassRef, EntityInstantiator!())();
+    map.put(classOf!string, custom);
+    auto instantiators = new EntityInstantiators(map);
+    assert(instantiators.getInstantiatorFor(entityForType!string()) is custom);
+}
+
+@("usesCustomFallbackInstantiatorsIfConfigured")
+unittest
+{
+    auto fallback = new CustomInstantiator!Object();
+    auto custom = new CustomInstantiator!string();
+    auto map = new HashMap!(ClassRef, EntityInstantiator!())();
+    map.put(classOf!string, custom);
+    auto instantiators = new EntityInstantiators(fallback, map);
+    auto entity = entityForType!Object();
+    assert(new EntityInstantiators(fallback).getInstantiatorFor(entity) is fallback);
+    assert(instantiators.getInstantiatorFor(entity) is fallback);
+    assert(instantiators.getInstantiatorFor(entityForType!string()) is custom);
+    map.put(classOf!Object, null);
+    assert(instantiators.getInstantiatorFor(entity) is fallback);
+    map.put(classOf!Object, custom);
+    assert(collectException!IllegalArgumentException(instantiators.getInstantiatorFor(entity)) !is null);
+}
+
+@("rejectsNullCustomInstantiators")
+unittest
+{
+    Map!(ClassRef, EntityInstantiator!()) map;
+    assert(collectException!IllegalArgumentException(new EntityInstantiators(map)) !is null);
 }

@@ -790,8 +790,15 @@
       "status": "partial"
     },
     "org/springframework/data/mapping/model/EntityInstantiatorsUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/entity_instantiator_tests.d",
+      "methods": {
+        "ported": [
+          "rejectsNullFallbackInstantiator",
+          "returnsCustomInstantiatorForTypeIfRegistered",
+          "usesCustomFallbackInstantiatorsIfConfigured"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/mapping/model/FactoryMethodUnitTests.java": {
       "phase": "2",
