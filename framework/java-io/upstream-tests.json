@@ -110,7 +110,8 @@
     },
     "java/io/ByteArrayOutputStream/WriteToReleasesCarrier.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/CharArrayReader/Constructor.java": {
       "status": "deferred",
@@ -557,7 +558,8 @@
     },
     "java/io/InputStream/TransferTo.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/InputStreamReader/GrowAfterEOF.java": {
       "status": "deferred",

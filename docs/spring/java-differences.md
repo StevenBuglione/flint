@@ -10968,6 +10968,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.ByteArrayInputStream#read()` | 2 | Sequential unsigned reads and EOF match Java. Synchronization on the stream monitor is pending. |
 | framework | `java.io.ByteArrayInputStream#readAllBytes()` | 2 | Java copies the remaining bytes under the stream monitor and advances to EOF without calling a subclass read override. The inherited Flint implementation calls the virtual bulk read without holding that monitor. |
 | framework | `java.io.ByteArrayInputStream#readNBytes(byte[],int,int)` | 2 | Missing byte-array override that converts EOF from the ranged read into a zero byte count. |
+| framework | `java.io.ByteArrayInputStream#transferTo(OutputStream)` | 2 | Missing synchronized transfer of remaining bytes in bounded ranged writes. The position advances after each successful write, and an empty stream returns zero before using the sink. |
 | framework | `java.io.ByteArrayOutputStream#<init>()` | 2 | Java initializes a protected 32-byte buffer and zero count. The existing facade starts with an empty private slice. |
 | framework | `java.io.ByteArrayOutputStream#<init>(int)` | 2 | The explicit initial capacity constructor is missing, including rejection of negative capacity. |
 | framework | `java.io.ByteArrayOutputStream#buf` | 2 | Subclasses do not have the protected capacity buffer. |
@@ -10976,6 +10977,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.ByteArrayOutputStream#size()` | 2 | Java reads the count under the stream monitor. The existing method reads the slice length without taking that monitor. |
 | framework | `java.io.ByteArrayOutputStream#toByteArray()` | 2 | Java copies the buffer under the stream monitor. The existing detached unsigned byte slice is copied without taking that monitor. An empty result uses a plain D array under R26. |
 | framework | `java.io.ByteArrayOutputStream#toString()` | 2 | The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input. |
+| framework | `java.io.ByteArrayOutputStream#writeTo(OutputStream)` | 2 | Missing transfer of the accumulated bytes without clearing them. Java 21 uses a ranged write under the monitor on platform threads and writes an independent snapshot after releasing the monitor on virtual threads. |
 | framework | `java.io.File` | 2 | The existing pathname facade lacks Java pathname value equality, hashing and the Comparable contract. |
 | framework | `java.io.File#<init>(File,String)` | 2 | The overload taking a File parent is pending. |
 | framework | `java.io.File#<init>(String)` | 2 | Java normalizes the platform pathname. The existing constructor stores the supplied spelling. R26 covers null pathname strings. |
@@ -11002,6 +11004,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.InputStream#readNBytes(byte[],int,int)` | 2 | Missing bounded read into a caller-supplied array range. Java returns zero at EOF. |
 | framework | `java.io.InputStream#readNBytes(int)` | 2 | Missing bounded read that returns a new byte array. Java uses this virtual overload to implement readAllBytes(). |
 | framework | `java.io.InputStream#reset()` | 2 | Missing virtual reset method that throws IOException with detail mark/reset not supported by default. |
+| framework | `java.io.InputStream#transferTo(OutputStream)` | 2 | Missing transfer through virtual ranged reads and writes. Java rejects a null sink before reading, returns the count, and leaves both streams open. |
 | framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java distinguishes absent detail from an empty detail message. The current raw string constructor and inherited accessor need the R5 nullable message contract. |
 | framework | `java.io.OutputStream` | 2 | The abstract sink exists. The Java type also implements the Closeable and Flushable interfaces, which are pending. |
 | framework | `java.io.OutputStream#write(byte[])` | 2 | Java forwards a whole-array write to the virtual ranged overload. The existing method calls the single-byte overload directly. |
