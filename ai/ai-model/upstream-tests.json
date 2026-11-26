@@ -319,8 +319,19 @@
       "status": "deferred"
     },
     "org/springframework/ai/converter/MarkdownCodeBlockCleanerTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-model/tests/markdown_code_block_cleaner_test.d",
+      "methods": {
+        "ported": [
+          "shouldHandleMalformedInput",
+          "shouldNotModifyTextWithoutCodeBlocks",
+          "shouldRemoveMultilineCodeBlockWithLanguageIdentifier",
+          "shouldRemoveMultilineCodeBlockWithoutLanguageIdentifier",
+          "shouldRemoveSingleLineCodeBlockWithoutLanguageIdentifier",
+          "shouldReturnEmptyForEmptyInput",
+          "shouldReturnNullForNullInput"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/ai/converter/ThinkingTagCleanerTest.java": {
       "phase": "2",

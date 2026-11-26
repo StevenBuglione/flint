@@ -52,7 +52,6 @@
       "org/springframework/ai/converter/BeanOutputConverterTest.java",
       "org/springframework/ai/converter/CompositeResponseTextCleanerTest.java",
       "org/springframework/ai/converter/ListOutputConverterTest.java",
-      "org/springframework/ai/converter/MarkdownCodeBlockCleanerTest.java",
       "org/springframework/ai/converter/ThinkingTagCleanerTest.java",
       "org/springframework/ai/decision/DecisionOptionsTests.java",
       "org/springframework/ai/decision/DecisionPromptTests.java",
