@@ -1177,3 +1177,5 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - sol-boot: Boot core and auto-configuration; boot reviews;
     - sol-jackson: Jackson's tree model and features; third-party-apis reviews;
     - sol-web: spring-web and webmvc remainders; web-http reviews.
+- 2026-11-26 03:05Z, coordinator: **`flint budget` lands now.** gs-rest's 18 endpoints are seeded as measured. petclinic's 13 endpoints that rose 0.50–1.23% since the 83ed6a19 seed are seeded at their current values and marked "under attribution", so main stays green and further growth is caught. After m7's bisect, they return to 83ed6a19 values unless the cause was a deliberate trade.
+- 2026-11-26 03:05Z, owner: **integration across all five machines** ([../phase2/integration.md](../phase2/integration.md)). venus develops. posidon, the owner's desktop (10.10.10.122) and 10.10.10.116 become merge-train verifiers, run speculatively in parallel with strict landing order. posidon alone runs `flint budget`, and pluto keeps the macOS lane.
