@@ -36,7 +36,6 @@ import flint.beans.factory.config : ConfigurableListableBeanFactory;
 import flint.core.env : ConfigurableEnvironment, Environment, EnvironmentCapable;
 import flint.core.io : ResourceLoader;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.name : typeNameOf;
 import flint.java.lang : Runnable, RuntimeException;
 import flint.java.util : Locale;
 
