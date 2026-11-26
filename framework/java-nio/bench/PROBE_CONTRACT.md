@@ -1,3 +1,3 @@
-# Byte order probe
+# Java NIO package probe
 
-The argument count selects the native byte order or one of the two explicit orders. The probe exits with the selected object's name length. The control selects the equivalent name using the same input and target endianness. It has no NIO dependency.
+The argument count selects a byte order or triggers a relative read at the buffer limit. The byte order branch returns the name length and the control selects the same name. The underflow branch throws and catches BufferUnderflowException and reports whether it has a detail message. The control exercises the same branch with the canonical RuntimeException. The closure probes exercise each leaf independently.

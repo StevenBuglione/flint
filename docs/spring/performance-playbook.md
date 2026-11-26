@@ -360,6 +360,8 @@ The Spring Beans factory exception types reuse the existing `BeanCreationExcepti
 
 **Represent Java NIO byte order as a value.** A private boolean distinguishes both named constants and the target endian selects the native order at compile time. On venus the matched Java NIO probe at `0ee09533d` added 72 loadable bytes at O3 and Oz with one DMD template instance. The new-module-rule caps are 80 bytes and 2 instances. The stock closure probe added 120 bytes in each profile with zero closure violations.
 
+**Reuse the canonical RuntimeException for relative buffer underflow.** The leaf adds a zero-argument subclass and inherits message and cause handling. The matched standalone probe at `ff9a41a2f` added 640 O3 and 640 Oz loadable bytes over a RuntimeException control with 436 DMD instances on venus. The jdk-leaf-rule caps are 704 bytes and 480 instances. The stock underflow probe retains nine known aggregate module records in each profile, tracked by the new-probe ratchet. The independent ByteOrder probe retains none.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |
