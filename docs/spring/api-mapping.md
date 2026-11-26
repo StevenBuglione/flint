@@ -165,6 +165,15 @@ Java often shares one instance of a generic class as a constant: Spring Data's `
 
 Mapping: the factory method or constant is `adapted` with rule `R17`. A lane cites R17 instead of adding a per-module deviation.
 
+### R18: Enums that implement an interface
+
+D enums cannot implement interfaces. Coordinator, 2026-11-26, under the owner's standing approval:
+- **A singleton enum** (one constant, used as a strategy object, such as Spring Data's `PersistableIsNewStrategy`) becomes a `final` fieldless class that implements the interface. Its one instance is shared through `statelessInstance` and exposed as the static constant (`INSTANCE`), so identity holds as in Java. It keeps `name()`, `ordinal()`, `toString()` and `values()` as Java has them.
+- **A multi-constant enum used as option values** (Jakarta's `LockModeType`, `FlushModeType`; D-JPA-2) stays a D `enum`. Methods that take the interface type gain overloads at the API boundary that accept the enum, as in `em.find!Owner(id, LockModeType.PESSIMISTIC_WRITE)`.
+- **Enums already ported under the R15 proposal** (`HttpStatus` as a struct with `alias this` to `HttpStatusCode`, docs/spring/phase1/web-mvc.md) keep that shape.
+
+Mapping: the enum and its constants are `adapted` with rule `R18`.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:
