@@ -39,6 +39,6 @@ class InputMismatchException : NoSuchElementException
     this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         // TODO: Pass the raw detail through once RuntimeException.getMessage normalizes it via javaDetail.
-        super(message.length == 0 ? null : message, null, file, line);
+        super(message.length == 0 ? null : message, file: file, line: line);
     }
 }
