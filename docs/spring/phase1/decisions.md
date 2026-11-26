@@ -1078,3 +1078,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - 3 SpelCompiler classes, excluded because they test JVM bytecode generation.
 
   **Condition:** their behavioural cases (compiled result equals interpreted result) must be ported against Flint AOT's SpEL compilation when it lands.
+- 2026-11-26 01:07Z, coordinator, under the owner's standing approval: **seeding a module's upstream-tests baseline is pre-approved,** for new modules and for newly owned classes, on three conditions:
+  - every class not yet ported is `deferred` with its phase;
+  - every `excluded` class has a concrete reason;
+  - nothing recorded as ported or partial is downgraded.
+
+  **Still needs the coordinator's approval:** a downgrade, or an exclusion without a concrete reason. **First use:** micrometer-core (sol-observability).
