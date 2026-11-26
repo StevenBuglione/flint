@@ -363,7 +363,7 @@ unittest
 
 // TestRootValues and ParserSequenceTest
 
-@("TestRootValues.simpleNumbers: root values separated by any whitespace")
+@("TestRootValues.simpleNumbers")
 unittest
 {
     auto p = createParser("1 2\t3\r4\n5\r\n6\r\n   7");
@@ -373,9 +373,23 @@ unittest
         assert(p.getIntValue() == i);
     }
     assert(p.nextToken() == JsonToken.NOT_AVAILABLE);
+    p.close();
 }
 
-@("TestRootValues.brokeanNumber: a root number must end at a separator")
+@("TestRootValues.simpleBooleans")
+unittest
+{
+    auto p = createParser("true false\ttrue\rfalse\ntrue\r\nfalse\r\n   true");
+    foreach (expected; [
+        JsonToken.VALUE_TRUE, JsonToken.VALUE_FALSE, JsonToken.VALUE_TRUE, JsonToken.VALUE_FALSE,
+        JsonToken.VALUE_TRUE, JsonToken.VALUE_FALSE, JsonToken.VALUE_TRUE
+    ])
+        assert(p.nextToken() == expected);
+    assert(p.nextToken() == JsonToken.NOT_AVAILABLE);
+    p.close();
+}
+
+@("a root number must end at a separator")
 unittest
 {
     auto p = createParser("12x");
@@ -454,6 +468,12 @@ private string written(scope void delegate(JsonGenerator) @safe write)
     write(g);
     g.close();
     return output.toUtf8String();
+}
+
+@("TestRootValues.simpleWrites")
+unittest
+{
+    assert(written((g) { g.writeNumber(123); g.writeString("abc"); g.writeBoolean(true); }) == `123 "abc" true`);
 }
 
 @("GeneratorBasicTest.fieldValueWrites")

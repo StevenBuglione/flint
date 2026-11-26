@@ -418,8 +418,22 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/json/TestRootValues.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/upstream_test.d",
+      "methods": {
+        "ported": [
+          "simpleBooleans",
+          "simpleNumbers",
+          "simpleWrites"
+        ],
+        "skipped": {
+          "brokenNumber": "The blocking parser accepts a colon after the first root number and rejects it on the next advance.",
+          "invalidToken": "The malformed Unicode token is rejected with an unexpected-character diagnostic rather than the pinned unrecognized-token diagnostic.",
+          "rootOffsetIssue516Bytes": "A blocking byte buffer has no throttled InputStream refill boundary.",
+          "rootOffsetIssue516Chars": "A blocking byte buffer has no throttled character Reader refill boundary."
+        }
+      },
+      "note": "The upstream stream/reader variants exercise Flint's blocking byte-buffer parser and output-sink generator.",
+      "status": "partial"
     },
     "tools/jackson/core/unittest/json/TestUnicode.java": {
       "phase": "2",

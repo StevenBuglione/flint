@@ -2433,7 +2433,6 @@
       "tools/jackson/core/unittest/json/TestCustomEscaping.java",
       "tools/jackson/core/unittest/json/TestDecorators.java",
       "tools/jackson/core/unittest/json/TestMaxErrorSize.java",
-      "tools/jackson/core/unittest/json/TestRootValues.java",
       "tools/jackson/core/unittest/json/TestUnicode.java",
       "tools/jackson/core/unittest/json/TestWithTonsaSymbols.java",
       "tools/jackson/core/unittest/json/async/AsyncAposUnescapedControlChars1750Test.java",
