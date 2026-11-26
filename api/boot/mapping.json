@@ -1474,7 +1474,7 @@
 "org.springframework.boot.autoconfigure.AutoConfigureBefore#name":{"d":"flint.boot.autoconfigure.AutoConfigureBefore.name","rules":["R2"],"status":"adapted"},
 "org.springframework.boot.autoconfigure.AutoConfigureBefore#value":{"d":"flint.boot.autoconfigure.AutoConfigureBefore.value","rules":["R2","R4"],"status":"adapted"},
 "org.springframework.boot.autoconfigure.AutoConfigureOrder":{"d":"flint.boot.autoconfigure.AutoConfigureOrder","rules":["R2"],"status":"adapted"},
-"org.springframework.boot.autoconfigure.AutoConfigureOrder#DEFAULT_ORDER":{"status":"excluded","category":"deferred","phase":"2","reason":"The constant's exact value needs direct verification."},
+"org.springframework.boot.autoconfigure.AutoConfigureOrder#DEFAULT_ORDER":{"d":"flint.boot.autoconfigure.AutoConfigureOrder.DEFAULT_ORDER","status":"ported"},
 "org.springframework.boot.autoconfigure.AutoConfigureOrder#value":{"d":"flint.boot.autoconfigure.AutoConfigureOrder.value","rules":["R2"],"status":"adapted"},
 "org.springframework.boot.autoconfigure.EnableAutoConfiguration":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.EnableAutoConfiguration#ENABLED_OVERRIDE_PROPERTY":{"status":"excluded","category":"deferred","phase":"2"},

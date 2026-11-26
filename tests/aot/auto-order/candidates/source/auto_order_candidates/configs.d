@@ -9,6 +9,10 @@ import flint.boot.context.properties : ClassRef;
 
 @safe:
 
+static assert(is(typeof(AutoConfigureOrder.DEFAULT_ORDER) == int));
+static assert(AutoConfigureOrder.DEFAULT_ORDER == 0);
+static assert(AutoConfigureOrder.init.value == AutoConfigureOrder.DEFAULT_ORDER);
+
 /// Uses the default order between the explicitly ordered classes.
 @AutoConfigureOrder
 class OrderUnspecified
@@ -110,5 +114,38 @@ class AutoConfigureZ
 /// Uses the direct before attribute to precede Y2.
 @AutoConfiguration(before: [ClassRef("auto_order_candidates.configs.AutoConfigureY2")])
 final class AutoConfigureZ2
+{
+}
+
+/// Follows the four configurations that declare a before constraint.
+class OrderAutoConfigureA
+{
+}
+
+/// The first predecessor by numeric priority.
+@AutoConfigureBefore([ClassRef("auto_order_candidates.configs.OrderAutoConfigureA")])
+@AutoConfigureOrder(1)
+class OrderAutoConfigureASeedR1
+{
+}
+
+/// The second predecessor by numeric priority.
+@AutoConfigureBefore([ClassRef("auto_order_candidates.configs.OrderAutoConfigureA")])
+@AutoConfigureOrder(2)
+class OrderAutoConfigureASeedY2
+{
+}
+
+/// The third predecessor by numeric priority.
+@AutoConfigureBefore([ClassRef("auto_order_candidates.configs.OrderAutoConfigureA")])
+@AutoConfigureOrder(3)
+class OrderAutoConfigureASeedA3
+{
+}
+
+/// The fourth predecessor by numeric priority.
+@AutoConfigureBefore([ClassRef("auto_order_candidates.configs.OrderAutoConfigureA")])
+@AutoConfigureOrder(4)
+class OrderAutoConfigureAutoConfigureASeedG4
 {
 }

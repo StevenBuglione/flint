@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 200 | 337 | 0 | 15,259 |
-| boot | spring-boot@v4.2.0 | 43 | 43 | 2,133 | 13,384 |
+| boot | spring-boot@v4.2.0 | 44 | 43 | 2,133 | 13,383 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,515 | 1,402 | 4,850 | 30,067 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -8902,7 +8902,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.amqp.rabbitmq.health | 0 | 3 |
 | org.springframework.boot.ansi | 68 | 0 |
 | org.springframework.boot.artemis.autoconfigure | 48 | 0 |
-| org.springframework.boot.autoconfigure | 86 | 0 |
+| org.springframework.boot.autoconfigure | 85 | 0 |
 | org.springframework.boot.autoconfigure.aop | 2 | 0 |
 | org.springframework.boot.autoconfigure.availability | 2 | 0 |
 | org.springframework.boot.autoconfigure.cache | 11 | 0 |
@@ -10328,7 +10328,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | boot | `org.springframework.boot.autoconfigure.AutoConfiguration#afterName` | 2 | Known defect. AOT ignores the direct afterName field when sorting auto-configurations. |
 | boot | `org.springframework.boot.autoconfigure.AutoConfiguration#beforeName` | 2 | Known defect. AOT ignores the direct beforeName field when sorting auto-configurations. |
 | boot | `org.springframework.boot.autoconfigure.AutoConfiguration#value` | 2 | The configuration bean-name alias needs separate verification. |
-| boot | `org.springframework.boot.autoconfigure.AutoConfigureOrder#DEFAULT_ORDER` | 2 | The constant's exact value needs direct verification. |
 | boot | `org.springframework.boot.autoconfigure.SpringBootApplication#proxyBeanMethods` | 2 | Known defect. The missing @AliasFor(annotation = Configuration.class) causes proxyBeanMethods = false to merge to true. |
 | boot | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperties` | 2 | Repeated conditions and explicit containers require AOT occurrence support. |
 | boot | `org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#search` | 2 | Known defect. A named missing-bean condition still searches the parent with SearchStrategy.CURRENT. |

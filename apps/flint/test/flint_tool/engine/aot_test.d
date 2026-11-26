@@ -1482,6 +1482,18 @@ unittest
     ], ["AutoConfigureC", "AutoConfigureB", "AutoConfigureA"]);
 }
 
+@("AutoConfigurationSorterTests.byBeforeAnnotationThenOrderAnnotation")
+unittest
+{
+    expectAutoConfigurationRanks([
+        "OrderAutoConfigureAutoConfigureASeedG4", "OrderAutoConfigureASeedA3",
+        "OrderAutoConfigureASeedY2", "OrderAutoConfigureASeedR1", "OrderAutoConfigureA"
+    ], [
+        "OrderAutoConfigureASeedR1", "OrderAutoConfigureASeedY2", "OrderAutoConfigureASeedA3",
+        "OrderAutoConfigureAutoConfigureASeedG4", "OrderAutoConfigureA"
+    ]);
+}
+
 private void expectAutoConfigurationRanks(const string[] imports, const string[] expected)
 {
     import std.algorithm.searching : count;
