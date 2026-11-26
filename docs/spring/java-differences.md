@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 137 | 138 | 0 | 2,115 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 42 | 52 | 0 | 4,358 |
+| framework | thymeleaf@3.1.7.RELEASE | 45 | 55 | 0 | 4,352 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 231 | 133 | 1,871 | 16,186 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -3920,6 +3920,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.thymeleaf.context.IContext#getVariable(String)` | `flint.thymeleaf.context.IContext.getVariable` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.thymeleaf.context.IContext#getVariableNames()` | `flint.thymeleaf.context.IContext.getVariableNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.thymeleaf.context.ILazyContextVariable` | `flint.thymeleaf.context.ILazyContextVariable` | [R23](api-mapping.md#r23-object-typed-values) | One erased interface lets the engine recognize lazy variables with any result type. |
+| `org.thymeleaf.context.ILazyContextVariable#getValue()` | `flint.thymeleaf.context.ILazyContextVariable.getValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.thymeleaf.context.LazyContextVariable#getValue()` | `flint.thymeleaf.context.LazyContextVariable.getValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.thymeleaf.dialect
 
@@ -9887,7 +9890,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.web.util.pattern | 47 | 0 |
 | org.thymeleaf | 153 | 0 |
 | org.thymeleaf.cache | 117 | 0 |
-| org.thymeleaf.context | 163 | 0 |
+| org.thymeleaf.context | 157 | 0 |
 | org.thymeleaf.dialect | 18 | 0 |
 | org.thymeleaf.engine | 441 | 0 |
 | org.thymeleaf.exceptions | 3 | 0 |
