@@ -1139,12 +1139,20 @@ class MockHttpServletResponse : HttpServletResponse
 
     void setIntHeader(string name, int value)
     {
-        setOrAddHeader(name, decimal(value), false);
+        setOrAddIntHeader(name, value, false);
     }
 
     void addIntHeader(string name, int value)
     {
-        setOrAddHeader(name, decimal(value), true);
+        setOrAddIntHeader(name, value, true);
+    }
+
+    pragma(inline, false) private void setOrAddIntHeader(string name, int value, bool add)
+    {
+        if (equalsIgnoreCase(name, HttpHeaders.CONTENT_LENGTH))
+            setContentLength(value);
+        else
+            setOrAddHeader(name, decimal(value), add);
     }
 
     pragma(inline, false) private void setOrAddHeader(string name, string value, bool add)

@@ -159,3 +159,37 @@ unittest
     assert(response.getContentLengthLong() == 3_000_000_000);
     assert(response.getHeader("Content-Length") == "3000000000");
 }
+
+private class LengthRecordingResponse : MockHttpServletResponse
+{
+    int[] lengths;
+
+    override void setContentLength(int length)
+    {
+        lengths ~= length;
+        super.setContentLength(length);
+    }
+}
+
+@("Integer Content-Length writes use the int setter and replace the header")
+unittest
+{
+    auto response = new LengthRecordingResponse;
+    response.setIntHeader("content-length", 12);
+    response.addIntHeader("Content-Length", 34);
+    assert(response.lengths == [12, 34]);
+    assert(response.getContentLength() == 34);
+    assert(response.getHeaders("Content-Length") == ["34"]);
+}
+
+@("Integer headers retain signed values, append in order and replace case-insensitively")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    response.setIntHeader("X-Number", int.min);
+    response.addIntHeader("x-number", int.max);
+    assert(response.getHeaders("X-Number") == ["-2147483648", "2147483647"]);
+    response.setIntHeader("x-number", 0);
+    assert(response.getHeaders("X-Number") == ["0"]);
+    assert(response.getHeaderNames() == ["X-Number"]);
+}
