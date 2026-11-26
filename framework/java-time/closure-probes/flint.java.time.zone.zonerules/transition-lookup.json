@@ -1,0 +1,5 @@
+{
+  "source": "closure/zone-rules-transition-lookup.d",
+  "leaves": ["flint.java.lang", "flint.java.time", "flint.java.time.zone.zoneoffsettransition"],
+  "data": []
+}

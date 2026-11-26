@@ -1807,9 +1807,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.zone.ZoneRules#getOffset(LocalDateTime)` | `flint.java.time.zone.zonerules.ZoneRules.getOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.time.zone.ZoneRules#getStandardOffset(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.getStandardOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.time.zone.ZoneRules#getTransition(LocalDateTime)` | `flint.java.time.zone.zonerules.ZoneRules.getTransition` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `java.time.zone.ZoneRules#getTransitionRules()` | `flint.java.time.zone.zonerules.ZoneRules.getTransitionRules` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `java.time.zone.ZoneRules#getTransitions()` | `flint.java.time.zone.zonerules.ZoneRules.getTransitions` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `java.time.zone.ZoneRules#getValidOffsets(LocalDateTime)` | `flint.java.time.zone.zonerules.ZoneRules.getValidOffsets` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.time.zone.ZoneRules#getTransitionRules()` | `flint.java.time.zone.zonerules.ZoneRules.getTransitionRules` | [R10](api-mapping.md#r10-streams-and-collections) | The shared empty List permits addAll of an empty collection and returns a mutable subList snapshot. |
+| `java.time.zone.ZoneRules#getTransitions()` | `flint.java.time.zone.zonerules.ZoneRules.getTransitions` | [R10](api-mapping.md#r10-streams-and-collections) | The shared empty List permits addAll of an empty collection and returns a mutable subList snapshot. |
+| `java.time.zone.ZoneRules#getValidOffsets(LocalDateTime)` | `flint.java.time.zone.zonerules.ZoneRules.getValidOffsets` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) | The shared singleton List rejects sorting and removal of an absent element. |
 | `java.time.zone.ZoneRules#isDaylightSavings(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.isDaylightSavings` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.time.zone.ZoneRules#isValidOffset(LocalDateTime,ZoneOffset)` | `flint.java.time.zone.zonerules.ZoneRules.isValidOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.time.zone.ZoneRules#nextTransition(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.nextTransition` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -10269,6 +10269,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ChronoUnit#isSupportedBy(Temporal)` | 2 | Requires the Temporal contract. |
 | framework | `java.time.temporal.ValueRange#checkValidIntValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
+| framework | `java.time.zone.ZoneRules#of(ZoneOffset,ZoneOffset,List,List,List)` | 2 | Requires rules built from supplied standard, historical and recurring transitions. |
 | framework | `org.springframework.expression.EvaluationContext#getTypeConverter()` | 2 | Deferred until indexed assignment uses the context conversion strategy. See D-SPEL-5. |
 | framework | `org.springframework.test.util.JsonPathExpectationsHelper#<init>(String,Configuration)` | 2 | Requires Jayway JsonPath provider configuration |
 | framework | `org.springframework.test.util.JsonPathExpectationsHelper#assertValue(String,Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |

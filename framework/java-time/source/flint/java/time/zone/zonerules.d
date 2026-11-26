@@ -106,14 +106,14 @@ struct ZoneRules
         return offset_;
     }
 
-    ZoneOffset getOffset()(Nullable!Instant instant) const pure nothrow @nogc
+    ZoneOffset getOffset()(Nullable!Instant instant) const pure
     {
-        return offset_;
+        return getOffset(dateOrFixedDefault(instant));
     }
 
-    ZoneOffset getOffset()(Nullable!LocalDateTime dateTime) const pure nothrow @nogc
+    ZoneOffset getOffset()(Nullable!LocalDateTime dateTime) const pure
     {
-        return offset_;
+        return getOffset(dateOrFixedDefault(dateTime));
     }
 
     auto getValidOffsets()(LocalDateTime dateTime) const
@@ -125,7 +125,7 @@ struct ZoneRules
 
     auto getValidOffsets()(Nullable!LocalDateTime dateTime) const
     {
-        return getValidOffsets(LocalDateTime.init);
+        return getValidOffsets(dateOrFixedDefault(dateTime));
     }
 
     auto getTransition()(LocalDateTime dateTime) const pure nothrow @nogc
@@ -133,9 +133,9 @@ struct ZoneRules
         return absentTransition();
     }
 
-    auto getTransition()(Nullable!LocalDateTime dateTime) const pure nothrow @nogc
+    auto getTransition()(Nullable!LocalDateTime dateTime) const pure
     {
-        return absentTransition();
+        return getTransition(dateOrFixedDefault(dateTime));
     }
 
     ZoneOffset getStandardOffset(Instant instant) const pure nothrow @nogc
@@ -143,9 +143,9 @@ struct ZoneRules
         return offset_;
     }
 
-    ZoneOffset getStandardOffset()(Nullable!Instant instant) const pure nothrow @nogc
+    ZoneOffset getStandardOffset()(Nullable!Instant instant) const pure
     {
-        return offset_;
+        return getStandardOffset(dateOrFixedDefault(instant));
     }
 
     Duration getDaylightSavings(Instant instant) const pure nothrow @nogc
@@ -153,9 +153,9 @@ struct ZoneRules
         return Duration.ZERO;
     }
 
-    Duration getDaylightSavings()(Nullable!Instant instant) const pure nothrow @nogc
+    Duration getDaylightSavings()(Nullable!Instant instant) const pure
     {
-        return Duration.ZERO;
+        return getDaylightSavings(dateOrFixedDefault(instant));
     }
 
     bool isDaylightSavings(Instant instant) const pure nothrow @nogc
@@ -163,9 +163,9 @@ struct ZoneRules
         return false;
     }
 
-    bool isDaylightSavings()(Nullable!Instant instant) const pure nothrow @nogc
+    bool isDaylightSavings()(Nullable!Instant instant) const pure
     {
-        return false;
+        return isDaylightSavings(dateOrFixedDefault(instant));
     }
 
     bool isValidOffset(LocalDateTime dateTime, ZoneOffset offset) const pure nothrow @nogc
@@ -173,9 +173,9 @@ struct ZoneRules
         return offset_ == offset;
     }
 
-    bool isValidOffset()(Nullable!LocalDateTime dateTime, ZoneOffset offset) const pure nothrow @nogc
+    bool isValidOffset()(Nullable!LocalDateTime dateTime, ZoneOffset offset) const pure
     {
-        return offset_ == offset;
+        return isValidOffset(dateOrFixedDefault(dateTime), offset);
     }
 
     bool isValidOffset()(LocalDateTime dateTime, Nullable!ZoneOffset offset) const pure nothrow @nogc
@@ -183,9 +183,9 @@ struct ZoneRules
         return !offset.isNull && offset_ == offset.get();
     }
 
-    bool isValidOffset()(Nullable!LocalDateTime dateTime, Nullable!ZoneOffset offset) const pure nothrow @nogc
+    bool isValidOffset()(Nullable!LocalDateTime dateTime, Nullable!ZoneOffset offset) const pure
     {
-        return isValidOffset(LocalDateTime.init, offset);
+        return isValidOffset(dateOrFixedDefault(dateTime), offset);
     }
 
     auto nextTransition()(Instant instant) const pure nothrow @nogc
@@ -193,9 +193,9 @@ struct ZoneRules
         return absentTransition();
     }
 
-    auto nextTransition()(Nullable!Instant instant) const pure nothrow @nogc
+    auto nextTransition()(Nullable!Instant instant) const pure
     {
-        return absentTransition();
+        return nextTransition(dateOrFixedDefault(instant));
     }
 
     auto previousTransition()(Instant instant) const pure nothrow @nogc
@@ -203,9 +203,9 @@ struct ZoneRules
         return absentTransition();
     }
 
-    auto previousTransition()(Nullable!Instant instant) const pure nothrow @nogc
+    auto previousTransition()(Nullable!Instant instant) const pure
     {
-        return absentTransition();
+        return previousTransition(dateOrFixedDefault(instant));
     }
 
     auto getTransitions()() const
@@ -244,6 +244,16 @@ struct ZoneRules
         text[prefix.length .. $ - 1] = id;
         text[$ - 1] = ']';
         return text;
+    }
+
+    // Fixed queries can use any date when the argument is absent.
+    private T dateOrFixedDefault(T)(Nullable!T dateTime) const pure
+    {
+        if (!dateTime.isNull)
+            return dateTime.get();
+        if (!isFixedOffset())
+            throw new NullPointerException();
+        return T.init;
     }
 
     // Instantiate the transition type only in callers that query transitions.
