@@ -1254,3 +1254,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Why no deviation is needed:** R1 governs the import path a developer writes, and that path is unchanged.
   - **Records:** `mapping.json` records the canonical path, and an import test compiles code that uses only the Java-shaped imports. flint-aot confirms that descriptors and diagnostics show the canonical name.
   - **Rulebook:** api-coverage adds the pattern to R1.
+- 2026-11-26 05:12Z, coordinator, under the owner's standing approval: **SpEL string indexing on supplementary characters** (sol-template). Indexing either UTF-16 half of a supplementary character returns `"�"`. Indices and length stay Java's (R14), and BMP characters are unchanged. A valid UTF-8 string cannot hold Java's lone surrogate. This is a D-SPEL deviation row in api-mapping.md.
+- 2026-11-26 05:12Z, coordinator, under the owner's standing approval: **R23: Java `Object`-typed values map to `flint.engine.aot.Any`**, the erased-core design of ADR-030 section 2.
+  - **Coverage:** inline zero and scalar values, a null reference as `Any`'s null, and identity kept for references.
+  - **Where it applies:** new mapping entries cite R23 rather than per-module deviations (first user: sol-data's `IdentifierAccessor`).
+  - **Who:** api-coverage adds the rule.
