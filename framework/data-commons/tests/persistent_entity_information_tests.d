@@ -67,6 +67,11 @@ private final class MappedProperty : PersistentProperty!MappedProperty
     {
         return false;
     }
+
+    override bool isAssociation()
+    {
+        return false;
+    }
 }
 
 private BasicPersistentEntity!(T, MappedProperty) mappedEntity(T)(const(DescriptorTable) descriptors,

@@ -6,11 +6,11 @@ module basic_persistent_entity_tests;
 
 import flint.core.annotation : AliasFor;
 import flint.core.annotation.types : AnnotationConfigurationException;
-import flint.data.annotation : CreatedBy, CreatedDate, Immutable, LastModifiedBy, Transient, TypeAlias;
+import flint.data.annotation : CreatedBy, CreatedDate, Immutable, LastModifiedBy, Reference, Transient, TypeAlias;
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
 import flint.data.mapping : Alias, Association, AssociationHandler, MappingException,
-    PersistentEntity, PersistentProperty;
+    PersistentEntity, PersistentProperty, PropertyHandler;
 import flint.data.mapping.model : BasicPersistentEntity;
 import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
@@ -57,6 +57,14 @@ private final class AuditedProperties
     {
         return field;
     }
+}
+
+private final class WithAssociation
+{
+    string property;
+
+    @Reference
+    WithAssociation association;
 }
 
 @TypeAlias("foo")
@@ -125,15 +133,17 @@ private final class Property : PersistentProperty!Property
     private bool identifier;
     private bool versioned;
     private bool transient_;
+    private bool association;
 
     this(string name, ClassRef type = ClassRef.init, bool identifier = false, bool versioned = false,
-            bool transient_ = false)
+            bool transient_ = false, bool association = false)
     {
         this.name = name;
         this.type = type;
         this.identifier = identifier;
         this.versioned = versioned;
         this.transient_ = transient_;
+        this.association = association;
     }
 
     override string getName()
@@ -159,6 +169,21 @@ private final class Property : PersistentProperty!Property
     override bool isTransient()
     {
         return transient_;
+    }
+
+    override bool isAssociation()
+    {
+        return association;
+    }
+}
+
+private final class RecordingPropertyHandler : PropertyHandler!Property
+{
+    private Property[] seen;
+
+    override void doWithPersistentProperty(Property property)
+    {
+        seen ~= property;
     }
 }
 
@@ -527,6 +552,43 @@ unittest
     assertThrown!IllegalArgumentException(entity.doWithAssociations(cast(AssociationHandler!Property) null));
     alias AssociationAction = void delegate(Association!Property) @safe;
     assertThrown!IllegalArgumentException(entity.doWithAssociations(cast(AssociationAction) null));
+}
+
+@("doWithAllInvokesPropertyHandlerForBothAPropertiesAndAssociations")
+unittest
+{
+    auto model = mapped!WithAssociation();
+    auto inverse = new Property("association", classOf!WithAssociation, association:
+            true);
+    auto ordinary = new Property("property", classOf!string);
+    model.addPersistentProperty(inverse);
+    model.addPersistentProperty(ordinary);
+    model.addAssociation(new Association!Property(inverse, null));
+    PersistentEntity!(WithAssociation, Property) entity = model;
+
+    auto visitor = new RecordingPropertyHandler;
+    entity.doWithProperties(visitor);
+    assert(visitor.seen == [ordinary]);
+    auto combinedVisitor = new RecordingPropertyHandler;
+    entity.doWithAll(combinedVisitor);
+    assert(combinedVisitor.seen == [ordinary, inverse]);
+
+    Property[] seen;
+    entity.doWithAll((property) { seen ~= property; });
+    assert(seen == [ordinary, inverse]);
+    auto properties = entity.iterator();
+    assert(properties.next() is inverse && properties.next() is ordinary && !properties.hasNext());
+}
+
+@("property traversal rejects null handlers before visiting anything")
+unittest
+{
+    auto entity = mapped!WithAssociation();
+    assertThrown!IllegalArgumentException(entity.doWithProperties(cast(PropertyHandler!Property) null));
+    assertThrown!IllegalArgumentException(entity.doWithAll(cast(PropertyHandler!Property) null));
+    alias PropertyAction = void delegate(Property) @safe;
+    assertThrown!IllegalArgumentException(entity.doWithProperties(cast(PropertyAction) null));
+    assertThrown!IllegalArgumentException(entity.doWithAll(cast(PropertyAction) null));
 }
 
 @("rejectsNonMatchingBeanForPropertyAccessor")

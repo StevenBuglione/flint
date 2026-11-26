@@ -1,6 +1,6 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,AssociationHandler,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,TargetAwareIdentifierAccessor}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,AssociationHandler,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,PropertyHandler,TargetAwareIdentifierAccessor}.java
 // Alias: Copyright 2016-present the original author or authors.
-// Association and AssociationHandler: Copyright 2011-present the original author or authors.
+// Association, AssociationHandler and PropertyHandler: Copyright 2011-present the original author or authors.
 // IdentifierAccessor: Copyright 2014-present the original author or authors.
 // MappingException, PersistentEntity and PersistentProperty: Copyright 2011-present the original author or authors.
 // PersistentPropertyAccessor: Copyright 2014-present the original author or authors.
@@ -131,6 +131,9 @@ interface PersistentProperty(P) : PersistentPropertyType
 
     /// Whether this property is excluded from ordinary persistence mapping.
     bool isTransient();
+
+    /// Whether this property denotes an association.
+    bool isAssociation();
 }
 
 /// The two persistent properties connected by an association.
@@ -164,6 +167,13 @@ interface AssociationHandler(P) if (is(P : PersistentProperty!P))
 {
     /// Invokes the handler for the supplied association.
     void doWithAssociation(Association!P association);
+}
+
+/// Processes a persistent property.
+interface PropertyHandler(P) if (is(P : PersistentProperty!P))
+{
+    /// Invokes the handler for the supplied property.
+    void doWithPersistentProperty(P property);
 }
 
 /// Access to the persistent properties of a mapped bean.
@@ -226,6 +236,18 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
 
     /// Delegate overload of association traversal (R9).
     void doWithAssociations(scope void delegate(Association!P) @safe handler);
+
+    /// Invokes the handler for ordinary persistent properties.
+    void doWithProperties(PropertyHandler!P handler);
+
+    /// Delegate overload of persistent-property traversal (R9).
+    void doWithProperties(scope void delegate(P) @safe handler);
+
+    /// Visits ordinary properties and then the inverse properties of associations.
+    void doWithAll(PropertyHandler!P handler);
+
+    /// Delegate overload of combined traversal (R9).
+    void doWithAll(scope void delegate(P) @safe handler);
 
     /// The named persistent property, or an IllegalStateException when absent.
     P getRequiredPersistentProperty(string name);
@@ -294,6 +316,19 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
                 throw new imported!"flint.java.lang".IllegalStateException(
                         "Required annotation " ~ annotationType.name ~ " not found for " ~ getType().name);
             return annotation;
+        }
+
+        void doWithAll(PropertyHandler!P handler)
+        {
+            if (handler is null)
+                throw new imported!"flint.java.lang".IllegalArgumentException("PropertyHandler must not be null");
+            doWithAll(&handler.doWithPersistentProperty);
+        }
+
+        void doWithAll(scope void delegate(P) @safe handler)
+        {
+            doWithProperties(handler);
+            doWithAssociations((association) { handler(association.getInverse()); });
         }
     }
 }
