@@ -183,7 +183,7 @@ Usage errors that occur before a command runs use `flint.usage/1`. A field is ad
 ADR-030 makes Flint a port of Spring. The `flint api` commands prove the port is complete, element by element, against the pinned upstream sources.
 
 **Fetch.** `api/upstreams.json` in the Flint home pins each upstream archive by URL and SHA-256:
-- the Spring projects as GitHub tag archives: Framework v7.1.0, Boot v4.2.0, and the portfolio tags Boot v4.2.0 manages (Security 7.2.0, Data Commons, Relational and JPA 4.2.0, Batch v6.1.0), plus Spring AI v2.1.0;
+- the Spring projects as GitHub tag archives: Framework v7.1.0, Boot v4.2.0, and the portfolio tags Boot v4.2.0 manages (Security 7.2.0, Data Commons, Relational and JPA 4.2.0, Batch v6.1.0), plus Spring AI v2.1.0 and Thymeleaf 3.1.7.RELEASE (its `thymeleaf`, `thymeleaf-spring6` and `thymeleaf-extras-springsecurity6` modules);
 - third-party APIs as Maven `-sources.jar`s, at the versions Boot v4.2.0 manages: Jakarta Validation 3.1.1, Persistence 3.2.0 and Servlet 6.1.0, Jackson databind 3.1.8, SLF4J 2.0.20 and Micrometer core 1.18.0.
 
 `flint api fetch` unpacks them into `<flint home>/.flint/cache/api/<project>-<version>/` (`FLINT_CACHE` relocates the cache, `--cache` overrides it). A digest mismatch is an error, and nothing in the cache is ever compiled. `FLINT_OFFLINE=1` uses the cache only.

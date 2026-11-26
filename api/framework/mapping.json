@@ -1,5 +1,5 @@
 {"rulebook":2,
-"upstream":["spring-framework@v7.1.0", "jakarta-annotation@3.0.0", "jakarta-validation@3.1.1", "jakarta-persistence@3.2.0", "jakarta-servlet@6.1.0", "jackson-core@3.1.8", "jackson-databind@3.1.8", "jackson-annotations@2.21", "slf4j-api@2.0.20", "micrometer-core@1.18.0", "hibernate-validator@9.1.6.Final"],
+"upstream":["spring-framework@v7.1.0", "jakarta-annotation@3.0.0", "jakarta-validation@3.1.1", "jakarta-persistence@3.2.0", "jakarta-servlet@6.1.0", "jackson-core@3.1.8", "jackson-databind@3.1.8", "jackson-annotations@2.21", "slf4j-api@2.0.20", "micrometer-core@1.18.0", "hibernate-validator@9.1.6.Final", "thymeleaf@3.1.7.RELEASE"],
 "elements":{
 "com.fasterxml.jackson.annotation.JacksonAnnotation":{"status":"ported","d":"flint.jackson.annotation.JacksonAnnotation"},
 "com.fasterxml.jackson.annotation.JacksonAnnotationValue**":{"status":"excluded","category":"deferred","phase":"2"},
