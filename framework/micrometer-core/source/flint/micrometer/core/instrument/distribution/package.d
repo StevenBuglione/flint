@@ -30,6 +30,7 @@ import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.micrometer.core.instrument : Clock;
 import flint.micrometer.core.instrument.config : InvalidConfigurationException;
 import flint.micrometer.core.instrument.internal : Mergeable;
+import flint.micrometer.core.instrument.util : TimeUtils;
 import std.typecons : Nullable;
 
 @safe:
@@ -62,7 +63,7 @@ final class CountAtBucket
     /// Interpret the boundary as nanoseconds and convert it to unit.
     double bucket(TimeUnit unit) const nothrow @nogc
     {
-        return nanosToUnit(boundary, unit);
+        return TimeUtils.nanosToUnit(boundary, unit);
     }
 
     /// The number of events at or below this bucket.
@@ -121,7 +122,7 @@ final class ValueAtPercentile
     /// Interpret the observation as nanoseconds and convert it to unit.
     double value(TimeUnit unit) const nothrow @nogc
     {
-        return nanosToUnit(observation, unit);
+        return TimeUtils.nanosToUnit(observation, unit);
     }
 
     /// Java double equality distinguishes signed zeros and equates NaNs.
@@ -181,7 +182,7 @@ final class HistogramSnapshot
     /// Convert the sum from nanoseconds to unit.
     double total(TimeUnit unit) const nothrow @nogc
     {
-        return nanosToUnit(sum, unit);
+        return TimeUtils.nanosToUnit(sum, unit);
     }
 
     /// The maximum recorded value.
@@ -193,7 +194,7 @@ final class HistogramSnapshot
     /// Convert the maximum from nanoseconds to unit.
     double max(TimeUnit unit) const nothrow @nogc
     {
-        return nanosToUnit(maximum, unit);
+        return TimeUtils.nanosToUnit(maximum, unit);
     }
 
     /// The mean recorded value, or zero for an empty recording count.
@@ -205,7 +206,7 @@ final class HistogramSnapshot
     /// Convert the mean from nanoseconds to unit.
     double mean(TimeUnit unit) const nothrow @nogc
     {
-        return nanosToUnit(mean(), unit);
+        return TimeUtils.nanosToUnit(mean(), unit);
     }
 
     /// The precomputed percentiles. An empty snapshot returns a zero-length D slice (R5).
@@ -226,11 +227,6 @@ final class HistogramSnapshot
         return "HistogramSnapshot{count=" ~ Long.toString(events) ~ ", total=" ~ Double.toString(
                 sum) ~ ", mean=" ~ Double.toString(mean()) ~ ", max=" ~ Double.toString(maximum) ~ "}";
     }
-}
-
-private double nanosToUnit(double nanos, TimeUnit unit) nothrow @nogc
-{
-    return unit == TimeUnit.NANOSECONDS ? nanos : nanos / unit.toNanos(1);
 }
 
 private bool equalHistogramValues(double x, double y, double otherX, double otherY) pure nothrow @nogc

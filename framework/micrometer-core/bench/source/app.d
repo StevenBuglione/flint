@@ -9,6 +9,7 @@ import flint.micrometer.core.instrument : Clock, MockClock, Tags, Timer;
 import flint.micrometer.core.instrument.distribution : CountAtBucket, DistributionStatisticConfig,
     HistogramSnapshot, TimeWindowMax, ValueAtPercentile;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
+import flint.micrometer.core.instrument.util : TimeUtils;
 
 @safe:
 
@@ -48,8 +49,11 @@ private bool verifyHistogramValues()
 {
     auto bucket = new CountAtBucket(2_500_000.0, 3.0);
     auto percentile = new ValueAtPercentile(0.95, 2_500_000.0);
-    return bucket.bucket(TimeUnit.MILLISECONDS) == 2.5 && percentile.value(TimeUnit.MILLISECONDS) == 2.5
-        && bucket.toString() == "(3.0 at 2500000.0)"
+    return bucket.bucket(TimeUnit.MILLISECONDS) == 2.5
+        && percentile.value(TimeUnit.MILLISECONDS) == 2.5 && TimeUtils.convert(bucket.bucket(),
+                TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS) == 2.5
+        && TimeUtils.millisToUnit(percentile.value(TimeUnit.MILLISECONDS),
+                TimeUnit.MICROSECONDS) == 2_500 && bucket.toString() == "(3.0 at 2500000.0)"
         && percentile.toString() == "(2500000.0 at 95.0%)" && verifyEmptySnapshot();
 }
 

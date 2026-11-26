@@ -175,7 +175,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-databind@3.1.8 | 597 | 52 | 5 | 9,813 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 110 | 112 | 0 | 2,168 |
+| framework | micrometer-core@1.18.0 | 119 | 112 | 0 | 2,159 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 0 | 0 | 0 | 4,452 |
 | framework | micrometer-observation@1.18.0 | 0 | 0 | 0 | 312 |
@@ -8676,7 +8676,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.search | 56 | 0 |
 | io.micrometer.core.instrument.simple | 20 | 0 |
 | io.micrometer.core.instrument.step | 72 | 0 |
-| io.micrometer.core.instrument.util | 46 | 0 |
+| io.micrometer.core.instrument.util | 37 | 0 |
 | io.micrometer.core.ipc.http | 56 | 0 |
 | io.micrometer.observation | 207 | 0 |
 | io.micrometer.observation.annotation | 12 | 0 |
