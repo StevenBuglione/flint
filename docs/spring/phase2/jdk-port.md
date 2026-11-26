@@ -105,6 +105,7 @@ Rules 1, 4 and 5 are enforced by a check, not by review. `sol-jdk-core` builds i
 - **The declared closure** lives in a small checked-in file per package, for example `framework/java-collections/closure.json`, which lists the leaves each leaf may pull in.
 - **Wiring:** a step in the module definition of done for every `flint:java*` package, plus a structural-gate check for the banned imports.
 - **Size measurement:** loadable section bytes, not file size (decisions.md, 2026-11-26 01:20Z).
+- **Budgets** (`jdk-leaf-rule`, decisions.md 2026-11-26 01:45Z): each leaf has its own budget, set at the measured value plus 10% and only shrinking afterwards. A package budget is the sum of its leaves; adding a leaf raises it by exactly that leaf's budget, with the trailer `Budget-Raise-Approved: jdk-leaf-rule`.
 
 ## Lanes
 

@@ -1126,3 +1126,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **The clash:** only on `Window!int`. Java tells `positionAt(int index)` from `positionAt(Integer item)` by boxing, which R5 erases.
   - **The resolution:** `positionAt(index)` keeps Java's index meaning, and element lookup is `positionAt!int(item)`.
   - **Tests (R7):** they assert Java's choice for both calls.
+- 2026-11-26 01:45Z, coordinator, under the owner's standing approval: **budgets for the Java standard library packages (`jdk-leaf-rule`).**
+  - **Per leaf:** each JDK leaf has its own loadable-byte and template budget for its single-leaf probe, set at the measured value plus 10%. After that it only shrinks.
+  - **Per package:** a package's budget is the sum of its leaves' budgets. Adding a leaf may raise it by exactly that leaf's budget, with the trailer `Budget-Raise-Approved: jdk-leaf-rule`.
+  - **Anything else:** any other growth needs a raise request with evidence.
