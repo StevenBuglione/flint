@@ -155,6 +155,8 @@ Builders keep Java's method chain exactly (`ResponseEntity.ok().header(...).body
 
 Java strings index UTF-16 code units, and D strings index UTF-8 bytes. Every ported routine that does index arithmetic, such as `AntPathMatcher`, `UriComponentsBuilder`, `StringUtils` and `PathPattern`, is reviewed for this and tested with non-ASCII input. Public methods that return an index document the unit, and keep Java's unit wherever the index crosses the API.
 
+**Lone surrogates.** Java's UTF-16 index arithmetic can split a supplementary character (one outside the Basic Multilingual Plane, such as an emoji) and yield a lone surrogate. Valid UTF-8 cannot hold a surrogate, so Flint keeps Java's UTF-16 counts and indices, and emits U+FFFD (the replacement character) for each lone half. Coordinator, 2026-11-26, from D-SPEL-4 and sol-ai's `ExtractedTextFormatter`; new entries cite R14.
+
 ### R15: Enums with fields
 
 Three rules cover every Java enum, so no enum needs a case-by-case decision:

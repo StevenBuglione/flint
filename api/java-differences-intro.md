@@ -160,7 +160,7 @@ http.authorizeHttpRequests((auth) { auth.anyRequest().authenticated(); });
 
 **R12: builders** keep Java's method chains exactly: `ResponseEntity.ok().header(...).body(x)`.
 
-**R14: strings** are UTF-8 inside Flint. Public methods that return an index keep Java's unit where the index crosses the API.
+**R14: strings** are UTF-8 inside Flint. Public methods that return an index keep Java's unit where the index crosses the API. Where Java's UTF-16 arithmetic would split a character outside the Basic Multilingual Plane (an emoji, say) and leave half of a surrogate pair, Flint keeps Java's counts and indices but writes U+FFFD for that half, because UTF-8 cannot hold a lone surrogate.
 
 ### Reflection and the closed world
 
