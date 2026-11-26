@@ -427,3 +427,32 @@ unittest
         assert(e.getParsedString() == "2026-13-01" && e.msg[0 .. 18] == "Text '2026-13-01' ", e.msg);
     }
 }
+
+@("java.time formatter parse errors report UTF-16 offsets after Unicode literals")
+unittest
+{
+    const formatter = DateTimeFormatter.ofPattern("'é😀'uuuu-MM-dd");
+    assert(LocalDate.parse("é😀2026-01-15", formatter) == LocalDate.of(2026, 1, 15));
+
+    try
+    {
+        formatter.parse("é😀2026-x1-15");
+        assert(false);
+    }
+    catch (DateTimeParseException e)
+    {
+        assert(e.getErrorIndex() == 8, e.msg);
+        assert(e.msg == "Text 'é😀2026-x1-15' could not be parsed at index 8", e.msg);
+    }
+
+    try
+    {
+        formatter.parse("é😀2026-01-15!");
+        assert(false);
+    }
+    catch (DateTimeParseException e)
+    {
+        assert(e.getErrorIndex() == 13, e.msg);
+        assert(e.msg == "Text 'é😀2026-01-15!' could not be parsed, unparsed text found at index 13", e.msg);
+    }
+}

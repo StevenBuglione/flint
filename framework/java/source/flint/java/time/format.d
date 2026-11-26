@@ -11,6 +11,7 @@ produces.
 +/
 module flint.java.time.format;
 
+import flint.engine.aot.text : decodeUtf8;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.time : DateTimeException, Duration, Instant, LocalDate, LocalDateTime, LocalTime,
     OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime, checkRange;
@@ -38,7 +39,7 @@ class DateTimeParseException : DateTimeException
         return parsedString_;
     }
 
-    /// The index in the text where the error was found.
+    /// The index in the text where the error was found, in UTF-16 code units.
     int getErrorIndex() const pure nothrow @nogc
     {
         return errorIndex_;
@@ -600,16 +601,18 @@ struct DateTimeFormatter
         const end = parser.run(elements_, 0);
         if (end < 0)
         {
+            const index = utf16ErrorIndex(text[0 .. ~end]);
             const copy = text.idup;
-            throw new DateTimeParseException("Text '" ~ copy ~ "' could not be parsed at index " ~ indexText(~end),
-                    copy, ~end);
+            throw new DateTimeParseException("Text '" ~ copy ~ "' could not be parsed at index " ~ indexText(index),
+                    copy, index);
         }
         if (end != text.length)
         {
+            const index = utf16ErrorIndex(text[0 .. end]);
             const copy = text.idup;
             throw new DateTimeParseException(
-                    "Text '" ~ copy ~ "' could not be parsed, unparsed text found at index " ~ indexText(end),
-                    copy, end);
+                    "Text '" ~ copy ~ "' could not be parsed, unparsed text found at index " ~ indexText(index),
+                    copy, index);
         }
         return fields;
     }
@@ -687,6 +690,15 @@ private string describeNumber(const Element e) pure
     if (e.minWidth == e.maxWidth && e.sign == SignStyle.NOT_NEGATIVE)
         return "Value(" ~ fieldNames[e.field] ~ "," ~ min ~ ")";
     return "Value(" ~ fieldNames[e.field] ~ "," ~ min ~ "," ~ max ~ "," ~ signNames[e.sign] ~ ")";
+}
+
+private int utf16ErrorIndex(scope const(char)[] prefix) pure nothrow @nogc
+{
+    size_t offset;
+    int units;
+    while (offset < prefix.length)
+        units += decodeUtf8(prefix, offset) > 0xFFFF ? 2 : 1;
+    return units;
 }
 
 private string indexText(int index) pure nothrow
