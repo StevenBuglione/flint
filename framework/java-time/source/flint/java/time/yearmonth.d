@@ -1,6 +1,7 @@
 /// Clean-room Java SE 21 ISO year and month values.
 module flint.java.time.yearmonth;
 
+import flint.engine.aot.text : decodeUtf8;
 import flint.java.lang : NullPointerException;
 import flint.java.time : DateTimeException, LocalDate, Month, checkRange, getValue, isLeap;
 import flint.java.time.format : DateTimeParseException;
@@ -42,7 +43,7 @@ struct YearMonth
 
         const parsed = readYearMonth(text);
         if (parsed.errorIndex >= 0)
-            throw new DateTimeParseException("Text cannot be parsed to a YearMonth", copyText(text), parsed.errorIndex);
+            throw syntaxError(text, parsed.errorIndex, parsed.trailingText);
 
         try
         {
@@ -169,22 +170,29 @@ struct YearMonth
     {
         // Nine year digits, a possible sign and the three-byte month suffix.
         char[13] buffer = void;
-        size_t start = 10;
         buffer[10] = '-';
         buffer[11] = cast(char)('0' + month_ / 10);
         buffer[12] = cast(char)('0' + month_ % 10);
-
-        int magnitude = year_ < 0 ? -year_ : year_;
-        do
-        {
-            buffer[--start] = cast(char)('0' + magnitude % 10);
-            magnitude /= 10;
-        }
-        while (magnitude != 0 || start > 6);
-        if (year_ < 0)
-            buffer[--start] = '-';
+        const start = prependYear(buffer[], 10, year_);
         return copyText(buffer[start .. $]);
     }
+}
+
+private size_t prependYear(scope char[] buffer, size_t start, int year) pure nothrow @nogc
+{
+    // Keep the bounded digit loop compact in the release link.
+    pragma(inline, false);
+    const minimumStart = start - 4;
+    int magnitude = year < 0 ? -year : year;
+    do
+    {
+        buffer[--start] = cast(char)('0' + magnitude % 10);
+        magnitude /= 10;
+    }
+    while (magnitude != 0 || start > minimumStart);
+    if (year < 0)
+        buffer[--start] = '-';
+    return start;
 }
 
 private int validateYear(long year)
@@ -198,6 +206,7 @@ private struct ParsedYearMonth
     long year;
     int month;
     int errorIndex;
+    bool trailingText;
 }
 
 private ParsedYearMonth readYearMonth(scope const(char)[] text) pure nothrow @nogc
@@ -216,7 +225,7 @@ private ParsedYearMonth readYearMonth(scope const(char)[] text) pure nothrow @no
     const month = 10 * (text[position] - '0') + text[position + 1] - '0';
     position += 2;
     if (position != text.length)
-        return ParsedYearMonth(0, 0, cast(int) position);
+        return ParsedYearMonth(0, 0, cast(int) position, true);
     return ParsedYearMonth(year, month, -1);
 }
 
@@ -242,6 +251,60 @@ private int readYear(scope const(char)[] text, out size_t position, out long yea
 private bool isDigit(char c) pure nothrow @nogc
 {
     return c >= '0' && c <= '9';
+}
+
+private DateTimeParseException syntaxError(scope const(char)[] text, int index, bool trailingText) pure nothrow
+{
+    return new DateTimeParseException(syntaxMessage(text, index, trailingText), copyText(text), index);
+}
+
+private char[] syntaxMessage(scope const(char)[] text, int index, bool trailingText) pure nothrow
+{
+    enum prefix = "Text '";
+    const preview = errorPreview(text);
+    const description = trailingText ? "' could not be parsed, unparsed text found at index "
+        : "' could not be parsed at index ";
+
+    const suffixStart = prefix.length + preview.bytes;
+    const descriptionStart = suffixStart + preview.suffix.length;
+    const indexStart = descriptionStart + description.length;
+    // The parser inspects at most ten year digits, a sign, a separator and two month digits.
+    assert(index >= 0 && index < 100);
+    auto message = new char[indexStart + (index < 10 ? 1 : 2)];
+    message[0 .. prefix.length] = prefix;
+    message[prefix.length .. suffixStart] = text[0 .. preview.bytes];
+    message[suffixStart .. descriptionStart] = preview.suffix;
+    message[descriptionStart .. indexStart] = description;
+    if (index >= 10)
+        message[indexStart] = cast(char)('0' + index / 10);
+    message[$ - 1] = cast(char)('0' + index % 10);
+    return message;
+}
+
+private struct ErrorPreview
+{
+    size_t bytes;
+    string suffix;
+}
+
+// Java limits the preview to 64 UTF-16 units. A split surrogate uses the UTF-8 replacement character.
+private ErrorPreview errorPreview(scope const(char)[] text) pure nothrow @nogc
+{
+    enum maxUnits = 64;
+    if (text.length <= maxUnits)
+        return ErrorPreview(text.length);
+
+    size_t end;
+    uint units;
+    while (end < text.length && units < maxUnits)
+    {
+        const start = end;
+        const width = decodeUtf8(text, end) > 0xFFFF ? 2 : 1;
+        units += width;
+        if (units > maxUnits)
+            return ErrorPreview(start, "\uFFFD...");
+    }
+    return ErrorPreview(end, end < text.length ? "..." : null);
 }
 
 // Copy borrowed text without making another object file provide the allocation template.

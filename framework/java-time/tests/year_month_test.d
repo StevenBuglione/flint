@@ -93,6 +93,37 @@ import flint.java.time.yearmonth : YearMonth;
     }
 }
 
+@("YearMonth diagnostics distinguish malformed input from trailing text and preview 64 UTF-16 units") unittest
+{
+    enum zeros = "00000000000000000000000000000000000000000000000000000000";
+    enum exact = "2024-02" ~ zeros ~ "é";
+    enum clipped = "2024-02" ~ zeros ~ "🙂x";
+    immutable string[2][] cases = [
+        ["2024-2", "Text '2024-2' could not be parsed at index 5"],
+        ["+00000000000-02", "Text '+00000000000-02' could not be parsed at index 11"],
+        ["2024-02x", "Text '2024-02x' could not be parsed, unparsed text found at index 7"],
+        ["2024-0😊", "Text '2024-0😊' could not be parsed at index 5"],
+        [exact, "Text '" ~ exact ~ "' could not be parsed, unparsed text found at index 7"],
+        [
+            clipped,
+            "Text '2024-02" ~ zeros ~ "�...' could not be parsed, unparsed text found at index 7"
+        ]
+    ];
+    foreach (example; cases)
+    {
+        try
+        {
+            YearMonth.parse(example[0]);
+            assert(false, example[0]);
+        }
+        catch (DateTimeParseException error)
+        {
+            assert(error.getParsedString() == example[0]);
+            assert(error.getMessage() == example[1], error.getMessage());
+        }
+    }
+}
+
 private struct ParseCase
 {
     string text;
