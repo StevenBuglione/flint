@@ -268,6 +268,21 @@ class BitSet
             applyMask(set, 0);
     }
 
+    /// Sets the bits that are set in either bit set.
+    void or(BitSet set) pure
+    {
+        if (set is null)
+            rejectNullSet();
+        if (this is set)
+            return;
+
+        const count = set.wordsInUse;
+        if (count > wordsInUse)
+            expandTo(cast(uint) count - 1);
+        foreach (index; 0 .. count)
+            words[index] |= set.words[index];
+    }
+
     /// Clears the bits that are also set in the supplied mask.
     void andNot(BitSet set) pure
     {
