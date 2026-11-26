@@ -59,7 +59,20 @@
         ],
         "leaves": [
           "flint.java.util.formatter",
+          "flint.java.util.internal.formatter_boolean",
+          "flint.java.util.internal.formatter_character",
           "flint.java.util.internal.formatter_date_time",
+          "flint.java.util.internal.formatter_decimal",
+          "flint.java.util.internal.formatter_digits",
+          "flint.java.util.internal.formatter_float_special",
+          "flint.java.util.internal.formatter_hash",
+          "flint.java.util.internal.formatter_hex_float",
+          "flint.java.util.internal.formatter_integer",
+          "flint.java.util.internal.formatter_number_padding",
+          "flint.java.util.internal.formatter_pieces",
+          "flint.java.util.internal.formatter_string",
+          "flint.java.util.internal.formatter_support",
+          "flint.java.util.internal.formatter_unicode",
           "flint.java.util.internal.gregorian"
         ],
         "source": "closure/string-format.d"
@@ -254,7 +267,20 @@
         ],
         "leaves": [
           "flint.java.lang",
+          "flint.java.util.internal.formatter_boolean",
+          "flint.java.util.internal.formatter_character",
           "flint.java.util.internal.formatter_date_time",
+          "flint.java.util.internal.formatter_decimal",
+          "flint.java.util.internal.formatter_digits",
+          "flint.java.util.internal.formatter_float_special",
+          "flint.java.util.internal.formatter_hash",
+          "flint.java.util.internal.formatter_hex_float",
+          "flint.java.util.internal.formatter_integer",
+          "flint.java.util.internal.formatter_number_padding",
+          "flint.java.util.internal.formatter_pieces",
+          "flint.java.util.internal.formatter_string",
+          "flint.java.util.internal.formatter_support",
+          "flint.java.util.internal.formatter_unicode",
           "flint.java.util.internal.gregorian"
         ],
         "source": "closure/formatter.d"
