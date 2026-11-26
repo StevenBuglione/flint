@@ -190,10 +190,19 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// The registered type alias, or Alias.NONE when absent.
     Alias getTypeAlias();
 
+    /// The merged annotation, or an empty Any when absent.
+    const(Any) findAnnotation(ClassRef annotationType);
+
+    /// The merged annotation, or an IllegalStateException when absent.
+    const(Any) getRequiredAnnotation(ClassRef annotationType);
+
+    /// Whether the given annotation is present in the type hierarchy.
+    bool isAnnotationPresent(ClassRef annotationType);
+
     /// Creates an accessor for a compatible bean.
     PersistentPropertyAccessor!(T, P) getPropertyAccessor(Any bean);
 
-    /// Supplies the required-property defaults (R3).
+    /// Supplies the required metadata defaults (R3).
     mixin template Defaults(PropertyType = P)
     {
         PropertyType getRequiredIdProperty()
@@ -221,6 +230,15 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
                 throw new imported!"flint.java.lang".IllegalStateException("Required property " ~ (name is null
                         ? "null" : name) ~ " not found for " ~ getType().name);
             return property;
+        }
+
+        const(Any) getRequiredAnnotation(ClassRef annotationType)
+        {
+            const annotation = findAnnotation(annotationType);
+            if (annotation.isNull())
+                throw new imported!"flint.java.lang".IllegalStateException(
+                        "Required annotation " ~ annotationType.name ~ " not found for " ~ getType().name);
+            return annotation;
         }
     }
 }

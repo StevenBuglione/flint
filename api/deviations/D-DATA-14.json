@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-14",
+ "deviation": "PersistentEntity annotation lookup takes a ClassRef and returns a read-only erased Any for the merged annotation value.",
+ "reason": "D interfaces cannot dispatch a generic return type virtually. The class token selects the registered annotation and const protects the shared descriptor value."
+}

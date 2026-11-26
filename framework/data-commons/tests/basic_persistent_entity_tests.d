@@ -5,7 +5,8 @@
 module basic_persistent_entity_tests;
 
 import flint.core.annotation : AliasFor;
-import flint.data.annotation : TypeAlias;
+import flint.core.annotation.types : AnnotationConfigurationException;
+import flint.data.annotation : Transient, TypeAlias;
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
 import flint.data.mapping : Alias, MappingException, PersistentEntity, PersistentProperty;
@@ -14,7 +15,7 @@ import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
 import flint.java.classref : ClassRef, classOf;
-import flint.java.lang : IllegalArgumentException, IllegalStateException, Long;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, Long, NullPointerException;
 import flint.java.util : Comparator;
 import std.exception : assertThrown, collectException;
 import std.typecons : Nullable;
@@ -59,7 +60,18 @@ private struct ComposedTypeAlias
 }
 
 @ComposedTypeAlias
-private final class ComposedAliasedEntity
+private final class ComposedAliasedEntity : AliasedEntity
+{
+}
+
+private struct InvalidAlias
+{
+    @AliasFor(attribute: "a", value: "b")
+    string a;
+}
+
+@InvalidAlias
+private final class EntityWithInvalidAlias
 {
 }
 
@@ -164,6 +176,36 @@ unittest
 unittest
 {
     assert(mapped!ComposedAliasedEntity().getTypeAlias() == Alias.of(Any.of("bar")));
+}
+
+@("getRequiredAnnotationReturnsAnnotation")
+unittest
+{
+    PersistentEntity!(ComposedAliasedEntity, Property) entity = mapped!ComposedAliasedEntity();
+    assert(entity.getRequiredAnnotation(classOf!TypeAlias).get!(const TypeAlias).value == "bar");
+    assert(entity.isAnnotationPresent(classOf!TypeAlias));
+    assert(entity.findAnnotation(classOf!TypeAlias).get!(const TypeAlias).value == "bar");
+}
+
+@("getRequiredAnnotationThrowsException")
+unittest
+{
+    import std.algorithm.searching : canFind;
+
+    PersistentEntity!(ComposedAliasedEntity, Property) entity = mapped!ComposedAliasedEntity();
+    auto missing = collectException!IllegalStateException(entity.getRequiredAnnotation(classOf!Transient));
+    assert(missing !is null && missing.msg.canFind(classOf!Transient.name));
+    assert(!entity.isAnnotationPresent(classOf!Transient));
+    assert(entity.findAnnotation(classOf!Transient).isNull());
+    assertThrown!NullPointerException(entity.findAnnotation(ClassRef.init));
+}
+
+@("throws for malformed aliases in registered annotation metadata")
+unittest
+{
+    auto entity = mapped!EntityWithInvalidAlias();
+    assertThrown!AnnotationConfigurationException(entity.findAnnotation(classOf!InvalidAlias));
+    assertThrown!AnnotationConfigurationException(entity.isAnnotationPresent(classOf!InvalidAlias));
 }
 
 @("resolves a type alias on the domain type hierarchy")

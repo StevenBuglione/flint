@@ -676,6 +676,8 @@
         "ported": [
           "addingAndIdPropertySetsIdPropertyInternally",
           "considersComparatorForPropertyOrder",
+          "getRequiredAnnotationReturnsAnnotation",
+          "getRequiredAnnotationThrowsException",
           "invalidBeanAccessCreatesDescriptiveErrorMessage",
           "rejectsIdPropertyIfAlreadySet",
           "rejectsNonMatchingBeanForPropertyAccessor",
@@ -696,9 +698,7 @@
           "doWithAllInvokesPropertyHandlerForBothAPropertiesAndAssociations": "Association registration and combined property traversal remain deferred.",
           "exposesPropertyPopulationNotRequired": "Creator and property-population metadata remain deferred.",
           "exposesPropertyPopulationRequired": "Creator and property-population metadata remain deferred.",
-          "findAnnotationShouldBeThreadSafe": "General entity annotation lookup remains deferred.",
-          "getRequiredAnnotationReturnsAnnotation": "General entity annotation lookup remains deferred.",
-          "getRequiredAnnotationThrowsException": "General entity annotation lookup remains deferred.",
+          "findAnnotationShouldBeThreadSafe": "The concurrent lookup fixture remains deferred.",
           "includesTransientProperty": "Automatic discovery and mapping of transient properties in entity contexts remain deferred.",
           "rejectsNullAssociation": "Association registration remains deferred.",
           "returnsGeneratedPropertyAccessorForPropertyAccessor": "Mapping context and generated property accessors remain deferred."

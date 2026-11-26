@@ -4,15 +4,16 @@
 // Modified by the Flint authors.
 module flint.data.mapping.model;
 
+import flint.core.annotation.types : AnnotationConfigurationException;
 import flint.data.annotation : TypeAlias;
 import flint.data.core.type_information : TypeInformation, registeredDescriptor;
 import flint.data.domain.persistable : PersistableState;
 import flint.data.mapping : Alias, IdentifierAccessor, MappingException, PersistentEntity, PersistentProperty,
     PersistentPropertyAccessor, PrimitivePropertyKind, TargetAwareIdentifierAccessor, primitivePropertyKind;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : Descriptor, PropertyDescriptor, findAnnotation;
+import flint.engine.aot.descriptor : Descriptor, PropertyDescriptor, findMergedAnnotation = findAnnotation;
 import flint.java.classref : ClassRef, classOf;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, NullPointerException;
 import flint.java.util : ArrayList, Collections, Comparator, HashMap, Iterator, List, Map, Objects;
 import flint.util : StringUtils;
 import std.typecons : Nullable;
@@ -76,6 +77,16 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     override Alias getTypeAlias()
     {
         return typeAlias;
+    }
+
+    override const(Any) findAnnotation(ClassRef annotationType)
+    {
+        return readEntityAnnotation(descriptor, annotationType);
+    }
+
+    override bool isAnnotationPresent(ClassRef annotationType)
+    {
+        return !readEntityAnnotation(descriptor, annotationType).isNull();
     }
 
     override P getIdProperty()
@@ -241,11 +252,24 @@ private Alias getAliasFromAnnotation(const Descriptor descriptor)
 {
     if (descriptor is null)
         return Alias.NONE;
-    const annotation = findAnnotation(descriptor.annotations, classOf!TypeAlias.name);
+    const annotation = findMergedAnnotation(descriptor.annotations, classOf!TypeAlias.name);
     if (annotation is null)
         return Alias.NONE;
     const aliasValue = annotation.value.get!TypeAlias.value;
     return StringUtils.hasText(aliasValue) ? Alias.of(Any.of(aliasValue)) : Alias.NONE;
+}
+
+private const(Any) readEntityAnnotation(const Descriptor descriptor, ClassRef annotationType)
+{
+    if (annotationType.name.length == 0)
+        throw new NullPointerException("Annotation type must not be null");
+    if (descriptor is null)
+        return const(Any).init;
+    foreach (ref annotation; descriptor.annotations)
+        if (annotation.error.length)
+            throw new AnnotationConfigurationException(annotation.error);
+    const match = findMergedAnnotation(descriptor.annotations, annotationType.name);
+    return match is null ? const(Any).init : match.value;
 }
 
 private final class DescriptorPropertyAccessor(T, P) : PersistentPropertyAccessor!(T, P)
