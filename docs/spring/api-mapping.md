@@ -156,6 +156,8 @@ A functional interface stays an interface, and every API that takes one also acc
 | Records | structs with member-wise equality |
 | Plain classes | identity equality unless they override `equals` |
 
+**Hashing through an erased reference.** D's `toHash` is `nothrow`, so `mixin JavaObject;` returns 0 when `hashCode` throws. Code that holds only an erased `Object` and must hash it (associative arrays, `Formatter`'s `%h`) goes through `toHash`, so an exception from `hashCode` is swallowed there, where Java propagates it. A class without the mixin hashes with its own D `toHash`, even if it has an unmapped `hashCode` member. Typed calls to `hashCode()` still propagate. This is recorded once here; each affected element cites R11 in its note, with no separate deviation ID. Coordinator, 2026-11-26, from sol-aop with framework-core's review.
+
 ### R12: Builders and fluent APIs
 
 Builders keep Java's method chain exactly (`ResponseEntity.ok().header(...).body(x)`, `RestClient.builder().baseUrl(...).build()`, `UriComponentsBuilder`). A builder is a struct whose setters return `ref` with `return` (DIP1000), or a final class where Spring users subclass it.
