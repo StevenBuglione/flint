@@ -3368,7 +3368,13 @@ struct Locale
     {
         const lower = key | 0x20;
         if (lower < 'a' || lower > 'z')
-            throw new IllegalArgumentException("Ill-formed locale extension key");
+        {
+            import flint.engine.aot.text : utf8;
+
+            const displayed = utf8(key);
+            const text = displayed is null ? "\uFFFD" : displayed;
+            throw new IllegalArgumentException("Ill-formed extension key: " ~ text);
+        }
         const payload = extensionPayload(cast(char) lower);
         return payload.length ? Nullable!string(payload) : Nullable!string.init;
     }
@@ -3377,7 +3383,7 @@ struct Locale
     Nullable!string getUnicodeLocaleType(string key) const
     {
         if (key.length != 2 || !isAsciiAlphanumeric(key))
-            throw new IllegalArgumentException("Ill-formed Unicode locale key");
+            throw new IllegalArgumentException("Ill-formed Unicode locale key: " ~ key);
         string remaining = extensionPayload(cast(char) UNICODE_LOCALE_EXTENSION);
         while (remaining.length)
         {

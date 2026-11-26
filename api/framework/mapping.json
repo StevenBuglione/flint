@@ -6897,7 +6897,7 @@
 "java.util.Locale#toLanguageTag()":{"status":"excluded","category":"deferred","phase":"2","reason":"Flint renders valid base subtags and legacy variant components, including the Norwegian NY compatibility case. Flint renders normalized scripts and stored extensions. Legacy Japanese and Thai extension synthesis is deferred."},
 "java.util.Locale#hasExtensions()":{"status":"excluded","category":"deferred","phase":"2","reason":"Reports explicitly stored extensions. Japanese and Thai compatibility extensions still need synthesis."},
 "java.util.Locale#stripExtensions()":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.stripExtensions"},
-"java.util.Locale#getExtension(char)":{"status":"adapted","rules":["R5"],"d":"flint.java.util.Locale.getExtension"},
+"java.util.Locale#getExtension(char)":{"status":"adapted","rules":["R5","R14"],"d":"flint.java.util.Locale.getExtension","note":"Invalid keys are included in the exception message. A lone UTF-16 surrogate is rendered as U+FFFD."},
 "java.util.Locale#getExtensionKeys()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java returns an unmodifiable set of present extension singleton keys, including an unmodifiable empty set. Flint needs extension storage."},
 "java.util.Locale#getUnicodeLocaleAttributes()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java returns an unmodifiable set of canonical Unicode attributes. Duplicate attributes collapse after case normalization."},
 "java.util.Locale#getUnicodeLocaleKeys()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java returns an unmodifiable set of canonical Unicode locale keys, including keys with empty types. Duplicate keys retain their first type."},
