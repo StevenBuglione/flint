@@ -217,6 +217,14 @@ version (linux)
     }
 }
 
+version (linux)
+{
+    import core.sys.posix.sys.types : off_t, ssize_t;
+
+    // druntime declares pread for glibc but not in its musl branch; the C library has it on every Linux target.
+    private extern (C) ssize_t pread(int fd, void* buffer, size_t count, off_t offset) nothrow @nogc @system;
+}
+
 /// What reading the map found.
 private enum Found
 {
@@ -235,7 +243,7 @@ private @trusted Found readMap(out Trailer trailer, out ubyte[] blob) nothrow @n
         import core.stdc.stdlib : free, malloc;
         import core.sys.posix.fcntl : O_CLOEXEC, O_RDONLY, open;
         import core.sys.posix.sys.stat : fstat, stat_t;
-        import core.sys.posix.unistd : close, pread;
+        import core.sys.posix.unistd : close;
 
         const fd = open("/proc/self/exe", O_RDONLY | O_CLOEXEC);
         if (fd < 0)
