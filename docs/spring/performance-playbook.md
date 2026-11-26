@@ -404,6 +404,8 @@ Assigning a raw value to a `std.typecons.Nullable` (`nullable = value`) calls `N
 
 Jackson's `nextIntValue` and `nextLongValue` advance one token through `nextToken` and reuse the existing integer getters, including their overflow checks. The matched jackson-core probe on venus at `00668089` and `cf8b0071` measured 43,229 loadable bytes and 596 DMD template instances on both sides. With pinned LDC and `flint build --profile size`, gs-rest-service moved from 3,681,735 to 3,681,983 allocated ELF bytes and petclinic-rest moved from 10,401,645 to 10,401,925.
 
+Jackson's `nextBooleanValue` advances one token and returns `Nullable!bool` (R5) to distinguish a Boolean false from any other token. The matched jackson-core probe on venus at `cf8b0071` and `28a0ab30` measured 43,229 loadable bytes on both sides and 596 to 657 DMD template instances. The API-growth rule raises the cap from 600 to 670 to cover the 61 new instances plus headroom. Pinned LDC with `flint build --profile size` moved gs-rest-service from 3,681,983 to 3,682,063 allocated ELF bytes and petclinic-rest from 10,401,925 to 10,401,957.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

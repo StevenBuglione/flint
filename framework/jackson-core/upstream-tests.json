@@ -662,6 +662,7 @@
       "methods": {
         "ported": [
           "isNextTokenName3",
+          "nextBooleanValue",
           "nextIntValue",
           "nextLongValue",
           "nextTextValue"
@@ -673,7 +674,6 @@
           "isNextTokenName5": "The case uses the deferred SerializableString nextName overload.",
           "issue34": "The case uses the deferred SerializableString nextName overload.",
           "issue38": "The case uses the deferred SerializableString nextName overload.",
-          "nextBooleanValue": "R5 Nullable!bool raises the jackson-core DMD probe from 596 to 657 templates, above its 600-template cap.",
           "nextNameWithIndentation": "The case uses the deferred SerializableString nextName overload.",
           "nextNameWithLongContent": "The case uses the deferred SerializableString nextName overload."
         }

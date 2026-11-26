@@ -145,3 +145,32 @@ unittest
     assert(longs.nextToken() == JsonToken.END_ARRAY);
     longs.close();
 }
+
+@("nextBooleanValue")
+unittest
+{
+    auto parser = JsonFactory.builder().build().createParser(`{"a":"xyz","b":true,"c":[false,0]}`);
+    assert(parser.nextBooleanValue().isNull);
+    assert(parser.currentToken() == JsonToken.START_OBJECT);
+    assert(parser.nextBooleanValue().isNull);
+    assert(parser.currentToken() == JsonToken.PROPERTY_NAME && parser.currentName() == "a");
+    assert(parser.nextBooleanValue().isNull);
+    assert(parser.currentToken() == JsonToken.VALUE_STRING && parser.getString() == "xyz");
+    assert(parser.nextToken() == JsonToken.PROPERTY_NAME && parser.currentName() == "b");
+    const trueValue = parser.nextBooleanValue();
+    assert(!trueValue.isNull && trueValue.get());
+    assert(parser.nextName() == "c");
+    assert(parser.nextBooleanValue().isNull);
+    assert(parser.currentToken() == JsonToken.START_ARRAY);
+    const falseValue = parser.nextBooleanValue();
+    assert(!falseValue.isNull && !falseValue.get());
+    assert(parser.nextBooleanValue().isNull);
+    assert(parser.currentToken() == JsonToken.VALUE_NUMBER_INT && parser.getIntValue() == 0);
+    assert(parser.nextBooleanValue().isNull);
+    assert(parser.currentToken() == JsonToken.END_ARRAY);
+    assert(parser.nextBooleanValue().isNull);
+    assert(parser.currentToken() == JsonToken.END_OBJECT);
+    assert(parser.nextBooleanValue().isNull);
+    assert(parser.currentToken() == JsonToken.NOT_AVAILABLE);
+    parser.close();
+}

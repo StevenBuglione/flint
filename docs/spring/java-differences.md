@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 497 | 22 | 1 | 2,775 |
+| framework | jackson-core@3.1.8 | 497 | 23 | 1 | 2,774 |
 | framework | jackson-databind@3.1.8 | 511 | 49 | 5 | 9,902 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -4838,6 +4838,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.core.JsonGenerator#writeStartObject(Object)` | `flint.jackson.core.JsonGenerator.writeStartObject` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.JsonGenerator#writeStartObject(Object,int)` | `flint.jackson.core.JsonGenerator.writeStartObject` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.JsonParser#assignCurrentValue(Object)` | `flint.jackson.core.JsonParser.assignCurrentValue` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.core.JsonParser#nextBooleanValue()` | `flint.jackson.core.JsonParser.nextBooleanValue` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `tools.jackson.core.JsonPointer#append(JsonPointer)` | `flint.jackson.core.JsonPointer.append` | [R8](api-mapping.md#r8-exceptions), [D-JACKSON-8](api-mapping.md#deviations) |  |
 | `tools.jackson.core.JsonPointer#appendIndex(int)` | `flint.jackson.core.JsonPointer.appendIndex` | [R8](api-mapping.md#r8-exceptions), [D-JACKSON-8](api-mapping.md#deviations) |  |
 | `tools.jackson.core.JsonPointer#compile(String)` | `flint.jackson.core.JsonPointer.compile` | [R8](api-mapping.md#r8-exceptions), [D-JACKSON-8](api-mapping.md#deviations) |  |
@@ -10874,7 +10875,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
-| tools.jackson.core | 607 | 0 |
+| tools.jackson.core | 606 | 0 |
 | tools.jackson.core.async | 7 | 0 |
 | tools.jackson.core.base | 363 | 0 |
 | tools.jackson.core.exc | 11 | 0 |
@@ -11805,7 +11806,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.JsonGenerator#writeNumber(BigDecimal)` | 2 | The Java overload accepts BigDecimal. Flint writes primitive numbers and pre-encoded numeric strings. |
 | framework | `tools.jackson.core.JsonGenerator#writeNumberProperty(String,BigDecimal)` | 2 | The Java overload accepts BigDecimal. Flint's numeric property writers take primitive numbers. |
 | framework | `tools.jackson.core.JsonGenerator#writeString(Reader,int)` | 2 | The Java overload reads from java.io.Reader. Flint writes strings and character-buffer slices. |
-| framework | `tools.jackson.core.JsonParser#nextBooleanValue()` | 2 | R5 Nullable!bool raises the jackson-core DMD probe from 596 to 657 templates, above its 600-template cap. |
 | framework | `tools.jackson.core.JsonParser#nextName(SerializableString)` | 2 | The overload requires the deferred SerializableString API. |
 | framework | `tools.jackson.core.StreamReadConstraints#<init>(int,long,long,int,int,int)` | 2 | The D read constraints expose four limit fields. The Java protected six-parameter constructor includes document length and token count limits and is deferred. |
 | framework | `tools.jackson.core.StreamWriteConstraints#<init>(int)` | 2 | Flint constructs write constraints through the public builder. The Java protected subclass constructor is deferred. |

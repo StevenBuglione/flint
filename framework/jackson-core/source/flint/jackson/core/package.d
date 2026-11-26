@@ -18,6 +18,8 @@
 /// Jackson's streaming API: tokens, the generator and parser abstractions, and their features.
 module flint.jackson.core;
 
+import std.typecons : Nullable;
+
 @safe:
 
 /**
@@ -1457,6 +1459,15 @@ abstract class JsonParser
     long nextLongValue(long defaultValue)
     {
         return nextToken() == JsonToken.VALUE_NUMBER_INT ? getLongValue() : defaultValue;
+    }
+
+    /// Advance once and return a Boolean, or a null nullable for any other token.
+    Nullable!bool nextBooleanValue()
+    {
+        const token = nextToken();
+        if (token != JsonToken.VALUE_TRUE && token != JsonToken.VALUE_FALSE)
+            return Nullable!bool.init;
+        return Nullable!bool(token == JsonToken.VALUE_TRUE);
     }
 
     /// Skip the children of the current START_OBJECT or START_ARRAY, leaving the parser on the matching end.
