@@ -1,34 +1,103 @@
-/// Java SE 21 hexadecimal primitive conversions.
+/// Java SE 21 hexadecimal conversions.
 module flint.java.util.hexformat;
 
 @safe:
 
-/// A formatter whose case setting applies only to output.
+/// An immutable hexadecimal formatter.
 final class HexFormat
 {
     private immutable bool upper;
+    private immutable string separator;
+    private immutable string beforeByte;
+    private immutable string afterByte;
 
-    private this(bool upper) pure nothrow @nogc
+    private this(bool upper, string delimiter, string prefix, string suffix) pure nothrow @nogc
     {
         this.upper = upper;
+        separator = delimiter;
+        beforeByte = prefix;
+        afterByte = suffix;
     }
 
     /// Create a lowercase formatter.
     static HexFormat of() pure nothrow
     {
-        return new HexFormat(false);
+        return new HexFormat(false, null, null, null);
+    }
+
+    /// Create a lowercase formatter with a delimiter between adjacent bytes.
+    static HexFormat ofDelimiter(string delimiter) pure nothrow
+    {
+        return new HexFormat(false, delimiter, null, null);
+    }
+
+    /// Select the delimiter between adjacent bytes.
+    HexFormat withDelimiter(string delimiter) pure nothrow
+    {
+        return new HexFormat(upper, delimiter, beforeByte, afterByte);
+    }
+
+    /// Select the prefix attached to each byte.
+    HexFormat withPrefix(string prefix) pure nothrow
+    {
+        return new HexFormat(upper, separator, prefix, afterByte);
+    }
+
+    /// Select the suffix attached to each byte.
+    HexFormat withSuffix(string suffix) pure nothrow
+    {
+        return new HexFormat(upper, separator, beforeByte, suffix);
     }
 
     /// Select uppercase hexadecimal letters.
     HexFormat withUpperCase() pure nothrow
     {
-        return upper ? this : new HexFormat(true);
+        return withCase(true);
     }
 
     /// Select lowercase hexadecimal letters.
     HexFormat withLowerCase() pure nothrow
     {
-        return upper ? new HexFormat(false) : this;
+        return withCase(false);
+    }
+
+    pragma(inline, false) private HexFormat withCase(bool uppercase) pure nothrow
+    {
+        return upper == uppercase ? this : new HexFormat(uppercase, separator, beforeByte, afterByte);
+    }
+
+    /// Return the delimiter between adjacent bytes.
+    string delimiter() const pure nothrow @nogc
+    {
+        return separator;
+    }
+
+    /// Return the prefix attached to each byte.
+    string prefix() const pure nothrow @nogc
+    {
+        return beforeByte;
+    }
+
+    /// Return the suffix attached to each byte.
+    string suffix() const pure nothrow @nogc
+    {
+        return afterByte;
+    }
+
+    /// Format each byte with the selected alphabet and decorations.
+    string formatHex(scope const(byte)[] bytes) const pure nothrow
+    {
+        return renderBytes(bytes, alphabet(), separator, beforeByte, afterByte);
+    }
+
+    /// Format the bytes in the range [fromIndex, toIndex).
+    string formatHex(scope const(byte)[] bytes, int fromIndex, int toIndex) const pure
+    {
+        import flint.java.lang : IndexOutOfBoundsException;
+
+        if (fromIndex < 0 || toIndex < fromIndex || toIndex > bytes.length)
+            throw new IndexOutOfBoundsException("Hexadecimal byte range is out of bounds");
+        return formatHex(bytes[fromIndex .. toIndex]);
     }
 
     /// Report the output case.
@@ -129,7 +198,46 @@ final class HexFormat
     }
 }
 
-private ulong parseDigits(scope const(char)[] text, uint limit) pure
+private:
+
+char[] renderBytes(scope const(byte)[] bytes, string table, string delimiter, string prefix, string suffix) pure nothrow
+{
+    import core.checkedint : addu, mulu;
+    import core.exception : onOutOfMemoryError;
+
+    const count = bytes.length;
+    if (count == 0)
+        return null;
+
+    bool overflow;
+    const width = addu(addu(prefix.length, suffix.length, overflow), cast(size_t) 2, overflow);
+    const decorated = mulu(width, count, overflow);
+    const separators = mulu(delimiter.length, count - 1, overflow);
+    const size = addu(decorated, separators, overflow);
+    if (overflow)
+        onOutOfMemoryError();
+
+    auto text = new char[size];
+    size_t at;
+    foreach (index, value; bytes)
+    {
+        if (index != 0)
+        {
+            text[at .. at + delimiter.length] = delimiter;
+            at += delimiter.length;
+        }
+        text[at .. at + prefix.length] = prefix;
+        at += prefix.length;
+        const uint octet = cast(ubyte) value;
+        text[at++] = table[octet >> 4];
+        text[at++] = table[octet & 15];
+        text[at .. at + suffix.length] = suffix;
+        at += suffix.length;
+    }
+    return text;
+}
+
+ulong parseDigits(scope const(char)[] text, uint limit) pure
 {
     import flint.java.lang : IllegalArgumentException;
 
@@ -156,7 +264,7 @@ private ulong parseDigits(scope const(char)[] text, uint limit) pure
     return result;
 }
 
-private char[] renderDigits(ulong value, uint digits, bool upper) pure nothrow
+pragma(inline, false) char[] renderDigits(ulong value, uint digits, bool upper) pure nothrow
 {
     auto text = new char[digits];
     const table = upper ? "0123456789ABCDEF" : "0123456789abcdef";
@@ -168,7 +276,7 @@ private char[] renderDigits(ulong value, uint digits, bool upper) pure nothrow
     return text;
 }
 
-private int digitValue(int codePoint) pure nothrow @nogc
+int digitValue(int codePoint) pure nothrow @nogc
 {
     const uint code = cast(uint) codePoint;
     const uint decimal = code - '0';

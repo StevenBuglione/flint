@@ -1,6 +1,6 @@
 module hexformat_test;
 
-import flint.java.lang : IllegalArgumentException, NumberFormatException;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, NumberFormatException;
 import flint.java.util.hexformat : HexFormat;
 import std.exception : assertThrown;
 import std.conv : to;
@@ -107,4 +107,24 @@ unittest
     {
         assert(typeid(failure) is typeid(IllegalArgumentException));
     }
+}
+
+@("HexFormat applies decorations to each byte and joins the selected range")
+unittest
+{
+    const byte[] bytes = [0, 15, -128, -1];
+    const plain = HexFormat.of();
+    auto decorated = HexFormat.ofDelimiter("·").withPrefix("«").withSuffix("»").withUpperCase();
+    assert(plain.formatHex(bytes) == "000f80ff");
+    assert(decorated.formatHex(bytes) == "«00»·«0F»·«80»·«FF»");
+    assert(decorated.formatHex(bytes, 1, 3) == "«0F»·«80»");
+    assert(decorated.formatHex(bytes, 4, 4) == "");
+    assert(decorated.formatHex(null) == "");
+    assert(decorated.withLowerCase().formatHex(bytes, 3, 4) == "«ff»");
+    assert(decorated.withDelimiter("/").formatHex(bytes, 2, 4) == "«80»/«FF»");
+    assert(decorated.delimiter() == "·" && decorated.prefix() == "«" && decorated.suffix() == "»");
+    assert(decorated.toHexDigits(cast(byte)-1) == "FF");
+    assertThrown!IndexOutOfBoundsException(decorated.formatHex(bytes, -1, 2));
+    assertThrown!IndexOutOfBoundsException(decorated.formatHex(bytes, 2, 1));
+    assertThrown!IndexOutOfBoundsException(decorated.formatHex(bytes, 0, 5));
 }
