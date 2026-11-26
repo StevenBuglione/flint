@@ -131,8 +131,6 @@
   "java.lang.RuntimeException",
   "java.lang.RuntimeException#<init>()",
   "java.lang.RuntimeException#<init>(String)",
-  "java.lang.RuntimeException#<init>(String,Throwable)",
-  "java.lang.RuntimeException#<init>(String,Throwable,boolean,boolean)",
   "java.lang.RuntimeException#<init>(Throwable)",
   "java.lang.UnsupportedOperationException",
   "java.lang.UnsupportedOperationException#<init>()",
