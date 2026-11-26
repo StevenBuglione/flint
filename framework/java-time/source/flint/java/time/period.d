@@ -1,4 +1,33 @@
-/// Clean-room ISO calendar periods from the Java SE 21 specification (R1, R7, R8, R11 and R14).
+/*
+ * Copyright (c) 1994, 2023, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
+// Modified by the Flint authors.
+// Component bounds checking adapted from OpenJDK jdk-21.0.13-ga
+// src/java.base/share/classes/java/lang/Integer.java (parseInt(CharSequence, int, int, int)).
+
+/// ISO calendar periods from the Java SE 21 API (R1, R7, R8, R11 and R14).
 module flint.java.time.period;
 
 import flint.engine.aot.text : parseLong;
@@ -88,8 +117,8 @@ struct Period
         case ParseStatus.dayOverflow:
             throw new ArithmeticException("integer overflow");
         case ParseStatus.componentOverflow:
-            throw periodParseException(text,
-                    new NumberFormatException("Period component out of integer range"));
+            const component = text[parsed.rejected.start .. parsed.rejected.end];
+            throw periodParseException(text, new NumberFormatException(overflowMessage(component)));
         case ParseStatus.signOverflow:
             throw periodParseException(text, new ArithmeticException("integer overflow"));
         case ParseStatus.syntax:
@@ -260,20 +289,46 @@ private void prependComponent(ref scope char[37] buffer, ref size_t start, int v
     if (value == 0)
         return;
     buffer[--start] = unit;
-    long magnitude = value < 0 ? -cast(long) value : value;
+    const magnitude = value < 0 ? -cast(long) value : value;
+    start = prependDigits(buffer[], start, cast(ulong) magnitude);
+    if (value < 0)
+        buffer[--start] = '-';
+}
+
+private size_t prependDigits(scope char[] buffer, size_t start, ulong magnitude) pure nothrow @nogc
+{
+    // Keep the digit loop shared under the optimized link profiles.
+    pragma(inline, false);
     do
     {
         buffer[--start] = cast(char)('0' + magnitude % 10);
         magnitude /= 10;
     }
     while (magnitude != 0);
-    if (value < 0)
-        buffer[--start] = '-';
+    return start;
 }
 
 private DateTimeParseException periodParseException(scope const(char)[] text, Throwable cause) pure nothrow
 {
     return new DateTimeParseException("Text cannot be parsed to a Period", copyText(text), 0, cause);
+}
+
+private char[] overflowMessage(scope const(char)[] component) pure nothrow
+{
+    enum prefix = "Error at index ";
+    enum separator = " in: \"";
+    char[20] digits;
+    const start = prependDigits(digits[], digits.length, firstOverflowingDigit(component));
+
+    const separatorStart = prefix.length + digits.length - start;
+    const componentStart = separatorStart + separator.length;
+    auto message = new char[componentStart + component.length + 1];
+    message[0 .. prefix.length] = prefix;
+    message[prefix.length .. separatorStart] = digits[start .. $];
+    message[separatorStart .. componentStart] = separator;
+    message[componentStart .. $ - 1] = component;
+    message[$ - 1] = '"';
+    return message;
 }
 
 // Keep Period's text allocation in this archive member.
@@ -293,16 +348,17 @@ private enum ParseStatus
     ok,
 }
 
-private struct ParsedPeriod
-{
-    ParseStatus status;
-    Period value;
-}
-
 private struct ComponentSpan
 {
     size_t start;
     size_t end;
+}
+
+private struct ParsedPeriod
+{
+    ParseStatus status;
+    Period value;
+    ComponentSpan rejected;
 }
 
 private ParsedPeriod parseComponents(scope const(char)[] text) pure nothrow @nogc
@@ -328,7 +384,7 @@ private ParsedPeriod readComponents(scope const(char)[] text, size_t start, int 
             continue;
         long value;
         if (!parseLong(text[span.start .. span.end], value) || !fitsInt(value))
-            return ParsedPeriod(ParseStatus.componentOverflow);
+            return ParsedPeriod(ParseStatus.componentOverflow, Period.ZERO, span);
         if (!fitsInt(value * sign))
             return ParsedPeriod(ParseStatus.signOverflow);
         values[i] = value * sign;
@@ -339,6 +395,27 @@ private ParsedPeriod readComponents(scope const(char)[] text, size_t start, int 
     if (!fitsInt(weeksInDays) || !fitsInt(days))
         return ParsedPeriod(ParseStatus.dayOverflow);
     return ParsedPeriod(ParseStatus.ok, Period.of(cast(int) values[0], cast(int) values[1], cast(int) days));
+}
+
+/// Locate the first overflowing digit in a rejected token whose syntax was checked by scanComponents.
+private size_t firstOverflowingDigit(scope const(char)[] token) pure nothrow @nogc
+{
+    const negative = token[0] == '-';
+    size_t index = negative || token[0] == '+' ? 1 : 0;
+    const limit = negative ? int.min : -int.max;
+    const multiplyMinimum = limit / 10;
+    int result;
+    for (; index < token.length; ++index)
+    {
+        const digit = token[index] - '0';
+        if (result < multiplyMinimum)
+            return index;
+        result *= 10;
+        if (result < limit + digit)
+            return index;
+        result -= digit;
+    }
+    return index;
 }
 
 // Record each numeric token so the complete syntax is checked before converting any of its numbers.

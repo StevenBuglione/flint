@@ -5,5 +5,8 @@ This package implements parts of the Java SE 21 java.time API. Its original
 conformance fixtures use reference results produced by executing the public
 Java SE 21 API.
 
+Period's checked decimal reader is adapted from OpenJDK 21.0.13
+(java/lang/Integer.java), copyright Oracle and/or its affiliates.
+
 SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
 See LICENSE for the license and Classpath Exception.

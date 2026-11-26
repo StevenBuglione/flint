@@ -71,6 +71,31 @@ import flint.java.time.period : Period;
     }
 }
 
+@("period numeric overflow identifies the first overflowing digit within its component") unittest
+{
+    foreach (example; [
+            ["P2147483648D", "Error at index 9 in: \"2147483648\""],
+            ["P2Y-2147483649M3D", "Error at index 10 in: \"-2147483649\""],
+            ["P+21474836480Y", "Error at index 10 in: \"+21474836480\""],
+            ["P000000002147483648D", "Error at index 17 in: \"000000002147483648\""]
+        ])
+    {
+        try
+        {
+            Period.parse(example[0]);
+            assert(false, example[0]);
+        }
+        catch (DateTimeParseException exception)
+        {
+            const cause = cast(NumberFormatException) exception.getCause();
+            assert(cause !is null);
+            assert(cause.getMessage() == example[1], cause.getMessage());
+            assert(exception.getErrorIndex() == 0);
+        }
+    }
+    assert(Period.parse("P+2147483647D") == Period.ofDays(int.max));
+}
+
 @("period arithmetic preserves components until normalization and rejects overflow") unittest
 {
     const period = Period.of(1, -14, 3);
