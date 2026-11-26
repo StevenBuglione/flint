@@ -796,24 +796,65 @@
       "methods": {
         "ported": [
           "defaults",
-          "nonStandardAnyCharQuoting"
+          "nonStandardAnyCharQuoting",
+          "leadingZeroesUTF8",
+          "leadingZeroesReader",
+          "allowNaN",
+          "allowInfinity"
+        ]
+      },
+      "status": "ported"
+    },
+    "tools/jackson/core/unittest/read/NonStandardLeadingPlusSign784Test.java": {
+      "d": "framework/jackson-core/tests/non_standard_leading_plus_sign784_test.d",
+      "methods": {
+        "ported": [
+          "testLeadingPlusSignConsistency",
+          "testLeadingPlusSignLongValues"
+        ]
+      },
+      "status": "ported"
+    },
+    "tools/jackson/core/unittest/read/NonStandardNumberParsingTest.java": {
+      "d": "framework/jackson-core/tests/non_standard_number_parsing_test.d",
+      "methods": {
+        "ported": [
+          "hexadecimal",
+          "hexadecimalBigX",
+          "negativeHexadecimal",
+          "floatMarker",
+          "doubleMarker",
+          "test2DecimalPoints",
+          "leadingDotInDecimal",
+          "leadingPlusSignInDecimalDefaultFail",
+          "trailingDotInDecimal",
+          "testLeadingDotInDecimalAllowedDataInput",
+          "testLeadingDotInDecimalAllowedBytes",
+          "testLeadingDotInDecimalAllowedReader",
+          "testTrailingDotInDecimalAllowedDataInput",
+          "testTrailingDotInDecimalAllowedBytes",
+          "trailingDotInDecimalAllowedReader",
+          "leadingPlusSignInDecimalAllowedDataInput",
+          "leadingPlusSignInDecimalAllowedBytes",
+          "leadingPlusSignInDecimalAllowedReader",
+          "leadingDotAsFieldValueBytes",
+          "leadingDotAsFieldValueReader",
+          "leadingDotAsFieldValueDataInput",
+          "signedLeadingDotAsFieldValueBytes",
+          "signedLeadingDotAsFieldValueReader",
+          "signedLeadingDotAsFieldValueDataInput",
+          "leadingDotAsFieldValueFailsWhenDisabledBytes",
+          "leadingDotAsFieldValueFailsWhenDisabledReader",
+          "leadingDotAsFieldValueFailsWhenDisabledDataInput",
+          "leadingDotInNegativeDecimalAllowedAsync",
+          "leadingDotInNegativeDecimalAllowedBytes",
+          "leadingDotInNegativeDecimalAllowedReader"
         ],
         "skipped": {
-          "leadingZeroesUTF8": "the non-standard number features arrive with the read features' number slice",
-          "leadingZeroesReader": "the non-standard number features arrive with the read features' number slice",
-          "allowNaN": "the non-standard number features arrive with the read features' number slice",
-          "allowInfinity": "the non-standard number features arrive with the read features' number slice"
+          "largeDecimal": "its assertions are getDecimalValue's; jackson-core has no BigDecimal accessor yet"
         }
       },
       "status": "partial"
-    },
-    "tools/jackson/core/unittest/read/NonStandardLeadingPlusSign784Test.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "tools/jackson/core/unittest/read/NonStandardNumberParsingTest.java": {
-      "phase": "2",
-      "status": "deferred"
     },
     "tools/jackson/core/unittest/read/NonStandardUnquotedNamesTest.java": {
       "d": "framework/jackson-core/tests/non_standard_unquoted_names_test.d",

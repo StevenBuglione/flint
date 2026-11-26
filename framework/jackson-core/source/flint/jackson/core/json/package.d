@@ -43,7 +43,7 @@ private string owned(scope const(char)[] text) pure nothrow
 private string decimal(long value) pure nothrow
 {
     char[20] digits;
-    return digits[0 .. NumberOutput.writeLong(value, digits)].idup;
+    return owned(digits[0 .. NumberOutput.writeLong(value, digits)]);
 }
 
 /// Token reader (parser) features specific to JSON backend.
@@ -1414,6 +1414,12 @@ class UTF8StreamJsonParser : JsonParser
     private long _numberLong;
     private double _numberDouble;
     private bool _numberParsed;
+    // A number read by oddNumber (a JsonReadFeature's form): the text getString reports, the digits it parses as, and
+    // whether it is NaN or an Infinity. _oddText is null for a strict number (the strict path pays one store) and the
+    // other two are read only when it is set.
+    private string _oddText;
+    private string _oddDigits;
+    private bool _oddNonNumeric;
 
     // Escaped text decodes here before its one copy; kept across documents by a recycled parser.
     private char[] _scratch;
@@ -2042,6 +2048,9 @@ class UTF8StreamJsonParser : JsonParser
     {
         if (c == '\'' && allows(JsonReadFeature.ALLOW_SINGLE_QUOTES))
             return lenientValue('\'');
+        if (c == '+' || c == 'N' || c == 'I' || (c == '.'
+                && allows(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)))
+            return oddNumber();
         immutable missing = c == ',' || (c == ']' && _streamReadContext.inArray());
         if (missing && !_streamReadContext.inRoot() && allows(JsonReadFeature.ALLOW_MISSING_VALUES))
             return JsonToken.VALUE_NULL;
@@ -2108,21 +2117,22 @@ class UTF8StreamJsonParser : JsonParser
 
     private JsonToken readNumber()
     {
+        _oddText = null;
         auto scanner = JsonScanner(_input, JsonDecodeOptions.init);
         scanner.offset = _inputPtr;
         const error = scanner.number(_number);
-        if (error.code)
-            throw readError("Invalid numeric value: " ~ (leadingZero(_inputPtr)
-                    ? "Leading zeroes not allowed" : error.message));
+        if (error.code) // read again as Jackson does: what the features allow, or Jackson's error
+            return oddNumber();
         _inputPtr = scanner.offset;
         immutable length = _number.end - _number.start;
         if (length > _constraints.maxNumberLength)
             throw lengthError("Number value", length, _constraints.maxNumberLength, currentLocation());
         if (_inputPtr < _input.length && !separator(_input[_inputPtr]) && !oddEndsNumber(_input[_inputPtr]))
         {
-            if (length == 1 && leadingZero(_number.start))
-                throw readError("Invalid numeric value: Leading zeroes not allowed");
-            throw unexpected(_input[_inputPtr], "Expected space separating root-level values", true);
+            // "00003" or "-01": the strict scanner stops after the first zero; leading zeros are oddNumber's.
+            if (leadingZero(_number.start + (_input[_number.start] == '-')))
+                return oddNumber();
+            throw unexpected(_input[_inputPtr], "Expected space separating root-level values");
         }
         return _number.fractional ? JsonToken.VALUE_NUMBER_FLOAT : JsonToken.VALUE_NUMBER_INT;
     }
@@ -2132,6 +2142,168 @@ class UTF8StreamJsonParser : JsonParser
     private bool oddEndsNumber(ubyte c)
     {
         return spaceKind[c] == Space.odd && !_streamReadContext.inRoot();
+    }
+
+    // UTF8StreamJsonParser's non-standard numbers, from the token's first byte: a leading '+'
+    // (ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS), leading zeros (ALLOW_LEADING_ZEROS_FOR_NUMBERS, which leave the text), a
+    // leading or trailing decimal point (ALLOW_LEADING_/ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS), and NaN, Infinity,
+    // -INF and +INF (ALLOW_NON_NUMERIC_NUMBERS); otherwise Jackson's error for the first byte that fails.
+    private JsonToken oddNumber()
+    {
+        size_t p = _tokenStart;
+        immutable sign = _input[p] == '-' || _input[p] == '+' ? _input[p] : 0;
+        if (sign)
+            ++p;
+        if (p < _input.length && (_input[p] == 'N' || _input[p] == 'I'))
+            return nonNumeric(p, sign);
+        if (sign == '+' && !allows(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS))
+            throw numberError('+', "JSON spec does not allow numbers to have plus signs: enable "
+                    ~ "`JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS` to allow");
+        // The digits it parses as, built in the scratch buffer: '-', the integer part ("0" when absent), the fraction
+        // when it has digits, and the exponent.
+        size_t n;
+        if (sign == '-')
+            putScratch(n, "-");
+        bool trimmed;
+        putScratch(n, integralPart(p, sign, trimmed));
+        immutable fractional = fractionAndExponent(p, n);
+        return finishOddNumber(p, owned(_scratch[0 .. n]), trimmed, fractional);
+    }
+
+    // The integer part from `p`: leading zeros dropped with ALLOW_LEADING_ZEROS_FOR_NUMBERS (`trimmed`), "0" before a
+    // leading decimal point with ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS, Jackson's error otherwise.
+    private const(char)[] integralPart(ref size_t p, ubyte sign, out bool trimmed)
+    {
+        immutable intStart = p;
+        p = skipDigits(p);
+        auto integral = cast(const(char)[]) _input[intStart .. p];
+        if (integral.length > 1 && integral[0] == '0')
+        {
+            if (!allows(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS))
+                throw readError("Invalid numeric value: Leading zeroes not allowed");
+            while (integral.length > 1 && integral[0] == '0')
+                integral = integral[1 .. $];
+            trimmed = true;
+        }
+        if (integral.length != 0)
+            return integral;
+        immutable leadingPoint = p < _input.length && _input[p] == '.'
+            && allows(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS);
+        if (!leadingPoint)
+            throw numberError(byteAt(p), sign == '-'
+                    ? "expected digit (0-9) to follow minus sign, for valid numeric value"
+                    : "Decimal point not followed by a digit");
+        return "0";
+    }
+
+    // The fraction (a trailing decimal point alone with ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS) and the exponent
+    // from `p`, onto the scratch digits; whether the number has either.
+    private bool fractionAndExponent(ref size_t p, ref size_t n)
+    {
+        bool fractional;
+        if (p < _input.length && _input[p] == '.')
+        {
+            fractional = true;
+            immutable from = ++p;
+            p = skipDigits(p);
+            if (p == from && !allows(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS))
+                throw numberError(byteAt(p), "Decimal point not followed by a digit");
+            if (p > from)
+                putScratch(n, cast(const(char)[]) _input[from - 1 .. p]);
+        }
+        if (p < _input.length && (_input[p] | 0x20) == 'e')
+        {
+            fractional = true;
+            immutable from = p++;
+            if (p < _input.length && (_input[p] == '+' || _input[p] == '-'))
+                ++p;
+            immutable expStart = p;
+            p = skipDigits(p);
+            if (p == expStart)
+                throw numberError(byteAt(p), "Exponent indicator not followed by a digit");
+            putScratch(n, cast(const(char)[]) _input[from .. p]);
+        }
+        return fractional;
+    }
+
+    // Append `piece` to the scratch buffer's first `n` bytes.
+    private void putScratch(ref size_t n, scope const(char)[] piece)
+    {
+        if (n + piece.length > _scratch.length)
+            growScratch(n + piece.length < 64 ? 64 : (n + piece.length) * 2);
+        _scratch[n .. n + piece.length] = piece[];
+        n += piece.length;
+    }
+
+    private size_t skipDigits(size_t p) const pure nothrow @nogc
+    {
+        while (p < _input.length && _input[p] >= '0' && _input[p] <= '9')
+            ++p;
+        return p;
+    }
+
+    // The byte at `p`, or a space at the end of input (as an error describes it).
+    private ubyte byteAt(size_t p) const pure nothrow @nogc
+    {
+        return p < _input.length ? _input[p] : ' ';
+    }
+
+    // An odd number's end: the separator checks of readNumber, then its token.
+    private JsonToken finishOddNumber(size_t end, string digits, bool trimmed, bool fractional)
+    {
+        _inputPtr = end;
+        if (end - _tokenStart > _constraints.maxNumberLength)
+            throw lengthError("Number value", end - _tokenStart, _constraints.maxNumberLength, currentLocation());
+        if (_inputPtr < _input.length && !separator(_input[_inputPtr]) && !oddEndsNumber(_input[_inputPtr]))
+            throw unexpected(_input[_inputPtr], "Expected space separating root-level values");
+        // Leading zeros leave the text (Jackson reports "00003" as "3"); a sign or decimal point stays as written.
+        _oddText = trimmed ? digits : owned(cast(const(char)[]) _input[_tokenStart .. end]);
+        _oddDigits = digits;
+        _oddNonNumeric = false;
+        _number = JsonNumberToken(_tokenStart, end, fractional);
+        return fractional ? JsonToken.VALUE_NUMBER_FLOAT : JsonToken.VALUE_NUMBER_INT;
+    }
+
+    // NaN, Infinity and the signed INF and Infinity: a double that is not a number, with ALLOW_NON_NUMERIC_NUMBERS.
+    private JsonToken nonNumeric(size_t p, ubyte sign)
+    {
+        size_t end = p;
+        while (end < _input.length && end - p < 8 && ((_input[end] | 0x20) >= 'a' && (_input[end] | 0x20) <= 'z'))
+            ++end;
+        auto word = cast(const(char)[]) _input[p .. end];
+        immutable valid = sign ? word == "INF" || word == "Infinity" : word == "NaN" || word == "Infinity";
+        if (!valid)
+        {
+            _inputPtr = _tokenStart;
+            throw unrecognized();
+        }
+        auto text = owned(cast(const(char)[]) _input[_tokenStart .. end]);
+        if (!allows(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS))
+            throw readError(
+                    "Non-standard token '" ~ text ~ "': enable `JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS` "
+                    ~ "to allow");
+        _inputPtr = end;
+        if (_inputPtr < _input.length && !separator(_input[_inputPtr]) && !oddEndsNumber(_input[_inputPtr]))
+            throw unexpected(_input[_inputPtr], "Expected space separating root-level values");
+        _oddText = text;
+        _oddDigits = text;
+        _oddNonNumeric = true;
+        _number = JsonNumberToken(_tokenStart, end, true);
+        _numberDouble = word == "NaN" ? double.nan : sign == '-' ? -double.infinity : double.infinity;
+        _numberType = NumberType.DOUBLE;
+        _numberParsed = true;
+        return JsonToken.VALUE_NUMBER_FLOAT;
+    }
+
+    // ParserMinimalBase._reportUnexpectedNumberChar: "Unexpected character ('x' (code 120)) in numeric value: ...".
+    private JacksonException numberError(ubyte c, string comment)
+    {
+        return unexpected(c, comment, false, false, true);
+    }
+
+    override bool isNaN()
+    {
+        return _currToken == JsonToken.VALUE_NUMBER_FLOAT && _oddText !is null && _oddNonNumeric;
     }
 
     // Whether a '0' at `offset` is followed by another digit.
@@ -2218,6 +2390,8 @@ class UTF8StreamJsonParser : JsonParser
             return _streamReadContext.currentName();
         case JsonToken.VALUE_NUMBER_INT:
         case JsonToken.VALUE_NUMBER_FLOAT:
+            if (_oddText !is null)
+                return _oddText;
             return owned(cast(const(char)[]) _input[_number.start .. _number.end]);
         case JsonToken.NOT_AVAILABLE:
             return null;
@@ -2252,7 +2426,7 @@ class UTF8StreamJsonParser : JsonParser
         if (_currToken != JsonToken.VALUE_NUMBER_INT && _currToken != JsonToken.VALUE_NUMBER_FLOAT)
             throw coercionError("Current token (" ~ tokenName(
                     _currToken) ~ ") not numeric, cannot use numeric value accessors", _currToken);
-        auto text = _input[_number.start .. _number.end];
+        auto text = _oddText is null ? _input[_number.start .. _number.end] : cast(const(ubyte)[]) _oddDigits;
         if (_currToken == JsonToken.VALUE_NUMBER_FLOAT)
         {
             if (!parseJsonDecimal(text, _numberDouble))
@@ -2484,7 +2658,8 @@ class UTF8StreamJsonParser : JsonParser
     }
 
     // `escape`: ParserMinimalBase._handleUnrecognizedCharacterEscape's "Unrecognized character escape 'x' (code 120)".
-    private JacksonException unexpected(ubyte c, string comment, bool whole = false, bool escape = false)
+    private JacksonException unexpected(ubyte c, string comment, bool whole = false,
+            bool escape = false, bool numeric = false)
     {
         import flint.engine.aot.text : decimal;
 
@@ -2496,6 +2671,8 @@ class UTF8StreamJsonParser : JsonParser
             return readError(comment);
         if (escape)
             return readError("Unrecognized character escape " ~ description);
+        if (numeric)
+            return readError("Unexpected character (" ~ description ~ ") in numeric value: " ~ comment);
         return readError("Unexpected character (" ~ description ~ "): " ~ comment);
     }
 

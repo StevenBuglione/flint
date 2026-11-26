@@ -221,7 +221,8 @@ unittest
     expectFailure(() { p.nextToken(); }, "Leading zeroes not allowed");
     p = createParser("[ -x ]");
     assert(p.nextToken() == JsonToken.START_ARRAY);
-    expectFailure(() { p.nextToken(); }, "Invalid numeric value");
+    // Jackson's _handleInvalidNumberStart wording.
+    expectFailure(() { p.nextToken(); }, "in numeric value: expected digit (0-9) to follow minus sign");
 }
 
 // NumberOverflowTest
