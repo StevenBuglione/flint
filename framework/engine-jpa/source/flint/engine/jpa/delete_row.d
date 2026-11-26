@@ -32,6 +32,12 @@ struct DeletePlan
         this.keySlot = keySlot;
         this.versionSlot = versionSlot;
     }
+
+    /// Whether planning verified the immutable SQL layout.
+    package bool isPlanned() const scope pure nothrow @nogc
+    {
+        return mapping !is null;
+    }
 }
 
 private alias PlanResult = Result!DeletePlan;

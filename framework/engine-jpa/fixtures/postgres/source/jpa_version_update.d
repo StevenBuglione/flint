@@ -15,8 +15,9 @@ import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : InsertPlan, ParameterBinding, executeManagedInsert, planInsert;
 import flint.engine.jpa.result_binding : ManagedRowMaterializationPlan, materializeManagedRow, planManagedResult;
 import flint.engine.jpa.snapshot : AttributeSnapshot;
-import flint.engine.jpa.update : UpdateAction, VersionBindings, executeManagedUpdate,
-    executeVersionedUpdate, UpdatePlan, flushManagedUpdate, flushManagedUpdates, planUpdate;
+import flint.engine.jpa.update : DeleteAction, MutationActions, MutationPhase, MutationPlans,
+    UpdateAction, VersionBindings, executeManagedUpdate,
+    executeVersionedUpdate, UpdatePlan, flushManagedMutations, flushManagedUpdate, flushManagedUpdates, planUpdate;
 import flint.java.sql : Connection, SQLException, Types;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
@@ -253,6 +254,9 @@ void verifyTransactionalUpdates(DataSource dataSource, JdbcTemplate jdbc, DataSo
     jdbc.execute("insert into jpa_version_probe values (3, 'Third row', 1)");
     verifyManagedBatch(dataSource, transaction, key, true);
     verifyManagedBatch(dataSource, transaction, key, false);
+    verifyMixedRollback(dataSource, transaction, key, true);
+    verifyMixedRollback(dataSource, transaction, key, false);
+    verifyMixedCommit(dataSource, transaction, key);
 }
 
 private void verifyManagedCommit(DataSource dataSource, JdbcTemplate jdbc, TransactionTemplate transaction, Object key)
@@ -430,18 +434,88 @@ private void verifyManagedBatch(DataSource dataSource, TransactionTemplate trans
     assertStored(dataSource, "Outer", 11);
 }
 
+private void verifyMixedRollback(DataSource dataSource, TransactionTemplate transaction, Object key, bool malformed)
+{
+    ManagedUpdateContext context;
+    bool rejected;
+    try
+    {
+        transaction.executeWithoutResult((TransactionStatus status) {
+            auto changes = [UpdateAction(0, thirdKey)];
+            auto removes = [
+                DeleteAction(0, thirdKey), DeleteAction(malformed ? 2 : 1, limitKey),
+                DeleteAction(0, ownerKey)
+            ];
+            context = new ManagedUpdateContext(dataSource, key, changes, removes);
+            context.owner(thirdKey).name = "Then delete";
+            try
+            {
+                context.flush();
+                assert(false, "the second deletion must fail");
+            }
+            catch (ManagedFlushFailure failure)
+            {
+                assert(failure.phase == MutationPhase.deletes && failure.action == 1);
+                assert(failure.status == (malformed ? Status.invalidArgument : Status.conflict));
+            }
+            assert(status.isRollbackOnly());
+            assert(context.writes == (malformed ? 0 : 1) && context.removed == (malformed ? 0 : 1));
+            assert(context.detached(thirdKey) == !malformed);
+            if (malformed)
+                assertStored(dataSource, "Third row", 1, 3);
+            else
+                assertAbsent(dataSource, 3);
+            assertStored(dataSource, "Limit", long.max, 2);
+            assertStored(dataSource, "Outer", 11);
+            assert(!context.detached(limitKey) && !context.detached());
+        });
+    }
+    catch (UnexpectedRollbackException)
+        rejected = true;
+    assert(rejected && context.completion == TransactionSynchronization.STATUS_ROLLED_BACK);
+    assertReleased(context, dataSource, key);
+    assert(context.detached(limitKey) && context.detached(thirdKey));
+    assertStored(dataSource, "Third row", 1, 3);
+}
+
+private void verifyMixedCommit(DataSource dataSource, TransactionTemplate transaction, Object key)
+{
+    ManagedUpdateContext context;
+    transaction.executeWithoutResult((TransactionStatus status) {
+        assert(status.isNewTransaction());
+        context = new ManagedUpdateContext(dataSource, key, [UpdateAction(0, thirdKey)], [
+            DeleteAction(0, thirdKey)
+        ]);
+        context.owner(thirdKey).name = "Delete on commit";
+    });
+    assert(context.writes == 1 && context.removed == 1);
+    assert(context.completion == TransactionSynchronization.STATUS_COMMITTED && context.detached(thirdKey));
+    assertReleased(context, dataSource, key);
+    assertAbsent(dataSource, 3);
+}
+
+private void assertAbsent(DataSource dataSource, long identifier)
+{
+    auto connection = DataSourceUtils.getConnection(dataSource);
+    scope (exit)
+        DataSourceUtils.releaseConnection(connection, dataSource);
+    assertDeleteAbsent(connection, identifier);
+}
+
 private final class ManagedFlushFailure : Exception
 {
     Status status;
     size_t action;
     size_t attribute;
+    MutationPhase phase;
 
-    this(Error error, size_t action = size_t.max)
+    this(Error error, size_t action = size_t.max, MutationPhase phase = MutationPhase.none)
     {
         super(error.message);
         status = error.code;
         this.action = action;
         attribute = error.offset;
+        this.phase = phase;
     }
 }
 
@@ -452,24 +526,36 @@ private final class ManagedUpdateContext : TransactionSynchronization
     private ManagedEntities managed;
     private UpdatePlan[] plans;
     private UpdateAction[] actions;
+    private DeletePlan[] deletePlans;
+    private DeleteAction[] deletions;
     private AttributeValue[] values;
     private bool retired;
     long pid;
     size_t writes;
+    size_t removed;
     int completion = -1;
     bool retiredBeforeConnectionRelease;
 
-    this(DataSource dataSource, Object key, UpdateAction[] actions = null)
+    this(DataSource dataSource, Object key, UpdateAction[] actions = null, DeleteAction[] deletions = null)
     {
         this.dataSource = dataSource;
         this.key = key;
         this.actions = actions;
+        this.deletions = deletions;
         const read = planManagedResult(&mapping, projection, 0);
         const write = planUpdate(&mapping, updateRow, parameters, 4, VersionBindings(1, 3));
         assert(read.ok && write.ok);
         plans = [write.value];
+        if (deletions.length != 0)
+        {
+            enum sql = "delete from jpa_version_probe where id = ? and version = ?";
+            const valid = planDelete(&mapping, sql, 1, 2);
+            const stale = planDelete(&mapping, sql ~ " and false", 1, 2);
+            assert(valid.ok && stale.ok);
+            deletePlans = [valid.value, stale.value];
+        }
         values = new AttributeValue[3];
-        const count = actions.length == 0 ? 1 : actions.length;
+        const count = deletions.length != 0 ? 3 : (actions.length == 0 ? 1 : actions.length);
         auto fields = new AttributeSnapshot[18];
         auto bytes = new ubyte[96];
         ManagedSnapshotSlot[] slots = [
@@ -566,6 +652,17 @@ private final class ManagedUpdateContext : TransactionSynchronization
         auto holder = cast(ConnectionHolder) TransactionSynchronizationManager.getResource(cast(Object) dataSource);
         assert(holder !is null && holder.getConnection() is connection);
         uint[1] ordinals;
+        if (deletions.length != 0)
+        {
+            const layout = MutationPlans(plans, deletePlans);
+            const queue = MutationActions(actions, deletions);
+            const mixed = flushManagedMutations(connection, managed, layout, queue, ordinals[], values);
+            writes += mixed.value.updated;
+            removed += mixed.value.deleted;
+            if (!mixed.ok)
+                throw new ManagedFlushFailure(mixed.error, mixed.value.failedAction, mixed.value.failedPhase);
+            return;
+        }
         if (actions.length != 0)
         {
             const batch = flushManagedUpdates(connection, managed, plans, actions, ordinals[], values);

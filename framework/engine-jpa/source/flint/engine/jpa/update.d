@@ -12,6 +12,7 @@
 module flint.engine.jpa.update;
 
 import flint.arena : Error, Result, Status;
+import flint.engine.jpa.delete_row : DeletePlan, executeManagedDelete;
 import flint.engine.jpa.identity : EntityIdentity;
 import flint.engine.jpa.managed_entities : ManagedTarget, ManagedEntities;
 import flint.engine.jpa.mapping : AttributeKind, AttributeValue, EntityMapping, checkIdentifier;
@@ -181,7 +182,7 @@ VersionResult flushManagedUpdate(const ref UpdatePlan plan, Connection connectio
 /// A scalar work item naming one checked plan and one managed entity.
 struct UpdateAction
 {
-    /// Ordinal in the provider's update plan table.
+    /// Ordinal in the plan table for this action's phase.
     uint planOrdinal;
     /// Canonical identity in the current persistence context.
     EntityIdentity key;
@@ -208,17 +209,32 @@ BatchResult flushManagedUpdates(Connection connection, scope ref ManagedEntities
     if (actions.length != 0 && connection is null)
         return BatchResult(UpdateBatchProgress.init, Error(Status.invalidArgument, "missing update connection"));
 
+    const checked = validateUpdateBatch(plans, actions, ordinals.length, values.length);
+    if (!checked.ok)
+        return checked;
+    return executeUpdateBatch(connection, entities, plans, actions, ordinals, values);
+}
+
+private BatchResult validateUpdateBatch(scope const(UpdatePlan)[] plans,
+        scope const(UpdateAction)[] actions, size_t ordinalCount, size_t valueCount) pure nothrow @nogc
+{
     foreach (index, ref action; actions)
     {
         if (action.planOrdinal >= plans.length || plans[action.planOrdinal].mapping is null)
             return BatchResult(UpdateBatchProgress(0, index), Error(Status.invalidArgument,
                     "invalid update plan ordinal"));
         const plan = &plans[action.planOrdinal];
-        if (ordinals.length < plan.dirtySlots || values.length < plan.mapping.attributes.length)
+        if (ordinalCount < plan.dirtySlots || valueCount < plan.mapping.attributes.length)
             return BatchResult(UpdateBatchProgress(0, index), Error(Status.resourceExhausted,
                     "insufficient batch scratch"));
     }
 
+    return BatchResult(UpdateBatchProgress.init);
+}
+
+private BatchResult executeUpdateBatch(Connection connection, scope ref ManagedEntities entities,
+        const(UpdatePlan)[] plans, scope const(UpdateAction)[] actions, scope uint[] ordinals, AttributeValue[] values)
+{
     UpdateBatchProgress progress;
     foreach (index, ref action; actions)
     {
@@ -232,6 +248,101 @@ BatchResult flushManagedUpdates(Connection connection, scope ref ManagedEntities
         progress.updated += result.value.updated;
     }
     return BatchResult(progress);
+}
+
+/// A delete action uses the same scalar layout as an update action.
+alias DeleteAction = UpdateAction;
+
+/// Provider-compiled plan tables for the two mutation phases.
+struct MutationPlans
+{
+    /// Update plans indexed by update actions.
+    const(UpdatePlan)[] updates;
+    /// Delete plans indexed by delete actions.
+    const(DeletePlan)[] deletes;
+}
+
+/// The caller's ordered action list for each phase.
+struct MutationActions
+{
+    /// Actions to run in the update phase.
+    const(UpdateAction)[] updates;
+    /// Actions to run after the update phase.
+    const(DeleteAction)[] deletes;
+}
+
+/// Phase of the first action error.
+enum MutationPhase : ubyte
+{
+    /// No individual action failed.
+    none,
+    /// An update plan or action failed.
+    updates,
+    /// A delete plan or action failed.
+    deletes,
+}
+
+/// Counts completed writes and identifies the first reported action error.
+struct MutationBatchProgress
+{
+    /// Updates that affected one row and published a baseline.
+    size_t updated;
+    /// Deletes that affected one row and retired an identity.
+    size_t deleted;
+    /// Phase that reported the error, or none for success or a batch-wide error.
+    MutationPhase failedPhase;
+    /// Zero-based index in that phase, or size_t.max when inapplicable.
+    size_t failedAction = size_t.max;
+}
+
+private alias MutationBatchResult = Result!MutationBatchProgress;
+
+/// Validates both phases before SQL, then flushes updates followed by deletes on one connection.
+/// On a reported error, progress identifies the stopped action and retains earlier write counts.
+/// The caller owns transaction rollback and retires state that was touched before an error.
+MutationBatchResult flushManagedMutations(Connection connection, scope ref ManagedEntities entities,
+        const ref MutationPlans plans, scope const ref MutationActions actions, scope uint[] ordinals,
+        AttributeValue[] values)
+{
+    if (connection is null && (actions.updates.length != 0 || actions.deletes.length != 0))
+        return MutationBatchResult(MutationBatchProgress.init, Error(Status.invalidArgument,
+                "missing mutation connection"));
+
+    const updateLayout = validateUpdateBatch(plans.updates, actions.updates, ordinals.length, values.length);
+    if (!updateLayout.ok)
+        return failedUpdatePhase(updateLayout);
+    foreach (index, ref action; actions.deletes)
+    {
+        if (action.planOrdinal >= plans.deletes.length || !plans.deletes[action.planOrdinal].isPlanned())
+            return MutationBatchResult(MutationBatchProgress(0, 0, MutationPhase.deletes, index),
+                    Error(Status.invalidArgument, "invalid delete plan ordinal"));
+    }
+
+    const updates = executeUpdateBatch(connection, entities, plans.updates, actions.updates, ordinals, values);
+    if (!updates.ok)
+        return failedUpdatePhase(updates);
+
+    MutationBatchProgress progress;
+    progress.updated = updates.value.updated;
+    foreach (index, ref action; actions.deletes)
+    {
+        const removed = executeManagedDelete(plans.deletes[action.planOrdinal], connection, entities, action.key);
+        if (removed.code != Status.ok)
+        {
+            progress.failedPhase = MutationPhase.deletes;
+            progress.failedAction = index;
+            return MutationBatchResult(progress, removed);
+        }
+        ++progress.deleted;
+    }
+    return MutationBatchResult(progress);
+}
+
+private MutationBatchResult failedUpdatePhase(const ref BatchResult updates) pure nothrow @nogc
+{
+    const progress = MutationBatchProgress(updates.value.updated, 0, MutationPhase.updates,
+            updates.value.failedAction);
+    return MutationBatchResult(progress, updates.error);
 }
 
 private VersionResult executeStaticUpdate(const ref UpdatePlan plan, Connection connection,
