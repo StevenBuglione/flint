@@ -1,0 +1,90 @@
+{
+  "classes": {
+    "io/micrometer/observation/AllMatchingCompositeObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/ArchitectureTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/CurrentObservationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/FirstMatchingCompositeObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/NoopContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/ObservationContextTest.java": {
+      "d": "framework/micrometer-observation/tests/observation_context_test.d",
+      "methods": {
+        "ported": [
+          "removingHighCardinalityKeysShouldBePossible",
+          "removingLowCardinalityKeysShouldBePossible",
+          "sameKeyShouldOverrideKeyValue"
+        ],
+        "skipped": {
+          "cleanEmptyContextShouldNotFail": "Deferred with the Context arbitrary Java object map.",
+          "computeIfAbsentShouldUseFallbackValue": "Deferred with the Context arbitrary Java object map.",
+          "getOrDefaultShouldUseFallbackValue": "Deferred with the Context arbitrary Java object map.",
+          "getOrDefaultSupplierWhenKeyIsMissing": "Deferred with the Context arbitrary Java object map.",
+          "getOrDefaultSupplierWhenKeyIsPresent": "Deferred with the Context arbitrary Java object map.",
+          "getRequiredShouldFailIfThereIsNoValue": "Deferred with the Context arbitrary Java object map.",
+          "getShouldReturnWhatWasPutPreviously": "Deferred with the Context arbitrary Java object map.",
+          "itemsShouldNotBePresentAfterClear": "Deferred with the Context arbitrary Java object map.",
+          "overwrittenValuesShouldBeUpdated": "Deferred with the Context arbitrary Java object map.",
+          "removeNonExistingItemShouldNotFail": "Deferred with the Context arbitrary Java object map.",
+          "removedItemsShouldNotBePresent": "Deferred with the Context arbitrary Java object map.",
+          "shouldBeEmptyByDefault": "Deferred with the Context arbitrary Java object map."
+        }
+      },
+      "status": "partial"
+    },
+    "io/micrometer/observation/ObservationConventionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/ObservationEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/ObservationNoopTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/ObservationRegistryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/ObservationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/ObservationTextPublisherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/aop/ObservedAspectTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/contextpropagation/ObservationThreadLocalAccessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/observation/docs/ObservationDocumentationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "schema": "flint.upstream-tests/1",
+  "upstream": "micrometer-observation@1.18.0",
+  "upstream_modules": [
+    "micrometer-observation"
+  ]
+}

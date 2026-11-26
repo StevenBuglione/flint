@@ -3509,6 +3509,22 @@
       "io/micrometer/core/ipc/http/OkHttpSenderTests.java",
       "io/micrometer/core/ipc/http/RequestTest.java"
     ],
+    "micrometer-observation": [
+      "io/micrometer/observation/AllMatchingCompositeObservationHandlerTests.java",
+      "io/micrometer/observation/ArchitectureTests.java",
+      "io/micrometer/observation/CurrentObservationTest.java",
+      "io/micrometer/observation/FirstMatchingCompositeObservationHandlerTests.java",
+      "io/micrometer/observation/NoopContextTests.java",
+      "io/micrometer/observation/ObservationConventionTest.java",
+      "io/micrometer/observation/ObservationEventTests.java",
+      "io/micrometer/observation/ObservationNoopTests.java",
+      "io/micrometer/observation/ObservationRegistryTest.java",
+      "io/micrometer/observation/ObservationTests.java",
+      "io/micrometer/observation/ObservationTextPublisherTests.java",
+      "io/micrometer/observation/aop/ObservedAspectTests.java",
+      "io/micrometer/observation/contextpropagation/ObservationThreadLocalAccessorTests.java",
+      "io/micrometer/observation/docs/ObservationDocumentationTests.java"
+    ],
     "security-config": [
       "org/springframework/security/config/FilterChainProxyConfigTests.java",
       "org/springframework/security/config/InvalidConfigurationTests.java",

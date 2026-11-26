@@ -367,6 +367,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:micrometer-observation": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:os": {
       "repo": "flint",
       "version": "monorepo"

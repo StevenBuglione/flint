@@ -700,6 +700,22 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "micrometer-observation": {
+   "directory": "framework/micrometer-observation",
+   "module": "flint.micrometer.observation",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "micrometer-observation@1.18.0",
+   "dependencies": [
+    "java",
+    "micrometer-commons"
+   ],
+   "bench": {
+    "fixture": "framework/micrometer-observation/bench",
+    "baseline": "framework/micrometer-observation/bench/baseline",
+    "edit_source": "framework/micrometer-observation/source/flint/micrometer/observation.d"
+   }
+  },
   "micrometer-core": {
    "directory": "framework/micrometer-core",
    "module": "flint.micrometer.core.instrument",

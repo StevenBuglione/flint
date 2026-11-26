@@ -192,7 +192,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | micrometer-core@1.18.0 | 130 | 123 | 0 | 2,137 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 0 | 0 | 0 | 4,452 |
-| framework | micrometer-observation@1.18.0 | 0 | 0 | 0 | 312 |
+| framework | micrometer-observation@1.18.0 | 25 | 11 | 0 | 276 |
 | framework | openjdk@21.0.13 | 168 | 102 | 1,871 | 15,838 |
 | framework | aspectj@1.9.27 | 0 | 31 | 191 | 88 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
@@ -844,6 +844,22 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile` | [R1](api-mapping.md#r1-packages-and-names) | The canonical import is unchanged. The declaration lives in an internal leaf to break the Java package cycle. |
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile#equals(Object)` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile#hashCode()` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+
+#### io.micrometer.observation
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `io.micrometer.observation.Observation.Context#getContextualName()` | `flint.micrometer.observation.Observation.Context.getContextualName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `io.micrometer.observation.Observation.Context#getError()` | `flint.micrometer.observation.Observation.Context.getError` | [R8](api-mapping.md#r8-exceptions) |  |
+| `io.micrometer.observation.Observation.Context#getName()` | `flint.micrometer.observation.Observation.Context.getName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `io.micrometer.observation.Observation.Context#removeHighCardinalityKeyValues(String...)` | `flint.micrometer.observation.Observation.Context.removeHighCardinalityKeyValues` | [R7](api-mapping.md#r7-overloads) |  |
+| `io.micrometer.observation.Observation.Context#removeLowCardinalityKeyValues(String...)` | `flint.micrometer.observation.Observation.Context.removeLowCardinalityKeyValues` | [R7](api-mapping.md#r7-overloads) |  |
+| `io.micrometer.observation.Observation.Context#setContextualName(String)` | `flint.micrometer.observation.Observation.Context.setContextualName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `io.micrometer.observation.Observation.Context#setError(Throwable)` | `flint.micrometer.observation.Observation.Context.setError` | [R8](api-mapping.md#r8-exceptions) |  |
+| `io.micrometer.observation.Observation.ContextView` | `flint.micrometer.observation.Observation.ContextView` | [D-MICROMETER-2](api-mapping.md#deviations) |  |
+| `io.micrometer.observation.Observation.ContextView#getContextualName()` | `flint.micrometer.observation.Observation.ContextView.getContextualName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `io.micrometer.observation.Observation.ContextView#getError()` | `flint.micrometer.observation.Observation.ContextView.getError` | [R8](api-mapping.md#r8-exceptions) |  |
+| `io.micrometer.observation.Observation.ContextView#getName()` | `flint.micrometer.observation.Observation.ContextView.getName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### jakarta.annotation
 
@@ -8919,7 +8935,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.step | 72 | 0 |
 | io.micrometer.core.instrument.util | 37 | 0 |
 | io.micrometer.core.ipc.http | 56 | 0 |
-| io.micrometer.observation | 207 | 0 |
+| io.micrometer.observation | 171 | 0 |
 | io.micrometer.observation.annotation | 12 | 0 |
 | io.micrometer.observation.aop | 17 | 0 |
 | io.micrometer.observation.contextpropagation | 14 | 0 |

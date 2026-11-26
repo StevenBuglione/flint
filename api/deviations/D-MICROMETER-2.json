@@ -1,0 +1,5 @@
+{
+ "id": "D-MICROMETER-2",
+ "deviation": "`Observation.ContextView` is a public alias to a module-private interface. Reflection reports the declaring name `flint.micrometer.observation.ObservationContextView`.",
+ "reason": "D resolves base interfaces before nested types. Declaring the shared return type at module scope allows `Observation` to extend `ObservationView` and expose the same type from both names."
+}
