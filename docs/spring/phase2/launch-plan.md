@@ -12,13 +12,13 @@ There are three lanes now. Each is an `agentctl` role with its own worktree at `
 | `sol-security` | 1. Spring Security core and crypto beyond petclinic's subset: password encoders on the pinned wrappers, user details, providers, events. 2. Security web and config: form login, logout, session management, CORS, `RequestMatcher`s, method security. 3. The OAuth2 resource server (JWT) on the pinned crypto wrappers. No new cryptography. | `security/*`, `boot/module/flint-boot-security*` | web-http (filters, servlet); framework-core (the `@PreAuthorize` advisor and AOP) |
 | `sol-context` | 1. spring-context features: the cache abstraction with `@Cacheable`, `@CacheEvict` and `@EnableCaching`; `@Scheduled` and `TaskScheduler`; `@Async`; `@Retryable` where Spring has it. 2. spring-web's clients: `RestClient`, then `HttpServiceProxyFactory` (`@HttpExchange`). 3. Boot auto-configuration for each: cache, task execution and scheduling, the HTTP client. | new modules under `framework/` for the features above, the matching `boot/module/flint-boot-*` | framework-core (beans, context, `engine-aot`); web-http (`RestClient` over engine-http); boot (auto-configuration core) |
 
-**Wave 2** starts when each wave-1 lane has landed its first module through the definition of done with no reviewer rejection. The coordinator launches it.
-- `sol-observability`: Actuator endpoints and Micrometer (`io.micrometer.core.instrument`, 2,280 deferred elements).
-- `sol-template`: SpEL compiled to D by Flint AOT, then Thymeleaf.
+**Wave 2 was launched at once** (owner, 2026-11-26 00:25Z), not after wave 1 lands a module. The git history showed the Phase 1 port took about 6 hours with about ten sessions, so the number of parallel lanes, not difficulty, sets the pace. Each lane's first steps and hard rules are in its hand-off state (`agentctl state <role>`).
+- `sol-observability`: Actuator endpoints and Micrometer. Reviewers: boot and web-http. With metrics off, the request path must cost exactly what main costs (`io.micrometer.core.instrument`, 2,280 deferred elements).
+- `sol-template`: SpEL compiled to D by Flint AOT, then Thymeleaf. Reviewers: flint-aot, web-http, and api-coverage for the new upstream.
 - `sol-jpa`: the JPA engine ported from Hibernate ORM.
   - **Start with an ADR draft.** The coordinator takes the ADR to the owner. No code lands before the owner approves it.
   - Classic PetClinic follows the JPA engine.
-- `sol-ai`: `flint-ai` takes over the ai and mcp packages.
+- `sol-ai`: `flint-ai` takes over engine-ai, engine-mcp and engine-prompt with Spring AI's API. Reviewers: boot and m7. It never calls a real model provider; tests use local mocks only.
 
 **Phase 3**, unchanged from the plan, needs owner go-ahead per item: WebFlux and Reactor, WebSocket and STOMP, Kafka, AMQP, Redis, MongoDB, Batch, Integration, the cloud family, Session and GraphQL.
 

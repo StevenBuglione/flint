@@ -1033,3 +1033,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - **Cancelled and blocked in the queue:** phase1-builds ×3 and the six GC-matrix parts.
     - **Close-out:** [closeout.md](closeout.md) (coordinator) cites B6 for builds and gs-rest's runtime and B7 for the rest; every gated metric passes at a certified baseline.
     - **From now on:** venus claims no windows. MEASURING is released, and certification runs only on request or in natural quiet.
+- 2026-11-26 00:25Z, owner: **launch Phase 2's wave 2 now**, not after wave 1 lands a module. The new lanes are sol-observability, sol-template, sol-jpa and sol-ai, for seven lanes in all.
+  - **Reason:** the git history shows the Phase 1 port went from 0 to 6,923 classified elements (about 6.4 MB of D) between 04:00 and 10:00Z on 2026-11-23, with about ten sessions. Parallelism, not difficulty, sets the pace.
+  - **sol-jpa:** its ADR still goes to the owner before any engine code lands.
