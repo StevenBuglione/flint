@@ -239,6 +239,21 @@ class QueueTests(unittest.TestCase):
         members = [m['agent'] for m in json.loads((self.root / 'queues.json').read_text())['apps-landing']['members']]
         self.assertEqual(members, ['a', 'b'])
 
+    def test_a_short_lease_slot_caps_claims_and_has_its_own_head_window(self):
+        self.run_cli('register', 'main-push', '--area', 'direct pushes', '--queued', '--head-min', '3', '--max-ttl-min', '5')
+        self.run_cli('claim', 'main-push', '--agent', 'x', '--harness', 'codex', '--ttl-min', '45')
+        self.assertEqual(json.loads((self.root / 'leases.json').read_text())['main-push']['ttl_min'], 5)
+        self.run_cli('release', 'main-push', '--agent', 'x')
+        for agent in ('a', 'b'):
+            self.run_cli('queue', 'main-push', 'join', '--agent', agent)
+        import time as clock
+        queues = json.loads((self.root / 'queues.json').read_text())
+        stamp = lambda minutes: agentctl._dt.datetime.fromtimestamp(clock.time() - minutes * 60,
+                                                                   agentctl._dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        queues['main-push']['freed'] = queues['main-push']['head_since'] = stamp(4)  # past a 3-minute window
+        (self.root / 'queues.json').write_text(json.dumps(queues))
+        self.assertIn('1. b', self.run_cli('queue', 'main-push', 'show'))
+
     def test_force_overrides_the_queue_and_is_logged(self):
         self.run_cli('queue', 'apps-landing', 'join', '--agent', 'a')
         self.run_cli('claim', 'apps-landing', '--agent', 'b', '--harness', 'codex', '--force', 'a is offline')

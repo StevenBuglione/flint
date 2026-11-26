@@ -154,13 +154,17 @@ class Store:
 
     # Roles and leases.
     def register(self, role: str, area: str, worktree: str | None, claude_session: str | None,
-                 queued: bool = False) -> None:
+                 queued: bool = False, head_min: int | None = None, max_ttl_min: int | None = None) -> None:
         with self.locked():
             roles = self.roles()
             entry = roles.get(role, {})
             entry['area'] = area
             if queued:
                 entry['queued'] = True
+            if head_min is not None:
+                entry['head_min'] = head_min  # this queue's claim window for its head (default QUEUE_HEAD_MIN)
+            if max_ttl_min is not None:
+                entry['max_ttl_min'] = max_ttl_min  # a short-lease slot such as main-push: claims are capped
             if worktree is not None:
                 entry['worktree'] = worktree
             if claude_session is not None:
@@ -219,13 +223,14 @@ class Store:
         freed = self.free_since(role, leases, queue)
         skipped = []
         deadline = None
+        window = self.roles().get(role, {}).get('head_min', QUEUE_HEAD_MIN) * 60
         if members and freed is not None and not queue.get('paused'):
             start = max(freed, parse_utc(queue['head_since']) if queue.get('head_since') else 0.0)
-            while members and now >= start + QUEUE_HEAD_MIN * 60:
+            while members and now >= start + window:
                 skipped.append(members.pop(0)['agent'])
-                start += QUEUE_HEAD_MIN * 60
+                start += window
                 queue['head_since'] = _dt.datetime.fromtimestamp(start, _dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-            deadline = start + QUEUE_HEAD_MIN * 60 if members else None
+            deadline = start + window if members else None
         queue['members'] = members
         return queue, skipped, deadline
 
@@ -308,6 +313,9 @@ class Store:
                     if not queue['members']:
                         queue.pop('head_since', None)
                 self._write_json('queues.json', queues)
+            cap = self.roles().get(role, {}).get('max_ttl_min')
+            if cap is not None:
+                ttl_min = min(ttl_min, cap)
             now = utc_now()
             lease = {'agent': agent, 'harness': harness, 'since': now, 'heartbeat': now, 'ttl_min': ttl_min}
             leases[role] = lease
@@ -565,6 +573,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser('register'); p.add_argument('role'); p.add_argument('--area', required=True)
     p.add_argument('--worktree'); p.add_argument('--claude-session')
     p.add_argument('--queued', action='store_true', help='claims follow the role\'s FIFO queue (agentctl queue)')
+    p.add_argument('--head-min', type=int, help='queued role: minutes its head has to claim once the slot frees')
+    p.add_argument('--max-ttl-min', type=int, help='cap every claim\'s lease at this many minutes (a short-lease slot)')
     p = sub.add_parser('claim'); p.add_argument('role'); p.add_argument('--agent', required=True)
     p.add_argument('--harness', required=True, choices=HARNESSES); p.add_argument('--force', metavar='REASON')
     p.add_argument('--ttl-min', type=int, default=DEFAULT_TTL_MIN)
@@ -600,7 +610,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command in ('roles', 'board'):
         print(table(store, with_next=args.command == 'board'))
     elif args.command == 'register':
-        store.register(check_role(args.role), args.area, args.worktree, args.claude_session, args.queued)
+        store.register(check_role(args.role), args.area, args.worktree, args.claude_session, args.queued,
+                       args.head_min, args.max_ttl_min)
     elif args.command == 'id':
         if args.action == 'next':
             if not args.kind or not args.agent:

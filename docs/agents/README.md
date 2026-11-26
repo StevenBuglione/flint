@@ -39,6 +39,23 @@ python3 tools/agentctl.py queue apps-landing leave --agent <name>   # if you no 
 
 `board` lists each queue under the roles. `--force REASON` still overrides, and it's logged; use it only when the holder or head has stopped.
 
+### Direct pushes (main-push)
+
+Changes outside the apps' closure land directly under the cheap-rebase rule. When many lanes do that at once, each push loses the race to the others and redoes its checks. The short-lease `main-push` slot serializes them:
+
+```bash
+python3 tools/agentctl.py queue main-push join --agent <name>          # once your slice is verified
+python3 tools/agentctl.py claim main-push --agent <name> --harness <h>  # at your turn; capped at 5 minutes
+git fetch fp main && git rebase fp/main                                 # then only the cheap rebase checks
+git push fp HEAD:main
+python3 tools/agentctl.py release main-push --agent <name>             # right after the push, or on failure
+```
+
+**Rules:**
+- The lease is capped at 5 minutes, so hold the slot only for fetch, rebase, cheap checks and push; never for development.
+- A head has 3 minutes to claim once the slot frees, or it is skipped. Rejoin if that happens.
+- If the rebase touches the apps' closure, release the slot and go through the merge train instead.
+
 ### The merge train
 
 Lanes don't each hold the slot for 7–10 minutes. A change that is green on its own module's definition of done is submitted to the train:
