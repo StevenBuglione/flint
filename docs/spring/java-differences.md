@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 517 | 17 | 1 | 2,760 |
+| framework | jackson-core@3.1.8 | 514 | 17 | 1 | 2,763 |
 | framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -9968,7 +9968,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.filter | 183 | 0 |
 | tools.jackson.core.io | 277 | 0 |
 | tools.jackson.core.io.schubfach | 34 | 0 |
-| tools.jackson.core.json | 457 | 0 |
+| tools.jackson.core.json | 460 | 0 |
 | tools.jackson.core.json.async | 168 | 0 |
 | tools.jackson.core.sym | 147 | 0 |
 | tools.jackson.core.tree | 2 | 0 |
@@ -10438,6 +10438,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_UNESCAPED_CONTROL_CHARS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_UNQUOTED_PROPERTY_NAMES` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_YAML_COMMENTS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
+| framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char)` | 2 | Requires SerializableString and the explicit generator context and output configuration. |
+| framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char,byte[],int,boolean)` | 2 | Requires SerializableString and the constructor with a caller-provided byte buffer, offset and recycling flag. |
+| framework | `tools.jackson.core.json.UTF8StreamJsonParser#<init>(ObjectReadContext,IOContext,int,int,InputStream,ByteQuadsCanonicalizer,byte[],int,int,int,boolean)` | 2 | Requires the explicit IOContext, input stream, and caller-provided byte-buffer constructor. |
 | framework | `tools.jackson.databind.JsonNode#findParents(String)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
