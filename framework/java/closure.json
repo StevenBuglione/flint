@@ -109,28 +109,6 @@
         "source": "closure/sql-exception.d"
       }
     },
-    "flint.java.text": {
-      "message-format": {
-        "data": [],
-        "leaves": [
-          "flint.java.lang",
-          "flint.java.text.simpledateformat"
-        ],
-        "source": "closure/message-format.d"
-      }
-    },
-    "flint.java.text.simpledateformat": {
-      "date-format": {
-        "data": [],
-        "leaves": [
-          "flint.java.lang",
-          "flint.java.util.calendar",
-          "flint.java.util.date",
-          "flint.java.util.timezone"
-        ],
-        "source": "closure/date-format.d"
-      }
-    },
     "flint.java.time": {
       "localdate": {
         "data": [],

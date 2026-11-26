@@ -206,6 +206,7 @@
         "boot-autoconfigure",
         "context",
         "java",
+        "java-text",
         "engine-aot",
         "jackson-annotations",
         "jackson-core",

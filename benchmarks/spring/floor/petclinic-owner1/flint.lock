@@ -47,7 +47,7 @@ name = "flint:boot-jackson"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:jackson-annotations", "flint:jackson-core", "flint:jackson-databind", "flint:java"]
+dependencies = ["flint:boot-autoconfigure", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:jackson-annotations", "flint:jackson-core", "flint:jackson-databind", "flint:java", "flint:java-text"]
 
 [[package]]
 name = "flint:boot-starter"
@@ -89,7 +89,7 @@ name = "flint:context"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:beans", "flint:conc", "flint:core", "flint:engine-aot", "flint:engine-reactor", "flint:jakarta-validation", "flint:java", "flint:java-concurrent"]
+dependencies = ["flint:beans", "flint:conc", "flint:core", "flint:engine-aot", "flint:engine-reactor", "flint:jakarta-validation", "flint:java", "flint:java-concurrent", "flint:java-text"]
 
 [[package]]
 name = "flint:core"
@@ -166,7 +166,7 @@ name = "flint:jackson-databind"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:engine-aot", "flint:jackson-annotations", "flint:jackson-core", "flint:java", "flint:serde"]
+dependencies = ["flint:engine-aot", "flint:jackson-annotations", "flint:jackson-core", "flint:java", "flint:java-text", "flint:serde"]
 
 [[package]]
 name = "flint:jakarta-annotation"
@@ -202,6 +202,13 @@ kind = "core"
 source = "workspace"
 scope = "build"
 dependencies = ["flint:engine-aot", "flint:java", "flint:validate"]
+
+[[package]]
+name = "flint:java-text"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:java"]
 
 [[package]]
 name = "flint:log"
