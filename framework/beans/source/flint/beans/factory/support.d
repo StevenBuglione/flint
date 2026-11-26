@@ -38,6 +38,8 @@ each dependency on demand, in Spring's sequence: instantiate, `BeanNameAware`/`B
 +/
 module flint.beans.factory.support;
 
+public import flint.beans.factory.bean_definition_defaults : BeanDefinitionDefaults;
+
 import flint.beans : BeansException;
 import flint.beans.factory : BeanCreationException,
     BeanCurrentlyInCreationException, BeanDefinitionStoreException,

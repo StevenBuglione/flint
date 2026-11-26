@@ -392,6 +392,8 @@ Stream contexts build typed JSON Pointers on demand by walking the parent chain 
 | B-35 | **Keep cache annotations in a leaf module.** Store alias fields and grouped operations as UDA data. Flint AOT reads those declarations without reaching operation builders or a cache provider during extraction. | Matched context probes on venus measured 636,748 → 636,772 loadable bytes and 8,234 → 8,274 DMD template instances. The linked cache fixture exercised the emitted proxy, alias defaults and nested operations on DMD and LDC. | Context budget gate and cache annotation metadata tests. |
 | B-40 | **Compile supported AspectJ selectors to method indexes.** The generator resolves the selector from extracted types, and proxy startup uses those indexes to join the existing ordered chain. An advisor publishes its typed aspect singleton on first invocation, so subsequent calls use an acquire load and direct typed call. | Matched canonical CLI links on venus (LDC 1.43.0, O3) went from 4,618,984 loadable ELF bytes at `f8112225` to 4,641,624 (+22,640 B), with identical dynamic dependencies. The pinned DMD extraction and generation of the existing AOT sample produced seven byte-identical D files. | Flint compiler tests exercise the generated call order, self-invocation and selector diagnostics. The Spring apps merge train checks the combined app closure. |
 
+BeanDefinitionDefaults stores optional defaults with rule R5's `Nullable`. The Beans probe on venus against `ca49d9d85` moved from 257,478 to 257,550 loadable bytes and from 1,632 to 1,762 DMD template instances against the 3,000 cap.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

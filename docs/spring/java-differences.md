@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
 | boot | spring-boot@v4.2.0 | 44 | 97 | 2,133 | 13,329 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,594 | 1,450 | 4,870 | 29,920 |
+| framework | spring-framework@v7.1.0 | 3,602 | 1,455 | 4,870 | 29,907 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2510,6 +2510,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.beans.factory.support.BeanDefinitionDefaults#getDestroyMethodName()` | `flint.beans.factory.support.BeanDefinitionDefaults.getDestroyMethodName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.beans.factory.support.BeanDefinitionDefaults#getInitMethodName()` | `flint.beans.factory.support.BeanDefinitionDefaults.getInitMethodName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.beans.factory.support.BeanDefinitionDefaults#getLazyInit()` | `flint.beans.factory.support.BeanDefinitionDefaults.getLazyInit` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.beans.factory.support.BeanDefinitionDefaults#setDestroyMethodName(String)` | `flint.beans.factory.support.BeanDefinitionDefaults.setDestroyMethodName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.beans.factory.support.BeanDefinitionDefaults#setInitMethodName(String)` | `flint.beans.factory.support.BeanDefinitionDefaults.setInitMethodName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#determineHighestPriorityCandidate(Map,Class)` | `flint.beans.factory.support.DefaultListableBeanFactory.determineHighestPriorityCandidate` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#determinePrimaryCandidate(Map,Class)` | `flint.beans.factory.support.DefaultListableBeanFactory.determinePrimaryCandidate` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#findAnnotationOnBean(String,Class)` | `flint.beans.factory.support.DefaultListableBeanFactory.findAnnotationOnBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -9835,7 +9840,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.beans.factory.config | 486 | 0 |
 | org.springframework.beans.factory.parsing | 133 | 0 |
 | org.springframework.beans.factory.serviceloader | 19 | 0 |
-| org.springframework.beans.factory.support | 751 | 0 |
+| org.springframework.beans.factory.support | 738 | 0 |
 | org.springframework.beans.factory.wiring | 26 | 0 |
 | org.springframework.beans.factory.xml | 0 | 320 |
 | org.springframework.beans.propertyeditors | 155 | 0 |
