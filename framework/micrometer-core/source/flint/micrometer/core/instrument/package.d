@@ -1208,18 +1208,24 @@ interface DistributionSummary : HistogramSupport
         return new MeterMeasurements(summary, withMaximum);
     }
 
-    /// Micrometer's default mean, snapshot overload and live measurements (R3).
-    mixin template Defaults(alias Measurements = MeasurementIterable, alias samples = measurementsOf,
-            alias SnapshotDefaults = HistogramSupport.Defaults)
+    package mixin template StatisticsDefaults(alias SnapshotDefaults = HistogramSupport.Defaults,
+            alias Summary = DistributionSummary)
     {
         mixin SnapshotDefaults;
 
         override double mean() nothrow @nogc
         {
-            DistributionSummary summary = this;
+            Summary summary = this;
             const count = summary.count();
             return count == 0 ? 0.0 : summary.totalAmount() / count;
         }
+    }
+
+    /// Micrometer's default mean, snapshot overload and live measurements (R3).
+    mixin template Defaults(alias Measurements = MeasurementIterable, alias samples = measurementsOf,
+            alias SnapshotDefaults = HistogramSupport.Defaults, alias Statistics = StatisticsDefaults)
+    {
+        mixin Statistics!SnapshotDefaults;
 
         override Measurements measure()
         {

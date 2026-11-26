@@ -628,19 +628,17 @@
       "status": "ported"
     },
     "io/micrometer/core/instrument/noop/NoopDistributionSummaryTest.java": {
-      "d": "framework/micrometer-core/tests/distribution_summary_test.d",
+      "d": "framework/micrometer-core/tests/noop_summary_test.d",
       "methods": {
         "ported": [
           "returnsCountAsZero",
           "returnsEmptySnapshot",
+          "returnsId",
           "returnsMaxAsZero",
           "returnsTotalAmountAsZero"
-        ],
-        "skipped": {
-          "returnsId": "Deferred as a direct test of the public NoopDistributionSummary type."
-        }
+        ]
       },
-      "status": "partial"
+      "status": "ported"
     },
     "io/micrometer/core/instrument/noop/NoopFunctionCounterTest.java": {
       "phase": "2",

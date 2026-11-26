@@ -16,11 +16,13 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopMeter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopGauge.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopCounter.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopDistributionSummary.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.noop;
 
 import flint.java.util : Collections, List;
-import flint.micrometer.core.instrument : AbstractMeter, Counter, Gauge, Measurement, Meter;
+import flint.micrometer.core.instrument : AbstractMeter, Counter, DistributionSummary, Gauge, Measurement, Meter;
+import flint.micrometer.core.instrument.distribution : HistogramSnapshot;
 
 @safe:
 
@@ -61,6 +63,42 @@ class NoopCounter : NoopMeter, Counter
     {
         return 0.0;
     }
+}
+
+/// A disabled distribution summary with empty statistics.
+class NoopDistributionSummary : NoopMeter, DistributionSummary
+{
+    /// Retain the ID of the disabled summary.
+    this(Meter.Id id)
+    {
+        super(id);
+    }
+
+    override void record(double) nothrow @nogc
+    {
+    }
+
+    override long count() nothrow @nogc
+    {
+        return 0;
+    }
+
+    override double totalAmount() nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override double max() nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override HistogramSnapshot takeSnapshot()
+    {
+        return HistogramSnapshot.empty(0, 0, 0);
+    }
+
+    mixin DistributionSummary.StatisticsDefaults;
 }
 
 /// A disabled gauge whose value is zero.
