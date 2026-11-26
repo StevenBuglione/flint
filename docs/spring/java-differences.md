@@ -11143,6 +11143,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.YearMonth#until(Temporal,TemporalUnit)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.YearMonth#with(TemporalAdjuster)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.YearMonth#with(TemporalField,long)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.ZoneId#normalized()` | 2 | The D return type is ZoneOffset. Java normalizes fixed-rule regions to an offset and preserves the original ZoneId for regions with variable rules. |
 | framework | `java.time.format.DateTimeFormatter#ISO_DATE` | 2 | The existing optional offset accepts hour-only values such as +01. Java requires a colon and minutes and rejects the incomplete offset at its beginning. |
 | framework | `java.time.format.DateTimeFormatter#ISO_DATE_TIME` | 2 | The existing optional offset accepts hour-only values such as +01. Java requires a colon and minutes and rejects the incomplete offset at its beginning. |
 | framework | `java.time.format.DateTimeFormatter#ISO_TIME` | 2 | The existing optional offset accepts hour-only values such as +01. Java requires a colon and minutes and rejects the incomplete offset at its beginning. |

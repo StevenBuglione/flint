@@ -6393,6 +6393,7 @@
 "java.time.YearMonth#with(TemporalField,long)":{"status":"excluded","category":"deferred","phase":"2","reason":"Requires temporal interfaces and dispatch."},
 "java.time.YearMonth#withMonth(int)":{"status":"ported","d":"flint.java.time.yearmonth.YearMonth.withMonth"},
 "java.time.YearMonth#withYear(int)":{"status":"ported","d":"flint.java.time.yearmonth.YearMonth.withYear"},
+"java.time.ZoneId#normalized()":{"status":"excluded","category":"deferred","phase":"2","reason":"The D return type is ZoneOffset. Java normalizes fixed-rule regions to an offset and preserves the original ZoneId for regions with variable rules."},
 "java.time.chrono.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.time.format.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.time.format.DateTimeParseException":{"d":"flint.java.time.format.DateTimeParseException","status":"adapted","note":"A null parsed text counts as empty (R26). Java throws NullPointerException. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String.","rules":["R26"]},
