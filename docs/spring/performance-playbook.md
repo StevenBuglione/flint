@@ -262,6 +262,9 @@ Before a ported module lands:
 3. **No per-call parsing** of anything that could be parsed once and cached (R-2); no monitors on lookups (R-7).
 4. **Templates.** Generic public APIs are thin façades over erased engines (B-1). No heavyweight Phobos templates (B-2). The module stays within its template budget.
 5. **Size.** Linked bytes stay within the module's ratio and ceiling. Optional functionality is unreachable unless used (S-1). No `std.process`, `std.file` or `std.path` (S-2).
+
+   The scalar atomic leaves use druntime's ordered atomics and keep the legacy imports as re-exports. On venus against `c06ba54f` with LDC 1.43.0, the `java` size probe measured 132,232 incremental loadable bytes at O3 and 125,320 at Oz before and after the split. DMD template instances rose from 6,287 to 6,394 within the 7,350 cap. The three [scalar link-closure probes](../../framework/java/closure/README.md) had zero findings at O3 and Oz.
+
 6. **Exceptions** used for control flow skip backtraces (R-11).
 7. **Shared state.** Anything created once and shared is immutable after warm-up, or protected, and has a concurrent test (R-4).
 8. **Generated code.** Anything the module asks Flint AOT to generate instantiates nothing per type it can look up (B-3).

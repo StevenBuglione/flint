@@ -198,11 +198,25 @@
         "source": "closure/time-unit.d"
       }
     },
-    "flint.java.util.concurrent.atomic": {
-      "atomic": {
+    "flint.java.util.concurrent.atomic.atomicboolean": {
+      "atomicboolean": {
         "data": [],
         "leaves": [],
-        "source": "closure/atomic.d"
+        "source": "closure/atomicboolean.d"
+      }
+    },
+    "flint.java.util.concurrent.atomic.atomicinteger": {
+      "atomicinteger": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/atomicinteger.d"
+      }
+    },
+    "flint.java.util.concurrent.atomic.atomiclong": {
+      "atomiclong": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/atomiclong.d"
       }
     },
     "flint.java.util.date": {

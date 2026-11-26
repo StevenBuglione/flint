@@ -1,6 +1,6 @@
 module app;
 
-import flint.java.util.concurrent.atomic : AtomicInteger;
+import flint.java.util.concurrent.atomic.atomicinteger : AtomicInteger;
 
 @safe:
 

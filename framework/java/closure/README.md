@@ -35,7 +35,7 @@ profile. The audit counts names per probe and profile after section GC.
 | [optional](optional.d) | 5,700 | 4,316 | 9 | 9 |
 | [calendar](calendar.d) | 20,636 | 17,004 | 6 | 6 |
 | [time-unit](time-unit.d) | 1,836 | 660 | 11 | 11 |
-| [atomic](atomic.d) | 1,460 | 1,460 | 0 | 0 |
+| atomic (legacy aggregate) | 1,460 | 1,460 | 0 | 0 |
 | [date](date.d) | 8,188 | 5,972 | 8 | 8 |
 | [descriptors](descriptors.d) | 7,796 | 6,308 | 11 | 11 |
 | [formatter](formatter.d) | 35,452 | 30,084 | 10 | 10 |
@@ -48,6 +48,10 @@ The 32 probes cover 22 source-backed modules. The ratchet starts with 551 link v
 `std.conv` source import in `flint.java.lang`. The executable for the ASCII-constrained Character
 probe retains no Unicode table. The Unicode case and category probes retain their declared tables.
 The D array fallback in `valueOf` retains symbols from all 13 forbidden Phobos families.
+
+The scalar split uses independent probes for [AtomicBoolean](atomicboolean.d),
+[AtomicInteger](atomicinteger.d) and [AtomicLong](atomiclong.d). The AtomicInteger probe retains
+the initial atomic workload from `d9e76015`.
 
 The initial ratchet also records the module records observed in sibling packages before the audit
 was enabled. The Period probe at `de670e9e` added 12,764/10,524 loadable bytes and retained eight
