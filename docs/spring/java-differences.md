@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,095 | 247 | 1,871 | 15,208 |
+| framework | openjdk@21.0.13 | 1,098 | 253 | 1,871 | 15,199 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2156,6 +2156,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.List#indexOf(Object)` | `flint.java.util.List.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.List#lastIndexOf(Object)` | `flint.java.util.List.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.List#of(E...)` | `flint.java.util.List.of` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.util.Locale` | `flint.java.util.Locale` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable D value for language, country and variant. The current constructor does not canonicalize legacy language aliases. Script and extension data are deferred. |
+| `java.util.Locale#CANADA` | `flint.java.util.Locale.CANADA` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#ENGLISH` | `flint.java.util.Locale.ENGLISH` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#ROOT` | `flint.java.util.Locale.ROOT` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#UK` | `flint.java.util.Locale.UK` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#US` | `flint.java.util.Locale.US` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Map#containsKey(Object)` | `flint.java.util.Map.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Map#containsValue(Object)` | `flint.java.util.Map.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Map#get(Object)` | `flint.java.util.Map.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -10029,7 +10035,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,922 | 0 |
+| java.util | 1,913 | 0 |
 | java.util.concurrent | 1,237 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
