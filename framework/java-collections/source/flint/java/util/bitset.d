@@ -249,13 +249,12 @@ class BitSet
     {
         checkIndex(bitIndex, 0, "bitIndex < 0: ");
         const word = bitIndex >> wordShift;
-        if (change == RangeChange.clear)
+        if (word >= wordsInUse)
         {
-            if (word >= wordsInUse)
+            if (change == RangeChange.clear)
                 return;
-        }
-        else
             expandTo(word);
+        }
 
         const mask = maskAt(bitIndex);
         const overwrite = change == RangeChange.flip ? 0UL : mask;
@@ -307,18 +306,18 @@ class BitSet
         const lastBit = toIndex - 1;
         int lastWord = lastBit >> wordShift;
         ulong lastMask = ulong.max >> (bitMask - (lastBit & bitMask));
-        if (change == RangeChange.clear)
+        if (lastWord >= wordsInUse)
         {
-            if (firstWord >= wordsInUse)
-                return;
-            if (lastWord >= wordsInUse)
+            if (change == RangeChange.clear)
             {
+                if (firstWord >= wordsInUse)
+                    return;
                 lastWord = wordsInUse - 1;
                 lastMask = ulong.max;
             }
+            else
+                expandTo(lastWord);
         }
-        else
-            expandTo(lastWord);
 
         const firstMask = ulong.max << (fromIndex & bitMask);
         // Set writes ones, clear writes zeroes, and flip XORs the selected bits.
@@ -345,8 +344,7 @@ class BitSet
             const doubled = 2 * words.length;
             words.length = doubled > required ? doubled : required;
         }
-        if (word >= wordsInUse)
-            wordsInUse = cast(int) required;
+        wordsInUse = cast(int) required;
     }
 
     pragma(inline, false) private void recalculateWordsInUse() pure nothrow @nogc
