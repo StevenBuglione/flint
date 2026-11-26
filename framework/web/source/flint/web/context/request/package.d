@@ -243,9 +243,9 @@ class ServletWebRequest : ServletRequestAttributes, NativeWebRequest
             return false;
         const current = ETag.create(tag);
         foreach (field; fields)
-            foreach (candidate; ETag.parse(field))
-                if ((matchWildcard && candidate.isWildcard()) || candidate.compare(current, strong))
-                    return true;
+            if (ETag.anyMatch(field,
+                    candidate => (matchWildcard && candidate.isWildcard()) || candidate.compare(current, strong)))
+                return true;
         return false;
     }
 

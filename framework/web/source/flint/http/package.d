@@ -719,6 +719,21 @@ struct ETag
         if (source is null)
             throw new NullPointerException("source");
 
+        auto result = new ArrayList!ETag();
+        anyMatch(source, (tag)
+        {
+            result.add(tag);
+            return false;
+        });
+        return result;
+    }
+
+    /// Tests parsed tags in field order, stopping at the first match without building a list.
+    package(flint) static bool anyMatch(string source, scope bool delegate(ETag) @safe matches)
+    {
+        if (source is null)
+            throw new NullPointerException("source");
+
         enum State : ubyte
         {
             beforeQuotes,
@@ -729,7 +744,6 @@ struct ETag
         State state;
         size_t start;
         bool weak;
-        auto result = new ArrayList!ETag();
         for (size_t i = 0; i < source.length; i++)
         {
             const c = source[i];
@@ -738,8 +752,8 @@ struct ETag
                 if (c == '"')
                 {
                     const tag = source[start .. i];
-                    if (StringUtils.hasText(tag))
-                        result.add(ETag(tag, weak));
+                    if (StringUtils.hasText(tag) && matches(ETag(tag, weak)))
+                        return true;
                     state = State.afterQuotes;
                     weak = false;
                 }
@@ -752,7 +766,8 @@ struct ETag
                 {
                     ETag tag = ETag("*", false);
                     tag.wildcard = true;
-                    result.add(tag);
+                    if (matches(tag))
+                        return true;
                     state = State.afterQuotes;
                 }
                 else if (c == '"' || (c == 'W' && source.length - i >= 3 && source[i .. i + 3] == "W/\""))
@@ -765,7 +780,7 @@ struct ETag
                 }
             }
         }
-        return result;
+        return false;
     }
 
     /// Adds double quotes when the tag is unquoted.
