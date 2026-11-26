@@ -1,5 +1,4 @@
-// Ported from spring-boot v4.2.0: core/spring-boot/src/test/java/org/springframework/boot/diagnostics/
-// FailureAnalyzersTests.java
+// Ported from spring-boot v4.2.0: core/spring-boot/src/test/java/org/springframework/boot/diagnostics/FailureAnalyzersTests.java
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: analyzers are listed as instances (Flint has no SpringFactoriesLoader), Mockito's
@@ -124,6 +123,37 @@ private Reports analyzeAndReport(Throwable failure, FailureAnalyzer[] analyzers.
             new IllegalStateFailureAnalyzer).reports;
     assert(reports.length == 1);
     assert(reports[0].getDescription() == "analyzed state");
+}
+
+@("FailureAnalyzedException exposes the description, action and analyzed cause") unittest
+{
+    auto failure = new FailureAnalyzedException("Bad", "Fix it!", new IllegalStateException("root cause"));
+    auto analysis = failure.analysis();
+    assert(analysis.getDescription() == "Bad");
+    assert(analysis.getAction() == "Fix it!");
+    assert(analysis.getCause() is failure);
+}
+
+private final class DetailedStartupFailure : FailureAnalyzedException
+{
+    this()
+    {
+        super("Bad", null);
+    }
+
+    override FailureAnalysis analysis()
+    {
+        return new FailureAnalysis("Analyzed in the exception subclass", null, this);
+    }
+}
+
+@("The fallback reporter invokes the exception's overridden analysis") unittest
+{
+    auto failure = new DetailedStartupFailure;
+    auto reports = analyzeAndReport(new IllegalStateException("wrapped failure", failure)).reports;
+    assert(reports.length == 1);
+    assert(reports[0].getDescription() == "Analyzed in the exception subclass");
+    assert(reports[0].getCause() is failure);
 }
 
 import boot_tests.support : RegisterTests;

@@ -667,7 +667,6 @@
       "org/springframework/boot/convert/StringToPeriodConverterTests.java",
       "org/springframework/boot/diagnostics/AbstractFailureAnalyzerTests.java",
       "org/springframework/boot/diagnostics/FailureAnalyzersIntegrationTests.java",
-      "org/springframework/boot/diagnostics/FailureAnalyzersTests.java",
       "org/springframework/boot/diagnostics/analyzer/AotInitializerNotFoundFailureAnalyzerTests.java",
       "org/springframework/boot/diagnostics/analyzer/BeanCurrentlyInCreationFailureAnalyzerTests.java",
       "org/springframework/boot/diagnostics/analyzer/BeanNotOfRequiredTypeFailureAnalyzerTests.java",

@@ -112,11 +112,17 @@ class FailureAnalyzedException : RuntimeException
         return action;
     }
 
+    /// Return the description and action carried by this exception.
+    FailureAnalysis analysis()
+    {
+        return new FailureAnalysis(getMessage(), action, this);
+    }
+
     /// The analysis of `failure` when it is, or is caused by, a `FailureAnalyzedException`.
     static FailureAnalysis analyze(Throwable failure)
     {
         auto analyzed = findCause!FailureAnalyzedException(failure);
-        return analyzed is null ? null : new FailureAnalysis(analyzed.getMessage(), analyzed.getAction(), analyzed);
+        return analyzed is null ? null : analyzed.analysis();
     }
 }
 

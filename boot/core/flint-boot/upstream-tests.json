@@ -1055,8 +1055,22 @@
       "status": "deferred"
     },
     "org/springframework/boot/diagnostics/FailureAnalyzersTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/core/flint-boot/tests/boot_tests/failure_analyzers_test.d",
+      "methods": {
+        "ported": [
+          "analyzerThatFailsDuringAnalysisDoesNotPreventOtherAnalyzersFromBeingCalled",
+          "analyzersAreLoadedAndCalled",
+          "failureAnalyzedExceptionAreReported",
+          "whenOtherAnalyzerIsAvailableFailureAnalyzedExceptionAreNotReported",
+          "wrappedFailureAnalyzedExceptionAreReported"
+        ],
+        "skipped": {
+          "analyzerIsConstructedWithBeanFactory": "Flint callers construct and register analyzer instances explicitly. This test covers bean factory injection by SpringFactoriesLoader.",
+          "analyzerIsConstructedWithEnvironment": "Flint callers construct and register analyzer instances explicitly. This test covers environment injection by SpringFactoriesLoader.",
+          "analyzerThatFailsDuringInitializationDoesNotPreventOtherAnalyzersFromBeingCalled": "This test covers a JVM static initializer failing while SpringFactoriesLoader loads an analyzer class."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/boot/diagnostics/analyzer/AotInitializerNotFoundFailureAnalyzerTests.java": {
       "phase": "2",
