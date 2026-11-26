@@ -13,6 +13,12 @@ struct ClassRef
 {
     /// The canonical fully qualified D name; empty for `ClassRef.init` ("none", or "this annotation").
     string name;
+
+    /// The stored canonical name, or "null" for an unset reference.
+    string toString() const pure nothrow @nogc
+    {
+        return name.length == 0 ? "null" : name;
+    }
 }
 
 /// Java's `T.class` in an annotation attribute: `@ConditionalOnMissingBean(classOf!DataSource)`.
