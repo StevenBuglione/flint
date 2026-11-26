@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 137 | 254 | 0 | 15,405 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,351 | 1,300 | 4,848 | 30,335 |
+| framework | spring-framework@v7.1.0 | 3,367 | 1,302 | 4,848 | 30,317 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1816,6 +1816,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.TargetSource#getTargetClass()` | `flint.aop.TargetSource.getTargetClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.TargetSource#isStatic()` | `flint.aop.TargetSource.isStatic` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.aop.TargetSource#releaseTarget(Object)` | `flint.aop.TargetSource.releaseTarget` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R23](api-mapping.md#r23-object-typed-values) |  |
+
+#### org.springframework.aop.framework
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.aop.framework.AopConfigException#<init>(String,Throwable)` | `flint.aop.framework.AopConfigException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.springframework.aop.framework.ProxyConfig#toString()` | `flint.aop.framework.ProxyConfig.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.springframework.aop.support
 
@@ -8896,7 +8903,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.aspectj.annotation | 102 | 0 |
 | org.springframework.aop.aspectj.autoproxy | 7 | 0 |
 | org.springframework.aop.config | 70 | 0 |
-| org.springframework.aop.framework | 214 | 0 |
+| org.springframework.aop.framework | 196 | 0 |
 | org.springframework.aop.framework.adapter | 32 | 0 |
 | org.springframework.aop.framework.autoproxy | 83 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
