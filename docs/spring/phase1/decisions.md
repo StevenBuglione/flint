@@ -1220,3 +1220,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Spring and other Apache-2.0 code** depends on `flint:java*` freely. The Classpath Exception means applications and Flint's other repositories are not affected.
   - **Apache Harmony is no longer used.** The few Harmony-derived files (BigInteger tests and code in `flint:java-math`) are replaced by OpenJDK ports, or by original code, so no `flint:java*` package mixes Apache-2.0 and GPL-2.0 files.
   - **The repo licence stays Apache-2.0.** Each `flint:java*` package states its own licence in `dub.sdl` and carries its own LICENSE file (with the Classpath Exception text) and NOTICE.
+- 2026-11-26 04:32Z, coordinator, under the owner's standing approval: **LDC `--linkonce-templates` is adopted in the release profiles** (sol-jdk-core, m7 reviewing). Diagnostic A/B on the owner's desktop, 3 alternating pairs each way:
+  - **Edit builds:** gs-rest −22%, petclinic −29%.
+  - **Cold builds:** petclinic −18%; gs-rest +3%, within noise.
+  - **JDK closure violations:** 664 → 36, with 0 new.
+  - **App sizes:** matched.
+  - **Next:** a certified venus build run in tonight's overnight window confirms the gated build metrics. This was a profile-wide change, never a per-package flag (36c5384c).
