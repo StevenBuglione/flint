@@ -25,6 +25,8 @@ module flint.micrometer.core.instrument.simple;
 import core.atomic : atomicLoad, atomicOp, cas;
 import flint.java.lang : Iterable, NullPointerException;
 import flint.java.util.concurrent : TimeUnit, toNanos;
+import flint.java.util.function_.intsupplier : IntSupplier;
+import flint.java.util.function_.longsupplier : LongSupplier;
 import flint.micrometer.core.instrument : Clock, Counter, DistributionSummary, Measurement, Meter,
     MeterRegistry, SummaryWindow, Timer;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot, TimeWindowMax;
@@ -57,7 +59,7 @@ class SimpleMeterRegistry : MeterRegistry
     }
 }
 
-private TimeWindowMax createWindow(Clock clock, scope const SummaryWindow* settings = null)
+pragma(inline, false) private TimeWindowMax createWindow(Clock clock, scope const SummaryWindow* settings = null)
 {
     // SimpleConfig's one-minute step overrides the default expiry. The default ring has three buckets.
     long millis = 60_000;
@@ -108,8 +110,20 @@ private final class CumulativeTimer : Timer
         scope (exit)
             record(clock.monotonicTime() - start, TimeUnit.NANOSECONDS);
         if (action is null)
-            throw new NullPointerException("action");
+            throw Timer.nullCallback();
         action();
+    }
+
+    override int record(IntSupplier action)
+    {
+        Timer timer = this;
+        return timer.record(action is null ? null : &action.getAsInt);
+    }
+
+    override long record(LongSupplier action)
+    {
+        Timer timer = this;
+        return timer.record(action is null ? null : &action.getAsLong);
     }
 
     override long count() nothrow @nogc

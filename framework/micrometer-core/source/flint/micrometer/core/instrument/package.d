@@ -50,6 +50,8 @@ import flint.java.util.concurrent : TimeUnit, toMillis, toNanos;
 import flint.java.util.concurrent.callable : Callable;
 import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
 import flint.java.util.function_ : BooleanSupplier, Consumer, DoubleSupplier, Supplier;
+import flint.java.util.function_.intsupplier : IntSupplier;
+import flint.java.util.function_.longsupplier : LongSupplier;
 import flint.java.util.stream : Stream;
 import flint.micrometer.core.instrument.config : validateDistributionBufferLength;
 import flint.micrometer.core.instrument.distribution.snapshots : HistogramSnapshot;
@@ -1417,6 +1419,24 @@ interface Timer : HistogramSupport
     /// Return a boolean result from a D delegate without retaining it (R9).
     bool record(scope bool delegate() @safe action);
 
+    /// Return an int result while recording the supplier's elapsed time (R9).
+    int record(IntSupplier action);
+
+    /// Time a D int delegate without retaining it (R9).
+    final int record(scope int delegate() @safe action)
+    {
+        return recordPrimitive!(int, nullCallback)(this, action);
+    }
+
+    /// Return a long result while recording the supplier's elapsed time (R9).
+    long record(LongSupplier action);
+
+    /// Time a D long delegate without retaining it (R9).
+    final long record(scope long delegate() @safe action)
+    {
+        return recordPrimitive!(long, nullCallback)(this, action);
+    }
+
     /// Return a primitive result while recording the supplier's elapsed time (R9).
     double record(DoubleSupplier action);
 
@@ -1543,9 +1563,21 @@ interface Timer : HistogramSupport
         return new TimedRunnable(timer, action);
     }
 
-    private static NullPointerException nullCallback()
+    pragma(inline, false) package static NullPointerException nullCallback()
     {
         return new NullPointerException("action");
+    }
+
+    pragma(inline, false) private static T recordPrimitive(T, alias makeError)(Timer timer,
+            scope T delegate() @safe action)
+    {
+        T result;
+        timer.record(() {
+            if (action is null)
+                throw makeError();
+            result = action();
+        });
+        return result;
     }
 
     /// Micrometer's default duration conversion, wrappers, mean and live measurements (R3).
@@ -1555,7 +1587,9 @@ interface Timer : HistogramSupport
             alias makeTimedRunnable = timedRunnable, alias DoubleSupplierType = DoubleSupplier,
             alias BooleanSupplierType = BooleanSupplier,
             alias NullAction = NullPointerException, alias makeNullAction = nullCallback,
-            alias SnapshotDefaults = HistogramSupport.Defaults)
+            alias SnapshotDefaults = HistogramSupport.Defaults,
+            alias IntSupplierType = IntSupplier,
+            alias LongSupplierType = LongSupplier, alias timePrimitive = recordPrimitive)
     {
         mixin SnapshotDefaults;
 
@@ -1589,14 +1623,21 @@ interface Timer : HistogramSupport
 
         override bool record(scope bool delegate() @safe action)
         {
-            bool result;
-            Timer timer = this;
-            timer.record(() {
-                if (action is null)
-                    throw nullAction();
-                result = action();
-            });
-            return result;
+            return timePrimitive!(bool, nullAction)(this, action);
+        }
+
+        override int record(IntSupplierType action)
+        {
+            if (action is null)
+                throw nullAction();
+            return timePrimitive!(int, nullAction)(this, &action.getAsInt);
+        }
+
+        override long record(LongSupplierType action)
+        {
+            if (action is null)
+                throw nullAction();
+            return timePrimitive!(long, nullAction)(this, &action.getAsLong);
         }
 
         override double record(DoubleSupplierType action)
@@ -1607,14 +1648,7 @@ interface Timer : HistogramSupport
 
         override double record(scope double delegate() @safe action)
         {
-            double result;
-            Timer timer = this;
-            timer.record(() {
-                if (action is null)
-                    throw nullAction();
-                result = action();
-            });
-            return result;
+            return timePrimitive!(double, nullAction)(this, action);
         }
 
         override RunnableType wrap(RunnableType action)
@@ -2037,7 +2071,7 @@ private final class NoopTimer : Timer
     override void record(scope void delegate() @safe action)
     {
         if (action is null)
-            throw new NullPointerException("action");
+            throw Timer.nullCallback();
         action();
     }
 
