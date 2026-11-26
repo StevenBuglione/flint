@@ -6,5 +6,9 @@
   "flint.java.time.temporal.valuerange": {
     "incremental_linked_bytes": 7318,
     "template_instances": 968
+  },
+  "flint.java.time.temporal.chronofield": {
+    "incremental_linked_bytes": 3437,
+    "template_instances": 975
   }
 }

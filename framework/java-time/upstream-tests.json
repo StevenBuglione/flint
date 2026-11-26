@@ -3,6 +3,10 @@
   "upstream": "openjdk@21.0.13",
   "module": "java-time",
   "note": "Java time is a clean-room port. This slice uses original Flint tests against the Java SE 21 specification, including the Period text used in Spring's binding test. No OpenJDK test code is ported.",
-  "flint_tests": ["framework/java-time/tests/period_test.d", "framework/java-time/tests/value_range_test.d"],
+  "flint_tests": [
+    "framework/java-time/tests/period_test.d",
+    "framework/java-time/tests/value_range_test.d",
+    "framework/java-time/tests/chrono_field_test.d"
+  ],
   "classes": {}
 }

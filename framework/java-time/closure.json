@@ -1,6 +1,18 @@
 {
   "schema": "flint.jdk-closure/1",
   "probes": {
+    "flint.java.time.temporal.chronofield": {
+      "range": {
+        "source": "closure/chrono-field-range.d",
+        "leaves": ["flint.java.time.temporal.valuerange", "flint.java.lang"],
+        "data": []
+      },
+      "name": {
+        "source": "closure/chrono-field-name.d",
+        "leaves": [],
+        "data": []
+      }
+    },
     "flint.java.time.temporal.valuerange": {
       "bounds": {
         "source": "closure/value-range.d",
