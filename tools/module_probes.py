@@ -128,6 +128,16 @@ def base_tree(base, root):
         if source.exists():
             (tree / name).parent.mkdir(parents=True, exist_ok=True)
             (tree / name).symlink_to(source.resolve(), target_is_directory=True)
+    # The same native blocks as the candidate (native_build --emit-dub writes them into each dub.sdl there): with the
+    # native install linked, measure_builds requires them (17:43Z train), and both sides are then built alike.
+    blocks = git('diff', 'HEAD', '--', '*dub.sdl', cwd=root)
+    if blocks:
+        patch = directory / 'native-blocks.patch'
+        patch.write_text(blocks)
+        done = subprocess.run(['git', 'apply', '--whitespace=nowarn', str(patch)], cwd=tree, capture_output=True,
+                              text=True)
+        if done.returncode != 0:
+            raise RuntimeError(f'the native blocks do not apply at {base[:12]}: {done.stderr[-500:]}')
     return tree
 
 

@@ -605,6 +605,14 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(merge_train.merge_rows(union.replace('| S-1 | s, ours |\n', '| S-1 | s |\n'), base, base,
                                                 theirs)[0], deleted + '| S-1 | s, theirs |\n')
 
+    def test_module_probes_block_only_on_a_breach_they_attribute(self):
+        script = merge_train.RemoteVerifier(dict(merge_train.DEFAULT_VERIFIERS[0])).script('c', 'r', 's', base='b' * 40)
+        probes = script[script.index('== module probes against main'):]
+        probes = probes[:probes.index('\n  fi\n')]
+        self.assertIn('--base "' + 'b' * 40 + '"', probes)
+        self.assertIn('[ $mrc -eq 1 ] && exit 1', probes)
+        self.assertNotIn('exit 3', probes)  # could not run (2): not judged, never a failed verifier
+
     def test_the_load_guard_marks_a_busy_run_not_quiet(self):
         s = merge_train.VERIFY_SCRIPT
         functions = s[s.index('LOAD_MEAN=0.5'):s.index('\n}\n', s.index('load_stop() {')) + 3]
