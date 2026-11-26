@@ -88,6 +88,21 @@ class BigDecimal : Number
         return wide !is null ? wide : BigInteger.valueOf(compact);
     }
 
+    /// Return Java's canonical decimal representation, retaining the scale.
+    override string toString() const pure nothrow
+    {
+        if (wide !is null)
+        {
+            const digits = wide.toString();
+            if (decimalScale == 0)
+                return digits;
+            return renderDecimal(digits, decimalScale);
+        }
+        char[20] buffer;
+        const size_t start = writeSigned(compact, buffer[]);
+        return renderDecimal(buffer[start .. $], decimalScale);
+    }
+
     /// Discard the fraction and return the low 32 bits.
     override int intValue()
     {
@@ -156,6 +171,53 @@ class BigDecimal : Number
 }
 
 private:
+
+// The coefficient has at least one digit and may include a leading minus.
+char[] renderDecimal(scope const(char)[] digits, int scale) pure nothrow
+{
+    if (scale == 0)
+        return digits.dup;
+
+    const size_t sign = digits[0] == '-';
+    const long adjusted = cast(long)(digits.length - sign) - scale - 1;
+    if (scale > 0 && adjusted >= -6)
+    {
+        if (adjusted >= 0)
+        {
+            const size_t point = sign + cast(size_t) adjusted + 1;
+            auto text = new char[digits.length + 1];
+            text[0 .. point] = digits[0 .. point];
+            text[point] = '.';
+            text[point + 1 .. $] = digits[point .. $];
+            return text;
+        }
+        const size_t coefficient = sign + 2 + cast(size_t)(-adjusted - 1);
+        auto text = new char[coefficient + digits.length - sign];
+        text[0 .. sign] = digits[0 .. sign];
+        text[sign .. sign + 2] = "0.";
+        text[sign + 2 .. coefficient] = '0';
+        text[coefficient .. $] = digits[sign .. $];
+        return text;
+    }
+
+    char[21] exponent;
+    size_t start = writeSigned(adjusted, exponent[]);
+    if (adjusted > 0)
+        exponent[--start] = '+';
+    const size_t firstDigitEnd = sign + 1;
+    const bool fraction = digits.length != firstDigitEnd;
+    const size_t marker = digits.length + fraction;
+    auto text = new char[marker + 1 + exponent.length - start];
+    text[0 .. firstDigitEnd] = digits[0 .. firstDigitEnd];
+    if (fraction)
+    {
+        text[firstDigitEnd] = '.';
+        text[firstDigitEnd + 1 .. marker] = digits[firstDigitEnd .. $];
+    }
+    text[marker] = 'E';
+    text[marker + 1 .. $] = exponent[start .. $];
+    return text;
+}
 
 // Exponents at least 64 yield zero modulo 2^64. The caller excludes them.
 ulong powerOfTen(uint exponent) pure nothrow @nogc

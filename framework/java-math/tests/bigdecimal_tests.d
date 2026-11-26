@@ -65,3 +65,17 @@ unittest
     assert((new BigDecimal("-1.8E+308")).doubleValue() == -double.infinity);
     assert((new BigDecimal("1E+2147483648")).doubleValue() == double.infinity);
 }
+
+@("BigDecimal formats its coefficient and scale in canonical Java text")
+unittest
+{
+    assert((new BigDecimal("001.2300")).toString() == "1.2300");
+    assert((new BigDecimal("-1.23E-6")).toString() == "-0.00000123");
+    assert((new BigDecimal("-1.23E-7")).toString() == "-1.23E-7");
+    assert((new BigDecimal("-0.0000000")).toString() == "0E-7");
+    assert((new BigDecimal("123E+2")).toString() == "1.23E+4");
+    assert((new BigDecimal("999e2147483647")).toString() == "9.99E+2147483649");
+    assert((new BigDecimal("1e-2147483647")).toString() == "1E-2147483647");
+    assert((new BigDecimal("1234567890123456789012345.678900")).toString() == "1234567890123456789012345.678900");
+    assert((new BigDecimal("-9223372036854775808")).toString() == "-9223372036854775808");
+}

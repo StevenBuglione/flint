@@ -6314,6 +6314,7 @@
 "java.math.BigDecimal#precision()":{"d":"flint.java.math.bigdecimal.BigDecimal.precision","status":"ported"},
 "java.math.BigDecimal#scale()":{"d":"flint.java.math.bigdecimal.BigDecimal.scale","status":"ported"},
 "java.math.BigDecimal#signum()":{"d":"flint.java.math.bigdecimal.BigDecimal.signum","status":"ported"},
+"java.math.BigDecimal#toString()":{"d":"flint.java.math.bigdecimal.BigDecimal.toString","status":"adapted","rules":["R5","R11"]},
 "java.math.BigDecimal#unscaledValue()":{"d":"flint.java.math.bigdecimal.BigDecimal.unscaledValue","status":"ported"},
 "java.math.BigInteger#abs()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.abs"},
 "java.math.BigInteger#add(BigInteger)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.add"},
