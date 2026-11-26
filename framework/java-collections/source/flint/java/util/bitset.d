@@ -323,15 +323,12 @@ class BitSet
     {
         const required = cast(size_t) word + 1;
         if (required > words.length)
-            grow(required);
+        {
+            const doubled = 2 * words.length;
+            words.length = doubled > required ? doubled : required;
+        }
         if (word >= wordsInUse)
             wordsInUse = cast(int) required;
-    }
-
-    pragma(inline, false) private void grow(size_t required) pure nothrow
-    {
-        const doubled = 2 * words.length;
-        words.length = doubled > required ? doubled : required;
     }
 
     pragma(inline, false) private void recalculateWordsInUse() pure nothrow @nogc
