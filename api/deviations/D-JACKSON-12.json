@@ -1,0 +1,5 @@
+{
+ "id": "D-JACKSON-12",
+ "deviation": "The parser follows `Character.isJavaIdentifierStart` and `isJavaIdentifierPart` exactly through U+00FF. Above U+00FF every code point counts as an identifier part and none as a start. Where a value or a literal (`true`, `false`, `null`, `NaN`, the Infinities) meets such a code point, Flint can draw the token's boundary differently from Jackson, so the same input can return a token in one and throw in the other. `true。` throws an unrecognized-token error on Flint's first `nextToken`, where Jackson returns `VALUE_TRUE` and fails on the next one. A value starting with `été` is Jackson's unrecognized token in both; one starting with `㑖` reports an unexpected character, where Jackson reports an unrecognized token. Which call throws, which error it is and its text can differ; valid JSON never reaches these paths.",
+ "reason": "jackson-core depends only on serde and engine-aot and has no Unicode identifier tables; exact tables would add several kilobytes to every application for inputs that are already malformed JSON"
+}

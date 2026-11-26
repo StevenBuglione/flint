@@ -1817,10 +1817,8 @@ class UTF8StreamJsonParser : JsonParser
     // as Latin-1 as Jackson's table does, plus '@', '#', '*', '-' and '+'.
     private static immutable bool[256] unquotedNameChar = () {
         bool[256] table;
-        foreach (c; 0 .. 256)
-            table[c] = (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-                || c == '_' || c == '$' || (c >= 0x7F && c <= 0x9F) || (c >= 0xA2 && c <= 0xA5)
-                || c == 0xAA || c == 0xAD || c == 0xB5 || c == 0xBA || (c >= 0xC0 && c != 0xD7 && c != 0xF7);
+        foreach (c; 33 .. 256)
+            table[c] = latinIdentifierPart[c];
         table['@'] = table['#'] = table['*'] = table['-'] = table['+'] = true;
         return table;
     }();
@@ -2056,8 +2054,22 @@ class UTF8StreamJsonParser : JsonParser
             return JsonToken.VALUE_NULL;
         if (missing || c == '}')
             throw unexpected(c, "expected a value");
-        throw unexpected(c,
-                "expected a valid value (JSON String, Number, Array, Object or token 'null', 'true' or 'false')");
+        throw invalidValue(c);
+    }
+
+    // UTF8StreamJsonParser._handleUnexpectedValue's end: a Java identifier start begins an unrecognized token
+    // (" A\u3456C " reads as 'A\u3456C'); any other byte is an unexpected character.
+    private JacksonException invalidValue(ubyte c)
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        size_t next = _inputPtr;
+        if (javaIdentifierStart(decodeUtf8(cast(const(char)[]) _input, next)))
+            return unrecognized(_inputPtr, _inputPtr);
+        return unexpected(c, allows(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
+                ? "expected a valid value (JSON String, Number (or 'NaN'/'+INF'/'-INF'), Array, Object or token "
+                ~ "'null', 'true' or 'false')"
+                : "expected a valid value (JSON String, Number, Array, Object or token 'null', 'true' or 'false')");
     }
 
     private JsonToken readString()
@@ -2103,11 +2115,23 @@ class UTF8StreamJsonParser : JsonParser
     {
         immutable end = _inputPtr + word.length;
         if (end > _input.length || cast(const(char)[]) _input[_inputPtr .. end] != word)
-            throw unrecognized();
+            throw unrecognized(_tokenStart, _tokenStart);
         _inputPtr = end;
         if (_inputPtr < _input.length && !separator(_input[_inputPtr]) && spaceKind[_input[_inputPtr]] != Space.odd)
-            throw unrecognized();
+            matchEnd(_tokenStart);
         return token;
+    }
+
+    // UTF8StreamJsonParser._checkMatchEnd: a matched token (a literal, NaN or an Infinity) runs on into a longer token
+    // only through a Java identifier part ("truex", "NaNu"); any other byte ends it ("NaN,", "true-"), and the next
+    // token reports that byte. `from` is where the token's letters start, after any sign.
+    private void matchEnd(size_t from)
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        size_t next = _inputPtr;
+        if (_input[_inputPtr] >= '0' && javaIdentifierPart(decodeUtf8(cast(const(char)[]) _input, next)))
+            throw unrecognized(_tokenStart, from);
     }
 
     private static bool separator(ubyte c) pure nothrow @nogc
@@ -2127,21 +2151,44 @@ class UTF8StreamJsonParser : JsonParser
         immutable length = _number.end - _number.start;
         if (length > _constraints.maxNumberLength)
             throw lengthError("Number value", length, _constraints.maxNumberLength, currentLocation());
-        if (_inputPtr < _input.length && !separator(_input[_inputPtr]) && !oddEndsNumber(_input[_inputPtr]))
+        if (_inputPtr < _input.length && badNumberEnd(_input[_inputPtr]))
         {
             // "00003" or "-01": the strict scanner stops after the first zero; leading zeros are oddNumber's.
             if (leadingZero(_number.start + (_input[_number.start] == '-')))
                 return oddNumber();
-            throw unexpected(_input[_inputPtr], "Expected space separating root-level values");
+            rootSpace(_input[_inputPtr]);
         }
         return _number.fractional ? JsonToken.VALUE_NUMBER_FLOAT : JsonToken.VALUE_NUMBER_INT;
     }
 
-    // A comment start or control character ends a number inside an Array or Object, where Jackson stops at any
-    // non-digit; at the root it needs a space first, as Jackson's _verifyRootSpace requires.
-    private bool oddEndsNumber(ubyte c)
+    // Where a number may stop without a second look: white space anywhere, and ',', ']', '}' or ':' inside an Array or
+    // Object. Any other byte, or a structural one at the root, goes to the cold checks.
+    private bool badNumberEnd(ubyte c)
     {
-        return spaceKind[c] == Space.odd && !_streamReadContext.inRoot();
+        immutable end = numberEnd[c];
+        return end == NumberEnd.other || (end == NumberEnd.structural && _streamReadContext.inRoot());
+    }
+
+    private enum NumberEnd : ubyte
+    {
+        blank,
+        structural,
+        other,
+    }
+
+    private static immutable NumberEnd[256] numberEnd = () {
+        NumberEnd[256] ends = NumberEnd.other;
+        ends[' '] = ends['\t'] = ends['\n'] = ends['\r'] = NumberEnd.blank;
+        ends[','] = ends[']'] = ends['}'] = ends[':'] = NumberEnd.structural;
+        return ends;
+    }();
+
+    // UTF8StreamJsonParser._verifyRootSpace: a root-level number needs white space (or the end of input) after it.
+    // Inside an Array or Object any other byte ends the number, and the next token reports it.
+    private void rootSpace(ubyte c)
+    {
+        if (spaceKind[c] != Space.blank && _streamReadContext.inRoot())
+            throw unexpected(c, "Expected space separating root-level values");
     }
 
     // UTF8StreamJsonParser's non-standard numbers, from the token's first byte: a leading '+'
@@ -2254,8 +2301,8 @@ class UTF8StreamJsonParser : JsonParser
         _inputPtr = end;
         if (end - _tokenStart > _constraints.maxNumberLength)
             throw lengthError("Number value", end - _tokenStart, _constraints.maxNumberLength, currentLocation());
-        if (_inputPtr < _input.length && !separator(_input[_inputPtr]) && !oddEndsNumber(_input[_inputPtr]))
-            throw unexpected(_input[_inputPtr], "Expected space separating root-level values");
+        if (_inputPtr < _input.length)
+            rootSpace(_input[_inputPtr]);
         // Leading zeros leave the text (Jackson reports "00003" as "3"); a sign or decimal point stays as written.
         _oddText = trimmed ? digits : owned(cast(const(char)[]) _input[_tokenStart .. end]);
         _oddDigits = digits;
@@ -2274,17 +2321,16 @@ class UTF8StreamJsonParser : JsonParser
         immutable valid = sign ? word == "INF" || word == "Infinity" : word == "NaN" || word == "Infinity";
         if (!valid)
         {
-            _inputPtr = _tokenStart;
-            throw unrecognized();
+            throw unrecognized(_tokenStart, p);
         }
+        _inputPtr = end;
+        if (_inputPtr < _input.length) // _matchToken's _checkMatchEnd, before the feature check; no _verifyRootSpace
+            matchEnd(p);
         auto text = owned(cast(const(char)[]) _input[_tokenStart .. end]);
         if (!allows(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS))
             throw readError(
                     "Non-standard token '" ~ text ~ "': enable `JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS` "
                     ~ "to allow");
-        _inputPtr = end;
-        if (_inputPtr < _input.length && !separator(_input[_inputPtr]) && !oddEndsNumber(_input[_inputPtr]))
-            throw unexpected(_input[_inputPtr], "Expected space separating root-level values");
         _oddText = text;
         _oddDigits = text;
         _oddNonNumeric = true;
@@ -2676,14 +2722,73 @@ class UTF8StreamJsonParser : JsonParser
         return readError("Unexpected character (" ~ description ~ "): " ~ comment);
     }
 
-    private JacksonException unrecognized()
+    // ParserBase._reportInvalidToken: what matched (`start` to `from`), then every Java identifier part after it, up to
+    // ErrorReportConfiguration's 256 UTF-16 units and "...", reported at the token's start.
+    private JacksonException unrecognized(size_t start, size_t from)
     {
-        size_t end = _inputPtr;
-        while (end < _input.length && end - _inputPtr < 256 && !separator(_input[end]) && _input[end] != '"')
-            ++end;
-        return readError("Unrecognized token '" ~ owned(cast(const(char)[]) _input[_inputPtr .. end])
-                ~ "': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')");
+        import flint.engine.aot.text : decodeUtf8;
+
+        enum maxErrorTokenLength = 256;
+        size_t end = from;
+        size_t units = from - start;
+        bool cut;
+        while (!cut && end < _input.length)
+        {
+            size_t next = end;
+            immutable c = decodeUtf8(cast(const(char)[]) _input, next);
+            if (!javaIdentifierPart(c))
+                break;
+            end = next;
+            units += c >= 0x10000 ? 2 : 1;
+            cut = units >= maxErrorTokenLength;
+        }
+        _inputPtr = start;
+        size_t n;
+        putScratch(n, "Unrecognized token '");
+        putScratch(n, cast(const(char)[]) _input[start .. end]);
+        putScratch(n, cut ? "...': was expecting " : "': was expecting ");
+        putScratch(n, validValues());
+        return readError(owned(_scratch[0 .. n]));
     }
+
+    // JsonParserBase._validJsonValueList: NaN and the Infinities are named once ALLOW_NON_NUMERIC_NUMBERS allows them.
+    private string validValues()
+    {
+        if (allows(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS))
+            return "(JSON String, Number (or 'NaN'/'+INF'/'-INF'), Array, Object or token 'null', 'true' or 'false')";
+        return "(JSON String, Number, Array, Object or token 'null', 'true' or 'false')";
+    }
+
+    // Character.isJavaIdentifierPart, exact through U+00FF. jackson-core has no Unicode identifier tables, so every
+    // code point above U+00FF counts as a part; only the text of an "Unrecognized token" error can differ.
+    private static bool javaIdentifierPart(dchar c) pure nothrow @nogc
+    {
+        return c >= 0x100 || latinIdentifierPart[c];
+    }
+
+    // Character.isJavaIdentifierStart through U+00FF; above it, false, so such a byte keeps the unexpected-character
+    // error.
+    private static bool javaIdentifierStart(dchar c) pure nothrow @nogc
+    {
+        return c < 0x100 && latinIdentifierPart[c] && !(c >= '0' && c <= '9') && c > 0x1B
+            && (c < 0x7F || c > 0x9F) && c != 0xAD;
+    }
+
+    // Character.isJavaIdentifierPart in Latin-1: letters, digits, '$', '_', the currency signs, ª, µ and º, and the
+    // identifier-ignorable controls (U+0000-U+0008, U+000E-U+001B, U+007F-U+009F) and soft hyphen.
+    private static immutable bool[256] latinIdentifierPart = () {
+        bool[256] table;
+        foreach (c; 0 .. 256)
+        {
+            immutable letter = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+            immutable ascii = letter || (c >= '0' && c <= '9') || c == '_' || c == '$';
+            immutable ignorable = c <= 0x08 || (c >= 0x0E && c <= 0x1B) || (c >= 0x7F && c <= 0x9F) || c == 0xAD;
+            immutable latin = (c >= 0xA2 && c <= 0xA5) || c == 0xAA || c == 0xB5 || c == 0xBA
+                || (c >= 0xC0 && c != 0xD7 && c != 0xF7);
+            table[c] = ascii || ignorable || latin;
+        }
+        return table;
+    }();
 
     // StreamReadConstraints' length limits, built at one site: "Name length (12) exceeds the maximum allowed (10)".
     private JacksonException lengthError(string what, size_t length, long limit, TokenStreamLocation location)
