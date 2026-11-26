@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,081 | 302 | 1,871 | 15,167 |
+| framework | openjdk@21.0.13 | 1,074 | 302 | 1,871 | 15,174 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10062,7 +10062,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 756 | 0 |
+| java.io | 763 | 0 |
 | java.lang | 2,005 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10953,9 +10953,16 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.File#<init>(String)` | 2 | Java normalizes the platform pathname. The existing constructor stores the supplied spelling. R26 covers null pathname strings. |
 | framework | `java.io.File#<init>(String,String)` | 2 | Java distinguishes a missing parent from an empty parent, which uses the platform default. Parent and child normalization and resolution are also pending. |
 | framework | `java.io.File#<init>(URI)` | 2 | The URI overload, file URI validation and conversion to a platform pathname are pending. |
+| framework | `java.io.File#canRead()` | 2 | The existing method checks existence. Java checks read access and can reject an existing unreadable file. |
+| framework | `java.io.File#exists()` | 2 | POSIX tests cover existing, absent and invalid paths. On Windows the Java implementation resolves reparse points before testing existence. The current metadata query uses the attributes of the reparse point itself. |
+| framework | `java.io.File#getAbsolutePath()` | 2 | Java resolves the empty pathname to its startup user directory and uses the normalized pathname spelling. The current method returns no path for empty input and preserves separators from the original spelling. |
 | framework | `java.io.File#getName()` | 2 | Java uses the final component of the normalized pathname. A trailing separator in the existing stored pathname gives an empty name. |
 | framework | `java.io.File#getParent()` | 2 | Java reports an absent parent for a root and computes other parents from normalized components. The existing method returns the root as its own parent and splits the raw spelling. |
 | framework | `java.io.File#getPath()` | 2 | Java exposes the normalized platform pathname. The existing method exposes the stored spelling. |
+| framework | `java.io.File#isDirectory()` | 2 | POSIX tests cover directories and followed links. On Windows the Java implementation tests the resolved reparse target and the current metadata query classifies the reparse point itself. |
+| framework | `java.io.File#isFile()` | 2 | POSIX tests cover regular files and followed links. On Windows the Java implementation tests the resolved reparse target and the current metadata query classifies the reparse point itself. |
+| framework | `java.io.File#lastModified()` | 2 | Java reports the modification time in milliseconds. The current method truncates to whole seconds before converting to milliseconds. |
+| framework | `java.io.File#length()` | 2 | The current method returns zero for all non-regular paths. The pinned Linux Java implementation returns the native size for a directory. |
 | framework | `java.io.File#toString()` | 2 | Java calls the virtual getPath method. The existing implementation returns the stored pathname directly. |
 | framework | `java.io.IOException#<init>(Throwable)` | 2 | The current constructor accepts a message and an optional cause. Java's cause-only constructor is pending. |
 | framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java distinguishes absent detail from an empty detail message. The current raw string constructor and inherited accessor need the R5 nullable message contract. |
