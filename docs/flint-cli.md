@@ -232,7 +232,7 @@ The mapping has the shape the rulebook ([`docs/spring/api-mapping.md`](spring/ap
 The entries follow these rules:
 - **Keys.** A key is an element id or a pattern: `*` matches within one name (no `.`, `#`, `(`, `)` or `,`), and `**` matches anything.
 - **Precedence.** An exact id wins. Among patterns, the longest literal text before the first wildcard wins, then fewer `**`, then the longer pattern.
-- **Status.** `ported` needs a D symbol `d` under `flint.`. `adapted` needs one or more of the rules R1–R14 or R16–R19 (R15 is reserved for a proposal). `excluded` needs one of the rulebook's categories, and `deferred` must also name its `phase`.
+- **Status.** `ported` needs a D symbol `d` under `flint.`. `adapted` needs one or more of the rules R1–R14 or R16–R20 (R15 is reserved for a proposal). `excluded` needs one of the rulebook's categories, and `deferred` must also name its `phase`.
 - **Rulebook version.** `rulebook` must equal the version in the rulebook.
 - **Upstreams.** Each manifest classified must be listed under `upstream`.
 

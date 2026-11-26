@@ -183,6 +183,16 @@ A Java identifier that is a D keyword or a name D reserves takes a trailing unde
 
 Mapping: the element is `adapted` with rule `R19`. Lanes cite R19 instead of a new deviation.
 
+### R20: Enums with methods but no fields or interfaces
+
+A Java enum that declares methods but has no instance fields and implements no interface stays a D `enum`. Coordinator, 2026-11-26, under the owner's standing approval, from sol-observability's Actuator `Access`:
+- **Constants** keep Java's names and order, so a constant's position is its `ordinal()`.
+- **Methods** become free functions in the same module, called by UFCS (`access.cap(other)`), so call sites read as in Java. A selective import lists the functions beside the enum: `import flint.boot.actuate.endpoint : Access, cap;`.
+- **Java's `null` behaviour** for enum-typed parameters (`cap(null)` throws) is kept through a typed `null` overload (D-7).
+- **Enums with fields** follow the R15 proposal, and **enums that implement an interface** follow R18.
+
+Mapping: the constants are `ported`, and the methods are `adapted` with rule `R20`.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:
