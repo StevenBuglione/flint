@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 164 | 272 | 0 | 15,360 |
 | boot | spring-boot@v4.2.0 | 43 | 28 | 2,133 | 13,399 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,461 | 1,378 | 4,848 | 30,147 |
+| framework | spring-framework@v7.1.0 | 3,464 | 1,379 | 4,848 | 30,143 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1982,6 +1982,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler#handleUncaughtException(Throwable,Method,Object...)` | `flint.aop.interceptor.AsyncUncaughtExceptionHandler.handleUncaughtException` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R23](api-mapping.md#r23-object-typed-values), [D-AOT-MEMBER](api-mapping.md#deviations) |  |
+| `org.springframework.aop.interceptor.ExposeBeanNameAdvisors#getBeanName(MethodInvocation)` | `flint.aop.interceptor.ExposeBeanNameAdvisors.getBeanName` | [R8](api-mapping.md#r8-exceptions) |  |
 
 #### org.springframework.aop.scope
 
@@ -9141,7 +9142,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.framework.adapter | 16 | 0 |
 | org.springframework.aop.framework.autoproxy | 83 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
-| org.springframework.aop.interceptor | 95 | 0 |
+| org.springframework.aop.interceptor | 91 | 0 |
 | org.springframework.aop.scope | 12 | 0 |
 | org.springframework.aop.support | 95 | 0 |
 | org.springframework.aop.support.annotation | 10 | 0 |
