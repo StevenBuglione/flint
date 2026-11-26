@@ -107,8 +107,7 @@ class BitSet
     /// Clears all bits without changing the capacity.
     void clear() pure nothrow @nogc
     {
-        words[0 .. wordsInUse] = 0;
-        wordsInUse = 0;
+        clearTail(0);
     }
 
     /// Toggles one bit, growing the capacity if necessary.
@@ -240,10 +239,7 @@ class BitSet
 
         int common = wordsInUse < set.wordsInUse ? wordsInUse : set.wordsInUse;
         if (invert == 0 && common < wordsInUse)
-        {
-            words[common .. wordsInUse] = 0;
-            wordsInUse = common;
-        }
+            clearTail(common);
         while (common > 0)
         {
             --common;
@@ -353,6 +349,12 @@ class BitSet
             words.length = doubled > required ? doubled : required;
         }
         wordsInUse = cast(int) required;
+    }
+
+    pragma(inline, false) private void clearTail(int retained) pure nothrow @nogc
+    {
+        words[retained .. wordsInUse] = 0;
+        wordsInUse = retained;
     }
 
     pragma(inline, false) private void recalculateWordsInUse() pure nothrow @nogc
