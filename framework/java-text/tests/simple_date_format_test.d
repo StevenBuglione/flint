@@ -278,3 +278,19 @@ unittest
     assertThrown!NullPointerException(format.format(date));
     assert(format.getCalendar() is null);
 }
+
+@("SimpleDateFormat rejects a null ParsePosition before parsing")
+unittest
+{
+    import flint.java.lang : NullPointerException;
+    import flint.java.text : ParsePosition;
+    import std.exception : assertThrown;
+
+    auto format = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    format.setTimeZone(TimeZone.getTimeZone("UTC"));
+    assertThrown!NullPointerException(format.parse("2020-06-01", null));
+    auto position = new ParsePosition(0);
+    auto date = format.parse("2020-06-01", position);
+    assert(date !is null && date.getTime() == 1_590_969_600_000L);
+    assert(position.getIndex() == 10 && position.getErrorIndex() == -1);
+}

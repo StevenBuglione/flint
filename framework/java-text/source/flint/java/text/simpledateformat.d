@@ -311,8 +311,11 @@ class SimpleDateFormat : DateFormat
         }
     }
 
+    /// Throws `NullPointerException` if the parse position is missing.
     override Date parse(string text, ParsePosition pos)
     {
+        if (pos is null)
+            throwNullPointerException();
         auto state = Parser(text, pos.getIndex(), defaultCenturyStartYear);
         foreach (i, e; compiled)
         {
