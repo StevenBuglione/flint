@@ -34,8 +34,7 @@ import core.time : MonoTime, ticksToNSecs;
 import flint.engine.aot.clock : currentTimeMillis;
 import flint.engine.aot.objects : objectToString, statelessInstance;
 import flint.engine.aot.text : decodeUtf8;
-import flint.java.lang : ArithmeticException, ClassCastException, Comparable,
-    IllegalArgumentException, Iterable, JavaObject,
+import flint.java.lang : ClassCastException, Comparable, IllegalArgumentException, Iterable, JavaObject,
     NullPointerException, Runnable, UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode, valueOf;
 import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit, toMillis, toNanos;
@@ -104,7 +103,7 @@ class MockClock : Clock
     /// Advance the clock by a Java duration.
     long add(Duration duration)
     {
-        return add(checkedNanos(duration), TimeUnit.NANOSECONDS);
+        return add(duration.toNanos(), TimeUnit.NANOSECONDS);
     }
 
     /// Advance the clock by a number of seconds.
@@ -124,13 +123,6 @@ class MockClock : Clock
         }
         return null;
     }
-}
-
-private long checkedNanos(Duration duration)
-{
-    if (duration.compareTo(Duration.ofNanos(long.min)) < 0 || duration.compareTo(Duration.ofNanos(long.max)) > 0)
-        throw new ArithmeticException("Duration exceeds a signed nanosecond count");
-    return duration.toNanos();
 }
 
 /// One key/value dimension of a meter (R1, R3, R6).
@@ -997,13 +989,12 @@ interface Timer : Meter
 
     /// Micrometer's default duration conversion, mean and live measurements (R3).
     mixin template Defaults(alias Measurements = MeasurementIterable, alias samples = timerMeasurements,
-            alias DurationType = Duration, alias Unit = TimeUnit, alias nanos = checkedNanos,
-            alias RunnableType = Runnable)
+            alias DurationType = Duration, alias Unit = TimeUnit, alias RunnableType = Runnable)
     {
         override void record(DurationType duration)
         {
             Timer timer = this;
-            timer.record(nanos(duration), Unit.NANOSECONDS);
+            timer.record(duration.toNanos(), Unit.NANOSECONDS);
         }
 
         override void record(RunnableType action)
