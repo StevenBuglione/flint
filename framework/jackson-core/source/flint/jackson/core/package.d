@@ -502,6 +502,37 @@ class JsonPointer
         return getMatchingIndex() >= 0;
     }
 
+    /// Append the suffix, preserving any empty segment at the end of this pointer.
+    JsonPointer append(JsonPointer suffix)
+    {
+        auto emptyPointer = empty();
+        if (this is emptyPointer)
+            return suffix;
+        if (suffix is emptyPointer)
+            return this;
+        if (suffix is null)
+            throw invalidArgument("Cannot append a null JSON Pointer"); // D-JACKSON-8
+        return compile(join(toString(), suffix.toString(), null));
+    }
+
+    /// Append one property segment, escaping slashes and tildes. A null name leaves this pointer intact.
+    JsonPointer appendProperty(string propertyName)
+    {
+        if (propertyName is null)
+            return this;
+        return compile(appendEscapedProperty(toString(), propertyName));
+    }
+
+    /// Append one nonnegative index segment.
+    JsonPointer appendIndex(int index)
+    {
+        import flint.engine.aot.text : decimal;
+
+        if (index < 0)
+            throw invalidArgument("Negative index cannot be appended");
+        return compile(join(toString(), "/", decimal(index)));
+    }
+
     /// Whether the current segment selects this property.
     bool matchesProperty(string name) const pure nothrow @nogc
     {
@@ -696,6 +727,30 @@ private char[] join(string first, string second, string third, string fourth = n
         offset += part.length;
     }
     return message;
+}
+
+private char[] appendEscapedProperty(string prefix, string propertyName) pure nothrow
+{
+    size_t length = prefix.length + 1 + propertyName.length;
+    foreach (value; propertyName)
+        if (value == JsonPointer.SEPARATOR || value == JsonPointer.ESC)
+            ++length;
+
+    auto expression = jsonTextBuffer(length);
+    expression[0 .. prefix.length] = prefix;
+    size_t written = prefix.length;
+    expression[written++] = JsonPointer.SEPARATOR;
+    foreach (value; propertyName)
+    {
+        if (value == JsonPointer.SEPARATOR || value == JsonPointer.ESC)
+        {
+            expression[written++] = JsonPointer.ESC;
+            expression[written++] = value == JsonPointer.SEPARATOR ? '1' : '0';
+        }
+        else
+            expression[written++] = value;
+    }
+    return expression;
 }
 
 private int readPointerIndex(string propertyName) pure nothrow @nogc

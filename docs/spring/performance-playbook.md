@@ -309,6 +309,8 @@ The string `requiredAt` overload follows S-1 by keeping optional pointer compila
 
 Jackson pointer prefixes keep slices of the original expression and reuse decoded property names. A parsed segment publishes its cached prefix with an acquire load and release store. Length and hashing preserve Java UTF-16 units. Reusing the segment allocator and a sized buffer for failure diagnostics replaces duplicated construction and string concatenation templates. The matched jackson-core probe on venus at `78ab8174` and `c7466e4a` moved from 43,045 to 43,157 loadable bytes and from 600 to 599 DMD templates. Pinned LDC with `flint build --profile size` added 560 loadable bytes to gs-rest-service and 536 to petclinic-rest.
 
+Jackson pointer append reuses the shared empty pointer and composes the original expressions. Property append counts escaping before allocating its output buffer, then encodes slashes and tildes in a single copy. Index append reuses the integer formatter. On venus, the matched jackson-core probe at `23ab83ed` and `9f2ebed7` measured 43,157 loadable bytes and 599 DMD templates on both sides. In paired pinned-LDC `flint build --profile size` links, gs-rest-service moved from 3,681,631 to 3,681,615 allocated ELF bytes and petclinic-rest moved from 10,401,525 to 10,401,557.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

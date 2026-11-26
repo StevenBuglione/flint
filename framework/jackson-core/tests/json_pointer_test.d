@@ -256,3 +256,89 @@ unittest
     assert(tail.getMatchingProperty() == "2147483648");
     assert(tail.tail().matches() && tail.tail().tail() is null);
 }
+
+@("append")
+unittest
+{
+    auto pointer = JsonPointer.compile("/Image/15/name");
+    auto suffix = JsonPointer.compile("/extension");
+    auto appended = pointer.append(suffix);
+
+    assert(appended.last().getMatchingProperty() == "extension");
+    assert(appended.toString() == "/Image/15/name/extension");
+}
+
+@("appendWithFinalSlash")
+unittest
+{
+    auto pointer = JsonPointer.compile("/Image/15/name/");
+    assert(pointer.toString() == "/Image/15/name/");
+    auto appended = pointer.append(JsonPointer.compile("/extension"));
+
+    assert(appended.last().getMatchingProperty() == "extension");
+    assert(appended.toString() == "/Image/15/name//extension");
+}
+
+@("appendProperty")
+unittest
+{
+    auto pointer = JsonPointer.compile("/Image/15/name");
+    auto plain = pointer.appendProperty("extension");
+    auto escaped = pointer.appendProperty("/extension~");
+
+    assert(plain.last().getMatchingProperty() == "extension");
+    assert(plain.toString() == "/Image/15/name/extension");
+    assert(escaped.last().getMatchingProperty() == "/extension~");
+    assert(escaped.toString() == "/Image/15/name/~1extension~0");
+}
+
+@("appendPropertyEmpty")
+unittest
+{
+    auto pointer = JsonPointer.compile("/Image/72/src");
+    assert(pointer.appendProperty(null) is pointer);
+    auto appended = pointer.appendProperty("");
+
+    assert(appended !is pointer);
+    assert(appended.toString() == "/Image/72/src/");
+}
+
+@("appendIndex")
+unittest
+{
+    auto pointer = JsonPointer.compile("/Image/15/name");
+    auto appended = pointer.appendIndex(12);
+
+    assert(appended.last().getMatchingIndex() == 12);
+}
+
+@("append preserves identity for empty operands and rejects a null suffix on a nonempty pointer")
+unittest
+{
+    import std.exception : assertThrown;
+
+    auto empty = JsonPointer.empty();
+    auto pointer = JsonPointer.compile("/a");
+    assert(empty.append(pointer) is pointer);
+    assert(pointer.append(empty) is pointer);
+    assert(empty.append(null) is null);
+    assertThrown!Exception(pointer.append(null)); // D-JACKSON-8
+}
+
+@("appendIndex keeps a trailing empty segment and rejects a negative index")
+unittest
+{
+    auto pointer = JsonPointer.compile("/a/");
+    auto appended = pointer.appendIndex(int.max);
+    assert(appended.toString() == "/a//2147483647");
+    assert(appended.last().getMatchingIndex() == int.max);
+
+    try
+        pointer.appendIndex(-1);
+    catch (Exception error) // D-JACKSON-8
+    {
+        assert(error.msg == "Negative index cannot be appended");
+        return;
+    }
+    assert(false, "negative index unexpectedly appended");
+}

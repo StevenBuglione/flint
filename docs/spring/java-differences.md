@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 517 | 19 | 1 | 2,758 |
+| framework | jackson-core@3.1.8 | 518 | 21 | 1 | 2,755 |
 | framework | jackson-databind@3.1.8 | 608 | 61 | 5 | 9,793 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -4158,6 +4158,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.core.JsonGenerator#writeStartObject(Object)` | `flint.jackson.core.JsonGenerator.writeStartObject` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.JsonGenerator#writeStartObject(Object,int)` | `flint.jackson.core.JsonGenerator.writeStartObject` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.JsonParser#assignCurrentValue(Object)` | `flint.jackson.core.JsonParser.assignCurrentValue` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.core.JsonPointer#append(JsonPointer)` | `flint.jackson.core.JsonPointer.append` | [R8](api-mapping.md#r8-exceptions), [D-JACKSON-8](api-mapping.md#deviations) |  |
+| `tools.jackson.core.JsonPointer#appendIndex(int)` | `flint.jackson.core.JsonPointer.appendIndex` | [R8](api-mapping.md#r8-exceptions), [D-JACKSON-8](api-mapping.md#deviations) |  |
 | `tools.jackson.core.JsonPointer#compile(String)` | `flint.jackson.core.JsonPointer.compile` | [R8](api-mapping.md#r8-exceptions), [D-JACKSON-8](api-mapping.md#deviations) |  |
 | `tools.jackson.core.JsonPointer#equals(Object)` | `flint.jackson.core.JsonPointer.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) | Supports D equality through opEquals. |
 | `tools.jackson.core.JsonPointer#hashCode()` | `flint.jackson.core.JsonPointer.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) | Also supplies the D toHash method. |
@@ -10151,7 +10153,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
-| tools.jackson.core | 600 | 0 |
+| tools.jackson.core | 597 | 0 |
 | tools.jackson.core.async | 7 | 0 |
 | tools.jackson.core.base | 363 | 0 |
 | tools.jackson.core.exc | 11 | 0 |

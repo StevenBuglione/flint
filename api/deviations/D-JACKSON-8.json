@@ -1,5 +1,5 @@
 {
  "id": "D-JACKSON-8",
- "deviation": "`StreamWriteConstraints.overrideDefaultStreamWriteConstraints` is excluded. `Builder.maxNestingDepth(-1)` and `JsonPointer.compile` with a nonempty expression missing its leading slash throw D `Exception` with Jackson’s diagnostic. Switch these two sites to `IllegalArgumentException` when the dependency-free `flint.java.lang` exception leaf is available.",
+ "deviation": "`StreamWriteConstraints.overrideDefaultStreamWriteConstraints` is excluded. `Builder.maxNestingDepth(-1)`, `JsonPointer.compile` with a nonempty expression missing its leading slash, and `JsonPointer.appendIndex` with a negative index throw D `Exception` with Jackson’s diagnostic. `JsonPointer.append(null)` on a nonempty pointer throws D `Exception` with \"Cannot append a null JSON Pointer\". Use `IllegalArgumentException` for the first three failures and `NullPointerException` for the last when the dependency-free `flint.java.lang` exception leaf is available.",
  "reason": "Framework packages keep no mutable module-level state. Standalone jackson-core has no `flint.java` dependency."
 }

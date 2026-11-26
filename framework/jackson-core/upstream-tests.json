@@ -568,6 +568,11 @@
       "d": "framework/jackson-core/tests/json_pointer_test.d",
       "methods": {
         "ported": [
+          "append",
+          "appendIndex",
+          "appendProperty",
+          "appendPropertyEmpty",
+          "appendWithFinalSlash",
           "emptyPointer",
           "equality",
           "iZeroIndex",
@@ -580,16 +585,9 @@
           "simplePathLonger",
           "simpleTail",
           "wonkyNumber173"
-        ],
-        "skipped": {
-          "append": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "appendIndex": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "appendProperty": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "appendPropertyEmpty": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "appendWithFinalSlash": "The additional pointer operations and standalone assertions await the next core pointer slice."
-        }
+        ]
       },
-      "status": "partial"
+      "status": "ported"
     },
     "tools/jackson/core/unittest/jsonptr/PointerFromContextTest.java": {
       "phase": "2",
