@@ -1,0 +1,13 @@
+{
+  "source": "closure/zone-rules-supplied.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.time",
+    "flint.java.util",
+    "flint.java.time.zone.zoneoffsettransition",
+    "flint.java.time.zone.zoneoffsettransitionrule",
+    "flint.java.time.zone.internal.rulestorage",
+    "flint.java.time.zone.internal.suppliedrules"
+  ],
+  "data": []
+}

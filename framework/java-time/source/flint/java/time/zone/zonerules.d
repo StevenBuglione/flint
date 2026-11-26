@@ -65,18 +65,24 @@ module flint.java.time.zone.zonerules;
 
 import flint.java.lang : NullPointerException;
 import flint.java.time : Duration, Instant, LocalDateTime, ZoneOffset;
+import flint.java.time.zone.internal.rulestorage : LocalMatch, RuleStorage;
+import flint.java.time.zone.zoneoffsettransition : ZoneOffsetTransition;
+import flint.java.time.zone.zoneoffsettransitionrule : ZoneOffsetTransitionRule;
+import flint.java.util : List;
 import std.typecons : Nullable;
 
 @safe:
 
-/// Time-zone rules created from one fixed offset. The default represents UTC.
+/// Rules created from a fixed offset or snapshots of supplied transitions. The default represents UTC.
 struct ZoneRules
 {
     private ZoneOffset offset_;
+    private immutable RuleStorage data_;
 
-    private this(ZoneOffset offset) pure nothrow @nogc
+    private this(ZoneOffset offset, immutable RuleStorage data = null) pure nothrow @nogc
     {
         offset_ = offset;
+        data_ = data;
     }
 
     static ZoneRules of(ZoneOffset offset) pure nothrow @nogc
@@ -91,154 +97,206 @@ struct ZoneRules
         return of(offset.get());
     }
 
+    /// The transition lists are in chronological order and copied during construction.
+    static ZoneRules of()(ZoneOffset baseStandardOffset, ZoneOffset baseWallOffset,
+            List!ZoneOffsetTransition standardTransitions,
+            List!ZoneOffsetTransition transitions, List!ZoneOffsetTransitionRule lastRules)
+    {
+        import flint.java.time.zone.internal.suppliedrules : makeSuppliedRules;
+
+        return ZoneRules(baseWallOffset, makeSuppliedRules(baseStandardOffset, baseWallOffset,
+                standardTransitions, transitions, lastRules));
+    }
+
+    static ZoneRules of()(Nullable!ZoneOffset baseStandardOffset, Nullable!ZoneOffset baseWallOffset,
+            List!ZoneOffsetTransition standardTransitions,
+            List!ZoneOffsetTransition transitions, List!ZoneOffsetTransitionRule lastRules)
+    {
+        if (baseStandardOffset.isNull)
+            throw new NullPointerException("baseStandardOffset");
+        if (baseWallOffset.isNull)
+            throw new NullPointerException("baseWallOffset");
+        return of(baseStandardOffset.get(), baseWallOffset.get(), standardTransitions, transitions, lastRules);
+    }
+
     bool isFixedOffset() const pure nothrow @nogc
     {
-        return true;
+        return data_ is null;
     }
 
-    ZoneOffset getOffset(Instant instant) const pure nothrow @nogc
+    ZoneOffset getOffset(Instant instant) const
     {
-        return offset_;
+        return hasWallChanges() ? data_.offsetAt(instant) : offset_;
     }
 
-    ZoneOffset getOffset(LocalDateTime dateTime) const pure nothrow @nogc
+    ZoneOffset getOffset(LocalDateTime dateTime) const
     {
-        return offset_;
+        return localMatch(dateTime).offset;
     }
 
-    ZoneOffset getOffset()(Nullable!Instant instant) const pure
+    ZoneOffset getOffset()(Nullable!Instant instant) const
     {
-        return getOffset(dateOrFixedDefault(instant));
+        return getOffset(dateOrDefault(instant, hasWallChanges()));
     }
 
-    ZoneOffset getOffset()(Nullable!LocalDateTime dateTime) const pure
+    ZoneOffset getOffset()(Nullable!LocalDateTime dateTime) const
     {
-        return getOffset(dateOrFixedDefault(dateTime));
+        return getOffset(dateOrDefault(dateTime, hasWallChanges()));
     }
 
     auto getValidOffsets()(LocalDateTime dateTime) const
     {
         import flint.java.util : Collections;
 
-        return Collections.singletonList!ZoneOffset(offset_);
+        const match = localMatch(dateTime);
+        if (!match.transitioning)
+            return Collections.singletonList!ZoneOffset(match.offset);
+        if (match.after.getTotalSeconds() > match.offset.getTotalSeconds())
+            return Collections.emptyList!ZoneOffset();
+        return List!ZoneOffset.of(match.offset, match.after);
     }
 
     auto getValidOffsets()(Nullable!LocalDateTime dateTime) const
     {
-        return getValidOffsets(dateOrFixedDefault(dateTime));
+        return getValidOffsets(dateOrDefault(dateTime, hasWallChanges()));
     }
 
-    auto getTransition()(LocalDateTime dateTime) const pure nothrow @nogc
+    auto getTransition()(LocalDateTime dateTime) const
     {
-        return absentTransition();
+        return asTransition(localMatch(dateTime));
     }
 
-    auto getTransition()(Nullable!LocalDateTime dateTime) const pure
+    auto getTransition()(Nullable!LocalDateTime dateTime) const
     {
-        return getTransition(dateOrFixedDefault(dateTime));
+        return getTransition(dateOrDefault(dateTime, hasWallChanges()));
     }
 
     ZoneOffset getStandardOffset(Instant instant) const pure nothrow @nogc
     {
-        return offset_;
+        if (data_ is null)
+            return offset_;
+        return data_.standardAt(instant);
     }
 
     ZoneOffset getStandardOffset()(Nullable!Instant instant) const pure
     {
-        return getStandardOffset(dateOrFixedDefault(instant));
+        return getStandardOffset(dateOrDefault(instant, hasStandardChanges()));
     }
 
-    Duration getDaylightSavings(Instant instant) const pure nothrow @nogc
+    Duration getDaylightSavings(Instant instant) const
     {
-        return Duration.ZERO;
+        const seconds = getOffset(instant).getTotalSeconds() - getStandardOffset(instant).getTotalSeconds();
+        return Duration.ofSeconds(seconds);
     }
 
-    Duration getDaylightSavings()(Nullable!Instant instant) const pure
+    Duration getDaylightSavings()(Nullable!Instant instant) const
     {
-        return getDaylightSavings(dateOrFixedDefault(instant));
+        return getDaylightSavings(dateOrDefault(instant, hasWallChanges() || hasStandardChanges()));
     }
 
-    bool isDaylightSavings(Instant instant) const pure nothrow @nogc
+    bool isDaylightSavings(Instant instant) const
     {
-        return false;
+        return getOffset(instant) != getStandardOffset(instant);
     }
 
-    bool isDaylightSavings()(Nullable!Instant instant) const pure
+    bool isDaylightSavings()(Nullable!Instant instant) const
     {
-        return isDaylightSavings(dateOrFixedDefault(instant));
+        return isDaylightSavings(dateOrDefault(instant, hasWallChanges() || hasStandardChanges()));
     }
 
-    bool isValidOffset(LocalDateTime dateTime, ZoneOffset offset) const pure nothrow @nogc
+    bool isValidOffset(LocalDateTime dateTime, ZoneOffset offset) const
     {
-        return offset_ == offset;
+        const match = localMatch(dateTime);
+        return validOffset(match, offset);
     }
 
-    bool isValidOffset()(Nullable!LocalDateTime dateTime, ZoneOffset offset) const pure
+    bool isValidOffset()(Nullable!LocalDateTime dateTime, ZoneOffset offset) const
     {
-        return isValidOffset(dateOrFixedDefault(dateTime), offset);
+        return isValidOffset(dateOrDefault(dateTime, hasWallChanges()), offset);
     }
 
-    bool isValidOffset()(LocalDateTime dateTime, Nullable!ZoneOffset offset) const pure nothrow @nogc
+    bool isValidOffset()(LocalDateTime dateTime, Nullable!ZoneOffset offset) const
     {
-        return !offset.isNull && offset_ == offset.get();
+        const match = localMatch(dateTime);
+        if (offset.isNull)
+            return false;
+        return validOffset(match, offset.get());
     }
 
-    bool isValidOffset()(Nullable!LocalDateTime dateTime, Nullable!ZoneOffset offset) const pure
+    bool isValidOffset()(Nullable!LocalDateTime dateTime, Nullable!ZoneOffset offset) const
     {
-        return isValidOffset(dateOrFixedDefault(dateTime), offset);
+        return isValidOffset(dateOrDefault(dateTime, hasWallChanges()), offset);
     }
 
-    auto nextTransition()(Instant instant) const pure nothrow @nogc
+    auto nextTransition()(Instant instant) const
     {
-        return absentTransition();
+        return hasWallChanges() ? asTransition(data_.next(instant)) : Nullable!ZoneOffsetTransition.init;
     }
 
-    auto nextTransition()(Nullable!Instant instant) const pure
+    auto nextTransition()(Nullable!Instant instant) const
     {
-        return nextTransition(dateOrFixedDefault(instant));
+        return nextTransition(dateOrDefault(instant, hasWallChanges()));
     }
 
-    auto previousTransition()(Instant instant) const pure nothrow @nogc
+    auto previousTransition()(Instant instant) const
     {
-        return absentTransition();
+        return hasWallChanges() ? asTransition(data_.previous(instant)) : Nullable!ZoneOffsetTransition.init;
     }
 
-    auto previousTransition()(Nullable!Instant instant) const pure
+    auto previousTransition()(Nullable!Instant instant) const
     {
-        return previousTransition(dateOrFixedDefault(instant));
+        return previousTransition(dateOrDefault(instant, hasWallChanges()));
     }
 
     auto getTransitions()() const
     {
-        import flint.java.time.zone.zoneoffsettransition : ZoneOffsetTransition;
         import flint.java.util : Collections;
 
-        return Collections.emptyList!ZoneOffsetTransition();
+        if (!hasWallChanges())
+            return Collections.emptyList!ZoneOffsetTransition();
+        auto result = new ZoneOffsetTransition[data_.historicCount()];
+        foreach (i, ref item; result)
+            item = asTransition(data_.historic(i)).get();
+        return List!ZoneOffsetTransition.of(result);
     }
 
     auto getTransitionRules()() const
     {
-        import flint.java.time.zone.zoneoffsettransitionrule : ZoneOffsetTransitionRule;
         import flint.java.util : Collections;
 
-        return Collections.emptyList!ZoneOffsetTransitionRule();
+        if (data_ is null || !data_.annual().length)
+            return Collections.emptyList!ZoneOffsetTransitionRule();
+        return List!ZoneOffsetTransitionRule.of(data_.annual().dup);
     }
 
     bool equals(ZoneRules other) const pure nothrow @nogc
     {
-        return offset_ == other.offset_;
+        if (data_ is other.data_)
+            return offset_ == other.offset_;
+        return data_ !is null && other.data_ !is null && data_.same(other.data_);
+    }
+
+    bool opEquals(ZoneRules other) const pure nothrow @nogc
+    {
+        return equals(other);
     }
 
     int hashCode() const pure nothrow @nogc
     {
-        // Java XORs three empty-array hashes and two identical singleton-offset hashes.
-        return 1;
+        // Fixed rules XOR three empty-array hashes and two identical singleton hashes.
+        return data_ is null ? 1 : data_.hash();
+    }
+
+    size_t toHash() const pure nothrow @nogc
+    {
+        return cast(uint) hashCode();
     }
 
     string toString() const pure nothrow
     {
         enum prefix = "ZoneRules[currentStandardOffset=";
-        const id = offset_.getId();
+        const standard = data_ is null ? offset_ : data_.finalStandard();
+        const id = standard.getId();
         auto text = new char[prefix.length + id.length + 1];
         text[0 .. prefix.length] = prefix[];
         text[prefix.length .. $ - 1] = id;
@@ -246,21 +304,43 @@ struct ZoneRules
         return text;
     }
 
-    // Fixed queries can use any date when the argument is absent.
-    private T dateOrFixedDefault(T)(Nullable!T dateTime) const pure
+    private bool hasStandardChanges() const pure nothrow @nogc
     {
-        if (!dateTime.isNull)
-            return dateTime.get();
-        if (!isFixedOffset())
-            throw new NullPointerException();
-        return T.init;
+        return data_ !is null && data_.hasStandardChanges();
     }
 
-    // Instantiate the transition type only in callers that query transitions.
-    private static auto absentTransition()() pure nothrow @nogc
+    private bool hasWallChanges() const pure nothrow @nogc
     {
-        import flint.java.time.zone.zoneoffsettransition : ZoneOffsetTransition;
+        return data_ !is null && data_.hasWallChanges();
+    }
 
+    private LocalMatch localMatch(LocalDateTime dateTime) const
+    {
+        return hasWallChanges() ? data_.localAt(dateTime) : LocalMatch(offset_);
+    }
+
+}
+
+private bool validOffset(LocalMatch match, ZoneOffset candidate) pure nothrow @nogc
+{
+    if (!match.transitioning)
+        return candidate == match.offset;
+    return match.after.getTotalSeconds() <= match.offset.getTotalSeconds()
+        && (candidate == match.offset || candidate == match.after);
+}
+
+private T dateOrDefault(T)(Nullable!T date, bool readsDate) pure
+{
+    if (!date.isNull)
+        return date.get();
+    if (readsDate)
+        throw new NullPointerException();
+    return T.init;
+}
+
+private Nullable!ZoneOffsetTransition asTransition()(LocalMatch match) pure nothrow @nogc
+{
+    if (!match.transitioning)
         return Nullable!ZoneOffsetTransition.init;
-    }
+    return Nullable!ZoneOffsetTransition(ZoneOffsetTransition(match.beforeTime, match.offset, match.after));
 }
