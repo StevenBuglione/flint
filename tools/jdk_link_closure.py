@@ -81,6 +81,18 @@ FIRST_OBJECT_ALLOWANCES = {
             '__minfo': 8,
         },
     },
+    ('java-nio', 'flint.java.nio.readonlybufferexception', 'write-read-only'): {
+        'profiles': ('O3', 'Oz'),
+        'module': 'flint.java.nio.bufferoverflowexception',
+        'member': 'flint.java.nio.bufferoverflowexception.o',
+        'referrer': 'flint.java.nio.readonlybufferexception.o',
+        'trigger': '_D6object__T10RTInfoImplVAmA2i97i2728ZQBayG2m',
+        'sections': {
+            '.rodata._D6object__T10RTInfoImplVAmA2i97i2728ZQBayG2m': 16,
+            '.data._D5flint4java3nio23bufferoverflowexception12__ModuleInfoZ': 48,
+            '__minfo': 8,
+        },
+    },
     ('java-util', 'flint.java.util.stringjoiner', 'full'): {
         'profiles': ('O3', 'Oz'),
         'module': 'flint.java.util.hexformat',

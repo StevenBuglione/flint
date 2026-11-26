@@ -368,6 +368,8 @@ The Spring Beans factory exception types reuse the existing `BeanCreationExcepti
 
 **Reuse the canonical IllegalStateException for buffer reset without a mark.** The leaf adds a zero-argument subclass and inherits message and cause handling. The matched standalone probe at `fa49a6041` added 624 loadable bytes at O3 and Oz over the IllegalStateException control, with 436 DMD instances on venus. The jdk-leaf-rule caps are 687 bytes and 480 instances. The package benchmark exercises the mark, underflow and overflow exceptions through one handler.
 
+**Reuse the canonical UnsupportedOperationException for writes to read-only buffers.** The leaf adds a zero-argument subclass and inherits message and cause handling. The matched standalone probe at `d1eb6b57f` added 640 O3 and 640 Oz loadable bytes over the UnsupportedOperationException control, with 436 DMD instances on venus. The jdk-leaf-rule caps are 704 bytes and 480 instances. The package benchmark exercises all the buffer exceptions through one handler.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

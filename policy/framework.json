@@ -708,7 +708,8 @@
    "also": [
     "flint.java.nio.bufferoverflowexception",
     "flint.java.nio.bufferunderflowexception",
-    "flint.java.nio.invalidmarkexception"
+    "flint.java.nio.invalidmarkexception",
+    "flint.java.nio.readonlybufferexception"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
@@ -725,7 +726,8 @@
     "java.nio.BufferOverflowException",
     "java.nio.BufferUnderflowException",
     "java.nio.ByteOrder",
-    "java.nio.InvalidMarkException"
+    "java.nio.InvalidMarkException",
+    "java.nio.ReadOnlyBufferException"
    ],
    "provisional": [
     "dmd_cold_seconds",

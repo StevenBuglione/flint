@@ -1,6 +1,6 @@
 module app;
 
-import flint.java.lang : IllegalStateException, RuntimeException;
+import flint.java.lang : IllegalStateException, RuntimeException, UnsupportedOperationException;
 
 @safe:
 
@@ -25,8 +25,10 @@ private int bufferException(size_t argumentCount)
 {
     try
     {
-        if (argumentCount >= 6)
+        if (argumentCount == 6)
             throw new IllegalStateException;
+        if (argumentCount >= 7)
+            throw new UnsupportedOperationException;
         throw new RuntimeException;
     }
     catch (RuntimeException error)

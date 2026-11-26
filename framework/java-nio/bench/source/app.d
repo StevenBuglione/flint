@@ -6,6 +6,7 @@ import flint.java.nio.byteorder : ByteOrder;
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
 import flint.java.nio.invalidmarkexception : InvalidMarkException;
+import flint.java.nio.readonlybufferexception : ReadOnlyBufferException;
 
 @safe:
 
@@ -29,7 +30,9 @@ private int bufferException(size_t argumentCount)
             throw new BufferUnderflowException;
         if (argumentCount == 5)
             throw new BufferOverflowException;
-        throw new InvalidMarkException;
+        if (argumentCount == 6)
+            throw new InvalidMarkException;
+        throw new ReadOnlyBufferException;
     }
     catch (RuntimeException error)
         return error.getMessage() is null ? 1 : 2;

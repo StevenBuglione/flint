@@ -7,6 +7,7 @@
   "java.nio.BufferUnderflowException": "flint.java.nio.bufferunderflowexception",
   "java.nio.ByteOrder": "flint.java.nio.byteorder",
   "java.nio.InvalidMarkException": "flint.java.nio.invalidmarkexception",
+  "java.nio.ReadOnlyBufferException": "flint.java.nio.readonlybufferexception",
   "java.time.MonthDay": "flint.java.time.monthday",
   "java.time.Period": "flint.java.time.period",
   "java.time.Year": "flint.java.time.year",
