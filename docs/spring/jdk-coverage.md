@@ -13,7 +13,7 @@ Overall: types 158/1307 (12%), members 1229/15237 (8%).
 | `java.math` | sol-jdk-math-regex | 2 / 4 | 38 / 173 | 22% | 1 |  |
 | `java.net` | sol-web | 1 / 66 | 3 / 755 | 0% |  |  |
 | `java.net.spi` | sol-web | 0 / 5 | 0 / 14 | 0% |  |  |
-| `java.nio` | sol-jackson | 7 / 14 | 57 / 363 | 16% |  | 5 |
+| `java.nio` | sol-jackson | 7 / 14 | 57 / 363 | 16% |  | 7 |
 | `java.nio.channels` | sol-jackson | 0 / 56 | 0 / 276 | 0% |  |  |
 | `java.nio.channels.spi` | sol-jackson | 0 / 6 | 0 / 47 | 0% |  |  |
 | `java.nio.charset` | sol-jackson | 3 / 12 | 9 / 103 | 9% | 12 |  |
@@ -63,8 +63,10 @@ Each is adapted R1 with a note naming its leaf module until the JDK aggregate re
 
 - `java.io.InterruptedIOException`: declared in `flint.java.io.interruptedioexception`
 - `java.io.UnsupportedEncodingException`: declared in `flint.java.io.unsupportedencodingexception`
+- `java.nio.Buffer`: declared in `flint.java.nio.buffer`
 - `java.nio.BufferOverflowException`: declared in `flint.java.nio.bufferoverflowexception`
 - `java.nio.BufferUnderflowException`: declared in `flint.java.nio.bufferunderflowexception`
+- `java.nio.ByteBuffer`: declared in `flint.java.nio.bytebuffer`
 - `java.nio.ByteOrder`: declared in `flint.java.nio.byteorder`
 - `java.nio.InvalidMarkException`: declared in `flint.java.nio.invalidmarkexception`
 - `java.nio.ReadOnlyBufferException`: declared in `flint.java.nio.readonlybufferexception`
