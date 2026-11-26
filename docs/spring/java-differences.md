@@ -11837,7 +11837,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat#format(Date)` | 2 | Flint uses an abstract string overload. Java supplies a final convenience overload that dispatches through the three-argument Format contract. |
 | framework | `java.text.DateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | The date append overload needs canonical java.lang.StringBuffer and a FieldPosition for UTF-16 offsets. |
 | framework | `java.text.DateFormat#format(Object,StringBuffer,FieldPosition)` | 2 | Generic date formatting needs canonical java.lang.StringBuffer and Format dispatch to the date append overload. |
-| framework | `java.text.DateFormat#parse(String)` | 2 | SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14). The convenience overload accepts a returned date even when the parser consumes no input. Java rejects a parse that leaves the start position unchanged. |
+| framework | `java.text.DateFormat#parse(String)` | 2 | Checks whether a result exists rather than whether it consumed input. Java throws ParseException when the position has not advanced. |
 | framework | `java.text.DecimalFormat` | 2 | The Java public formatter class and mutable pattern configuration are pending. |
 | framework | `java.text.DecimalFormat#<init>(String,DecimalFormatSymbols)` | 2 | Requires the public formatter and symbols classes. Java copies the supplied symbol settings on construction. |
 | framework | `java.text.DecimalFormat#applyPattern(String)` | 2 | Applying a pattern requires the public DecimalFormat. Java changes fractional precision and the multiplier on the same formatter instance. |
@@ -11881,7 +11881,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.SimpleDateFormat#<init>(String)` | 2 | Uses Locale.US for named fields instead of Java's default Locale.Category.FORMAT. |
 | framework | `java.text.SimpleDateFormat#<init>(String,Locale)` | 2 | Rejects named fields with a non-English locale. Java uses that locale's date and time names. |
 | framework | `java.text.SimpleDateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | Appending the date to the caller buffer and updating UTF-16 field offsets needs canonical java.lang.StringBuffer and FieldPosition. |
-| framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Interprets the initial ParsePosition index and reports consumed and error indices in UTF-8 bytes. Java uses UTF-16 code units (R14). Passing a null ParsePosition terminates the process. Java throws NullPointerException (R8). |
+| framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Negative input indices throw the broader IndexOutOfBoundsException. Java throws StringIndexOutOfBoundsException (R8). |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.MonthDay#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
 | framework | `java.time.MonthDay#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |

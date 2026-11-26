@@ -363,3 +363,54 @@ unittest
         assert(format.toPattern() == "'stable:'yyyy" && format.format(date) == "stable:1970");
     }
 }
+
+@("SimpleDateFormat parse positions use UTF-16 code units")
+unittest
+{
+    import flint.java.text : ParsePosition;
+
+    auto format = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    format.setTimeZone(TimeZone.getTimeZone("UTC"));
+    foreach (i, text; ["é2020-06-01.", "😀2020-06-01.", "\x802020-06-01."])
+    {
+        const start = i == 1 ? 2 : 1;
+        auto position = new ParsePosition(start);
+        position.setErrorIndex(31);
+        auto date = format.parse(text, position);
+        assert(date !is null && date.getTime() == 1_590_969_600_000L);
+        assert(position.getIndex() == start + 10 && position.getErrorIndex() == 31);
+    }
+
+    auto split = new ParsePosition(1);
+    assert(format.parse("😀2020-06-01", split) is null);
+    assert(split.getIndex() == 1 && split.getErrorIndex() == 1);
+    auto pastEnd = new ParsePosition(3);
+    assert(format.parse("😀", pastEnd) is null);
+    assert(pastEnd.getIndex() == 3 && pastEnd.getErrorIndex() == 3);
+
+    format.applyPattern("");
+    foreach (start; [-1, 3])
+    {
+        auto empty = new ParsePosition(start);
+        empty.setErrorIndex(31);
+        auto date = format.parse("😀", empty);
+        assert(date !is null && date.getTime() == 0);
+        assert(empty.getIndex() == start && empty.getErrorIndex() == 31);
+    }
+}
+
+@("SimpleDateFormat reports the first mismatched UTF-16 literal unit")
+unittest
+{
+    import flint.java.text : ParsePosition;
+
+    auto format = new SimpleDateFormat("'prefixX'yyyy", Locale.US);
+    auto ascii = new ParsePosition(0);
+    assert(format.parse("prefixY2020", ascii) is null && ascii.getErrorIndex() == 6);
+    format.applyPattern("'😀'yyyy");
+    auto supplementary = new ParsePosition(0);
+    assert(format.parse("😁2020", supplementary) is null && supplementary.getErrorIndex() == 1);
+    format.applyPattern("'é😀'yyyy-MM-dd");
+    auto fields = new ParsePosition(0);
+    assert(format.parse("é😀wrong", fields) is null && fields.getErrorIndex() == 3);
+}
