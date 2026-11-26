@@ -310,7 +310,7 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         for needed in ('source "$HOME/flint-work/posidon.env"', 'export FLINT_HOME="$WT"', 'measure_queue.py hold --',
                        '--emit-dub', '--step apps --apps gs-rest-service,petclinic-rest', 'trap cleanup EXIT',
                        'SHIMS="--shims-only"',
-                       'rm -rf "$FLINT_CACHE"'):
+                       'rm -rf "$FLINT_CACHE"', 'benchmarks/spring/flint/*/.flint "$WT"'):
             self.assertIn(needed, script)
         self.assertIn('refs/heads/train-', git(bare, 'for-each-ref', '--format=%(refname)'))
 

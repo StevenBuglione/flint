@@ -106,7 +106,8 @@ cleanup() {
     if tr '\0' '\n' < /proc/$pid/environ 2>/dev/null | grep -qx "FLINT_CACHE=$FLINT_CACHE"; then kill "$pid" 2>/dev/null; fi
   done
   rm -rf "$FLINT_CACHE" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
-  rm -rf "$WT"/benchmarks/spring/flint/*/.flint/build "$WT"/benchmarks/spring/flint/*/.dub
+  # Each app's whole .flint (its dub cache grew to 5 GB on posidon) and the CLI's build tree; the natives stay.
+  rm -rf "$WT"/benchmarks/spring/flint/*/.flint "$WT"/benchmarks/spring/flint/*/.dub "$WT/apps/flint/.flint/build"
   find "$WT" -xdev -name .dub -type d -prune -exec rm -rf {} + 2>/dev/null
   git --git-dir="$BARE" update-ref -d "refs/heads/@REF@"
 }
