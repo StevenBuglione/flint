@@ -39,8 +39,8 @@ unittest
     char[24] output;
     output[] = 'x';
     size_t required;
-    assert(compileFixedDecimalPattern("#,##0.###", pattern) == DecimalCompileStatus.accepted);
-    assert(!tryRenderDecimalDouble(0x3f40_624d_d2f1_a9fc, pattern, symbols, output[], required));
+    pattern.scale = 1;
+    assert(!tryRenderDecimalDouble(0, pattern, symbols, output[], required));
     assert(output[0] == 'x' && required == 0);
 }
 
@@ -95,4 +95,32 @@ unittest
     check("0%", 0xffef_ffff_ffff_ffff, "-∞%");
     check("0%", 0x8000_0000_0000_0000, "-0%");
     check("0%", 0xfff8_0000_0000_0000, "NaN");
+}
+
+@("Java grouped fixed-point keeps its binary64 half-even boundary")
+unittest
+{
+    static void check(string text, ulong bits, string expected)
+    {
+        DecimalFixedPattern pattern;
+        assert(compileFixedDecimalPattern(text, pattern) == DecimalCompileStatus.accepted);
+        DecimalSymbolData symbols;
+        char[48] output;
+        output[] = 'x';
+        size_t required;
+        assert(tryRenderDecimalDouble(bits, pattern, symbols, output[0 .. 0], required),
+                "grouped fast path was declined");
+        assert(output[0] == 'x' && required == expected.length);
+        assert(tryRenderDecimalDouble(bits, pattern, symbols, output[], required));
+        assert(output[0 .. required] == expected);
+    }
+
+    check("#,##0.###", 0x3f40_624d_d2f1_a9fc, "0.001");
+    check("#,##0.###", 0xbf40_624d_d2f1_a9fc, "-0.001");
+    check("0.###", 0xbf40_624d_d2f1_a9fc, "-0");
+    check("'p'#,##0.###'s';'n'#,##0.###'z'", 0xbf40_624d_d2f1_a9fc, "n0.001z");
+    check("#,##0.###", 0x3fb0_0000_0000_0000, "0.062");
+    check("#,##0.###", 0x3fc8_0000_0000_0000, "0.188");
+    check("#,##0.###", 0x41df_ffff_ffc0_0000, "2,147,483,647");
+    check("#,##0.###", 0x8000_0000_0000_0000, "-0");
 }

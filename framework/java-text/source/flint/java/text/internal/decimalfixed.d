@@ -35,18 +35,12 @@ size_t renderDecimalLong(long value, ref scope const DecimalFixedPattern pattern
     const negative = value < 0;
     ulong magnitude = negative ? -cast(ulong) value : cast(ulong) value;
     char[20] digits;
-    size_t start = digits.length;
-    while (magnitude != 0)
-    {
-        digits[--start] = cast(char)('0' + magnitude % 10);
-        magnitude /= 10;
-    }
-
+    const start = writeUnsignedDigits(magnitude, digits);
     const decimalAt = value == 0 ? 0 : cast(int)(digits.length - start + pattern.scale);
     return renderFixedDigits(digits[start .. $], decimalAt, negative, pattern, symbols, output);
 }
 
-/// Renders binary64 through the general path using the explicit Latin symbols.
+/// Renders fixed-point binary64 using the explicit Latin symbols.
 /// A successful call reports bytes required. A short buffer or unsupported value is untouched.
 pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output, out size_t required)
@@ -60,7 +54,10 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const Decim
             return false;
     }
     else if (usesGroupedFastPath(bits, pattern))
-        return false;
+    {
+        required = renderGroupedFast(bits, pattern, symbols, output);
+        return true;
+    }
 
     if ((bits & (ulong.max >> 1)) >= infinityBits)
     {
@@ -87,6 +84,8 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const Decim
     return true;
 }
 
+private enum ulong implicitBit = 1UL << 52;
+private enum ulong signBit = 1UL << 63;
 private enum ulong infinityBits = 0x7ff0_0000_0000_0000;
 
 private bool scaleBinary(ref ulong bits, ubyte scale) pure nothrow @nogc
@@ -95,16 +94,13 @@ private bool scaleBinary(ref ulong bits, ubyte scale) pure nothrow @nogc
 
     if (scale != 2 && scale != 3)
         return false;
-    enum implicitBit = 1UL << 52;
-    enum signBit = 1UL << 63;
     const magnitude = bits & (signBit - 1);
     const sign = bits & signBit;
     if (magnitude == 0 || magnitude >= infinityBits)
         return true;
 
     const exponent = cast(uint)(magnitude >> 52);
-    const fraction = magnitude & (implicitBit - 1);
-    const significand = exponent == 0 ? fraction : fraction | implicitBit;
+    const significand = binarySignificand(magnitude, exponent);
     // The exact product fits in 63 bits. Round once when restoring the 53-bit precision.
     const product = significand * (scale == 2 ? 100 : 1000);
     if (product < implicitBit)
@@ -113,16 +109,9 @@ private bool scaleBinary(ref ulong bits, ubyte scale) pure nothrow @nogc
         return true;
     }
 
-    const discarded = bsr(product) - 52;
-    ulong rounded = product >> discarded;
-    if (discarded != 0)
-    {
-        const halfway = 1UL << (discarded - 1);
-        const remainder = product & ((1UL << discarded) - 1);
-        if (remainder > halfway || (remainder == halfway && (rounded & 1) != 0))
-            ++rounded;
-    }
-    uint outputExponent = (exponent == 0 ? 1u : exponent) + cast(uint) discarded;
+    const discarded = cast(uint)(bsr(product) - 52);
+    ulong rounded = roundSignificandRight(product, discarded);
+    uint outputExponent = (exponent == 0 ? 1u : exponent) + discarded;
     if (rounded == (implicitBit << 1))
     {
         rounded >>= 1;
@@ -131,6 +120,55 @@ private bool scaleBinary(ref ulong bits, ubyte scale) pure nothrow @nogc
     bits = sign | (outputExponent >= 0x7ff ? infinityBits : (cast(ulong) outputExponent << 52) | (
             rounded & (implicitBit - 1)));
     return true;
+}
+
+private ulong binarySignificand(ulong magnitude, uint exponent) pure nothrow @nogc
+{
+    const fraction = magnitude & (implicitBit - 1);
+    return exponent == 0 ? fraction : fraction | implicitBit;
+}
+
+// The scaled significand fits in 63 bits, so a shift of 64 or more always rounds to zero.
+private ulong roundSignificandRight(ulong product, uint discarded) pure nothrow @nogc
+{
+    if (discarded == 0)
+        return product;
+    if (discarded >= 64)
+        return 0;
+    const rounded = product >> discarded;
+    const halfway = 1UL << (discarded - 1);
+    const remainder = product & ((1UL << discarded) - 1);
+    return rounded + (remainder > halfway || (remainder == halfway && (rounded & 1) != 0));
+}
+
+private pure nothrow @nogc size_t renderGroupedFast(ulong bits,
+        ref scope const DecimalFixedPattern pattern, ref scope const DecimalSymbolData symbols, scope char[] output)
+{
+    const magnitude = bits & (signBit - 1);
+    const exponent = cast(uint)(magnitude >> 52);
+    const product = binarySignificand(magnitude, exponent) * 1000;
+    // Round directly to integer thousandths to avoid rounding a binary64 intermediate.
+    const discarded = 1075u - (exponent == 0 ? 1u : exponent);
+    const units = roundSignificandRight(product, discarded);
+
+    char[20] digits;
+    const start = writeUnsignedDigits(units, digits);
+    const decimalAt = units == 0 ? 0 : cast(int)(digits.length - start) - 3;
+    size_t end = digits.length;
+    while (end > start && digits[end - 1] == '0')
+        --end;
+    return renderFixedDigits(digits[start .. end], decimalAt, (bits & signBit) != 0, pattern, symbols, output);
+}
+
+private size_t writeUnsignedDigits(ulong magnitude, ref scope char[20] digits) pure nothrow @nogc
+{
+    size_t start = digits.length;
+    while (magnitude != 0)
+    {
+        digits[--start] = cast(char)('0' + magnitude % 10);
+        magnitude /= 10;
+    }
+    return start;
 }
 
 private pure nothrow @nogc size_t renderSpecial(ulong bits, ref scope const DecimalFixedPattern pattern,
