@@ -3068,8 +3068,6 @@ class Properties : LinkedHashMap!(string, string)
     /// The value of `key`, then the defaults' value; null when neither has it.
     string getProperty(string key)
     {
-        if (key is null)
-            throw new NullPointerException();
         if (containsKey(key))
             return get(key);
         return defaults is null ? null : defaults.getProperty(key);
@@ -3085,9 +3083,8 @@ class Properties : LinkedHashMap!(string, string)
     /// Set `key` to `value`; the previous value, or null.
     string setProperty(string key, string value)
     {
-        if (key is null || value is null)
-            throw new NullPointerException();
-        return put(key, value);
+        // Canonical empty values remain present when the getter checks for a missing value.
+        return put(key.length == 0 ? "" : key, value.length == 0 ? "" : value);
     }
 
     /// Every key, including the defaults' keys, in insertion order.

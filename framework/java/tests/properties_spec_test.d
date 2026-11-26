@@ -1,6 +1,6 @@
 module properties_spec_test;
 
-import flint.java.lang : NullPointerException, UnsupportedOperationException;
+import flint.java.lang : UnsupportedOperationException;
 import flint.java.util : Properties;
 import std.exception : assertThrown;
 
@@ -38,14 +38,14 @@ import std.exception : assertThrown;
     assert(properties.stringPropertyNames().size() == 4);
 }
 
-@("Properties rejects null keys and values at its string accessors") unittest
+@("Properties treats null string slices as empty under R26") unittest
 {
     auto properties = new Properties;
-    assertThrown!NullPointerException(properties.getProperty(null));
-    assertThrown!NullPointerException(properties.getProperty(null, "fallback"));
-    assertThrown!NullPointerException(properties.setProperty(null, "text"));
-    assertThrown!NullPointerException(properties.setProperty("key", null));
-    assert(properties.isEmpty());
-    properties.setProperty("", "");
-    assert(properties.getProperty("", "fallback") == "");
+    assert(properties.getProperty(null, "fallback") == "fallback");
+    assert(properties.setProperty(null, "text") is null);
+    assert(properties.getProperty("") == "text");
+    assert(properties.setProperty("", null) == "text");
+    assert(properties.getProperty(null, "fallback") == "");
+    assert(properties.setProperty("key", null) is null);
+    assert(properties.getProperty("key", "fallback") == "");
 }
