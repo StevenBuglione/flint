@@ -1077,8 +1077,54 @@
       "status": "deferred"
     },
     "tools/jackson/databind/ext/javatime/deser/LocalDateDeserTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/local_date_deser_test.d",
+      "methods": {
+        "ported": [
+          "testBadDeserializationAsString01",
+          "testBadDeserializationAsString02",
+          "testCustomFormat",
+          "testDeserializationAsString01",
+          "testDeserializationAsString02",
+          "testDeserializationAsTimestamp01",
+          "testDeserializationAsTimestamp02",
+          "testLenientDeserializationAsString01",
+          "testLenientDeserializeFromEmptyString",
+          "testLenientDeserializeFromInt"
+        ],
+        "skipped": {
+          "testDeserializationAsArrayDisabled": "The invalid array element diagnostic differs from the pinned token-type message.",
+          "testDeserializationAsArrayEnabled": "ObjectReader feature overrides for unwrapping arrays are version-gated.",
+          "testDeserializationAsEmptyArrayDisabled": "The current reader rejects an empty array instead of returning null.",
+          "testDeserializationAsEmptyArrayEnabled": "ObjectReader array and empty-array feature overrides are version-gated.",
+          "testDeserializationCaseInsensitiveDisabled": "Per-type format overrides and the configured ObjectReader are version-gated.",
+          "testDeserializationCaseInsensitiveDisabled_InvalidDate": "Per-type format overrides and the configured ObjectReader are version-gated.",
+          "testDeserializationCaseInsensitiveEnabled": "Per-type format overrides and the configured ObjectReader are version-gated.",
+          "testDeserializationCaseInsensitiveEnabledOnValue": "Per-type format feature overrides are version-gated.",
+          "testDeserializationWithTypeInfo01": "Mix-ins and polymorphic type ids are version-gated.",
+          "testDeserializeFromEmptyStringWithCoercionActionFail": "Per-type coercion configuration is version-gated.",
+          "testDeserializeFromIntegerWithCoercionActionFail": "Per-type coercion configuration is version-gated.",
+          "testInvalidEpochDayValue": "Per-type numeric shape and Jackson's Java time parse exception are version-gated.",
+          "testInvalidEpochDayValueInLenientMode": "The out-of-range epoch day currently exposes a Java time exception with different diagnostic details.",
+          "testLenientDeserializationAsString02": "ObjectReader.with(TimeZone) is version-gated.",
+          "testLenientDeserializationAsString03": "The active UTC fixture gives the same answer with the time-zone feature ignored.",
+          "testLenientDeserializationAsString04": "Per-reader time zones for the four date-boundary rows are version-gated.",
+          "testLenientDeserializeFromNumberInt": "Per-type numeric shape configuration is version-gated.",
+          "testStricDeserializeFromInt": "Per-type leniency overrides are version-gated.",
+          "testStrictCustomFormatForInvalidDateWithEra": "The formatter era pattern is version-gated.",
+          "testStrictCustomFormatForInvalidDateWithoutEra": "The active fixture does not exercise the JsonFormat leniency setting, which the date reader ignores.",
+          "testStrictCustomFormatForInvalidFormat": "The strict year-of-era resolution behavior is version-gated.",
+          "testStrictCustomFormatForInvalidFormatWithEra": "The formatter era pattern is version-gated.",
+          "testStrictCustomFormatForInvalidFormatWithoutEra": "The active fixture does not exercise the JsonFormat leniency setting, which the date reader ignores.",
+          "testStrictCustomFormatForValidDateWithEra": "The formatter era pattern is version-gated.",
+          "testStrictCustomFormatForValidDateWithoutEra": "The active fixture does not exercise the JsonFormat leniency setting, which the date reader ignores.",
+          "testStrictDeserializeFromEmptyString": "Per-type leniency overrides are version-gated.",
+          "testStrictDeserializeFromNumberInt": "Per-type leniency overrides are version-gated.",
+          "testStrictDeserializeFromString": "Per-type leniency overrides are version-gated.",
+          "testStrictWithCustomFormat": "The active invalid-date assertion passes without exercising the JsonFormat leniency setting."
+        }
+      },
+      "note": "Typed mapper reads cover the unconfigured Java reader path. The map case uses Nullable!LocalDate under R5.",
+      "status": "partial"
     },
     "tools/jackson/databind/ext/javatime/deser/LocalDateTimeDeserTest.java": {
       "phase": "2",
