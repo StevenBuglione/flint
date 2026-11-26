@@ -8,6 +8,9 @@ does not open streams itself.
 +/
 module flint.java.io;
 
+public import flint.java.io.closeable : Closeable;
+public import flint.java.io.flushable : Flushable;
+
 import flint.java.lang : RuntimeException;
 
 @safe:

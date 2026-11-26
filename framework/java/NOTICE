@@ -2,10 +2,13 @@ Flint Java
 Copyright 2026 The Flint authors
 
 This package implements the Java SE 21 types that Spring's APIs expose
-(flint.java.lang, flint.java.util and related modules). Its code is original
-Flint code, contributed under the package licence below by owner decision
+(flint.java.lang, flint.java.util and related modules). Original Flint code
+is contributed under the package licence below by owner decision
 (docs/spring/phase1/decisions.md, flint:java* licence); conformance fixtures use
 reference results produced by executing the public Java SE 21 API.
+
+Closeable and Flushable are ported from OpenJDK 21.0.13. Their source files
+retain the upstream copyright and license notices.
 
 SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
 See LICENSE for the license and Classpath Exception.

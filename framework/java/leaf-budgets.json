@@ -1,4 +1,12 @@
 {
+  "flint.java.io.closeable": {
+    "incremental_linked_bytes": 2152,
+    "template_instances": 241
+  },
+  "flint.java.io.flushable": {
+    "incremental_linked_bytes": 792,
+    "template_instances": 33
+  },
   "flint.java.lang.boolean": {
     "incremental_linked_bytes": 150,
     "template_instances": 2
