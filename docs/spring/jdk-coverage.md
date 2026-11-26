@@ -30,7 +30,7 @@ Overall: types 152/1307 (12%), members 1199/15237 (8%).
 | `java.text.spi` | sol-template | 0 / 6 | 0 / 21 | 0% |  |  |
 | `java.time` | sol-jdk-time-text | 7 / 19 | 114 / 786 | 15% |  | 4 |
 | `java.time.chrono` | sol-jdk-time-text | 0 / 21 | 0 / 384 | 0% |  |  |
-| `java.time.format` | sol-jdk-time-text | 2 / 8 | 9 / 133 | 7% | 2 |  |
+| `java.time.format` | sol-jdk-time-text | 2 / 8 | 9 / 133 | 7% |  |  |
 | `java.time.temporal` | sol-jdk-time-text | 3 / 16 | 69 / 169 | 41% |  | 3 |
 | `java.time.zone` | sol-jdk-time-text | 4 / 6 | 51 / 63 | 81% |  | 3 |
 | `java.util` | sol-jdk-core, sol-ai, sol-aop, sol-jdk-math-regex, sol-jdk-time-text (Locale) | 35 / 133 | 401 / 2216 | 18% | 342 | 8 |

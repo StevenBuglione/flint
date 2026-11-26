@@ -208,6 +208,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.lang.RuntimeException#<init>(String,Throwable)` | `flint.java.lang.RuntimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | framework | `java.lang.RuntimeException#<init>(String,Throwable,boolean,boolean)` | `flint.java.lang.RuntimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | framework | `java.time.DateTimeException#<init>(String,Throwable)` | `flint.java.time.DateTimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| framework | `java.time.format.DateTimeParseException` | `flint.java.time.format.DateTimeParseException` | A null parsed text counts as empty (R26). Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
 | framework | `org.springframework.expression.spel.support.StandardTypeConverter#<init>()` | `flint.expression.spel.support.StandardTypeConverter` | Creates and retains one default conversion service per converter. Flint's core getSharedInstance factory creates a fresh service. |
@@ -2005,8 +2006,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text) |  |
-| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.time.temporal
 
