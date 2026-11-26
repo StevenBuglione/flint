@@ -64,10 +64,7 @@ class BitSet
     /// Sets one bit, growing the capacity if necessary.
     void set(int bitIndex) pure
     {
-        checkIndex(bitIndex, 0, "bitIndex < 0: ");
-        const word = bitIndex >> wordShift;
-        expandTo(word);
-        words[word] |= maskAt(bitIndex);
+        changeBit(bitIndex, RangeChange.set);
     }
 
     /// Sets or clears one bit according to the supplied value.
@@ -97,12 +94,7 @@ class BitSet
     /// Clears one bit without changing the capacity.
     void clear(int bitIndex) pure
     {
-        checkIndex(bitIndex, 0, "bitIndex < 0: ");
-        const word = bitIndex >> wordShift;
-        if (word >= wordsInUse)
-            return;
-        words[word] &= ~maskAt(bitIndex);
-        recalculateWordsInUse();
+        changeBit(bitIndex, RangeChange.clear);
     }
 
     /// Clears the half-open range [fromIndex, toIndex) without growing the capacity.
@@ -121,11 +113,7 @@ class BitSet
     /// Toggles one bit, growing the capacity if necessary.
     void flip(int bitIndex) pure
     {
-        checkIndex(bitIndex, 0, "bitIndex < 0: ");
-        const word = bitIndex >> wordShift;
-        expandTo(word);
-        words[word] ^= maskAt(bitIndex);
-        recalculateWordsInUse();
+        changeBit(bitIndex, RangeChange.flip);
     }
 
     /// Toggles the bits in the half-open range [fromIndex, toIndex).
@@ -246,6 +234,26 @@ class BitSet
     private static ulong maskAt(int index) pure nothrow @nogc
     {
         return 1UL << (index & bitMask);
+    }
+
+    pragma(inline, false) private void changeBit(int bitIndex, RangeChange change) pure
+    {
+        checkIndex(bitIndex, 0, "bitIndex < 0: ");
+        const word = bitIndex >> wordShift;
+        if (change == RangeChange.clear)
+        {
+            if (word >= wordsInUse)
+                return;
+        }
+        else
+            expandTo(word);
+
+        const mask = maskAt(bitIndex);
+        const overwrite = change == RangeChange.flip ? 0UL : mask;
+        const writeOnes = change == RangeChange.clear ? 0UL : mask;
+        words[word] = (words[word] & ~overwrite) ^ writeOnes;
+        if (change != RangeChange.set)
+            recalculateWordsInUse();
     }
 
     private static void checkIndex(int index, int minimum, string label) pure
