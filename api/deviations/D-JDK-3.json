@@ -1,0 +1,5 @@
+{
+ "id": "D-JDK-3",
+ "deviation": "InvalidPathException formats its message when constructed. A subclass overriding getReason() changes that getter while getMessage() retains the formatted constructor reason.",
+ "reason": "Flint's RuntimeException.getMessage() is pure, nothrow and @nogc. Caching the message preserves ordinary OpenJDK formatting and the shared exception accessor contract."
+}

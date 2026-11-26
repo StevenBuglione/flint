@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,128 | 336 | 1,871 | 15,086 |
+| framework | openjdk@21.0.13 | 1,132 | 339 | 1,871 | 15,079 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -216,6 +216,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.math.BigInteger` | `flint.java.math.BigInteger` | A null byte-array argument counts as empty under R26. Java throws NullPointerException. |
 | framework | `java.math.RoundingMode` | `flint.java.math.roundingmode.RoundingMode` | A null name counts as empty text under R26. Java throws NullPointerException. |
 | framework | `java.nio.ByteBuffer#asCharBuffer()` | `flint.java.nio.bytebuffer.ByteBuffer.asCharBuffer` | Final in Flint because construction is package-internal in both Java and Flint. |
+| framework | `java.nio.file.InvalidPathException` | `flint.java.nio.file.InvalidPathException` | Null input and reason strings count as empty under R26. |
 | framework | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.TimeDefinition` | A null name counts as empty (R26). Java throws NullPointerException. |
 | framework | `java.util.regex.Pattern` | `flint.java.util.regex.Pattern` | Under R26, a null expression or input slice counts as empty text. Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
@@ -2302,6 +2303,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.charset.CodingErrorAction#IGNORE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.IGNORE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction#REPLACE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.REPLACE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction#REPORT` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.REPORT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+
+#### java.nio.file
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.nio.file.InvalidPathException#<init>(String,String)` | `flint.java.nio.file.InvalidPathException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.file.InvalidPathException#<init>(String,String,int)` | `flint.java.nio.file.InvalidPathException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.file.InvalidPathException#getMessage()` | `flint.java.nio.file.InvalidPathException.getMessage` | [D-JDK-3](api-mapping.md#deviations) |  |
 
 #### java.sql
 
@@ -10525,7 +10534,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 98 | 0 |
 | java.nio.charset.spi | 0 | 4 |
-| java.nio.file | 285 | 0 |
+| java.nio.file | 278 | 0 |
 | java.nio.file.attribute | 137 | 0 |
 | java.nio.file.spi | 0 | 35 |
 | java.security | 663 | 0 |

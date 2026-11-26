@@ -3,6 +3,7 @@
  "types": {
   "java.io.InterruptedIOException": "flint.java.io.interruptedioexception",
   "java.io.UnsupportedEncodingException": "flint.java.io.unsupportedencodingexception",
+  "java.lang.Number": "flint.java.lang.number",
   "java.nio.Buffer": "flint.java.nio.buffer",
   "java.nio.BufferOverflowException": "flint.java.nio.bufferoverflowexception",
   "java.nio.BufferUnderflowException": "flint.java.nio.bufferunderflowexception",

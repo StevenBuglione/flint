@@ -1,0 +1,8 @@
+Flint Java NIO File
+Copyright 2026 The Flint authors
+
+This package ports parts of Java SE 21's java.nio.file API from OpenJDK 21.0.13.
+Original conformance tests use reference results from the same Java SE API.
+
+SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
+See LICENSE for the license and Classpath Exception.
