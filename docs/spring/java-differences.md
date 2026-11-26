@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
 | boot | spring-boot@v4.2.0 | 44 | 50 | 2,133 | 13,376 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,555 | 1,451 | 4,870 | 29,958 |
+| framework | spring-framework@v7.1.0 | 3,555 | 1,447 | 4,870 | 29,962 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2453,14 +2453,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.ListableBeanFactory#getBeansWithAnnotation(Class)` | `flint.beans.factory.ListableBeanFactory.getBeansWithAnnotation` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.NoSuchBeanDefinitionException#<init>(Class)` | `flint.beans.factory.NoSuchBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.NoSuchBeanDefinitionException#<init>(Class,String)` | `flint.beans.factory.NoSuchBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.NoSuchBeanDefinitionException#<init>(ResolvableType)` | `flint.beans.factory.NoSuchBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.NoSuchBeanDefinitionException#<init>(ResolvableType,String)` | `flint.beans.factory.NoSuchBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(Class,Collection)` | `flint.beans.factory.NoUniqueBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(Class,Collection,String)` | `flint.beans.factory.NoUniqueBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(Class,String...)` | `flint.beans.factory.NoUniqueBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(Class,int,String)` | `flint.beans.factory.NoUniqueBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(ResolvableType,Collection)` | `flint.beans.factory.NoUniqueBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(ResolvableType,String...)` | `flint.beans.factory.NoUniqueBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.beans.factory.support
 
@@ -9774,7 +9770,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aot | 4 | 0 |
 | org.springframework.aot.nativex | 8 | 0 |
 | org.springframework.beans | 334 | 0 |
-| org.springframework.beans.factory | 132 | 0 |
+| org.springframework.beans.factory | 136 | 0 |
 | org.springframework.beans.factory.annotation | 105 | 0 |
 | org.springframework.beans.factory.aot | 123 | 0 |
 | org.springframework.beans.factory.config | 486 | 0 |
@@ -10645,6 +10641,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.beans.factory.BeanFactory#isTypeMatch(String,ResolvableType)` | 2 | Requires runtime ResolvableType matching. |
 | framework | `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(ResolvableType)` | 2 | Requires runtime ResolvableType matching. |
 | framework | `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(ResolvableType,boolean,boolean)` | 2 | Requires runtime ResolvableType matching. |
+| framework | `org.springframework.beans.factory.NoSuchBeanDefinitionException#<init>(ResolvableType)` | 2 | Requires retaining the full ResolvableType for the type accessors. |
+| framework | `org.springframework.beans.factory.NoSuchBeanDefinitionException#<init>(ResolvableType,String)` | 2 | Requires retaining the full ResolvableType for the type accessors. |
+| framework | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(ResolvableType,Collection)` | 2 | Requires retaining the full ResolvableType for the inherited type accessors. |
+| framework | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(ResolvableType,String...)` | 2 | Requires retaining the full ResolvableType for the inherited type accessors. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(ResolvableType)` | 2 | Requires ResolvableType, which is classified as runtime reflection. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(String,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
