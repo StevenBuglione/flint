@@ -302,7 +302,7 @@ final class JsonFactory
             auto known = atomicLoad(*slot);
             if (known is null)
             {
-                auto name = new InternedName(text.idup);
+                auto name = new InternedName(copyName(text));
                 if (cas(slot, cast(InternedName) null, name))
                     return name.text;
                 known = atomicLoad(*slot);
@@ -310,7 +310,13 @@ final class JsonFactory
             if (known.text == text)
                 return known.text;
         }
-        return text.idup;
+        return copyName(text);
+    }
+
+    private static string copyName(scope const(char)[] text) pure nothrow
+    {
+        // D's idup of an empty slice can be null, which a context uses for an absent name.
+        return text.length == 0 ? "" : text.idup;
     }
 
     // Recycled generators: a bounded pool of slots taken and returned with compare-and-swap, so reactor threads

@@ -379,20 +379,24 @@ abstract class TokenStreamContext
         _currentValue = v;
     }
 
-    /// The path from the root as a JSON Pointer (`/visits/0/date`), for reporting.
-    final string pathAsPointer() const pure nothrow
+    /// Whether this object or array context has advanced to a path segment.
+    bool hasPathSegment() const pure nothrow @nogc
     {
-        import flint.engine.aot.text : decimal;
+        if (inObject())
+            return hasCurrentName();
+        return inArray() && hasCurrentIndex();
+    }
 
-        if (_parent is null || inRoot())
-            return "";
-        // As JsonPointer.forPath: a segment only once the context has a name or an index.
-        string step;
-        if (inObject() && _currentName !is null)
-            step = "/" ~ _currentName;
-        else if (inArray() && _index >= 0)
-            step = "/" ~ decimal(_index);
-        return _parent.pathAsPointer() ~ step;
+    /// The path from the root as a JSON Pointer, for reporting.
+    final JsonPointer pathAsPointer()
+    {
+        return JsonPointer.forPath(this, false);
+    }
+
+    /// The path from the root, optionally prefixed by the root value's index.
+    final JsonPointer pathAsPointer(bool includeRoot)
+    {
+        return JsonPointer.forPath(this, includeRoot);
     }
 
     /// The enclosing context, maintained by subclasses.
@@ -456,6 +460,16 @@ class JsonPointer
         import flint.engine.aot.objects : statelessInstance;
 
         return statelessInstance!EmptyJsonPointer();
+    }
+
+    /// A pointer to the current stream position, optionally including the root value's index.
+    static JsonPointer forPath(TokenStreamContext context, bool includeRoot)
+    {
+        if (context is null)
+            return empty();
+        if (!context.hasPathSegment() && !(includeRoot && context.inRoot() && context.hasCurrentIndex()))
+            context = context.getParent();
+        return compile(contextExpression(context, includeRoot));
     }
 
     /// Length of this expression in Java UTF-16 code units (R14).
@@ -731,26 +745,69 @@ private char[] join(string first, string second, string third, string fourth = n
 
 private char[] appendEscapedProperty(string prefix, string propertyName) pure nothrow
 {
-    size_t length = prefix.length + 1 + propertyName.length;
+    auto expression = jsonTextBuffer(prefix.length + pointerPropertyWidth(propertyName));
+    expression[0 .. prefix.length] = prefix;
+    size_t end = expression.length;
+    writePointerProperty(expression, end, propertyName);
+    return expression;
+}
+
+private size_t pointerPropertyWidth(string propertyName) pure nothrow @nogc
+{
+    size_t width = 1 + propertyName.length;
     foreach (value; propertyName)
         if (value == JsonPointer.SEPARATOR || value == JsonPointer.ESC)
-            ++length;
+            ++width;
+    return width;
+}
 
-    auto expression = jsonTextBuffer(length);
-    expression[0 .. prefix.length] = prefix;
-    size_t written = prefix.length;
-    expression[written++] = JsonPointer.SEPARATOR;
-    foreach (value; propertyName)
+private void writePointerProperty(scope char[] expression, ref size_t end, string propertyName) pure nothrow @nogc
+{
+    foreach_reverse (value; propertyName)
     {
         if (value == JsonPointer.SEPARATOR || value == JsonPointer.ESC)
         {
-            expression[written++] = JsonPointer.ESC;
-            expression[written++] = value == JsonPointer.SEPARATOR ? '1' : '0';
+            expression[--end] = value == JsonPointer.SEPARATOR ? '1' : '0';
+            expression[--end] = JsonPointer.ESC;
         }
         else
-            expression[written++] = value;
+            expression[--end] = value;
     }
-    return expression;
+    expression[--end] = JsonPointer.SEPARATOR;
+}
+
+private string contextExpression(TokenStreamContext context, bool includeRoot) pure nothrow
+{
+    size_t capacity;
+    for (auto current = context; current !is null; current = current.getParent())
+    {
+        if (current.inObject())
+            capacity += pointerPropertyWidth(current.currentName());
+        else if (current.inArray() || includeRoot)
+            capacity += 11; // The separator and up to ten digits of a nonnegative int.
+    }
+    if (capacity == 0)
+        return "";
+
+    auto expression = jsonTextBuffer(capacity);
+    size_t end = capacity;
+    for (auto current = context; current !is null; current = current.getParent())
+    {
+        if (current.inObject())
+            writePointerProperty(expression, end, current.currentName());
+        else if (current.inArray() || includeRoot)
+        {
+            auto index = cast(uint) current.getCurrentIndex();
+            do
+            {
+                expression[--end] = cast(char)('0' + index % 10);
+                index /= 10;
+            }
+            while (index != 0);
+            expression[--end] = JsonPointer.SEPARATOR;
+        }
+    }
+    return expression[end .. $].idup;
 }
 
 private int readPointerIndex(string propertyName) pure nothrow @nogc

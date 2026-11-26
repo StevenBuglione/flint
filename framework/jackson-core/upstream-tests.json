@@ -590,8 +590,16 @@
       "status": "ported"
     },
     "tools/jackson/core/unittest/jsonptr/PointerFromContextTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/pointer_from_context_test.d",
+      "methods": {
+        "ported": [
+          "testGeneratorWithRoot",
+          "testParserWithRoot",
+          "testViaGenerator",
+          "testViaParser"
+        ]
+      },
+      "status": "ported"
     },
     "tools/jackson/core/unittest/read/AposUnescapedControlChars1750Test.java": {
       "phase": "2",

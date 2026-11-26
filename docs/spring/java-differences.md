@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 518 | 21 | 1 | 2,755 |
+| framework | jackson-core@3.1.8 | 518 | 23 | 1 | 2,753 |
 | framework | jackson-databind@3.1.8 | 608 | 61 | 5 | 9,793 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -4165,6 +4165,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.core.JsonPointer#hashCode()` | `flint.jackson.core.JsonPointer.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) | Also supplies the D toHash method. |
 | `tools.jackson.core.StreamWriteConstraints.Builder#maxNestingDepth(int)` | `flint.jackson.core.StreamWriteConstraints.Builder.maxNestingDepth` | [R8](api-mapping.md#r8-exceptions) |  |
 | `tools.jackson.core.TokenStreamContext#assignCurrentValue(Object)` | `flint.jackson.core.TokenStreamContext.assignCurrentValue` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.core.TokenStreamContext#pathAsPointer()` | `flint.jackson.core.TokenStreamContext.pathAsPointer` | [D-JACKSON-11](api-mapping.md#deviations) | Returns the JsonPointer for the current position. |
+| `tools.jackson.core.TokenStreamContext#pathAsPointer(boolean)` | `flint.jackson.core.TokenStreamContext.pathAsPointer` | [D-JACKSON-11](api-mapping.md#deviations) | Returns the JsonPointer, with an optional root-value index. |
 
 #### tools.jackson.core.exc
 
@@ -10153,7 +10155,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
-| tools.jackson.core | 597 | 0 |
+| tools.jackson.core | 595 | 0 |
 | tools.jackson.core.async | 7 | 0 |
 | tools.jackson.core.base | 363 | 0 |
 | tools.jackson.core.exc | 11 | 0 |

@@ -321,8 +321,9 @@ unittest
     assert(p.nextToken() == JsonToken.END_OBJECT);
     assert(p.nextToken() == JsonToken.PROPERTY_NAME);
     assert(p.nextToken() == JsonToken.START_ARRAY && p.currentName() == "pets");
-    assert(p.streamReadContext().pathAsPointer() == "/pets");
-    assert(p.nextToken() == JsonToken.VALUE_NUMBER_INT && p.streamReadContext().pathAsPointer() == "/pets/0");
+    assert(p.streamReadContext().pathAsPointer().toString() == "/pets");
+    assert(p.nextToken() == JsonToken.VALUE_NUMBER_INT);
+    assert(p.streamReadContext().pathAsPointer().toString() == "/pets/0");
 }
 
 // ArrayParsingTest

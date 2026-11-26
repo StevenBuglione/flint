@@ -1,5 +1,5 @@
 {
  "id": "D-JACKSON-11",
- "deviation": "`JsonNode.requiredAt(String)` is final. Subclasses can override the protected `_at(JsonPointer)` traversal hook.",
- "reason": "No Jackson 3.1.8 subclass overrides the string overload. Moving it out of the vtable lets the linker discard unused pointer compilation and removes 4,880 loadable bytes from gs-rest-service and 4,184 from petclinic-rest in matched Oz builds."
+ "deviation": "`JsonNode.requiredAt(String)` is final. Subclasses can override the protected `_at(JsonPointer)` traversal hook. Both `TokenStreamContext.pathAsPointer()` and `TokenStreamContext.pathAsPointer(boolean)` are final and return `JsonPointer`.",
+ "reason": "No Jackson 3.1.8 subclass overrides the string overload. Moving it out of the vtable lets the linker discard unused pointer compilation and removes 4,880 loadable bytes from gs-rest-service and 4,184 from petclinic-rest in matched Oz builds. Jackson 3.1.8 also has no subclass overrides of the two context overloads. Keeping these accessors out of the context vtables allows apps to discard their pointer code when they do not call the accessors."
 }
