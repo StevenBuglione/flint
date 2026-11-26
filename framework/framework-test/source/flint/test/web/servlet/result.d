@@ -17,12 +17,15 @@ module flint.test.web.servlet.result;
 import flint.http : HttpHeaders, HttpStatus, MediaType;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : canonicalTypeName, typeNameOf;
+import flint.engine.aot.text : decimal;
 import flint.jakarta.servlet.http : Cookie;
+import flint.java.io : IOException;
 import flint.java.lang : AssertionError, Boolean, IllegalStateException, Integer, Long, String, valueOf;
 import flint.java.nio.charset : Charset;
 import flint.test.json : JsonComparator, JsonCompareMode, JsonComparison;
 import flint.test.util : AssertionErrors, JsonPathExpectationsHelper;
 import flint.test.web.servlet : MvcResult, ResultHandler, ResultMatcher;
+import flint.test.web.sys.output : writeStandardOutput;
 import flint.util : AntPathMatcher;
 import flint.validation : BindingResult, Errors;
 import flint.web.method : HandlerMethod;
@@ -1378,10 +1381,9 @@ final class PrintingResultHandler : ResultHandler
         return lastText;
     }
 
+    /// Throws `IOException` if standard output cannot accept the report.
     void handle(MvcResult result)
     {
-        import std.conv : to;
-
         auto request = result.getRequest();
         auto response = result.getResponse();
         immutable(char)[] text;
@@ -1434,7 +1436,7 @@ final class PrintingResultHandler : ResultHandler
         auto ex = result.getResolvedException();
         line("Type", ex is null ? "null" : typeid(ex).name);
         heading("MockHttpServletResponse");
-        line("Status", response.getStatus().to!(immutable(char)[]));
+        line("Status", decimal(response.getStatus()));
         line("Error message", response.getErrorMessage() is null ? "null" : response.getErrorMessage());
         line("Headers", headersText(response.getHeaderNames(), (n) => response.getHeaders(n)));
         line("Content type", response.getContentType() is null ? "null" : response.getContentType());
@@ -1443,12 +1445,8 @@ final class PrintingResultHandler : ResultHandler
         line("Redirected URL", response.getRedirectedUrl() is null ? "null" : response.getRedirectedUrl());
         line("Cookies", "[]");
         lastText = text;
-        if (!quiet)
-        {
-            import std.stdio : write;
-
-            write(text);
-        }
+        if (!quiet && !writeStandardOutput(text))
+            throw new IOException("Could not write MockMvc result to standard output");
     }
 
     private static immutable(char)[] handlerType(Object handler)
