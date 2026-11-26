@@ -42614,6 +42614,8 @@
 "org.thymeleaf.templateresolver.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.thymeleaf.templateresource.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.thymeleaf.util.**":{"status":"excluded","category":"deferred","phase":"2"},
+"org.thymeleaf.util.LoggingUtils":{"status":"ported","d":"flint.thymeleaf.util.LoggingUtils"},
+"org.thymeleaf.util.LoggingUtils#loggifyTemplateName(String)":{"status":"adapted","d":"flint.thymeleaf.util.LoggingUtils.loggifyTemplateName","rules":["R5","R14"],"note":"Nullable preserves null separately from an empty name. Truncation uses Java UTF-16 units and emits U+FFFD for a split surrogate."},
 "org.thymeleaf.util.ObjectUtils":{"status":"ported","d":"flint.thymeleaf.util.ObjectUtils"},
 "org.thymeleaf.util.ObjectUtils#nullSafe(T,T)":{"status":"adapted","d":"flint.thymeleaf.util.ObjectUtils.nullSafe","rules":["R5","R23"],"note":"A default-initialized D string or slice remains empty. Use Nullable when null must select the fallback."},
 "org.thymeleaf.util.temporal.**":{"status":"excluded","category":"deferred","phase":"2"},

@@ -19,6 +19,8 @@
  */
 module flint.thymeleaf.util;
 
+public import flint.thymeleaf.util.loggingutils : LoggingUtils;
+
 import flint.engine.aot.any : Any;
 import std.typecons : Nullable;
 
