@@ -85,11 +85,50 @@ package(flint.data) interface PersistentPropertyType
     ClassRef getType();
 }
 
+package(flint.data) enum PrimitivePropertyKind
+{
+    reference,
+    numeric,
+    boolean,
+    character,
+}
+
+package(flint.data) PrimitivePropertyKind primitivePropertyKind(ClassRef type) pure nothrow @nogc
+{
+    switch (type.name)
+    {
+    case classOf!byte.name:
+    case classOf!short.name:
+    case classOf!int.name:
+    case classOf!long.name:
+    case classOf!float.name:
+    case classOf!double.name:
+        return PrimitivePropertyKind.numeric;
+    case classOf!bool.name:
+        return PrimitivePropertyKind.boolean;
+    case classOf!char.name:
+    case classOf!wchar.name:
+    case classOf!dchar.name:
+        return PrimitivePropertyKind.character;
+    default:
+        return PrimitivePropertyKind.reference;
+    }
+}
+
 /// Describes a property of a persistent entity.
 interface PersistentProperty(P) : PersistentPropertyType
 {
     /// The name of this property.
     string getName();
+
+    /// Whether this property is the identifier.
+    bool isIdProperty();
+
+    /// Whether this property is the optimistic locking version.
+    bool isVersionProperty();
+
+    /// Whether this property is excluded from ordinary persistence mapping.
+    bool isTransient();
 }
 
 // The repository adapter uses the same metadata without retaining the property type parameter.
@@ -118,6 +157,9 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
 
     /// The metadata for the entity's domain type.
     TypeInformation getTypeInformation();
+
+    /// The registered type alias, or Alias.NONE when absent.
+    Alias getTypeAlias();
 
     /// Supplies the default required-identifier property check (R3).
     mixin template Defaults(PropertyType = P)

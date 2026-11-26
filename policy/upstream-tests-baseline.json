@@ -1648,7 +1648,6 @@
       "org/springframework/data/mapping/context/PropertyMatchUnitTests.java",
       "org/springframework/data/mapping/model/AbstractPersistentPropertyUnitTests.java",
       "org/springframework/data/mapping/model/AnnotationBasedPersistentPropertyUnitTests.java",
-      "org/springframework/data/mapping/model/BasicPersistentEntityUnitTests.java",
       "org/springframework/data/mapping/model/CachingValueExpressionEvaluatorFactoryUnitTests.java",
       "org/springframework/data/mapping/model/CamelCaseAbbreviatingFieldNamingStrategyUnitTests.java",
       "org/springframework/data/mapping/model/ClassGeneratingEntityInstantiatorUnitTests.java",

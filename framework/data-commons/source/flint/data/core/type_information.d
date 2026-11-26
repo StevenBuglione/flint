@@ -91,6 +91,15 @@ private const(Descriptor) requireDescriptor(const(DescriptorTable) descriptors, 
     return descriptor;
 }
 
+// Reads the known metadata without looking up a runtime type.
+package(flint.data) const(Descriptor) registeredDescriptor(TypeInformation information, string name = null)
+{
+    auto known = cast(TypeDiscoverer) information;
+    if (known is null)
+        return null;
+    return name is null ? known.descriptor : known.descriptors.find(name);
+}
+
 private final class TypeDiscoverer : TypeInformation
 {
     private const(DescriptorTable) descriptors;

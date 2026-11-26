@@ -7,7 +7,7 @@
 module flint.data.repository.core.support;
 
 import flint.data.domain.persistable : NullableId;
-import flint.data.mapping : PersistentEntity, PersistentEntityIdentity;
+import flint.data.mapping : PersistentEntity, PersistentEntityIdentity, PrimitivePropertyKind, primitivePropertyKind;
 import flint.data.repository.core : EntityInformation;
 import flint.engine.aot.any : Any;
 import flint.java.classref : ClassRef, classOf;
@@ -97,26 +97,19 @@ abstract class AbstractEntityInformation(T, ID) : EntityInformation!(T, ID)
 private bool isNewIdentifier(ClassRef idType, bool missing, bool numeric = false, bool zero = false)
 {
     string name = idType.name;
-    switch (name)
+    final switch (primitivePropertyKind(idType))
     {
-    case classOf!byte.name:
-    case classOf!short.name:
-    case classOf!int.name:
-    case classOf!long.name:
-    case classOf!float.name:
-    case classOf!double.name:
+    case PrimitivePropertyKind.numeric:
         if (numeric)
             return zero;
         break;
-    case classOf!bool.name:
+    case PrimitivePropertyKind.boolean:
         name = "boolean";
         break;
-    case classOf!char.name:
-    case classOf!wchar.name:
-    case classOf!dchar.name:
+    case PrimitivePropertyKind.character:
         name = "char";
         break;
-    default:
+    case PrimitivePropertyKind.reference:
         return missing;
     }
     throw new IllegalArgumentException("Unsupported primitive id type " ~ name);

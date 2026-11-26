@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-12",
+ "deviation": "BasicPersistentEntity binds identifier and version readers from registered descriptors and rejects duplicate identifier or version registration before adding the property.",
+ "reason": "Flint uses explicit closed-world type descriptors under R4. Early validation keeps the persistent metadata consistent when callers handle a mapping exception."
+}

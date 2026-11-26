@@ -6,7 +6,8 @@ module persistent_entity_information_tests;
 
 import flint.data.annotation : Id;
 import flint.data.core : TypeInformation;
-import flint.data.mapping : IdentifierAccessor, PersistentEntity, PersistentProperty, TargetAwareIdentifierAccessor;
+import flint.data.mapping : Alias, IdentifierAccessor, PersistentEntity, PersistentProperty,
+    TargetAwareIdentifierAccessor;
 import flint.data.repository.core : EntityInformation;
 import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
@@ -51,6 +52,24 @@ private final class MappedProperty : PersistentProperty!MappedProperty
     override ClassRef getType()
     {
         return declaredType;
+    }
+
+    override bool isIdProperty()
+    {
+        foreach (ref annotation; property.annotations)
+            if (annotation.type == classOf!Id.name)
+                return true;
+        return false;
+    }
+
+    override bool isVersionProperty()
+    {
+        return false;
+    }
+
+    override bool isTransient()
+    {
+        return false;
     }
 
     Any read(ref Any bean)
@@ -123,6 +142,11 @@ private final class MappedEntity(T) : PersistentEntity!(T, MappedProperty)
     override TypeInformation getTypeInformation()
     {
         return typeInformation;
+    }
+
+    override Alias getTypeAlias()
+    {
+        return Alias.NONE;
     }
 
     override MappedProperty getIdProperty()

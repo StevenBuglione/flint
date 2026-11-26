@@ -671,8 +671,40 @@
       "status": "deferred"
     },
     "org/springframework/data/mapping/model/BasicPersistentEntityUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/basic_persistent_entity_tests.d",
+      "methods": {
+        "ported": [
+          "addingAndIdPropertySetsIdPropertyInternally",
+          "considersComparatorForPropertyOrder",
+          "rejectsIdPropertyIfAlreadySet",
+          "rejectsNullProperty",
+          "rejectsNullTypeInformation",
+          "returnsNullForTypeAliasIfNoneConfigured",
+          "returnsTypeAliasIfAnnotated",
+          "supportsPersistableViaIdentifierAccessor"
+        ],
+        "skipped": {
+          "assertInvariants": "The MutablePersistentEntity interface and environment contract remain deferred.",
+          "detectsImmutableEntity": "Entity immutability metadata remains deferred.",
+          "detectsPropertyWithAnnotation": "Lookup of persistent properties by annotation remains deferred.",
+          "doWithAllInvokesPropertyHandlerForBothAPropertiesAndAssociations": "Association registration and combined property traversal remain deferred.",
+          "exposesPropertyPopulationNotRequired": "Creator and property-population metadata remain deferred.",
+          "exposesPropertyPopulationRequired": "Creator and property-population metadata remain deferred.",
+          "findAnnotationShouldBeThreadSafe": "General entity annotation lookup remains deferred.",
+          "getRequiredAnnotationReturnsAnnotation": "General entity annotation lookup remains deferred.",
+          "getRequiredAnnotationThrowsException": "General entity annotation lookup remains deferred.",
+          "includesTransientProperty": "Automatic discovery and mapping of transient properties in entity contexts remain deferred.",
+          "invalidBeanAccessCreatesDescriptiveErrorMessage": "General persistent-property accessor remains deferred.",
+          "rejectsNonMatchingBeanForPropertyAccessor": "General persistent-property accessor remains deferred.",
+          "rejectsNullAssociation": "Association registration remains deferred.",
+          "rejectsNullBeanForPropertyAccessor": "General persistent-property accessor remains deferred.",
+          "reportsRequiredPropertyName": "Required persistent-property lookup remains deferred.",
+          "returnsGeneratedPropertyAccessorForPropertyAccessor": "Mapping context and generated property accessors remain deferred.",
+          "returnsTypeAliasIfAnnotatedUsingComposedAnnotation": "The composed TypeAlias annotation fixture remains deferred.",
+          "supportsSubtypeInstancesOnPropertyAccessorLookup": "General persistent-property accessor remains deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/mapping/model/CachingValueExpressionEvaluatorFactoryUnitTests.java": {
       "phase": "2",
