@@ -337,3 +337,29 @@ unittest
     assert(format.toPattern() == "'stable:'yyyy");
     assert(format.format(new Date(0)) == "stable:1970");
 }
+
+@("SimpleDateFormat validates an adjacent pattern letter before a pending ISO zone run")
+unittest
+{
+    import flint.java.lang : IllegalArgumentException;
+
+    auto format = new SimpleDateFormat("'stable:'yyyy", Locale.US);
+    const date = new Date(0);
+    format.setTimeZone(TimeZone.getTimeZone("UTC"));
+    const patterns = ["XXXXQ", "XXXXXXXXXXl", "XXXXyQ", "XXXX Q", "XXXX'Q", "XXXXéQ"];
+    const errors = [
+        "Illegal pattern character 'Q'", "Illegal pattern character 'l'",
+        "invalid ISO 8601 format: length=4", "invalid ISO 8601 format: length=4",
+        "invalid ISO 8601 format: length=4", "invalid ISO 8601 format: length=4"
+    ];
+    foreach (i, pattern; patterns)
+    {
+        string message;
+        try
+            format.applyPattern(pattern);
+        catch (IllegalArgumentException e)
+            message = e.msg;
+        assert(message == errors[i], "wrong pattern failure precedence");
+        assert(format.toPattern() == "'stable:'yyyy" && format.format(date) == "stable:1970");
+    }
+}
