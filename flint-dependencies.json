@@ -431,6 +431,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-zip": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:jdbc": {
       "repo": "framework",
       "version": "monorepo"
