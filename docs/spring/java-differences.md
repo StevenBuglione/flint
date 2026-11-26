@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 229 | 173 | 0 | 3,580 |
+| data-commons | spring-data-commons@4.2.0 | 234 | 184 | 0 | 3,564 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -985,6 +985,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.data.mapping.Alias` | `flint.data.mapping.Alias` | [D-DATA-11](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.Alias#NONE` | `flint.data.mapping.Alias.NONE` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) |  |
+| `org.springframework.data.mapping.Alias#empty()` | `flint.data.mapping.Alias.empty` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) |  |
+| `org.springframework.data.mapping.Alias#equals(Object)` | `flint.data.mapping.Alias.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.data.mapping.Alias#getRequiredValue()` | `flint.data.mapping.Alias.getRequiredValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.Alias#getValue()` | `flint.data.mapping.Alias.getValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.Alias#hasValue(Object)` | `flint.data.mapping.Alias.hasValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.Alias#hashCode()` | `flint.data.mapping.Alias.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.data.mapping.Alias#mapTyped(Class)` | `flint.data.mapping.Alias.mapTyped` | [R4](api-mapping.md#r4-classt-parameters), [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.Alias#of(Object)` | `flint.data.mapping.Alias.of` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.Alias#ofNullable(Object)` | `flint.data.mapping.Alias.ofNullable` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.IdentifierAccessor#getIdentifier()` | `flint.data.mapping.IdentifierAccessor.getIdentifier` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.IdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.IdentifierAccessor.getRequiredIdentifier` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.MappingException#<init>(String)` | `flint.data.mapping.MappingException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -10101,7 +10112,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.geo.format | 11 | 0 |
 | org.springframework.data.history | 42 | 0 |
 | org.springframework.data.javapoet | 69 | 0 |
-| org.springframework.data.mapping | 185 | 0 |
+| org.springframework.data.mapping | 169 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
 | org.springframework.data.mapping.model | 220 | 0 |

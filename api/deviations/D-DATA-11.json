@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-11",
+ "deviation": "Alias has a private constructor and two private implementations. The fieldless empty implementation supplies the shared Alias.NONE under R17.",
+ "reason": "Flint's allocation-free shared object support accepts classes without fields. The private constructor keeps the abstract base closed to clients."
+}

@@ -1,4 +1,5 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,TargetAwareIdentifierAccessor}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,TargetAwareIdentifierAccessor}.java
+// Alias: Copyright 2016-present the original author or authors.
 // IdentifierAccessor: Copyright 2014-present the original author or authors.
 // MappingException, PersistentEntity and PersistentProperty: Copyright 2011-present the original author or authors.
 // TargetAwareIdentifierAccessor: Copyright 2017-present the original author or authors.
@@ -7,9 +8,13 @@
 module flint.data.mapping;
 
 import flint.data.core : TypeInformation;
+import flint.data.domain.persistable : NullableId;
 import flint.engine.aot.any : Any;
-import flint.java.classref : ClassRef;
-import flint.java.lang : IllegalStateException, Iterable, RuntimeException, String;
+import flint.engine.aot.objects : statelessInstance;
+import flint.java.classref : ClassRef, classOf;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, Iterable, JavaObject,
+    NullPointerException, RuntimeException, String;
+import flint.java.util : NoSuchElementException, Objects;
 import std.typecons : Nullable;
 
 @safe:
@@ -126,4 +131,217 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
             return identifier;
         }
     }
+}
+
+/// An immutable, optionally present type alias.
+abstract class Alias
+{
+    private this() pure nothrow @nogc
+    {
+    }
+
+    /// The shared absent alias (R17).
+    static Alias NONE() nothrow @nogc
+    {
+        return statelessInstance!EmptyAlias();
+    }
+
+    /// Wraps a present alias.
+    static Alias of(Any value)
+    {
+        if (value.isNull())
+            throw new IllegalArgumentException("Alias must not be null");
+        return new PresentAlias(value);
+    }
+
+    /// Wraps a present alias or returns the shared empty instance.
+    static Alias ofNullable(Any value)
+    {
+        return value.isNull() ? NONE : new PresentAlias(value);
+    }
+
+    /// The shared absent alias.
+    static Alias empty() nothrow @nogc
+    {
+        return NONE;
+    }
+
+    /// Whether this alias has a value that differs from the other alias.
+    bool isPresentButDifferent(Alias other)
+    {
+        if (other is null)
+            throw new IllegalArgumentException("Other alias must not be null");
+        auto value = getValue();
+        return !value.isNull() && !equalAliasValues(value, other.getValue());
+    }
+
+    /// Whether this alias has the specified value.
+    bool hasValue(Any that)
+    {
+        auto value = getValue();
+        return !value.isNull() && equalAliasValues(value, that);
+    }
+
+    /// Whether both aliases have the same present value.
+    bool hasSamePresentValueAs(Alias other)
+    {
+        auto value = getValue();
+        if (value.isNull())
+            return false;
+        if (other is null)
+            throw new NullPointerException("Other alias must not be null");
+        return equalAliasValues(value, other.getValue());
+    }
+
+    /// Whether an alias value is present.
+    bool isPresent() nothrow @nogc
+    {
+        return !getValue().isNull();
+    }
+
+    /// Whether the alias is absent.
+    bool isEmpty() nothrow @nogc
+    {
+        return getValue().isNull();
+    }
+
+    /// The value if it has the requested type, with ordinary subtype checks for references.
+    NullableId!T mapTyped(T)()
+    {
+        auto value = getValue();
+        static if (is(T == Any))
+            return value.isNull() ? NullableId!T.init : NullableId!T(value);
+        else static if (is(T == class) || is(T == interface))
+            return cast(T) value.asObject();
+        else
+            return value.isNull() || value.typeName() != classOf!T.name ? NullableId!T.init
+                : NullableId!T(value.get!T);
+    }
+
+    /// The alias value, or Any.init when absent.
+    abstract Any getValue() nothrow @nogc;
+
+    /// The alias value, or a NoSuchElementException when absent.
+    Any getRequiredValue()
+    {
+        auto value = getValue();
+        if (value.isNull())
+            throw new NoSuchElementException("No value present");
+        return value;
+    }
+
+    /// Value equality, including shared absence.
+    bool equals(Object other)
+    {
+        if (this is other)
+            return true;
+        auto aliasValue = cast(Alias) other;
+        return aliasValue !is null && equalAliasValues(getValue(), aliasValue.getValue());
+    }
+
+    /// The hash of the held value, or zero for absence.
+    int hashCode()
+    {
+        auto value = getValue();
+        if (value.isNull())
+            return 0;
+        if (auto object = value.asObject())
+            return Objects.hashCode(object);
+        return hashAliasValue(value);
+    }
+
+    /// The value's Java string representation, or NONE for absence.
+    override string toString()
+    {
+        auto value = getValue();
+        if (value.isNull())
+            return "NONE";
+        if (value.typeName() == "string")
+            return value.get!string;
+        return String.format("%s", value);
+    }
+
+    mixin JavaObject;
+}
+
+private final class EmptyAlias : Alias
+{
+    override Any getValue() nothrow @nogc
+    {
+        return Any.init;
+    }
+}
+
+private final class PresentAlias : Alias
+{
+    private Any value;
+
+    this(Any value) nothrow @nogc
+    {
+        this.value = value;
+    }
+
+    override Any getValue() nothrow @nogc
+    {
+        return value;
+    }
+}
+
+private bool equalAliasValues(Any left, Any right)
+{
+    if (left.isNull() || right.isNull())
+        return left.isNull() && right.isNull();
+    auto lhs = left.asObject();
+    auto rhs = right.asObject();
+    if (lhs !is null || rhs !is null)
+        return Objects.equals(lhs, rhs);
+    const type = left.typeName();
+    if (type != right.typeName())
+        return false;
+    if (type == "float" || type == "double")
+    {
+        const x = left.get!double;
+        const y = right.get!double;
+        return x != x ? y != y : x == y && (x != 0 || Objects.hashCode(x) == Objects.hashCode(y));
+    }
+    return left == right;
+}
+
+private int hashAliasValue(Any value)
+{
+    switch (value.typeName())
+    {
+    case "string":
+        return Objects.hashCode(value.get!string);
+    case "bool":
+        return Objects.hashCode(value.get!bool);
+    case "long", "ulong":
+        return Objects.hashCode(value.typeName() == "long"
+                ? cast(ulong) value.get!long : value.get!ulong);
+    case "double":
+        return Objects.hashCode(value.get!double);
+    case "float":
+        return hashAliasFloat(value.get!float);
+    default:
+        if (value.holds!long())
+            return cast(int) value.get!long;
+        if (value.holds!dchar())
+            return cast(int) value.get!dchar;
+        return cast(int) value.toHash();
+    }
+}
+
+private int hashAliasFloat(float number) pure nothrow @nogc
+{
+    if (number != number)
+        return 0x7fc0_0000;
+    union FloatBits
+    {
+        float number;
+        int bits;
+    }
+
+    FloatBits bits;
+    bits.number = number;
+    return bits.bits;
 }
