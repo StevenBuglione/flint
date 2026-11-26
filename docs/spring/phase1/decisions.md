@@ -1249,3 +1249,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Decision:** module probes use the release profile's link flags. proof-harness makes the change.
   - **Re-baseline:** every module's linked-byte cap is re-baselined once, on the same machine, at the new measurement plus 10%, and never above its old cap. The commit carries `Budget-Raise-Approved: probe-flags-rebaseline` and a before/after table for every module. Template caps are unchanged, because templates don't depend on link flags.
   - **Until it lands:** slices whose probe growth comes from ModuleInfo retention wait, unless their release-flag growth fits the existing rules. sol-boot's report slice waits.
+- 2026-11-26 05:10Z, coordinator, under the owner's standing approval: **Java package cycles that D cannot express** (sol-observability: Micrometer `Timer` → `HistogramSupport` → `Meter`).
+  - **The pattern:** declarations may live in an internal leaf module. The canonical module re-exports them with selective `public import leaf : Name, ...` of exactly those symbols. There are no wildcard re-exports and no `package.d` aggregators.
+  - **Why no deviation is needed:** R1 governs the import path a developer writes, and that path is unchanged.
+  - **Records:** `mapping.json` records the canonical path, and an import test compiles code that uses only the Java-shaped imports. flint-aot confirms that descriptors and diagnostics show the canonical name.
+  - **Rulebook:** api-coverage adds the pattern to R1.
