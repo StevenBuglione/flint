@@ -209,6 +209,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.math.BigInteger` | `flint.java.math.BigInteger` | A null byte-array argument counts as empty under R26. Java throws NullPointerException. |
 | framework | `java.math.RoundingMode` | `flint.java.math.roundingmode.RoundingMode` | A null name counts as empty text under R26. Java throws NullPointerException. |
 | framework | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.TimeDefinition` | A null name counts as empty (R26). Java throws NullPointerException. |
+| framework | `java.util.regex.Pattern` | `flint.java.util.regex.Pattern` | Under R26, a null expression or input slice counts as empty text. Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
 | framework | `org.springframework.expression.spel.support.StandardTypeConverter#<init>()` | `flint.expression.spel.support.StandardTypeConverter` | Creates and retains one default conversion service per converter. Flint's core getSharedInstance factory creates a fresh service. |
@@ -2267,10 +2268,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.util.regex.Pattern#compile(String)` | `flint.java.util.regex.pattern.Pattern.compile` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
-| `java.util.regex.Pattern#compile(String,int)` | `flint.java.util.regex.pattern.Pattern.compile` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
-| `java.util.regex.Pattern#matcher(CharSequence)` | `flint.java.util.regex.pattern.Pattern.matcher` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `java.util.regex.Pattern#matches(String,CharSequence)` | `flint.java.util.regex.pattern.Pattern.matches` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
+| `java.util.regex.Pattern#compile(String)` | `flint.java.util.regex.pattern.Pattern.compile` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.regex.Pattern#compile(String,int)` | `flint.java.util.regex.pattern.Pattern.compile` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.regex.Pattern#matcher(CharSequence)` | `flint.java.util.regex.pattern.Pattern.matcher` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.regex.Pattern#matches(String,CharSequence)` | `flint.java.util.regex.pattern.Pattern.matches` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Pattern#pattern()` | `flint.java.util.regex.pattern.Pattern.pattern` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.regex.Pattern#toString()` | `flint.java.util.regex.pattern.Pattern.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.regex.PatternSyntaxException#<init>(String,String,int)` | `flint.java.util.regex.pattern.PatternSyntaxException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
