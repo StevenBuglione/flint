@@ -112,3 +112,36 @@ unittest
     assert(reference.getAndSet(null) is first);
     assert(reference.get() is null);
 }
+
+private void retryWeak(scope bool delegate(Reading, Reading) @safe nothrow @nogc update,
+        Reading expected, Reading desired) nothrow @nogc
+{
+    foreach (attempt; 0 .. 10_000)
+        if (update(expected, desired))
+            return;
+    assert(false, "weak update did not succeed in bounded retries");
+}
+
+@("AtomicReference weak operations compare identity and preserve nullable references")
+unittest
+{
+    auto reference = new AtomicReference!Reading;
+    Reading old = new Sample(7);
+    Reading equal = new Sample(7);
+    assert(old.sum() == equal.sum() && old !is equal);
+
+    foreach (update; [
+        &reference.weakCompareAndSet, &reference.weakCompareAndSetPlain,
+        &reference.weakCompareAndSetAcquire, &reference.weakCompareAndSetRelease,
+        &reference.weakCompareAndSetVolatile
+    ])
+    {
+        reference.set(old);
+        assert(!update(equal, null));
+        assert(reference.get() is old);
+        retryWeak(update, old, null);
+        assert(reference.get() is null);
+        retryWeak(update, null, equal);
+        assert(reference.get() is equal);
+    }
+}
