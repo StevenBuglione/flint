@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-8",
+ "deviation": "Repository virtual operations use the repository's domain and ID types. `save!Subtype` and `saveAll!Subtype` check subtype results from the same virtual operations. Iterable inputs accept subtype views, and the explicitly typed list result contains the saved entities in backend order.",
+ "reason": "D dispatches interface templates statically and selects the virtual `save(T)` for an ordinary call. D's generic collections have distinct types for distinct element types."
+}

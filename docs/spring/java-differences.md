@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 209 | 122 | 0 | 3,651 |
+| data-commons | spring-data-commons@4.2.0 | 210 | 148 | 0 | 3,624 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -980,6 +980,37 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.domain.Window#isLast()` | `flint.data.domain.Window.isLast` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.domain.Window#map(Function)` | `flint.data.domain.Window.map` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.domain.Window#positionAt(T)` | `flint.data.domain.Window.positionAt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.data.repository
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.data.repository.CrudRepository` | `flint.data.repository_runtime.CrudRepository` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#count()` | `flint.data.repository_runtime.CrudRepository.count` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#delete(T)` | `flint.data.repository_runtime.CrudRepository.delete_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#deleteAll()` | `flint.data.repository_runtime.CrudRepository.deleteAll` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#deleteAll(Iterable)` | `flint.data.repository_runtime.CrudRepository.deleteAll` | [R10](api-mapping.md#r10-streams-and-collections), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#deleteAllById(Iterable)` | `flint.data.repository_runtime.CrudRepository.deleteAllById` | [R10](api-mapping.md#r10-streams-and-collections), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#deleteById(ID)` | `flint.data.repository_runtime.CrudRepository.deleteById` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#existsById(ID)` | `flint.data.repository_runtime.CrudRepository.existsById` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#findAll()` | `flint.data.repository_runtime.CrudRepository.findAll` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#findAllById(Iterable)` | `flint.data.repository_runtime.CrudRepository.findAllById` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#findById(ID)` | `flint.data.repository_runtime.CrudRepository.findById` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#save(S)` | `flint.data.repository_runtime.CrudRepository.save` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.CrudRepository#saveAll(Iterable)` | `flint.data.repository_runtime.CrudRepository.saveAll` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.ListCrudRepository` | `flint.data.repository_runtime.ListCrudRepository` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.ListCrudRepository#findAll()` | `flint.data.repository_runtime.ListCrudRepository.findAll` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.ListCrudRepository#findAllById(Iterable)` | `flint.data.repository_runtime.ListCrudRepository.findAllById` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.ListCrudRepository#saveAll(Iterable)` | `flint.data.repository_runtime.ListCrudRepository.saveAll` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.ListPagingAndSortingRepository` | `flint.data.repository_runtime.ListPagingAndSortingRepository` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.ListPagingAndSortingRepository#findAll(Sort)` | `flint.data.repository_runtime.ListPagingAndSortingRepository.findAll` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.NoRepositoryBean` | `flint.data.repository.NoRepositoryBean` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.repository.PagingAndSortingRepository` | `flint.data.repository_runtime.PagingAndSortingRepository` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.PagingAndSortingRepository#findAll(Pageable)` | `flint.data.repository_runtime.PagingAndSortingRepository.findAll` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.PagingAndSortingRepository#findAll(Sort)` | `flint.data.repository_runtime.PagingAndSortingRepository.findAll` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.data.repository.RepositoryDefinition` | `flint.data.repository.RepositoryDefinition` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.repository.RepositoryDefinition#domainClass` | `flint.data.repository.RepositoryDefinition.domainClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.data.repository.RepositoryDefinition#idClass` | `flint.data.repository.RepositoryDefinition.idClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.data.support
 
@@ -10037,7 +10068,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.projection | 70 | 0 |
 | org.springframework.data.querydsl | 66 | 0 |
 | org.springframework.data.querydsl.binding | 45 | 0 |
-| org.springframework.data.repository | 27 | 0 |
 | org.springframework.data.repository.aot.generate | 115 | 0 |
 | org.springframework.data.repository.cdi | 46 | 0 |
 | org.springframework.data.repository.config | 273 | 0 |

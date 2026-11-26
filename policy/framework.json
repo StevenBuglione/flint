@@ -1164,6 +1164,8 @@
     "flint.data.annotation",
     "flint.data.auditing",
     "flint.data.core",
+    "flint.data.repository",
+    "flint.data.repository_runtime",
     "flint.data.support"
    ],
    "repo": "data-commons",
