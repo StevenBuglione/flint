@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,073 | 311 | 1,871 | 15,166 |
+| framework | openjdk@21.0.13 | 1,071 | 311 | 1,871 | 15,168 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10072,7 +10072,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 766 | 0 |
-| java.lang | 1,991 | 0 |
+| java.lang | 1,993 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 137 | 0 |
@@ -11029,11 +11029,19 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.AssertionError#<init>(int)` | 2 | Missing primitive overload. Java stores the signed decimal detail of the int. |
 | framework | `java.lang.AssertionError#<init>(long)` | 2 | Missing primitive overload. Java stores the signed decimal detail of the long. |
 | framework | `java.lang.Double#parseDouble(String)` | 2 | The current parser throws NumberFormatException for null input, gives a different message for whitespace-only input, accepts lowercase nan, NaNd, hexadecimal syntax without a binary exponent, and a mantissa underscore, and rejects Infinity, +Infinity, and -Infinity. Decimal overflow (positive, negative, a very long exponent, and rounding past the largest finite value) and hexadecimal overflow currently throw instead of returning signed infinity. |
+| framework | `java.lang.InstantiationException` | 2 | Flint extends RuntimeException. Java extends checked ReflectiveOperationException and bypasses RuntimeException catches (R8). |
+| framework | `java.lang.InstantiationException#<init>()` | 2 | The no-argument constructor must produce the checked InstantiationException type (R8). |
+| framework | `java.lang.InstantiationException#<init>(String)` | 2 | The String constructor must produce the checked InstantiationException type (R8). |
 | framework | `java.lang.Integer#parseInt(String)` | 2 | The current parser rejects BMP decimal digits accepted by Java Character.digit(char, int). Flint reports For input string: "" for both null and empty input (R26). Temurin reports Cannot parse null string for null input. |
 | framework | `java.lang.Integer#parseInt(String,int)` | 2 | The current parser rejects BMP decimal digits and fullwidth Latin letters accepted by Java Character.digit(char, int). It omits the " under radix N" suffix on invalid nondecimal input. It also omits the "radix N less than Character.MIN_RADIX" and "radix N greater than Character.MAX_RADIX" diagnostics for out-of-range radixes. Flint reports For input string: "" for both null and empty input (R26). Temurin reports Cannot parse null string for null input. |
 | framework | `java.lang.Iterable#forEach(Consumer)` | 2 | Requires default traversal with a Consumer for iterator-only implementations. |
 | framework | `java.lang.Long#parseLong(String)` | 2 | The current parser rejects BMP decimal digits accepted by Java Character.digit(char, int). Flint reports For input string: "" for both null and empty input (R26). Temurin reports Cannot parse null string for null input. |
 | framework | `java.lang.Long#parseLong(String,int)` | 2 | The current parser rejects BMP decimal digits and fullwidth Latin letters accepted by Java Character.digit(char, int). It omits the " under radix N" suffix on invalid nondecimal input. It also omits the "radix N less than Character.MIN_RADIX" and "radix N greater than Character.MAX_RADIX" diagnostics for out-of-range radixes. Flint reports For input string: "" for both null and empty input (R26). Temurin reports Cannot parse null string for null input. |
+| framework | `java.lang.ReflectiveOperationException` | 2 | Missing checked base for reflective operation failures. It must preserve native D Exception catches (R8). |
+| framework | `java.lang.ReflectiveOperationException#<init>()` | 2 | Requires the checked ReflectiveOperationException base with absent detail and a cause that can be initialized later. |
+| framework | `java.lang.ReflectiveOperationException#<init>(String)` | 2 | Requires the checked ReflectiveOperationException base and a cause that can be initialized later. |
+| framework | `java.lang.ReflectiveOperationException#<init>(String,Throwable)` | 2 | Requires the checked ReflectiveOperationException base and a cause initialized even when null. |
+| framework | `java.lang.ReflectiveOperationException#<init>(Throwable)` | 2 | Requires the checked ReflectiveOperationException base with a detail derived from the cause and the cause already initialized. |
 | framework | `java.net.URI#<init>(String)` | 2 | Requires a public string constructor with Java URI syntax validation and URISyntaxException diagnostics. |
 | framework | `java.net.URI#compareTo(URI)` | 2 | Requires ordering by URI component, including percent escape hex normalization and case-insensitive scheme and host comparison. |
 | framework | `java.net.URI#create(String)` | 2 | Requires Java URI syntax validation. The current parser accepts invalid scheme starts, unclosed IPv6 literals, and repeated unescaped fragment delimiters. |

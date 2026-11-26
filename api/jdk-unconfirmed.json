@@ -7,8 +7,6 @@
   "java.io.InputStream#read()",
   "java.io.InputStream#read(byte[])",
   "java.io.InputStream#readAllBytes()",
-  "java.lang.InstantiationException",
-  "java.lang.InstantiationException#<init>()",
   "java.lang.Iterable",
   "java.math.BigInteger",
   "java.nio.charset.IllegalCharsetNameException",
