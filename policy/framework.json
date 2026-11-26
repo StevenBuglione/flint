@@ -668,6 +668,22 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "micrometer-commons": {
+   "directory": "framework/micrometer-commons",
+   "module": "flint.micrometer.common",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "micrometer-commons@1.18.0",
+   "dependencies": [
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/micrometer-commons/bench",
+    "baseline": "framework/micrometer-commons/bench/baseline",
+    "edit_source": "framework/micrometer-commons/source/flint/micrometer/common/package.d"
+   }
+  },
   "micrometer-core": {
    "directory": "framework/micrometer-core",
    "module": "flint.micrometer.core.instrument",

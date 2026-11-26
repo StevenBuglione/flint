@@ -1,0 +1,65 @@
+{
+  "classes": {
+    "io/micrometer/common/KeyValuesTest.java": {
+      "d": "framework/micrometer-commons/tests/key_values_test.d",
+      "methods": {
+        "ported": [
+          "andEmptyDoesNotAllocate",
+          "andExtractingFromElementsReturnsKeyValues",
+          "andIterableShouldReturnNewInstanceWithKeyValues",
+          "andIterableWhenIterableIsNullShouldReturnCurrentInstance",
+          "andKeyValueShouldReturnNewInstanceWithAddedKeyValues",
+          "andKeyValuesMultipleTimesShouldWork",
+          "andKeyValuesShouldReturnANewInstanceWithKeyValues",
+          "andKeyValuesShouldReturnNewInstanceWithAddedKeyValues",
+          "andKeyValuesStringArrayWhenKeyValuesAreEmptyShouldReturnCurrentInstance",
+          "andKeyValuesStringArrayWhenKeyValuesAreNullShouldReturnCurrentInstance",
+          "andKeyValuesStringArrayWhenKeyValuesArrayIsNullShouldReturnCurrentInstance",
+          "andKeyValuesWhenKeyValueIsNullShouldReturnCurrentInstance",
+          "andKeyValuesWhenKeyValuesAreEmptyShouldReturnCurrentInstance",
+          "andKeyValuesWhenKeyValuesAreOddShouldThrowException",
+          "andKeyValuesWhenKeyValuesArrayIsNullShouldReturnCurrentInstance",
+          "andWhenAlreadyContainsKeyShouldReplaceValue",
+          "concatIterableShouldReturnNewInstanceWithAddedKeyValues",
+          "concatOnTwoKeyValuesWithSameKeyAreMergedIntoOneKeyValue",
+          "concatStringsShouldReturnNewInstanceWithAddedKeyValues",
+          "concatWhenKeyValuesAreNullShouldReturnCurrentInstance",
+          "createsListWithSingleKeyValue",
+          "dedup",
+          "emptyKeyValueArrayShouldProduceEmptyKeyValues",
+          "emptyKeyValueIterableShouldProduceEmptyKeyValues",
+          "emptyKeyValueStringArrayShouldProduceEmptyKeyValues",
+          "emptyShouldNotContainKeyValues",
+          "iteratorShouldIterateKeyValues",
+          "keyValuesEquality",
+          "keyValuesHashCode",
+          "keyValuesToString",
+          "nullKeyValueArrayShouldProduceEmptyKeyValues",
+          "nullKeyValueIterableShouldProduceEmptyKeyValues",
+          "nullKeyValueShouldProduceEmptyKeyValues",
+          "nullKeyValueStringArrayShouldProduceEmptyKeyValues",
+          "nullKeyValuesShouldProduceEmptyKeyValues",
+          "ofEmptyDoesNotAllocate",
+          "ofExtractingFromElementsReturnsKeyValues",
+          "ofIterableShouldReturnNewInstanceWithKeyValues",
+          "ofIterableWhenIterableIsKeyValuesShouldReturnSameInstance",
+          "ofKeyValueShouldReturnNewInstance",
+          "ofKeyValuesShouldReturnNewInstance",
+          "stream",
+          "streamShouldStreamKeyValues",
+          "zipOnTwoKeyValuesWithSameKeyAreMergedIntoOneKeyValue",
+          "zipShouldReturnNewInstanceWithKeyValues"
+        ],
+        "skipped": {
+          "spliterator": "Deferred until the Java Spliterator contract is available."
+        }
+      },
+      "status": "partial"
+    }
+  },
+  "schema": "flint.upstream-tests/1",
+  "upstream": "micrometer-commons@1.18.0",
+  "upstream_modules": [
+    "micrometer-commons"
+  ]
+}

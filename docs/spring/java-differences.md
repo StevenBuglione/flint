@@ -195,7 +195,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | micrometer-observation@1.18.0 | 0 | 0 | 0 | 312 |
 | framework | openjdk@21.0.13 | 168 | 102 | 1,871 | 15,838 |
 | framework | aspectj@1.9.27 | 0 | 31 | 191 | 88 |
-| framework | micrometer-commons@1.18.0 | 0 | 0 | 0 | 61 |
+| framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
 
 ## Adapted elements
@@ -689,6 +689,27 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.support.WindowIterator.WindowIteratorBuilder` | `flint.data.support.WindowIterator.WindowIteratorBuilder` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 
 ### framework
+
+#### io.micrometer.common
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `io.micrometer.common.KeyValue#compareTo(KeyValue)` | `flint.micrometer.common.KeyValue.compareTo` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R14](api-mapping.md#r14-strings-and-text) |  |
+| `io.micrometer.common.KeyValue#of(E,Function,Function)` | `flint.micrometer.common.KeyValue.of` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `io.micrometer.common.KeyValues` | `flint.micrometer.common.KeyValues` | [D-MICROMETER-1](api-mapping.md#deviations) |  |
+| `io.micrometer.common.KeyValues#and(Iterable)` | `flint.micrometer.common.KeyValues.and` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.common.KeyValues#and(Iterable,Function,Function)` | `flint.micrometer.common.KeyValues.and` | [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.common.KeyValues#and(KeyValue...)` | `flint.micrometer.common.KeyValues.and` | [R7](api-mapping.md#r7-overloads), [D-MICROMETER-1](api-mapping.md#deviations) |  |
+| `io.micrometer.common.KeyValues#and(String...)` | `flint.micrometer.common.KeyValues.and` | [R7](api-mapping.md#r7-overloads), [D-MICROMETER-1](api-mapping.md#deviations) |  |
+| `io.micrometer.common.KeyValues#concat(Iterable,Iterable)` | `flint.micrometer.common.KeyValues.concat` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.common.KeyValues#concat(Iterable,String...)` | `flint.micrometer.common.KeyValues.concat` | [R7](api-mapping.md#r7-overloads), [D-MICROMETER-1](api-mapping.md#deviations) |  |
+| `io.micrometer.common.KeyValues#equals(Object)` | `flint.micrometer.common.KeyValues.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `io.micrometer.common.KeyValues#iterator()` | `flint.micrometer.common.KeyValues.iterator` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.common.KeyValues#of(Iterable)` | `flint.micrometer.common.KeyValues.of` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.common.KeyValues#of(Iterable,Function,Function)` | `flint.micrometer.common.KeyValues.of` | [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.common.KeyValues#of(KeyValue...)` | `flint.micrometer.common.KeyValues.of` | [R7](api-mapping.md#r7-overloads), [D-MICROMETER-1](api-mapping.md#deviations) |  |
+| `io.micrometer.common.KeyValues#of(String...)` | `flint.micrometer.common.KeyValues.of` | [R7](api-mapping.md#r7-overloads), [D-MICROMETER-1](api-mapping.md#deviations) |  |
+| `io.micrometer.common.KeyValues#stream()` | `flint.micrometer.common.KeyValues.stream` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### io.micrometer.core.instrument
 
@@ -8836,7 +8857,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | Java package | Phase 2 | Phase 3 |
 | --- | ---: | ---: |
 | com.fasterxml.jackson.annotation | 377 | 0 |
-| io.micrometer.common | 30 | 0 |
+| io.micrometer.common | 4 | 0 |
 | io.micrometer.common.annotation | 13 | 0 |
 | io.micrometer.common.docs | 7 | 0 |
 | io.micrometer.common.lang | 4 | 0 |

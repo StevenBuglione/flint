@@ -359,6 +359,10 @@
       "repo": "flint",
       "version": "monorepo"
     },
+    "flint:micrometer-commons": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:micrometer-core": {
       "repo": "framework",
       "version": "monorepo"

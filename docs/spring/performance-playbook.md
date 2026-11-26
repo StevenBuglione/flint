@@ -166,6 +166,8 @@ The largest costs are per-request allocation and the collector pauses it causes.
 
 | R-137 | **Keep only the meter references and readings in cumulative measurement views.** Read the live count from the timer or summary. Derive the traversal limit from the optional maximum slot. | On venus, DMD and LDC each measured 240,000 to 208,000 GC bytes per 1,000 timer views and per 1,000 summary views. Counter views measured 48,000 bytes per 1,000 in both builds. With the unchanged fixture, parent `f8009bf6` measured 130,852 incremental loadable bytes and 3,092 templates. The compact view measured 130,724 bytes and 3,092 templates. | `framework/micrometer-core/tests/registry_test.d` and the Micrometer module probe. |
 
+| R-138 | **Own and normalize key-value arrays once.** Copy borrowed inputs. Keep sorted unique arrays in order and use a stable sort when normalization is needed. Merge sorted arrays in one pass and let the right side replace duplicate keys. | DMD and LDC verified zero GC bytes for empty merge and empty factory reuse. On venus, the first Commons probe at `7038b238` added 62,028 loadable bytes at O3 and 57,580 at Oz and counted 2,440 DMD template instances. The new-module-rule seeds caps of 68,231 bytes and 2,684 instances. | `framework/micrometer-commons/tests/key_values_test.d` and the Commons module size probe. |
+
 ## 2. Binary size
 
 | ID | Rule | Evidence | Enforced by |
