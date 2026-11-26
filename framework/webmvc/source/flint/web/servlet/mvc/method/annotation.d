@@ -297,16 +297,17 @@ class ServletResponseMethodArgumentResolver : HandlerMethodArgumentResolver
 // ---------------------------------------------------------------------------------------------------------
 // Message conversion
 
-// Only the exact processors built by the adapter omit the default manager.
-private enum DefaultContentNegotiation
+// The adapter's own processors can use header negotiation without constructing a manager.
+private enum ProcessorNegotiation
 {
-    headers
+    useProvidedManager
 }
 
 /// `AbstractMessageConverterMethodProcessor`: reading bodies, and writing them with content negotiation.
 abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentResolver, HandlerMethodReturnValueHandler
 {
     protected HttpMessageConverter[] messageConverters;
+    // The adapter's own processors use the default header strategy when this is null.
     protected ContentNegotiationManager contentNegotiationManager;
 
     private static immutable MediaType[] problemMediaTypes = [MediaType.APPLICATION_PROBLEM_JSON];
@@ -314,13 +315,14 @@ abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentRe
     ///
     protected this(HttpMessageConverter[] converters, ContentNegotiationManager manager)
     {
-        this(converters);
-        contentNegotiationManager = manager !is null ? manager : new ContentNegotiationManager;
+        this(converters, manager !is null ? manager : new ContentNegotiationManager,
+                ProcessorNegotiation.useProvidedManager);
     }
 
-    private this(HttpMessageConverter[] converters)
+    private this(HttpMessageConverter[] converters, ContentNegotiationManager manager, ProcessorNegotiation)
     {
         messageConverters = converters;
+        contentNegotiationManager = manager;
     }
 
     /// Reads `typeName` from the request body. Throws `HttpMediaTypeNotSupportedException` or
@@ -573,9 +575,9 @@ class RequestResponseBodyMethodProcessor : AbstractMessageConverterMethodProcess
         super(converters, manager);
     }
 
-    private this(HttpMessageConverter[] converters, DefaultContentNegotiation)
+    private this(HttpMessageConverter[] converters, ContentNegotiationManager manager, ProcessorNegotiation negotiation)
     {
-        super(converters);
+        super(converters, manager, negotiation);
     }
 
     /// The validator for `@Valid` and `@Validated` arguments, with the descriptors its binding results read
@@ -680,9 +682,9 @@ class HttpEntityMethodProcessor : AbstractMessageConverterMethodProcessor
         super(converters, manager);
     }
 
-    private this(HttpMessageConverter[] converters, DefaultContentNegotiation)
+    private this(HttpMessageConverter[] converters, ContentNegotiationManager manager, ProcessorNegotiation negotiation)
     {
-        super(converters);
+        super(converters, manager, negotiation);
     }
 
     bool supportsParameter(MethodParameter parameter)
@@ -919,17 +921,9 @@ private struct DefaultHandlers
             HandlerMethodArgumentResolver[] customResolvers, HandlerMethodReturnValueHandler[] customHandlers)
     {
         DefaultHandlers result;
-        HttpEntityMethodProcessor entity;
-        if (manager is null)
-        {
-            result.responseBody = new RequestResponseBodyMethodProcessor(converters, DefaultContentNegotiation.headers);
-            entity = new HttpEntityMethodProcessor(converters, DefaultContentNegotiation.headers);
-        }
-        else
-        {
-            result.responseBody = new RequestResponseBodyMethodProcessor(converters, manager);
-            entity = new HttpEntityMethodProcessor(converters, manager);
-        }
+        result.responseBody = new RequestResponseBodyMethodProcessor(converters, manager,
+                ProcessorNegotiation.useProvidedManager);
+        auto entity = new HttpEntityMethodProcessor(converters, manager, ProcessorNegotiation.useProvidedManager);
         result.argumentResolvers = new HandlerMethodArgumentResolverComposite;
         result.argumentResolvers.addResolvers(new RequestParamMethodArgumentResolver(false),
                 new PathVariableMethodArgumentResolver, new RequestHeaderMethodArgumentResolver,

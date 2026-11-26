@@ -718,6 +718,8 @@ Resource filename decoding uses Flint's UTF-8 decoder and encoder. It copies val
 
 HTTP date parsing keeps up to six trimmed tokens on the stack. It rejects extra nonempty tokens and preserves the existing RFC 1123, RFC 850, asctime, and structured-field branches. In the warmed public `HttpHeaders.getFirstDate` witness, 128 RFC 1123 reads fall from 22,528 GC bytes on DMD to zero with the bounded scan on DMD and LDC.
 
+The MVC adapter's own body and entity processors use the existing header strategy directly when the adapter receives no negotiation manager. Explicit managers and public processor construction retain the existing behavior. This removes the default manager and file-extension resolver classes from the stock MVC link. The isolated header-only diagnostic cuts 10,600 incremental bytes on the matched S-77 LDC O3 probe.
+
 The final `ResourceHttpRequestHandler.setLocations` installs the classpath serving
 implementation through a private interface. The stock empty handler freezes its
 configuration during the 404 proof. Method and path hooks remain virtual. The matched
