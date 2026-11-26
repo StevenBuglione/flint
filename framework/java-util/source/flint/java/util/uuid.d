@@ -122,15 +122,20 @@ final class UUID : Comparable!UUID
     /// Render the standard 8-4-4-4-12 layout in lowercase hexadecimal.
     override string toString() const pure nothrow
     {
-        char[36] text;
-        text[8] = text[13] = text[18] = text[23] = '-';
-        writeHex(text[0 .. 8], most >> 32);
-        writeHex(text[9 .. 13], most >> 16);
-        writeHex(text[14 .. 18], most);
-        writeHex(text[19 .. 23], least >> 48);
-        writeHex(text[24 .. 36], least);
-        return text[].idup;
+        return renderUuid(most, least);
     }
+}
+
+private char[] renderUuid(ulong most, ulong least) pure nothrow
+{
+    auto text = new char[36];
+    text[8] = text[13] = text[18] = text[23] = '-';
+    writeHex(text[0 .. 8], most >> 32);
+    writeHex(text[9 .. 13], most >> 16);
+    writeHex(text[14 .. 18], most);
+    writeHex(text[19 .. 23], least >> 48);
+    writeHex(text[24 .. 36], least);
+    return text;
 }
 
 private ulong loadWord(scope const(ubyte)[] bytes) pure nothrow @nogc
