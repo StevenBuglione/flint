@@ -256,6 +256,14 @@ unittest
     auto input = imageMessage("attachment; filename=\"a;b.png\"; filename*=UTF-8''caf%C3%A9.png");
     auto resource = new ResourceHttpMessageConverter().read(typeNameOf!Resource, input).get!Resource;
     assert(resource.getFilename() == "café.png");
+
+    input = imageMessage("attachment; filename*=UTF-8''%F0%9F%8D%B5%FF%EF%BF%BD.png");
+    resource = new ResourceHttpMessageConverter().read(typeNameOf!Resource, input).get!Resource;
+    assert(resource.getFilename() == "🍵\uFFFD\uFFFD.png");
+
+    input = imageMessage("attachment; filename*=ISO-8859-1''caf%E9.png");
+    resource = new ResourceHttpMessageConverter().read(typeNameOf!Resource, input).get!Resource;
+    assert(resource.getFilename() == "café.png");
 }
 
 @("Flint.ResourceHttpMessageConverter.ownsBufferedInput")

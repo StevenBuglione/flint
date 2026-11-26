@@ -849,20 +849,29 @@ private string decodeQuotedFilename(string value)
 
 private string decodeExtendedFilename(string value)
 {
-    import std.utf : encode;
+    import flint.engine.aot.text : utf8;
 
     const charset = extractFilenameCharset(value);
-    auto bytes = decodeFilenamePercentEscapes(value);
+    const bytes = decodeFilenamePercentEscapes(value);
     char[] name;
     if (charset == StandardCharsets.UTF_8)
     {
         size_t pos;
         while (pos < bytes.length)
-            encode(name, decodeUtf8(bytes, pos));
+        {
+            const start = pos;
+            const point = decodeUtf8(bytes, pos);
+            name ~= point == '\uFFFD' ? "\uFFFD" : bytes[start .. pos];
+        }
     }
     else
         foreach (c; bytes)
-            encode(name, charset == StandardCharsets.US_ASCII && c >= 128 ? '\uFFFD' : cast(dchar) c);
+        {
+            if (c < 128)
+                name ~= c;
+            else
+                name ~= charset == StandardCharsets.US_ASCII ? "\uFFFD" : utf8(cast(dchar) c);
+        }
     return name.length == 0 ? "" : name.idup;
 }
 
