@@ -53,7 +53,8 @@ struct YearMonth
         }
         catch (DateTimeException error)
         {
-            throw new DateTimeParseException("Invalid year or month", copyText(text), 0, error);
+            string detail = resolutionDetail(parsed.year, parsed.month);
+            throw parseError(text, 0, "' could not be parsed: ", detail, new DateTimeException(detail, error));
         }
     }
 
@@ -173,24 +174,24 @@ struct YearMonth
         buffer[10] = '-';
         buffer[11] = cast(char)('0' + month_ / 10);
         buffer[12] = cast(char)('0' + month_ % 10);
-        const start = prependYear(buffer[], 10, year_);
+        const start = prependNumber(buffer[], 10, year_, 4);
         return copyText(buffer[start .. $]);
     }
 }
 
-private size_t prependYear(scope char[] buffer, size_t start, int year) pure nothrow @nogc
+private size_t prependNumber(scope char[] buffer, size_t start, long number, size_t minimumDigits) pure nothrow @nogc
 {
     // Keep the bounded digit loop compact in the release link.
     pragma(inline, false);
-    const minimumStart = start - 4;
-    int magnitude = year < 0 ? -year : year;
+    const minimumStart = start - minimumDigits;
+    ulong magnitude = number < 0 ? 0 - cast(ulong) number : cast(ulong) number;
     do
     {
         buffer[--start] = cast(char)('0' + magnitude % 10);
         magnitude /= 10;
     }
     while (magnitude != 0 || start > minimumStart);
-    if (year < 0)
+    if (number < 0)
         buffer[--start] = '-';
     return start;
 }
@@ -255,30 +256,59 @@ private bool isDigit(char c) pure nothrow @nogc
 
 private DateTimeParseException syntaxError(scope const(char)[] text, int index, bool trailingText) pure nothrow
 {
-    return new DateTimeParseException(syntaxMessage(text, index, trailingText), copyText(text), index);
+    const description = trailingText ? "' could not be parsed, unparsed text found at index "
+        : "' could not be parsed at index ";
+    // The parser inspects at most ten year digits, a sign, a separator and two month digits.
+    char[2] digits = void;
+    const start = prependNumber(digits[], digits.length, index, 1);
+    return parseError(text, index, description, digits[start .. $]);
 }
 
-private char[] syntaxMessage(scope const(char)[] text, int index, bool trailingText) pure nothrow
+private char[] resolutionDetail(long year, int month) pure nothrow
+{
+    enum prefix = "Unable to obtain YearMonth from TemporalAccessor: {Year=";
+    enum separator = ", MonthOfYear=";
+    enum suffix = "},ISO of type java.time.format.Parsed";
+    // A signed ten-digit year and an unsigned two-digit month.
+    char[prefix.length + 11 + separator.length + 2 + suffix.length] buffer = void;
+    size_t start = buffer.length - suffix.length;
+    copyInto(buffer[], start, suffix);
+    start = prependNumber(buffer[], start, month, 1);
+    copyInto(buffer[], start - separator.length, separator);
+    start = prependNumber(buffer[], start - separator.length, year, 1);
+    copyInto(buffer[], start - prefix.length, prefix);
+    return copyText(buffer[start - prefix.length .. $]);
+}
+
+private DateTimeParseException parseError(scope const(char)[] text, int index, string description,
+        scope const(char)[] detail, Throwable cause = null) pure nothrow
+{
+    // Syntax and resolution failures use the same owning constructor path.
+    pragma(inline, false);
+    return new DateTimeParseException(parseMessage(text, description, detail), copyText(text), index, cause);
+}
+
+private char[] parseMessage(scope const(char)[] text, string description, scope const(char)[] detail) pure nothrow
 {
     enum prefix = "Text '";
     const preview = errorPreview(text);
-    const description = trailingText ? "' could not be parsed, unparsed text found at index "
-        : "' could not be parsed at index ";
-
     const suffixStart = prefix.length + preview.bytes;
     const descriptionStart = suffixStart + preview.suffix.length;
-    const indexStart = descriptionStart + description.length;
-    // The parser inspects at most ten year digits, a sign, a separator and two month digits.
-    assert(index >= 0 && index < 100);
-    auto message = new char[indexStart + (index < 10 ? 1 : 2)];
-    message[0 .. prefix.length] = prefix;
-    message[prefix.length .. suffixStart] = text[0 .. preview.bytes];
-    message[suffixStart .. descriptionStart] = preview.suffix;
-    message[descriptionStart .. indexStart] = description;
-    if (index >= 10)
-        message[indexStart] = cast(char)('0' + index / 10);
-    message[$ - 1] = cast(char)('0' + index % 10);
+    const detailStart = descriptionStart + description.length;
+    auto message = new char[detailStart + detail.length];
+    copyInto(message, 0, prefix);
+    copyInto(message, prefix.length, text[0 .. preview.bytes]);
+    copyInto(message, suffixStart, preview.suffix);
+    copyInto(message, descriptionStart, description);
+    copyInto(message, detailStart, detail);
     return message;
+}
+
+private void copyInto(scope char[] buffer, size_t start, scope const(char)[] text) pure nothrow @nogc
+{
+    // Share the checked slice write across diagnostic fragments.
+    pragma(inline, false);
+    buffer[start .. start + text.length] = text;
 }
 
 private struct ErrorPreview

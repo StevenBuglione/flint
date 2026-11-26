@@ -137,6 +137,43 @@ import flint.java.time.yearmonth : YearMonth;
     }
 }
 
+@("YearMonth resolution reports the parsed fields and retains the invalid field cause") unittest
+{
+    struct ResolutionCase
+    {
+        string input;
+        string fields;
+        string fieldError;
+    }
+
+    foreach (example; [
+        ResolutionCase("2024-13", "Year=2024, MonthOfYear=13",
+                "Invalid value for MonthOfYear (valid values 1 - 12): 13"),
+        ResolutionCase("+1000000000-13", "Year=1000000000, MonthOfYear=13",
+                "Invalid value for Year (valid values -999999999 - 999999999): 1000000000"),
+        ResolutionCase("-9999999999-00", "Year=-9999999999, MonthOfYear=0",
+                "Invalid value for Year (valid values -999999999 - 999999999): -9999999999")
+    ])
+    {
+        try
+        {
+            YearMonth.parse(example.input);
+            assert(false, example.input);
+        }
+        catch (DateTimeParseException error)
+        {
+            const detail = "Unable to obtain YearMonth from TemporalAccessor: {" ~ example.fields
+                ~ "},ISO of type java.time.format.Parsed";
+            assert(error.getParsedString() == example.input && error.getErrorIndex() == 0);
+            assert(error.getMessage() == "Text '" ~ example.input ~ "' could not be parsed: " ~ detail);
+            const resolution = cast(const DateTimeException) error.getCause();
+            assert(resolution !is null && resolution.getMessage() == detail);
+            const field = cast(const DateTimeException) resolution.getCause();
+            assert(field !is null && field.getMessage() == example.fieldError);
+        }
+    }
+}
+
 private struct ParseCase
 {
     string text;
