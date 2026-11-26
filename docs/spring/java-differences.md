@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 132 | 135 | 0 | 2,123 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 34 | 44 | 0 | 4,374 |
+| framework | thymeleaf@3.1.7.RELEASE | 39 | 50 | 0 | 4,363 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 231 | 133 | 1,871 | 16,186 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -3842,6 +3842,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.thymeleaf.dialect.AbstractDialect#<init>(String)` | `flint.thymeleaf.dialect.AbstractDialect` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A default-initialized D string represents an empty name; Java rejects a null name. |
+
+#### org.thymeleaf.engine
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.engine.HTMLElementType` | `flint.thymeleaf.engine.HTMLElementType` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.engine.HTMLElementType#ESCAPABLE_RAW_TEXT` | `flint.thymeleaf.engine.HTMLElementType.ESCAPABLE_RAW_TEXT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.engine.HTMLElementType#FOREIGN` | `flint.thymeleaf.engine.HTMLElementType.FOREIGN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.engine.HTMLElementType#NORMAL` | `flint.thymeleaf.engine.HTMLElementType.NORMAL` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.engine.HTMLElementType#RAW_TEXT` | `flint.thymeleaf.engine.HTMLElementType.RAW_TEXT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.engine.HTMLElementType#VOID` | `flint.thymeleaf.engine.HTMLElementType.VOID` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 
 #### org.thymeleaf.exceptions
 
@@ -9787,7 +9798,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.cache | 117 | 0 |
 | org.thymeleaf.context | 168 | 0 |
 | org.thymeleaf.dialect | 18 | 0 |
-| org.thymeleaf.engine | 448 | 0 |
+| org.thymeleaf.engine | 441 | 0 |
 | org.thymeleaf.exceptions | 3 | 0 |
 | org.thymeleaf.expression | 576 | 0 |
 | org.thymeleaf.extras.springsecurity6.auth | 0 | 22 |
@@ -9798,7 +9809,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.inline | 11 | 0 |
 | org.thymeleaf.linkbuilder | 20 | 0 |
 | org.thymeleaf.messageresolver | 25 | 0 |
-| org.thymeleaf.model | 143 | 0 |
+| org.thymeleaf.model | 139 | 0 |
 | org.thymeleaf.postprocessor | 9 | 0 |
 | org.thymeleaf.preprocessor | 9 | 0 |
 | org.thymeleaf.processor | 7 | 0 |
