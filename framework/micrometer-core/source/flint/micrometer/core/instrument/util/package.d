@@ -14,12 +14,36 @@
  * limitations under the License.
  */
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/util/TimeUtils.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/util/MeterEquivalence.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.util;
 
+import flint.engine.aot.any : Any;
 import flint.java.util.concurrent : TimeUnit, toNanos;
+import flint.micrometer.core.instrument : Meter, meterHashCode, metersEqual;
+import flint.micrometer.core.instrument.distribution.snapshots : convertNanos = nanosToUnit;
 
 @safe:
+
+/// Compare and hash meters by registered ID.
+final class MeterEquivalence
+{
+    private this()
+    {
+    }
+
+    /// Check reference identity, then compare the meters' IDs.
+    static bool equals(Meter meter, Any other)
+    {
+        return metersEqual(meter, other.asObject());
+    }
+
+    /// Return the hash code of the supplied meter's ID.
+    static int hashCode(Meter meter)
+    {
+        return meterHashCode(meter);
+    }
+}
 
 /// Time unit conversions for measurements with fractional precision.
 final class TimeUtils
@@ -43,7 +67,7 @@ final class TimeUtils
     /// Convert a measurement in nanoseconds.
     static double nanosToUnit(double amount, TimeUnit destinationUnit) pure nothrow @nogc
     {
-        return destinationUnit == TimeUnit.NANOSECONDS ? amount : amount / destinationUnit.toNanos(1);
+        return convertNanos(amount, destinationUnit);
     }
 
     /// Convert a measurement in microseconds.

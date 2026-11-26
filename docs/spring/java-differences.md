@@ -189,7 +189,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 132 | 135 | 0 | 2,123 |
+| framework | micrometer-core@1.18.0 | 137 | 138 | 0 | 2,115 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 39 | 50 | 0 | 4,363 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
@@ -817,6 +817,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `io.micrometer.core.instrument.AbstractMeter#equals(Object)` | `flint.micrometer.core.instrument.AbstractMeter.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `io.micrometer.core.instrument.AbstractMeter#hashCode()` | `flint.micrometer.core.instrument.AbstractMeter.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `io.micrometer.core.instrument.Clock#SYSTEM` | `flint.micrometer.core.instrument.Clock.SYSTEM` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.core.instrument.Counter` | `flint.micrometer.core.instrument.Counter` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.core.instrument.Counter#builder(String)` | `flint.micrometer.core.instrument.Counter.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
@@ -957,6 +959,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile` | [R1](api-mapping.md#r1-packages-and-names) | The canonical import is unchanged. The declaration lives in an internal leaf to break the Java package cycle. |
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile#equals(Object)` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile#hashCode()` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+
+#### io.micrometer.core.instrument.util
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `io.micrometer.core.instrument.util.MeterEquivalence#equals(Meter,Object)` | `flint.micrometer.core.instrument.util.MeterEquivalence.equals` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### io.micrometer.observation
 
@@ -9287,7 +9295,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.common.util | 7 | 0 |
 | io.micrometer.core.annotation | 17 | 0 |
 | io.micrometer.core.aop | 35 | 0 |
-| io.micrometer.core.instrument | 311 | 0 |
+| io.micrometer.core.instrument | 306 | 0 |
 | io.micrometer.core.instrument.binder | 27 | 0 |
 | io.micrometer.core.instrument.binder.cache | 79 | 0 |
 | io.micrometer.core.instrument.binder.commonspool2 | 6 | 0 |
@@ -9326,7 +9334,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.search | 56 | 0 |
 | io.micrometer.core.instrument.simple | 20 | 0 |
 | io.micrometer.core.instrument.step | 72 | 0 |
-| io.micrometer.core.instrument.util | 37 | 0 |
+| io.micrometer.core.instrument.util | 34 | 0 |
 | io.micrometer.core.ipc.http | 56 | 0 |
 | io.micrometer.observation | 120 | 0 |
 | io.micrometer.observation.annotation | 12 | 0 |

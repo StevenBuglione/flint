@@ -16,15 +16,21 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/CountAtBucket.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/ValueAtPercentile.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/HistogramSnapshot.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/util/TimeUtils.java
 // Modified by the Flint authors.
 /// R1 implementation leaf. Applications use the canonical distribution module.
 module flint.micrometer.core.instrument.distribution.snapshots;
 
 import flint.java.lang : Double, JavaObject, Long;
-import flint.java.util.concurrent : TimeUnit;
-import flint.micrometer.core.instrument.util : TimeUtils;
+import flint.java.util.concurrent : TimeUnit, toNanos;
 
 @safe:
+
+// Snapshot readers and the public TimeUtils method share this conversion without a package import cycle.
+package(flint.micrometer.core.instrument) double nanosToUnit(double amount, TimeUnit destinationUnit) pure nothrow @nogc
+{
+    return destinationUnit == TimeUnit.NANOSECONDS ? amount : amount / destinationUnit.toNanos(1);
+}
 
 /// The number of events at or below a histogram bucket.
 final class CountAtBucket
@@ -54,7 +60,7 @@ final class CountAtBucket
     /// Interpret the boundary as nanoseconds and convert it to unit.
     double bucket(TimeUnit unit) const nothrow @nogc
     {
-        return TimeUtils.nanosToUnit(boundary, unit);
+        return nanosToUnit(boundary, unit);
     }
 
     /// The number of events at or below this bucket.
@@ -113,7 +119,7 @@ final class ValueAtPercentile
     /// Interpret the observation as nanoseconds and convert it to unit.
     double value(TimeUnit unit) const nothrow @nogc
     {
-        return TimeUtils.nanosToUnit(observation, unit);
+        return nanosToUnit(observation, unit);
     }
 
     /// Java double equality distinguishes signed zeros and equates NaNs.
@@ -174,7 +180,7 @@ final class HistogramSnapshot
     /// Convert the sum from nanoseconds to unit.
     double total(TimeUnit unit) const nothrow @nogc
     {
-        return TimeUtils.nanosToUnit(sum, unit);
+        return nanosToUnit(sum, unit);
     }
 
     /// The maximum recorded value.
@@ -186,7 +192,7 @@ final class HistogramSnapshot
     /// Convert the maximum from nanoseconds to unit.
     double max(TimeUnit unit) const nothrow @nogc
     {
-        return TimeUtils.nanosToUnit(maximum, unit);
+        return nanosToUnit(maximum, unit);
     }
 
     /// The mean recorded value, or zero for an empty recording count.
@@ -198,7 +204,7 @@ final class HistogramSnapshot
     /// Convert the mean from nanoseconds to unit.
     double mean(TimeUnit unit) const nothrow @nogc
     {
-        return TimeUtils.nanosToUnit(mean(), unit);
+        return nanosToUnit(mean(), unit);
     }
 
     /// The precomputed percentiles. An empty snapshot returns a zero-length D slice (R5).

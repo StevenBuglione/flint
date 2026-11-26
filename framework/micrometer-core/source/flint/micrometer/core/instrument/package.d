@@ -31,6 +31,8 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopMeter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Gauge.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/AbstractMeter.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/util/MeterEquivalence.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument;
 
@@ -765,6 +767,63 @@ interface Meter
 
         mixin JavaObject;
     }
+}
+
+/// Base class for meters that retain an ID and compare by that ID.
+abstract class AbstractMeter : Meter
+{
+    private Meter.Id id;
+
+    /// Retain the meter's registered ID.
+    this(Meter.Id id)
+    {
+        this.id = id;
+    }
+
+    override Meter.Id getId()
+    {
+        return id;
+    }
+
+    /// Compare with another meter by ID.
+    bool equals(Object other)
+    {
+        return metersEqual(this, other);
+    }
+
+    /// Hash the meter's ID.
+    int hashCode()
+    {
+        return meterHashCode(this);
+    }
+
+    mixin JavaObject;
+}
+
+// Keep the shared implementation beside Meter so the utility module depends on instrument in one direction.
+package bool metersEqual(Meter meter, Object other)
+{
+    auto otherMeter = cast(Meter) other;
+    if (meter is null || otherMeter is null)
+        return false;
+    if (meter is otherMeter)
+        return true;
+
+    auto id = meter.getId();
+    auto otherId = otherMeter.getId();
+    if (id is null)
+        throw new NullPointerException("meter id");
+    return id.equals(otherId);
+}
+
+package int meterHashCode(Meter meter)
+{
+    if (meter is null)
+        throw new NullPointerException("meter");
+    auto id = meter.getId();
+    if (id is null)
+        throw new NullPointerException("meter id");
+    return id.hashCode();
 }
 
 /// A counter preallocated during meter registration.
