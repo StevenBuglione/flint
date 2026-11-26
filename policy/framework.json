@@ -498,6 +498,40 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-concurrent-sync": {
+   "directory": "framework/java-concurrent-sync",
+   "module": "flint.java.util.concurrent.locks",
+   "also": [
+    "flint.java.util.concurrent.locks.contracts"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-concurrent-sync/bench",
+    "baseline": "framework/java-concurrent-sync/bench/baseline",
+    "edit_source": "framework/java-concurrent-sync/source/flint/java/util/concurrent/locks/contracts.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 2535,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 490
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-io": {
    "directory": "framework/java-io",
    "module": "flint.java.io.unsupportedencodingexception",

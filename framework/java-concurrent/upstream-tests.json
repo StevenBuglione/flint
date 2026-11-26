@@ -408,66 +408,6 @@
       "phase": "2",
       "status": "deferred"
     },
-    "java/util/concurrent/locks/Lock/CheckedLockLoops.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/Lock/FlakyMutex.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/Lock/OOMEInAQS.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/Lock/TimedAcquire.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/Lock/TimedAcquireLeak.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/LockSupport/ParkLoops.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/ReentrantLock/CancelledLockLoops.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/ReentrantLock/LockOncePerThreadLoops.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/ReentrantLock/SimpleReentrantLockLoops.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/ReentrantLock/TimeoutLockLoops.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/ReentrantReadWriteLock/Bug6571733.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/ReentrantReadWriteLock/Count.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/ReentrantReadWriteLock/MapLoops.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/StampedLock/Basic.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/concurrent/locks/StampedLock/ReadersUnlockAfterWriteUnlock.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
     "java/util/concurrent/tck/JSR166TestCase.java": {
       "phase": "2",
       "status": "deferred"

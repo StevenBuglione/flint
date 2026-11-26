@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,084 | 213 | 1,871 | 15,253 |
+| framework | openjdk@21.0.13 | 1,093 | 222 | 1,871 | 15,235 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2187,6 +2187,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.atomic.AtomicBoolean` | `flint.java.util.concurrent.atomic.atomicboolean.AtomicBoolean` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `java.util.concurrent.atomic.AtomicInteger` | `flint.java.util.concurrent.atomic.atomicinteger.AtomicInteger` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `java.util.concurrent.atomic.AtomicLong` | `flint.java.util.concurrent.atomic.atomiclong.AtomicLong` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+
+#### java.util.concurrent.locks
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.util.concurrent.locks.Condition` | `flint.java.util.concurrent.locks.Condition` | [R1](api-mapping.md#r1-packages-and-names) | The canonical locks package re-exports this interface from the internal contracts leaf. |
+| `java.util.concurrent.locks.Condition#await()` | `flint.java.util.concurrent.locks.Condition.await` | [R8](api-mapping.md#r8-exceptions) |  |
+| `java.util.concurrent.locks.Condition#await(long,TimeUnit)` | `flint.java.util.concurrent.locks.Condition.await` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
+| `java.util.concurrent.locks.Condition#awaitNanos(long)` | `flint.java.util.concurrent.locks.Condition.awaitNanos` | [R8](api-mapping.md#r8-exceptions) |  |
+| `java.util.concurrent.locks.Condition#awaitUntil(Date)` | `flint.java.util.concurrent.locks.Condition.awaitUntil` | [R8](api-mapping.md#r8-exceptions) |  |
+| `java.util.concurrent.locks.Lock` | `flint.java.util.concurrent.locks.Lock` | [R1](api-mapping.md#r1-packages-and-names) | The canonical locks package re-exports this interface from the internal contracts leaf. |
+| `java.util.concurrent.locks.Lock#lockInterruptibly()` | `flint.java.util.concurrent.locks.Lock.lockInterruptibly` | [R8](api-mapping.md#r8-exceptions) |  |
+| `java.util.concurrent.locks.Lock#tryLock(long,TimeUnit)` | `flint.java.util.concurrent.locks.Lock.tryLock` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
+| `java.util.concurrent.locks.ReadWriteLock` | `flint.java.util.concurrent.locks.ReadWriteLock` | [R1](api-mapping.md#r1-packages-and-names) | The canonical locks package re-exports this interface from the internal contracts leaf. |
 
 #### java.util.function
 
@@ -9989,7 +10003,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util | 1,948 | 0 |
 | java.util.concurrent | 1,256 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |
-| java.util.concurrent.locks | 215 | 0 |
+| java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 84 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 96 | 0 |

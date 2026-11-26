@@ -3458,6 +3458,9 @@
       "java/util/concurrent/forkjoin/ThreadLessCommon.java",
       "java/util/concurrent/forkjoin/ThrowingRunnable.java",
       "java/util/concurrent/forkjoin/Uniprocessor.java",
+      "java/util/concurrent/tck/JSR166TestCase.java"
+    ],
+    "java-concurrent-sync": [
       "java/util/concurrent/locks/Lock/CheckedLockLoops.java",
       "java/util/concurrent/locks/Lock/FlakyMutex.java",
       "java/util/concurrent/locks/Lock/OOMEInAQS.java",
@@ -3472,8 +3475,7 @@
       "java/util/concurrent/locks/ReentrantReadWriteLock/Count.java",
       "java/util/concurrent/locks/ReentrantReadWriteLock/MapLoops.java",
       "java/util/concurrent/locks/StampedLock/Basic.java",
-      "java/util/concurrent/locks/StampedLock/ReadersUnlockAfterWriteUnlock.java",
-      "java/util/concurrent/tck/JSR166TestCase.java"
+      "java/util/concurrent/locks/StampedLock/ReadersUnlockAfterWriteUnlock.java"
     ],
     "java-io": [
       "java/io/BufferedInputStream/CloseStream.java",
