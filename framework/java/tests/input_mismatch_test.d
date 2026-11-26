@@ -8,7 +8,8 @@ import flint.java.util.inputmismatchexception : InputMismatchException;
 @("Scanner input mismatch keeps its class and its inherited cause")
 unittest
 {
-    auto empty = new InputMismatchException("");
+    auto empty = new InputMismatchException("", "scanner.d", 17);
+    assert(empty.file == "scanner.d" && empty.line == 17);
     assert(empty.getMessage() is null);
     assert(empty.getCause() is null);
     assert((new InputMismatchException).getMessage() is null);
