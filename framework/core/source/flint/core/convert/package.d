@@ -339,10 +339,22 @@ interface ConversionService
 /// Base class for exceptions thrown by the conversion system.
 abstract class ConversionException : NestedRuntimeException
 {
-    /// `message`, and optionally a `cause`.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// `message`, with a cause that can still be initialized (Java's `(String)` constructor).
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file: file, line: line);
+    }
+
+    /// `message` and an initialized `cause`, even `null` (Java's `(String, Throwable)` constructor).
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Selects the cause overload for a `null` literal, as Java's overload resolution does.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 }
 

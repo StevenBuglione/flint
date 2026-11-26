@@ -41,3 +41,41 @@ unittest
     assert(notReady.getCause() is null);
     assert((new FactoryBeanNotInitializedException("Waiting for properties")).getMessage() == "Waiting for properties");
 }
+
+@("message-only bean exceptions leave the cause uninitialized, so initCause still works")
+unittest
+{
+    import flint.beans : FatalBeanException;
+    import flint.beans.factory : BeanCreationException, BeanCreationNotAllowedException,
+        BeanDefinitionStoreException, BeanIsAbstractException;
+    import flint.core : NestedRuntimeException;
+    import flint.java.lang : IllegalStateException;
+
+    // Java's (String) constructors leave the cause uninitialized; a later initCause sets it once.
+    auto cause = new Exception("root");
+    NestedRuntimeException[] messageOnly = [
+        new FatalBeanException("fatal"), new BeanCreationException("create"),
+        new BeanCreationException("bean", "detail"),
+        new BeanCreationNotAllowedException("bean", "closing"),
+        new BeanIsAbstractException("bean"), new BeanDefinitionStoreException("store")
+    ];
+    foreach (failure; messageOnly)
+    {
+        assert(failure.getCause() is null);
+        assert(failure.initCause(cause) is failure && failure.getCause() is cause);
+    }
+
+    // A supplied cause is initialized, so initCause rejects a second one.
+    auto withCause = new FatalBeanException("fatal", cause);
+    assert(withCause.getCause() is cause);
+    bool rejected;
+    try
+        withCause.initCause(new Exception("other"));
+    catch (IllegalStateException)
+        rejected = true;
+    assert(rejected);
+
+    // A `null` literal selects the cause overload (Java's (String, Throwable)), which still reports no cause.
+    assert((new FatalBeanException("fatal", null)).getCause() is null);
+    assert((new BeanCreationException("bean", "detail", null)).getCause() is null);
+}

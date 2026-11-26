@@ -143,8 +143,14 @@ class BeanDefinitionOverrideException : BeanDefinitionStoreException
 /// Thrown when a bean definition fails validation.
 class BeanDefinitionValidationException : FatalBeanException
 {
-    /// The detail message and optional underlying failure.
-    this(string message, Throwable cause = null) pure nothrow
+    /// `message`, with a cause that can still be initialized (Java's `(String)` constructor).
+    this(string message) pure nothrow
+    {
+        super(message);
+    }
+
+    /// `message` and an initialized `cause`, even `null` (Java's `(String, Throwable)` constructor).
+    this(string message, Throwable cause) pure nothrow
     {
         super(message, cause);
     }
@@ -1244,7 +1250,7 @@ class DefaultListableBeanFactory : SimpleAliasRegistry, ConfigurableListableBean
             throw new NoSuchBeanDefinitionException(name);
         }
         if (definition.isAbstract())
-            throw new BeanCreationException(beanName, "Bean definition is abstract", null);
+            throw new BeanCreationException(beanName, "Bean definition is abstract");
         createDependsOn(beanName, *definition);
         if (definition.isPrototype())
             return dependedOn(beanName, createBean(beanName, *definition));

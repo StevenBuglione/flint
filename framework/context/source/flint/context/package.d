@@ -292,8 +292,14 @@ class NoSuchMessageException : RuntimeException
 /// Exception thrown during application context initialization.
 class ApplicationContextException : FatalBeanException
 {
-    /// `msg`, and optionally a `cause`.
-    this(string msg, Throwable cause = null) pure nothrow
+    /// `msg`, with a cause that can still be initialized (Java's `(String)` constructor).
+    this(string msg) pure nothrow
+    {
+        super(msg);
+    }
+
+    /// `msg` and an initialized `cause`, even `null` (Java's `(String, Throwable)` constructor).
+    this(string msg, Throwable cause) pure nothrow
     {
         super(msg, cause);
     }

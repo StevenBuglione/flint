@@ -622,10 +622,22 @@ cause; since Spring 6 it is the exception's own message only, and this port foll
 +/
 abstract class NestedRuntimeException : RuntimeException
 {
-    /// `msg`, and optionally a `cause`.
-    this(string msg, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// `msg`, with a cause that can still be initialized (Java's `(String)` constructor).
+    this(string msg, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(msg, file: file, line: line);
+    }
+
+    /// `msg` and an initialized `cause`, even `null` (Java's `(String, Throwable)` constructor).
+    this(string msg, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(msg, cause, file, line);
+    }
+
+    /// Selects the cause overload for a `null` literal, as Java's overload resolution does.
+    this(string msg, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(msg, cast(Throwable) null, file, line);
     }
 
     /// The innermost cause, or null when there is no cause.

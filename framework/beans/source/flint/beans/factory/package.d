@@ -437,35 +437,91 @@ class BeanCreationException : FatalBeanException
     private string beanName;
     private string resourceDescription;
 
-    /// `msg`, and optionally a `cause`, for no particular bean.
-    this(string msg, Throwable cause = null)
+    /// `msg`, with a cause that can still be initialized (Java's `(String)` constructor).
+    this(string msg)
+    {
+        super(msg);
+    }
+
+    /// `msg` and an initialized `cause`, even `null` (Java's `(String, Throwable)` constructor).
+    this(string msg, Throwable cause)
     {
         super(msg, cause);
     }
 
-    /// `Error creating bean with name 'beanName': msg`.
-    this(string beanName, string msg, Throwable cause)
+    /// Selects the cause overload for a `null` literal, as Java's overload resolution does.
+    this(string msg, typeof(null))
     {
-        super("Error creating bean with name '" ~ beanName ~ "': " ~ msg, cause);
+        this(msg, cast(Throwable) null);
+    }
+
+    /// `Error creating bean with name 'beanName': msg`, with a cause that can still be initialized.
+    this(string beanName, string msg)
+    {
+        super(named(beanName, msg));
         this.beanName = beanName;
     }
 
-    /// `Error creating bean with name 'beanName' defined in resourceDescription: msg`.
-    this(string resourceDescription, string beanName, string msg, Throwable cause)
+    /// `Error creating bean with name 'beanName': msg` and an initialized `cause`, even `null`.
+    this(string beanName, string msg, Throwable cause)
     {
-        super("Error creating bean with name '" ~ beanName ~ "'" ~ (resourceDescription is null
-                ? "" : " defined in " ~ resourceDescription) ~ ": " ~ msg, cause);
+        super(named(beanName, msg), cause);
+        this.beanName = beanName;
+    }
+
+    /// Selects the cause overload for a `null` literal, as Java's overload resolution does.
+    this(string beanName, string msg, typeof(null))
+    {
+        this(beanName, msg, cast(Throwable) null);
+    }
+
+    /// `Error creating bean with name 'beanName' defined in resourceDescription: msg`, with a cause that can still be
+    /// initialized.
+    this(string resourceDescription, string beanName, string msg)
+    {
+        super(defined(resourceDescription, beanName, msg));
         this.beanName = beanName;
         this.resourceDescription = resourceDescription;
     }
 
-    private this(NullableString resourceDescription, NullableString beanName, string msg, Throwable cause)
+    /// `Error creating bean with name 'beanName' defined in resourceDescription: msg` and an initialized `cause`.
+    this(string resourceDescription, string beanName, string msg, Throwable cause)
     {
-        const name = beanName.isNull ? "null" : beanName.get();
-        const resource = resourceDescription.isNull ? "" : " defined in " ~ resourceDescription.get();
-        super("Error creating bean with name '" ~ name ~ "'" ~ resource ~ ": " ~ msg, cause);
+        super(defined(resourceDescription, beanName, msg), cause);
+        this.beanName = beanName;
+        this.resourceDescription = resourceDescription;
+    }
+
+    private this(NullableString resourceDescription, NullableString beanName, string msg)
+    {
+        super(optionalDefined(resourceDescription, beanName, msg));
         this.beanName = beanName.isNull ? null : beanName.get();
         this.resourceDescription = resourceDescription.isNull ? null : resourceDescription.get();
+    }
+
+    private this(NullableString resourceDescription, NullableString beanName, string msg, Throwable cause)
+    {
+        super(optionalDefined(resourceDescription, beanName, msg), cause);
+        this.beanName = beanName.isNull ? null : beanName.get();
+        this.resourceDescription = resourceDescription.isNull ? null : resourceDescription.get();
+    }
+
+    private static string named(string beanName, string msg) pure nothrow
+    {
+        return "Error creating bean with name '" ~ beanName ~ "': " ~ msg;
+    }
+
+    private static string defined(string resourceDescription, string beanName, string msg) pure nothrow
+    {
+        return "Error creating bean with name '" ~ beanName ~ "'" ~ (resourceDescription is null
+                ? "" : " defined in " ~ resourceDescription) ~ ": " ~ msg;
+    }
+
+    private static string optionalDefined(NullableString source, NullableString beanName, string msg) pure nothrow
+    {
+        const name = beanName.isNull ? "null" : beanName.get();
+        const resource = source.isNull ? "" : " defined in " ~ source.get();
+        return "Error creating bean with name '" ~ name ~ "'" ~ resource ~ ": " ~ msg;
     }
 
     /// The bean's name, or null.
@@ -487,7 +543,7 @@ class BeanCreationNotAllowedException : BeanCreationException
     /// Describes why the named bean cannot be created.
     this(string beanName, string message)
     {
-        super(beanName, message, null);
+        super(beanName, message);
     }
 }
 
@@ -497,15 +553,21 @@ class BeanIsAbstractException : BeanCreationException
     /// Reports the requested abstract bean.
     this(string beanName)
     {
-        super(beanName, "Bean definition is abstract", null);
+        super(beanName, "Bean definition is abstract");
     }
 }
 
 /// Thrown when initialization fails before a bean is fully configured.
 class BeanInitializationException : FatalBeanException
 {
-    /// The detail message and optional underlying failure.
-    this(string message, Throwable cause = null) pure nothrow
+    /// `message`, with a cause that can still be initialized (Java's `(String)` constructor).
+    this(string message) pure nothrow
+    {
+        super(message);
+    }
+
+    /// `message` and an initialized `cause`, even `null` (Java's `(String, Throwable)` constructor).
+    this(string message, Throwable cause) pure nothrow
     {
         super(message, cause);
     }
@@ -534,13 +596,13 @@ class BeanCurrentlyInCreationException : BeanCreationException
     this(string beanName)
     {
         super(beanName, "Requested bean is currently in creation: "
-                ~ "Is there an unresolvable circular reference or an asynchronous initialization dependency?", null);
+                ~ "Is there an unresolvable circular reference or an asynchronous initialization dependency?");
     }
 
     /// `Error creating bean with name 'beanName': msg`.
     this(string beanName, string msg)
     {
-        super(beanName, msg, null);
+        super(beanName, msg);
     }
 }
 
@@ -651,7 +713,13 @@ interface FactoryBean(T) : FactoryBeanErased
 class UnsatisfiedDependencyException : BeanCreationException
 {
     /// `Error creating bean with name 'b': Unsatisfied dependency expressed through bean property 'p': msg`.
-    this(string resourceDescription, string beanName, string propertyName, string msg, Throwable cause = null)
+    this(string resourceDescription, string beanName, string propertyName, string msg)
+    {
+        super(resourceDescription, beanName, propertyMessage(propertyName, msg));
+    }
+
+    /// The same message with an initialized `cause`.
+    this(string resourceDescription, string beanName, string propertyName, string msg, Throwable cause)
     {
         super(resourceDescription, beanName, propertyMessage(propertyName, msg), cause);
     }
@@ -659,7 +727,7 @@ class UnsatisfiedDependencyException : BeanCreationException
     /// The unsatisfied property with an optional resource, bean name and detail message (R5).
     this(NullableString resourceDescription, NullableString beanName, string propertyName, NullableString msg)
     {
-        super(resourceDescription, beanName, propertyMessage(propertyName, msg.isNull ? null : msg.get()), null);
+        super(resourceDescription, beanName, propertyMessage(propertyName, msg.isNull ? null : msg.get()));
     }
 
     /// The unsatisfied property with the supplied bean exception as its cause (R5, R7).
@@ -683,34 +751,68 @@ class BeanDefinitionStoreException : FatalBeanException
     private string beanName;
     private NullableString resourceDescription;
 
-    /// `msg`, and optionally a `cause`.
-    this(string msg, Throwable cause = null)
+    /// `msg`, with a cause that can still be initialized (Java's `(String)` constructor).
+    this(string msg)
+    {
+        super(msg);
+    }
+
+    /// `msg` and an initialized `cause`, even `null` (Java's `(String, Throwable)` constructor).
+    this(string msg, Throwable cause)
     {
         super(msg, cause);
     }
 
-    /// A resource reference with the supplied detail message and optional cause.
-    this(NullableString resourceDescription, string msg, Throwable cause = null)
+    /// A resource reference with the supplied detail message, with a cause that can still be initialized.
+    this(NullableString resourceDescription, string msg)
+    {
+        super(msg);
+        this.resourceDescription = resourceDescription;
+    }
+
+    /// A resource reference with the supplied detail message and an initialized `cause`.
+    this(NullableString resourceDescription, string msg, Throwable cause)
     {
         super(msg, cause);
         this.resourceDescription = resourceDescription;
     }
 
-    /// `Invalid bean definition with name 'beanName' defined in resource: msg`.
-    this(string resourceDescription, string beanName, string msg, Throwable cause = null)
+    /// `Invalid bean definition with name 'beanName' defined in resource: msg`, with a cause that can still be
+    /// initialized.
+    this(string resourceDescription, string beanName, string msg)
+    {
+        this(optionalText(resourceDescription), beanName, optionalText(msg));
+    }
+
+    /// `Invalid bean definition with name 'beanName' defined in resource: msg` and an initialized `cause`.
+    this(string resourceDescription, string beanName, string msg, Throwable cause)
     {
         this(optionalText(resourceDescription), beanName, optionalText(msg), cause);
     }
 
-    /// A named definition with an optional resource description and detail message.
-    this(NullableString resourceDescription, string beanName, NullableString msg, Throwable cause = null)
+    /// A named definition with an optional resource description and detail message, with a cause that can still be
+    /// initialized.
+    this(NullableString resourceDescription, string beanName, NullableString msg)
     {
-        const name = beanName is null ? "null" : beanName;
-        const resource = resourceDescription.isNull ? "null" : resourceDescription.get();
-        const detail = msg.isNull ? "" : ": " ~ msg.get();
-        super("Invalid bean definition with name '" ~ name ~ "' defined in " ~ resource ~ detail, cause);
+        super(invalidDefinition(resourceDescription, beanName, msg));
         this.beanName = beanName;
         this.resourceDescription = resourceDescription;
+    }
+
+    /// A named definition with an optional resource description and detail message, and an initialized `cause`.
+    this(NullableString resourceDescription, string beanName, NullableString msg, Throwable cause)
+    {
+        super(invalidDefinition(resourceDescription, beanName, msg), cause);
+        this.beanName = beanName;
+        this.resourceDescription = resourceDescription;
+    }
+
+    private static string invalidDefinition(NullableString source, string beanName, NullableString msg) pure nothrow
+    {
+        const name = beanName is null ? "null" : beanName;
+        const resource = source.isNull ? "null" : source.get();
+        const detail = msg.isNull ? "" : ": " ~ msg.get();
+        return "Invalid bean definition with name '" ~ name ~ "' defined in " ~ resource ~ detail;
     }
 
     /// The resource description, if available.

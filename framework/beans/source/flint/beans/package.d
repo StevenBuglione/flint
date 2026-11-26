@@ -34,20 +34,44 @@ import flint.core : NestedRuntimeException;
 /// Abstract superclass for all exceptions thrown in the beans package and subpackages.
 abstract class BeansException : NestedRuntimeException
 {
-    /// `msg`, and optionally a `cause`.
-    this(string msg, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// `msg`, with a cause that can still be initialized (Java's `(String)` constructor).
+    this(string msg, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(msg, file: file, line: line);
+    }
+
+    /// `msg` and an initialized `cause`, even `null` (Java's `(String, Throwable)` constructor).
+    this(string msg, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(msg, cause, file, line);
+    }
+
+    /// Selects the cause overload for a `null` literal, as Java's overload resolution does.
+    this(string msg, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(msg, cast(Throwable) null, file, line);
     }
 }
 
 /// Thrown on an unrecoverable problem encountered in the beans packages or sub-packages.
 class FatalBeanException : BeansException
 {
-    /// `msg`, and optionally a `cause`.
-    this(string msg, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// `msg`, with a cause that can still be initialized (Java's `(String)` constructor).
+    this(string msg, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(msg, file: file, line: line);
+    }
+
+    /// `msg` and an initialized `cause`, even `null` (Java's `(String, Throwable)` constructor).
+    this(string msg, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(msg, cause, file, line);
+    }
+
+    /// Selects the cause overload for a `null` literal, as Java's overload resolution does.
+    this(string msg, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(msg, cast(Throwable) null, file, line);
     }
 }
 
@@ -56,8 +80,15 @@ class BeanInstantiationException : FatalBeanException
 {
     private string beanClass;
 
-    /// `Failed to instantiate [beanClass]: msg`.
-    this(string beanClass, string msg, Throwable cause = null) pure nothrow
+    /// `Failed to instantiate [beanClass]: msg`, with a cause that can still be initialized.
+    this(string beanClass, string msg) pure nothrow
+    {
+        super("Failed to instantiate [" ~ beanClass ~ "]: " ~ msg);
+        this.beanClass = beanClass;
+    }
+
+    /// `Failed to instantiate [beanClass]: msg` and an initialized `cause`.
+    this(string beanClass, string msg, Throwable cause) pure nothrow
     {
         super("Failed to instantiate [" ~ beanClass ~ "]: " ~ msg, cause);
         this.beanClass = beanClass;
