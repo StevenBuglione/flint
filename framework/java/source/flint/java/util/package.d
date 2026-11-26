@@ -3516,7 +3516,7 @@ struct Locale
             && script == other.script && extensions == other.extensions;
     }
 
-    /// The hash of the locale value.
+    /// The hash used by D associative arrays.
     size_t toHash() const pure nothrow
     {
         const base = hashOf(variant, hashOf(country, hashOf(language)));
@@ -3524,10 +3524,16 @@ struct Locale
         return extensions.length ? hashOf(extensions, scriptHash) : scriptHash;
     }
 
-    /// Java's `hashCode`.
-    int hashCode() const pure nothrow
+    /// Java's `hashCode` over the base fields and the canonical extension ID.
+    int hashCode() const pure nothrow @nogc
     {
-        return cast(int) toHash();
+        import flint.java.lang : stringHashCode;
+
+        int hash = stringHashCode(language);
+        hash = 31 * hash + stringHashCode(script);
+        hash = 31 * hash + stringHashCode(country);
+        hash = 31 * hash + stringHashCode(variant);
+        return hash ^ stringHashCode(extensions);
     }
 
     /// `language_COUNTRY_variant`, with an empty result when both language and country are absent.

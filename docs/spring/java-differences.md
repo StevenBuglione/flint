@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,229 | 410 | 1,871 | 14,911 |
+| framework | openjdk@21.0.13 | 1,230 | 410 | 1,871 | 14,910 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10636,7 +10636,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 123 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,878 | 0 |
+| java.util | 1,877 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -11885,7 +11885,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Locale#getISOLanguages()` | 2 | Java returns an independently mutable array of two-letter language codes. Temurin 21 includes both modern and legacy aliases, independently of the old-ISO startup setting. Flint needs the language inventory. |
 | framework | `java.util.Locale#getUnicodeLocaleAttributes()` | 2 | Flint returns frozen snapshots of canonical Unicode locale attributes. Java returns Collections.emptySet() or unmodifiable views. Shared Set parity still needs the empty-set no-op behavior and exception ordering for populated set mutations. |
 | framework | `java.util.Locale#getUnicodeLocaleKeys()` | 2 | Flint returns frozen snapshots of canonical Unicode locale keys, including typeless keys. Java returns Collections.emptySet() or unmodifiable views. Shared Set parity still needs the empty-set no-op behavior and exception ordering for populated set mutations. |
-| framework | `java.util.Locale#hashCode()` | 2 | Flint narrows its D associative-array hash to int and produces different numeric hashes from Java. Both implementations give equal Locale values equal hashes. |
 | framework | `java.util.Locale#of(String)` | 2 | Flint uses the normalized Locale constructor, including the compatibility extensions. The java.locale.useOldISOCodes startup property is deferred. A null String is the empty slice under R26. |
 | framework | `java.util.Locale#of(String,String)` | 2 | Flint uses the normalized Locale constructor, including the compatibility extensions. The java.locale.useOldISOCodes startup property is deferred. A null String is the empty slice under R26. |
 | framework | `java.util.Locale#of(String,String,String)` | 2 | Flint uses the normalized Locale constructor, including the compatibility extensions. The java.locale.useOldISOCodes startup property is deferred. A null String is the empty slice under R26. |
