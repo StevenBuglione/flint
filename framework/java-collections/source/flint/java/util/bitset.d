@@ -268,23 +268,10 @@ class BitSet
         return 1UL << (index & bitMask);
     }
 
-    pragma(inline, false) private void changeBit(int bitIndex, RangeChange change) pure
+    private void changeBit(int bitIndex, RangeChange change) pure
     {
         checkIndex(bitIndex, 0, "bitIndex < 0: ");
-        const word = bitIndex >> wordShift;
-        if (word >= wordsInUse)
-        {
-            if (change == RangeChange.clear)
-                return;
-            expandTo(word);
-        }
-
-        const mask = maskAt(bitIndex);
-        const overwrite = change == RangeChange.flip ? 0UL : mask;
-        const writeOnes = change == RangeChange.clear ? 0UL : mask;
-        words[word] = (words[word] & ~overwrite) ^ writeOnes;
-        if (change != RangeChange.set)
-            recalculateWordsInUse();
+        changeIncludedBits(bitIndex, bitIndex, change);
     }
 
     private static void checkIndex(int index, int minimum, string label) pure
@@ -318,15 +305,17 @@ class BitSet
         throw new IndexOutOfBoundsException(message);
     }
 
-    pragma(inline, false) private void changeRange(int fromIndex, int toIndex, RangeChange change) pure
+    private void changeRange(int fromIndex, int toIndex, RangeChange change) pure
     {
         if (fromIndex < 0 || toIndex < fromIndex)
             rejectRange(fromIndex, toIndex);
-        if (fromIndex == toIndex)
-            return;
+        if (fromIndex != toIndex)
+            changeIncludedBits(fromIndex, toIndex - 1, change);
+    }
 
+    pragma(inline, false) private void changeIncludedBits(int fromIndex, int lastBit, RangeChange change) pure
+    {
         const firstWord = fromIndex >> wordShift;
-        const lastBit = toIndex - 1;
         int lastWord = lastBit >> wordShift;
         ulong lastMask = ulong.max >> (bitMask - (lastBit & bitMask));
         if (lastWord >= wordsInUse)
