@@ -196,7 +196,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | openjdk@21.0.13 | 234 | 135 | 1,871 | 16,181 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 509 | 1 | 88 | 11,815 |
+| security | spring-security@7.2.0 | 499 | 1 | 88 | 11,825 |
 
 ## Known gaps
 
@@ -208,6 +208,8 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
 | framework | `org.springframework.expression.spel.support.StandardTypeConverter#<init>()` | `flint.expression.spel.support.StandardTypeConverter` | Creates and retains one default conversion service per converter. Flint's core getSharedInstance factory creates a fresh service. |
 | framework | `tools.jackson.core.JsonPointer#length()` | `flint.jackson.core.JsonPointer.length` | Returns UTF-16 code units. |
+| security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.InMemoryUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
+| security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.JdbcUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.JdbcUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
 
 ## Adapted elements
 
@@ -10237,7 +10239,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.acls.domain | 139 | 0 |
 | org.springframework.security.acls.jdbc | 63 | 0 |
 | org.springframework.security.acls.model | 83 | 0 |
-| org.springframework.security.authentication | 99 | 32 |
+| org.springframework.security.authentication | 100 | 32 |
 | org.springframework.security.authentication.dao | 29 | 0 |
 | org.springframework.security.authentication.event | 10 | 0 |
 | org.springframework.security.authentication.jaas | 73 | 0 |
@@ -10260,17 +10262,17 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.config | 87 | 0 |
 | org.springframework.security.config.annotation | 40 | 0 |
 | org.springframework.security.config.annotation.authentication | 2 | 0 |
-| org.springframework.security.config.annotation.authentication.builders | 3 | 0 |
-| org.springframework.security.config.annotation.authentication.configuration | 11 | 0 |
+| org.springframework.security.config.annotation.authentication.builders | 5 | 0 |
+| org.springframework.security.config.annotation.authentication.configuration | 12 | 0 |
 | org.springframework.security.config.annotation.authentication.configurers.ldap | 33 | 0 |
-| org.springframework.security.config.annotation.authentication.configurers.provisioning | 33 | 0 |
+| org.springframework.security.config.annotation.authentication.configurers.provisioning | 31 | 0 |
 | org.springframework.security.config.annotation.authentication.configurers.userdetails | 15 | 0 |
 | org.springframework.security.config.annotation.authorization | 5 | 0 |
 | org.springframework.security.config.annotation.configuration | 3 | 0 |
 | org.springframework.security.config.annotation.method.configuration | 28 | 5 |
 | org.springframework.security.config.annotation.rsocket | 39 | 5 |
 | org.springframework.security.config.annotation.web | 23 | 0 |
-| org.springframework.security.config.annotation.web.builders | 56 | 0 |
+| org.springframework.security.config.annotation.web.builders | 57 | 0 |
 | org.springframework.security.config.annotation.web.configuration | 15 | 0 |
 | org.springframework.security.config.annotation.web.configurers | 285 | 0 |
 | org.springframework.security.config.annotation.web.configurers.oauth2.client | 57 | 0 |
@@ -10311,7 +10313,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.core.userdetails.jdbc | 12 | 0 |
 | org.springframework.security.core.userdetails.memory | 14 | 0 |
 | org.springframework.security.crypto.argon2 | 7 | 0 |
-| org.springframework.security.crypto.bcrypt | 14 | 0 |
+| org.springframework.security.crypto.bcrypt | 17 | 0 |
 | org.springframework.security.crypto.codec | 7 | 0 |
 | org.springframework.security.crypto.encrypt | 105 | 0 |
 | org.springframework.security.crypto.keygen | 16 | 0 |
@@ -10445,7 +10447,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.util | 26 | 0 |
 | org.springframework.security.util.matcher | 15 | 0 |
 | org.springframework.security.web | 74 | 0 |
-| org.springframework.security.web.access | 67 | 0 |
+| org.springframework.security.web.access | 68 | 0 |
 | org.springframework.security.web.access.channel | 57 | 0 |
 | org.springframework.security.web.access.expression | 35 | 0 |
 | org.springframework.security.web.access.intercept | 61 | 0 |
@@ -10464,10 +10466,10 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.web.authentication.www | 52 | 0 |
 | org.springframework.security.web.bind.annotation | 2 | 0 |
 | org.springframework.security.web.bind.support | 4 | 0 |
-| org.springframework.security.web.context | 69 | 0 |
+| org.springframework.security.web.context | 71 | 0 |
 | org.springframework.security.web.context.request.async | 11 | 0 |
 | org.springframework.security.web.context.support | 3 | 0 |
-| org.springframework.security.web.csrf | 67 | 0 |
+| org.springframework.security.web.csrf | 68 | 0 |
 | org.springframework.security.web.debug | 6 | 0 |
 | org.springframework.security.web.firewall | 59 | 0 |
 | org.springframework.security.web.header | 14 | 0 |
@@ -10691,3 +10693,15 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.node.ObjectNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ValueNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ValueNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
+| security | `org.springframework.security.authentication.AbstractAuthenticationToken#<init>(AbstractAuthenticationBuilder)` | 2 | The constructor requires the deferred nested authentication builder. |
+| security | `org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder#<init>(ObjectPostProcessor)` | 2 | The constructor requires the deferred ObjectPostProcessor contract. |
+| security | `org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder#userDetailsService(T)` | 2 | The upstream method returns DaoAuthenticationConfigurer. The current Flint method returns the builder. |
+| security | `org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration#authenticationManagerBuilder(ObjectPostProcessor,ApplicationContext)` | 2 | The bean method with parameters requires the deferred ObjectPostProcessor contract. |
+| security | `org.springframework.security.config.annotation.web.builders.HttpSecurity#<init>(ObjectPostProcessor,AuthenticationManagerBuilder,Map)` | 2 | The constructor requires the deferred ObjectPostProcessor contract. |
+| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(BCryptVersion,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
+| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(BCryptVersion,int,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
+| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(int,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
+| security | `org.springframework.security.web.access.ExceptionTranslationFilter#<init>(AuthenticationEntryPoint,RequestCache)` | 2 | The request-caching overload requires the deferred RequestCache contract. |
+| security | `org.springframework.security.web.context.RequestAttributeSecurityContextRepository#loadContext(HttpRequestResponseHolder)` | 2 | The current Flint method accepts HttpServletRequest. The holder-based method waits on HttpRequestResponseHolder. |
+| security | `org.springframework.security.web.context.SecurityContextRepository#loadContext(HttpRequestResponseHolder)` | 2 | The current Flint interface accepts HttpServletRequest. The holder-based method waits on HttpRequestResponseHolder. |
+| security | `org.springframework.security.web.csrf.CsrfFilter#<init>(CsrfTokenRepository)` | 2 | The constructor requires the deferred CsrfTokenRepository contract. |
