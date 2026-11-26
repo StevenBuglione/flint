@@ -577,7 +577,8 @@
    "module": "flint.data.domain",
    "also": [
     "flint.data.annotation",
-    "flint.data.core"
+    "flint.data.core",
+    "flint.data.support"
    ],
    "repo": "data-commons",
    "licence": "Apache-2.0",
