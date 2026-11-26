@@ -62,7 +62,7 @@ struct OpaquePayload
     @disable this();
 
     /// Creates a payload from nonblank provider and kind names and a present data string.
-    this(string provider, string kind, string data)
+    pragma(inline, true) this(string provider, string kind, string data)
     {
         Assert.hasText(provider, "provider must not be empty");
         Assert.hasText(kind, "kind must not be empty");
