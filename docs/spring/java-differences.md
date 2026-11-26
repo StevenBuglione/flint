@@ -11029,12 +11029,17 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.OutputStreamWriter#close()` | 2 | Java flushes buffered output, closes once, and rejects subsequent writes and flushes. The existing method forwards every close without flushing or tracking the closed state. |
 | framework | `java.io.OutputStreamWriter#flush()` | 2 | Java drains its encoded buffer before flushing the stream and rejects flush after close. The existing writer emits bytes eagerly and forwards flush even after close. |
 | framework | `java.io.PrintWriter#<init>(File)` | 2 | The existing type has no File constructor. |
-| framework | `java.io.PrintWriter#<init>(OutputStream)` | 2 | Java rejects a null output during construction and buffers writes. The existing constructor accepts a null sink and wraps an eager writer. |
+| framework | `java.io.PrintWriter#<init>(OutputStream)` | 2 | Java rejects a null output, buffers writes and uses the charset of a PrintStream sink or the default charset. The existing constructor accepts a null sink and wraps an eager UTF-8 writer. |
+| framework | `java.io.PrintWriter#<init>(OutputStream,boolean)` | 2 | Missing buffered output-stream constructor with selectable auto-flush and charset inherited from a PrintStream sink or the default charset. |
+| framework | `java.io.PrintWriter#<init>(OutputStream,boolean,Charset)` | 2 | Missing buffered output-stream constructor with selectable auto-flush and explicit charset. |
 | framework | `java.io.PrintWriter#<init>(Writer)` | 2 | Java rejects a null writer during construction. The existing constructor accepts one. |
+| framework | `java.io.PrintWriter#<init>(Writer,boolean)` | 2 | Missing constructor with selectable auto-flush for println, printf and format. An ordinary print containing a newline does not trigger it. |
 | framework | `java.io.PrintWriter#append(CharSequence)` | 2 | Java appends literal null for an absent character sequence. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
 | framework | `java.io.PrintWriter#checkError()` | 2 | Error tracking and the public checkError accessor are pending. |
 | framework | `java.io.PrintWriter#close()` | 2 | Java records checked close failures in the error state and ignores repeated closes after success. The existing method forwards every close and propagates checked failures. |
 | framework | `java.io.PrintWriter#flush()` | 2 | A checked flush failure or a flush after closure sets Java's error state. The existing method forwards flush and propagates checked failures. |
+| framework | `java.io.PrintWriter#format(Locale,String,Object[])` | 2 | Missing explicit-locale formatting and writer return. Java disables localization for a null locale, honors auto-flush, records checked sink errors, and restores interruption for InterruptedIOException. |
+| framework | `java.io.PrintWriter#format(String,Object[])` | 2 | Missing formatting using the current default locale and returning this writer. Java honors auto-flush and records checked sink errors while invalid conversions propagate. |
 | framework | `java.io.PrintWriter#print(Object)` | 2 | Java records checked errors in the PrintWriter error state. The existing Object overload propagates the sink's write failure. |
 | framework | `java.io.PrintWriter#print(String)` | 2 | Java prints literal null for an absent string. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
 | framework | `java.io.PrintWriter#print(boolean)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
@@ -11044,6 +11049,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#print(float)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
 | framework | `java.io.PrintWriter#print(int)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
 | framework | `java.io.PrintWriter#print(long)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
+| framework | `java.io.PrintWriter#printf(Locale,String,Object[])` | 2 | Missing forwarding overload for format with an explicit locale. |
+| framework | `java.io.PrintWriter#printf(String,Object[])` | 2 | Missing forwarding overload for format using the current default locale. |
 | framework | `java.io.PrintWriter#println()` | 2 | Java uses its platform line separator. The existing method always emits LF. |
 | framework | `java.io.PrintWriter#println(Object)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#println(String)` | 2 | Java prints literal null for an absent string and uses its platform line separator. The existing slice treats null as empty and always emits LF. |
