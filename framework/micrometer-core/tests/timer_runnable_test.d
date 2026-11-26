@@ -17,11 +17,47 @@
 // Modified by the Flint authors.
 module micrometer_timer_runnable_test;
 
+import core.memory : GC;
 import flint.java.lang : NullPointerException, Runnable;
+import flint.java.util.concurrent.callable : Callable;
+import flint.micrometer.core.instrument : Timer;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 import std.exception : assertThrown;
+import std.typecons : Nullable;
 
 @safe:
+
+@("recordCallable")
+unittest
+{
+    static final class Value : Callable!(Nullable!string)
+    {
+        this() scope
+        {
+        }
+
+        override Nullable!string call()
+        {
+            return Nullable!string("value");
+        }
+    }
+
+    static assert(!__traits(compiles, (Timer timer) @safe {
+            scope stackValue = new Value;
+            timer.recordCallable(stackValue);
+        }));
+
+    auto registry = new SimpleMeterRegistry;
+    registry.close();
+    auto timer = registry.timer("test");
+    Callable!(Nullable!string) callable = new Value;
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    assert(timer.recordCallable(callable).get() == "value");
+    assert(timer.recordCallable(() => Nullable!string.init).isNull());
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 0);
+    assertThrown!NullPointerException(timer.recordCallable(cast(Callable!(Nullable!string)) null));
+}
 
 @("recordRunnable")
 unittest

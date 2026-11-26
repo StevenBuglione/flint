@@ -38,6 +38,7 @@ import flint.java.lang : ClassCastException, Comparable, IllegalArgumentExceptio
     NullPointerException, Runnable, UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode, valueOf;
 import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit, toMillis, toNanos;
+import flint.java.util.concurrent.callable : Callable;
 import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
 import flint.java.util.function_ : BooleanSupplier, Consumer, DoubleSupplier, Supplier;
 import flint.java.util.stream : Stream;
@@ -979,6 +980,42 @@ interface Timer : Meter
     /// Return a primitive result from a D delegate without retaining it (R9).
     double record(scope double delegate() @safe action);
 
+    /// Time the callable and propagate any exception it raises (R8, R9).
+    /// Value results must support default initialization and assignment.
+    T recordCallable(T)(Callable!T action)
+    {
+        static if (!is(T == void))
+            T result;
+        record(() @safe {
+            if (action is null)
+                throw nullCallback();
+            static if (is(T == void))
+                action.call();
+            else
+                result = action.call();
+        });
+        static if (!is(T == void))
+            return result;
+    }
+
+    /// Time a D callable without retaining it (R9).
+    /// Value results must support default initialization and assignment.
+    T recordCallable(T)(scope T delegate() @safe action)
+    {
+        static if (is(T == void))
+            record(action);
+        else
+        {
+            T result;
+            record(() {
+                if (action is null)
+                    throw nullCallback();
+                result = action();
+            });
+            return result;
+        }
+    }
+
     /// Wrap a task to time each invocation.
     Runnable wrap(Runnable action);
 
@@ -1010,13 +1047,29 @@ interface Timer : Meter
         return new TimedRunnable(timer, action);
     }
 
+    private static NullPointerException nullCallback()
+    {
+        return new NullPointerException("action");
+    }
+
     /// Micrometer's default duration conversion, wrappers, mean and live measurements (R3).
     mixin template Defaults(alias Measurements = MeasurementIterable,
             alias samples = timerMeasurements, alias DurationType = Duration,
-            alias Unit = TimeUnit, alias RunnableType = Runnable, alias makeTimedRunnable = timedRunnable,
-            alias DoubleSupplierType = DoubleSupplier,
-            alias BooleanSupplierType = BooleanSupplier, alias NullAction = NullPointerException)
+            alias Unit = TimeUnit, alias RunnableType = Runnable,
+            alias makeTimedRunnable = timedRunnable, alias DoubleSupplierType = DoubleSupplier,
+            alias BooleanSupplierType = BooleanSupplier,
+            alias NullAction = NullPointerException, alias makeNullAction = nullCallback)
     {
+        static if (is(NullAction == typeof(makeNullAction())))
+            private alias nullAction = makeNullAction;
+        else
+        {
+            private static NullAction nullAction()
+            {
+                return new NullAction("action");
+            }
+        }
+
         override void record(DurationType duration)
         {
             Timer timer = this;
@@ -1041,7 +1094,7 @@ interface Timer : Meter
             Timer timer = this;
             timer.record(() {
                 if (action is null)
-                    throw new NullAction("action");
+                    throw nullAction();
                 result = action();
             });
             return result;
@@ -1059,7 +1112,7 @@ interface Timer : Meter
             Timer timer = this;
             timer.record(() {
                 if (action is null)
-                    throw new NullAction("action");
+                    throw nullAction();
                 result = action();
             });
             return result;

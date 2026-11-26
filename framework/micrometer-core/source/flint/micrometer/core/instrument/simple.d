@@ -293,6 +293,49 @@ unittest
     assert(noop.count() == 0);
 }
 
+@("callable timing preserves nullable values and exceptions without allocating")
+unittest
+{
+    import core.memory : GC;
+    import flint.java.lang : IllegalStateException;
+    import flint.java.util.concurrent.callable : Callable;
+    import flint.micrometer.core.instrument : Tags;
+    import std.exception : assertThrown;
+
+    auto clock = new MockClock;
+    auto id = new Meter.Id("callable", Tags.empty(), Nullable!string.init, Nullable!string.init, Meter.Type.TIMER);
+    Timer timer = new CumulativeTimer(id, clock);
+    auto failure = new IllegalStateException("callable failed");
+
+    Nullable!string supply()
+    {
+        clock.add(8, TimeUnit.NANOSECONDS);
+        return Nullable!string("");
+    }
+
+    Nullable!string fail()
+    {
+        clock.add(9, TimeUnit.NANOSECONDS);
+        throw failure;
+    }
+
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    const result = timer.recordCallable(&supply);
+    assert(!result.isNull() && result.get() == "");
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 1 && timer.totalTime(TimeUnit.NANOSECONDS) == 8);
+
+    bool caught;
+    try
+        timer.recordCallable(&fail);
+    catch (IllegalStateException error)
+        caught = error is failure;
+    assert(caught);
+    assert(timer.count() == 2 && timer.totalTime(TimeUnit.NANOSECONDS) == 17);
+    assertThrown!NullPointerException(timer.recordCallable(cast(Callable!(Nullable!string)) null));
+    assert(timer.count() == 3 && timer.totalTime(TimeUnit.NANOSECONDS) == 17);
+}
+
 @("a wrapped task records each invocation and propagates the original exception")
 unittest
 {

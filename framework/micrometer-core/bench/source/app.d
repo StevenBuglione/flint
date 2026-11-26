@@ -2,10 +2,26 @@ module app;
 
 import core.stdc.stdio : fputc, stdout;
 import flint.java.util.concurrent : TimeUnit;
+import flint.java.util.concurrent.callable : Callable;
 import flint.micrometer.core.instrument : Clock, MockClock, Tags, Timer;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 
 @safe:
+
+private final class Region : Callable!string
+{
+    private const string value;
+
+    this(string region)
+    {
+        value = region;
+    }
+
+    override string call()
+    {
+        return value;
+    }
+}
 
 void main(string[] args)
 {
@@ -20,6 +36,9 @@ void main(string[] args)
     clock.add(250, TimeUnit.MILLISECONDS);
     if (sample.stop(timer) != 250_000_000 || timer.count() != 1
             || timer.totalTime(TimeUnit.SECONDS) != 0.25 || timer.max(TimeUnit.SECONDS) != 0.25)
+        return;
+    Callable!string action = new Region(region);
+    if (timer.recordCallable(action) != region || timer.count() != 2)
         return;
     foreach (character; tags.toString())
         fputc(character, stdout);
