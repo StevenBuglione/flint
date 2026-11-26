@@ -1,0 +1,18 @@
+{
+  "flint.java.util.zip.adler32": {
+    "incremental_linked_bytes": 4295,
+    "template_instances": 57
+  },
+  "flint.java.util.zip.checksum": {
+    "incremental_linked_bytes": 1320,
+    "template_instances": 33
+  },
+  "flint.java.util.zip.crc32": {
+    "incremental_linked_bytes": 15603,
+    "template_instances": 57
+  },
+  "flint.java.util.zip.crc32c": {
+    "incremental_linked_bytes": 2508,
+    "template_instances": 33
+  }
+}

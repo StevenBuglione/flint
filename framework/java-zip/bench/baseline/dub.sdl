@@ -1,0 +1,5 @@
+name "probe-java-zip-baseline"
+targetType "executable"
+targetPath "build"
+targetName "probe-java-zip"
+dflags "-preview=dip1000"
