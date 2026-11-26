@@ -12175,7 +12175,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.security.NoSuchAlgorithmException#<init>(Throwable)` | 2 | Requires Java cause initialization, including null, and derives the detail from a non-null cause's virtual toString. The checked Flint exception base still needs that behavior. |
 | framework | `java.text.DateFormat` | 2 | Java DateFormat extends Format and is usable through its generic format(Object) contract. Flint has no Format supertype. |
 | framework | `java.text.DateFormat#<init>()` | 2 | Subclass initialization is implicit. Flint has no DateFormat constructor for an explicit super() call, which Java subclasses can make. |
-| framework | `java.text.DateFormat#format(Date)` | 2 | With SimpleDateFormat, a null Date or an absent Calendar can terminate the process. Java throws NullPointerException (R8). |
+| framework | `java.text.DateFormat#format(Date)` | 2 | Flint uses an abstract string overload. Java supplies a final convenience overload that dispatches through the three-argument Format contract. |
 | framework | `java.text.DateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | The date append overload needs canonical java.lang.StringBuffer and a FieldPosition for UTF-16 offsets. |
 | framework | `java.text.DateFormat#format(Object,StringBuffer,FieldPosition)` | 2 | Generic date formatting needs canonical java.lang.StringBuffer and Format dispatch to the date append overload. |
 | framework | `java.text.DateFormat#getTimeZone()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
