@@ -150,7 +150,6 @@
       "org/springframework/aop/support/DelegatingIntroductionInterceptorTests.java",
       "org/springframework/aop/support/JdkRegexpMethodPointcutTests.java",
       "org/springframework/aop/support/RegexpMethodPointcutAdvisorIntegrationTests.java",
-      "org/springframework/aop/support/annotation/AnnotationMatchingPointcutTests.java",
       "org/springframework/aop/target/CommonsPool2TargetSourceProxyTests.java",
       "org/springframework/aop/target/HotSwappableTargetSourceTests.java",
       "org/springframework/aop/target/LazyCreationTargetSourceTests.java",

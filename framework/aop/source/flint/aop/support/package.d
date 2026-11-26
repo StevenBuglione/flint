@@ -220,7 +220,8 @@ abstract class Pointcuts
     }
 
     /// Test a pointcut against one invocation, checking the class and static method first.
-    static bool matches(Pointcut pointcut, const(MethodDescriptor)* method, const Descriptor targetClass, Any[] args...)
+    pragma(inline, true) static bool matches(Pointcut pointcut, const(MethodDescriptor)* method,
+            const Descriptor targetClass, Any[] args...)
     {
         if (pointcut is null)
             throw new IllegalArgumentException("Pointcut must not be null");

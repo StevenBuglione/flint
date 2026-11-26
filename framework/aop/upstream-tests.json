@@ -305,8 +305,17 @@
       "status": "ported"
     },
     "org/springframework/aop/support/annotation/AnnotationMatchingPointcutTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/aop/tests/annotation_class_pointcut_tests.d",
+      "methods": {
+        "ported": [
+          "classLevelPointcuts"
+        ],
+        "skipped": {
+          "classLevelAndMethodLevelPointcuts": "Phase 2: method annotation matching awaits method-only AOT metadata.",
+          "methodLevelPointcuts": "Phase 2: method annotation matching awaits method-only AOT metadata."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/aop/target/CommonsPool2TargetSourceProxyTests.java": {
       "phase": "2",

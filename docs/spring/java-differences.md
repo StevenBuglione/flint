@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 138 | 255 | 0 | 15,403 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,375 | 1,310 | 4,848 | 30,301 |
+| framework | spring-framework@v7.1.0 | 3,379 | 1,322 | 4,848 | 30,285 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1872,6 +1872,23 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.support.RootClassFilter#toString()` | `flint.aop.support.RootClassFilter.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.StaticMethodMatcher#matches(Method,Class,Object...)` | `flint.aop.support.StaticMethodMatcher.matches` | [R4](api-mapping.md#r4-classt-parameters), [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.aop.support.StaticMethodMatcherPointcut#setClassFilter(ClassFilter)` | `flint.aop.support.StaticMethodMatcherPointcut.setClassFilter` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) |  |
+
+#### org.springframework.aop.support.annotation
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.aop.support.annotation.AnnotationClassFilter#<init>(Class)` | `flint.aop.support.annotation.AnnotationClassFilter` | [R4](api-mapping.md#r4-classt-parameters) | Uses the annotation ClassRef token, such as classOf!Order. |
+| `org.springframework.aop.support.annotation.AnnotationClassFilter#<init>(Class,boolean)` | `flint.aop.support.annotation.AnnotationClassFilter` | [R4](api-mapping.md#r4-classt-parameters) | Uses the annotation ClassRef token, such as classOf!Order. |
+| `org.springframework.aop.support.annotation.AnnotationClassFilter#equals(Object)` | `flint.aop.support.annotation.AnnotationClassFilter.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.annotation.AnnotationClassFilter#hashCode()` | `flint.aop.support.annotation.AnnotationClassFilter.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.annotation.AnnotationClassFilter#matches(Class)` | `flint.aop.support.annotation.AnnotationClassFilter.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.support.annotation.AnnotationClassFilter#toString()` | `flint.aop.support.annotation.AnnotationClassFilter.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.annotation.AnnotationMatchingPointcut#<init>(Class)` | `flint.aop.support.annotation.AnnotationMatchingPointcut` | [R4](api-mapping.md#r4-classt-parameters) | Uses the annotation ClassRef token, such as classOf!Order. |
+| `org.springframework.aop.support.annotation.AnnotationMatchingPointcut#<init>(Class,boolean)` | `flint.aop.support.annotation.AnnotationMatchingPointcut` | [R4](api-mapping.md#r4-classt-parameters) | Uses the annotation ClassRef token, such as classOf!Order. |
+| `org.springframework.aop.support.annotation.AnnotationMatchingPointcut#equals(Object)` | `flint.aop.support.annotation.AnnotationMatchingPointcut.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.annotation.AnnotationMatchingPointcut#forClassAnnotation(Class)` | `flint.aop.support.annotation.AnnotationMatchingPointcut.forClassAnnotation` | [R4](api-mapping.md#r4-classt-parameters) | Uses the annotation ClassRef token, such as classOf!Order. |
+| `org.springframework.aop.support.annotation.AnnotationMatchingPointcut#hashCode()` | `flint.aop.support.annotation.AnnotationMatchingPointcut.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.annotation.AnnotationMatchingPointcut#toString()` | `flint.aop.support.annotation.AnnotationMatchingPointcut.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.springframework.beans
 
@@ -8922,7 +8939,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.interceptor | 97 | 0 |
 | org.springframework.aop.scope | 20 | 0 |
 | org.springframework.aop.support | 118 | 0 |
-| org.springframework.aop.support.annotation | 26 | 0 |
+| org.springframework.aop.support.annotation | 10 | 0 |
 | org.springframework.aop.target | 116 | 0 |
 | org.springframework.aop.target.dynamic | 20 | 0 |
 | org.springframework.aot | 4 | 0 |
