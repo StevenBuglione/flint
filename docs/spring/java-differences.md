@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,223 | 405 | 1,871 | 14,922 |
+| framework | openjdk@21.0.13 | 1,224 | 405 | 1,871 | 14,921 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2559,7 +2559,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.List#indexOf(Object)` | `flint.java.util.List.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.List#lastIndexOf(Object)` | `flint.java.util.List.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.List#of(E...)` | `flint.java.util.List.of` | [R7](api-mapping.md#r7-overloads) |  |
-| `java.util.Locale` | `flint.java.util.Locale` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable D value for language, country and variant. Legacy ISO spellings canonicalize to modern codes. The Java startup property java.locale.useOldISOCodes, script data and extensions are deferred. |
+| `java.util.Locale` | `flint.java.util.Locale` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable D value for language, country, variant and script. Legacy ISO spellings canonicalize to modern codes. The Java startup property java.locale.useOldISOCodes and extensions are deferred. |
 | `java.util.Locale#CANADA` | `flint.java.util.Locale.CANADA` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#CANADA_FRENCH` | `flint.java.util.Locale.CANADA_FRENCH` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#CHINA` | `flint.java.util.Locale.CHINA` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -10631,7 +10631,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 123 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,889 | 0 |
+| java.util | 1,888 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -11871,7 +11871,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Locale#<init>(String,String,String)` | 2 | Java adds Japanese calendar or Thai numbering extensions to the legacy ja_JP_JP and th_TH_TH locales and can select old ISO language codes at startup with java.locale.useOldISOCodes. Flint has no extension storage. A null String is the empty slice under R26. |
 | framework | `java.util.Locale#clone()` | 2 | Java returns a distinct Locale reference with equal fields and hash, including its current script and extension data. Cloning a stripped legacy locale preserves the stripped state. Flint has no named Locale clone operation. |
 | framework | `java.util.Locale#equals(Object)` | 2 | Java equality includes script and extensions, including typeless Unicode keys. Flint compares the current language, country and variant fields. The Flint method accepts a Locale value. Java returns false for null and foreign object arguments. |
-| framework | `java.util.Locale#forLanguageTag(String)` | 2 | Flint replaces whole grandfathered tags and stores the first extended language, consecutive variants and reachable x-lvariant payloads. Scripts, general extension and private-use storage, including private use in grandfathered replacements, and legacy Japanese or Thai extension synthesis are deferred. A null String is the empty slice under R26. |
+| framework | `java.util.Locale#forLanguageTag(String)` | 2 | Flint replaces whole grandfathered tags and stores the first extended language, consecutive variants and reachable x-lvariant payloads. It preserves and normalizes scripts. General extension and private-use storage, including private use in grandfathered replacements, and legacy Japanese or Thai extension synthesis are deferred. A null String is the empty slice under R26. |
 | framework | `java.util.Locale#getDefault()` | 2 | Flint reads LC_ALL and LANG per call. Java initializes its default from startup properties and exposes a setDefault path. |
 | framework | `java.util.Locale#getDefault(Locale.Category)` | 2 | Java initializes separate DISPLAY and FORMAT defaults from category-specific startup properties. Missing category components inherit the global defaults, while an explicitly empty component overrides them. Flint needs the canonical JVM-style System property provider. |
 | framework | `java.util.Locale#getExtension(char)` | 2 | Pinned Java 21 accepts ASCII letters without case sensitivity and rejects other keys, including every decimal digit. The invalid-key message starts with Ill-formed extension key: and appends the supplied key. Absent extensions return null. |
@@ -11881,7 +11881,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Locale#getISOCountries()` | 2 | Java returns an independently mutable array of current two-letter region codes. Its membership matches the PART1_ALPHA2 set. Flint needs the region inventory. |
 | framework | `java.util.Locale#getISOCountries(IsoCountryCode)` | 2 | Java returns an unmodifiable set for the selected current or withdrawn code inventory. It throws NullPointerException for a null selector. Flint needs the selector and inventories. |
 | framework | `java.util.Locale#getISOLanguages()` | 2 | Java returns an independently mutable array of two-letter language codes. Temurin 21 includes both modern and legacy aliases, independently of the old-ISO startup setting. Flint needs the language inventory. |
-| framework | `java.util.Locale#getScript()` | 2 | Java returns the title-cased four-letter script from a language tag, or an empty string when absent. Flint currently skips the script without storing it. |
 | framework | `java.util.Locale#getUnicodeLocaleAttributes()` | 2 | Java returns an unmodifiable set of canonical Unicode attributes. Duplicate attributes collapse after case normalization. |
 | framework | `java.util.Locale#getUnicodeLocaleKeys()` | 2 | Java returns an unmodifiable set of canonical Unicode locale keys, including keys with empty types. Duplicate keys retain their first type. |
 | framework | `java.util.Locale#getUnicodeLocaleType(String)` | 2 | Java accepts a case-insensitive two-character ASCII alphanumeric key. An absent key and a present key with no type return null and the empty string respectively. The result needs R5 nullable storage. An invalid key produces an Ill-formed Unicode locale key: message followed by the input. Null input follows the String slice rule R26. |
@@ -11893,8 +11892,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Locale#setDefault(Locale)` | 2 | Java replaces the global default and both category defaults for subsequent callers. Flint has no process-wide locale default storage. |
 | framework | `java.util.Locale#setDefault(Locale.Category,Locale)` | 2 | Java replaces the selected category default while retaining the other category default and the global default. Flint has no process-wide locale default storage. |
 | framework | `java.util.Locale#stripExtensions()` | 2 | Java removes extensions while preserving language, region, script and variant. This includes removing the Japanese and Thai compatibility extensions without regenerating them. |
-| framework | `java.util.Locale#toLanguageTag()` | 2 | Flint renders valid base subtags and legacy variant components, including the Norwegian NY compatibility case. Script and extension data, including the legacy Japanese calendar and Thai numbering extensions, are deferred. |
-| framework | `java.util.Locale#toString()` | 2 | Flint matches legacy language, country and variant rendering. Java also appends script or extension data, which Flint does not store. |
+| framework | `java.util.Locale#toLanguageTag()` | 2 | Flint renders valid base subtags and legacy variant components, including the Norwegian NY compatibility case. Flint renders normalized scripts after the language. Extension data, including the legacy Japanese calendar and Thai numbering extensions, is deferred. |
+| framework | `java.util.Locale#toString()` | 2 | Flint renders language, country, variant and script. Java also appends extension data, which Flint does not store. |
 | framework | `java.util.Locale.IsoCountryCode` | 2 | The enum selects one of the three ISO country code inventories. |
 | framework | `java.util.Locale.IsoCountryCode#PART1_ALPHA2` | 2 | Selects current two-letter ISO 3166 country codes. |
 | framework | `java.util.Locale.IsoCountryCode#PART1_ALPHA3` | 2 | Selects current three-letter ISO 3166 country codes. |
