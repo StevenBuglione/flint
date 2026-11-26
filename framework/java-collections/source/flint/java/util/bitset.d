@@ -356,7 +356,7 @@ class BitSet
             foreach (ref word; affected[1 .. $ - 1])
                 word = (word & ~overwrite) ^ writeOnes;
         }
-        if (change != RangeChange.set)
+        if (change != RangeChange.set && lastWord + 1 == cast(uint) wordsInUse)
             recalculateWordsInUse();
     }
 
