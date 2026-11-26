@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 498 | 22 | 1 | 2,774 |
-| framework | jackson-databind@3.1.8 | 538 | 56 | 5 | 9,868 |
+| framework | jackson-databind@3.1.8 | 534 | 56 | 5 | 9,872 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 182 | 155 | 0 | 2,053 |
@@ -10348,9 +10348,9 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.tree | 2 | 0 |
 | tools.jackson.core.type | 48 | 0 |
 | tools.jackson.core.util | 460 | 0 |
-| tools.jackson.databind | 1,535 | 0 |
+| tools.jackson.databind | 1,537 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
-| tools.jackson.databind.cfg | 763 | 0 |
+| tools.jackson.databind.cfg | 764 | 0 |
 | tools.jackson.databind.deser | 587 | 0 |
 | tools.jackson.databind.deser.bean | 343 | 0 |
 | tools.jackson.databind.deser.impl | 211 | 0 |
@@ -10368,7 +10368,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.databind.ext.javatime.util | 10 | 0 |
 | tools.jackson.databind.ext.jdk8 | 60 | 0 |
 | tools.jackson.databind.ext.sql | 40 | 0 |
-| tools.jackson.databind.introspect | 924 | 0 |
+| tools.jackson.databind.introspect | 925 | 0 |
 | tools.jackson.databind.json | 25 | 0 |
 | tools.jackson.databind.jsonFormatVisitors | 119 | 0 |
 | tools.jackson.databind.jsontype | 138 | 0 |
@@ -10891,6 +10891,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.ObjectMapper#createGenerator(Path,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
 | framework | `tools.jackson.databind.ObjectMapper#createParser(DataInput)` | 2 | The Java overload uses DataInput. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#createParser(Reader)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#isEnabled(DatatypeFeature)` | 2 | Flint exposes typed DateTimeFeature and EnumFeature queries under R18. The Java overload takes the shared DatatypeFeature interface. |
+| framework | `tools.jackson.databind.ObjectMapper#isEnabled(TokenStreamFactory.Feature)` | 2 | Flint uses a concrete JsonFactory and typed stream queries. The Java overload requires TokenStreamFactory.Feature. |
 | framework | `tools.jackson.databind.ObjectMapper#readTree(Reader)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readTree(TokenBuffer)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(DataInput,Class)` | 2 | The Java overload uses DataInput. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
@@ -10924,6 +10926,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.ObjectWriter#isEnabled(MapperFeature)` | 2 | Flint exposes feature queries on ObjectMapper. This Java ObjectWriter overload remains deferred. |
 | framework | `tools.jackson.databind.ObjectWriter#isEnabled(SerializationFeature)` | 2 | Flint exposes feature queries on ObjectMapper. This Java ObjectWriter overload remains deferred. |
 | framework | `tools.jackson.databind.ObjectWriter#writeValue(DataOutput,Object)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
+| framework | `tools.jackson.databind.cfg.MapperConfig#isEnabled(DatatypeFeature)` | 2 | Flint exposes typed DateTimeFeature and EnumFeature queries under R18. The Java overload takes the shared DatatypeFeature interface. |
 | framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonGenerator,String,BeanDescription,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
 | framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonGenerator,String,JavaType)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
 | framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonParser,String,BeanDescription,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
@@ -10941,6 +10944,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.exc.ValueInstantiationException#from(JsonParser,String,JavaType)` | 2 | Flint's constructor takes a message, diagnostic type name and cause. The Java overload uses a parser and JavaType. |
 | framework | `tools.jackson.databind.exc.ValueInstantiationException#from(JsonParser,String,JavaType,Throwable)` | 2 | Flint's constructor takes a message, diagnostic type name and cause. The Java overload uses a parser and JavaType. |
 | framework | `tools.jackson.databind.exc.ValueInstantiationException#getType()` | 2 | Flint returns the type's diagnostic name as a string. JavaType remains deferred. |
+| framework | `tools.jackson.databind.introspect.POJOPropertiesCollector#<init>(MapperConfig,boolean,JavaType,AnnotatedClass,AccessorNamingStrategy)` | 2 | Flint configures the collector aggregate and supplies an AOT descriptor to collect. The Java constructor takes runtime type and naming metadata. |
 | framework | `tools.jackson.databind.node.ArrayNode#add(BigDecimal)` | 2 | Flint adds an existing JsonNode or a primitive number. |
 | framework | `tools.jackson.databind.node.ArrayNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ArrayNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
