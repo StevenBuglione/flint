@@ -22,7 +22,7 @@ module flint.expression.spel.standard.property;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, DescriptorTable, TypeKind;
-import flint.engine.aot.text : decimal;
+import flint.engine.aot.text : decimal, decodeUtf8;
 import flint.expression : EvaluationContext, PropertyAccessor;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
 import flint.expression.spel.standard.literal : LiteralParser, utf16Length;
@@ -76,7 +76,7 @@ void readPathStep(string source, const ref PropertyStep step, ref Any root, Eval
         return;
     if (step.name is null)
     {
-        root = readArrayIndex(source, step, root, table, index);
+        root = readIndex(source, step, root, table, index);
         return;
     }
     const type = propertyTargetType(root);
@@ -96,7 +96,7 @@ void readPathStep(string source, const ref PropertyStep step, ref Any root, Eval
     throw evaluationErrorAt(source, step.position, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, step.name, type);
 }
 
-private Any readArrayIndex(string source, const ref PropertyStep step, ref Any target,
+private Any readIndex(string source, const ref PropertyStep step, ref Any target,
         const DescriptorTable table, const ref Any value)
 {
     if (target.isNull())
@@ -104,21 +104,54 @@ private Any readArrayIndex(string source, const ref PropertyStep step, ref Any t
     if (value.isNull())
         throw new IllegalStateException("No index");
     const type = target.typeName();
-    const descriptor = table is null ? null : table.find(type);
-    if (descriptor is null || descriptor.kind != TypeKind.array || descriptor.length is null || descriptor
-            .element is null)
-        throw evaluationErrorAt(source, step.position, SpelMessage.INDEXING_NOT_SUPPORTED_FOR_TYPE, type);
+    const isString = type == "string";
+    const descriptor = isString ? null : arrayIndexDescriptor(source, step.position, type, table);
 
     if (value.typeName() != "int")
         throw evaluationErrorAt(source, step.position, SpelMessage.TYPE_CONVERSION_ERROR, value.typeName(), "int");
     const index = value.get!int;
-    const length = descriptor.length(target);
+    const length = isString ? 0 : descriptor.length(target);
     if (index < 0)
         throw new IndexOutOfBoundsException(index);
+    if (isString)
+        return Any.of(readStringIndex(source, step.position, target.get!string, index));
     if (cast(size_t) index >= length)
         throw evaluationErrorAt(source, step.position, SpelMessage.ARRAY_INDEX_OUT_OF_BOUNDS,
                 decimal(length), decimal(index));
     return descriptor.element(target, index);
+}
+
+private const(Descriptor) arrayIndexDescriptor(string source, size_t position, string type, const DescriptorTable table)
+{
+    const descriptor = table is null ? null : table.find(type);
+    if (descriptor is null || descriptor.kind != TypeKind.array || descriptor.length is null || descriptor
+            .element is null)
+        throw evaluationErrorAt(source, position, SpelMessage.INDEXING_NOT_SUPPORTED_FOR_TYPE, type);
+    return descriptor;
+}
+
+private string readStringIndex(string source, size_t position, string text, int index)
+{
+    size_t units;
+    const unit = stringUnitAt(text, index, units);
+    if (unit is null)
+        throw evaluationErrorAt(source, position, SpelMessage.STRING_INDEX_OUT_OF_BOUNDS,
+                decimal(units), decimal(index));
+    return unit;
+}
+
+// R14 keeps Java's UTF-16 offsets. D-SPEL-4 maps each lone surrogate to U+FFFD.
+private string stringUnitAt(string text, size_t index, out size_t units) pure nothrow @nogc
+{
+    for (size_t offset; offset < text.length;)
+    {
+        const start = offset;
+        const point = decodeUtf8(text, offset);
+        units += point > 0xFFFF ? 2 : 1;
+        if (index < units)
+            return point > 0xFFFF || point == 0xFFFD ? "\uFFFD" : text[start .. offset];
+    }
+    return null;
 }
 
 private List!PropertyAccessor configuredAccessors(EvaluationContext context, EvaluationContextAccess standard)

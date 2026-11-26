@@ -306,5 +306,16 @@
     "id": "elvis-zero",
     "expression": "0 ?: 1",
     "expected": {"type": "int", "value": "0"}
+  },
+  {
+    "id": "string-index-ascii",
+    "expression": "'ABC'[1]",
+    "expected": {"type": "string", "value": "B"}
+  },
+  {
+    "id": "string-index-utf16",
+    "expression": "'A😀Z'[3]",
+    "runtimeOnly": "Compiled string indexing still uses UTF-8 byte offsets. Interpreted indexing counts UTF-16 code units.",
+    "expected": {"type": "string", "value": "Z"}
   }
 ]

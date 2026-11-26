@@ -73,11 +73,11 @@
       "methods": {
         "ported": [
           "indexIntoArrays",
-          "nullSafeIndexIntoArray"
+          "nullSafeIndexIntoArray",
+          "nullSafeIndexIntoString"
         ],
         "skipped": {
           "indexIntoGenericPropertyContainingArray": "Requires property type descriptors and annotation propagation.",
-          "nullSafeIndexIntoString": "String indexing is deferred.",
           "indexIntoGenericPropertyContainingList": "List indexing is deferred.",
           "indexIntoGenericPropertyContainingMap": "Map indexing is deferred.",
           "setPropertyContainingList": "Indexed assignment is deferred."

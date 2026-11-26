@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 121 | 247 | 0 | 15,428 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,329 | 1,282 | 4,848 | 30,375 |
+| framework | spring-framework@v7.1.0 | 3,326 | 1,286 | 4,848 | 30,374 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2071,6 +2071,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.expression.TypedValue#<init>(Object,TypeDescriptor)` | `flint.expression.TypedValue` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | D-SPEL-1 |
 | `org.springframework.expression.TypedValue#NULL` | `flint.expression.TypedValue.NULL` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | D-SPEL-1 |
 | `org.springframework.expression.TypedValue#getValue()` | `flint.expression.TypedValue.getValue` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | D-SPEL-1 |
+
+#### org.springframework.expression.spel.standard
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.expression.spel.standard.SpelExpression#getValue()` | `flint.expression.spel.standard.SpelExpression.getValue` | [R14](api-mapping.md#r14-strings-and-text), [R23](api-mapping.md#r23-object-typed-values), [D-SPEL-4](api-mapping.md#deviations) |  |
+| `org.springframework.expression.spel.standard.SpelExpression#getValue(EvaluationContext)` | `flint.expression.spel.standard.SpelExpression.getValue` | [R14](api-mapping.md#r14-strings-and-text), [R23](api-mapping.md#r23-object-typed-values), [D-SPEL-4](api-mapping.md#deviations) |  |
+| `org.springframework.expression.spel.standard.SpelExpression#getValue(EvaluationContext,Object)` | `flint.expression.spel.standard.SpelExpression.getValue` | [R14](api-mapping.md#r14-strings-and-text), [R23](api-mapping.md#r23-object-typed-values), [D-SPEL-4](api-mapping.md#deviations) |  |
+| `org.springframework.expression.spel.standard.SpelExpression#getValue(Object)` | `flint.expression.spel.standard.SpelExpression.getValue` | [R14](api-mapping.md#r14-strings-and-text), [R23](api-mapping.md#r23-object-typed-values), [D-SPEL-4](api-mapping.md#deviations) |  |
 
 #### org.springframework.expression.spel.support
 
@@ -8930,7 +8939,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.dao.support | 16 | 0 |
 | org.springframework.expression | 83 | 0 |
 | org.springframework.expression.common | 73 | 0 |
-| org.springframework.expression.spel | 168 | 0 |
+| org.springframework.expression.spel | 167 | 0 |
 | org.springframework.expression.spel.ast | 267 | 0 |
 | org.springframework.expression.spel.standard | 26 | 0 |
 | org.springframework.expression.spel.support | 151 | 0 |

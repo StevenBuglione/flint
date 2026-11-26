@@ -33,6 +33,7 @@ enum SpelMessage
     CANNOT_INDEX_INTO_NULL_VALUE = 1012,
     EXCEPTION_DURING_PROPERTY_READ = 1021,
     ARRAY_INDEX_OUT_OF_BOUNDS = 1024,
+    STRING_INDEX_OUT_OF_BOUNDS = 1026,
     INDEXING_NOT_SUPPORTED_FOR_TYPE = 1027,
     NOT_AN_INTEGER = 1035,
     NOT_A_LONG,
@@ -92,23 +93,44 @@ class SpelEvaluationException : EvaluationException
     }
 }
 
-private string formatMessage(SpelMessage code, string detail, string context = null)
+pragma(inline, false) private string formatMessage(SpelMessage code, string detail, string context = null)
 {
-    foreach (entry; diagnosticTexts)
+    size_t lower;
+    size_t upper = diagnosticTexts.length;
+    while (lower < upper)
+    {
+        const middle = lower + (upper - lower) / 2;
+        const entry = &diagnosticTexts[middle];
         if (entry.code == code)
-            return "EL" ~ decimal(cast(int) code) ~ "E: " ~ entry.prefix ~ detail ~ entry.between
-                ~ context ~ entry.suffix;
+            return entry.text[0 .. entry.first] ~ detail ~ entry.text[entry.first .. entry.second]
+                ~ context ~ entry.text[entry.second .. $];
+        if (entry.code < code)
+            lower = middle + 1;
+        else
+            upper = middle;
+    }
     assert(0, "Missing SpEL diagnostic");
 }
 
 private struct DiagnosticText
 {
     SpelMessage code;
-    string prefix;
-    string suffix;
-    string between;
+    ushort first;
+    ushort second;
+    string text;
+
+    this(SpelMessage code, string prefix, string suffix = null, string between = null) pure nothrow
+    {
+        this.code = code;
+        const label = "EL" ~ decimal(cast(int) code) ~ "E: " ~ prefix;
+        assert(label.length + between.length <= ushort.max);
+        first = cast(ushort) label.length;
+        second = cast(ushort)(label.length + between.length);
+        text = label ~ between ~ suffix;
+    }
 }
 
+// The evaluator looks up diagnostics by code.
 private immutable DiagnosticText[] diagnosticTexts = [
     DiagnosticText(SpelMessage.TYPE_CONVERSION_ERROR, "Type conversion problem, cannot convert from ",
             "", " to "),
@@ -122,6 +144,8 @@ private immutable DiagnosticText[] diagnosticTexts = [
             "A problem occurred whilst attempting to access the property '", "'", "': '"),
     DiagnosticText(SpelMessage.ARRAY_INDEX_OUT_OF_BOUNDS, "The array has '", "' is invalid",
             "' elements, index '"),
+    DiagnosticText(SpelMessage.STRING_INDEX_OUT_OF_BOUNDS, "The string has '", "' is invalid",
+            "' characters, index '"),
     DiagnosticText(SpelMessage.INDEXING_NOT_SUPPORTED_FOR_TYPE, "Indexing into type '",
             "' is not supported"),
     DiagnosticText(SpelMessage.NOT_AN_INTEGER, "The value '", "' cannot be parsed as an int"),
@@ -143,3 +167,13 @@ private immutable DiagnosticText[] diagnosticTexts = [
     DiagnosticText(SpelMessage.MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED,
             "SpEL expression nesting depth exceeds the threshold of "),
 ];
+
+private bool diagnosticCodesAreSorted() pure nothrow @nogc
+{
+    foreach (index; 1 .. diagnosticTexts.length)
+        if (diagnosticTexts[index - 1].code >= diagnosticTexts[index].code)
+            return false;
+    return true;
+}
+
+static assert(diagnosticCodesAreSorted());

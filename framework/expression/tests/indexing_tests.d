@@ -92,6 +92,41 @@ unittest
     assert(expression.getValue(context).get!int == 42);
 }
 
+@("nullSafeIndexIntoString") unittest
+{
+    auto root = new ArrayRoot;
+    auto context = contextFor(root);
+    auto expression = (new SpelExpressionParser).parseExpression("property?.[0]");
+    assert(expression.getValue(context).isNull());
+    root.values = Any.of("XYZ");
+    assert(expression.getValue(context).get!string == "X");
+}
+
+@("string indexes preserve BMP characters and UTF-16 offsets")
+unittest
+{
+    auto parser = new SpelExpressionParser;
+    const text = "Aé中";
+    const character = parser.parseExpression("#root[1]").getValue(Any.of(text)).get!string;
+    assert(character == "é" && character.ptr is text[1 .. 3].ptr);
+    assert(parser.parseExpression("'Aé中'[1 + 1]").getValue().get!string == "中");
+    assert(parser.parseExpression("'A😀Z'[1]").getValue().get!string == "\uFFFD");
+    assert(parser.parseExpression("'A😀Z'[2]").getValue().get!string == "\uFFFD");
+    assert(parser.parseExpression("'A😀Z'[3]").getValue().get!string == "Z");
+
+    try
+    {
+        parser.parseExpression("'é😀'[3]").getValue();
+        assert(false);
+    }
+    catch (SpelEvaluationException error)
+    {
+        assert(error.getPosition() == 5);
+        assert(error.getMessageCode() == SpelMessage.STRING_INDEX_OUT_OF_BOUNDS);
+        assert(error.getSimpleMessage() == "EL1026E: The string has '3' characters, index '3' is invalid");
+    }
+}
+
 @("computed array indexes use the original root")
 unittest
 {
@@ -197,4 +232,7 @@ unittest
     root.values = Any.of(1);
     check("property[0]", SpelMessage.INDEXING_NOT_SUPPORTED_FOR_TYPE, 8,
             "EL1027E: Indexing into type 'int' is not supported");
+    root.values = Any.of("");
+    check("property[0]", SpelMessage.STRING_INDEX_OUT_OF_BOUNDS, 8,
+            "EL1026E: The string has '0' characters, index '0' is invalid");
 }

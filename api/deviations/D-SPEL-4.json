@@ -1,0 +1,5 @@
+{
+  "id": "D-SPEL-4",
+  "deviation": "SpEL string indexing returns U+FFFD for either UTF-16 half of a supplementary character. Indices and length remain UTF-16 code units (R14).",
+  "reason": "Java `String.charAt` can return a lone surrogate. Flint's UTF-8 strings use the replacement character for that result."
+}

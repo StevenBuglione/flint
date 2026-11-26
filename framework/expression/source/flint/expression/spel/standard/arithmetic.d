@@ -123,7 +123,8 @@ private:
 
             if (instruction !is null)
             {
-                auto target = lookup(root, instruction.variable, read);
+                auto target = instruction.value.text is null ? lookup(root, instruction.variable,
+                        read) : Any.of(instruction.value.text);
                 resumePath = instruction.op == Op.property;
                 if (resumePath)
                 {
@@ -456,7 +457,17 @@ private struct ArithmeticParser
             else
             {
                 reader.position = position;
-                operand(position, reader.readLiteral());
+                auto value = reader.readLiteral();
+                const afterLiteral = reader.position;
+                const separator = readSeparator(reader);
+                if (reader.peek == '[' && value.typeName() == "string")
+                    property(position, null, readStep(separator == PropertySeparator.safeDot,
+                            nesting), nesting, value.get!string);
+                else
+                {
+                    reader.position = afterLiteral;
+                    operand(position, value);
+                }
             }
         }
         return position;
@@ -558,7 +569,7 @@ private struct ArithmeticParser
         return PropertyStep(null, position, nullSafe, slot);
     }
 
-    void property(size_t position, string target, PropertyStep first, uint nesting)
+    void property(size_t position, string target, PropertyStep first, uint nesting, string literal = null)
     {
         emitFirstOperand();
         auto steps = [first];
@@ -568,7 +579,9 @@ private struct ArithmeticParser
             steps ~= readStep(separator == PropertySeparator.safeDot, nesting);
             separator = readSeparator(reader);
         }
-        instructions ~= Instruction(Op.property, position, Scalar.init, propertyPaths.length, target);
+        Scalar receiver;
+        receiver.text = literal;
+        instructions ~= Instruction(Op.property, position, receiver, propertyPaths.length, target);
         propertyPaths ~= steps.idup;
     }
 }
