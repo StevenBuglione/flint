@@ -16,7 +16,7 @@ parsed date. 'Y' parses as the calendar year.
 +/
 module flint.java.text.simpledateformat;
 
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, NullPointerException;
 import flint.java.util : Locale;
 import flint.java.util.calendar : Calendar, GregorianCalendar;
 import flint.java.util.date : Date;
@@ -121,29 +121,41 @@ abstract class DateFormat
         calendar = newCalendar;
     }
 
-    /// The time zone.
+    /// The time zone. Throws `NullPointerException` if the calendar is missing.
     TimeZone getTimeZone()
     {
-        return calendar.getTimeZone();
+        return requiredCalendar().getTimeZone();
     }
 
-    /// Set the time zone.
+    /// Set the time zone. Throws `NullPointerException` if the calendar is missing.
     void setTimeZone(TimeZone zone)
     {
-        calendar.setTimeZone(zone);
+        requiredCalendar().setTimeZone(zone);
     }
 
-    /// Whether parsing is lenient.
+    /// Whether parsing is lenient. Throws `NullPointerException` if the calendar is missing.
     bool isLenient()
     {
-        return calendar.isLenient();
+        return requiredCalendar().isLenient();
     }
 
-    /// Set the leniency of parsing.
+    /// Set the leniency of parsing. Throws `NullPointerException` if the calendar is missing.
     void setLenient(bool lenient)
     {
-        calendar.setLenient(lenient);
+        requiredCalendar().setLenient(lenient);
     }
+
+    private Calendar requiredCalendar()
+    {
+        if (calendar is null)
+            throwNullPointerException();
+        return calendar;
+    }
+}
+
+pragma(inline, false) private noreturn throwNullPointerException()
+{
+    throw new NullPointerException();
 }
 
 /// Java's `SimpleDateFormat`.
