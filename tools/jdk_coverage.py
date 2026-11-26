@@ -177,7 +177,7 @@ def functions_named(decl, name, module_functions):
     return found
 
 
-JAVA_PRIMITIVES = {'boolean': 'b', 'int': 'i', 'long': 'l', 'short': 's', 'byte': 'g', 'char': 'auw', 'float': 'f',
+JAVA_PRIMITIVES = {'boolean': 'b', 'int': 'i', 'long': 'l', 'short': 's', 'byte': 'gh', 'char': 'auw', 'float': 'f',
                    'double': 'd'}
 D_PRIMITIVE = re.compile(r'[xyO]*([bilsgauwfdhtkm])')
 
@@ -199,6 +199,16 @@ def compatible(java, d_param):
     java = re.sub(r'@\w+(\([^)]*\))?\s*', '', java).strip()
     java = re.sub(r'<.*>', '', java).strip()
     primitive = D_PRIMITIVE.fullmatch(deco)
+    if java.endswith('[]'):
+        # An array needs a D array. Java's char[] is UTF-16, so only a wchar array is the same overload: a
+        # const(char)[] parameter is the CharSequence/String overload (R14) and must not also claim char[].
+        element = java[:-2].strip()
+        array = re.fullmatch(r'[xyO]*A(.*)', deco)
+        if not array:
+            return False
+        if element == 'char':
+            return bool(re.fullmatch(r'[xyO]*u', array.group(1)))
+        return compatible(element, {'deco': array.group(1)})
     if java in JAVA_PRIMITIVES:
         return bool(primitive) and primitive.group(1) in JAVA_PRIMITIVES[java]
     if java == 'String':

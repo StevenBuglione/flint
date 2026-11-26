@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,094 | 212 | 1,871 | 15,244 |
+| framework | openjdk@21.0.13 | 1,087 | 212 | 1,871 | 15,251 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -9958,7 +9958,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 704 | 0 |
+| java.io | 706 | 0 |
 | java.lang | 2,016 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -9977,7 +9977,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.cert | 0 | 466 |
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
-| java.sql | 1,000 | 0 |
+| java.sql | 1,005 | 0 |
 | java.text | 515 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |

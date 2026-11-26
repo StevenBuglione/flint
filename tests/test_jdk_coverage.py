@@ -32,6 +32,14 @@ class JdkCoverageTest(unittest.TestCase):
         self.assertTrue(jdk_coverage.accepts(get, member('get(int)', ['int index'])))
         self.assertFalse(jdk_coverage.accepts(get, member('get(Object)', ['Object key'])))
         self.assertFalse(jdk_coverage.accepts(get, member('get(long)', ['long index'])))
+        # Java's UTF-16 char[] is not the const(char)[] CharSequence overload (sol-jdk-math-regex, HexFormat).
+        utf8 = {'kind': 'function', 'parameters': [{'name': 's', 'deco': 'xAa'}, {'name': 'a', 'deco': 'i'},
+                                                   {'name': 'b', 'deco': 'i'}]}
+        self.assertFalse(jdk_coverage.accepts(utf8, member('parseHex(char[],int,int)', ['char[] c', 'int a', 'int b'])))
+        utf16 = {'kind': 'function', 'parameters': [{'name': 's', 'deco': 'xAu'}, {'name': 'a', 'deco': 'i'},
+                                                    {'name': 'b', 'deco': 'i'}]}
+        self.assertTrue(jdk_coverage.accepts(utf16, member('parseHex(char[],int,int)', ['char[] c', 'int a', 'int b'])))
+        self.assertFalse(jdk_coverage.accepts(get, member('get(int[])', ['int[] index'])))
         templated = {'kind': 'function', 'parameters': [{'name': 'value', 'type': 'T'}]}
         self.assertTrue(jdk_coverage.accepts(templated, member('of(E)', ['E value'])))
 
