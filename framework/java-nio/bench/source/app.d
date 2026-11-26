@@ -5,13 +5,14 @@ import flint.java.nio.byteorder : ByteOrder;
 
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
+import flint.java.nio.invalidmarkexception : InvalidMarkException;
 
 @safe:
 
 int main(string[] args)
 {
     if (args.length >= 4)
-        return accessPastLimit(args.length == 4);
+        return bufferException(args.length);
 
     const mode = args.length % 3;
     if (mode == 0)
@@ -20,13 +21,15 @@ int main(string[] args)
     return cast(int)(order.toString().length);
 }
 
-private int accessPastLimit(bool read)
+private int bufferException(size_t argumentCount)
 {
     try
     {
-        if (read)
+        if (argumentCount == 4)
             throw new BufferUnderflowException;
-        throw new BufferOverflowException;
+        if (argumentCount == 5)
+            throw new BufferOverflowException;
+        throw new InvalidMarkException;
     }
     catch (RuntimeException error)
         return error.getMessage() is null ? 1 : 2;

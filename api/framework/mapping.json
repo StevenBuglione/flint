@@ -5777,6 +5777,8 @@
 "java.nio.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.nio.channels.**":{"status":"excluded","category":"deferred","phase":"3"},
 "java.nio.channels.spi.**":{"status":"excluded","category":"deferred","phase":"3"},
+"java.nio.InvalidMarkException":{"status":"adapted","rules":["R1"],"d":"flint.java.nio.invalidmarkexception.InvalidMarkException","note":"Import the exception from flint.java.nio.invalidmarkexception. It extends the canonical Java IllegalStateException."},
+"java.nio.InvalidMarkException#<init>()":{"status":"ported","d":"flint.java.nio.invalidmarkexception.InvalidMarkException.this"},
 "java.nio.charset.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.nio.charset.IllegalCharsetNameException":{"d":"flint.java.nio.charset.IllegalCharsetNameException","status":"ported"},
 "java.nio.charset.IllegalCharsetNameException#<init>(String)":{"d":"flint.java.nio.charset.IllegalCharsetNameException.this","status":"ported"},

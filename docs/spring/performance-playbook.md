@@ -366,6 +366,8 @@ The Spring Beans factory exception types reuse the existing `BeanCreationExcepti
 
 **Reuse the canonical RuntimeException for relative buffer overflow.** The leaf adds a zero-argument subclass and inherits message and cause handling. The matched standalone probe at `3d29a30b1` added 624 loadable bytes at O3 and Oz over the RuntimeException control, with 436 DMD instances on venus. The jdk-leaf-rule caps are 687 bytes and 480 instances. Independent stock probes cover the exception and the existing byte order and underflow paths.
 
+**Reuse the canonical IllegalStateException for buffer reset without a mark.** The leaf adds a zero-argument subclass and inherits message and cause handling. The matched standalone probe at `fa49a6041` added 624 loadable bytes at O3 and Oz over the IllegalStateException control, with 436 DMD instances on venus. The jdk-leaf-rule caps are 687 bytes and 480 instances. The package benchmark exercises the mark, underflow and overflow exceptions through one handler.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |
