@@ -33,7 +33,8 @@ $(UL
         directories in the `FLINT_CLASSPATH` environment variable (colon-separated; default `resources` and
         `src/main/resources` under the working directory).)
     $(LI `getURL`, `getURI`, `getFilePath` and `readableChannel` are not offered: Flint has no `java.net` or NIO.)
-    $(LI `getContentAsString` decodes UTF-8 (Java's `Charset` parameter is dropped).)
+    $(LI `getContentAsString` decodes UTF-8 (Java's `Charset` parameter is dropped). Malformed input becomes U+FFFD with the
+        malformed lengths of OpenJDK's UTF-8 decoder, as Java's `InputStreamReader` does.)
 )
 +/
 module flint.core.io;
@@ -128,7 +129,7 @@ interface Resource : InputStreamSource
     string getDescription();
     /// The whole content.
     ubyte[] getContentAsByteArray();
-    /// The whole content, decoded as UTF-8.
+    /// The whole content, decoded as UTF-8; malformed input becomes U+FFFD as in Java.
     string getContentAsString();
 }
 
@@ -230,15 +231,10 @@ abstract class AbstractResource : Resource
         return stream.readAllBytes();
     }
 
-    /// The content as UTF-8 text. Throws `IOException` when it is not valid UTF-8.
+    /// The content as UTF-8 text. Malformed input becomes U+FFFD, as Spring's `InputStreamReader` decoding does.
     string getContentAsString()
     {
-        import flint.engine.aot.text : isValidUtf8;
-
-        auto text = cast(string) getContentAsByteArray().idup;
-        if (!isValidUtf8(text))
-            throw new IOException("Malformed UTF-8 input in " ~ getDescription());
-        return text;
+        return decodeUtf8Replacing(getContentAsByteArray());
     }
 
     abstract InputStream getInputStream();
@@ -802,4 +798,85 @@ class InputStreamResource : AbstractResource
     {
         return source is null ? hashOf(openStream) : objectToHash(source);
     }
+}
+
+/++
+Java's UTF-8 decoding with the REPLACE action (`InputStreamReader`, `new String(bytes, UTF_8)`): each malformed input
+becomes one U+FFFD, and each malformed input is as long as OpenJDK's `sun.nio.cs.UTF_8` decoder reports it. A lead
+byte that cannot start a sequence, or whose next byte is out of range, is one byte; a sequence broken at its third
+or fourth byte covers the bytes before that one; a surrogate encoding is three bytes; a truncated tail is one input.
+Valid input is returned as is.
++/
+package(flint.core) string decodeUtf8Replacing(scope const(ubyte)[] bytes) pure nothrow
+{
+    import flint.engine.aot.text : isValidUtf8;
+
+    if (isValidUtf8(cast(const(char)[]) bytes))
+        return (cast(const(char)[]) bytes).idup;
+    string text;
+    size_t index;
+    while (index < bytes.length)
+    {
+        const length = utf8InputLength(bytes[index .. $]);
+        if (length > 0)
+            text ~= cast(const(char)[]) bytes[index .. index + length];
+        else
+            text ~= "\uFFFD";
+        index += length > 0 ? length : -length;
+    }
+    return text;
+}
+
+// The length of the well-formed sequence at the start of `bytes`, or minus the length of the malformed input there.
+private ptrdiff_t utf8InputLength(scope const(ubyte)[] bytes) pure nothrow @nogc
+{
+    const lead = bytes[0];
+    if (lead < 0x80)
+        return 1;
+    if (lead >= 0xC2 && lead <= 0xDF)
+        return bytes.length >= 2 && continuation(bytes[1]) ? 2 : -1;
+    if ((lead & 0xF0) == 0xE0)
+        return threeByteInputLength(bytes);
+    if (lead >= 0xF0 && lead <= 0xF4)
+        return fourByteInputLength(bytes);
+    return -1;
+}
+
+private bool continuation(ubyte b) pure nothrow @nogc
+{
+    return (b & 0xC0) == 0x80;
+}
+
+// A sequence led by E0..EF: E0 needs A0..BF next, and ED A0..BF encodes a surrogate (one three-byte input).
+private ptrdiff_t threeByteInputLength(scope const(ubyte)[] bytes) pure nothrow @nogc
+{
+    const lead = bytes[0];
+    if (bytes.length >= 2 && ((lead == 0xE0 && (bytes[1] & 0xE0) == 0x80) || !continuation(bytes[1])))
+        return -1;
+    if (bytes.length < 3)
+        return -cast(ptrdiff_t) bytes.length;
+    if (!continuation(bytes[2]))
+        return -2;
+    return lead == 0xED && bytes[1] >= 0xA0 ? -3 : 3;
+}
+
+// A sequence led by F0..F4: F0 needs 90..BF next and F4 needs 80..8F, so the code point is at most U+10FFFF.
+private ptrdiff_t fourByteInputLength(scope const(ubyte)[] bytes) pure nothrow @nogc
+{
+    if (bytes.length >= 2 && !validFourByteSecond(bytes[0], bytes[1]))
+        return -1;
+    if (bytes.length >= 3 && !continuation(bytes[2]))
+        return -2;
+    if (bytes.length < 4)
+        return -cast(ptrdiff_t) bytes.length;
+    return continuation(bytes[3]) ? 4 : -3;
+}
+
+private bool validFourByteSecond(ubyte lead, ubyte second) pure nothrow @nogc
+{
+    if (lead == 0xF0)
+        return second >= 0x90 && second <= 0xBF;
+    if (lead == 0xF4)
+        return second >= 0x80 && second <= 0x8F;
+    return continuation(second);
 }
