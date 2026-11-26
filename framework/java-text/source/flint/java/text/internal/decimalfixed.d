@@ -40,19 +40,26 @@ size_t renderDecimalLong(long value, ref scope const DecimalFixedPattern pattern
     return renderFixedDigits(digits[start .. $], decimalAt, negative, pattern, symbols, output);
 }
 
-/// Renders fixed-point binary64 using the explicit Latin symbols.
-/// A successful call reports bytes required. A short buffer or unsupported value is untouched.
+/// Uses the multiplier implied by the fixed-point pattern.
 pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const DecimalFixedPattern pattern,
+        ref scope const DecimalSymbolData symbols, scope char[] output, out size_t required)
+{
+    if (pattern.scale != 0 && pattern.scale != 2 && pattern.scale != 3)
+        return false;
+    const multiplier = pattern.scale == 0 ? 1 : (pattern.scale == 2 ? 100 : 1000);
+    return tryRenderDecimalDouble(bits, multiplier, pattern, symbols, output, required);
+}
+
+/// Uses a resolved Java multiplier while preserving the pattern's affixes.
+/// A successful call reports bytes required. A short buffer or unsupported value is untouched.
+pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output, out size_t required)
 {
     import flint.java.text.internal.binarydecimal : BinaryDecimal;
     import flint.java.text.internal.decimaldigitlist : tryFixedBinaryDecimal;
 
-    if (pattern.scale != 0)
-    {
-        if (!scaleBinary(bits, pattern.scale))
-            return false;
-    }
+    if (multiplier != 1)
+        bits = scaleBinary(bits, multiplier);
     else if (usesGroupedFastPath(bits, pattern))
     {
         required = renderGroupedFast(bits, pattern, symbols, output);
@@ -88,38 +95,57 @@ private enum ulong implicitBit = 1UL << 52;
 private enum ulong signBit = 1UL << 63;
 private enum ulong infinityBits = 0x7ff0_0000_0000_0000;
 
-private bool scaleBinary(ref ulong bits, ubyte scale) pure nothrow @nogc
+private ulong scaleBinary(ulong bits, int multiplier) pure nothrow @nogc
+{
+    const magnitude = bits & (signBit - 1);
+    if (magnitude > infinityBits)
+        return bits;
+    const negativeMultiplier = multiplier < 0;
+    const sign = (bits & signBit) ^ (negativeMultiplier ? signBit : 0);
+    if (multiplier == 0)
+        return magnitude == infinityBits ? infinityBits | (implicitBit >> 1) : sign;
+    if (magnitude == 0 || magnitude == infinityBits)
+        return sign | magnitude;
+
+    const factor = negativeMultiplier ? -cast(uint) multiplier : cast(uint) multiplier;
+    return scaleFiniteBinary(magnitude, sign, factor);
+}
+
+private ulong scaleFiniteBinary(ulong magnitude, ulong sign, uint factor) pure nothrow @nogc
 {
     import core.bitop : bsr;
 
-    if (scale != 2 && scale != 3)
-        return false;
-    const magnitude = bits & (signBit - 1);
-    const sign = bits & signBit;
-    if (magnitude == 0 || magnitude >= infinityBits)
-        return true;
-
     const exponent = cast(uint)(magnitude >> 52);
     const significand = binarySignificand(magnitude, exponent);
-    // The exact product fits in 63 bits. Round once when restoring the 53-bit precision.
-    const product = significand * (scale == 2 ? 100 : 1000);
-    if (product < implicitBit)
+    ulong product;
+    ulong upper;
+    if (factor <= 1023)
+        product = significand * factor;
+    else
     {
-        bits = sign | product;
-        return true;
+        // The exact product of the 53-bit significand and the magnitude of an int fits in 84 bits.
+        const lowerProduct = (significand & uint.max) * factor;
+        const upperProduct = (significand >> 32) * factor;
+        product = lowerProduct + (upperProduct << 32);
+        upper = (upperProduct >> 32) + (product < lowerProduct);
     }
+    if (upper == 0 && product < implicitBit)
+        return sign | product;
 
-    const discarded = cast(uint)(bsr(product) - 52);
+    const discarded = upper == 0 ? cast(uint)(bsr(product) - 52) : cast(uint)(bsr(upper) + 12);
     ulong rounded = roundSignificandRight(product, discarded);
+    // Any upper contribution is even after the shift, so the low word decides ties.
+    if (upper != 0)
+        rounded += upper << (64 - discarded);
     uint outputExponent = (exponent == 0 ? 1u : exponent) + discarded;
     if (rounded == (implicitBit << 1))
     {
         rounded >>= 1;
         ++outputExponent;
     }
-    bits = sign | (outputExponent >= 0x7ff ? infinityBits : (cast(ulong) outputExponent << 52) | (
-            rounded & (implicitBit - 1)));
-    return true;
+    if (outputExponent >= 0x7ff)
+        return sign | infinityBits;
+    return sign | (cast(ulong) outputExponent << 52) | (rounded & (implicitBit - 1));
 }
 
 private ulong binarySignificand(ulong magnitude, uint exponent) pure nothrow @nogc
@@ -128,7 +154,7 @@ private ulong binarySignificand(ulong magnitude, uint exponent) pure nothrow @no
     return exponent == 0 ? fraction : fraction | implicitBit;
 }
 
-// The scaled significand fits in 63 bits, so a shift of 64 or more always rounds to zero.
+// Only the grouped path requests shifts of 64 or more, with a product of at most 63 bits.
 private ulong roundSignificandRight(ulong product, uint discarded) pure nothrow @nogc
 {
     if (discarded == 0)
