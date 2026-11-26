@@ -3,7 +3,9 @@
 
 Ported from spring-projects/spring-framework v7.1.0,
 spring-webmvc/src/main/java/org/springframework/web/servlet/resource/ (NoResourceFoundException.java,
-ResourceHttpRequestHandler.java) and .../mvc/HttpRequestHandlerAdapter.java, .../handler/SimpleUrlHandlerMapping.java,
+ResourceHttpRequestHandler.java, ResourceHandlerUtils.java, ResourceResolver.java, ResourceResolverChain.java,
+AbstractResourceResolver.java, PathResourceResolver.java) and .../mvc/HttpRequestHandlerAdapter.java,
+.../handler/SimpleUrlHandlerMapping.java,
 spring-web's HttpRequestHandler.java.
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
@@ -13,14 +15,21 @@ is how Boot answers an unmapped path (a JSON 404 from the error controller).
 +/
 module flint.web.servlet.resource;
 
+import flint.core.io : ClassPathResource, FileSystemResource, Resource;
 import flint.engine.aot.any : Any;
 import flint.http : HttpMethod, HttpStatus, HttpStatusCode, ProblemDetail;
 import flint.jakarta.servlet : ServletException;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
+import flint.java.io : IOException;
+import flint.java.lang : IllegalArgumentException;
+import flint.java.util : List;
+import flint.util : StringUtils, toLowerAscii;
 import flint.web : ErrorResponse, skipBacktrace;
 import flint.web.servlet : HandlerAdapter, HandlerMapping, ImmediateFailure, ModelAndView;
 import flint.web.servlet.handler : AbstractHandlerMapping, lookupPath, parsedLookupPath;
+import flint.web.util : UriUtils;
 import flint.web.util.pattern : PathPattern, PathPatternParser;
+import std.typecons : Nullable, nullable;
 
 @safe:
 
@@ -71,6 +80,284 @@ class NoResourceFoundException : ServletException, ErrorResponse
     {
         return
         body;
+    }
+}
+
+/// Validates request paths and location resources for the servlet resource chain.
+abstract class ResourceHandlerUtils
+{
+    /// Checks that an inspectable location has a directory path and is safe to configure.
+    static void assertResourceLocation(Resource location)
+    {
+        if (location is null)
+            throw new IllegalArgumentException("Resource location must not be null");
+        const path = locationPath(location);
+        if (path is null)
+            return;
+        if (cast(ClassPathResource) location !is null && (path.length == 0 || path == "/"))
+            throw new IllegalArgumentException("Resource location '" ~ location.getDescription()
+                    ~ "' is considered unsafe and cannot be used as it provides access to the entire classpath.");
+        if (path.length == 0 || (path[$ - 1] != '/' && path[$ - 1] != '\\'))
+            throw new IllegalArgumentException("Resource location does not end with slash: " ~ path);
+    }
+
+    /// Appends the directory separator used by the location.
+    static string initLocationPath(string path) pure nothrow
+    {
+        const separator = hasBytes(path, "/") ? '/' : '\\';
+        return path.length != 0 && path[$ - 1] == separator ? path : path ~ separator;
+    }
+
+    /// Normalizes separators and drops leading control characters.
+    static string normalizeInputPath(string path) pure nothrow
+    {
+        size_t start;
+        bool slash;
+        for (; start < path.length; start++)
+        {
+            const c = path[start];
+            if (c == '/' || c == '\\')
+                slash = true;
+            else if (c > ' ' && c != 127)
+                break;
+        }
+        const tail = path[start .. $];
+        const normalized = collapseSeparators(tail);
+        if (!slash)
+            return normalized;
+        if (start == 1 && path[0] == '/' && normalized is tail)
+            return path;
+        return "/" ~ normalized;
+    }
+
+    private static string collapseSeparators(string path) pure nothrow
+    {
+        char[] result;
+        bool changed, slash;
+        foreach (offset, c; path)
+        {
+            const normalized = c == '\\' ? '/' : c;
+            const duplicate = slash && normalized == '/';
+            if (!changed && (duplicate || c != normalized))
+            {
+                result = path[0 .. offset].dup;
+                changed = true;
+            }
+            if (changed && !duplicate)
+                result ~= normalized;
+            slash = normalized == '/';
+        }
+        return changed ? result.idup : path;
+    }
+
+    /// Whether the normalized path or its percent-decoded form must be ignored.
+    static bool shouldIgnoreInputPath(string path)
+    {
+        if (!StringUtils.hasText(path) || isInvalidPath(path))
+            return true;
+        if (!hasBytes(path, "%"))
+            return false;
+        try
+        {
+            auto decoded = UriUtils.decode(path);
+            if (hasBytes(decoded, "%"))
+                decoded = UriUtils.decode(decoded);
+            if (!StringUtils.hasText(decoded) || isInvalidPath(decoded))
+                return true;
+            return isInvalidPath(normalizeInputPath(decoded));
+        }
+        catch (IllegalArgumentException)
+        {
+            return true;
+        }
+    }
+
+    /// Rejects private container paths, URL selectors and parent-directory segments.
+    static bool isInvalidPath(string path) pure nothrow
+    {
+        const lower = toLowerAscii(path);
+        return hasBytes(lower, "web-inf") || hasBytes(lower, "meta-inf") || hasBytes(path, "../")
+            || representsUrl(lower);
+    }
+
+    /// Whether both resources have the same class and the resource lies under the location path.
+    static bool isResourceUnderLocation(Resource location, Resource resource)
+    {
+        if (location is null || resource is null || typeid(cast(Object) location) !is typeid(cast(Object) resource))
+            return false;
+
+        const basePath = locationPath(location);
+        const resourcePath = locationPath(resource);
+        if (resourcePath is null)
+            return false;
+        const cleanBase = StringUtils.cleanPath(basePath);
+        if (cleanBase == resourcePath)
+            return true;
+        const prefix = cleanBase.length == 0 || cleanBase[$ - 1] == '/' ? cleanBase : cleanBase ~ "/";
+        if (resourcePath.length < prefix.length || resourcePath[0 .. prefix.length] != prefix)
+            return false;
+        if (!hasBytes(resourcePath, "%"))
+            return true;
+        try
+        {
+            const decoded = UriUtils.decode(resourcePath);
+            return !hasBytes(decoded, "../") && !hasBytes(decoded, "..\\");
+        }
+        catch (IllegalArgumentException)
+        {
+            // A readable resource can have a literal percent in its path.
+            return true;
+        }
+    }
+
+    private static string locationPath(Resource resource) pure nothrow @nogc
+    {
+        if (auto classPath = cast(ClassPathResource) resource)
+        {
+            const path = classPath.getPath();
+            return path.length != 0 ? path : "";
+        }
+        if (auto fileSystem = cast(FileSystemResource) resource)
+            return fileSystem.getPath();
+        return null;
+    }
+
+    private static bool representsUrl(string path) pure nothrow @nogc
+    {
+        if (path.length != 0 && path[0] == '/')
+            path = path[1 .. $];
+        foreach (offset, c; path)
+        {
+            if (c == '/')
+                return false;
+            if (c != ':')
+                continue;
+            switch (path[0 .. offset])
+            {
+            case "classpath", "file", "jar", "http", "https", "ftp", "jrt", "mailto", "url":
+                return true;
+            default:
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static bool hasBytes(string text, string needle) pure nothrow @nogc
+    {
+        if (needle.length > text.length)
+            return false;
+        foreach (i; 0 .. text.length - needle.length + 1)
+            if (text[i .. i + needle.length] == needle)
+                return true;
+        return false;
+    }
+}
+
+/// Resolves an incoming resource path or the outbound path to a public resource.
+interface ResourceResolver
+{
+    Resource resolveResource(HttpServletRequest request, string requestPath, List!Resource locations,
+            ResourceResolverChain chain);
+
+    Nullable!string resolveUrlPath(string resourcePath, List!Resource locations, ResourceResolverChain chain);
+}
+
+/// Delegates to the remaining resource resolvers.
+interface ResourceResolverChain
+{
+    Resource resolveResource(HttpServletRequest request, string requestPath, List!Resource locations);
+
+    Nullable!string resolveUrlPath(string resourcePath, List!Resource locations);
+}
+
+/// Template methods for a resource resolver.
+abstract class AbstractResourceResolver : ResourceResolver
+{
+    Resource resolveResource(HttpServletRequest request, string requestPath, List!Resource locations,
+            ResourceResolverChain chain)
+    {
+        return resolveResourceInternal(request, requestPath, locations, chain);
+    }
+
+    Nullable!string resolveUrlPath(string resourcePath, List!Resource locations, ResourceResolverChain chain)
+    {
+        return resolveUrlPathInternal(resourcePath, locations, chain);
+    }
+
+    protected abstract Resource resolveResourceInternal(HttpServletRequest request,
+            string requestPath, List!Resource locations, ResourceResolverChain chain);
+
+    protected abstract Nullable!string resolveUrlPathInternal(string resourcePath,
+            List!Resource locations, ResourceResolverChain chain);
+}
+
+/// Resolves readable resources under the configured class-path and file-system locations.
+class PathResourceResolver : AbstractResourceResolver
+{
+    private Resource[] allowedLocations;
+
+    /// Also permits resources found under these locations.
+    void setAllowedLocations(Resource[] locations...)
+    {
+        allowedLocations = locations.dup;
+    }
+
+    Resource[] getAllowedLocations()
+    {
+        return allowedLocations;
+    }
+
+    protected override Resource resolveResourceInternal(HttpServletRequest request,
+            string requestPath, List!Resource locations, ResourceResolverChain chain)
+    {
+        return findResource(requestPath, locations);
+    }
+
+    protected override Nullable!string resolveUrlPathInternal(string resourcePath,
+            List!Resource locations, ResourceResolverChain chain)
+    {
+        return StringUtils.hasText(resourcePath) && findResource(resourcePath, locations) !is null
+            ? nullable(resourcePath) : Nullable!string.init;
+    }
+
+    private Resource findResource(string path, List!Resource locations)
+    {
+        if (locations is null)
+            return null;
+        foreach (location; locations)
+        {
+            try
+            {
+                if (auto resource = getResource(path, location))
+                    return resource;
+            }
+            catch (IOException)
+            {
+                // Try the next location when this one cannot be read.
+            }
+        }
+        return null;
+    }
+
+    /// Finds a readable resource relative to the location and checks its location boundary.
+    protected Resource getResource(string resourcePath, Resource location)
+    {
+        if (location is null)
+            return null;
+        auto resource = location.createRelative(resourcePath);
+        return resource !is null && checkResource(resource, location) && resource.isReadable() ? resource : null;
+    }
+
+    /// Checks the configured location and any additional allowed locations.
+    protected bool checkResource(Resource resource, Resource location)
+    {
+        if (ResourceHandlerUtils.isResourceUnderLocation(location, resource))
+            return true;
+        foreach (allowed; allowedLocations)
+            if (ResourceHandlerUtils.isResourceUnderLocation(allowed, resource))
+                return true;
+        return false;
     }
 }
 

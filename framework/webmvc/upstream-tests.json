@@ -659,12 +659,38 @@
       "status": "deferred"
     },
     "org/springframework/web/servlet/resource/PathResourceResolverTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/webmvc/tests/resource_resolution_tests.d",
+      "methods": {
+        "ported": [
+          "checkFileLocation",
+          "checkResourceWithAllowedLocations",
+          "resolveFromClasspath",
+          "resolveFromClasspathRoot",
+          "resolvePathRootResource"
+        ],
+        "skipped": {
+          "checkRelativeLocation": "Requires UrlResource.",
+          "checkResource": "Requires UrlResource alongside the classpath location.",
+          "checkServletContextResource": "Requires ServletContextResource.",
+          "ignoreInvalidEscapeSequence": "Requires UrlResource.",
+          "relativePathEncodedForUrlResource": "Requires UrlResource and servlet URL path configuration."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/web/servlet/resource/ResourceHandlerUtilsTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/webmvc/tests/resource_resolution_tests.d",
+      "methods": {
+        "ported": [
+          "assertResourceLocationShouldRejectNotEndWithSlash",
+          "assertResourceLocationShouldRejectNull",
+          "assertResourceLocationShouldRejectUnsafeClassPathResource"
+        ],
+        "skipped": {
+          "assertResourceLocation": "The URL, PathResource and servlet-context cases require the deferred resource types."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/web/servlet/resource/ResourceHttpRequestHandlerIntegrationTests.java": {
       "phase": "2",

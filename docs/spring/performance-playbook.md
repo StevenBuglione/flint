@@ -697,6 +697,15 @@ stayed at 536,737 linked bytes and moved from 11,212 to 11,284 DMD template inst
 `4860be58` and `f1cd24f2`. The gs-rest Oz link map traces `uuid.o` to Phobos `process.o` and
 places the converter's UUID generator in discarded sections.
 
+Servlet resource path normalization reuses its input string when the separators and leading
+characters are already normalized. The resolver's typed location list adds 359 DMD template
+instances, from 5,557 to 5,916 against the 6,300 cap. On venus the matched webmvc probe at
+`2aef375a` and `85a9d725` measured 1,601,626 to 1,601,602 loadable bytes at O3 and
+1,525,890 to 1,525,898 at Oz. Main at `b0a6a019` measured 1,575,206 bytes at O3 and its
+link map retains Phobos curl, socket and zip. The base-relative size rule in `6c9e5f49`
+applies while that cascade remains. The resolver runs through the standalone API before
+it is integrated with servlet dispatch.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

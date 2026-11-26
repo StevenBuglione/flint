@@ -1,0 +1,5 @@
+{
+ "id": "D-WEB-5",
+ "deviation": "Servlet resource path validation and resolution support classpath and filesystem resources. Path validation recognizes built-in URL schemes and omits Spring's diagnostic logging. The allowed-location setter copies its input.",
+ "reason": "Flint currently exposes these two location types for path comparison. URL and servlet-context resources and their URL path configuration are deferred. Copying the variadic input gives the resolver ownership of its stored array."
+}

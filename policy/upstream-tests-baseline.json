@@ -9408,8 +9408,6 @@
       "org/springframework/web/servlet/resource/FixedVersionStrategyTests.java",
       "org/springframework/web/servlet/resource/LiteWebJarsResourceResolverTests.java",
       "org/springframework/web/servlet/resource/NoResourceFoundExceptionTests.java",
-      "org/springframework/web/servlet/resource/PathResourceResolverTests.java",
-      "org/springframework/web/servlet/resource/ResourceHandlerUtilsTests.java",
       "org/springframework/web/servlet/resource/ResourceHttpRequestHandlerIntegrationTests.java",
       "org/springframework/web/servlet/resource/ResourceTransformerSupportTests.java",
       "org/springframework/web/servlet/resource/ResourceUrlEncodingFilterTests.java",
