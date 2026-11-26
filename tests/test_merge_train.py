@@ -250,6 +250,89 @@ class TrainTests(unittest.TestCase):
         self.assertEqual(queue['members'], [])
         self.assertIn('"landed": ["sol-a", "sol-b"]', lines[0])
 
+    class FakeVerifier:
+        """Red when the candidate's tree has src/BAD; None (unavailable) when told to be."""
+
+        def __init__(self, test, name, budget=False, unavailable=False):
+            self.test, self.name, self.budget, self.unavailable = test, name, budget, unavailable
+            self.seen = []
+
+        def __call__(self, commit, repo):
+            import threading
+            self.seen.append((commit, threading.current_thread().name))
+            if self.unavailable:
+                return None, f'{self.name}: ssh failed'
+            files = git(self.test.work, 'ls-tree', '-r', '--name-only', commit).split()
+            return 'src/BAD' not in files, f'{self.name} verified {commit[:8]}'
+
+    def stacked(self, *verifiers):
+        return merge_train.Train(self.store, repo=self.work, worktree=self.tree, remote='origin', closure=('src/',),
+                                 verifiers=list(verifiers))
+
+    def test_two_verifiers_check_two_stacked_candidates_at_once_and_land_both(self):
+        for i in range(6):
+            self.lane(f'sol-{"abcdef"[i]}', {f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        desktop, posidon = self.FakeVerifier(self, 'desktop'), self.FakeVerifier(self, 'posidon', budget=True)
+        result = self.stacked(posidon, desktop).run('runner')
+        self.assertEqual((len(result['landed']), result['verifications']), (6, 2))
+        self.assertEqual((len(desktop.seen), len(posidon.seen)), (1, 1))
+        files = lambda c: git(self.work, 'ls-tree', '-r', '--name-only', c).split()
+        self.assertEqual(len([f for f in files(desktop.seen[0][0]) if f.startswith('src/') and f[4].isdigit()]), 4)
+        self.assertEqual(posidon.seen[0][0], result['pushed'])  # the budget verifier saw the deepest candidate
+        self.assertNotEqual(desktop.seen[0][1], posidon.seen[0][1])  # concurrently, on two threads
+
+    def test_a_red_second_candidate_lands_the_first_and_bisects_its_own_group(self):
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e')):
+            self.lane(role, {f'src/{i}.txt': str(i)})
+        self.lane('sol-f', {'src/BAD': 'x'})
+        self.hold_slot()
+        result = self.stacked(self.FakeVerifier(self, 'desktop'), self.FakeVerifier(self, 'posidon', True)).run('runner')
+        self.assertEqual(result['landed'], ['sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e'])
+        self.assertEqual(result['failed'], ['sol-f'])
+
+    def test_a_red_first_candidate_holds_everything_stacked_on_it_for_re_verification(self):
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.lane('sol-b', {'src/BAD': 'x'})
+        for i, role in enumerate(('sol-c', 'sol-d', 'sol-e', 'sol-f')):
+            self.lane(role, {f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        result = self.stacked(self.FakeVerifier(self, 'desktop'), self.FakeVerifier(self, 'posidon', True)).run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a'], ['sol-b']))
+        self.assertEqual(result['pending'], ['sol-c', 'sol-d', 'sol-e', 'sol-f'])
+
+    def test_an_unavailable_verifier_blames_nobody(self):
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.lane('sol-b', {'src/b.txt': 'b'})
+        self.hold_slot()
+        result = self.stacked(self.FakeVerifier(self, 'desktop', unavailable=True)).run('runner')
+        self.assertEqual((result['landed'], result['failed'], result['pending']), ([], [], ['sol-a', 'sol-b']))
+        self.assertEqual(self.main_log(), ['base'])
+
+    def test_a_verifier_entry_becomes_its_script(self):
+        entry = {'name': 'desktop', 'host': 'sbuglione@10.10.10.122', 'push_to': 'flint-verifier/flint.git',
+                 'bare': '$HOME/flint-verifier/flint.git', 'worktree': '$HOME/flint-verifier/wt-train',
+                 'tools': '$HOME/flint-verifier/.tools', 'peers': '$HOME/flint-verifier/.flint/peers',
+                 'native_install': '$HOME/flint-verifier/.native/install', 'prelude': 'export PATH="$HOME/x:$PATH"',
+                 'receipts': {'flint-verifier/.tools/dmd2/linux/bin64/dmd': 'ab' * 32}}
+        script = merge_train.RemoteVerifier(entry).script('c0ffee', 'train-x', 'S')
+        self.assertIn('export PATH="$HOME/x:$PATH"', script)
+        self.assertIn('--json', script)
+        self.assertIn('--no-flint-budget', script)
+        self.assertIn(f'{"ab" * 32}  flint-verifier/.tools/dmd2/linux/bin64/dmd', script)
+        self.assertIn('[ "$REPO" = "$BARE" ]', script)
+        posidon = merge_train.RemoteVerifier(merge_train.DEFAULT_VERIFIERS[0]).script('c0ffee', 'train-x', 'S')
+        self.assertNotIn('--no-flint-budget', posidon)
+        self.assertIn('source "$HOME/flint-work/posidon.env"', posidon)
+
+    def test_verifiers_come_from_the_coordination_file(self):
+        self.assertEqual([v.name for v in merge_train.load_verifiers(self.store)], ['posidon'])
+        (self.store.root / 'train').mkdir(exist_ok=True)
+        (self.store.root / 'train' / 'verifiers.json').write_text(json.dumps({'verifiers': [
+            merge_train.DEFAULT_VERIFIERS[0], dict(merge_train.DEFAULT_VERIFIERS[0], name='desktop', budget=False),
+            dict(merge_train.DEFAULT_VERIFIERS[0], name='neptune', enabled=False)]}))
+        self.assertEqual([v.name for v in merge_train.load_verifiers(self.store)], ['posidon', 'desktop'])
+
     def test_the_closure_covers_the_apps_packages_and_shared_paths(self):
         paths = merge_train.closure_paths(merge_train.ROOT)
         for expected in ('framework/web/', 'framework/jdbc/', 'boot/core/flint-boot/', 'policy/', 'benchmarks/spring/'):

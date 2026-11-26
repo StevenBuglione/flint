@@ -584,6 +584,12 @@ class Apps(unittest.TestCase):
         spring_bench.stop_postmaster(data, grace=0.2)
         self.assertEqual(server.wait(timeout=5), -15)
 
+    def test_no_flint_budget_skips_it_on_a_verifier_without_budgets(self):
+        run = FakeRunner()
+        result = dod.applications(module(), run, 'gs-rest-service', self.flint, budget=False)
+        self.assertFalse(any('budget' in c for c in run.calls))
+        self.assertIn('--no-flint-budget', result.details['gs-rest-service flint budget'])
+
     def test_none_skips(self):
         self.assertEqual(dod.applications(module(), FakeRunner(), 'none', self.flint).status, 'skip')
 

@@ -838,7 +838,7 @@ def app_database(app, root=ROOT):
 ALLOCATION_CONFIGURATIONS = (('allocation tests', {}), ('allocation tests, static trim', {'FLINT_GC_STATIC_VERIFY': '0'}))
 
 
-def applications(module, run, which='auto', flint=None, root=ROOT):
+def applications(module, run, which='auto', flint=None, root=ROOT, budget=True):
     if which == 'none':
         return Result('apps', 'skip', ['--apps none'])
     apps = using_apps(module, root) if which == 'auto' else [a for a in which.split(',') if a]
@@ -847,7 +847,7 @@ def applications(module, run, which='auto', flint=None, root=ROOT):
     if not flint or not Path(flint).is_file():
         return Result('apps', 'error', [f'no flint at {flint}: `python3 tools/install_toolchains.py --compiler flint`'])
     messages, details = [], {'apps': apps}
-    budget_cli = run([flint, 'budget', '--help'])[0] == 0
+    budget_cli = budget and run([flint, 'budget', '--help'])[0] == 0
     for app in apps:
         try:
             with app_database(app, root) as database:
@@ -867,7 +867,8 @@ def applications(module, run, which='auto', flint=None, root=ROOT):
             messages.append(f'{app}: the golden suite fails in exact mode (benchmarks/spring/suites):')
             messages += tail(out + err, 10)
         if not budget_cli:
-            details[f'{app} flint budget'] = 'skip: `flint budget` does not exist yet (m7)'
+            details[f'{app} flint budget'] = ('skip: `flint budget` does not exist yet (m7)' if budget else
+                                              'skip: --no-flint-budget (this machine has no seeded budgets)')
             continue
         code, out, err = run([flint, 'budget', '--app', f'benchmarks/spring/flint/{app}', '--json'])
         details[f'{app} flint budget'] = {0: 'pass', 1: 'regression', 2: 'run failed'}.get(code, f'exit {code}')
@@ -901,7 +902,7 @@ def link_closure(module, run, release):
 
 
 def run_all(directory, steps=STEPS, apps='auto', release=False, hold=True, flint=None, write_upstream_tests=False,
-            runner=None, root=ROOT, seed_phase=None, shrink_baseline=False):
+            runner=None, root=ROOT, seed_phase=None, shrink_baseline=False, flint_budget=True):
     run = runner or Runner(hold=hold, root=root)
     flint = Path(flint) if flint else root / '.flint' / 'bin' / 'flint'
     began = time.monotonic()
@@ -921,7 +922,7 @@ def run_all(directory, steps=STEPS, apps='auto', release=False, hold=True, flint
                                                       seed_phase=seed_phase, shrink_baseline=shrink_baseline),
              'budgets': lambda: budgets(module, run),
              'link-closure': lambda: link_closure(module, run, release),
-             'apps': lambda: applications(module, run, apps, flint, root)}
+             'apps': lambda: applications(module, run, apps, flint, root, flint_budget)}
     for step in steps:
         if step == 'resolve':
             continue
@@ -977,6 +978,8 @@ def main(argv=None):
                         'them to policy/upstream-tests-baseline.json; never changes a recorded entry (integration owner)')
     p.add_argument('--shrink-upstream-tests', action='store_true',
                    help='remove from policy/upstream-tests-baseline.json the module\'s classes no longer deferred')
+    p.add_argument('--no-flint-budget', action='store_true',
+                   help='apps: skip flint budget (a verifier without seeded budgets; posidon runs it)')
     p.add_argument('--json', action='store_true', help='print the report as JSON')
     a = p.parse_args(argv)
     if not a.no_hold:
@@ -988,7 +991,8 @@ def main(argv=None):
         return subprocess.run(command, cwd=ROOT).returncode
     steps =[s for s in STEPS if s == 'resolve' or not a.step or s in a.step]
     module, results = run_all(a.module, steps, a.apps, a.release, not a.no_hold, a.flint, a.write_upstream_tests,
-                              seed_phase=a.seed_upstream_tests, shrink_baseline=a.shrink_upstream_tests)
+                              seed_phase=a.seed_upstream_tests, shrink_baseline=a.shrink_upstream_tests,
+                              flint_budget=not a.no_flint_budget)
     out = report(module, results, a.module)
     if module:
         REPORT_DIR.mkdir(parents=True, exist_ok=True)

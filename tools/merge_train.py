@@ -60,17 +60,28 @@ def git(args, cwd, check=True):
     return done
 
 
+SSH_KEY = Path.home() / '.ssh' / 'full-access-ssh-key'
+SSH = ['ssh', '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes', '-i', str(SSH_KEY)]
 POSIDON = 'olfa@10.10.10.12'
-POSIDON_KEY = Path.home() / '.ssh' / 'full-access-ssh-key'
-POSIDON_SSH = ['ssh', '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes', '-i', str(POSIDON_KEY)]
+POSIDON_SSH = SSH
+VERIFIERS_FILE = 'train/verifiers.json'  # in the coordination directory
+# Built in, so a fresh checkout trains on posidon; coordination/train/verifiers.json adds or replaces verifiers.
+DEFAULT_VERIFIERS = [{
+    'name': 'posidon', 'host': POSIDON, 'budget': True,
+    'prelude': 'source "$HOME/flint-work/posidon.env"',
+    'push_to': 'flint-work/flint.git', 'bare': '$HOME/flint-work/flint.git', 'repo': '$HOME/flint-work/flint',
+    'worktree': '$HOME/flint-work/wt-train', 'tools': '$HOME/flint-work/flint/.tools',
+    'peers': '$HOME/flint-work/flint/.flint/peers', 'native_install': '$HOME/flint-work/flint/.native/install',
+    'cache_root': '$HOME/flint-work', 'receipts': {}}]
 
-# Runs on posidon with bash -s; @COMMIT@, @REF@, @STAMP@ and @APPS@ are filled in. Its exit status is the verification's.
-POSIDON_SCRIPT = r'''
+# Runs on a verifier with bash -s; the @NAME@ tokens are filled in from its entry. Exit status: 0 green, 1/2/4 red
+# (the candidate's apps, its native shims or its flint fail), 3 git setup and 5 a receipt mismatch: the verifier, not
+# the candidate, so nobody is blamed.
+VERIFY_SCRIPT = r"""
 set -uo pipefail
-source "$HOME/flint-work/posidon.env"
-SHARED="$HOME/flint-work/flint"
-WT="$HOME/flint-work/wt-train"
-export FLINT_HOME="$WT" FLINT_CACHE="$HOME/flint-work/train-cache-@STAMP@"
+@PRELUDE@
+BARE="@BARE@"; REPO="@REPO@"; WT="@WORKTREE@"
+export FLINT_HOME="$WT" FLINT_CACHE="@CACHE_ROOT@/train-cache-@STAMP@"
 cleanup() {
   # Only this run's servers: DMD fork servers whose environment names this run's FLINT_CACHE.
   for pid in $(pgrep -u "$USER" -f 'dmd' || true); do
@@ -79,38 +90,71 @@ cleanup() {
   rm -rf "$FLINT_CACHE" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
   rm -rf "$WT"/benchmarks/spring/flint/*/.flint/build "$WT"/benchmarks/spring/flint/*/.dub
   find "$WT" -xdev -name .dub -type d -prune -exec rm -rf {} + 2>/dev/null
-  git --git-dir="$HOME/flint-work/flint.git" update-ref -d "refs/heads/@REF@"
+  git --git-dir="$BARE" update-ref -d "refs/heads/@REF@"
 }
 trap cleanup EXIT
-git -C "$SHARED" fetch -q origin "refs/heads/@REF@" || exit 3
-[ -d "$WT" ] || git -C "$SHARED" worktree add -q --detach "$WT" "@COMMIT@" || exit 3
+echo "== receipts"
+RECEIPTS="@RECEIPTS@"
+if [ -n "$RECEIPTS" ]; then
+  ( cd "$HOME" && printf '%s' "$RECEIPTS" | sha256sum --quiet -c - ) || { echo "receipt mismatch: this verifier's toolchain changed; re-pin it"; exit 5; }
+fi
+[ "$REPO" = "$BARE" ] || git -C "$REPO" fetch -q origin "refs/heads/@REF@" || exit 3
+[ -d "$WT" ] || git -C "$REPO" worktree add -q --detach "$WT" "@COMMIT@" || exit 3
 cd "$WT"
 git checkout -q -f --detach "@COMMIT@" || exit 3
-[ -e .tools ] || ln -s "$SHARED/.tools" .tools
-mkdir -p .flint && { [ -e .flint/peers ] || ln -s "$SHARED/.flint/peers" .flint/peers; }
-[ -d .native/install ] || { mkdir -p .native && cp -a "$SHARED/.native/install" .native/; }
+[ -e .tools ] || ln -s "@TOOLS@" .tools
+mkdir -p .flint && { [ -e .flint/peers ] || ln -s "@PEERS@" .flint/peers; }
+[ -d .native/install ] || { mkdir -p .native && cp -a "@NATIVE_INSTALL@" .native/ && @NATIVE_FIX@; } || exit 3
 export PATH="$WT/.flint/bin:$WT/.tools/dmd2/linux/bin64:$PATH"
 H="python3 tools/measure_queue.py hold --"
 # A full native build only when what defines the libraries changed since the last one here; otherwise just the Flint
 # C shims over the installed libraries, plus the dub blocks (a full build recompiles OpenSSL every time).
 INPUTS=$(git ls-tree -r HEAD -- policy/native-lock.json policy/native-c.toml tools/native_build.py native/conan-index | sha256sum | cut -c1-64)
 SHIMS=""; [ -f .native/train-native-inputs ] && [ "$(cat .native/train-native-inputs)" = "$INPUTS" ] && SHIMS="--shims-only"
+[ "@FULL_NATIVE@" = yes ] || SHIMS="--shims-only"
 echo "== native blocks ${SHIMS:-full build}"
 $H python3 tools/native_build.py --profile ci --target linux-x86_64-glibc --phase build $SHIMS --emit-dub || exit 4
 echo "$INPUTS" > .native/train-native-inputs
 echo "== flint"; $H python3 tools/install_toolchains.py --compiler flint || exit 4
-echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ --json
-'''
+echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ @DOD_FLAGS@ --json
+"""
+POSIDON_SCRIPT = VERIFY_SCRIPT  # the name earlier tests and notes use
+UNAVAILABLE = (3, 5, 255)  # git setup, a receipt mismatch, ssh itself
 
 
-class PosidonVerifier:
-    """The train's apps verification on posidon. Called with a commit (and the venus repository that has it);
-    returns (ok, log)."""
+def load_verifiers(store):
+    """The configured verifiers: coordination/train/verifiers.json if present ({"verifiers": [...]}), else posidon."""
+    path = store.root / VERIFIERS_FILE
+    entries = json.loads(path.read_text())['verifiers'] if path.is_file() else DEFAULT_VERIFIERS
+    return [RemoteVerifier(entry) for entry in entries if entry.get('enabled', True)]
 
-    def __init__(self, host=POSIDON, ssh=None, bare='flint-work/flint.git', url=None):
-        self.host = host
-        self.ssh = list(ssh or POSIDON_SSH)
-        self.url = url or f'{host}:{bare}'
+
+class RemoteVerifier:
+    """One verifier: a host plus a worktree (coordinator, 2026-11-26). Called with a commit and the venus repository
+    that has it; returns (ok, log), ok None when the verifier itself failed (nobody is blamed)."""
+
+    def __init__(self, entry, ssh=None, url=None):
+        self.entry = dict(entry)
+        self.name = entry['name']
+        self.host = entry['host']
+        self.budget = bool(entry.get('budget'))
+        self.ssh = list(ssh or entry.get('ssh') or SSH)
+        self.url = url or entry.get('url') or f"{self.host}:{entry['push_to']}"
+
+    def script(self, commit, ref, stamp):
+        e = self.entry
+        receipts = ''.join(f'{digest}  {path}\n' for path, digest in sorted(e.get('receipts', {}).items()))
+        values = {'@PRELUDE@': e.get('prelude', ''), '@BARE@': e['bare'], '@REPO@': e.get('repo', e['bare']),
+                  '@WORKTREE@': e['worktree'], '@TOOLS@': e['tools'], '@PEERS@': e['peers'],
+                  '@NATIVE_INSTALL@': e['native_install'], '@NATIVE_FIX@': e.get('native_fix', 'true'),
+                  '@FULL_NATIVE@': 'yes' if e.get('full_native', True) else 'no',
+                  '@CACHE_ROOT@': e.get('cache_root', '$HOME'), '@RECEIPTS@': receipts,
+                  '@DOD_FLAGS@': '' if self.budget else '--no-flint-budget', '@APPS@': ','.join(APPS),
+                  '@COMMIT@': commit, '@REF@': ref, '@STAMP@': stamp}
+        text = VERIFY_SCRIPT
+        for token, value in values.items():
+            text = text.replace(token, value)
+        return text
 
     def __call__(self, commit, repo):
         stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()) + '-' + commit[:8]
@@ -119,13 +163,25 @@ class PosidonVerifier:
         pushed = subprocess.run(['git', 'push', '-q', self.url, f'{commit}:refs/heads/{ref}'],
                                 cwd=repo, env=env, capture_output=True, text=True)
         if pushed.returncode != 0:
-            return False, f'pushing the candidate to posidon failed:\n{pushed.stderr}'
-        script = POSIDON_SCRIPT
-        for token, value in (('@COMMIT@', commit), ('@REF@', ref), ('@STAMP@', stamp), ('@APPS@', ','.join(APPS))):
-            script = script.replace(token, value)
-        done = subprocess.run([*self.ssh, self.host, 'bash', '-s'], input=script, capture_output=True, text=True)
-        log = f'posidon {self.host}, ~/flint-work/wt-train at {commit} ({ref}):\n{done.stdout}{done.stderr}'
+            return None, f'{self.name}: pushing the candidate failed:\n{pushed.stderr}'
+        done = subprocess.run([*self.ssh, self.host, 'bash', '-s'], input=self.script(commit, ref, stamp),
+                              capture_output=True, text=True)
+        log = f'{self.name} ({self.host}), {self.entry["worktree"]} at {commit} ({ref}):\n{done.stdout}{done.stderr}'
+        if done.returncode in UNAVAILABLE:
+            return None, log
         return done.returncode == 0, log
+
+    def pin(self, paths):
+        """Record the sha256 of `paths` (relative to the verifier's home) as its receipts."""
+        done = subprocess.run([*self.ssh, self.host, 'cd "$HOME" && sha256sum ' + ' '.join(shlex.quote(p) for p in paths)],
+                              capture_output=True, text=True, check=True)
+        return {line.split(None, 1)[1].strip(): line.split()[0] for line in done.stdout.splitlines() if line.strip()}
+
+
+def PosidonVerifier(host=POSIDON, ssh=None, bare='flint-work/flint.git', url=None):
+    """posidon's built-in entry (kept for callers and tests of the first version)."""
+    entry = dict(DEFAULT_VERIFIERS[0], host=host, push_to=bare)
+    return RemoteVerifier(entry, ssh=ssh, url=url)
 
 
 def closure_paths(root):
@@ -152,14 +208,17 @@ def touches(paths, prefixes):
 
 class Train:
     def __init__(self, store, repo=ROOT, worktree=DEFAULT_WORKTREE, remote='fp', branch='main', verify=None,
-                 closure=None, log_dir=None, mail=True, verifier=None):
+                 closure=None, log_dir=None, mail=True, verifier=None, verifiers=None):
         self.store = store
         self.repo = Path(repo)
         self.worktree = Path(worktree)
         self.remote = remote
         self.branch = branch
-        self.verify_commands = verify  # local commands (tests); otherwise the verifier, posidon by default
-        self.verifier = verifier or (None if verify else PosidonVerifier())
+        self.verify_commands = verify  # local commands (tests); otherwise the remote verifiers
+        if verifiers is None:
+            verifiers = [verifier] if verifier else ([] if verify else load_verifiers(store))
+        # The budget verifier last: it gets the deepest candidate, so flint budget covers everything that lands.
+        self.verifiers = sorted(verifiers, key=lambda v: bool(getattr(v, 'budget', False)))
         self.closure = closure
         self.log_dir = Path(log_dir) if log_dir else store.root / 'train'
         self.mail = mail
@@ -219,11 +278,12 @@ class Train:
         git(['checkout', '-q', '--detach', tip], self.worktree)
         return applied, failed
 
-    def verify(self, commit):
-        git(['checkout', '-q', '--detach', commit], self.worktree)
+    def verify(self, commit, verifier=None):
+        """(ok, log): True green, False red, None the verifier could not run."""
         self.verifications += 1
-        if self.verifier:
-            return self.verifier(commit, self.worktree)
+        if self.verifiers:
+            return (verifier or self.verifiers[-1])(commit, self.worktree)
+        git(['checkout', '-q', '--detach', commit], self.worktree)
         log = []
         for command in self.verify_commands:
             done = subprocess.run(command, cwd=self.worktree, capture_output=True, text=True,
@@ -232,6 +292,16 @@ class Train:
             if done.returncode != 0:
                 return False, '\n'.join(log)
         return True, '\n'.join(log)
+
+    def verify_all(self, commits):
+        """Verify candidate k on verifier k, concurrently; results in candidate order."""
+        if len(commits) == 1:
+            return [self.verify(commits[0])]
+        from concurrent.futures import ThreadPoolExecutor
+        # The deepest candidate goes to the last verifier (the budget one).
+        pairs = list(zip(commits, self.verifiers[-len(commits):]))
+        with ThreadPoolExecutor(len(pairs)) as pool:
+            return list(pool.map(lambda pair: self.verify(*pair), pairs))
 
     def changed(self, old, new):
         return git(['diff', '--name-only', old, new], self.worktree).stdout.split()
@@ -242,7 +312,7 @@ class Train:
         if not lease or lease['agent'] != agent or not self.store.lease_live(lease):
             raise SystemExit(f'merge_train: run the train while holding {SLOT}: python3 tools/agentctl.py claim {SLOT} '
                              f'--agent {agent} --harness <h> --ttl-min 40 (join its queue first if it is busy)')
-        batch = self.ordered()[:max_train]
+        batch = self.ordered()[:max_train * max(1, len(self.verifiers))]
         if not batch:
             return {'landed': [], 'failed': [], 'pending': []}
         if dry_run:
@@ -253,32 +323,49 @@ class Train:
         applied, failed = self.build(batch, base)
         landed, verified_tip = [], None
         if applied:
-            ok, log = self.verify(applied[-1][1])
-            if ok:
+            # Speculative stacking: candidate k is main plus groups 1..k (up to max_train submissions each), one per
+            # verifier, all verified at once; they land in strict order.
+            lanes = max(1, len(self.verifiers))
+            ends = [min(len(applied), (k + 1) * max_train) for k in range(lanes) if k * max_train < len(applied)]
+            results = self.verify_all([applied[end - 1][1] for end in ends])
+            first = next((k for k, (ok, _) in enumerate(results) if ok is not True), None)
+            if first is None:
                 landed, verified_tip = applied, applied[-1][1]
             else:
-                good, bad, bad_log = 0, len(applied), log  # prefix lengths: main itself is green
-                while bad - good > 1:
-                    middle = (good + bad) // 2
-                    ok, middle_log = self.verify(applied[middle - 1][1])
-                    if ok:
-                        good = middle
+                good, bad = (ends[first - 1] if first else 0), ends[first]
+                ok, bad_log = results[first]
+                if ok is None:  # the verifier failed: land what is green before it, blame nobody
+                    landed = applied[:good]
+                    verified_tip = applied[good - 1][1] if good else None
+                    self.store.event('train-verifier-failed', log=bad_log[-2000:])
+                else:
+                    while bad - good > 1:  # bisect the red group on top of the green candidates before it
+                        middle = (good + bad) // 2
+                        ok, middle_log = self.verify(applied[middle - 1][1])
+                        if ok is None:
+                            bad = None
+                            break
+                        if ok:
+                            good = middle
+                        else:
+                            bad, bad_log = middle, middle_log
+                    if bad is None:
+                        self.store.event('train-verifier-failed', log=middle_log[-2000:])
+                    elif bad == 1 and self.verify(base)[0] is not True:
+                        # Main itself is red: blame nobody; every submission waits for main to be fixed.
+                        self.store.event('train-main-red', base=base)
+                        return {'landed': [], 'failed': [], 'pushed': None, 'logs': {}, 'main_red': base,
+                                'pending': [s['role'] for s in self.ordered()], 'verifications': self.verifications}
                     else:
-                        bad, bad_log = middle, middle_log
-                if bad == 1 and not self.verify(base)[0]:
-                    # Main itself is red: blame nobody; every submission waits for main to be fixed.
-                    self.store.event('train-main-red', base=base)
-                    return {'landed': [], 'failed': [], 'pushed': None, 'logs': {}, 'main_red': base,
-                            'pending': [s['role'] for s in self.ordered()], 'verifications': self.verifications}
-                failed.append((applied[bad - 1][0], 'the apps verification failed with this submission on the train:\n'
-                               + bad_log))
-                landed = applied[:good]
-                verified_tip = applied[good - 1][1] if good else None
+                        failed.append((applied[bad - 1][0], 'the apps verification failed with this submission on '
+                                       'the train:\n' + bad_log))
+                    landed = applied[:good]
+                    verified_tip = applied[good - 1][1] if good else None
         pushed = None
         if landed:
             pushed = self.push([s for s, _ in landed], base, verified_tip, attempts)
-            if pushed is None:
-                failed += [(s, 'main moved under the train and the train could not land; resubmitted') for s, _ in landed]
+            if pushed is None:  # main kept moving or a re-verification failed: they stay submitted for the next train
+                self.store.event('train-push-failed', roles=[s['role'] for s, _ in landed])
                 landed = []
         return self.settle(batch, landed, failed, pushed)
 
