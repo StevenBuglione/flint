@@ -59,13 +59,13 @@ final class BindFailureAnalyzer : AbstractFailureAnalyzer!BindException
         string action = "Update your application's configuration";
         if (auto conversion = findCause!ConversionFailedException(cause))
         {
-            import std.algorithm.sorting : sort;
+            import flint.boot.internal.text : sortStrings;
 
             auto valid = conversion.getEnumConstants().dup;
             if (valid.length)
             {
                 action ~= ". The following values are valid:\n";
-                foreach (value; valid.sort)
+                foreach (value; sortStrings(valid))
                     action ~= "\n    " ~ value;
             }
         }
@@ -139,15 +139,17 @@ final class InvalidConfigurationPropertyNameFailureAnalyzer
 {
     protected override FailureAnalysis analyze(Throwable rootFailure, InvalidConfigurationPropertyNameException cause)
     {
-        import std.algorithm.iteration : map;
-        import std.array : join;
-        import std.conv : to;
+        import flint.engine.aot.text : decodeUtf8, utf8;
 
         auto bind = findCause!BindException(rootFailure);
         const target = bind is null ? "" : "\n    Bean: " ~ bind.getTarget();
         enum reason = "\n    Reason: Canonical names should be kebab-case ('-' separated), lowercase "
             ~ "alpha-numeric characters and must start with a letter";
-        const invalid = cause.getInvalidCharacters().map!(c => "'" ~ c.to!string ~ "'").join(", ");
+        // Each code point quoted, as Boot joins the invalid characters; plain loops, not std.conv/std.algorithm (S-24).
+        const characters = cause.getInvalidCharacters();
+        string invalid;
+        for (size_t index; index < characters.length;)
+            invalid ~= (invalid.length ? ", '" : "'") ~ utf8(decodeUtf8(characters, index)) ~ "'";
         const description = "Configuration property name '" ~ cause.getName() ~ "' is not valid:\n"
             ~ "\n    Invalid characters: " ~ invalid ~ target ~ reason;
         const action = "Modify '" ~ cause.getName() ~ "' so that it conforms to the canonical names requirements.";

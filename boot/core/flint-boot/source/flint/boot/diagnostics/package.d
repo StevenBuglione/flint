@@ -131,9 +131,9 @@ string failureReport(FailureAnalysis analysis)
 {
     string report = "\n\n***************************\nAPPLICATION FAILED TO START\n***************************\n\n"
         ~ "Description:\n\n" ~ analysis.getDescription() ~ "\n";
-    import std.string : strip;
+    import flint.engine.aot.text : stripWhite;
 
-    if (analysis.getAction().strip.length)
+    if (analysis.getAction().stripWhite.length)
         report ~= "\nAction:\n\n" ~ analysis.getAction() ~ "\n";
     return report;
 }
