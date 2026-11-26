@@ -1905,8 +1905,19 @@
       "status": "deferred"
     },
     "tools/jackson/databind/node/JsonNodeFindMethodsTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/json_node_find_methods_test.d",
+      "methods": {
+        "ported": [
+          "testMatchingSingle"
+        ],
+        "skipped": {
+          "testFindParents4229": "List-valued findParents is deferred pending the Java List fa\u00e7ade budget.",
+          "testFindValues4229": "List-valued findValues is deferred pending the Java List fa\u00e7ade budget.",
+          "testMatchingMultiple": "This test needs all three plural List-valued find methods.",
+          "testNonMatching": "The singular assertions run separately; this test also requires the plural empty lists."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/databind/node/JsonNodeFloatValueTest.java": {
       "phase": "2",

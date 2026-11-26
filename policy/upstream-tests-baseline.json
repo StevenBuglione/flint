@@ -3096,7 +3096,6 @@
       "tools/jackson/databind/node/JsonNodeDeepCopyTest.java",
       "tools/jackson/databind/node/JsonNodeDoubleValueTest.java",
       "tools/jackson/databind/node/JsonNodeFactoryTest.java",
-      "tools/jackson/databind/node/JsonNodeFindMethodsTest.java",
       "tools/jackson/databind/node/JsonNodeFloatValueTest.java",
       "tools/jackson/databind/node/JsonNodeIntValueTest.java",
       "tools/jackson/databind/node/JsonNodeLongValueTest.java",

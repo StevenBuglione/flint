@@ -194,6 +194,14 @@ InputStreamResource reuses Java's stream and Object operations. On the same Core
 
 LocalizedResourceHelper keeps locale fallback behind the Core resource support module. The same probe on venus, from its parent 0016ed2e to 05b6c659, kept 8,708 loadable bytes and moved DMD templates from 6,389 to 6,472, within the 8,550 cap. The ResourceRegion, InputStreamResource, CompositeIterator and LocalizedResourceHelper batch on 37c78eea kept the Core probe at 8,884 loadable bytes and moved DMD templates from 6,392 to 6,495.
 
+### Jackson tree search
+
+The first-match operations check an object's own property and then walk its stored children. A failed path lookup returns a missing node through the existing factory. The plural operations require Java List façades, which pull in Stream, Comparator, collection methods and their runtime templates. Keep the plural API deferred while the façade is over budget (B-1).
+
+On venus, the pinned `measure_builds.py --framework-sizes --framework jackson-databind` probe measured 4,086 DMD template instances and 418,773 loadable bytes at `26bd3a8c`. First-match search at `755c8bd9` measured 4,088 and 419,469. The experiment with node-valued lists at `13b527ef` measured 5,347 and 446,649. Adding string-valued lists at `f2b34aec` measured 5,702 and 476,197. The module cap is 4,850 template instances.
+
+The first-match experiment added 672 bytes of allocated ELF sections at Oz to both applications, from 3,727,853 to 3,728,525 for gs-rest-service and from 10,481,639 to 10,482,311 for petclinic-rest. Both builds used `flint build --profile size` and the pinned LDC on the same matched source trees.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

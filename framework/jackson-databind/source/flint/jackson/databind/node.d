@@ -324,8 +324,21 @@ abstract class JsonNode
         return null;
     }
 
-    /// The first value of property `propertyName` found in this tree, depth first; null when none.
+    /// The first value of `propertyName`, checking each object before its children; null when absent.
     JsonNode findValue(string)
+    {
+        return null;
+    }
+
+    /// Like `findValue`, returning the missing node when the property is absent.
+    final JsonNode findPath(string propertyName)
+    {
+        auto value = findValue(propertyName);
+        return value is null ? MissingNode.getInstance() : value;
+    }
+
+    /// The first Object node with property `propertyName`, or null when absent.
+    JsonNode findParent(string)
     {
         return null;
     }
@@ -670,13 +683,21 @@ final class ObjectNode : ContainerNode
 
     override JsonNode findValue(string propertyName)
     {
+        if (auto value = get(propertyName))
+            return value;
         foreach (k; keys)
-        {
-            if (k == propertyName)
-                return children[k];
             if (auto found = children[k].findValue(propertyName))
                 return found;
-        }
+        return null;
+    }
+
+    override ObjectNode findParent(string propertyName)
+    {
+        if (has(propertyName))
+            return this;
+        foreach (k; keys)
+            if (auto parent = children[k].findParent(propertyName))
+                return cast(ObjectNode) parent;
         return null;
     }
 
@@ -900,6 +921,14 @@ final class ArrayNode : ContainerNode
         return null;
     }
 
+    override ObjectNode findParent(string propertyName)
+    {
+        foreach (child; elements)
+            if (auto parent = child.findParent(propertyName))
+                return cast(ObjectNode) parent;
+        return null;
+    }
+
     override ArrayNode asArray()
     {
         return this;
@@ -1052,6 +1081,11 @@ abstract class ValueNode : JsonNode
     alias asLong = JsonNode.asLong;
     alias asDouble = JsonNode.asDouble;
     alias asBoolean = JsonNode.asBoolean;
+
+    final override ObjectNode findParent(string)
+    {
+        return null;
+    }
 
     override JsonNode deepCopy()
     {
