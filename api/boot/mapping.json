@@ -1484,7 +1484,7 @@
 "org.springframework.boot.autoconfigure.ImportAutoConfiguration#classes":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.ImportAutoConfiguration#exclude":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.ImportAutoConfiguration#value":{"status":"excluded","category":"deferred","phase":"2"},
-"org.springframework.boot.autoconfigure.SpringBootApplication":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.boot.autoconfigure.SpringBootApplication":{"d":"flint.boot.autoconfigure.FlintBootApplication","rules":["R2"],"status":"adapted","note":"Startup composition, default proxying, and typed and named exclusions are verified. proxyBeanMethods = false currently merges to true, as recorded in the member mapping."},
 "org.springframework.boot.autoconfigure.SpringBootApplication#exclude":{"d":"flint.boot.autoconfigure.FlintBootApplication.exclude","rules":["R2","R4"],"status":"adapted"},
 "org.springframework.boot.autoconfigure.SpringBootApplication#excludeName":{"d":"flint.boot.autoconfigure.FlintBootApplication.excludeName","rules":["R2"],"status":"adapted"},
 "org.springframework.boot.autoconfigure.SpringBootApplication#nameGenerator":{"status":"excluded","category":"deferred","phase":"2"},
