@@ -24,7 +24,6 @@ import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
 public import flint.java.classref : ClassRef, classOf; // a leaf, so annotation-only clients skip this module
 import flint.java.util : Iterator; // module scope: a template-scoped import breaks -i builds (forward references)
 import flint.engine.aot.any : Any;
-import flint.java.util.formatter : formatJava;
 
 @safe:
 package(flint) import flint.java.lang.character.decimaldigits : javaDecimalDigit;
@@ -350,6 +349,8 @@ struct String
     /// are boxed on the stack and formatted by one non-template engine (rule R7), not by `std.format`.
     static string format(Args...)(string format, Args args)
     {
+        import flint.java.util.formatter : formatJava;
+
         Any[Args.length] boxed;
         static foreach (i; 0 .. Args.length)
             boxed[i] = Any.of(args[i]);

@@ -1,5 +1,5 @@
 // Regenerate the marked Formatter table with pinned JDK 21, then run repo dfmt.
-// java GenFormatterUppercase.java ../source/flint/java/util/formatter.d
+// java GenFormatterUppercase.java ../source/flint/java/util/internal/formatter_unicode.d
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
