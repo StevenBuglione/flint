@@ -12,7 +12,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding,
     RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult, validateEntity, validateMapping;
 import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
-import flint.engine.jpa.loaded_state : captureLoadedState, dirtyOrdinals, planLoadedSnapshot;
+import flint.engine.jpa.loaded_state : ManagedSnapshotSlot, captureLoadedState, dirtyOrdinals, planLoadedSnapshot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.engine.jpa.registry : registerMappings;
@@ -271,29 +271,59 @@ private void verifyManagedIdentity(DataSource dataSource)
         rows.close();
     assert(rows.next());
 
-    IdentitySlot[4] backing;
-    Object[4] entities;
+    IdentitySlot[2] backing;
+    Object[2] entities;
+    // The context allocates its bounded backing at startup. All slot operations borrow it.
+    auto fields = new AttributeSnapshot[6];
+    auto bytes = new ubyte[16];
+    ManagedSnapshotSlot[2] snapshots = [
+        ManagedSnapshotSlot(fields[0 .. 3], bytes[0 .. 8]),
+        ManagedSnapshotSlot(fields[3 .. 6], bytes[8 .. 16])
+    ];
     Error error;
     {
-        scope managed = ManagedEntities(backing[], entities[], error);
+        scope managed = ManagedEntities(backing[], entities[], error, snapshots[]);
         assert(error.code == Status.ok);
-        const first = materializeManagedRow(plan.value, rows, managed);
+        const key = EntityIdentity(0, 1);
+        const snapshotPlan = planLoadedSnapshot(&ownerMapping);
+        assert(snapshotPlan.ok);
+        auto oversized = new Owner;
+        oversized.name = "Longer name";
+        const rejected = managed.manage(key, oversized, snapshotPlan.value);
+        assert(rejected.code == Status.outOfMemory && rejected.offset == 1);
+        assert(managed.find(key).error.code == Status.notFound);
+
+        auto first = materializeManagedRow(plan.value, rows, managed);
         assert(first.ok && (cast(const Owner) first.value).loadOrder == 3);
+
+        uint[2] ordinals;
         const before = GC.stats().allocatedInCurrentThread;
+        const original = managed.dirty(key, ordinals[]);
+        assert(original.ok && original.value == 0);
+        (cast(Owner) first.value).name = "Edited";
         const found = materializeManagedRow(plan.value, rows, managed);
         assert(found.ok && found.value is first.value);
+        const dirty = managed.dirty(key, ordinals[]);
+        assert(dirty.ok && dirty.value == 1 && ordinals[0] == 1);
         assert(GC.stats().allocatedInCurrentThread == before);
         verifyManagedLoadFailure(rows, managed);
-        const detached = managed.detach(EntityIdentity(0, 1));
+        // A second callback failure must reach PostLoad using the reclaimed slot bytes.
+        verifyManagedLoadFailure(rows, managed);
+        const detached = managed.detach(key);
         assert(detached.ok && detached.value is first.value);
+        assert(managed.dirty(key, ordinals[]).error.code == Status.notFound);
         const loadedAgain = materializeManagedRow(plan.value, rows, managed);
         assert(loadedAgain.ok && loadedAgain.value !is first.value);
         assert((cast(const Owner) loadedAgain.value).loadOrder == 3);
+        const clean = managed.dirty(key, ordinals[]);
+        assert(clean.ok && clean.value == 0);
 
         assert(rows.next());
         const missing = materializeManagedRow(plan.value, rows, managed);
         assert(missing.error.code == Status.invalidArgument && missing.error.offset == 0);
-        assert(managed.find(EntityIdentity(0, 1)).value is loadedAgain.value);
+        assert(managed.find(key).value is loadedAgain.value);
+        managed.clear();
+        assert(managed.dirty(key, ordinals[]).error.code == Status.notFound);
     }
     foreach (entity; entities)
         assert(entity is null);

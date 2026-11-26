@@ -8,6 +8,7 @@ module flint.engine.jpa.result_binding;
 
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa.identity : EntityIdentity;
+import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, planLoadedSnapshot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.mapping : AttributeKind, AttributeValue, EntityMapping, validateEntity, validateMapping;
 import flint.java.sql : PreparedStatement, ResultSet;
@@ -54,16 +55,16 @@ struct RowMaterializationPlan
 struct ManagedRowMaterializationPlan
 {
     private RowMaterializationPlan row;
+    private LoadedSnapshotPlan snapshot;
     private uint root;
-    private uint idOrdinal;
-    private int idColumn;
+    private ResultBinding identity;
 
-    private this(RowMaterializationPlan row, uint root, uint idOrdinal, int idColumn) nothrow @nogc
+    private this(RowMaterializationPlan row, LoadedSnapshotPlan loaded, uint root, ResultBinding identity) nothrow @nogc
     {
         this.row = row;
+        this.snapshot = loaded;
         this.root = root;
-        this.idOrdinal = idOrdinal;
-        this.idColumn = idColumn;
+        this.identity = identity;
     }
 }
 
@@ -113,8 +114,14 @@ ManagedPlanResult planManagedResult(immutable(EntityMapping)* mapping,
                 "managed rows require a simple integer identity"));
     const id = mapping.idOrdinals[0];
     foreach (ref binding; bindings)
-        if (binding.ordinal == id)
-            return ManagedPlanResult(ManagedRowMaterializationPlan(plan.value, root, id, binding.column));
+    {
+        if (binding.ordinal != id)
+            continue;
+        const snapshot = planLoadedSnapshot(mapping);
+        if (!snapshot.ok)
+            return ManagedPlanResult(ManagedRowMaterializationPlan.init, snapshot.error);
+        return ManagedPlanResult(ManagedRowMaterializationPlan(plan.value, snapshot.value, root, binding));
+    }
     return ManagedPlanResult(ManagedRowMaterializationPlan.init, Error(Status.invalidArgument,
             "missing identity projection", id));
 }
@@ -129,14 +136,15 @@ RowResult materializeRow(scope const ref RowMaterializationPlan plan, ResultSet 
 }
 
 /// Resolves a managed identity before hydration. The caller owns the cursor and supplies the current context.
-RowResult materializeManagedRow(scope const ref ManagedRowMaterializationPlan plan, ResultSet row,
+/// A captured baseline retains the immutable mapping for the life of its managed slot.
+RowResult materializeManagedRow(const ref ManagedRowMaterializationPlan plan, ResultSet row,
         scope ref ManagedEntities entities)
 {
     if (plan.row.mapping is null || row is null)
         return RowResult(null, Error(Status.invalidArgument, "missing managed materialization plan or row"));
-    const identifier = row.getLong(plan.idColumn);
+    const identifier = row.getLong(plan.identity.column);
     if (row.wasNull())
-        return RowResult(null, Error(Status.invalidArgument, "Cannot map SQL NULL to", plan.idOrdinal));
+        return RowResult(null, Error(Status.invalidArgument, "Cannot map SQL NULL to", plan.identity.ordinal));
     const key = EntityIdentity(plan.root, identifier);
     auto existing = entities.find(key);
     if (existing.ok)
@@ -145,10 +153,10 @@ RowResult materializeManagedRow(scope const ref ManagedRowMaterializationPlan pl
         return error.code == Status.ok ? existing : RowResult(null, error);
     }
 
-    auto loaded = hydrateRow!true(plan.row, row, plan.idOrdinal, identifier);
+    auto loaded = hydrateRow!true(plan.row, row, plan.identity.ordinal, identifier);
     if (!loaded.ok)
         return loaded;
-    const error = entities.manage(key, loaded.value);
+    const error = entities.manage(key, loaded.value, plan.snapshot);
     if (error.code != Status.ok)
         return RowResult(null, error);
     scope (failure)

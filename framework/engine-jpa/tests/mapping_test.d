@@ -8,7 +8,8 @@ module flint.engine.jpa.mapping_test;
 import flint.arena : Error, RequestArena, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping,
     ResultBinding, planResult, validateEntity, validateMapping;
-import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, captureLoadedState, planLoadedSnapshot;
+import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, ManagedSnapshotSlot,
+    captureLoadedState, planLoadedSnapshot;
 import flint.engine.jpa.parameter_binding : ParameterBinding, ParameterBindingPlan, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jpa.result_binding : planManagedResult;
@@ -76,6 +77,11 @@ unittest
     static assert(!__traits(compiles, (LoadedSnapshotPlan plan, Object entity, ref RequestArena arena) @safe {
             AttributeSnapshot[1] local;
             return captureLoadedState(plan, entity, arena, local[]);
+        }));
+    static assert(!__traits(compiles, () @safe {
+            AttributeSnapshot[1] fields;
+            ubyte[16] bytes;
+            return ManagedSnapshotSlot(fields[], bytes[]);
         }));
     ubyte[16] backing;
     scope arena = RequestArena(backing[]);

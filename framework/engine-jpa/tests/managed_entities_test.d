@@ -7,6 +7,7 @@ module flint.engine.jpa.managed_entities_test;
 
 import flint.arena : Error, Status;
 import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
+import flint.engine.jpa.loaded_state : ManagedSnapshotSlot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
 
 @safe:
@@ -29,6 +30,7 @@ unittest
     assert(managed.manage(key, original).code == Status.ok);
     assert(managed.manage(key, other).code == Status.conflict);
     assert(managed.find(key).value is original);
+    assert(managed.dirty(key, null).error.code == Status.unsupported);
     assert(managed.manage(EntityIdentity(1, 4), other).code == Status.resourceExhausted);
 
     const detached = managed.detach(key);
@@ -85,6 +87,13 @@ unittest
         assert(error.code == Status.invalidArgument);
         assert(managed.find(EntityIdentity(0, 1)).error.code == Status.notFound);
         managed.clear();
+    }
+    assert(roots[0] is unrelated);
+    ManagedSnapshotSlot[2] snapshots;
+    {
+        scope managed = ManagedEntities(identities[0 .. 1], roots[], error, snapshots[]);
+        assert(error.code == Status.invalidArgument);
+        assert(managed.find(EntityIdentity(0, 1)).error.code == Status.notFound);
     }
     assert(roots[0] is unrelated);
 }

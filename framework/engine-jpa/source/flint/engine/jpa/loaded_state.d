@@ -39,6 +39,50 @@ struct LoadedSnapshot
     }
 }
 
+/// Bounded baseline storage for one managed identity slot, with its own byte arena for reuse.
+struct ManagedSnapshotSlot
+{
+    private RequestArena arena;
+    private AttributeSnapshot[] fields;
+    private LoadedSnapshotPlan plan;
+
+    @disable this(this);
+    @disable void opAssign(ManagedSnapshotSlot replacement);
+
+    /// Borrows the exclusively reserved field and byte storage until this slot is retired.
+    this(return scope AttributeSnapshot[] fields, return scope ubyte[] bytes) nothrow @nogc
+    {
+        arena = RequestArena(bytes);
+        this.fields = fields;
+    }
+
+    /// Initializes an empty slot before its entity root is published.
+    package Error capture(LoadedSnapshotPlan current, Object entity) scope nothrow @nogc
+    {
+        const error = writeSnapshots(current, entity, arena, fields);
+        if (error.code != Status.ok)
+        {
+            clear();
+            return error;
+        }
+        plan = current;
+        return Error.init;
+    }
+
+    /// Checks the live baseline against its managed entity.
+    package Result!size_t dirty(Object entity, scope uint[] ordinals) scope nothrow @nogc
+    {
+        return compareSnapshots(plan, entity, fields, arena, ordinals);
+    }
+
+    /// Retires the baseline and makes its byte storage available for the next identity.
+    package void clear() scope nothrow @nogc
+    {
+        plan = LoadedSnapshotPlan.init;
+        arena.reset();
+    }
+}
+
 private alias PlanResult = Result!LoadedSnapshotPlan;
 private alias LoadedResult = Result!LoadedSnapshot;
 private alias DirtyResult = Result!size_t;
@@ -64,28 +108,34 @@ PlanResult planLoadedSnapshot(immutable(EntityMapping)* mapping) nothrow @nogc
 LoadedResult captureLoadedState(LoadedSnapshotPlan plan, Object entity, scope ref RequestArena arena,
         return scope AttributeSnapshot[] staging) nothrow @nogc
 {
-    if (plan.mapping is null)
-        return LoadedResult(LoadedSnapshot.init, Error(Status.invalidArgument, "missing loaded snapshot plan"));
-    const error = validateEntity(*plan.mapping, entity);
+    const error = writeSnapshots(plan, entity, arena, staging);
     if (error.code != Status.ok)
         return LoadedResult(LoadedSnapshot.init, error);
-    const count = plan.mapping.attributes.length;
-    if (staging.length < count)
-        return LoadedResult(LoadedSnapshot.init, Error(Status.resourceExhausted,
-                "insufficient loaded snapshot slots"));
+    return LoadedResult(LoadedSnapshot(plan, staging[0 .. plan.mapping.attributes.length]));
+}
+
+private Error writeSnapshots(scope const LoadedSnapshotPlan plan, Object entity,
+        scope ref RequestArena arena, scope AttributeSnapshot[] staging) nothrow @nogc
+{
+    if (plan.mapping is null)
+        return Error(Status.invalidArgument, "missing loaded snapshot plan");
+    const error = validateEntity(*plan.mapping, entity);
+    if (error.code != Status.ok)
+        return error;
+    if (staging.length < plan.mapping.attributes.length)
+        return Error(Status.resourceExhausted, "insufficient loaded snapshot slots");
 
     foreach (ref attribute; plan.mapping.attributes)
     {
         const current = readMapped(attribute, entity);
         if (!current.ok)
-            return LoadedResult(LoadedSnapshot.init, current.error);
+            return current.error;
         const snapshot = captureAttribute(arena, current.value);
         if (!snapshot.ok)
-            return LoadedResult(LoadedSnapshot.init, Error(snapshot.error.code,
-                    snapshot.error.message, attribute.ordinal));
+            return Error(snapshot.error.code, snapshot.error.message, attribute.ordinal);
         staging[attribute.ordinal] = snapshot.value;
     }
-    return LoadedResult(LoadedSnapshot(plan, staging[0 .. count]));
+    return Error.init;
 }
 
 /// Writes changed updatable ordinals in mapping order. Reserve one slot per updatable attribute and use the
@@ -93,23 +143,29 @@ LoadedResult captureLoadedState(LoadedSnapshotPlan plan, Object entity, scope re
 DirtyResult dirtyOrdinals(scope const ref LoadedSnapshot loaded, Object entity,
         scope ref RequestArena arena, scope uint[] ordinals) nothrow @nogc
 {
-    if (loaded.plan.mapping is null)
+    return compareSnapshots(loaded.plan, entity, loaded.snapshots, arena, ordinals);
+}
+
+private DirtyResult compareSnapshots(scope const LoadedSnapshotPlan plan, Object entity,
+        scope const(AttributeSnapshot)[] fields, scope ref RequestArena arena, scope uint[] ordinals) nothrow @nogc
+{
+    if (plan.mapping is null)
         return DirtyResult(0, Error(Status.invalidArgument, "missing loaded baseline"));
-    const error = validateEntity(*loaded.plan.mapping, entity);
+    const error = validateEntity(*plan.mapping, entity);
     if (error.code != Status.ok)
         return DirtyResult(0, error);
-    if (ordinals.length < loaded.plan.updatable)
+    if (ordinals.length < plan.updatable)
         return DirtyResult(0, Error(Status.resourceExhausted, "insufficient dirty ordinal slots"));
 
     size_t count;
-    foreach (ref attribute; loaded.plan.mapping.attributes)
+    foreach (ref attribute; plan.mapping.attributes)
     {
         if (!attribute.updatable)
             continue;
         const current = readMapped(attribute, entity);
         if (!current.ok)
             return DirtyResult(0, current.error);
-        const matches = matchesAttribute(arena, loaded.snapshots[attribute.ordinal], current.value);
+        const matches = matchesAttribute(arena, fields[attribute.ordinal], current.value);
         if (!matches.ok)
             return DirtyResult(0, Error(matches.error.code, matches.error.message, attribute.ordinal));
         if (!matches.value)
