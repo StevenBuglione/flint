@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 187 | 313 | 0 | 15,296 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,483 | 1,387 | 4,848 | 30,116 |
+| framework | spring-framework@v7.1.0 | 3,485 | 1,388 | 4,848 | 30,113 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -3350,6 +3350,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.test.web.servlet.result.ModelResultMatchers#attributeHasFieldErrors(String,String...)` | `flint.test.web.servlet.result.ModelResultMatchers.attributeHasFieldErrors` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.test.web.servlet.result.ModelResultMatchers#attributeHasNoErrors(String...)` | `flint.test.web.servlet.result.ModelResultMatchers.attributeHasNoErrors` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.test.web.servlet.result.StatusResultMatchers#is(int)` | `flint.test.web.servlet.result.StatusResultMatchers.is_` | [R1](api-mapping.md#r1-packages-and-names) | is is a reserved D keyword; retain the established is_ spelling |
+
+#### org.springframework.test.web.servlet.setup
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.test.web.servlet.setup.AbstractMockMvcBuilder#defaultResponseCharacterEncoding(Charset)` | `flint.test.web.servlet.setup.StandaloneMockMvcBuilder.defaultResponseCharacterEncoding` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 
 #### org.springframework.transaction
 
@@ -9501,7 +9507,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.mock.http.client | 23 | 0 |
 | org.springframework.mock.http.client.reactive | 0 | 28 |
 | org.springframework.mock.http.server.reactive | 0 | 53 |
-| org.springframework.mock.web | 562 | 0 |
+| org.springframework.mock.web | 560 | 0 |
 | org.springframework.mock.web.reactive.function.server | 0 | 51 |
 | org.springframework.mock.web.server | 30 | 0 |
 | org.springframework.objenesis | 9 | 0 |
@@ -9576,7 +9582,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.test.web.servlet.htmlunit.webdriver | 20 | 0 |
 | org.springframework.test.web.servlet.request | 31 | 0 |
 | org.springframework.test.web.servlet.result | 88 | 0 |
-| org.springframework.test.web.servlet.setup | 85 | 0 |
+| org.springframework.test.web.servlet.setup | 84 | 0 |
 | org.springframework.test.web.support | 118 | 0 |
 | org.springframework.transaction | 5 | 0 |
 | org.springframework.transaction.annotation | 62 | 0 |

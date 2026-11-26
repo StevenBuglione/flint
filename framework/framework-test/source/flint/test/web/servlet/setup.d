@@ -21,6 +21,7 @@ import flint.http.converter : HttpMessageConverter;
 import flint.http.converter.json : JacksonJsonHttpMessageConverter;
 import flint.jakarta.servlet : Filter;
 import flint.java.lang : IllegalStateException;
+import flint.java.nio.charset : Charset;
 import flint.test.web.servlet : MockMvc, ResultHandler, ResultMatcher, TestDispatcherServlet;
 import flint.web.servlet : HandlerInterceptor;
 import flint.web.servlet.config.annotation : InterceptorRegistry, WebMvcConfigurationSupport, WebMvcConfigurer;
@@ -126,6 +127,7 @@ final class StandaloneMockMvcBuilder
     private Filter[] filters;
     private ResultMatcher[] globalMatchers;
     private ResultHandler[] globalHandlers;
+    private string defaultResponseEncoding;
     private int[string] adviceOrder;
     private imported!"flint.validation".Validator validator;
 
@@ -204,6 +206,13 @@ final class StandaloneMockMvcBuilder
         return this;
     }
 
+    /// Sets the fallback character encoding of responses.
+    StandaloneMockMvcBuilder defaultResponseCharacterEncoding(Charset charset) pure nothrow @nogc
+    {
+        defaultResponseEncoding = charset.name();
+        return this;
+    }
+
     /// Builds the `MockMvc`.
     MockMvc build()
     {
@@ -235,7 +244,7 @@ final class StandaloneMockMvcBuilder
                     json.getMapper().descriptors().add(descriptor);
         support.setMessageConverters(converters);
         auto servlet = new TestDispatcherServlet(support.build());
-        auto mockMvc = new MockMvc(servlet, filters);
+        auto mockMvc = new MockMvc(servlet, filters, defaultResponseEncoding);
         mockMvc.setGlobalResultMatchers(globalMatchers);
         mockMvc.setGlobalResultHandlers(globalHandlers);
         return mockMvc;

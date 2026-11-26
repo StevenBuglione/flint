@@ -21,8 +21,73 @@
       "status": "deferred"
     },
     "org/springframework/mock/web/MockHttpServletResponseTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/mock_http_servlet_response_encoding_tests.d",
+      "methods": {
+        "ported": [
+          "isoShouldBeDefault",
+          "setDefaultShouldNotChangeEncoding",
+          "shouldResetToDefault",
+          "shouldSetDefault",
+          "shouldSetEncodingWithContentType"
+        ],
+        "skipped": {
+          "addCookie": "Deferred response cookie and Set-Cookie header behavior.",
+          "addCookieHeader": "Deferred response cookie and Set-Cookie header behavior.",
+          "addCookieHeaderWithExpiresAttributeWithoutMaxAgeAttribute": "Deferred response cookie and Set-Cookie header behavior.",
+          "addCookieHeaderWithMaxAgeAndExpiresAttributes": "Deferred response cookie and Set-Cookie header behavior.",
+          "addCookieHeaderWithMaxAgeAndZeroExpiresAttributes": "Deferred response cookie and Set-Cookie header behavior.",
+          "addDateHeader": "Deferred response header behavior.",
+          "addHeaderWithNullNameShouldHaveNoEffect": "Deferred response header behavior.",
+          "addHeaderWithNullValueShouldHaveNoEffect": "Deferred response header behavior.",
+          "contentAsStringEncodingWithJson": "Deferred implicit JSON charset selection.",
+          "contentAsUtf8": "Deferred character encoding on writes through the response writer.",
+          "contentLanguageHeaderWithMultipleValues": "Deferred locale and Content-Language header behavior.",
+          "contentLanguageHeaderWithSingleValue": "Deferred locale and Content-Language header behavior.",
+          "contentLengthHeaderSetsLength": "Deferred response header behavior.",
+          "contentLengthIntHeader": "Deferred response header behavior.",
+          "contentLengthSetsHeader": "Deferred response header behavior.",
+          "cookies": "Deferred response cookie and Set-Cookie header behavior.",
+          "getDateHeader": "Deferred response header behavior.",
+          "getInvalidDateHeader": "Deferred response header behavior.",
+          "getNonExistentDateHeader": "Deferred response header behavior.",
+          "httpHeaderNameCasingIsPreserved": "Deferred response header behavior.",
+          "locationHeaderUpdatesGetRedirectedUrl": "Deferred redirect and sendError behavior.",
+          "modifyStatusAfterSendError": "Deferred redirect and sendError behavior.",
+          "modifyStatusMessageAfterSendError": "Deferred redirect and sendError behavior.",
+          "outputStreamShouldFailWhenWriterCalled": "Deferred response writer, output stream and commitment behavior.",
+          "resetResponseShouldResetCharset": "Deferred full reset and explicit charset header checks.",
+          "sendRedirect": "Deferred redirect and sendError behavior.",
+          "servletOutputStreamCommittedOnFlushBuffer": "Deferred response writer, output stream and commitment behavior.",
+          "servletOutputStreamCommittedOnOutputStreamFlush": "Deferred response writer, output stream and commitment behavior.",
+          "servletOutputStreamCommittedWhenBufferSizeExceeded": "Deferred response writer, output stream and commitment behavior.",
+          "servletWriterAutoFlushedForChar": "Deferred response writer, output stream and commitment behavior.",
+          "servletWriterAutoFlushedForCharArray": "Deferred response writer, output stream and commitment behavior.",
+          "servletWriterAutoFlushedForString": "Deferred response writer, output stream and commitment behavior.",
+          "servletWriterCommittedOnWriterClose": "Deferred response writer, output stream and commitment behavior.",
+          "servletWriterCommittedOnWriterFlush": "Deferred response writer, output stream and commitment behavior.",
+          "servletWriterCommittedWhenBufferSizeExceeded": "Deferred response writer, output stream and commitment behavior.",
+          "setCharacterEncodingNull": "Deferred explicit charset clearing and Content-Type reconciliation.",
+          "setCharacterEncodingThenContentType": "Deferred synthesis of a Content-Type charset from an explicit encoding.",
+          "setContentTypeHeaderWithNullValueShouldRemoveHeader": "Deferred response header behavior.",
+          "setContentTypeThenCharacterEncoding": "Deferred explicit charset changes after setting Content-Type.",
+          "setContentTypeWithNullValueShouldRemoveHeader": "Deferred response header behavior.",
+          "setCookieHeader": "Deferred response cookie and Set-Cookie header behavior.",
+          "setCookieHeaderWithMaxAgeAndExpiresAttributes": "Deferred response cookie and Set-Cookie header behavior.",
+          "setCookieHeaderWithZeroExpiresAttribute": "Deferred response cookie and Set-Cookie header behavior.",
+          "setDateHeader": "Deferred response header behavior.",
+          "setHeaderWithNullValueShouldHaveNoEffect": "Deferred response header behavior.",
+          "setHeaderWithNullValueShouldRemoveHeader": "Deferred response header behavior.",
+          "setLocaleWithNullValue": "Deferred locale and Content-Language header behavior.",
+          "shouldAddContentTypeHeader": "Deferred response header behavior.",
+          "shouldAddMultipleContentLanguage": "Deferred locale and Content-Language header behavior.",
+          "shouldSetContentType": "Deferred response header behavior.",
+          "shouldSetContentTypeHeader": "Deferred response header behavior.",
+          "shouldSetEncodingWithComplexContentTypeSyntax": "Deferred charset handling for Content-Type header writes.",
+          "shouldSetUtf8EncodingForJson": "Deferred implicit JSON charset selection.",
+          "writerShouldFailWhenOutputStreamCalled": "Deferred response writer, output stream and commitment behavior."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/mock/web/MockHttpSessionTests.java": {
       "phase": "2",
@@ -992,8 +1057,13 @@
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/samples/standalone/ResponseBodyTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/standalone_response_body_tests.d",
+      "methods": {
+        "ported": [
+          "json"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/test/web/servlet/samples/standalone/RouterFunctionTests.java": {
       "phase": "2",
@@ -1044,7 +1114,7 @@
           "hamcrestEqualTo": "Requires the separate Hamcrest matcher API.",
           "matcher": "Requires the separate Hamcrest matcher API.",
           "sameSiteMatcher": "Requires the separate Hamcrest matcher API.",
-          "version": "The Servlet Cookie façade has no legacy version accessor."
+          "version": "The Servlet Cookie fa\u00e7ade has no legacy version accessor."
         }
       },
       "note": "An interceptor supplies the same fixture cookies directly without the locale resolver.",

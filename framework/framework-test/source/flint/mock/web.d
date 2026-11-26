@@ -21,6 +21,7 @@ import flint.jakarta.servlet.http : Cookie, HttpServletRequest, HttpServletRespo
 import flint.java.io : PrintWriter, Writer;
 import flint.java.lang : IllegalStateException, NumberFormatException, UnsupportedOperationException;
 import flint.java.util : Locale;
+import flint.util : Assert;
 import std.typecons : Nullable;
 
 @safe:
@@ -693,11 +694,14 @@ private final class ContentWriter : Writer
 /// `MockHttpServletResponse`.
 class MockHttpServletResponse : HttpServletResponse
 {
+    private enum string defaultEncoding = "ISO-8859-1";
+
     private int status = HttpServletResponse.SC_OK;
     private string errorMessage;
     private Pair[] headers;
     private string contentType;
-    private string characterEncoding = "ISO-8859-1";
+    private string defaultCharacterEncoding = defaultEncoding;
+    private string characterEncoding = defaultEncoding;
     private bool characterEncodingSet;
     private long contentLength = -1;
     package ubyte[] content;
@@ -720,20 +724,20 @@ class MockHttpServletResponse : HttpServletResponse
     /// The body decoded with the response encoding (`ISO-8859-1` unless set).
     string getContentAsString() const
     {
-        if (characterEncoding == "UTF-8" || characterEncoding == "utf-8")
-            return cast(string) content.idup;
-        // ISO-8859-1: each byte is one code point.
-        string result;
-        foreach (b; content)
-            result ~= cast(dchar) b;
-        return result;
+        return decodeContent(characterEncoding);
     }
 
     /// The body decoded as `charset` (UTF-8 or ISO-8859-1).
     string getContentAsString(string charset) const
     {
+        return decodeContent(charset);
+    }
+
+    pragma(inline, false) private string decodeContent(string charset) const
+    {
         if (equalsIgnoreCase(charset, "UTF-8"))
             return cast(string) content.idup;
+        // ISO-8859-1: each byte is one code point.
         string result;
         foreach (b; content)
             result ~= cast(dchar) b;
@@ -765,6 +769,21 @@ class MockHttpServletResponse : HttpServletResponse
     }
 
     // ----- ServletResponse
+
+    /// Sets the fallback encoding without marking a charset as explicitly set.
+    void setDefaultCharacterEncoding(string encoding)
+    {
+        Assert.notNull(encoding, "'characterEncoding' must not be null");
+        defaultCharacterEncoding = encoding;
+        if (!characterEncodingSet)
+            characterEncoding = encoding;
+    }
+
+    /// Whether an explicit charset has been set.
+    bool isCharset() const pure nothrow @nogc
+    {
+        return characterEncodingSet;
+    }
 
     string getCharacterEncoding()
     {
@@ -903,7 +922,7 @@ class MockHttpServletResponse : HttpServletResponse
     void reset()
     {
         resetBuffer();
-        characterEncoding = "ISO-8859-1";
+        characterEncoding = defaultCharacterEncoding;
         characterEncodingSet = false;
         contentLength = -1;
         contentType = null;
@@ -1072,7 +1091,7 @@ private inout(char)[] trimAscii(return scope inout(char)[] value) pure nothrow @
     return value[start .. end];
 }
 
-private bool equalsIgnoreCase(scope const(char)[] a, scope const(char)[] b) pure nothrow @nogc
+pragma(inline, false) private bool equalsIgnoreCase(scope const(char)[] a, scope const(char)[] b) pure nothrow @nogc
 {
     if (a.length != b.length)
         return false;

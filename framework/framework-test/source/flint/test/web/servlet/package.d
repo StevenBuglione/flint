@@ -283,13 +283,15 @@ final class MockMvc
     private Filter[] filters;
     private MockServletContext servletContext;
     private RequestBuilder defaultRequestBuilder;
+    private string defaultResponseEncoding;
     private ResultMatcher[] defaultResultMatchers;
     private ResultHandler[] defaultResultHandlers;
 
-    package(flint) this(TestDispatcherServlet servlet, Filter[] filters)
+    package(flint) this(TestDispatcherServlet servlet, Filter[] filters, string defaultResponseEncoding = null)
     {
         this.servlet = servlet;
         this.filters = filters;
+        this.defaultResponseEncoding = defaultResponseEncoding;
         servletContext = new MockServletContext;
     }
 
@@ -314,6 +316,8 @@ final class MockMvc
     {
         auto request = requestBuilder.buildRequest(servletContext);
         auto response = new MockHttpServletResponse;
+        if (defaultResponseEncoding !is null)
+            response.setDefaultCharacterEncoding(defaultResponseEncoding);
         if (auto smartBuilder = cast(SmartRequestBuilder) requestBuilder)
             request = smartBuilder.postProcessRequest(request);
         auto result = new DefaultMvcResult(request, response);
