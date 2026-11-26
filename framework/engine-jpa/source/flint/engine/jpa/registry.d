@@ -13,7 +13,8 @@ import flint.engine.jpa.mapping : EntityMapping, validateMapping;
 
 private struct MappingTypeSlot
 {
-    TypeInfo_Class type;
+    // The address is an opaque class identity and is never dereferenced.
+    const(void)* identity;
     size_t ordinal;
 }
 
@@ -51,8 +52,9 @@ struct MappingRegistry
     {
         if (entity is null || typeSlots.length == 0)
             return null;
-        const slot = &typeSlots[slotOf(typeSlots, typeid(entity))];
-        return slot.type is null ? null : &mappings[slot.ordinal];
+        const identity = cast(const(void)*) typeid(entity);
+        const slot = &typeSlots[slotOf(typeSlots, identity)];
+        return slot.identity is null ? null : &mappings[slot.ordinal];
     }
 }
 
@@ -79,8 +81,8 @@ Result!MappingRegistry registerMappings(immutable(EntityMapping)[] mappings) not
     return Registration(MappingRegistry(mappings));
 }
 
-/// Builds a read-only exact-class index at startup. Class entries are in the same order as the mappings.
-Registration registerMappings(immutable(EntityMapping)[] mappings, scope TypeInfo_Class[] classes)
+/// Builds a read-only exact-class index at startup. The ordered class table can be static read-only data.
+Registration registerMappings(immutable(EntityMapping)[] mappings, scope const(TypeInfo_Class)[] classes)
 {
     if (classes.length != mappings.length)
         return Registration(MappingRegistry.init, Error(Status.invalidArgument, "incomplete JPA class table"));
@@ -100,22 +102,23 @@ Registration registerMappings(immutable(EntityMapping)[] mappings, scope TypeInf
         if (type is null || !mappings[ordinal].isExactType(type))
             return Registration(MappingRegistry.init, Error(Status.invalidArgument,
                     "JPA class does not match its mapping", ordinal));
-        const slot = slotOf(slots, type);
-        if (slots[slot].type !is null)
+        const identity = cast(const(void)*) type;
+        const slot = slotOf(slots, identity);
+        if (slots[slot].identity !is null)
             return Registration(MappingRegistry.init, Error(Status.invalidArgument,
                     "duplicate JPA class identity", ordinal));
-        slots[slot] = MappingTypeSlot(type, ordinal);
+        slots[slot] = MappingTypeSlot(identity, ordinal);
     }
     registered.value.typeSlots = slots;
     return registered;
 }
 
-private size_t slotOf(scope const(MappingTypeSlot)[] slots, scope const TypeInfo_Class type) pure nothrow @nogc
+private size_t slotOf(scope const(MappingTypeSlot)[] slots, scope const(void)* identity) pure nothrow @nogc
 {
     const capacity = slots.length; // Callers have a nonempty power-of-two table.
     const mask = capacity - 1;
-    size_t slot = hashOf(cast(const(void)*) type) & mask;
-    while (slots[slot].type !is null && slots[slot].type !is type)
+    size_t slot = hashOf(identity) & mask;
+    while (slots[slot].identity !is null && slots[slot].identity !is identity)
         slot = (slot + 1) & mask;
     return slot;
 }

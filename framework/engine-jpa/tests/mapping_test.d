@@ -121,6 +121,10 @@ unittest
     assert(registered.value.findExactObject(new Object) is null);
     assert(registered.value.findExactObject(null) is null);
 
+    static const(TypeInfo_Class[]) generatedClasses = [typeid(Record), typeid(OtherRecord)];
+    const generated = registerMappings(descriptors, generatedClasses);
+    assert(generated.ok && generated.value.findExactObject(new OtherRecord) is &descriptors[1]);
+
     EntityMapping separateMapping = recordMapping;
     separateMapping.table = "other_unit";
     const separate = registerMappings([separateMapping].idup, [typeid(Record)]);
