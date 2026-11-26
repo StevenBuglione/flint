@@ -18,8 +18,10 @@
 
 module flint.core.io.support;
 
-import flint.core.io : Resource;
+import flint.core.io : DefaultResourceLoader, Resource, ResourceLoader;
+import flint.java.util : Locale;
 import flint.util : Assert;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -57,5 +59,63 @@ class ResourceRegion
     long getCount()
     {
         return count;
+    }
+}
+
+// Ported from spring-framework v7.1.0, spring-core/src/main/java/org/springframework/core/io/support/LocalizedResourceHelper.java
+// Modified by the Flint authors.
+
+/// Selects a resource for a locale, falling back to the unlocalized resource.
+class LocalizedResourceHelper
+{
+    enum DEFAULT_SEPARATOR = "_";
+
+    private ResourceLoader resourceLoader;
+    private string separator = DEFAULT_SEPARATOR;
+
+    /// Creates a helper with the default loader.
+    this()
+    {
+        this(new DefaultResourceLoader);
+    }
+
+    /// Creates a helper with the specified loader.
+    this(ResourceLoader resourceLoader)
+    {
+        Assert.isTrue(resourceLoader !is null, "ResourceLoader must not be null");
+        this.resourceLoader = resourceLoader;
+    }
+
+    /// Sets the separator between locale components. An absent separator restores the default.
+    void setSeparator(Nullable!string separator)
+    {
+        this.separator = separator.isNull ? DEFAULT_SEPARATOR : separator.get();
+    }
+
+    /// Searches variant, country and language suffixes in order and returns the default handle when none exists.
+    Resource findLocalizedResource(string name, string extension, Nullable!Locale locale)
+    {
+        Assert.isTrue(name !is null, "Name must not be null");
+        Assert.isTrue(extension !is null, "Extension must not be null");
+
+        Resource resource;
+        if (!locale.isNull)
+        {
+            const language = locale.get().getLanguage();
+            const country = locale.get().getCountry();
+            const variant = locale.get().getVariant();
+
+            if (variant.length)
+                resource = resourceLoader.getResource(
+                        name ~ separator ~ language ~ separator ~ country ~ separator ~ variant ~ extension);
+            if ((resource is null || !resource.exists()) && country.length)
+                resource = resourceLoader.getResource(name ~ separator ~ language ~ separator ~ country ~ extension);
+            if ((resource is null || !resource.exists()) && language.length)
+                resource = resourceLoader.getResource(name ~ separator ~ language ~ extension);
+        }
+
+        if (resource is null || !resource.exists())
+            resource = resourceLoader.getResource(name ~ extension);
+        return resource;
     }
 }

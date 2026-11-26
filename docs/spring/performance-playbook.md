@@ -192,6 +192,8 @@ ResourceRegion validates its coordinates without opening a stream. Its independe
 
 InputStreamResource reuses Java's stream and Object operations. On the same Core probe, 0016ed2e to a8182248 kept 8,708 loadable bytes and moved DMD templates from 6,389 to 6,407.
 
+LocalizedResourceHelper keeps locale fallback behind the Core resource support module. The same probe on venus, from its parent 0016ed2e to 05b6c659, kept 8,708 loadable bytes and moved DMD templates from 6,389 to 6,472, within the 8,550 cap. The ResourceRegion, InputStreamResource, CompositeIterator and LocalizedResourceHelper batch on 37c78eea kept the Core probe at 8,884 loadable bytes and moved DMD templates from 6,392 to 6,495.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |
