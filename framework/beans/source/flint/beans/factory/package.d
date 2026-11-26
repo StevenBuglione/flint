@@ -36,7 +36,6 @@ lookups (R4); they are `final` façades over the erased `getBeanErased`, `getBea
 module flint.beans.factory;
 
 import flint.beans : BeansException, FatalBeanException;
-import flint.core.annotation.types : AnnotationAwareOrderComparator;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : typeNameOf;
 import flint.java.util : LinkedHashMap, Map;
@@ -266,7 +265,8 @@ private final class BeanObjectProvider(T) : ObjectProvider!T
     Stream!T orderedStream()
     {
         auto items = instances();
-        auto comparator = AnnotationAwareOrderComparator.INSTANCE();
+        // Imported here so flint.beans.factory's interfaces do not link the ordering code (S-9).
+        auto comparator = imported!"flint.core.annotation.types".AnnotationAwareOrderComparator.INSTANCE();
         imported!"flint.java.util".stableSort(items, (T a, T b) => comparator.compare(cast(Object) a, cast(Object) b));
         return Stream!T.ofArray(items);
     }
