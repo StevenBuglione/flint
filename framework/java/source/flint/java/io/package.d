@@ -118,14 +118,17 @@ abstract class OutputStream
     /// Write every byte of `b`.
     void write(scope const(ubyte)[] b)
     {
-        foreach (value; b)
-            write(value);
+        // D slices can exceed the length representable by Java's int indices.
+        for (; b.length > int.max; b = b[int.max .. $])
+            write(b[0 .. int.max], 0, int.max);
+        write(b, 0, cast(int) b.length);
     }
 
     /// Write `len` bytes of `b` from `off`.
     void write(scope const(ubyte)[] b, int off, int len)
     {
-        write(b[off .. off + len]);
+        foreach (value; b[off .. byteWriteEnd(b.length, off, len)])
+            write(cast(byte) value);
     }
 
     /// Flush buffered bytes. The default does nothing.
@@ -139,19 +142,30 @@ abstract class OutputStream
     }
 }
 
+package(flint) size_t byteWriteEnd(size_t capacity, int offset, int count)
+{
+    import flint.java.lang : IndexOutOfBoundsException;
+
+    if (offset < 0 || count < 0 || cast(size_t) offset > capacity || cast(size_t) count > capacity - offset)
+        throw new IndexOutOfBoundsException;
+    return cast(size_t) offset + count;
+}
+
 /// An `OutputStream` collecting bytes in memory.
 class ByteArrayOutputStream : OutputStream
 {
     private ubyte[] bytes;
+
+    alias write = OutputStream.write;
 
     override void write(int b)
     {
         bytes ~= cast(ubyte) b;
     }
 
-    override void write(scope const(ubyte)[] b)
+    override void write(scope const(ubyte)[] b, int off, int len)
     {
-        bytes ~= b;
+        bytes ~= b[off .. byteWriteEnd(b.length, off, len)];
     }
 
     /// A copy of the bytes written.

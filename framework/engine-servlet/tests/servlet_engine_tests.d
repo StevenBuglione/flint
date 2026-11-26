@@ -34,7 +34,8 @@ private final class Probe : HttpServlet
         const Page[string] pages = [
             "/greeting": &greeting, "/committed": &committed, "/empty": &empty,
             "/fields": &fields, "/throw": &fail, "/lazy": &failLazily, "/headers": &headers,
-            "/visit": &visit, "/large": &large, "/many": &many, "/twelve": &twelve
+            "/visit": &visit, "/large": &large, "/ranged": &ranged, "/many": &many,
+            "/twelve": &twelve
         ];
         if (auto page = request.getServletPath() in pages)
             return (*page)(request, response);
@@ -62,6 +63,12 @@ private final class Probe : HttpServlet
         response.getOutputStream().write(cast(const(ubyte)[]) `{"committed":true}`);
         response.flushBuffer();
         response.setHeader("X-Late", "ignored");
+    }
+
+    private void ranged(HttpServletRequest, HttpServletResponse response)
+    {
+        response.setBufferSize(2);
+        response.getOutputStream().write(cast(const(ubyte)[]) "_abcd_", 1, 4);
     }
 
     private void empty(HttpServletRequest, HttpServletResponse response)
@@ -288,6 +295,7 @@ private struct Exchange
 {
     string head;
     string content;
+    size_t dataChunks;
 
     /// The head without its Date line, which the suites do not compare either.
     string headWithoutDate() const
@@ -340,7 +348,9 @@ private Exchange exchange(Socket socket, ref char[] received, scope const(char)[
                 const last = find(received, "\r\n0\r\n\r\n", start - 2);
                 if (last >= 0)
                 {
-                    auto result = Exchange(headText.idup, dechunk(received[start .. last + 7]));
+                    size_t dataChunks;
+                    auto content = dechunk(received[start .. last + 7], dataChunks);
+                    auto result = Exchange(headText.idup, content, dataChunks);
                     received = received[last + 7 .. $].dup;
                     return result;
                 }
@@ -356,7 +366,7 @@ private Exchange exchange(Socket socket, ref char[] received, scope const(char)[
     }
 }
 
-private string dechunk(scope const(char)[] text)
+private string dechunk(scope const(char)[] text, out size_t dataChunks)
 {
     string decoded;
     size_t at;
@@ -371,6 +381,7 @@ private string dechunk(scope const(char)[] text)
         at += 2;
         if (size == 0)
             return decoded;
+        ++dataChunks;
         decoded ~= text[at .. at + size];
         at += size + 2;
     }
@@ -442,6 +453,23 @@ unittest
     reply = exchange(socket, pending, "GET /large HTTP/1.1\r\nHost: localhost\r\n\r\n");
     assert(find(reply.head, "Transfer-Encoding: chunked\r\n") > 0, reply.head);
     assert(reply.content.length == 10_000 && reply.content[0 .. 10] == "0123456789");
+}
+
+@("A ranged servlet output write that overflows the buffer sends one body chunk")
+unittest
+{
+    Fixture fixture;
+    fixture.open();
+    scope (exit)
+        fixture.close();
+    auto socket = fixture.connect();
+    scope (exit)
+        socket.close();
+    char[] pending;
+
+    const reply = exchange(socket, pending, "GET /ranged HTTP/1.1\r\nHost: localhost\r\n\r\n");
+    assert(reply.content == "abcd", reply.content);
+    assert(reply.dataChunks == 1, "ranged output must send the whole selected slice in one chunk");
 }
 
 @("sendError forwards once to the error page with Tomcat's attributes, keeping fields set before it")

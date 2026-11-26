@@ -21,7 +21,7 @@ import flint.engine.web.fiber : FiberResponse, unknownLength;
 import flint.engine.web.stream : StreamField;
 import flint.jakarta.servlet : ServletOutputStream;
 import flint.jakarta.servlet.http : Cookie, HttpServletResponse;
-import flint.java.io : IOException, PrintWriter, Writer;
+import flint.java.io : byteWriteEnd, IOException, PrintWriter, Writer;
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.util : Locale;
 
@@ -739,6 +739,11 @@ private final class BodyOutput : ServletOutputStream
     override void write(scope const(ubyte)[] b)
     {
         response.write(b);
+    }
+
+    override void write(scope const(ubyte)[] b, int off, int len)
+    {
+        write(b[off .. byteWriteEnd(b.length, off, len)]);
     }
 
     /// Spring's `ServletServerHttpResponse` body flush is a no-op; a servlet's own flush commits, as in Tomcat.

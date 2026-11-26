@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,127 | 322 | 1,871 | 15,101 |
+| framework | openjdk@21.0.13 | 1,127 | 324 | 1,871 | 15,099 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2185,6 +2185,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.ByteArrayInputStream#<init>(byte[])` | `flint.java.io.ByteArrayInputStream.this` | [R26](api-mapping.md#r26-null-arrays) | Uses the caller's backing array as an unsigned byte slice. A null slice counts as an empty array under R26. |
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D checked-exception hierarchy. The merged constructor represents omitted and explicit null causes identically under R8. The checked family currently lacks initCause. |
 | `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
+| `java.io.OutputStream#write(byte[])` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) | Unsigned D slices preserve the byte payload. A null slice counts as an empty array. |
+| `java.io.OutputStream#write(byte[],int,int)` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.io.UnsupportedEncodingException` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
 
 #### java.lang
@@ -10354,7 +10356,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 774 | 0 |
+| java.io | 772 | 0 |
 | java.lang | 1,985 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -11260,6 +11262,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.ByteArrayOutputStream#size()` | 2 | Java reads the count under the stream monitor. The existing method reads the slice length without taking that monitor. |
 | framework | `java.io.ByteArrayOutputStream#toByteArray()` | 2 | Java copies the buffer under the stream monitor. The existing detached unsigned byte slice is copied without taking that monitor. An empty result uses a plain D array under R26. |
 | framework | `java.io.ByteArrayOutputStream#toString()` | 2 | The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input. |
+| framework | `java.io.ByteArrayOutputStream#write(byte[],int,int)` | 2 | The range override preserves bulk append and bounds behavior. Java synchronizes the operation on the stream monitor. |
 | framework | `java.io.ByteArrayOutputStream#writeTo(OutputStream)` | 2 | Missing transfer of the accumulated bytes without clearing them. Flint will follow Java 21 virtual-thread behavior on every thread, copying under the monitor and releasing it before the whole-array write so reactor fibers can suspend safely. Java 21 platform threads use a ranged write under the monitor. |
 | framework | `java.io.File` | 2 | The existing pathname facade lacks Java pathname value equality, hashing and the Comparable contract. |
 | framework | `java.io.File#<init>(File,String)` | 2 | The overload taking a File parent is pending. |
@@ -11296,8 +11299,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.InterruptedIOException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.OutputStream` | 2 | The abstract sink exists. The Java type also implements the Closeable and Flushable interfaces, which are pending. |
-| framework | `java.io.OutputStream#write(byte[])` | 2 | Java forwards a whole-array write to the virtual ranged overload. The existing method calls the single-byte overload directly. |
-| framework | `java.io.OutputStream#write(byte[],int,int)` | 2 | Java validates the range with IndexOutOfBoundsException and calls the single-byte overload. The existing method slices the array and calls the virtual whole-array overload. |
 | framework | `java.io.OutputStreamWriter#<init>(OutputStream)` | 2 | Java rejects a null output stream during construction. The existing constructor accepts one. |
 | framework | `java.io.OutputStreamWriter#close()` | 2 | Java flushes buffered output, closes once, and rejects subsequent writes and flushes. The existing method forwards every close without flushing or tracking the closed state. |
 | framework | `java.io.OutputStreamWriter#flush()` | 2 | Java drains its encoded buffer before flushing the stream and rejects flush after close. The existing writer emits bytes eagerly and forwards flush even after close. |

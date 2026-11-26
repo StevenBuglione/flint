@@ -18,7 +18,7 @@ import flint.http : HttpHeaders, MediaType;
 import flint.jakarta.servlet : DispatcherType, Filter, FilterRegistration, RequestDispatcher,
     Servlet, ServletContext, ServletInputStream, ServletOutputStream, ServletRegistration;
 import flint.jakarta.servlet.http : Cookie, HttpServletRequest, HttpServletResponse;
-import flint.java.io : PrintWriter, Writer;
+import flint.java.io : byteWriteEnd, PrintWriter, Writer;
 import flint.java.io.unsupportedencodingexception : UnsupportedEncodingException;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, NullPointerException,
     NumberFormatException, UnsupportedOperationException;
@@ -750,6 +750,11 @@ private final class BytesOutput : ServletOutputStream
     {
         if (b.length != 0)
             response.appendContent(b);
+    }
+
+    override void write(scope const(ubyte)[] b, int off, int len)
+    {
+        write(b[off .. byteWriteEnd(b.length, off, len)]);
     }
 
     override void flush()
