@@ -283,6 +283,24 @@ if (id.tryGet!long(l)) use(l);
 
 Mapping: the element is `adapted` with rule `R23`.
 
+### R24: `final` instance fields
+
+A Java `final` instance field that users or subclasses can see (`public` or `protected`) becomes a same-name accessor with the same visibility over a private D field. The field is assigned once, in the constructor. The accessor returns the value, never `ref`, and isn't virtual (`final`). D calls a no-argument function without parentheses, so reads look the same as in Java (`this.includes`, `logger.debug(...)`), and assigning to the name doesn't compile, which matches `final`. Coordinator, 2026-11-26, from sol-framework's `InstanceFilter`:
+- **Mutable referents stay mutable.** `final` fixes the reference, not the object. An accessor for a `Collection`, `Map` or object field returns that same handle, so callers can still mutate through it wherever Java allows.
+- **Non-`final` fields** that are `public` or `protected` stay D fields with the same name and visibility.
+- **`static final` constants** follow R17 where it applies. Otherwise they become `enum` or `static immutable` members with the same name.
+- **Private fields** aren't API, so they're the port's choice.
+
+```java
+protected final Collection<? extends T> includes;
+```
+```d
+private Collection!T includes_;
+protected final Collection!T includes() nothrow @nogc => includes_;
+```
+
+Mapping: the element is `adapted` with rule `R24`.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:

@@ -1353,3 +1353,4 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 
   If any of these fails, the change goes through the train.
 - 2026-11-26 14:55Z, coordinator: the sol-jdk-math-regex and sol-translator launchers had been SIGSTOPped since about 06:00Z with no FROZEN record and no MEASURING lock. I resumed both by pid, and proof-harness is looking for the leak.
+- 2026-11-26 15:08Z, coordinator: **rule R24, Java `final` instance fields** (sol-framework's `InstanceFilter`, which framework-core approved). A `public` or `protected` `final` field becomes a same-name, same-visibility, `final`, non-`ref` accessor over a private field assigned once in the constructor. Reads look the same as Java's, and assignment doesn't compile. It's a general rule rather than a narrow deviation, because Spring has many such fields, `protected final Log logger` among them.
