@@ -16,6 +16,7 @@ import flint.conc.slot : ProcessSlot;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.objects : objectEquals, objectToHash;
 import flint.engine.reactor : Reactor, RemoteWaker;
+import flint.java.io : IOException;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, NullPointerException;
 import flint.java.util : Collection;
 import flint.java.util.concurrent.callable : Callable;
@@ -27,6 +28,8 @@ import flint.java.util.concurrent.callable : Callable;
 /// must have GC-managed or static storage and be safe to share with readers.
 /// Writes copy the affected bucket in a fixed 64-bucket table, so their cost grows with that bucket's occupancy.
 /// A single mutex per cache serializes publication and invalidation.
+/// A cancelled reactor task waiting for another caller's load receives $(D IOException).
+/// The loader remains governed by its own caller's task.
 class ConcurrentMapCache : Cache
 {
     private string name_;
@@ -431,7 +434,11 @@ private final class Flight
         auto result = reactor.yieldUntil(deadline);
         removeWaiter(waker);
         if (result.code != typeof(result.code).ok)
+        {
+            if (result.code == typeof(result.code).cancelled)
+                throw new IOException(result.message);
             throw new IllegalStateException(result.message);
+        }
     }
 
     private void removeWaiter(RemoteWaker waker) nothrow @nogc
