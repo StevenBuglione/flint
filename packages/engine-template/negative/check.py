@@ -58,7 +58,8 @@ def main():
     cli.add_argument("compiler")
     args = cli.parse_args()
     packages = ROOT / "packages"
-    imports = ["-I" + str(packages / n / "source") for n in ("arena", "serde", "template")]
+    imports = ["-I" + str(packages / n / "source") for n in ("arena", "serde")]
+    imports.append("-I" + str(Path(__file__).resolve().parents[1] / "source"))
     with tempfile.TemporaryDirectory(prefix="flint-template-negative-") as temp:
         directory = Path(temp)
         for index in range(1, 18):

@@ -10,8 +10,8 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT))
-from tools.measure_builds import template_instances, timed_process
+sys.path.insert(0, str(ROOT / "tools"))
+from measure_builds import template_instances, timed_process
 
 
 def run(compiler, output, count, profile):
@@ -38,7 +38,8 @@ Result!Buffer show(scope const ref Record record, ref scope RequestArena arena) 
 }}
 """)
             sources.append(leaf)
-        paths = ["-I" + str(ROOT / "packages" / name / "source") for name in ("arena", "serde", "template")]
+        paths = ["-I" + str(ROOT / "packages" / name / "source") for name in ("arena", "serde")]
+        paths.append("-I" + str(Path(__file__).resolve().parents[1] / "source"))
         options = ["-preview=dip1000", "-vtemplates", "-lib", "-J" + tmp, "-I" + tmp, *paths]
         identities = [fingerprint(path, shared, compiler, options) for path in inputs]
         cold = compile_(compiler, output, directory, options, model, sources, profile, count, "cold")
