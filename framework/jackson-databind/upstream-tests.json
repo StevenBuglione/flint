@@ -745,8 +745,28 @@
       "status": "deferred"
     },
     "tools/jackson/databind/deser/filter/UnknownPropertyDeserTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/unknown_property_deser_test.d",
+      "methods": {
+        "ported": [
+          "testClassWithIgnoreUnknown",
+          "testClassWithUnknownAndIgnore",
+          "testPropertyIgnoral",
+          "testPropertyIgnoralWithClass",
+          "testUnknownHandlingIgnoreWithFeature",
+          "testWithClassIgnore"
+        ],
+        "skipped": {
+          "testAnySetterWithFailOnUnknownDisabled": "Requires the JsonAnySetter fixture.",
+          "testClassIgnoreWithMap": "The fixture is gated on class-level ignored properties for maps.",
+          "testIssue987": "Requires the deserialization problem-handler fixture.",
+          "testPropertyIgnoralForMap": "The fixture is gated on ignored properties for map-valued properties.",
+          "testUnknownHandlingDefault": "The fixture is gated on configured ObjectReader support.",
+          "testUnknownHandlingIgnoreWithHandler": "Requires the deserialization problem-handler fixture.",
+          "testUnknownHandlingIgnoreWithHandlerAndObjectReader": "Requires the ObjectReader problem-handler fixture.",
+          "testUnwrappedWithFailOnUnknownDisabled": "Requires the unwrapped deserialization fixture."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/databind/deser/inject/InjectableWithoutDeser962Test.java": {
       "phase": "2",
@@ -2382,8 +2402,38 @@
       "status": "deferred"
     },
     "tools/jackson/databind/ser/enums/EnumSerializationTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/enum_serialization_test.d",
+      "methods": {
+        "ported": [
+          "testAsIndex",
+          "testEnumFeature_WRITE_ENUMS_TO_LOWERCASE",
+          "testEnumMapSerDefault",
+          "testEnumSet",
+          "testSimple"
+        ],
+        "skipped": {
+          "testAnnotationsOnEnumCtor": "Requires the non-integral enum constructor fixture.",
+          "testEnumFeature_WRITE_ENUMS_TO_LOWERCASE_isDisabledByDefault": "The fixture is gated on ObjectReader.",
+          "testEnumKeysWithJsonProperty": "Requires the enum constant rename fixture for map keys.",
+          "testEnumMapSerDisableToString": "The fixture is gated on per-writer enum configuration.",
+          "testEnumMapSerEnableToString": "The fixture is gated on per-writer enum configuration.",
+          "testEnumUsingToString": "Requires the enum method and ToStringSerializer fixture.",
+          "testEnumWithJsonKey": "Requires enum JsonKey method dispatch.",
+          "testEnumsWithJsonProperty": "Requires the enum constant rename fixture.",
+          "testEnumsWithJsonPropertyAsKey": "Requires the enum constant rename fixture for map keys.",
+          "testEnumsWithJsonPropertyEnableToString": "The fixture is gated on per-writer enum configuration.",
+          "testEnumsWithJsonPropertyInSet": "Requires the enum constant rename fixture for sets.",
+          "testEnumsWithJsonValue": "Requires enum JsonValue method dispatch.",
+          "testEnumsWithJsonValueInMap": "Requires enum JsonValue method dispatch for map keys.",
+          "testEnumsWithJsonValueUsingMixin": "Requires the enum JsonValue mix-in fixture.",
+          "testGenericEnumSerializer": "Requires the registered custom enum serializer fixture.",
+          "testSerializableEnum": "Requires the JacksonSerializable fixture.",
+          "testSubclassedEnums": "The D case uses ordinary enum constants and cannot exercise Java constant-specific subclasses.",
+          "testToStringEnum": "The fixture is gated on per-writer enum configuration.",
+          "testToStringEnumWithEnumMap": "Requires the enum toString method fixture for map keys."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/databind/ser/enums/EnumsToLCvsJsonProperty4788Test.java": {
       "phase": "2",
