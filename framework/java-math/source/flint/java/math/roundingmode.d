@@ -1,7 +1,7 @@
 /// Java SE 21 rounding directions and legacy BigDecimal mode codes (rules R7 and R20).
 module flint.java.math.roundingmode;
 
-import flint.java.lang : IllegalArgumentException, NullPointerException;
+import flint.java.lang : IllegalArgumentException;
 
 @safe:
 
@@ -62,11 +62,6 @@ RoundingMode valueOf(scope const(char)[] spelling)
         if (candidate == spelling)
             return cast(RoundingMode) i;
     throw new IllegalArgumentException("Unknown rounding mode");
-}
-
-RoundingMode valueOf(typeof(null))
-{
-    throw new NullPointerException();
 }
 
 /// Convert a legacy BigDecimal rounding code.

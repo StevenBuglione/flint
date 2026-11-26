@@ -207,6 +207,8 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `io.micrometer.observation.ObservationPredicate` | `flint.micrometer.observation.ObservationPredicate` | Inherits the test method from Flint's Java BiPredicate. Its combinators are deferred with the Java provider. |
 | framework | `java.lang.RuntimeException#<init>(String,Throwable)` | `flint.java.lang.RuntimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | framework | `java.lang.RuntimeException#<init>(String,Throwable,boolean,boolean)` | `flint.java.lang.RuntimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| framework | `java.math.BigInteger` | `flint.java.math.BigInteger` | A null byte-array argument counts as empty under R26. Java throws NullPointerException. |
+| framework | `java.math.RoundingMode` | `flint.java.math.roundingmode.RoundingMode` | A null name counts as empty text under R26. Java throws NullPointerException. |
 | framework | `java.time.DateTimeException#<init>(String,Throwable)` | `flint.java.time.DateTimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | framework | `java.time.format.DateTimeParseException` | `flint.java.time.format.DateTimeParseException` | A null parsed text counts as empty (R26). Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
@@ -1945,15 +1947,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.math.BigInteger#<init>(byte[])` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) |  |
-| `java.math.BigInteger#<init>(byte[],int,int)` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) |  |
-| `java.math.BigInteger#<init>(int,byte[])` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) |  |
-| `java.math.BigInteger#<init>(int,byte[],int,int)` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) |  |
+| `java.math.BigInteger#<init>(byte[])` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.math.BigInteger#<init>(byte[],int,int)` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.math.BigInteger#<init>(int,byte[])` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.math.BigInteger#<init>(int,byte[],int,int)` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.math.BigInteger#equals(Object)` | `flint.java.math.biginteger.BigInteger.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.math.BigInteger#hashCode()` | `flint.java.math.biginteger.BigInteger.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.math.BigInteger#toString()` | `flint.java.math.biginteger.BigInteger.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.math.BigInteger#toString(int)` | `flint.java.math.biginteger.BigInteger.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `java.math.RoundingMode#valueOf(String)` | `flint.java.math.roundingmode.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `java.math.RoundingMode#valueOf(String)` | `flint.java.math.roundingmode.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.math.RoundingMode#valueOf(int)` | `flint.java.math.roundingmode.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.math.RoundingMode#values()` | `flint.java.math.roundingmode.values` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 

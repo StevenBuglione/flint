@@ -1,6 +1,6 @@
 module roundingmode_tests;
 
-import flint.java.lang : IllegalArgumentException, NullPointerException;
+import flint.java.lang : IllegalArgumentException;
 import flint.java.math.roundingmode : RoundingMode, compareTo, name, ordinal, toString, valueOf, values;
 
 @safe:
@@ -34,7 +34,7 @@ import flint.java.math.roundingmode : RoundingMode, compareTo, name, ordinal, to
     assert(values()[0] == RoundingMode.UP);
 }
 
-@("RoundingMode rejects invalid names, integer codes and explicit null") unittest
+@("RoundingMode rejects invalid names, including absent text slices, and integer codes") unittest
 {
     import std.exception : assertThrown;
 
@@ -43,6 +43,8 @@ import flint.java.math.roundingmode : RoundingMode, compareTo, name, ordinal, to
     assertThrown!IllegalArgumentException(valueOf("UP "));
     assertThrown!IllegalArgumentException(valueOf(-1));
     assertThrown!IllegalArgumentException(valueOf(8));
-    assertThrown!NullPointerException(valueOf(null));
+    assertThrown!IllegalArgumentException(valueOf(null));
+    const(char)[] missing;
+    assertThrown!IllegalArgumentException(valueOf(missing));
     static assert(!__traits(compiles, RoundingMode.UP.compareTo(null)));
 }

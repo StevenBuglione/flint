@@ -48,6 +48,8 @@ unittest
     assertThrown!NumberFormatException(new BigInteger((new byte[1])[0 .. 0]));
     assert((new BigInteger(0, new byte[0])).signum() == 0);
     assert((new BigInteger(-1, cast(byte[]) null)).signum() == 0);
+    assertThrown!NumberFormatException(new BigInteger(cast(byte[]) null, 0, 0));
+    assert((new BigInteger(-1, cast(byte[]) null, 0, 0)).signum() == 0);
 }
 
 @("Binary constructors reject invalid signs and slices")
