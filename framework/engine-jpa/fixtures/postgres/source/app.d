@@ -397,10 +397,16 @@ private RowMaterializationPlan verifyMappingContract()
     assert(planResult(&ownerMapping, [ResultBinding(1, 1), ResultBinding(2, 2), ResultBinding(0, 0)], ownerCodec)
             .error.code == Status.invalidArgument);
     static immutable EntityMapping[] descriptors = [ownerMapping];
-    const registered = registerMappings(descriptors);
+    const registered = registerMappings(descriptors, [typeid(Owner)]);
     assert(registered.ok);
-    const mapping = registered.value.findEntity("Owner");
+    auto owner = new Owner;
+    auto derived = new DerivedOwner;
+    const before = GC.stats().allocatedInCurrentThread;
+    const mapping = registered.value.findExactObject(owner);
+    assert(registered.value.findExactObject(derived) is null);
+    assert(GC.stats().allocatedInCurrentThread == before);
     assert(mapping is &descriptors[0] && mapping is registered.value.findType("app.Owner"));
+    assert(mapping is registered.value.findEntity("Owner"));
     const planned = planResult(mapping, ownerBindings, ownerCodec);
     assert(planned.ok);
     assert(validateMapping(ownerMapping).code == Status.ok);

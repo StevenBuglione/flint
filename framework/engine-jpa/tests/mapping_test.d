@@ -33,6 +33,16 @@ private bool isExactRecordType(scope const TypeInfo_Class candidate) nothrow @no
     return candidate is typeid(Record);
 }
 
+private Object constructOtherRecord()
+{
+    return new OtherRecord;
+}
+
+private bool isExactOtherRecordType(scope const TypeInfo_Class candidate) nothrow @nogc
+{
+    return candidate is typeid(OtherRecord);
+}
+
 private Result!AttributeValue readId(Object entity) nothrow @nogc
 {
     auto record = cast(Record) entity;
@@ -53,6 +63,54 @@ private immutable EntityMapping recordMapping = EntityMapping("Record",
                 false, true, false, 0, Types.BIGINT)
 ], &constructRecord, [], &isExactRecordType, [0]);
 
+private immutable EntityMapping otherRecordMapping = EntityMapping("OtherRecord",
+        "flint.engine.jpa.mapping_test.OtherRecord",
+        "records", recordMapping.attributes, &constructOtherRecord, [], &isExactOtherRecordType, [0]);
+
+@("the mapping index uses exact class identity and copies the side table")
+unittest
+{
+    static immutable EntityMapping[] descriptors = [recordMapping, otherRecordMapping];
+    TypeInfo_Class[] classes = [typeid(Record), typeid(OtherRecord)];
+    const registered = registerMappings(descriptors, classes);
+    assert(registered.ok);
+    classes[0] = typeid(Object);
+    assert(registered.value.findExactObject(new Record) is &descriptors[0]);
+    assert(registered.value.findExactObject(new OtherRecord) is &descriptors[1]);
+    assert(registered.value.findExactObject(new Object) is null);
+    assert(registered.value.findExactObject(null) is null);
+
+    EntityMapping separateMapping = recordMapping;
+    separateMapping.table = "other_unit";
+    const separate = registerMappings([separateMapping].idup, [typeid(Record)]);
+    assert(separate.ok && separate.value.findExactObject(new Record).table == "other_unit");
+    assert(separate.value.findExactObject(new OtherRecord) is null);
+    assert(registered.value.findExactObject(new Record).table == "records");
+}
+
+@("a missing, misordered or duplicate class identity prevents registry publication")
+unittest
+{
+    static immutable EntityMapping[] descriptors = [recordMapping, otherRecordMapping];
+    const missing = registerMappings(descriptors, [typeid(Record)]);
+    assert(missing.error.code == Status.invalidArgument);
+    const wrongOrder = registerMappings(descriptors, [typeid(OtherRecord), typeid(Record)]);
+    assert(wrongOrder.error.code == Status.invalidArgument && wrongOrder.error.offset == 0);
+    const nullEntry = registerMappings(descriptors, [typeid(Record), null]);
+    assert(nullEntry.error.code == Status.invalidArgument && nullEntry.error.offset == 1);
+
+    EntityMapping aliasMapping = recordMapping;
+    aliasMapping.entityName = "Alias";
+    aliasMapping.typeName = "app.Alias";
+    const duplicate = registerMappings([recordMapping, aliasMapping].idup, [
+        typeid(Record), typeid(Record)
+    ]);
+    assert(duplicate.error.code == Status.invalidArgument && duplicate.error.offset == 1);
+    assert(duplicate.error.message == "duplicate JPA class identity");
+    assert(duplicate.value.findEntity("Record") is null);
+    assert(duplicate.value.findExactObject(new Record) is null);
+}
+
 @("a persistence unit resolves its canonical mappings by entity name and D type name")
 unittest
 {
@@ -63,6 +121,7 @@ unittest
     assert(registered.value.findType("flint.engine.jpa.mapping_test.Record") is &descriptors[0]);
     assert(registered.value.findEntity("record") is null);
     assert(registered.value.findType("Record") is null);
+    assert(registered.value.findExactObject(new Record) is null);
 
     EntityMapping otherUnit = recordMapping;
     otherUnit.table = "other_records";
