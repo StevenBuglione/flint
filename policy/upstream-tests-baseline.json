@@ -3125,7 +3125,6 @@
       "tools/jackson/databind/records/JsonAliasWithDeduction4327RecordTest.java",
       "tools/jackson/databind/records/JsonIncludeNonDefaultOnRecord5312Test.java",
       "tools/jackson/databind/records/RecordBackReference5188Test.java",
-      "tools/jackson/databind/records/RecordBasicsTest.java",
       "tools/jackson/databind/records/RecordCreatorWithAnySetterTest.java",
       "tools/jackson/databind/records/RecordCreatorsTest.java",
       "tools/jackson/databind/records/RecordDeserializationTest.java",

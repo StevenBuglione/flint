@@ -2188,8 +2188,37 @@
       "status": "deferred"
     },
     "tools/jackson/databind/records/RecordBasicsTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/record_basics_test.d",
+      "methods": {
+        "ported": [
+          "testDeserializeEmptyRecord",
+          "testDeserializeJsonRename",
+          "testDeserializeRecordOfRecord",
+          "testDeserializeSimpleRecord",
+          "testDeserializeSimpleRecord_DisableAnnotationIntrospector",
+          "testDeserialize_AllWriteOnlyParameter",
+          "testDeserialize_SingleWriteOnlyParameter",
+          "testDeserialize_SomeWriteOnlyParameter",
+          "testNamingStrategy",
+          "testSerializeEmptyRecord",
+          "testSerializeJsonRename",
+          "testSerializeRecordOfRecord",
+          "testSerializeSimpleRecord",
+          "testSerializeSimpleRecord_DisableAnnotationIntrospector",
+          "testSerializeWithSettersForGetters",
+          "testSerialize_AllWriteOnlyParameter",
+          "testSerialize_SingleWriteOnlyParameter",
+          "testSerialize_SomeWriteOnlyParameter"
+        ],
+        "skipped": {
+          "testDeserializeConstructorInjectRecord4218": "The constructor-injection fixture is version-gated.",
+          "testDeserializeHeaderInjectRecord4218": "The header-injection fixture is version-gated.",
+          "testDeserializeJsonDeserializeRecord": "The record converter fixture is version-gated.",
+          "testRecordJavaType": "The JavaType record introspection fixture is version-gated."
+        }
+      },
+      "note": "The port uses R11 structs with explicit constructor descriptors and ObjectNode for untyped object comparisons.",
+      "status": "partial"
     },
     "tools/jackson/databind/records/RecordCreatorWithAnySetterTest.java": {
       "phase": "2",
