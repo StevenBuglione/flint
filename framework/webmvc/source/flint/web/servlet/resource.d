@@ -25,6 +25,7 @@ import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.java.io : IOException;
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.util : List;
+import flint.java.util.function_ : Function;
 import flint.util : StringUtils, toLowerAscii;
 import flint.web : ErrorResponse, HttpRequestMethodNotSupportedException, skipBacktrace;
 import flint.web.context.request : ServletWebRequest;
@@ -368,6 +369,7 @@ class PathResourceResolver : AbstractResourceResolver
 class ResourceHttpRequestHandler : HttpRequestHandler, ImmediateFailure
 {
     private ResourceHandlerConfiguration configuration;
+    private Function!(Resource, string) etagGenerator;
     private bool initialized;
     private shared bool useLastModified = true;
 
@@ -394,6 +396,18 @@ class ResourceHttpRequestHandler : HttpRequestHandler, ImmediateFailure
     bool isUseLastModified()
     {
         return atomicLoad!(MemoryOrder.raw)(useLastModified);
+    }
+
+    /// Sets or clears the callback that supplies an entity tag for a resolved resource.
+    void setEtagGenerator(Function!(Resource, string) generator)
+    {
+        atomicStore!(MemoryOrder.rel)(etagGenerator, generator);
+    }
+
+    /// Returns the configured entity tag callback.
+    Function!(Resource, string) getEtagGenerator()
+    {
+        return atomicLoad!(MemoryOrder.acq)(etagGenerator);
     }
 
     /// Validates the explicit locations and creates their resolver and message converter.
@@ -557,8 +571,11 @@ private final class ClassPathResourceHandlerConfiguration : ResourceHandlerConfi
         if (converter is null)
             throw new IllegalStateException("ResourceHttpMessageConverter not initialized");
 
+        Nullable!string etag;
+        if (auto generator = handler.getEtagGenerator())
+            etag = nullable(generator.apply(resource));
         const lastModified = handler.isUseLastModified() && resource.isFile() ? resource.lastModified() : -1;
-        if (new ServletWebRequest(request, response).checkNotModified(lastModified))
+        if (new ServletWebRequest(request, response).checkNotModified(etag, lastModified))
             return;
 
         auto contentType = handler.getMediaType(request, resource);

@@ -19,6 +19,7 @@ import flint.engine.aot.any : Any;
 import flint.http : HttpHeaders, HttpMethod;
 import flint.java.lang : IllegalStateException;
 import flint.java.util : ArrayList, List;
+import flint.java.util.function_ : Function;
 import flint.mock.web : MockHttpServletRequest, MockHttpServletResponse, MockServletContext;
 import flint.web : HttpRequestMethodNotSupportedException;
 import flint.web.servlet : HandlerMapping;
@@ -29,6 +30,7 @@ import std.exception : assertThrown;
 @safe:
 
 private alias PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE = HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE;
+private alias EtagGenerator = Function!(Resource, string);
 
 /// The class path directory of `ResourceHttpRequestHandlerTests.class`, which Spring's relative resources start from.
 private enum string resourcePackage = "org/springframework/web/servlet/resource/";
@@ -822,32 +824,6 @@ version (FlintResourceHttpCaching)
         assert(f.response.getHeader("Cache-Control") == "max-age=3600");
     }
 
-    @("ResourceHttpRequestHandlerTests.HttpCachingTests.shouldRespondWithModifiedResourceWhenEtagNoMatch")
-    unittest
-    {
-        auto f = setup();
-        f.handler.setEtagGenerator((Resource resource) => "noMatch");
-        f.handler.afterPropertiesSet();
-        f.setPathWithinHandlerMapping("foo.css");
-        f.request.addHeader("If-None-Match", "\"testEtag\"");
-        f.handler.handleRequest(f.request, f.response);
-        assert(f.response.getStatus() == HttpServletResponse.SC_OK);
-        assert(f.response.getContentAsString() == "h1 { color:red; }");
-    }
-
-    @("ResourceHttpRequestHandlerTests.HttpCachingTests.shouldRespondWithNotModifiedWhenEtagAndLastModified")
-    unittest
-    {
-        auto f = setup();
-        f.handler.setEtagGenerator((Resource resource) => "testEtag");
-        f.handler.afterPropertiesSet();
-        f.setPathWithinHandlerMapping("foo.css");
-        f.request.addHeader("If-None-Match", "\"testEtag\"");
-        f.request.addHeader("If-Modified-Since", httpDate(resourceLastModified("test/foo.css")));
-        f.handler.handleRequest(f.request, f.response);
-        assert(f.response.getStatus() == HttpServletResponse.SC_NOT_MODIFIED);
-    }
-
     // SPR-14005
     @("ResourceHttpRequestHandlerTests.HttpCachingTests.overwritesExistingCacheControlHeaders")
     unittest
@@ -1203,5 +1179,66 @@ unittest
         f.setPathWithinHandlerMapping("../outside.css");
         auto missing = new MockHttpServletResponse();
         assertThrown!NoResourceFoundException(f.handler.handleRequest(f.request, missing));
+    });
+}
+
+@("ResourceHttpRequestHandlerTests.HttpCachingTests.shouldRespondWithModifiedResourceWhenEtagNoMatch")
+unittest
+{
+    withFileClasspath((ref Fixture f, long timestamp) {
+        f.handler.setEtagGenerator(EtagGenerator.of((Resource resource) => "noMatch"));
+        f.request.addHeader(HttpHeaders.IF_NONE_MATCH, "\"testEtag\"");
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getStatus() == 200);
+        assert(f.response.getHeader(HttpHeaders.ETAG) == "\"noMatch\"");
+        assert(f.response.getContentAsString() == "h1 { color:red; }");
+    });
+}
+
+@("ResourceHttpRequestHandlerTests.HttpCachingTests.shouldRespondWithNotModifiedWhenEtagAndLastModified")
+unittest
+{
+    withFileClasspath((ref Fixture f, long timestamp) {
+        f.handler.setEtagGenerator(EtagGenerator.of((Resource resource) => "testEtag"));
+        f.request.addHeader(HttpHeaders.IF_NONE_MATCH, "\"testEtag\"");
+        f.request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, HttpHeaders.formatDate(timestamp));
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getStatus() == 304);
+        assert(f.response.getHeader(HttpHeaders.ETAG) == "\"testEtag\"");
+        assert(f.response.getContentAsByteArray().length == 0);
+    });
+}
+
+@("Flint.ResourceHttpRequestHandler.usesEtagWithoutTimestampOnHead")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
+        int calls;
+        auto generator = EtagGenerator.of((Resource resource) {
+            assert(resource.getFilename() == "foo.css");
+            ++calls;
+            return "testEtag";
+        });
+        assert(f.handler.getEtagGenerator() is null);
+        f.handler.setEtagGenerator(generator);
+        assert(f.handler.getEtagGenerator() is generator);
+        f.handler.setUseLastModified(false);
+        f.setPathWithinHandlerMapping("foo.css");
+        f.request.setMethod("HEAD");
+        f.request.addHeader(HttpHeaders.IF_NONE_MATCH, "\"testEtag\"");
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getStatus() == 304);
+        assert(f.response.getHeader(HttpHeaders.ETAG) == "\"testEtag\"");
+        assert(!f.response.containsHeader(HttpHeaders.LAST_MODIFIED));
+        assert(calls == 1);
+
+        f.handler.setEtagGenerator(null);
+        assert(f.handler.getEtagGenerator() is null);
+        auto cleared = new MockHttpServletResponse();
+        f.handler.handleRequest(f.request, cleared);
+        assert(cleared.getStatus() == 200);
+        assert(cleared.getContentAsByteArray().length == 0);
+        assert(!cleared.containsHeader(HttpHeaders.ETAG));
+        assert(calls == 1);
     });
 }

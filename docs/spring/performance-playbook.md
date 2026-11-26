@@ -753,6 +753,15 @@ uses the base-relative rule in `6c9e5f49`. LDC release allocated 49,152 GC bytes
 for 1,024 handlers on both builds. The file-backed tests cover header
 suppression, an unconditional body and the restored 304 response.
 
+Configured static serving loads the ETag generator once and invokes it once
+before the existing tag and date checks. The callback field raises the LDC
+release allocation from 48 to 64 bytes when constructing a handler. The
+matched venus probes at `507c82f09` and `d542fb4f8` add 160 loadable bytes
+to Web MVC and 152 to framework-test in each profile. DMD templates rise from
+6,025 to 6,050 and from 8,467 to 8,475, respectively. The inherited Phobos
+overages use the base-relative rule in `6c9e5f49`. The pinned file cases and
+the HEAD test cover the callback's effect on conditional responses.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
