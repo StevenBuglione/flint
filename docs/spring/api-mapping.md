@@ -315,6 +315,16 @@ A Java interface may become a `final` class with the same name and methods when 
 
 Mapping: the type is `adapted` with rule `R25`, and its members keep their own classifications.
 
+### R26: `null` arrays
+
+D can't tell a `null` array from an empty one: `[]`, `new byte[0]` and an absent array all satisfy `is null`. Coordinator, 2026-11-26, from sol-jpa's `java.util.zip` boundary:
+- **Parameters stay plain arrays** (`byte[]`, `const(byte)[]`, `T[]`), never `Nullable!(T[])`, because D doesn't construct a struct implicitly from an argument. Callers write `crc.update(data)` as in Java.
+- **A `null` array argument counts as empty.** Where Java throws `NullPointerException` for a `null` array (`CRC32.update(null)`), Flint treats the argument as empty, so the call is a no-op or acts on zero elements. That `NullPointerException` path is the only observable difference, and it's recorded once per type with a note citing R26, not as a separate deviation for each method. A ported upstream test that expects the `NullPointerException` is deferred with that reason.
+- **Returns that mean something different when `null`** (Java returns `null` for "absent" as opposed to an empty array) become `Nullable!(T[])` under R5. Returns where Java never returns `null` stay plain arrays.
+- **Existing deviations** that only restate this (D-JACKSON-6, a null array writes as `[]`) keep their rows. New entries cite R26.
+
+Mapping: the element is `adapted` with rule `R26` where the `null` behaviour differs, and keeps its other classification where it doesn't.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:
