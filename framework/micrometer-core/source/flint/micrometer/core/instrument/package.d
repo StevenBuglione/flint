@@ -21,20 +21,92 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/MeterRegistry.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Counter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Measurement.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Clock.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/MockClock.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument;
 
 import core.sync.mutex : Mutex;
+import core.time : MonoTime, ticksToNSecs;
+import flint.engine.aot.clock : currentTimeMillis;
 import flint.engine.aot.objects : objectToString, statelessInstance;
 import flint.engine.aot.text : decodeUtf8;
-import flint.java.lang : Comparable, IllegalArgumentException, Iterable, JavaObject, NullPointerException,
-    UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode, valueOf;
+import flint.java.lang : ArithmeticException, Comparable, IllegalArgumentException, Iterable, JavaObject,
+    NullPointerException, UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode, valueOf;
+import flint.java.time : Duration;
+import flint.java.util.concurrent : TimeUnit, toMillis, toNanos;
 import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
 import flint.java.util.function_ : Consumer, DoubleSupplier, Supplier;
 import flint.java.util.stream : Stream;
 import std.typecons : Nullable;
 
 @safe:
+
+/// Sources of epoch milliseconds and monotonic nanoseconds.
+interface Clock
+{
+    /// The shared clock for readings from the system.
+    static @property Clock SYSTEM() nothrow @nogc
+    {
+        return statelessInstance!SystemClock();
+    }
+
+    /// Current time in milliseconds since the Unix epoch.
+    long wallTime() nothrow @nogc;
+
+    /// Monotonic time in nanoseconds from a fixed origin.
+    long monotonicTime() nothrow @nogc;
+}
+
+private final class SystemClock : Clock
+{
+    override long wallTime() nothrow @nogc
+    {
+        return currentTimeMillis();
+    }
+
+    override long monotonicTime() nothrow @nogc
+    {
+        return ticksToNSecs(MonoTime.currTime.ticks);
+    }
+}
+
+/// A clock controlled by its caller, for deterministic metric tests.
+class MockClock : Clock
+{
+    private long timeNanos = 1_000_000;
+
+    override long monotonicTime() nothrow @nogc
+    {
+        return timeNanos;
+    }
+
+    override long wallTime() nothrow @nogc
+    {
+        return TimeUnit.NANOSECONDS.toMillis(timeNanos);
+    }
+
+    /// Advance the clock and return the new monotonic time.
+    long add(long amount, TimeUnit unit) nothrow @nogc
+    {
+        timeNanos += unit.toNanos(amount);
+        return timeNanos;
+    }
+
+    /// Advance the clock by a Java duration.
+    long add(Duration duration)
+    {
+        if (duration.compareTo(Duration.ofNanos(long.min)) < 0 || duration.compareTo(Duration.ofNanos(long.max)) > 0)
+            throw new ArithmeticException("Duration exceeds a signed nanosecond count");
+        return add(duration.toNanos(), TimeUnit.NANOSECONDS);
+    }
+
+    /// Advance the clock by a number of seconds.
+    long addSeconds(long amount) nothrow @nogc
+    {
+        return add(amount, TimeUnit.SECONDS);
+    }
+}
 
 /// One key/value dimension of a meter (R1, R3, R6).
 interface Tag : Comparable!Tag
