@@ -25,8 +25,22 @@
       "status": "deferred"
     },
     "org/springframework/security/config/annotation/authentication/AuthenticationManagerBuilderTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-config/tests/authentication_manager_builder_events_test.d",
+      "methods": {
+        "ported": [
+          "customAuthenticationEventPublisherWithWeb"
+        ],
+        "skipped": {
+          "authenticationManagerWhenMultipleProvidersThenWorks": "Deferred to the corresponding Phase 2 builder or manager configuration slice.",
+          "buildWhenAddAuthenticationProviderThenDoesNotPerformRegistration": "Deferred to the corresponding Phase 2 builder or manager configuration slice.",
+          "buildWhenAuthenticationProviderThenIsConfigured": "Deferred to the corresponding Phase 2 builder or manager configuration slice.",
+          "buildWhenNotConfiguredThenIsConfiguredFalse": "Deferred to the corresponding Phase 2 builder or manager configuration slice.",
+          "buildWhenParentThenIsConfigured": "Deferred to the corresponding Phase 2 builder or manager configuration slice.",
+          "getAuthenticationManagerWhenGlobalPasswordEncoderBeanThenUsed": "Deferred to the corresponding Phase 2 builder or manager configuration slice.",
+          "getAuthenticationManagerWhenProtectedPasswordEncoderBeanThenUsed": "Deferred to the corresponding Phase 2 builder or manager configuration slice."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/security/config/annotation/authentication/NamespaceAuthenticationManagerTests.java": {
       "phase": "2",

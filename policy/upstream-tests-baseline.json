@@ -3515,7 +3515,6 @@
       "org/springframework/security/config/annotation/ObjectPostProcessorTests.java",
       "org/springframework/security/config/annotation/SecurityConfigurerAdapterClosureTests.java",
       "org/springframework/security/config/annotation/SecurityConfigurerAdapterTests.java",
-      "org/springframework/security/config/annotation/authentication/AuthenticationManagerBuilderTests.java",
       "org/springframework/security/config/annotation/authentication/NamespaceAuthenticationManagerTests.java",
       "org/springframework/security/config/annotation/authentication/NamespaceAuthenticationProviderTests.java",
       "org/springframework/security/config/annotation/authentication/NamespaceJdbcUserServiceTests.java",

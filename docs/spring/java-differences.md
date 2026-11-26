@@ -195,7 +195,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | micrometer-observation@1.18.0 | 0 | 0 | 0 | 312 |
 | framework | openjdk@21.0.13 | 159 | 96 | 1,871 | 15,853 |
 | framework | aspectj@1.9.27 | 0 | 31 | 191 | 88 |
-| security | spring-security@7.2.0 | 509 | 1 | 88 | 11,815 |
+| security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
 
 ## Adapted elements
 
@@ -9436,7 +9436,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.config | 87 | 0 |
 | org.springframework.security.config.annotation | 40 | 0 |
 | org.springframework.security.config.annotation.authentication | 2 | 0 |
-| org.springframework.security.config.annotation.authentication.builders | 4 | 0 |
+| org.springframework.security.config.annotation.authentication.builders | 3 | 0 |
 | org.springframework.security.config.annotation.authentication.configuration | 11 | 0 |
 | org.springframework.security.config.annotation.authentication.configurers.ldap | 33 | 0 |
 | org.springframework.security.config.annotation.authentication.configurers.provisioning | 33 | 0 |

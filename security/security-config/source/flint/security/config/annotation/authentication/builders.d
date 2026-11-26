@@ -14,9 +14,10 @@
 +/
 module flint.security.config.annotation.authentication.builders;
 
-import flint.java.lang : IllegalStateException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.javax.sql : DataSource;
-import flint.security.authentication : AuthenticationManager, AuthenticationProvider, ProviderManager;
+import flint.security.authentication : AuthenticationEventPublisher, AuthenticationManager,
+    AuthenticationProvider, ProviderManager;
 import flint.security.authentication.dao : DaoAuthenticationProvider;
 import flint.security.core.userdetails : UserDetails, UserDetailsService;
 import flint.security.core.userdetails.jdbc : JdbcDaoImpl;
@@ -141,6 +142,7 @@ class AuthenticationManagerBuilder
     private InMemoryUserDetailsManagerConfigurer[] inMemory;
     private AuthenticationProvider[] providers;
     private AuthenticationManager parent;
+    private AuthenticationEventPublisher eventPublisher;
     private PasswordEncoder delegate() @safe defaultPasswordEncoder;
     private bool eraseCredentials_ = true;
     private AuthenticationManager built;
@@ -191,6 +193,15 @@ class AuthenticationManagerBuilder
         return this;
     }
 
+    /// Set the publisher used for authentication outcomes.
+    AuthenticationManagerBuilder authenticationEventPublisher(AuthenticationEventPublisher eventPublisher)
+    {
+        if (eventPublisher is null)
+            throw new IllegalArgumentException("AuthenticationEventPublisher cannot be null");
+        this.eventPublisher = eventPublisher;
+        return this;
+    }
+
     /// Whether credentials are erased after authentication (default true).
     AuthenticationManagerBuilder eraseCredentials(bool eraseCredentials)
     {
@@ -219,10 +230,17 @@ class AuthenticationManagerBuilder
         foreach (configurer; inMemory)
             all ~= configurer.provider(encoder);
         all ~= providers;
-        auto manager = new ProviderManager(all, parent);
+        auto manager = configureEventPublisher(new ProviderManager(all, parent));
         manager.setEraseCredentialsAfterAuthentication(eraseCredentials_);
         built = manager;
         return built;
+    }
+
+    package ProviderManager configureEventPublisher(ProviderManager manager)
+    {
+        if (eventPublisher !is null)
+            manager.setAuthenticationEventPublisher(eventPublisher);
+        return manager;
     }
 
     /// The built manager, or null before `build`.
