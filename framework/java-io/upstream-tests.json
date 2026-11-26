@@ -232,7 +232,8 @@
     },
     "java/io/File/EmptyPath.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/File/FileMethods.java": {
       "status": "deferred",
@@ -248,7 +249,8 @@
     },
     "java/io/File/GetParent.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/File/GetXSpace.java": {
       "status": "deferred",
