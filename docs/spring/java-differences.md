@@ -11144,12 +11144,18 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.StringBuffer#append(char[],int,int)` | 2 | Requires synchronized append of a checked UTF-16 offset and count (R14), including overflow rejection, and return of the original buffer. |
 | framework | `java.lang.StringBuffer#length()` | 2 | Requires synchronized access to the length in UTF-16 code units (R14), used by format field offsets. |
 | framework | `java.lang.StringBuffer#toString()` | 2 | Requires a synchronized immutable snapshot of the buffer text. |
+| framework | `java.net.ProtocolException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
+| framework | `java.net.ProtocolException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
+| framework | `java.net.SocketTimeoutException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
+| framework | `java.net.SocketTimeoutException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.URI#<init>(String)` | 2 | Requires a public string constructor with Java URI syntax validation and URISyntaxException diagnostics. |
 | framework | `java.net.URI#compareTo(URI)` | 2 | Requires ordering by URI component, including percent escape hex normalization and case-insensitive scheme and host comparison. |
 | framework | `java.net.URI#create(String)` | 2 | Requires Java URI syntax validation. The current parser accepts invalid scheme starts, unclosed IPv6 literals, and repeated unescaped fragment delimiters. |
 | framework | `java.net.URI#equals(Object)` | 2 | Java compares scheme, host and percent escape hex digits case-insensitively. Flint compares the original URI text. |
 | framework | `java.net.URI#hashCode()` | 2 | Requires Java component equality and hashing. Flint hashes the original URI text. |
 | framework | `java.net.URI#toASCIIString()` | 2 | Java applies NFC normalization before percent-encoding non-ASCII text. The current implementation encodes the original UTF-8 bytes. |
+| framework | `java.net.UnknownServiceException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
+| framework | `java.net.UnknownServiceException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.nio.ByteBuffer#alignedSlice(int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |
 | framework | `java.nio.ByteBuffer#alignmentOffset(int,int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |
 | framework | `java.nio.ByteBuffer#allocateDirect(int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |
