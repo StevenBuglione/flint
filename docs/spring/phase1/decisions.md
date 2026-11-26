@@ -1295,3 +1295,10 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **'update owner pet':** median 561,003 against a budget of 562,146, with a spread under 0.1%. The +1.3% misses seen on train candidates are therefore real and come from a submission. The train's median re-measure (962c64a8) bisects them to their submission. No re-baseline is needed.
   - **'create owner: telephone with letters':** bimodal on main, with runs of 103.2k and 104.4k, about 1.2% apart. That explains main's earlier +1.17%.
   - **Tolerance for that one endpoint:** m7 may set it from its measured spread (`--update --repeat 5`, 3× the spread), in a commit with the samples. This is the separate decision the 05:55Z rule asked for. All other endpoints keep 1%. The source of the bimodality (likely GC timing) is worth finding later.
+- 2026-11-26 07:36Z, coordinator, under the owner's standing approval: **runtime `Class` checks (R4).**
+  - **Annotations and compile-time uses:** Java `Class<?>` stays `ClassRef` via `classOf!T`, name only, so the AOT annotation ABI is unchanged.
+  - **Runtime values needing `isInstance` or `isAssignableFrom`:** a separate `RuntimeClassRef` via `runtimeClassOf!T` (`flint.java.runtimeclassref`, sol-jdk-core, flint-aot reviewing). It holds the class's `ClassInfo` and uses druntime's `@safe nothrow @nogc` `TypeInfo_Class.isBaseOf`. It converts to `ClassRef` by name.
+  - **Null:** `RuntimeClassRef.init` is Java's null `Class`, and operations on it throw `NullPointerException`, as in Java. This is not an R5 drop.
+  - **Scope:** reference types first; arrays and primitives come later.
+  - **First user:** `ApplicationObjectSupport.requiredContextClass` (sol-web).
+- 2026-11-26 07:36Z, coordinator: **`fillSecureRandom` moves to a dependency-free `flint:conc` leaf** (sol-jdk-math-regex), with a `public import` kept from `flint.conc`. `UUID.randomUUID` was linking conc's arena static-root machinery, about 10 KB per app (sol-ai's `Document` trace).
