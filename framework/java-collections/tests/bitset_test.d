@@ -8,6 +8,53 @@ import std.exception : assertThrown;
 
 @safe:
 
+@("intersects checks both operands without changing capacity or allocating")
+unittest
+{
+    auto left = new BitSet();
+    auto right = new BitSet();
+    assertThrown!NullPointerException(left.intersects(null));
+    assert(!left.intersects(left) && !left.intersects(right));
+    left.set(1);
+    left.set(127);
+    right.set(63);
+    right.set(128);
+    right.set(4_096);
+    assert(!left.intersects(right) && !right.intersects(left));
+    right.set(127);
+    const leftSize = left.size();
+    const rightSize = right.size();
+
+    const before = GC.stats().allocatedInCurrentThread;
+    foreach (_; 0 .. 500)
+        assert(left.intersects(right) && right.intersects(left) && left.intersects(left));
+    assert(GC.stats().allocatedInCurrentThread == before);
+    assert(left.size() == leftSize && left.length() == 128 && left.cardinality() == 2);
+    assert(right.size() == rightSize && right.length() == 4_097 && right.cardinality() == 4);
+}
+
+@("intersects agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto left = new BitSet();
+    auto right = new BitSet();
+    uint state = 0x18c0_5f23;
+    uint digest;
+    foreach (step; 0 .. 512)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        if ((step & 7) == 0)
+            left.clear();
+        if ((step & 15) == 8)
+            right.clear();
+        left.set(cast(int)((state >> 3) % 193));
+        right.set(cast(int)((state >> 14) % 257));
+        digest = 31 * digest + (left.intersects(right) ? 1u : 0u);
+        digest = 31 * digest + (right.intersects(left) ? 1u : 0u);
+    }
+    assert(digest == 437_498_016);
+}
+
 @("andNot preserves capacity and clears only overlapping bits")
 unittest
 {

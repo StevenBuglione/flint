@@ -191,15 +191,25 @@ class BitSet
         return cast(int) count;
     }
 
+    /// Reports whether the two bit sets have any set bit in common.
+    bool intersects(BitSet set) const pure
+    {
+        if (set is null)
+            rejectNullSet();
+
+        const common = wordsInUse < set.wordsInUse ? wordsInUse : set.wordsInUse;
+        foreach_reverse (word; 0 .. common)
+            if ((words[word] & set.words[word]) != 0)
+                return true;
+        return false;
+    }
+
     /// Clears the bits that are also set in the supplied mask.
     void andNot(BitSet set) pure
     {
         if (set is null)
-        {
-            import flint.java.lang : NullPointerException;
+            rejectNullSet();
 
-            throw new NullPointerException();
-        }
         int common = wordsInUse < set.wordsInUse ? wordsInUse : set.wordsInUse;
         while (common > 0)
         {
@@ -207,6 +217,13 @@ class BitSet
             words[common] &= ~set.words[common];
         }
         recalculateWordsInUse();
+    }
+
+    pragma(inline, false) private static void rejectNullSet() pure
+    {
+        import flint.java.lang : NullPointerException;
+
+        throw new NullPointerException();
     }
 
     private static ulong maskAt(int index) pure nothrow @nogc
@@ -290,12 +307,15 @@ class BitSet
     {
         const required = cast(size_t) word + 1;
         if (required > words.length)
-        {
-            const doubled = 2 * words.length;
-            words.length = doubled > required ? doubled : required;
-        }
+            grow(required);
         if (word >= wordsInUse)
             wordsInUse = cast(int) required;
+    }
+
+    pragma(inline, false) private void grow(size_t required) pure nothrow
+    {
+        const doubled = 2 * words.length;
+        words.length = doubled > required ? doubled : required;
     }
 
     pragma(inline, false) private void recalculateWordsInUse() pure nothrow @nogc
@@ -321,7 +341,7 @@ class BitSet
         return word * wordBits + bsf(matches);
     }
 
-    private int previousBit(int fromIndex, bool set) const pure nothrow @nogc
+    pragma(inline, false) private int previousBit(int fromIndex, bool set) const pure nothrow @nogc
     {
         if (fromIndex == -1)
             return -1;

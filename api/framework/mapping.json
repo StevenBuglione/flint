@@ -6371,6 +6371,7 @@
 "java.util.BitSet#flip(int)":{"status":"ported","d":"flint.java.util.bitset.BitSet.flip"},
 "java.util.BitSet#flip(int,int)":{"status":"ported","d":"flint.java.util.bitset.BitSet.flip"},
 "java.util.BitSet#get(int)":{"status":"ported","d":"flint.java.util.bitset.BitSet.get"},
+"java.util.BitSet#intersects(BitSet)":{"status":"ported","d":"flint.java.util.bitset.BitSet.intersects"},
 "java.util.BitSet#isEmpty()":{"status":"ported","d":"flint.java.util.bitset.BitSet.isEmpty"},
 "java.util.BitSet#length()":{"status":"ported","d":"flint.java.util.bitset.BitSet.length"},
 "java.util.BitSet#nextClearBit(int)":{"status":"ported","d":"flint.java.util.bitset.BitSet.nextClearBit"},
