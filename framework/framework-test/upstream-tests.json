@@ -18,13 +18,19 @@
     },
     "org/springframework/mock/web/MockHttpServletRequestTests.java": {
       "d": [
-        "framework/framework-test/tests/mock_http_servlet_request_content_type_tests.d"
+        "framework/framework-test/tests/mock_http_servlet_request_content_type_tests.d",
+        "framework/framework-test/tests/mock_http_servlet_request_header_tests.d"
       ],
       "methods": {
         "ported": [
           "contentTypeHeader",
           "contentTypeHeaderUTF8",
           "contentTypeMultipleCalls",
+          "httpHeaderFirstVariantFormattedDate",
+          "httpHeaderFormattedDateError",
+          "httpHeaderNameCasingIsPreserved",
+          "httpHeaderRfcFormattedDate",
+          "httpHeaderSecondVariantFormattedDate",
           "setContentType",
           "setContentTypeHeaderWithMoreComplexCharsetSyntax",
           "setContentTypeUTF8"
@@ -67,11 +73,6 @@
           "getServerPortWithInvalidIpv6AddressViaHostHeader": "Deferred request protocol, origin and URL derivation.",
           "getServerPortWithIpv6AddressAndInvalidPortViaHostHeader": "Deferred request protocol, origin and URL derivation.",
           "httpHeaderDate": "Deferred request date header value dispatch and grammar.",
-          "httpHeaderFirstVariantFormattedDate": "Deferred request date header value dispatch and grammar.",
-          "httpHeaderFormattedDateError": "Deferred request date header value dispatch and grammar.",
-          "httpHeaderNameCasingIsPreserved": "Deferred general request header behavior.",
-          "httpHeaderRfcFormattedDate": "Deferred request date header value dispatch and grammar.",
-          "httpHeaderSecondVariantFormattedDate": "Deferred request date header value dispatch and grammar.",
           "httpHeaderTimestamp": "Deferred request date header value dispatch and grammar.",
           "invalidAcceptLanguageHeader": "Deferred request locale contract.",
           "isSecureWithHttpSchemeAndSecureFlagIsFalse": "Deferred request protocol, origin and URL derivation.",
