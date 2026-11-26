@@ -18,7 +18,9 @@ finds the D declarations that already exist, so the classification starts from t
    A row that would open a dependency gap (tools/api_differences.py) or a kind mismatch is not added. Every row this
    tool adds is listed in api/jdk-unconfirmed.json until the owning lane confirms it (removes the id after checking the
    signature and behaviour); a lane that finds a row wrong reclassifies it.
-3. --table writes docs/spring/jdk-coverage.md: per package, the owners, done (ported or adapted) against in scope
+3. Each run records the leaf-only types in api/jdk-leaf-types.json. The table is built from committed files only, so
+   tools/api_differences.py --write regenerates it (the merge train included) and --check fails when it is stale;
+   --table writes it here too. docs/spring/jdk-coverage.md: per package, the owners, done (ported or adapted) against in scope
    (everything not excluded), and the types that exist only in a leaf module, not at their R1 path. Until the JDK
    aggregate re-exports them, --classify makes such a type adapted R1 with a note naming the leaf import path.
 
@@ -39,6 +41,7 @@ import api_differences  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 MAPPING = Path('api/framework/mapping.json')
 UNCONFIRMED = Path('api/jdk-unconfirmed.json')
+LEAF_TYPES = Path('api/jdk-leaf-types.json')
 TABLE = Path('docs/spring/jdk-coverage.md')
 AGGREGATES = {'class', 'struct', 'interface', 'enum', 'union'}
 D_KEYWORDS = {
@@ -409,6 +412,19 @@ def write_rows(root, rows):
     json.loads(path.read_text())
 
 
+def openjdk_manifest(root):
+    pin = next(u for u in json.loads((root / MAPPING).read_text())['upstream'] if u.startswith('openjdk@'))
+    return json.loads((root / 'api' / 'upstream' / f'openjdk-{pin.partition("@")[2]}.json').read_text())
+
+
+def table_text(root):
+    """docs/spring/jdk-coverage.md from committed files only (the mapping, the manifest, api/jdk-unconfirmed.json and
+    api/jdk-leaf-types.json), so tools/api_differences.py --write regenerates it wherever it regenerates the Java
+    differences page, including the merge train, and --check fails when it is stale."""
+    leaf = json.loads((root / LEAF_TYPES).read_text())['types'] if (root / LEAF_TYPES).is_file() else {}
+    return render_table(coverage(root, openjdk_manifest(root), leaf), leaf)
+
+
 def coverage(root, manifest, leaf):
     elements = json.loads((root / MAPPING).read_text())['elements']
     classifier = api_differences.Classifier(elements)
@@ -488,8 +504,7 @@ def main(argv=None):
     p.add_argument('--table', action='store_true', help=f'write {TABLE}')
     a = p.parse_args(argv)
     root = a.root
-    pin = next(u for u in json.loads((root / MAPPING).read_text())['upstream'] if u.startswith('openjdk@'))
-    manifest = json.loads((root / 'api' / 'upstream' / f'openjdk-{pin.partition("@")[2]}.json').read_text())
+    manifest = openjdk_manifest(root)
     xjson = a.xjson
     if xjson is None:
         xjson = Path(tempfile.mkdtemp()) / 'flint-java.json'
@@ -509,8 +524,12 @@ def main(argv=None):
         print(f'{len(rows)} rows added; {len(leaf)} types exist only in a leaf module')
     else:
         print(f'{len(rows)} rows would be added; {len(leaf)} types exist only in a leaf module')
+    (root / LEAF_TYPES).write_text(json.dumps({
+        'note': 'JDK types that exist only in a leaf module, not at their R1 path (tools/jdk_coverage.py, from dmd -X). '
+                'The table reads this file, so it regenerates without a compiler.',
+        'types': dict(sorted(leaf.items()))}, indent=1) + '\n')
     if a.table:
-        (root / TABLE).write_text(render_table(coverage(root, manifest, leaf), leaf))
+        (root / TABLE).write_text(table_text(root))
     return 0
 
 

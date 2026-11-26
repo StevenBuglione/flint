@@ -535,6 +535,22 @@ def groupby(rows):
         yield package, sorted(grouped[package], key=lambda r: r[1])
 
 
+def jdk_table(root, write=False):
+    """docs/spring/jdk-coverage.md is generated from the same mappings (tools/jdk_coverage.py), so it is written and
+    checked here with the Java differences page: a rebase or merge-train replay regenerates it instead of conflicting."""
+    if not (root / 'tools' / 'jdk_coverage.py').is_file() or not (root / 'api' / 'jdk-leaf-types.json').is_file():
+        return []
+    sys.path.insert(0, str(root / 'tools'))
+    import jdk_coverage
+    text = jdk_coverage.table_text(root)
+    target = root / jdk_coverage.TABLE
+    if write:
+        target.write_text(text)
+    elif not target.is_file() or target.read_text() != text:
+        return [f'{jdk_coverage.TABLE} does not match the mappings; run: python3 tools/api_differences.py --write']
+    return []
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     mode = p.add_mutually_exclusive_group(required=True)
@@ -561,6 +577,7 @@ def main(argv=None):
         target.write_text(page)
     elif not target.is_file() or target.read_text() != page:
         problems.append(f'{OUTPUT} does not match the mappings; run: python3 tools/api_differences.py --write')
+    problems += jdk_table(a.root, write=a.write)
     for problem in problems:
         print('api differences: ' + problem, file=sys.stderr)
     return 1 if problems else 0
