@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
+| data-commons | spring-data-commons@4.2.0 | 206 | 104 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,615 | 1,482 | 4,870 | 29,867 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -9999,7 +9999,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.auditing.config | 33 | 0 |
 | org.springframework.data.config | 25 | 0 |
 | org.springframework.data.convert | 255 | 0 |
-| org.springframework.data.core | 119 | 0 |
+| org.springframework.data.core | 116 | 0 |
 | org.springframework.data.crossstore | 29 | 0 |
 | org.springframework.data.domain | 182 | 0 |
 | org.springframework.data.domain.jaxb | 27 | 0 |
