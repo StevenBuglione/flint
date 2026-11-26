@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 159 | 143 | 0 | 2,088 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 54 | 65 | 0 | 4,333 |
+| framework | thymeleaf@3.1.7.RELEASE | 56 | 69 | 0 | 4,327 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 231 | 132 | 1,871 | 16,187 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -4043,6 +4043,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.thymeleaf.expression.IExpressionObjects#getObject(String)` | `flint.thymeleaf.expression.IExpressionObjects.getObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.thymeleaf.expression.IExpressionObjects#getObjectNames()` | `flint.thymeleaf.expression.IExpressionObjects.getObjectNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.thymeleaf.expression.Objects#arrayNullSafe(T[],T)` | `flint.thymeleaf.expression.Objects.arrayNullSafe` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A default-initialized D slice represents an empty array. Java throws for a null array. |
+| `org.thymeleaf.expression.Objects#listNullSafe(List,T)` | `flint.thymeleaf.expression.Objects.listNullSafe` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.thymeleaf.expression.Objects#nullSafe(T,T)` | `flint.thymeleaf.expression.Objects.nullSafe` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.thymeleaf.expression.Objects#setNullSafe(Set,T)` | `flint.thymeleaf.expression.Objects.setNullSafe` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.thymeleaf.standard.expression
 
@@ -10017,7 +10021,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.dialect | 18 | 0 |
 | org.thymeleaf.engine | 441 | 0 |
 | org.thymeleaf.exceptions | 3 | 0 |
-| org.thymeleaf.expression | 570 | 0 |
+| org.thymeleaf.expression | 564 | 0 |
 | org.thymeleaf.extras.springsecurity6.auth | 0 | 22 |
 | org.thymeleaf.extras.springsecurity6.dialect | 0 | 10 |
 | org.thymeleaf.extras.springsecurity6.dialect.expression | 0 | 8 |
