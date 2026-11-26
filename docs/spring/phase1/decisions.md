@@ -1200,3 +1200,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 04:05Z, coordinator, under the owner's standing approval: **R15 (enums with fields) is adopted** from the web-mvc proposal, minus its interface clause, which R18 now covers.
   - **The rule:** such an enum becomes a struct with `static immutable` constants and Java's enum methods.
   - **The enum rules are now complete:** constant-only enums stay D enums (R15), enums with methods are covered by R20, enums with interfaces by R18, and enums with fields by R15.
+- 2026-11-26 04:08Z, coordinator, under the owner's standing approval: **D-AOT-MEMBER, the one shared deviation for Java reflection members.**
+  - **The mapping:** `AccessibleObject` and `Member` map to engine-aot's `MemberDescriptorRef`, with the declaring descriptor, the kind, a safe pointer for method, constructor or property, and `.init` when absent.
+  - **Scope:** only metadata that Flint AOT generates is exposed. Missing categories throw `UnsupportedOperationException` until the generator adds them; no reflection is used.
+  - **Ownership:** framework-core owns the type, and every lane cites this deviation.
