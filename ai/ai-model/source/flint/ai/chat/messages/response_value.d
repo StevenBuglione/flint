@@ -25,7 +25,7 @@ import std.typecons : Nullable;
 
 @safe:
 
-private alias NullableText = Nullable!string;
+package(flint.ai) alias NullableText = Nullable!string;
 
 package(flint.ai) char[] joinRecord(scope const(string)[] parts) pure
 {

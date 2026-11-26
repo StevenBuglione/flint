@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/{AbstractMessage,Message,MessageType,SystemMessage,ToolResponseMessage}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/{AbstractMessage,AssistantMessage,Message,MessageType,SystemMessage,ToolResponseMessage}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages;
 
 import flint.ai.chat.messages.part : MessagePart, TextPart, joinTextParts;
+import flint.ai.chat.messages.response_value : NullableText;
 import flint.ai.content : Content, copyContentMetadata;
 import flint.engine.aot.any : Any;
 import flint.java.lang : JavaObject;
 import flint.java.util : List, Map;
-import std.typecons : Nullable;
 
 @safe:
 
@@ -101,7 +101,7 @@ interface Message : Content
     MessageType getMessageType();
 }
 
-private alias MessageText = Nullable!string;
+private alias MessageText = NullableText;
 private alias MessageParts = List!MessagePart;
 private alias MessageMetadata = Map!(string, Any);
 
@@ -295,6 +295,15 @@ class SystemMessage : AbstractMessage
             return new SystemMessage(text_, metadataSet_ ? metadata_ : MessageMetadata.of());
         }
     }
+}
+
+/// A message carrying the assistant's output.
+class AssistantMessage : AbstractMessage
+{
+    @disable this();
+
+    /// The legacy value representing a tool call requested by the model.
+    public import flint.ai.chat.messages.tool_call_value : ToolCall;
 }
 
 /// A message carrying tool responses.

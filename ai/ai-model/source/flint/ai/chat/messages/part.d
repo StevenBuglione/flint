@@ -18,8 +18,8 @@
 // Modified by the Flint authors.
 module flint.ai.chat.messages.part;
 
-import flint.ai.chat.messages.response_value : ToolResponse, joinRecord, normalizeText,
-    recordText, sameText, textHash;
+import flint.ai.chat.messages.response_value : NullableText, ToolResponse, joinRecord,
+    normalizeText, recordText, sameText, textHash;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException, stringHashCode;
 import flint.java.util : LinkedHashMap, List, Map;
 import std.typecons : Nullable;
@@ -30,7 +30,6 @@ private alias PartAttributes = Map!(string, string);
 // Reuse the concrete map that Map.copyOf instantiates for part attributes.
 private alias MutablePartAttributes = LinkedHashMap!(string, string);
 private alias NullablePayload = Nullable!OpaquePayload;
-private alias NullableText = Nullable!string;
 private alias ResultParts = List!MessagePart;
 
 // LDC's size profile needs the constructor inlined. DMD avoids importing its body in the caller.

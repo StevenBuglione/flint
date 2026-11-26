@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 204 | 377 | 0 | 15,215 |
+| ai | spring-ai@v2.1.0 | 204 | 383 | 0 | 15,209 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
 | framework | spring-framework@v7.1.0 | 3,618 | 1,462 | 4,870 | 29,884 |
@@ -237,6 +237,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.messages.AbstractMessage#messageType` | `flint.ai.chat.messages.AbstractMessage.messageType` | [R15](api-mapping.md#r15-enums-with-fields), [R24](api-mapping.md#r24-final-instance-fields) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#metadata` | `flint.ai.chat.messages.AbstractMessage.metadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values), [R24](api-mapping.md#r24-final-instance-fields) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#textContent` | `flint.ai.chat.messages.AbstractMessage.textContent` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.messages.AssistantMessage.ToolCall` | `flint.ai.chat.messages.AssistantMessage.ToolCall` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.chat.messages.AssistantMessage.ToolCall#<init>(String,String,String,String)` | `flint.ai.chat.messages.AssistantMessage.ToolCall.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.chat.messages.AssistantMessage.ToolCall#arguments` | `flint.ai.chat.messages.AssistantMessage.ToolCall.arguments` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.AssistantMessage.ToolCall#id` | `flint.ai.chat.messages.AssistantMessage.ToolCall.id` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.AssistantMessage.ToolCall#name` | `flint.ai.chat.messages.AssistantMessage.ToolCall.name` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.AssistantMessage.ToolCall#type` | `flint.ai.chat.messages.AssistantMessage.ToolCall.type` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.MessageType` | `flint.ai.chat.messages.MessageType` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.chat.messages.MessageType#ASSISTANT` | `flint.ai.chat.messages.MessageType.ASSISTANT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.chat.messages.MessageType#SYSTEM` | `flint.ai.chat.messages.MessageType.SYSTEM` | [R15](api-mapping.md#r15-enums-with-fields) |  |
@@ -8947,7 +8953,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.memory.repository.mongo | 0 | 20 |
 | org.springframework.ai.chat.memory.repository.neo4j | 0 | 63 |
 | org.springframework.ai.chat.memory.repository.redis | 0 | 65 |
-| org.springframework.ai.chat.messages | 81 | 0 |
+| org.springframework.ai.chat.messages | 75 | 0 |
 | org.springframework.ai.chat.messages.part | 32 | 0 |
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |
