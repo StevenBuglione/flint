@@ -7,6 +7,7 @@ delegate to the interface; `asDelegate` goes the other way.
 +/
 module flint.java.util.function_;
 
+public import flint.java.util.function_.intbinaryoperator : IntBinaryOperator;
 public import flint.java.util.function_.intsupplier : IntSupplier;
 public import flint.java.util.function_.longsupplier : LongSupplier;
 public import flint.java.util.function_.supplier : Supplier;

@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,126 | 325 | 1,871 | 15,099 |
+| framework | openjdk@21.0.13 | 1,127 | 326 | 1,871 | 15,097 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2583,6 +2583,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `java.util.function.Function#identity()` | `flint.java.util.function_.Function.identity` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Call Function!(T, T).identity(). Flint binds Java's method type parameter on the interface specialization. |
+| `java.util.function.IntBinaryOperator` | `flint.java.util.function_.intbinaryoperator.IntBinaryOperator` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.IntSupplier` | `flint.java.util.function_.intsupplier.IntSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.LongSupplier` | `flint.java.util.function_.longsupplier.LongSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.Supplier` | `flint.java.util.function_.supplier.Supplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
@@ -10528,7 +10529,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 285 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
-| java.util.function | 91 | 0 |
+| java.util.function | 89 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 96 | 0 |
 | java.util.regex | 67 | 0 |

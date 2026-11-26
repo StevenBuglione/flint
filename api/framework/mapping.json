@@ -7350,6 +7350,8 @@
 "java.util.function.ToLongFunction#applyAsLong(T)":{"d":"flint.java.util.function_.ToLongFunction.applyAsLong","status":"ported"},
 "java.util.function.UnaryOperator":{"d":"flint.java.util.function_.UnaryOperator","status":"ported"},
 "java.util.function.UnaryOperator#identity()":{"status":"excluded","category":"deferred","phase":"2","reason":"The inherited Function.identity factory returns Function. Java's UnaryOperator factory returns the nominal UnaryOperator."},
+"java.util.function.IntBinaryOperator":{"status":"adapted","d":"flint.java.util.function_.intbinaryoperator.IntBinaryOperator","rules":["R1","R3","R9"]},
+"java.util.function.IntBinaryOperator#applyAsInt(int,int)":{"status":"ported","d":"flint.java.util.function_.intbinaryoperator.IntBinaryOperator.applyAsInt"},
 "java.util.function.IntSupplier":{"status":"adapted","d":"flint.java.util.function_.intsupplier.IntSupplier","rules":["R1","R3","R9"]},
 "java.util.function.IntSupplier#getAsInt()":{"status":"ported","d":"flint.java.util.function_.intsupplier.IntSupplier.getAsInt"},
 "java.util.function.LongSupplier":{"status":"adapted","d":"flint.java.util.function_.longsupplier.LongSupplier","rules":["R1","R3","R9"]},
