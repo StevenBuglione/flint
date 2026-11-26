@@ -13,13 +13,15 @@ public import flint.jakarta.persistence.annotations : Access, AccessType, Associ
     Id, IdClass, Index, Inheritance, InheritanceType, JoinColumn, JoinColumns, JoinTable, Lob, LockModeType,
     ManyToMany, ManyToOne, MapKey, MapKeyClass, MapKeyColumn, MapKeyEnumerated, MapKeyJoinColumn,
     MapKeyJoinColumns, MapKeyTemporal,
-    MappedSuperclass, MapsId, NamedQueries, NamedQuery, OneToMany, OneToOne, OrderBy, OrderColumn, PersistenceUnit,
-    PersistenceUnits, PostLoad, PostPersist, PostRemove, PostUpdate, PrePersist, PreRemove,
-    PreUpdate, PrimaryKeyJoinColumn, PrimaryKeyJoinColumns,
-    QueryHint, SecondaryTable, SecondaryTables, SequenceGenerator, SequenceGenerators, Table,
+    MappedSuperclass, MapsId, NamedQueries, NamedQuery, OneToMany, OneToOne, OrderBy, OrderColumn,
+    PersistenceContext, PersistenceContexts,
+    PersistenceContextType,
+    PersistenceProperty, PersistenceUnit, PersistenceUnits, PostLoad, PostPersist, PostRemove,
+    PostUpdate, PrePersist, PreRemove, PreUpdate,
+    PrimaryKeyJoinColumn, PrimaryKeyJoinColumns,
+    QueryHint, SecondaryTable, SecondaryTables, SequenceGenerator, SequenceGenerators, SynchronizationType, Table,
     TableGenerator, TableGenerators, Temporal, TemporalType, Transient, UniqueConstraint, Version;
-public import flint.jakarta.persistence.contracts : AttributeConverter, CacheRetrieveMode,
-    CacheStoreMode, EntityTransaction, FindOption,
-    LockOption, ParameterMode, PersistenceContextType, PessimisticLockScope, RefreshOption, SynchronizationType;
+public import flint.jakarta.persistence.contracts : AttributeConverter, CacheRetrieveMode, CacheStoreMode,
+    EntityTransaction, FindOption, LockOption, ParameterMode, PessimisticLockScope, RefreshOption;
 
 @safe:

@@ -46,10 +46,11 @@
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  *   CascadeType.java, ElementCollection.java, EntityListeners.java, FlushModeType.java, IdClass.java, ManyToMany.java,
  *   ManyToOne.java,
- *   MapKeyClass.java, OneToMany.java, OneToOne.java, PersistenceUnit.java
+ *   MapKeyClass.java, OneToMany.java, OneToOne.java, PersistenceContext.java, PersistenceContexts.java,
+ *   PersistenceContextType.java, PersistenceProperty.java, PersistenceUnit.java
  *
  * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
- *   Convert.java, Converter.java, Converts.java
+ *   Convert.java, Converter.java, Converts.java, SynchronizationType.java
  */
 
 /// Jakarta Persistence mapping annotations and their option enums.
@@ -941,6 +942,57 @@ struct Converts
 {
     /// The conversion overrides.
     Convert[] value;
+}
+
+/// Declares a dependency on a container-managed entity manager and its persistence context.
+struct PersistenceContext
+{
+    /// Name of the reference in the environment naming context.
+    string name = "";
+    /// Name of the persistence unit to use.
+    string unitName = "";
+    /// Lifetime of the context.
+    PersistenceContextType type = PersistenceContextType.TRANSACTION;
+    /// How the context joins the current transaction.
+    SynchronizationType synchronization = SynchronizationType.SYNCHRONIZED;
+    /// Properties for the container or provider.
+    PersistenceProperty[] properties = [];
+}
+
+/// Groups multiple persistence context dependencies on one declaration.
+struct PersistenceContexts
+{
+    /// The declared dependencies.
+    PersistenceContext[] value;
+}
+
+/// A property passed to the container or persistence provider.
+struct PersistenceProperty
+{
+    /// Value of the property.
+    string value;
+    /// Name of the property.
+    string name;
+}
+
+/// Lifetime of a persistence context.
+enum PersistenceContextType
+{
+    /// Default. The context is scoped to a transaction.
+    TRANSACTION,
+
+    /// The context can span transactions.
+    EXTENDED,
+}
+
+/// Controls whether the persistence context joins the current transaction automatically.
+enum SynchronizationType
+{
+    /// Join the current transaction automatically.
+    SYNCHRONIZED,
+
+    /// Join the current transaction only after an explicit joinTransaction call.
+    UNSYNCHRONIZED,
 }
 
 /// Declares a dependency on an entity manager factory for a persistence unit.
