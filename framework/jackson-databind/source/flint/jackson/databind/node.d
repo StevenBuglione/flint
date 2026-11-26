@@ -306,6 +306,20 @@ abstract class JsonNode
         return get(index) !is null;
     }
 
+    /// Whether the property exists and its value is not JSON null.
+    bool hasNonNull(string propertyName)
+    {
+        auto value = get(propertyName);
+        return value !is null && !value.isNull();
+    }
+
+    /// Whether the element exists and its value is not JSON null.
+    bool hasNonNull(int index)
+    {
+        auto value = get(index);
+        return value !is null && !value.isNull();
+    }
+
     /// The properties of an Object node in insertion order; empty for other nodes.
     Entry[] properties()
     {
@@ -1081,6 +1095,16 @@ abstract class ValueNode : JsonNode
     alias asLong = JsonNode.asLong;
     alias asDouble = JsonNode.asDouble;
     alias asBoolean = JsonNode.asBoolean;
+
+    final override bool hasNonNull(string)
+    {
+        return false;
+    }
+
+    final override bool hasNonNull(int)
+    {
+        return false;
+    }
 
     final override ObjectNode findParent(string)
     {

@@ -202,6 +202,8 @@ On venus, the pinned `measure_builds.py --framework-sizes --framework jackson-da
 
 The first-match experiment added 672 bytes of allocated ELF sections at Oz to both applications, from 3,727,853 to 3,728,525 for gs-rest-service and from 10,481,639 to 10,482,311 for petclinic-rest. Both builds used `flint build --profile size` and the pinned LDC on the same matched source trees.
 
+The `hasNonNull` accessors look up a child once and inspect its node type. Tests port the presence assertions from Jackson's ArrayNodeTest and ObjectNodeTest, including the change from explicit null to a value. The same module probe on venus measured 419,469 to 419,989 loadable bytes from `5658e261` to `0f76aad2`, with 4,088 DMD template instances in both builds.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |
