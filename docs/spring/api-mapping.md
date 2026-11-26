@@ -33,6 +33,7 @@ A Java package with one public type still gets its own module. Framework modules
 - The canonical import path is unchanged, and `api/mapping.json` records the canonical path as `d`, never the internal module.
 - No wildcard re-exports, and no `package.d` aggregators.
 - The internal module is documented as internal, and applications never import it.
+- **Names at run time:** imports and class-presence checks (`@ConditionalOnClass`) use the canonical path. Compiler RTTI (`typeid`, `ClassInfo.name`), Flint AOT descriptors and diagnostics show the declaring internal module's fully qualified name, because that is where D declares the type (flint-aot review, 2026-11-26).
 
 ```java
 import org.springframework.web.bind.annotation.GetMapping;
