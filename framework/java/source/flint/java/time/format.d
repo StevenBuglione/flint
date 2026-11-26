@@ -659,6 +659,8 @@ struct DateTimeFormatter
                     "Text '" ~ copy ~ "' could not be parsed, unparsed text found at index " ~ indexText(index),
                     copy, index);
         }
+        if (hasZone_ && !fields.zoneId_.length)
+            fields.addZone(zone_);
         return fields;
     }
 
