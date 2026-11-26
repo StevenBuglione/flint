@@ -24,8 +24,13 @@ long currentTimeTicks() nothrow @nogc
     return ticks < 0 ? 0 : ticks;
 }
 
-/// The local zone's current offset from UTC in minutes (east positive), as std.datetime's
-/// `Clock.currTime.utcOffset.total!"minutes"`; 0 when it cannot be read.
+/++
+The local zone's current offset from UTC in minutes (east positive), as std.datetime's
+`Clock.currTime.utcOffset.total!"minutes"`; 0 when it cannot be read. On POSIX it follows `TZ` as localtime does
+(tzset first). On Windows it is the system zone's current bias (GetTimeZoneInformation): `TZ` is not read, and the
+offset is today's, so an instant on the other side of a daylight-saving change would get today's offset. That suits
+log timestamps, its use; code that converts past or future instants needs a zone database.
++/
 int localOffsetMinutes() nothrow @nogc
 {
     return cast(int)(localOffsetSeconds(currentTimeMillis() / 1000) / 60);
