@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,103 | 245 | 1,871 | 15,202 |
+| framework | openjdk@21.0.13 | 1,105 | 246 | 1,871 | 15,199 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1953,6 +1953,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.math.RoundingMode#valueOf(String)` | `flint.java.math.roundingmode.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.math.RoundingMode#valueOf(int)` | `flint.java.math.roundingmode.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.math.RoundingMode#values()` | `flint.java.math.roundingmode.values` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+
+#### java.net
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.net.URI#getScheme()` | `flint.java.net.URI.getScheme` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null string denotes an absent scheme. Every present scheme is nonempty. |
 
 #### java.nio
 
@@ -9999,7 +10005,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 137 | 0 |
-| java.net | 821 | 0 |
+| java.net | 818 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 372 | 0 |
 | java.nio.channels | 0 | 332 |
