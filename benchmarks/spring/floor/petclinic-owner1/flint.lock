@@ -145,7 +145,7 @@ name = "flint:hibernate-validator"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:engine-aot", "flint:jakarta-validation", "flint:java", "flint:serde", "flint:validate"]
+dependencies = ["flint:engine-aot", "flint:jakarta-validation", "flint:java", "flint:java-regex", "flint:serde", "flint:validate"]
 
 [[package]]
 name = "flint:jackson-annotations"
@@ -195,6 +195,13 @@ kind = "core"
 source = "workspace"
 scope = "build"
 dependencies = []
+
+[[package]]
+name = "flint:java-regex"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:java", "flint:validate"]
 
 [[package]]
 name = "flint:log"
