@@ -106,6 +106,36 @@ unittest
     assert(response.getHeader("Content-Length") == "66");
 }
 
+@("shouldSetContentType")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    response.setContentType("text/plain");
+    assert(response.getContentType() == "text/plain");
+    assert(response.getHeader("Content-Type") == "text/plain");
+    assert(response.getCharacterEncoding() == "ISO-8859-1");
+}
+
+@("shouldSetContentTypeHeader")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    response.setHeader("Content-Type", "text/plain");
+    assert(response.getContentType() == "text/plain");
+    assert(response.getHeader("Content-Type") == "text/plain");
+    assert(response.getCharacterEncoding() == "ISO-8859-1");
+}
+
+@("shouldAddContentTypeHeader")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    response.addHeader("Content-Type", "text/plain");
+    assert(response.getContentType() == "text/plain");
+    assert(response.getHeader("Content-Type") == "text/plain");
+    assert(response.getCharacterEncoding() == "ISO-8859-1");
+}
+
 @("contentLengthHeaderSetsLength")
 unittest
 {

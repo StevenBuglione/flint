@@ -66,8 +66,11 @@
           "setHeaderWithNullValueShouldHaveNoEffect",
           "setHeaderWithNullValueShouldRemoveHeader",
           "setLocaleWithNullValue",
+          "shouldAddContentTypeHeader",
           "shouldAddMultipleContentLanguage",
           "shouldResetToDefault",
+          "shouldSetContentType",
+          "shouldSetContentTypeHeader",
           "shouldSetDefault",
           "shouldSetEncodingWithComplexContentTypeSyntax",
           "shouldSetEncodingWithContentType",
@@ -87,10 +90,7 @@
           "getNonExistentDateHeader": "Deferred response header behavior.",
           "setCookieHeader": "Deferred response cookie and Set-Cookie header behavior.",
           "setCookieHeaderWithMaxAgeAndExpiresAttributes": "Deferred response cookie and Set-Cookie header behavior.",
-          "setCookieHeaderWithZeroExpiresAttribute": "Deferred response cookie and Set-Cookie header behavior.",
-          "shouldAddContentTypeHeader": "Deferred response header behavior.",
-          "shouldSetContentType": "Deferred response header behavior.",
-          "shouldSetContentTypeHeader": "Deferred response header behavior."
+          "setCookieHeaderWithZeroExpiresAttribute": "Deferred response cookie and Set-Cookie header behavior."
         }
       },
       "status": "partial"
