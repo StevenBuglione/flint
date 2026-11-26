@@ -202,33 +202,35 @@ class NameMatchMethodPointcut : StaticMethodMatcherPointcut
     }
 }
 
+private alias NullableString = Nullable!string;
+
 /// A pointcut with a user-supplied selector expression.
 interface ExpressionPointcut : Pointcut
 {
     /// Returns the configured expression, if present.
-    Nullable!string getExpression();
+    NullableString getExpression();
 }
 
 /// Base class that stores an expression and its optional diagnostic location.
 abstract class AbstractExpressionPointcut : ExpressionPointcut
 {
-    private Nullable!string location;
-    private Nullable!string expression;
+    private NullableString location;
+    private NullableString expression;
 
     /// Sets the location used to report configuration errors.
-    void setLocation(Nullable!string location)
+    void setLocation(NullableString location)
     {
         this.location = location;
     }
 
     /// Returns the configured diagnostic location, if present.
-    Nullable!string getLocation()
+    NullableString getLocation()
     {
         return location;
     }
 
     /// Stores the expression and invokes the subclass's configuration hook.
-    void setExpression(Nullable!string expression)
+    void setExpression(NullableString expression)
     {
         this.expression = expression;
         try
@@ -243,12 +245,12 @@ abstract class AbstractExpressionPointcut : ExpressionPointcut
     }
 
     /// Lets a subclass parse the expression. Throws IllegalArgumentException for an invalid expression.
-    protected void onSetExpression(Nullable!string)
+    protected void onSetExpression(NullableString)
     {
     }
 
     /// Returns the stored expression, if present.
-    Nullable!string getExpression()
+    NullableString getExpression()
     {
         return expression;
     }
