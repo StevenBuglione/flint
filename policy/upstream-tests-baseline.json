@@ -9119,7 +9119,6 @@
       "org/springframework/http/support/JacksonHandlerInstantiatorTests.java",
       "org/springframework/web/accept/ContentNegotiationManagerFactoryBeanTests.java",
       "org/springframework/web/accept/DefaultApiVersionStrategiesTests.java",
-      "org/springframework/web/accept/HeaderApiVersionResolverTests.java",
       "org/springframework/web/accept/MappingContentNegotiationStrategyTests.java",
       "org/springframework/web/accept/MappingMediaTypeFileExtensionResolverTests.java",
       "org/springframework/web/accept/MediaTypeParamApiVersionResolverTests.java",

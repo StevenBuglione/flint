@@ -1,10 +1,11 @@
 /++
-`org.springframework.web.accept`: content negotiation and API version exceptions.
+`org.springframework.web.accept`: content negotiation and API versioning.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/accept/
 (ContentNegotiationStrategy.java, ContentNegotiationManager.java, FixedContentNegotiationStrategy.java,
-HeaderContentNegotiationStrategy.java, MediaTypeFileExtensionResolver.java, InvalidApiVersionException.java,
-MissingApiVersionException.java, NotAcceptableApiVersionException.java).
+HeaderContentNegotiationStrategy.java, MediaTypeFileExtensionResolver.java, ApiVersionResolver.java,
+HeaderApiVersionResolver.java, InvalidApiVersionException.java, MissingApiVersionException.java,
+NotAcceptableApiVersionException.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook. Spring Boot's default manager has only the
@@ -13,15 +14,42 @@ header strategy.
 module flint.web.accept;
 
 import flint.http : HttpHeaders, HttpStatus, InvalidMediaTypeException, MediaType;
+import flint.jakarta.servlet.http : HttpServletRequest;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.util : ArrayList, Collections, List, Objects;
 import flint.util : InvalidMimeTypeException, MimeTypeUtils;
 import flint.web : HttpMediaTypeNotAcceptableException;
 import flint.web.context.request : NativeWebRequest;
 import flint.web.server : ResponseStatusException;
-import std.typecons : Nullable;
+import std.typecons : Nullable, nullable;
 
 @safe:
+
+/// Extracts the API version from a request.
+interface ApiVersionResolver
+{
+    /// The version value, or an absent value if the request did not supply one.
+    Nullable!string resolveVersion(HttpServletRequest request);
+}
+
+/// Reads the API version from a configured request header.
+class HeaderApiVersionResolver : ApiVersionResolver
+{
+    private string headerName;
+
+    ///
+    this(string headerName) pure nothrow @nogc
+    {
+        this.headerName = headerName;
+    }
+
+    /// Uses the servlet's first value for the header.
+    override Nullable!string resolveVersion(HttpServletRequest request)
+    {
+        const value = request.getHeader(headerName);
+        return value is null ? Nullable!string.init : nullable(value);
+    }
+}
 
 /// A version that cannot be parsed or is outside the supported set.
 class InvalidApiVersionException : ResponseStatusException

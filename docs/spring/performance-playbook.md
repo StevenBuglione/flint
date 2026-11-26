@@ -850,6 +850,15 @@ and moved from 8,493 to 8,497 templates. The inherited Phobos overage uses
 `6c9e5f49`. Direct DMD and LDC tests cover status, reasons, cause identity,
 and exception inheritance.
 
+The header API version resolver wraps the servlet's first header value
+without parsing it. A native LDC release probe recorded zero GC bytes over
+2,000 warmed lookups each for repeated, empty, and absent headers. Matched
+venus probes at `23d6a4f38` and `88247c8a5` held their O3 and Oz loadable
+bytes for Web, Web MVC, and framework-test. DMD templates moved from
+7,017 to 7,023, 6,082 to 6,086, and 8,497 to 8,501 respectively. The native
+probe and both compiler suites verify first-value selection and the
+distinction between an empty header and an absent header.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
