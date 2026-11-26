@@ -1985,18 +1985,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.time.MonthDay` | `flint.java.time.monthday.MonthDay` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.MonthDay` | `flint.java.time.monthday.MonthDay` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import MonthDay from flint.java.time.monthday until the JDK aggregate re-exports it. |
 | `java.time.MonthDay#equals(Object)` | `flint.java.time.monthday.MonthDay.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.MonthDay#parse(CharSequence)` | `flint.java.time.monthday.MonthDay.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.MonthDay#with(Month)` | `flint.java.time.monthday.MonthDay.with_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `java.time.Period` | `flint.java.time.period.Period` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.Period` | `flint.java.time.period.Period` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Period from flint.java.time.period until the JDK aggregate re-exports it. |
 | `java.time.Period#equals(Object)` | `flint.java.time.period.Period.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Period#parse(CharSequence)` | `flint.java.time.period.Period.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
-| `java.time.Year` | `flint.java.time.year.Year` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.Year` | `flint.java.time.year.Year` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Year from flint.java.time.year until the JDK aggregate re-exports it. |
 | `java.time.Year#equals(Object)` | `flint.java.time.year.Year.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Year#isValidMonthDay(MonthDay)` | `flint.java.time.year.Year.isValidMonthDay` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.time.Year#parse(CharSequence)` | `flint.java.time.year.Year.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
-| `java.time.YearMonth` | `flint.java.time.yearmonth.YearMonth` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.YearMonth` | `flint.java.time.yearmonth.YearMonth` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import YearMonth from flint.java.time.yearmonth until the JDK aggregate re-exports it. |
 | `java.time.YearMonth#equals(Object)` | `flint.java.time.yearmonth.YearMonth.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.YearMonth#parse(CharSequence)` | `flint.java.time.yearmonth.YearMonth.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 
@@ -2011,7 +2011,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.time.temporal.ChronoField` | `flint.java.time.temporal.chronofield.ChronoField` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `java.time.temporal.ChronoField` | `flint.java.time.temporal.chronofield.ChronoField` | [R1](api-mapping.md#r1-packages-and-names), [R18](api-mapping.md#r18-enums-that-implement-an-interface) | Import ChronoField from flint.java.time.temporal.chronofield until the JDK aggregate re-exports it. |
 | `java.time.temporal.ChronoField#ALIGNED_DAY_OF_WEEK_IN_MONTH` | `flint.java.time.temporal.chronofield.ChronoField.ALIGNED_DAY_OF_WEEK_IN_MONTH` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoField#ALIGNED_DAY_OF_WEEK_IN_YEAR` | `flint.java.time.temporal.chronofield.ChronoField.ALIGNED_DAY_OF_WEEK_IN_YEAR` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoField#ALIGNED_WEEK_OF_MONTH` | `flint.java.time.temporal.chronofield.ChronoField.ALIGNED_WEEK_OF_MONTH` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
@@ -2046,7 +2046,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.temporal.ChronoField#isTimeBased()` | `flint.java.time.temporal.chronofield.isTimeBased` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoField#range()` | `flint.java.time.temporal.chronofield.range` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoField#toString()` | `flint.java.time.temporal.chronofield.toString` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
-| `java.time.temporal.ChronoUnit` | `flint.java.time.temporal.chronounit.ChronoUnit` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `java.time.temporal.ChronoUnit` | `flint.java.time.temporal.chronounit.ChronoUnit` | [R1](api-mapping.md#r1-packages-and-names), [R18](api-mapping.md#r18-enums-that-implement-an-interface) | Import ChronoUnit from flint.java.time.temporal.chronounit until the JDK aggregate re-exports it. |
 | `java.time.temporal.ChronoUnit#CENTURIES` | `flint.java.time.temporal.chronounit.ChronoUnit.CENTURIES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoUnit#DAYS` | `flint.java.time.temporal.chronounit.ChronoUnit.DAYS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoUnit#DECADES` | `flint.java.time.temporal.chronounit.ChronoUnit.DECADES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
@@ -2068,24 +2068,24 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.temporal.ChronoUnit#isDurationEstimated()` | `flint.java.time.temporal.chronounit.isDurationEstimated` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoUnit#isTimeBased()` | `flint.java.time.temporal.chronounit.isTimeBased` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoUnit#toString()` | `flint.java.time.temporal.chronounit.toString` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
-| `java.time.temporal.ValueRange` | `flint.java.time.temporal.valuerange.ValueRange` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.temporal.ValueRange` | `flint.java.time.temporal.valuerange.ValueRange` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import ValueRange from flint.java.time.temporal.valuerange until the JDK aggregate re-exports it. |
 | `java.time.temporal.ValueRange#equals(Object)` | `flint.java.time.temporal.valuerange.ValueRange.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### java.time.zone
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.time.zone.ZoneOffsetTransition` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition` | [R11](api-mapping.md#r11-object-identity-and-equality) | The value struct exposes compareTo directly. Java Comparable callers use a D template constraint on compareTo. |
+| `java.time.zone.ZoneOffsetTransition` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | The value struct exposes compareTo directly. Java Comparable callers use a D template constraint on compareTo. Import ZoneOffsetTransition from flint.java.time.zone.zoneoffsettransition until the JDK aggregate re-exports it. |
 | `java.time.zone.ZoneOffsetTransition#equals(Object)` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.zone.ZoneOffsetTransition#isValidOffset(ZoneOffset)` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition.isValidOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `java.time.zone.ZoneOffsetTransitionRule` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.zone.ZoneOffsetTransitionRule` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import ZoneOffsetTransitionRule from flint.java.time.zone.zoneoffsettransitionrule until the JDK aggregate re-exports it. |
 | `java.time.zone.ZoneOffsetTransitionRule#equals(Object)` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.zone.ZoneOffsetTransitionRule#getDayOfWeek()` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.getDayOfWeek` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.time.zone.ZoneOffsetTransitionRule#of(Month,int,DayOfWeek,LocalTime,boolean,TimeDefinition,ZoneOffset,ZoneOffset,ZoneOffset)` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.of` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition#createDateTime(LocalDateTime,ZoneOffset,ZoneOffset)` | `flint.java.time.zone.zoneoffsettransitionrule.createDateTime` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition#valueOf(String)` | `flint.java.time.zone.zoneoffsettransitionrule.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition#values()` | `flint.java.time.zone.zoneoffsettransitionrule.values` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
-| `java.time.zone.ZoneRules` | `flint.java.time.zone.zonerules.ZoneRules` | [R11](api-mapping.md#r11-object-identity-and-equality) | Rules accept a fixed offset or explicit transition lists. Typed wall-offset, transition, validity and daylight-savings queries drop pure, nothrow and @nogc so malformed recurring rules can raise DateTimeException. Zone database lookup lives in a future leaf. |
+| `java.time.zone.ZoneRules` | `flint.java.time.zone.zonerules.ZoneRules` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Rules accept a fixed offset or explicit transition lists. Typed wall-offset, transition, validity and daylight-savings queries drop pure, nothrow and @nogc so malformed recurring rules can raise DateTimeException. Zone database lookup lives in a future leaf. Import ZoneRules from flint.java.time.zone.zonerules until the JDK aggregate re-exports it. |
 | `java.time.zone.ZoneRules#equals(Object)` | `flint.java.time.zone.zonerules.ZoneRules.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.zone.ZoneRules#getDaylightSavings(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.getDaylightSavings` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.time.zone.ZoneRules#getOffset(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.getOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
