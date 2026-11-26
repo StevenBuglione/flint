@@ -41,10 +41,14 @@
   "aspectj": {
    "directory": "framework/aspectj",
    "module": "flint.aspectj.lang.annotation",
+   "also": [
+    "flint.aspectj.lang"
+   ],
    "repo": "framework",
    "licence": "EPL-2.0",
    "upstream": "aspectj@1.9.27",
    "dependencies": [
+    "engine-aot",
     "java"
    ],
    "bench": {

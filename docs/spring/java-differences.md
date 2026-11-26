@@ -194,7 +194,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | thymeleaf@3.1.7.RELEASE | 0 | 0 | 0 | 4,452 |
 | framework | micrometer-observation@1.18.0 | 42 | 34 | 0 | 236 |
 | framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 16,240 |
-| framework | aspectj@1.9.27 | 0 | 31 | 191 | 88 |
+| framework | aspectj@1.9.27 | 18 | 55 | 191 | 46 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
 
@@ -1795,6 +1795,35 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.aopalliance.intercept.Joinpoint#proceed()` | `flint.aopalliance.intercept.Joinpoint.proceed` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.aopalliance.intercept.MethodInterceptor#invoke(MethodInvocation)` | `flint.aopalliance.intercept.MethodInterceptor.invoke` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.aopalliance.intercept.MethodInvocation#getMethod()` | `flint.aopalliance.intercept.MethodInvocation.getMethod` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### org.aspectj.lang
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.aspectj.lang.JoinPoint#ADVICE_EXECUTION` | `flint.aspectj.lang.JoinPoint.ADVICE_EXECUTION` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#CONSTRUCTOR_CALL` | `flint.aspectj.lang.JoinPoint.CONSTRUCTOR_CALL` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#CONSTRUCTOR_EXECUTION` | `flint.aspectj.lang.JoinPoint.CONSTRUCTOR_EXECUTION` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#EXCEPTION_HANDLER` | `flint.aspectj.lang.JoinPoint.EXCEPTION_HANDLER` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#FIELD_GET` | `flint.aspectj.lang.JoinPoint.FIELD_GET` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#FIELD_SET` | `flint.aspectj.lang.JoinPoint.FIELD_SET` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#INITIALIZATION` | `flint.aspectj.lang.JoinPoint.INITIALIZATION` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#METHOD_CALL` | `flint.aspectj.lang.JoinPoint.METHOD_CALL` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#METHOD_EXECUTION` | `flint.aspectj.lang.JoinPoint.METHOD_EXECUTION` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#PREINITIALIZATION` | `flint.aspectj.lang.JoinPoint.PREINITIALIZATION` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#STATICINITIALIZATION` | `flint.aspectj.lang.JoinPoint.STATICINITIALIZATION` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#SYNCHRONIZATION_LOCK` | `flint.aspectj.lang.JoinPoint.SYNCHRONIZATION_LOCK` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#SYNCHRONIZATION_UNLOCK` | `flint.aspectj.lang.JoinPoint.SYNCHRONIZATION_UNLOCK` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.aspectj.lang.JoinPoint#getArgs()` | `flint.aspectj.lang.JoinPoint.getArgs` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aspectj.lang.JoinPoint#getTarget()` | `flint.aspectj.lang.JoinPoint.getTarget` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aspectj.lang.JoinPoint#getThis()` | `flint.aspectj.lang.JoinPoint.getThis` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aspectj.lang.JoinPoint#toString()` | `flint.aspectj.lang.JoinPoint.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.aspectj.lang.JoinPoint.EnclosingStaticPart` | `flint.aspectj.lang.JoinPoint.EnclosingStaticPart` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `org.aspectj.lang.JoinPoint.StaticPart` | `flint.aspectj.lang.JoinPoint.StaticPart` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `org.aspectj.lang.JoinPoint.StaticPart#toString()` | `flint.aspectj.lang.JoinPoint.StaticPart.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.aspectj.lang.ProceedingJoinPoint#proceed()` | `flint.aspectj.lang.ProceedingJoinPoint.proceed` | [R8](api-mapping.md#r8-exceptions), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aspectj.lang.ProceedingJoinPoint#proceed(Object[])` | `flint.aspectj.lang.ProceedingJoinPoint.proceed` | [R8](api-mapping.md#r8-exceptions), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aspectj.lang.Signature#getDeclaringType()` | `flint.aspectj.lang.Signature.getDeclaringType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.aspectj.lang.Signature#toString()` | `flint.aspectj.lang.Signature.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.aspectj.lang.annotation
 
@@ -9146,7 +9175,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | javax.security.auth.x500 | 0 | 23 |
 | javax.security.cert | 0 | 39 |
 | javax.sql | 217 | 0 |
-| org.aspectj.lang | 73 | 0 |
+| org.aspectj.lang | 31 | 0 |
 | org.aspectj.lang.annotation | 13 | 0 |
 | org.aspectj.lang.annotation.control | 2 | 0 |
 | org.hibernate.validator | 82 | 0 |
