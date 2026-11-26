@@ -414,3 +414,39 @@ unittest
     auto fields = new ParsePosition(0);
     assert(format.parse("é😀wrong", fields) is null && fields.getErrorIndex() == 3);
 }
+
+@("DateFormat convenience parsing checks position advancement")
+unittest
+{
+    import flint.java.text : DateFormat, ParsePosition;
+
+    auto emptyPattern = new SimpleDateFormat("", Locale.US);
+    emptyPattern.setTimeZone(TimeZone.getTimeZone("UTC"));
+    try
+    {
+        emptyPattern.parse("anything");
+        assert(false, "a parse without progress must throw");
+    }
+    catch (ParseException failure)
+    {
+        assert(failure.getErrorOffset() == -1);
+        assert(failure.getMessage() == "Unparseable date: \"anything\"");
+    }
+
+    final class AdvancesWithoutResult : DateFormat
+    {
+        override string format(const Date date)
+        {
+            return "";
+        }
+
+        override Date parse(string text, ParsePosition position)
+        {
+            position.setIndex(3);
+            return null;
+        }
+    }
+
+    DateFormat custom = new AdvancesWithoutResult;
+    assert(custom.parse("abc") is null);
+}
