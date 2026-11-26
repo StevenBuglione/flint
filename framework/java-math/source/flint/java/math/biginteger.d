@@ -6,6 +6,7 @@ import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsExcept
 import flint.java.math.internal.limbs : addLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
     signedLength, significantBytes, significantLimbs, storeSignedBytes, subtractLimbs;
 import flint.java.math.internal.products : multiplyLimbs;
+import flint.java.math.internal.radix : formatRadix;
 
 @safe:
 
@@ -147,6 +148,18 @@ class BigInteger : Comparable!BigInteger
             return 0;
         const ulong high = magnitude.length > 1 ? magnitude[1] : 0;
         return (high << 32) | magnitude[0];
+    }
+
+    /// Return the signed decimal text.
+    override string toString() const pure nothrow
+    {
+        return formatRadix(magnitude, sign < 0, 10);
+    }
+
+    /// Return signed text in radix 2 to 36, with decimal for a radix outside that range.
+    string toString(int radix) const pure nothrow
+    {
+        return formatRadix(magnitude, sign < 0, radix);
     }
 
     /// Return a fresh, minimal big-endian two's-complement byte array.

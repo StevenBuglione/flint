@@ -217,8 +217,23 @@
       "status": "ported"
     },
     "org/apache/harmony/tests/java/math/BigIntegerToStringTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/java-math/tests/biginteger_harmony_format_tests.d",
+      "methods": {
+        "ported": [
+          "testRadix10Neg",
+          "testRadix10Pos",
+          "testRadix16Neg",
+          "testRadix16Pos",
+          "testRadix24Neg",
+          "testRadix24Pos",
+          "testRadix2Neg",
+          "testRadix2Pos",
+          "testRadix36Neg",
+          "testRadix36Pos",
+          "testRadixOutOfRange"
+        ]
+      },
+      "status": "ported"
     },
     "org/apache/harmony/tests/java/math/BigIntegerXorTest.java": {
       "phase": "2",

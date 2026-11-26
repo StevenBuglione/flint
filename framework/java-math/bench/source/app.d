@@ -11,9 +11,13 @@ int main(string[] args) @system
     auto a = new BigInteger([1, 0, 0, 0, 0, last]);
     const long operand = (1L << 40) + 1;
     auto b = BigInteger.valueOf(operand);
-    auto total = a.add(b).subtract(b).toByteArray();
+    auto total = a.add(b).subtract(b);
+    const bytes = total.toByteArray();
     if (b.longValueExact() != operand)
         return 1;
-    printf("%d %d\n", cast(int) total.length, cast(int) total[$ - 1]);
+    const text = total.toString(16);
+    if (text.length != 11 || text[0] != '1')
+        return 1;
+    printf("%d %d\n", cast(int) bytes.length, cast(int) bytes[$ - 1]);
     return 0;
 }

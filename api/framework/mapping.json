@@ -4822,6 +4822,8 @@
 "java.math.BigInteger#signum()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.signum"},
 "java.math.BigInteger#subtract(BigInteger)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.subtract"},
 "java.math.BigInteger#toByteArray()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.toByteArray"},
+"java.math.BigInteger#toString()":{"status":"adapted","rules":["R5","R11"],"d":"flint.java.math.biginteger.BigInteger.toString"},
+"java.math.BigInteger#toString(int)":{"status":"adapted","rules":["R5","R11"],"d":"flint.java.math.biginteger.BigInteger.toString"},
 "java.math.BigInteger#valueOf(long)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.valueOf"},
 "java.net.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.net.spi.**":{"status":"excluded","category":"deferred","phase":"3"},

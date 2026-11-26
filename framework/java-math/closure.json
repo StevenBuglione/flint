@@ -7,7 +7,8 @@
         "leaves": [
           "flint.java.lang",
           "flint.java.math.internal.limbs",
-          "flint.java.math.internal.products"
+          "flint.java.math.internal.products",
+          "flint.java.math.internal.radix"
         ],
         "data": []
       }
