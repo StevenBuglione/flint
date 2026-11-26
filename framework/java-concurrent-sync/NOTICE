@@ -1,8 +1,9 @@
 Flint Java Concurrency Synchronization
 Copyright 2026 The Flint authors
 
-The Lock, Condition, and ReadWriteLock contracts are adapted from OpenJDK
-21.0.13. Their source retains the original OpenJDK file notices.
+The Lock, Condition, ReadWriteLock, and BrokenBarrierException types are
+adapted from OpenJDK 21.0.13. Their source retains the original OpenJDK
+file notices.
 
 SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
 See LICENSE for the license and Classpath Exception.

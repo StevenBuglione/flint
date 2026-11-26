@@ -502,6 +502,7 @@
    "directory": "framework/java-concurrent-sync",
    "module": "flint.java.util.concurrent.locks",
    "also": [
+    "flint.java.util.concurrent.brokenbarrierexception",
     "flint.java.util.concurrent.locks.contracts"
    ],
    "repo": "framework",

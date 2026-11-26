@@ -18,6 +18,7 @@
   "java.util.MissingFormatArgumentException": "flint.java.util.formatter",
   "java.util.UUID": "flint.java.util.uuid",
   "java.util.UnknownFormatConversionException": "flint.java.util.formatter",
+  "java.util.concurrent.BrokenBarrierException": "flint.java.util.concurrent.brokenbarrierexception",
   "java.util.concurrent.Callable": "flint.java.util.concurrent.callable",
   "java.util.concurrent.TimeoutException": "flint.java.util.concurrent.timeoutexception"
  }

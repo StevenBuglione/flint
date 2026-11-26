@@ -1,4 +1,8 @@
 {
+  "flint.java.util.concurrent.brokenbarrierexception": {
+    "incremental_linked_bytes": 924,
+    "template_instances": 35
+  },
   "flint.java.util.concurrent.locks.contracts": {
     "incremental_linked_bytes": 2535,
     "template_instances": 490
