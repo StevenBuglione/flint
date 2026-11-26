@@ -7,12 +7,12 @@ import flint.conc.sys.slot : casWitness, exchangeSlot, loadSlot, loadVolatileSlo
 @safe:
 
 /**
- * One class or interface reference shared by every thread and fiber: what a Java `static` field
+ * One D class or interface reference shared by every thread and fiber: what a Java `static` field
  * holding a thread-safe object is. Declare it `shared` at module level; `get` sees the reference a
  * `set` or `setIfAbsent` published, with the object fully constructed. The slot synchronizes only the
  * reference: the object guards its own state, as Java's `LoggerFactory` provider does.
  */
-struct ProcessSlot(T) if (is(T == class) || is(T == interface))
+struct ProcessSlot(T) if (is(T == class) || (is(T == interface) && is(typeof(T.init.classinfo))))
 {
     private Object value;
 

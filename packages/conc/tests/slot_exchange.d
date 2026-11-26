@@ -12,6 +12,20 @@ private interface Reading
     int value() const;
 }
 
+private extern (C++) interface ForeignReading
+{
+    int value() const;
+}
+
+private extern (Windows) interface IUnknown
+{
+    int query();
+}
+
+private interface ComReading : IUnknown
+{
+}
+
 private final class Sample : Reading
 {
     private int[] values;
@@ -57,6 +71,8 @@ private final class DualReading : LeftReading, RightReading
 unittest
 {
     static assert(!is(ProcessSlot!int));
+    static assert(!is(ProcessSlot!ForeignReading));
+    static assert(!is(ProcessSlot!ComReading));
     static assert(!__traits(compiles, (ref shared ProcessSlot!Reading target, Object unrelated) {
             target.setVolatile(unrelated);
         }));
