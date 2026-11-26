@@ -611,6 +611,14 @@ unittest
     assert(Locale.fromPosix("C") == Locale.US && Locale.fromPosix("") == Locale.US
             && Locale.fromPosix("de") == Locale.GERMAN);
     assert(Locale.getDefault().toLanguageTag().length >= 2);
+
+    assert(Locale.KOREAN == Locale("ko"));
+    assert(Locale.KOREA == Locale("ko", "KR"));
+    assert(Locale.CANADA_FRENCH == Locale("fr", "CA"));
+    assert(Locale.SIMPLIFIED_CHINESE == Locale("zh", "CN"));
+    assert(Locale.TRADITIONAL_CHINESE == Locale("zh", "TW"));
+    assert(Locale.CHINA == Locale.SIMPLIFIED_CHINESE && Locale.PRC == Locale.SIMPLIFIED_CHINESE);
+    assert(Locale.TAIWAN == Locale.TRADITIONAL_CHINESE);
 }
 
 @("RawMap.forEachAny: entries in order without a copy, early exit, empty map, and a structural change fails")
