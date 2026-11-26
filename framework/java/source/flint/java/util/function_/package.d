@@ -7,6 +7,7 @@ delegate to the interface; `asDelegate` goes the other way.
 +/
 module flint.java.util.function_;
 
+public import flint.java.util.function_.consumer : Consumer;
 public import flint.java.util.function_.intbinaryoperator : IntBinaryOperator;
 public import flint.java.util.function_.intsupplier : IntSupplier;
 public import flint.java.util.function_.longsupplier : LongSupplier;
@@ -84,32 +85,6 @@ interface UnaryOperator(T) : Function!(T, T)
 /// Java's `BinaryOperator`: a `BiFunction` of two values of a type to that type.
 interface BinaryOperator(T) : BiFunction!(T, T, T)
 {
-}
-
-/// Java's `Consumer`: an operation on one argument with no result.
-interface Consumer(T)
-{
-    /// Perform the operation on `t`.
-    void accept(T t);
-
-    /// The `accept` method as a delegate.
-    final void delegate(T) @safe asDelegate()
-    {
-        return &accept;
-    }
-
-    /// First this consumer, then `after`.
-    final Consumer!T andThen(Consumer!T after)
-    {
-        auto self = this;
-        return of((T t) { self.accept(t); after.accept(t); });
-    }
-
-    /// A `Consumer` calling `dg`.
-    static Consumer!T of(void delegate(T) @safe dg)
-    {
-        return new DelegateConsumer!(T)(dg);
-    }
 }
 
 /// Java's `BiConsumer`: an operation on two arguments with no result.
@@ -281,21 +256,6 @@ private final class DelegateBiFunction(T, U, R) : BiFunction!(T, U, R)
     R apply(T t, U u)
     {
         return dg(t, u);
-    }
-}
-
-private final class DelegateConsumer(T) : Consumer!(T)
-{
-    private void delegate(T) @safe dg;
-
-    this(void delegate(T) @safe dg) pure nothrow @nogc
-    {
-        this.dg = dg;
-    }
-
-    void accept(T t)
-    {
-        dg(t);
     }
 }
 
