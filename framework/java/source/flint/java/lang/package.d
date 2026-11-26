@@ -637,6 +637,8 @@ int javaHashCode(T)(T value)
         return Long.hashCode(cast(long) value);
     else static if (__traits(isIntegral, T) || is(T == char) || is(T == wchar) || is(T == dchar))
         return cast(int) value;
+    else static if (is(T == float))
+        return floatHashBits(value);
     else static if (__traits(isFloating, T))
     {
         const bits = doubleBits(cast(double) value);
@@ -655,6 +657,21 @@ int javaHashCode(T)(T value)
         return value.hashCode();
     else
         return cast(int) hashOf(value);
+}
+
+private int floatHashBits(float value) pure nothrow @nogc
+{
+    if (value != value)
+        return 0x7fc00000; // Java's canonical Float NaN
+    union Bits
+    {
+        float f;
+        int i;
+    }
+
+    Bits bits;
+    bits.f = value;
+    return bits.i;
 }
 
 private ulong doubleBits(double value) pure nothrow @nogc
