@@ -11140,6 +11140,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DecimalFormat#format(double,StringBuffer,FieldPosition)` | 2 | Requires DecimalFormat, caller-owned StringBuffer and UTF-16 FieldPosition updates alongside binary64 formatting. |
 | framework | `java.text.DecimalFormat#format(long,StringBuffer,FieldPosition)` | 2 | Requires DecimalFormat, caller-owned StringBuffer and UTF-16 FieldPosition updates alongside exact signed long formatting and scaling. |
 | framework | `java.text.DecimalFormatSymbols` | 2 | The public locale symbol table and mutable symbol API are pending. |
+| framework | `java.text.DecimalFormatSymbols#getInstance(Locale)` | 2 | Requires the public locale-specific symbols factory. The pinned Java factory selects separators and honors the Unicode numbering-system extension. |
+| framework | `java.text.DecimalFormatSymbols#getZeroDigit()` | 2 | Requires the public symbols object. Java returns the localized zero digit, including Devanagari zero with the matching Unicode numbering-system extension. |
 | framework | `java.text.FieldPosition` | 2 | Flint has no FieldPosition binding for numeric or attribute field positions and UTF-16 output offsets. |
 | framework | `java.text.Format` | 2 | Flint has no shared Format superclass. The generic formatting contract needs StringBuffer, FieldPosition and AttributedCharacterIterator. |
 | framework | `java.text.Format#format(Object,StringBuffer,FieldPosition)` | 2 | The virtual append contract needs canonical java.lang.StringBuffer, including caller buffer identity and UTF-16 length. |
