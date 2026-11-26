@@ -629,11 +629,13 @@
     },
     "java/io/OutputStream/NullOutputStream.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception. The nullOutputStream factory remains deferred."
     },
     "java/io/OutputStream/WriteParams.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception. The byte-array overloads remain deferred."
     },
     "java/io/OutputStreamWriter/BoundsCheck.java": {
       "status": "deferred",
