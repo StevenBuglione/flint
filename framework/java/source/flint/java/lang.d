@@ -16,6 +16,7 @@ $(UL
 module flint.java.lang;
 
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
+public import flint.java.classref : ClassRef, classOf; // a leaf, so annotation-only clients skip this module
 import flint.java.util : Iterator; // module scope: a template-scoped import breaks -i builds (forward references)
 import flint.engine.aot.any : Any;
 import flint.java.util.formatter : formatJava;
@@ -301,20 +302,6 @@ interface Iterable(T)
     /// `foreach (e; iterable)`.
     int opApply(scope int delegate(T) @safe dg);
 }
-
-/++
-Java's `Class<?>` where an annotation attribute names a type: the type's canonical fully qualified D name
-(AOT contract section 2). Rulebook R4 makes `Class` parameters template parameters; annotation attributes cannot be
-templates, so they carry a `ClassRef`. `flint.core.annotation` re-exports it.
-+/
-struct ClassRef
-{
-    /// The canonical fully qualified D name; empty for `ClassRef.init` ("none", or "this annotation").
-    string name;
-}
-
-/// Java's `T.class` in an annotation attribute: `@ConditionalOnMissingBean(classOf!DataSource)`.
-enum ClassRef classOf(T) = ClassRef(imported!"flint.engine.aot.name".typeNameOf!T);
 
 /// Java's `Comparable`: a natural ordering.
 interface Comparable(T)

@@ -26,13 +26,13 @@
 The annotations of `org.springframework.core.annotation`: `@AliasFor` and `@Order`, plus `ClassRef` and `classOf`
 for `Class`-valued annotation attributes (AOT contract section 2).
 
-This is a leaf module (rulebook R2): it imports only `flint.java.lang` (for `ClassRef`, Java's `Class`, shared with
+This is a leaf module (rulebook R2): it imports only `flint.java.classref` (for `ClassRef`, Java's `Class`, shared with
 the third-party annotation modules), so generated code and every annotation module may import it. The package's runtime types (`MergedAnnotations`, `AnnotationAwareOrderComparator`, `AnnotationUtils`) are in
 `flint.core.annotation.types` (deviation D-21).
 +/
 module flint.core.annotation;
 
-public import flint.java.lang : ClassRef, classOf;
+public import flint.java.classref : ClassRef, classOf;
 
 @safe:
 
