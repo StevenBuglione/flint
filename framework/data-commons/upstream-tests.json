@@ -594,8 +594,28 @@
       "status": "deferred"
     },
     "org/springframework/data/mapping/ParameterUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/parameter_tests.d",
+      "methods": {
+        "ported": [
+          "getRequiredNameDoesNotThrowExceptionWhenHasName",
+          "getRequiredNameThrowsExceptionWhenHasNoName",
+          "hasNameReturnsFalseWhenHasNoName",
+          "hasNameReturnsTrueWhenHasName"
+        ],
+        "skipped": {
+          "shouldConsiderMemberTypeOfClassEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
+          "shouldNotConsiderMemberTypeOfInterfaceEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
+          "shouldNotConsiderRecordMemberTypeOfClassEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
+          "shouldNotConsiderRecordTypeOfInterfaceEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
+          "shouldNotConsiderStaticMemberTypeOfClassEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
+          "twoParametersWithDifferenTypeAreNotEqual": "Parameter equality and hashing across creator metadata bindings remain deferred.",
+          "twoParametersWithDifferentNameAreNotEqual": "Parameter equality and hashing across creator metadata bindings remain deferred.",
+          "twoParametersWithIdenticalAndNullEntitySetupEqual": "Parameter equality and hashing across creator metadata bindings remain deferred.",
+          "twoParametersWithIdenticalSetupAndNullNameEqual": "Parameter equality and hashing across creator metadata bindings remain deferred.",
+          "twoParametersWithIdenticalSetupEqual": "Parameter equality and hashing across creator metadata bindings remain deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/mapping/PersistentPropertyAccessorUnitTests.java": {
       "phase": "2",

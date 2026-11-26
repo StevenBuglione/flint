@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-20",
+ "deviation": "Parameter is typed by its owning entity and property type, and keeps the declared parameter type in TypeInformation. The constructor reads merged descriptor annotation records, with a null slice representing an empty table.",
+ "reason": "Registered descriptor metadata supplies annotation values and type names in the closed-world port while preserving the owning entity lookup for transient properties."
+}

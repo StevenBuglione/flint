@@ -1,22 +1,28 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,AssociationHandler,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,PropertyHandler,TargetAwareIdentifierAccessor}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,AssociationHandler,IdentifierAccessor,MappingException,Parameter,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,PropertyHandler,TargetAwareIdentifierAccessor}.java
 // Alias: Copyright 2016-present the original author or authors.
 // Association, AssociationHandler and PropertyHandler: Copyright 2011-present the original author or authors.
 // IdentifierAccessor: Copyright 2014-present the original author or authors.
 // MappingException, PersistentEntity and PersistentProperty: Copyright 2011-present the original author or authors.
+// Parameter: Copyright 2021-present the original author or authors.
 // PersistentPropertyAccessor: Copyright 2014-present the original author or authors.
 // TargetAwareIdentifierAccessor: Copyright 2017-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 module flint.data.mapping;
 
+import flint.beans.factory.annotation : Value;
+import flint.core.annotation.types : MergedAnnotations, SearchStrategy;
+import flint.data.annotation : Transient;
 import flint.data.core : TypeInformation;
 import flint.data.domain.persistable : NullableId;
 import flint.engine.aot.any : Any;
+import flint.engine.aot.descriptor : MergedAnnotation;
 import flint.engine.aot.objects : statelessInstance;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, Iterable, JavaObject,
     NullPointerException, RuntimeException, String;
 import flint.java.util : NoSuchElementException, Objects;
+import flint.util : StringUtils;
 import std.typecons : Nullable;
 
 @safe:
@@ -345,6 +351,105 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
             doWithProperties(handler);
             doWithAssociations((association) { handler(association.getInverse()); });
         }
+    }
+}
+
+/// Metadata for a parameter of an entity creator.
+class Parameter(T, P) if (is(P : PersistentProperty!P))
+{
+    private Nullable!string name;
+    private TypeInformation type;
+    private MergedAnnotations annotations;
+    private Nullable!string expression;
+    private PersistentEntity!(T, P) entity;
+
+    /// Creates a parameter with a nullable name and its registered metadata.
+    this(Nullable!string name, TypeInformation type, const(MergedAnnotation)[] annotations,
+            PersistentEntity!(T, P) entity)
+    {
+        if (type is null)
+            throw new IllegalArgumentException("Type must not be null");
+        this.name = name;
+        this.type = type;
+        this.annotations = MergedAnnotations.from(annotations, SearchStrategy.DIRECT);
+        this.entity = entity;
+        const value = this.annotations.get!Value();
+        if (value.isPresent())
+        {
+            const text = value.synthesize().value;
+            if (StringUtils.hasText(text))
+                expression = Nullable!string(text);
+        }
+    }
+
+    /// The parameter name, if available.
+    Nullable!string getName()
+    {
+        return name;
+    }
+
+    /// Whether this parameter has a name.
+    bool hasName()
+    {
+        return !name.isNull;
+    }
+
+    /// The name, or an IllegalStateException when no name is present.
+    string getRequiredName()
+    {
+        if (!hasName())
+            throw new IllegalStateException("No name associated with this parameter");
+        return name.get;
+    }
+
+    /// The declared parameter type information.
+    TypeInformation getType()
+    {
+        return type;
+    }
+
+    /// The parameter's raw type token (R4).
+    ClassRef getRawType()
+    {
+        return type.getType();
+    }
+
+    /// The registered merged annotations on this parameter.
+    MergedAnnotations getAnnotations()
+    {
+        return annotations;
+    }
+
+    /// The value expression, if present.
+    Nullable!string getValueExpression()
+    {
+        return expression;
+    }
+
+    /// The value expression, if present, through the Spring compatibility name.
+    Nullable!string getSpelExpression()
+    {
+        return getValueExpression();
+    }
+
+    /// Whether this parameter has a value expression.
+    bool hasValueExpression()
+    {
+        return !expression.isNull;
+    }
+
+    /// The value expression, or an IllegalStateException when absent.
+    string getRequiredValueExpression()
+    {
+        if (!hasValueExpression())
+            throw new IllegalStateException("No expression associated with this parameter");
+        return expression.get;
+    }
+
+    /// Whether the parameter or its matching property is transient.
+    bool isTransient()
+    {
+        return annotations.isPresent!Transient() || (entity !is null && hasName() && entity.isTransient(name.get));
     }
 }
 

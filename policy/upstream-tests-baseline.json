@@ -1631,7 +1631,6 @@
       "org/springframework/data/javapoet/TypeNamesUnitTests.java",
       "org/springframework/data/mapping/InstantiationAwarePersistentPropertyAccessorUnitTests.java",
       "org/springframework/data/mapping/MappingMetadataTests.java",
-      "org/springframework/data/mapping/ParameterUnitTests.java",
       "org/springframework/data/mapping/PersistentPropertyAccessorUnitTests.java",
       "org/springframework/data/mapping/PreferredConstructorDiscovererUnitTests.java",
       "org/springframework/data/mapping/SimpleTypeHolderUnitTests.java",
