@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,125 | 338 | 1,871 | 15,087 |
+| framework | openjdk@21.0.13 | 1,127 | 340 | 1,871 | 15,083 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 88 | 11,744 |
@@ -217,6 +217,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.math.RoundingMode` | `flint.java.math.roundingmode.RoundingMode` | A null name counts as empty text under R26. Java throws NullPointerException. |
 | framework | `java.nio.ByteBuffer#asCharBuffer()` | `flint.java.nio.bytebuffer.ByteBuffer.asCharBuffer` | Final in Flint because construction is package-internal in both Java and Flint. |
 | framework | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.TimeDefinition` | A null name counts as empty (R26). Java throws NullPointerException. |
+| framework | `java.util.DuplicateFormatFlagsException#getMessage()` | `flint.java.util.formatter.DuplicateFormatFlagsException.getMessage` | Inherits RuntimeException.getMessage; the duplicate flag is recorded in the constructor. |
 | framework | `java.util.regex.Pattern` | `flint.java.util.regex.Pattern` | Under R26, a null expression or input slice counts as empty text. Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
@@ -2521,6 +2522,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Collection#remove(Object)` | `flint.java.util.Collection.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Collection#toArray()` | `flint.java.util.Collection.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Date#clone()` | `flint.java.util.Date.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.DuplicateFormatFlagsException` | `flint.java.util.formatter.DuplicateFormatFlagsException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null flag slice counts as empty under R26. |
+| `java.util.DuplicateFormatFlagsException#<init>(String)` | `flint.java.util.formatter.DuplicateFormatFlagsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HashMap#containsKey(Object)` | `flint.java.util.HashMap.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#containsValue(Object)` | `flint.java.util.HashMap.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#get(Object)` | `flint.java.util.HashMap.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -10653,7 +10656,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,916 | 0 |
+| java.util | 1,912 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 285 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
