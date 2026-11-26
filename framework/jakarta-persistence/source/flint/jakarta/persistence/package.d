@@ -5,18 +5,20 @@ public import flint.jakarta.persistence.annotations : Access, AccessType, Associ
     AssociationOverrides, AttributeOverride,
     AttributeOverrides, Basic, Cacheable, CascadeType, CheckConstraint, CollectionTable, Column,
     ConstraintMode, DiscriminatorColumn,
-    DiscriminatorType, DiscriminatorValue, Embeddable, Embedded, EmbeddedId, ElementCollection,
+    DiscriminatorType, DiscriminatorValue, ElementCollection, Embeddable, Embedded, EmbeddedId,
     Entity, EnumType, Enumerated, EnumeratedValue,
     ExcludeDefaultListeners, ExcludeSuperclassListeners, FetchType, ForeignKey, GeneratedValue,
     GenerationType, Id, IdClass,
-    Index, Inheritance, InheritanceType, JoinColumn, JoinColumns, JoinTable, Lob, ManyToMany,
-    ManyToOne, MapKey, MapKeyClass,
-    MapKeyColumn, MapKeyEnumerated, MapKeyJoinColumn, MapKeyJoinColumns, MapKeyTemporal,
-    MappedSuperclass, MapsId, OneToMany,
-    OneToOne, OrderBy, OrderColumn, PostLoad, PostPersist, PostRemove, PostUpdate, PrePersist,
-    PreRemove, PreUpdate, PrimaryKeyJoinColumn,
-    PrimaryKeyJoinColumns, QueryHint, SecondaryTable, SecondaryTables, SequenceGenerator, SequenceGenerators, Table,
-    TableGenerator, TableGenerators, Temporal, TemporalType, Transient, UniqueConstraint, Version;
+    Index, Inheritance, InheritanceType, JoinColumn, JoinColumns, JoinTable, Lob, LockModeType,
+    ManyToMany, ManyToOne, MapKey,
+    MapKeyClass, MapKeyColumn, MapKeyEnumerated, MapKeyJoinColumn, MapKeyJoinColumns,
+    MapKeyTemporal, MappedSuperclass, MapsId,
+    NamedQueries, NamedQuery, OneToMany, OneToOne, OrderBy, OrderColumn, PostLoad, PostPersist,
+    PostRemove, PostUpdate, PrePersist,
+    PreRemove, PreUpdate, PrimaryKeyJoinColumn, PrimaryKeyJoinColumns, QueryHint, SecondaryTable,
+    SecondaryTables, SequenceGenerator,
+    SequenceGenerators, Table, TableGenerator,
+    TableGenerators, Temporal, TemporalType, Transient, UniqueConstraint, Version;
 public import flint.jakarta.persistence.contracts : AttributeConverter, EntityTransaction;
 
 @safe:

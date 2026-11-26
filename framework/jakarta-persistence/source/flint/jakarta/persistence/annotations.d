@@ -41,6 +41,9 @@
  *   ExcludeSuperclassListeners.java
  *
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
+ *   LockModeType.java, NamedQuery.java, NamedQueries.java
+ *
+ * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  *   CascadeType.java, ElementCollection.java, IdClass.java, ManyToMany.java, ManyToOne.java,
  *   MapKeyClass.java, OneToMany.java, OneToOne.java
  */
@@ -902,4 +905,41 @@ struct IdClass
     /// The primary key class, which must declare fields or properties with names and types that match the `Id`
     /// fields and properties of the annotated entity class.
     ClassRef value;
+}
+
+// JPQL declarations
+
+/// Lock mode for a persistence operation. D-JPA-2 adapts this enum at the EntityManager option boundary.
+enum LockModeType
+{
+    READ,
+    WRITE,
+    OPTIMISTIC,
+    OPTIMISTIC_FORCE_INCREMENT,
+    PESSIMISTIC_READ,
+    PESSIMISTIC_WRITE,
+    PESSIMISTIC_FORCE_INCREMENT,
+    NONE,
+}
+
+/// Declares a JPQL query scoped to the persistence unit.
+struct NamedQuery
+{
+    /// Name supplied to EntityManager.createNamedQuery.
+    string name;
+    /// JPQL source supplied to Flint AOT.
+    string query;
+    /// Optional declared result type. The requested type can override it.
+    ClassRef resultClass = ClassRef.init;
+    /// Lock mode. A mode other than NONE requires a transaction joined to the persistence context.
+    LockModeType lockMode = LockModeType.NONE;
+    /// Provider query hints.
+    QueryHint[] hints = [];
+}
+
+/// Groups named JPQL queries on an entity or mapped superclass.
+struct NamedQueries
+{
+    /// The query declarations.
+    NamedQuery[] value;
 }
