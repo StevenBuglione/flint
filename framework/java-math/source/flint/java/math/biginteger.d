@@ -1,7 +1,7 @@
 /// Immutable arbitrary-precision integers (Java SE 21, rules R1, R5, R7, R8 and R11).
 module flint.java.math.biginteger;
 
-import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsException,
+import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsException, JavaObject,
     NullPointerException, NumberFormatException;
 import flint.java.math.internal.floating : roundedFloating;
 import flint.java.math.internal.limbs : addLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
@@ -14,6 +14,8 @@ import flint.java.math.internal.radix : formatRadix;
 /// A signed integer with an owned, normalized magnitude.
 class BigInteger : Comparable!BigInteger
 {
+    mixin JavaObject;
+
     private const(uint)[] magnitude;
     private int sign;
 
@@ -193,6 +195,22 @@ class BigInteger : Comparable!BigInteger
         if (sign != other.sign)
             return sign < other.sign ? -1 : 1;
         return sign * compareLimbs(magnitude, other.magnitude);
+    }
+
+    /// Compare the numeric value with another BigInteger.
+    bool equals(scope const Object other) const pure nothrow @nogc
+    {
+        const value = cast(const BigInteger) other;
+        return value !is null && sign == value.sign && compareLimbs(magnitude, value.magnitude) == 0;
+    }
+
+    /// Fold the magnitude words from most to least significant, with 32-bit wraparound.
+    int hashCode() const pure nothrow @nogc
+    {
+        uint hash;
+        foreach_reverse (word; magnitude)
+            hash = 31U * hash + word;
+        return cast(int)(sign < 0 ? 0U - hash : hash);
     }
 
     /// Return the exact sum.

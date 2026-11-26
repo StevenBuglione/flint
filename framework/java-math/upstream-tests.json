@@ -56,8 +56,47 @@
       "status": "deferred"
     },
     "org/apache/harmony/tests/java/math/BigIntegerCompareTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/java-math/tests/biginteger_harmony_equality_tests.d",
+      "methods": {
+        "ported": [
+          "testEqualsBigIntegerFalse",
+          "testEqualsBigIntegerTrue",
+          "testEqualsNull",
+          "testEqualsObject"
+        ],
+        "skipped": {
+          "testAbsNegative": "Phase 2: abs",
+          "testAbsPositive": "Phase 2: abs",
+          "testCompareNegNeg2": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToDiffSigns1": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToDiffSigns2": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToEqualNeg": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToEqualPos": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToNegNeg1": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToNegZero": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToPosPos1": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToPosPos2": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToPosZero": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToZeroNeg": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToZeroPos": "Phase 2: remaining upstream compareTo fixtures",
+          "testCompareToZeroZero": "Phase 2: remaining upstream compareTo fixtures",
+          "testMaxEqual": "Phase 2: max",
+          "testMaxGreater": "Phase 2: max",
+          "testMaxLess": "Phase 2: max",
+          "testMaxNegZero": "Phase 2: max",
+          "testMinEqual": "Phase 2: min",
+          "testMinGreater": "Phase 2: min",
+          "testMinLess": "Phase 2: min",
+          "testMinPosZero": "Phase 2: min",
+          "testNegateNegative": "Phase 2: negate",
+          "testNegatePositive": "Phase 2: negate",
+          "testNegateZero": "Phase 2: negate",
+          "testSignumNegative": "Phase 2: remaining upstream signum fixtures",
+          "testSignumPositive": "Phase 2: remaining upstream signum fixtures",
+          "testSignumZero": "Phase 2: remaining upstream signum fixtures"
+        }
+      },
+      "status": "partial"
     },
     "org/apache/harmony/tests/java/math/BigIntegerConstructorsTest.java": {
       "phase": "2",
@@ -137,8 +176,17 @@
       "status": "deferred"
     },
     "org/apache/harmony/tests/java/math/BigIntegerHashCodeTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/java-math/tests/biginteger_harmony_hash_tests.d",
+      "methods": {
+        "ported": [
+          "testEqualObjects",
+          "testUnequalObjectsUnequal"
+        ],
+        "skipped": {
+          "testSameObject": "Phase 2: division, shifts, bitLength and gcd"
+        }
+      },
+      "status": "partial"
     },
     "org/apache/harmony/tests/java/math/BigIntegerModPowTest.java": {
       "phase": "2",
