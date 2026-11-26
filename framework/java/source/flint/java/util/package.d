@@ -25,6 +25,7 @@ import flint.engine.aot.objects : assumeClass, assumeClasses, asObjects, objectE
 import flint.java.lang : ClassCastException, IllegalArgumentException, IndexOutOfBoundsException, Iterable,
     NullPointerException, RuntimeException, UnsupportedOperationException, javaEquals, javaHashCode, valueOf;
 import flint.java.util.stream : Stream;
+import std.typecons : Nullable;
 public import flint.java.util.calendar : Calendar, GregorianCalendar;
 public import flint.java.util.date : Date;
 public import flint.java.util.timezone : SimpleTimeZone, TimeZone;
@@ -3261,7 +3262,7 @@ class Properties : LinkedHashMap!(string, string)
 /++
 Java's `Locale` (clean room, from the Java SE specification): a language, a country (region), a variant and a script,
 normalized as Java does (the language lowercase, the country uppercase, and the script title case). Like flint.java's `Charset`, it is a
-value type, so its constants are `static immutable`. `forLanguageTag` reads scripts, skips extensions and restores
+value type, so its constants are `static immutable`. `forLanguageTag` stores scripts and extensions and restores
 legacy variants from `x-lvariant` private use. `getDefault` reads the POSIX locale
 (`LC_ALL`, then `LANG`) once per call; `setDefault` is not provided, because framework modules keep no mutable
 module state.
@@ -3285,6 +3286,7 @@ struct Locale
     private string country;
     private string variant;
     private string script;
+    private string extensions;
 
     /// A locale for `language`, `country` and `variant`.
     this(string language, string country = "", string variant = "") pure nothrow
@@ -3347,24 +3349,111 @@ struct Locale
         return script;
     }
 
-    /// Equal language, country, variant and script.
+    /// Whether an extension is present.
+    bool hasExtensions() const pure nothrow @nogc
+    {
+        return extensions.length != 0;
+    }
+
+    /// Remove extensions while retaining the language, country, script and variant.
+    Locale stripExtensions() const pure nothrow @nogc
+    {
+        Locale result = this;
+        result.extensions = null;
+        return result;
+    }
+
+    /// The extension payload for an ASCII letter singleton, or absent.
+    Nullable!string getExtension(wchar key) const
+    {
+        const lower = key | 0x20;
+        if (lower < 'a' || lower > 'z')
+            throw new IllegalArgumentException("Ill-formed locale extension key");
+        const payload = extensionPayload(cast(char) lower);
+        return payload.length ? Nullable!string(payload) : Nullable!string.init;
+    }
+
+    /// The type of a two-character Unicode key. A present typeless key has an empty value.
+    Nullable!string getUnicodeLocaleType(string key) const
+    {
+        if (key.length != 2 || !isAsciiAlphanumeric(key))
+            throw new IllegalArgumentException("Ill-formed Unicode locale key");
+        string remaining = extensionPayload(cast(char) UNICODE_LOCALE_EXTENSION);
+        while (remaining.length)
+        {
+            const part = takeTagSubtag(remaining);
+            if (part.length == 2 && matchesLowercaseTag(key, part))
+                return Nullable!string(unicodeKeywordType(remaining));
+        }
+        return Nullable!string.init;
+    }
+
+    private string extensionPayload(char key) const pure nothrow @nogc
+    {
+        size_t start;
+        while (start < extensions.length)
+        {
+            const singleton = extensions[start];
+            const end = extensionEnd(start);
+            if (singleton == key)
+                return extensions[start + 2 .. end];
+            start = end + 1;
+        }
+        return null;
+    }
+
+    private size_t extensionEnd(size_t start) const pure nothrow @nogc
+    {
+        if (extensions[start] != PRIVATE_USE_EXTENSION)
+            for (size_t i = start + 2; i + 2 < extensions.length; ++i)
+                if (extensions[i] == '-' && extensions[i + 2] == '-')
+                    return i;
+        return extensions.length;
+    }
+
+    private static string takeTagSubtag(ref string remaining) pure nothrow @nogc
+    {
+        size_t end;
+        while (end < remaining.length && remaining[end] != '-')
+            ++end;
+        const part = remaining[0 .. end];
+        remaining = end == remaining.length ? null : remaining[end + 1 .. $];
+        return part;
+    }
+
+    private static string unicodeKeywordType(string remaining) pure nothrow @nogc
+    {
+        const payload = remaining;
+        size_t length;
+        while (remaining.length)
+        {
+            const part = takeTagSubtag(remaining);
+            if (part.length == 2)
+                break;
+            length += part.length + (length ? 1 : 0);
+        }
+        return payload[0 .. length];
+    }
+
+    /// Equal language, country, variant, script and extensions.
     bool equals(const Locale other) const pure nothrow @nogc
     {
         return opEquals(other);
     }
 
-    /// Equal language, country, variant and script.
+    /// Equal language, country, variant, script and extensions.
     bool opEquals(const Locale other) const pure nothrow @nogc
     {
         return language == other.language && country == other.country && variant == other.variant
-            && script == other.script;
+            && script == other.script && extensions == other.extensions;
     }
 
-    /// The hash of the language, country, variant and script.
+    /// The hash of the locale value.
     size_t toHash() const pure nothrow
     {
         const base = hashOf(variant, hashOf(country, hashOf(language)));
-        return script.length ? hashOf(script, base) : base;
+        const scriptHash = script.length ? hashOf(script, base) : base;
+        return extensions.length ? hashOf(extensions, scriptHash) : scriptHash;
     }
 
     /// Java's `hashCode`.
@@ -3376,13 +3465,15 @@ struct Locale
     /// `language_COUNTRY_variant`, with an empty result when both language and country are absent.
     string toString() const pure nothrow
     {
-        if (!country.length && (!language.length || (!variant.length && !script.length)))
+        if (!country.length && (!language.length || (!variant.length && !script.length && !extensions.length)))
             return language;
         string result = language ~ "_" ~ country;
         if (variant.length)
             result ~= "_" ~ variant;
         if (script.length)
             result ~= "_#" ~ script;
+        if (extensions.length)
+            result ~= (script.length ? "_" : "_#") ~ extensions;
         return result;
     }
 
@@ -3390,7 +3481,7 @@ struct Locale
     string toLanguageTag() const pure nothrow
     {
         if (language == "no" && country == "NO" && variant == "NY")
-            return script.length ? "nn-" ~ script ~ "-NO" : "nn-NO";
+            return appendLocaleExtensions(script.length ? "nn-" ~ script ~ "-NO" : "nn-NO");
 
         string tag = isAlpha(language, 2, 8) ? language : null;
         if (script.length)
@@ -3398,11 +3489,11 @@ struct Locale
         if (isAlpha(country, 2, 2) || isDigits(country, 3))
             tag = tag.length ? tag ~ "-" ~ country : "und-" ~ country;
 
-        tag = appendTagVariants(tag, variant);
+        tag = appendTagVariants(tag);
         return tag.length ? tag : "und";
     }
 
-    private static string appendTagVariants(string tag, string variant) pure nothrow
+    private string appendTagVariants(string tag) const pure nothrow
     {
         bool privateUse;
         for (size_t start; start < variant.length;)
@@ -3419,14 +3510,31 @@ struct Locale
                     break;
                 if (!privateUse)
                 {
-                    tag = tag.length ? tag ~ "-x-lvariant" : "x-lvariant";
+                    tag = startLegacyVariantSuffix(tag);
                     privateUse = true;
                 }
                 tag ~= "-" ~ subtag;
             }
             start = end + 1;
         }
-        return tag;
+        return privateUse ? tag : appendLocaleExtensions(tag);
+    }
+
+    private string appendLocaleExtensions(string tag) const pure nothrow
+    {
+        if (!extensions.length)
+            return tag;
+        if (tag.length)
+            return tag ~ "-" ~ extensions;
+        return extensions[0] == PRIVATE_USE_EXTENSION ? extensions : "und-" ~ extensions;
+    }
+
+    private string startLegacyVariantSuffix(string tag) const pure nothrow
+    {
+        tag = appendLocaleExtensions(tag);
+        if (extensionPayload(cast(char) PRIVATE_USE_EXTENSION).length)
+            return tag ~ "-lvariant";
+        return tag.length ? tag ~ "-x-lvariant" : "x-lvariant";
     }
 
     /// The locale of a BCP 47 tag (`en-US`, `de`, `und`, `zh-Hant-TW`); an ill-formed subtag ends the parse.
@@ -3460,8 +3568,9 @@ struct Locale
             parsedScript = canonicalScript(subtags[next++]);
         if (next < subtags.length && (isAlpha(subtags[next], 2, 2) || isDigits(subtags[next], 3)))
             region = subtags[next++];
-        Locale locale = Locale(lang, region, parseTagVariants(subtags[next .. $]));
+        Locale locale = Locale(lang, region);
         locale.script = parsedScript;
+        parseTagSuffix(subtags[next .. $], locale);
         return locale;
     }
 
@@ -3507,12 +3616,15 @@ struct Locale
         return tag;
     }
 
-    private static string parseTagVariants(string[] subtags) pure nothrow
+    private static void parseTagSuffix(string[] subtags, ref Locale locale) pure nothrow
     {
         size_t next;
         while (next < subtags.length && isVariant(subtags[next]))
             ++next;
-        string[][2] variants = [subtags[0 .. next], legacyTagVariants(subtags[next .. $])];
+        string[] legacyVariants;
+        if (next < subtags.length && isAlpha(subtags[next], 1, 1))
+            locale.extensions = parseExtensions(subtags[next .. $], legacyVariants);
+        string[][2] variants = [subtags[0 .. next], legacyVariants];
 
         string first;
         char[] joined;
@@ -3529,36 +3641,122 @@ struct Locale
                     joined ~= subtag;
                 }
             }
-        return joined.length ? joined.idup : first;
+        locale.variant = joined.length ? joined.idup : first;
     }
 
-    private static string[] legacyTagVariants(string[] subtags) pure nothrow @nogc
+    private static string parseExtensions(string[] subtags, out string[] legacyVariants) pure nothrow
     {
-        const next = skipTagExtensions(subtags);
-        if (next == subtags.length || !isPrivateUseSingleton(subtags[next]))
-            return null;
-
-        size_t end = next + 1;
-        while (end < subtags.length && isTagPayload(subtags[end], 1))
-            ++end;
-        foreach (i; next + 1 .. end)
-            if (matchesLowercaseTag(subtags[i], "lvariant"))
-                return subtags[i + 1 .. end];
-        return null;
-    }
-
-    private static size_t skipTagExtensions(string[] subtags) pure nothrow @nogc
-    {
+        string[26] payloads;
         size_t next;
         while (next < subtags.length && isAlpha(subtags[next], 1, 1) && !isPrivateUseSingleton(subtags[next]))
         {
+            const key = subtags[next][0] | 0x20;
             const first = ++next;
             while (next < subtags.length && isTagPayload(subtags[next], 2))
                 ++next;
             if (next == first)
-                return subtags.length;
+                return renderExtensions(payloads);
+            if (!payloads[key - 'a'].length)
+            {
+                const parts = subtags[first .. next];
+                payloads[key - 'a'] = key == UNICODE_LOCALE_EXTENSION ? canonicalUnicodePayload(parts) : tagPayload(
+                        parts);
+            }
         }
-        return next;
+        if (next < subtags.length && isPrivateUseSingleton(subtags[next]))
+            payloads[PRIVATE_USE_EXTENSION - 'a'] = privateTagPayload(subtags[next + 1 .. $], legacyVariants);
+        return renderExtensions(payloads);
+    }
+
+    private static string privateTagPayload(string[] subtags, out string[] legacyVariants) pure nothrow
+    {
+        size_t end;
+        while (end < subtags.length && isTagPayload(subtags[end], 1))
+            ++end;
+        foreach (i; 0 .. end)
+            if (i + 1 < end && matchesLowercaseTag(subtags[i], "lvariant"))
+            {
+                legacyVariants = subtags[i + 1 .. end];
+                return tagPayload(subtags[0 .. i]);
+            }
+        return tagPayload(subtags[0 .. end]);
+    }
+
+    private static string renderExtensions(ref const string[26] payloads) pure nothrow
+    {
+        string result;
+        foreach (i, payload; payloads)
+        {
+            if (!payload.length || i == PRIVATE_USE_EXTENSION - 'a')
+                continue;
+            result = appendSingleton(result, cast(char)('a' + i), payload);
+        }
+        const privateUse = payloads[PRIVATE_USE_EXTENSION - 'a'];
+        if (privateUse.length)
+            result = appendSingleton(result, cast(char) PRIVATE_USE_EXTENSION, privateUse);
+        return result;
+    }
+
+    private static string appendSingleton(string tag, char singleton, string payload) pure nothrow
+    {
+        if (tag.length)
+            tag ~= '-';
+        return tag ~ singleton ~ '-' ~ payload;
+    }
+
+    private static string canonicalUnicodePayload(const string[] subtags) pure nothrow
+    {
+        string[] attributes;
+        string[] keywords;
+        size_t next;
+        while (next < subtags.length && subtags[next].length != 2)
+            insertUnicodeItem(attributes, asciiCase(subtags[next++], false), false);
+        while (next < subtags.length)
+        {
+            const key = asciiCase(subtags[next++], false);
+            const first = next;
+            while (next < subtags.length && subtags[next].length != 2)
+                ++next;
+            const type = tagPayload(subtags[first .. next]);
+            insertUnicodeItem(keywords, type.length ? key ~ "-" ~ type : key, true);
+        }
+
+        const attributesTag = tagPayload(attributes);
+        const keywordsTag = tagPayload(keywords);
+        return attributesTag.length && keywordsTag.length ? attributesTag ~ "-" ~ keywordsTag
+            : attributesTag ~ keywordsTag;
+    }
+
+    private static void insertUnicodeItem(ref string[] items, string item, bool keyword) pure nothrow
+    {
+        const identity = keyword ? item[0 .. 2] : item;
+        size_t position;
+        while (position < items.length)
+        {
+            const existing = keyword ? items[position][0 .. 2] : items[position];
+            if (existing == identity)
+                return;
+            if (existing > identity)
+                break;
+            ++position;
+        }
+        const last = items.length;
+        items ~= item;
+        for (size_t i = last; i > position; --i)
+            items[i] = items[i - 1];
+        items[position] = item;
+    }
+
+    private static string tagPayload(const string[] subtags) pure nothrow
+    {
+        string result;
+        foreach (subtag; subtags)
+        {
+            if (result.length)
+                result ~= '-';
+            result ~= asciiCase(subtag, false);
+        }
+        return result;
     }
 
     private static bool isPrivateUseSingleton(string subtag) pure nothrow @nogc
