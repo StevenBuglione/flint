@@ -63,7 +63,7 @@
 // Modified by the Flint authors.
 module flint.java.time.zone.zoneoffsettransitionrule;
 
-import flint.java.lang : IllegalArgumentException, NullPointerException;
+import flint.java.lang : IllegalArgumentException;
 import flint.java.time : DayOfWeek, LocalDate, LocalDateTime, LocalTime, Month, ZoneOffset;
 import std.typecons : Nullable;
 
@@ -307,19 +307,12 @@ ZoneOffsetTransitionRule.TimeDefinition[] values() pure nothrow
 /// Resolve the exact declared Java enum name.
 ZoneOffsetTransitionRule.TimeDefinition valueOf(scope const(char)[] spelling) pure
 {
-    if (spelling is null)
-        return valueOf(null);
     foreach (index, name; definitionNames)
     {
         if (name == spelling)
             return cast(ZoneOffsetTransitionRule.TimeDefinition) index;
     }
     throw new IllegalArgumentException(unknownDefinitionMessage(spelling));
-}
-
-ZoneOffsetTransitionRule.TimeDefinition valueOf(typeof(null)) pure
-{
-    throw new NullPointerException("Name is null");
 }
 
 private string unknownDefinitionMessage(scope const(char)[] spelling) pure nothrow

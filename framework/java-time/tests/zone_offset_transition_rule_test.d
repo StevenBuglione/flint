@@ -1,7 +1,7 @@
 module flint.java.time.zone_offset_transition_rule_test;
 
 import core.memory : GC;
-import flint.java.lang : IllegalArgumentException, NullPointerException;
+import flint.java.lang : IllegalArgumentException;
 import flint.java.time : DateTimeException, DayOfWeek, LocalDateTime, LocalTime, Month, ZoneOffset;
 import flint.java.time.zone.zoneoffsettransitionrule : ZoneOffsetTransitionRule, createDateTime, valueOf, values;
 import std.typecons : Nullable;
@@ -18,7 +18,7 @@ private enum summer = ZoneOffset.ofHours(2);
     assert(first == [TimeDefinition.UTC, TimeDefinition.WALL, TimeDefinition.STANDARD]);
     first[0] = TimeDefinition.WALL;
     assert(values()[0] == TimeDefinition.UTC && valueOf("STANDARD") == TimeDefinition.STANDARD);
-    foreach (bad; ["wall", ""])
+    foreach (bad; ["wall", "", null])
     {
         try
         {
@@ -36,9 +36,9 @@ private enum summer = ZoneOffset.ofHours(2);
         valueOf(null);
         assert(false);
     }
-    catch (NullPointerException error)
+    catch (IllegalArgumentException error)
     {
-        assert(error.getMessage() == "Name is null");
+        assert(error.getMessage() == "No enum constant java.time.zone.ZoneOffsetTransitionRule.TimeDefinition.");
     }
 }
 
