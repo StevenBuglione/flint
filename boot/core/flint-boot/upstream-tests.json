@@ -1067,8 +1067,14 @@
       "status": "deferred"
     },
     "org/springframework/boot/diagnostics/analyzer/BeanDefinitionOverrideFailureAnalyzerTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/core/flint-boot/tests/boot_tests/bean_definition_override_failure_analyzer_test.d",
+      "methods": {
+        "ported": [
+          "analyzeBeanDefinitionOverrideException",
+          "analyzeBeanDefinitionOverrideExceptionWithDefinitionsWithNoResourceDescription"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/boot/diagnostics/analyzer/BeanNotOfRequiredTypeFailureAnalyzerTests.java": {
       "phase": "2",

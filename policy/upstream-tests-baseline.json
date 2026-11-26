@@ -670,7 +670,6 @@
       "org/springframework/boot/diagnostics/FailureAnalyzersTests.java",
       "org/springframework/boot/diagnostics/analyzer/AotInitializerNotFoundFailureAnalyzerTests.java",
       "org/springframework/boot/diagnostics/analyzer/BeanCurrentlyInCreationFailureAnalyzerTests.java",
-      "org/springframework/boot/diagnostics/analyzer/BeanDefinitionOverrideFailureAnalyzerTests.java",
       "org/springframework/boot/diagnostics/analyzer/BeanNotOfRequiredTypeFailureAnalyzerTests.java",
       "org/springframework/boot/diagnostics/analyzer/BindFailureAnalyzerTests.java",
       "org/springframework/boot/diagnostics/analyzer/BindValidationFailureAnalyzerTests.java",

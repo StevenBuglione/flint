@@ -1,19 +1,42 @@
 // Ported from spring-boot v4.2.0: core/spring-boot/src/main/java/org/springframework/boot/diagnostics/analyzer/BindFailureAnalyzer.java
 // with InvalidConfigurationPropertyNameFailureAnalyzer.java and BindValidationFailureAnalyzer.java from the same directory, and
 // core/spring-boot/src/main/java/org/springframework/boot/context/config/ConfigDataNotFoundFailureAnalyzer.java.
+// Ported from spring-boot v4.2.0: core/spring-boot/src/main/java/org/springframework/boot/diagnostics/analyzer/BeanDefinitionOverrideFailureAnalyzer.java
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
-// Modified by the Flint authors: exception type names are D's fully qualified names.
+// Modified by the Flint authors: exception type names are D's fully qualified names, and the override
+// action uses the Flint configuration key (R1).
 
 /// `org.springframework.boot.diagnostics.analyzer`: the analyzers Boot core registers.
 module flint.boot.diagnostics.analyzer;
 
+import flint.beans.factory.support : BeanDefinitionOverrideException;
 import flint.boot.context.config : ConfigDataLocationNotFoundException;
 import flint.boot.context.properties.bind : BindException, ConversionFailedException;
 import flint.boot.context.properties.source : InvalidConfigurationPropertyNameException;
 import flint.boot.diagnostics : AbstractFailureAnalyzer, FailureAnalysis, FailureAnalyzer, causeOf, findCause;
 
 @safe:
+
+/// Explains a bean registration rejected because overriding was disabled.
+private final class BeanDefinitionOverrideFailureAnalyzer : AbstractFailureAnalyzer!BeanDefinitionOverrideException
+{
+    protected override FailureAnalysis analyze(Throwable rootFailure, BeanDefinitionOverrideException cause)
+    {
+        string description = "The bean '" ~ cause.getBeanName() ~ "'";
+        const source = cause.getBeanDefinition().getResourceDescription();
+        if (source !is null)
+            description ~= ", defined in " ~ source ~ ",";
+        description ~= " could not be registered. A bean with that name has already been defined ";
+        const existingSource = cause.getExistingDefinition().getResourceDescription();
+        if (existingSource !is null)
+            description ~= "in " ~ existingSource ~ " ";
+        description ~= "and overriding is disabled.";
+        enum action = "Consider renaming one of the beans or enabling overriding by setting "
+            ~ "flint.main.allow-bean-definition-overriding=true";
+        return new FailureAnalysis(description, action, cause);
+    }
+}
 
 /// Explains a `BindException`: the property, its value and origin, and why it did not bind.
 final class BindFailureAnalyzer : AbstractFailureAnalyzer!BindException
@@ -147,9 +170,9 @@ final class ConfigDataNotFoundFailureAnalyzer : AbstractFailureAnalyzer!ConfigDa
 FailureAnalyzer[] bootFailureAnalyzers()
 {
     return [
-        cast(FailureAnalyzer) new InvalidConfigurationPropertyNameFailureAnalyzer,
-        new BindFailureAnalyzer, new BindValidationFailureAnalyzer,
-        new ConfigDataNotFoundFailureAnalyzer
+        cast(FailureAnalyzer) new BeanDefinitionOverrideFailureAnalyzer,
+        new InvalidConfigurationPropertyNameFailureAnalyzer, new BindFailureAnalyzer,
+        new BindValidationFailureAnalyzer, new ConfigDataNotFoundFailureAnalyzer
     ];
 }
 

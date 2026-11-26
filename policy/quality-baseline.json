@@ -3,9 +3,6 @@
   "note": "Known quality findings per file, a ratchet: tools/quality.py --baseline fails on any finding not listed here and on any listed finding that is gone. It only shrinks (--shrink-baseline); recording findings (--record-baseline) is the integration owner's, 2026-11-25 coordinator decision on the definition of done.",
   "trees": {
     "boot": {
-      "boot/core/flint-boot/source/flint/boot/package.d": {
-        "dfmt: formatter difference": 1
-      },
       "boot/core/flint-boot/tests/boot_tests/bind_validation_failure_analyzer_test.d": {
         "dfmt: formatter difference": 1
       },
