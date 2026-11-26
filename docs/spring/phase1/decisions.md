@@ -1115,3 +1115,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 01:32Z, coordinator: **apps landing slot.** A change that touches gs-rest's or petclinic's dependency closure lands only while its role holds `agentctl claim apps-landing` (40-minute lease). The holder rebases, runs the full definition of done and pushes, then releases the slot.
   - **Why:** sol-observability's Actuator slice passed five full candidates, and each push raced another closure change.
   - **Changes outside the closure** land under the cheap-rebase rule, without the slot.
+- 2026-11-26 01:38Z, coordinator, under the owner's standing approval: **D-SPEL-1 (sol-template) is approved.** SpEL's `TypedValue` becomes a value struct, so evaluation steps allocate nothing.
+  - **Calls:** `new TypedValue(v)` becomes `TypedValue(v)`.
+  - **BooleanTypedValue** becomes a factory returning `TypedValue`.
+  - **Unchanged:** `TypedValue.NULL`, `equals` and `toString` keep Java's semantics.
