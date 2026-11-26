@@ -701,6 +701,17 @@ SpEL is compiled to typed D at build time (`engine/aot/spel.d`); nothing interpr
 
 Every diagnostic names the source file and line of the declaration that caused it.
 
+Reserved blocks for the Phase 2 lanes (flint-aot, 2026-11-26). A lane takes the next free code in its block, adds its
+row above in the commit that first emits it, and has flint-aot review the commit:
+
+| Block | Owner | For |
+| --- | --- | --- |
+| FLINT-E1118–E1129 | flint-aot | general generator diagnostics |
+| FLINT-E1130–E1139 | `sol-data` | Data JDBC repositories, `@Query`, repository beans |
+| FLINT-E1140–E1159 | `sol-jpa` | JPA entity mappings, accessors, lazy proxies, build-time JPQL |
+| FLINT-E1160–E1169 | `sol-template` | SpEL beyond section 9, compiled templates |
+| FLINT-E1170–E1179 | `sol-context` | cache, scheduling, `@Async`, HTTP service proxies |
+
 ## 11. Ownership and change
 
 - The generator, the extractor and this document belong to the flint-aot session in `flint`. Runtime signatures in section 4 change only by a contract version bump agreed with framework-core.
