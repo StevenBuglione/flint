@@ -14,13 +14,65 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/model/{ApiKey,ModelOptions,ModelRequest,ModelResult,NoopApiKey,ResultMetadata,SimpleApiKey}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/model/{ApiKey,ChatModelDescription,EmbeddingModelDescription,ModelDescription,ModelOptions,ModelRequest,ModelResult,NoopApiKey,ResultMetadata,SimpleApiKey}.java
 // Modified by the Flint authors.
 module flint.ai.model;
 
 import flint.java.lang : JavaObject, stringHashCode;
 
 @safe:
+
+/// Describes a model's name, description, and version.
+interface ModelDescription
+{
+    /// Returns the model's name.
+    string getName();
+
+    /// Returns a description of the model.
+    string getDescription();
+
+    /// Returns the model's version.
+    string getVersion();
+
+    /// Supplies the description and version defaults (R3).
+    mixin template Defaults()
+    {
+        override string getDescription() pure nothrow @nogc
+        {
+            return "";
+        }
+
+        override string getVersion() pure nothrow @nogc
+        {
+            return "";
+        }
+    }
+}
+
+/// Marks a description of a chat model.
+interface ChatModelDescription : ModelDescription
+{
+}
+
+/// Describes an embedding model.
+interface EmbeddingModelDescription : ModelDescription
+{
+    /// Returns the embedding dimensionality, or -1 when unknown.
+    int getDimensions();
+
+    /// Supplies the base model defaults and the embedding dimension default (R3).
+    mixin template Defaults()
+    {
+        import flint.ai.model : ModelDescription;
+
+        mixin ModelDescription.Defaults;
+
+        override int getDimensions() pure nothrow @nogc
+        {
+            return -1;
+        }
+    }
+}
 
 /// Marker for options that customize an AI model request.
 interface ModelOptions
