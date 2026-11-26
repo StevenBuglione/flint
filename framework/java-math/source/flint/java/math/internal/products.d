@@ -1,42 +1,30 @@
-/*
- *  Licensed to the Apache Software Foundation (ASF) under one or more
- *  contributor license agreements.  See the NOTICE file distributed with
- *  this work for additional information regarding copyright ownership.
- *  The ASF licenses this file to You under the Apache License, Version 2.0
- *  (the "License"); you may not use this file except in compliance with
- *  the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- *  Copyright 2006, 2010 The Apache Software Foundation.
- *  Ported from harmony 6.0M3, classlib/modules/math/src/main/java/java/math/Multiplication.java
- *  Modified by the Flint authors.
- */
+/// Column-wise multiplication of little-endian unsigned words.
 module flint.java.math.internal.products;
 
 @safe:
 
 package(flint.java.math):
 
-/// Multiply two magnitudes into a zeroed destination with room for both lengths.
+/// Multiply two nonempty magnitudes into a destination with room for both lengths.
 void multiplyLimbs(scope uint[] product, scope const(uint)[] left, scope const(uint)[] right) pure nothrow @nogc
 {
-    foreach (i, word; left)
+    assert(left.length && right.length && product.length == left.length + right.length);
+    ulong carry;
+    foreach (column, ref word; product[0 .. $ - 1])
     {
-        ulong carry;
-        foreach (j, factor; right)
+        const size_t first = column < right.length ? 0 : column - right.length + 1;
+        const size_t end = column < left.length ? column + 1 : left.length;
+        ulong sum = carry;
+        uint overflow;
+        foreach (i; first .. end)
         {
-            // A full limb product plus a limb and a carry fits in 64 bits.
-            const ulong sum = cast(ulong) word * factor + product[i + j] + carry;
-            product[i + j] = cast(uint) sum;
-            carry = sum >> 32;
+            const ulong before = sum;
+            sum += cast(ulong) left[i] * right[column - i];
+            overflow += sum < before;
         }
-        product[i + right.length] = cast(uint) carry;
+        word = cast(uint) sum;
+        // The accumulator spans 96 bits. Carry the upper two words to the next column.
+        carry = (cast(ulong) overflow << 32) | (sum >> 32);
     }
+    product[$ - 1] = cast(uint) carry;
 }

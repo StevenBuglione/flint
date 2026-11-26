@@ -206,6 +206,8 @@ The first-match experiment added 672 bytes of allocated ELF sections at Oz to bo
 The `hasNonNull` accessors look up a child once and inspect its node type. Tests port the presence assertions from Jackson's ArrayNodeTest and ObjectNodeTest, including the change from explicit null to a value. The same module probe on venus measured 419,469 to 419,989 loadable bytes from `5658e261` to `0f76aad2`, with 4,088 DMD template instances in both builds.
 
 Direct `required` access returns an existing child immediately and formats an index or runtime type name only on failure. The exact exception text distinguishes a wrong container from a missing property or index. From `36d984ed` to `636c7b16`, the jackson-databind probe on venus moved from 419,989 to 420,277 loadable bytes and from 4,088 to 4,096 DMD template instances.
+| S-26 | **Accumulate BigInteger products by output column.** Each column combines its limb products and incoming carry in a 96-bit accumulator, then writes one destination word. | On venus with LDC 1.43.0 at `3c6e97ad` the java-math probe moved from 23,764 to 23,668 B O3 and from 21,060 to 21,516 B Oz, in allocated sections. On the earlier matched Java closure with the queued Number bridge, the isolated BigInteger probe moved from 22,844 to 22,748 B O3 and from 20,140 to 20,596 B Oz, under the 22,858 B cap. DMD stayed at 533 templates for the combined package. | Both compilers match Java SE 21 on 4,096 signed multiplication and 4,096 exponentiation cases. Carry-chain and uneven-input tests exercise column boundaries. |
+
 
 ## 3. Build time
 
