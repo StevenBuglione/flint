@@ -116,25 +116,25 @@
       "d": "ai/ai-model/tests/message_part_tests.d",
       "methods": {
         "ported": [
-          "whenOpaquePayloadHasNullComponentThenThrow"
+          "attributesAreDefensivelyCopiedAndUnmodifiable",
+          "textPartOfHasNoPayloadAndEmptyAttributes",
+          "whenAttributesIsNullThenThrow",
+          "whenOpaquePayloadHasNullComponentThenThrow",
+          "whenTextIsNullThenThrow"
         ],
         "skipped": {
-          "attributesAreDefensivelyCopiedAndUnmodifiable": "TextPart is pending.",
           "mediaPartOfWrapsMedia": "MediaPart and Media are pending.",
-          "partsWithSameComponentsAreEqual": "TextPart and ReasoningPart are pending.",
-          "reasoningPartIsAMessagePart": "ReasoningPart and MessagePart are pending.",
+          "partsWithSameComponentsAreEqual": "The full comparison requires ReasoningPart.",
+          "reasoningPartIsAMessagePart": "ReasoningPart is pending.",
           "reasoningPartOfIsPlainText": "ReasoningPart is pending.",
           "reasoningPartWithAttributesReturnsACopy": "ReasoningPart is pending.",
           "reasoningPartWithPayloadIsReplayableOnlyToItsProvider": "ReasoningPart is pending.",
           "reasoningPartWithoutPayloadIsReplayableEverywhere": "ReasoningPart is pending.",
-          "textPartOfHasNoPayloadAndEmptyAttributes": "TextPart is pending.",
           "toolCallPartOfWrapsToolCall": "ToolCallPart and AssistantMessage.ToolCall are pending.",
           "toolResultPartContentIsDefensivelyCopied": "ToolResultPart is pending.",
           "toolResultPartOfWrapsToolResponseAsSingleTextPart": "ToolResultPart and ToolResponseMessage are pending.",
           "toolResultPartToToolResponseJoinsTextContentOnly": "ToolResultPart is pending.",
           "unknownPartKeepsRawJson": "UnknownPart is pending.",
-          "whenAttributesIsNullThenThrow": "TextPart is pending.",
-          "whenTextIsNullThenThrow": "TextPart is pending.",
           "whenToolCallIsNullThenThrow": "ToolCallPart is pending."
         }
       },
