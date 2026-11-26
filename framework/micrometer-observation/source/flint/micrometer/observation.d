@@ -24,6 +24,7 @@
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationRegistry.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationView.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/SimpleEvent.java
+// Ported from micrometer-observation 1.18.0: io/micrometer/observation/SimpleObservationRegistry.java
 // Modified by the Flint authors.
 module flint.micrometer.observation;
 
@@ -592,12 +593,33 @@ private alias FilterCallback = Observation.Context delegate(Observation.Context)
 /// Configures registries that supply and manage observations.
 interface ObservationRegistry
 {
+    /// Create a registry with its own empty configuration.
+    static ObservationRegistry create()
+    {
+        return new SimpleObservationRegistry();
+    }
+
+    /// Return the configuration owned by this registry.
+    ObservationConfig observationConfig();
+
+    /// Report whether this registry supplies no-op observations.
+    bool isNoop();
+
+    /// Defaults for custom registries (R3).
+    mixin template Defaults()
+    {
+        override bool isNoop()
+        {
+            return false;
+        }
+    }
+
     /// The ordered callbacks associated with an observation registry.
     static class ObservationConfig
     {
         private Mutex gate;
-        private ObservationPredicate[] predicates;
-        private ObservationFilter[] filters;
+        private ObservationRegistrations predicates;
+        private ObservationRegistrations filters;
         private ObservationRegistrations handlers;
         private ObservationRegistrations conventions;
 
@@ -643,8 +665,7 @@ interface ObservationRegistry
         /// Register a predicate after the predicates already configured.
         ObservationConfig observationPredicate(ObservationPredicate predicate)
         {
-            synchronized (gate)
-                predicates = predicates ~ predicate;
+            appendCallback(predicates, predicate, null);
             return this;
         }
 
@@ -663,8 +684,7 @@ interface ObservationRegistry
         /// Register a filter after the filters already configured.
         ObservationConfig observationFilter(ObservationFilter filter)
         {
-            synchronized (gate)
-                filters = filters ~ filter;
+            appendCallback(filters, null, filter);
             return this;
         }
 
@@ -728,11 +748,21 @@ interface ObservationRegistry
             return defaultConvention;
         }
 
+        private void appendCallback(ref ObservationRegistrations callbacks,
+                ObservationPredicate predicate, ObservationFilter filter)
+        {
+            auto entry = new ObservationRegistration(null, null);
+            entry.predicate = predicate;
+            entry.filter = filter;
+            synchronized (gate)
+                callbacks.append(entry);
+        }
+
         package(flint.micrometer) bool isObservationEnabled(Nullable!string name, Observation.Context context)
         {
-            ObservationPredicate[] snapshot;
+            ObservationRegistrationSnapshot snapshot;
             synchronized (gate)
-                snapshot = predicates;
+                snapshot = predicates.snapshot();
 
             string callbackName;
             if (!name.isNull)
@@ -740,8 +770,9 @@ interface ObservationRegistry
                 const supplied = name.get();
                 callbackName = supplied is null ? "" : supplied;
             }
-            foreach (predicate; snapshot)
+            foreach (entry; snapshot)
             {
+                auto predicate = entry.predicate;
                 if (predicate is null)
                     throw new NullPointerException("observationPredicate");
                 if (!predicate.test(callbackName, context))
@@ -753,8 +784,28 @@ interface ObservationRegistry
         package(flint.micrometer) ObservationFilterSnapshot getObservationFilters()
         {
             synchronized (gate)
-                return ObservationFilterSnapshot(filters);
+                return ObservationFilterSnapshot(filters.snapshot());
         }
+    }
+}
+
+private final class SimpleObservationRegistry : ObservationRegistry
+{
+    private ObservationConfig configuration;
+
+    this()
+    {
+        configuration = new ObservationConfig;
+    }
+
+    override ObservationConfig observationConfig() nothrow @nogc
+    {
+        return configuration;
+    }
+
+    override bool isNoop()
+    {
+        return configuration.getObservationHandlers().empty;
     }
 }
 
@@ -806,6 +857,8 @@ private final class ObservationRegistration
     private ObservationRegistration next;
     private Object original;
     private ContextSupport supports;
+    private ObservationPredicate predicate;
+    private ObservationFilter filter;
 
     this(Object original, ContextSupport supports)
     {
@@ -828,19 +881,24 @@ private final class ObservationRegistration
     }
 }
 
-// A reader can invoke a retained callback without changing the snapshot's membership.
+// Keep filter membership read-only while preserving the original filter reference.
 private struct ObservationFilterSnapshot
 {
-    private ObservationFilter[] filters;
+    private ObservationRegistrationSnapshot filters;
 
-    @property size_t length() const nothrow @nogc
+    @property bool empty() const nothrow @nogc
     {
-        return filters.length;
+        return filters.empty;
     }
 
-    inout(ObservationFilter) opIndex(size_t index) inout nothrow @nogc
+    @property ObservationFilter front() nothrow @nogc
     {
-        return filters[index];
+        return filters.front.filter;
+    }
+
+    void popFront() nothrow @nogc
+    {
+        filters.popFront();
     }
 }
 

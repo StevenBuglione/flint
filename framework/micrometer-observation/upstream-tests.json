@@ -76,8 +76,20 @@
       "status": "deferred"
     },
     "io/micrometer/observation/ObservationRegistryTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-observation/tests/observation_registry_test.d",
+      "methods": {
+        "ported": [
+          "observationHandlersShouldBeAddedToTheRegistry"
+        ],
+        "skipped": {
+          "observationShouldBeNoopWhenNullRegistry": "Deferred until the observation lifecycle and registry scope APIs are ported.",
+          "observationShouldBeNoopWhenPredicateApplicable": "Deferred until the observation lifecycle and registry scope APIs are ported.",
+          "observationShouldNotBeNoopWhenNonNullRegistry": "Deferred until the observation lifecycle and registry scope APIs are ported.",
+          "observationShouldWorkWithConventions": "Deferred until the observation lifecycle and registry scope APIs are ported.",
+          "openingScopeShouldSetSampleAsCurrent": "Deferred until the observation lifecycle and registry scope APIs are ported."
+        }
+      },
+      "status": "partial"
     },
     "io/micrometer/observation/ObservationTests.java": {
       "phase": "2",

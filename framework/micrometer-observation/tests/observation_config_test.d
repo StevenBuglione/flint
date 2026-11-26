@@ -105,17 +105,23 @@ unittest
     auto config = new Config;
     auto filter = new AddTag;
     assert(config.observationFilter(filter) is config);
-    static assert(!__traits(compiles, config.getObservationFilters()[0] = filter));
-    const first = config.getObservationFilters();
+    static assert(!__traits(compiles, config.getObservationFilters().front = filter));
+    auto first = config.getObservationFilters();
     assert(config.observationFilter(context => context.addHighCardinalityKeyValue(KeyValue.of("source",
             "replacement"))) is config);
 
     auto filters = config.getObservationFilters();
-    assert(first.length == 1 && filters.length == 2);
-    assert(first[0] is filter && filters[0] is filter);
+    assert(first.front is filter && filters.front is filter);
+    first.popFront();
+    assert(first.empty);
     auto context = new Observation.Context;
-    for (size_t index; index < filters.length; index++)
-        context = filters[index].map(context);
+    size_t count;
+    foreach (registered; filters)
+    {
+        count++;
+        context = registered.map(context);
+    }
+    assert(count == 2);
     assert(context.getHighCardinalityKeyValue("source").getValue() == "replacement");
 }
 
@@ -126,8 +132,13 @@ unittest
     alias Map = Observation.Context delegate(Observation.Context) @safe;
     assert(config.observationFilter(cast(ObservationFilter) null).observationFilter(cast(Map) null)
             .observationFilter(null) is config);
-    const filters = config.getObservationFilters();
-    assert(filters.length == 3 && filters[0] is null && filters[1] is null && filters[2] is null);
+    size_t count;
+    foreach (filter; config.getObservationFilters())
+    {
+        count++;
+        assert(filter is null);
+    }
+    assert(count == 3);
 }
 
 private final class TimedContext : Observation.Context
@@ -290,4 +301,33 @@ unittest
         new Config().observationConvention(cast(Supports) null)
     ])
         assertThrown!NullPointerException(registered.getObservationConvention(null, DefaultConventionContract.EMPTY));
+}
+
+private interface LeftFilter : ObservationFilter
+{
+}
+
+private interface RightFilter : ObservationFilter
+{
+}
+
+private interface CombinedFilter : LeftFilter, RightFilter
+{
+}
+
+private final class IdentityFilter : CombinedFilter
+{
+    override Observation.Context map(Observation.Context context)
+    {
+        return context;
+    }
+}
+
+@("a snapshot retains the exact registered interface reference")
+unittest
+{
+    auto config = new Config;
+    ObservationFilter filter = cast(RightFilter) new IdentityFilter;
+    config.observationFilter(filter);
+    assert(config.getObservationFilters().front is filter);
 }
