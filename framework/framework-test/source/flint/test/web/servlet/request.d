@@ -18,14 +18,15 @@ import flint.engine.aot.text : decimal;
 import flint.http : HttpHeaders, HttpMethod, MediaType, asciiLower, equalsIgnoreAsciiCase;
 import flint.jakarta.servlet : ServletContext;
 import flint.jakarta.servlet.http : Cookie;
-import flint.java.lang : IllegalArgumentException, valueOf;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, valueOf;
 import flint.java.net : URI;
-import flint.java.nio.charset : Charset;
-import flint.java.util : Locale, RawCollection;
+import flint.java.nio.charset : Charset, StandardCharsets;
+import flint.java.util : ArrayList, Locale, RawCollection;
 import flint.java.util.date : Date;
 import flint.mock.web : MockHttpServletRequest;
 import flint.test.web.servlet : SmartRequestBuilder;
-import flint.util : Assert, MultiValueMap, StringUtils;
+import flint.test.web.servlet.form : decodeFormRequestParameter, readForm, writeForm;
+import flint.util : Assert, LinkedMultiValueMap, MultiValueMap, StringUtils;
 import flint.web.util : UriComponentsBuilder, UriComponentType, UriUtils;
 import std.typecons : Nullable;
 
@@ -93,6 +94,8 @@ final class MockHttpServletRequestBuilder : ConfigurableSmartRequestBuilder!Mock
     private HttpHeaders headerValues;
     private Parameter[] parameters;
     private Parameter[] queryParameters;
+    private LinkedMultiValueMap!(string, string) formValues;
+    private void delegate(MockHttpServletRequest) @safe processForm;
     private const(ubyte)[] contentValue;
     private string contentTypeValue;
     private string characterEncodingValue;
@@ -214,6 +217,27 @@ final class MockHttpServletRequestBuilder : ConfigurableSmartRequestBuilder!Mock
         return this;
     }
 
+    /// Adds a form field to the body and to the servlet parameters.
+    MockHttpServletRequestBuilder formField(string name, string[] values...)
+    {
+        param(name, values);
+        if (formValues is null)
+        {
+            formValues = new LinkedMultiValueMap!(string, string);
+            processForm = &applyFormData;
+        }
+        formValues.addAll(name, new ArrayList!string(values));
+        return this;
+    }
+
+    /// Adds the supplied form fields in map iteration order.
+    MockHttpServletRequestBuilder formFields(MultiValueMap!(string, string) fields)
+    {
+        Assert.notNull(fields, "'params' must not be null");
+        fields.forEach((name, values) { formField(name, values.toArray()); });
+        return this;
+    }
+
     /// Adds a header.
     MockHttpServletRequestBuilder header(string name, string[] values...)
     {
@@ -329,14 +353,14 @@ final class MockHttpServletRequestBuilder : ConfigurableSmartRequestBuilder!Mock
     /// Sets the body.
     MockHttpServletRequestBuilder content(string content)
     {
-        contentValue = cast(const(ubyte)[]) content;
-        return this;
+        return this.content(cast(const(ubyte)[]) content);
     }
 
     /// ditto
     MockHttpServletRequestBuilder content(const(ubyte)[] content)
     {
         contentValue = content;
+        processForm = &applyFormData;
         return this;
     }
 
@@ -505,6 +529,8 @@ final class MockHttpServletRequestBuilder : ConfigurableSmartRequestBuilder!Mock
         foreach (parameter; parameters)
             request.addParameter(parameter.name, parameter.values);
         applyHeadersAndBody(request);
+        if (processForm !is null)
+            processForm(request);
         if (preferredLocales.length != 0)
             request.setPreferredLocales(preferredLocales);
         foreach (name; attributeOrder)
@@ -542,6 +568,49 @@ final class MockHttpServletRequestBuilder : ConfigurableSmartRequestBuilder!Mock
             foreach (index, cookie; cookies)
                 cookieHeader ~= (index == 0 ? "" : "; ") ~ cookie.getName() ~ "=" ~ cookie.getValue();
             request.addHeader(HttpHeaders.COOKIE, cookieHeader);
+        }
+    }
+
+    private void applyFormData(MockHttpServletRequest request)
+    {
+        const contentType = request.getContentType();
+        if (formValues !is null && !formValues.isEmpty())
+        {
+            if (contentValue.length != 0)
+                throw new IllegalStateException("Could not write form data with an existing body");
+            const fallback = characterEncodingValue is null ? StandardCharsets.UTF_8
+                : Charset.forName(characterEncodingValue);
+            const mediaType = contentType is null ? MediaType(MediaType.APPLICATION_FORM_URLENCODED, fallback)
+                : MediaType.parseMediaType(contentType);
+            if (!mediaType.isCompatibleWith(MediaType.APPLICATION_FORM_URLENCODED))
+                throw new IllegalStateException("Invalid content type: '" ~ mediaType.toString()
+                        ~ "' is not compatible with 'application/x-www-form-urlencoded'");
+            const encoding = mediaType.getCharset();
+            request.setContent(writeForm(formValues, encoding is null ? fallback : *encoding));
+            if (contentType is null)
+                request.setContentType(mediaType.toString());
+        }
+        if (contentValue.length == 0 || contentType is null)
+            return;
+        try
+        {
+            const mediaType = MediaType.parseMediaType(contentType);
+            if (MediaType.APPLICATION_FORM_URLENCODED.includes(mediaType))
+            {
+                const encoding = mediaType.getCharset();
+                const charset = encoding is null ? StandardCharsets.UTF_8 : *encoding;
+                readForm(contentValue, charset).forEach((name, values) {
+                    auto decoded = values.toArray();
+                    foreach (ref value; decoded)
+                        if (value !is null)
+                            value = decodeFormRequestParameter(value);
+                    request.addParameter(decodeFormRequestParameter(name), decoded);
+                });
+            }
+        }
+        catch (IllegalArgumentException)
+        {
+            // Malformed media types or encoded form data stay in the request body for assertions.
         }
     }
 

@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 142 | 256 | 0 | 15,398 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,385 | 1,330 | 4,848 | 30,271 |
+| framework | spring-framework@v7.1.0 | 3,385 | 1,332 | 4,848 | 30,269 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2965,6 +2965,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#contentType(String)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.contentType` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#contextPath(String)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.contextPath` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#cookie(Cookie...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.cookie` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#formField(String,String...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.formField` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#formFields(MultiValueMap)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.formFields` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#header(String,Object...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.header` | [R7](api-mapping.md#r7-overloads), [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) | Varargs are boxed into Any; a sole Java Collection is expanded and Date values are formatted as HTTP dates. The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#headers(Consumer)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.headers` | [R9](api-mapping.md#r9-functional-interfaces), [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
 | `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#headers(HttpHeaders)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.headers` | [R12](api-mapping.md#r12-builders-and-fluent-apis) | The concrete fluent builder exposes this method pending the self-typed abstract base. |
@@ -9191,7 +9193,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.test.web.servlet.client.assertj | 27 | 0 |
 | org.springframework.test.web.servlet.htmlunit | 40 | 0 |
 | org.springframework.test.web.servlet.htmlunit.webdriver | 20 | 0 |
-| org.springframework.test.web.servlet.request | 33 | 0 |
+| org.springframework.test.web.servlet.request | 31 | 0 |
 | org.springframework.test.web.servlet.result | 106 | 0 |
 | org.springframework.test.web.servlet.setup | 85 | 0 |
 | org.springframework.test.web.support | 118 | 0 |

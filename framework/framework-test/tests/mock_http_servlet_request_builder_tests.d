@@ -11,7 +11,7 @@ module mock_http_servlet_request_builder_tests;
 import flint.engine.aot.any : Any;
 import flint.http : HttpHeaders, HttpMethod, MediaType;
 import flint.jakarta.servlet.http : Cookie;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.net : URI;
 import flint.java.nio.charset : StandardCharsets;
 import flint.java.util : ArrayList, Collection, Locale;
@@ -24,6 +24,147 @@ import std.typecons : Nullable;
 @safe:
 
 private alias Builders = MockMvcRequestBuilders;
+
+private enum formType = MediaType.APPLICATION_FORM_URLENCODED_VALUE;
+
+private void assertForm(MockHttpServletRequest request, string body)
+{
+    assert(request.getInputStream().readAllBytes() == cast(const(ubyte)[])
+            body);
+    assert(request.getContentType() == formType ~ ";charset=UTF-8");
+}
+
+private void rejectsForm(MockHttpServletRequestBuilder builder, string expected)
+{
+    try
+    {
+        build(builder);
+        assert(false);
+    }
+    catch (IllegalStateException failure)
+        assert(failure.getMessage() == expected, failure.getMessage());
+}
+
+@("MockHttpServletRequestBuilderTests.formField")
+unittest
+{
+    auto request = build(Builders.post("/").formField("foo", "bar").formField("foo", "baz"));
+    assert(request.getParameterValues("foo") == ["bar", "baz"]);
+    assertForm(request, "foo=bar&foo=baz");
+}
+
+@("MockHttpServletRequestBuilderTests.formFieldMap")
+unittest
+{
+    auto fields = new LinkedMultiValueMap!(string, string);
+    fields.add("foo", "bar");
+    fields.add("foo", "baz");
+    auto request = build(Builders.post("/").formFields(fields));
+    assert(request.getParameterValues("foo") == ["bar", "baz"]);
+    assertForm(request, "foo=bar&foo=baz");
+}
+
+@("MockHttpServletRequestBuilderTests.formFieldsAreEncoded")
+unittest
+{
+    auto request = build(Builders.post("/").formField("name 1", "value 1").formField("name 2", "value A", "value B"));
+    assert(request.getParameterNames() == ["name 1", "name 2"]);
+    assert(request.getParameterValues("name 1") == ["value 1"]);
+    assert(request.getParameterValues("name 2") == ["value A", "value B"]);
+    assertForm(request, "name+1=value+1&name+2=value+A&name+2=value+B");
+}
+
+@("MockHttpServletRequestBuilderTests.formFieldWithContent")
+unittest
+{
+    rejectsForm(Builders.post("/").content("Should not have content").formField("foo", "bar"),
+            "Could not write form data with an existing body");
+}
+
+@("MockHttpServletRequestBuilderTests.formFieldWithIncompatibleMediaType")
+unittest
+{
+    rejectsForm(Builders.post("/").contentType(MediaType.TEXT_PLAIN).formField("foo", "bar"),
+            "Invalid content type: 'text/plain' is not compatible with 'application/x-www-form-urlencoded'");
+}
+
+@("MockHttpServletRequestBuilderTests.requestParameterFromRequestBodyFormData")
+unittest
+{
+    enum body = "name+1=value+1&name+2=value+A&name+2=value+B&name+3";
+    auto request = build(Builders.post("/foo").contentType(formType ~ ";charset=UTF-8")
+            .content(cast(const(ubyte)[])
+                body));
+    assert(request.getParameterValues("name 1") == ["value 1"]);
+    assert(request.getParameterValues("name 2") == ["value A", "value B"]);
+    auto values = request.getParameterValues("name 3");
+    assert(values.length == 1 && values[0] is null);
+}
+
+unittest
+{
+    auto request = build(Builders.post("/?key=query").param("key", "ordinary").formField("key",
+            "a ~+*").formField("other", "2").formField("key", null, ""));
+    assertForm(request, "key=a+%7E%2B*&key&key=&other=2");
+    assert(request.getQueryString() == "key=query");
+    assert(request.getHeader(HttpHeaders.CONTENT_LENGTH) is null);
+    auto values = request.getParameterValues("key");
+    assert(values == ["query", "ordinary", "a ~+*", null, ""]);
+    assert(values[3] is null && values[4]!is null);
+
+    request = build(Builders.post("/?key=query").param("key", "ordinary").contentType(formType)
+            .content("key=body&&absent&empty="));
+    assert(request.getParameterValues("key") == ["query", "ordinary", "body"]);
+    assert(request.getParameterValues("absent")[0] is null);
+    assert(request.getParameterValues("empty")[0]!is null);
+
+    request = build(Builders.post("/?key=query").contentType(formType).content("key=valid&broken=%GG"));
+    assert(request.getParameterValues("key") == ["query"]);
+    assert(request.getParameter("broken") is null);
+    assert(request.getContentAsByteArray() == cast(const(ubyte)[]) "key=valid&broken=%GG");
+
+    request = build(Builders.post("/").contentType(MediaType.TEXT_PLAIN).content("key=form"));
+    assert(request.getParameterNames().length == 0);
+}
+
+unittest
+{
+    auto request = build(Builders.post("/").contentType(formType)
+            .content("missingContinuation=%C3%28&overlong=%C0%AF&nested=%252B&nestedUtf8=%25C3%2528"));
+    assert(request.getParameter("missingContinuation") == "\uFFFD(");
+    assert(request.getParameter("overlong") == "\uFFFD\uFFFD");
+    assert(request.getParameter("nested") == "+");
+    assert(request.getParameter("nestedUtf8") == "\uFFFD(");
+}
+
+unittest
+{
+    auto request = build(Builders.post("/").characterEncoding(StandardCharsets.ISO_8859_1).formField("f", "café"));
+    assert(request.getContentAsByteArray() == cast(const(ubyte)[]) "f=caf%E9");
+    assert(request.getContentType() == formType ~ ";charset=ISO-8859-1");
+    request = build(Builders.post("/").contentType(request.getContentType()).content(request.getContentAsByteArray()));
+    assert(request.getParameter("f") == "café");
+
+    request = build(Builders.post("/").characterEncoding(StandardCharsets.ISO_8859_1)
+            .contentType(formType ~ ";charset=UTF-8").formField("f", "café"));
+    assertForm(request, "f=caf%C3%A9");
+
+    request = build(Builders.post("/").characterEncoding(StandardCharsets.UTF_16).formField("f", "😀"));
+    enum latin = "f=%FE%FF%D8%3D%DE%00";
+    auto body = request.getContentAsByteArray();
+    assert(body.length == 2 + latin.length * 2);
+    assert(body[0 .. 2] == [0xFE, 0xFF]);
+    foreach (i, char c; latin)
+        assert(body[2 + i * 2 .. 4 + i * 2] == [0, cast(ubyte) c]);
+    request = build(Builders.post("/").contentType(request.getContentType()).content(body));
+    assert(request.getParameter("f") == "😀");
+
+    ubyte[] malformed;
+    foreach (char c; "f=%D8%00%00%41")
+        malformed ~= [0, cast(ubyte) c];
+    request = build(Builders.post("/").contentType(formType ~ ";charset=UTF-16BE").content(malformed));
+    assert(request.getParameter("f") == "\uFFFD");
+}
 
 @("MockHttpServletRequestBuilderTests.locale")
 unittest
