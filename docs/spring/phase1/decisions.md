@@ -1324,3 +1324,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     2. until then, the train judges only those two endpoints against main's measured median, so a candidate fails them only by regressing further. This is a temporary list that the fix commit deletes. All other endpoints stay on their absolute budgets.
 
     Main's miss stays an open release blocker.
+- 2026-11-26 10:40Z, coordinator: **the gs-rest-service `flint budget` miss is measurement drift, not code** (proof-harness, `coordination/notes/gs-rest-bisect/summary.md`). This supersedes 476a03c3's 'regression' framing.
+  - **The evidence:** the seed commit 1b23b27a itself now measures +0.42% median over its own budgets (+80 to +180 instructions per request) on posidon. The shift appeared between 05:38Z and about 07:33Z. Petclinic did not shift, and the measurement code is unchanged.
+  - **The cause:** instruction counts are deterministic, so some input to the measured binary changed. Candidates are the native install, the toolchain, or posidon's system libraries or kernel. proof-harness is identifying which.
+  - **Interim:** the train judges gs-rest only relative to main's measured median on every endpoint. A candidate fails gs-rest only by being worse than main. Petclinic stays absolute. This is a temporary list, removed when the cause is reverted or the owner re-baselines.
+  - **Budgets unchanged:** a gs-rest re-baseline is the owner's decision.
