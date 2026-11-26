@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,090 | 205 | 1,871 | 15,255 |
+| framework | openjdk@21.0.13 | 1,094 | 212 | 1,871 | 15,244 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2116,6 +2116,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.HashSet#contains(Object)` | `flint.java.util.HashSet.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashSet#remove(Object)` | `flint.java.util.HashSet.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashSet#toArray()` | `flint.java.util.HashSet.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.HexFormat` | `flint.java.util.hexformat.HexFormat` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.hexformat; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.HexFormat#delimiter()` | `flint.java.util.hexformat.HexFormat.delimiter` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#formatHex(byte[])` | `flint.java.util.hexformat.HexFormat.formatHex` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#formatHex(byte[],int,int)` | `flint.java.util.hexformat.HexFormat.formatHex` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
@@ -2137,6 +2138,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.HexFormat#withDelimiter(String)` | `flint.java.util.hexformat.HexFormat.withDelimiter` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#withPrefix(String)` | `flint.java.util.hexformat.HexFormat.withPrefix` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#withSuffix(String)` | `flint.java.util.hexformat.HexFormat.withSuffix` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.IllegalFormatConversionException` | `flint.java.util.formatter.IllegalFormatConversionException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
+| `java.util.IllegalFormatConversionException#<init>(char,Class)` | `flint.java.util.formatter.IllegalFormatConversionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `java.util.IllegalFormatException` | `flint.java.util.formatter.IllegalFormatException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.List#indexOf(Object)` | `flint.java.util.List.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.List#lastIndexOf(Object)` | `flint.java.util.List.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.List#of(E...)` | `flint.java.util.List.of` | [R7](api-mapping.md#r7-overloads) |  |
@@ -2146,6 +2150,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Map#getOrDefault(Object,V)` | `flint.java.util.Map.getOrDefault` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Map#remove(Object)` | `flint.java.util.Map.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Map.Entry` | `flint.java.util.MapEntry` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to MapEntry and exposed through Map.Entry as an alias. |
+| `java.util.MissingFormatArgumentException` | `flint.java.util.formatter.MissingFormatArgumentException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.Objects#equals(Object,Object)` | `flint.java.util.Objects.equals` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Objects#hash(Object...)` | `flint.java.util.Objects.hash` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.Objects#hashCode(Object)` | `flint.java.util.Objects.hashCode` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -2157,10 +2162,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.UUID` | `flint.java.util.uuid.UUID` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.uuid; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.UUID#equals(Object)` | `flint.java.util.uuid.UUID.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#hashCode()` | `flint.java.util.uuid.UUID.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#toString()` | `flint.java.util.uuid.UUID.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#version()` | `flint.java.util.uuid.UUID.version_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `java.util.UnknownFormatConversionException` | `flint.java.util.formatter.UnknownFormatConversionException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 
 #### java.util.concurrent
 
@@ -9976,7 +9983,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,958 | 0 |
+| java.util | 1,947 | 0 |
 | java.util.concurrent | 1,256 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |
 | java.util.concurrent.locks | 215 | 0 |

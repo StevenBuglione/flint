@@ -19,7 +19,8 @@ finds the D declarations that already exist, so the classification starts from t
    tool adds is listed in api/jdk-unconfirmed.json until the owning lane confirms it (removes the id after checking the
    signature and behaviour); a lane that finds a row wrong reclassifies it.
 3. --table writes docs/spring/jdk-coverage.md: per package, the owners, done (ported or adapted) against in scope
-   (everything not excluded), and the types that exist only in a leaf module, not at their R1 path.
+   (everything not excluded), and the types that exist only in a leaf module, not at their R1 path. Until the JDK
+   aggregate re-exports them, --classify makes such a type adapted R1 with a note naming the leaf import path.
 
     python3 tools/measure_queue.py hold -- python3 tools/jdk_coverage.py --classify --table
 """
@@ -148,14 +149,18 @@ class DCode:
         return decl if decl and decl.get('kind') in AGGREGATES else None
 
     def leaf_only(self, java_type):
-        """A module below the canonical one that declares the type, when the canonical path lacks it."""
+        """(module, declaration) of a module below the canonical one that declares the type, when the canonical path
+        lacks it; (None, None) otherwise."""
         canonical, name = d_module(java_type['package']), d_name(java_type['id'].rsplit('.', 1)[-1])
-        for module, m in self.modules.items():
+        if '.' in java_type['id'][len(java_type['package']) + 1:]:
+            return None, None         # a nested type follows its outer type
+        for module, m in sorted(self.modules.items()):
             if module.startswith(canonical + '.') and '.internal' not in module:
-                if any(self.unwrap(d).get('name') == name and self.unwrap(d).get('kind') in AGGREGATES
-                       for d in m.get('members', [])):
-                    return module
-        return None
+                for d in m.get('members', []):
+                    d = self.unwrap(d)
+                    if d.get('name') == name and d.get('kind') in AGGREGATES and d.get('protection', 'public') == 'public':
+                        return module, d
+        return None, None
 
 
 def functions_named(decl, name, module_functions):
@@ -261,6 +266,11 @@ def type_row(java_type, decl, d_symbol):
     return None
 
 
+def leaf_note(java_type, module):
+    return (f'Import from {module}; {d_module(java_type["package"])} does not re-export it until the JDK aggregate '
+            'exists.')
+
+
 def open_for_classification(classifier, element):
     match = classifier.classify(element)
     return match is None or (match[1]['status'] == 'excluded' and match[1].get('category') == 'deferred'
@@ -281,21 +291,27 @@ def propose(root, code, manifest, elements):
         if t.get('visibility') != 'public':
             continue
         decl = code.type_at(t)
-        if decl is None:
-            where = code.leaf_only(t)
-            if where:
-                leaf[t['id']] = where
-            continue
+        module = d_module(t['package'])
         short = t['id'][len(t['package']) + 1:]
-        d_type = d_module(t['package']) + '.' + '.'.join(d_name(p) for p in short.split('.'))
+        if decl is None:
+            # Until the JDK aggregate exists, a type only a leaf module declares is adapted R1 with a note naming
+            # the leaf import path (coordinator, 2026-11-26 16:31Z).
+            module, decl = code.leaf_only(t)
+            if decl is None:
+                continue
+            leaf[t['id']] = module
+        d_type = module + '.' + '.'.join(d_name(p) for p in short.split('.'))
         if open_for_classification(classifier, t['id']):
             row = type_row(t, decl, d_type)
             if row is None:
                 continue          # a kind change needs a rule chosen by hand; members wait for it too
+            if t['id'] in leaf:
+                row = {'d': d_type, 'rules': sorted(set(row.get('rules', [])) | {'R1'}, key=lambda r: int(r[1:])),
+                       'status': 'adapted', 'note': leaf_note(t, module)}
             rows[t['id']] = row
         elif classifier.classify(t['id'])[1]['status'] not in ('ported', 'adapted'):
             continue
-        functions = module_functions[d_module(t['package'])]
+        functions = module_functions[module]
         for member in t['members']:
             if member.get('visibility') not in ('public', 'protected'):
                 continue
@@ -418,8 +434,8 @@ def render_table(table, leaf):
         'member not excluded (deferred counts as in scope). Owners are from '
         '[the lane table](phase2/jdk-port.md#lanes). **Unconfirmed** rows were classified by the tool from the D code '
         'that exists (name, arity and parameter kinds) and wait for the owning lane to confirm them (api/jdk-unconfirmed.json). '
-        '**Leaf only** types exist in D but not at their R1 path, so `import flint.java.x : T` fails until the '
-        'package module re-exports them.',
+        '**Leaf only** types exist in D but not at their R1 path: `import flint.java.x : T` fails, so they are '
+        'adapted R1 with a note naming the leaf module until the JDK aggregate (sol-jdk-core) re-exports them.',
         '',
         f'Overall: types {total["types done"]}/{total["types"]} ({pct(total["types done"], total["types"])}), '
         f'members {total["members done"]}/{total["members"]} ({pct(total["members done"], total["members"])}).',
@@ -434,8 +450,8 @@ def render_table(table, leaf):
                      f'{c["unconfirmed"] or ""} | {c["leaf"] or ""} |')
     if leaf:
         lines += ['', '## Types that exist only in a leaf module', '',
-                  'Re-export each from its package module (`public import flint.java.x.leaf : T;`), then rerun '
-                  '`--classify`.', '']
+                  'Each is adapted R1 with a note naming its leaf module until the JDK aggregate re-exports it '
+                  '(coordinator, 2026-11-26 16:31Z).', '']
         lines += [f'- `{t}`: declared in `{m}`' for t, m in sorted(leaf.items())]
     return '\n'.join(lines) + '\n'
 
