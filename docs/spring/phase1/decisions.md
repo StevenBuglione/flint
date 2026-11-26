@@ -1093,3 +1093,5 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **The two triggers:** `flint.util`'s use of std.uni, and engine-reactor's `Thread.sleep(25.msecs)`.
   - **With both fixed:** context is 583 KB, beans 243 KB and core 11 KB, all well under their existing caps.
   - **Owner's decision kept:** "only goes down" is respected; this simply removes the need to go up.
+
+- 2026-11-26 00:56Z, sol-observability: D-MICROMETER-1's empty-tag rule is now R-113. SpEL keeps R-109 after the parallel landings assigned the same number.

@@ -65,8 +65,39 @@
       "status": "deferred"
     },
     "io/micrometer/core/instrument/MeterRegistryTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/registry_test.d",
+      "methods": {
+        "ported": [
+          "clear",
+          "removeMeters"
+        ],
+        "skipped": {
+          "acceptMeterFilter": "Deferred with registry filters and pre-filter identity tracking.",
+          "acceptPercentilesNullOrEmpty": "Deferred with timer distribution configuration and synthetic meter lifetime.",
+          "baseUnitStringShouldBeCachedAndReturnTheSameInstance": "Deferred with Timer and cross-type registration.",
+          "differentPreFilterIdsMapToSameIdWithStaleId": "Deferred with registry filters and pre-filter identity tracking.",
+          "differentPreFilterIdsMapToSameId_thenCacheIsBounded": "Deferred with registry filters and pre-filter identity tracking.",
+          "doNotCallFiltersWhenUnnecessary": "Deferred with registry filters and pre-filter identity tracking.",
+          "filterConfiguredAfterMeterRegistered": "Deferred with registry filters and pre-filter identity tracking.",
+          "gaugeRegistersGaugeOnceAndSubsequentGaugeCallsWillNotRegister": "Deferred with gauge registration.",
+          "histogramConfigTransformingMeterFilter": "Deferred with registry filters and pre-filter identity tracking.",
+          "idTransformingMeterFilter": "Deferred with registry filters and pre-filter identity tracking.",
+          "multiplePreFilterIdsMapToSameId_removeByPreFilterId": "Deferred with registry filters and pre-filter identity tracking.",
+          "noopMetersAfterRegistryClosed": "Deferred with Timer and cross-type registration.",
+          "overridingAcceptMeterFilter": "Deferred with registry filters and pre-filter identity tracking.",
+          "registryCloseShouldCloseHighCardinalityTagsDetectorOnlyOnce": "Deferred with the high-cardinality tags detector.",
+          "removeByPreFilterIdAfterAddingFilterAndDifferentlyMappedId": "Deferred with registry filters and pre-filter identity tracking.",
+          "removeMetersAffectedByMeterFilter": "Deferred with registry filters and pre-filter identity tracking.",
+          "removeMetersAffectedByNonIdempotentMeterFilter": "Deferred with registry filters and pre-filter identity tracking.",
+          "removeMetersWithSynthetics": "Deferred with timer distribution configuration and synthetic meter lifetime.",
+          "removeMetersWithSyntheticsAffectedByMeterFilter": "Deferred with registry filters and pre-filter identity tracking.",
+          "removingStaleMeterRemovesItFromAllInternalState": "Deferred with registry filters and pre-filter identity tracking.",
+          "samePreFilterIdsMapToDifferentIdWithStaleMeter": "Deferred with registry filters and pre-filter identity tracking.",
+          "shouldNotLetRegisteringMetersTwice": "Deferred with Timer and cross-type registration.",
+          "unchangedStaleMeterShouldBeUnmarked": "Deferred with registry filters and pre-filter identity tracking."
+        }
+      },
+      "status": "partial"
     },
     "io/micrometer/core/instrument/MeterTest.java": {
       "phase": "2",

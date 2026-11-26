@@ -3099,7 +3099,6 @@
       "io/micrometer/core/instrument/MeterRegistryAllocationTest.java",
       "io/micrometer/core/instrument/MeterRegistryInjectionTest.java",
       "io/micrometer/core/instrument/MeterRegistryLoggingTest.java",
-      "io/micrometer/core/instrument/MeterRegistryTest.java",
       "io/micrometer/core/instrument/MeterTest.java",
       "io/micrometer/core/instrument/MetricsTest.java",
       "io/micrometer/core/instrument/MissingHdrHistogramTest.java",

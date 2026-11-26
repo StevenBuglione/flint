@@ -18,14 +18,18 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/ImmutableTag.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Meter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Statistic.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/MeterRegistry.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Counter.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument;
 
+import core.sync.mutex : Mutex;
 import flint.engine.aot.objects : objectToString, statelessInstance;
 import flint.engine.aot.text : decodeUtf8;
 import flint.java.lang : Comparable, IllegalArgumentException, Iterable, JavaObject,
     NullPointerException, UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode;
 import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
+import flint.java.util.function_ : Consumer;
 import flint.java.util.stream : Stream;
 import std.typecons : Nullable;
 
@@ -613,4 +617,180 @@ interface Meter
 
         mixin JavaObject;
     }
+}
+
+/// A counter preallocated during meter registration.
+interface Counter : Meter
+{
+    /// Add one to this counter.
+    void increment() nothrow @nogc;
+
+    /// Add an amount to this counter.
+    void increment(double amount) nothrow @nogc;
+
+    /// The total since this counter was created.
+    double count() nothrow @nogc;
+
+    /// Micrometer's default increment by one (R3).
+    mixin template Defaults()
+    {
+        override void increment() nothrow @nogc
+        {
+            Counter counter = this;
+            counter.increment(1.0);
+        }
+    }
+}
+
+/// Register meters by name and tags before handing their handles to request code.
+abstract class MeterRegistry
+{
+    private Meter[] meters;
+    private Mutex gate;
+    private bool closed;
+
+    /// Prepare empty registry storage.
+    protected this()
+    {
+        gate = new Mutex;
+    }
+
+    /// Find or register a counter with the given name and tag pairs.
+    Counter counter(string name, scope const(string)[] tags...)
+    {
+        return counter(name, Tags.of(tags));
+    }
+
+    /// Find or register a counter with the given name and tag iterable.
+    Counter counter(string name, Iterable!Tag tags)
+    {
+        return counter(name, Tags.of(tags));
+    }
+
+    /// Find or register a counter with the given name and normalized tags.
+    Counter counter(string name, Tags tags)
+    {
+        if (tags is null)
+            tags = Tags.empty();
+        auto id = new Meter.Id(name, tags, Nullable!string.init, Nullable!string.init, Meter.Type.COUNTER);
+        gate.lock_nothrow();
+        scope (exit)
+            gate.unlock_nothrow();
+
+        foreach (meter; meters)
+        {
+            if (id.equals(meter.getId()))
+                return cast(Counter) meter;
+        }
+
+        if (closed)
+            return new NoopCounter(id);
+        auto created = newCounter(id);
+        meters ~= created;
+        return created;
+    }
+
+    /// Build the concrete registry's counter.
+    protected abstract Counter newCounter(Meter.Id id);
+
+    /// Visit a snapshot of the registered meters.
+    void forEachMeter(Consumer!Meter action)
+    {
+        forEachMeter(&action.accept);
+    }
+
+    /// Visit registered meters using a D delegate (R9).
+    void forEachMeter(scope void delegate(Meter) @safe action)
+    {
+        foreach (meter; snapshot())
+            action(meter);
+    }
+
+    private Meter[] snapshot()
+    {
+        gate.lock_nothrow();
+        scope (exit)
+            gate.unlock_nothrow();
+        return meters.dup;
+    }
+
+    /// Remove the meter whose identity matches this meter.
+    Meter remove(Meter meter)
+    {
+        return remove(meter.getId());
+    }
+
+    /// Return the removed meter, or null when no meter has the requested identity.
+    Meter remove(Meter.Id id)
+    {
+        gate.lock_nothrow();
+        scope (exit)
+            gate.unlock_nothrow();
+
+        foreach (index, meter; meters)
+        {
+            if (id.equals(meter.getId()))
+            {
+                foreach (position; index + 1 .. meters.length)
+                    meters[position - 1] = meters[position];
+                meters[$ - 1] = null;
+                meters = meters[0 .. $ - 1];
+                return meter;
+            }
+        }
+        return null;
+    }
+
+    /// Remove all registered meters.
+    void clear()
+    {
+        gate.lock_nothrow();
+        scope (exit)
+            gate.unlock_nothrow();
+        meters = null;
+    }
+
+    /// Stop admitting new meters. Existing handles remain usable.
+    void close()
+    {
+        gate.lock_nothrow();
+        scope (exit)
+            gate.unlock_nothrow();
+        closed = true;
+    }
+
+    /// Whether new identities are denied.
+    bool isClosed() nothrow @nogc
+    {
+        gate.lock_nothrow();
+        scope (exit)
+            gate.unlock_nothrow();
+        return closed;
+    }
+}
+
+private final class NoopCounter : Counter
+{
+    private Meter.Id id;
+
+    this(Meter.Id id) nothrow @nogc
+    {
+        this.id = id;
+    }
+
+    override Meter.Id getId() nothrow @nogc
+    {
+        return id;
+    }
+
+    override void increment(double) nothrow @nogc
+    {
+    }
+
+    override double count() nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    mixin Counter.Defaults;
 }
