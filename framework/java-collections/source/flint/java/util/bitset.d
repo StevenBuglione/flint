@@ -263,6 +263,8 @@ class BitSet
         int common = wordsInUse < set.wordsInUse ? wordsInUse : set.wordsInUse;
         if (invert == 0 && common < wordsInUse)
             clearTail(common);
+        if (common == 0)
+            return;
         while (common > 0)
         {
             --common;

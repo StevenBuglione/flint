@@ -286,6 +286,8 @@ unittest
     bits.set(63, 130);
     assertThrown!NullPointerException(bits.andNot(null));
     assert(bits.length() == 130 && bits.cardinality() == 67);
+    bits.andNot(new BitSet());
+    assert(bits.size() == 192 && bits.length() == 130 && bits.cardinality() == 67);
     bits.andNot(bits);
     assert(bits.size() == 192 && bits.isEmpty() && bits.cardinality() == 0);
     bits.set(129);
