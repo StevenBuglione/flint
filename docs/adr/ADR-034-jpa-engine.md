@@ -1,6 +1,6 @@
 # ADR-034 — JPA engine for Flint
 
-**Status** Proposed, 2026-11-26. Owner approval is required before engine implementation.
+**Status** Accepted, 2026-11-26 (owner decision `0168bca6`).
 **Reviewers** data-access for JDBC and transaction integration, flint-aot for generated metadata, accessors, proxies and JPQL.
 
 ## Context
