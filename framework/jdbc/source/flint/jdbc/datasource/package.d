@@ -182,8 +182,10 @@ class ConnectionHolder : ResourceHolderSupport
     /// Return whether JDBC savepoints are supported. Caches the flag for the lifetime of this `ConnectionHolder`.
     bool supportsSavepoints()
     {
+        // A whole Nullable, not Nullable.opAssign(bool): that template imports std.algorithm.mutation, whose
+        // ModuleInfo this module would then list, pulling Phobos mutation.o into the link (playbook S-9).
         if (savepointsSupported.isNull)
-            savepointsSupported = getConnection().getMetaData().supportsSavepoints();
+            savepointsSupported = Nullable!bool(getConnection().getMetaData().supportsSavepoints());
         return savepointsSupported.get;
     }
 
@@ -524,7 +526,7 @@ abstract class DataSourceUtils
             const currentIsolation = con.getTransactionIsolation();
             if (currentIsolation != isolationLevel)
             {
-                previousIsolationLevel = currentIsolation;
+                previousIsolationLevel = Nullable!int(currentIsolation); // not opAssign(int): see supportsSavepoints
                 con.setTransactionIsolation(isolationLevel);
             }
         }
