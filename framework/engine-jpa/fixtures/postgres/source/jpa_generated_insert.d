@@ -5,20 +5,22 @@
 
 module jpa_generated_insert;
 
+import core.memory : GC;
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping;
 import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
 import flint.engine.jpa.loaded_state : ManagedSnapshotSlot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
-import flint.engine.jpa.parameter_binding : ParameterBinding, executeIdentityInsert,
-    planIdentityInsert, readGeneratedIntegerKey;
+import flint.engine.jpa.parameter_binding : InsertPlan, ParameterBinding, executeIdentityInsert,
+    executeManagedInsert, planIdentityInsert, planInsert, readGeneratedIntegerKey;
 import flint.engine.jpa.snapshot : AttributeSnapshot;
 import flint.engine.jpa.update : InsertAction, InsertInputs, MutationActions, MutationPhase,
     MutationPlans, flushManagedMutations;
 import flint.jakarta.persistence : GenerationType;
-import flint.java.sql : Connection, Types;
+import flint.java.sql : Connection, PreparedStatement, ResultSet, Types;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
+import std.typecons : BlackHole;
 
 @safe:
 
@@ -27,6 +29,7 @@ private final class GeneratedOwner
     long id;
     string name;
     uint reads;
+    InsertContext retireOnRead;
 }
 
 private alias AttrResult = Result!AttributeValue;
@@ -40,6 +43,11 @@ private AttrResult readName(Object entity) nothrow @nogc
 {
     auto owner = cast(GeneratedOwner) entity;
     ++owner.reads;
+    if (auto context = owner.retireOnRead)
+    {
+        owner.retireOnRead = null;
+        context.managed.clear();
+    }
     return AttrResult(AttributeValue(kind: AttributeKind.text, text: owner.name));
 }
 
@@ -201,4 +209,173 @@ void verifyGeneratedInserts(DataSource dataSource, JdbcTemplate jdbc)
     connection.rollback();
     managed.clear();
     assert(managed.find(scheduledKey).error.code == Status.notFound);
+    verifyRetiredInserts(connection, planned.value);
+}
+
+private final class InsertContext
+{
+    private IdentitySlot[1] slots;
+    private Object[1] roots;
+    private ManagedSnapshotSlot[1] snapshots;
+    ManagedEntities managed;
+    uint closedStatements;
+
+    this()
+    {
+        snapshots = [ManagedSnapshotSlot(new AttributeSnapshot[2], new ubyte[16])];
+        Error error;
+        managed = ManagedEntities(slots[], roots[], error, snapshots[]);
+        assert(error.code == Status.ok);
+    }
+}
+
+private enum RetireAt
+{
+    capture,
+    bind,
+    close,
+}
+
+private final class RetiringStatement : BlackHole!PreparedStatement
+{
+    private PreparedStatement statement;
+    private InsertContext context;
+    private RetireAt phase;
+
+    this(PreparedStatement statement, InsertContext context, RetireAt phase)
+    {
+        this.statement = statement;
+        this.context = context;
+        this.phase = phase;
+    }
+
+    override void setLong(int slot, long value)
+    {
+        statement.setLong(slot, value);
+    }
+
+    override void setString(int slot, string value)
+    {
+        statement.setString(slot, value);
+        if (phase == RetireAt.bind)
+            context.managed.clear();
+    }
+
+    override int executeUpdate()
+    {
+        return statement.executeUpdate();
+    }
+
+    override ResultSet getGeneratedKeys()
+    {
+        return statement.getGeneratedKeys();
+    }
+
+    override void close()
+    {
+        statement.close();
+        ++context.closedStatements;
+        if (phase == RetireAt.close)
+            context.managed.clear();
+    }
+}
+
+private final class RetiringConnection : BlackHole!Connection
+{
+    private Connection connection;
+    private InsertContext context;
+    private RetireAt phase;
+
+    this(Connection connection, InsertContext context, RetireAt phase)
+    {
+        this.connection = connection;
+        this.context = context;
+        this.phase = phase;
+    }
+
+    override bool getAutoCommit()
+    {
+        return connection.getAutoCommit();
+    }
+
+    override PreparedStatement prepareStatement(string sql)
+    {
+        return new RetiringStatement(connection.prepareStatement(sql), context, phase);
+    }
+
+    override PreparedStatement prepareStatement(string sql, string[] columns)
+    {
+        return new RetiringStatement(connection.prepareStatement(sql, columns), context, phase);
+    }
+}
+
+private immutable EntityMapping assignedMapping = () {
+    EntityMapping result = mapping;
+    result.generatesId = false;
+    result.generationStrategy = GenerationType.AUTO;
+    return result;
+}();
+
+private void verifyRetiredInserts(Connection connection, const ref InsertPlan generatedPlan)
+{
+    enum assignedSql = "insert into jpa_identity_probe (\"Owner Key\", name) overriding system value values (?, ?)";
+    static immutable ParameterBinding[] assignedBindings = [
+        ParameterBinding(0, 1), ParameterBinding(1, 2)
+    ];
+    const assigned = planInsert(&assignedMapping, assignedSql, assignedBindings);
+    assert(assigned.ok);
+    foreach (phase; [RetireAt.capture, RetireAt.bind, RetireAt.close])
+    {
+        verifyRetiredInsert(connection, generatedPlan, true, phase);
+        verifyRetiredInsert(connection, assigned.value, false, phase);
+    }
+}
+
+private void verifyRetiredInsert(Connection connection, const ref InsertPlan plan, bool generated, RetireAt phase)
+{
+    auto context = new InsertContext;
+    scope (exit)
+        context.managed.clear();
+    auto owner = new GeneratedOwner;
+    owner.name = "Retired";
+    const identifier = generated ? 0L : 7L;
+    owner.id = identifier;
+    auto writing = connection;
+    if (phase == RetireAt.capture)
+        owner.retireOnRead = context;
+    else
+        writing = new RetiringConnection(connection, context, phase);
+    auto values = new AttributeValue[2];
+    string[] columns = ["Owner Key"];
+
+    const allocated = GC.stats().allocatedInCurrentThread;
+    const rejected = runInsert(plan, writing, context, owner, values, columns, generated);
+    assert(rejected.code == Status.conflict && owner.id == identifier);
+    if (phase == RetireAt.capture)
+        assert(GC.stats().allocatedInCurrentThread == allocated, "capture retirement must stop before JDBC");
+    else
+        assert(context.closedStatements == 1);
+    assert(context.managed.find(EntityIdentity(0, identifier)).error.code == Status.notFound);
+    foreach (ref value; values)
+        assert(value.kind == AttributeKind.nullValue);
+    if (phase == RetireAt.close)
+    {
+        assert(countRows(connection) == 1);
+        connection.rollback();
+    }
+    assert(countRows(connection) == 0, "retired reservation still inserted a row");
+
+    owner.name = "Retry";
+    assert(runInsert(plan, connection, context, owner, values, columns, generated).code == Status.ok);
+    assert(context.managed.find(EntityIdentity(0, owner.id)).value is owner);
+    assert(countRows(connection) == 1);
+    connection.rollback();
+}
+
+private Error runInsert(const ref InsertPlan plan, Connection connection, InsertContext context,
+        GeneratedOwner owner, AttributeValue[] values, string[] columns, bool generated)
+{
+    if (generated)
+        return executeIdentityInsert(plan, connection, context.managed, 0, owner, values, columns).error;
+    return executeManagedInsert(plan, connection, context.managed, EntityIdentity(0, owner.id), owner, values);
 }

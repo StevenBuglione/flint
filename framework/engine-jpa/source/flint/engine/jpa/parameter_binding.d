@@ -280,7 +280,7 @@ Error executeManagedInsert(const ref InsertPlan plan, Connection connection,
     const initial = checkInsertedValues(*mapping, key.identifier, captured);
     if (initial.code != Status.ok)
         return initial;
-    const executed = insertRow(plan, connection, captured);
+    const executed = insertRow(plan, connection, entities, staged.value, captured);
     if (executed.code != Status.ok)
         return executed;
     return entities.publishInsert(staged.value, entity);
@@ -302,20 +302,25 @@ private Error checkInitialVersion(uint revision, scope const(AttributeValue)[] c
     return Error.init;
 }
 
-private Error insertRow(const ref InsertPlan plan, Connection connection, const(AttributeValue)[] captured)
+private Error insertRow(const ref InsertPlan plan, Connection connection,
+        scope const ref ManagedEntities entities, ulong ticket, const(AttributeValue)[] captured)
 {
     auto statement = connection.prepareStatement(plan.sql);
     scope (exit)
         statement.close();
-    return executeInsertStatement(plan.parameters, statement, captured);
+    return executeInsertStatement(plan.parameters, statement, entities, ticket, captured);
 }
 
-private Error executeInsertStatement(scope const ref ParameterBindingPlan parameters,
-        PreparedStatement statement, const(AttributeValue)[] captured)
+private enum insertRetired = Error(Status.conflict, "JPA insert reservation retired");
+
+private Error executeInsertStatement(scope const ref ParameterBindingPlan parameters, PreparedStatement statement,
+        scope const ref ManagedEntities entities, ulong ticket, const(AttributeValue)[] captured)
 {
     const bound = bindMappedValues(parameters, statement, null, captured);
     if (bound.code != Status.ok)
         return bound;
+    if (!entities.ownsInsert(ticket))
+        return insertRetired;
     if (statement.executeUpdate() != 1)
         return Error(Status.ioError, "managed insert affected an unexpected number of rows");
     return Error.init;
@@ -361,9 +366,11 @@ GeneratedKeyResult executeIdentityInsert(const ref InsertPlan plan, Connection c
         entities.cancelInsert(reserved.value);
 
     const initial = collectIdentityInput(*mapping, entity, captured);
+    if (!entities.ownsInsert(reserved.value))
+        return GeneratedKeyResult(0, insertRetired);
     if (initial.code != Status.ok)
         return GeneratedKeyResult(0, initial);
-    const written = insertGeneratedRow(plan, connection, captured, columns);
+    const written = insertGeneratedRow(plan, connection, entities, reserved.value, captured, columns);
     if (!written.ok)
         return written;
 
@@ -412,12 +419,12 @@ private Error collectIdentityInput(scope const ref EntityMapping mapping, Object
 }
 
 private GeneratedKeyResult insertGeneratedRow(const ref InsertPlan plan, Connection connection,
-        const(AttributeValue)[] captured, string[] columns)
+        scope const ref ManagedEntities entities, ulong ticket, const(AttributeValue)[] captured, string[] columns)
 {
     auto statement = connection.prepareStatement(plan.sql, columns);
     scope (exit)
         statement.close();
-    const written = executeInsertStatement(plan.parameters, statement, captured);
+    const written = executeInsertStatement(plan.parameters, statement, entities, ticket, captured);
     if (written.code != Status.ok)
         return GeneratedKeyResult(0, written);
 

@@ -219,7 +219,8 @@ struct ManagedEntities
         insertionSlot = size_t.max;
     }
 
-    private bool ownsInsert(ulong ticket) const scope nothrow @nogc
+    /// Checks that this insert still owns its context reservation after reentrant work.
+    package bool ownsInsert(ulong ticket) const scope nothrow @nogc
     {
         return (awaitingKey || insertionSlot != size_t.max) && insertionTicket == ticket;
     }
