@@ -33,7 +33,7 @@ import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.java.lang : IllegalStateException;
 import flint.util : MimeTypeUtils;
 import flint.web : ErrorResponse, HttpMediaTypeNotAcceptableException, HttpMediaTypeNotSupportedException;
-import flint.web.accept : ContentNegotiationManager;
+import flint.web.accept : ContentNegotiationManager, HeaderContentNegotiationStrategy;
 import flint.web.bind : MissingPathVariableException;
 import flint.web.bind.support : DefaultDataBinderFactory, WebDataBinderFactory;
 import flint.web.context.request : NativeWebRequest, ServletWebRequest, WebRequest;
@@ -297,6 +297,12 @@ class ServletResponseMethodArgumentResolver : HandlerMethodArgumentResolver
 // ---------------------------------------------------------------------------------------------------------
 // Message conversion
 
+// Only the exact processors built by the adapter omit the default manager.
+private enum DefaultContentNegotiation
+{
+    headers
+}
+
 /// `AbstractMessageConverterMethodProcessor`: reading bodies, and writing them with content negotiation.
 abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentResolver, HandlerMethodReturnValueHandler
 {
@@ -308,8 +314,13 @@ abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentRe
     ///
     protected this(HttpMessageConverter[] converters, ContentNegotiationManager manager)
     {
-        messageConverters = converters;
+        this(converters);
         contentNegotiationManager = manager !is null ? manager : new ContentNegotiationManager;
+    }
+
+    private this(HttpMessageConverter[] converters)
+    {
+        messageConverters = converters;
     }
 
     /// Reads `typeName` from the request body. Throws `HttpMediaTypeNotSupportedException` or
@@ -360,7 +371,9 @@ abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentRe
         {
             MediaType[] acceptableTypes;
             try
-                acceptableTypes = contentNegotiationManager.resolveMediaTypes(webRequest);
+                acceptableTypes = contentNegotiationManager is null ? HeaderContentNegotiationStrategy
+                    .resolveHeaderValues(webRequest.getHeaderValues(
+                            HttpHeaders.ACCEPT)) : contentNegotiationManager.resolveMediaTypes(webRequest);
             catch (HttpMediaTypeNotAcceptableException ex)
             {
                 const series = outputMessage.getServletResponse().getStatus() / 100;
@@ -426,14 +439,14 @@ abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentRe
     The middle of Spring's `writeWithMessageConverters`, from the acceptable and producible types to the selected
     type. Pure, so Flint's fast path fills its Accept table with this very code (fast-path.md).
     +/
-    package(flint) static Selection selectMediaType(MediaType[] acceptableTypes, MediaType[] producibleTypes,
-            string valueType, out MediaType selectedMediaType)
+    package(flint) static Selection selectMediaType(MediaType[] acceptableTypes,
+            MediaType[] producibleTypes, string valueType, out MediaType selectedMediaType)
     {
         MediaType[] compatibleMediaTypes;
         determineCompatibleMediaTypes(acceptableTypes, producibleTypes, compatibleMediaTypes);
         if (compatibleMediaTypes.length == 0 && valueType == "flint.http.ProblemDetail")
-            determineCompatibleMediaTypes(cast(MediaType[]) problemMediaTypes.dup,
-                    producibleTypes, compatibleMediaTypes);
+            determineCompatibleMediaTypes(cast(MediaType[]) problemMediaTypes.dup, producibleTypes,
+                    compatibleMediaTypes);
         if (compatibleMediaTypes.length == 0)
             return Selection.notAcceptable;
         MimeTypeUtils.sortBySpecificity(compatibleMediaTypes);
@@ -560,6 +573,11 @@ class RequestResponseBodyMethodProcessor : AbstractMessageConverterMethodProcess
         super(converters, manager);
     }
 
+    private this(HttpMessageConverter[] converters, DefaultContentNegotiation)
+    {
+        super(converters);
+    }
+
     /// The validator for `@Valid` and `@Validated` arguments, with the descriptors its binding results read
     /// properties through (Spring keeps it in the web binding initializer).
     package(flint) void setValidator(Validator validator, DescriptorTable descriptors) pure nothrow @nogc
@@ -660,6 +678,11 @@ class HttpEntityMethodProcessor : AbstractMessageConverterMethodProcessor
     this(HttpMessageConverter[] converters, ContentNegotiationManager manager = null)
     {
         super(converters, manager);
+    }
+
+    private this(HttpMessageConverter[] converters, DefaultContentNegotiation)
+    {
+        super(converters);
     }
 
     bool supportsParameter(MethodParameter parameter)
@@ -896,8 +919,17 @@ private struct DefaultHandlers
             HandlerMethodArgumentResolver[] customResolvers, HandlerMethodReturnValueHandler[] customHandlers)
     {
         DefaultHandlers result;
-        result.responseBody = new RequestResponseBodyMethodProcessor(converters, manager);
-        auto entity = new HttpEntityMethodProcessor(converters, manager);
+        HttpEntityMethodProcessor entity;
+        if (manager is null)
+        {
+            result.responseBody = new RequestResponseBodyMethodProcessor(converters, DefaultContentNegotiation.headers);
+            entity = new HttpEntityMethodProcessor(converters, DefaultContentNegotiation.headers);
+        }
+        else
+        {
+            result.responseBody = new RequestResponseBodyMethodProcessor(converters, manager);
+            entity = new HttpEntityMethodProcessor(converters, manager);
+        }
         result.argumentResolvers = new HandlerMethodArgumentResolverComposite;
         result.argumentResolvers.addResolvers(new RequestParamMethodArgumentResolver(false),
                 new PathVariableMethodArgumentResolver, new RequestHeaderMethodArgumentResolver,
@@ -918,7 +950,6 @@ private struct DefaultHandlers
 class RequestMappingHandlerAdapter : HandlerAdapter, DeferredFailure
 {
     private HttpMessageConverter[] messageConverters;
-    private ContentNegotiationManager contentNegotiationManager;
     private HandlerMethodArgumentResolver[] customArgumentResolvers;
     private HandlerMethodReturnValueHandler[] customReturnValueHandlers;
     private DefaultHandlers handlers;
@@ -932,11 +963,10 @@ class RequestMappingHandlerAdapter : HandlerAdapter, DeferredFailure
             HandlerMethodReturnValueHandler[] customReturnValueHandlers = null)
     {
         this.messageConverters = messageConverters;
-        contentNegotiationManager = manager !is null ? manager : new ContentNegotiationManager;
         this.customArgumentResolvers = customArgumentResolvers;
         this.customReturnValueHandlers = customReturnValueHandlers;
-        handlers = DefaultHandlers.create(messageConverters, contentNegotiationManager,
-                customArgumentResolvers, customReturnValueHandlers);
+        handlers = DefaultHandlers.create(messageConverters, manager, customArgumentResolvers,
+                customReturnValueHandlers);
         binderFactory = new DefaultDataBinderFactory;
     }
 
@@ -1261,8 +1291,8 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
     Flint's fast path (S7): the prepared invocable `doResolveException` would invoke for `exception` raised for
     `handlerMethod`, and the adapter it was prepared from; null when no handler method resolves it.
     +/
-    package(flint.web) ServletInvocableHandlerMethod adviceFor(HandlerMethod handlerMethod, Exception exception,
-            out RequestMappingHandlerAdapter preparedFrom)
+    package(flint.web) ServletInvocableHandlerMethod adviceFor(HandlerMethod handlerMethod,
+            Exception exception, out RequestMappingHandlerAdapter preparedFrom)
     {
         Object bean;
         HandlerGroup* group;
@@ -1277,8 +1307,8 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
     Flint's fast path (S7): the arguments `doResolveException` provides, in `storage`: the exception, its causes,
     then the handler method; null when they do not fit.
     +/
-    package(flint.web) static Any[] providedArguments(Exception exception, HandlerMethod handlerMethod,
-            return scope Any[] storage)
+    package(flint.web) static Any[] providedArguments(Exception exception,
+            HandlerMethod handlerMethod, return scope Any[] storage)
     {
         size_t at;
         if (storage.length == 0)
