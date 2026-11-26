@@ -58,7 +58,7 @@ final class Box(T)
 
     override size_t toHash() const nothrow
     {
-        static if (__traits(compiles, ()nothrow{ const T v; return hashOf(v); }))
+        static if (__traits(compiles, ()@safe nothrow{ const T v; return hashOf(v); }))
             return hashOf(value);
         else
             return 0;
@@ -477,6 +477,68 @@ struct Any
     inout(Box!T) box(T)() inout pure nothrow @nogc
     {
         return slot_ == Slot.box ? cast(inout(Box!T)) object_ : null;
+    }
+
+    // Store a converted element. A failed slot or type check leaves the destination untouched.
+    package(flint.engine.aot) bool tryStoreElement(T)(ref T destination) nothrow @nogc
+    {
+        enum category = categoryOf!T;
+        static if (category == Category.any)
+            destination = this;
+        else static if (category == Category.reference)
+        {
+            if (slot_ != Slot.reference && slot_ != Slot.empty)
+                return false;
+            auto reference = cast(T) object_;
+            if (reference is null && object_ !is null)
+                return false;
+            destination = reference;
+        }
+        else
+        {
+            static if (category == Category.text || category == Category.collection)
+            {
+                if (slot_ == Slot.empty)
+                {
+                    destination = T.init;
+                    return true;
+                }
+            }
+            if (typeName_ != typeNameOf!T)
+                return false;
+            static if (isScalar!T)
+            {
+                if (!holdsScalar!T())
+                    return false;
+                destination = readScalar!T();
+            }
+            else
+                return tryStoreBoxedElement(destination);
+        }
+        return true;
+    }
+
+    private bool tryStoreBoxedElement(T)(ref T destination) nothrow @nogc
+    {
+        static if (isInlineable!T)
+        {
+            if (slot_ == Slot.inlined)
+            {
+                destination = inlineValue!T(object_);
+                return true;
+            }
+        }
+        if (auto stored = box!T())
+            destination = stored.value;
+        else static if (categoryOf!T == Category.collection)
+        {
+            if (slot_ != Slot.box || object_ !is null)
+                return false;
+            destination = T.init;
+        }
+        else
+            return false;
+        return true;
     }
 
     /++

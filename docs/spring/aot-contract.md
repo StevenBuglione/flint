@@ -505,6 +505,21 @@ Flint's per-endpoint fast path ([`phase1/fast-path.md`](phase1/fast-path.md)) ad
 
   Both are probed for presence like the date customizer. Without the option, or without a qualifying mapping, the output is byte-identical to a build without this section, and nothing of the fast path is linked.
 
+### 4.14 Checked array element writes
+
+| Type | Member | Meaning |
+| --- | --- | --- |
+| `Descriptor` | `ElementWriteResult function(ref Any receiver, size_t index, Any value) @safe nothrow @nogc setElement` | Mutates the original backing slice. Null for unsupported types. |
+
+`descriptorOf!T` supplies the callback for mutable dynamic arrays whose elements permit a safe, nonthrowing,
+allocation-free assignment. The caller supplies an already converted element. Scalar and boxed values must have
+the slot and type of the element. Class and interface elements also accept assignable references.
+`Any.init` clears reference-like elements. The callback checks the receiver and bounds before attempting the store. A failed
+check returns `wrongReceiver`, `outOfBounds` or `wrongElement` and leaves the slice unchanged. Success returns
+`written`. The enum's default, `invalid`, is distinct from success.
+
+Generated code leaves this field at its default. The runtime contract version stays 3.
+
 ## 5. Beans
 
 ### 5.1 What becomes a bean

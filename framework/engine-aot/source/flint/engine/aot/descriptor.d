@@ -15,6 +15,7 @@ module flint.engine.aot.descriptor;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.expression : ExpressionSpec;
 import flint.engine.aot.name : typeNameOf;
+import flint.engine.aot.sys.inline : isInlineable;
 
 @safe:
 
@@ -28,6 +29,16 @@ enum TypeKind
     struct_,
     class_,
     interface_,
+}
+
+/// The result of writing an element through an erased descriptor.
+enum ElementWriteResult : ubyte
+{
+    invalid = 0,
+    written,
+    wrongReceiver,
+    wrongElement,
+    outOfBounds,
 }
 
 /// An annotation present on an element, with its attributes merged (contract section 2.1).
@@ -246,6 +257,9 @@ final class Descriptor
     /// ditto
     Any function(Any value) @safe wrap;
 
+    /// In-place checked write of a converted element. Null when the type has no supported mutable destination.
+    ElementWriteResult function(ref Any receiver, size_t index, Any value) @safe nothrow @nogc setElement;
+
     /// A descriptor with no members yet, as generated code builds one.
     this(string name, TypeKind kind) pure nothrow
     {
@@ -460,6 +474,10 @@ private void addBuilders(U)(Descriptor d)
         d.length = &arrayLength!U;
         d.element = &arrayElement!U;
         d.fromElements = &arrayFrom!U;
+        static if (__traits(compiles, (ref E destination, ref E value)@safe nothrow @nogc {
+                destination = value;
+            }))
+            d.setElement = &arraySetElement!U;
     }
     else static if (is(U == V[K], V, K))
     {
@@ -532,6 +550,19 @@ private size_t arrayLength(T)(ref Any value) @safe
 private Any arrayElement(T)(ref Any value, size_t index) @safe
 {
     return Any.of(value.get!T[index]);
+}
+
+private ElementWriteResult arraySetElement(T)(ref Any receiver, size_t index, Any value) @safe nothrow @nogc
+{
+    static assert(!isInlineable!T, "Array element writes require a boxed slice");
+    if (auto stored = receiver.box!T())
+    {
+        if (index >= stored.value.length)
+            return ElementWriteResult.outOfBounds;
+        return value.tryStoreElement(stored.value[index]) ? ElementWriteResult.written : ElementWriteResult
+            .wrongElement;
+    }
+    return ElementWriteResult.wrongReceiver;
 }
 
 private Any arrayFrom(T : E[], E)(Any[] elements) @safe
