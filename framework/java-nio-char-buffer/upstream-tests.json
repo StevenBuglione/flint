@@ -20,7 +20,8 @@
           "BasicChar.absBulkGet",
           "BasicChar.bulkPutArray",
           "BasicChar.absBulkPutArray",
-          "BasicChar.bulkPutBuffer"
+          "BasicChar.bulkPutBuffer",
+          "BasicChar.test comparison"
         ],
         "skipped": {
           "main": "Remaining families and cases require direct memory or the character sequence API. R26 also treats null arrays as empty."
@@ -65,7 +66,7 @@
     "java/nio/Buffer/EqualsCompareTest.java": {
       "status": "deferred",
       "phase": "2",
-      "reason": "Checks value comparison across typed and direct buffer families beyond the tested heap byte subset."
+      "reason": "The GPL-only suite covers other typed buffer families and direct memory. The heap character contract runs in the licensed Basic port and original Flint tests."
     },
     "java/nio/Buffer/LimitDirectMemory.java": {
       "status": "deferred",

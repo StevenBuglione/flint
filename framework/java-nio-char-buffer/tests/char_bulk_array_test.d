@@ -157,3 +157,21 @@ unittest
     assert(into.position() == capacity && from.position() == capacity);
     assert(into.flip().array() == source[offset .. $]);
 }
+
+@("BasicChar.test comparison")
+unittest
+{
+    const wchar[] values = [0, 0xFFFF, 0, 1, 0xFFFF];
+    foreach (left; values)
+    {
+        auto a = CharBuffer.wrap([left]);
+        assert(a.equals(a) && a.compareTo(a) == 0);
+        foreach (right; values)
+        {
+            auto b = CharBuffer.wrap([right]);
+            assert(a.compareTo(b) == cast(int) left - cast(int) right);
+            assert(a.compareTo(b) == -b.compareTo(a));
+            assert(a.equals(b) == (left == right));
+        }
+    }
+}

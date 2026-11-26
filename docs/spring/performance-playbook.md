@@ -380,6 +380,8 @@ The Spring Beans factory exception types reuse the existing `BeanCreationExcepti
 
 **Reuse the character copy for buffer transfers and compaction.** Each put validates both cursor windows before moving the code units. Relative puts advance both cursors after the copy, and compact clears the mark without allocating another view. The unchanged CharBuffer package probe on venus rose from 20,284 O3 and 18,348 Oz loadable bytes with 523 DMD instances to 21,988 and 20,020 bytes with 526 instances. The enforced leaf rose from 20,364 O3 and 18,428 Oz bytes with 507 instances to 22,068 and 20,100 bytes with 510. Sharing the read-only exception constructor in an additional helper cost 32 bytes in both profiles, so the measured port retains the existing exception path. Both ByteBuffer probes retain their byte and template counts.
 
+**Compare character windows through one code-unit scan.** CharBuffer compares unsigned remaining units across native and byte-backed storage, and hashes the same window backwards. Equality, ordering and mismatch share an allocation-free scan. The unchanged CharBuffer package probe on venus moved from 21,988 O3 and 20,020 Oz loadable bytes with 526 DMD instances to 23,932 and 21,964 bytes with 531. The enforced leaf moved from 22,068 O3 and 20,100 Oz bytes with 510 instances to 24,012 and 22,044 with 515. A scan indexing both validated byte windows gave identical O3 size and cost 8 more bytes at Oz, so the port reuses the scalar code-unit load. The ByteBuffer probes retained their linked sizes. Their two added DMD instances take the package to 561 and the enforced leaf to 558, within the existing 630 caps.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

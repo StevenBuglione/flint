@@ -32,8 +32,8 @@
 module flint.java.nio.charbuffer;
 
 import flint.engine.aot.any : Any;
-import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, NullPointerException,
-    UnsupportedOperationException;
+import flint.java.lang : Comparable, IllegalArgumentException, IndexOutOfBoundsException,
+    JavaObject, NullPointerException, UnsupportedOperationException;
 import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkIndex, checkRange;
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
@@ -43,8 +43,10 @@ import flint.java.nio.readonlybufferexception : ReadOnlyBufferException;
 
 @safe:
 
-class CharBuffer : Buffer
+class CharBuffer : Buffer, Comparable!CharBuffer
 {
+    mixin JavaObject;
+
     private enum Storage : ubyte
     {
         words,
@@ -331,6 +333,55 @@ class CharBuffer : Buffer
         return this;
     }
 
+    bool equals(Object other) pure nothrow @nogc
+    {
+        if (other is this)
+            return true;
+        auto that = cast(CharBuffer) other;
+        const length = cursor.remaining();
+        return that !is null && length == that.cursor.remaining() && firstMismatch(that, length) < 0;
+    }
+
+    int hashCode() const pure nothrow @nogc
+    {
+        uint hash = 1;
+        foreach_reverse (index; cursor.position() .. cursor.limit())
+            hash = hash * 31 + load(index);
+        return cast(int) hash;
+    }
+
+    override int compareTo(CharBuffer other) pure
+    {
+        requireBuffer(other);
+        const left = cursor.remaining();
+        const right = other.cursor.remaining();
+        const index = firstMismatch(other, left < right ? left : right);
+        if (index < 0)
+            return left - right;
+        return cast(int) load(cursor.position() + index) - cast(int) other.load(other.cursor.position() + index);
+    }
+
+    int mismatch(CharBuffer other) pure
+    {
+        requireBuffer(other);
+        const left = cursor.remaining();
+        const right = other.cursor.remaining();
+        const common = left < right ? left : right;
+        const index = firstMismatch(other, common);
+        return index < 0 && left != right ? common : index;
+    }
+
+    private int firstMismatch(scope const(CharBuffer) other, int length) const scope pure nothrow @nogc
+    {
+        pragma(inline, false);
+        const left = cursor.position();
+        const right = other.cursor.position();
+        foreach (index; 0 .. length)
+            if (load(left + index) != other.load(right + index))
+                return index;
+        return -1;
+    }
+
     private void copyFromBuffer(int index, scope CharBuffer source, int offset, int length) scope pure nothrow @nogc
     {
         pragma(inline, false);
@@ -356,7 +407,7 @@ class CharBuffer : Buffer
         return cast(Storage)(storageFlags & ~readOnlyFlag);
     }
 
-    private bool littleEndian() const pure nothrow @nogc
+    private bool littleEndian() const scope pure nothrow @nogc
     {
         version (LittleEndian)
             return storageKind() != Storage.bigEndian;
@@ -364,7 +415,7 @@ class CharBuffer : Buffer
             return storageKind() == Storage.littleEndian;
     }
 
-    private wchar load(int index) const pure nothrow @nogc
+    private wchar load(int index) const scope pure nothrow @nogc
     {
         const start = cast(size_t)(origin + index) * wchar.sizeof;
         const first = cast(ubyte) backing[start];
