@@ -20,6 +20,7 @@
 module flint.expression.spel.support;
 
 import core.atomic : atomicLoad, atomicStore, MemoryOrder;
+import flint.core.convert : TypeDescriptor;
 import flint.engine.aot.any : Any;
 import flint.expression : EvaluationContext, TypedValue;
 import flint.java.lang : NullPointerException;
@@ -48,7 +49,18 @@ class StandardEvaluationContext : EvaluationContext
     /// Change the default root for subsequent evaluations.
     void setRootObject(Any rootObject)
     {
-        auto next = rootObject.isNull() ? null : new TypedValue(rootObject);
+        publishRoot(rootObject, null);
+    }
+
+    /// Change the root and its declared type, without inferring the type from the value.
+    void setRootObject(Any rootObject, TypeDescriptor typeDescriptor)
+    {
+        publishRoot(rootObject, typeDescriptor);
+    }
+
+    private void publishRoot(Any value, TypeDescriptor type)
+    {
+        auto next = value.isNull() && type is null ? null : new TypedValue(value, type);
         atomicStore!(MemoryOrder.rel)(root, next);
     }
 

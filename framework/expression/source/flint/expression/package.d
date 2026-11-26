@@ -20,6 +20,7 @@
  */
 module flint.expression;
 
+import flint.core.convert : TypeDescriptor;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decimal;
 import flint.java.lang : RuntimeException;
@@ -68,11 +69,27 @@ struct TypedValue
     enum TypedValue NULL = TypedValue.init;
 
     private Any value;
+    private TypeDescriptor typeDescriptor;
 
     /// Wrap the supplied value.
     this(Any value) pure nothrow @nogc
     {
+        this(value, null);
+    }
+
+    /// Wrap a value with its declared type, including metadata beyond the value's type name.
+    this(Any value, TypeDescriptor typeDescriptor) pure nothrow @nogc
+    {
         this.value = value;
+        this.typeDescriptor = typeDescriptor;
+    }
+
+    /// The explicit type descriptor, or a descriptor inferred from the value when needed.
+    TypeDescriptor getTypeDescriptor()
+    {
+        if (typeDescriptor is null && !value.isNull())
+            typeDescriptor = TypeDescriptor.forObject(value);
+        return typeDescriptor;
     }
 
     /// The wrapped value.
