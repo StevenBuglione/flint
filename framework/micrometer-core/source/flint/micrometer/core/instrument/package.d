@@ -1182,6 +1182,20 @@ interface LongTaskTimer : HistogramSupport
         abstract double duration(TimeUnit unit);
     }
 
+    private alias SampleConsumer = Consumer!Sample;
+
+    /// Run an action with a sample stopped as the call completes (R3, R9).
+    void record(Runnable action);
+
+    /// Run a D action without retaining it (R9).
+    void record(scope void delegate() @safe action);
+
+    /// Pass the started sample to the action and stop it as the call completes (R3, R9).
+    void record(SampleConsumer action);
+
+    /// Pass the sample to a D action without retaining the delegate (R9).
+    void record(scope void delegate(Sample) @safe action);
+
     /// Start a task and return its sample.
     Sample start();
 
@@ -1206,11 +1220,58 @@ interface LongTaskTimer : HistogramSupport
     /// The legacy task ID API always returns -1.
     deprecated("Use Sample.duration(TimeUnit)") double duration(long task, TimeUnit unit);
 
-    /// Micrometer's mean, legacy IDs and legacy snapshot overload (R3).
+    private static void recordSample(LongTaskTimer timer, scope void delegate() @safe action,
+            scope void delegate(Sample) @safe withSample)
+    {
+        auto sample = timer.start();
+        Exception failure;
+        try
+        {
+            if (action !is null)
+                action();
+            else if (withSample !is null)
+                withSample(sample);
+            else
+                throw Timer.nullCallback();
+        }
+        catch (Exception error)
+            failure = error;
+
+        // Java finally propagates a stop failure in place of a callback failure.
+        if (sample is null)
+            throw new NullPointerException("sample");
+        sample.stop();
+        if (failure !is null)
+            throw failure;
+    }
+
+    /// Micrometer's callback, mean, legacy ID and snapshot defaults (R3).
     mixin template Defaults(alias SnapshotDefaults = HistogramSupport.Defaults, alias Unit = TimeUnit,
-            alias TaskTimer = LongTaskTimer)
+            alias TaskTimer = LongTaskTimer,
+            alias RunnableType = Runnable, alias ConsumerType = SampleConsumer,
+            alias TaskSample = Sample, alias timeSample = recordSample)
     {
         mixin SnapshotDefaults;
+
+        override void record(RunnableType action)
+        {
+            timeSample(this, action is null ? null : &action.run, null);
+        }
+
+        override void record(scope void delegate() @safe action)
+        {
+            timeSample(this, action, null);
+        }
+
+        override void record(ConsumerType action)
+        {
+            timeSample(this, null, action is null ? null : &action.accept);
+        }
+
+        override void record(scope void delegate(TaskSample) @safe action)
+        {
+            timeSample(this, null, action);
+        }
 
         override double mean(Unit unit)
         {

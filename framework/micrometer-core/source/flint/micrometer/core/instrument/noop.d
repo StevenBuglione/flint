@@ -183,6 +183,7 @@ class NoopTimer : NoopMeter, Timer
 class NoopLongTaskTimer : NoopMeter, LongTaskTimer
 {
     alias duration = defaults.duration;
+    alias record = defaults.record;
     alias takeSnapshot = defaults.takeSnapshot;
 
     /// Retain the ID of the disabled timer.
