@@ -318,6 +318,12 @@
     "expected": {"type": "string", "value": "B"}
   },
   {
+    "id": "string-index-numeric-string",
+    "expression": "'ABC'['2']",
+    "runtimeOnly": "Compiled indexing requires a numeric operand. Interpreted indexing converts strings to int.",
+    "expected": {"type": "string", "value": "C"}
+  },
+  {
     "id": "string-index-utf16",
     "expression": "'A😀Z'[3]",
     "runtimeOnly": "Compiled string indexing still uses UTF-8 byte offsets. Interpreted indexing counts UTF-16 code units.",

@@ -215,6 +215,76 @@ unittest
     }
 }
 
+@("String operands use Spring's Integer conversion for arrays and strings")
+unittest
+{
+    auto root = new ArrayRoot;
+    root.values = Any.of([10, 20, 30]);
+    auto context = contextFor(root);
+    auto parser = new SpelExpressionParser;
+    assert(parser.parseExpression("property[' + 0x 2 ']").getValue(context).get!int == 30);
+    assert(parser.parseExpression("'abcdefghijk'['010']").getValue().get!string == "k");
+
+    auto expression = parser.parseExpression("property[#index]");
+    foreach (text; ["2", "+2", "#2", "0X2", "0\u2003x\t2", "\u0662", "#\uFF12"])
+    {
+        context.setVariable("index", Any.of(text));
+        assert(expression.getValue(context).get!int == 30, text);
+    }
+    assert(parser.parseExpression("'abcdefghijklmnop'['#\uFF26']").getValue().get!string == "p");
+
+    context.setVariable("index", Any.of(" 00000000000000000000000000000000000000000000000000 2 "));
+    assert(expression.getValue(context).get!int == 30);
+}
+
+@("invalid String index conversion is reported at the bracket")
+unittest
+{
+    auto root = new ArrayRoot;
+    root.values = Any.of([10]);
+    auto context = contextFor(root);
+    auto expression = (new SpelExpressionParser).parseExpression("property[#index]");
+
+    foreach (text; [
+        "2147483648", "-2147483649", "#80000000", "0x", "0x+1", "++1", "1.5", "\u2003", "\u00A01",
+        "\U0001D7DA"
+    ])
+    {
+        context.setVariable("index", Any.of(text));
+        try
+        {
+            expression.getValue(context);
+            assert(false, text);
+        }
+        catch (SpelEvaluationException error)
+        {
+            assert(error.getPosition() == 8 && error.getMessageCode() == SpelMessage.TYPE_CONVERSION_ERROR, text);
+        }
+    }
+
+    context.setVariable("index", Any.of("-0x80000000"));
+    try
+    {
+        expression.getValue(context);
+        assert(false);
+    }
+    catch (IndexOutOfBoundsException error)
+    {
+        assert(error.msg == "Index out of range: -2147483648");
+    }
+
+    context.setVariable("index", Any.of(""));
+    try
+    {
+        expression.getValue(context);
+        assert(false);
+    }
+    catch (IllegalStateException error)
+    {
+        assert(error.msg == "Null conversion result for value []");
+    }
+}
+
 @("null-safe and untaken array hops skip computed indexes")
 unittest
 {

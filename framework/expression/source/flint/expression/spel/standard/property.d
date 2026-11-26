@@ -22,7 +22,7 @@ module flint.expression.spel.standard.property;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, DescriptorTable, TypeKind;
-import flint.engine.aot.text : decimal, decodeUtf8;
+import flint.engine.aot.text : ParsedLong, decimal, decodeUtf8;
 import flint.expression : EvaluationContext, PropertyAccessor;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
 import flint.expression.spel.standard.literal : LiteralParser, utf16Length;
@@ -109,8 +109,8 @@ private Any readIndex(string source, const ref PropertyStep step, ref Any target
 
     const index = convertIndexToInt(source, step.position, value);
     const length = isString ? 0 : descriptor.length(target);
-    if (index < 0)
-        throw new IndexOutOfBoundsException(index);
+    if (index < 0) // Reuse the formatter for the bounds diagnostics until the Java exception leaves share it.
+        throw new IndexOutOfBoundsException("Index out of range: " ~ decimal(index));
     if (isString)
         return Any.of(readStringIndex(source, step.position, target.get!string, index));
     if (cast(size_t) index >= length)
@@ -136,8 +136,102 @@ private int convertIndexToInt(string source, size_t position, const ref Any valu
     // Spring's CharacterToNumberFactory widens the UTF-16 value through a signed short.
     if (type == "wchar" || type == "char")
         return cast(short) value.get!wchar;
+    if (type == "string")
+    {
+        const text = value.get!string;
+        if (text.length == 0)
+            throw new IllegalStateException("Null conversion result for value []");
+        const parsed = parseIndexInteger(text);
+        if (parsed.ok)
+            return cast(int) parsed.value;
+    }
 
     throw evaluationErrorAt(source, position, SpelMessage.TYPE_CONVERSION_ERROR, type, "int");
+}
+
+// NumberUtils strips Java whitespace throughout the string. Only # and 0x/0X select hexadecimal.
+private ParsedLong parseIndexInteger(scope const(char)[] text) pure nothrow @nogc
+{
+    size_t offset;
+    auto unit = nextIndexCharacter(text, offset);
+    const negative = unit == '-';
+    if (negative || unit == '+')
+        unit = nextIndexCharacter(text, offset);
+
+    uint radix = 10;
+    if (unit == '0')
+    {
+        auto afterZero = offset;
+        const prefix = nextIndexCharacter(text, afterZero);
+        if ((prefix | 0x20) == 'x')
+        {
+            unit = '#';
+            offset = afterZero;
+        }
+    }
+    if (unit == '#')
+    {
+        radix = 16;
+        unit = nextIndexCharacter(text, offset);
+    }
+    if (unit == endOfIndexText)
+        return ParsedLong.init;
+
+    long magnitude;
+    const limit = cast(long) int.max + negative;
+    do
+    {
+        const digit = indexDigit(unit);
+        if (digit >= radix)
+            return ParsedLong.init;
+        magnitude = magnitude * radix + digit;
+        if (magnitude > limit)
+            return ParsedLong.init;
+        unit = nextIndexCharacter(text, offset);
+    }
+    while (unit != endOfIndexText);
+    return ParsedLong(true, negative ? -magnitude : magnitude);
+}
+
+private enum endOfIndexText = uint.max;
+
+// Equivalent to Java Character.isWhitespace for the code points of a UTF-8 string.
+private uint nextIndexCharacter(scope const(char)[] text, ref size_t offset) pure nothrow @nogc
+{
+    while (offset < text.length)
+    {
+        const uint unit = decodeUtf8(text, offset);
+        if (unit - 9 <= 4 || unit - 0x1C <= 4 || unit == 0x1680 || (unit - 0x2000 <= 10 && unit != 0x2007)
+                || unit - 0x2028 <= 1 || unit == 0x205F || unit == 0x3000)
+            continue;
+        return unit;
+    }
+    return endOfIndexText;
+}
+
+// Integer.parseInt calls Character.digit on UTF-16 code units. The BMP decimal zeroes match JDK 21.0.13.1.
+private uint indexDigit(uint unit) pure nothrow @nogc
+{
+    static immutable ushort[] decimalZeros = [
+        0x0660, 0x06F0, 0x07C0, 0x0966, 0x09E6, 0x0A66, 0x0AE6, 0x0B66, 0x0BE6, 0x0C66, 0x0CE6,
+        0x0D66, 0x0DE6, 0x0E50, 0x0ED0, 0x0F20, 0x1040, 0x1090, 0x17E0, 0x1810, 0x1946, 0x19D0,
+        0x1A80, 0x1A90, 0x1B50, 0x1BB0, 0x1C40, 0x1C50, 0xA620, 0xA8D0, 0xA900, 0xA9D0, 0xA9F0,
+        0xAA50, 0xABF0, 0xFF10
+    ];
+    if (unit - '0' <= 9)
+        return unit - '0';
+    const letter = (unit | 0x20) - 'a';
+    if (letter <= 5)
+        return 10 + letter;
+    if (unit - 0xFF21 <= 5)
+        return 10 + unit - 0xFF21;
+    if (unit - 0xFF41 <= 5)
+        return 10 + unit - 0xFF41;
+    if (unit >= 0x80 && unit <= 0xFFFF)
+        foreach (zero; decimalZeros)
+            if (unit - zero <= 9)
+                return unit - zero;
+    return uint.max;
 }
 
 private const(Descriptor) arrayIndexDescriptor(string source, size_t position, string type, const DescriptorTable table)
