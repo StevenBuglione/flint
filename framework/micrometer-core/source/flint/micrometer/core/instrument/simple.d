@@ -191,6 +191,60 @@ version (unittest)
     }
 }
 
+@("double supplier timing preserves the primitive result and the original failure")
+unittest
+{
+    import core.memory : GC;
+    import flint.java.lang : IllegalStateException;
+    import flint.java.util.function_ : DoubleSupplier;
+    import flint.micrometer.core.instrument : Tags;
+    import std.exception : assertThrown;
+
+    auto clock = new MockClock;
+    auto id = new Meter.Id("supplier", Tags.empty(), Nullable!string.init, Nullable!string.init, Meter.Type.TIMER);
+    Timer timer = new CumulativeTimer(id, clock);
+    auto registry = new SimpleMeterRegistry;
+    registry.close();
+    auto noop = registry.timer("supplier");
+    auto failure = new IllegalStateException("supplier failed");
+
+    double supply()
+    {
+        clock.add(7, TimeUnit.NANOSECONDS);
+        return -0.25;
+    }
+
+    double fail()
+    {
+        clock.add(11, TimeUnit.NANOSECONDS);
+        throw failure;
+    }
+
+    auto supplier = DoubleSupplier.of(&supply);
+    auto failingSupplier = DoubleSupplier.of(&fail);
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    assert(timer.record(supplier) == -0.25);
+    assert(timer.record(&supply) == -0.25);
+    assert(noop.record(supplier) == -0.25);
+    assert(noop.record(&supply) == -0.25);
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 2 && timer.totalTime(TimeUnit.NANOSECONDS) == 14);
+    assert(noop.count() == 0 && noop.totalTime(TimeUnit.NANOSECONDS) == 0);
+
+    bool caught;
+    try
+        timer.record(failingSupplier);
+    catch (IllegalStateException error)
+        caught = error is failure;
+    assert(caught);
+    assert(timer.count() == 3 && timer.totalTime(TimeUnit.NANOSECONDS) == 25);
+
+    assertThrown!NullPointerException(timer.record(cast(DoubleSupplier) null));
+    assertThrown!NullPointerException(noop.record(cast(double delegate() @safe) null));
+    assert(timer.count() == 4 && timer.totalTime(TimeUnit.NANOSECONDS) == 25);
+    assert(noop.count() == 0);
+}
+
 @("a wrapped task records each invocation and propagates the original exception")
 unittest
 {

@@ -967,6 +967,12 @@ interface Timer : Meter
     /// Run and time a D delegate without retaining it (R9).
     void record(scope void delegate() @safe action);
 
+    /// Return a primitive result while recording the supplier's elapsed time (R9).
+    double record(DoubleSupplier action);
+
+    /// Return a primitive result from a D delegate without retaining it (R9).
+    double record(scope double delegate() @safe action);
+
     /// Wrap a task to time each invocation.
     Runnable wrap(Runnable action);
 
@@ -999,9 +1005,10 @@ interface Timer : Meter
     }
 
     /// Micrometer's default duration conversion, wrappers, mean and live measurements (R3).
-    mixin template Defaults(alias Measurements = MeasurementIterable, alias samples = timerMeasurements,
-            alias DurationType = Duration,
-            alias Unit = TimeUnit, alias RunnableType = Runnable, alias makeTimedRunnable = timedRunnable)
+    mixin template Defaults(alias Measurements = MeasurementIterable,
+            alias samples = timerMeasurements, alias DurationType = Duration,
+            alias Unit = TimeUnit, alias RunnableType = Runnable, alias makeTimedRunnable = timedRunnable,
+            alias DoubleSupplierType = DoubleSupplier, alias NullAction = NullPointerException)
     {
         override void record(DurationType duration)
         {
@@ -1013,6 +1020,24 @@ interface Timer : Meter
         {
             Timer timer = this;
             timer.record(action is null ? null : &action.run);
+        }
+
+        override double record(DoubleSupplierType action)
+        {
+            Timer timer = this;
+            return timer.record(action is null ? null : &action.getAsDouble);
+        }
+
+        override double record(scope double delegate() @safe action)
+        {
+            double result;
+            Timer timer = this;
+            timer.record(() {
+                if (action is null)
+                    throw new NullAction("action");
+                result = action();
+            });
+            return result;
         }
 
         override RunnableType wrap(RunnableType action)
