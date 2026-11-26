@@ -14,6 +14,7 @@
  * limitations under the License.
  *
  * Ported from spring-framework v7.1.0: spring-expression/src/test/java/org/springframework/expression/spel/IndexingTests.java
+ * Also from OptionalNullSafetyTests.java.
  * Modified by the Flint authors.
  */
 module flint.expression.indexing_tests;
@@ -24,6 +25,7 @@ import flint.expression.spel : SpelEvaluationException, SpelMessage, SpelParseEx
 import flint.expression.spel.standard : SpelExpressionParser;
 import flint.expression.spel.support : StandardEvaluationContext;
 import flint.java.lang : IllegalStateException, IndexOutOfBoundsException;
+import flint.java.util : List, Optional;
 
 @safe:
 
@@ -300,6 +302,69 @@ unittest
     assert(root.reads == 0);
     assert(safe.getValue(context).get!int == 3);
     assert(root.reads == 1);
+}
+
+@("OptionalNullSafetyTests.accessIndexOnNullOptionalViaNullSafeOperator")
+unittest
+{
+    auto context = new StandardEvaluationContext;
+    auto expression = (new SpelExpressionParser).parseExpression("#fruits?.[1]");
+    assert(expression.getValue(context).isNull());
+}
+
+@("OptionalNullSafetyTests.accessIndexOnEmptyOptionalViaNullSafeOperator")
+unittest
+{
+    alias Fruits = Optional!(List!string);
+    auto descriptors = new DescriptorTable;
+    descriptors.add(descriptorOf!Fruits);
+    auto context = new StandardEvaluationContext;
+    context.setDescriptorTable(descriptors);
+    context.setVariable("fruits", Any.of(Fruits.empty()));
+    auto parser = new SpelExpressionParser;
+    auto expression = parser.parseExpression("#fruits?.[1]");
+    assert(expression.getValue(context).isNull());
+    assert(expression.getValue(context).isNull());
+    assert(parser.parseExpression("#fruits?.[1 / 0]").getValue(context).isNull());
+}
+
+@("present Optional indexes read the original root and unwrap once")
+unittest
+{
+    auto root = new ArrayRoot;
+    auto context = new StandardEvaluationContext(Any.of(root));
+    auto descriptors = new DescriptorTable;
+    descriptors.add(descriptorOf!ArrayRoot);
+    descriptors.add(descriptorOf!(Optional!(int[])));
+    descriptors.add(descriptorOf!(Optional!string));
+    descriptors.add(descriptorOf!(Optional!(Optional!string)));
+    descriptors.add(descriptorOf!(int[]));
+    context.setDescriptorTable(descriptors);
+    auto parser = new SpelExpressionParser;
+    auto expression = parser.parseExpression("property?.[#this.offset]");
+    root.values = Any.of(Optional!(int[]).empty());
+    assert(expression.getValue(context).isNull() && root.reads == 0);
+    root.values = Any.of(Optional!(int[]).of([10, 20]));
+    root.offset = 1;
+    assert(expression.getValue(context).get!int == 20);
+    assert(expression.getValue(context).get!int == 20 && root.reads == 2);
+
+    root.values = Any.of(Optional!string.of("ab"));
+    assert(expression.getValue(context).get!string == "b");
+    assert(parser.parseExpression("property?.[0]?.[0]").getValue(context).get!string == "a");
+    root.values = Any.of(Optional!(Optional!string).of(Optional!string.of("ab")));
+    foreach (text; ["property?.[0]", "property[0]"])
+    {
+        try
+        {
+            parser.parseExpression(text).getValue(context);
+            assert(false, text);
+        }
+        catch (SpelEvaluationException error)
+        {
+            assert(error.getMessageCode() == SpelMessage.INDEXING_NOT_SUPPORTED_FOR_TYPE, text);
+        }
+    }
 }
 
 @("nested array index plans preserve pending arithmetic operands")

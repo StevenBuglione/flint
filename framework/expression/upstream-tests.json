@@ -186,8 +186,20 @@
       "status": "partial"
     },
     "org/springframework/expression/spel/OptionalNullSafetyTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/expression/tests/indexing_tests.d",
+      "methods": {
+        "ported": [
+          "accessIndexOnNullOptionalViaNullSafeOperator",
+          "accessIndexOnEmptyOptionalViaNullSafeOperator"
+        ],
+        "skipped": {
+          "accessIndexOnNonEmptyOptionalViaNullSafeOperator": "Array and String targets are covered. List indexing is deferred.",
+          "accessPropertyOnEmptyOptionalViaNullSafeOperator": "Optional property access is deferred.",
+          "invokeMethodOnNonEmptyOptionalViaNullSafeOperator": "Method invocation is deferred.",
+          "projectionOnNonEmptyOptionalViaNullSafeOperator": "Collection projection and selection are deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/expression/spel/ParserErrorMessagesTests.java": {
       "phase": "2",

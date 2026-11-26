@@ -68,10 +68,15 @@ PropertySeparator readSeparator(ref LiteralParser reader) pure nothrow @nogc
     return PropertySeparator.absent;
 }
 
-/// Apply one descriptor-backed path step at the Spring API boundary.
+/// Apply one descriptor-backed path step, or prepare its null-safe index receiver.
 void readPathStep(string source, const ref PropertyStep step, ref Any root, EvaluationContext context,
-        EvaluationContextAccess standard, const DescriptorTable table, const ref Any index)
+        EvaluationContextAccess standard, const DescriptorTable table, const ref Any index, bool prepareIndex)
 {
+    if (prepareIndex)
+    {
+        unwrapOptional(root, table);
+        return;
+    }
     if (step.nullSafe && root.isNull())
         return;
     if (step.name is null)
@@ -94,6 +99,17 @@ void readPathStep(string source, const ref PropertyStep step, ref Any root, Eval
     if (root.isNull())
         throw evaluationErrorAt(source, step.position, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL, step.name);
     throw evaluationErrorAt(source, step.position, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, step.name, type);
+}
+
+private void unwrapOptional(ref Any target, const DescriptorTable table)
+{
+    enum prefix = "flint.java.util.Optional!";
+    const name = target.typeName();
+    if (table is null || name.length <= prefix.length || name[0 .. prefix.length] != prefix)
+        return;
+    const descriptor = table.find(name);
+    if (descriptor !is null && descriptor.unwrap !is null)
+        target = descriptor.unwrap(target);
 }
 
 private Any readIndex(string source, const ref PropertyStep step, ref Any target,

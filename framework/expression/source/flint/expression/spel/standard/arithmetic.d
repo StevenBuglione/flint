@@ -139,7 +139,7 @@ private:
             if (level == 0 || error.code != Status.ok)
                 return Result!Any(frame.value, error);
             auto parent = &frames[--level];
-            readStep(parent.target, parent.path[0], frame.value);
+            readStep(parent.target, parent.path[0], frame.value, false);
             parent.path = parent.path[1 .. $];
             resumePath = true;
         }
@@ -153,8 +153,14 @@ private:
         {
             const step = &frame.path[0];
             if (step.name is null && !frame.target.isNull())
-                return true;
-            readStep(frame.target, *step, noIndex);
+            {
+                // An empty Optional short-circuits before the child expression runs.
+                if (step.nullSafe)
+                    readStep(frame.target, *step, noIndex, true);
+                if (!frame.target.isNull())
+                    return true;
+            }
+            readStep(frame.target, *step, noIndex, false);
             frame.path = frame.path[1 .. $];
         }
         return false;

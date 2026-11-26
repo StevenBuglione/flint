@@ -116,8 +116,8 @@ class SpelExpression : Expression
         const table = standard !is null && expression.hasProperties() ? standard.descriptorTable() : null;
         return unwrap(expression.evaluate(rootObject, (string name) => context is null ? Any.init
                 : direct ? standard.readVariable(name) : context.lookupVariable(name),
-                (ref Any receiver, const ref PropertyStep step, const ref Any index) {
-                readPathStep(expressionString, step, receiver, context, standard, table, index);
+                (ref Any receiver, const ref PropertyStep step, const ref Any index, bool prepareIndex) {
+                readPathStep(expressionString, step, receiver, context, standard, table, index, prepareIndex);
             }));
     }
 
@@ -143,7 +143,7 @@ class SpelExpression : Expression
             return Result!Any(Any.init, Error(Status.unsupported, "Property reads use the SpEL API boundary"));
         if (useContextRoot && expression.readsRoot && context !is null)
             rootObject = context.readRootObject().getValue();
-        static void noPath(ref Any, const ref PropertyStep, const ref Any) @safe nothrow @nogc
+        static void noPath(ref Any, const ref PropertyStep, const ref Any, bool) @safe nothrow @nogc
         {
             assert(0);
         }
