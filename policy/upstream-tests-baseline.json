@@ -2419,7 +2419,6 @@
       "tools/jackson/core/unittest/json/FailedGeneratorConstructionCloseTest.java",
       "tools/jackson/core/unittest/json/GeneratorFailFromReaderTest.java",
       "tools/jackson/core/unittest/json/GeneratorFailTest.java",
-      "tools/jackson/core/unittest/json/JsonFactoryTest.java",
       "tools/jackson/core/unittest/json/JsonParserClosedCaseTest.java",
       "tools/jackson/core/unittest/json/JsonReadContextTest.java",
       "tools/jackson/core/unittest/json/JsonReadFeaturesTest.java",

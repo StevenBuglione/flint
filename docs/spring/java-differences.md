@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 511 | 28 | 1 | 2,755 |
+| framework | jackson-core@3.1.8 | 512 | 28 | 1 | 2,754 |
 | framework | jackson-databind@3.1.8 | 511 | 49 | 5 | 9,902 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -10887,7 +10887,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.filter | 183 | 0 |
 | tools.jackson.core.io | 277 | 0 |
 | tools.jackson.core.io.schubfach | 34 | 0 |
-| tools.jackson.core.json | 468 | 0 |
+| tools.jackson.core.json | 467 | 0 |
 | tools.jackson.core.json.async | 168 | 0 |
 | tools.jackson.core.sym | 147 | 0 |
 | tools.jackson.core.tree | 2 | 0 |
@@ -11818,6 +11818,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
 | framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
 | framework | `tools.jackson.core.TokenStreamLocation#toString(StringBuilder)` | 2 | The Java overload appends to a StringBuilder. Flint exposes a zero-argument formatter returning a string. |
+| framework | `tools.jackson.core.json.JsonFactory#snapshot()` | 2 | Requires the Java-shaped TokenStreamFactory return type. |
 | framework | `tools.jackson.core.json.JsonFactoryBuilder#rootValueSeparator()` | 2 | The Java builder getter returns SerializableString. Flint exposes the builder's string setter and a separate JsonFactory getter. |
 | framework | `tools.jackson.core.json.JsonReadContext#<init>(JsonReadContext,int,DupDetector,int,int,int)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.JsonReadContext#createRootContext(DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |

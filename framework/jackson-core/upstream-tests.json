@@ -305,8 +305,38 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/json/JsonFactoryTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/json_factory_copy_test.d",
+      "methods": {
+        "ported": [
+          "testCopy"
+        ],
+        "skipped": {
+          "testBuilderWithJackson2Defaults": "The Jackson 2 defaults builder is deferred.",
+          "testCanonicalizationDisabled": "The toggled factory canonicalization options are deferred.",
+          "testCanonicalizationEnabled": "The toggled factory canonicalization options are deferred.",
+          "testFactoryFeatures": "The toggled factory canonicalization options are deferred.",
+          "testFactoryMisc": "The factory configuration assertions await their feature test slice.",
+          "testJsonWithFiles": "The fixture uses file overloads and UTF-16 transport.",
+          "testJsonWriteFeatures": "The factory configuration assertions await their feature test slice.",
+          "testRootValues": "The SerializedString builder getter is deferred.",
+          "testStreamWriteFeatures": "The factory configuration assertions await their feature test slice.",
+          "test_createGenerator_DataOutput": "The input and output overload cases await their factory test slice.",
+          "test_createGenerator_File": "The input and output overload cases await their factory test slice.",
+          "test_createGenerator_OutputStream": "The input and output overload cases await their factory test slice.",
+          "test_createGenerator_Path": "The input and output overload cases await their factory test slice.",
+          "test_createGenerator_Writer": "The input and output overload cases await their factory test slice.",
+          "test_createParser_ByteArray": "The input and output overload cases await their factory test slice.",
+          "test_createParser_CharArray": "The input and output overload cases await their factory test slice.",
+          "test_createParser_DataInput": "The input and output overload cases await their factory test slice.",
+          "test_createParser_File": "The input and output overload cases await their factory test slice.",
+          "test_createParser_InputStream": "The input and output overload cases await their factory test slice.",
+          "test_createParser_Path": "The input and output overload cases await their factory test slice.",
+          "test_createParser_Reader": "The input and output overload cases await their factory test slice.",
+          "test_createParser_String": "The input and output overload cases await their factory test slice."
+        }
+      },
+      "note": "Flint uses per-factory canonicalization and does not expose the upstream intern toggle.",
+      "status": "partial"
     },
     "tools/jackson/core/unittest/json/JsonParserClosedCaseTest.java": {
       "phase": "2",

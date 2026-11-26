@@ -152,6 +152,17 @@ final class JsonFactory
         _rootValueSeparator = b._rootValueSeparator;
     }
 
+    private this(JsonFactory source) pure nothrow @nogc
+    {
+        _streamReadFeatures = source._streamReadFeatures;
+        _streamWriteFeatures = source._streamWriteFeatures;
+        _formatReadFeatures = source._formatReadFeatures;
+        _formatWriteFeatures = source._formatWriteFeatures;
+        _streamReadConstraints = source._streamReadConstraints;
+        _streamWriteConstraints = source._streamWriteConstraints;
+        _rootValueSeparator = source._rootValueSeparator;
+    }
+
     /// Main factory method to use for constructing `JsonFactory` instances with different configuration.
     static JsonFactoryBuilder builder() pure nothrow
     {
@@ -162,6 +173,12 @@ final class JsonFactory
     JsonFactoryBuilder rebuild() pure nothrow
     {
         return new JsonFactoryBuilder(this);
+    }
+
+    /// Copy the configuration to a factory with its own caches.
+    JsonFactory copy() pure nothrow
+    {
+        return new JsonFactory(this);
     }
 
     /// Format name: "JSON".
@@ -422,6 +439,7 @@ unittest
             assert(p.currentName() is first);
     }
     assert(factory._names !is null);
+    assert(factory.copy()._names is null);
 }
 
 /// `TSFBuilder` implementation for constructing vanilla `JsonFactory` instances for reading/writing JSON encoded content.

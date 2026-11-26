@@ -412,6 +412,8 @@ Jackson's native object and type ID methods report the format's capabilities and
 
 Jackson's default `writeOmittedProperty` returns its generator without touching the write context. On venus at `e8097ec65` and `dba1e28b4`, the matched jackson-core probe moved from 43,917 to 44,037 loadable bytes and stayed at 658 DMD template instances. With pinned LDC and `flint build --profile size`, gs-rest-service moved from 3,683,367 to 3,683,503 allocated ELF bytes and petclinic-rest moved from 10,404,357 to 10,404,509.
 
+Jackson's `JsonFactory.copy` creates a factory from the original's configuration. The copy starts with its own lazy name table and becomes independent on first use. The matched jackson-core probe on venus at `dba1e28b4` and `4a2a41311` stayed at 44,037 loadable bytes and moved from 658 to 659 DMD template instances. With pinned LDC and `flint build --profile size`, gs-rest-service moved from 3,683,503 to 3,683,487 allocated ELF bytes and petclinic-rest moved from 10,404,509 to 10,404,541.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |
