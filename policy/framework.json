@@ -1190,8 +1190,10 @@
    "directory": "ai/ai-model",
    "module": "flint.ai.chat.messages.part",
    "also": [
+    "flint.ai.chat.messages",
     "flint.ai.chat.metadata",
     "flint.ai.converter",
+    "flint.ai.image",
     "flint.ai.model"
    ],
    "repo": "ai",
