@@ -149,18 +149,18 @@
           "reasoningPartWithPayloadIsReplayableOnlyToItsProvider",
           "reasoningPartWithoutPayloadIsReplayableEverywhere",
           "textPartOfHasNoPayloadAndEmptyAttributes",
+          "toolCallPartOfWrapsToolCall",
           "toolResultPartContentIsDefensivelyCopied",
           "toolResultPartOfWrapsToolResponseAsSingleTextPart",
           "unknownPartKeepsRawJson",
           "whenAttributesIsNullThenThrow",
           "whenOpaquePayloadHasNullComponentThenThrow",
-          "whenTextIsNullThenThrow"
+          "whenTextIsNullThenThrow",
+          "whenToolCallIsNullThenThrow"
         ],
         "skipped": {
           "mediaPartOfWrapsMedia": "MediaPart and Media are pending.",
-          "toolCallPartOfWrapsToolCall": "ToolCallPart and AssistantMessage.ToolCall are pending.",
-          "toolResultPartToToolResponseJoinsTextContentOnly": "The text-only conversion has local mixed-part coverage. The exact pinned case requires MediaPart and Media.",
-          "whenToolCallIsNullThenThrow": "ToolCallPart is pending."
+          "toolResultPartToToolResponseJoinsTextContentOnly": "The text-only conversion has local mixed-part coverage. The exact pinned case requires MediaPart and Media."
         }
       },
       "status": "partial"
@@ -181,7 +181,7 @@
           "partIndexIsNullWhenAbsentOrMalformed": "StreamingParts.partIndex is pending.",
           "partialStampsIndexAndPartialFlag": "StreamingParts.partIndex is pending.",
           "stripRemovesStreamingAttributesOnly": "StreamingParts.partIndex is pending.",
-          "withAttributesReplacesAttributesOnEveryRecord": "ToolCallPart, ToolResultPart and MediaPart are pending."
+          "withAttributesReplacesAttributesOnEveryRecord": "The exact all-record fixture requires MediaPart and Media."
         }
       },
       "status": "partial"

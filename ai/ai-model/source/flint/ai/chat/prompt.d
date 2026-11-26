@@ -18,6 +18,7 @@
 // Modified by the Flint authors.
 module flint.ai.chat.prompt;
 
+import flint.ai.chat.messages.response_value : NullableText;
 import flint.ai.model : ModelOptions;
 import flint.java.lang : JavaObject;
 import flint.java.util : List;
@@ -25,7 +26,7 @@ import std.typecons : Nullable;
 
 @safe:
 
-private alias ModelName = Nullable!string;
+private alias ModelName = NullableText;
 private alias Count = Nullable!int;
 private alias Ratio = Nullable!double;
 private alias StopSequences = List!string;

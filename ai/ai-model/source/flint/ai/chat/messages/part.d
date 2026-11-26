@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,ReasoningPart,StreamingParts,TextPart,ToolResultPart,UnknownPart}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,ReasoningPart,StreamingParts,TextPart,ToolCallPart,ToolResultPart,UnknownPart}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages.part;
 
 import flint.ai.chat.messages.response_value : NullableText, ToolResponse, joinRecord,
     normalizeText, recordText, sameText, textHash;
+import flint.ai.chat.messages.tool_call_value : ToolCall;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException, stringHashCode;
 import flint.java.util : LinkedHashMap, List, Map;
 import std.typecons : Nullable;
@@ -68,6 +69,11 @@ private PartAttributes copyAttributes(PartAttributes attributes)
 private PartAttributes emptyPartAttributes()
 {
     return PartAttributes.of();
+}
+
+private bool sameAttributes(PartAttributes left, PartAttributes right)
+{
+    return left.equals(cast(Object) right);
 }
 
 // A null result means that no text parts were present.
@@ -296,7 +302,7 @@ final class TextPart : MessagePart
     {
         auto that = cast(TextPart) other;
         return that !is null && text_ == that.text_ && samePayload(payload_, that.payload_)
-            && attributes_.equals(cast(Object) that.attributes_);
+            && sameAttributes(attributes_, that.attributes_);
     }
 
     /// Computes the Java record hash of the three components.
@@ -385,7 +391,7 @@ final class ReasoningPart : MessagePart
     {
         auto that = cast(ReasoningPart) other;
         return that !is null && sameText(text_, that.text_) && sameText(summary_, that.summary_)
-            && samePayload(payload_, that.payload_) && attributes_.equals(cast(Object) that.attributes_);
+            && samePayload(payload_, that.payload_) && sameAttributes(attributes_, that.attributes_);
     }
 
     /// Computes the Java record hash of the four components.
@@ -471,7 +477,7 @@ final class UnknownPart : MessagePart
         auto that = cast(UnknownPart) other;
         return that !is null && provider_ == that.provider_ && kind_ == that.kind_
             && rawJson_ == that.rawJson_ && samePayload(payload_, that.payload_)
-            && attributes_.equals(cast(Object) that.attributes_);
+            && sameAttributes(attributes_, that.attributes_);
     }
 
     /// Computes the Java record hash of the five components.
@@ -490,6 +496,77 @@ final class UnknownPart : MessagePart
             ", payload=", payloadText(payload_), ", attributes=", attributes_.toString(), "]"
         ];
         return joinRecord(parts[]);
+    }
+
+    mixin JavaObject;
+}
+
+/// A tool call requested by the model, with its optional provider payload (R16).
+final class ToolCallPart : MessagePart
+{
+    private ToolCall toolCall_;
+    private NullablePayload payload_;
+    private PartAttributes attributes_;
+
+    /// Captures the tool call and takes an unmodifiable snapshot of its attributes.
+    this(ToolCall toolCall, NullablePayload payload, PartAttributes attributes)
+    {
+        toolCall_ = toolCall;
+        payload_ = payload;
+        attributes_ = copyAttributes(attributes);
+    }
+
+    /// Wraps a call with no provider payload or attributes.
+    static ToolCallPart of(ToolCall toolCall)
+    {
+        return create(toolCall, NullablePayload.init, emptyPartAttributes());
+    }
+
+    /// The model's tool call.
+    ToolCall toolCall() const pure nothrow @nogc
+    {
+        return toolCall_;
+    }
+
+    override NullablePayload payload()
+    {
+        return payload_;
+    }
+
+    override PartAttributes attributes()
+    {
+        return attributes_;
+    }
+
+    override ToolCallPart withAttributes(PartAttributes attributes)
+    {
+        return create(toolCall_, payload_, attributes);
+    }
+
+    private static ToolCallPart create(ToolCall toolCall, NullablePayload payload, PartAttributes attributes)
+    {
+        return new ToolCallPart(toolCall, payload, attributes);
+    }
+
+    /// Compares the three record components.
+    bool equals(Object other)
+    {
+        auto that = cast(ToolCallPart) other;
+        return that !is null && toolCall_ == that.toolCall_ && samePayload(payload_, that.payload_)
+            && sameAttributes(attributes_, that.attributes_);
+    }
+
+    /// Hashes the three record components in Java order.
+    int hashCode()
+    {
+        return 31 * (31 * toolCall_.hashCode() + payloadHash(payload_)) + attributes_.hashCode();
+    }
+
+    /// Formats the three record components.
+    override string toString()
+    {
+        return renderRecord("ToolCallPart[toolCall=", toolCall_.toString(), ", payload=",
+                payloadText(payload_), ", attributes=", attributes_.toString());
     }
 
     mixin JavaObject;
@@ -591,7 +668,7 @@ final class ToolResultPart : MessagePart
         auto that = cast(ToolResultPart) other;
         return that !is null && sameText(id_, that.id_) && sameText(name_, that.name_)
             && content_.equals(cast(Object) that.content_) && error_ == that.error_
-            && samePayload(payload_, that.payload_) && attributes_.equals(cast(Object) that.attributes_);
+            && samePayload(payload_, that.payload_) && sameAttributes(attributes_, that.attributes_);
     }
 
     /// Hashes the six record components in Java order.

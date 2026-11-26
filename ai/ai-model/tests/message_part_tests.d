@@ -18,8 +18,9 @@
 // Modified by the Flint authors.
 module message_part_tests;
 
-import flint.ai.chat.messages : ToolResponseMessage;
-import flint.ai.chat.messages.part : MessagePart, OpaquePayload, ReasoningPart, TextPart, ToolResultPart, UnknownPart;
+import flint.ai.chat.messages : AssistantMessage, ToolResponseMessage;
+import flint.ai.chat.messages.part : MessagePart, OpaquePayload, ReasoningPart, TextPart,
+    ToolCallPart, ToolResultPart, UnknownPart;
 import flint.java.lang : IllegalArgumentException, NullPointerException, UnsupportedOperationException;
 import flint.java.util : ArrayList, HashMap, List, Map;
 import std.exception : assertThrown;
@@ -27,7 +28,58 @@ import std.typecons : Nullable, nullable;
 
 @safe:
 
+private alias ToolCall = AssistantMessage.ToolCall;
 private alias ToolResponse = ToolResponseMessage.ToolResponse;
+
+@("toolCallPartOfWrapsToolCall")
+unittest
+{
+    auto toolCall = ToolCall(nullable("id-1"), nullable("function"), nullable("getWeather"),
+            nullable(`{"city":"Amsterdam"}`));
+    auto part = ToolCallPart.of(toolCall);
+
+    assert(part.toolCall() == toolCall);
+    assert(part.payload().isNull);
+    assert(part.attributes().isEmpty());
+}
+
+@("whenToolCallIsNullThenThrow")
+unittest
+{
+    // R5 rejects null for the D record value at compile time.
+    static assert(!__traits(compiles, ToolCallPart.of(null)));
+    static assert(!__traits(compiles, new ToolCallPart(null, Nullable!OpaquePayload.init, Map!(string, string).of())));
+}
+
+@("tool call parts preserve provider payload and snapshot replacement attributes")
+unittest
+{
+    alias Attributes = Map!(string, string);
+    auto call = ToolCall(nullable("id-1"), nullable("function"), nullable("tool"), nullable("{}"));
+    auto payload = nullable(OpaquePayload("provider", "reasoning", "opaque"));
+    auto input = new HashMap!(string, string)();
+    input.put("source", "original");
+
+    auto part = new ToolCallPart(call, payload, input);
+    assertThrown!IllegalArgumentException(new ToolCallPart(call, payload, null));
+    input.put("source", "replacement");
+    MessagePart view = part;
+    auto replaced = cast(ToolCallPart) view.withAttributes(input);
+    input.put("source", "mutated");
+
+    assert(replaced !is part && replaced.toolCall() == call && replaced.payload().get() == payload.get());
+    assert(part.attributes().get("source") == "original");
+    assert(replaced.attributes().get("source") == "replacement");
+    assertThrown!UnsupportedOperationException(replaced.attributes().put("another", "value"));
+
+    auto equal = new ToolCallPart(call, payload, Attributes.of("source", "replacement"));
+    assert(replaced == equal && replaced.hashCode() == equal.hashCode());
+    assert(replaced != part && replaced != ToolCallPart.of(call));
+    assert(replaced != new ToolCallPart(ToolCall.init, payload, equal.attributes()));
+    assert(replaced != new ToolCallPart(call, Nullable!OpaquePayload.init, equal.attributes()));
+    assert(replaced.toString() == "ToolCallPart[toolCall=" ~ call.toString() ~ ", payload=" ~ payload.get()
+            .toString() ~ ", attributes={source=replacement}]");
+}
 
 @("toolResultPartOfWrapsToolResponseAsSingleTextPart")
 unittest

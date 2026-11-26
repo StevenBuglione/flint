@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 204 | 383 | 0 | 15,209 |
+| ai | spring-ai@v2.1.0 | 204 | 390 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
 | framework | spring-framework@v7.1.0 | 3,614 | 1,466 | 4,870 | 29,884 |
@@ -282,6 +282,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.messages.part.TextPart#attributes` | `flint.ai.chat.messages.part.TextPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.TextPart#payload` | `flint.ai.chat.messages.part.TextPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.TextPart#withAttributes(Map)` | `flint.ai.chat.messages.part.TextPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart` | `flint.ai.chat.messages.part.ToolCallPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#<init>(ToolCall,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolCallPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#attributes` | `flint.ai.chat.messages.part.ToolCallPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#of(ToolCall)` | `flint.ai.chat.messages.part.ToolCallPart.of` | [R11](api-mapping.md#r11-object-identity-and-equality) | The tool call is a D record value. A null argument is rejected at compile time. |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#payload` | `flint.ai.chat.messages.part.ToolCallPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#toolCall` | `flint.ai.chat.messages.part.ToolCallPart.toolCall` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#withAttributes(Map)` | `flint.ai.chat.messages.part.ToolCallPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart` | `flint.ai.chat.messages.part.ToolResultPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#<init>(String,String,List,boolean,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolResultPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#attributes` | `flint.ai.chat.messages.part.ToolResultPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -8973,7 +8980,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.memory.repository.neo4j | 0 | 63 |
 | org.springframework.ai.chat.memory.repository.redis | 0 | 65 |
 | org.springframework.ai.chat.messages | 75 | 0 |
-| org.springframework.ai.chat.messages.part | 32 | 0 |
+| org.springframework.ai.chat.messages.part | 25 | 0 |
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |
 | org.springframework.ai.chat.observation | 73 | 0 |
