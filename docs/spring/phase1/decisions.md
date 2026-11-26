@@ -1119,3 +1119,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Calls:** `new TypedValue(v)` becomes `TypedValue(v)`.
   - **BooleanTypedValue** becomes a factory returning `TypedValue`.
   - **Unchanged:** `TypedValue.NULL`, `equals` and `toString` keep Java's semantics.
+- 2026-11-26 01:40Z, coordinator: **D-SPEL-2 (sol-template) is not approved.** It would have required `nothrow @nogc` on `EvaluationContext` methods, restricting user implementations.
+  - **Instead:** porting-guide rule 7. The evaluator takes a `@nogc` fast path for Flint's own final contexts and a generic GC-allowed path for any other implementation, with parity tests.
+  - **No deviation is needed.**
