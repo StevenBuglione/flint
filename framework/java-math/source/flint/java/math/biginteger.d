@@ -4,8 +4,8 @@ module flint.java.math.biginteger;
 import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsException, JavaObject,
     NullPointerException, NumberFormatException;
 import flint.java.math.internal.floating : roundedFloating;
-import flint.java.math.internal.limbs : addLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
-    magnitudeBitLength, signedLength, significantBytes, significantLimbs, storeSignedBytes, subtractLimbs;
+import flint.java.math.internal.limbs : combineLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
+    magnitudeBitLength, signedLength, significantBytes, significantLimbs, storeSignedBytes;
 import flint.java.math.internal.products : multiplyLimbs;
 import flint.java.math.internal.radix : formatRadix;
 
@@ -318,17 +318,11 @@ class BigInteger : Comparable!BigInteger
         const int order = adding ? (magnitude.length < other.length ? -1 : 1) : compareLimbs(magnitude, other);
         const high = order < 0 ? other : magnitude;
         const low = order < 0 ? magnitude : other;
-        if (adding)
-        {
-            auto sum = new uint[high.length + 1];
-            addLimbs(sum, high, low);
-            return new BigInteger(sum, sign);
-        }
         if (!order)
             return new BigInteger(cast(const(uint)[]) null, 0);
-        auto difference = new uint[high.length];
-        subtractLimbs(difference, high, low);
-        return new BigInteger(difference, order < 0 ? otherSign : sign);
+        auto words = new uint[high.length + adding];
+        combineLimbs(words, high, low, !adding);
+        return new BigInteger(words, order < 0 ? otherSign : sign);
     }
 }
 

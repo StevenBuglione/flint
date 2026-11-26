@@ -1,23 +1,4 @@
-/*
- *  Licensed to the Apache Software Foundation (ASF) under one or more
- *  contributor license agreements.  See the NOTICE file distributed with
- *  this work for additional information regarding copyright ownership.
- *  The ASF licenses this file to You under the Apache License, Version 2.0
- *  (the "License"); you may not use this file except in compliance with
- *  the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- *  Copyright 2006, 2010 The Apache Software Foundation.
- *  Ported from harmony 6.0M3, classlib/modules/math/src/main/java/java/math/Elementary.java
- *  Modified by the Flint authors.
- */
+/// Unsigned-word arithmetic and signed byte conversion for BigInteger.
 module flint.java.math.internal.limbs;
 
 import core.bitop : bsr;
@@ -26,127 +7,144 @@ import core.bitop : bsr;
 
 package(flint.java.math):
 
-/// The length of the magnitude after removing zero limbs from its most significant end.
+/// Return the length of a magnitude without leading zero words.
 size_t significantLimbs(scope const(uint)[] words) pure nothrow @nogc
 {
-    size_t length = words.length;
-    while (length && words[length - 1] == 0)
-        --length;
-    return length;
-}
-
-/// The bit length of a normalized magnitude.
-size_t magnitudeBitLength(scope const(uint)[] words) pure nothrow @nogc
-{
-    return words.length ? words.length * 32 - 31 + bsr(words[$ - 1]) : 0;
-}
-
-/// Compare normalized unsigned magnitudes, with the least significant limb at index zero.
-int compareLimbs(scope const(uint)[] left, scope const(uint)[] right) pure nothrow @nogc
-{
-    if (left.length != right.length)
-        return left.length < right.length ? -1 : 1;
-    foreach_reverse (i; 0 .. left.length)
-        if (left[i] != right[i])
-            return left[i] < right[i] ? -1 : 1;
+    foreach_reverse (i, word; words)
+        if (word)
+            return i + 1;
     return 0;
 }
 
-/// Sum two magnitudes. The left input is at least as long as the right.
-void addLimbs(scope uint[] sum, scope const(uint)[] left, scope const(uint)[] right) pure nothrow @nogc
+/// Return the width of a normalized magnitude in bits.
+size_t magnitudeBitLength(scope const(uint)[] words) pure nothrow @nogc
 {
-    ulong carry;
-    foreach (i; 0 .. right.length)
-    {
-        carry += cast(ulong) left[i] + right[i];
-        sum[i] = cast(uint) carry;
-        carry >>= 32;
-    }
-    foreach (i; right.length .. left.length)
-    {
-        carry += left[i];
-        sum[i] = cast(uint) carry;
-        carry >>= 32;
-    }
-    sum[left.length] = cast(uint) carry;
+    if (!words.length)
+        return 0;
+    size_t leading = words.length;
+    --leading;
+    return leading * 32 + 1 + bsr(words[leading]);
 }
 
-/// Subtract two magnitudes. The left input is at least as large as the right.
-void subtractLimbs(scope uint[] difference, scope const(uint)[] left, scope const(uint)[] right) pure nothrow @nogc
+/// Compare normalized magnitudes from their most significant words.
+int compareLimbs(scope const(uint)[] left, scope const(uint)[] right) pure nothrow @nogc
 {
-    long borrow;
-    foreach (i; 0 .. right.length)
+    if (left.length > right.length)
+        return 1;
+    if (left.length < right.length)
+        return -1;
+
+    foreach_reverse (i, word; left)
     {
-        borrow += cast(long) left[i] - right[i];
-        difference[i] = cast(uint) borrow;
-        borrow >>= 32;
+        const uint other = right[i];
+        if (word < other)
+            return -1;
+        if (word > other)
+            return 1;
     }
-    foreach (i; right.length .. left.length)
-    {
-        borrow += left[i];
-        difference[i] = cast(uint) borrow;
-        borrow >>= 32;
-    }
+    return 0;
 }
 
-/// Remove leading zero bytes or redundant sign extension before allocating limbs.
+/// Combine magnitudes in descending length order. Addition reserves a final carry word.
+void combineLimbs(scope uint[] dest, scope const(uint)[] left, scope const(uint)[] right, bool minus) pure nothrow @nogc
+{
+    // For subtraction add the two's complement of the shorter input, including its sign extension.
+    const uint extension = minus ? uint.max : 0;
+    ulong carry = minus;
+    foreach (i, word; left)
+    {
+        const uint other = i < right.length ? right[i] : 0;
+        const ulong total = cast(ulong) word + (other ^ extension) + carry;
+        dest[i] = cast(uint) total;
+        carry = total >> 32;
+    }
+    if (!minus)
+        dest[left.length] = cast(uint) carry;
+}
+
+/// Return the input suffix that contributes to the signed value or unsigned magnitude.
 const(byte)[] significantBytes(return scope const(byte)[] bytes, bool negative) pure nothrow @nogc
 {
     if (!negative)
     {
-        while (bytes.length && bytes[0] == 0)
-            bytes = bytes[1 .. $];
+        foreach (i, octet; bytes)
+            if (octet)
+                return bytes[i .. $];
+        return bytes[$ .. $];
     }
-    else
-    {
-        while (bytes.length > 1 && bytes[0] == -1 && bytes[1] < 0)
-            bytes = bytes[1 .. $];
-    }
-    return bytes;
+
+    foreach (i, octet; bytes[0 .. $ - 1])
+        if (octet != -1 || bytes[i + 1] >= 0)
+            return bytes[i .. $];
+    return bytes[$ - 1 .. $];
 }
 
-/// Read big-endian magnitude bytes or recover the magnitude of negative two's-complement bytes.
+/// Decode big-endian input into little-endian words.
 void loadLimbs(scope uint[] words, scope const(byte)[] bytes, bool negative) pure nothrow @nogc
 {
+    const uint padding = negative ? uint.max : 0;
     uint carry = negative;
-    uint mask = negative ? 255 : 0;
-    foreach (i; 0 .. bytes.length)
+    size_t remaining = bytes.length;
+    foreach (ref word; words)
     {
-        const uint digit = (cast(ubyte) bytes[$ - 1 - i] ^ mask) + carry;
-        words[i / 4] |= (digit & 255) << ((i % 4) * 8);
-        carry = digit >> 8;
+        uint packed;
+        uint bits;
+        do
+        {
+            --remaining;
+            packed |= cast(uint) cast(ubyte) bytes[remaining] << bits;
+            bits += 8;
+        }
+        while (remaining && bits < 32);
+        // Sign extension is only needed at the most significant, partial word.
+        if (bits < 32)
+            packed |= padding << bits;
+        word = (packed ^ padding) + carry;
+        carry &= word == 0;
     }
 }
 
-/// For negative values, this limb is the last to receive a carry in the two's-complement encoding.
+/// Find the first nonzero word from the least significant end.
 size_t firstNonzeroLimb(scope const(uint)[] words) pure nothrow @nogc
 {
-    size_t index;
-    while (words[index] == 0)
-        ++index;
-    return index;
+    foreach (i, word; words)
+        if (word)
+            return i;
+    return words.length;
 }
 
-/// Length of the shortest signed encoding, including a sign bit. For a negative value count bits in magnitude - 1.
+/// Return the byte length including a sign bit.
 size_t signedLength(scope const(uint)[] words, bool negative, size_t firstNonzero) pure nothrow @nogc
 {
     if (!words.length)
         return 1;
-    size_t highIndex = words.length;
-    --highIndex;
-    const uint high = words[highIndex] - (negative && firstNonzero == highIndex ? 1 : 0);
-    return highIndex * 4 + (high ? (bsr(high) + 1) / 8 : 0) + 1;
+    size_t leading = words.length;
+    --leading;
+    uint word = words[leading];
+    if (negative && firstNonzero == leading)
+        --word;
+    const size_t leadingBits = word ? 1 + bsr(word) : 0;
+    return leading * 4 + leadingBits / 8 + 1;
 }
 
-/// Write a big-endian, signed encoding of the magnitude into a destination of signedLength bytes.
+/// Write the minimal big-endian two's-complement bytes, including sign extension.
 void storeSignedBytes(scope byte[] bytes, scope const(uint)[] words, bool negative, size_t first) pure nothrow @nogc
 {
-    foreach (i; 0 .. bytes.length)
+    size_t end = bytes.length;
+    foreach (i, limb; words)
     {
-        const size_t index = i / 4;
-        uint word = index < words.length ? words[index] : 0;
-        if (negative && index >= first)
-            word = index == first ? 0U - word : ~word;
-        bytes[$ - 1 - i] = cast(byte)(word >> ((i % 4) * 8));
+        const uint mask = negative && i >= first ? uint.max : 0;
+        uint word = (limb ^ mask) + (negative && i == first);
+        uint count = 4;
+        do
+        {
+            --end;
+            bytes[end] = cast(byte) word;
+            word >>= 8;
+            --count;
+        }
+        while (end && count);
     }
+    if (end)
+        bytes[0] = negative ? -1 : 0;
 }
