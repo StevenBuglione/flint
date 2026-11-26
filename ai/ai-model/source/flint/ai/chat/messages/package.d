@@ -200,6 +200,28 @@ class SystemMessage : AbstractMessage
         super(MessageType.SYSTEM, text, metadata);
     }
 
+    /// Copies the message text and snapshots its metadata.
+    SystemMessage copy()
+    {
+        import flint.java.lang : NullPointerException;
+
+        const text = getText();
+        // The base constructor copies the metadata. Check Java Map.copyOf's null contract here.
+        metadata_.forEach((string key, Any value) {
+            if (key is null || value.isNull)
+                throw new NullPointerException();
+        });
+        return new SystemMessage(text, metadata_);
+    }
+
+    /// Starts a builder with this message's current text and metadata.
+    Builder mutate()
+    {
+        auto result = builder();
+        result.text(getText()).metadata(metadata_);
+        return result;
+    }
+
     /// Starts an empty system message builder.
     static Builder builder() pure nothrow @nogc
     {

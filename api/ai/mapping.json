@@ -55,6 +55,8 @@
 "org.springframework.ai.chat.messages.SystemMessage":{"d":"flint.ai.chat.messages.SystemMessage","status":"ported"},
 "org.springframework.ai.chat.messages.SystemMessage#<init>(String)":{"d":"flint.ai.chat.messages.SystemMessage.this","rules":["R5"],"status":"adapted"},
 "org.springframework.ai.chat.messages.SystemMessage#builder()":{"d":"flint.ai.chat.messages.SystemMessage.builder","rules":["R12"],"status":"adapted"},
+"org.springframework.ai.chat.messages.SystemMessage#copy()":{"d":"flint.ai.chat.messages.SystemMessage.copy","status":"ported"},
+"org.springframework.ai.chat.messages.SystemMessage#mutate()":{"d":"flint.ai.chat.messages.SystemMessage.mutate","rules":["R12"],"status":"adapted"},
 "org.springframework.ai.chat.messages.SystemMessage.Builder":{"d":"flint.ai.chat.messages.SystemMessage.Builder","rules":["R12"],"status":"adapted"},
 "org.springframework.ai.chat.messages.SystemMessage.Builder#<init>()":{"d":"flint.ai.chat.messages.SystemMessage.Builder.init","rules":["R12"],"status":"adapted"},
 "org.springframework.ai.chat.messages.SystemMessage.Builder#build()":{"d":"flint.ai.chat.messages.SystemMessage.Builder.build","rules":["R12"],"status":"adapted"},

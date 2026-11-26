@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 200 | 337 | 0 | 15,259 |
+| ai | spring-ai@v2.1.0 | 201 | 338 | 0 | 15,257 |
 | boot | spring-boot@v4.2.0 | 44 | 43 | 2,133 | 13,383 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,515 | 1,402 | 4,850 | 30,067 |
@@ -222,6 +222,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.messages.MessageType#USER` | `flint.ai.chat.messages.MessageType.USER` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.chat.messages.SystemMessage#<init>(String)` | `flint.ai.chat.messages.SystemMessage.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.SystemMessage#builder()` | `flint.ai.chat.messages.SystemMessage.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.messages.SystemMessage#mutate()` | `flint.ai.chat.messages.SystemMessage.mutate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder` | `flint.ai.chat.messages.SystemMessage.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#<init>()` | `flint.ai.chat.messages.SystemMessage.Builder.init` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#build()` | `flint.ai.chat.messages.SystemMessage.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
@@ -8574,7 +8575,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.memory.repository.mongo | 0 | 20 |
 | org.springframework.ai.chat.memory.repository.neo4j | 0 | 63 |
 | org.springframework.ai.chat.memory.repository.redis | 0 | 65 |
-| org.springframework.ai.chat.messages | 93 | 0 |
+| org.springframework.ai.chat.messages | 91 | 0 |
 | org.springframework.ai.chat.messages.part | 43 | 0 |
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |
