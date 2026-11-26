@@ -40,7 +40,7 @@ struct SpringPort
     bool inherited;
 }
 
-/// Translate a single public annotation or constants-only enum.
+/// Translate a single public annotation or a supported enum.
 bool portSpring(string root, const ref SpringPortRequest request, out SpringPort output, out string error)
 {
     import flint_tool.api.upstreams : findUpstream, loadUpstreams;
@@ -158,7 +158,7 @@ private const(ApiType)* supportedType(ref const Manifest manifest, const ref Ups
             return &type;
         if (type.decl.kind == TypeKind.enum_)
         {
-            if (constantsOnly(type.decl))
+            if (supportedEnum(type.decl))
                 return &type;
             error = id ~ ": unsupported enum shape in the pinned manifest";
             return null;
@@ -169,14 +169,33 @@ private const(ApiType)* supportedType(ref const Manifest manifest, const ref Ups
     return null;
 }
 
-private bool constantsOnly(const ref TypeDecl decl)
+private bool supportedEnum(const ref TypeDecl decl)
 {
     if (!decl.members.length || decl.implements_.length)
         return false;
+    size_t constants;
+    bool hasMethod;
     foreach (ref member; decl.members)
-        if (member.kind != MemberKind.constant)
+    {
+        if (member.kind == MemberKind.constant)
+            ++constants;
+        else if (hasMethod || !enumMethodSignature(decl, member))
             return false;
-    return true;
+        else
+            hasMethod = true;
+    }
+    return constants != 0;
+}
+
+private bool enumMethodSignature(const ref TypeDecl decl, const ref Member member)
+{
+    import std.algorithm.searching : startsWith;
+
+    const prefix = decl.name ~ " ";
+    return member.kind == MemberKind.method && member.visibility == "public"
+        && member.type == decl.name && !member.modifiers.length && !member.annotations.length
+        && !member.typeParameters.length && !member.throws_.length && member.parameters.length == 1
+        && member.parameters[0].startsWith(prefix) && identifier(member.parameters[0][prefix.length .. $]);
 }
 
 private string sourcePath(string root, const ref SpringPortRequest request, const ref Upstream pin,
@@ -324,6 +343,8 @@ private string shadowedAttributeType(const ref Manifest manifest, const ref ApiT
         names["Deprecated"] = true;
     foreach (ref field; annotation.decl.members)
     {
+        if (field.kind != MemberKind.attribute)
+            continue;
         const name = attributeBaseType(field.type);
         if (identifier(name) && !resolvedFields.canFind(field.name))
             names[name] = true;
@@ -334,6 +355,13 @@ private string shadowedAttributeType(const ref Manifest manifest, const ref ApiT
     return null;
 }
 
+private struct CandidateField
+{
+    string symbol;
+    string sentinel;
+    string enumParameter;
+}
+
 private string classifiedFragment(const ref Upstream pin, const ref ApiType type, string module_,
         const ref JSONValue candidate, const ref Mapping mapping, out string error, bool replacePorted = false)
 {
@@ -341,17 +369,13 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
     import std.array : join;
 
     const dName = candidate["symbol"].str;
-    struct Field
-    {
-        string symbol;
-        string sentinel;
-    }
-
-    Field[string] fields;
+    CandidateField[string] fields;
     foreach (ref field; candidate["members"].arrayNoRef)
     {
         const sentinel = "classSentinel" in field;
-        fields[field["name"].str] = Field(field["symbol"].str, sentinel is null ? null : sentinel.str);
+        const parameter = "enumParameter" in field;
+        fields[field["name"].str] = CandidateField(field["symbol"].str, sentinel is null
+                ? null : sentinel.str, parameter is null ? null : parameter.str);
     }
     if (!identifier(dName) || fields.length != type.decl.members.length)
     {
@@ -362,18 +386,16 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
     MappingEntry[string] entries;
     string[string] notes;
     const annotation = type.decl.kind == TypeKind.annotation;
-    const memberKind = annotation ? MemberKind.attribute : MemberKind.constant;
-    entries[type.decl.id] = mappingEntry(dType, type.decl.name, dName, annotation);
+    const classifier = Classifier(mapping);
+    if (!preserveEnumReexport(type.decl, classifier, dType))
+        entries[type.decl.id] = mappingEntry(dType, type.decl.name, dName, annotation);
     foreach (ref member; type.decl.members)
     {
         const field = member.name in fields;
-        if (member.kind != memberKind || field is null || !identifier(field.symbol))
-        {
-            error = "translator field does not match " ~ memberId(type.decl, member) ~ " in the manifest";
-            return null;
-        }
         const id = memberId(type.decl, member);
-        entries[id] = mappingEntry(dType ~ "." ~ field.symbol, member.name, field.symbol, annotation, member.type);
+        entries[id] = proposedMember(type.decl, member, field, module_, dType, error);
+        if (error.length)
+            return null;
         if (field.sentinel.length)
         {
             notes[id] = classSentinelNote(member, field.sentinel, error);
@@ -381,7 +403,6 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
                 return null;
         }
     }
-    const classifier = Classifier(mapping);
     string[] lines;
     foreach (key; entries.keys.sort)
     {
@@ -395,6 +416,47 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
     }
     return "{\"rulebook\":2,\n\"upstream\":[" ~ quote(
             pin.project ~ "@" ~ pin.version_) ~ "],\n\"elements\":{\n" ~ lines.join(",\n") ~ "\n}}\n";
+}
+
+private MappingEntry proposedMember(const ref TypeDecl decl, const ref Member member,
+        const(CandidateField)* field, string module_, string dType, out string error)
+{
+    if (field is null || !identifier(field.symbol))
+    {
+        error = "translator field does not match " ~ memberId(decl, member) ~ " in the manifest";
+        return MappingEntry.init;
+    }
+    if (field.enumParameter.length)
+    {
+        if (decl.kind != TypeKind.enum_ || !enumMethodSignature(decl, member)
+                || member.parameters[0] != decl.name ~ " " ~ field.enumParameter)
+        {
+            error = "translator enum method does not match " ~ memberId(decl, member) ~ " in the manifest";
+            return MappingEntry.init;
+        }
+        auto entry = mappingEntry(module_ ~ "." ~ field.symbol, member.name, field.symbol, false);
+        entry.rules ~= "R20";
+        entry.status = Status.adapted;
+        return entry;
+    }
+    const annotation = decl.kind == TypeKind.annotation;
+    if (member.kind == (annotation ? MemberKind.attribute : MemberKind.constant))
+        return mappingEntry(dType ~ "." ~ field.symbol, member.name, field.symbol, annotation, member.type);
+
+    error = "translator field does not match " ~ memberId(decl, member) ~ " in the manifest";
+    return MappingEntry.init;
+}
+
+/// A draft can put methods and constants together while a landed R1 map keeps a canonical re-export.
+private bool preserveEnumReexport(const ref TypeDecl decl, const ref Classifier classifier, string dType)
+{
+    import std.algorithm.searching : any;
+
+    if (decl.kind != TypeKind.enum_ || !decl.members.any!(member => member.kind == MemberKind.method))
+        return false;
+    const entry = classifier.classify(decl.id);
+    return entry !is null && entry.match == decl.id && entry.symbol == dType
+        && entry.status == Status.adapted && entry.rules == ["R1"];
 }
 
 private string classSentinelNote(const ref Member member, string sentinel, out string error)
@@ -686,6 +748,8 @@ unittest
 
     manifest.types[0].decl.implements_ = null;
     manifest.types[0].decl.members[0].kind = MemberKind.method;
+    manifest.types[0].decl.members[0].type = option.decl.name;
+    assert(!shadowedAttributeType(manifest, manifest.types[0]).length);
     assert(supportedType(manifest, pin, id, error) is null);
     assert(error.indexOf("unsupported enum shape") >= 0, error);
 

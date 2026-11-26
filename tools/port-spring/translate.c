@@ -29,6 +29,7 @@ typedef struct {
     Slice reference_type;
     TSNode reference_default;
     Slice class_sentinel;
+    Slice enum_parameter;
     size_t offset;
     bool array;
 } Field;
@@ -812,15 +813,95 @@ static bool plain_constant(TSNode node)
         && ts_node_is_null(child_of_kind(node, "modifiers"));
 }
 
+static TSNode code_child(TSNode node, uint32_t position)
+{
+    if (!ts_node_is_null(node)) {
+        for (uint32_t index = 0; index < ts_node_named_child_count(node); ++index) {
+            TSNode child = ts_node_named_child(node, index);
+            if (!ts_node_is_extra(child) && position-- == 0)
+                return child;
+        }
+    }
+    return (TSNode){0};
+}
+
+static bool ordinal_call(const JavaFile *java, TSNode call, Slice parameter)
+{
+    if (!kind(call, "method_invocation") || !is(node_text(java, member(call, "name")), "ordinal") ||
+        !ts_node_is_null(member(call, "type_arguments")) || !ts_node_is_null(code_child(member(call, "arguments"), 0)))
+        return false;
+    TSNode receiver = member(call, "object");
+    if (parameter.length)
+        return kind(receiver, "identifier") && equal(node_text(java, receiver), parameter);
+    return ts_node_is_null(receiver) || kind(receiver, "this");
+}
+
+static bool ordinal_minimum(const JavaFile *java, TSNode statement, Slice parameter)
+{
+    TSNode result = code_child(statement, 0);
+    if (!kind(statement, "return_statement") || !kind(result, "ternary_expression"))
+        return false;
+    TSNode test = member(result, "condition");
+    while (kind(test, "parenthesized_expression"))
+        test = code_child(test, 0);
+    return kind(test, "binary_expression") && kind(member(test, "operator"), "<=") &&
+        ordinal_call(java, member(test, "left"), (Slice){0}) && ordinal_call(java, member(test, "right"), parameter) &&
+        kind(member(result, "consequence"), "this") && equal(node_text(java, member(result, "alternative")), parameter);
+}
+
+static bool checks_enum_null(const JavaFile *java, TSNode statement, Slice parameter)
+{
+    TSNode call = code_child(statement, 0);
+    if (!kind(statement, "expression_statement") || !kind(call, "method_invocation") ||
+        !resolves(java, node_text(java, member(call, "object")), "org.springframework.util.Assert", false, NULL) ||
+        !is(node_text(java, member(call, "name")), "notNull") || !ts_node_is_null(member(call, "type_arguments")))
+        return false;
+    TSNode arguments = member(call, "arguments");
+    TSNode message = code_child(arguments, 1);
+    Slice text = node_text(java, message);
+    return kind(message, "string_literal") && text_literal(text) &&
+        equal(node_text(java, code_child(arguments, 0)), parameter) && ts_node_is_null(code_child(arguments, 2));
+}
+
+static bool checked_ordinal_cap(const JavaFile *java, TSNode method, Field *field)
+{
+    TSNode modifiers = child_of_kind(method, "modifiers");
+    Slice enum_name = node_text(java, member(java->declaration, "name"));
+    if (!kind(method, "method_declaration") || !is(node_text(java, modifiers), "public") ||
+        !equal(node_text(java, member(method, "type")), enum_name) || !ts_node_is_null(member(method, "type_parameters")) ||
+        !ts_node_is_null(child_of_kind(method, "throws")) || !ts_node_is_null(member(method, "dimensions")))
+        return false;
+    TSNode parameters = member(method, "parameters");
+    TSNode parameter = code_child(parameters, 0);
+    Slice name = kind(parameter, "formal_parameter") ? node_text(java, member(parameter, "name")) : (Slice){0};
+    if (!identifier(name) || d_keyword(name) || is(name, "receiver") || is(name, "Assert") ||
+        !ts_node_is_null(code_child(parameters, 1)) ||
+        !equal(node_text(java, member(parameter, "type")), enum_name) ||
+        !ts_node_is_null(child_of_kind(parameter, "modifiers")) || !ts_node_is_null(member(parameter, "dimensions")))
+        return false;
+    TSNode body = member(method, "body");
+    if (!checks_enum_null(java, code_child(body, 0), name) ||
+        !ordinal_minimum(java, code_child(body, 1), name) || !ts_node_is_null(code_child(body, 2)))
+        return false;
+    field->enum_parameter = name;
+    return true;
+}
+
 static int collect_fields(const JavaFile *annotation, TSNode body, Field *fields, size_t *count)
 {
     for (uint32_t index = 0; index < ts_node_named_child_count(body); ++index) {
         TSNode node = ts_node_named_child(body, index);
         if (ts_node_is_extra(node))
             continue;
-        if (annotation->is_enum && kind(node, "enum_body_declarations") && !has_named_children(node))
-            continue;
-        if (annotation->is_enum && !plain_constant(node))
+        bool method = annotation->is_enum && kind(node, "enum_body_declarations");
+        if (method) {
+            if (!ts_node_is_null(code_child(node, 1)))
+                return diagnostic(annotation, node, "unsupported enum members after the constants");
+            node = code_child(node, 0);
+            if (ts_node_is_null(node))
+                continue;
+        }
+        if (annotation->is_enum && !method && !plain_constant(node))
             return diagnostic(annotation, node, "unsupported enum member");
         if (!annotation->is_enum && !kind(node, "annotation_type_element_declaration"))
             return diagnostic(annotation, node, "unsupported annotation member");
@@ -828,6 +909,8 @@ static int collect_fields(const JavaFile *annotation, TSNode body, Field *fields
         Field *field = &fields[(*count)++];
         field->name = name;
         field->node = node;
+        if (method && (!checked_ordinal_cap(annotation, node, field) || *count == 1))
+            return diagnostic(annotation, node, "unsupported enum method");
         if (!lower_name(name, &field->symbol))
             return diagnostic(annotation, node, "unsupported member name");
         for (size_t earlier = 0; earlier + 1 < *count; ++earlier) {
@@ -843,6 +926,27 @@ static int collect_fields(const JavaFile *annotation, TSNode body, Field *fields
     if (annotation->is_enum && !*count)
         return diagnostic(annotation, body, "unsupported enum without constants");
     return 0;
+}
+
+static void emit_enum_method(Text *output, Slice enum_name, const Field *method)
+{
+    Slice name = contents(&method->symbol);
+    Slice parameter = method->enum_parameter;
+    add(output, "\n");
+    append(output, enum_name);
+    add(output, " ");
+    append(output, name);
+    add(output, "(");
+    append(output, enum_name);
+    add(output, " receiver, ");
+    append(output, enum_name);
+    add(output, " ");
+    append(output, parameter);
+    add(output, ") pure nothrow @nogc\n{\n    return receiver <= ");
+    append(output, parameter);
+    add(output, " ? receiver : ");
+    append(output, parameter);
+    add(output, ";\n}\n");
 }
 
 static void json_string(Slice text)
@@ -948,6 +1052,10 @@ static void emit_candidate(const JavaFile *annotation, Slice name, const Text *s
             fputs(",\"classSentinel\":", stdout);
             json_string(fields[index].class_sentinel);
         }
+        if (fields[index].enum_parameter.length) {
+            fputs(",\"enumParameter\":", stdout);
+            json_string(fields[index].enum_parameter);
+        }
         putchar('}');
     }
     const char *body_key = annotation->marker_count ? "metaBody" : has_references ? "referenceBody" : "body";
@@ -1016,6 +1124,11 @@ static int translate(JavaFile *annotation, bool scope_only)
     status = collect_fields(annotation, body, fields, &count);
     if (status)
         goto cleanup;
+    Field *method = count && fields[count - 1].enum_parameter.length ? &fields[count - 1] : NULL;
+    if (method && equal(contents(&method->symbol), contents(&symbol))) {
+        status = diagnostic(annotation, method->node, "unsupported enum method name in destination module");
+        goto cleanup;
+    }
     status = emit_deprecation(annotation, annotation->declaration, deprecated, &output, "");
     if (status)
         goto cleanup;
@@ -1023,6 +1136,8 @@ static int translate(JavaFile *annotation, bool scope_only)
     append(&output, contents(&symbol));
     add(&output, "\n{\n");
     for (size_t index = 0; index < count; ++index) {
+        if (&fields[index] == method)
+            break;
         if (annotation->is_enum) {
             add(&output, "    ");
             append(&output, contents(&fields[index].symbol));
@@ -1034,6 +1149,8 @@ static int translate(JavaFile *annotation, bool scope_only)
         }
     }
     add(&output, "}\n");
+    if (method)
+        emit_enum_method(&output, contents(&symbol), method);
     if (output.failed) {
         status = diagnostic(annotation, body, "cannot allocate output");
         goto cleanup;

@@ -27,13 +27,15 @@ An annotation can use an enum that already maps to its destination D module. The
 
 Nested annotation fields and arrays use the same reference lookup and require an exact R2 mapping to the destination module. A zero-argument default uses the nested struct's `.init` when every Java attribute has a default. A single enum constant supplied as `@Nested(CONSTANT)` or `@Nested(value = CONSTANT)` initializes the mapped first field when every other attribute has a default. The CLI resolves the field type using the nested declaration's imports and the constant using the imports at the use site. A required array field uses D's default initialization, and an explicit Java empty array uses `[]`.
 
-Public top-level enums with constants alone become D enums in Java declaration order. Constants with arguments or class bodies, enums with methods or fields, and enums that implement interfaces require their own rulebook translations.
+Public top-level enums keep Java constant order. The R20 method slice recognizes one public instance method that checks an enum argument with Spring's `Assert.notNull` and returns the lesser ordinal through a conditional expression. It emits a same-module UFCS function. D rejects a null argument at compile time under R5 and R20. Constants with arguments or class bodies, other method bodies, fields and implemented interfaces require separate translations.
 
 ## Verification
 
 `test_annotations.py` exercises the C helper and compiles the emitted UDA with DMD and LDC. `test_jakarta.py` walks every Jakarta Persistence annotation in the pinned manifest, compares generated fields and mappings to the existing hand port where available, checks the emitted headers, and compiles every generated D file on both compilers.
 
 `test_spring_markers.py` translates Spring Framework's `Component` and compares the marker and field with the hand port. It checks the extracted AOT models and runs a direct and transitive lookup with both compilers.
+
+`test_boot_enum_method.py` translates Actuator's `Access.cap` and compares every pair of enum values with the hand port. It checks the R20 mapping and pins rejection of `cap(null)` at compile time on DMD and LDC.
 
 ```sh
 python3 tools/port-spring/tests/test_annotations.py
@@ -43,6 +45,8 @@ python3 tools/port-spring/tests/test_jakarta.py --flint /path/to/flint \
 python3 tools/port-spring/tests/test_jakarta_enums.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 python3 tools/port-spring/tests/test_spring_markers.py --flint /path/to/flint \
+  --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
+python3 tools/port-spring/tests/test_boot_enum_method.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 ```
 
