@@ -1,6 +1,6 @@
 module app;
 
-import flint.java.util.function_ : Function;
+import flint.java.util.function_.function_ : Function;
 
 @safe:
 
