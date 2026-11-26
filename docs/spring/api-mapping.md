@@ -146,9 +146,27 @@ Builders keep Java's method chain exactly (`ResponseEntity.ok().header(...).body
 
 Java strings index UTF-16 code units, and D strings index UTF-8 bytes. Every ported routine that does index arithmetic, such as `AntPathMatcher`, `UriComponentsBuilder`, `StringUtils` and `PathPattern`, is reviewed for this and tested with non-ASCII input. Public methods that return an index document the unit, and keep Java's unit wherever the index crosses the API.
 
+### R15: Enums with fields
+
+Three rules cover every Java enum, so no enum needs a case-by-case decision:
+- **Constants only:** a D `enum` with the same constant names, `ported`.
+- **Fields** (with or without methods): R15, below.
+- **Methods but no fields and no interface:** R20.
+- **An interface:** R18.
+
+Adopted by the coordinator on 2026-11-26 under the owner's standing approval. It was proposed in `docs/spring/phase1/web-mvc.md`; R18 replaces that proposal's interface clause.
+
+An enum with fields becomes a struct:
+- **Constants** are `static immutable` instances in Java's order.
+- **Members:** Java's `name()`, `ordinal()`, `values()`, `valueOf(String)` and `toString()`, plus the enum's own field getters and methods.
+- **Equality** is by value, per R11: two constants are equal when they are the same constant.
+- **Existing ports:** `HttpStatus` and `HttpMethod` (D-15 in web-mvc.md). `HttpStatus` also converts to `HttpStatusCode` through `alias this`, and keeps that shape.
+
+Mapping: the enum, its constants and its members are `adapted` with rule `R15`, or `ported` where a member keeps Java's exact shape.
+
 ### R16: Sealed interfaces and the records that implement them
 
-R15 is reserved for the Java-enums proposal in `docs/spring/phase1/web-mvc.md`. R16 says how R3 and R11 combine when a record implements an interface (coordinator, 2026-11-26, from sol-ai's `MessagePart`):
+R16 says how R3 and R11 combine when a record implements an interface (coordinator, 2026-11-26, from sol-ai's `MessagePart`):
 - **The interface stays a D interface** (R3), sealed or not. Its constants become static members.
 - **A record that implements an interface is a `final class`**, because only classes implement D interfaces. It mixes in `JavaObject` and defines member-wise `equals`, `hashCode` and `toString`, so R11's record equality holds. Its accessors keep the record names (`text()`, `payload()`).
 - **A record that implements no interface stays a struct** (R11).
@@ -170,7 +188,7 @@ Mapping: the factory method or constant is `adapted` with rule `R17`. A lane cit
 D enums cannot implement interfaces. Coordinator, 2026-11-26, under the owner's standing approval:
 - **A singleton enum** (one constant, used as a strategy object, such as Spring Data's `PersistableIsNewStrategy`) becomes a `final` fieldless class that implements the interface. Its one instance is shared through `statelessInstance` and exposed as the static constant (`INSTANCE`), so identity holds as in Java. It keeps `name()`, `ordinal()`, `toString()` and `values()` as Java has them.
 - **A multi-constant enum used as option values** (Jakarta's `LockModeType`, `FlushModeType`; D-JPA-2) stays a D `enum`. Methods that take the interface type gain overloads at the API boundary that accept the enum, as in `em.find!Owner(id, LockModeType.PESSIMISTIC_WRITE)`.
-- **Enums already ported under the R15 proposal** (`HttpStatus` as a struct with `alias this` to `HttpStatusCode`, docs/spring/phase1/web-mvc.md) keep that shape.
+- **Enums already ported as structs with `alias this` to an interface struct** (`HttpStatus` to `HttpStatusCode`, R15) keep that shape.
 
 Mapping: the enum and its constants are `adapted` with rule `R18`.
 
@@ -190,7 +208,7 @@ A Java enum that declares methods but has no instance fields and implements no i
 - **Methods** become free functions in the same module, called by UFCS (`access.cap(other)`), so call sites read as in Java. A selective import lists the functions beside the enum: `import flint.boot.actuate.endpoint : Access, cap;`.
 - **Static methods** become same-module free functions too, called without a receiver: Spring AI's `FinishReasonCategory.categorize(s)` is `categorize(s)`, imported by name.
 - **Java's `null` behaviour** for enum-typed parameters (`cap(null)` throws) is kept through a typed `null` overload (D-7).
-- **Enums with fields** follow the R15 proposal, and **enums that implement an interface** follow R18.
+- **Enums with fields** follow R15, and **enums that implement an interface** follow R18.
 
 Mapping: the constants are `ported`, and the methods are `adapted` with rule `R20`.
 

@@ -238,11 +238,11 @@ private bool checkPorted(const ref MappingEntry entry, out string error)
 private bool checkAdapted(const ref MappingEntry entry, out string error)
 {
     if (entry.rules.length == 0)
-        error = entry.match ~ ": an adapted element needs the rulebook `rules` it follows, R1 to R14 or R16 to R20";
+        error = entry.match ~ ": an adapted element needs the rulebook `rules` it follows, R1 to R20";
     foreach (rule; entry.rules)
     {
         if (!validRule(rule) && error.length == 0)
-            error = entry.match ~ ": `" ~ rule ~ "` is not a rulebook rule, R1 to R14 or R16 to R20";
+            error = entry.match ~ ": `" ~ rule ~ "` is not a rulebook rule, R1 to R20";
     }
     if (entry.symbol.length && !validSymbol(entry.symbol) && error.length == 0)
         error = entry.match ~ ": `d` must be a D symbol under flint.";
@@ -315,7 +315,7 @@ bool validSymbol(string symbol)
     return !start;
 }
 
-/// Whether `rule` is a rulebook rule id, `R1` to `R14` or `R16` to `R20` (R15 is reserved for a proposal).
+/// Whether `rule` is a rulebook rule id, `R1` to `R20`.
 bool validRule(string rule)
 {
     import std.conv : ConvException, to;
@@ -325,7 +325,7 @@ bool validRule(string rule)
     try
     {
         const number = rule[1 .. $].to!uint;
-        return (number >= 1 && number <= 14) || (number >= 16 && number <= 20);
+        return number >= 1 && number <= 20;
     }
     catch (ConvException)
         return false;

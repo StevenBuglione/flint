@@ -152,7 +152,7 @@ Creating the GitHub repositories is an outward step and waits for the owner's go
 
 ### 6. The API mapping rulebook
 
-[`docs/spring/api-mapping.md`](../spring/api-mapping.md) defines how a Java API element becomes a D one. It has rules R1–R14 and R16–R20, each with an ID and an example. Every adapted element cites its rule, and every deviation is listed there with its reason. Elements that cannot exist in D or in a closed world are excluded with a reason category. Examples are JMX, JNDI, JSP, Java serialization, JFR, CRaC, load-time weaving, runtime CGLIB, the jar launcher and the restart classloader.
+[`docs/spring/api-mapping.md`](../spring/api-mapping.md) defines how a Java API element becomes a D one. It has rules R1–R20, each with an ID and an example. Every adapted element cites its rule, and every deviation is listed there with its reason. Elements that cannot exist in D or in a closed world are excluded with a reason category. Examples are JMX, JNDI, JSP, Java serialization, JFR, CRaC, load-time weaving, runtime CGLIB, the jar launcher and the restart classloader.
 
 ### 7. Licences, attribution and trademarks
 
