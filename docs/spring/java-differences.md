@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 137 | 254 | 0 | 15,405 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,340 | 1,293 | 4,848 | 30,353 |
+| framework | spring-framework@v7.1.0 | 3,351 | 1,300 | 4,848 | 30,335 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1835,6 +1835,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.support.ComposablePointcut#union(ClassFilter)` | `flint.aop.support.ComposablePointcut.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords), [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.aop.support.ComposablePointcut#union(MethodMatcher)` | `flint.aop.support.ComposablePointcut.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.aop.support.ComposablePointcut#union(Pointcut)` | `flint.aop.support.ComposablePointcut.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.aop.support.DefaultIntroductionAdvisor#<init>(DynamicIntroductionAdvice,Class)` | `flint.aop.support.DefaultIntroductionAdvisor` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.support.DefaultIntroductionAdvisor#addInterface(Class)` | `flint.aop.support.DefaultIntroductionAdvisor.addInterface` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.support.DefaultIntroductionAdvisor#equals(Object)` | `flint.aop.support.DefaultIntroductionAdvisor.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.DefaultIntroductionAdvisor#getInterfaces()` | `flint.aop.support.DefaultIntroductionAdvisor.getInterfaces` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.support.DefaultIntroductionAdvisor#hashCode()` | `flint.aop.support.DefaultIntroductionAdvisor.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.DefaultIntroductionAdvisor#matches(Class)` | `flint.aop.support.DefaultIntroductionAdvisor.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.support.DefaultIntroductionAdvisor#toString()` | `flint.aop.support.DefaultIntroductionAdvisor.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.DefaultPointcutAdvisor#toString()` | `flint.aop.support.DefaultPointcutAdvisor.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.DynamicMethodMatcher#matches(Method,Class)` | `flint.aop.support.DynamicMethodMatcher.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.support.MethodMatchers#matches(MethodMatcher,Method,Class,boolean)` | `flint.aop.support.MethodMatchers.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -8882,7 +8889,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.slf4j.event | 36 | 0 |
 | org.slf4j.helpers | 208 | 0 |
 | org.slf4j.spi | 7 | 0 |
-| org.springframework.aop | 11 | 0 |
+| org.springframework.aop | 8 | 0 |
 | org.springframework.aop.aspectj | 184 | 0 |
 | org.springframework.aop.aspectj.annotation | 102 | 0 |
 | org.springframework.aop.aspectj.autoproxy | 7 | 0 |
@@ -8893,7 +8900,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
 | org.springframework.aop.interceptor | 97 | 0 |
 | org.springframework.aop.scope | 20 | 0 |
-| org.springframework.aop.support | 133 | 0 |
+| org.springframework.aop.support | 118 | 0 |
 | org.springframework.aop.support.annotation | 26 | 0 |
 | org.springframework.aop.target | 116 | 0 |
 | org.springframework.aop.target.dynamic | 20 | 0 |

@@ -15,6 +15,7 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/ClassFilter.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/DynamicIntroductionAdvice.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/IntroductionAwareMethodMatcher.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/IntroductionAdvisor.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/IntroductionInfo.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/MethodMatcher.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/Pointcut.java
@@ -185,6 +186,16 @@ interface IntroductionInfo
 {
     /// The AOT descriptors of the interfaces introduced on the proxy.
     const(Descriptor)[] getInterfaces();
+}
+
+/// Selects the target classes on which advice supplies additional interfaces.
+interface IntroductionAdvisor : Advisor, IntroductionInfo
+{
+    /// Returns the class filter for this introduction.
+    ClassFilter getClassFilter();
+
+    /// Checks that the introduction advice can supply the configured interfaces.
+    void validateInterfaces();
 }
 
 /// Advice that can supply behavior for an introduced interface.

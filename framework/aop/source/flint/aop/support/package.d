@@ -8,6 +8,7 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/AbstractPointcutAdvisor.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/AbstractGenericPointcutAdvisor.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DefaultPointcutAdvisor.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DefaultIntroductionAdvisor.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/StaticMethodMatcherPointcutAdvisor.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
@@ -18,13 +19,14 @@ module flint.aop.support;
 public import flint.aop.support.class_filters : ClassFilters, RootClassFilter;
 public import flint.aop.support.method_matchers : ComposablePointcut, MethodMatchers;
 
-import flint.aop : Advisor, ClassFilter, MethodMatcher, Pointcut, PointcutAdvisor;
+import flint.aop : Advisor, ClassFilter, DynamicIntroductionAdvice, IntroductionAdvisor,
+    IntroductionInfo, MethodMatcher, Pointcut, PointcutAdvisor;
 import flint.aop.support.class_filters : ClassPredicate, asClassFilter;
 import flint.aopalliance.aop : Advice;
 import flint.core : Ordered;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : Descriptor, MethodDescriptor;
-import flint.engine.aot.objects : objectEquals, objectToString, statelessInstance;
+import flint.engine.aot.descriptor : Descriptor, MethodDescriptor, TypeKind;
+import flint.engine.aot.objects : objectEquals, objectToHash, objectToString, statelessInstance;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException,
     UnsupportedOperationException, stringHashCode;
 import flint.util : PatternMatchUtils;
@@ -444,5 +446,158 @@ abstract class StaticMethodMatcherPointcutAdvisor : StaticMethodMatcherPointcut,
     Pointcut getPointcut()
     {
         return this;
+    }
+}
+
+/// Configures interfaces supplied by advice and applies to every target class by default.
+class DefaultIntroductionAdvisor : IntroductionAdvisor, ClassFilter, Ordered
+{
+    mixin JavaObject;
+    mixin Advisor.Defaults;
+
+    private Advice advice;
+    private const(Descriptor)[] interfaces;
+    private int order = Ordered.LOWEST_PRECEDENCE;
+
+    /// Uses the interfaces declared by the advice if it provides IntroductionInfo.
+    this(Advice advice)
+    {
+        this(advice, cast(IntroductionInfo) advice);
+    }
+
+    /// Uses an explicit interface declaration when supplied.
+    this(Advice advice, IntroductionInfo introductionInfo)
+    {
+        if (advice is null)
+            throw new IllegalArgumentException("Advice must not be null");
+        this.advice = advice;
+        if (introductionInfo is null)
+            return;
+        const declared = introductionInfo.getInterfaces();
+        if (!declared.length)
+            throw new IllegalArgumentException(
+                    "IntroductionInfo defines no interfaces to introduce: " ~ objectToString(
+                    cast(Object) introductionInfo));
+        addInterfaces(declared);
+    }
+
+    /// Exposes one interface from dynamic introduction advice.
+    this(DynamicIntroductionAdvice advice, const Descriptor interfaceType)
+    {
+        this(advice, cast(IntroductionInfo) null);
+        const(Descriptor)[1] declared = [interfaceType];
+        addInterfaces(declared[]);
+    }
+
+    /// Appends an interface if it is not already configured.
+    void addInterface(const Descriptor interfaceType)
+    {
+        if (interfaceType is null)
+            throw new IllegalArgumentException("Interface must not be null");
+        if (interfaceType.kind != TypeKind.interface_)
+            throw new IllegalArgumentException("Specified class [" ~ interfaceType.name ~ "] must be an interface");
+        if (!hasInterface(interfaceType.name))
+            interfaces ~= interfaceType;
+    }
+
+    /// Returns a snapshot of the interfaces in registration order.
+    const(Descriptor)[] getInterfaces()
+    {
+        // Concatenation copies the array while preserving const on the class references.
+        const(Descriptor)[] empty;
+        return interfaces ~ empty;
+    }
+
+    /// Rejects a configured interface that the dynamic advice cannot supply.
+    void validateInterfaces()
+    {
+        auto dynamicAdvice = cast(DynamicIntroductionAdvice) advice;
+        if (dynamicAdvice is null)
+            return;
+        foreach (interfaceType; interfaces)
+            if (!dynamicAdvice.implementsInterface(interfaceType))
+                throw new IllegalArgumentException("DynamicIntroductionAdvice [" ~ objectToString(cast(Object) advice)
+                        ~ "] does not implement interface [" ~ interfaceType.name ~ "] specified for introduction");
+    }
+
+    /// Changes the order of this advisor.
+    void setOrder(int order)
+    {
+        this.order = order;
+    }
+
+    /// Returns the configured order, defaulting to LOWEST_PRECEDENCE.
+    int getOrder()
+    {
+        return order;
+    }
+
+    /// Returns the advice that supplies the introduction.
+    Advice getAdvice()
+    {
+        return advice;
+    }
+
+    /// Uses this advisor as the class filter.
+    ClassFilter getClassFilter()
+    {
+        return this;
+    }
+
+    /// Selects any target class.
+    bool matches(const Descriptor)
+    {
+        return true;
+    }
+
+    /// Compares the advice and the set of introduced interfaces.
+    bool equals(Object other)
+    {
+        if (this is other)
+            return true;
+        auto advisor = cast(DefaultIntroductionAdvisor) other;
+        if (advisor is null || interfaces.length != advisor.interfaces.length
+                || !objectEquals(cast(Object) advice, cast(Object) advisor.advice))
+            return false;
+        foreach (interfaceType; interfaces)
+            if (!advisor.hasInterface(interfaceType.name))
+                return false;
+        return true;
+    }
+
+    /// Hashes the advice and the introduced interfaces independently of interface order.
+    int hashCode()
+    {
+        auto hash = cast(int) objectToHash(cast(Object) advice) * 13;
+        foreach (interfaceType; interfaces)
+            hash += stringHashCode(interfaceType.name);
+        return hash;
+    }
+
+    /// Describes the advice and introduced interfaces.
+    override string toString()
+    {
+        auto description = typeid(this).name ~ ": advice [" ~ objectToString(cast(Object) advice) ~ "]; interfaces [";
+        foreach (index, interfaceType; interfaces)
+        {
+            if (index)
+                description ~= ", ";
+            description ~= interfaceType.name;
+        }
+        return description ~ "]";
+    }
+
+    private bool hasInterface(string name) const
+    {
+        foreach (interfaceType; interfaces)
+            if (interfaceType.name == name)
+                return true;
+        return false;
+    }
+
+    private void addInterfaces(scope const(Descriptor)[] declared)
+    {
+        foreach (interfaceType; declared)
+            addInterface(interfaceType);
     }
 }
