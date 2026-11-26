@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 197 | 323 | 0 | 15,276 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,500 | 1,393 | 4,849 | 30,092 |
+| framework | spring-framework@v7.1.0 | 3,502 | 1,397 | 4,850 | 30,085 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2141,6 +2141,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.aop.aspectj.AspectInstanceFactory#getAspectInstance()` | `flint.aop.aspectj.AspectInstanceFactory.getAspectInstance` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.aop.aspectj.SimpleAspectInstanceFactory#<init>(Class)` | `flint.aop.aspectj.SimpleAspectInstanceFactory` | [R4](api-mapping.md#r4-classt-parameters) | Uses the aspect type's AOT descriptor. |
+| `org.springframework.aop.aspectj.SimpleAspectInstanceFactory#getAspectClass()` | `flint.aop.aspectj.SimpleAspectInstanceFactory.getAspectClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.aspectj.SimpleAspectInstanceFactory#getAspectInstance()` | `flint.aop.aspectj.SimpleAspectInstanceFactory.getAspectInstance` | [R4](api-mapping.md#r4-classt-parameters), [R23](api-mapping.md#r23-object-typed-values) | Calls the generated default constructor. An absent constructor hook is treated as no default constructor. |
+| `org.springframework.aop.aspectj.SimpleAspectInstanceFactory#getOrderForAspectClass(Class)` | `flint.aop.aspectj.SimpleAspectInstanceFactory.getOrderForAspectClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.aop.framework
 
@@ -6007,6 +6011,7 @@ These Java elements have no Flint counterpart, for the reason the category gives
 | Java | Reason | Note |
 | --- | --- | --- |
 | `org.springframework.aop.aspectj.AspectInstanceFactory#getAspectClassLoader()` | `jvm-runtime` |  |
+| `org.springframework.aop.aspectj.SimpleAspectInstanceFactory#getAspectClassLoader()` | `jvm-runtime` |  |
 
 #### org.springframework.aot.agent
 
@@ -9425,7 +9430,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.slf4j.event | 36 | 0 |
 | org.slf4j.helpers | 208 | 0 |
 | org.slf4j.spi | 7 | 0 |
-| org.springframework.aop.aspectj | 168 | 0 |
+| org.springframework.aop.aspectj | 161 | 0 |
 | org.springframework.aop.aspectj.annotation | 102 | 0 |
 | org.springframework.aop.aspectj.autoproxy | 7 | 0 |
 | org.springframework.aop.config | 70 | 0 |
