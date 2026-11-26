@@ -6,32 +6,48 @@ spring-test/src/main/java/org/springframework/test/web/servlet/request/ (MockMvc
 MockHttpServletRequestBuilder.java, AbstractMockHttpServletRequestBuilder.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
-Modified by the Flint authors: `Object... uriVariables` is a template parameter pack (R7) rendered with
-`std.conv.to!string`; the builder is a final class with Java's chained methods (R12). Query parameters of the URL
-are decoded as UTF-8 (R14), as `UriUtils.decode` does.
+Modified by the Flint authors: `Object... uriVariables` is a template parameter pack (R7). The concrete
+builder supplies the fluent URI and path methods (R12). Query parameters are decoded as UTF-8 (R14).
 +/
 module flint.test.web.servlet.request;
 
 import flint.engine.aot.any : Any;
+import flint.engine.aot.text : decimal;
 import flint.http : HttpHeaders, HttpMethod, MediaType;
 import flint.jakarta.servlet : ServletContext;
 import flint.jakarta.servlet.http : Cookie;
+import flint.java.lang : IllegalArgumentException, valueOf;
+import flint.java.net : URI;
 import flint.mock.web : MockHttpServletRequest;
 import flint.test.web.servlet : RequestBuilder;
+import flint.util : Assert, MultiValueMap, StringUtils;
+import flint.web.util : UriComponentsBuilder, UriComponentType, UriUtils;
+import std.typecons : Nullable;
 
 @safe:
 
 /// `MockHttpServletRequestBuilder`.
 final class MockHttpServletRequestBuilder : RequestBuilder
 {
+    private struct Parameter
+    {
+        string name;
+        string[] values;
+    }
+
     private string method;
     private string rawPath;
     private string rawQuery;
+    private string scheme;
+    private string host;
+    private int port = -1;
+    private string uriTemplate;
     private string contextPathValue = "";
     private string servletPathValue = "";
+    private Nullable!string pathInfoValue = Nullable!string("");
     private string[2][] headers;
-    private string[2][] parameters;
-    private string[2][] queryParameters;
+    private Parameter[] parameters;
+    private Parameter[] queryParameters;
     private const(ubyte)[] contentValue;
     private string contentTypeValue;
     private string characterEncodingValue;
@@ -40,28 +56,75 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     private string[] attributeOrder;
     private bool secureValue;
 
-    ///
+    private this(string method)
+    {
+        if (method is null)
+            throw new IllegalArgumentException("'httpMethod' is required");
+        this.method = method;
+    }
+
+    /// Creates a builder using a method name and URI template.
     this(string method, string url)
     {
-        this.method = method;
-        size_t q = url.length;
-        foreach (i, c; url)
-            if (c == '?')
-            {
-                q = i;
-                break;
-            }
-        string path = url[0 .. q];
-        rawQuery = q < url.length ? url[q + 1 .. $] : null;
-        // An absolute URL keeps only its path.
-        foreach (i; 0 .. path.length)
-            if (i + 3 <= path.length && path[i .. i + 3] == "://")
-            {
-                const slash = indexOf(path, '/', i + 3);
-                path = slash < 0 ? "/" : path[slash .. $];
-                break;
-            }
-        rawPath = path;
+        this(method);
+        uri(url);
+    }
+
+    /// Uses a fully formed URI and preserves its raw path and query.
+    MockHttpServletRequestBuilder uri(URI target)
+    {
+        const text = target.toString();
+        if (text is null)
+            throw new IllegalArgumentException("'uri' is required");
+        return updateUri(text, null);
+    }
+
+    /// Expands URI template variables in order and records the original template.
+    MockHttpServletRequestBuilder uri(Args...)(string uriTemplate, Args uriVariables)
+    {
+        string[Args.length] values;
+        static foreach (index; 0 .. Args.length)
+            values[index] = valueOf(uriVariables[index]);
+        return uriFromTemplate(uriTemplate, values[]);
+    }
+
+    private MockHttpServletRequestBuilder uriFromTemplate(string uriTemplate, scope const(string)[] variables)
+    {
+        if (uriTemplate is null)
+            throw new IllegalArgumentException("'uri' must not be null");
+        if (uriTemplate.length != 0 && !startsWith(uriTemplate, "/") && !startsWith(uriTemplate,
+                "http://") && !startsWith(uriTemplate, "https://"))
+            throw new IllegalArgumentException(
+                    "'uri' should start with a path or be a complete HTTP URI: " ~ uriTemplate);
+        const expanded = expand(uriTemplate.length == 0 ? "/" : uriTemplate, variables);
+        return updateUri(expanded, uriTemplate);
+    }
+
+    private MockHttpServletRequestBuilder updateUri(string target, string templateValue)
+    {
+        auto end = indexOf(target, '#', 0);
+        if (end >= 0)
+            target = target[0 .. end];
+        const delimiter = indexOf(target, '?', 0);
+        const query = delimiter < 0 ? null : target[delimiter + 1 .. $];
+        const authorityAndPath = delimiter < 0 ? target : target[0 .. delimiter];
+        auto components = UriComponentsBuilder.fromUriString(authorityAndPath).build();
+        const parsedPort = components.getPort();
+        auto path = components.getPath();
+        if (templateValue !is null && path.length == 0)
+            path = "/";
+        rawPath = templateValue is null ? path : encodePreservingEscapes(path, UriComponentType.PATH);
+        rawQuery = templateValue is null ? query : encodePreservingEscapes(query, UriComponentType.QUERY);
+        scheme = components.getScheme();
+        host = components.getHost();
+        port = parsedPort;
+        this.uriTemplate = templateValue;
+        return this;
+    }
+
+    private static bool startsWith(string value, string prefix) pure nothrow @nogc
+    {
+        return value.length >= prefix.length && value[0 .. prefix.length] == prefix;
     }
 
     private static ptrdiff_t indexOf(string text, char c, size_t from) pure nothrow @nogc
@@ -75,16 +138,30 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     /// Adds a request parameter.
     MockHttpServletRequestBuilder param(string name, string[] values...)
     {
-        foreach (value; values)
-            parameters ~= [name, value];
+        parameters ~= Parameter(name, values.dup);
+        return this;
+    }
+
+    /// Adds each entry of a parameter map in iteration order.
+    MockHttpServletRequestBuilder params(MultiValueMap!(string, string) values)
+    {
+        Assert.notNull(values, "'params' must not be null");
+        values.forEach((name, entries) { param(name, entries.toArray()); });
         return this;
     }
 
     /// Adds a query parameter (also appended to the query string).
     MockHttpServletRequestBuilder queryParam(string name, string[] values...)
     {
-        foreach (value; values)
-            queryParameters ~= [name, value];
+        queryParameters ~= Parameter(name, values.dup);
+        return this;
+    }
+
+    /// Adds each entry of a map to the query string and request parameters.
+    MockHttpServletRequestBuilder queryParams(MultiValueMap!(string, string) values)
+    {
+        Assert.notNull(values, "'params' must not be null");
+        values.forEach((name, entries) { queryParam(name, entries.toArray()); });
         return this;
     }
 
@@ -165,6 +242,7 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     /// Sets the context path.
     MockHttpServletRequestBuilder contextPath(string contextPath)
     {
+        validatePathPrefix(contextPath, "Context path");
         contextPathValue = contextPath;
         return this;
     }
@@ -172,7 +250,33 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     /// Sets the servlet path.
     MockHttpServletRequestBuilder servletPath(string servletPath)
     {
+        validatePathPrefix(servletPath, "Servlet path");
         servletPathValue = servletPath;
+        return this;
+    }
+
+    private static void validatePathPrefix(string path, string description)
+    {
+        if (!StringUtils.hasText(path))
+            return;
+        if (path[0] != '/')
+            throw new IllegalArgumentException(description ~ " must start with a '/'");
+        if (path[$ - 1] == '/')
+            throw new IllegalArgumentException(description ~ " must not end with a '/'");
+    }
+
+    /// Sets the path info explicitly. An empty value derives it from the request URI.
+    MockHttpServletRequestBuilder pathInfo(string pathInfo)
+    {
+        return this.pathInfo(pathInfo is null ? Nullable!string.init : Nullable!string(pathInfo));
+    }
+
+    /// Accepts the nullable servlet path-info value (R5).
+    MockHttpServletRequestBuilder pathInfo(Nullable!string pathInfo)
+    {
+        if (!pathInfo.isNull && StringUtils.hasText(pathInfo.get()) && pathInfo.get()[0] != '/')
+            throw new IllegalArgumentException("Path info must start with a '/'");
+        pathInfoValue = pathInfo;
         return this;
     }
 
@@ -186,21 +290,34 @@ final class MockHttpServletRequestBuilder : RequestBuilder
     MockHttpServletRequest buildRequest(ServletContext servletContext)
     {
         auto request = new MockHttpServletRequest(method, rawPath);
-        request.setContextPath(contextPathValue);
-        request.setServletPath(servletPathValue);
-        if (secureValue)
+        if (scheme !is null)
+            request.setScheme(scheme);
+        else if (secureValue)
         {
             request.setScheme("https");
             request.setServerPort(443);
         }
+        if (host !is null)
+            request.setServerName(host);
+        if (port >= 0)
+            request.setServerPort(port);
+        updatePath(request);
+
         string query = rawQuery;
-        foreach (pair; queryParameters)
-            query = (query.length != 0 ? query ~ "&" : "") ~ encodeQuery(pair[0]) ~ "=" ~ encodeQuery(pair[1]);
+        foreach (pair; parseQuery(rawQuery))
+            request.addParameter(pair[0], pair[1]);
+        foreach (parameter; queryParameters)
+        {
+            if (parameter.values.length == 0)
+                query = appendQuery(query, parameter.name, null);
+            else
+                foreach (value; parameter.values)
+                    query = appendQuery(query, parameter.name, value);
+            request.addParameter(parameter.name, parameter.values);
+        }
         request.setQueryString(query);
-        foreach (pair; parseQuery(query))
-            request.addParameter(pair[0], pair[1]);
-        foreach (pair; parameters)
-            request.addParameter(pair[0], pair[1]);
+        foreach (parameter; parameters)
+            request.addParameter(parameter.name, parameter.values);
         foreach (pair; headers)
             request.addHeader(pair[0], pair[1]);
         if (contentTypeValue !is null)
@@ -211,17 +328,40 @@ final class MockHttpServletRequestBuilder : RequestBuilder
         {
             request.setContent(contentValue);
             if (request.getHeader(HttpHeaders.CONTENT_LENGTH) is null)
-            {
-                import std.conv : to;
-
-                request.addHeader(HttpHeaders.CONTENT_LENGTH, contentValue.length.to!string);
-            }
+                request.addHeader(HttpHeaders.CONTENT_LENGTH, decimal(contentValue.length));
         }
         if (cookies.length != 0)
             request.setCookies(cookies);
         foreach (name; attributeOrder)
             request.setAttribute(name, attributes[name]);
         return request;
+    }
+
+    private void updatePath(MockHttpServletRequest request)
+    {
+        if (!startsWith(rawPath, contextPathValue))
+            throw new IllegalArgumentException(
+                    "Request URI [" ~ rawPath ~ "] does not start with context path [" ~ contextPathValue ~ "]");
+        request.setContextPath(contextPathValue);
+        request.setServletPath(servletPathValue);
+        auto pathInfo = pathInfoValue;
+        if (!pathInfo.isNull && pathInfo.get().length == 0)
+        {
+            const remaining = rawPath[contextPathValue.length .. $];
+            if (!startsWith(remaining, servletPathValue))
+                throw new IllegalArgumentException(
+                        "Invalid servlet path [" ~ servletPathValue ~ "] for request URI [" ~ rawPath ~ "]");
+            const tail = remaining[servletPathValue.length .. $];
+            pathInfo = StringUtils.hasText(tail) ? Nullable!string(UriUtils.decode(tail)) : Nullable!string.init;
+        }
+        request.setPathInfo(pathInfo);
+        request.setUriTemplate(uriTemplate is null ? Nullable!string.init : Nullable!string(uriTemplate));
+    }
+
+    private static string appendQuery(string query, string name, string value)
+    {
+        const pair = UriUtils.encodeQueryParam(name) ~ (value is null ? "" : "=" ~ UriUtils.encodeQueryParam(value));
+        return query.length == 0 ? pair : query ~ "&" ~ pair;
     }
 
     private static string[2][] parseQuery(string query)
@@ -239,52 +379,31 @@ final class MockHttpServletRequestBuilder : RequestBuilder
                 if (pair.length == 0)
                     continue;
                 ptrdiff_t eq = indexOf(pair, '=', 0);
-                // UriComponentsBuilder: a name without '=' has a null value, which MockMvc skips.
                 if (eq < 0)
                 {
-                    result ~= [decode(pair), ""];
+                    result ~= [UriUtils.decode(pair), null];
                     continue;
                 }
-                result ~= [decode(pair[0 .. eq]), decode(pair[eq + 1 .. $])];
+                result ~= [UriUtils.decode(pair[0 .. eq]), UriUtils.decode(pair[eq + 1 .. $])];
             }
         }
         return result;
     }
 
-    // UriUtils.decode(value, UTF_8): %XX sequences become bytes; '+' stays '+' (it is not form decoding).
-    private static string decode(string text)
+    private static string encodePreservingEscapes(string text, UriComponentType component)
     {
-        char[] result;
-        for (size_t i = 0; i < text.length; i++)
+        string result;
+        size_t start;
+        for (size_t index; index + 2 < text.length; ++index)
         {
-            if (text[i] == '%' && i + 2 < text.length && isHex(text[i + 1]) && isHex(text[i + 2]))
-            {
-                result ~= cast(char)(hex(text[i + 1]) * 16 + hex(text[i + 2]));
-                i += 2;
-            }
-            else
-                result ~= text[i];
+            if (text[index] != '%' || !isHex(text[index + 1]) || !isHex(text[index + 2]))
+                continue;
+            result ~= UriUtils.encodeUriComponent(text[start .. index], component) ~ text[index .. index + 3];
+            index += 2;
+            start = index + 1;
         }
-        return result.idup;
-    }
-
-    private static string encodeQuery(string text)
-    {
-        static immutable digits = "0123456789ABCDEF";
-        char[] result;
-        foreach (char c; text)
-        {
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-'
-                    || c == '.' || c == '_' || c == '~')
-                result ~= c;
-            else
-            {
-                result ~= '%';
-                result ~= digits[c >> 4];
-                result ~= digits[c & 15];
-            }
-        }
-        return result.idup;
+        return start == 0 ? UriUtils.encodeUriComponent(text,
+                component) : result ~ UriUtils.encodeUriComponent(text[start .. $], component);
     }
 
     private static bool isHex(char c) pure nothrow @nogc
@@ -292,9 +411,36 @@ final class MockHttpServletRequestBuilder : RequestBuilder
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     }
 
-    private static int hex(char c) pure nothrow @nogc
+    private static string expand(string template_, scope const(string)[] values)
     {
-        return c <= '9' ? c - '0' : (c | 0x20) - 'a' + 10;
+        if (indexOf(template_, '{', 0) < 0)
+            return template_;
+        string result;
+        size_t next;
+        bool inQuery;
+        for (size_t index; index < template_.length; ++index)
+        {
+            const character = template_[index];
+            if (character == '#')
+                break;
+            if (character == '?')
+                inQuery = true;
+            if (character != '{')
+            {
+                result ~= character;
+                continue;
+            }
+            const close = indexOf(template_, '}', index + 1);
+            if (close < 0)
+                throw new IllegalArgumentException("Invalid URI template: " ~ template_);
+            if (next == values.length)
+                throw new IllegalArgumentException(
+                        "Not enough variable values available to expand '" ~ template_[index + 1 .. close] ~ "'");
+            const value = values[next++];
+            result ~= inQuery ? UriUtils.encodeQueryParam(value) : UriUtils.encodePathSegment(value);
+            index = close;
+        }
+        return result;
     }
 }
 
@@ -307,10 +453,22 @@ struct MockMvcRequestBuilders
         return request!Args("GET", uriTemplate, uriVariables);
     }
 
+    /// GET with a URI.
+    static MockHttpServletRequestBuilder get(URI uri)
+    {
+        return request(HttpMethod.GET, uri);
+    }
+
     /// POST.
     static MockHttpServletRequestBuilder post(Args...)(string uriTemplate, Args uriVariables)
     {
         return request!Args("POST", uriTemplate, uriVariables);
+    }
+
+    /// POST with a URI.
+    static MockHttpServletRequestBuilder post(URI uri)
+    {
+        return request(HttpMethod.POST, uri);
     }
 
     /// PUT.
@@ -319,10 +477,22 @@ struct MockMvcRequestBuilders
         return request!Args("PUT", uriTemplate, uriVariables);
     }
 
+    /// PUT with a URI.
+    static MockHttpServletRequestBuilder put(URI uri)
+    {
+        return request(HttpMethod.PUT, uri);
+    }
+
     /// PATCH.
     static MockHttpServletRequestBuilder patch(Args...)(string uriTemplate, Args uriVariables)
     {
         return request!Args("PATCH", uriTemplate, uriVariables);
+    }
+
+    /// PATCH with a URI.
+    static MockHttpServletRequestBuilder patch(URI uri)
+    {
+        return request(HttpMethod.PATCH, uri);
     }
 
     /// DELETE.
@@ -331,16 +501,34 @@ struct MockMvcRequestBuilders
         return request!Args("DELETE", uriTemplate, uriVariables);
     }
 
+    /// DELETE with a URI.
+    static MockHttpServletRequestBuilder delete_(URI uri)
+    {
+        return request(HttpMethod.DELETE, uri);
+    }
+
     /// OPTIONS.
     static MockHttpServletRequestBuilder options(Args...)(string uriTemplate, Args uriVariables)
     {
         return request!Args("OPTIONS", uriTemplate, uriVariables);
     }
 
+    /// OPTIONS with a URI.
+    static MockHttpServletRequestBuilder options(URI uri)
+    {
+        return request(HttpMethod.OPTIONS, uri);
+    }
+
     /// HEAD.
     static MockHttpServletRequestBuilder head(Args...)(string uriTemplate, Args uriVariables)
     {
         return request!Args("HEAD", uriTemplate, uriVariables);
+    }
+
+    /// HEAD with a URI.
+    static MockHttpServletRequestBuilder head(URI uri)
+    {
+        return request(HttpMethod.HEAD, uri);
     }
 
     /// Any method.
@@ -352,55 +540,18 @@ struct MockMvcRequestBuilders
     /// ditto, by name.
     static MockHttpServletRequestBuilder request(Args...)(string method, string uriTemplate, Args uriVariables)
     {
-        import std.conv : to;
-
-        string[] values;
-        foreach (v; uriVariables)
-            values ~= v.to!string;
-        return new MockHttpServletRequestBuilder(method, expand(uriTemplate, values));
+        return (new MockHttpServletRequestBuilder(method)).uri(uriTemplate, uriVariables);
     }
 
-    private static string expand(string template_, string[] values)
+    /// Any method, with a URI.
+    static MockHttpServletRequestBuilder request(HttpMethod method, URI uri)
     {
-        string result;
-        size_t next;
-        for (size_t i = 0; i < template_.length; i++)
-        {
-            if (template_[i] == '{')
-            {
-                size_t close = i;
-                while (close < template_.length && template_[close] != '}')
-                    close++;
-                if (close < template_.length && next < values.length)
-                {
-                    result ~= encodePathSegment(values[next++]);
-                    i = close;
-                    continue;
-                }
-            }
-            result ~= template_[i];
-        }
-        return result;
+        return (new MockHttpServletRequestBuilder(method.name())).uri(uri);
     }
 
-    private static string encodePathSegment(string text)
+    /// Any method by name, with a URI.
+    deprecated("use request(HttpMethod, URI)") static MockHttpServletRequestBuilder request(string method, URI uri)
     {
-        static immutable digits = "0123456789ABCDEF";
-        char[] result;
-        foreach (char c; text)
-        {
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-'
-                    || c == '.' || c == '_' || c == '~' || c == '!' || c == '$' || c == '&' || c == '\''
-                    || c == '(' || c == ')' || c == '*' || c == '+' || c == ',' || c == ';'
-                    || c == '=' || c == ':' || c == '@')
-                result ~= c;
-            else
-            {
-                result ~= '%';
-                result ~= digits[c >> 4];
-                result ~= digits[c & 15];
-            }
-        }
-        return result.idup;
+        return request(HttpMethod.valueOf(method), uri);
     }
 }

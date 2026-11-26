@@ -166,7 +166,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 107 | 235 | 0 | 15,454 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,296 | 1,236 | 4,848 | 30,454 |
+| framework | spring-framework@v7.1.0 | 3,306 | 1,257 | 4,848 | 30,423 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2794,6 +2794,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.jdbc.support.KeyHolder#getKeyList()` | `flint.jdbc.support.KeyHolder.getKeyList` | [R10](api-mapping.md#r10-streams-and-collections) |
 | `org.springframework.jdbc.support.KeyHolder#getKeys()` | `flint.jdbc.support.KeyHolder.getKeys` | [R10](api-mapping.md#r10-streams-and-collections) |
 
+#### org.springframework.mock.web
+
+| Java | Flint | Rules |
+| --- | --- | --- |
+| `org.springframework.mock.web.MockHttpServletRequest#getUriTemplate()` | `flint.mock.web.MockHttpServletRequest.getUriTemplate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |
+| `org.springframework.mock.web.MockHttpServletRequest#setPathInfo(String)` | `flint.mock.web.MockHttpServletRequest.setPathInfo` | [R5](api-mapping.md#r5-optional-and-nullable-values) |
+| `org.springframework.mock.web.MockHttpServletRequest#setUriTemplate(String)` | `flint.mock.web.MockHttpServletRequest.setUriTemplate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |
+
 #### org.springframework.orm
 
 | Java | Flint | Rules |
@@ -2824,6 +2832,29 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.test.util.JsonPathExpectationsHelper#<init>(String,Object...)` | `flint.test.util.JsonPathExpectationsHelper` | [R7](api-mapping.md#r7-overloads) |
 | `org.springframework.test.util.JsonPathExpectationsHelper#assertValue(String,Object)` | `flint.test.util.JsonPathExpectationsHelper.assertValue` | [R4](api-mapping.md#r4-classt-parameters) |
 | `org.springframework.test.util.JsonPathExpectationsHelper#evaluateJsonPath(String)` | `flint.test.util.JsonPathExpectationsHelper.evaluateJsonPath` | [R1](api-mapping.md#r1-packages-and-names) |
+
+#### org.springframework.test.web.servlet.request
+
+| Java | Flint | Rules |
+| --- | --- | --- |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#contextPath(String)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.contextPath` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#param(String,String...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.param` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#params(MultiValueMap)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.params` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#pathInfo(String)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.pathInfo` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#queryParam(String,String...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.queryParam` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#queryParams(MultiValueMap)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.queryParams` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#servletPath(String)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.servletPath` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#uri(String,Object...)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.uri` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |
+| `org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder#uri(URI)` | `flint.test.web.servlet.request.MockHttpServletRequestBuilder.uri` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |
+| `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#delete(String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.delete_` | [R1](api-mapping.md#r1-packages-and-names), [R7](api-mapping.md#r7-overloads) |
+| `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#delete(URI)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.delete_` | [R1](api-mapping.md#r1-packages-and-names) |
+| `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#get(String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.get` | [R7](api-mapping.md#r7-overloads) |
+| `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#head(String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.head` | [R7](api-mapping.md#r7-overloads) |
+| `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#options(String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.options` | [R7](api-mapping.md#r7-overloads) |
+| `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#patch(String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.patch` | [R7](api-mapping.md#r7-overloads) |
+| `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#post(String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.post` | [R7](api-mapping.md#r7-overloads) |
+| `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#put(String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.put` | [R7](api-mapping.md#r7-overloads) |
+| `org.springframework.test.web.servlet.request.MockMvcRequestBuilders#request(HttpMethod,String,Object...)` | `flint.test.web.servlet.request.MockMvcRequestBuilders.request` | [R7](api-mapping.md#r7-overloads) |
 
 #### org.springframework.test.web.servlet.result
 
@@ -8933,7 +8964,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.mock.http.client | 23 | 0 |
 | org.springframework.mock.http.client.reactive | 0 | 28 |
 | org.springframework.mock.http.server.reactive | 0 | 53 |
-| org.springframework.mock.web | 565 | 0 |
+| org.springframework.mock.web | 562 | 0 |
 | org.springframework.mock.web.reactive.function.server | 0 | 51 |
 | org.springframework.mock.web.server | 30 | 0 |
 | org.springframework.objenesis | 9 | 0 |
@@ -9006,7 +9037,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.test.web.servlet.client.assertj | 27 | 0 |
 | org.springframework.test.web.servlet.htmlunit | 40 | 0 |
 | org.springframework.test.web.servlet.htmlunit.webdriver | 20 | 0 |
-| org.springframework.test.web.servlet.request | 85 | 0 |
+| org.springframework.test.web.servlet.request | 57 | 0 |
 | org.springframework.test.web.servlet.result | 132 | 0 |
 | org.springframework.test.web.servlet.setup | 85 | 0 |
 | org.springframework.test.web.support | 118 | 0 |

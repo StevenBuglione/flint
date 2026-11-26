@@ -20,6 +20,7 @@ import flint.jakarta.servlet.http : Cookie, HttpServletRequest, HttpServletRespo
 import flint.java.io : PrintWriter, Writer;
 import flint.java.lang : IllegalStateException, UnsupportedOperationException;
 import flint.java.util : Locale;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -140,6 +141,7 @@ class MockHttpServletRequest : HttpServletRequest
     private string contextPath = "";
     private string servletPath = "";
     private string pathInfo;
+    private Nullable!string uriTemplate;
     private string queryString;
     private Pair[] parameters;
     private Pair[] headers;
@@ -188,6 +190,24 @@ class MockHttpServletRequest : HttpServletRequest
     void setServletPath(string servletPath) pure nothrow @nogc
     {
         this.servletPath = servletPath;
+    }
+
+    /// Sets the nullable path information after the context and servlet paths.
+    void setPathInfo(Nullable!string pathInfo) pure nothrow @nogc
+    {
+        this.pathInfo = pathInfo.isNull ? null : pathInfo.get();
+    }
+
+    /// Records the original URI template used to build this request.
+    void setUriTemplate(Nullable!string uriTemplate) pure nothrow @nogc
+    {
+        this.uriTemplate = uriTemplate;
+    }
+
+    /// The original URI template, absent for a request built from an explicit URI.
+    Nullable!string getUriTemplate() const pure nothrow @nogc
+    {
+        return uriTemplate;
     }
 
     /// Sets the query string.

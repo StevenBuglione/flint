@@ -101,9 +101,6 @@
       "framework/framework-test/source/flint/test/util.d": {
         "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 1
       },
-      "framework/framework-test/source/flint/test/web/servlet/request.d": {
-        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 1
-      },
       "framework/framework-test/tests/fast_path_tests.d": {
         "dscanner.style.undocumented_declaration: Public declaration 'Box' is undocumented.": 1,
         "dscanner.style.undocumented_declaration: Public declaration 'CorsController' is undocumented.": 1,

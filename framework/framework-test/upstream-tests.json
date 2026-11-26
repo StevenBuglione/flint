@@ -515,16 +515,94 @@
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/request/AbstractMockHttpServletRequestBuilderTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/mock_http_servlet_request_builder_tests.d",
+      "methods": {
+        "ported": [
+          "pathInfoIsNotMutatedByBuildMethod",
+          "uriSetsRequestsUrlAndTemplateConsistently",
+          "uriTemplateSetsRequestsUrlAndTemplateConsistently"
+        ],
+        "skipped": {
+          "insertVersionInHeader": "Requires the API version inserter",
+          "insertVersionInUrl": "Requires the API version inserter",
+          "mergeUriTemplateWhenUriIsSetDoesNotMergeUriTemplate": "Requires request-builder merge and default request behavior",
+          "mergeUriTemplateWhenUriTemplateIsNotSet": "Requires request-builder merge and default request behavior",
+          "mergeUriTemplateWhenUriTemplateIsSetDoesNotMergeUriTemplate": "Requires request-builder merge and default request behavior",
+          "mergeUriWhenUriIsSetDoesNotOverride": "Requires request-builder merge and default request behavior",
+          "mergeVersion": "Requires request-builder merge and default request behavior"
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/test/web/servlet/request/AbstractMockMultipartHttpServletRequestBuilderTests.java": {
       "phase": "2",
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/request/MockHttpServletRequestBuilderTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/mock_http_servlet_request_builder_tests.d",
+      "methods": {
+        "ported": [
+          "arbitraryMethod",
+          "contextPathEmpty",
+          "contextPathServletPath",
+          "contextPathServletPathEmpty",
+          "contextPathServletPathInfo",
+          "contextPathServletPathInfoEmpty",
+          "contextPathServletPathInvalid",
+          "emptyPath",
+          "method",
+          "pathInfoIsDecoded",
+          "queryParameter",
+          "queryParameterAndQueryString",
+          "queryParameterMap",
+          "queryParameterWithListValues",
+          "queryParameterWithoutValues",
+          "queryStringWithoutValues",
+          "requestParameter",
+          "requestParameterFromMultiValueMap",
+          "requestParameterFromQueryNull",
+          "requestParameterFromQueryString",
+          "requestParameterFromQueryStringWithListValues",
+          "requestParameterFromQueryWithEncoding",
+          "requestUriAndFragment",
+          "requestUriWithDoubleSlashes",
+          "requestUriWithEncoding",
+          "requestUriWithoutScheme",
+          "uri"
+        ],
+        "skipped": {
+          "acceptHeader": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "acceptHeaderWithInvalidValues": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "body": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "characterEncoding": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "contentType": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "contentTypeViaHeader": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "contentTypeViaHeaderWithInvalidValue": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "contentTypeViaMultipleHeaderValues": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "contentTypeViaString": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "contentTypeWithInvalidValue": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "cookie": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "flashAttribute": "Requires session or flash request state",
+          "formField": "Requires form request fields or request-body parameter processing",
+          "formFieldMap": "Requires form request fields or request-body parameter processing",
+          "formFieldWithContent": "Requires form request fields or request-body parameter processing",
+          "formFieldWithIncompatibleMediaType": "Requires form request fields or request-body parameter processing",
+          "formFieldsAreEncoded": "Requires form request fields or request-body parameter processing",
+          "header": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "headers": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "locale": "Outside the URI and path slice. Request identity and locale behavior are deferred.",
+          "mergeInvokesDefaultRequestPostProcessorFirst": "Requires request-builder merge and default request behavior",
+          "noCookies": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "principal": "Outside the URI and path slice. Request identity and locale behavior are deferred.",
+          "remoteAddress": "Outside the URI and path slice. Request identity and locale behavior are deferred.",
+          "requestAttribute": "Outside the URI and path slice. Request headers, body and cookies are deferred.",
+          "requestParameterFromRequestBodyFormData": "Requires form request fields or request-body parameter processing",
+          "session": "Requires session or flash request state",
+          "sessionAttribute": "Requires session or flash request state",
+          "sessionAttributes": "Requires session or flash request state"
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/test/web/servlet/request/MockMultipartHttpServletRequestBuilderTests.java": {
       "phase": "2",
