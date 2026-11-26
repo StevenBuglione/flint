@@ -30,6 +30,7 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/HistogramSupport.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopMeter.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Gauge.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument;
 
@@ -843,7 +844,7 @@ interface Counter : Meter
 
     private static MeasurementIterable countMeasurement(Counter counter)
     {
-        return new CounterMeasurement(counter);
+        return new SingleMeasurement(&counter.count, Statistic.COUNT);
     }
 
     /// Micrometer's default increment and count measurement (R3).
@@ -858,6 +859,27 @@ interface Counter : Meter
         override Measurements measure()
         {
             return countSample(this);
+        }
+    }
+}
+
+/// A meter that samples an instantaneous value.
+interface Gauge : Meter
+{
+    /// Sample the current value.
+    double value();
+
+    private static MeasurementIterable valueMeasurement(Gauge gauge)
+    {
+        return new SingleMeasurement(&gauge.value, Statistic.VALUE);
+    }
+
+    /// Micrometer's default lazy value measurement (R3).
+    mixin template Defaults(alias Measurements = MeasurementIterable, alias sample = valueMeasurement)
+    {
+        override Measurements measure()
+        {
+            return sample(this);
         }
     }
 }
@@ -1878,11 +1900,11 @@ private final class EmptyMeasurements : MeasurementIterable
     }
 }
 
-private final class CounterMeasurement : Measurement, MeasurementIterable
+private final class SingleMeasurement : Measurement, MeasurementIterable
 {
-    this(Counter counter)
+    this(double delegate() @safe sample, Statistic statistic)
     {
-        super(&counter.count, Statistic.COUNT);
+        super(sample, statistic);
     }
 
     override Iterator!Measurement iterator()
