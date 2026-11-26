@@ -322,6 +322,39 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
         return this;
     }
 
+    short getShort() pure
+    {
+        if (remaining() < shortWidth)
+            throwUnderflow();
+        const value = readShortAt(position());
+        advance(shortWidth);
+        return value;
+    }
+
+    short getShort(int index) const pure
+    {
+        checkIndex(index, shortWidth, limit());
+        return readShortAt(index);
+    }
+
+    ByteBuffer putShort(short value) pure
+    {
+        checkWritable();
+        if (remaining() < shortWidth)
+            throwOverflow();
+        writeShortAt(position(), value);
+        advance(shortWidth);
+        return this;
+    }
+
+    ByteBuffer putShort(int index, short value) pure
+    {
+        checkWritable();
+        checkIndex(index, shortWidth, limit());
+        writeShortAt(index, value);
+        return this;
+    }
+
     bool equals(Object other) pure nothrow @nogc
     {
         if (other is this)
@@ -358,6 +391,25 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     override string toString() pure nothrow
     {
         return summary(readOnly ? "java.nio.HeapByteBufferR" : "java.nio.HeapByteBuffer");
+    }
+
+    private enum int shortWidth = short.sizeof;
+
+    pragma(inline, false) private short readShortAt(int index) const pure nothrow @nogc
+    {
+        const start = origin + index;
+        const first = cast(ubyte) backing[start];
+        const second = cast(ubyte) backing[start + 1];
+        return cast(short)(littleEndian ? first | (second << 8) : (first << 8) | second);
+    }
+
+    pragma(inline, false) private void writeShortAt(int index, short value) pure nothrow @nogc
+    {
+        const high = cast(byte)(cast(ushort) value >> 8);
+        const low = cast(byte) value;
+        const start = origin + index;
+        backing[start] = littleEndian ? low : high;
+        backing[start + 1] = littleEndian ? high : low;
     }
 
     private void copyFromBuffer(int index, scope ByteBuffer source, int offset, int length) scope pure nothrow @nogc

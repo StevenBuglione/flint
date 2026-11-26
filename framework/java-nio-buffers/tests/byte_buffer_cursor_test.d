@@ -261,3 +261,42 @@ unittest
     assert(slice.compact().position() == 0 && slice.limit() == 6);
     assertThrown!InvalidMarkException(slice.reset());
 }
+
+@("Heap ByteBuffer short access follows view byte order and keeps marks")
+unittest
+{
+    byte[] storage = [85, -128, 1, 0, 0, 0, 85];
+    auto view = ByteBuffer.wrap(storage, 1, 5).slice().mark();
+    assert(view.getShort() == -32_767);
+    assert(view.position() == 2 && view.reset().position() == 0);
+    view.order(ByteOrder.LITTLE_ENDIAN);
+    assert(view.getShort(0) == 384 && view.position() == 0);
+
+    view.position(1).mark();
+    assert(view.putShort(cast(short)-2) is view && view.position() == 3);
+    view.order(ByteOrder.BIG_ENDIAN);
+    assert(view.putShort(3, cast(short) 0x1234) is view && view.position() == 3);
+    assert(view.getShort(3) == 0x1234 && view.reset().position() == 1);
+    assert(storage == [85, -128, -2, -1, 0x12, 0x34, 85]);
+    auto readOnly = view.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
+    assert(readOnly.getShort() == -2 && readOnly.reset().position() == 1);
+}
+
+@("Heap ByteBuffer short failures use the two-byte limit and leave the view intact")
+unittest
+{
+    byte[] storage = [0, 1, 2, 3, 4];
+    auto view = ByteBuffer.wrap(storage).limit(4).position(3).mark();
+    assertThrown!BufferUnderflowException(view.getShort());
+    assertThrown!BufferOverflowException(view.putShort(cast(short) 9));
+    rejectsMessage!IndexOutOfBoundsException(() { view.getShort(3); }, null);
+    rejectsMessage!IndexOutOfBoundsException(() { view.putShort(-1, cast(short) 9); }, null);
+    rejectsMessage!IndexOutOfBoundsException(() { ByteBuffer.allocate(0).getShort(0); }, null);
+
+    auto readOnly = view.asReadOnlyBuffer();
+    assertThrown!ReadOnlyBufferException(readOnly.putShort(cast(short) 9));
+    assertThrown!ReadOnlyBufferException(readOnly.putShort(-1, cast(short) 9));
+    assert(view.position() == 3 && view.reset().position() == 3);
+    assert(readOnly.position() == 3 && readOnly.reset().position() == 3);
+    assert(storage == [0, 1, 2, 3, 4]);
+}
