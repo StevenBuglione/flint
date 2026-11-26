@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,103 | 246 | 1,871 | 15,201 |
+| framework | openjdk@21.0.13 | 1,101 | 245 | 1,871 | 15,204 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2149,7 +2149,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.HexFormat#withPrefix(String)` | `flint.java.util.hexformat.HexFormat.withPrefix` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#withSuffix(String)` | `flint.java.util.hexformat.HexFormat.withSuffix` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.IllegalFormatConversionException` | `flint.java.util.formatter.IllegalFormatConversionException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
-| `java.util.IllegalFormatConversionException#<init>(char,Class)` | `flint.java.util.formatter.IllegalFormatConversionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `java.util.IllegalFormatException` | `flint.java.util.formatter.IllegalFormatException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.List#indexOf(Object)` | `flint.java.util.List.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.List#lastIndexOf(Object)` | `flint.java.util.List.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -10027,7 +10026,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,919 | 0 |
+| java.util | 1,922 | 0 |
 | java.util.concurrent | 1,237 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -10976,7 +10975,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ChronoUnit#isSupportedBy(Temporal)` | 2 | Requires the Temporal contract. |
 | framework | `java.time.temporal.ValueRange#checkValidIntValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
+| framework | `java.util.IllegalFormatConversionException#<init>(char,Class)` | 2 | Flint currently accepts a string name. Java retains the argument Class and exposes it through getArgumentClass(). |
+| framework | `java.util.MissingFormatArgumentException#<init>(String)` | 2 | The current Flint constructor accepts null. Java throws NullPointerException for a null format specifier. |
 | framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
+| framework | `java.util.UnknownFormatConversionException#<init>(String)` | 2 | The current Flint constructor accepts null. Java throws NullPointerException for a null conversion. |
 | framework | `org.hibernate.validator.HibernateValidator#buildValidatorFactory(ConfigurationState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `org.hibernate.validator.HibernateValidator#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `org.hibernate.validator.HibernateValidator#createSpecializedConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
