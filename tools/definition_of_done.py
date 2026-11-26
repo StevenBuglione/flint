@@ -502,6 +502,8 @@ def upstream_inventory(module, root=ROOT, caches=None):
             # A module that alone ports its upstream (Hibernate Validator, Jackson) owns tests whose packages no
             # mapped element names (org.hibernate.validator.test...).
             sole = sum(up == module.upstream for _, _, up, _ in ported_modules(root).values()) == 1
+            if (base / 'test' / 'jdk').is_dir():
+                return jtreg_inventory(module, base / 'test' / 'jdk', table)
             keys = set()
             for path in [*base.rglob('*Tests.java'), *base.rglob('*Test.java')]:
                 text = str(path.relative_to(base))
@@ -516,6 +518,29 @@ def upstream_inventory(module, root=ROOT, caches=None):
                     keys.add(key)
             return sorted(keys)
     return None
+
+
+def jtreg_inventory(module, jdk, table):
+    """OpenJDK's tests: files under test/jdk/java/ and test/jdk/javax/ that are tests, either a jtreg `@test` tag or a
+    TestNG/JUnit `@Test` method (java.time's and java.util.stream's TestNG trees), keyed by their path below test/jdk
+    (java/util/HashMap/KeySetRemove.java) and owned by the module that owns the Java package their directory names
+    (java.util), whatever package the file itself declares."""
+    keys = set()
+    for top in ('java', 'javax'):
+        for path in (jdk / top).rglob('*.java') if (jdk / top).is_dir() else ():
+            text = path.read_text(errors='replace')
+            if '@test' not in text and '@Test' not in text:
+                continue
+            key = str(path.relative_to(jdk))
+            if owner(key[:-len('.java')], table) == module.name:
+                keys.add(key)
+    return sorted(keys)
+
+
+# A jtreg test under plain GPL-2.0 (no Classpath Exception) can never be ported into a GPL+CE package (owner licensing
+# rule, 2026-11-26): it is excluded with a reason starting with this word, and `covered_by` names the original Flint
+# test file(s) covering the same behaviour; until such a test exists it stays deferred.
+PLAIN_GPL = 'plain-gpl'
 
 
 DEFERRED_BASELINE = 'policy/upstream-tests-baseline.json'
@@ -561,8 +586,17 @@ def check_upstream_tests(module, record, root=ROOT, inventory=None, release=Fals
                 messages.append(f'{key}: deferred without "phase": "2" or "3"')
             continue
         if status == 'excluded':
-            if not str(entry.get('reason', '')).strip():
+            reason = str(entry.get('reason', '')).strip()
+            if not reason:
                 messages.append(f'{key}: excluded without a "reason" (a rule id or a short note)')
+            elif reason.startswith(PLAIN_GPL):
+                covered = entry.get('covered_by') or []
+                covered = [covered] if isinstance(covered, str) else list(covered)
+                absent = [f for f in covered if not (root / f).is_file()]
+                if not covered or absent:
+                    messages.append(f'{key}: a {PLAIN_GPL} exclusion needs "covered_by", the original Flint test '
+                                    f'file(s) covering the same behaviour; {(absent or [None])[0]!r} does not exist '
+                                    '(keep it deferred until one does)')
             continue
         files = entry.get('d') or []
         files = [files] if isinstance(files, str) else list(files)

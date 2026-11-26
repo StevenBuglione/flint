@@ -486,6 +486,31 @@ class UpstreamTests(unittest.TestCase):
         path.write_text(json.dumps(record))
         self.assertEqual(dod.upstream_tests(jdk, root=self.root, caches=[self.cache]).status, 'fail')
 
+    def test_openjdk_jtreg_tests_are_inventoried_and_plain_gpl_ones_need_a_covering_flint_test(self):
+        jdk = self.pin_openjdk(signatures_only=False, licence_use='gpl-ce-module')
+        jtreg = self.cache / 'openjdk-21.0.13' / 'test' / 'jdk'
+        (jtreg / 'java' / 'sql' / 'Timestamp').mkdir(parents=True)
+        (jtreg / 'java' / 'sql' / 'Timestamp' / 'TimestampTests.java').write_text('/* @test */ class T {}')
+        (jtreg / 'java' / 'sql' / 'Timestamp' / 'Helper.java').write_text('class Helper {}')  # no @test
+        (jtreg / 'java' / 'sql' / 'testng').mkdir(parents=True)
+        (jtreg / 'java' / 'sql' / 'testng' / 'DateTests.java').write_text('class D { @Test public void t() {} }')
+        (jtreg / 'java' / 'net' / 'URL').mkdir(parents=True)
+        (jtreg / 'java' / 'net' / 'URL' / 'Equals.java').write_text('/* @test */ class E {}')  # owned elsewhere
+        dod._OWNERSHIP[self.root] = {'java.sql': 'jdbc'}
+        self.addCleanup(dod._OWNERSHIP.pop, self.root, None)
+        self.assertEqual(dod.upstream_inventory(jdk, self.root, [self.cache]),
+                         ['java/sql/Timestamp/TimestampTests.java', 'java/sql/testng/DateTests.java'])
+        record = {'schema': dod.SCHEMA, 'classes': {'java/sql/Timestamp/TimestampTests.java': {
+            'status': 'excluded', 'reason': 'plain-gpl: GPL-2.0 without the Classpath Exception'}}}
+        problems = dod.check_upstream_tests(jdk, record, self.root)
+        self.assertEqual(len(problems), 1)
+        self.assertIn('needs "covered_by"', problems[0])
+        flint_test = self.root / 'framework' / 'jdbc' / 'tests' / 'timestamp_test.d'
+        flint_test.parent.mkdir(parents=True, exist_ok=True)
+        flint_test.write_text('module t;\n')
+        record['classes']['java/sql/Timestamp/TimestampTests.java']['covered_by'] = 'framework/jdbc/tests/timestamp_test.d'
+        self.assertEqual(dod.check_upstream_tests(jdk, record, self.root), [])
+
     def test_an_upstream_without_pinned_tests_and_no_record_skips(self):
         result = dod.upstream_tests(module(upstream='jackson-core@3.1.8'), root=self.root, caches=[self.cache])
         self.assertEqual(result.status, 'skip')

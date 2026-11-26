@@ -1,15 +1,44 @@
 {
-  "schema": "flint.upstream-tests/1",
-  "module": "java-regex",
-  "upstream": "openjdk@21.0.13",
-  "test_packages": [
-    ":java-regex"
-  ],
-  "note": "GoldenRegex.java uses public Java SE 21 APIs to generate the match and capture-count fixtures. Flint tests also cover Pattern identity and the engine step budget.",
+  "classes": {
+    "java/util/regex/ImmutableMatchResultTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/regex/NamedGroupsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/regex/NegativeArraySize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/regex/PatternStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/regex/RegExTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/regex/SplitWithDelimitersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/regex/whitebox/GraphemeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
   "flint_tests": [
     "framework/java-regex/tests/matcher_java21_test.d",
     "framework/java-regex/tests/pattern_test.d",
     "framework/java-regex/tests/regex_test.d"
   ],
-  "classes": {}
+  "module": "java-regex",
+  "note": "GoldenRegex.java uses public Java SE 21 APIs to generate the match and capture-count fixtures. Flint tests also cover Pattern identity and the engine step budget.",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":java-regex"
+  ],
+  "upstream": "openjdk@21.0.13"
 }

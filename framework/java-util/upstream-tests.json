@@ -1,16 +1,3229 @@
 {
-  "schema": "flint.upstream-tests/1",
-  "module": "java-util",
-  "upstream": "openjdk@21.0.13",
-  "test_packages": [
-    ":java-util"
-  ],
-  "note": "UUIDOracle.java generates the UUID corpus using public Java SE 21 APIs. The random UUID layout and entropy smoke test is an original Flint test. HexFormatOracle.java generates the primitive hexadecimal width and case cases.",
+  "classes": {
+    "java/util/AbstractCollection/ToArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractCollection/ToString.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractList/CheckForComodification.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractList/CheckForIndexOutOfBoundsException.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractList/FailFastIterator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractList/HasNextAfterException.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractMap/AbstractMapClone.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractMap/Equals.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractMap/SimpleEntries.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractMap/ToString.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/AbstractSequentialList/AddAll.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ArrayDeque/WhiteBox.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ArrayList/AddAll.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ArrayList/ArrayManagement.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ArrayList/Bug6533203.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ArrayList/Bug8146568.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ArrayList/EnsureCapacity.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ArrayList/IteratorMicroBenchmark.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ArrayList/SubListModCount.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/ArrayObjectMethods.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/ArraysEqCmpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/AsList.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/Big.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/CopyMethods.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/Correct.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/Fill.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/FloatDoubleOrder.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/HashCode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/SetAllTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/Sorting.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/SortingNearlySortedPrimitive.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/StreamAndSpliterator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/TimSortStackSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/TimSortStackSize2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Arrays/largeMemory/ParallelPrefix.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Base64/Base64GetEncoderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Base64/TestBase64.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Base64/TestBase64Golden.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Base64/TestEncodingDecodingLength.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/BitSet/And.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/BitSet/BSMethods.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/BitSet/HugeToString.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/BitSet/ImportExport.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/BitSet/MemoryLeak.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/BitSet/PreviousBits.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/BitSet/StickySize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/BitSet/stream/BitSetStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/BuddhistCalendarTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug4302966.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug4766302.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug4851640.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug4958050.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug5078053.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug6178071.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug6234795.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug6448234.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug6645263.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug6902861.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug7017458.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug8007038.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug8075548.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug8152077.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug8167273.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Bug8176847.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Builder/BuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/CalendarDataTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/CalendarDisplayNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/CalendarLimitTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/CalendarRegression.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/CalendarTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/CalendarTestScripts/JapaneseRollTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/CalendarTestScripts/JapaneseTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/CalendarTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/CldrFormatNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/FieldStateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/GenericTimeZoneNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/GregorianCutoverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/JapanEraNameCompatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/JapaneseEraNameTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/JapaneseLenientEraTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/JavatimeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/JulianTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/Limit.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/NarrowNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/NonLenientTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/ResolutionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/RollDayOfWeekTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/RollFromLastToFirstWeek.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/StampOverflow.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/SupplementalJapaneseEraTestRun.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/WeekDateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/ZoneOffsets.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/bug4028518.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/bug4100311.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/bug4243802.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/bug4316678.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/bug4372743.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/bug4401223.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/bug4409072.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Calendar/bug4514831.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collection/BiggernYours.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collection/CollectionDefaults.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collection/HotPotatoes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collection/IteratorAtEnd.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collection/IteratorMicroBenchmark.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collection/MOAT.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collection/RandomizedIteration.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collection/RemoveMicroBenchmark.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collection/SetFactories.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/AddAll.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/AsLifoQueue.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/BigBinarySearch.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/BinarySearchNullComparator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/CheckedIdentityMap.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/CheckedListBash.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/CheckedListReplaceAll.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/CheckedMapBash.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/CheckedMapReplaceAll.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/CheckedNull.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/CheckedQueue.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/CheckedSetBash.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/DelegatingIteratorForEachRemaining.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/Disjoint.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/EmptyCollectionSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/EmptyIterator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/EmptyNavigableMap.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/EmptyNavigableSet.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/Enum.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/EnumerationAsIterator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/EqualsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/FindSubList.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/Frequency.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/MinMax.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/NCopies.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/NullComparator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/RacingCollections.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/ReplaceAll.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/ReverseOrder.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/ReverseOrder2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/Rotate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/RotateEmpty.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/RotateHuge.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/Ser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/SetFromMap.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/Shuffle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/SingletonIterator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/Swap.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/SyncSubMutexes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/T5078378.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/T6433170.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/UnmodifiableMapEntrySet.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/ViewSynch.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/WrappedNull.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/WrappedUnmodifiableCollections.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Collections/Wrappers.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Comparator/BasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Comparator/TypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Currency/CNPGetDisplayName.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Currency/CurrencyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Currency/NoMinorUnitCurrenciesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Currency/NumCodeAsStringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Currency/PropertiesTestRun.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Currency/ValidateISO4217.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Date/Bug4955000.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Date/Bug8135055.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Date/DateGregorianCalendarTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Date/DateRegression.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Date/DateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Date/TZ.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Date/TimestampTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Deque/ChorusLine.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/DoubleStreamSums/CompensatedSums.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/DoubleSummaryStatistics/NegativeCompensation.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumMap/DistinctEntrySetElements.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumMap/EntrySetIteratorRemoveInvalidatesEntry.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumMap/EnumMapBash.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumMap/ProperEntrySetOnClone.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumMap/SimpleSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumMap/ToArray.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumMap/UniqueNullValue.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/AllOf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/BogusEnumSet.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/ComplementOf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/EnumSetBash.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/EnumSetClassSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/InsertWrongType.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/JumboRange.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/LargeEnumIteratorRemoveResilience.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/OneUniverse.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/Range.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/RetainAll.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/EnumSet/SmallEnumIteratorRemoveResilience.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formattable/StockName.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/BasicTestLauncher.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/BigDecimalRounding.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/Close.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/Constructors.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/EncodingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/FailingConstructors.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/Flush.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/FormatLocale.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/HexFloatZeroPadding.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/NullArg.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/Padding.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/spi/FormatterWithProvider.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Formatter/spi/NoGroupingUsed.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/HashMapCloneLeak.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/KeySetRemove.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/NullKeyAtResize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/OverrideIsEmpty.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/PutNullKey.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/ReplaceExisting.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/SetValue.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/ToArray.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/ToString.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/TreeBinAssert.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashMap/WhiteBoxResizeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HashSet/Serialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Hashtable/DeserializedLength.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Hashtable/EqualsCast.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Hashtable/HashCode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Hashtable/IllegalLoadFactor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Hashtable/ReadObject.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Hashtable/SelfRef.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Hashtable/SerializationDeadlock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Hashtable/SimpleSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/HexFormat/HexFormatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/IdentityHashMap/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/IdentityHashMap/Capacity.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/IdentityHashMap/DistinctEntrySetElements.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/IdentityHashMap/EntrySetIteratorRemoveInvalidatesEntry.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/IdentityHashMap/ToArray.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/IdentityHashMap/ToString.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/IllegalFormatException/Constructors.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/IllegalFormatException/TestFormatSpecifierBounds.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Iterator/IteratorDefaults.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Iterator/PrimitiveIteratorDefaults.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/LinkedHashMap/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/LinkedHashMap/Cache.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/LinkedHashMap/ComputeIfAbsentAccessOrder.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/LinkedHashMap/EmptyMapIterator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/LinkedHashSet/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/LinkedList/AddAll.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/LinkedList/Clone.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/LinkedList/ComodifiedRemove.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/LinkedList/Remove.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/List/ListDefaults.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/List/ListFactories.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/List/LockStep.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/List/NestedSubList.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/List/SubList.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/AliasesShouldBeRecognizedInCLDR.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/AvailableLocalesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/CaseCheckVariant.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/CaseFoldLanguageTagTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/CompareProviderFormats.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/CompatWarning.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/ExpectedAdapterTypes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/ExtensionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/FilteringModeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/GetAdapterPreference.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/GetInstanceCheck.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/HashCodeShouldBeThreadSafe.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/HashCodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/ISO3166.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/ISO639.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/InternationalBAT.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/JDK7LocaleServiceDiffs.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LRToString.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LSRDataTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LanguageRangeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LanguageSubtagRegistryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LegacyCodesClassInvariant.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LocaleCategory.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LocaleCmdOverrides.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LocaleConstructors.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LocaleEnhanceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LocaleMatchingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LocaleProvidersRun.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LocaleShouldSetFromCLI.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LocaleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/LookupOnValidRangeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/MatchEmptyWeightCorrectly.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/PreserveTagCase.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/ProviderPoolMultiThreadAccess.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/RequiredAvailableLocalesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/RootLocale.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/SoftKeys.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/SubsequentRangeParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/TestOf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/ThaiGov.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/TurkishLangRangeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/UseOldISOCodesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/UserRegionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/bcp47u/CalendarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/bcp47u/CurrencyFormatTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/bcp47u/CurrencyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/bcp47u/DisplayNameTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/bcp47u/FormatTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/bcp47u/SymbolsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/bcp47u/SystemPropertyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/bcp47u/spi/DateFormatSymbolsProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Locale/bcp47u/spi/LocaleNameProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/BasicSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/Collisions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/Defaults.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/EntryComparators.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/EntryHashCode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/EntrySetIterator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/FunctionalCMEs.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/Get.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/InPlaceOpsCollisions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/LockStep.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/MapBinToFromTreeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/MapFactories.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Map/ToArray.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/MissingFormatArgumentException/GetFormatSpecifier.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/NavigableMap/LockStep.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Objects/BasicObjectsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Objects/CheckIndex.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Objects/CheckLongIndex.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Observable/ClearChanged.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Optional/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Optional/BasicDouble.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Optional/BasicInt.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Optional/BasicLong.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/BreakIteratorProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/CalendarDataProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/CalendarNameProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/ClasspathTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/CollatorProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/CurrencyNameProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/DateFormatProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/DateFormatSymbolsProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/DecimalFormatSymbolsProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/GenericTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/LocaleNameProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/NumberFormatProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/PermissionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/SupportedLocalesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PluggableLocale/TimeZoneNameProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PriorityQueue/AddNonComparable.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PriorityQueue/ForgetMeNot.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PriorityQueue/NoNulls.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PriorityQueue/PriorityQueueSort.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PriorityQueue/RemoveContains.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/BlankLines.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/Bug6609431.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/CheckOverrides.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/CheckUnsynchronized.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/CloseXMLStream.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/CompatibilityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/ConcurrentLoadAndStoreXML.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/EncodingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/EscapeSpace.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/GenerifiedUses.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/InitialCapacity.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/LoadAndStoreNPE.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/LoadAndStoreXML.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/LoadAndStoreXMLWithDefaults.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/LoadParsing.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/LoadParsing2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/LoadSeparators.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/PropertiesEntrySetTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/PropertiesSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/PropertiesStoreTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/PropertiesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/Save.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/SaveClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/SaveComments.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/SaveEncoding.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/SaveLoadBasher.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/SaveSeparator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/StoreDeadlock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/StoreReproducibilityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/StringPropertyNames.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/UnicodeEscape.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Properties/XMLSaveLoadBasher.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/PropertyPermission/PropertyPermissionCollection.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/DistinctSeeds.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/LXMRandomWithSeed.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/NextBytes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/NextIntPowerOfTwoMod.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/RandomCanaryPi.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/RandomExponentialTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/RandomNextDoubleBoundary.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/RandomStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/RandomTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/RandomTestBsi1999.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/RandomTestChiSquared.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/RandomTestCoverage.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/RandomTestMoments.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Random/T8282144.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/RandomAccess/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug4083270Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug4168625Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug4177489Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug4195978Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug4257318.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug4353454.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug4396021.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug6190861.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug6204853.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug6299235/Bug6299235Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug6355009.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug6356571.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug6359330.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Bug6572242.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Control/BadControlsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Control/Bug6530694.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Control/ControlFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Control/DefaultControlTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Control/LoadingStrategiesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Control/MissingResourceCauseTestRun.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Control/PackagePrivateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Control/StressTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Control/XMLResourceBundleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/KeySetTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/ReferencesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/ResourceBundleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Test4300693.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Test4314141.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/Test4318520.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/TestBug4179766.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/UTF8Properties/CodePointTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/UTF8Properties/IllegalSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/getBaseBundleName/TestGetBaseBundleName.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/modules/basic/BasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/modules/cache/CacheTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/modules/casesensitive/CaseInsensitiveNameClash.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/modules/layer/LayerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/modules/security/TestPermission.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/modules/unnamed/UnNamedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ResourceBundle/modules/visibility/VisibilityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Scanner/EncodingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Scanner/FailingConstructors.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Scanner/ScanTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Scanner/ScannerStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Scanner/spi/UseLocaleWithProvider.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/SequencedCollection/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/SequencedCollection/BasicMap.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/BadProvidersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/CachingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/ModulesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/NPE.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/NoInterferenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/ReloadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/TwoIterators.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/basic/ServiceLoaderBasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/inheritance/NoInheritanceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/nouses/NoUsesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/security/SecurityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/ServiceLoader/security/test/p/Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Spliterator/IteratorFromSpliteratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Spliterator/SpliteratorCharacteristics.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Spliterator/SpliteratorCollisions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Spliterator/SpliteratorFailFastTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Spliterator/SpliteratorLateBindingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Spliterator/SpliteratorTraversingAndSplittingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/StringJoiner/MergeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/StringJoiner/StringJoinerOomUtf16Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/StringJoiner/StringJoinerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/StringTokenizer/FormFeed.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/StringTokenizer/ResetPos.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/StringTokenizer/Supplementary.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/AIXTzMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/AssureTzdataVersion.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/Bug4322313.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/Bug5097350.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/Bug6329116.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/Bug6772689.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/Bug6912560.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/Bug8066652Run.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/Bug8149452.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/Bug8167143.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/CLDRDisplayNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/CustomTzIDCheckDST.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/DaylightTimeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/DefaultTimeZoneTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/HongKong.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/IDTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/ListTimeZones.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/NegativeDSTTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/OldIDMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/SetDefaultSecurityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/SimpleTimeZoneCloneRaceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/SimpleTimeZoneEqualsHashCodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/TimeZoneBoundaryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/TimeZoneDatePermissionCheckRun.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/TimeZoneRegression.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/TimeZoneTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/TransitionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/UTCAliasTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/ZoneIdRoundTripTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TimeZone/bug4096952.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Timer/Args.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Timer/AutoStop.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Timer/DelayOverflow.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Timer/KillThread.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Timer/NameConstructors.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Timer/Purge.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TreeMap/Clone.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TreeMap/ContainsValue.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TreeMap/EmptyMapAndNulls.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TreeMap/HeadTailTypeError.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TreeMap/NullAtEnd.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TreeMap/NullPermissiveComparator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TreeMap/SubMap.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/TreeMap/SubMapClear.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/UUID/Serial.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/UUID/UUIDTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Vector/ArrayManagement.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Vector/Bug8148174.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Vector/ComodifiedRemoveAllElements.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Vector/CopyInto.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Vector/IllegalConstructorArgs.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Vector/LastIndexOf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Vector/SerializationDeadlock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Vector/SimpleSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/Vector/SyncLastIndexOf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/WeakHashMap/GCDuringIteration.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/WeakHashMap/Iteration.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/WeakHashMap/ZeroInitCap.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/function/BiFunction/BiFunctionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/function/BinaryOperator/BasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/function/PredicateNotTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Attributes/IterationOrder.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Attributes/Name.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Attributes/NullAndEmptyKeysAndValues.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Attributes/PutAndPutAll.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Attributes/TestAttrsNL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarEntry/GetMethodsReturnClones.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/Constructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/IgnoreUnrelatedSignatureFiles.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/JarBacktickManifest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/JarNoManifest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/MevNPE.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/ScanSignedJar.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/SignedJarFileGetInputStream.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/SignedJarPendingBlock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/SorryClosed.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/TurkCert.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/VerifySignedJar.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/jarVerification/MultiProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/mrjar/MultiReleaseJarAPI.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/mrjar/MultiReleaseJarHttpProperties.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/mrjar/MultiReleaseJarProperties.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/mrjar/MultiReleaseJarSecurity.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarFile/mrjar/TestVersionedStream.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarInputStream/EmptyJar.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarInputStream/ExtraFileInMetaInf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarInputStream/ScanSignedJar.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/JarInputStream/TestIndexedJarWithBadSignature.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Manifest/CreateManifest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Manifest/IncludeInExceptionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Manifest/LineBreakLineWidth.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Manifest/ValueUtf8Coding.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/Manifest/WriteBinaryStructure.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/jar/TestExtra.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/AnonymousLogger/TestAnonymousLogger.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/CheckLockLocationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/CheckZombieLockTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/ClassLoaderLeakTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/CustomLogManagerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/DefaultConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/DrainFindDeadlockTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/FileHandlerAccessTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/FileHandlerLongLimit.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/FileHandlerMaxLocksTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/FileHandlerPath.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/FileHandlerPatternExceptions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/FileHandlerPatternGeneration.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/GetGlobalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/HandlersConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/HigherResolutionTimeStamps/LogRecordWithNanos.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/HigherResolutionTimeStamps/LogRecordWithNanosAPI.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/HigherResolutionTimeStamps/SerializeLogRecord.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/HigherResolutionTimeStamps/SimpleFormatterNanos.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/HigherResolutionTimeStamps/XmlFormatterNanos.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/IsLoggableHandlerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Level/CustomLevel.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LocalizedLevelName.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/InvalidEscapeConfigurationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/ParentLoggerWithHandlerGC.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/TestConfigurationLock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/rootLoggerHandlers/BadRootLoggerHandlers.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/rootLoggerHandlers/RootLoggerHandlers.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/updateConfiguration/HandlersOnComplexResetUpdate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/updateConfiguration/HandlersOnComplexUpdate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/updateConfiguration/SimpleUpdateConfigWithInputStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/updateConfiguration/SimpleUpdateConfigurationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/Configuration/updateConfiguration/UpdateConfigurationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/LinkageErrorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/RootLogger/setLevel/TestRootLoggerLevel.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManager/TestLoggerNames.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManagerAppContextDeadlock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogManagerInstanceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LogRecordThreadIdTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/bundleLeak/BundleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/entering/LoggerEnteringWithParams.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/getGlobal/TestGetGlobal.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/getGlobal/TestGetGlobalByName.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/getGlobal/TestGetGlobalConcurrent.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/getLogger/TestInferCaller.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/getLogger/TestLogger.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/isLoggable/TestIsLoggable.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/logrb/TestLogrbResourceBundle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Logger/setResourceBundle/TestSetResourceBundle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggerResourceBundleRace.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggerSubclass.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggerSupplierAPIsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggingDeadlock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggingDeadlock2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggingDeadlock3.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggingDeadlock4.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggingMXBeanTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggingMXBeanTest2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/LoggingNIOChange.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/MemoryHandlerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/ParentLoggersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/Reflect.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/RootLogger/RootLevelInConfigFile.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/SerializeLogRecordTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/SimpleFormatterFormat.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/SimpleLogManager.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/SystemLoggerConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/TestAppletLoggerContext.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/TestConfigurationListeners.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/TestGetLoggerNPE.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/TestLogConfigurationDeadLock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/TestLogConfigurationDeadLockWithConf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/TestLoggerBundleSync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/TestLoggerWeakRefLeak.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/TestLoggingWithMainAppContext.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/TestMainAppContext.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/XMLFormatterDate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/bundlesearch/ResourceBundleSearchTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/modules/GetResourceBundleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/logging/modules/LogManagerInModule/LogManagerInModuleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/AddNodeChangeListener.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/CheckUserPrefsStorage.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/CodePointZeroPrefsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/CommentsInXml.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/ConflictInFlush.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/ExportNode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/ExportSubtree.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/PrefsSpiTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/RemoveNullKeyCheck.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/RemoveReadOnlyNode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/RemoveUnregedListener.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/prefs/SerializeExceptions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/spi/ToolProviderDescriptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/spi/ToolProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/CustomFJPoolTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/TestDoubleSumAverage.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/DoubleNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/FlagOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/IntNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/LongNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/NodeBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/NodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/SliceSpliteratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/SpinedBufferDoubleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/SpinedBufferIntTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/SpinedBufferIntegerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/SpinedBufferLongTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/StreamFlagsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/StreamOpFlagsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/boottest/java.base/java/util/stream/StreamReuseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/examples/JavadocExamples.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/lang/invoke/DeserializeMethodTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/lang/invoke/MHProxiesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/lang/invoke/SerializedLambdaTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/FillableStringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/MapTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/SplittableRandomTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/CollectAndSummaryStatisticsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/CollectionAndMapModifyStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/CollectorExample.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/CollectorToUnmodListTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/CollectorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/ConcatOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/ConcatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/CountLargeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/CountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/DistinctOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/DoublePrimitiveOpsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/FilterOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/FindAnyOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/FindFirstOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/FlatMapOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/ForEachOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/GroupByOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/InfiniteStreamWithLimitOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/IntPrimitiveOpsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/IntReduceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/IntSliceOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/IntUniqOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/IterateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/LongPrimitiveOpsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/MapOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/MatchOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/MinMaxTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/PrimitiveAverageOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/PrimitiveSumTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/RangeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/ReduceByOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/ReduceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/SequentialOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/SliceOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/SortedOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/SpliteratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/StreamBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/StreamCloseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/StreamLinkTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/StreamParSeqTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/StreamSpliteratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/TeeOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/ToArrayOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/ToListOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/WhileOpStatefulTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/WhileOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/stream/test/org/openjdk/tests/java/util/stream/mapMultiOpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/Available.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/Bounds.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/CloseInflaterDeflaterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ConstructDeflaterInput.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ConstructInflaterOutput.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/CopyZipFile.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/DataDescriptor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/DataDescriptorSignatureMissing.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/DeInflate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/DeflateIn_InflateOut.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/DeflaterDictionaryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/EntryCount64k.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/FlaterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/GZIP/Accordion.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/GZIP/BasicGZIPInputStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/GZIP/GZIPInZip.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/GZIP/GZIPInputStreamAvailable.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/GZIP/GZIPInputStreamRead.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/GZIP/GZIPOutputStreamHeaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/GZIP/ReadUByte.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/InflateIn_DeflateOut.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/InflaterBufferSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/InflaterInputStream/MarkReset.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/InflaterInputStream/TestAvailable.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/InflaterInputStream/UnexpectedEndOfZlibStream.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/InfoZip.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/InterruptibleZip.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/NoExtensionSignature.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ReadLoc.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/StoredCRC.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/StreamConstructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/StreamIOAfterClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/TestCRC32.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/TestCRC32C.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/TestChecksum.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/TestEmptyZip.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/TestExtraTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/TestLocalTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/TestZipError.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/TimeChecksum.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/TotalInOut.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipCoding.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipEntry/Clone.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipEntry/Constructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/Assortment.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/CenSizeTooLarge.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ClearStaleZipFileInputStreams.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/Comment.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/Constructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/CorruptedZipFiles.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/DeleteTempJarTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/EndOfCenValidation.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/EnumerateAfterClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/FinalizeInflater.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/GetInputStreamNPETest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/InvalidBytesInEntryNameOrComment.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/InvalidCommentLengthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ManyEntries.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ManyZipFiles.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/MultiThreadedReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ReadAfterClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ReadLongZipFileName.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ReadNonStandardExtraHeadersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ReadZip.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ReleaseInflater.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ShortRead.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/StreamZipEntriesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/TestCleaner.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/TestZipFile.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/TestZipFileEncodings.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ZeroDate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/Zip64SizeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ZipEntryFreeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ZipEntryTimeBounds.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ZipFileDuplicateEntryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipFile/ZipFileInputStreamSkipTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipInputStream/Constructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipInputStream/Skip.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/util/zip/ZipOutputStream/EmptyComment.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
   "flint_tests": [
     "framework/java-util/tests/hexformat_test.d",
     "framework/java-util/tests/uuid_java21_test.d",
     "framework/java-util/tests/uuid_order_test.d",
     "framework/java-util/tests/uuid_test.d"
   ],
-  "classes": {}
+  "module": "java-util",
+  "note": "UUIDOracle.java generates the UUID corpus using public Java SE 21 APIs. The random UUID layout and entropy smoke test is an original Flint test. HexFormatOracle.java generates the primitive hexadecimal width and case cases.",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":java-util"
+  ],
+  "upstream": "openjdk@21.0.13"
 }

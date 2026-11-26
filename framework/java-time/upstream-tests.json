@@ -1,8 +1,714 @@
 {
-  "schema": "flint.upstream-tests/1",
-  "upstream": "openjdk@21.0.13",
-  "module": "java-time",
-  "note": "Original Flint tests exercise the Java SE 21 API, including the Period text used in Spring's binding test and numeric overflow diagnostics checked against the Java 21 runtime. No OpenJDK test code is ported.",
+  "classes": {
+    "java/time/nontestng/java/time/chrono/Bug8178823.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/nontestng/java/time/chrono/HijrahConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/nontestng/java/time/zone/CustomZoneNameTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/AbstractDateTimeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKClock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKClock_Fixed.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKClock_Offset.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKClock_System.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKClock_Tick.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKDayOfWeek.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKDuration.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKInstant.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKLocalDate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKLocalDateTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKLocalTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKMonth.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKMonthDay.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKOffsetDateTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKOffsetTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKPeriod.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKYear.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKYearMonth.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKZoneId.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKZoneOffset.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TCKZonedDateTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/TestIsoChronology.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKChronoLocalDate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKChronoLocalDateTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKChronoPeriod.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKChronoZonedDateTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKChronology.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKHijrahChronology.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKHijrahEra.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKIsoChronology.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKIsoEra.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKJapaneseChronology.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKJapaneseEra.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKMinguoChronology.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKMinguoEra.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKTestServiceLoader.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKThaiBuddhistChronology.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/TCKThaiBuddhistEra.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/serial/TCKChronoLocalDateSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/serial/TCKChronoLocalDateTimeSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/serial/TCKChronoZonedDateTimeSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/serial/TCKChronologySerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/serial/TCKCopticSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/chrono/serial/TCKEraSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKChronoPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKDTFParsedInstant.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKDateTimeFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKDateTimeFormatterBuilder.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKDateTimeFormatters.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKDateTimeParseResolver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKDateTimeTextPrinting.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKDecimalStyle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKFormatStyle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKInstantPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKLocalizedFieldParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKLocalizedFieldPrinter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKLocalizedOffsetIdPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKLocalizedPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKOffsetPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKPadPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKResolverStyle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKSignStyle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKTextStyle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/format/TCKZoneIdPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKClockSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKDurationSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKInstantSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKLocalDateSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKLocalDateTimeSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKLocalTimeSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKMonthDaySerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKOffsetDateTimeSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKOffsetTimeSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKPeriodSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKYearMonthSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKYearSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKZoneIdSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKZoneOffsetSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/serial/TCKZonedDateTimeSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/TCKChronoField.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/TCKChronoUnit.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/TCKIsoFields.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/TCKJulianFields.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/TCKTemporalAdjusters.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/TCKWeekFields.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/serial/TCKChronoFieldSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/serial/TCKChronoUnitSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/serial/TCKJulianFieldsSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/serial/TCKValueRangeSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/temporal/serial/TCKWeekFieldsSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/zone/TCKFixedZoneRules.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/zone/TCKZoneOffsetTransition.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/zone/TCKZoneOffsetTransitionRule.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/zone/TCKZoneRules.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/zone/TCKZoneRulesProvider.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/zone/serial/TCKFixedZoneRulesSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/zone/serial/TCKZoneOffsetTransitionRuleSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/zone/serial/TCKZoneOffsetTransitionSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/tck/java/time/zone/serial/TCKZoneRulesSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestClock_Fixed.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestClock_Offset.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestClock_System.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestClock_Tick.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestDuration.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestInstant.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestInstantSource.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestLocalDate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestLocalDateTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestLocalTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestMonthDay.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestOffsetDateTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestOffsetDateTime_instants.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestOffsetTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestPeriod.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestYear.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestYearMonth.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestZoneId.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestZoneOffset.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/TestZonedDateTime.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestChronoLocalDate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestChronologyPerf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestEraDisplayName.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestExampleCode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestIsoChronoImpl.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestJapaneseChronoImpl.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestJapaneseChronology.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestServiceLoader.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestThaiBuddhistChronoImpl.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/chrono/TestUmmAlQuraChronology.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/AbstractTestPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestCharLiteralParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestCharLiteralPrinter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestDateTimeFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestDateTimeFormatterBuilder.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestDateTimeFormatterBuilderWithLocale.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestDateTimeParsing.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestDateTimeTextProvider.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestDateTimeTextProviderWithLocale.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestDecimalStyle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestFractionPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestLocalizedOffsetPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestLocalizedPattern.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestNarrowMonthNamesAndDayNames.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestNonIsoFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestNumberParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestNumberPrinter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestPadPrinterDecorator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestReducedParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestReducedPrinter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestSettingsParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestStringLiteralParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestStringLiteralPrinter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestTextParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestTextParserWithLocale.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestTextPrinter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestTextPrinterWithLocale.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestUTCParse.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestUnicodeExtension.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestZoneOffsetParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestZoneOffsetPrinter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/format/TestZoneTextPrinterParser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/temporal/TestChronoField.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/temporal/TestChronoUnit.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/temporal/TestDateTimeBuilderCombinations.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/temporal/TestDateTimeValueRange.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/temporal/TestIsoFields.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/temporal/TestIsoWeekFields.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/temporal/TestJulianFields.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/zone/TestFixedZoneRules.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/zone/TestMutableZoneRules.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/zone/TestZoneRules.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/time/zone/TestZoneRulesProvider.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/time/test/java/util/TestFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
   "flint_tests": [
     "framework/java-time/tests/period_test.d",
     "framework/java-time/tests/value_range_test.d",
@@ -11,5 +717,8 @@
     "framework/java-time/tests/year_month_test.d",
     "framework/java-time/tests/date_values_test.d"
   ],
-  "classes": {}
+  "module": "java-time",
+  "note": "Original Flint tests exercise the Java SE 21 API, including the Period text used in Spring's binding test and numeric overflow diagnostics checked against the Java 21 runtime. No OpenJDK test code is ported.",
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13"
 }
