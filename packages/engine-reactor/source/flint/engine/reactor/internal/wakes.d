@@ -93,6 +93,15 @@ package(flint.engine.reactor) struct WakeLane
         atomicStore(armed[slot], 0UL);
     }
 
+    /// Owner: retire only the specified nonzero wait key. Signallers never modify the armed key.
+    bool disarmMatching(uint slot, ulong key) nothrow @nogc
+    {
+        if (key == 0 || atomicLoad(armed[slot]) != key)
+            return false;
+        disarm(slot);
+        return true;
+    }
+
     /// Owner: whether `slot`'s armed wait has been signalled.
     bool signalledNow(uint slot) const nothrow @nogc
     {
