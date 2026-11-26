@@ -265,6 +265,8 @@ private void verifyUpdateRebinds(Connection connection, const ref UpdatePlan upd
         const ref ManagedRowMaterializationPlan readPlan)
 {
     verifyUpdateCaptureRebind(connection, update, readPlan);
+    verifyNestedUpdate(connection, update, readPlan, true);
+    verifyNestedUpdate(connection, update, readPlan, false);
     foreach (phase; [RebindPhase.binding, RebindPhase.close])
     {
         verifyUpdateStatementRebind(connection, update, readPlan, phase, true);
@@ -909,6 +911,77 @@ private final class RebindContext
         assert(managed.manage(ownerKey, owner, plan).code == Status.ok);
     }
 
+}
+
+private final class NestedUpdateConnection : BlackHole!Connection
+{
+    private Connection connection;
+    private RebindContext context;
+    private UpdatePlan plan;
+    private bool refresh;
+    uint transactionChecks;
+
+    this(Connection connection, RebindContext context, UpdatePlan plan, bool refresh)
+    {
+        this.connection = connection;
+        this.context = context;
+        this.plan = plan;
+        this.refresh = refresh;
+    }
+
+    override bool getAutoCommit()
+    {
+        ++transactionChecks;
+        if (transactionChecks != 1)
+            return connection.getAutoCommit();
+        auto owner = cast(VersionedOwner) context.managed.find(ownerKey).value;
+        const reads = owner.nameReads;
+        uint[1] ordinals;
+        auto values = new AttributeValue[3];
+        const allocated = GC.stats().allocatedInCurrentThread;
+        const nested = refresh ? flushManagedUpdate(plan, this, context.managed, ownerKey, ordinals[], values)
+            : executeVersionedUpdate(plan, this, context.managed, ownerKey, ordinals[]);
+        const allocatedAfter = GC.stats().allocatedInCurrentThread;
+        assertStored(connection, "Winner", 8);
+        assert(nested.error.code == Status.conflict, "recursive update accepted the in-flight attachment");
+        assert(allocatedAfter == allocated);
+        assert(owner.nameReads == reads && transactionChecks == 1);
+        return connection.getAutoCommit();
+    }
+
+    override PreparedStatement prepareStatement(string sql)
+    {
+        return connection.prepareStatement(sql);
+    }
+}
+
+private void verifyNestedUpdate(Connection connection, const ref UpdatePlan update,
+        const ref ManagedRowMaterializationPlan readPlan, bool nestedRefresh)
+{
+    const snapshot = planLoadedSnapshot(&mapping);
+    assert(snapshot.ok);
+    auto context = new RebindContext(snapshot.value, true);
+    scope (exit)
+        context.managed.clear();
+    loadRows(readPlan, connection, context.managed);
+    auto owner = cast(VersionedOwner) context.managed.find(ownerKey).value;
+    assert(owner !is null);
+    auto wrapper = new NestedUpdateConnection(connection, context, update, nestedRefresh);
+    owner.name = "Outer edit";
+    uint[1] ordinals;
+    auto values = new AttributeValue[3];
+    const outer = flushManagedUpdate(update, wrapper, context.managed, ownerKey, ordinals[], values);
+    assert(wrapper.transactionChecks == 1 && outer.ok && outer.value.updated && owner.revision == 9);
+    assertStored(connection, "Outer edit", 9);
+    const dirty = context.managed.dirty(ownerKey, ordinals[]);
+    assert(dirty.ok && dirty.value == 0);
+
+    owner.name = "Follow-up";
+    const next = flushManagedUpdate(update, connection, context.managed, ownerKey, ordinals[], values);
+    assert(next.ok && next.value.updated && owner.revision == 10);
+    assertStored(connection, "Follow-up", 10);
+    connection.rollback();
+    assertStored(connection, "Winner", 8);
 }
 
 private void verifyUpdateCaptureRebind(Connection connection, const ref UpdatePlan update,

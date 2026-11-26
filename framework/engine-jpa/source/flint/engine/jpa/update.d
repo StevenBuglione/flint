@@ -432,10 +432,10 @@ private VersionResult executeStaticUpdate(const ref UpdatePlan plan, Connection 
         return VersionResult(VersionedUpdate.init, resolved);
     auto slot = entities.snapshotFor(target);
     assert(slot !is null);
-    const alreadyUpdating = slot.setUpdating(true);
+    if (slot.setUpdating(true))
+        return VersionResult(VersionedUpdate.init, Error(Status.conflict, "managed update already in progress"));
     scope (exit)
-        if (!alreadyUpdating)
-            slot.setUpdating(false);
+        slot.setUpdating(false);
 
     const checked = checkUpdateTarget(plan, key.identifier, target.entity, *slot, dirtyOrdinals,
             target.loadedVersion);

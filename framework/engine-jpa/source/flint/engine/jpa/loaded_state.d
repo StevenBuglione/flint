@@ -130,7 +130,7 @@ struct ManagedSnapshotSlot
         return compareSnapshots(plan, entity, bank(active).fields, bank(active).arena, ordinals);
     }
 
-    /// The previous marker lets a synchronous nested update borrow its caller's mark.
+    /// Sets the attachment's update marker and returns its previous value.
     package bool setUpdating(bool value) scope nothrow @nogc
     {
         const previous = updating;
