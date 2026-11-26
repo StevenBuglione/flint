@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,076 | 310 | 1,871 | 15,164 |
+| framework | openjdk@21.0.13 | 1,072 | 310 | 1,871 | 15,168 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10097,7 +10097,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,914 | 0 |
+| java.util | 1,918 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 285 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -11176,6 +11176,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Objects#requireNonNull(T,Supplier)` | 2 | Java calls the message Supplier only for a null object. The Supplier overload is missing. |
 | framework | `java.util.Objects#requireNonNullElse(T,T)` | 2 | Java selects the fallback when the first boxed value is absent and throws NullPointerException when both values are absent. The current method ignores absence in an R5 Nullable payload. |
 | framework | `java.util.Optional#equals(Object)` | 2 | Java compares Optional values across generic arguments and accepts other objects and null. The current R5 value facade accepts only the same instantiation, so separately typed empty values cannot compare equal. |
+| framework | `java.util.Optional#filter(Predicate)` | 2 | Java rejects a null predicate even when the Optional is empty. Flint returns the empty value. |
+| framework | `java.util.Optional#flatMap(Function)` | 2 | Java rejects a null mapper even when the Optional is empty. Flint returns the empty value. |
+| framework | `java.util.Optional#map(Function)` | 2 | Java rejects a null mapper even when the Optional is empty. Flint returns the empty value. |
+| framework | `java.util.Optional#or(Supplier)` | 2 | Java rejects a null supplier even when a value is present. Flint returns the present value. |
 | framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
 | framework | `java.util.function.BiConsumer#andThen(BiConsumer)` | 2 | The existing interface exposes accept and lacks Java's overridable composition default (R3). |
