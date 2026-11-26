@@ -1039,6 +1039,9 @@
   "ai-model": {
    "directory": "ai/ai-model",
    "module": "flint.ai.chat.messages.part",
+   "also": [
+    "flint.ai.chat.metadata"
+   ],
    "repo": "ai",
    "licence": "Apache-2.0",
    "upstream": "spring-ai@v2.1.0",
@@ -1058,7 +1061,7 @@
     "ldc_incremental_seconds": 4.2,
     "incremental_linked_bytes": 100,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 1200
+    "template_instances": 1260
    },
    "provisional": [
     "dmd_cold_seconds",
