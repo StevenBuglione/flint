@@ -78,6 +78,8 @@ A template wrapper stays a one-liner over an erased engine that takes `T`'s Flin
 
 - **`Optional<T>`** → `flint.java.util.Optional!T`, a struct with Java's methods: `of`, `ofNullable`, `empty`, `isPresent`, `isEmpty`, `get`, `orElse`, `orElseGet`, `orElseThrow`, `map`, `filter`, `ifPresent`.
 - **A `String` that may be `null` distinctly from `""`** → `Nullable!string`. D's `null` and `""` compare equal, so `@Nullable String` parameters must use `Nullable!string`.
+- **Any other Java value that may be `null` where the D type is a value type** → `Nullable!T` (`std.typecons.Nullable`, as for strings). This covers boxed `Long`/`Integer` IDs and `@Nullable` boxed parameters and returns: `Persistable!ID.getId()` returns `Nullable!long` when `ID` is `long`. Coordinator, 2026-11-26, under the owner's standing approval.
+- **Reference types** (classes, interfaces) keep plain `null`. **`Optional!T` is only for `java.util.Optional`**, never for a nullable value.
 
 ### R6: Java Beans properties
 
