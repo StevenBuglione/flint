@@ -15,6 +15,7 @@ import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.engine.jpa.registry : registerMappings;
+import flint.engine.jpa.result_binding : materializeManagedRow, planManagedResult;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
 import flint.engine.reactor : Backend, Reactor, ReactorOptions, TaskContext, TaskDelegate;
 import flint.java.sql : PreparedStatement, ResultSet, SQLException, Types;
@@ -227,28 +228,73 @@ private void requireNullRejection(DataSource dataSource, scope const ref RowMate
     assert(false, "SQL NULL must be rejected");
 }
 
-private void verifyManagedIdentity(Owner owner)
+private void failPostLoad(Object entity)
 {
+    assert((cast(Owner) entity).name == "One");
+    throw new Exception("intentional managed PostLoad failure");
+}
+
+private void verifyManagedLoadFailure(ResultSet rows, scope ref ManagedEntities managed)
+{
+    static immutable EntityMapping failing = EntityMapping("Owner", "app.Owner", "jpa_seam_probe",
+            ownerAttributes, &constructOwner, [&failPostLoad], &isExactOwnerType, [0]);
+    const plan = planManagedResult(&failing, ownerBindings, 1, ownerCodec);
+    assert(plan.ok);
+    try
+    {
+        cast(void) materializeManagedRow(plan.value, rows, managed);
+        assert(false, "PostLoad failure must propagate");
+    }
+    catch (Exception failure)
+    {
+        assert(failure.msg == "intentional managed PostLoad failure");
+    }
+    assert(managed.find(EntityIdentity(1, 1)).error.code == Status.notFound);
+    assert(managed.find(EntityIdentity(0, 1)).ok);
+}
+
+private void verifyManagedIdentity(DataSource dataSource)
+{
+    const plan = planManagedResult(&ownerMapping, ownerBindings, 0, ownerCodec);
+    assert(plan.ok);
+    auto connection = DataSourceUtils.getConnection(dataSource);
+    scope (exit)
+        DataSourceUtils.releaseConnection(connection, dataSource);
+    auto statement = connection.prepareStatement("select name, birth_date, id from jpa_seam_probe where id = 1 "
+            ~ "union all select name, birth_date, null from jpa_seam_probe where id = 1 order by id nulls last");
+    scope (exit)
+        statement.close();
+    auto rows = statement.executeQuery();
+    scope (exit)
+        rows.close();
+    assert(rows.next());
+
     IdentitySlot[4] backing;
     Object[4] entities;
     Error error;
-    const key = EntityIdentity(0, owner.id);
-    const before = GC.stats().allocatedInCurrentThread;
     {
         scope managed = ManagedEntities(backing[], entities[], error);
         assert(error.code == Status.ok);
-        assert(managed.manage(key, owner).code == Status.ok);
-        const found = managed.find(key);
-        assert(found.ok && found.value is owner);
-        assert(managed.manage(key, owner).code == Status.ok);
-        const detached = managed.detach(key);
-        assert(detached.ok && detached.value is owner);
-        assert(managed.find(key).error.code == Status.notFound);
-        assert(managed.manage(key, owner).code == Status.ok);
+        const first = materializeManagedRow(plan.value, rows, managed);
+        assert(first.ok && (cast(const Owner) first.value).loadOrder == 3);
+        const before = GC.stats().allocatedInCurrentThread;
+        const found = materializeManagedRow(plan.value, rows, managed);
+        assert(found.ok && found.value is first.value);
+        assert(GC.stats().allocatedInCurrentThread == before);
+        verifyManagedLoadFailure(rows, managed);
+        const detached = managed.detach(EntityIdentity(0, 1));
+        assert(detached.ok && detached.value is first.value);
+        const loadedAgain = materializeManagedRow(plan.value, rows, managed);
+        assert(loadedAgain.ok && loadedAgain.value !is first.value);
+        assert((cast(const Owner) loadedAgain.value).loadOrder == 3);
+
+        assert(rows.next());
+        const missing = materializeManagedRow(plan.value, rows, managed);
+        assert(missing.error.code == Status.invalidArgument && missing.error.offset == 0);
+        assert(managed.find(EntityIdentity(0, 1)).value is loadedAgain.value);
     }
     foreach (entity; entities)
         assert(entity is null);
-    assert(GC.stats().allocatedInCurrentThread == before);
 }
 
 private void providerInsert(DataSource dataSource, long id, string name)
@@ -666,7 +712,7 @@ void main() @system
         providerInsert(dataSource, 1, "One");
         materialized = providerLoadOwner(dataSource, ownerPlan, 1);
         assert(materialized.loadOrder == 3);
-        verifyManagedIdentity(materialized);
+        verifyManagedIdentity(dataSource);
         requireNullRejection(dataSource, ownerPlan,
             "select name, birth_date, null::bigint from jpa_seam_probe where id = ?", "id");
         requireNullRejection(dataSource, ownerPlan,

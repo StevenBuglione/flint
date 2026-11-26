@@ -10,6 +10,7 @@ import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, Entit
     ResultBinding, planResult, validateEntity, validateMapping;
 import flint.engine.jpa.parameter_binding : ParameterBinding, ParameterBindingPlan, planParameters;
 import flint.engine.jpa.registry : registerMappings;
+import flint.engine.jpa.result_binding : planManagedResult;
 import flint.java.sql : Types;
 
 @safe:
@@ -187,6 +188,24 @@ unittest
     assert(planResult(&recordMapping, []).error.code == Status.invalidArgument);
     assert(planResult(&recordMapping, [ResultBinding(1, 1)]).error.code == Status.invalidArgument);
     assert(planResult(&recordMapping, [ResultBinding(0, 0)]).error.code == Status.invalidArgument);
+}
+
+@("managed row plans require a complete projection and a simple integer identity")
+unittest
+{
+    assert(planManagedResult(&recordMapping, [ResultBinding(0, 3)], 0).ok);
+    assert(planManagedResult(&recordMapping, [], 0).error.code == Status.invalidArgument);
+    static immutable EntityMapping textId = EntityMapping("Record", "app.Record", "records",
+            [AttributeMapping(0, "id", "id", AttributeKind.text, &readId, &writeId)],
+            &constructRecord, [], &isExactRecordType, [0]);
+    assert(planManagedResult(&textId, [ResultBinding(0, 1)], 0).error.code == Status.unsupported);
+    static immutable EntityMapping composite = EntityMapping("Record", "app.Record", "records",
+            [
+                AttributeMapping(0, "id", "id", AttributeKind.integer, &readId, &writeId),
+                AttributeMapping(1, "tenant", "tenant", AttributeKind.integer, &readId, &writeId)
+    ], &constructRecord, [], &isExactRecordType, [0, 1]);
+    assert(planManagedResult(&composite, [ResultBinding(0, 1), ResultBinding(1, 2)], 0)
+            .error.code == Status.unsupported);
 }
 
 @("parameter plans validate positions independently of attribute ordinals")
