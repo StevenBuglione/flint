@@ -17,3 +17,21 @@ bool isWhitespace(dchar codePoint) pure nothrow @nogc
     return codePoint == 0x1680 || codePoint == 0x2028 || codePoint == 0x2029 || codePoint == 0x205F
         || codePoint == 0x3000;
 }
+
+/// Classify one Java UTF-16 code unit.
+bool isWhitespace(wchar codeUnit) pure nothrow @nogc
+{
+    return isWhitespace(cast(dchar) codeUnit);
+}
+
+/// Classify a signed Java code point, returning false outside the Unicode range.
+bool isWhitespace(int codePoint) pure nothrow @nogc
+{
+    return isWhitespace(cast(dchar) codePoint);
+}
+
+/// Classify a code point held in an unsigned D integer.
+bool isWhitespace(uint codePoint) pure nothrow @nogc
+{
+    return isWhitespace(cast(dchar) codePoint);
+}

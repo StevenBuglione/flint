@@ -6195,6 +6195,8 @@
 "java.lang.Character#digit(int,int)":{"status":"ported","d":"flint.java.lang.character.digit"},
 "java.lang.Character#isDigit(char)":{"status":"adapted","rules":["R7"],"d":"flint.java.lang.character.isDigit"},
 "java.lang.Character#isDigit(int)":{"status":"ported","d":"flint.java.lang.character.isDigit"},
+"java.lang.Character#isWhitespace(char)":{"status":"adapted","rules":["R7"],"d":"flint.java.lang.character.isWhitespace","note":"Java char maps to a D wchar UTF-16 code unit."},
+"java.lang.Character#isWhitespace(int)":{"status":"ported","d":"flint.java.lang.character.isWhitespace"},
 "java.lang.Class":{"status":"excluded","category":"runtime-reflection"},
 "java.lang.Class#**":{"status":"excluded","category":"runtime-reflection"},
 "java.lang.Class.**":{"status":"excluded","category":"runtime-reflection"},
