@@ -175,6 +175,12 @@ private final class BytesInput : ServletInputStream
 /// `MockHttpServletRequest`.
 class MockHttpServletRequest : HttpServletRequest
 {
+    /// The default request protocol.
+    enum string DEFAULT_PROTOCOL = "HTTP/1.1";
+
+    /// The default request scheme.
+    enum string DEFAULT_SCHEME = "http";
+
     private string method = "";
     private string requestURI = "";
     private string contextPath = "";
@@ -190,11 +196,12 @@ class MockHttpServletRequest : HttpServletRequest
     private string characterEncoding;
     private string contentType;
     private Cookie[] cookies;
-    private string scheme = "http";
+    private string scheme = DEFAULT_SCHEME;
     private string serverName = "localhost";
     private int serverPort = 80;
+    private bool secure;
     private string remoteAddr = "127.0.0.1";
-    private string protocol = "HTTP/1.1";
+    private string protocol = DEFAULT_PROTOCOL;
     private DispatcherType dispatcherType = DispatcherType.REQUEST;
     private MockServletContext servletContext;
     private Locale[] locales = [Locale.ENGLISH];
@@ -339,10 +346,22 @@ class MockHttpServletRequest : HttpServletRequest
         this.serverPort = serverPort;
     }
 
+    /// Sets the request protocol.
+    void setProtocol(string protocol) pure nothrow @nogc
+    {
+        this.protocol = protocol;
+    }
+
     /// Sets the scheme.
     void setScheme(string scheme) pure nothrow @nogc
     {
         this.scheme = scheme;
+    }
+
+    /// Sets whether the request was made over a secure channel.
+    void setSecure(bool secure) pure nothrow @nogc
+    {
+        this.secure = secure;
     }
 
     /// Sets the remote address.
@@ -483,7 +502,7 @@ class MockHttpServletRequest : HttpServletRequest
 
     bool isSecure()
     {
-        return scheme == "https";
+        return secure || equalsIgnoreCase(scheme, "https");
     }
 
     RequestDispatcher getRequestDispatcher(string path)
