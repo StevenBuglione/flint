@@ -4,12 +4,10 @@
  * jakarta/persistence/EntityTransaction.java:
  * Copyright (c) 2008, 2024 Oracle and/or its affiliates. All rights reserved.
  * jakarta/persistence/CacheRetrieveMode.java, CacheStoreMode.java, Parameter.java, PessimisticLockScope.java,
- * TupleElement.java:
+ * SharedCacheMode.java, TupleElement.java, ValidationMode.java:
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
- * jakarta/persistence/FindOption.java, LockOption.java, RefreshOption.java:
+ * jakarta/persistence/FindOption.java, LockOption.java, PersistenceUnitTransactionType.java, RefreshOption.java:
  * Copyright (c) 2023 Oracle and/or its affiliates. All rights reserved.
- * jakarta/persistence/ParameterMode.java:
- * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  * Modified by the Flint authors: D interfaces (R3), class tokens (R4), nullable values (R5), DDoc exceptions (R8),
  * and built-in options as enums (D-JPA-2).
@@ -133,18 +131,44 @@ enum PessimisticLockScope
     EXTENDED,
 }
 
-/// Direction of a stored procedure parameter.
-enum ParameterMode
+/// Transaction management mode of a persistence unit.
+enum PersistenceUnitTransactionType
 {
-    /// Input parameter.
-    IN,
+    /// Transactions managed through JTA.
+    JTA,
 
-    /// Input and output parameter.
-    INOUT,
+    /// Transactions managed through EntityTransaction.
+    RESOURCE_LOCAL,
+}
 
-    /// Output parameter.
-    OUT,
+/// Shared cache policy for the persistence unit.
+enum SharedCacheMode
+{
+    /// Cache all entities.
+    ALL,
 
-    /// Reference cursor that can return a result set.
-    REF_CURSOR,
+    /// Disable caching for the unit.
+    NONE,
+
+    /// Cache entities that declare Cacheable(true).
+    ENABLE_SELECTIVE,
+
+    /// Cache entities unless they declare Cacheable(false).
+    DISABLE_SELECTIVE,
+
+    /// Use the provider's default caching policy.
+    UNSPECIFIED,
+}
+
+/// Lifecycle validation policy for the persistence unit.
+enum ValidationMode
+{
+    /// Validate entities when a Bean Validation provider is present.
+    AUTO,
+
+    /// Require lifecycle validation and a Bean Validation provider.
+    CALLBACK,
+
+    /// Disable lifecycle validation.
+    NONE,
 }

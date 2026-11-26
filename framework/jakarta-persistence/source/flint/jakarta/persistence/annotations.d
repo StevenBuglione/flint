@@ -53,7 +53,8 @@
  *   PersistenceContextType.java, PersistenceProperty.java, PersistenceUnit.java
  *
  * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
- *   Convert.java, Converter.java, Converts.java, SynchronizationType.java
+ *   Convert.java, Converter.java, Converts.java, NamedStoredProcedureQueries.java, NamedStoredProcedureQuery.java,
+ *   ParameterMode.java, StoredProcedureParameter.java, SynchronizationType.java
  */
 
 /// Jakarta Persistence mapping annotations and their option enums.
@@ -1089,6 +1090,57 @@ struct NamedNativeQueries
 {
     /// The native query declarations.
     NamedNativeQuery[] value;
+}
+
+/// Declares a stored procedure query scoped to a persistence unit.
+struct NamedStoredProcedureQuery
+{
+    /// Name supplied to EntityManager.createNamedStoredProcedureQuery.
+    string name;
+    /// Name of the stored procedure in the database.
+    string procedureName;
+    /// Parameters in procedure declaration order.
+    StoredProcedureParameter[] parameters = [];
+    /// Result classes in the order their result sets are returned.
+    ClassRef[] resultClasses = [];
+    /// Result set mapping names in result order, in place of resultClasses.
+    string[] resultSetMappings = [];
+    /// Provider query hints.
+    QueryHint[] hints = [];
+}
+
+/// Groups named stored procedure queries on one declaration.
+struct NamedStoredProcedureQueries
+{
+    /// The stored procedure query declarations.
+    NamedStoredProcedureQuery[] value;
+}
+
+/// Describes a parameter of a named stored procedure query.
+struct StoredProcedureParameter
+{
+    /// Parameter name. An empty value leaves it positional.
+    string name = "";
+    /// Parameter direction.
+    ParameterMode mode = ParameterMode.IN;
+    /// Type of the parameter.
+    ClassRef type;
+}
+
+/// Direction of a stored procedure parameter.
+enum ParameterMode
+{
+    /// Input parameter.
+    IN,
+
+    /// Input and output parameter.
+    INOUT,
+
+    /// Output parameter.
+    OUT,
+
+    /// Reference cursor that can return a result set.
+    REF_CURSOR,
 }
 
 /// Names a mapping from a native SQL result set to entity, constructor and scalar results.
