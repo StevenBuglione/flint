@@ -1,4 +1,8 @@
 {
+  "flint.java.nio.bufferoverflowexception": {
+    "incremental_linked_bytes": 687,
+    "template_instances": 480
+  },
   "flint.java.nio.bufferunderflowexception": {
     "incremental_linked_bytes": 704,
     "template_instances": 480
