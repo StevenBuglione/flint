@@ -401,13 +401,38 @@ interface InstanceCreatorMetadata(T, P) if (is(P : PersistentProperty!P))
     }
 }
 
-/// Metadata for a parameter of an entity creator.
-class Parameter(T, P) if (is(P : PersistentProperty!P))
+// Shares value equality across parameter bindings (R11).
+private abstract class ParameterValue
 {
     private Nullable!string name;
     private TypeInformation type;
-    private MergedAnnotations annotations;
     private Nullable!string expression;
+
+    protected abstract Object owningEntity();
+
+    /// Whether the name, declared type, expression and owning entity are equal.
+    bool equals(Object other)
+    {
+        if (this is other)
+            return true;
+        auto that = cast(ParameterValue) other;
+        return that !is null && name == that.name && type.equals(cast(Object) that.type)
+            && expression == that.expression && Objects.equals(owningEntity(), that.owningEntity());
+    }
+
+    /// Hashes the same metadata used by equality.
+    int hashCode()
+    {
+        return Objects.hash(name.get(string.init), type, expression.get(string.init), owningEntity());
+    }
+
+    mixin JavaObject;
+}
+
+/// Metadata for a parameter of an entity creator.
+class Parameter(T, P) : ParameterValue if (is(P : PersistentProperty!P))
+{
+    private MergedAnnotations annotations;
     private PersistentEntity!(T, P) entity;
 
     /// Creates a parameter with a nullable name and its registered metadata.
@@ -497,6 +522,11 @@ class Parameter(T, P) if (is(P : PersistentProperty!P))
     bool isTransient()
     {
         return annotations.isPresent!Transient() || (entity !is null && hasName() && entity.isTransient(name.get));
+    }
+
+    protected override final Object owningEntity()
+    {
+        return cast(Object) entity;
     }
 
     package(flint.data) bool maps(PersistentProperty!() property)

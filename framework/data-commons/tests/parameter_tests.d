@@ -82,6 +82,89 @@ private CreatorParameter parameter(Nullable!string name)
     return new CreatorParameter(name, TypeInformation.of!long(DescriptorTable.withBuiltins()), null, null);
 }
 
+@("twoParametersWithIdenticalSetupEqual")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto entity = withConstructors(descriptors, null);
+    auto left = new CreatorParameter(Nullable!string("revision"), TypeInformation.of!long(descriptors), null, entity);
+    auto right = new CreatorParameter(Nullable!string("revision"), TypeInformation.of!long(descriptors), null, entity);
+    assert(left == right && left.equals(right));
+    assert(left.hashCode() == right.hashCode() && left.toHash() == right.toHash());
+}
+
+@("twoParametersWithIdenticalSetupAndNullNameEqual")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto entity = withConstructors(descriptors, null);
+    auto type = TypeInformation.of!long(descriptors);
+    auto left = new CreatorParameter(Nullable!string.init, type, null, entity);
+    auto right = new CreatorParameter(Nullable!string.init, type, null, entity);
+    assert(left.equals(right) && left.hashCode() == right.hashCode());
+    assert(!left.equals(new CreatorParameter(Nullable!string(""), type, null, entity)));
+}
+
+@("twoParametersWithIdenticalAndNullEntitySetupEqual")
+unittest
+{
+    auto left = parameter(Nullable!string("revision"));
+    auto right = parameter(Nullable!string("revision"));
+    assert(left.equals(right) && left.hashCode() == right.hashCode());
+}
+
+@("twoParametersWithDifferentNameAreNotEqual")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto entity = withConstructors(descriptors, null);
+    auto type = TypeInformation.of!long(descriptors);
+    auto left = new CreatorParameter(Nullable!string("first"), type, null, entity);
+    auto right = new CreatorParameter(Nullable!string("second"), type, null, entity);
+    assert(!left.equals(right));
+}
+
+@("twoParametersWithDifferenTypeAreNotEqual")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto entity = withConstructors(descriptors, null);
+    auto left = new CreatorParameter(Nullable!string("revision"), TypeInformation.of!long(descriptors), null, entity);
+    auto right = new CreatorParameter(Nullable!string("revision"),
+            TypeInformation.of!string(descriptors), null, entity);
+    assert(!left.equals(right));
+}
+
+@("parameter equality uses metadata across template bindings")
+unittest
+{
+    auto name = Nullable!string("revision");
+    auto left = parameter(name);
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto type = TypeInformation.of!long(descriptors);
+    auto right = new Parameter!(Object, RevisionProperty)(name, type, null, null);
+    assert(left.equals(right) && right.equals(left));
+    assert(left.hashCode() == right.hashCode());
+    assert(!left.equals(new Object) && !left.equals(null));
+}
+
+@("parameter equality includes the expression and owning entity")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto entity = withConstructors(descriptors, null);
+    auto otherEntity = withConstructors(DescriptorTable.withBuiltins(), null);
+    auto type = TypeInformation.of!long(descriptors);
+    auto name = Nullable!string("revision");
+    auto annotations = [MergedAnnotation(classOf!Value.name, Any.of(Value("1")))];
+    auto left = new CreatorParameter(name, type, annotations, entity);
+    auto right = new CreatorParameter(name, type,
+            annotations ~ [MergedAnnotation(classOf!Transient.name, Any.of(Transient.init))], entity);
+    assert(left.equals(right) && left.hashCode() == right.hashCode());
+    assert(!left.equals(new CreatorParameter(name, type, null, entity)));
+    assert(!left.equals(new CreatorParameter(name, type, annotations, otherEntity)));
+}
+
 @("getRequiredNameDoesNotThrowExceptionWhenHasName")
 unittest
 {

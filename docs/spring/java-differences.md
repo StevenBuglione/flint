@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 276 | 247 | 0 | 3,459 |
+| data-commons | spring-data-commons@4.2.0 | 276 | 249 | 0 | 3,457 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1008,11 +1008,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.MappingException#<init>(String,Throwable)` | `flint.data.mapping.MappingException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.data.mapping.Parameter` | `flint.data.mapping.Parameter` | [D-DATA-20](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.Parameter#<init>(String,TypeInformation,Annotation[],PersistentEntity)` | `flint.data.mapping.Parameter.this` | [R4](api-mapping.md#r4-classt-parameters), [R5](api-mapping.md#r5-optional-and-nullable-values), [D-DATA-20](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.Parameter#equals(Object)` | `flint.data.mapping.Parameter.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.data.mapping.Parameter#getName()` | `flint.data.mapping.Parameter.getName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.data.mapping.Parameter#getRawType()` | `flint.data.mapping.Parameter.getRawType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.mapping.Parameter#getSpelExpression()` | `flint.data.mapping.Parameter.getSpelExpression` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.data.mapping.Parameter#getType()` | `flint.data.mapping.Parameter.getType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.mapping.Parameter#getValueExpression()` | `flint.data.mapping.Parameter.getValueExpression` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.data.mapping.Parameter#hashCode()` | `flint.data.mapping.Parameter.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.data.mapping.PersistentEntity#doWithAll(PropertyHandler)` | `flint.data.mapping.PersistentEntity.doWithAll` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.mapping.PersistentEntity#doWithAssociations(AssociationHandler)` | `flint.data.mapping.PersistentEntity.doWithAssociations` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.mapping.PersistentEntity#doWithProperties(PropertyHandler)` | `flint.data.mapping.PersistentEntity.doWithProperties` | [R9](api-mapping.md#r9-functional-interfaces) |  |
@@ -10180,7 +10182,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.geo.format | 11 | 0 |
 | org.springframework.data.history | 42 | 0 |
 | org.springframework.data.javapoet | 69 | 0 |
-| org.springframework.data.mapping | 111 | 0 |
+| org.springframework.data.mapping | 109 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
 | org.springframework.data.mapping.model | 173 | 0 |

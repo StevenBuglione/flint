@@ -600,19 +600,19 @@
           "getRequiredNameDoesNotThrowExceptionWhenHasName",
           "getRequiredNameThrowsExceptionWhenHasNoName",
           "hasNameReturnsFalseWhenHasNoName",
-          "hasNameReturnsTrueWhenHasName"
+          "hasNameReturnsTrueWhenHasName",
+          "twoParametersWithDifferenTypeAreNotEqual",
+          "twoParametersWithDifferentNameAreNotEqual",
+          "twoParametersWithIdenticalAndNullEntitySetupEqual",
+          "twoParametersWithIdenticalSetupAndNullNameEqual",
+          "twoParametersWithIdenticalSetupEqual"
         ],
         "skipped": {
           "shouldConsiderMemberTypeOfClassEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
           "shouldNotConsiderMemberTypeOfInterfaceEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
           "shouldNotConsiderRecordMemberTypeOfClassEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
           "shouldNotConsiderRecordTypeOfInterfaceEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
-          "shouldNotConsiderStaticMemberTypeOfClassEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred.",
-          "twoParametersWithDifferenTypeAreNotEqual": "Parameter equality and hashing across creator metadata bindings remain deferred.",
-          "twoParametersWithDifferentNameAreNotEqual": "Parameter equality and hashing across creator metadata bindings remain deferred.",
-          "twoParametersWithIdenticalAndNullEntitySetupEqual": "Parameter equality and hashing across creator metadata bindings remain deferred.",
-          "twoParametersWithIdenticalSetupAndNullNameEqual": "Parameter equality and hashing across creator metadata bindings remain deferred.",
-          "twoParametersWithIdenticalSetupEqual": "Parameter equality and hashing across creator metadata bindings remain deferred."
+          "shouldNotConsiderStaticMemberTypeOfClassEnclosingClassParameter": "Java enclosing class and record parameter detection remain deferred."
         }
       },
       "status": "partial"

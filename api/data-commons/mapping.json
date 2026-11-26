@@ -392,6 +392,8 @@
 "org.springframework.data.mapping.Parameter#getRequiredValueExpression()":{"status":"ported","d":"flint.data.mapping.Parameter.getRequiredValueExpression"},
 "org.springframework.data.mapping.Parameter#hasValueExpression()":{"status":"ported","d":"flint.data.mapping.Parameter.hasValueExpression"},
 "org.springframework.data.mapping.Parameter#isTransient()":{"status":"ported","d":"flint.data.mapping.Parameter.isTransient"},
+"org.springframework.data.mapping.Parameter#equals(Object)":{"status":"adapted","d":"flint.data.mapping.Parameter.equals","rules":["R11"]},
+"org.springframework.data.mapping.Parameter#hashCode()":{"status":"adapted","d":"flint.data.mapping.Parameter.hashCode","rules":["R11"]},
 "org.springframework.data.mapping.PersistentEntity":{"status":"ported","d":"flint.data.mapping.PersistentEntity"},
 "org.springframework.data.mapping.PersistentEntity#findAnnotation(Class)":{"status":"adapted","d":"flint.data.mapping.PersistentEntity.findAnnotation","rules":["R4","R23","D-DATA-14"]},
 "org.springframework.data.mapping.PersistentEntity#getRequiredAnnotation(Class)":{"status":"adapted","d":"flint.data.mapping.PersistentEntity.getRequiredAnnotation","rules":["R3","R4","R23","D-DATA-14"]},
