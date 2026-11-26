@@ -982,8 +982,19 @@
       "status": "deferred"
     },
     "org/springframework/data/repository/core/support/AbstractEntityInformationUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/abstract_entity_information_tests.d",
+      "methods": {
+        "ported": [
+          "considersEntityNewIfGetIdReturnsNull",
+          "detectsNewStateForPrimitiveIds",
+          "detectsNewStateForPrimitiveWrapperIds",
+          "rejectsUnsupportedPrimitiveIdType"
+        ],
+        "skipped": {
+          "rejectsNullDomainClass": "R4 represents the domain class constructor token as the type parameter T."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/repository/core/support/AbstractRepositoryMetadataUnitTests.java": {
       "phase": "2",

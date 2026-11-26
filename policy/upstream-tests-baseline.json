@@ -1728,7 +1728,6 @@
       "org/springframework/data/repository/config/ResourceReaderRepositoryPopulatorBeanDefinitionParserIntegrationTests.java",
       "org/springframework/data/repository/config/SelectionSetUnitTests.java",
       "org/springframework/data/repository/config/XmlRepositoryConfigurationSourceUnitTests.java",
-      "org/springframework/data/repository/core/support/AbstractEntityInformationUnitTests.java",
       "org/springframework/data/repository/core/support/AbstractRepositoryMetadataUnitTests.java",
       "org/springframework/data/repository/core/support/AnnotationRepositoryMetadataUnitTests.java",
       "org/springframework/data/repository/core/support/DefaultCrudMethodsUnitTests.java",
