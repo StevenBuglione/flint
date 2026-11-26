@@ -14,8 +14,6 @@
   "jakarta.validation.ConstraintValidatorContext#buildConstraintViolationWithTemplate(String) -> ConstraintViolationBuilder": "framework: jakarta.validation.ConstraintValidatorContext.ConstraintViolationBuilder is deferred",
   "jakarta.validation.Validation#byDefaultProvider() -> GenericBootstrap": "framework: jakarta.validation.bootstrap.GenericBootstrap is deferred",
   "jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState) -> BootstrapState": "framework: jakarta.validation.spi.BootstrapState is deferred",
-  "java.time.temporal.ChronoField#getBaseUnit() -> TemporalUnit": "framework: java.time.temporal.TemporalUnit is deferred",
-  "java.time.temporal.ChronoField#getRangeUnit() -> TemporalUnit": "framework: java.time.temporal.TemporalUnit is deferred",
   "org.hibernate.validator.HibernateValidator#buildValidatorFactory(ConfigurationState) -> ConfigurationState": "framework: jakarta.validation.spi.ConfigurationState is deferred",
   "org.hibernate.validator.HibernateValidator#createGenericConfiguration(BootstrapState) -> BootstrapState": "framework: jakarta.validation.spi.BootstrapState is deferred",
   "org.hibernate.validator.HibernateValidator#createSpecializedConfiguration(BootstrapState) -> BootstrapState": "framework: jakarta.validation.spi.BootstrapState is deferred",

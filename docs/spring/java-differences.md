@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 54 | 65 | 0 | 4,333 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 231 | 134 | 1,871 | 16,185 |
+| framework | openjdk@21.0.13 | 231 | 132 | 1,871 | 16,187 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 509 | 1 | 88 | 11,815 |
@@ -1870,8 +1870,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.temporal.ChronoField#SECOND_OF_MINUTE` | `flint.java.time.temporal.chronofield.ChronoField.SECOND_OF_MINUTE` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoField#YEAR` | `flint.java.time.temporal.chronofield.ChronoField.YEAR` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoField#YEAR_OF_ERA` | `flint.java.time.temporal.chronofield.ChronoField.YEAR_OF_ERA` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
-| `java.time.temporal.ChronoField#getBaseUnit()` | `flint.java.time.temporal.chronofield.getBaseUnit` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
-| `java.time.temporal.ChronoField#getRangeUnit()` | `flint.java.time.temporal.chronofield.getRangeUnit` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoField#isDateBased()` | `flint.java.time.temporal.chronofield.isDateBased` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoField#isTimeBased()` | `flint.java.time.temporal.chronofield.isTimeBased` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ChronoField#range()` | `flint.java.time.temporal.chronofield.range` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
@@ -9575,7 +9573,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time | 709 | 0 |
 | java.time.chrono | 405 | 0 |
 | java.time.format | 141 | 0 |
-| java.time.temporal | 111 | 0 |
+| java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 2,321 | 0 |
 | java.util.concurrent | 1,264 | 0 |
@@ -10489,8 +10487,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ChronoField#adjustInto(R,long)` | 2 | Requires the TemporalAccessor family and compatible temporal value types. |
 | framework | `java.time.temporal.ChronoField#checkValidIntValue(long)` | 2 | Requires field-aware ValueRange checks. |
 | framework | `java.time.temporal.ChronoField#checkValidValue(long)` | 2 | Requires field-aware ValueRange checks. |
+| framework | `java.time.temporal.ChronoField#getBaseUnit()` | 2 | The D accessor returns concrete ChronoUnit. The general Java TemporalUnit return contract is pending. |
 | framework | `java.time.temporal.ChronoField#getDisplayName(Locale)` | 2 | Requires Locale display-name data. |
 | framework | `java.time.temporal.ChronoField#getFrom(TemporalAccessor)` | 2 | Requires the TemporalAccessor family and compatible temporal value types. |
+| framework | `java.time.temporal.ChronoField#getRangeUnit()` | 2 | The D accessor returns concrete ChronoUnit. The general Java TemporalUnit return contract is pending. |
 | framework | `java.time.temporal.ChronoField#isSupportedBy(TemporalAccessor)` | 2 | Requires the TemporalAccessor family and compatible temporal value types. |
 | framework | `java.time.temporal.ChronoField#rangeRefinedBy(TemporalAccessor)` | 2 | Requires the TemporalAccessor family and compatible temporal value types. |
 | framework | `java.time.temporal.ChronoUnit#addTo(R,long)` | 2 | Requires the Temporal contract. |
