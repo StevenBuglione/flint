@@ -1197,3 +1197,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - sol-test: spring-test and boot-test;
     - sol-aop: spring-aop with AOT proxies.
   - **Machines:** neptune's winbuild VM was force-stopped (owner) so neptune can serve as verifier C.
+- 2026-11-26 04:05Z, coordinator, under the owner's standing approval: **R15 (enums with fields) is adopted** from the web-mvc proposal, minus its interface clause, which R18 now covers.
+  - **The rule:** such an enum becomes a struct with `static immutable` constants and Java's enum methods.
+  - **The enum rules are now complete:** constant-only enums stay D enums (R15), enums with methods are covered by R20, enums with interfaces by R18, and enums with fields by R15.
