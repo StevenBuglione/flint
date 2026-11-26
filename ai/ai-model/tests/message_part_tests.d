@@ -18,6 +18,7 @@
 // Modified by the Flint authors.
 module message_part_tests;
 
+import flint.ai.chat.messages : ToolResponseMessage;
 import flint.ai.chat.messages.part : MessagePart, OpaquePayload, ReasoningPart, TextPart, ToolResultPart, UnknownPart;
 import flint.java.lang : IllegalArgumentException, NullPointerException, UnsupportedOperationException;
 import flint.java.util : ArrayList, HashMap, List, Map;
@@ -25,6 +26,42 @@ import std.exception : assertThrown;
 import std.typecons : Nullable, nullable;
 
 @safe:
+
+private alias ToolResponse = ToolResponseMessage.ToolResponse;
+
+@("toolResultPartOfWrapsToolResponseAsSingleTextPart")
+unittest
+{
+    auto response = ToolResponse(nullable("id-1"), nullable("getWeather"), nullable(`{"tempC":18}`));
+    auto part = ToolResultPart.of(response);
+    assert(part.id().get() == "id-1" && part.name().get() == "getWeather" && !part.isError());
+    assert(part.content().equals(cast(Object) List!MessagePart.of(TextPart.of(`{"tempC":18}`))));
+}
+
+@("legacy tool response conversions distinguish missing text from empty text")
+unittest
+{
+    auto absent = ToolResponse(Nullable!string.init, nullable(""), Nullable!string.init);
+    auto empty = ToolResponse(Nullable!string.init, nullable(""), nullable(""));
+    auto absentResult = ToolResultPart.of(absent);
+    auto emptyResult = ToolResultPart.of(empty);
+    assert(absentResult.content().isEmpty() && absentResult.toToolResponse() == absent);
+    assert(emptyResult.content().size() == 1 && emptyResult.toToolResponse() == empty);
+    assert(absent != empty);
+    assert(absent.toString() == "ToolResponse[id=null, name=, responseData=null]");
+    static assert(!__traits(compiles, ToolResultPart.of(null)));
+}
+
+@("legacy tool responses join text parts in order")
+unittest
+{
+    auto content = List!MessagePart.of(TextPart.of("a"), ReasoningPart.of("skip"), TextPart.of("b"));
+    auto part = new ToolResultPart(nullable("id-1"), nullable("tool"), content, true,
+            Nullable!OpaquePayload.init, Map!(string, string).of());
+    auto response = part.toToolResponse();
+    auto expected = ToolResponse(nullable("id-1"), nullable("tool"), nullable("ab"));
+    assert(response == expected && response.hashCode() == expected.hashCode());
+}
 
 @("toolResultPartContentIsDefensivelyCopied")
 unittest

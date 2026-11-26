@@ -18,7 +18,8 @@
 // Modified by the Flint authors.
 module flint.ai.chat.messages.part;
 
-import core.exception : onOutOfMemoryError;
+import flint.ai.chat.messages.response_value : ToolResponse, joinRecord, normalizeText,
+    recordText, sameText, textHash;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException, stringHashCode;
 import flint.java.util : LinkedHashMap, List, Map;
 import std.typecons : Nullable;
@@ -54,26 +55,6 @@ private string renderRecord(string prefix, string first, string secondLabel, str
     return joinRecord(parts[]);
 }
 
-package(flint.ai) char[] joinRecord(scope const(string)[] parts) pure
-{
-    size_t length;
-    foreach (part; parts)
-    {
-        if (part.length > size_t.max - length)
-            onOutOfMemoryError();
-        length += part.length;
-    }
-
-    char[] result = new char[length];
-    size_t offset;
-    foreach (part; parts)
-    {
-        result[offset .. offset + part.length] = part;
-        offset += part.length;
-    }
-    return result;
-}
-
 private PartAttributes copyAttributes(PartAttributes attributes)
 {
     if (attributes is null)
@@ -83,6 +64,30 @@ private PartAttributes copyAttributes(PartAttributes attributes)
             throw new NullPointerException();
     });
     return PartAttributes.copyOf(attributes);
+}
+
+private PartAttributes emptyPartAttributes()
+{
+    return PartAttributes.of();
+}
+
+// A null result means that no text parts were present.
+package(flint.ai) string joinTextParts(ResultParts parts)
+{
+    string text;
+    foreach (part; parts)
+    {
+        if (part is null)
+            throw new NullPointerException();
+        if (auto textPart = cast(TextPart) part)
+        {
+            if (text is null)
+                text = textPart.text();
+            else
+                text ~= textPart.text();
+        }
+    }
+    return text;
 }
 
 private bool samePayload(ref const NullablePayload left, ref const NullablePayload right)
@@ -100,29 +105,6 @@ private int payloadHash(ref const NullablePayload value)
 private string payloadText(ref const NullablePayload value)
 {
     return value.isNull ? "null" : value.get().toString();
-}
-
-// Java has one null string value. A present empty string stays distinct (R5).
-package(flint.ai) NullableText normalizeText(NullableText value) pure nothrow @nogc
-{
-    return value.isNull || value.get() is null ? NullableText.init : value;
-}
-
-package(flint.ai) bool sameText(ref const NullableText left, ref const NullableText right)
-{
-    if (left.isNull)
-        return right.isNull;
-    return !right.isNull && left.get() == right.get();
-}
-
-package(flint.ai) int textHash(ref const NullableText value)
-{
-    return value.isNull ? 0 : stringHashCode(value.get());
-}
-
-package(flint.ai) string recordText(ref const NullableText value)
-{
-    return value.isNull ? "null" : value.get();
 }
 
 /// An ordered chat message part. Spring AI permits MediaPart, ReasoningPart,
@@ -285,7 +267,7 @@ final class TextPart : MessagePart
     static TextPart of(string text)
     {
         auto part = new TextPart(text);
-        part.attributes_ = PartAttributes.of();
+        part.attributes_ = emptyPartAttributes();
         return part;
     }
 
@@ -362,7 +344,7 @@ final class ReasoningPart : MessagePart
         if (text is null)
             throw new IllegalArgumentException("text must not be null");
         auto part = new ReasoningPart(NullableText(text));
-        part.attributes_ = PartAttributes.of();
+        part.attributes_ = emptyPartAttributes();
         return part;
     }
 
@@ -581,7 +563,27 @@ final class ToolResultPart : MessagePart
 
     override ToolResultPart withAttributes(PartAttributes attributes)
     {
-        return new ToolResultPart(id_, name_, content_, error_, payload_, attributes);
+        return create(id_, name_, content_, error_, payload_, attributes);
+    }
+
+    /// Wraps a legacy response as a result, with one text part when it has a body.
+    static ToolResultPart of(ToolResponse response)
+    {
+        const text = response.responseData();
+        auto content = text.isNull ? ResultParts.of() : ResultParts.of(TextPart.of(text.get()));
+        return create(response.id(), response.name(), content, false, NullablePayload.init, emptyPartAttributes());
+    }
+
+    /// Joins the text parts in order into a legacy response.
+    ToolResponse toToolResponse()
+    {
+        return ToolResponse(id_, name_, NullableText(joinTextParts(content_)));
+    }
+
+    private static ToolResultPart create(NullableText id, NullableText name, ResultParts content,
+            bool isError, NullablePayload payload, PartAttributes attributes)
+    {
+        return new ToolResultPart(id, name, content, isError, payload, attributes);
     }
 
     /// Compares the six record components.

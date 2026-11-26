@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/{AbstractMessage,Message,MessageType,SystemMessage}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/{AbstractMessage,Message,MessageType,SystemMessage,ToolResponseMessage}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages;
 
-import flint.ai.chat.messages.part : MessagePart, TextPart;
+import flint.ai.chat.messages.part : MessagePart, TextPart, joinTextParts;
 import flint.ai.content : Content, copyContentMetadata;
 import flint.engine.aot.any : Any;
 import flint.java.lang : JavaObject;
@@ -75,7 +75,7 @@ struct MessageType
     /// Finds a message type by its exact enum name.
     static MessageType valueOf(string name)
     {
-        import flint.ai.chat.messages.part : joinRecord;
+        import flint.ai.chat.messages.response_value : joinRecord;
         import flint.java.lang : IllegalArgumentException, NullPointerException;
 
         if (name is null)
@@ -125,7 +125,7 @@ abstract class AbstractMessage : Message
     /// Takes a read-only snapshot of the parts and a mutable copy of the metadata.
     protected this(MessageType messageType, MessageParts parts, MessageMetadata metadata)
     {
-        import flint.java.lang : IllegalArgumentException, NullPointerException;
+        import flint.java.lang : IllegalArgumentException;
 
         if (parts is null)
             throw new IllegalArgumentException("Parts must not be null");
@@ -137,18 +137,11 @@ abstract class AbstractMessage : Message
         if (empty && (messageType == MessageType.SYSTEM || messageType == MessageType.USER))
             throw new IllegalArgumentException("Content must not be null for SYSTEM or USER messages");
 
-        string text = "";
-        foreach (part; snapshot)
-        {
-            if (part is null)
-                throw new NullPointerException();
-            if (auto textPart = cast(TextPart) part)
-                text ~= textPart.text();
-        }
+        const text = joinTextParts(snapshot);
 
         messageType_ = messageType;
         parts_ = snapshot;
-        text_ = empty ? MessageText.init : MessageText(text);
+        text_ = empty ? MessageText.init : MessageText(text is null ? "" : text);
         metadata_ = copyContentMetadata(metadata);
         metadata_.put(MESSAGE_TYPE, Any.of(messageType));
     }
@@ -284,4 +277,13 @@ class SystemMessage : AbstractMessage
             return new SystemMessage(text_, metadataSet_ ? metadata_ : MessageMetadata.of());
         }
     }
+}
+
+/// A message carrying tool responses.
+class ToolResponseMessage : AbstractMessage
+{
+    @disable this();
+
+    /// The legacy response value shared with the message part conversions.
+    public import flint.ai.chat.messages.response_value : ToolResponse;
 }

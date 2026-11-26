@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 204 | 367 | 0 | 15,225 |
+| ai | spring-ai@v2.1.0 | 204 | 374 | 0 | 15,218 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
 | framework | spring-framework@v7.1.0 | 3,613 | 1,464 | 4,870 | 29,887 |
@@ -246,6 +246,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#build()` | `flint.ai.chat.messages.SystemMessage.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#metadata(Map)` | `flint.ai.chat.messages.SystemMessage.Builder.metadata` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#text(String)` | `flint.ai.chat.messages.SystemMessage.Builder.text` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse` | `flint.ai.chat.messages.ToolResponseMessage.ToolResponse` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse#<init>(String,String,String)` | `flint.ai.chat.messages.ToolResponseMessage.ToolResponse.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse#id` | `flint.ai.chat.messages.ToolResponseMessage.ToolResponse.id` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse#name` | `flint.ai.chat.messages.ToolResponseMessage.ToolResponse.name` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse#responseData` | `flint.ai.chat.messages.ToolResponseMessage.ToolResponse.responseData` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.ai.chat.messages.part
 
@@ -273,7 +278,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.messages.part.ToolResultPart#content` | `flint.ai.chat.messages.part.ToolResultPart.content` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#id` | `flint.ai.chat.messages.part.ToolResultPart.id` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#name` | `flint.ai.chat.messages.part.ToolResultPart.name` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.part.ToolResultPart#of(ToolResponse)` | `flint.ai.chat.messages.part.ToolResultPart.of` | [R11](api-mapping.md#r11-object-identity-and-equality) | The response is a D record value. A null argument is rejected at compile time. |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#payload` | `flint.ai.chat.messages.part.ToolResultPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.part.ToolResultPart#toToolResponse()` | `flint.ai.chat.messages.part.ToolResultPart.toToolResponse` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#withAttributes(Map)` | `flint.ai.chat.messages.part.ToolResultPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.UnknownPart` | `flint.ai.chat.messages.part.UnknownPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
 | `org.springframework.ai.chat.messages.part.UnknownPart#<init>(String,String,String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.UnknownPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
@@ -8918,8 +8925,8 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.memory.repository.mongo | 0 | 20 |
 | org.springframework.ai.chat.memory.repository.neo4j | 0 | 63 |
 | org.springframework.ai.chat.memory.repository.redis | 0 | 65 |
-| org.springframework.ai.chat.messages | 89 | 0 |
-| org.springframework.ai.chat.messages.part | 34 | 0 |
+| org.springframework.ai.chat.messages | 84 | 0 |
+| org.springframework.ai.chat.messages.part | 32 | 0 |
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |
 | org.springframework.ai.chat.observation | 73 | 0 |
@@ -10670,8 +10677,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 
 | Repo | Java | Phase | Reason |
 | --- | --- | --- | --- |
-| ai | `org.springframework.ai.chat.messages.part.ToolResultPart#of(ToolResponse)` | 2 | Requires the legacy ToolResponseMessage.ToolResponse value. |
-| ai | `org.springframework.ai.chat.messages.part.ToolResultPart#toToolResponse()` | 2 | Requires the legacy ToolResponseMessage.ToolResponse value. |
 | ai | `org.springframework.ai.chat.prompt.ChatOptions#builder()` | 2 | Requires the default chat options builder and its self-typed result. |
 | ai | `org.springframework.ai.chat.prompt.ChatOptions#mutate()` | 2 | Requires a builder that can preserve the concrete chat option settings. |
 | ai | `org.springframework.ai.chat.prompt.ChatOptions.Builder` | 2 | Requires the self-typed fluent builder contract and its implementations. |

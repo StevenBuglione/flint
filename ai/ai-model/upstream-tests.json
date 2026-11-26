@@ -150,6 +150,7 @@
           "reasoningPartWithoutPayloadIsReplayableEverywhere",
           "textPartOfHasNoPayloadAndEmptyAttributes",
           "toolResultPartContentIsDefensivelyCopied",
+          "toolResultPartOfWrapsToolResponseAsSingleTextPart",
           "unknownPartKeepsRawJson",
           "whenAttributesIsNullThenThrow",
           "whenOpaquePayloadHasNullComponentThenThrow",
@@ -158,8 +159,7 @@
         "skipped": {
           "mediaPartOfWrapsMedia": "MediaPart and Media are pending.",
           "toolCallPartOfWrapsToolCall": "ToolCallPart and AssistantMessage.ToolCall are pending.",
-          "toolResultPartOfWrapsToolResponseAsSingleTextPart": "Requires the legacy ToolResponseMessage.ToolResponse value and conversion.",
-          "toolResultPartToToolResponseJoinsTextContentOnly": "Requires the legacy ToolResponseMessage.ToolResponse value and conversion.",
+          "toolResultPartToToolResponseJoinsTextContentOnly": "The text-only conversion has local mixed-part coverage. The exact pinned case requires MediaPart and Media.",
           "whenToolCallIsNullThenThrow": "ToolCallPart is pending."
         }
       },

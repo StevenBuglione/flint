@@ -331,7 +331,7 @@ class DefaultUsage : Usage
     /// Formats counts and any available cache fields.
     override string toString()
     {
-        import flint.ai.chat.messages.part : joinRecord;
+        import flint.ai.chat.messages.response_value : joinRecord;
         import flint.engine.aot.text : decimal;
 
         const bool hasRead = !cacheRead_.isNull;

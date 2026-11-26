@@ -98,7 +98,7 @@ class Embedding : ModelResult!(float[])
     /// Describes the result without rendering the vector elements.
     override string toString() const
     {
-        import flint.ai.chat.messages.part : joinRecord;
+        import flint.ai.chat.messages.response_value : joinRecord;
         import flint.java.lang : Integer, NullPointerException;
 
         if (embedding_ is null)
@@ -180,7 +180,7 @@ class DefaultEmbeddingOptions : EmbeddingOptions
     /// Stores the selected model and dimensions.
     protected this(ModelName model, Dimensions dimensions) pure nothrow @nogc
     {
-        import flint.ai.chat.messages.part : normalizeText;
+        import flint.ai.chat.messages.response_value : normalizeText;
 
         model_ = normalizeText(model);
         dimensions_ = dimensions;
@@ -345,7 +345,7 @@ class EmbeddingResultMetadata : ResultMetadata
         /// Checks the supported MIME families in Spring AI's order.
         static ModalityType getModalityType(MimeType mimeType)
         {
-            import flint.ai.chat.messages.part : joinRecord;
+            import flint.ai.chat.messages.response_value : joinRecord;
             import flint.java.lang : IllegalArgumentException;
 
             if (mimeType.isCompatibleWith(imageType))

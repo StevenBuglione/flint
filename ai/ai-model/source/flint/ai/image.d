@@ -36,7 +36,7 @@ class Image
     /// Creates an image with either or both forms present.
     this(Text url, Text b64Json) pure nothrow @nogc
     {
-        import flint.ai.chat.messages.part : normalizeText;
+        import flint.ai.chat.messages.response_value : normalizeText;
 
         url_ = normalizeText(url);
         b64Json_ = normalizeText(b64Json);
@@ -69,7 +69,7 @@ class Image
     /// Compares the URL and base64 data.
     bool equals(Object other)
     {
-        import flint.ai.chat.messages.part : sameText;
+        import flint.ai.chat.messages.response_value : sameText;
 
         auto that = cast(Image) other;
         return this is that || (that !is null && sameText(url_, that.url_) && sameText(b64Json_, that.b64Json_));
@@ -78,7 +78,7 @@ class Image
     /// Computes the Java hash over the two image fields.
     int hashCode()
     {
-        import flint.ai.chat.messages.part : textHash;
+        import flint.ai.chat.messages.response_value : textHash;
 
         return 31 * (31 + textHash(url_)) + textHash(b64Json_);
     }
@@ -86,7 +86,7 @@ class Image
     /// Returns the image's two fields in Java's display format.
     override string toString()
     {
-        import flint.ai.chat.messages.part : joinRecord, recordText;
+        import flint.ai.chat.messages.response_value : joinRecord, recordText;
 
         string[5] parts = [
             "Image{url='", recordText(url_), "', b64Json='", recordText(b64Json_), "'}"
@@ -142,7 +142,7 @@ class ImageGeneration : ModelResult!Image
     /// Renders the metadata and image using their object representations.
     override string toString()
     {
-        import flint.ai.chat.messages.part : joinRecord;
+        import flint.ai.chat.messages.response_value : joinRecord;
         import flint.engine.aot.objects : objectToString;
 
         string[5] parts = [
