@@ -1150,6 +1150,7 @@
    "module": "flint.ai.chat.messages.part",
    "also": [
     "flint.ai.chat.metadata",
+    "flint.ai.converter",
     "flint.ai.model"
    ],
    "repo": "ai",
