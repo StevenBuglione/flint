@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 188 | 315 | 0 | 15,293 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,485 | 1,388 | 4,848 | 30,113 |
+| framework | spring-framework@v7.1.0 | 3,489 | 1,389 | 4,849 | 30,107 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2102,6 +2102,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.TargetSource#getTargetClass()` | `flint.aop.TargetSource.getTargetClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.TargetSource#isStatic()` | `flint.aop.TargetSource.isStatic` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.aop.TargetSource#releaseTarget(Object)` | `flint.aop.TargetSource.releaseTarget` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R23](api-mapping.md#r23-object-typed-values) |  |
+
+#### org.springframework.aop.aspectj
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.aop.aspectj.AspectInstanceFactory#getAspectInstance()` | `flint.aop.aspectj.AspectInstanceFactory.getAspectInstance` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.aop.framework
 
@@ -5929,6 +5935,12 @@ These Java elements have no Flint counterpart, for the reason the category gives
 | --- | --- | --- |
 | `org.slf4j.helpers.AbstractLogger#readResolve()` | `jvm-platform` |  |
 
+#### org.springframework.aop.aspectj
+
+| Java | Reason | Note |
+| --- | --- | --- |
+| `org.springframework.aop.aspectj.AspectInstanceFactory#getAspectClassLoader()` | `jvm-runtime` |  |
+
 #### org.springframework.aot.agent
 
 | Java | Reason | Note |
@@ -9347,7 +9359,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.slf4j.event | 36 | 0 |
 | org.slf4j.helpers | 208 | 0 |
 | org.slf4j.spi | 7 | 0 |
-| org.springframework.aop.aspectj | 174 | 0 |
+| org.springframework.aop.aspectj | 168 | 0 |
 | org.springframework.aop.aspectj.annotation | 102 | 0 |
 | org.springframework.aop.aspectj.autoproxy | 7 | 0 |
 | org.springframework.aop.config | 70 | 0 |

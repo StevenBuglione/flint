@@ -1,16 +1,36 @@
 /*
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/aspectj/AspectJPrecedenceInformation.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/aspectj/AspectJAopUtils.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/aspectj/AspectInstanceFactory.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/aspectj/InstantiationModelAwarePointcutAdvisor.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
  * Modified by the Flint authors.
  */
 module flint.aop.aspectj;
 
-import flint.aop : Advisor, AfterAdvice, BeforeAdvice;
+import flint.aop : Advisor, AfterAdvice, BeforeAdvice, PointcutAdvisor;
 import flint.core : Ordered;
+import flint.engine.aot.any : Any;
 
 @safe:
+
+/// Provides an ordered aspect instance independently of the bean factory.
+interface AspectInstanceFactory : Ordered
+{
+    /// Returns the non-null aspect instance (R23).
+    Any getAspectInstance();
+}
+
+/// A pointcut advisor that exposes the instantiation state of its underlying advice.
+interface InstantiationModelAwarePointcutAdvisor : PointcutAdvisor
+{
+    /// Whether this advisor initializes its advice lazily.
+    bool isLazy();
+
+    /// Whether the underlying advice has been instantiated.
+    bool isAdviceInstantiated();
+}
 
 /// Supplies the metadata for comparing advice and advisors by AspectJ precedence.
 interface AspectJPrecedenceInformation : Ordered
