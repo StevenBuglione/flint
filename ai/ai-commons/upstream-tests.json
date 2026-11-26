@@ -1,5 +1,35 @@
 {
   "classes": {
+    "org/springframework/ai/document/ContentFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/document/DocumentBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/document/DocumentMetadataTests.java": {
+      "d": "ai/ai-commons/tests/document_metadata_tests.d",
+      "methods": {
+        "ported": [
+          "contentRefKey",
+          "distanceKey"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/ai/document/DocumentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/document/id/IdGeneratorProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/document/id/JdkSha256HexIdGeneratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/ai/observation/AiOperationMetadataTests.java": {
       "d": "ai/ai-commons/tests/ai_operation_metadata_tests.d",
       "methods": {

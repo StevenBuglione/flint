@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 156 | 268 | 0 | 15,372 |
+| ai | spring-ai@v2.1.0 | 163 | 271 | 0 | 15,362 |
 | boot | spring-boot@v4.2.0 | 40 | 22 | 2,133 | 13,408 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,461 | 1,372 | 4,848 | 30,153 |
@@ -319,6 +319,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.converter.ResponseTextCleaner#clean(String)` | `flint.ai.converter.ResponseTextCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.StructuredOutputConverter#getJsonSchema()` | `flint.ai.converter.StructuredOutputConverter.getJsonSchema` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.ai.converter.WhitespaceCleaner#clean(String)` | `flint.ai.converter.WhitespaceCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.ai.document
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.document.DocumentMetadata` | `flint.ai.document.DocumentMetadata` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.springframework.ai.document.DocumentMetadata#CONTENT_REF` | `flint.ai.document.DocumentMetadata.CONTENT_REF` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.springframework.ai.document.DocumentMetadata#DISTANCE` | `flint.ai.document.DocumentMetadata.DISTANCE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 
 #### org.springframework.ai.embedding
 
@@ -8125,7 +8133,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.deepseek.api | 0 | 210 |
 | org.springframework.ai.deepseek.api.common | 0 | 5 |
 | org.springframework.ai.docker.compose.service.connection.typesense | 0 | 3 |
-| org.springframework.ai.document | 70 | 0 |
+| org.springframework.ai.document | 60 | 0 |
 | org.springframework.ai.document.id | 9 | 0 |
 | org.springframework.ai.elevenlabs | 0 | 61 |
 | org.springframework.ai.elevenlabs.aot | 0 | 3 |
