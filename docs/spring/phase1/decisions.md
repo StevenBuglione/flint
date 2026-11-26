@@ -1187,3 +1187,13 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **The caps are unchanged.**
   - **Expiry:** the exception ends for a module when its probe no longer links the cascade, after which the module must fit its cap.
   - **Why:** web's 126,976 B cap was set when the probe baseline also linked Phobos I/O. Probes switching to C output (55f6747c) exposed about 420 KB of cascade that the S-9 owners (boot, framework-core, data-access, web-http) are removing now.
+- 2026-11-26 03:55Z, coordinator, under the owner's standing approval: **throughput changes.**
+  - **Bigger slices:** 30–100 elements each.
+  - **No local apps step** for slices going to the merge train; the train runs the apps on the verifiers.
+  - **Batched train submissions.**
+  - **For the train (proof-harness):** union merge for append-only docs, and an `agentctl id next` allocator for playbook and deviation IDs.
+  - **Three more lanes, 18 in all:**
+    - sol-translator: a deterministic Java-to-D translator for mechanical element kinds (plan section 8.4);
+    - sol-test: spring-test and boot-test;
+    - sol-aop: spring-aop with AOT proxies.
+  - **Machines:** neptune's winbuild VM was force-stopped (owner) so neptune can serve as verifier C.
