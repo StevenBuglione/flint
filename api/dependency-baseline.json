@@ -1,13 +1,5 @@
 {
  "gaps": {
-  "jakarta.servlet.FilterConfig#getInitParameterNames() -> Enumeration": "framework: java.util.Enumeration is deferred",
-  "jakarta.servlet.GenericFilter#getInitParameterNames() -> Enumeration": "framework: java.util.Enumeration is deferred",
-  "jakarta.servlet.GenericServlet#getInitParameterNames() -> Enumeration": "framework: java.util.Enumeration is deferred",
-  "jakarta.servlet.ServletConfig#getInitParameterNames() -> Enumeration": "framework: java.util.Enumeration is deferred",
-  "jakarta.servlet.ServletRequest#getAttributeNames() -> Enumeration": "framework: java.util.Enumeration is deferred",
-  "jakarta.servlet.ServletRequest#getParameterNames() -> Enumeration": "framework: java.util.Enumeration is deferred",
-  "jakarta.servlet.http.HttpServletRequest#getHeaderNames() -> Enumeration": "framework: java.util.Enumeration is deferred",
-  "jakarta.servlet.http.HttpServletRequest#getHeaders(String) -> Enumeration": "framework: java.util.Enumeration is deferred",
   "jakarta.servlet.http.HttpServletRequest#getRequestURL() -> StringBuffer": "framework: java.lang.StringBuffer is deferred",
   "org.springframework.boot.diagnostics.FailureAnalyzedException#analysis() -> FailureAnalysis": "boot: org.springframework.boot.diagnostics.FailureAnalysis is deferred",
   "org.springframework.context.PayloadApplicationEvent#<init>(Object,T,ResolvableType) -> ResolvableType": "framework: org.springframework.core.ResolvableType is excluded",
