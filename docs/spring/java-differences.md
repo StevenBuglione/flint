@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 541 | 17 | 1 | 2,736 |
-| framework | jackson-databind@3.1.8 | 597 | 52 | 5 | 9,813 |
+| framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 130 | 123 | 0 | 2,137 |
@@ -3438,6 +3438,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `tools.jackson.databind.JsonNode#require()` | `flint.jackson.databind.node.JsonNode.require` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
+| `tools.jackson.databind.JsonNode#requireNonNull()` | `flint.jackson.databind.node.JsonNode.requireNonNull` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,Class)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,JavaType)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,TypeReference)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R7](api-mapping.md#r7-overloads) |  |
@@ -9354,7 +9356,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.tree | 2 | 0 |
 | tools.jackson.core.type | 48 | 0 |
 | tools.jackson.core.util | 458 | 0 |
-| tools.jackson.databind | 1,506 | 0 |
+| tools.jackson.databind | 1,499 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
 | tools.jackson.databind.cfg | 763 | 0 |
 | tools.jackson.databind.deser | 587 | 0 |
@@ -9380,7 +9382,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.databind.jsontype | 138 | 0 |
 | tools.jackson.databind.jsontype.impl | 277 | 0 |
 | tools.jackson.databind.module | 103 | 0 |
-| tools.jackson.databind.node | 806 | 0 |
+| tools.jackson.databind.node | 799 | 0 |
 | tools.jackson.databind.ser | 339 | 0 |
 | tools.jackson.databind.ser.bean | 115 | 0 |
 | tools.jackson.databind.ser.impl | 86 | 0 |

@@ -241,6 +241,8 @@ An interface module imports only what its signatures name. A template body's dep
 
 Jackson core’s JsonPointer reuses the original expression for segment suffixes and allocates a decoded buffer only for a property with an escape. A pure buffer builder lets D publish that buffer as an immutable string. Compile and the existing stream-write constraint use one interim argument-exception factory. On venus at `5be6db90` and `d8eeff6a`, the standard jackson-core probe stayed at 43,045 loadable bytes and moved from 581 to 600 DMD templates, at its existing cap. The probe exercises the prior streaming API.
 
+Tree pointer traversal shares one iterative walk for `at` and `requiredAt`. The walk keeps the unmatched suffix for the exception and leaves the original pointer reusable. The R21 overloads run the same required-value checks before casting. The matched databind probe on venus from `30c4e089` to `7cf148a5` moved from 420,445 to 426,685 loadable bytes and from 4,104 to 4,114 DMD templates. For the whole batch from `3561ba4e` to `7cf148a5`, pinned LDC with `flint build --profile size` moved gs-rest-service from 3,717,189 to 3,725,117 allocated ELF bytes (+7,928) and petclinic-rest from 10,469,759 to 10,476,967 (+7,208).
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

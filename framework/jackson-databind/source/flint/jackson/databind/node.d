@@ -17,7 +17,7 @@
 /// Jackson's tree model: `JsonNode` and its object, array and value nodes.
 module flint.jackson.databind.node;
 
-import flint.jackson.core : JsonGenerator, JsonParser, JsonToken, ObjectWriteContext, PrettyPrinter;
+import flint.jackson.core : JsonGenerator, JsonParser, JsonPointer, JsonToken, ObjectWriteContext, PrettyPrinter;
 import flint.jackson.core.json : JsonFactory;
 import flint.jackson.core.util : ByteArrayBuilder, DefaultPrettyPrinter;
 import flint.jackson.databind.exc : DatabindException;
@@ -271,6 +271,100 @@ abstract class JsonNode
     JsonNode path(string)
     {
         return MissingNode.getInstance();
+    }
+
+    /// Find the node selected by the expression. Missing paths return a missing node.
+    final JsonNode at(string expression)
+    {
+        return at(JsonPointer.compile(expression));
+    }
+
+    /// Find the node selected by an already compiled pointer.
+    final JsonNode at(JsonPointer pointer)
+    {
+        auto node = followPointer(pointer);
+        return node is null ? MissingNode.getInstance() : node;
+    }
+
+    /// Find the node selected by the expression or report the first unmatched segment.
+    JsonNode requiredAt(string expression)
+    {
+        return requiredAt(JsonPointer.compile(expression));
+    }
+
+    /// Find the node selected by an already compiled pointer or report the first unmatched segment.
+    final JsonNode requiredAt(JsonPointer pointer)
+    {
+        auto remaining = pointer;
+        if (auto node = followPointer(remaining))
+            return node;
+        throw new JsonNodeException(
+                "No node at '" ~ pointer.toString() ~ "' (unmatched part: '" ~ remaining.toString() ~ "')");
+    }
+
+    private JsonNode followPointer(ref JsonPointer remaining)
+    {
+        import flint.java.lang : NullPointerException;
+
+        JsonNode node = this;
+        while (true)
+        {
+            if (remaining is null)
+                throw new NullPointerException("JSON Pointer is null");
+            if (remaining.matches())
+                return node;
+
+            node = node._at(remaining);
+            if (node is null)
+                return null;
+            remaining = remaining.tail();
+        }
+    }
+
+    /// Select the child for the current pointer segment.
+    protected JsonNode _at(JsonPointer)
+    {
+        return null;
+    }
+
+    /// Return this node. Missing nodes report a required-value violation.
+    JsonNode require()
+    {
+        if (isMissingNode())
+            throw new JsonNodeException("require() called on `MissingNode`");
+        return this;
+    }
+
+    /// Return the required node as an explicitly selected subtype.
+    T require(T : JsonNode)()
+    {
+        return castRequiredNode!T(require());
+    }
+
+    /// Return this node. Missing and null nodes report a required-value violation.
+    JsonNode requireNonNull()
+    {
+        if (isNull())
+            throw new JsonNodeException("requireNonNull() called on `NullNode`");
+        if (isMissingNode())
+            throw new JsonNodeException("requireNonNull() called on `MissingNode`");
+        return this;
+    }
+
+    /// Return the required non-null node as an explicitly selected subtype.
+    T requireNonNull(T : JsonNode)()
+    {
+        return castRequiredNode!T(requireNonNull());
+    }
+
+    private static T castRequiredNode(T : JsonNode)(JsonNode node)
+    {
+        import flint.java.lang : ClassCastException;
+
+        auto typed = cast(T) node;
+        if (typed is null && node !is null)
+            throw new ClassCastException("class " ~ typeid(node).name ~ " cannot be cast to class " ~ typeid(T).name);
+        return typed;
     }
 
     /// Like `get(propertyName)`, but throws when the property is absent.
@@ -649,6 +743,11 @@ final class ObjectNode : ContainerNode
         super(nf);
     }
 
+    protected override JsonNode _at(JsonPointer pointer)
+    {
+        return get(pointer.getMatchingProperty());
+    }
+
     override JsonNodeType getNodeType() const pure nothrow @nogc
     {
         return JsonNodeType.OBJECT;
@@ -897,6 +996,11 @@ final class ArrayNode : ContainerNode
     this(JsonNodeFactory nf) pure nothrow @nogc
     {
         super(nf);
+    }
+
+    protected override JsonNode _at(JsonPointer pointer)
+    {
+        return get(pointer.getMatchingIndex());
     }
 
     override JsonNodeType getNodeType() const pure nothrow @nogc
@@ -2088,6 +2192,11 @@ final class MissingNode : JsonNode
     static MissingNode getInstance() pure nothrow
     {
         return new MissingNode();
+    }
+
+    protected override JsonNode _at(JsonPointer)
+    {
+        return this;
     }
 
     override JsonNodeType getNodeType() const pure nothrow @nogc
