@@ -211,6 +211,42 @@ interface BooleanSupplier
     bool getAsBoolean();
 }
 
+/// Java's `DoubleSupplier`.
+interface DoubleSupplier
+{
+    /// A result.
+    double getAsDouble();
+
+    /// A `DoubleSupplier` calling `dg`.
+    static DoubleSupplier of(double delegate() @safe dg)
+    {
+        return new DelegateDoubleSupplier(dg);
+    }
+}
+
+private final class DelegateDoubleSupplier : DoubleSupplier
+{
+    private double delegate() @safe dg;
+
+    this(double delegate() @safe dg) pure nothrow @nogc
+    {
+        this.dg = dg;
+    }
+
+    double getAsDouble()
+    {
+        return dg();
+    }
+}
+
+unittest
+{
+    double level = 0.25;
+    auto supplier = DoubleSupplier.of(() => level);
+    level = 0.5;
+    assert(supplier.getAsDouble() == 0.5);
+}
+
 /// Java's `IntFunction`.
 interface IntFunction(R)
 {
