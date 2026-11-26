@@ -6143,7 +6143,7 @@
 "java.time.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.time.DateTimeException":{"d":"flint.java.time.DateTimeException","status":"ported"},
 "java.time.DateTimeException#<init>(String)":{"d":"flint.java.time.DateTimeException.this","status":"ported"},
-"java.time.DateTimeException#<init>(String,Throwable)":{"d":"flint.java.time.DateTimeException.this","status":"ported"},
+"java.time.DateTimeException#<init>(String,Throwable)":{"d":"flint.java.time.DateTimeException.this","status":"ported","note":"An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized."},
 "java.time.DayOfWeek":{"d":"flint.java.time.DayOfWeek","status":"ported"},
 "java.time.DayOfWeek#FRIDAY":{"d":"flint.java.time.DayOfWeek.FRIDAY","status":"ported"},
 "java.time.DayOfWeek#MONDAY":{"d":"flint.java.time.DayOfWeek.MONDAY","status":"ported"},

@@ -28,7 +28,7 @@ Overall: types 151/1307 (12%), members 1191/15237 (8%).
 | `java.sql` | sol-data | 27 / 55 | 259 / 1236 | 21% | 286 |  |
 | `java.text` | sol-template | 5 / 32 | 19 / 518 | 4% | 10 |  |
 | `java.text.spi` | sol-template | 0 / 6 | 0 / 21 | 0% |  |  |
-| `java.time` | sol-jdk-time-text | 7 / 19 | 114 / 786 | 15% | 24 | 4 |
+| `java.time` | sol-jdk-time-text | 7 / 19 | 114 / 786 | 15% |  | 4 |
 | `java.time.chrono` | sol-jdk-time-text | 0 / 21 | 0 / 384 | 0% |  |  |
 | `java.time.format` | sol-jdk-time-text | 2 / 8 | 9 / 133 | 7% | 11 |  |
 | `java.time.temporal` | sol-jdk-time-text | 3 / 16 | 69 / 169 | 41% |  | 3 |
