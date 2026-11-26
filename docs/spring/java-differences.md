@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 130 | 134 | 0 | 2,126 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 30 | 43 | 0 | 4,379 |
+| framework | thymeleaf@3.1.7.RELEASE | 34 | 44 | 0 | 4,374 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 228 | 118 | 1,871 | 16,204 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -3820,6 +3820,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.thymeleaf.cache.AlwaysValidCacheEntryValidity#INSTANCE` | `flint.thymeleaf.cache.AlwaysValidCacheEntryValidity.INSTANCE` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) |  |
 | `org.thymeleaf.cache.NonCacheableCacheEntryValidity#INSTANCE` | `flint.thymeleaf.cache.NonCacheableCacheEntryValidity.INSTANCE` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) |  |
+
+#### org.thymeleaf.dialect
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.dialect.AbstractDialect#<init>(String)` | `flint.thymeleaf.dialect.AbstractDialect` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A default-initialized D string represents an empty name; Java rejects a null name. |
 
 #### org.thymeleaf.exceptions
 
@@ -9764,7 +9770,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf | 153 | 0 |
 | org.thymeleaf.cache | 117 | 0 |
 | org.thymeleaf.context | 168 | 0 |
-| org.thymeleaf.dialect | 23 | 0 |
+| org.thymeleaf.dialect | 18 | 0 |
 | org.thymeleaf.engine | 448 | 0 |
 | org.thymeleaf.exceptions | 3 | 0 |
 | org.thymeleaf.expression | 576 | 0 |
