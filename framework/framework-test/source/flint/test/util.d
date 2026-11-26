@@ -10,10 +10,10 @@ The helper evaluates paths against the Jackson tree (D-TEST-2).
 +/
 module flint.test.util;
 
-import flint.engine.aot.text : tryParseLong, tryParseULong;
+import flint.engine.aot.text : decimal, doubleText, tryParseLong, tryParseULong;
 import flint.jackson.databind : JsonMapper;
 import flint.jackson.databind.node : JsonNode, JsonNodeFactory, JsonNodeType;
-import flint.java.lang : AssertionError, IllegalArgumentException, String;
+import flint.java.lang : AssertionError, IllegalArgumentException, String, valueOf;
 import flint.util : Assert;
 
 @safe:
@@ -77,8 +77,6 @@ struct AssertionErrors
 
     private static string text(T)(T value)
     {
-        import std.conv : to;
-
         static if (is(T == typeof(null)))
             return "null";
         else static if (is(T : const(char)[]))
@@ -87,8 +85,32 @@ struct AssertionErrors
             return value.toString();
         else static if (is(T == class))
             return value is null ? "null" : typeid(value).name;
+        else static if (is(T == float) || is(T == double))
+            return doubleText(value);
+        else static if (is(T == bool) || __traits(isIntegral, T))
+            return valueOf(value);
+        else static if (is(T : const(ubyte)[]))
+            return byteArrayText(value, false);
+        else static if (is(T : const(byte)[]))
+            return byteArrayText(cast(const(ubyte)[]) value, true);
         else
+        {
+            import std.conv : to;
+
             return value.to!string;
+        }
+    }
+
+    private static string byteArrayText(scope const(ubyte)[] bytes, bool signedBytes) pure nothrow
+    {
+        string result = "[";
+        foreach (index, octet; bytes)
+        {
+            if (index != 0)
+                result ~= ", ";
+            result ~= decimal(signedBytes ? cast(byte) octet : cast(int) octet);
+        }
+        return result ~ "]";
     }
 }
 
