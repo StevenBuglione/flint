@@ -11011,8 +11011,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#println(long)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#write(String)` | 2 | Java forwards to the virtual UTF-16 ranged write and records checked errors. The existing method writes the slice directly and propagates errors. |
 | framework | `java.io.StringWriter#write(String)` | 2 | Java appends the text null for a null string. The existing plain D slice treats null as empty. The distinct nullable string contract requires R5. |
-| framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. |
-| framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. |
+| framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. Java derives the detail from the cause's virtual toString. The current formatter uses the cause's type name and raw detail. |
+| framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. The inherited Java detail accessor still needs R26 empty-string normalization. |
 | framework | `java.io.UncheckedIOException#getCause()` | 2 | The inherited accessor returns Throwable. Java overrides it to return IOException. |
 | framework | `java.io.Writer` | 2 | The abstract sink exists. The Java type also implements Appendable, Closeable and Flushable, which are pending. |
 | framework | `java.io.Writer#<init>()` | 2 | Java initializes the protected lock to the writer itself. The existing type has no lock field. |
