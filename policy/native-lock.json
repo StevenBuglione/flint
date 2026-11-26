@@ -962,7 +962,8 @@
       "consumers": [
         "engine-codec",
         "engine-http",
-        "engine-mq"
+        "engine-mq",
+        "java-zip"
       ],
       "dependencies": [],
       "header_strategy": "C ABI shim compiled against the pinned headers; narrow extern(C) D declarations; opaque native handles. ImportC only for the sanitized Flint shim header.",

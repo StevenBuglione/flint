@@ -495,6 +495,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-zip": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-zip-exception": {
       "repo": "framework",
       "version": "monorepo"
