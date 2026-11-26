@@ -5,6 +5,7 @@
 module endpoint_access_test;
 
 import flint.boot.actuate.endpoint : Access, cap;
+import flint.boot.actuate.endpoint.annotation : Endpoint;
 import flint.java.lang : IllegalArgumentException;
 import std.exception : assertThrown;
 
@@ -32,4 +33,30 @@ unittest
 unittest
 {
     assertThrown!IllegalArgumentException(Access.UNRESTRICTED.cap(null));
+}
+
+@("endpoint annotations carry typed default access")
+unittest
+{
+    @Endpoint("default")
+    struct DefaultEndpoint
+    {
+    }
+
+    @Endpoint(id: "read-only", defaultAccess: Access.READ_ONLY)
+    struct ReadOnlyEndpoint
+    {
+    }
+
+    enum implicit = __traits(getAttributes, DefaultEndpoint)[0];
+    enum explicit = __traits(getAttributes, ReadOnlyEndpoint)[0];
+    static assert(implicit.id == "default" && implicit.defaultAccess == Access.UNRESTRICTED);
+    static assert(explicit.id == "read-only" && explicit.defaultAccess == Access.READ_ONLY);
+    static assert(is(typeof(explicit.defaultAccess) == Access));
+
+    static assert(!__traits(compiles, () {
+            import flint.boot.actuate.endpoint.annotation : AnnotationAccess = Access;
+
+            return AnnotationAccess.READ_ONLY;
+        }()));
 }

@@ -9,20 +9,10 @@
 /// `org.springframework.boot.actuate.endpoint`: actuator endpoints.
 module flint.boot.actuate.endpoint;
 
+public import flint.boot.actuate.endpoint.access : Access;
 import flint.java.lang : IllegalArgumentException;
 
 @safe:
-
-/// Access to an endpoint and its operations, ordered from least to most permissive.
-enum Access
-{
-    /// No access to the endpoint.
-    NONE,
-    /// Access to read operations.
-    READ_ONLY,
-    /// Access to all operations.
-    UNRESTRICTED
-}
 
 /// Limit the access to the configured maximum (R20).
 Access cap(Access access, Access maxPermitted) pure nothrow @nogc

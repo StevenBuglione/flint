@@ -9,6 +9,8 @@
 /// `org.springframework.boot.actuate.endpoint.annotation`: the endpoint annotations.
 module flint.boot.actuate.endpoint.annotation;
 
+import flint.boot.actuate.endpoint.access : Access;
+
 @safe:
 
 /// Marks a bean as an actuator endpoint.
@@ -16,6 +18,9 @@ struct Endpoint
 {
     /// The endpoint's id.
     string id;
+
+    /// The level of access permitted by default.
+    Access defaultAccess = Access.UNRESTRICTED;
 }
 
 /// Marks an endpoint method as a read operation.

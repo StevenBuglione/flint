@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
-| boot | spring-boot@v4.2.0 | 44 | 97 | 2,133 | 13,329 |
+| boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
 | framework | spring-framework@v7.1.0 | 3,610 | 1,463 | 4,870 | 29,891 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -670,7 +670,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.boot.actuate.endpoint.Access` | `flint.boot.actuate.endpoint.Access` | [R1](api-mapping.md#r1-packages-and-names) | The canonical endpoint module re-exports Access so the endpoint annotation can use it from a dependency-free leaf. |
 | `org.springframework.boot.actuate.endpoint.Access#cap(Access)` | `flint.boot.actuate.endpoint.cap` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+
+#### org.springframework.boot.actuate.endpoint.annotation
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.boot.actuate.endpoint.annotation.Endpoint#defaultAccess` | `flint.boot.actuate.endpoint.annotation.Endpoint.defaultAccess` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.boot.actuate.info
 
@@ -9159,7 +9166,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.actuate.context | 6 | 0 |
 | org.springframework.boot.actuate.context.properties | 18 | 0 |
 | org.springframework.boot.actuate.endpoint | 110 | 0 |
-| org.springframework.boot.actuate.endpoint.annotation | 60 | 0 |
+| org.springframework.boot.actuate.endpoint.annotation | 59 | 0 |
 | org.springframework.boot.actuate.endpoint.invoke | 25 | 0 |
 | org.springframework.boot.actuate.endpoint.invoke.convert | 8 | 0 |
 | org.springframework.boot.actuate.endpoint.invoke.reflect | 10 | 0 |
