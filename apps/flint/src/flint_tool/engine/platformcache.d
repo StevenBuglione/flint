@@ -1176,6 +1176,7 @@ string renderPrelude(scope const PlatformModule[] modules, scope const string[] 
 {
     import std.algorithm.sorting : sort;
     import std.array : split;
+    import flint_tool.engine.dflags : spelledFor;
 
     size_t[string] index;
     foreach (position, ref item; modules)
@@ -1214,7 +1215,8 @@ string renderPrelude(scope const PlatformModule[] modules, scope const string[] 
     sort(versions);
     sort(names);
     string text;
-    foreach (line; paths ~ versions ~ dflags.split ~ names)
+    // The server is DMD's: an ldc2 build's -d-debug is its -debug.
+    foreach (line; paths ~ versions ~ spelledFor(dflags.split, "dmd") ~ names)
         text ~= line ~ "\n";
     return text;
 }
@@ -1333,6 +1335,7 @@ version (Posix) @safe unittest  // The fixture spells POSIX paths.
     assert(prelude == "-I/h/core/source\n-I/h/web/source\n-I/h/web/source/extra\n-version=A\n-version=Z\n-g\n"
             ~ "-preview=dip1000\nflint.core\nflint.core.views.page\nflint.web.http\nglue\n", prelude);
     assert(renderPrelude([core, desktop, web], null, "-g") == "-g\n");
+    assert(renderPrelude([core, desktop, web], null, "-d-debug -g") == "-debug\n-g\n");
 }
 
 @safe unittest

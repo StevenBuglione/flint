@@ -921,7 +921,7 @@ bool buildProject(ref Session session, const ref Manifest manifest, const ref Re
     }
     const compiler = request.compiler.length ? request.compiler : spec.compiler;
     result.compiler = compiler;
-    const flags = composeFlags(spec, manifest.overrideFor(request.profile), request);
+    const flags = composeFlags(spec, manifest.overrideFor(request.profile), request, compiler);
     const dubHome = projectDubHome(session, manifest.root, request.target);
     const settings = BuildSettings(spec, flags.dflags.join(" "), dubHome);
     Toolchain toolchain;
@@ -1006,8 +1006,10 @@ struct Flags
     bool noDebug;
 }
 
-private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions, const ref BuildRequest request)
+private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions,
+        const ref BuildRequest request, string compiler)
 {
+    import flint_tool.engine.dflags : spelledFor;
     import flint_tool.engine.target : linksElf, linksGlibcPie;
 
     Flags flags;
@@ -1029,6 +1031,8 @@ private Flags composeFlags(const ref ProfileSpec spec, ProfileOverride additions
         flags.dflags = kept;
     }
     flags.dflags ~= request.targetDflags ~ additions.dflags ~ request.dflags;
+    // The profiles use DMD's spelling of -debug and -version=; ldc2 takes -d-debug and -d-version=.
+    flags.dflags = spelledFor(flags.dflags, compiler);
     flags.noDebug = (additions.noDebug || request.noDebug) && !request.debugger;
     if (flags.noDebug)
         flags.dflags = withoutDebugInformation(flags.dflags);
@@ -1571,7 +1575,7 @@ private PackageRun runPackage(ref Session session, string name, string compiler,
         report.error("FLINT-E0705", name ~ ": no implementation sources", "follow its milestone task");
         return run;
     }
-    const flags = composeFlags(spec, ProfileOverride.init, request);
+    const flags = composeFlags(spec, ProfileOverride.init, request, compiler);
     string[] command = [
         toolchain.dub.path, test ? "test" : "build", ":" ~ name, "--root=" ~ session.home.root,
         "--compiler=" ~ toolchain.component(compiler).path, "--build=" ~ spec.build_type,

@@ -162,6 +162,7 @@ private ExtractionResult extractOnce(const ref ExtractionRequest request, bool n
 {
     import core.time : MonoTime;
     import std.path : buildPath;
+    import flint_tool.engine.dflags : spelledFor;
     import flint_tool.support.files : writeIfChanged;
     import flint.os : EnvVar;
     import flint_tool.support.process : Launch, capture;
@@ -187,8 +188,9 @@ private ExtractionResult extractOnce(const ref ExtractionRequest request, bool n
         launch.environment ~= EnvVar("FLINT_DMD_SERVER_PRELUDE", request.prelude);
     const started = MonoTime.currTime;
     const object = buildPath(request.directory, "flint_aot_extract.o");
+    // The flags use DMD's spelling; LDC runs the extraction only when the toolchain has no DMD.
     const outcome = capture([request.compiler, "-c", "-of=" ~ object,
-        "-I" ~ request.directory] ~ switches ~ request.flags ~ [root], launch);
+        "-I" ~ request.directory] ~ switches ~ spelledFor(request.flags, request.compiler) ~ [root], launch);
     removeObject(object);
     result.milliseconds = (MonoTime.currTime - started).total!"msecs";
     if (native && outcome.started && !outcome.ok && rejectsNativeSwitch(outcome.combined()))

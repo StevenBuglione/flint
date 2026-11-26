@@ -356,6 +356,19 @@ class ProjectLifecycleTests(unittest.TestCase):
         resolved = json.loads((self.project / ('.flint/build/dev/demo' + EXE + '.receipt.json')).read_text(encoding='utf-8'))
         self.assertEqual(resolved['outputs'][0]['sha256'], install_toolchains.sha256_file(artifact))
 
+    def test_the_default_profile_builds_with_each_compiler(self):
+        # The dev profile spells -debug as DMD does; ldc2 rejects it and takes -d-debug, so flint respells the
+        # profile's flags for the compiler that builds. DMD builds last and leaves the usual dev output.
+        for compiler in ('ldc2', 'dmd'):
+            with self.subTest(compiler=compiler):
+                status, built = flint_json('build', '--compiler', compiler, cwd=self.project)
+                self.assertEqual(status, 0, built)
+                receipt = json.loads((self.project / ('.flint/build/dev/demo' + EXE + '.receipt.json')).read_text(encoding='utf-8'))
+                expected = profiles.dflags('dev') + profiles.link_dflags('dev')
+                if compiler == 'ldc2':
+                    expected = ['-d-debug' if flag == '-debug' else flag for flag in expected]
+                self.assertEqual(receipt['profile']['effective_dflags'], expected)
+
     def test_a_dev_binary_changed_after_its_build_is_refused_not_hashed(self):
         status, built = flint_json('build', cwd=self.project)
         self.assertEqual(status, 0, built)

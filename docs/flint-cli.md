@@ -362,7 +362,7 @@ defines = ["SHOP_FAST=1"]
 
 ### Profiles
 
-`policy/profiles.toml` defines the canonical profiles. `flint`, `tools/ci.py` and `tools/measure_builds.py` all read it. Its `elf_lflags` are added to every Linux ELF link, glibc or musl. The release and size profiles use them to pass ThinLTO's code-generation level (`-plugin-opt=O3`, and `O2` for `-Oz`, as `ldc2` itself would). DUB's LDC link step forwards `--flto` but not `-O`, so without them the linker plugin code-generates every Flint function at O0.
+`policy/profiles.toml` defines the canonical profiles. `flint`, `tools/ci.py` and `tools/measure_builds.py` all read it. Its `elf_lflags` are added to every Linux ELF link, glibc or musl. The release and size profiles use them to pass ThinLTO's code-generation level (`-plugin-opt=O3`, and `O2` for `-Oz`, as `ldc2` itself would). DUB's LDC link step forwards `--flto` but not `-O`, so without them the linker plugin code-generates every Flint function at O0. The profiles spell the conditional-compilation switches as DMD does (`-debug`, `-debug=X`, `-version=X`). When `ldc2` builds, flint respells them as `-d-debug`, `-d-debug=X` and `-d-version=X`, so `flint build --compiler ldc2` works in every profile. The same applies to `--dflags` and `flint.toml` additions.
 
 | Profile | Compiler | Flags |
 | --- | --- | --- |
