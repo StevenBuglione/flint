@@ -2664,7 +2664,6 @@
       "tools/jackson/databind/deser/GenericTypeDeserTest.java",
       "tools/jackson/databind/deser/JacksonTypesDeserTest.java",
       "tools/jackson/databind/deser/MergePolymorphicTest.java",
-      "tools/jackson/databind/deser/NullHandlingDeserTest.java",
       "tools/jackson/databind/deser/NullStringValueDeserTest.java",
       "tools/jackson/databind/deser/PropertyAliasTest.java",
       "tools/jackson/databind/deser/PropertyFilteringDeserTest.java",

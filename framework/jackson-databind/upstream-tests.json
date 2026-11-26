@@ -289,8 +289,24 @@
       "status": "deferred"
     },
     "tools/jackson/databind/deser/NullHandlingDeserTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/null_handling_deser_test.d",
+      "methods": {
+        "ported": [
+          "testNull"
+        ],
+        "skipped": {
+          "testAnySetterNulls": "Custom null-value deserialization and its ObjectReader path are version-gated.",
+          "testContentsNullFailForArrays": "Setting content nulls to FAIL through default setter configuration is version-gated.",
+          "testContentsNullFailForCollections": "Setting content nulls to FAIL through default setter configuration is version-gated.",
+          "testContentsNullFailForMaps": "Setting content nulls to FAIL through default setter configuration is version-gated.",
+          "testCustomRootNulls": "Custom root getNullValue deserialization is version-gated.",
+          "testListOfNulls": "Custom list element getNullValue deserialization is version-gated.",
+          "testMapOfNulls": "Custom map value getNullValue deserialization is version-gated.",
+          "testPolymorphicDataNull": "Polymorphic object typing for null data is version-gated."
+        }
+      },
+      "note": "The active fixture checks erased, string and bean-property nulls. The erased Java Object value maps to Any under R23.",
+      "status": "partial"
     },
     "tools/jackson/databind/deser/NullStringValueDeserTest.java": {
       "phase": "2",
