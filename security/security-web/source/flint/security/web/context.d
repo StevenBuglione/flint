@@ -15,6 +15,7 @@
 module flint.security.web.context;
 
 import flint.engine.aot.any : Any;
+import flint.engine.aot.name : typeNameOf;
 import flint.jakarta.servlet : FilterChain;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.security.core.context : SecurityContext, SecurityContextHolder;
@@ -49,7 +50,7 @@ class RequestAttributeSecurityContextRepository : SecurityContextRepository
     /// Save it as an attribute.
     void saveContext(SecurityContext context, HttpServletRequest request, HttpServletResponse)
     {
-        request.setAttribute(DEFAULT_REQUEST_ATTR_NAME, Any.of(cast(Object) context));
+        request.setAttribute(DEFAULT_REQUEST_ATTR_NAME, Any.ofObject(cast(Object) context, typeNameOf!Object));
     }
 
     /// Whether the attribute is set.

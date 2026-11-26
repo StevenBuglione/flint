@@ -46,6 +46,12 @@ private bool present(const(FastField)[] written, string name) pure nothrow @nogc
     return false;
 }
 
+// Share startup field appends across the built-in writers.
+private void appendField(ref FastField[] written, string name, string value)
+{
+    written ~= FastField(name, value);
+}
+
 /// Writes headers to a response (Spring Security's `HeaderWriter`).
 interface HeaderWriter
 {
@@ -61,7 +67,8 @@ class HeaderWriterFilter : SecurityFilter
     /// A filter applying `headerWriters` in order.
     this(HeaderWriter[] headerWriters...)
     {
-        this.headerWriters = headerWriters.dup;
+        this.headerWriters = new HeaderWriter[headerWriters.length];
+        this.headerWriters[] = headerWriters[];
     }
 
     override void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -80,17 +87,18 @@ class HeaderWriterFilter : SecurityFilter
     {
         foreach (writer; headerWriters)
         {
-            if (auto known = cast(XContentTypeOptionsHeaderWriter) writer)
+            auto implementation = cast(Object) writer;
+            if (auto known = cast(XContentTypeOptionsHeaderWriter) implementation)
                 known.appendFields(secure, fields);
-            else if (auto known = cast(XXssProtectionHeaderWriter) writer)
+            else if (auto known = cast(XXssProtectionHeaderWriter) implementation)
                 known.appendFields(secure, fields);
-            else if (auto known = cast(CacheControlHeadersWriter) writer)
+            else if (auto known = cast(CacheControlHeadersWriter) implementation)
                 known.appendFields(secure, fields);
-            else if (auto known = cast(HstsHeaderWriter) writer)
+            else if (auto known = cast(HstsHeaderWriter) implementation)
                 known.appendFields(secure, fields);
-            else if (auto known = cast(XFrameOptionsHeaderWriter) writer)
+            else if (auto known = cast(XFrameOptionsHeaderWriter) implementation)
                 known.appendFields(secure, fields);
-            else if (auto known = cast(StaticHeadersWriter) writer)
+            else if (auto known = cast(StaticHeadersWriter) implementation)
                 known.appendFields(secure, fields);
             else
                 return false;
@@ -115,7 +123,7 @@ final class XContentTypeOptionsHeaderWriter : HeaderWriter
     package(flint.security) void appendFields(bool, ref FastField[] written)
     {
         if (!present(written, name))
-            written ~= FastField(name, value);
+            appendField(written, name, value);
     }
 }
 
@@ -150,7 +158,7 @@ final class XXssProtectionHeaderWriter : HeaderWriter
     package(flint.security) void appendFields(bool, ref FastField[] written)
     {
         if (!present(written, name))
-            written ~= FastField(name, headerValue);
+            appendField(written, name, headerValue);
     }
 }
 
@@ -213,7 +221,7 @@ final class HstsHeaderWriter : HeaderWriter
     package(flint.security) void appendFields(bool secure, ref FastField[] written)
     {
         if (secure && !present(written, name))
-            written ~= FastField(name, value());
+            appendField(written, name, value());
     }
 
     private string value() const
@@ -255,7 +263,7 @@ final class XFrameOptionsHeaderWriter : HeaderWriter
     package(flint.security) void appendFields(bool, ref FastField[] written)
     {
         if (!present(written, name))
-            written ~= FastField(name, mode);
+            appendField(written, name, mode);
     }
 }
 
@@ -269,7 +277,8 @@ final class StaticHeadersWriter : HeaderWriter
     this(string name, string[] values...)
     {
         this.name = name;
-        this.values = values.dup;
+        this.values = new string[values.length];
+        this.values[] = values[];
     }
 
     /// Add each value unless the header is present.
@@ -286,6 +295,6 @@ final class StaticHeadersWriter : HeaderWriter
         if (present(written, name))
             return;
         foreach (value; values)
-            written ~= FastField(name, value);
+            appendField(written, name, value);
     }
 }

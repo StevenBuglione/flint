@@ -49,7 +49,7 @@ class DefaultSecurityFilterChain : SecurityFilterChain
     this(RequestMatcher requestMatcher, Filter[] filters...)
     {
         this.requestMatcher = requestMatcher;
-        this.filters = filters.dup;
+        this.filters = copyFilters(filters);
     }
 
     /// The matcher.
@@ -61,7 +61,7 @@ class DefaultSecurityFilterChain : SecurityFilterChain
     /// The filters.
     Filter[] getFilters()
     {
-        return filters.dup;
+        return copyFilters(filters);
     }
 
     /// Whether the matcher matches.
@@ -88,13 +88,13 @@ class FilterChainProxy : Filter, FastFilter
         foreach (chain; filterChains)
             if (chain is null)
                 throw new IllegalArgumentException("filterChains cannot contain null elements");
-        this.filterChains = filterChains.dup;
+        this.filterChains = copySecurityFilterChains(filterChains);
     }
 
     /// The chains.
     SecurityFilterChain[] getFilterChains()
     {
-        return filterChains.dup;
+        return copySecurityFilterChains(filterChains);
     }
 
     /// The filters of the first chain matching `request`; empty when none does.
@@ -259,4 +259,18 @@ abstract class SecurityFilter : Filter
 
     /// Filter one HTTP request.
     protected abstract void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain);
+}
+
+private Filter[] copyFilters(scope Filter[] source)
+{
+    auto result = new Filter[source.length];
+    result[] = source[];
+    return result;
+}
+
+private SecurityFilterChain[] copySecurityFilterChains(scope SecurityFilterChain[] source)
+{
+    auto result = new SecurityFilterChain[source.length];
+    result[] = source[];
+    return result;
 }

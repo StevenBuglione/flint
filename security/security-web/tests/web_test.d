@@ -12,7 +12,7 @@ import flint.security.core.context : SecurityContextHolder;
 import flint.security.core.userdetails : User;
 import flint.security.crypto.password : NoOpPasswordEncoder;
 import flint.security.provisioning : InMemoryUserDetailsManager;
-import flint.security.web : DefaultSecurityFilterChain, FilterChainProxy;
+import flint.security.web : DefaultSecurityFilterChain, FilterChainProxy, SecurityFilterChain;
 import flint.security.web.access : AuthorizationFilter, ExceptionTranslationFilter,
     RequestAuthorizationContext, RequestMatcherDelegatingAuthorizationManager;
 import flint.security.web.authentication : AnonymousAuthenticationFilter;
@@ -41,6 +41,29 @@ private HeaderWriterFilter headers(XFrameOptionsHeaderWriter.XFrameOptionsMode f
 {
     return new HeaderWriterFilter(new XContentTypeOptionsHeaderWriter, new XXssProtectionHeaderWriter,
             new CacheControlHeadersWriter, new XFrameOptionsHeaderWriter(frame));
+}
+
+@("Security filter chains own their input arrays and getter snapshots")
+unittest
+{
+    auto filter = headers(XFrameOptionsHeaderWriter.XFrameOptionsMode.DENY);
+    Filter[] filters = [filter];
+    auto chain = new DefaultSecurityFilterChain(AnyRequestMatcher.INSTANCE(), filters);
+    SecurityFilterChain[] chains = [chain];
+    auto proxy = new FilterChainProxy(chains);
+
+    filters[0] = null;
+    chains[0] = null;
+    auto filtersSnapshot = chain.getFilters();
+    auto chainsSnapshot = proxy.getFilterChains();
+    assert(filtersSnapshot[0] is filter);
+    assert(chainsSnapshot[0] is chain);
+
+    filtersSnapshot[0] = null;
+    chainsSnapshot[0] = null;
+    assert(chain.getFilters()[0] is filter);
+    assert(proxy.getFilterChains()[0] is chain);
+    assert(new FilterChainProxy().getFilterChains() is null);
 }
 
 /// petclinic's DisableSecurityConfig: csrf off, permitAll, frame options SAMEORIGIN.
