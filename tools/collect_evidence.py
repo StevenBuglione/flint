@@ -338,7 +338,8 @@ def validate_builds(builds, directory, commit):
         group = 'packages' if name in packages else 'modules' if name in modules else None
         expected = (builds[group][name]['size_detail'][profile][variant] if group
                     else builds['apps'][name][profile]['binary_bytes'])
-        require(expected == sizes[(name, profile, variant)]['binary_bytes'], 'size aggregate differs from stripped binary observation')
+        observed = sizes[(name, profile, variant)].get('loadable_bytes' if group else 'binary_bytes')
+        require(expected == observed, 'size aggregate differs from stripped binary observation')
         if group:
             require(builds[group][name]['size_detail'][profile][variant + '_sha256'] == sizes[(name, profile, variant)]['sha256'],
                     'package or module binary identity differs from stripped observation')

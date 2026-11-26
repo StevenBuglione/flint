@@ -17,8 +17,8 @@ can also carry its own budget for the bytes it adds to a linked executable:
 
 The fixture is a minimal executable that uses the module and the baseline the same executable without it.
 tools/measure_builds.py builds both with the release (O3) and size (Oz) profiles and records the larger
-stripped-size difference as the module's `incremental_linked_bytes`, exactly as for packages. tools/gates.py
-fails a module above its budget or one that grew past the regression ratio against the base commit. Every
+difference in loadable section bytes (the allocated sections, not the page-rounded file size) as the module's
+`incremental_linked_bytes`, exactly as for packages. tools/gates.py fails a module above its budget or one that grew past the regression ratio against the base commit. Every
 module of a package in `required_packages` must have a budget, so a package opts in once and every module
 it adds later needs one.
 """

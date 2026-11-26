@@ -16,9 +16,9 @@ with the same keys as a package's and a probe pair, as packages/<name>/bench doe
 The probe follows packages' PROBE_CONTRACT.md: the fixture executes a representative public operation of the module
 with observable output, and the baseline is the same program without the module. tools/measure_builds.py measures
 each module as it measures a package (nine cold and nine edited-source DMD and LDC builds, compiler peak RSS, the
-module's own template instances, and the larger O3/Oz stripped-size difference), into the evidence's `framework`
-section. tools/gates.py then requires a measurement for exactly the modules framework.json lists, each within its
-budget and, against a base commit, within the regression ratios of policy/budgets.json. A module without a budget
+module's own template instances, and the larger O3/Oz difference in loadable section bytes), into the
+evidence's `framework` section. tools/gates.py then requires a measurement for exactly the modules framework.json
+lists, each within its budget and, against a base commit, within the regression ratios of policy/budgets.json. A module without a budget
 or a probe fails: missing evidence never passes.
 
 A module may also carry `"provisional": [<budget keys>]`: values set as placeholders until the quiet-window timings

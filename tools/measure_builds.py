@@ -438,11 +438,49 @@ def stripped_size(target, strip, readelf, workspace, log):
               'libgcc_s.so.1', 'libstdc++.so.6', 'libatomic.so.1', 'ld-linux-x86-64.so.2'}
     if set(needed) - system:
         raise RuntimeError('uncounted shared dependency; static profile or full closure measurement required: ' + str(needed))
+    sections_command = [readelf, '--wide', '--sections', target]
+    sections = run_checked(sections_command, workspace)
     with log.open('a', encoding='utf-8') as output:
         output.write('\n' + json.dumps({'strip_command': [str(x) for x in strip_command],
-                                       'audit_command': [str(x) for x in audit_command]}) + '\n' + audit.stdout + audit.stderr)
-    return {'binary_bytes': target.stat().st_size, 'sha256': digest(target),
-            'dynamic_system_dependencies': needed, 'log_sha256': digest(log)}
+                                       'audit_command': [str(x) for x in audit_command],
+                                       'sections_command': [str(x) for x in sections_command]}) + '\n' + audit.stdout
+                     + audit.stderr + sections.stdout + sections.stderr)
+    return {'binary_bytes': target.stat().st_size, 'loadable_bytes': elf_loadable_bytes(sections.stdout),
+            'sha256': digest(target), 'dynamic_system_dependencies': needed, 'log_sha256': digest(log)}
+
+
+def elf_loadable_bytes(listing):
+    """The bytes a program occupies once loaded: the sum of its allocated (SHF_ALLOC, flag A) sections from
+    `readelf --wide --sections`, .bss included and the thread-local template .tbss left out (it is per thread).
+    Unlike the file size it is not rounded to pages, so a module's marginal cost reads as what it adds (decisions.md
+    2026-11-26 01:20Z: incremental_linked_bytes measures loadable section bytes)."""
+    total = 0
+    for line in listing.splitlines():
+        match = re.match(r'\s*\[\s*\d+\]\s+(.*)$', line)
+        if not match:
+            continue
+        fields = match.group(1).split()
+        # name type address offset size entsize [flags] link info align
+        if len(fields) != 10 or fields[0] == '.tbss':
+            continue
+        if 'A' in fields[6]:
+            total += int(fields[4], 16)
+    return total
+
+
+def macho_loadable_bytes(listing):
+    """The Mach-O counterpart of elf_loadable_bytes: the sizes of every section `otool -l` lists (zero-fill included,
+    thread-local zero-fill left out)."""
+    total, name = 0, None
+    for line in listing.splitlines():
+        words = line.split()
+        if len(words) == 2 and words[0] == 'sectname':
+            name = words[1]
+        elif len(words) == 2 and words[0] == 'size' and name is not None:
+            if name != '__thread_bss':
+                total += int(words[1], 16)
+            name = None
+    return total
 
 
 def stripped_size_macho(target, strip, otool, workspace, log):
@@ -457,11 +495,15 @@ def stripped_size_macho(target, strip, otool, workspace, log):
     if unexpected:
         raise RuntimeError('uncounted shared dependency; static profile or full closure measurement required: '
                            + str(unexpected))
+    sections_command = [otool, '-l', target]
+    sections = run_checked(sections_command, workspace)
     with log.open('a', encoding='utf-8') as output:
         output.write('\n' + json.dumps({'strip_command': [str(x) for x in strip_command],
-                                       'audit_command': [str(x) for x in audit_command]}) + '\n' + audit.stdout + audit.stderr)
-    return {'binary_bytes': target.stat().st_size, 'sha256': digest(target),
-            'dynamic_system_dependencies': needed, 'log_sha256': digest(log)}
+                                       'audit_command': [str(x) for x in audit_command],
+                                       'sections_command': [str(x) for x in sections_command]}) + '\n' + audit.stdout
+                     + audit.stderr + sections.stdout + sections.stderr)
+    return {'binary_bytes': target.stat().st_size, 'loadable_bytes': macho_loadable_bytes(sections.stdout),
+            'sha256': digest(target), 'dynamic_system_dependencies': needed, 'log_sha256': digest(log)}
 
 
 def go_compile_gate_trials(go, name, source, go_env, temporary, logs, result):
@@ -860,7 +902,8 @@ def main(argv=None):
             print(name, 'O3', row['O3']['binary_bytes'], 'Oz', row['Oz']['binary_bytes'])
         return 0
     def size_delta(name, fixture):
-        """The larger O3/Oz stripped-size difference of a fixture over its baseline, and the sizes."""
+        """The larger O3/Oz difference in loadable bytes of a fixture over its baseline, and the sizes (each variant's
+        loadable bytes, plus its stripped file size as `<variant>_file_bytes`)."""
         differences = []; sizes = {}
         for profile in ['O3', 'Oz']:
             sizes[profile] = {}
@@ -873,7 +916,8 @@ def main(argv=None):
                     logfile.write_text(json.dumps({'command': cmd, 'dflags': env['DFLAGS']}) + '\n' + build.stdout + build.stderr)
                     target = binary(workspace, fixture[variant], args.ldc)
                     measured_size = stripped_size(target, args.strip, args.readelf, workspace, logfile)
-                    sizes[profile][variant] = measured_size['binary_bytes']
+                    sizes[profile][variant] = measured_size['loadable_bytes']
+                    sizes[profile][variant + '_file_bytes'] = measured_size['binary_bytes']
                     sizes[profile][variant + '_sha256'] = measured_size['sha256']
                     result['size_trials'].append(dict(measured_size, fixture=name, profile=profile,
                                                        variant=variant, log=str(logfile.relative_to(args.output.parent))))
