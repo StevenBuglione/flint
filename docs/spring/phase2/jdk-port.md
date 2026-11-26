@@ -111,6 +111,7 @@ closure report. A cap measured against a different baseline names its
 repository-relative D control source in `control`. It counts DMD templates
 from one invocation on the leaf source and its exact probe. Existing caps
 that use two invocations specify `"template_compile": "separate"`.
+The DMD invocation uses the native provider versions resolved by DUB.
 The JSON report includes all observations and any overruns.
 Use `--enforce-leaf-budgets` with the standalone audit to make overruns fail.
 The definition-of-done step reports overruns while their historical

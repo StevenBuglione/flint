@@ -493,7 +493,8 @@ Discarded input sections
             for directory in (root / 'policy', modules / 'data', package / 'closure'):
                 directory.mkdir(parents=True)
             (root / 'dub.sdl').write_text('name "flint"\ntargetType "none"\nsubPackage "framework/java"\n')
-            (package / 'dub.sdl').write_text('name "java"\ntargetType "library"\n')
+            (package / 'dub.sdl').write_text('name "java"\ntargetType "library"\n'
+                                             'versions "FlintNativeWitness" platform="linux"\n')
             (root / 'policy/framework.json').write_text(
                 '{"modules":{"java":{"directory":"framework/java","dependencies":[]}}}')
             (root / 'policy/packages.json').write_text('{"packages":{}}')
@@ -501,6 +502,7 @@ Discarded input sections
                                                   'immutable int[6] values = [7, 5, 2, 8, 4, 0];\n')
             (modules / 'package.d').write_text('module flint.java;\npublic import flint.java.sample;\n@safe:\n')
             (modules / 'sample.d').write_text('module flint.java.sample;\n@safe:\n'
+                'version (FlintNativeWitness) {} else static assert(0, "missing native DUB version");\n'
                 'int lookup(size_t index) { import flint.java.data.table : values; return values[index % values.length]; }\n')
             (package / 'closure/sample.d').write_text('module flint.java.sample_probe;\n'
                                                       'import flint.java.sample : lookup;\n@safe:\n'

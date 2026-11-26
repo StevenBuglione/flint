@@ -695,14 +695,19 @@ def run(command, cwd, env=None):
     return result.stdout
 
 
+def write_probe_recipe(directory, package, link_map=None):
+    dependency = f'dependency "flint:{package}" path=".."\n' if package else ''
+    link_flag = f'lflags "-Map={link_map}"\n' if link_map is not None else ''
+    (directory / 'dub.sdl').write_text('name "jdk-closure-probe"\ntargetName "probe"\n'
+        'targetType "executable"\nsourcePaths "."\nimportPaths "."\ntargetPath "build"\n'
+        + link_flag + dependency)
+
+
 def build_probe(workspace, directory, package, source, flags, evidence):
     directory.mkdir()
     shutil.copyfile(source, directory / 'app.d')
     link_map = directory / 'link.map'
-    dependency = f'dependency "flint:{package}" path=".."\n' if package else ''
-    (directory / 'dub.sdl').write_text('name "jdk-closure-probe"\ntargetName "probe"\n'
-        'targetType "executable"\nsourcePaths "."\nimportPaths "."\ntargetPath "build"\n'
-        f'lflags "-Map={link_map}"\n{dependency}')
+    write_probe_recipe(directory, package, link_map)
     command, cwd, env = dub_invocation('dub', workspace, directory.name, 'ldc2', flags, os.environ)
     build_log = run(command + ['-v'], cwd, env)
     binary = directory / 'build' / 'probe'
@@ -732,9 +737,23 @@ def template_imports(package, owners):
     return [owners[name][1] + '/source' for name in sorted(seen)]
 
 
-def count_source_templates(workspace, sources, imports, evidence, name):
+def native_template_flags(workspace, package):
+    directory = workspace / '.jdk-template-settings'
+    directory.mkdir()
+    (directory / 'app.d').write_text('module app;\nint main() { return 0; }\n')
+    write_probe_recipe(directory, package)
+    command, cwd, env = dub_invocation('dub', workspace, directory.name, 'dmd', [], os.environ)
+    command[1] = 'describe'
+    settings = json.loads(run(command, cwd, env))
+    # Direct DMD compilation still semantically imports the checked provider bindings.
+    versions = {version for target in settings['targets'] for version in target['buildSettings'].get('versions', [])
+                if version.startswith('FlintNative')}
+    return ['-version=' + version for version in sorted(versions)]
+
+
+def count_source_templates(workspace, sources, flags, evidence, name):
     command = ['dmd', '-preview=dip1000', '-vtemplates', '-c', '-o-',
-               *('-I' + path for path in imports), *(str(source) for source in sources)]
+               *flags, *(str(source) for source in sources)]
     result = subprocess.run(command, cwd=workspace, text=True, capture_output=True)
     output = result.stdout + result.stderr
     if evidence:
@@ -747,7 +766,8 @@ def count_source_templates(workspace, sources, imports, evidence, name):
 
 def measure_leaf_templates(workspace, package, entries, budgets, evidence):
     owners = package_repos(ROOT)
-    imports = template_imports(package, owners)
+    flags = ['-I' + path for path in template_imports(package, owners)]
+    flags += native_template_flags(workspace, package)
     directory = workspace / owners[package][1]
     for leaf, budget in budgets.items():
         path = directory / 'source' / leaf.replace('.', '/')
@@ -756,17 +776,17 @@ def measure_leaf_templates(workspace, package, entries, budgets, evidence):
             implementation = path / 'package.d'
         mode = budget.get('template_compile', 'joint')
         if mode == 'separate':
-            leaf_count = count_source_templates(workspace, [implementation], imports, evidence, leaf)
+            leaf_count = count_source_templates(workspace, [implementation], flags, evidence, leaf)
         for name, entry in entries[leaf].items():
             if 'source' not in entry:
                 continue
             fixture = directory / entry['source']
             label = f'{leaf}-{name}'
             if mode == 'separate':
-                probe_count = count_source_templates(workspace, [fixture], imports, evidence, label)
+                probe_count = count_source_templates(workspace, [fixture], flags, evidence, label)
                 detail = {'leaf': leaf_count, 'probe': probe_count}
             else:
-                detail = {'joint': count_source_templates(workspace, [implementation, fixture], imports,
+                detail = {'joint': count_source_templates(workspace, [implementation, fixture], flags,
                                                           evidence, label)}
             yield leaf, name, {
                 'limits': {key: budget[key] for key in sorted(LEAF_BUDGET_METRICS)},
