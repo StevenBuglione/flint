@@ -54,5 +54,9 @@
   "flint.java.lang.math": {
     "incremental_linked_bytes": 2227,
     "template_instances": 4
+  },
+  "flint.java.util.function_.function_": {
+    "incremental_linked_bytes": 933,
+    "template_instances": 41
   }
 }
