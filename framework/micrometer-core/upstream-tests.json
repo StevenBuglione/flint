@@ -534,8 +534,17 @@
       "status": "deferred"
     },
     "io/micrometer/core/instrument/distribution/DistributionStatisticConfigTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/distribution_statistic_config_test.d",
+      "methods": {
+        "ported": [
+          "bufferLengthValidation",
+          "expectedValueRangeValidation",
+          "merge",
+          "percentilesValidation",
+          "serviceLevelObjectiveBoundariesValidation"
+        ]
+      },
+      "status": "ported"
     },
     "io/micrometer/core/instrument/distribution/FixedBoundaryHistogramTest.java": {
       "phase": "2",

@@ -3499,7 +3499,6 @@
       "io/micrometer/core/instrument/config/ValidatedTest.java",
       "io/micrometer/core/instrument/config/validate/PropertyValidatorTest.java",
       "io/micrometer/core/instrument/cumulative/CumulativeFunctionTimerTest.java",
-      "io/micrometer/core/instrument/distribution/DistributionStatisticConfigTest.java",
       "io/micrometer/core/instrument/distribution/FixedBoundaryHistogramTest.java",
       "io/micrometer/core/instrument/distribution/FixedBoundaryVictoriaMetricsHistogramTest.java",
       "io/micrometer/core/instrument/distribution/HistogramGaugesTest.java",

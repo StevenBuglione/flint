@@ -1,10 +1,12 @@
 module app;
 
 import core.stdc.stdio : fputc, stdout;
+import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit;
 import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.function_ : Supplier;
 import flint.micrometer.core.instrument : Clock, MockClock, Tags, Timer;
+import flint.micrometer.core.instrument.distribution : DistributionStatisticConfig, TimeWindowMax;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 
 @safe:
@@ -41,6 +43,23 @@ private bool verifyWrappers(Timer timer, RegionCallable callable, RegionSupplier
         && wrappedDelegate() == region && timer.count() == 6;
 }
 
+private bool verifyDistribution(MockClock clock)
+{
+    auto config = DistributionStatisticConfig.builder().percentiles(0.95)
+        .expiry(Duration.ofMillis(2)).bufferLength(2).build().merge(DistributionStatisticConfig.DEFAULT);
+    auto percentiles = config.getPercentiles();
+    if (percentiles.isNull() || percentiles.get().length != 1 || percentiles.get()[0] != 0.95
+            || config.isPercentileHistogram().get())
+        return false;
+    auto maximum = new TimeWindowMax(clock, config);
+    maximum.record(3.0);
+    clock.add(3, TimeUnit.MILLISECONDS);
+    if (maximum.poll() != 3.0)
+        return false;
+    clock.add(1, TimeUnit.MILLISECONDS);
+    return maximum.poll() == 0.0;
+}
+
 void main(string[] args)
 {
     string region = args.length > 1 ? args[1] : "west";
@@ -63,6 +82,8 @@ void main(string[] args)
     if (timer.record(supplier) != region || timer.count() != 3)
         return;
     if (!verifyWrappers(timer, callable, supplier, region))
+        return;
+    if (!verifyDistribution(clock))
         return;
     foreach (character; tags.toString())
         fputc(character, stdout);
