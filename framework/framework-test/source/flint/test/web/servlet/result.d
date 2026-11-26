@@ -4,6 +4,7 @@
 Ported from spring-projects/spring-framework v7.1.0,
 spring-test/src/main/java/org/springframework/test/web/servlet/result/ (MockMvcResultMatchers.java,
 StatusResultMatchers.java, ContentResultMatchers.java, HeaderResultMatchers.java, JsonPathResultMatchers.java,
+ModelResultMatchers.java, ViewResultMatchers.java,
 MockMvcResultHandlers.java, PrintingResultHandler.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
@@ -14,11 +15,16 @@ Hamcrest-matcher overloads are not ported (Hamcrest is a separate library).
 module flint.test.web.servlet.result;
 
 import flint.http : HttpHeaders, HttpStatus, MediaType;
-import flint.java.lang : AssertionError, IllegalStateException, Integer, Long, String;
+import flint.engine.aot.any : Any;
+import flint.java.lang : AssertionError, IllegalStateException, Integer, Long, String, valueOf;
 import flint.java.nio.charset : Charset;
 import flint.test.json : JsonComparator, JsonCompareMode, JsonComparison;
 import flint.test.util : AssertionErrors, JsonPathExpectationsHelper;
 import flint.test.web.servlet : MvcResult, ResultHandler, ResultMatcher;
+import flint.util : AntPathMatcher;
+import flint.validation : BindingResult, Errors;
+import flint.web.servlet : ModelAndView;
+import flint.web.util : UriComponentsBuilder;
 import std.typecons : Nullable;
 
 @safe:
@@ -52,6 +58,18 @@ struct MockMvcResultMatchers
         return new JsonPathResultMatchers(expression, args);
     }
 
+    /// Matchers on model attributes and binding errors.
+    static ModelResultMatchers model()
+    {
+        return new ModelResultMatchers;
+    }
+
+    /// Matchers on the selected view.
+    static ViewResultMatchers view()
+    {
+        return new ViewResultMatchers;
+    }
+
     /// Asserts the forwarded URL.
     static ResultMatcher forwardedUrl(string expectedUrl)
     {
@@ -63,9 +81,262 @@ struct MockMvcResultMatchers
     /// Asserts the redirected URL.
     static ResultMatcher redirectedUrl(string expectedUrl)
     {
+        return redirectedUrl(nullableText(expectedUrl));
+    }
+
+    /// A null expected URL asserts that no redirect occurred (R5).
+    static ResultMatcher redirectedUrl(Nullable!string expectedUrl)
+    {
         return ResultMatcher.of((MvcResult result) {
-            AssertionErrors.assertEquals("Redirected URL", expectedUrl, result.getResponse().getRedirectedUrl());
+            assertTextEquals("Redirected URL", expectedUrl, result.getResponse().getRedirectedUrl());
         });
+    }
+
+    /// Asserts the expanded and encoded redirect URL.
+    static ResultMatcher redirectedUrlTemplate(Args...)(string urlTemplate, Args uriVars)
+    {
+        string[Args.length] values;
+        static foreach (index; 0 .. Args.length)
+            values[index] = uriVariableText(uriVars[index]);
+        return redirectedUrl(expandUrlTemplate(urlTemplate, values[]));
+    }
+
+    /// Asserts the redirect URL against an Ant-style path pattern.
+    static ResultMatcher redirectedUrlPattern(string urlPattern)
+    {
+        auto matcher = new AntPathMatcher;
+        matcher.setCachePatterns(false);
+        return ResultMatcher.of((MvcResult result) {
+            AssertionErrors.assertTrue("'" ~ urlPattern ~ "' is not an Ant-style path pattern",
+                matcher.isPattern(urlPattern));
+            const url = result.getResponse().getRedirectedUrl();
+            AssertionErrors.assertTrue("Redirected URL '" ~ (url is null
+                ? "null" : url) ~ "' does not match the expected URL pattern '" ~ urlPattern ~ "'",
+                url !is null && matcher.match(urlPattern, url));
+        });
+    }
+}
+
+private string uriVariableText(T)(T value)
+{
+    static if (is(T == Any))
+        return value.isNull() ? null : (value.asObject() is null ? value.toString() : valueOf(value.asObject()));
+    else static if (is(T == typeof(null)))
+        return null;
+    else static if (is(T == class) || is(T == interface) || is(T : const(char)[]))
+        return value is null ? null : valueOf(value);
+    else
+        return valueOf(value);
+}
+
+private string expandUrlTemplate(string urlTemplate, scope string[] values)
+{
+    return UriComponentsBuilder.fromUriString(urlTemplate).buildAndExpand(values).encode().toUriString();
+}
+
+private Nullable!string nullableText(string text)
+{
+    return text is null ? Nullable!string.init : Nullable!string(text);
+}
+
+private void assertTextEquals(string message, Nullable!string expected, string actual)
+{
+    if (expected.isNull ? actual !is null : actual is null || expected.get() != actual)
+        AssertionErrors.fail(message, expected.isNull ? "null" : expected.get(), actual is null ? "null" : actual);
+}
+
+private void assertCount(string message, int expected, int actual)
+{
+    if (expected != actual)
+        AssertionErrors.fail(message, Integer.toString(expected), Integer.toString(actual));
+}
+
+private ModelAndView requireModelAndView(MvcResult result)
+{
+    auto modelAndView = result.getModelAndView();
+    AssertionErrors.assertNotNull("No ModelAndView found", modelAndView is null);
+    return modelAndView;
+}
+
+/// `ViewResultMatchers`.
+class ViewResultMatchers
+{
+    /// Obtain the standard instance through `MockMvcResultMatchers.view()`.
+    protected this() pure nothrow @nogc
+    {
+    }
+
+    /// Asserts the selected view name.
+    ResultMatcher name(string expectedViewName)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            assertTextEquals("View name", nullableText(expectedViewName), requireModelAndView(result).getViewName());
+        });
+    }
+}
+
+/// `ModelResultMatchers`.
+class ModelResultMatchers
+{
+    /// Obtain the standard instance through `MockMvcResultMatchers.model()`.
+    protected this() pure nothrow @nogc
+    {
+    }
+
+    /// Asserts each named model attribute has a value.
+    ResultMatcher attributeExists(string[] names...)
+    {
+        const expected = names.dup;
+        return ResultMatcher.of((MvcResult result) {
+            auto model = requireModelAndView(result).getModel();
+            foreach (name; expected)
+            {
+                const message = "Model attribute '" ~ name ~ "' does not exist";
+                AssertionErrors.assertNotNull(message, model.get(name).isNull());
+            }
+        });
+    }
+
+    /// Asserts each named model attribute is absent or null.
+    ResultMatcher attributeDoesNotExist(string[] names...)
+    {
+        const expected = names.dup;
+        return ResultMatcher.of((MvcResult result) {
+            auto model = requireModelAndView(result).getModel();
+            foreach (name; expected)
+                AssertionErrors.assertNull("Model attribute '" ~ name ~ "' exists", model.get(name).isNull());
+        });
+    }
+
+    /// Asserts the number of errors on an attribute.
+    ResultMatcher attributeErrorCount(string name, int expectedCount)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            const count = getBindingResult(requireModelAndView(result), name).getErrorCount();
+            assertCount("Binding/validation error count for attribute '" ~ name ~ "',", expectedCount, count);
+        });
+    }
+
+    /// Asserts each named attribute has a binding error.
+    ResultMatcher attributeHasErrors(string[] names...)
+    {
+        const expected = names.dup;
+        return ResultMatcher.of((MvcResult result) {
+            auto modelAndView = requireModelAndView(result);
+            foreach (name; expected)
+                AssertionErrors.assertTrue("No errors for attribute '" ~ name ~ "'",
+                    getBindingResult(modelAndView, name).hasErrors());
+        });
+    }
+
+    /// Asserts each named attribute has a binding result with zero errors.
+    ResultMatcher attributeHasNoErrors(string[] names...)
+    {
+        const expected = names.dup;
+        return ResultMatcher.of((MvcResult result) {
+            auto modelAndView = requireModelAndView(result);
+            foreach (name; expected)
+            {
+                auto errors = getBindingResult(modelAndView, name);
+                if (errors.hasErrors())
+                    AssertionErrors.fail("Unexpected errors for attribute '" ~ name ~ "': " ~ errors.getAllErrors()
+                        .toString());
+            }
+        });
+    }
+
+    /// Asserts the binding result has errors on each named field.
+    ResultMatcher attributeHasFieldErrors(string name, string[] fieldNames...)
+    {
+        const expected = fieldNames.dup;
+        return ResultMatcher.of((MvcResult result) {
+            auto errors = requireAttributeErrors(result, name);
+            foreach (fieldName; expected)
+                AssertionErrors.assertTrue(fieldErrorMessage(name, fieldName), errors.hasFieldErrors(fieldName));
+        });
+    }
+
+    /// Asserts the first field error has the expected code.
+    ResultMatcher attributeHasFieldErrorCode(string name, string fieldName, string code)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            auto error = requireAttributeErrors(result, name).getFieldError(fieldName);
+            AssertionErrors.assertNotNull(fieldErrorMessage(name, fieldName), error is null);
+            assertTextEquals("Field error code", nullableText(code), error.getCode());
+        });
+    }
+
+    /// Asserts the total number of binding and validation errors.
+    ResultMatcher errorCount(int expectedCount)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            assertCount("Binding/validation error count", expectedCount, countErrors(requireModelAndView(result)));
+        });
+    }
+
+    /// Asserts at least one binding or validation error occurred.
+    ResultMatcher hasErrors()
+    {
+        return ResultMatcher.of((MvcResult result) {
+            AssertionErrors.assertTrue("Expected binding/validation errors",
+                countErrors(requireModelAndView(result)) != 0);
+        });
+    }
+
+    /// Asserts no binding or validation errors occurred.
+    ResultMatcher hasNoErrors()
+    {
+        return ResultMatcher.of((MvcResult result) {
+            requireModelAndView(result).getModel().forEach((string, Any value) {
+                auto errors = cast(Errors) value.asObject();
+                if (errors !is null && errors.hasErrors())
+                    AssertionErrors.fail("Unexpected binding/validation errors: " ~ valueOf(value.asObject()));
+            });
+        });
+    }
+
+    /// Asserts the model size, excluding binding result entries.
+    ResultMatcher size(int size)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            enum prefix = BindingResult.MODEL_KEY_PREFIX;
+            int count;
+            requireModelAndView(result).getModel().forEach((string name, Any) {
+                if (name.length < prefix.length || name[0 .. prefix.length] != prefix)
+                    ++count;
+            });
+            assertCount("Model size", size, count);
+        });
+    }
+
+    private static BindingResult getBindingResult(ModelAndView modelAndView, string name)
+    {
+        auto value = modelAndView.getModel().get(BindingResult.MODEL_KEY_PREFIX ~ name);
+        auto binding = cast(BindingResult) value.asObject();
+        AssertionErrors.assertNotNull("No BindingResult for attribute: " ~ name, binding is null);
+        return binding;
+    }
+
+    private static BindingResult requireAttributeErrors(MvcResult result, string name)
+    {
+        auto binding = getBindingResult(requireModelAndView(result), name);
+        AssertionErrors.assertTrue("No errors for attribute '" ~ name ~ "'", binding.hasErrors());
+        return binding;
+    }
+
+    private static string fieldErrorMessage(string name, string fieldName)
+    {
+        return "No errors for field '" ~ fieldName ~ "' of attribute '" ~ name ~ "'";
+    }
+
+    private static int countErrors(ModelAndView modelAndView)
+    {
+        int count;
+        modelAndView.getModel().forEach((string, Any value) {
+            if (auto errors = cast(Errors) value.asObject())
+                count += errors.getErrorCount();
+        });
+        return count;
     }
 }
 

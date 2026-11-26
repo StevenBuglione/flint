@@ -701,12 +701,66 @@
       "status": "partial"
     },
     "org/springframework/test/web/servlet/result/MockMvcResultMatchersTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/mock_mvc_result_matchers_tests.d",
+      "methods": {
+        "ported": [
+          "redirect",
+          "redirectNonMatching",
+          "redirectWithMatchingPattern",
+          "redirectWithNonMatchingPattern",
+          "redirectWithNullAssertsNoRedirectOccurred",
+          "redirectWithNullNonMatchingBecauseRedirectOccurred",
+          "redirectWithUrlTemplate"
+        ],
+        "skipped": {
+          "forward": "Requires forwarded URL state in MockHttpServletResponse.",
+          "forwardNonMatching": "Requires forwarded URL state in MockHttpServletResponse.",
+          "forwardNonMatchingBecauseNotForward": "Requires forwarded URL state in MockHttpServletResponse.",
+          "forwardWithMatchingPattern": "Requires forwarded URL state in MockHttpServletResponse.",
+          "forwardWithNonMatchingPattern": "Requires forwarded URL state in MockHttpServletResponse.",
+          "forwardWithNonMatchingPatternBecauseNotForward": "Requires forwarded URL state in MockHttpServletResponse.",
+          "forwardWithNullAssertsNoForwardingOccurred": "Requires forwarded URL state in MockHttpServletResponse.",
+          "forwardWithNullNonMatchingBecauseForwardingOccurred": "Requires forwarded URL state in MockHttpServletResponse.",
+          "forwardWithQueryString": "Requires forwarded URL state in MockHttpServletResponse.",
+          "forwardWithUrlTemplate": "Requires forwarded URL state in MockHttpServletResponse.",
+          "redirectNonMatchingBecauseNotRedirect": "Requires forwarded URL state in MockHttpServletResponse.",
+          "redirectWithNonMatchingPatternBecauseNotRedirect": "Requires forwarded URL state in MockHttpServletResponse."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/test/web/servlet/result/ModelResultMatchersTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/model_result_matchers_tests.d",
+      "methods": {
+        "ported": [
+          "attributeDoesNotExist",
+          "attributeDoesNotExist_doesExist",
+          "attributeErrorCount",
+          "attributeErrorCount_withWrongErrorCount",
+          "attributeExists",
+          "attributeExists_doesNotExist",
+          "attributeHasErrors",
+          "attributeHasErrors_withoutErrors",
+          "attributeHasFieldErrorCode",
+          "attributeHasFieldErrorCode_withoutErrorOnField",
+          "attributeHasFieldErrors",
+          "attributeHasFieldErrors_withoutAttribute",
+          "attributeHasFieldErrors_withoutErrorsForAttribute",
+          "attributeHasFieldErrors_withoutErrorsForField",
+          "attributeHasNoErrors",
+          "attributeHasNoErrors_withErrors",
+          "attributeHasNoErrors_withoutAttribute",
+          "hasNoErrors",
+          "hasNoErrors_withErrors"
+        ],
+        "skipped": {
+          "attributeHasFieldErrorCode_startsWith": "Requires the separate Hamcrest matcher overload.",
+          "attributeHasFieldErrorCode_startsWith_withoutErrorOnField": "Requires the separate Hamcrest matcher overload.",
+          "attribute_equal": "Requires the separate Hamcrest matcher overload.",
+          "attribute_notEqual": "Requires the separate Hamcrest matcher overload."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/test/web/servlet/result/PrintingResultHandlerTests.java": {
       "phase": "2",

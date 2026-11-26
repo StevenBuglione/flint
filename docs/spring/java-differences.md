@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 133 | 250 | 0 | 15,413 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,326 | 1,286 | 4,848 | 30,374 |
+| framework | spring-framework@v7.1.0 | 3,340 | 1,293 | 4,848 | 30,353 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2945,6 +2945,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.test.web.servlet.result.JsonPathResultMatchers#<init>(String,Object...)` | `flint.test.web.servlet.result.JsonPathResultMatchers` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.test.web.servlet.result.JsonPathResultMatchers#value(Object)` | `flint.test.web.servlet.result.JsonPathResultMatchers.value` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.test.web.servlet.result.MockMvcResultMatchers#jsonPath(String,Object...)` | `flint.test.web.servlet.result.MockMvcResultMatchers.jsonPath` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.test.web.servlet.result.MockMvcResultMatchers#redirectedUrl(String)` | `flint.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Nullable!string distinguishes an absent redirect from an empty URL; a string overload delegates. |
+| `org.springframework.test.web.servlet.result.MockMvcResultMatchers#redirectedUrlTemplate(String,Object...)` | `flint.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlTemplate` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.test.web.servlet.result.ModelResultMatchers#attributeDoesNotExist(String...)` | `flint.test.web.servlet.result.ModelResultMatchers.attributeDoesNotExist` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.test.web.servlet.result.ModelResultMatchers#attributeExists(String...)` | `flint.test.web.servlet.result.ModelResultMatchers.attributeExists` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.test.web.servlet.result.ModelResultMatchers#attributeHasErrors(String...)` | `flint.test.web.servlet.result.ModelResultMatchers.attributeHasErrors` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.test.web.servlet.result.ModelResultMatchers#attributeHasFieldErrors(String,String...)` | `flint.test.web.servlet.result.ModelResultMatchers.attributeHasFieldErrors` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.test.web.servlet.result.ModelResultMatchers#attributeHasNoErrors(String...)` | `flint.test.web.servlet.result.ModelResultMatchers.attributeHasNoErrors` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.test.web.servlet.result.StatusResultMatchers#is(int)` | `flint.test.web.servlet.result.StatusResultMatchers.is_` | [R1](api-mapping.md#r1-packages-and-names) | is is a reserved D keyword; retain the established is_ spelling |
 
 #### org.springframework.transaction
@@ -9117,7 +9124,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.test.web.servlet.htmlunit | 40 | 0 |
 | org.springframework.test.web.servlet.htmlunit.webdriver | 20 | 0 |
 | org.springframework.test.web.servlet.request | 42 | 0 |
-| org.springframework.test.web.servlet.result | 132 | 0 |
+| org.springframework.test.web.servlet.result | 111 | 0 |
 | org.springframework.test.web.servlet.setup | 85 | 0 |
 | org.springframework.test.web.support | 118 | 0 |
 | org.springframework.transaction | 5 | 0 |
