@@ -1130,3 +1130,5 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Per leaf:** each JDK leaf has its own loadable-byte and template budget for its single-leaf probe, set at the measured value plus 10%. After that it only shrinks.
   - **Per package:** a package's budget is the sum of its leaves' budgets. Adding a leaf may raise it by exactly that leaf's budget, with the trailer `Budget-Raise-Approved: jdk-leaf-rule`.
   - **Anything else:** any other growth needs a raise request with evidence.
+- 2026-11-26 01:50Z, coordinator, under the owner's standing approval: **D-DATA-5 (sol-data) is approved.** `Range.unbounded()` and `Bound.unbounded()` return value-equal instances rather than one shared object.
+  - **A general rulebook rule follows:** shared singleton instances of generic classes with fields become value-equal per instantiation, and reference identity is not preserved. api-coverage adds it.
