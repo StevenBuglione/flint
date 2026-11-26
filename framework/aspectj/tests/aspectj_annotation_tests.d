@@ -4,9 +4,10 @@
  */
 module aspectj_annotation_tests;
 
-import flint.aspectj.lang.annotation : AdviceName, After, AfterReturning, AfterThrowing, Around,
-    Aspect, Before, DeclareParents, DeclarePrecedence, Pointcut;
-import flint.java.classref : classOf;
+import flint.aspectj.lang.annotation : AdviceName, After, AfterReturning, AfterThrowing, Around, Aspect, Before,
+    DeclareAnnotation, DeclareError, DeclareMixin, DeclareParents, DeclarePrecedence,
+    DeclareWarning, Pointcut, RequiredTypes, SuppressAjWarnings;
+import flint.java.classref : ClassRef, classOf;
 import std.traits : getUDAs;
 
 @safe:
@@ -96,4 +97,62 @@ private final class AuditAspect
     static assert(parents.value == "fixtures.Owner+" && parents.defaultImpl == classOf!AuditMixin);
     static assert(DeclareParents.init.defaultImpl == classOf!DeclareParents);
     static assert(precedence.value == "AuditAspect, *");
+}
+
+@DeclareAnnotation("fixtures.Owner")
+@RequiredTypes(["fixtures.Owner", "fixtures.Repository"])
+@SuppressAjWarnings()
+private final class DeclarationAspect
+{
+    @DeclareError("forbiddenCall()")
+    static immutable string errorText = "forbidden";
+
+    @DeclareWarning("deprecatedCall()")
+    static immutable string warningText = "deprecated";
+
+    @DeclareMixin("fixtures.Owner", [classOf!Auditable])
+    static Auditable explicitMixin()
+    {
+        return new AuditMixin;
+    }
+
+    @DeclareMixin("fixtures.Owner")
+    static Auditable inferredMixin()
+    {
+        return new AuditMixin;
+    }
+
+    @DeclareMixin("fixtures.Owner", [])
+    @SuppressAjWarnings(["adviceDidNotMatch", "uncheckedArgument"])
+    static Auditable emptyMixin()
+    {
+        return new AuditMixin;
+    }
+}
+
+@("AspectJ declarations retain their selectors, dependency order and warning defaults") unittest
+{
+    enum declaration = getUDAs!(DeclarationAspect, DeclareAnnotation)[0];
+    enum required = getUDAs!(DeclarationAspect, RequiredTypes)[0];
+    enum defaults = getUDAs!(DeclarationAspect, SuppressAjWarnings)[0];
+    enum configured = getUDAs!(DeclarationAspect.emptyMixin, SuppressAjWarnings)[0];
+    enum error = getUDAs!(DeclarationAspect.errorText, DeclareError)[0];
+    enum warning = getUDAs!(DeclarationAspect.warningText, DeclareWarning)[0];
+
+    static assert(declaration.value == "fixtures.Owner");
+    static assert(required.value == ["fixtures.Owner", "fixtures.Repository"]);
+    static assert(defaults.value == [""]);
+    static assert(configured.value == ["adviceDidNotMatch", "uncheckedArgument"]);
+    static assert(error.value == "forbiddenCall()" && warning.value == "deprecatedCall()");
+}
+
+@("AspectJ mixin declarations distinguish supplied, inferred and empty interfaces") unittest
+{
+    enum explicit = getUDAs!(DeclarationAspect.explicitMixin, DeclareMixin)[0];
+    enum inferred = getUDAs!(DeclarationAspect.inferredMixin, DeclareMixin)[0];
+    enum empty = getUDAs!(DeclarationAspect.emptyMixin, DeclareMixin)[0];
+
+    static assert(explicit.value == "fixtures.Owner" && explicit.interfaces == [classOf!Auditable]);
+    static assert(inferred.interfaces == [ClassRef.init]);
+    static assert(empty.interfaces.length == 0);
 }

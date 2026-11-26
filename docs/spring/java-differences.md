@@ -194,7 +194,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | thymeleaf@3.1.7.RELEASE | 3 | 7 | 0 | 4,442 |
 | framework | micrometer-observation@1.18.0 | 42 | 35 | 0 | 235 |
 | framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 16,240 |
-| framework | aspectj@1.9.27 | 19 | 62 | 191 | 38 |
+| framework | aspectj@1.9.27 | 19 | 75 | 191 | 25 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
 
@@ -1864,14 +1864,27 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.aspectj.lang.annotation.Before` | `flint.aspectj.lang.annotation.Before` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.Before#argNames` | `flint.aspectj.lang.annotation.Before.argNames` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.Before#value` | `flint.aspectj.lang.annotation.Before.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.DeclareAnnotation` | `flint.aspectj.lang.annotation.DeclareAnnotation` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.DeclareAnnotation#value` | `flint.aspectj.lang.annotation.DeclareAnnotation.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.DeclareError` | `flint.aspectj.lang.annotation.DeclareError` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.DeclareError#value` | `flint.aspectj.lang.annotation.DeclareError.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.DeclareMixin` | `flint.aspectj.lang.annotation.DeclareMixin` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.DeclareMixin#interfaces` | `flint.aspectj.lang.annotation.DeclareMixin.interfaces` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) | The upstream {Object.class} default maps to one unset ClassRef token, so the factory method's return type supplies the interfaces. |
+| `org.aspectj.lang.annotation.DeclareMixin#value` | `flint.aspectj.lang.annotation.DeclareMixin.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.DeclareParents` | `flint.aspectj.lang.annotation.DeclareParents` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.DeclareParents#defaultImpl` | `flint.aspectj.lang.annotation.DeclareParents.defaultImpl` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.aspectj.lang.annotation.DeclareParents#value` | `flint.aspectj.lang.annotation.DeclareParents.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.DeclarePrecedence` | `flint.aspectj.lang.annotation.DeclarePrecedence` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.DeclarePrecedence#value` | `flint.aspectj.lang.annotation.DeclarePrecedence.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.DeclareWarning` | `flint.aspectj.lang.annotation.DeclareWarning` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.DeclareWarning#value` | `flint.aspectj.lang.annotation.DeclareWarning.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.Pointcut` | `flint.aspectj.lang.annotation.Pointcut` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.Pointcut#argNames` | `flint.aspectj.lang.annotation.Pointcut.argNames` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.aspectj.lang.annotation.Pointcut#value` | `flint.aspectj.lang.annotation.Pointcut.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.RequiredTypes` | `flint.aspectj.lang.annotation.RequiredTypes` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.RequiredTypes#value` | `flint.aspectj.lang.annotation.RequiredTypes.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.SuppressAjWarnings` | `flint.aspectj.lang.annotation.SuppressAjWarnings` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.aspectj.lang.annotation.SuppressAjWarnings#value` | `flint.aspectj.lang.annotation.SuppressAjWarnings.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.slf4j
 
@@ -9200,7 +9213,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | javax.security.cert | 0 | 39 |
 | javax.sql | 217 | 0 |
 | org.aspectj.lang | 23 | 0 |
-| org.aspectj.lang.annotation | 13 | 0 |
 | org.aspectj.lang.annotation.control | 2 | 0 |
 | org.hibernate.validator | 82 | 0 |
 | org.hibernate.validator.cfg | 18 | 0 |

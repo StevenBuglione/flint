@@ -128,6 +128,82 @@
  *******************************************************************************/
 
 // SPDX-License-Identifier: EPL-2.0
+// Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/annotation/DeclareAnnotation.java
+/*******************************************************************************
+ * Copyright (c) 2005 Contributors.
+ * All rights reserved.
+ * This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v 2.0
+ * which accompanies this distribution and is available at
+ * https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt
+ *
+ * Contributors:
+ *   Alexandre Vasseur         initial implementation
+ *******************************************************************************/
+
+// Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/annotation/DeclareError.java
+/* *******************************************************************
+ * Copyright (c) 2005 Contributors.
+ * All rights reserved.
+ * This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v 2.0
+ * which accompanies this distribution and is available at
+ * https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt
+ *
+ * Contributors:
+ *   Adrian Colyer			Initial implementation
+ * ******************************************************************/
+
+// Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/annotation/DeclareWarning.java
+/* *******************************************************************
+ * Copyright (c) 2005 Contributors.
+ * All rights reserved.
+ * This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v 2.0
+ * which accompanies this distribution and is available at
+ * https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt
+ *
+ * Contributors:
+ *   Adrian Colyer			Initial implementation
+ * ******************************************************************/
+
+// Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/annotation/DeclareMixin.java
+/*******************************************************************************
+ * Copyright (c) 2009 Contributors.
+ * All rights reserved.
+ * This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v 2.0
+ * which accompanies this distribution and is available at
+ * https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt
+ *
+ * Contributors:
+ * initial implementation              Andy Clement
+ *******************************************************************************/
+
+// Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/annotation/RequiredTypes.java
+/* *******************************************************************
+ * Copyright (c) 2014 Contributors.
+ * All rights reserved.
+ * This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v 2.0
+ * which accompanies this distribution and is available at
+ * https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt
+ * ******************************************************************/
+
+// Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/annotation/SuppressAjWarnings.java
+/* *******************************************************************
+ * Copyright (c) 2005 Contributors.
+ * All rights reserved.
+ * This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v 2.0
+ * which accompanies this distribution and is available at
+ * https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt
+ *
+ * Contributors:
+ *     Wes Isberg       initial implementation
+ *   Andy Clement       fleshed out to match SuppressWarnings
+ * ******************************************************************/
+
 // Modified by the Flint authors.
 module flint.aspectj.lang.annotation;
 
@@ -225,4 +301,48 @@ struct DeclarePrecedence
 {
     /// A comma-separated sequence of aspect type patterns.
     string value;
+}
+
+/// Associates an annotation declaration with the matching types or members.
+struct DeclareAnnotation
+{
+    /// The type or member pattern that selects where to declare the annotation.
+    string value;
+}
+
+/// Selects the join points for a declared error.
+struct DeclareError
+{
+    /// Pointcut expression identifying locations where the error applies.
+    string value;
+}
+
+/// Selects the join points for a declared warning.
+struct DeclareWarning
+{
+    /// Pointcut expression identifying locations where the warning applies.
+    string value;
+}
+
+/// Describes the interfaces an annotated factory can mix into selected types.
+struct DeclareMixin
+{
+    /// Type pattern selecting the targets of the mixin.
+    string value;
+    /// A single unset token selects the factory method's return type.
+    ClassRef[] interfaces = [ClassRef.init];
+}
+
+/// Names the types that must be available for an aspect to activate.
+struct RequiredTypes
+{
+    /// Fully qualified names of the required types.
+    string[] value;
+}
+
+/// Selects AspectJ warnings to suppress for the annotated declaration.
+struct SuppressAjWarnings
+{
+    /// Warning identifiers, with the upstream default of one empty string.
+    string[] value = [""];
 }
