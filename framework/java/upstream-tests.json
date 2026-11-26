@@ -9397,6 +9397,10 @@
       "status": "deferred"
     }
   },
+  "flint_tests": [
+    "framework/java/tests/character_digit_tests.d",
+    "framework/java/tests/character_whitespace_test.d"
+  ],
   "module": "java",
   "schema": "flint.upstream-tests/1",
   "test_packages": [
