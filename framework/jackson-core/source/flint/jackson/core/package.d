@@ -1210,6 +1210,17 @@ abstract class JsonGenerator
     /// Method for writing an Object Property name (JSON String surrounded by double quotes).
     abstract JsonGenerator writeName(string name);
 
+    /// Write a numeric property id. The default JSON name is its signed decimal spelling.
+    JsonGenerator writePropertyId(long id)
+    {
+        import flint.jackson.core.io : NumberOutput;
+
+        char[20] digits;
+        const length = NumberOutput.writeLong(id, digits);
+        writeName(digits[0 .. length].idup);
+        return this;
+    }
+
     /// Notify the output format that a property was omitted. JSON needs no placeholder.
     JsonGenerator writeOmittedProperty(string propertyName)
     {

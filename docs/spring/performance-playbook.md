@@ -416,6 +416,8 @@ Jackson's `JsonFactory.copy` creates a factory from the original's configuration
 
 Jackson's UTF-8 parser and generator expose stream feature masks directly from their factory. Custom stream implementations can derive the same mask from their existing `isEnabled` method. The matched jackson-core probe on venus at `4a2a41311` and `e56d436ce` moved from 44,037 to 44,109 loadable bytes and stayed at 659 DMD template instances. Pinned LDC with `flint build --profile size` moved gs-rest-service from 3,683,487 to 3,683,607 allocated ELF bytes and petclinic-rest from 10,404,541 to 10,404,597.
 
+Jackson's `writePropertyId` renders a signed decimal ID using the existing numeric writer and passes one owned name to `writeName`. The matched jackson-core probe on venus at `e56d436ce` and `8ff0d3ae8` moved from 44,109 to 44,389 loadable bytes and from 659 to 660 DMD template instances. Pinned LDC with `flint build --profile size` moved gs-rest-service from 3,683,607 to 3,684,095 allocated ELF bytes and petclinic-rest from 10,404,597 to 10,405,085.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

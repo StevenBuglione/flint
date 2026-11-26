@@ -470,6 +470,21 @@ unittest
         }) == `{"short":3,"int":3,"long":3,"double":0.25,"float":-0.25}`);
 }
 
+@("numeric property ids use signed decimal and keep the write context")
+unittest
+{
+    assert(written((g) {
+            expectFailure!StreamWriteException(() { g.writePropertyId(0); }, "Can not write a property name");
+            g.writeStartObject();
+            assert(g.writePropertyId(long.min) is g);
+            expectFailure!StreamWriteException(() { g.writePropertyId(8); }, "Can not write a property name");
+            g.writeNull();
+            g.writePropertyId(0).writeBoolean(true);
+            g.writePropertyId(long.max).writeNumber(42);
+            g.writeEndObject();
+        }) == `{"-9223372036854775808":null,"0":true,"9223372036854775807":42}`);
+}
+
 @("GeneratorBasicTest.rootIntsWrite")
 unittest
 {
