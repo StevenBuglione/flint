@@ -12009,8 +12009,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Locale#setDefault(Locale)` | 2 | Java replaces the global default and both category defaults for subsequent callers. Flint has no process-wide locale default storage. |
 | framework | `java.util.Locale#setDefault(Locale.Category,Locale)` | 2 | Java replaces the selected category default while retaining the other category default and the global default. Flint has no process-wide locale default storage. |
 | framework | `java.util.Locale#stripExtensions()` | 2 | Java removes extensions while preserving language, region, script and variant. This includes removing the Japanese and Thai compatibility extensions without regenerating them. |
-| framework | `java.util.Locale#toLanguageTag()` | 2 | The existing renderer cannot emit script or extension data. Flint emits invalid base language and region subtags and appends legacy variants directly. Java validates the base subtags, moves eligible legacy variant components into x-lvariant, and renders no_NO_NY as nn-NO. |
-| framework | `java.util.Locale#toString()` | 2 | Flint renders a variant-only locale as __variant. Java returns an empty string and includes script or extension data for locales with a language or region. |
+| framework | `java.util.Locale#toLanguageTag()` | 2 | Flint renders valid base subtags and legacy variant components, including the Norwegian NY compatibility case. Script and extension data, including the legacy Japanese calendar and Thai numbering extensions, are deferred. |
+| framework | `java.util.Locale#toString()` | 2 | Flint matches legacy language, country and variant rendering. Java also appends script or extension data, which Flint does not store. |
 | framework | `java.util.Locale.IsoCountryCode` | 2 | The enum selects one of the three ISO country code inventories. |
 | framework | `java.util.Locale.IsoCountryCode#PART1_ALPHA2` | 2 | Selects current two-letter ISO 3166 country codes. |
 | framework | `java.util.Locale.IsoCountryCode#PART1_ALPHA3` | 2 | Selects current three-letter ISO 3166 country codes. |

@@ -3358,24 +3358,54 @@ struct Locale
         return cast(int) toHash();
     }
 
-    /// `language_COUNTRY_variant`, leaving out empty trailing parts: `en_US`, `en`, `_US`; empty for `ROOT`.
+    /// `language_COUNTRY_variant`, with an empty result when both language and country are absent.
     string toString() const pure nothrow
     {
-        if (!country.length && !variant.length)
+        if (!country.length && (!language.length || !variant.length))
             return language;
         string result = language ~ "_" ~ country;
         return variant.length ? result ~ "_" ~ variant : result;
     }
 
-    /// The BCP 47 tag: `en-US`, `en`, or `und` without a language.
+    /// The BCP 47 tag for the language, region and variant.
     string toLanguageTag() const pure nothrow
     {
-        string result = language.length ? language : "und";
-        if (country.length)
-            result ~= "-" ~ country;
-        if (variant.length)
-            result ~= "-" ~ variant;
-        return result;
+        if (language == "no" && country == "NO" && variant == "NY")
+            return "nn-NO";
+
+        string tag = isAlpha(language, 2, 8) ? language : null;
+        if (isAlpha(country, 2, 2) || isDigits(country, 3))
+            tag = tag.length ? tag ~ "-" ~ country : "und-" ~ country;
+
+        tag = appendTagVariants(tag, variant);
+        return tag.length ? tag : "und";
+    }
+
+    private static string appendTagVariants(string tag, string variant) pure nothrow
+    {
+        bool privateUse;
+        for (size_t start; start < variant.length;)
+        {
+            size_t end = start;
+            while (end < variant.length && variant[end] != '_')
+                ++end;
+            const subtag = variant[start .. end];
+            if (!privateUse && isVariant(subtag))
+                tag = tag.length ? tag ~ "-" ~ subtag : "und-" ~ subtag;
+            else
+            {
+                if (!subtag.length || subtag.length > 8 || !isAsciiAlphanumeric(subtag))
+                    break;
+                if (!privateUse)
+                {
+                    tag = tag.length ? tag ~ "-x-lvariant" : "x-lvariant";
+                    privateUse = true;
+                }
+                tag ~= "-" ~ subtag;
+            }
+            start = end + 1;
+        }
+        return tag;
     }
 
     /// The locale of a BCP 47 tag (`en-US`, `de`, `und`, `zh-Hant-TW`); an ill-formed subtag ends the parse.
@@ -3479,8 +3509,11 @@ struct Locale
     private static bool isVariant(string s) pure nothrow @nogc
     {
         const digitLed = s.length == 4 && s[0] >= '0' && s[0] <= '9';
-        if (!digitLed && (s.length < 5 || s.length > 8))
-            return false;
+        return (digitLed || (s.length >= 5 && s.length <= 8)) && isAsciiAlphanumeric(s);
+    }
+
+    private static bool isAsciiAlphanumeric(string s) pure nothrow @nogc
+    {
         foreach (c; s)
             if (!((c >= '0' && c <= '9') || ((c | 0x20) >= 'a' && (c | 0x20) <= 'z')))
                 return false;

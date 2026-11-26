@@ -635,6 +635,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Carry a resolver style in the formatter's existing flag.** `withResolverStyle` and `getResolverStyle` map STRICT and SMART onto the SMART flag that RFC_1123_DATE_TIME added, so neither the formatter nor the parsed `Fields` grows, and `withResolverStyle` copies the value instead of rebuilding it. On venus (v4.2 toolchain) against the parent `bae39d810`, the Java module stays at 129,496 incremental linked bytes, its DMD template count rises from 4,522 to 4,527 against the 7,350 cap, and the enforced DMD leaf `flint.java.io.closeable/close` stays at 239 against its cap of 241.
 
+- **Scan Locale variant components in order.** The tag renderer uses the same ASCII validation as the parser and starts an `x-lvariant` suffix at the first eligible legacy component. On venus against `a864057e6`, the Java module probe measured 129,496 O3 and 122,144 Oz incremental loadable bytes before and after the change with LDC 1.43.0. DMD template instances rose from 4,440 to 4,445 against the 7,350 cap.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:
