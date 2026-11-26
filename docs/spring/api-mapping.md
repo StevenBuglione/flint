@@ -44,6 +44,8 @@ import flint.web.bind.annotation : GetMapping;
 import flint.http : ResponseEntity;
 ```
 
+**Static-only types.** A Java class or interface whose public API is only static members and constants (a utility class with a private constructor, such as `AnnotationUtils`, `BCrypt` or `SecurityContextHolder`, or a constants-only interface such as `JsonTokenId`) may be a D `struct` of static members, or module-level functions in the same module. Callers write `AnnotationUtils.findAnnotation(...)` as in Java, and Java can't instantiate it either, so the type stays `ported`. Coordinator, 2026-11-26, from api-coverage's kind audit. A Java class or interface that callers instantiate, subclass or implement isn't static-only: porting it as a value struct, or an interface as a class, is `adapted` with a rule or a deviation.
+
 ### R2: Annotations
 
 An annotation becomes a UDA struct with the same name. Its attributes become fields with the same names and Java's defaults. The `value` element is the first field, so `@GetMapping("/x")` reads the same.
