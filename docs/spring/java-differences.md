@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,096 | 286 | 1,871 | 15,168 |
+| framework | openjdk@21.0.13 | 1,089 | 300 | 1,871 | 15,161 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1938,14 +1938,28 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.lang.ArithmeticException` | `flint.java.lang.ArithmeticException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.ArithmeticException#<init>(String)` | `flint.java.lang.ArithmeticException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.AssertionError` | `flint.java.lang.AssertionError` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Flint uses the catchable D Exception base. The inherited Java initCause method is unavailable. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.AssertionError#<init>(String,Throwable)` | `flint.java.lang.AssertionError.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.ClassCastException` | `flint.java.lang.ClassCastException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.ClassCastException#<init>(String)` | `flint.java.lang.ClassCastException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.IllegalArgumentException` | `flint.java.lang.IllegalArgumentException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.IllegalArgumentException#<init>(String)` | `flint.java.lang.IllegalArgumentException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.IllegalStateException` | `flint.java.lang.IllegalStateException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.IllegalStateException#<init>(String)` | `flint.java.lang.IllegalStateException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.IndexOutOfBoundsException` | `flint.java.lang.IndexOutOfBoundsException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.IndexOutOfBoundsException#<init>(String)` | `flint.java.lang.IndexOutOfBoundsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.NullPointerException` | `flint.java.lang.NullPointerException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.NullPointerException#<init>(String)` | `flint.java.lang.NullPointerException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.NumberFormatException` | `flint.java.lang.NumberFormatException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.NumberFormatException#<init>(String)` | `flint.java.lang.NumberFormatException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.RuntimeException` | `flint.java.lang.RuntimeException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.RuntimeException#<init>(String)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.RuntimeException#<init>(String,Throwable)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | `java.lang.RuntimeException#<init>(String,Throwable,boolean,boolean)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| `java.lang.UnsupportedOperationException` | `flint.java.lang.UnsupportedOperationException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.UnsupportedOperationException#<init>(String)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.math
 
@@ -10044,7 +10058,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 748 | 0 |
-| java.lang | 2,018 | 0 |
+| java.lang | 2,011 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 137 | 0 |
