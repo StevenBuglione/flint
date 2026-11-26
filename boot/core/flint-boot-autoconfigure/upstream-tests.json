@@ -135,8 +135,39 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionMessageTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/core/flint-boot-autoconfigure/tests/autoconfigure_tests/condition_message_test.d",
+      "methods": {
+        "ported": [
+          "isEmptyWhenEmptyShouldReturnTrue",
+          "isEmptyWhenNotEmptyShouldReturnFalse",
+          "toStringWhenEmptyShouldReturnEmptyString",
+          "toStringWhenHasMessageShouldReturnMessage",
+          "appendWhenHasExistingMessageShouldAddSpace",
+          "appendWhenAppendingNullShouldDoNothing",
+          "appendWhenNoMessageShouldNotAddSpace",
+          "andConditionWhenUsingClassShouldIncludeCondition",
+          "andConditionWhenUsingStringShouldIncludeCondition",
+          "andConditionWhenIncludingDetailsShouldIncludeCondition",
+          "ofCollectionShouldCombine",
+          "ofCollectionWhenNullShouldReturnEmpty",
+          "forConditionShouldIncludeCondition",
+          "forConditionShouldNotAddExtraSpaceWithEmptyCondition",
+          "forConditionWhenClassShouldIncludeCondition",
+          "foundExactlyShouldConstructMessage",
+          "foundWhenSingleElementShouldUseSingular",
+          "foundNoneAtAllShouldConstructMessage",
+          "foundWhenMultipleElementsShouldUsePlural",
+          "foundWhenQuoteStyleShouldQuote",
+          "didNotFindWhenSingleElementShouldUseSingular",
+          "didNotFindWhenMultipleElementsShouldUsePlural",
+          "resultedInShouldConstructMessage",
+          "notAvailableShouldConstructMessage",
+          "availableShouldConstructMessage",
+          "itemsTolerateNullInput",
+          "quotedItemsTolerateNullInput"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnBeanTests.java": {
       "phase": "2",

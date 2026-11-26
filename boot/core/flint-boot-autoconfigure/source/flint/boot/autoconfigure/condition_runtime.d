@@ -1,0 +1,319 @@
+// Ported from spring-boot v4.2.0: core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/condition/ConditionMessage.java
+// Copyright 2012-present the original author or authors.
+// Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+// Modified by the Flint authors: split runtime APIs from the condition UDA leaf, and apply rulebook R4, R5, R7,
+// R10, R11, R13 and R20 to the Java API shapes. The sibling module follows R22.
+module flint.boot.autoconfigure.condition_runtime;
+
+import flint.engine.aot.any : Any;
+import flint.engine.aot.name : simpleTypeName, typeNameOf;
+import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException, String, stringHashCode;
+import flint.java.util : ArrayList, Collection, RawCollection;
+import flint.java.util.formatter : formatJava;
+import std.typecons : Nullable;
+
+@safe:
+
+/// A message associated with a Boot auto-configuration condition.
+final class ConditionMessage
+{
+    private string message;
+
+    private this(string message)
+    {
+        this.message = message;
+    }
+
+    /// Whether there is any message text.
+    bool isEmpty() const pure nothrow @nogc
+    {
+        return message.length == 0;
+    }
+
+    /// Compare the message text, distinguishing absent and explicitly empty text.
+    bool equals(Object other)
+    {
+        auto that = cast(ConditionMessage) other;
+        return that !is null && (that.message is null) == (message is null) && that.message == message;
+    }
+
+    /// The Java hash of the message.
+    int hashCode() const pure nothrow @nogc
+    {
+        return stringHashCode(message);
+    }
+
+    /// The rendered message.
+    override string toString() const pure nothrow @nogc
+    {
+        return message is null ? "" : message;
+    }
+
+    mixin JavaObject;
+
+    /// Return a message with an additional phrase separated by a space.
+    ConditionMessage append(Nullable!string suffix)
+    {
+        if (suffix.isNull || suffix.get.length == 0)
+            return this;
+        return new ConditionMessage(isEmpty() ? suffix.get : message ~ " " ~ suffix.get);
+    }
+
+    /// Start the next clause with an annotation name and optional details.
+    Builder andCondition(Annotation, Args...)(Args details)
+    {
+        return andCondition("@" ~ simpleTypeName(typeNameOf!Annotation), details);
+    }
+
+    /// Start the next clause with a condition label and optional details.
+    Builder andCondition(Args...)(string condition, Args details)
+    {
+        return andConditionText(condition, boxArguments(details)[]);
+    }
+
+    private Builder andConditionText(string condition, scope Any[] details)
+    {
+        if (condition is null)
+            throw new IllegalArgumentException("'condition' must not be null");
+        string text;
+        foreach (index, detail; details)
+            text ~= (index == 0 ? "" : " ") ~ String.format("%s", detail);
+        return new Builder(text.length == 0 ? condition : condition ~ " " ~ text);
+    }
+
+    /// Start an empty message.
+    static ConditionMessage empty()
+    {
+        return new ConditionMessage(null);
+    }
+
+    /// Create a message, formatting it with Java's String.format when arguments are supplied.
+    static ConditionMessage of(Args...)(string message, Args args)
+    {
+        return formatted(message, boxArguments(args)[]);
+    }
+
+    private static ConditionMessage formatted(string message, scope Any[] args)
+    {
+        if (args.length == 0)
+            return new ConditionMessage(message);
+        if (message is null)
+            throw new NullPointerException();
+        return new ConditionMessage(formatJava(message, args));
+    }
+
+    /// Combine messages in encounter order with semicolons.
+    static ConditionMessage of(Collection!ConditionMessage messages)
+    {
+        string result;
+        if (messages !is null)
+        {
+            auto iterator = messages.iterator();
+            while (iterator.hasNext())
+            {
+                auto next = iterator.next();
+                if (next is null)
+                    throw new NullPointerException();
+                if (result.length)
+                    result ~= "; " ~ next.toString();
+                else
+                    result = next.toString();
+            }
+        }
+        return new ConditionMessage(result);
+    }
+
+    /// Start a message with an annotation name and optional details.
+    static Builder forCondition(Annotation, Args...)(Args details)
+    {
+        return empty().andCondition!Annotation(details);
+    }
+
+    /// Start a message with a condition label and optional details.
+    static Builder forCondition(Args...)(string condition, Args details)
+    {
+        return empty().andCondition(condition, details);
+    }
+
+    /// Build a clause for a condition.
+    final class Builder
+    {
+        private string condition;
+
+        private this(string condition)
+        {
+            this.condition = condition;
+        }
+
+        /// State that an exact result was found.
+        ConditionMessage foundExactly(T)(T result)
+        {
+            return found("").items(asArgument(result));
+        }
+
+        /// Introduce the items that were found with a common article.
+        ItemsBuilder found(string article)
+        {
+            return found(article, article);
+        }
+
+        /// Introduce the items that were found with singular and plural articles.
+        ItemsBuilder found(string singular, string plural)
+        {
+            return new ItemsBuilder(this, "found", singular, plural);
+        }
+
+        /// Introduce the items that were absent with a common article.
+        ItemsBuilder didNotFind(string article)
+        {
+            return didNotFind(article, article);
+        }
+
+        /// Introduce the items that were absent with singular and plural articles.
+        ItemsBuilder didNotFind(string singular, string plural)
+        {
+            return new ItemsBuilder(this, "did not find", singular, plural);
+        }
+
+        /// State the result of the condition.
+        ConditionMessage resultedIn(T)(T result)
+        {
+            return becauseText("resulted in " ~ String.format("%s", asArgument(result)));
+        }
+
+        /// State that an item is available.
+        ConditionMessage available(string item)
+        {
+            return becauseText((item is null ? "null" : item) ~ " is available");
+        }
+
+        /// State that an item is unavailable.
+        ConditionMessage notAvailable(string item)
+        {
+            return becauseText((item is null ? "null" : item) ~ " is not available");
+        }
+
+        /// State why the condition matched or failed.
+        ConditionMessage because(Nullable!string reason)
+        {
+            return becauseText(reason.isNull ? null : reason.get);
+        }
+
+        private ConditionMessage becauseText(string reason)
+        {
+            string clause = condition;
+            if (reason.length)
+                clause = condition.length ? condition ~ " " ~ reason : reason;
+            return new ConditionMessage(message.length ? message ~ "; " ~ clause : clause);
+        }
+    }
+
+    /// Add the items that explain a condition.
+    final class ItemsBuilder
+    {
+        private Builder condition;
+        private string reason, singular, plural;
+
+        private this(Builder condition, string reason, string singular, string plural)
+        {
+            this.condition = condition;
+            this.reason = reason;
+            this.singular = singular;
+            this.plural = plural;
+        }
+
+        /// Complete the clause with no items.
+        ConditionMessage atAll()
+        {
+            return render(Style.NORMAL, null);
+        }
+
+        /// Complete the clause with the supplied items.
+        ConditionMessage items(Args...)(Args values)
+                if (!collectionArgument!Args && !is(Args[0] == Style))
+        {
+            return render(Style.NORMAL, boxArguments(values)[]);
+        }
+
+        /// Complete the clause with the supplied items in the selected style.
+        ConditionMessage items(Args...)(Style style, Args values) if (!collectionArgument!Args)
+        {
+            return render(style, boxArguments(values)[]);
+        }
+
+        /// Complete the clause with the items in a collection.
+        ConditionMessage items(RawCollection values)
+        {
+            return items(Style.NORMAL, values);
+        }
+
+        /// Complete the clause with the items in a collection in the selected style.
+        ConditionMessage items(Style style, RawCollection values)
+        {
+            return render(style, values is null ? null : values.toAnyArray());
+        }
+
+        private ConditionMessage render(Style style, scope Any[] values)
+        {
+            string text;
+            size_t count;
+            foreach (value; values)
+            {
+                if (value.isNull())
+                    continue;
+                text ~= (count == 0 ? "" : ", ") ~ styledText(style, value);
+                ++count;
+            }
+            string article = count <= 1 && singular.length ? singular : plural;
+            string clause = article.length ? reason ~ " " ~ article : reason;
+            return condition.becauseText(count ? clause ~ " " ~ text : clause);
+        }
+    }
+
+    /// How each non-null item is displayed.
+    enum Style
+    {
+        /// Use the item's string representation.
+        NORMAL,
+        /// Enclose the item's string representation in single quotes.
+        QUOTE,
+    }
+}
+
+/// Apply the style to each non-null item in encounter order (R20).
+Collection!Any applyTo(ConditionMessage.Style style, RawCollection values)
+{
+    if (values is null)
+        return null;
+    auto result = new ArrayList!Any(values.size());
+    foreach (value; values.toAnyArray())
+    {
+        if (!value.isNull())
+            result.add(style == ConditionMessage.Style.QUOTE ? Any.of(styledText(style, value)) : value);
+    }
+    return result;
+}
+
+private string styledText(ConditionMessage.Style style, Any value)
+{
+    string text = String.format("%s", value);
+    return style == ConditionMessage.Style.QUOTE ? "'" ~ text ~ "'" : text;
+}
+
+private enum collectionArgument(Args...) = Args.length == 1 && is(Args[0] : RawCollection);
+
+private Any[Args.length] boxArguments(Args...)(Args args)
+{
+    Any[Args.length] result;
+    static foreach (index; 0 .. Args.length)
+        result[index] = asArgument(args[index]);
+    return result;
+}
+
+private Any asArgument(T)(T value)
+{
+    static if (is(T == typeof(null)))
+        return Any.init;
+    else
+        return Any.of(value);
+}
