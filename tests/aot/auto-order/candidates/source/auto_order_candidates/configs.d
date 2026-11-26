@@ -4,7 +4,7 @@
 // Modified by the Flint authors: test configuration classes are supplied to the AOT registry by the imports manifest.
 module auto_order_candidates.configs;
 
-import flint.boot.autoconfigure : AutoConfigureAfter, AutoConfigureBefore, AutoConfigureOrder;
+import flint.boot.autoconfigure : AutoConfiguration, AutoConfigureAfter, AutoConfigureBefore, AutoConfigureOrder;
 import flint.boot.context.properties : ClassRef;
 
 @safe:
@@ -39,9 +39,16 @@ class AutoConfigureA2
 {
 }
 
+/// Applies the direct @AutoConfiguration after attribute.
+@AutoConfiguration(after: [ClassRef("auto_order_candidates.configs.AutoConfigureB2")])
+final class AutoConfigureA3
+{
+}
+
 /// Must follow C and any present D or E.
 @AutoConfigureAfter([
     ClassRef("auto_order_candidates.configs.AutoConfigureC"),
+    // The pinned acyclic cases omit D's metadata.
     ClassRef("auto_order_candidates.configs.AutoConfigureD"),
     ClassRef("auto_order_candidates.configs.AutoConfigureE")
 ])
@@ -49,14 +56,14 @@ class AutoConfigureB
 {
 }
 
-/// An unordered prerequisite.
-class AutoConfigureC
+/// Uses the direct after attribute to follow C.
+@AutoConfiguration(after: [ClassRef("auto_order_candidates.configs.AutoConfigureC")])
+final class AutoConfigureB2
 {
 }
 
-/// A prerequisite omitted from the acyclic test inputs.
-@AutoConfigureAfter([ClassRef("auto_order_candidates.configs.AutoConfigureA")])
-class AutoConfigureD
+/// An unordered prerequisite.
+class AutoConfigureC
 {
 }
 
@@ -88,8 +95,20 @@ class AutoConfigureY
 {
 }
 
+/// Applies the direct @AutoConfiguration before attribute.
+@AutoConfiguration(before: [ClassRef("auto_order_candidates.configs.AutoConfigureX")])
+final class AutoConfigureY2
+{
+}
+
 /// Must precede Y.
 @AutoConfigureBefore([ClassRef("auto_order_candidates.configs.AutoConfigureY")])
 class AutoConfigureZ
+{
+}
+
+/// Uses the direct before attribute to precede Y2.
+@AutoConfiguration(before: [ClassRef("auto_order_candidates.configs.AutoConfigureY2")])
+final class AutoConfigureZ2
 {
 }

@@ -1393,6 +1393,20 @@ unittest
             ["AutoConfigureZ", "AutoConfigureY", "AutoConfigureX"]);
 }
 
+@("AutoConfigurationSorterTests.byAutoConfigureAfterAliasFor")
+unittest
+{
+    expectAutoConfigurationRanks(["AutoConfigureA3", "AutoConfigureB2", "AutoConfigureC"],
+            ["AutoConfigureC", "AutoConfigureB2", "AutoConfigureA3"]);
+}
+
+@("AutoConfigurationSorterTests.byAutoConfigureBeforeAliasFor")
+unittest
+{
+    expectAutoConfigurationRanks(["AutoConfigureX", "AutoConfigureY2", "AutoConfigureZ2"],
+            ["AutoConfigureZ2", "AutoConfigureY2", "AutoConfigureX"]);
+}
+
 @("AutoConfigurationSorterTests.byAutoConfigureAfterDoubles")
 unittest
 {
@@ -1431,6 +1445,32 @@ unittest
     expectAutoConfigurationRanks(["AutoConfigureA", "AutoConfigureB"], [
         "AutoConfigureB", "AutoConfigureA"
     ]);
+}
+
+private immutable string[] largeAutoConfigurationOrder = [
+    "OrderHighest", "AutoConfigureC", "AutoConfigureE", "AutoConfigureW", "AutoConfigureW2",
+    "AutoConfigureB", "AutoConfigureA", "AutoConfigureA2", "AutoConfigureZ", "AutoConfigureY",
+    "AutoConfigureX", "OrderUnspecified", "OrderLowest"
+];
+
+@("AutoConfigurationSorterTests.orderIsStableForLargerMixedGraph")
+unittest
+{
+    expectAutoConfigurationRanks([
+        "OrderLowest", "OrderHighest", "OrderUnspecified", "AutoConfigureA", "AutoConfigureA2",
+        "AutoConfigureB", "AutoConfigureC", "AutoConfigureE", "AutoConfigureW",
+        "AutoConfigureW2", "AutoConfigureX", "AutoConfigureY", "AutoConfigureZ"
+    ], largeAutoConfigurationOrder);
+}
+
+@("AutoConfigurationSorterTests.orderIsStableForLargerMixedGraphWithReversedInput")
+unittest
+{
+    expectAutoConfigurationRanks([
+        "AutoConfigureZ", "AutoConfigureY", "AutoConfigureX", "AutoConfigureW2", "AutoConfigureW",
+        "AutoConfigureE", "AutoConfigureC", "AutoConfigureB", "AutoConfigureA2",
+        "AutoConfigureA", "OrderUnspecified", "OrderHighest", "OrderLowest"
+    ], largeAutoConfigurationOrder);
 }
 
 @("AutoConfigurationSorterTests.duplicateInputDoesNotChangeResult")
