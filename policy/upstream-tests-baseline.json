@@ -1164,7 +1164,6 @@
     ],
     "context": [
       "org/springframework/cache/CacheReproTests.java",
-      "org/springframework/cache/annotation/AnnotationCacheOperationSourceTests.java",
       "org/springframework/cache/annotation/ReactiveCachingTests.java",
       "org/springframework/cache/config/AnnotationDrivenCacheConfigTests.java",
       "org/springframework/cache/config/AnnotationNamespaceDrivenTests.java",
@@ -1181,7 +1180,6 @@
       "org/springframework/cache/interceptor/CacheResolverCustomizationTests.java",
       "org/springframework/cache/interceptor/CacheSyncFailureTests.java",
       "org/springframework/cache/interceptor/LoggingCacheErrorHandlerTests.java",
-      "org/springframework/cache/interceptor/SimpleKeyGeneratorTests.java",
       "org/springframework/context/annotation/AbstractCircularImportDetectionTests.java",
       "org/springframework/context/annotation/AggressiveFactoryBeanInstantiationTests.java",
       "org/springframework/context/annotation/AnnotatedBeanDefinitionReaderTests.java",

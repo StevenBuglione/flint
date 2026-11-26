@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 47 | 111 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
+| framework | spring-framework@v7.1.0 | 3,629 | 1,525 | 4,870 | 29,810 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3118,6 +3118,21 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) | Java serialization of the operation source is deferred. |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource#<init>(CacheAnnotationParser...)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.this` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource#<init>(Set)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource#determineCacheOperations(CacheOperationProvider)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.determineCacheOperations` | [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource#equals(Object)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource#findCacheOperations(Class)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.findCacheOperations` | [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource#findCacheOperations(Method)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.findCacheOperations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource#hashCode()` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource#isCandidateClass(Class)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.isCandidateClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource.CacheOperationProvider` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.CacheOperationProvider` | [R9](api-mapping.md#r9-functional-interfaces), [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource.CacheOperationProvider#getCacheOperations(CacheAnnotationParser)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.CacheOperationProvider.getCacheOperations` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.annotation.CacheAnnotationParser` | `flint.cache.annotation_runtime.CacheAnnotationParser` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.cache.annotation.CacheAnnotationParser#isCandidateClass(Class)` | `flint.cache.annotation_runtime.CacheAnnotationParser.isCandidateClass` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.cache.annotation.CacheAnnotationParser#parseCacheAnnotations(Class)` | `flint.cache.annotation_runtime.CacheAnnotationParser.parseCacheAnnotations` | [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.annotation.CacheAnnotationParser#parseCacheAnnotations(Method)` | `flint.cache.annotation_runtime.CacheAnnotationParser.parseCacheAnnotations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.annotation.CacheConfig` | `flint.cache.annotation.CacheConfig` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.cache.annotation.CacheConfig#cacheManager` | `flint.cache.annotation.CacheConfig.cacheManager` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.cache.annotation.CacheConfig#cacheNames` | `flint.cache.annotation.CacheConfig.cacheNames` | [R2](api-mapping.md#r2-annotations) |  |
@@ -3157,6 +3172,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.cache.annotation.Caching#cacheable` | `flint.cache.annotation.Caching.cacheable` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.cache.annotation.Caching#evict` | `flint.cache.annotation.Caching.evict` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.cache.annotation.Caching#put` | `flint.cache.annotation.Caching.put` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.SpringCacheAnnotationParser` | `flint.cache.annotation_runtime.FlintCacheAnnotationParser` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) | Java serialization of the parser is deferred. |
+| `org.springframework.cache.annotation.SpringCacheAnnotationParser#equals(Object)` | `flint.cache.annotation_runtime.FlintCacheAnnotationParser.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.annotation.SpringCacheAnnotationParser#hashCode()` | `flint.cache.annotation_runtime.FlintCacheAnnotationParser.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.annotation.SpringCacheAnnotationParser#isCandidateClass(Class)` | `flint.cache.annotation_runtime.FlintCacheAnnotationParser.isCandidateClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.cache.annotation.SpringCacheAnnotationParser#parseCacheAnnotations(Class)` | `flint.cache.annotation_runtime.FlintCacheAnnotationParser.parseCacheAnnotations` | [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.annotation.SpringCacheAnnotationParser#parseCacheAnnotations(Method)` | `flint.cache.annotation_runtime.FlintCacheAnnotationParser.parseCacheAnnotations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.cache.concurrent
 
@@ -3176,16 +3197,33 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#findCacheOperations(Class)` | `flint.cache.interceptor.AbstractFallbackCacheOperationSource.findCacheOperations` | [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#findCacheOperations(Method)` | `flint.cache.interceptor.AbstractFallbackCacheOperationSource.findCacheOperations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#getCacheKey(Method,Class)` | `flint.cache.interceptor.AbstractFallbackCacheOperationSource.getCacheKey` | [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#getCacheOperations(Method,Class)` | `flint.cache.interceptor.AbstractFallbackCacheOperationSource.getCacheOperations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#hasCacheOperations(Method,Class)` | `flint.cache.interceptor.AbstractFallbackCacheOperationSource.hasCacheOperations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.cache.interceptor.BasicOperation#getCacheNames()` | `flint.cache.interceptor.BasicOperation.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.interceptor.CacheOperation#equals(Object)` | `flint.cache.interceptor.CacheOperation.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.cache.interceptor.CacheOperation#getCacheNames()` | `flint.cache.interceptor.CacheOperation.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.interceptor.CacheOperation#hashCode()` | `flint.cache.interceptor.CacheOperation.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.cache.interceptor.CacheOperation.Builder#getCacheNames()` | `flint.cache.interceptor.CacheOperation.Builder.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.interceptor.CacheOperation.Builder#setCacheNames(String...)` | `flint.cache.interceptor.CacheOperation.Builder.setCacheNames` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.cache.interceptor.CacheOperationSource#getCacheOperations(Method,Class)` | `flint.cache.interceptor.CacheOperationSource.getCacheOperations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.interceptor.CacheOperationSource#hasCacheOperations(Method,Class)` | `flint.cache.interceptor.CacheOperationSource.hasCacheOperations` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.cache.interceptor.CacheOperationSource#isCandidateClass(Class)` | `flint.cache.interceptor.CacheOperationSource.isCandidateClass` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.cache.interceptor.CachePutOperation#getUnless()` | `flint.cache.interceptor.CachePutOperation.getUnless` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.cache.interceptor.CachePutOperation.Builder#setUnless(String)` | `flint.cache.interceptor.CachePutOperation.Builder.setUnless` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.cache.interceptor.CacheableOperation#getUnless()` | `flint.cache.interceptor.CacheableOperation.getUnless` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.cache.interceptor.CacheableOperation.Builder#setUnless(String)` | `flint.cache.interceptor.CacheableOperation.Builder.setUnless` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.cache.interceptor.KeyGenerator#generate(Object,Method,Object...)` | `flint.cache.interceptor.KeyGenerator.generate` | [D-AOT-MEMBER](api-mapping.md#deviations), [R7](api-mapping.md#r7-overloads), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.cache.interceptor.SimpleKey` | `flint.cache.interceptor.SimpleKey` | [R7](api-mapping.md#r7-overloads) | Java serialization is deferred. Array arguments are snapshotted. |
+| `org.springframework.cache.interceptor.SimpleKey#<init>(Object...)` | `flint.cache.interceptor.SimpleKey.this` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.cache.interceptor.SimpleKey#EMPTY` | `flint.cache.interceptor.SimpleKey.EMPTY` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.cache.interceptor.SimpleKey#equals(Object)` | `flint.cache.interceptor.SimpleKey.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.interceptor.SimpleKey#hashCode()` | `flint.cache.interceptor.SimpleKey.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.interceptor.SimpleKey#toString()` | `flint.cache.interceptor.SimpleKey.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.interceptor.SimpleKeyGenerator#generate(Object,Method,Object...)` | `flint.cache.interceptor.SimpleKeyGenerator.generate` | [D-AOT-MEMBER](api-mapping.md#deviations), [R7](api-mapping.md#r7-overloads), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.cache.interceptor.SimpleKeyGenerator#generateKey(Object...)` | `flint.cache.interceptor.SimpleKeyGenerator.generateKey` | [R7](api-mapping.md#r7-overloads), [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.cache.support
 
@@ -10574,11 +10612,11 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.beans.propertyeditors | 155 | 0 |
 | org.springframework.beans.support | 70 | 0 |
 | org.springframework.cache | 3 | 0 |
-| org.springframework.cache.annotation | 62 | 0 |
+| org.springframework.cache.annotation | 38 | 0 |
 | org.springframework.cache.caffeine | 40 | 0 |
 | org.springframework.cache.concurrent | 22 | 0 |
 | org.springframework.cache.config | 9 | 0 |
-| org.springframework.cache.interceptor | 165 | 0 |
+| org.springframework.cache.interceptor | 142 | 0 |
 | org.springframework.cache.jcache | 34 | 0 |
 | org.springframework.cache.jcache.config | 14 | 0 |
 | org.springframework.cache.jcache.interceptor | 71 | 0 |
@@ -11846,6 +11884,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(ResolvableType)` | 2 | Requires ResolvableType, which is classified as runtime reflection. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(String,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
+| framework | `org.springframework.cache.annotation.AnnotationCacheOperationSource#<init>(boolean)` | 2 | AOT member tables do not carry JVM method visibility modifiers. |
+| framework | `org.springframework.cache.annotation.AnnotationCacheOperationSource#allowPublicMethodsOnly()` | 2 | AOT member tables do not carry JVM method visibility modifiers. |
+| framework | `org.springframework.cache.annotation.AnnotationCacheOperationSource#setPublicMethodsOnly(boolean)` | 2 | AOT member tables do not carry JVM method visibility modifiers. |
+| framework | `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#allowPublicMethodsOnly()` | 2 | AOT member tables do not carry JVM method visibility modifiers. |
+| framework | `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#logger` | 2 | The AOT metadata lookup has no Commons Logging diagnostic adapter. |
 | framework | `org.springframework.cache.interceptor.CacheEvictOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |
 | framework | `org.springframework.cache.interceptor.CacheOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |
 | framework | `org.springframework.cache.interceptor.CachePutOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |

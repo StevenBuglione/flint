@@ -18,8 +18,42 @@
       "status": "ported"
     },
     "org/springframework/cache/annotation/AnnotationCacheOperationSourceTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/context/tests/cache/cache_operation_source_tests.d",
+      "methods": {
+        "ported": [
+          "cacheConfigFromInterface",
+          "cacheResolverAndCacheManagerCannotBeSetTogether",
+          "caching",
+          "emptyCaching",
+          "keyAndKeyGeneratorCannotBeSetTogether",
+          "multipleAnnotation",
+          "singularAnnotation",
+          "validateNoCacheIsValid"
+        ],
+        "skipped": {
+          "cacheAnnotationOverride": "The exact hierarchy and override fixture is pending linked AOT coverage.",
+          "customCacheManager": "The dedicated Spring method-level qualifier fixture is pending.",
+          "customCacheManagerInherited": "The exact composed declaration fixture still needs linked AOT coverage.",
+          "customCacheResolver": "The dedicated Spring method-level qualifier fixture is pending.",
+          "customCacheResolverInherited": "The exact composed declaration fixture still needs linked AOT coverage.",
+          "customClassLevelWithCustomCacheName": "The pinned class-default combination still needs a dedicated source fixture.",
+          "customKeyGenerator": "The dedicated Spring method-level qualifier fixture is pending.",
+          "customKeyGeneratorInherited": "The exact composed declaration fixture still needs linked AOT coverage.",
+          "fullClassLevelWithCustomCacheManager": "The pinned class-default combination still needs a dedicated source fixture.",
+          "fullClassLevelWithCustomCacheName": "The pinned class-default combination still needs a dedicated source fixture.",
+          "fullClassLevelWithCustomCacheResolver": "The pinned class-default combination still needs a dedicated source fixture.",
+          "fullClassLevelWithCustomKeyManager": "The pinned class-default combination still needs a dedicated source fixture.",
+          "multipleComposedAnnotations": "The exact composed declaration fixture still needs linked AOT coverage.",
+          "multipleStereotypes": "The exact composed declaration fixture still needs linked AOT coverage.",
+          "partialClassLevelWithCustomCacheManager": "The pinned class-default combination still needs a dedicated source fixture.",
+          "partialClassLevelWithCustomCacheResolver": "The pinned class-default combination still needs a dedicated source fixture.",
+          "partialClassLevelWithNoCustomization": "The pinned class-default combination still needs a dedicated source fixture.",
+          "severalCacheConfigUseClosest": "The exact hierarchy and override fixture is pending linked AOT coverage.",
+          "singleComposedAnnotation": "The exact composed declaration fixture still needs linked AOT coverage.",
+          "singularStereotype": "The exact composed declaration fixture still needs linked AOT coverage."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/cache/annotation/ReactiveCachingTests.java": {
       "phase": "2",
@@ -113,8 +147,22 @@
       "status": "deferred"
     },
     "org/springframework/cache/interceptor/SimpleKeyGeneratorTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/context/tests/cache/simple_key_generator_tests.d",
+      "methods": {
+        "ported": [
+          "arrayWithExtraParameter",
+          "multipleNullValues",
+          "multipleValues",
+          "noValues",
+          "plainArray",
+          "singleNullValue",
+          "singleValue"
+        ],
+        "skipped": {
+          "serializedKeys": "Java object-stream serialization of SimpleKey is deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/context/annotation/AbstractCircularImportDetectionTests.java": {
       "phase": "2",
