@@ -311,6 +311,35 @@ unittest
     }
 }
 
+@("java.time: Duration milliseconds truncate toward zero and check overflow")
+unittest
+{
+    const before = GC.stats().allocatedInCurrentThread;
+    assert(Duration.ofNanos(-1).toMillis() == 0);
+    assert(Duration.ofNanos(-1_000_001).toMillis() == -1);
+    assert(Duration.ofSeconds(-1, 1).toMillis() == -999);
+    assert(Duration.ofSeconds(-9_223_372_036_854_776L, 191_000_001).toMillis() == long.min);
+    assert(Duration.ofSeconds(9_223_372_036_854_775L, 807_999_999).toMillis() == long.max);
+    assert(GC.stats().allocatedInCurrentThread == before);
+
+    foreach (duration; [
+        Duration.ofSeconds(-9_223_372_036_854_776L, 191_000_000),
+        Duration.ofSeconds(9_223_372_036_854_775L, 808_000_000), Duration.ofSeconds(long.min),
+        Duration.ofSeconds(long.max)
+    ])
+    {
+        try
+        {
+            duration.toMillis();
+            assert(false, "Duration.toMillis must reject overflow");
+        }
+        catch (ArithmeticException error)
+        {
+            assert(error.msg == "long overflow");
+        }
+    }
+}
+
 @("java.time: now() reads the system clock in UTC")
 unittest
 {

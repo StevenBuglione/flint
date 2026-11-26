@@ -1870,27 +1870,35 @@ struct Duration
         return seconds_ / 60;
     }
 
-    /// The total length in milliseconds.
-    long toMillis() const pure nothrow @nogc
+    /// Whole milliseconds, truncated toward zero. Throws `ArithmeticException` on signed overflow.
+    long toMillis() const pure
     {
-        return seconds_ * 1000 + nanos_ / 1_000_000;
+        enum int nanosPerMilli = 1_000_000;
+        // Seconds are rounded down. Round up the fractional part for a negative result.
+        const fraction = nanos_ / nanosPerMilli + (seconds_ < 0 && nanos_ % nanosPerMilli != 0 ? 1 : 0);
+        return checkedTotal(1_000, fraction);
     }
 
     /// The total length in nanoseconds. Throws `ArithmeticException` if it exceeds the signed range.
     long toNanos() const pure
     {
-        enum long minWholeSeconds = long.min / nanosPerSecond;
-        enum long minPartialNanos = nanosPerSecond + long.min % nanosPerSecond;
-        enum long maxWholeSeconds = long.max / nanosPerSecond;
-        enum long maxPartialNanos = long.max % nanosPerSecond;
+        return checkedTotal(nanosPerSecond, nanos_);
+    }
+
+    private long checkedTotal(long unitsPerSecond, long fraction) const pure
+    {
+        const minWholeSeconds = long.min / unitsPerSecond;
+        const minFraction = unitsPerSecond + long.min % unitsPerSecond;
+        const maxWholeSeconds = long.max / unitsPerSecond;
+        const maxFraction = long.max % unitsPerSecond;
 
         // This partial second fits even though multiplying its seconds would overflow.
-        if (seconds_ == minWholeSeconds - 1 && nanos_ >= minPartialNanos)
-            return long.min + (nanos_ - minPartialNanos);
-        const upperFractionOverflows = seconds_ == maxWholeSeconds && nanos_ > maxPartialNanos;
+        if (seconds_ == minWholeSeconds - 1 && fraction >= minFraction)
+            return long.min + (fraction - minFraction);
+        const upperFractionOverflows = seconds_ == maxWholeSeconds && fraction > maxFraction;
         if (seconds_ < minWholeSeconds || seconds_ > maxWholeSeconds || upperFractionOverflows)
             throw new ArithmeticException("long overflow");
-        return seconds_ * nanosPerSecond + nanos_;
+        return seconds_ * unitsPerSecond + fraction;
     }
 
     /// A copy with `other` added.

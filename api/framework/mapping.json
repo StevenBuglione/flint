@@ -5652,6 +5652,7 @@
 "java.text.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.text.spi.**":{"status":"excluded","category":"deferred","phase":"3"},
 "java.time.**":{"status":"excluded","category":"deferred","phase":"2"},
+"java.time.Duration#toMillis()":{"status":"ported","d":"flint.java.time.Duration.toMillis"},
 "java.time.Duration#toNanos()":{"status":"ported","d":"flint.java.time.Duration.toNanos"},
 "java.time.Period":{"status":"adapted","rules":["R1","R11"],"d":"flint.java.time.period.Period"},
 "java.time.Period#ZERO":{"status":"ported","d":"flint.java.time.period.Period.ZERO"},
