@@ -9,6 +9,7 @@ import flint.data.domain.window : Window;
 import flint.java.lang : IllegalArgumentException, NullPointerException, UnsupportedOperationException;
 import flint.java.util : Iterator, List, NoSuchElementException;
 import flint.java.util.function_ : Function;
+public import flint.data.support.is_new_strategy : IsNewStrategy, PersistableIsNewStrategy;
 
 @safe:
 

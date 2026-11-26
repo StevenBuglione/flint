@@ -1104,8 +1104,14 @@
       "status": "deferred"
     },
     "org/springframework/data/support/PersistableIsNewStrategyUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/persistable_tests.d",
+      "methods": {
+        "ported": [
+          "invokesPersistableIsNewForTest",
+          "rejectsNonPersistableEntity"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/support/ReactivePageableExecutionUtilsUnitTests.java": {
       "phase": "2",

@@ -1740,7 +1740,6 @@
       "org/springframework/data/spel/spi/FunctionUnitTests.java",
       "org/springframework/data/spel/spi/ParameterTypesUnitTests.java",
       "org/springframework/data/support/PageableExecutionUtilsUnitTests.java",
-      "org/springframework/data/support/PersistableIsNewStrategyUnitTests.java",
       "org/springframework/data/support/ReactivePageableExecutionUtilsUnitTests.java",
       "org/springframework/data/transaction/ChainedTransactionManagerTests.java",
       "org/springframework/data/util/AnnotatedTypeScannerUnitTests.java",

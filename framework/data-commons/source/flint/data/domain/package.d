@@ -28,6 +28,7 @@ import flint.java.util : ArrayList, Collections, Iterator, List, Map, Objects, O
 public import flint.data.domain.aggregate_root : AbstractAggregateRoot;
 public import flint.data.domain.events : AfterDomainEventPublication, DomainEvents;
 public import flint.data.domain.limit : Limit;
+public import flint.data.domain.persistable : Persistable;
 public import flint.data.domain.range : Range;
 public import flint.data.domain.scroll_position : KeysetScrollPosition, OffsetScrollPosition, ScrollPosition;
 public import flint.data.domain.window : Window;
