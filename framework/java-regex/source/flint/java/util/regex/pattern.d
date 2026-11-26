@@ -49,6 +49,12 @@ final class Pattern
         return compilePattern(regex, 0).matches(input);
     }
 
+    /// Test the entire borrowed input against this pattern without constructing a Matcher.
+    package(flint) bool matches(scope const(char)[] input) const
+    {
+        return program.matches(input);
+    }
+
     /// Bind one input to the compiled expression.
     Matcher matcher(string input)
     {
@@ -94,7 +100,7 @@ final class Matcher
     /// Test the entire input against the pattern.
     bool matches()
     {
-        return compiled.program.matches(input);
+        return compiled.matches(input);
     }
 
     /// Count the capturing groups defined by the pattern.

@@ -30,6 +30,37 @@ unittest
     assert(Pattern.compile("(?-i)a", Pattern.CASE_INSENSITIVE).flags() == 0);
 }
 
+@("the internal Pattern helper matches the entire input without a Matcher allocation")
+unittest
+{
+    import core.memory : GC;
+
+    struct Case
+    {
+        string expression;
+        string text;
+        bool expected;
+    }
+
+    foreach (example; [
+        Case("pet", "pet", true), Case("pet", "carpet", false), Case("^pet$", "pet\n", false),
+        Case("^pet$", "pet", true), Case("^$", "", true), Case("pet", "", false),
+    ])
+    {
+        auto pattern = Pattern.compile(example.expression);
+        assert(pattern.matcher(example.text).matches() == example.expected);
+
+        const Pattern compiled = pattern;
+        char[6] buffer;
+        scope input = buffer[0 .. example.text.length];
+        input[] = example.text[];
+        const before = GC.stats().allocatedInCurrentThread;
+        const matched = compiled.matches(input);
+        assert(GC.stats().allocatedInCurrentThread == before);
+        assert(matched == example.expected);
+    }
+}
+
 @("Pattern rejects unknown flags and reports Java syntax exceptions")
 unittest
 {
