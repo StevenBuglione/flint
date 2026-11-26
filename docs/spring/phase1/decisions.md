@@ -1346,3 +1346,10 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - The archive is checked against IANA's `.asc` signature and its SHA-256.
   - The licence-matrix row (public domain) and the `api:false` upstream entry land with the package.
   - The 13 Java SystemV IDs and the alias differences are listed explicitly.
+- 2026-11-26 15:02Z, coordinator: **an attribute-only closure change may land through main-push** (framework-core's "Permit scoped reads through Any accessors" in engine-aot `any.d`, which sol-context needs). It's an exception to the train rule for a change that adds DIP1000 attributes and no code paths. It needs:
+  - the engine-aot DoD on both compilers, plus structural;
+  - compile-only builds of all three apps on DMD and LDC, because `return scope` can break a caller that lets the result escape;
+  - unchanged codegen: identical engine-aot release bytes and template count before and after.
+
+  If any of these fails, the change goes through the train.
+- 2026-11-26 14:55Z, coordinator: the sol-jdk-math-regex and sol-translator launchers had been SIGSTOPped since about 06:00Z with no FROZEN record and no MEASURING lock. I resumed both by pid, and proof-harness is looking for the leak.
