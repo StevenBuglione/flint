@@ -7,7 +7,7 @@ import flint_tool.engine.session : Session;
 
 @safe:
 
-/// Translate a pinned Java annotation into a reviewable D source and mapping fragment.
+/// Translate a pinned Java declaration into a reviewable D source and mapping fragment.
 int commandPortSpring(ref Session session, const ref SpringPortRequest request, string output)
 {
     import flint_tool.commands.output : finish;

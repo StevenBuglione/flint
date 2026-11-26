@@ -752,7 +752,7 @@ struct ApiArgs
 }
 
 /// `flint port-spring`.
-@Command("flint port-spring", "Translate a pinned upstream annotation for review")
+@Command("flint port-spring", "Translate a pinned upstream declaration for review")
 struct PortSpringArgs
 {
     /// Upstream project name.
@@ -761,8 +761,8 @@ struct PortSpringArgs
     /// Upstream tag.
     @Option("tag", 0, "Pinned upstream tag")
     string tag;
-    /// Canonical Java annotation id.
-    @Option("type", 't', "Canonical Java annotation id")
+    /// Canonical Java type id.
+    @Option("type", 't', "Canonical Java type id")
     string type;
     /// Destination D module name.
     @Option("module", 'm', "Destination D module under flint.*")
@@ -867,6 +867,6 @@ struct FlintArgs
     @Subcommand("api", "Upstream API manifests, coverage and diffs")
     ApiArgs api;
     /// port-spring.
-    @Subcommand("port-spring", "Translate a pinned upstream annotation for review")
+    @Subcommand("port-spring", "Translate a pinned upstream declaration for review")
     PortSpringArgs portSpring;
 }

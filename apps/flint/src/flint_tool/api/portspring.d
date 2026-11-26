@@ -3,21 +3,21 @@ module flint_tool.api.portspring;
 
 import flint_tool.api.coverage : Classifier, Mapping, MappingEntry, Status;
 import flint_tool.api.headers : LicenceEntry;
-import flint_tool.api.java : MemberKind, TypeKind;
+import flint_tool.api.java : MemberKind, TypeDecl, TypeKind;
 import flint_tool.api.manifest : ApiType, Manifest, memberId;
 import flint_tool.api.upstreams : Upstream;
 import std.json : JSONValue;
 
 @safe:
 
-/// One annotation requested from the pinned source cache.
+/// One type requested from the pinned source cache.
 struct SpringPortRequest
 {
     /// Upstream project name.
     string project;
     /// Upstream tag or release.
     string tag;
-    /// Canonical Java annotation id from flint api extract.
+    /// Canonical Java type id from flint api extract.
     string type;
     /// Destination D module name.
     string module_;
@@ -40,7 +40,7 @@ struct SpringPort
     bool inherited;
 }
 
-/// Translate a single public annotation. All validation completes before returning a candidate.
+/// Translate a single public annotation or constants-only enum.
 bool portSpring(string root, const ref SpringPortRequest request, out SpringPort output, out string error)
 {
     import flint_tool.api.upstreams : findUpstream, loadUpstreams;
@@ -99,7 +99,7 @@ private bool portPinned(string root, const ref SpringPortRequest request, const 
     const path = buildPath(root, "api", "upstream", pin.key ~ ".json");
     if (!loadManifest(path, manifest, error))
         return false;
-    const type = annotationIn(manifest, pin, request.type, error);
+    const type = supportedType(manifest, pin, request.type, error);
     if (type is null)
         return false;
     const source = sourcePath(root, request, pin, type.file, error);
@@ -139,7 +139,7 @@ private const(LicenceEntry)* destinationLicence(const ref Upstream pin, const(Li
     }
 }
 
-private const(ApiType)* annotationIn(ref const Manifest manifest, const ref Upstream pin, string id, out string error)
+private const(ApiType)* supportedType(ref const Manifest manifest, const ref Upstream pin, string id, out string error)
 {
     if (manifest.project != pin.project || manifest.version_ != pin.version_)
     {
@@ -150,12 +150,31 @@ private const(ApiType)* annotationIn(ref const Manifest manifest, const ref Upst
     {
         if (type.decl.id != id)
             continue;
-        if (type.decl.kind == TypeKind.annotation && type.decl.visibility == "public")
+        if (type.decl.visibility != "public")
+            break;
+        if (type.decl.kind == TypeKind.annotation)
             return &type;
+        if (type.decl.kind == TypeKind.enum_)
+        {
+            if (constantsOnly(type.decl))
+                return &type;
+            error = id ~ ": unsupported enum shape in the pinned manifest";
+            return null;
+        }
         break;
     }
-    error = id ~ " is not a public annotation in the pinned manifest";
+    error = id ~ " is not a supported public type in the pinned manifest";
     return null;
+}
+
+private bool constantsOnly(const ref TypeDecl decl)
+{
+    if (!decl.members.length || decl.implements_.length)
+        return false;
+    foreach (ref member; decl.members)
+        if (member.kind != MemberKind.constant)
+            return false;
+    return true;
 }
 
 private string sourcePath(string root, const ref SpringPortRequest request, const ref Upstream pin,
@@ -221,7 +240,8 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
     import std.file : readText;
     import std.path : buildPath;
 
-    if (candidate["package"].str != type.decl.package_ || candidate["name"].str != type.decl.name)
+    if (candidate["package"].str != type.decl.package_ || candidate["name"].str != type.decl.name
+            || candidate["kind"].str != cast(string) type.decl.kind)
     {
         error = "translator declaration does not match " ~ type.decl.id ~ " in the manifest";
         return null;
@@ -278,7 +298,7 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
 
     const dName = candidate["symbol"].str;
     string[string] fields;
-    foreach (ref field; candidate["fields"].arrayNoRef)
+    foreach (ref field; candidate["members"].arrayNoRef)
         fields[field["name"].str] = field["symbol"].str;
     if (!identifier(dName) || fields.length != type.decl.members.length)
     {
@@ -287,16 +307,19 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
     }
     const dType = module_ ~ "." ~ dName;
     MappingEntry[string] entries;
-    entries[type.decl.id] = mappingEntry(dType, type.decl.name, dName);
+    const annotation = type.decl.kind == TypeKind.annotation;
+    const memberKind = annotation ? MemberKind.attribute : MemberKind.constant;
+    entries[type.decl.id] = mappingEntry(dType, type.decl.name, dName, annotation);
     foreach (ref member; type.decl.members)
     {
         const field = member.name in fields;
-        if (member.kind != MemberKind.attribute || field is null || !identifier(*field))
+        if (member.kind != memberKind || field is null || !identifier(*field))
         {
             error = "translator field does not match " ~ memberId(type.decl, member) ~ " in the manifest";
             return null;
         }
-        entries[memberId(type.decl, member)] = mappingEntry(dType ~ "." ~ *field, member.name, *field, member.type);
+        entries[memberId(type.decl, member)] = mappingEntry(dType ~ "." ~ *field, member.name,
+                *field, annotation, member.type);
     }
     const classifier = Classifier(mapping);
     string[] lines;
@@ -342,15 +365,15 @@ private string quote(string text)
     return JSONValue(text).toString();
 }
 
-private MappingEntry mappingEntry(string symbol, string javaName, string dName, string javaType = "")
+private MappingEntry mappingEntry(string symbol, string javaName, string dName, bool annotation, string javaType = "")
 {
     import std.string : replace;
 
     const renamed = javaName.replace("Spring", "Flint");
     MappingEntry entry;
-    entry.status = Status.adapted;
     entry.symbol = symbol;
-    entry.rules = ["R2"];
+    if (annotation)
+        entry.rules = ["R2"];
     if (javaName != renamed)
         entry.rules ~= "R1";
     const baseType = attributeBaseType(javaType);
@@ -358,6 +381,7 @@ private MappingEntry mappingEntry(string symbol, string javaName, string dName, 
         entry.rules ~= "R4";
     if (renamed != dName)
         entry.rules ~= "R19";
+    entry.status = entry.rules.length ? Status.adapted : Status.ported;
     return entry;
 }
 
@@ -460,7 +484,7 @@ version (unittest)
         return annotation;
     }
 
-    private enum candidateFixture = `{"symbol":"FlintHint","fields":[{"name":"version","symbol":"version_"}]}`;
+    private enum candidateFixture = `{"symbol":"FlintHint","members":[{"name":"version","symbol":"version_"}]}`;
 }
 
 unittest
@@ -519,13 +543,14 @@ unittest
     import std.string : indexOf;
 
     const annotation = annotationFixture();
-    const candidate = parseJSON(`{"symbol":"FlintHint","fields":[]}`);
+    const candidate = parseJSON(`{"symbol":"FlintHint","members":[]}`);
     Upstream pin;
     Mapping mapping;
     string error;
     assert(!classifiedFragment(pin, annotation, "flint.example", candidate, mapping, error).length);
     assert(error.indexOf("symbols do not match the manifest") >= 0, error);
-    const entry = mappingEntry("flint.example.FlintHint.version_", "version", "version_", "Class<? extends Number>[]");
+    const entry = mappingEntry("flint.example.FlintHint.version_", "version", "version_", true,
+            "Class<? extends Number>[]");
     assert(entry.rules == ["R2", "R4", "R19"]);
 }
 
@@ -546,10 +571,43 @@ unittest
     pin.project = manifest.project;
     pin.version_ = manifest.version_;
     string error;
-    assert(annotationIn(manifest, pin, other.decl.id, error) is null);
-    assert(error.indexOf("not a public annotation") >= 0, error);
-    assert(annotationIn(manifest, pin, "org.springframework.example.Missing", error) is null);
+    assert(supportedType(manifest, pin, other.decl.id, error) is null);
+    assert(error.indexOf("not a supported public type") >= 0, error);
+    assert(supportedType(manifest, pin, "org.springframework.example.Missing", error) is null);
     assert(shadowedAttributeType(manifest, annotation) == "String");
+}
+
+@("enum manifest excludes interfaces and non-constant members")
+unittest
+{
+    import std.string : indexOf;
+
+    Manifest manifest;
+    manifest.project = "example";
+    manifest.version_ = "1";
+    auto option = annotationFixture();
+    option.decl.kind = TypeKind.enum_;
+    option.decl.members[0].kind = MemberKind.constant;
+    manifest.types = [option];
+    Upstream pin;
+    pin.project = manifest.project;
+    pin.version_ = manifest.version_;
+    const id = option.decl.id;
+    string error;
+    assert(supportedType(manifest, pin, id, error) !is null, error);
+
+    manifest.types[0].decl.implements_ = ["example.Option"];
+    assert(supportedType(manifest, pin, id, error) is null);
+    assert(error.indexOf("unsupported enum shape") >= 0, error);
+
+    manifest.types[0].decl.implements_ = null;
+    manifest.types[0].decl.members[0].kind = MemberKind.method;
+    assert(supportedType(manifest, pin, id, error) is null);
+    assert(error.indexOf("unsupported enum shape") >= 0, error);
+
+    manifest.types[0].decl.members = null;
+    assert(supportedType(manifest, pin, id, error) is null);
+    assert(error.indexOf("unsupported enum shape") >= 0, error);
 }
 
 unittest

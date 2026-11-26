@@ -33,9 +33,10 @@ typedef struct {
     TSNode root;
     Slice package;
     TSNode declaration;
+    bool is_enum;
     bool inherited;
     bool class_ref;
-} Annotation;
+} JavaFile;
 
 typedef struct {
     const char *java;
@@ -57,12 +58,12 @@ static bool is(Slice a, const char *b)
     return equal(a, literal(b));
 }
 
-static Slice node_text(const Annotation *annotation, TSNode node)
+static Slice node_text(const JavaFile *java, TSNode node)
 {
     if (ts_node_is_null(node))
         return (Slice){0};
     uint32_t start = ts_node_start_byte(node);
-    return (Slice){annotation->source + start, ts_node_end_byte(node) - start};
+    return (Slice){java->source + start, ts_node_end_byte(node) - start};
 }
 
 static bool kind(TSNode node, const char *name)
@@ -204,36 +205,37 @@ static bool lower_name(Slice name, Text *symbol)
     return !symbol->failed;
 }
 
-static int diagnostic(const Annotation *annotation, TSNode node, const char *message)
+static int diagnostic(const JavaFile *java, TSNode node, const char *message)
 {
     TSPoint start = ts_node_is_null(node) ? (TSPoint){0} : ts_node_start_point(node);
     fprintf(stderr, "%s:%" PRIu32 ":%" PRIu32 ": %s\n",
-            annotation->path, start.row + 1, start.column + 1, message);
+            java->path, start.row + 1, start.column + 1, message);
     return 2;
 }
 
-static bool package_and_declaration(Annotation *annotation)
+static bool package_and_declaration(JavaFile *java)
 {
-    for (uint32_t index = 0; index < ts_node_named_child_count(annotation->root); ++index) {
-        TSNode child = ts_node_named_child(annotation->root, index);
+    for (uint32_t index = 0; index < ts_node_named_child_count(java->root); ++index) {
+        TSNode child = ts_node_named_child(java->root, index);
         if (ts_node_is_extra(child) || kind(child, "import_declaration"))
             continue;
-        if (kind(child, "package_declaration") && !annotation->package.length) {
+        if (kind(child, "package_declaration") && !java->package.length) {
             if (ts_node_named_child_count(child) != 1)
                 return false;
-            annotation->package = node_text(annotation, ts_node_named_child(child, 0));
-        } else if (kind(child, "annotation_type_declaration")
-                   && ts_node_is_null(annotation->declaration)) {
-            annotation->declaration = child;
+            java->package = node_text(java, ts_node_named_child(child, 0));
+        } else if (ts_node_is_null(java->declaration) &&
+                   (kind(child, "annotation_type_declaration") || kind(child, "enum_declaration"))) {
+            java->declaration = child;
+            java->is_enum = kind(child, "enum_declaration");
         } else {
             return false;
         }
     }
-    return annotation->package.length && qualified_identifier(annotation->package)
-        && !ts_node_is_null(child_of_kind(child_of_kind(annotation->declaration, "modifiers"), "public"));
+    return java->package.length && qualified_identifier(java->package)
+        && !ts_node_is_null(child_of_kind(child_of_kind(java->declaration, "modifiers"), "public"));
 }
 
-static Slice import_path(const Annotation *annotation, TSNode node)
+static Slice import_path(const JavaFile *annotation, TSNode node)
 {
     TSNode path = child_of_kind(node, "scoped_identifier");
     if (ts_node_is_null(path))
@@ -250,7 +252,7 @@ static Slice last_name(Slice name)
     return name;
 }
 
-static bool resolves(const Annotation *annotation, Slice spelling, const char *qualified,
+static bool resolves(const JavaFile *annotation, Slice spelling, const char *qualified,
                      bool implicit_java_lang)
 {
     Slice target = literal(qualified);
@@ -274,7 +276,7 @@ static bool resolves(const Annotation *annotation, Slice spelling, const char *q
     return implicit_java_lang && !ambiguous;
 }
 
-static int check_meta(Annotation *annotation, TSNode modifiers)
+static int check_meta(JavaFile *annotation, TSNode modifiers)
 {
     static const char *const metadata[] = {
         "java.lang.annotation.Target", "java.lang.annotation.Retention",
@@ -300,7 +302,7 @@ static int check_meta(Annotation *annotation, TSNode modifiers)
     return 0;
 }
 
-static const Type *identify_type(const Annotation *annotation, TSNode node)
+static const Type *identify_type(const JavaFile *annotation, TSNode node)
 {
     static const Type types[] = {
         {"boolean", "bool"}, {"byte", "byte"}, {"short", "short"},
@@ -423,7 +425,7 @@ static bool integral_default(Text *output, Slice value, const Type *type, unsign
     return append(output, (Slice){number_text, (size_t)length});
 }
 
-static bool scalar_default(const Annotation *annotation, Text *output, TSNode value, const Type *type)
+static bool scalar_default(const JavaFile *annotation, Text *output, TSNode value, const Type *type)
 {
     bool negative = false;
     bool signed_expression = kind(value, "unary_expression");
@@ -451,7 +453,7 @@ static bool scalar_default(const Annotation *annotation, Text *output, TSNode va
     return false;
 }
 
-static bool array_default(const Annotation *annotation, Text *output, TSNode value, const Type *type)
+static bool array_default(const JavaFile *annotation, Text *output, TSNode value, const Type *type)
 {
     add(output, "[");
     if (kind(value, "element_value_array_initializer")) {
@@ -473,7 +475,7 @@ static bool array_default(const Annotation *annotation, Text *output, TSNode val
     return !output->failed;
 }
 
-static int emit_field(Annotation *annotation, const Field *field, Text *output)
+static int emit_field(JavaFile *annotation, const Field *field, Text *output)
 {
     TSNode node = field->node;
     TSNode type_node = member(node, "type");
@@ -510,30 +512,51 @@ static int emit_field(Annotation *annotation, const Field *field, Text *output)
     return 0;
 }
 
-static int collect_fields(const Annotation *annotation, TSNode body, Field *fields, size_t *count)
+static bool has_declarations(TSNode node)
+{
+    for (uint32_t index = 0; index < ts_node_named_child_count(node); ++index)
+        if (!ts_node_is_extra(ts_node_named_child(node, index)))
+            return true;
+    return false;
+}
+
+static bool plain_constant(TSNode node)
+{
+    return kind(node, "enum_constant") && ts_node_is_null(member(node, "arguments"))
+        && ts_node_is_null(member(node, "body"))
+        && ts_node_is_null(child_of_kind(node, "modifiers"));
+}
+
+static int collect_fields(const JavaFile *annotation, TSNode body, Field *fields, size_t *count)
 {
     for (uint32_t index = 0; index < ts_node_named_child_count(body); ++index) {
         TSNode node = ts_node_named_child(body, index);
         if (ts_node_is_extra(node))
             continue;
-        if (!kind(node, "annotation_type_element_declaration"))
+        if (annotation->is_enum && kind(node, "enum_body_declarations") && !has_declarations(node))
+            continue;
+        if (annotation->is_enum && !plain_constant(node))
+            return diagnostic(annotation, node, "unsupported enum member");
+        if (!annotation->is_enum && !kind(node, "annotation_type_element_declaration"))
             return diagnostic(annotation, node, "unsupported annotation member");
         Slice name = node_text(annotation, member(node, "name"));
         Field *field = &fields[(*count)++];
         field->name = name;
         field->node = node;
         if (!lower_name(name, &field->symbol))
-            return diagnostic(annotation, node, "unsupported annotation field name");
+            return diagnostic(annotation, node, "unsupported member name");
         for (size_t earlier = 0; earlier + 1 < *count; ++earlier) {
             if (equal(contents(&fields[earlier].symbol), contents(&field->symbol)))
-                return diagnostic(annotation, node, "annotation field names collide in D");
+                return diagnostic(annotation, node, "member names collide in D");
         }
-        if (is(name, "value") && *count > 1) {
+        if (!annotation->is_enum && is(name, "value") && *count > 1) {
             Field value = *field;
             memmove(fields + 1, fields, (*count - 1) * sizeof *fields);
             fields[0] = value;
         }
     }
+    if (annotation->is_enum && !*count)
+        return diagnostic(annotation, body, "unsupported enum without constants");
     return 0;
 }
 
@@ -552,7 +575,7 @@ static void json_string(Slice text)
     putchar('"');
 }
 
-static void emit_candidate(const Annotation *annotation, Slice name, const Text *symbol,
+static void emit_candidate(const JavaFile *annotation, Slice name, const Text *symbol,
                            const Field *fields, size_t count, const Text *body)
 {
     fputs("{\"package\":", stdout);
@@ -561,7 +584,8 @@ static void emit_candidate(const Annotation *annotation, Slice name, const Text 
     json_string(name);
     fputs(",\"symbol\":", stdout);
     json_string(contents(symbol));
-    fputs(",\"fields\":[", stdout);
+    fputs(annotation->is_enum ? ",\"kind\":\"enum\"" : ",\"kind\":\"annotation\"", stdout);
+    fputs(",\"members\":[", stdout);
     for (size_t index = 0; index < count; ++index) {
         fputs(index ? ",{\"name\":" : "{\"name\":", stdout);
         json_string(fields[index].name);
@@ -575,12 +599,14 @@ static void emit_candidate(const Annotation *annotation, Slice name, const Text 
     puts("}");
 }
 
-static int translate(Annotation *annotation)
+static int translate(JavaFile *annotation)
 {
     if (ts_node_has_error(annotation->root))
         return diagnostic(annotation, annotation->root, "Java syntax error");
     if (!package_and_declaration(annotation))
-        return diagnostic(annotation, annotation->root, "expected a package and one public annotation");
+        return diagnostic(annotation, annotation->root, "expected a package and one public annotation or enum");
+    if (annotation->is_enum && !ts_node_is_null(member(annotation->declaration, "interfaces")))
+        return diagnostic(annotation, annotation->declaration, "unsupported enum implementing an interface");
     int status = check_meta(annotation, child_of_kind(annotation->declaration, "modifiers"));
     if (status)
         return status;
@@ -589,25 +615,31 @@ static int translate(Annotation *annotation)
     size_t slots = ts_node_named_child_count(body);
     Field *fields = calloc(slots ? slots : 1, sizeof *fields);
     if (!fields)
-        return diagnostic(annotation, body, "cannot allocate annotation fields");
+        return diagnostic(annotation, body, "cannot allocate members");
     size_t count = 0;
     Text output = {0};
     Text symbol = {0};
     Slice name = node_text(annotation, member(annotation->declaration, "name"));
     if (!lower_name(name, &symbol)) {
-        status = diagnostic(annotation, annotation->declaration, "unsupported annotation name");
+        status = diagnostic(annotation, annotation->declaration, "unsupported declaration name");
         goto cleanup;
     }
     status = collect_fields(annotation, body, fields, &count);
     if (status)
         goto cleanup;
-    add(&output, "struct ");
+    add(&output, annotation->is_enum ? "enum " : "struct ");
     append(&output, contents(&symbol));
     add(&output, "\n{\n");
     for (size_t index = 0; index < count; ++index) {
-        status = emit_field(annotation, &fields[index], &output);
-        if (status)
-            goto cleanup;
+        if (annotation->is_enum) {
+            add(&output, "    ");
+            append(&output, contents(&fields[index].symbol));
+            add(&output, ",\n");
+        } else {
+            status = emit_field(annotation, &fields[index], &output);
+            if (status)
+                goto cleanup;
+        }
     }
     add(&output, "}\n");
     if (output.failed) {
@@ -665,7 +697,7 @@ int main(int argc, char **argv)
         tree = ts_parser_parse_string(parser, NULL, source, size);
     int status = 1;
     if (tree) {
-        Annotation annotation = {.source = source, .path = argv[1], .root = ts_tree_root_node(tree)};
+        JavaFile annotation = {.source = source, .path = argv[1], .root = ts_tree_root_node(tree)};
         status = translate(&annotation);
         ts_tree_delete(tree);
     } else {

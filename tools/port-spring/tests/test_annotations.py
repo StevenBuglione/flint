@@ -43,8 +43,8 @@ public @interface Settings {
         self.assertEqual(first.stdout, self.run_helper(source).stdout)
         result = json.loads(first.stdout)
         self.assertEqual((result["package"], result["name"]), ("org.springframework.demo", "Settings"))
-        self.assertEqual(result["fields"][0], {"name": "value", "symbol": "value"})
-        self.assertIn({"name": "version", "symbol": "version_"}, result["fields"])
+        self.assertEqual(result["members"][0], {"name": "value", "symbol": "value"})
+        self.assertIn({"name": "version", "symbol": "version_"}, result["members"])
         probe = """module flint.demo;
 @safe:
 """ + result["body"] + """
