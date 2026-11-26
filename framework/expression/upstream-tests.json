@@ -53,7 +53,10 @@
       "status": "deferred"
     },
     "org/springframework/expression/spel/LiteralTests.java": {
-      "d": "framework/expression/tests/literal_tests.d",
+      "d": [
+        "framework/expression/tests/context_tests.d",
+        "framework/expression/tests/literal_tests.d"
+      ],
       "methods": {
         "ported": [
           "booleans",
@@ -69,12 +72,12 @@
           "doubles",
           "doublesUsingExponents",
           "doublesUsingExponentsWithInvalidInput",
-          "nullLiteral"
+          "nullLiteral",
+          "notWritable"
         ],
         "skipped": {
           "conversions": "Phase 2: property resolution and type conversion.",
-          "hexLongAndIntInteractions": "Phase 2: mixed-width multiplication and requested-type conversion.",
-          "notWritable": "Phase 2: the EvaluationContext and isWritable overloads."
+          "hexLongAndIntInteractions": "Phase 2: mixed-width multiplication and requested-type conversion."
         }
       },
       "status": "partial"

@@ -14,7 +14,8 @@
  * limitations under the License.
  *
  * Ported from spring-framework v7.1.0: spring-expression/src/main/java/org/springframework/expression/Expression.java
- * Also from ExpressionParser.java, ExpressionException.java, ParseException.java and EvaluationException.java.
+ * Also from ExpressionParser.java, ExpressionException.java, ParseException.java, EvaluationException.java,
+ * EvaluationContext.java and TypedValue.java.
  * Modified by the Flint authors.
  */
 module flint.expression;
@@ -33,6 +34,52 @@ interface Expression
 
     /// Evaluate using the expression's default context.
     Any getValue();
+
+    /// Evaluate using the given context.
+    Any getValue(EvaluationContext context);
+
+    /// Evaluate with the given root and the expression's default context.
+    Any getValue(Any rootObject);
+
+    /// Evaluate using the given context and root, including an explicitly null root.
+    Any getValue(EvaluationContext context, Any rootObject);
+
+    /// Whether this expression designates a writable value in the context.
+    bool isWritable(EvaluationContext context);
+}
+
+/// Resolves the root and named variables when an expression is evaluated.
+interface EvaluationContext
+{
+    /// The default root for expressions evaluated with this context.
+    TypedValue getRootObject();
+
+    /// Bind a value to a name.
+    void setVariable(string name, Any value);
+
+    /// The bound value, or null if the name is absent.
+    Any lookupVariable(string name);
+}
+
+/// A value in an evaluation context. D-SPEL-1 maps Java's wrapper to a value type.
+struct TypedValue
+{
+    /// A typed value wrapping null.
+    enum TypedValue NULL = TypedValue.init;
+
+    private Any value;
+
+    /// Wrap the supplied value.
+    this(Any value) pure nothrow @nogc
+    {
+        this.value = value;
+    }
+
+    /// The wrapped value.
+    inout(Any) getValue() inout pure nothrow @nogc
+    {
+        return value;
+    }
 }
 
 /// A parser of expression source text.

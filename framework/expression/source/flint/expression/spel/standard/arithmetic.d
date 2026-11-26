@@ -21,8 +21,10 @@ module flint.expression.spel.standard.arithmetic;
 
 import flint.arena : Error, Result, Status;
 import flint.engine.aot.any : Any;
+import flint.engine.aot.text : decodeUtf8;
 import flint.expression.spel : SpelMessage;
 import flint.expression.spel.standard.literal : LiteralParser;
+import flint.java.character : isLetter;
 import flint.java.lang : IllegalArgumentException;
 import std.ascii : isAlpha, isDigit, toLower;
 
@@ -33,11 +35,12 @@ package(flint.expression.spel.standard):
 private enum maxNesting = 200;
 private enum maxStack = 2 * (maxNesting + 1) + 1;
 
-/// A scalar literal or an arithmetic tree stored in evaluation order.
+/// A scalar, a standalone variable, or an arithmetic tree stored in evaluation order.
 struct ArithmeticExpression
 {
     private Any constant;
     private immutable(Instruction)[] instructions;
+    string variable;
 
     Result!Any evaluate() pure nothrow @nogc
     {
@@ -73,7 +76,7 @@ ArithmeticExpression parseArithmetic(string source)
     if (end < source.length)
         throw parser.reader.errorAt(end, SpelMessage.MORE_INPUT, source[end .. $]);
     if (parser.instructions.length == 0)
-        return ArithmeticExpression(parser.firstLiteral, null);
+        return ArithmeticExpression(parser.firstLiteral, null, parser.variable);
     return ArithmeticExpression(Any.init, parser.instructions.idup);
 }
 
@@ -100,6 +103,7 @@ private struct ArithmeticParser
     Instruction[] instructions;
     Any firstLiteral;
     size_t firstPosition = size_t.max;
+    string variable;
 
     void parse(ubyte minimumPrecedence, uint nesting)
     {
@@ -109,7 +113,7 @@ private struct ArithmeticParser
             reader.skipWhitespace();
             const position = reader.position;
             const token = operatorToken(reader.text[position .. $]);
-            if (token.precedence < minimumPrecedence)
+            if (token.precedence < minimumPrecedence || variable !is null)
                 return;
             reader.position += token.length;
             parse(cast(ubyte)(token.precedence + 1), nesting);
@@ -123,7 +127,13 @@ private struct ArithmeticParser
         const position = reader.position;
         if (reader.peek != '(')
         {
-            literal(position);
+            if (reader.peek == '#' && firstPosition == size_t.max)
+            {
+                variable = readVariableName();
+                firstPosition = position;
+            }
+            else
+                literal(position);
             return;
         }
         if (nesting == maxNesting)
@@ -133,6 +143,25 @@ private struct ArithmeticParser
         if (reader.peek != ')')
             throw reader.errorAt(reader.position, SpelMessage.OOD);
         ++reader.position;
+    }
+
+    string readVariableName()
+    {
+        ++reader.position;
+        reader.skipWhitespace();
+        const start = reader.position;
+        size_t end = start;
+        if (start == reader.text.length || !startsIdentifier(decodeUtf8(reader.text, end)))
+            throw reader.errorAt(start, SpelMessage.OOD);
+        reader.position = end;
+        while (end < reader.text.length)
+        {
+            const next = decodeUtf8(reader.text, end);
+            if (!startsIdentifier(next) && (next < '0' || next > '9'))
+                break;
+            reader.position = end;
+        }
+        return reader.text[start .. reader.position];
     }
 
     void literal(size_t position)
@@ -148,6 +177,12 @@ private struct ArithmeticParser
         const scalar = reader.readLiteral();
         instructions ~= Instruction(Op.literal, position, Numeric.from(scalar));
     }
+}
+
+// Spring's tokenizer applies Character.isLetter to one UTF-16 code unit at a time.
+private bool startsIdentifier(dchar c) pure nothrow @nogc
+{
+    return c == '_' || c == '$' || (c <= 0xFFFF && isLetter(c));
 }
 
 private struct OperatorToken
