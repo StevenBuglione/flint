@@ -2802,7 +2802,6 @@
       "tools/jackson/databind/deser/jdk/JDKAtomicTypesDeserTest.java",
       "tools/jackson/databind/deser/jdk/JDKNumberDeserTest.java",
       "tools/jackson/databind/deser/jdk/JDKNumberLeniencyTest.java",
-      "tools/jackson/databind/deser/jdk/JDKScalarsDeserTest.java",
       "tools/jackson/databind/deser/jdk/JDKStringLikeTypeDeserTest.java",
       "tools/jackson/databind/deser/jdk/JavaLangObjectDeserializationTest.java",
       "tools/jackson/databind/deser/jdk/JavaUtilCollectionsTypesTest.java",

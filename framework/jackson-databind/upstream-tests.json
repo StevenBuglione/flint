@@ -894,8 +894,45 @@
       "status": "deferred"
     },
     "tools/jackson/databind/deser/jdk/JDKScalarsDeserTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/jdk_scalars_deser_test.d",
+      "methods": {
+        "ported": [
+          "testBooleanPrimitive",
+          "testBooleanWrapper",
+          "testByteWrapper",
+          "testDoublePrimitive",
+          "testDoubleWrapper",
+          "testEmptyStringForBooleanPrimitive",
+          "testEmptyStringForFloatPrimitives",
+          "testEmptyStringForFloatWrappers",
+          "testEmptyStringForIntegerPrimitives",
+          "testEmptyStringForIntegerWrappers",
+          "testFloatWrapper",
+          "testIntWithOverride",
+          "testIntWrapper",
+          "testLongWrapper",
+          "testNullForPrimitivesDefault",
+          "testShortWrapper"
+        ],
+        "skipped": {
+          "testBase64Variants": "The active default Base64 decode omits the reader's four explicit variants.",
+          "testByteFromFloatOverflow": "The float-to-byte check currently throws a different exception with a truncated numeric value in its diagnostic.",
+          "testCharacterWrapper": "Integer character codes and the reader-specific primitive null settings are version-gated.",
+          "testFailForScalarFromObject": "The active scalar checks omit BigInteger and BigDecimal.",
+          "testIntPrimitive": "The active default binder checks omit the reader's single-array unwrapping variants.",
+          "testInvalidStringCoercionFail": "The active coercion checks omit the byte-array element diagnostic.",
+          "testLongPrimitive": "The active default binder checks omit the reader's single-array unwrapping variants.",
+          "testNullForPrimitiveArrays": "The reader with FAIL_ON_NULL_FOR_PRIMITIVES and its array reference-path assertions are version-gated.",
+          "testNullForPrimitivesNotAllowedFP": "Reader-specific FAIL_ON_NULL_FOR_PRIMITIVES is version-gated.",
+          "testNullForPrimitivesNotAllowedInts": "Reader-specific FAIL_ON_NULL_FOR_PRIMITIVES is version-gated.",
+          "testNullForPrimitivesNotAllowedMisc": "Reader-specific FAIL_ON_NULL_FOR_PRIMITIVES is version-gated.",
+          "testNullForPrimitivesViaCreator": "The configured reader's creator parameter checks are version-gated.",
+          "testSequenceOfInts": "Binding leaves the parser on the last value token, so repeated reads do not advance as in Jackson.",
+          "testVoidDeser": "Java Void and void.class have no supported bind target in D."
+        }
+      },
+      "note": "The fixtures use Nullable value types for Java's boxed scalars under R5 and D wchar for Java char.",
+      "status": "partial"
     },
     "tools/jackson/databind/deser/jdk/JDKStringLikeTypeDeserTest.java": {
       "phase": "2",
