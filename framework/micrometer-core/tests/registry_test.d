@@ -19,7 +19,10 @@ module micrometer_registry_test;
 
 import core.memory : GC;
 import core.thread : Thread;
-import flint.micrometer.core.instrument : Meter, MeterRegistry, Tags;
+import flint.java.lang : ArithmeticException, IllegalArgumentException;
+import flint.java.time : Duration;
+import flint.java.util.concurrent : TimeUnit;
+import flint.micrometer.core.instrument : Meter, MeterRegistry, Statistic, Tags;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 
 @safe:
@@ -84,6 +87,121 @@ unittest
     same.increment(0.5);
     assert(a.count() == 0.75);
     assert(different.count() == 0);
+}
+
+@("shouldNotLetRegisteringMetersTwice")
+unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    registry.counter("my.dupe.meter");
+    bool rejected;
+    try
+        registry.timer("my.dupe.meter");
+    catch (IllegalArgumentException exception)
+    {
+        assert(exception.msg == "There is already a registered meter of a different type "
+                ~ "(CumulativeCounter vs. Timer) with the same name: my.dupe.meter");
+        rejected = true;
+    }
+    assert(rejected);
+
+    auto timer = registry.timer("my.dupe.meter", "region", "east");
+    assert(registry.timer("my.dupe.meter", Tags.of("region", "east")) is timer);
+    rejected = false;
+    try
+        registry.counter("my.dupe.meter", "region", "east");
+    catch (IllegalArgumentException exception)
+    {
+        assert(exception.msg == "There is already a registered meter of a different type "
+                ~ "(CumulativeTimer vs. Counter) with the same name: my.dupe.meter");
+        rejected = true;
+    }
+    assert(rejected);
+    assert(meterCount(registry) == 2);
+}
+
+@("noopMetersAfterRegistryClosed")
+unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    auto admitted = registry.timer("my.timer.before");
+    admitted.record(1, TimeUnit.SECONDS);
+    registry.close();
+    assert(registry.isClosed());
+    assert(registry.timer("my.timer.before") is admitted);
+    auto denied = registry.timer("my.timer.after");
+    denied.record(2, TimeUnit.SECONDS);
+    admitted.record(3, TimeUnit.SECONDS);
+    assert(denied.getId().getName() == "my.timer.after");
+    assert(denied.count() == 0 && denied.totalTime(TimeUnit.SECONDS) == 0 && denied.max(TimeUnit.SECONDS) == 0);
+    assert(denied.baseTimeUnit() == TimeUnit.SECONDS);
+    assert(!denied.measure().iterator().hasNext());
+    assert(admitted.count() == 2 && admitted.totalTime(TimeUnit.SECONDS) == 4 && admitted.max(TimeUnit.SECONDS) == 3);
+    assert(meterCount(registry) == 1);
+}
+
+@("baseUnitStringShouldBeCachedAndReturnTheSameInstance")
+unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    auto first = registry.timer("test.timer1");
+    auto second = registry.timer("test.timer2");
+    assert(first.baseTimeUnit() == TimeUnit.SECONDS);
+    const firstUnit = first.getId().getBaseUnit().get();
+    const secondUnit = second.getId().getBaseUnit().get();
+    assert(firstUnit == "seconds" && firstUnit is secondUnit);
+}
+
+@("timer measurement values stay live and use the registry base unit")
+unittest
+{
+    auto timer = (new SimpleMeterRegistry).timer("latency");
+    assert(timer.mean(TimeUnit.SECONDS) == 0);
+    auto measurements = timer.measure().iterator();
+    auto count = measurements.next();
+    auto total = measurements.next();
+    auto maximum = measurements.next();
+    assert(!measurements.hasNext());
+    assert(count.getStatistic() == Statistic.COUNT);
+    assert(total.getStatistic() == Statistic.TOTAL_TIME);
+    assert(maximum.getStatistic() == Statistic.MAX);
+    timer.record(-1, TimeUnit.SECONDS);
+    timer.record(Duration.ofMillis(-1));
+    assert(count.getValue() == 0);
+    timer.record(Duration.ofMillis(250));
+    timer.record(1, TimeUnit.SECONDS);
+    timer.record(0, TimeUnit.SECONDS);
+    assert(count.getValue() == 3 && total.getValue() == 1.25 && maximum.getValue() == 1);
+    assert(timer.mean(TimeUnit.MILLISECONDS) == 1250.0 / 3);
+    bool overflow;
+    try
+        timer.record(Duration.ofSeconds(long.max));
+    catch (ArithmeticException)
+        overflow = true;
+    assert(overflow && count.getValue() == 3);
+}
+
+@("preallocated timers record concurrently without request-thread allocations")
+@system unittest
+{
+    auto timer = (new SimpleMeterRegistry).timer("parallel.latency");
+    enum threadCount = 4, updates = 10_000;
+    Thread[threadCount] workers;
+    foreach (ref worker; workers)
+    {
+        worker = new Thread(() {
+            const allocatedBefore = GC.stats().allocatedInCurrentThread;
+            foreach (_; 0 .. updates)
+                timer.record(500, TimeUnit.MICROSECONDS);
+            assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+        });
+        worker.start();
+    }
+    foreach (worker; workers)
+        worker.join();
+    assert(timer.count() == threadCount * updates);
+    assert(timer.totalTime(TimeUnit.SECONDS) == 20);
+    assert(timer.max(TimeUnit.MILLISECONDS) == 0.5);
 }
 
 @("preallocated counters update concurrently with no request-thread allocations")

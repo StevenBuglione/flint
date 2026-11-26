@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 VMware, Inc.
+ * Copyright 2019 VMware, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +24,8 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Measurement.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Clock.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/MockClock.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Timer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument;
 
@@ -41,6 +44,10 @@ import flint.java.util.stream : Stream;
 import std.typecons : Nullable;
 
 @safe:
+
+private alias NullableString = Nullable!string;
+private alias TagIterable = Iterable!Tag;
+private alias MeasurementIterable = Iterable!Measurement;
 
 /// Sources of epoch milliseconds and monotonic nanoseconds.
 interface Clock
@@ -96,9 +103,7 @@ class MockClock : Clock
     /// Advance the clock by a Java duration.
     long add(Duration duration)
     {
-        if (duration.compareTo(Duration.ofNanos(long.min)) < 0 || duration.compareTo(Duration.ofNanos(long.max)) > 0)
-            throw new ArithmeticException("Duration exceeds a signed nanosecond count");
-        return add(duration.toNanos(), TimeUnit.NANOSECONDS);
+        return add(checkedNanos(duration), TimeUnit.NANOSECONDS);
     }
 
     /// Advance the clock by a number of seconds.
@@ -106,6 +111,13 @@ class MockClock : Clock
     {
         return add(amount, TimeUnit.SECONDS);
     }
+}
+
+private long checkedNanos(Duration duration)
+{
+    if (duration.compareTo(Duration.ofNanos(long.min)) < 0 || duration.compareTo(Duration.ofNanos(long.max)) > 0)
+        throw new ArithmeticException("Duration exceeds a signed nanosecond count");
+    return duration.toNanos();
 }
 
 /// One key/value dimension of a meter (R1, R3, R6).
@@ -213,7 +225,7 @@ class ImmutableTag : Tag
 }
 
 /// Immutable tags in key order. Later instances of a key replace earlier ones.
-abstract class Tags : Iterable!Tag
+abstract class Tags : TagIterable
 {
     // Only this module constructs Tags. EmptyTags uses the existing stateless Java singleton path.
     private this() nothrow @nogc
@@ -229,7 +241,7 @@ abstract class Tags : Iterable!Tag
     }
 
     /// Normalize the contents of an iterable.
-    static Tags of(Iterable!Tag tags)
+    static Tags of(TagIterable tags)
     {
         if (tags is null)
             return empty();
@@ -273,19 +285,19 @@ abstract class Tags : Iterable!Tag
     }
 
     /// Merge two iterables. The second supplies the value of any repeated key.
-    static Tags concat(Iterable!Tag tags, Iterable!Tag otherTags)
+    static Tags concat(TagIterable tags, TagIterable otherTags)
     {
         return of(tags).and(otherTags);
     }
 
     /// Merge an iterable with alternating keys and values.
-    static Tags concat(Iterable!Tag tags, scope const(string)[] keyValues...)
+    static Tags concat(TagIterable tags, scope const(string)[] keyValues...)
     {
         return of(tags).and(keyValues);
     }
 
     /// Merge this set with the given iterable.
-    final Tags and(Iterable!Tag tags)
+    final Tags and(TagIterable tags)
     {
         return merge(of(tags));
     }
@@ -601,7 +613,7 @@ interface Meter
     Id getId();
 
     /// Measurements sampled from this meter.
-    Iterable!Measurement measure();
+    MeasurementIterable measure();
 
     /// The kind of measurements the meter reports.
     enum Type : ubyte
@@ -619,12 +631,12 @@ interface Meter
     {
         private immutable string name;
         private Tags tags;
-        private Nullable!string baseUnit;
-        private Nullable!string description;
+        private NullableString baseUnit;
+        private NullableString description;
         private Type type;
 
         /// The name and tags identify the meter. Unit, description and type describe it.
-        this(string name, Tags tags, Nullable!string baseUnit, Nullable!string description, Type type)
+        this(string name, Tags tags, NullableString baseUnit, NullableString description, Type type)
         {
             this.name = name;
             this.tags = tags;
@@ -653,19 +665,19 @@ interface Meter
         }
 
         /// Return an ID with the supplied dimensions merged into the current ones.
-        Id withTags(Iterable!Tag extraTags)
+        Id withTags(TagIterable extraTags)
         {
             return new Id(name, tags.and(extraTags), baseUnit, description, type);
         }
 
         /// Return an ID whose only dimensions are the supplied tags.
-        Id replaceTags(Iterable!Tag replacement)
+        Id replaceTags(TagIterable replacement)
         {
             return new Id(name, Tags.of(replacement), baseUnit, description, type);
         }
 
         /// Return an ID for the same meter with a different base unit.
-        Id withBaseUnit(Nullable!string newBaseUnit)
+        Id withBaseUnit(NullableString newBaseUnit)
         {
             return new Id(name, tags, newBaseUnit, description, type);
         }
@@ -683,32 +695,32 @@ interface Meter
         }
 
         /// The meter's dimensions in key order.
-        Iterable!Tag getTagsAsIterable() nothrow @nogc
+        TagIterable getTagsAsIterable() nothrow @nogc
         {
             return tags;
         }
 
         /// The value of the named dimension, or null if absent.
-        Nullable!string getTag(string key)
+        NullableString getTag(string key)
         {
             if (key is null)
-                return Nullable!string.init;
+                return NullableString.init;
             foreach (tag; tags.entries())
             {
                 if (tag.getKey() == key)
-                    return Nullable!string(tag.getValue());
+                    return NullableString(tag.getValue());
             }
-            return Nullable!string.init;
+            return NullableString.init;
         }
 
         /// The meter's base unit, if set.
-        Nullable!string getBaseUnit() const pure nothrow @nogc
+        NullableString getBaseUnit() const pure nothrow @nogc
         {
             return baseUnit;
         }
 
         /// The meter's description, if set.
-        Nullable!string getDescription() const pure nothrow @nogc
+        NullableString getDescription() const pure nothrow @nogc
         {
             return description;
         }
@@ -756,8 +768,8 @@ interface Counter : Meter
     {
         private string name;
         private Tags dimensions;
-        private Nullable!string description_;
-        private Nullable!string baseUnit_;
+        private NullableString description_;
+        private NullableString baseUnit_;
 
         private this(string name)
         {
@@ -773,7 +785,7 @@ interface Counter : Meter
         }
 
         /// Add dimensions. Later entries override the same key.
-        ref Builder tags(Iterable!Tag tags) return
+        ref Builder tags(TagIterable tags) return
         {
             dimensions = dimensions.and(tags);
             return this;
@@ -787,14 +799,14 @@ interface Counter : Meter
         }
 
         /// Set the description of the registered meter.
-        ref Builder description(Nullable!string description) return
+        ref Builder description(NullableString description) return
         {
             description_ = description;
             return this;
         }
 
         /// Set the base unit of the registered meter.
-        ref Builder baseUnit(Nullable!string baseUnit) return
+        ref Builder baseUnit(NullableString baseUnit) return
         {
             baseUnit_ = baseUnit;
             return this;
@@ -817,13 +829,13 @@ interface Counter : Meter
     /// The total since this counter was created.
     double count() nothrow @nogc;
 
-    private static Iterable!Measurement countMeasurement(Counter counter)
+    private static MeasurementIterable countMeasurement(Counter counter)
     {
         return new CounterMeasurement(counter);
     }
 
     /// Micrometer's default increment and count measurement (R3).
-    mixin template Defaults(alias Measurements = Iterable!Measurement, alias countSample = countMeasurement)
+    mixin template Defaults(alias Measurements = MeasurementIterable, alias countSample = countMeasurement)
     {
         override void increment() nothrow @nogc
         {
@@ -838,17 +850,77 @@ interface Counter : Meter
     }
 }
 
+/// Count recorded durations and report their total and recent maximum.
+interface Timer : Meter
+{
+    /// Record an event. Negative durations are ignored.
+    void record(long amount, TimeUnit unit) nothrow @nogc;
+
+    /// Record an event with a duration representable as signed nanoseconds.
+    void record(Duration duration);
+
+    /// The number of recorded events.
+    long count() nothrow @nogc;
+
+    /// The sum of recorded durations in the requested unit.
+    double totalTime(TimeUnit unit) nothrow @nogc;
+
+    /// The mean of recorded durations in the requested unit.
+    double mean(TimeUnit unit) nothrow @nogc;
+
+    /// The maximum duration in the current window in the requested unit.
+    double max(TimeUnit unit) nothrow @nogc;
+
+    /// The time unit used for published measurements.
+    TimeUnit baseTimeUnit() nothrow @nogc;
+
+    private static MeasurementIterable timerMeasurements(Timer timer)
+    {
+        return new TimerMeasurements(timer);
+    }
+
+    /// Micrometer's default duration conversion, mean and live measurements (R3).
+    mixin template Defaults(alias Measurements = MeasurementIterable, alias samples = timerMeasurements,
+            alias DurationType = Duration, alias Unit = TimeUnit, alias nanos = checkedNanos)
+    {
+        override void record(DurationType duration)
+        {
+            Timer timer = this;
+            timer.record(nanos(duration), Unit.NANOSECONDS);
+        }
+
+        override double mean(Unit unit) nothrow @nogc
+        {
+            Timer timer = this;
+            const events = timer.count();
+            return events == 0 ? 0.0 : timer.totalTime(unit) / events;
+        }
+
+        override Measurements measure()
+        {
+            return samples(this);
+        }
+    }
+}
+
 /// Register meters by name and tags before handing their handles to request code.
 abstract class MeterRegistry
 {
     private Meter[] meters;
     private Mutex gate;
+    private Timer function(Meter.Id) @safe timerFactory;
     private bool closed;
 
     /// Prepare empty registry storage.
     protected this()
     {
+        this(null);
+    }
+
+    package this(Timer function(Meter.Id) @safe timerFactory)
+    {
         gate = new Mutex;
+        this.timerFactory = timerFactory;
     }
 
     /// Find or register a counter with the given name and tag pairs.
@@ -858,7 +930,7 @@ abstract class MeterRegistry
     }
 
     /// Find or register a counter with the given name and tag iterable.
-    Counter counter(string name, Iterable!Tag tags)
+    Counter counter(string name, TagIterable tags)
     {
         return counter(name, Tags.of(tags));
     }
@@ -868,24 +940,70 @@ abstract class MeterRegistry
     {
         if (tags is null)
             tags = Tags.empty();
-        return counter(new Meter.Id(name, tags, Nullable!string.init, Nullable!string.init, Meter.Type.COUNTER));
+        return counter(new Meter.Id(name, tags, NullableString.init, NullableString.init, Meter.Type.COUNTER));
     }
 
     private Counter counter(Meter.Id id)
     {
+        return cast(Counter) registerMeter(id);
+    }
+
+    /// Find or register a timer with the given name and tag pairs.
+    Timer timer(string name, scope const(string)[] tags...)
+    {
+        return timer(name, Tags.of(tags));
+    }
+
+    /// Find or register a timer with the given name and tag iterable.
+    Timer timer(string name, TagIterable tags)
+    {
+        return timer(name, Tags.of(tags));
+    }
+
+    /// Find or register a timer with the given name and normalized tags.
+    Timer timer(string name, Tags tags)
+    {
+        if (tags is null)
+            tags = Tags.empty();
+        auto id = new Meter.Id(name, tags, NullableString.init, NullableString.init, Meter.Type.TIMER);
+        return cast(Timer) registerMeter(id);
+    }
+
+    private Meter registerMeter(Meter.Id id)
+    {
+        const registeringTimer = id.getType() == Meter.Type.TIMER;
         gate.lock_nothrow();
         scope (exit)
             gate.unlock_nothrow();
 
         foreach (meter; meters)
         {
-            if (id.equals(meter.getId()))
-                return cast(Counter) meter;
+            if (!id.equals(meter.getId()))
+                continue;
+            if (registeringTimer ? cast(Timer) meter is null : cast(Counter) meter is null)
+            {
+                const conflict = registeringTimer ? "CumulativeCounter vs. Timer" : "CumulativeTimer vs. Counter";
+                throw new IllegalArgumentException("There is already a registered meter of a different type ("
+                        ~ conflict ~ ") with the same name: " ~ id.getName());
+            }
+            return meter;
         }
 
         if (closed)
+        {
+            if (registeringTimer)
+                return new NoopTimer(id);
             return new NoopCounter(id);
-        auto created = newCounter(id);
+        }
+        Meter created;
+        if (registeringTimer)
+        {
+            if (timerFactory is null)
+                throw new UnsupportedOperationException("This registry does not provide timers");
+            created = timerFactory(id);
+        }
+        else
+            created = newCounter(id);
         meters ~= created;
         return created;
     }
@@ -995,7 +1113,67 @@ private final class NoopCounter : Counter
     mixin Counter.Defaults;
 }
 
-private final class CounterMeasurement : Measurement, Iterable!Measurement
+private final class NoopTimer : Timer, MeasurementIterable
+{
+    private Meter.Id id;
+
+    this(Meter.Id id) nothrow @nogc
+    {
+        this.id = id;
+    }
+
+    override Meter.Id getId() nothrow @nogc
+    {
+        return id;
+    }
+
+    override void record(long, TimeUnit) nothrow @nogc
+    {
+    }
+
+    override long count() nothrow @nogc
+    {
+        return 0;
+    }
+
+    override double totalTime(TimeUnit) nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override double max(TimeUnit) nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override TimeUnit baseTimeUnit() nothrow @nogc
+    {
+        return TimeUnit.SECONDS;
+    }
+
+    override MeasurementIterable measure()
+    {
+        return this;
+    }
+
+    override Iterator!Measurement iterator()
+    {
+        return new MeasurementIterator(null);
+    }
+
+    override void forEach(void delegate(Measurement) @safe)
+    {
+    }
+
+    override int opApply(scope int delegate(Measurement) @safe)
+    {
+        return 0;
+    }
+
+    mixin Timer.Defaults;
+}
+
+private final class CounterMeasurement : Measurement, MeasurementIterable
 {
     this(Counter counter)
     {
@@ -1018,26 +1196,80 @@ private final class CounterMeasurement : Measurement, Iterable!Measurement
     }
 }
 
+private final class TimerMeasurements : MeasurementIterable
+{
+    private Timer timer;
+    private Measurement[3] measurements;
+
+    this(Timer timer)
+    {
+        this.timer = timer;
+        measurements[0] = new Measurement(&count, Statistic.COUNT);
+        measurements[1] = new Measurement(&total, Statistic.TOTAL_TIME);
+        measurements[2] = new Measurement(&maximum, Statistic.MAX);
+    }
+
+    private double count() nothrow @nogc
+    {
+        return cast(double) timer.count();
+    }
+
+    private double total() nothrow @nogc
+    {
+        return timer.totalTime(timer.baseTimeUnit());
+    }
+
+    private double maximum() nothrow @nogc
+    {
+        return timer.max(timer.baseTimeUnit());
+    }
+
+    override Iterator!Measurement iterator()
+    {
+        return new MeasurementIterator(measurements[0], measurements[1], measurements[2]);
+    }
+
+    override void forEach(void delegate(Measurement) @safe action)
+    {
+        foreach (sample; measurements)
+            action(sample);
+    }
+
+    override int opApply(scope int delegate(Measurement) @safe visit)
+    {
+        foreach (sample; measurements)
+            if (const result = visit(sample))
+                return result;
+        return 0;
+    }
+}
+
 private final class MeasurementIterator : Iterator!Measurement
 {
-    private Measurement remaining;
+    private Measurement first;
+    private Measurement second;
+    private Measurement third;
 
-    this(Measurement sample) nothrow @nogc
+    this(Measurement first, Measurement second = null, Measurement third = null) nothrow @nogc
     {
-        remaining = sample;
+        this.first = first;
+        this.second = second;
+        this.third = third;
     }
 
     override bool hasNext() nothrow @nogc
     {
-        return remaining !is null;
+        return first !is null;
     }
 
     override Measurement next()
     {
         if (!hasNext())
             throw new NoSuchElementException("no more measurements");
-        auto current = remaining;
-        remaining = null;
+        auto current = first;
+        first = second;
+        second = third;
+        third = null;
         return current;
     }
 
