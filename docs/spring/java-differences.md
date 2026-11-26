@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,223 | 408 | 1,871 | 14,919 |
+| framework | openjdk@21.0.13 | 1,226 | 408 | 1,871 | 14,916 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10634,7 +10634,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 117 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,892 | 0 |
+| java.util | 1,889 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
