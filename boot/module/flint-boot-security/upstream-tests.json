@@ -10,9 +10,13 @@
         "ported": [
           "defaultAuthenticationEventPublisherIsConditionalOnMissingBean",
           "defaultAuthenticationEventPublisherRegistered"
-        ]
+        ],
+        "skipped": {
+          "testJpaCoexistsHappily": "Phase 2: requires the Hibernate JPA auto-configuration.",
+          "testSecurityEvaluationContextExtensionSupport": "Phase 2: requires the Spring Data security expression extension."
+        }
       },
-      "status": "ported"
+      "status": "partial"
     },
     "org/springframework/boot/security/autoconfigure/SecurityPropertiesTests.java": {
       "d": "boot/module/flint-boot-security/tests/security_test.d",

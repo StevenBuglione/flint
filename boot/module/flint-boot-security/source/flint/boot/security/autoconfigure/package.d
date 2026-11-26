@@ -4,8 +4,7 @@
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java Beans getters and setters are kept (rulebook R6); `spring.*` keys
 // become `flint.*` with `spring.*` accepted as an alias (ADR-030); `List<String> roles` is a string array;
-// SecurityAutoConfiguration's `DefaultAuthenticationEventPublisher` and `SecurityDataConfiguration` join when
-// Flint's Spring Security has them, and its class condition names `AuthenticationManager` meanwhile;
+// SecurityAutoConfiguration's `SecurityDataConfiguration` joins when Flint has Security's Spring Data extension;
 // UserDetailsServiceAutoConfiguration's OAuth2, SAML and `AuthenticationManagerResolver` conditions always match,
 // since Flint has none of those types.
 
@@ -15,8 +14,10 @@ module flint.boot.security.autoconfigure;
 import flint.boot.autoconfigure : AutoConfiguration;
 import flint.boot.autoconfigure.condition : ConditionalOnClass, ConditionalOnMissingBean, ConditionalOnWebApplication;
 import flint.boot.context.properties : ClassRef, ConfigurationProperties, EnableConfigurationProperties;
+import flint.context : ApplicationEventPublisher;
 import flint.context.annotation : Bean;
 import flint.engine.aot.name : typeNameOf;
+import flint.security.authentication : AuthenticationEventPublisher, DefaultAuthenticationEventPublisher;
 import flint.security.core.userdetails : User;
 import flint.security.crypto.password : PasswordEncoder;
 import flint.security.provisioning : InMemoryUserDetailsManager;
@@ -121,10 +122,17 @@ imported!"flint.engine.aot.descriptor".Descriptor[] flintAotDescriptors()
 
 /// Auto-configuration of Spring Security's defaults: binds `flint.security.*`.
 @AutoConfiguration
-@ConditionalOnClass(null, ["flint.security.authentication.AuthenticationManager"])
+@ConditionalOnClass([ClassRef(typeNameOf!DefaultAuthenticationEventPublisher)])
 @EnableConfigurationProperties([ClassRef(typeNameOf!SecurityProperties)])
 final class SecurityAutoConfiguration
 {
+    /// Publish authentication events through the application context by default.
+    @Bean
+    @ConditionalOnMissingBean([ClassRef(typeNameOf!AuthenticationEventPublisher)])
+    DefaultAuthenticationEventPublisher authenticationEventPublisher(ApplicationEventPublisher publisher)
+    {
+        return new DefaultAuthenticationEventPublisher(publisher);
+    }
 }
 
 /// Auto-configuration of an `InMemoryUserDetailsManager` holding the `flint.security.user.*` user, unless the

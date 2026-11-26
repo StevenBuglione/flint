@@ -1,7 +1,7 @@
 {"schema":"flint.api-coverage-baseline/1",
-"unclassified":10886,
+"unclassified":10816,
 "upstreams":{
-"spring-boot@v4.2.0":{"unclassified":10886,"modules":{
+"spring-boot@v4.2.0":{"unclassified":10816,"modules":{
 "spring-boot":2371,
 "spring-boot-activemq":35,
 "spring-boot-actuator":741,
@@ -115,7 +115,7 @@
 "spring-boot-resttestclient":66,
 "spring-boot-rsocket":0,
 "spring-boot-rsocket-test":0,
-"spring-boot-security":70,
+"spring-boot-security":0,
 "spring-boot-security-oauth2-authorization-server":0,
 "spring-boot-security-oauth2-client":0,
 "spring-boot-security-oauth2-resource-server":0,
