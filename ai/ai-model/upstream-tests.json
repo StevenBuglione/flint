@@ -182,8 +182,21 @@
       "status": "deferred"
     },
     "org/springframework/ai/chat/metadata/FinishReasonCategoryTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-model/tests/finish_reason_category_tests.d",
+      "methods": {
+        "ported": [
+          "absentReasonIsDistinctFromUnrecognizedReason",
+          "shouldCategorizeCompletedReasons",
+          "shouldCategorizeFilteredReasons",
+          "shouldCategorizeNullOrBlankAsUnknown",
+          "shouldCategorizeToolCallReasons",
+          "shouldCategorizeTruncatedReasons",
+          "shouldCategorizeUnrecognizedAsOther",
+          "shouldHandleMixedCaseAndWhitespace",
+          "shouldReturnNonNullForAllEnumValues"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/ai/chat/model/ChatResponseTests.java": {
       "phase": "2",

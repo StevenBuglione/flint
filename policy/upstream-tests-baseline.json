@@ -37,7 +37,6 @@
       "org/springframework/ai/chat/metadata/ChatResponseMetadataTests.java",
       "org/springframework/ai/chat/metadata/DefaultUsageTests.java",
       "org/springframework/ai/chat/metadata/EmptyUsageTests.java",
-      "org/springframework/ai/chat/metadata/FinishReasonCategoryTests.java",
       "org/springframework/ai/chat/model/ChatResponseTests.java",
       "org/springframework/ai/chat/model/GenerationTests.java",
       "org/springframework/ai/chat/model/GuardrailRefusalTests.java",
