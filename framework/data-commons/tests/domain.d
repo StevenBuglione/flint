@@ -279,7 +279,7 @@ unittest
 
 // PageImplUnitTests
 
-@("PageImpl: assertEqualsForSimpleSetup")
+@("PageImplUnitTests.assertEqualsForSimpleSetup")
 unittest
 {
     auto page = new PageImpl!string(Collections.singletonList("Foo"));
@@ -287,7 +287,7 @@ unittest
     assertEqualsAndHashcode(page, new PageImpl!string(Collections.singletonList("Foo")));
 }
 
-@("PageImpl: assertEqualsForComplexSetup")
+@("PageImplUnitTests.assertEqualsForComplexSetup")
 unittest
 {
     Pageable pageable = PageRequest.of(0, 10);
@@ -300,14 +300,19 @@ unittest
     assertNotEqualsAndHashcode(page, new PageImpl!string(content, PageRequest.of(0, 15), 100));
 }
 
-@("PageImpl: preventsNullContent")
+@("PageImplUnitTests.preventsNullContentForSimpleSetup")
 unittest
 {
     assertThrown!IllegalArgumentException(new PageImpl!string(null));
+}
+
+@("PageImplUnitTests.preventsNullContentForAdvancedSetup")
+unittest
+{
     assertThrown!IllegalArgumentException(new PageImpl!string(null, null, 0));
 }
 
-@("PageImpl: returnsNextPageable")
+@("PageImplUnitTests.returnsNextPageable")
 unittest
 {
     Page!Object page = new PageImpl!Object(Collections.singletonList(new Object()), PageRequest.of(0, 1), 10);
@@ -319,7 +324,7 @@ unittest
     assert(same(page.nextPageable(), PageRequest.of(1, 1)));
 }
 
-@("PageImpl: returnsPreviousPageable")
+@("PageImplUnitTests.returnsPreviousPageable")
 unittest
 {
     Page!Object page = new PageImpl!Object(Collections.singletonList(new Object()), PageRequest.of(1, 1), 2);
@@ -331,7 +336,7 @@ unittest
     assert(!page.nextPageable().isPaged());
 }
 
-@("PageImpl: createsPageForEmptyContentCorrectly")
+@("PageImplUnitTests.createsPageForEmptyContentCorrectly")
 unittest
 {
     List!string list = Collections.emptyList!string();
@@ -350,7 +355,7 @@ unittest
     assert(!page.hasContent());
 }
 
-@("PageImpl: returnsCorrectTotalPages")
+@("PageImplUnitTests.returnsCorrectTotalPages")
 unittest
 {
     Page!string page = new PageImpl!string(Collections.singletonList("a"));
@@ -359,7 +364,7 @@ unittest
     assert(!page.hasPrevious());
 }
 
-@("PageImpl: transformsPageCorrectly")
+@("PageImplUnitTests.transformsPageCorrectly")
 unittest
 {
     Page!string page = new PageImpl!string(Arrays.asList("foo", "bar"), PageRequest.of(0, 2), 10);
@@ -368,17 +373,37 @@ unittest
     assert(transformed.getContent().get(0) == 3 && transformed.getContent().get(1) == 3);
 }
 
-@("PageImpl: adapts the total on the last page (DATACMNS-713)")
+@("PageImplUnitTests.adaptsTotalForLastPageOnIntermediateDeletion")
 unittest
 {
     assert(new PageImpl!string(Arrays.asList("foo", "bar"), PageRequest.of(0, 5), 3).getTotalElements() == 2);
+}
+
+@("PageImplUnitTests.adaptsTotalForLastPageOnIntermediateInsertion")
+unittest
+{
     assert(new PageImpl!string(Arrays.asList("foo", "bar"), PageRequest.of(0, 5), 1).getTotalElements() == 2);
+}
+
+@("PageImplUnitTests.adaptsTotalForLastPageOnIntermediateDeletionOnLastPate")
+unittest
+{
     assert(new PageImpl!string(Arrays.asList("foo", "bar"), PageRequest.of(1, 10), 13).getTotalElements() == 12);
+}
+
+@("PageImplUnitTests.adaptsTotalForLastPageOnIntermediateInsertionOnLastPate")
+unittest
+{
     assert(new PageImpl!string(Arrays.asList("foo", "bar"), PageRequest.of(1, 10), 11).getTotalElements() == 12);
+}
+
+@("PageImplUnitTests.doesNotAdapttotalIfPageIsEmpty")
+unittest
+{
     assert(new PageImpl!string(Collections.emptyList!string(), PageRequest.of(1, 10), 0).getTotalElements() == 0);
 }
 
-@("PageImpl: returnsSelfPagablesIfThePageIsAlreadyTheFirstOrLastOne")
+@("PageImplUnitTests.returnsSelfPagablesIfThePageIsAlreadyTheFirstOrLastOne")
 unittest
 {
     Pageable pageable = PageRequest.of(0, 2);
@@ -389,7 +414,7 @@ unittest
     assert(same(page.nextOrLastPageable(), pageable));
 }
 
-@("PageImpl: usesContentLengthForSizeIfNoPageableGiven")
+@("PageImplUnitTests.usesContentLengthForSizeIfNoPageableGiven")
 unittest
 {
     Page!int page = new PageImpl!int(Arrays.asList(1, 2));
@@ -399,9 +424,44 @@ unittest
     assert(!page.hasNext());
 }
 
-@("PageImpl: toStringShouldNotInspectNullInstances")
+@("PageImplUnitTests.toStringShouldNotInspectNullInstances")
 unittest
 {
     auto page = new PageImpl!Object(Collections.singletonList!Object(null));
     assert(page.toString() == "Page 1 of 1 containing UNKNOWN instances");
+}
+
+@("Slice maps content through the interface and keeps the next-page flag")
+unittest
+{
+    auto pageable = PageRequest.of(1, 2, Sort.by("id"));
+    auto content = Arrays.asList("a", "bbb");
+    Slice!string slice = new SliceImpl!string(content, pageable, true);
+    content.set(0, "changed");
+
+    auto mapped = slice.map((string value) => cast(int) value.length);
+    assert(mapped.getContent().get(0) == 1 && mapped.getContent().get(1) == 3);
+    assert(mapped.getPageable() is pageable);
+    assert(mapped.hasNext() && !mapped.isLast());
+    assert(same(mapped.nextPageable(), PageRequest.of(2, 2, Sort.by("id"))));
+}
+
+@("Slices include the next-page flag in equality")
+unittest
+{
+    auto pageable = PageRequest.of(0, 2);
+    auto content = Arrays.asList(1, 2);
+    auto first = new SliceImpl!int(content, pageable, true);
+    assertEqualsAndHashcode(first, new SliceImpl!int(content, pageable, true));
+    assertNotEqualsAndHashcode(first, new SliceImpl!int(content, pageable, false));
+    auto unpaged = new SliceImpl!int(content);
+    assert(unpaged.getPageable().isUnpaged() && !unpaged.hasNext());
+}
+
+@("A page mapped through Slice retains its total")
+unittest
+{
+    Slice!string original = new PageImpl!string(Arrays.asList("a", "bbb"), PageRequest.of(0, 2), 12);
+    auto mapped = cast(Page!int) original.map((string value) => cast(int) value.length);
+    assert(mapped !is null && mapped.getTotalElements() == 12);
 }

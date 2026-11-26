@@ -242,6 +242,31 @@
       "phase": "2",
       "status": "deferred"
     },
+    "org/springframework/data/domain/PageImplUnitTests.java": {
+      "status": "ported",
+      "d": "framework/data-commons/tests/domain.d",
+      "methods": {
+        "ported": [
+          "assertEqualsForSimpleSetup",
+          "assertEqualsForComplexSetup",
+          "preventsNullContentForSimpleSetup",
+          "preventsNullContentForAdvancedSetup",
+          "returnsNextPageable",
+          "returnsPreviousPageable",
+          "createsPageForEmptyContentCorrectly",
+          "returnsCorrectTotalPages",
+          "transformsPageCorrectly",
+          "adaptsTotalForLastPageOnIntermediateDeletion",
+          "adaptsTotalForLastPageOnIntermediateInsertion",
+          "adaptsTotalForLastPageOnIntermediateDeletionOnLastPate",
+          "adaptsTotalForLastPageOnIntermediateInsertionOnLastPate",
+          "doesNotAdapttotalIfPageIsEmpty",
+          "returnsSelfPagablesIfThePageIsAlreadyTheFirstOrLastOne",
+          "usesContentLengthForSizeIfNoPageableGiven",
+          "toStringShouldNotInspectNullInstances"
+        ]
+      }
+    },
     "org/springframework/data/domain/PageRequestUnitTests.java": {
       "d": "framework/data-commons/tests/domain.d",
       "methods": {

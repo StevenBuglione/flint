@@ -1569,7 +1569,6 @@
       "org/springframework/data/domain/FloatVectorUnitTests.java",
       "org/springframework/data/domain/ManagedTypesUnitTests.java",
       "org/springframework/data/domain/NumberVectorUnitTests.java",
-      "org/springframework/data/domain/PageImplUnitTests.java",
       "org/springframework/data/domain/RangeUnitTests.java",
       "org/springframework/data/domain/SearchResultUnitTests.java",
       "org/springframework/data/domain/SearchResultsUnitTests.java",

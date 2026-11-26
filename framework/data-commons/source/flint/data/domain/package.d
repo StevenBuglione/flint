@@ -1,5 +1,6 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/domain/{Sort,Pageable,Unpaged,AbstractPageRequest,PageRequest,Slice,Page,Chunk,PageImpl}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/domain/{Sort,Pageable,Unpaged,AbstractPageRequest,PageRequest,Slice,SliceImpl,Page,Chunk,PageImpl}.java
 // Copyright 2008-present the original author or authors.
+// SliceImpl: Copyright 2014-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 
@@ -15,7 +16,7 @@ $(UL
     $(LI `Streamable` is `Iterable` here (R10); `map` takes a delegate (R9). `Sort` has `Iterable`'s methods but does
         not declare the interface: `Iterable!(Sort.Order)` inside `Sort`'s own base list is a recursive template
         expansion in D.)
-    $(LI Typed sort resolves named getter aliases at compile time. `SliceImpl` remains pending.)
+    $(LI Typed sort resolves named getter aliases at compile time.)
 )
 +/
 module flint.data.domain;
@@ -976,6 +977,14 @@ interface Slice(T) : Iterable!T
     /// The previous slice's `Pageable`, or this one's when this is the first.
     Pageable previousOrFirstPageable();
 
+    /// A slice of the content mapped by `converter` (R9).
+    Slice!U map(U)(U delegate(T) @safe converter)
+    {
+        if (auto page = cast(Page!T) this)
+            return page.map(converter);
+        return new SliceImpl!U(convertedContent(this, converter), getPageable(), hasNext());
+    }
+
     /// Java's default methods (R3).
     mixin template Defaults()
     {
@@ -1019,11 +1028,18 @@ interface Page(T) : Slice!T
     /// A page of the content mapped by `converter` (R9).
     Page!U map(U)(U delegate(T) @safe converter)
     {
-        auto content = new ArrayList!U();
-        foreach (element; this)
-            content.add(converter(element));
-        return new PageImpl!U(content, getPageable(), getTotalElements());
+        return new PageImpl!U(convertedContent(this, converter), getPageable(), getTotalElements());
     }
+}
+
+private List!U convertedContent(T, U)(Slice!T slice, scope U delegate(T) @safe converter)
+{
+    if (converter is null)
+        throw new IllegalArgumentException("Function must not be null");
+    auto content = new ArrayList!U();
+    for (auto elements = slice.iterator(); elements.hasNext();)
+        content.add(converter(elements.next()));
+    return content;
 }
 
 /// A chunk of data restricted by the configured `Pageable`.
@@ -1139,6 +1155,73 @@ abstract class Chunk(T) : Slice!T
     {
         return Objects.hash(content, pageable);
     }
+}
+
+/// A slice of a result set with a caller-supplied indication of another result.
+class SliceImpl(T) : Chunk!T
+{
+    private const bool hasNext_;
+
+    /// A slice of `content` with the configured `pageable`.
+    this(List!T content, Pageable pageable, bool hasNext)
+    {
+        super(content, pageable);
+        hasNext_ = hasNext;
+    }
+
+    /// A single unpaged slice covering all of `content`.
+    this(List!T content)
+    {
+        this(content, Pageable.unpaged(), false);
+    }
+
+    override bool hasNext()
+    {
+        return hasNext_;
+    }
+
+    /// A slice of the content mapped by `converter` (R9).
+    Slice!U map(U)(U delegate(T) @safe converter)
+    {
+        return new SliceImpl!U(convertedContent(cast(Slice!T) this, converter), getPageable(), hasNext_);
+    }
+
+    override bool equals(Object other)
+    {
+        auto that = cast(SliceImpl!T) other;
+        return that !is null && hasNext_ == that.hasNext_ && super.equals(other);
+    }
+
+    override int hashCode()
+    {
+        return 31 * super.hashCode() + (hasNext_ ? 1 : 0);
+    }
+
+    override string toString()
+    {
+        import flint.engine.aot.name : typeNameOf;
+        import flint.engine.aot.text : decimal;
+
+        auto content = getContent();
+        string contentType = "UNKNOWN";
+        if (!content.isEmpty())
+        {
+            static if (is(T == class) || is(T == interface))
+            {
+                auto object = cast(Object) content.get(0);
+                if (object is null)
+                    throw new NullPointerException();
+                contentType = typeid(object).name;
+            }
+            else
+                contentType = typeNameOf!T;
+        }
+        return "Slice " ~ decimal(long(getNumber())) ~ " containing " ~ contentType ~ " instances";
+    }
+
+    import flint.java.lang : JavaObject;
+
+    mixin JavaObject;
 }
 
 /// Basic `Page` implementation.
