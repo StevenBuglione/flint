@@ -9,7 +9,10 @@
       "org/springframework/ai/document/id/JdkSha256HexIdGeneratorTest.java",
       "org/springframework/ai/observation/TracingAwareLoggingObservationHandlerTests.java",
       "org/springframework/ai/reader/JsonReaderTests.java",
-      "org/springframework/ai/reader/TextReaderTests.java"
+      "org/springframework/ai/reader/TextReaderTests.java",
+      "org/springframework/ai/util/JacksonUtilsTests.java",
+      "org/springframework/ai/util/JsonHelperTests.java",
+      "org/springframework/ai/util/ParsingUtilsTests.java"
     ],
     "ai-model": [
       "org/springframework/ai/aot/AiRuntimeHintsTests.java",

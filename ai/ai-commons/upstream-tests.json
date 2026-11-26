@@ -179,6 +179,18 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/ai/util/JacksonUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/util/JsonHelperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/util/ParsingUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
     }
   },
   "module": "ai-commons",

@@ -1305,7 +1305,8 @@
     "flint.ai.observation.conventions",
     "flint.ai.reader",
     "flint.ai.template_",
-    "flint.ai.tokenizer"
+    "flint.ai.tokenizer",
+    "flint.ai.util"
    ],
    "repo": "ai",
    "licence": "Apache-2.0",
