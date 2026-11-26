@@ -108,6 +108,17 @@ pragma(inline, false) private string firstHeaderValue(const(Pair)[] headers, str
     return i >= 0 && headers[i].values.length != 0 ? headers[i].values[0] : null;
 }
 
+pragma(inline, false) private void storeHeaderValue(ref Pair[] headers, string name, string value, bool add)
+{
+    const index = findPair(headers, name, true);
+    if (index < 0)
+        headers ~= Pair(name, [value]);
+    else if (add)
+        headers[index].values ~= value;
+    else
+        headers[index].values = [value];
+}
+
 pragma(inline, false) private string[] pairNames(const(Pair)[] pairs) pure nothrow
 {
     string[] names;
@@ -273,11 +284,7 @@ class MockHttpServletRequest : HttpServletRequest
             if (locales.length == 0)
                 locales = [Locale.ENGLISH];
         }
-        const i = findPair(headers, name, true);
-        if (i >= 0)
-            headers[i].values ~= value;
-        else
-            headers ~= Pair(name, [value]);
+        storeHeaderValue(headers, name, value, true);
     }
 
     /// Sets the body.
@@ -298,11 +305,7 @@ class MockHttpServletRequest : HttpServletRequest
                 if (auto charset = mediaType.getCharset())
                     characterEncoding = charset.name();
             }
-            const i = findPair(headers, HttpHeaders.CONTENT_TYPE, true);
-            if (i >= 0)
-                headers[i].values = [contentType];
-            else
-                headers ~= Pair(HttpHeaders.CONTENT_TYPE, [contentType]);
+            storeHeaderValue(headers, HttpHeaders.CONTENT_TYPE, contentType, false);
         }
     }
 
@@ -919,8 +922,17 @@ class MockHttpServletResponse : HttpServletResponse
 
     void setContentLengthLong(long len)
     {
-        contentLength = len;
-        setHeaderValue(HttpHeaders.CONTENT_LENGTH, decimal(len), false);
+        if (!isCommitted())
+        {
+            contentLength = len;
+            storeHeaderValue(headers, HttpHeaders.CONTENT_LENGTH, decimal(len), false);
+        }
+    }
+
+    /// The content length as a Java int.
+    int getContentLength() const pure nothrow @nogc
+    {
+        return cast(int) contentLength;
     }
 
     /// The content length set, or zero.
@@ -959,14 +971,7 @@ class MockHttpServletResponse : HttpServletResponse
         }
         else
         {
-            const i = findPair(headers, HttpHeaders.CONTENT_TYPE, true);
-            if (i >= 0)
-            {
-                for (size_t position = i + 1; position < headers.length; ++position)
-                    headers[position - 1] = headers[position];
-                headers[$ - 1] = Pair.init;
-                headers = headers[0 .. $ - 1];
-            }
+            removeHeader(HttpHeaders.CONTENT_TYPE);
         }
     }
 
@@ -978,7 +983,7 @@ class MockHttpServletResponse : HttpServletResponse
         if (characterEncodingSet && charsetIndex(value) == value.length)
             value ~= ";" ~ charsetPrefix ~ characterEncoding;
         contentType = value;
-        setHeaderValue(HttpHeaders.CONTENT_TYPE, value, false);
+        storeHeaderValue(headers, HttpHeaders.CONTENT_TYPE, value, false);
     }
 
     pragma(inline, false) private static size_t charsetIndex(string type) pure nothrow @nogc
@@ -1022,7 +1027,14 @@ class MockHttpServletResponse : HttpServletResponse
     {
         locale = loc;
         localeSet = true;
-        setHeader("Content-Language", loc.toLanguageTag());
+        storeHeaderValue(headers, HttpHeaders.CONTENT_LANGUAGE, loc.toLanguageTag(), false);
+    }
+
+    /// Sets the locale when the caller supplied one.
+    void setLocale(Nullable!Locale loc)
+    {
+        if (!loc.isNull)
+            setLocale(loc.get());
     }
 
     /// The locale (the default locale unless set).
@@ -1107,42 +1119,77 @@ class MockHttpServletResponse : HttpServletResponse
 
     void setDateHeader(string name, long date)
     {
-        setHeaderValue(name, HttpHeaders.formatDate(date), false);
+        setOrAddHeader(name, HttpHeaders.formatDate(date), false);
     }
 
     void addDateHeader(string name, long date)
     {
-        setHeaderValue(name, HttpHeaders.formatDate(date), true);
+        setOrAddHeader(name, HttpHeaders.formatDate(date), true);
     }
 
     void setHeader(string name, string value)
     {
-        if (equalsIgnoreCase(name, HttpHeaders.CONTENT_TYPE))
-            setContentType(value);
-        else if (equalsIgnoreCase(name, HttpHeaders.CONTENT_LENGTH))
-            setContentLengthLong(parseIntegerHeader(value, long.min, long.max));
-        else
-            setHeaderValue(name, value, false);
+        setOrAddHeader(name, value, false);
     }
 
     void addHeader(string name, string value)
     {
-        if (equalsIgnoreCase(name, HttpHeaders.CONTENT_TYPE))
-            setContentType(value);
-        else if (equalsIgnoreCase(name, HttpHeaders.CONTENT_LENGTH))
-            setHeader(name, value);
-        else
-            setHeaderValue(name, value, true);
+        setOrAddHeader(name, value, true);
     }
 
     void setIntHeader(string name, int value)
     {
-        setHeaderValue(name, decimal(value), false);
+        setOrAddHeader(name, decimal(value), false);
     }
 
     void addIntHeader(string name, int value)
     {
-        setHeaderValue(name, decimal(value), true);
+        setOrAddHeader(name, decimal(value), true);
+    }
+
+    pragma(inline, false) private void setOrAddHeader(string name, string value, bool add)
+    {
+        if (name is null)
+            return;
+        if (equalsIgnoreCase(name, HttpHeaders.CONTENT_TYPE))
+            setContentType(value);
+        else if (equalsIgnoreCase(name, HttpHeaders.CONTENT_LENGTH))
+        {
+            if (value is null)
+                contentLength = 0;
+            else
+                setContentLengthLong(parseIntegerHeader(value, long.min, long.max));
+        }
+        else if (value is null)
+            removeHeader(name);
+        else if (equalsIgnoreCase(name, HttpHeaders.CONTENT_LANGUAGE))
+            setContentLanguage(value, add);
+        else
+            storeHeaderValue(headers, name, value, add);
+    }
+
+    private void setContentLanguage(string value, bool add)
+    {
+        if (!add || !containsHeader(HttpHeaders.CONTENT_LANGUAGE))
+        {
+            auto contentHeaders = HttpHeaders.create();
+            contentHeaders.add(HttpHeaders.CONTENT_LANGUAGE, value);
+            const values = contentHeaders.getValuesAsList(HttpHeaders.CONTENT_LANGUAGE);
+            locale = values.length == 0 ? Locale.getDefault() : Locale.forLanguageTag(values[0]);
+            localeSet = true;
+        }
+        storeHeaderValue(headers, HttpHeaders.CONTENT_LANGUAGE, value, add);
+    }
+
+    pragma(inline, false) private void removeHeader(string name)
+    {
+        const i = findPair(headers, name, true);
+        if (i < 0)
+            return;
+        for (size_t position = i + 1; position < headers.length; ++position)
+            headers[position - 1] = headers[position];
+        headers[$ - 1] = Pair.init;
+        headers = headers[0 .. $ - 1];
     }
 
     void setStatus(int sc)
@@ -1172,19 +1219,6 @@ class MockHttpServletResponse : HttpServletResponse
         return pairNames(headers);
     }
 
-    private void setHeaderValue(string name, string value, bool add)
-    {
-        const i = findPair(headers, name, true);
-        if (i >= 0)
-        {
-            if (add)
-                headers[i].values ~= value;
-            else
-                headers[i].values = [value];
-        }
-        else
-            headers ~= Pair(name, [value]);
-    }
 }
 
 pragma(inline, false) private noreturn rejectResponseState(string message)

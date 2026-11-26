@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 200 | 337 | 0 | 15,259 |
 | boot | spring-boot@v4.2.0 | 43 | 43 | 2,133 | 13,384 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,511 | 1,401 | 4,850 | 30,072 |
+| framework | spring-framework@v7.1.0 | 3,515 | 1,402 | 4,850 | 30,067 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3394,6 +3394,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.mock.web.MockHttpServletResponse#sendError(int,String)` | `flint.mock.web.MockHttpServletResponse.sendError` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Preserves the existing string signature. A null slice represents absence. |
 | `org.springframework.mock.web.MockHttpServletResponse#setCharacterEncoding(String)` | `flint.mock.web.MockHttpServletResponse.setCharacterEncoding` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Uses the existing Jakarta ServletResponse string signature. A null slice represents absence. |
 | `org.springframework.mock.web.MockHttpServletResponse#setContentType(String)` | `flint.mock.web.MockHttpServletResponse.setContentType` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Uses the existing Jakarta ServletResponse string signature. A null slice represents absence. |
+| `org.springframework.mock.web.MockHttpServletResponse#setLocale(Locale)` | `flint.mock.web.MockHttpServletResponse.setLocale` | [R5](api-mapping.md#r5-optional-and-nullable-values) | The servlet Locale setter also accepts Nullable!Locale for the Java null case. |
 
 #### org.springframework.orm
 
@@ -9706,7 +9707,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.mock.http.client | 23 | 0 |
 | org.springframework.mock.http.client.reactive | 0 | 28 |
 | org.springframework.mock.http.server.reactive | 0 | 53 |
-| org.springframework.mock.web | 535 | 0 |
+| org.springframework.mock.web | 530 | 0 |
 | org.springframework.mock.web.reactive.function.server | 0 | 51 |
 | org.springframework.mock.web.server | 30 | 0 |
 | org.springframework.objenesis | 9 | 0 |
