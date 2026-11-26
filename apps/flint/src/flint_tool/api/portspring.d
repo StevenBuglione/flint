@@ -144,8 +144,6 @@ private const(LicenceEntry)* destinationLicence(const ref Upstream pin, const(Li
 
 private const(ApiType)* supportedType(ref const Manifest manifest, const ref Upstream pin, string id, out string error)
 {
-    import flint_tool.api.exception_references : supportedException;
-
     if (manifest.project != pin.project || manifest.version_ != pin.version_)
     {
         error = "manifest project or version does not match " ~ pin.key;
@@ -157,14 +155,10 @@ private const(ApiType)* supportedType(ref const Manifest manifest, const ref Ups
             continue;
         if (type.decl.visibility != "public")
             break;
-        if (type.decl.kind == TypeKind.annotation)
-            return &type;
-        if (type.decl.kind == TypeKind.class_ && supportedException(type.decl))
+        if (supportedDeclaration(type.decl))
             return &type;
         if (type.decl.kind == TypeKind.enum_)
         {
-            if (supportedEnum(type.decl))
-                return &type;
             error = id ~ ": unsupported enum shape in the pinned manifest";
             return null;
         }
@@ -172,6 +166,26 @@ private const(ApiType)* supportedType(ref const Manifest manifest, const ref Ups
     }
     error = id ~ " is not a supported public type in the pinned manifest";
     return null;
+}
+
+private bool supportedDeclaration(const ref TypeDecl decl)
+{
+    import flint_tool.api.exception_references : supportedException;
+    import flint_tool.api.interface_references : supportedMarkerInterface;
+
+    final switch (decl.kind)
+    {
+    case TypeKind.annotation:
+        return true;
+    case TypeKind.class_:
+        return supportedException(decl);
+    case TypeKind.interface_:
+        return supportedMarkerInterface(decl);
+    case TypeKind.enum_:
+        return supportedEnum(decl);
+    case TypeKind.record:
+        return false;
+    }
 }
 
 private bool supportedEnum(const ref TypeDecl decl)
@@ -298,11 +312,17 @@ private string translatedBody(string root, const ref Upstream pin, const ref Man
 {
     import flint_tool.api.annotation_references : resolveReferenceBody;
     import flint_tool.api.exception_references : renderException;
+    import flint_tool.api.interface_references : renderMarkerInterface;
 
     if (type.decl.kind == TypeKind.class_)
     {
         const classifier = Classifier(mapping);
         return renderException(manifest, type.decl, classifier, request.module_, candidate, error);
+    }
+    if (type.decl.kind == TypeKind.interface_)
+    {
+        const classifier = Classifier(mapping);
+        return renderMarkerInterface(manifest, type.decl, classifier, request.module_, candidate, error);
     }
     string[] referenceFields;
     foreach (ref field; candidate["members"].arrayNoRef)

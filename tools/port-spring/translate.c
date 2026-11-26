@@ -235,7 +235,7 @@ static bool package_and_declaration(JavaFile *java)
             java->package = node_text(java, ts_node_named_child(child, 0));
         } else if (ts_node_is_null(java->declaration) &&
                    (kind(child, "annotation_type_declaration") || kind(child, "enum_declaration") ||
-                    kind(child, "class_declaration"))) {
+                    kind(child, "class_declaration") || kind(child, "interface_declaration"))) {
             java->declaration = child;
             java->is_enum = kind(child, "enum_declaration");
         } else {
@@ -1028,6 +1028,57 @@ static void emit_imports(const JavaFile *java)
     putchar(']');
 }
 
+static void emit_declaration(const JavaFile *java, Slice name, Slice symbol, const char *declaration_kind)
+{
+    fputs("{\"package\":", stdout);
+    json_string(java->package);
+    fputs(",\"name\":", stdout);
+    json_string(name);
+    fputs(",\"symbol\":", stdout);
+    json_string(symbol);
+    fputs(",\"kind\":", stdout);
+    json_string(literal(declaration_kind));
+}
+
+static bool has_static_import(const JavaFile *java)
+{
+    for (uint32_t index = 0; index < ts_node_named_child_count(java->root); ++index) {
+        TSNode child = ts_node_named_child(java->root, index);
+        if (kind(child, "import_declaration") && !ts_node_is_null(child_of_kind(child, "static")))
+            return true;
+    }
+    return false;
+}
+
+static int translate_interface(const JavaFile *java)
+{
+    TSNode declaration = java->declaration;
+    TSNode bases = code_child(child_of_kind(declaration, "extends_interfaces"), 0);
+    TSNode parent = code_child(bases, 0);
+    Slice base = node_text(java, parent);
+    if (!is(node_text(java, child_of_kind(declaration, "modifiers")), "public") ||
+        !ts_node_is_null(member(declaration, "type_parameters")) || !ts_node_is_null(member(declaration, "permits")) ||
+        !ts_node_is_null(code_child(member(declaration, "body"), 0)) || !ts_node_is_null(code_child(bases, 1)) ||
+        !qualified_identifier(base))
+        return diagnostic(java, declaration, "unsupported marker interface shape. Expected one parent and an empty body");
+    if (equal(last_name(base), base) && has_static_import(java))
+        return diagnostic(java, parent, "unsupported marker interface with an unqualified parent and static imports");
+
+    Slice name = node_text(java, member(declaration, "name"));
+    Text symbol = {0};
+    if (!lower_name(name, &symbol)) {
+        free(symbol.bytes);
+        return diagnostic(java, declaration, "unsupported marker interface name");
+    }
+    emit_declaration(java, name, contents(&symbol), "interface");
+    free(symbol.bytes);
+    fputs(",\"inherited\":false,\"classRef\":false,\"members\":[],\"interfaceParent\":", stdout);
+    json_string(base);
+    emit_imports(java);
+    puts("}");
+    return fflush(stdout) == EOF ? diagnostic(java, java->root, "cannot write output") : 0;
+}
+
 static bool exception_modifiers(const JavaFile *java, bool *implicit_warning)
 {
     TSNode modifiers = child_of_kind(java->declaration, "modifiers");
@@ -1112,14 +1163,9 @@ static int translate_exception(const JavaFile *java)
         free(symbol.bytes);
         return diagnostic(java, declaration, "unsupported exception name");
     }
-    fputs("{\"package\":", stdout);
-    json_string(java->package);
-    fputs(",\"name\":", stdout);
-    json_string(name);
-    fputs(",\"symbol\":", stdout);
-    json_string(contents(&symbol));
+    emit_declaration(java, name, contents(&symbol), "class");
     free(symbol.bytes);
-    fputs(",\"kind\":\"class\",\"inherited\":false,\"classRef\":false,\"exception\":{\"base\":", stdout);
+    fputs(",\"inherited\":false,\"classRef\":false,\"exception\":{\"base\":", stdout);
     json_string(base);
     fputs(",\"parameter\":", stdout);
     json_string(parameter);
@@ -1136,13 +1182,7 @@ static int translate_exception(const JavaFile *java)
 static void emit_candidate(const JavaFile *annotation, Slice name, const Text *symbol,
                            const Field *fields, size_t count, const Text *body)
 {
-    fputs("{\"package\":", stdout);
-    json_string(annotation->package);
-    fputs(",\"name\":", stdout);
-    json_string(name);
-    fputs(",\"symbol\":", stdout);
-    json_string(contents(symbol));
-    fputs(annotation->is_enum ? ",\"kind\":\"enum\"" : ",\"kind\":\"annotation\"", stdout);
+    emit_declaration(annotation, name, contents(symbol), annotation->is_enum ? "enum" : "annotation");
     fputs(",\"members\":[", stdout);
     bool has_references = false;
     for (size_t index = 0; index < count; ++index) {
@@ -1189,7 +1229,8 @@ static int translate(JavaFile *annotation, bool scope_only)
     if (ts_node_has_error(annotation->root))
         return diagnostic(annotation, annotation->root, "Java syntax error");
     if (!package_and_declaration(annotation))
-        return diagnostic(annotation, annotation->root, "expected a package and one public annotation, enum or class");
+        return diagnostic(annotation, annotation->root,
+                          "expected a package and one public annotation, enum, class or interface");
     if (scope_only) {
         if (!kind(annotation->declaration, "annotation_type_declaration"))
             return diagnostic(annotation, annotation->declaration, "expected annotation declaration");
@@ -1203,6 +1244,8 @@ static int translate(JavaFile *annotation, bool scope_only)
     }
     if (kind(annotation->declaration, "class_declaration"))
         return translate_exception(annotation);
+    if (kind(annotation->declaration, "interface_declaration"))
+        return translate_interface(annotation);
     if (annotation->is_enum && !ts_node_is_null(member(annotation->declaration, "interfaces")))
         return diagnostic(annotation, annotation->declaration, "unsupported enum implementing an interface");
     TSNode modifiers = child_of_kind(annotation->declaration, "modifiers");
