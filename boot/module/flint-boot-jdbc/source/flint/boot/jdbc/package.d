@@ -133,12 +133,11 @@ struct DatabaseDriver
     static DatabaseDriver fromJdbcUrl(string url) pure
     {
         import flint.java.lang : IllegalArgumentException;
-        import std.algorithm.searching : startsWith;
         import std.ascii : toLower;
 
         if (url.length == 0)
             return UNKNOWN;
-        if (!url.startsWith("jdbc"))
+        if (!hasPrefix(url, "jdbc"))
             throw new IllegalArgumentException("'url' must start with \"jdbc\"");
         char[] withoutPrefix;
         foreach (c; url["jdbc".length .. $])
@@ -148,7 +147,7 @@ struct DatabaseDriver
             if (i == UNKNOWN.index)
                 continue;
             foreach (urlPrefix; row.urlPrefixes.length ? row.urlPrefixes : [lowerName(row.name)])
-                if (withoutPrefix.startsWith(":" ~ urlPrefix ~ ":"))
+                if (hasPrefix(withoutPrefix, ":" ~ urlPrefix ~ ":"))
                     return DatabaseDriver(cast(ubyte) i);
         }
         return UNKNOWN;
@@ -185,17 +184,35 @@ struct Row
 
     bool matches(string candidate) const pure
     {
-        import std.algorithm.searching : canFind, startsWith;
-        import std.uni : sicmp;
-
-        if (productName.length && sicmp(productName, candidate) == 0)
+        // Product names are ASCII, so an ASCII comparison ignoring case is std.uni's sicmp for them.
+        if (productName.length && lowerName(productName) == lowerName(candidate))
             return true;
-        if (alsoEquals.length && sicmp(alsoEquals, candidate) == 0)
+        if (alsoEquals.length && lowerName(alsoEquals) == lowerName(candidate))
             return true;
         const lower = lowerName(candidate);
-        return (alsoStartsWith.length && lower.startsWith(alsoStartsWith))
-            || (alsoContains.length && lower.canFind(alsoContains));
+        return (alsoStartsWith.length && hasPrefix(lower, alsoStartsWith))
+            || (alsoContains.length && contains(lower, alsoContains));
     }
+}
+
+// Flint: plain loops, not std.algorithm or std.uni, whose objects pull std.net.curl and the rest of Phobos's
+// network objects into every app (playbook S-9).
+
+/// Whether `text` starts with `prefix`.
+package(flint.boot) bool hasPrefix(scope const(char)[] text, scope const(char)[] prefix) pure nothrow @nogc
+{
+    return text.length >= prefix.length && text[0 .. prefix.length] == prefix;
+}
+
+/// Whether `text` contains `fragment`.
+package(flint.boot) bool contains(scope const(char)[] text, scope const(char)[] fragment) pure nothrow @nogc
+{
+    if (fragment.length > text.length)
+        return false;
+    foreach (i; 0 .. text.length - fragment.length + 1)
+        if (text[i .. i + fragment.length] == fragment)
+            return true;
+    return false;
 }
 
 string lowerName(string text) pure

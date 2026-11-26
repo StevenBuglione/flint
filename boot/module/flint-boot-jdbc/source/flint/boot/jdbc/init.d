@@ -17,9 +17,9 @@ import flint.jdbc.datasource.init : DatabasePopulatorUtils, ResourceDatabasePopu
 /// Whether `url` is the URL of an embedded, in-memory database (Boot's `EmbeddedDatabaseConnection.isEmbedded`).
 bool isEmbeddedUrl(string url) pure
 {
-    import std.algorithm.searching : canFind, startsWith;
+    import flint.boot.jdbc : contains, hasPrefix;
 
-    return url.startsWith("jdbc:sqlite::memory:") || (url.startsWith("jdbc:sqlite:") && url.canFind("mode=memory"));
+    return hasPrefix(url, "jdbc:sqlite::memory:") || (hasPrefix(url, "jdbc:sqlite:") && contains(url, "mode=memory"));
 }
 
 /// Initializes a `DataSource` from schema and data scripts.

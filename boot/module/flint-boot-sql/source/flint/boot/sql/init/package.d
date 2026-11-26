@@ -167,11 +167,11 @@ abstract class AbstractScriptDatabaseInitializer : ResourceLoaderAware, Initiali
     /// Whether the database is embedded; by default unknown, which `EMBEDDED` mode reports.
     protected bool isEmbeddedDatabase()
     {
+        import flint.engine.aot.text : enumName;
         import flint.java.lang : IllegalStateException;
-        import std.conv : to;
 
-        throw new IllegalStateException("Database initialization mode is '" ~ settings.getMode()
-                .to!string ~ "' and database type is unknown");
+        throw new IllegalStateException("Database initialization mode is '" ~ enumName(
+                settings.getMode()) ~ "' and database type is unknown");
     }
 
     /// Run `scripts`.
@@ -197,12 +197,12 @@ abstract class AbstractScriptDatabaseInitializer : ResourceLoaderAware, Initiali
     private Resource[] getScripts(string[] locations, string type)
     {
         import flint.java.lang : IllegalStateException;
-        import std.algorithm.searching : startsWith;
 
         Resource[] resources;
         foreach (location; locations)
         {
-            const optional = location.startsWith(OPTIONAL_LOCATION_PREFIX);
+            const optional = location.length >= OPTIONAL_LOCATION_PREFIX.length
+                && location[0 .. OPTIONAL_LOCATION_PREFIX.length] == OPTIONAL_LOCATION_PREFIX;
             if (optional)
                 location = location[OPTIONAL_LOCATION_PREFIX.length .. $];
             auto resource = loader().getResource(classPathLocation(location));
@@ -226,9 +226,9 @@ abstract class AbstractScriptDatabaseInitializer : ResourceLoaderAware, Initiali
     // `classpath*:x` names `classpath:x` (see the module header).
     private static string classPathLocation(string location) pure
     {
-        import std.algorithm.searching : startsWith;
-
-        return location.startsWith("classpath*:") ? "classpath:" ~ location["classpath*:".length .. $] : location;
+        enum prefix = "classpath*:";
+        return location.length >= prefix.length && location[0 .. prefix.length] == prefix
+            ? "classpath:" ~ location[prefix.length .. $] : location;
     }
 
     /// The scripts to run, with how to run them.
