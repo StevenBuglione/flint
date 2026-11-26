@@ -166,5 +166,83 @@
     "expression": "NoT true Or false",
     "runtimeOnly": "The AOT parser currently matches word operators case-sensitively.",
     "expected": {"type": "bool", "value": "false"}
+  },
+  {
+    "id": "compiler-double-quoted-literal",
+    "upstreamTest": "SpelCompilationCoverageTests.LiteralTests.stringLiteral",
+    "expression": "\"abcde\"",
+    "expected": {"type": "string", "value": "abcde"}
+  },
+  {
+    "id": "compiler-float-literal",
+    "upstreamTest": "SpelCompilationCoverageTests.LiteralTests.floatLiteral",
+    "expression": "3.4f",
+    "expected": {"type": "float", "value": "3.4"}
+  },
+  {
+    "id": "compiler-double-literal",
+    "upstreamTest": "SpelCompilationCoverageTests.LiteralTests.realLiteral",
+    "expression": "3.4d",
+    "expected": {"type": "double", "value": "3.4"}
+  },
+  {
+    "id": "compiler-int-literal",
+    "upstreamTest": "SpelCompilationCoverageTests.LiteralTests.intLiteral",
+    "expression": "42",
+    "expected": {"type": "int", "value": "42"}
+  },
+  {
+    "id": "compiler-unary-minus",
+    "upstreamTest": "SpelCompilationCoverageTests.LiteralTests.intLiteral",
+    "expression": "-1",
+    "expected": {"type": "int", "value": "-1"}
+  },
+  {
+    "id": "compiler-long-literal",
+    "upstreamTest": "SpelCompilationCoverageTests.LiteralTests.longLiteral",
+    "expression": "99L",
+    "expected": {"type": "long", "value": "99"}
+  },
+  {
+    "id": "compiler-boolean-false",
+    "upstreamTest": "SpelCompilationCoverageTests.LiteralTests.booleanLiteral",
+    "expression": "false",
+    "expected": {"type": "bool", "value": "false"}
+  },
+  {
+    "id": "compiler-negate-true",
+    "upstreamTest": "SpelCompilationCoverageTests.UnaryOperatorTests.operatorNot",
+    "expression": "!true",
+    "expected": {"type": "bool", "value": "false"}
+  },
+  {
+    "id": "compiler-negate-false",
+    "upstreamTest": "SpelCompilationCoverageTests.UnaryOperatorTests.operatorNot",
+    "expression": "!false",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "compiler-float-multiplication",
+    "upstreamTest": "SpelCompilationCoverageTests.ArithmeticOperatorTests.opMultiply",
+    "expression": "2.0f*2.0f",
+    "expected": {"type": "float", "value": "4.0"}
+  },
+  {
+    "id": "compiler-int-division",
+    "upstreamTest": "SpelCompilationCoverageTests.ArithmeticOperatorTests.opDivide",
+    "expression": "2/2",
+    "expected": {"type": "int", "value": "1"}
+  },
+  {
+    "id": "compiler-float-division",
+    "upstreamTest": "SpelCompilationCoverageTests.ArithmeticOperatorTests.opDivide",
+    "expression": "2.0f/2.0f",
+    "expected": {"type": "float", "value": "1.0"}
+  },
+  {
+    "id": "compiler-double-division",
+    "upstreamTest": "SpelCompilationCoverageTests.ArithmeticOperatorTests.opDivide",
+    "expression": "3.0d/4.0d",
+    "expected": {"type": "double", "value": "0.75"}
   }
 ]
