@@ -1196,6 +1196,18 @@ interface LongTaskTimer : HistogramSupport
     /// Pass the sample to a D action without retaining the delegate (R9).
     void record(scope void delegate(Sample) @safe action);
 
+    /// Record a task and return the supplier's int result (R3, R9).
+    int record(IntSupplier action);
+
+    /// Record a task and return the D delegate's int result (R9).
+    int record(scope int delegate() @safe action);
+
+    /// Record a task and return the supplier's long result (R3, R9).
+    long record(LongSupplier action);
+
+    /// Record a task and return the D delegate's long result (R9).
+    long record(scope long delegate() @safe action);
+
     /// Start a task and return its sample.
     Sample start();
 
@@ -1245,11 +1257,24 @@ interface LongTaskTimer : HistogramSupport
             throw failure;
     }
 
+    private static T recordPrimitive(T)(LongTaskTimer timer, scope T delegate() @safe action)
+    {
+        T result;
+        recordSample(timer, () {
+            if (action is null)
+                throw Timer.nullCallback();
+            result = action();
+        }, null);
+        return result;
+    }
+
     /// Micrometer's callback, mean, legacy ID and snapshot defaults (R3).
     mixin template Defaults(alias SnapshotDefaults = HistogramSupport.Defaults, alias Unit = TimeUnit,
             alias TaskTimer = LongTaskTimer,
             alias RunnableType = Runnable, alias ConsumerType = SampleConsumer,
-            alias TaskSample = Sample, alias timeSample = recordSample)
+            alias TaskSample = Sample, alias timeSample = recordSample,
+            alias IntSupplierType = IntSupplier,
+            alias LongSupplierType = LongSupplier, alias timePrimitive = recordPrimitive)
     {
         mixin SnapshotDefaults;
 
@@ -1271,6 +1296,26 @@ interface LongTaskTimer : HistogramSupport
         override void record(scope void delegate(TaskSample) @safe action)
         {
             timeSample(this, null, action);
+        }
+
+        override int record(IntSupplierType action)
+        {
+            return timePrimitive(this, action is null ? null : &action.getAsInt);
+        }
+
+        override int record(scope int delegate() @safe action)
+        {
+            return timePrimitive(this, action);
+        }
+
+        override long record(LongSupplierType action)
+        {
+            return timePrimitive(this, action is null ? null : &action.getAsLong);
+        }
+
+        override long record(scope long delegate() @safe action)
+        {
+            return timePrimitive(this, action);
         }
 
         override double mean(Unit unit)

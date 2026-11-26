@@ -4,6 +4,8 @@ import core.memory : GC;
 import flint.java.lang : NullPointerException, Runnable;
 import flint.java.util.concurrent : TimeUnit;
 import flint.java.util.function_ : Consumer;
+import flint.java.util.function_.intsupplier : IntSupplier;
+import flint.java.util.function_.longsupplier : LongSupplier;
 import flint.micrometer.core.instrument : LongTaskTimer, Meter, Tags;
 import flint.micrometer.core.instrument.noop : NoopLongTaskTimer;
 import std.exception : assertThrown;
@@ -147,4 +149,49 @@ unittest
             called = true;
         }));
     assert(called && timer.starts == 5);
+}
+
+@("primitive long task suppliers return exact signed values without allocating adapters")
+unittest
+{
+    auto timer = new RecordingTimer;
+    LongTaskTimer meter = timer;
+    auto ints = IntSupplier.of(() { assert(timer.starts == timer.sample.stops + 1); return int.min; });
+    auto longs = LongSupplier.of(() => long.max);
+    int delegate() @safe readInt = () => int.max;
+    long delegate() @safe readLong = () => long.min;
+    static assert(is(typeof(timer.record(ints)) == int));
+    static assert(is(typeof(timer.record(longs)) == long));
+    static assert(is(typeof(meter.record(readInt)) == int));
+    static assert(is(typeof(meter.record(readLong)) == long));
+
+    const before = GC.stats().allocatedInCurrentThread;
+    assert(timer.record(ints) == int.min);
+    assert(timer.record(longs) == long.max);
+    assert(meter.record(readInt) == int.max);
+    assert(meter.record(readLong) == long.min);
+    assert(GC.stats().allocatedInCurrentThread == before);
+    assert(timer.starts == 4 && timer.sample.stops == 4);
+}
+
+@("null and throwing primitive long task suppliers still stop their sample")
+unittest
+{
+    auto timer = new RecordingTimer;
+    assertThrown!NullPointerException(timer.record(cast(IntSupplier) null));
+    assertThrown!NullPointerException(timer.record(cast(LongSupplier) null));
+    assertThrown!NullPointerException(timer.record(cast(int delegate() @safe) null));
+    assertThrown!NullPointerException(timer.record(cast(long delegate() @safe) null));
+    assert(timer.starts == 4 && timer.sample.stops == 4);
+
+    auto callbackFailure = new Exception("primitive callback");
+    auto stopFailure = new Exception("primitive stop");
+    auto failing = LongSupplier.of(delegate long() @safe { throw callbackFailure; });
+    assert(failureOf(() { timer.record(failing); }) is callbackFailure);
+    assert(timer.starts == 5 && timer.sample.stops == 5);
+
+    timer.sample.failure = stopFailure;
+    assert(failureOf(() { timer.record(failing); }) is stopFailure);
+    assert(timer.starts == 6 && timer.sample.stops == 6);
+    assert(callbackFailure.next is null && stopFailure.next is null);
 }
