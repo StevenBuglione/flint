@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 200 | 331 | 0 | 15,265 |
+| ai | spring-ai@v2.1.0 | 200 | 337 | 0 | 15,259 |
 | boot | spring-boot@v4.2.0 | 43 | 43 | 2,133 | 13,384 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,511 | 1,401 | 4,850 | 30,072 |
@@ -221,6 +221,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.messages.MessageType#TOOL` | `flint.ai.chat.messages.MessageType.TOOL` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.chat.messages.MessageType#USER` | `flint.ai.chat.messages.MessageType.USER` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.chat.messages.SystemMessage#<init>(String)` | `flint.ai.chat.messages.SystemMessage.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.SystemMessage#builder()` | `flint.ai.chat.messages.SystemMessage.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.messages.SystemMessage.Builder` | `flint.ai.chat.messages.SystemMessage.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.messages.SystemMessage.Builder#<init>()` | `flint.ai.chat.messages.SystemMessage.Builder.init` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.messages.SystemMessage.Builder#build()` | `flint.ai.chat.messages.SystemMessage.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.chat.messages.SystemMessage.Builder#metadata(Map)` | `flint.ai.chat.messages.SystemMessage.Builder.metadata` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.SystemMessage.Builder#text(String)` | `flint.ai.chat.messages.SystemMessage.Builder.text` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 
 #### org.springframework.ai.chat.messages.part
 
@@ -8556,7 +8562,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.memory.repository.mongo | 0 | 20 |
 | org.springframework.ai.chat.memory.repository.neo4j | 0 | 63 |
 | org.springframework.ai.chat.memory.repository.redis | 0 | 65 |
-| org.springframework.ai.chat.messages | 99 | 0 |
+| org.springframework.ai.chat.messages | 93 | 0 |
 | org.springframework.ai.chat.messages.part | 43 | 0 |
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |

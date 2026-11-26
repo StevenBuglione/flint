@@ -192,6 +192,52 @@ class SystemMessage : AbstractMessage
     /// Creates a system message from its text.
     this(MessageText text)
     {
-        super(MessageType.SYSTEM, text, MessageMetadata.of());
+        this(text, MessageMetadata.of());
+    }
+
+    private this(MessageText text, MessageMetadata metadata)
+    {
+        super(MessageType.SYSTEM, text, metadata);
+    }
+
+    /// Starts an empty system message builder.
+    static Builder builder() pure nothrow @nogc
+    {
+        return Builder.init;
+    }
+
+    /// Configures the text and metadata for a system message.
+    static struct Builder
+    {
+        private MessageText text_;
+        private MessageMetadata metadata_;
+        private bool metadataSet_;
+
+        /// Sets the text, or clears it when the input is null.
+        ref Builder text(string textContent) return pure nothrow @nogc
+        {
+            return text(textContent is null ? MessageText.init : MessageText(textContent));
+        }
+
+        /// Sets text with explicit presence, including an empty value (R5).
+        ref Builder text(MessageText textContent) return pure nothrow @nogc
+        {
+            text_ = textContent;
+            return this;
+        }
+
+        /// Replaces the metadata supplied for the message.
+        ref Builder metadata(MessageMetadata metadata) return pure nothrow @nogc
+        {
+            metadata_ = metadata;
+            metadataSet_ = true;
+            return this;
+        }
+
+        /// Builds a message from the current text and metadata.
+        SystemMessage build()
+        {
+            return new SystemMessage(text_, metadataSet_ ? metadata_ : MessageMetadata.of());
+        }
     }
 }
