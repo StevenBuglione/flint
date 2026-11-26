@@ -56,3 +56,11 @@ final class ValuePrefixProperties
         this.level = level;
     }
 }
+
+/// A separate guard activates an empty list of configuration properties types.
+@Configuration(proxyBeanMethods: false)
+@ConditionalOnProperty(prefix: "proof.properties", name: ["empty"], havingValue: "true")
+@EnableConfigurationProperties
+final class EmptyPropertiesConfiguration
+{
+}

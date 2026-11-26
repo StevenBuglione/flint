@@ -72,3 +72,24 @@ unittest
     assert(!context.containsLocalBean("proof.value-property_relaxed.binding.ValuePrefixProperties"),
             "the disabled configuration must not register the value prefix");
 }
+
+@("EnableConfigurationPropertiesRegistrarTests.registrationWithNoTypeShouldNotRegisterAnything")
+unittest
+{
+    import std.algorithm.searching : canFind;
+
+    auto baseline = runBinding("--proof.properties.empty=false");
+    scope (exit)
+        baseline.close();
+    auto enabled = runBinding("--proof.properties.empty=true");
+    scope (exit)
+        enabled.close();
+
+    const previousNames = baseline.getBeanFactory().getBeanDefinitionNames();
+    const enabledNames = enabled.getBeanFactory().getBeanDefinitionNames();
+    assert(enabledNames.canFind("emptyPropertiesConfiguration"));
+    assert(enabledNames.length == previousNames.length + 1,
+            "the enabling configuration must be the only added bean definition");
+    foreach (name; previousNames)
+        assert(enabledNames.canFind(name), "the empty type list must preserve previous definitions");
+}
