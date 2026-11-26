@@ -1,0 +1,5 @@
+{
+ "id": "D-CORE-2",
+ "deviation": "An interface whose Java methods have `Class`-typed overloads (`getBean(Class)`, `convert(Object, Class)`, `getProperty(String, Class)`) declares those overloads as final templates (`getBean!T`) that forward to virtual `<method>Erased` primitives taking Flint AOT descriptors. Code implementing `BeanFactory`, `ConversionService` and the like overrides the `<method>Erased` primitives, not `getBean(Class)` and the other `Class`-typed overloads; callers write `getBean!T` exactly as R4 says.",
+ "reason": "D cannot overload or override templates across a class hierarchy (templates are not virtual); R4 turns the `Class<T>` token into a template parameter, so the virtual dispatch moves to an erased primitive (coordinator approval, 2026-11-26)."
+}
