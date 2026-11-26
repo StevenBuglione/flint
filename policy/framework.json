@@ -2,6 +2,42 @@
  "schema": "flint.framework/1",
  "note": "ADR-030: Spring-layer DUB packages (the Spring Framework API and the third-party APIs of rulebook R1) live under framework/<artifact>, outside the 37 engine packages of policy/packages.json, and move to flint-framework at the repo split. tools/gates.py (framework_layers) checks each against this file. 'licence' is the module's own licence: EPL-2.0 modules hold ported EPL-2.0 sources and nothing else (ADR-030 section 7). 'also' lists further package roots a module owns beside 'module' (spring-tx is flint.dao and flint.transaction).",
  "modules": {
+  "aop": {
+   "directory": "framework/aop",
+   "module": "flint.aop",
+   "also": [
+    "flint.aopalliance"
+   ],
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "spring-framework@v7.1.0",
+   "dependencies": [
+    "core",
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/aop/bench",
+    "baseline": "framework/aop/bench/baseline",
+    "edit_source": "framework/aop/source/flint/aop/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 11537,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1157
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "core": {
    "directory": "framework/core",
    "module": "flint.core",

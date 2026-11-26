@@ -11,6 +11,10 @@
       "repo": "ai",
       "version": "monorepo"
     },
+    "flint:aop": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:arena": {
       "repo": "flint",
       "version": "monorepo"

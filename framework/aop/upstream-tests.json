@@ -1,0 +1,304 @@
+{
+  "classes": {
+    "org/springframework/aop/aspectj/AbstractAspectJAdviceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/AspectJAdviceParameterNameDiscovererTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/AspectJExpressionPointcutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/BeanNamePointcutMatchingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/MethodInvocationProceedingJoinPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/TrickyAspectJPointcutExpressionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/TypePatternClassFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/annotation/AbstractAspectJAdvisorFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/annotation/ArgumentBindingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/annotation/AspectJAdvisorBeanRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/annotation/AspectJBeanFactoryInitializationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/annotation/AspectJPointcutAdvisorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/annotation/AspectMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/annotation/AspectProxyFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/annotation/ReflectiveAspectJAdvisorFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/autoproxy/AspectJNamespaceHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/aspectj/autoproxy/AspectJPrecedenceComparatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/config/AopNamespaceHandlerEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/config/AopNamespaceHandlerPointcutErrorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/config/TopLevelAopTagTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/AbstractProxyExceptionHandlingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/AopProxyUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/CglibAopProxyConfigurationCallbackTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/CglibProxyExceptionHandlingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/IntroductionBenchmarkTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/JdkProxyExceptionHandlingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/MethodInvocationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/NullPrimitiveTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/PrototypeTargetTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/ProxyFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/ProxyProcessorSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/framework/adapter/ThrowsAdviceInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/interceptor/AsyncExecutionInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/interceptor/ConcurrencyThrottleInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/interceptor/CustomizableTraceInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/interceptor/DebugInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/interceptor/ExposeBeanNameAdvisorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/interceptor/ExposeInvocationInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/interceptor/PerformanceMonitorInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/interceptor/SimpleTraceInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/scope/DefaultScopedObjectTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/scope/ScopedProxyAutowireTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/scope/ScopedProxyBeanRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/scope/ScopedProxyUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/AopUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/ClassFiltersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/ClassUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/ComposablePointcutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/ControlFlowPointcutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/DelegatingIntroductionInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/JdkRegexpMethodPointcutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/MethodMatchersTests.java": {
+      "d": "framework/aop/tests/pointcut_tests.d",
+      "methods": {
+        "ported": [
+          "defaultMatchesAll"
+        ],
+        "skipped": {
+          "dynamicAndStaticMethodMatcherIntersection": "Phase 2: method matcher composition and negation are deferred.",
+          "methodMatcherTrueSerializable": "Rulebook jvm-platform: Java serialization is excluded.",
+          "negateHasNotSameHashCodeAsOriginalMatcher": "Phase 2: method matcher composition and negation are deferred.",
+          "negateIsNotEqualsToOriginalMatcher": "Phase 2: method matcher composition and negation are deferred.",
+          "negateMethodMatcher": "Phase 2: method matcher composition and negation are deferred.",
+          "negateOnSameMatcherHasSameHashCode": "Phase 2: method matcher composition and negation are deferred.",
+          "negateOnSameMatcherIsEquals": "Phase 2: method matcher composition and negation are deferred.",
+          "negateTrueMethodMatcher": "Phase 2: method matcher composition and negation are deferred.",
+          "negateTrueMethodMatcherAppliedTwice": "Phase 2: method matcher composition and negation are deferred.",
+          "single": "Phase 2: method matcher composition and negation are deferred.",
+          "staticMethodMatcherUnion": "Phase 2: method matcher composition and negation are deferred.",
+          "toStringIncludesRepresentationOfOriginalMatcher": "Phase 2: method matcher composition and negation are deferred.",
+          "unionEquals": "Phase 2: method matcher composition and negation are deferred."
+        }
+      },
+      "status": "partial"
+    },
+    "org/springframework/aop/support/NameMatchMethodPointcutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/PointcutsTests.java": {
+      "d": "framework/aop/tests/pointcut_tests.d",
+      "methods": {
+        "ported": [
+          "trueCase"
+        ],
+        "skipped": {
+          "intersectionOfSpecificGettersAndSubclassGetters": "Phase 2: getter and setter pointcuts and composition are deferred.",
+          "matches": "Phase 2: getter and setter pointcuts and composition are deferred.",
+          "simpleIntersection": "Phase 2: getter and setter pointcuts and composition are deferred.",
+          "unionOfAllSettersAndSubclassSetters": "Phase 2: getter and setter pointcuts and composition are deferred.",
+          "unionOfSettersAndGetters": "Phase 2: getter and setter pointcuts and composition are deferred.",
+          "unionOfSpecificGetters": "Phase 2: getter and setter pointcuts and composition are deferred."
+        }
+      },
+      "status": "partial"
+    },
+    "org/springframework/aop/support/RegexpMethodPointcutAdvisorIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/RootClassFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/support/annotation/AnnotationMatchingPointcutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/target/CommonsPool2TargetSourceProxyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/target/HotSwappableTargetSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/target/LazyCreationTargetSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/target/LazyInitTargetSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/target/PrototypeBasedTargetSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/target/PrototypeTargetSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/target/ThreadLocalTargetSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/aop/target/dynamic/RefreshableTargetSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "aop",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [],
+  "upstream": "spring-framework@v7.1.0",
+  "upstream_modules": [
+    "spring-aop"
+  ]
+}

@@ -1,0 +1,6 @@
+name "probe-aop-baseline"
+targetType "executable"
+sourcePaths "source"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:engine-aot" path="../../../.."
