@@ -623,6 +623,7 @@ unittest
     assert(Locale.forLanguageTag("und-Latn-x-lvariant-ABC").toLanguageTag() == "und-Latn-x-lvariant-ABC");
     assert(Locale.forLanguageTag("no-Latn-NO-x-lvariant-NY").toLanguageTag() == "nn-Latn-NO");
     assert(Locale.forLanguageTag("en-L111-US").getScript().length == 0);
+
     assert(Locale.forLanguageTag("es-419").getCountry() == "419" && Locale.forLanguageTag("en_US") == Locale.ROOT);
     assert(Locale.forLanguageTag("de-DE-1996").getVariant() == "1996");
     assert(Locale.forLanguageTag("zh-CMN-yue-TW") == Locale("cmn", "TW"));
@@ -867,4 +868,13 @@ unittest
         assert(unsupported);
     }
     assert(empty.size() == 0);
+}
+
+@("Locale extension singleton codes")
+unittest
+{
+    import flint.java.util : Locale;
+
+    static assert(is(typeof(Locale.PRIVATE_USE_EXTENSION) == wchar) && Locale.PRIVATE_USE_EXTENSION == 'x');
+    static assert(is(typeof(Locale.UNICODE_LOCALE_EXTENSION) == wchar) && Locale.UNICODE_LOCALE_EXTENSION == 'u');
 }

@@ -3275,6 +3275,12 @@ struct Locale
         FORMAT, /// Locale for formatting dates, numbers, and currencies.
     }
 
+    /// Singleton identifying a private-use extension.
+    enum wchar PRIVATE_USE_EXTENSION = 'x';
+
+    /// Singleton identifying a Unicode locale extension.
+    enum wchar UNICODE_LOCALE_EXTENSION = 'u';
+
     private string language;
     private string country;
     private string variant;
@@ -3557,7 +3563,7 @@ struct Locale
 
     private static bool isPrivateUseSingleton(string subtag) pure nothrow @nogc
     {
-        return subtag.length == 1 && (subtag[0] | 0x20) == 'x';
+        return subtag.length == 1 && (subtag[0] | 0x20) == PRIVATE_USE_EXTENSION;
     }
 
     private static bool isTagPayload(string subtag, size_t minLength) pure nothrow @nogc
