@@ -1,0 +1,994 @@
+{
+  "classes": {
+    "org/springframework/security/config/FilterChainProxyConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/InvalidConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/SecurityNamespaceHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/ObjectPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/SecurityConfigurerAdapterClosureTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/SecurityConfigurerAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/AuthenticationManagerBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/NamespaceAuthenticationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/NamespaceAuthenticationProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/NamespaceJdbcUserServiceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/NamespacePasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/PasswordEncoderConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/configuration/AuthenticationConfigurationPublishTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/configuration/AuthenticationConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/configuration/AuthenticationManagerBeanRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/configuration/EnableGlobalAuthenticationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/configurers/ldap/LdapAuthenticationProviderConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authentication/configurers/provisioning/UserDetailsManagerConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authorization/EnableMultiFactorAuthenticationCustomizerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authorization/EnableMultiFactorAuthenticationFiltersSetTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authorization/EnableMultiFactorAuthenticationMultipleCustomizersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authorization/EnableMultiFactorAuthenticationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/authorization/MultiFactorAuthenticationSelectorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/configuration/AutowireBeanFactoryObjectPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/issue50/Issue50Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/AuthorizationProxyConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/EnableAuthorizationManagerReactiveMethodSecurityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/EnableReactiveMethodSecurityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/Gh19441Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/GlobalMethodSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/NamespaceGlobalMethodSecurityExpressionHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/NamespaceGlobalMethodSecurityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/PrePostMethodSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/PrePostReactiveMethodSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/ReactiveMethodSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/SampleEnableGlobalMethodSecurityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/aot/EnableMethodSecurityAotTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/method/configuration/issue14637/Issue14637Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/sec2758/Sec2758Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/AbstractConfiguredSecurityBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/AbstractRequestMatcherRegistryAnyMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/AbstractRequestMatcherRegistryNoMvcTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/AbstractRequestMatcherRegistryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/HttpSecurityHeadersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/builders/FilterOrderRegistrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/builders/HttpConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/builders/HttpSecurityAuthenticationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/builders/HttpSecurityDeferAddFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/builders/NamespaceHttpTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/builders/WebSecurityFilterChainValidatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/builders/WebSecurityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/AuthenticationPrincipalArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/AuthorizationManagerWebInvocationPrivilegeEvaluatorConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/DeferHttpSessionJavaConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/EnableWebSecurityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/HttpSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/OAuth2AuthorizationServerConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/OAuth2AuthorizedClientManagerConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/OAuth2ClientConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/RegisterMissingBeanPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/SecurityReactorContextConfigurationResourceServerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/SecurityReactorContextConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/WebMvcSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/WebSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configuration/sec2377/Sec2377Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/AbstractConfigAttributeRequestMatcherRegistryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/AnonymousConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/AuthorizeHttpRequestsConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/ChannelSecurityConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/CorsConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/CsrfConfigurerIgnoringRequestMatchersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/CsrfConfigurerNoWebMvcTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/CsrfConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/DefaultFiltersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/DefaultLoginPageConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/ExceptionHandlingConfigurerAccessDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/ExceptionHandlingConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/FormLoginConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/HeadersConfigurerEagerHeadersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/HeadersConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/HttpBasicConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/HttpSecurityLogoutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/HttpSecurityObservationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/HttpSecurityRequestMatchersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/HttpSecuritySecurityMatchersNoMvcTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/HttpSecuritySecurityMatchersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/HttpsRedirectConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/JeeConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/LogoutConfigurerClearSiteDataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/LogoutConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceDebugTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpAnonymousTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpBasicTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpCustomFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpExpressionHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpFirewallTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpFormLoginTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpHeadersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpInterceptUrlTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpJeeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpLogoutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpPortMappingsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpRequestCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpServerAccessDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceHttpX509Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceRememberMeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/NamespaceSessionManagementTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/PasswordManagementConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/PermitAllSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/PortMapperConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/RememberMeConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/RequestCacheConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/RequestMatcherConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/SecurityContextConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/ServletApiConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/SessionManagementConfigurerServlet31Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/SessionManagementConfigurerSessionAuthenticationStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/SessionManagementConfigurerSessionCreationPolicyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/SessionManagementConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/SessionManagementConfigurerTransientAuthenticationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/UrlAuthorizationsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/WebAuthnConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/X509ConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/client/OAuth2ClientConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/client/OAuth2LoginConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/client/OidcBackChannelLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/client/OidcLogoutConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/client/OidcUserRefreshedEventListenerConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/client/OidcUserRefreshedEventListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/AuthorizationServerContextFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/DefaultOAuth2TokenCustomizersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/JwkSetTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OAuth2AuthorizationCodeGrantTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OAuth2AuthorizationServerMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OAuth2ClientCredentialsGrantTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OAuth2ClientRegistrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OAuth2DeviceCodeGrantTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OAuth2RefreshTokenGrantTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OAuth2TokenExchangeGrantTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OAuth2TokenIntrospectionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OAuth2TokenRevocationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OidcClientRegistrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OidcProviderConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OidcTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/authorization/OidcUserInfoTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/resource/DPoPAuthenticationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/resource/OAuth2ProtectedResourceMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/oauth2/server/resource/OAuth2ResourceServerConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/ott/OneTimeTokenLoginConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/saml2/Saml2LoginConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/saml2/Saml2LogoutConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/configurers/saml2/Saml2MetadataConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/reactive/EnableWebFluxSecurityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/reactive/ReactiveOAuth2AuthorizedClientManagerConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/reactive/ReactiveOAuth2ClientImportSelectorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/reactive/ServerHttpSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/reactive/WebFluxSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/socket/WebSocketMessageBrokerSecurityConfigurationDocTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/annotation/web/socket/WebSocketMessageBrokerSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/aot/hint/OAuth2LoginRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/aot/hint/WebMvcSecurityConfigurationRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/aot/hint/WebSecurityConfigurationRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/authentication/AuthenticationConfigurationGh3935Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/authentication/AuthenticationManagerBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/authentication/AuthenticationProviderBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/authentication/JdbcUserServiceBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/authentication/PasswordEncoderParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/authentication/UserServiceBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/core/GrantedAuthorityDefaultsJcTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/core/GrantedAuthorityDefaultsXmlTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/core/userdetails/ReactiveUserDetailsServiceResourceFactoryBeanPropertiesResourceITests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/core/userdetails/ReactiveUserDetailsServiceResourceFactoryBeanPropertiesResourceLocationITests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/core/userdetails/ReactiveUserDetailsServiceResourceFactoryBeanStringITests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/core/userdetails/UserDetailsResourceFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/crypto/RsaKeyConversionServicePostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/debug/SecurityDebugBeanFactoryPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/doc/XsdDocumentedTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/AccessDeniedConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/CsrfBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/CsrfConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/DefaultFilterChainValidatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/DeferHttpSessionXmlConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/FilterSecurityMetadataSourceBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/FormLoginBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/FormLoginConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/HttpConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/HttpCorsConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/HttpHeadersConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/HttpInterceptUrlTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/InterceptUrlConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/MiscHttpConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/MultiHttpBlockConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/NamespaceHttpBasicTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/OAuth2AuthorizedClientManagerRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/OAuth2ClientBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/OAuth2LoginBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/OAuth2ResourceServerBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/PlaceHolderAndELConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/RememberMeConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/Saml2LoginBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/Saml2LogoutBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/SecurityContextHolderAwareRequestConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/SessionManagementConfigServlet31Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/SessionManagementConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/SessionManagementConfigTransientAuthenticationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/WebConfigUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/WellKnownChangePasswordBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/http/customconfigurer/CustomHttpSecurityConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/GlobalMethodSecurityBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/InterceptMethodsBeanDefinitionDecoratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/Jsr250AnnotationDrivenBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/MethodSecurityBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/PreAuthorizeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/Sec2196Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/SecuredAnnotationDrivenBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/SecuredTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/configuration/Gh4020GlobalMethodSecurityConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/sec2136/Sec2136Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/method/sec2499/Sec2499Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/oauth2/client/ClientRegistrationsBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/oauth2/client/CommonOAuth2ProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/observation/SecurityObservationSettingsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/provisioning/UserDetailsManagerResourceFactoryBeanPropertiesResourceITests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/provisioning/UserDetailsManagerResourceFactoryBeanPropertiesResourceLocationITests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/provisioning/UserDetailsManagerResourceFactoryBeanStringITests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/saml2/RelyingPartyRegistrationsBeanDefinitionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/PathPatternRequestMatcherBuilderFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/AuthorizeExchangeSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/CorsSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/ExceptionHandlingSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/FormLoginTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/HeaderSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/HttpsRedirectSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/LogoutSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/OAuth2ClientSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/OAuth2LoginTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/OAuth2ResourceServerSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/OidcBackChannelServerLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/OidcLogoutSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/OneTimeTokenLoginSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/PasswordManagementSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/RequestCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/ServerHttpSecurityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/web/server/SessionManagementSpecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/websocket/MessageSecurityPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/config/websocket/WebSocketMessageBrokerConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "security-config",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":security-config"
+  ],
+  "upstream": "spring-security@7.2.0"
+}

@@ -1,0 +1,377 @@
+{
+  "classes": {
+    "org/springframework/boot/jdbc/DataSourceBuilderNoHikariTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/DataSourceBuilderRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/DataSourceBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/DataSourceUnwrapperNoSpringJdbcTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/DataSourceUnwrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/DatabaseDriverClassNameTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/DatabaseDriverTests.java": {
+      "d": "boot/module/flint-boot-jdbc/tests/database_driver_upstream_test.d",
+      "methods": {
+        "ported": [
+          "FlintDatabaseDriverDependencies",
+          "classNameForKnownDatabase",
+          "databaseJdbcUrlLookups",
+          "databaseProductNameLookups",
+          "deprecatedDatabaseJdbcUrlLookups",
+          "deprecatedDatabaseProductNameLookups",
+          "failureOnMalformedJdbcUrl",
+          "nullClassNameForUnknownDatabase",
+          "unknownOnNullJdbcUrl",
+          "unknownOnNullProductName"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/EmbeddedDatabaseConnectionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/HikariCheckpointRestoreLifecycleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/DataSourceAutoConfigurationTests.java": {
+      "d": [
+        "boot/module/flint-boot-jdbc/tests/datasource_autoconfiguration_test.d",
+        "boot/module/flint-boot-jdbc/tests/datasource_autoconfiguration_upstream_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "FlintDataSourceWithoutItsDriverFailsAtStartup",
+          "dataSourceWhenNoConnectionPoolsAreAvailableWithUrlAndTypeCreatesDataSource",
+          "dataSourceWhenNoConnectionPoolsAreAvailableWithUrlDoesNotCreateDataSource",
+          "definesPropertiesBasedConnectionDetailsByDefault",
+          "explicitTypeSupportedDataSource",
+          "genericUsesCustomJdbcConnectionDetailsWhenAvailable",
+          "hikariValidatesConnectionByDefault",
+          "testBadDriverClass",
+          "testBadUrl",
+          "testDataSourceHasEmbeddedDefault",
+          "testDefaultDataSourceCanBeOverridden",
+          "testDefaultDataSourceExists",
+          "testEmbeddedTypeDefaultsUsername",
+          "testExplicitDriverClassClearsUsername",
+          "transactionManagerCommits",
+          "whenThereIsAUserProvidedDataSourceAnUnresolvablePlaceholderDoesNotCauseAProblem",
+          "whenThereIsAnEmptyUserProvidedDataSource"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/DataSourceAutoConfigurationWithoutSpringJdbcTests.java": {
+      "d": "boot/module/flint-boot-jdbc/tests/datasource_autoconfiguration_without_spring_jdbc_test.d",
+      "methods": {
+        "ported": [
+          "pooledDataSourceCanBeAutoConfigured",
+          "withUrlAndWithoutConnectionPoolsAutoConfigurationBacksOff",
+          "withoutConnectionPoolsAutoConfigurationBacksOff"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/DataSourceBeanCreationFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/DataSourceInitializationAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-jdbc/tests/datasource_initialization_autoconfiguration_test.d",
+      "methods": {
+        "ported": [
+          "whenDataSourceIsAvailableThenDataSourceInitializerIsAutoConfigured",
+          "whenNoDataSourceIsAvailableThenAutoConfigurationBacksOff"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/DataSourceJmxConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/DataSourceJsonSerializationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/DataSourcePropertiesTests.java": {
+      "d": [
+        "boot/module/flint-boot-jdbc/tests/datasource_properties_test.d",
+        "boot/module/flint-boot-jdbc/tests/datasource_properties_upstream_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "FlintDetermineDriverClassNameEmbeddedAndNone",
+          "determineDriver",
+          "determineDriverWithExplicitConfig",
+          "determinePassword",
+          "determinePasswordWithExplicitConfig",
+          "determinePasswordWithNonEmbeddedUrl",
+          "determineUrlWithExplicitConfig",
+          "determineUrlWithGenerateUniqueName",
+          "determineUrlWithNoEmbeddedSupport",
+          "determineUrlWithSpecificEmbeddedConnection",
+          "determineUrlWithoutGenerateUniqueName",
+          "determineUsername",
+          "determineUsernameWhenEmpty",
+          "determineUsernameWhenNull",
+          "determineUsernameWithExplicitConfig",
+          "determineUsernameWithNonEmbeddedUrl",
+          "whenEmbeddedConnectionIsNoneAndNoUrlIsConfiguredThenDetermineUrlThrows"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/DataSourceTransactionManagerAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-jdbc/tests/datasource_transaction_manager_autoconfiguration_upstream_test.d",
+      "methods": {
+        "ported": [
+          "shouldNotUseDataSourcePropertiesIfDataSourceIsNotOnTheClasspath",
+          "transactionManagerWithCustomizationIsConfigured",
+          "transactionManagerWithExistingTransactionManagerIsNotOverridden",
+          "transactionManagerWithPersistenceExceptionTranslationDefault",
+          "transactionManagerWithPersistenceExceptionTranslationEnabled",
+          "transactionManagerWithoutDataSourceIsNotConfigured",
+          "transactionWithMultipleDataSourcesIsNotConfigured"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/Dbcp2JdbcConnectionDetailsBeanPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/EmbeddedDataSourceConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/HikariDataSourceConfigurationTests.java": {
+      "d": "boot/module/flint-boot-jdbc/tests/hikari_datasource_configuration_test.d",
+      "methods": {
+        "ported": [
+          "configureDataSourceClassNameToOverrideUseOfAnEmbeddedDatabase",
+          "configureDataSourceClassNameWithNoEmbeddedDatabaseAvailable",
+          "nameIsAliasedToPoolName",
+          "poolNameTakesPrecedenceOverName",
+          "testDataSourceDefaultsPreserved",
+          "testDataSourceExists",
+          "testDataSourceGenericPropertiesOverridden",
+          "testDataSourcePropertiesOverridden",
+          "usesCustomConnectionDetailsWhenDefined"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/HikariDataSourcePoolMetadataRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/HikariDriverConfigurationFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/HikariJdbcConnectionDetailsBeanPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/JdbcClientAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-jdbc/tests/jdbc_client_autoconfiguration_upstream_test.d",
+      "methods": {
+        "ported": [
+          "jdbcClientWhenNoAvailableJdbcTemplateIsNotCreated",
+          "jdbcClientWithCustomJdbcClientIsNotCreated"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/JdbcTemplateAutoConfigurationTests.java": {
+      "d": [
+        "boot/module/flint-boot-jdbc/tests/jdbc_template_autoconfiguration_test.d",
+        "boot/module/flint-boot-jdbc/tests/jdbc_template_autoconfiguration_upstream_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "shouldConfigureJdbcTemplateWithSQLExceptionTranslatorIfPresent",
+          "shouldNotConfigureJdbcTemplateWithSQLExceptionTranslatorIfNotUnique",
+          "testDependencyToScriptBasedDataSourceInitialization",
+          "testExistingCustomJdbcTemplate",
+          "testExistingCustomNamedParameterJdbcTemplate",
+          "testJdbcTemplateExists",
+          "testJdbcTemplateExistsWithCustomDataSource",
+          "testJdbcTemplateWithCustomProperties",
+          "testMultiDataSource",
+          "testMultiDataSourceUsingPrimary",
+          "testMultiJdbcTemplate",
+          "testMultiJdbcTemplateUsingPrimary"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/JndiDataSourceAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/LazyConnectionDataSourceConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/OracleUcpDataSourceConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/OracleUcpJdbcConnectionDetailsBeanPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/TomcatDataSourceConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/TomcatJdbcConnectionDetailsBeanPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/XADataSourceAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/health/DataSourceHealthContributorAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-jdbc-health/tests/datasource_health_contributor_autoconfiguration_upstream_test.d",
+      "methods": {
+        "ported": [
+          "runShouldCreateIndicator",
+          "runWhenMultipleDataSourceBeansShouldCreateCompositeIndicator"
+        ]
+      },
+      "note": "ported in boot-jdbc-health",
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/autoconfigure/metrics/DataSourcePoolMetricsAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/docker/compose/ClickHouseEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/docker/compose/JdbcUrlBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/docker/compose/MariaDbEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/docker/compose/MySqlEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/docker/compose/OracleEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/docker/compose/PostgresEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/docker/compose/PostgresJdbcDockerComposeConnectionDetailsFactoryConnectionDetailsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/docker/compose/SqlServerEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/docker/compose/SqlServerJdbcDockerComposeConnectionDetailsFactoryConnectionDetailsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/init/DataSourceScriptDatabaseInitializerTests.java": {
+      "d": "boot/module/flint-boot-jdbc/tests/datasource_script_database_initializer_upstream_test.d",
+      "methods": {
+        "ported": [
+          "whenCustomizeIsOverriddenThenDatabasePopulatorIsConfiguredAccordingly",
+          "whenDatabaseIsInaccessibleThenItIsAssumedNotToBeEmbedded",
+          "whenDatabaseIsInitializedWithDirectoryLocationsThenFailureIsHelpful",
+          "whenModeIsAlwaysThenEmbeddedDatabaseIsInitialized",
+          "whenModeIsAlwaysThenStandaloneDatabaseIsInitialized",
+          "whenModeIsEmbeddedThenEmbeddedDatabaseIsInitialized",
+          "whenModeIsEmbeddedThenStandaloneDatabaseIsNotInitialized",
+          "whenModeIsNeverThenEmbeddedDatabaseIsNotInitialized",
+          "whenModeIsNeverThenStandaloneDatabaseIsNotInitialized",
+          "whenNoScriptsExistAtADataLocationThenInitializationFails",
+          "whenNoScriptsExistAtAnOptionalDataLocationThenDatabaseIsNotAccessed"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/init/PlatformPlaceholderDatabaseDriverResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/metadata/AbstractDataSourcePoolMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/metadata/CommonsDbcp2DataSourcePoolMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/metadata/CompositeDataSourcePoolMetadataProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/metadata/HikariDataSourcePoolMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/metadata/OracleUcpDataSourcePoolMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/metadata/TomcatDataSourcePoolMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jdbc/metrics/DataSourcePoolMetricsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/sql/init/AbstractScriptDatabaseInitializerTests.java": {
+      "d": "boot/module/flint-boot-jdbc/tests/sql_init_test.d",
+      "methods": {
+        "ported": [
+          "whenContinueOnErrorIsFalseThenInitializationFailsOnError",
+          "whenContinueOnErrorIsTrueThenInitializationDoesNotFailOnError",
+          "whenDatabaseIsInitializedWithNeverModeThenNothingIsApplied",
+          "whenNoScriptsExistAtASchemaLocationThenInitializationFails",
+          "whenNoScriptsExistAtAnOptionalSchemaLocationThenInitializationSucceeds"
+        ]
+      },
+      "status": "ported"
+    }
+  },
+  "module": "boot-jdbc",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-jdbc"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

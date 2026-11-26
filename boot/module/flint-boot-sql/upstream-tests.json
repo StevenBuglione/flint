@@ -1,0 +1,22 @@
+{
+  "classes": {
+    "org/springframework/boot/sql/autoconfigure/init/OnDatabaseInitializationConditionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/sql/autoconfigure/init/SqlInitializationScriptsRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/sql/init/dependency/DatabaseInitializationDependencyConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-sql",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-sql"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

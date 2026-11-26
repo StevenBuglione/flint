@@ -69,7 +69,11 @@ AGENTS.md requires every ported module to port its upstream tests. `upstream-tes
 
 - **Keys** are paths under the upstream's `src/test/java`.
 - **`d`** is the D file that ports the class, or a list of files when its tests are spread over several.
-- **`status`** is `ported`, `partial` (it needs `methods.skipped` with reasons) or `excluded` (it needs `reason`).
+- **`status`** is one of:
+  - `ported`;
+  - `partial`, which needs `methods.skipped` with reasons;
+  - `excluded`, which needs `reason`;
+  - `deferred`, which needs `"phase": "2"` or `"3"`. It passes the normal check and fails under `--release`, like a deferred API exclusion.
 - **A ported method needs a named unittest in `d`:**
   - `@("Class.method") unittest` in a file that ports several classes;
   - `@("method") unittest` in a file that ports one.
@@ -79,6 +83,23 @@ AGENTS.md requires every ported module to port its upstream tests. `upstream-tes
 - **`test_packages`** adds other packages whose tests exercise the module. For example, webmvc adds `:framework-test`, where MockMvc lives.
 
 **Drafting the record.** `--write-upstream-tests` drafts the record from the module's `Ported from <project> <tag>, <path>/src/test/java/...Tests.java` headers and its unittest names. It keeps any entries that already exist. Then add the classes it could not see, and give each exclusion and skip its reason.
+
+### Deferrals are a ratchet
+
+The coordinator decided this on 2026-11-26:
+- **The record.** `policy/upstream-tests-baseline.json` lists each module's deferred classes.
+- **What fails:**
+  - a deferred class not in that list, so a recorded class can never be turned back into a deferral;
+  - a listed class that is no longer deferred, until the baseline is shrunk.
+- **Shrinking.** Port, mark partial or exclude a deferred class, then shrink the baseline:
+
+  ```bash
+  python3 tools/gates.py --module framework/context --definition-of-done --step upstream-tests --shrink-upstream-tests
+  ```
+
+**Seeding** is the integration owner's job: `--seed-upstream-tests [2|3]` drafts the record and adds every class it still lacks. A class ported in another module of the same upstream is recorded as ported, pointing at that module's file; framework-test ports some web and webmvc tests. Every other class is recorded as deferred and added to the baseline. Seeding never changes a recorded entry.
+
+The 31 Phase 1 modules with pinned test sources were seeded on 2026-11-26, with 4,172 deferred classes. Modules whose upstream pins no test sources (Jackson core and annotations, Jakarta, SLF4J) are checked on their record alone. Flint's own modules have no upstream tests to record.
 
 ## Output
 

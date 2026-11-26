@@ -1,0 +1,33 @@
+{
+  "classes": {
+    "org/springframework/boot/jdbc/autoconfigure/health/DataSourceHealthContributorAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-jdbc-health/tests/datasource_health_contributor_autoconfiguration_upstream_test.d",
+      "methods": {
+        "ported": [
+          "runShouldCreateIndicator",
+          "runWhenMultipleDataSourceBeansShouldCreateCompositeIndicator"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jdbc/health/DataSourceHealthIndicatorTests.java": {
+      "d": "boot/module/flint-boot-jdbc-health/tests/datasource_health_indicator_upstream_test.d",
+      "methods": {
+        "ported": [
+          "healthIndicatorCloseConnection",
+          "healthIndicatorWithConnectionValidationFailure",
+          "healthIndicatorWithCustomValidationQuery",
+          "healthIndicatorWithDefaultSettings",
+          "healthIndicatorWithInvalidValidationQuery"
+        ]
+      },
+      "status": "ported"
+    }
+  },
+  "module": "boot-jdbc-health",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-jdbc-health"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

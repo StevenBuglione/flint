@@ -1,0 +1,415 @@
+{
+  "classes": {
+    "org/springframework/dao/annotation/PersistenceExceptionTranslationAdvisorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/dao/annotation/PersistenceExceptionTranslationInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/dao/annotation/PersistenceExceptionTranslationPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/dao/support/ChainedPersistenceExceptionTranslatorTests.java": {
+      "d": "framework/tx/tests/chained_persistence_exception_translator_tests.d",
+      "methods": {
+        "ported": [
+          "empty",
+          "exceptionTranslationWithTranslation"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/dao/support/DataAccessUtilsTests.java": {
+      "d": "framework/tx/tests/data_access_utils.d",
+      "methods": {
+        "ported": [
+          "exceptionTranslationWithNoTranslation",
+          "exceptionTranslationWithTranslation",
+          "optionalResultWithSupertypeTargetType",
+          "withEmptyCollection",
+          "withEquivalentIntegerInstanceTwice",
+          "withInteger",
+          "withLong",
+          "withNullValueInCollection",
+          "withSameIntegerInstanceTwice",
+          "withString",
+          "withTooLargeCollection"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/orm/jpa/AbstractContainerEntityManagerFactoryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/AbstractEntityManagerFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/AbstractEntityManagerFactoryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/ApplicationManagedEntityManagerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/ContainerManagedEntityManagerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/DefaultJpaDialectTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/EntityManagerFactoryBeanSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/EntityManagerFactoryUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/EntityManagerRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/JpaTransactionManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/LocalContainerEntityManagerFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/LocalEntityManagerFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/SharedEntityManagerCreatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/eclipselink/EclipseLinkEntityManagerFactoryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/eclipselink/EclipseLinkEntityManagerFactoryScanIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/eclipselink/EclipseLinkEntityManagerFactorySimpleIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/hibernate/HibernateEntityManagerFactoryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/hibernate/HibernateEntityManagerFactoryScanIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/hibernate/HibernateEntityManagerFactorySimpleIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/hibernate/HibernateJpaDialectTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/hibernate/HibernateMultiEntityManagerFactoryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/hibernate/HibernateNativeEntityManagerFactoryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/hibernate/HibernateNativeEntityManagerFactorySpringBeanContainerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/hibernate/HibernateTransactionManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/persistenceunit/DefaultPersistenceUnitManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/persistenceunit/PersistenceManagedTypesBeanRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/persistenceunit/PersistenceManagedTypesScannerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/persistenceunit/PersistenceManagedTypesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/persistenceunit/PersistenceXmlParsingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/persistenceunit/SpringPersistenceUnitInfoRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/support/InjectionCodeGeneratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/support/OpenEntityManagerInViewTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/support/PersistenceAnnotationBeanPostProcessorAotContributionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/support/PersistenceContextTransactionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/support/PersistenceInjectionIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/support/PersistenceInjectionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/orm/jpa/support/SharedEntityManagerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/JndiJtaTransactionManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/JtaTransactionManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/TxNamespaceHandlerEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/TxNamespaceHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/annotation/AnnotationTransactionAttributeSourceTests.java": {
+      "d": "framework/tx/tests/annotation_transaction_attribute_source_tests.d",
+      "methods": {
+        "ported": [
+          "customClassAttributeDetected",
+          "customClassAttributeWithReadOnlyOverrideDetected",
+          "customClassAttributeWithReadOnlyOverrideOnInterface",
+          "customMethodAttributeDetected",
+          "customMethodAttributeWithReadOnlyOverrideDetected",
+          "customMethodAttributeWithReadOnlyOverrideOnInterface",
+          "defaultsToClassTransactionAttribute",
+          "labelsAreApplied",
+          "nullOrEmpty",
+          "rollbackRulesAreApplied",
+          "serializable",
+          "transactionAttributeDeclaredOnCglibClassMethod",
+          "transactionAttributeDeclaredOnClassMethod",
+          "transactionAttributeDeclaredOnInterfaceMethodOnly"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/transaction/annotation/AnnotationTransactionInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/annotation/AnnotationTransactionNamespaceHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/annotation/EnableTransactionManagementTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/annotation/RetryableTransactionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/annotation/TransactionBeanRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/config/AnnotationDrivenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/event/ReactiveTransactionalEventListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/event/TransactionalApplicationListenerAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/event/TransactionalApplicationListenerMethodAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/event/TransactionalEventListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/interceptor/AbstractReactiveTransactionAspectTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/interceptor/AbstractTransactionAspectTests.java": {
+      "d": [
+        "framework/tx/tests/abstract_transaction_aspect_upstream_tests.d",
+        "framework/tx/tests/transaction_interceptor.d"
+      ],
+      "methods": {
+        "ported": [
+          "cannotCommitTransaction",
+          "cannotCreateTransaction",
+          "enclosingTransactionWithNestedTransactionOnAdvisedInside",
+          "enclosingTransactionWithNonTransactionMethodOnAdvisedInside",
+          "noRollbackOnCheckedException",
+          "noRollbackOnCheckedExceptionWithRollbackException",
+          "noRollbackOnUncheckedExceptionWithRollbackException",
+          "noTransaction",
+          "programmaticRollback",
+          "rollbackOnCheckedExceptionWithRollbackException",
+          "rollbackOnUncheckedException",
+          "rollbackOnUncheckedExceptionWithRollbackException",
+          "transactionExceptionPropagatedWithCallbackPreference",
+          "transactionShouldSucceed",
+          "transactionShouldSucceedWithCallbackPreference",
+          "twoTransactionsShouldSucceed"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/transaction/interceptor/BeanFactoryTransactionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/interceptor/ReactiveTransactionInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/interceptor/RollbackRuleAttributeTests.java": {
+      "d": "framework/tx/tests/rollback_rules.d",
+      "methods": {
+        "ported": []
+      },
+      "status": "ported"
+    },
+    "org/springframework/transaction/interceptor/RuleBasedTransactionAttributeTests.java": {
+      "d": "framework/tx/tests/rule_based_transaction_attribute_upstream_tests.d",
+      "methods": {
+        "ported": [
+          "toStringMatchesEditor"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/transaction/interceptor/TransactionAttributeEditorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/interceptor/TransactionAttributeSourceAdvisorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/interceptor/TransactionAttributeSourceEditorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/interceptor/TransactionAttributeSourceTests.java": {
+      "d": "framework/tx/tests/transaction_attribute_source_tests.d",
+      "methods": {
+        "ported": [
+          "matchAlwaysTransactionAttributeSource",
+          "nameMatchTransactionAttributeSourceMostSpecificMethodNameIsDefinitelyMatched",
+          "nameMatchTransactionAttributeSourceWithEmptyMethodName",
+          "nameMatchTransactionAttributeSourceWithStarAtEndOfMethodName",
+          "nameMatchTransactionAttributeSourceWithStarAtStartOfMethodName"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/transaction/interceptor/TransactionInterceptorTests.java": {
+      "d": "framework/tx/tests/transaction_interceptor_tests.d",
+      "methods": {
+        "ported": [
+          "determineTransactionManagerDefaultSeveralTimes",
+          "determineTransactionManagerWithBeanNameSeveralTimes",
+          "determineTransactionManagerWithEmptyQualifierAndDefaultName",
+          "determineTransactionManagerWithNoBeanFactory",
+          "determineTransactionManagerWithNoBeanFactoryAndNoTransactionAttribute",
+          "determineTransactionManagerWithNoTransactionAttribute",
+          "determineTransactionManagerWithQualifierAndDefault",
+          "determineTransactionManagerWithQualifierAndDefaultName",
+          "determineTransactionManagerWithQualifierSeveralTimes",
+          "determineTransactionManagerWithQualifierUnknown",
+          "serializableWithAttributeProperties",
+          "serializableWithCompositeSource"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/transaction/reactive/ReactiveTransactionSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/reactive/TransactionalOperatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/support/JtaTransactionManagerSerializationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/support/SimpleTransactionScopeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/transaction/support/TransactionSupportTests.java": {
+      "d": "framework/tx/tests/transaction_support.d",
+      "methods": {
+        "ported": [
+          "commitWithExistingTransaction",
+          "commitWithoutExistingTransaction",
+          "existingTransaction",
+          "noExistingTransaction",
+          "rollbackOnlyWithExistingTransaction",
+          "rollbackOnlyWithoutExistingTransaction",
+          "rollbackWithExistingTransaction",
+          "rollbackWithoutExistingTransaction",
+          "transactionTemplate",
+          "transactionTemplateEquality",
+          "transactionTemplateWithCallbackPreference",
+          "transactionTemplateWithError",
+          "transactionTemplateWithException",
+          "transactionTemplateWithRollbackException"
+        ]
+      },
+      "status": "ported"
+    }
+  },
+  "module": "tx",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":tx"
+  ],
+  "upstream": "spring-framework@v7.1.0"
+}

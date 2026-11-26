@@ -1,0 +1,1466 @@
+{
+  "classes": {
+    "org/hibernate/validator/resourceloading/AggregateResourceBundleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/HibernateValidatorConfigurationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/CascadingWithConstraintMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ConfigurationFilePropertiesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ConstraintDefinitionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ConstraintMappingContributorConfiguredInValidationXmlTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ConstraintMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ConstraintMappingWithAnnotationProcessingOptionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ConstructorConstraintMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/MethodConstraintMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/MultipleConstraintMappingsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/NonHibernateValidatorConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ProgrammaticConstraintDefinitionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ProgrammaticContainerElementConstraintsForFieldTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ProgrammaticContainerElementConstraintsForGetterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ProgrammaticContainerElementConstraintsForParameterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ProgrammaticContainerElementConstraintsForReturnValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/ScriptAssertDefTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/cfg/UniqueElementsDefTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/ClassValidatorWithTypeVariableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/ConstraintTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/ConstraintValidatorContextImplTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/ConstraintValidatorContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/ValidatorResolutionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/AbstractConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/SizeOnParameterizedAndNonParameterizedContainersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/CreditCardNumberConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/CurrencyConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/EANConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/ISBNConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/IpAddressConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/LengthConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/LuhnCheckConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/Mod10CheckConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/Mod11CheckConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/ParameterScriptAssertConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/RangeConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/ScriptAssertConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/URLConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/ValidAnnotationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/br/CNPJValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/br/CPFValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/br/TituloEleitoralValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/kor/KorRRNValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/pl/NIPValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/pl/PESELValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/pl/REGONValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/ru/INNValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/annotations/hv/time/DurationConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/boolcomposition/BoolCompositeConstraintTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/boolcomposition/localconstrval/LocalConstrValTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/composition/basic/CompositeConstraintTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/composition/lazyevaluation/EagerEvaluationOfComposingConstraintsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/composition/lazyevaluation/LazyEvaluationOfComposingConstraintsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/composition/validationtarget/ValidationTargetOfComposedConstraintTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraints/records/RecordConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraintvalidator/ConstraintDefinitionContributorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraintvalidator/ConstraintDefinitionTypeMismatchTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/constraintvalidator/ConstraintValidatorPayloadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/el/ConstraintExpressionLanguageFeatureLevelTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/el/CustomViolationExpressionLanguageFeatureLevelTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/el/ExpressionVariableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/el/RecordExpressionLanguageTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/el/RecordPropertiesELResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/bootstrap/BootstrappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/bootstrap/ConfigurationReuseHibernateValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/MessagePropertiesTest.java": {
+      "d": "framework/hibernate-validator/tests/message_properties_test.d",
+      "methods": {
+        "ported": [
+          "testMessageProperties"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/PredefinedScopeAllConstraintsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/AssertFalseValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/assert_false_validator_test.d",
+      "methods": {
+        "ported": [
+          "testIsValid"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/AssertTrueValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/assert_true_validator_test.d",
+      "methods": {
+        "ported": [
+          "testIsValid"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/BaseMinMaxValidatorForNumberTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/BlankValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/blank_validator_test.d",
+      "methods": {
+        "ported": [
+          "testConstraintValidator",
+          "testNotBlank"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/DecimalMinMaxValidatorBoundaryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/DigitsValidatorForCharSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/DigitsValidatorForNumberTest.java": {
+      "d": "framework/hibernate-validator/tests/digits_validator_for_number_test.d",
+      "methods": {
+        "ported": [
+          "testIsValid",
+          "testIsValidZeroLength",
+          "testNegativeFractionLength",
+          "testNegativeIntegerLength",
+          "testTrailingZerosAreTrimmed"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/EmailValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/email_validator_test.d",
+      "methods": {
+        "ported": [
+          "testAccent",
+          "testEMailWithTrailingAt",
+          "testEmailAddressLength",
+          "testEmailRegExp",
+          "testEmailWith256CharacterDomainPartIsInvalid",
+          "testEmailWith63CharactersDomainPartIsValid",
+          "testEmailWith65CharacterLocalPartIsInvalid",
+          "testEmailWithUpTo255CharacterDomainPartIsValid",
+          "testEmailWithUpTo64CharacterLocalPartIsValid",
+          "testInValidEmail",
+          "testLongEmail",
+          "testMailWithInternationalDomainName",
+          "testNullAndEmptyString",
+          "testValidEmail",
+          "testValidEmailCharSequence"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/MaxValidatorForNumberTest.java": {
+      "d": "framework/hibernate-validator/tests/max_validator_for_number_test.d",
+      "methods": {
+        "ported": [
+          "testInitializeDecimalMaxWithInvalidValue",
+          "testIsValidDecimalMax",
+          "testIsValidDecimalMax1",
+          "testIsValidDecimalMaxExclusive",
+          "testIsValidDecimalMaxWithDecimalFractionInConstraint",
+          "testIsValidMax",
+          "testIsValidNumberForFloatingPointOrBigNumbersStoredAsNumber"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/MaxValidatorForStringTest.java": {
+      "d": "framework/hibernate-validator/tests/max_validator_for_string_test.d",
+      "methods": {
+        "ported": [
+          "testInitializeDecimalMaxWithInvalidValue",
+          "testIsValidDecimalMax",
+          "testIsValidDecimalMaxExclusive",
+          "testIsValidMax"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/MinMaxValidatorBoundaryTest.java": {
+      "d": "framework/hibernate-validator/tests/min_max_validator_boundary_test.d",
+      "methods": {
+        "ported": [
+          "testMaxBoundaryValue",
+          "testMinBoundaryValue"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/MinValidatorForNumberTest.java": {
+      "d": "framework/hibernate-validator/tests/min_validator_for_number_test.d",
+      "methods": {
+        "ported": [
+          "testInitializeDecimalMinWithInvalidValue",
+          "testIsValidDecimalMinExclusive",
+          "testIsValidDecimalMinValidator",
+          "testIsValidDecimalMinWithDecimalFractionInConstraint",
+          "testIsValidMinValidator"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/MinValidatorForStringTest.java": {
+      "d": "framework/hibernate-validator/tests/min_validator_for_string_test.d",
+      "methods": {
+        "ported": [
+          "testInitializeDecimalMaxWithInvalidValue",
+          "testIsValidDecimalMinExclusive",
+          "testIsValidDecimalMinValidator",
+          "testIsValidMinValidator"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/NegativePositiveValidatorForStringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/NotNullValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/not_null_validator_test.d",
+      "methods": {
+        "ported": [
+          "testIsValid"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/NullValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/null_validator_test.d",
+      "methods": {
+        "ported": [
+          "testIsValid"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/PatternValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/pattern_validator_test.d",
+      "methods": {
+        "ported": [
+          "testInvalidRegularExpression",
+          "testIsValid",
+          "testIsValidForCharSequence",
+          "testIsValidForEmptyStringRegexp"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/SignValidatorForNumberTest.java": {
+      "d": "framework/hibernate-validator/tests/sign_validator_for_number_test.d",
+      "methods": {
+        "ported": [
+          "testNegativeOrZeroValidator",
+          "testNegativeValidator",
+          "testPositiveOrZeroValidator",
+          "testPositiveValidator"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/CurrencyValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/DecimalMaxValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/DecimalMinValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/DigitsValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/MaxValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/MinValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/NegativeOrZeroValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/NegativeValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/PositiveOrZeroValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/money/PositiveValidatorForMonetaryAmountTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/size/SizeValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/size_validator_test.d",
+      "methods": {
+        "ported": [
+          "testGenericsExtendsFoo",
+          "testIsValidBooleanArray",
+          "testIsValidByteArray",
+          "testIsValidCharArray",
+          "testIsValidCharSequence",
+          "testIsValidCollection",
+          "testIsValidDoubleArray",
+          "testIsValidFloatArray",
+          "testIsValidIntArray",
+          "testIsValidLongArray",
+          "testIsValidMap",
+          "testIsValidObjectArray",
+          "testIsValidShortArray",
+          "testIsValidString"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/time/ClockProviderFutureTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/time/ClockProviderPastTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/time/JavaSqlDateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/time/TemporalValidationToleranceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/bv/time/TimeValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/time_validator_test.d",
+      "methods": {
+        "ported": [
+          "testFutureAndPast"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/BitcoinConstrainedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/BitcoinValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/CodePointLengthValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/CreditCardNumberValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/EAN13Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/EAN8Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/ISBNValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/IpAddressValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/LengthValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/LuhnCheckValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/Mod10CheckValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/Mod11CheckValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/NormalizedValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/ParameterScriptAssertValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/ScriptAssertValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/URLValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/UUIDValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/UniqueElementsValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/kor/KorRRNValidatorAlwaysAttrTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/kor/KorRRNValidatorNeverAttrTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/ru/INNValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/time/DurationMaxValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/constraintvalidators/hv/time/DurationMinValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/ConfigurationImplTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/ConstraintValidatorCachingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/ConstraintViolationImplIdentityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/DefaultParameterNameProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/EnhancedBeanAccessorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/ValidatorFactoryBeanMetadataClassNormalizerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/ValidatorFactoryNoELBootstrapTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/ValidatorFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/ValidatorTest.java": {
+      "d": "framework/hibernate-validator/tests/validator_test.d",
+      "methods": {
+        "ported": [
+          "testConstraintDefinedOnEntityNotFollowingBeanNotation",
+          "testIsBeanConstrained",
+          "testPropertyPath",
+          "testPropertyPathDoesNotStartWithLeadingDot",
+          "testUnwrapToExecutableValidatorCausesValidationException",
+          "testUnwrapToImplementationCausesValidationException",
+          "testUnwrapToPublicTypesSucceeds",
+          "testValidateInterfaceConstraintsAreValidatedOneTime",
+          "testValidatePropertyInPresenceOfClassLevelConstraint",
+          "testValidatePropertyInterfaceConstraintsAreValidatedOneTime",
+          "testValidatePropertyWithNestedPath",
+          "testValidatePropertyWithNestedPathAndMissingValid",
+          "testValidatePropertyWithNestedPathAndNullPropertyInTheWay",
+          "testValidatePropertyWithRedefinedDefaultGroupOnMainEntity",
+          "testValidatePropertyWithRedefinedDefaultGroupOnSuperClass",
+          "testValidateValueConstraintOnInterface",
+          "testValidateValueInterfaceConstraintsAreValidatedOneTime",
+          "testValidateValueWithNestedPath",
+          "testValidateValueWithRedefinedDefaultGroupOnMainEntity",
+          "testValidateValueWithRedefinedDefaultGroupOnSuperClass"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/engine/cascaded/CascadingOnClassLevelConstraintTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/cascaded/CascadingOnIterableMapWithAdditionalPropertiesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/cascaded/NestedCascadingArraySupportTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/constraintvalidation/ConstraintValidatorManagerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/constraintvalidation/ConstraintValidatorResolutionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/constraintvalidation/HibernateConstraintValidatorContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/constraintvalidation/LogValidatedValueConfigurationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/customerror/CustomErrorMessageTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/failfast/FailFastTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/failfastonpropertyviolation/FailFastOnPropertyViolationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/conversion/AbstractGroupConversionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/conversion/AnnotationBasedGroupConversionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/conversion/XmlBasedGroupConversionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/defaultgroupsequenceprovider/DefaultGroupSequenceProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/defaultgroupwithinheritance/DefaultGroupWithInheritanceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/inheritance/GroupInheritanceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/redefiningdefaultgroup/RedefiningDefaultGroupTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/sequence/SequenceOfSequencesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/sequence/SequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/validation/GroupValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/validationorder/ValidationOrderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/groups/validationordergenerator/ValidationOrderGeneratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/AbstractTokenCollectorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/DefaultLocaleMessageInterpolationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/EscapedInterpolationVariableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/ExpressionLanguageMessageInterpolationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/InterpolationHelperTest.java": {
+      "d": "framework/hibernate-validator/tests/interpolation_helper_test.d",
+      "methods": {
+        "ported": [
+          "testEscapeMessageParameter",
+          "testEscapeReturnsSameInstanceWhenNothingToEscape",
+          "testIsEscapeableChar",
+          "testResolveToString",
+          "testResolveToStringNestedPrimitiveArray",
+          "testResolveToStringNestedStringArray",
+          "testUnescapeIsInverseOfEscape",
+          "testUnescapeIsNotIdempotent",
+          "testUnescapeMessageParameter",
+          "testUnescapeReturnsSameInstanceWhenNoBackslash"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/LocaleResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/MessageInterpolationTest.java": {
+      "d": "framework/hibernate-validator/tests/message_interpolation_test.d",
+      "methods": {
+        "ported": [
+          "testAppendReplacementNeedsToEscapeBackslashAndDollarSign",
+          "testCurlyBracesEscapingShouldBeRespected",
+          "testDollarSignEscapingShouldBeRespected",
+          "testInterpolationOfArrayParameter",
+          "testUnknownParametersShouldBePreserved"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/MessageInterpolationWithDefaultBundleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/MessageInterpolatorContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/MessageParameterEscapingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/MessageParameterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/ParameterMessageInterpolatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/ParameterTermResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/RegexpEscapingInterpolationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/ResourceBundleMessageInterpolatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/TokenCollectorMessageExpressionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/TokenCollectorMessageParameterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/TokenIteratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/messageinterpolation/TooBigMessageTest.java": {
+      "d": "framework/hibernate-validator/tests/too_big_message_test.d",
+      "methods": {
+        "ported": [
+          "largeMessageCanBeInterpolated"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/hibernate/validator/test/internal/engine/methodlevel/generic/MethodValidationInHierarchyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/AbstractConstructorValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/AbstractMethodValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/AnnotationBasedConstructorValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/AnnotationBasedMethodValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/IllegalMethodParameterConstraintsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/MethodInnerClassConstructorValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/MethodLevelValidationGroupSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/MethodParameterConstraintsInParallelHierarchyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/ParameterValidationCycleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/ParameterlessMethodValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/PrivateMethodInSuperClassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/PureCompositeConstraintsOnReturnValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/RelaxedMethodParameterConstraintsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/TypeVariableMethodParameterResolutionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/WrongMethodOrParameterForMethodValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/cascadedgroupvalidation/CascadedMethodLevelValidationGroupSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/crossparameter/CrossParameterValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/returnvaluevalidation/ReturnValueValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/xml/IgnoreAnnotationConfiguredConstructorValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/xml/IgnoreCrossParameterConstraintTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/xml/InvalidConstructorParameterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/xml/PrimitiveTypesConfiguredInXmlTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/xml/SameMethodOrConstructorDefinedTwiceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/xml/XmlBasedConstructorValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/methodvalidation/xml/XmlBasedMethodValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/packageprivateconstraint/PackagePrivateConstraintValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/path/MutableNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/path/MutablePathTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/path/RandomAccessPathTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/path/specexample/SpecExamplePropertyPathTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/path/stringrepresentation/AbstractPathStringRepresentationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/path/stringrepresentation/BeanPathStringRepresentationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/path/stringrepresentation/ConstructorPathStringRepresentationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/path/stringrepresentation/ContainerElementPathStringRepresentationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/path/stringrepresentation/MethodPathStringRepresentationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/proxy/ProxyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/serialization/ConstraintViolationSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/serialization/CustomConstraintSerializableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCycles1Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCycles2Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCycles3Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCycles4Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCycles5Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCycles6Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCycles7Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCycles8Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCycles9Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCyclesExecutable1Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCyclesExecutable2Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCyclesNoCyclesListDuplicateElementsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCyclesNoCyclesListTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCyclesNoCyclesMapTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingCyclesNoCyclesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingNoCycles1Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingNoCycles2Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/tracking/ProcessedBeansTrackingNoCycles3Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/traversableresolver/CachedTraversableResolverCacheHitsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/traversableresolver/CachedTraversableResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/traversableresolver/JpaTraversableResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/traversableresolver/TraversableResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/typeannotationconstraint/ContainerElementConstraintsArraySupportTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/typeannotationconstraint/TypeAnnotationDefinedOnAGenericTypeArgumentTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/CascadedOptionalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/ContainerElementPropertyPathTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/ContainerInClassHierarchyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/ContainerWithWildcardTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/GenericModelLegacyCascadingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/InvalidValueExtractorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/JavaFXClassLoadingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/MostSpecificValueExtractorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/MultipleContainersAtTheSameTimeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/NestedTypeArgumentsValueExtractorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/OptionalTypeAnnotationConstraintOnConstructorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/OptionalTypeAnnotationConstraintOnFieldTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/OptionalTypeAnnotationConstraintOnGetterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/OptionalTypeAnnotationConstraintOnMethodTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/OptionalTypeAnnotationConstraintUsingValidatePropertyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/OptionalTypeAnnotationConstraintUsingValidateValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/OptionalWithPrivateGetterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/UnwrapValidatedValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/UnwrappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/engine/valueextraction/ValueExtractorDefinitionInHierarchyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/BeanMetaDataManagerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/aggregated/ExecutableMetaDataTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/aggregated/ParameterMetaDataTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/aggregated/PropertyMetaDataTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/bytebuddy/ByteBuddyWrapperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/core/ConstraintHelperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/core/MetaConstraintTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/descriptor/BeanDescriptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/descriptor/ConstraintDescriptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/descriptor/ConstructorDescriptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/descriptor/CrossParameterDescriptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/descriptor/ElementDescriptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/descriptor/MethodDescriptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/descriptor/ParameterDescriptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/descriptor/PropertyDescriptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/descriptor/ReturnValueDescriptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/location/ConstraintLocationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/provider/AnnotationMetaDataProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/metadata/provider/TypeAnnotationMetaDataRetrievalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/properties/javabean/JavaBeanExecutableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/DurationFormatterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/ExecutableFormatterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/ExecutableHelperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/ModUtilTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/ReflectionHelperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/StringHelperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/TypeHelperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/TypeVariableBindingsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/annotationfactory/AnnotationFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/annotationfactory/AnnotationProxyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/classhierarchy/ClassHierarchyHelperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/privilegedactions/GetAnnotationsParameterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/util/privilegedactions/LoadClassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/DefaultPackageInVarargParameterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/InvalidXmlConfigurationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/MappingXmlParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/UnknownVersionInValidationXmlTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/XmlMappingMixedWithServiceLoaderAndProgrammaticDefinitionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/XmlMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/XmlParserHelperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/XmlParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/constrainttarget/ConstraintTargetDeterminationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/containerelementtype/ContainerElementTypeConstraintsForFieldXmlMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/containerelementtype/ContainerElementTypeConstraintsForGetterXmlMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/containerelementtype/ContainerElementTypeConstraintsForParameterXmlMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/containerelementtype/ContainerElementTypeConstraintsForReturnValueXmlMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/exception/XmlConfigurationExceptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/internal/xml/mixedconfiguration/InheritanceMappingsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/parameternameprovider/DefaultParameterNameProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/parameternameprovider/ParanamerParameterNameProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/predefinedscope/LocaleResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/predefinedscope/PredefinedScopeConstraintDefinitionContributorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/predefinedscope/PredefinedScopeValidatorFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/properties/GetterPropertySelectionStrategyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/resourceloading/AggregateResourceBundleLocatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/resourceloading/PlatformResourceBundleLocatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/spi/nodenameprovider/PropertyNodeNameProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/hibernate/validator/test/spi/nodenameprovider/jackson/JacksonAnnotationPropertyNodeNameProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "hibernate-validator",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":hibernate-validator"
+  ],
+  "upstream": "hibernate-validator@9.1.6.Final"
+}

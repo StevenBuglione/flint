@@ -1,0 +1,366 @@
+{
+  "classes": {
+    "org/springframework/boot/autoconfigure/AbstractDependsOnBeanFactoryPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/AutoConfigurationExcludeFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/AutoConfigurationImportSelectorIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/AutoConfigurationImportSelectorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/AutoConfigurationMetadataLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/AutoConfigurationPackagesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/AutoConfigurationReplacementsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/AutoConfigurationSorterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/AutoConfigurationsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ImportAutoConfigurationImportSelectorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ImportAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/SharedMetadataReaderFactoryContextInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/SpringBootApplicationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/admin/SpringApplicationAdminJmxAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/aop/AopAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/aop/NonAspectJAopAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/availability/ApplicationAvailabilityAutoConfigurationTests.java": {
+      "d": "boot/core/flint-boot-autoconfigure/tests/autoconfigure_tests/application_availability_auto_configuration_test.d",
+      "methods": {
+        "ported": [
+          "providerIsNotConfiguredWhenCustomOneIsPresent",
+          "providerIsPresentWhenNotRegistered"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/autoconfigure/condition/AbstractNestedConditionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/AllNestedConditionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/AnyNestedConditionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionEvaluationReportAutoConfigurationImportListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionEvaluationReportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionMessageTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnBooleanPropertyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnCheckpointRestoreTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnClassTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnCloudPlatformTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnExpressionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnJavaTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnJndiTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingBeanWithFilteredClasspathTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingClassTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingFilterBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnNotWarDeploymentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnNotWebApplicationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnPropertyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnResourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnSingleCandidateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnThreadingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnWarDeploymentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ConditionalOnWebApplicationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/NoneNestedConditionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/OnBeanConditionTypeDeductionFailureTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/OnClassConditionAutoConfigurationImportFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/OnPropertyListConditionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/ResourceConditionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/condition/SpringBootConditionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/container/ContainerImageMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/context/ConfigurationPropertiesAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/context/LifecycleAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/context/MessageSourceAutoConfigurationTests.java": {
+      "d": [
+        "boot/core/flint-boot-autoconfigure/tests/autoconfigure_tests/message_source_test.d",
+        "boot/core/flint-boot-autoconfigure/tests/autoconfigure_tests/message_source_upstream_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "autoConfiguredMessageSourceUsesUserDefinedConfigurer",
+          "existingMessageSourceInParentIsIgnored",
+          "existingMessageSourceIsPreferred",
+          "messageSourceWithNonStandardBeanNameIsIgnored",
+          "propertiesBundleWithDotIsDetected",
+          "propertiesBundleWithSlashIsDetected",
+          "resourceBasedMessageSourceConfigurerCanConfigureUserDefinedMessageSource",
+          "resourceBasedMessageSourceConfigurerIsAvailableWithoutResourceBundle",
+          "testCacheDurationNoUnit",
+          "testCacheDurationWithUnit",
+          "testCommonMessages",
+          "testCommonMessagesWhenNotFound",
+          "testEncodingWorks",
+          "testFallbackDefault",
+          "testFallbackTurnOff",
+          "testFormatMessageDefault",
+          "testFormatMessageOn",
+          "testUseCodeAsDefaultMessage",
+          "testUseCodeAsDefaultMessageDefault"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/autoconfigure/context/PropertyPlaceholderAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/data/ConditionalOnRepositoryTypeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/diagnostics/analyzer/NoSuchBeanDefinitionFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/info/ProjectInfoAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/jmx/JmxAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/jmx/ParentAwareNamingStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/logging/ConditionEvaluationReportLoggerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/logging/ConditionEvaluationReportLoggingListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/logging/ConditionEvaluationReportLoggingProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/service/connection/ConnectionDetailsFactoriesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ssl/BundleContentNotWatchableFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ssl/BundleContentPropertyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ssl/CertificateMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ssl/CertificateMatchingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ssl/FileWatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ssl/PropertiesSslBundleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ssl/SslAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/ssl/SslPropertiesBundleRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/task/ScheduledBeanLazyInitializationExcludeFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/task/TaskExecutionAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/task/TaskSchedulingAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/template/TemplateAvailabilityProvidersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/template/TemplateRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/web/ConditionalOnEnabledResourceChainTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/web/WebPropertiesResourcesBindingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/web/WebPropertiesResourcesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/web/WebResourcesRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/autoconfigure/web/format/WebConversionServiceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-autoconfigure",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-autoconfigure"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

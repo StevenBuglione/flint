@@ -1,0 +1,75 @@
+{
+  "classes": {
+    "org/springframework/boot/validation/MessageInterpolatorFactoryTests.java": {
+      "d": "boot/module/flint-boot-validation/tests/message_interpolator_factory_test.d",
+      "methods": {
+        "ported": [
+          "getObjectShouldReturnResourceBundleMessageInterpolator"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/validation/MessageInterpolatorFactoryWithoutElIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/validation/MessageSourceMessageInterpolatorIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/validation/MessageSourceMessageInterpolatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/validation/autoconfigure/ValidationAutoConfigurationTests.java": {
+      "d": [
+        "boot/module/flint-boot-validation/tests/validation_auto_configuration_upstream_test.d",
+        "boot/module/flint-boot-validation/tests/validation_autoconfiguration_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "classCanBeExcludedFromValidation",
+          "configurationCustomizerBeansAreCalledInOrder",
+          "defaultValidatorUsesTheContextDescriptors",
+          "methodValidationPostProcessorReadsAdaptConstraintViolations",
+          "methodValidationPostProcessorValidatesWithTheContextValidator",
+          "methodValidationPostProcessorValidatorDependencyDoesNotTriggerEarlyInitialization",
+          "userDefinedMethodValidationPostProcessorTakesPrecedence",
+          "validatedConfigurationPropertiesUseTheContextBeanValidationValidator",
+          "validationAutoConfigurationShouldConfigureDefaultValidator",
+          "validationAutoConfigurationWhenUserProvidesJsrValidatorShouldBackOff",
+          "validationAutoConfigurationWhenUserProvidesValidatorShouldBackOff",
+          "validationCanBeConfiguredToAdaptConstraintViolations",
+          "validationConfigurationCustomizersAreApplied",
+          "validationIsEnabled",
+          "validationIsEnabledInChildContext",
+          "validationUseDefaultAdaptToConstraintViolationsValue",
+          "validationUsesCglibProxy"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/validation/autoconfigure/ValidationAutoConfigurationWithHibernateValidatorMissingElImplTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/validation/autoconfigure/ValidationAutoConfigurationWithoutValidatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/validation/autoconfigure/ValidatorAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/validation/beanvalidation/MethodValidationExcludeFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-validation",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-validation"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

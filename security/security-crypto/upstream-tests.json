@@ -1,0 +1,177 @@
+{
+  "classes": {
+    "org/springframework/security/crypto/argon2/Argon2EncodingUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/argon2/Argon2PasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/assertions/CryptoAssertionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/bcrypt/BCryptPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/bcrypt/BCryptTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/codec/HexTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/codec/Utf8Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/AesBytesEncryptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/AesCbcBytesEncryptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/AesGcmBytesEncryptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/BouncyCastleAesBytesEncryptorEquivalencyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/BouncyCastleAesBytesEncryptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/EncryptorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/KeyStoreKeyFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/RsaKeyHelperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/RsaRawEncryptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/encrypt/RsaSecretEncryptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/factory/PasswordEncoderFactoriesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/keygen/Base64StringKeyGeneratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/keygen/KeyGeneratorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/AbstractPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/AbstractPasswordEncoderValidationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/AbstractValidatingPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/DelegatingPasswordEncoderTests.java": {
+      "d": "security/security-crypto/tests/password_encoder_test.d",
+      "methods": {
+        "ported": []
+      },
+      "status": "ported"
+    },
+    "org/springframework/security/crypto/password/DigesterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/LdapShaPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/Md4PasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/MessageDigestPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/NoOpPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/PasswordEncoderUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/Pbkdf2PasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password/StandardPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password4j/Argon2Password4jPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password4j/BalloonHashingPassword4jPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password4j/BcryptPassword4jPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password4j/Password4jPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password4j/PasswordCompatibilityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password4j/Pbkdf2Password4jPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/password4j/ScryptPassword4jPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/scrypt/SCryptPasswordEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/crypto/util/EncodingUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "security-crypto",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":security-crypto"
+  ],
+  "upstream": "spring-security@7.2.0"
+}

@@ -1,0 +1,490 @@
+{
+  "classes": {
+    "org/springframework/security/access/expression/AbstractSecurityExpressionHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/access/expression/ExpressionUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/access/expression/SecurityExpressionRootTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/access/hierarchicalroles/RoleHierarchyAuthoritiesMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/access/hierarchicalroles/RoleHierarchyImplTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/access/hierarchicalroles/RoleHierarchyUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/access/hierarchicalroles/TestHelperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/AbstractAuthenticationBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/AbstractAuthenticationTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/AuthenticationTrustResolverImplTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/DefaultAuthenticationEventPublisherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/DelegatingReactiveAuthenticationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ObservationAuthenticationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ObservationReactiveAuthenticationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ProviderManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ReactiveAuthenticationManagerAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ReactiveUserDetailsServiceAuthenticationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/TestingAuthenticationProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/TestingAuthenticationTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/UserDetailsRepositoryReactiveAuthenticationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/UsernamePasswordAuthenticationTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/anonymous/AnonymousAuthenticationProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/anonymous/AnonymousAuthenticationTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/dao/DaoAuthenticationProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/event/AuthenticationEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/event/LoggerListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/jaas/DefaultJaasAuthenticationProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/jaas/JaasAuthenticationProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/jaas/JaasAuthenticationTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/jaas/JaasGrantedAuthorityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/jaas/Sec760Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/jaas/SecurityContextLoginModuleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/jaas/memory/InMemoryConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ott/InMemoryOneTimeTokenServiceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ott/JdbcOneTimeTokenServiceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ott/OneTimeTokenAuthenticationProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ott/OneTimeTokenAuthenticationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ott/OneTimeTokenAuthenticationTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ott/reactive/InMemoryReactiveOneTimeTokenServiceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/ott/reactive/OneTimeTokenReactiveAuthenticationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/rememberme/RememberMeAuthenticationProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authentication/rememberme/RememberMeAuthenticationTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AllAuthoritiesAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AllAuthoritiesReactiveAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AllRequiredFactorsAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AuthenticatedAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AuthenticatedReactiveAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AuthoritiesAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AuthorityAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AuthorityReactiveAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AuthorizationAdvisorProxyFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AuthorizationManagerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/AuthorizationManagersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/ConditionalAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/FactorAuthorizationDecisionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/MapRequiredAuthoritiesRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/ObservationAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/ObservationReactiveAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/ReactiveAuthorizationAdvisorProxyFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/RequiredAuthoritiesAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/RequiredFactorErrorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/RequiredFactorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/SingleResultAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/SpringAuthorizationEventPublisherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/AuthorizationManagerAfterMethodInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/AuthorizationManagerAfterReactiveMethodInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/AuthorizationManagerBeforeMethodInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/AuthorizationManagerBeforeReactiveMethodInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/AuthorizationMethodPointcutsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/ExpressionUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/Jsr250AuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/MethodExpressionAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/NullReturningMethodAuthorizationDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/PostAuthorizeAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/PostAuthorizeReactiveAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/PostFilterAuthorizationMethodInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/PostFilterAuthorizationReactiveMethodInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/PreAuthorizeAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/PreAuthorizeReactiveAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/PreFilterAuthorizationMethodInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/PreFilterAuthorizationReactiveMethodInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/authorization/method/SecuredAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/JavaVersionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/SpringSecurityCoreVersionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/SpringSecurityMessageSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/annotation/ExpressionTemplateSecurityAnnotationScannerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/annotation/UniqueSecurityAnnotationScannerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/authority/AuthorityUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/authority/FactorGrantedAuthorityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/authority/SimpleGrantedAuthorityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/authority/mapping/MapBasedAttributes2GrantedAuthoritiesMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/authority/mapping/SimpleAuthoritiesMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/authority/mapping/SimpleMappableRolesRetrieverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/authority/mapping/SimpleRoles2GrantedAuthoritiesMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/context/InheritableThreadLocalSecurityContextHolderStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/context/ListeningSecurityContextHolderStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/context/ObservationSecurityContextChangedListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/context/ReactiveSecurityContextHolderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/context/ReactiveSecurityContextHolderThreadLocalAccessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/context/SecurityContextHolderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/context/SecurityContextHolderThreadLocalAccessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/context/SecurityContextImplTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/context/ThreadLocalSecurityContextHolderStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/parameters/AnnotationParameterNameDiscovererTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/parameters/DefaultSecurityParameterNameDiscovererTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/session/SessionInformationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/session/SessionRegistryImplTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/token/DefaultTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/token/KeyBasedPersistenceTokenServiceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/token/SecureRandomFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/userdetails/MapReactiveUserDetailsServiceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/userdetails/UserDetailsByNameServiceWrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/userdetails/UserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/userdetails/cache/NullUserCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/userdetails/cache/SpringCacheBasedUserCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/userdetails/jdbc/JdbcDaoImplTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/core/userdetails/memory/UserAttributeEditorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/provisioning/InMemoryUserDetailsManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/provisioning/JdbcUserDetailsManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "security-core",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":security-core"
+  ],
+  "upstream": "spring-security@7.2.0"
+}

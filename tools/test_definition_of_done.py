@@ -247,10 +247,12 @@ class UpstreamTests(unittest.TestCase):
         (tests / 'single.d').write_text(SINGLE)
         (tests / 'multi.d').write_text(MULTI)
         (self.root / 'policy').mkdir()
-        (self.root / 'policy' / 'framework.json').write_text(json.dumps({'modules': {'jdbc': {
-            'module': 'flint.jdbc', 'upstream': 'spring-framework@v7.1.0', 'directory': 'framework/jdbc'}}}))
+        (self.root / 'policy' / 'framework.json').write_text(json.dumps({'modules': {
+            'jdbc': {'module': 'flint.jdbc', 'upstream': 'spring-framework@v7.1.0', 'directory': 'framework/jdbc'},
+            'web': {'module': 'flint.web', 'upstream': 'spring-framework@v7.1.0', 'directory': 'framework/web'}}}))
         (self.root / 'api').mkdir()
-        (self.root / 'api' / 'upstreams.json').write_text(json.dumps({'upstreams': []}))
+        (self.root / 'api' / 'upstreams.json').write_text(json.dumps({'upstreams': [
+            {'project': 'spring-framework', 'version': 'v7.1.0', 'repo': 'framework', 'format': 'tar.gz'}]}))
         self.cache = self.root / 'cache'
         dod._OWNERSHIP.pop(self.root, None)
 
@@ -341,7 +343,91 @@ class UpstreamTests(unittest.TestCase):
         self.assertIn('GammaTests.java: excluded without a "reason"', text)
         self.assertIn("DeltaTests.java: its D file 'framework/jdbc/tests/gone.d' does not exist", text)
         self.assertIn('EpsilonTests.java: skipped method x has no reason', text)
-        self.assertIn("ZetaTests.java: \"status\" must be ported, partial or excluded, not 'todo'", text)
+        self.assertIn("ZetaTests.java: \"status\" must be ported, partial, excluded or deferred, not 'todo'", text)
+
+    INVENTORY = ('org/springframework/jdbc/support/JdbcUtilsTests.java', 'org/springframework/jdbc/core/AlphaTests.java',
+                 'org/springframework/jdbc/core/BetaTests.java', 'org/springframework/jdbc/core/JdbcTemplateTests.java',
+                 'org/springframework/jdbc/core/KappaTests.java')
+
+    def seeded(self):
+        self.inventory(*self.INVENTORY)
+        result = dod.upstream_tests(module(), root=self.root, caches=[self.cache], seed_phase='2')
+        record = json.loads((self.root / 'framework' / 'jdbc' / 'upstream-tests.json').read_text())
+        return result, record
+
+    def save(self, record):
+        (self.root / 'framework' / 'jdbc' / 'upstream-tests.json').write_text(json.dumps(record))
+
+    def test_seeding_defers_only_the_unrecorded_classes_and_passes(self):
+        result, record = self.seeded()
+        self.assertEqual(result.status, 'pass', result.messages)
+        self.assertEqual(result.details['deferred'], 2)
+        self.assertEqual(record['classes']['org/springframework/jdbc/core/KappaTests.java'],
+                         {'status': 'deferred', 'phase': '2'})
+        self.assertEqual(record['classes']['org/springframework/jdbc/core/AlphaTests.java']['status'], 'ported')
+        baseline = json.loads((self.root / dod.DEFERRED_BASELINE).read_text())['modules']
+        self.assertEqual(baseline, {'jdbc': ['org/springframework/jdbc/core/JdbcTemplateTests.java',
+                                             'org/springframework/jdbc/core/KappaTests.java']})
+
+    def test_a_class_another_module_ports_is_seeded_as_ported_not_deferred(self):
+        entry = {'status': 'ported', 'd': 'framework/jdbc/tests/single.d', 'methods': {'ported': ['commonDatabaseName']},
+                 'note': 'ported in framework-test'}
+        original = dod.ported_elsewhere
+        dod.ported_elsewhere = lambda module, root=ROOT: {'org/springframework/jdbc/core/KappaTests.java': entry}
+        try:
+            result, record = self.seeded()
+        finally:
+            dod.ported_elsewhere = original
+        self.assertEqual(result.status, 'pass', result.messages)
+        self.assertEqual(record['classes']['org/springframework/jdbc/core/KappaTests.java'], entry)
+        self.assertEqual(result.details['deferred'], 1)
+
+    def test_seeding_never_changes_a_recorded_entry(self):
+        dod.draft(module(), self.root)
+        path = self.root / 'framework' / 'jdbc' / 'upstream-tests.json'
+        record = json.loads(path.read_text())
+        record['classes']['org/springframework/jdbc/core/KappaTests.java'] = {'status': 'excluded', 'reason': 'R12'}
+        path.write_text(json.dumps(record))
+        _, seeded = self.seeded()
+        self.assertEqual(seeded['classes']['org/springframework/jdbc/core/KappaTests.java'],
+                         {'status': 'excluded', 'reason': 'R12'})
+
+    def test_deferred_fails_under_release(self):
+        self.seeded()
+        result = dod.upstream_tests(module(), root=self.root, caches=[self.cache], release=True)
+        self.assertEqual(result.status, 'fail')
+        self.assertIn('2 upstream test classes are deferred; a release ports or excludes each:', result.messages)
+
+    def test_a_new_deferral_fails_the_ratchet(self):
+        _, record = self.seeded()
+        record['classes']['org/springframework/jdbc/core/AlphaTests.java'] = {'status': 'deferred', 'phase': '2'}
+        self.save(record)
+        result = dod.upstream_tests(module(), root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'fail')
+        self.assertIn('  org/springframework/jdbc/core/AlphaTests.java', result.messages)
+        self.assertIn('deferrals only shrink', result.messages[0])
+
+    def test_a_resolved_deferral_fails_until_the_baseline_shrinks(self):
+        _, record = self.seeded()
+        record['classes']['org/springframework/jdbc/core/KappaTests.java'] = {'status': 'excluded', 'reason': 'R12'}
+        self.save(record)
+        result = dod.upstream_tests(module(), root=self.root, caches=[self.cache])
+        self.assertIn('--shrink-upstream-tests', result.messages[0])
+        result = dod.upstream_tests(module(), root=self.root, caches=[self.cache], shrink_baseline=True)
+        self.assertEqual(result.status, 'pass', result.messages)
+        baseline = json.loads((self.root / dod.DEFERRED_BASELINE).read_text())['modules']
+        self.assertEqual(baseline, {'jdbc': ['org/springframework/jdbc/core/JdbcTemplateTests.java']})
+
+    def test_a_deferral_needs_its_phase(self):
+        record = {'schema': dod.SCHEMA, 'classes': {'org/springframework/jdbc/core/KappaTests.java': {'status': 'deferred'}}}
+        self.assertIn('org/springframework/jdbc/core/KappaTests.java: deferred without "phase": "2" or "3"',
+                      dod.check_upstream_tests(module(), record, self.root))
+
+    def test_without_pinned_test_sources_the_record_alone_is_checked(self):
+        dod.draft(module(), self.root)
+        result = dod.upstream_tests(module(upstream='jackson-core@3.1.8'), root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'pass', result.messages)
+        self.assertEqual(result.details['inventory'], 'none: no test sources are pinned')
 
     def test_a_missing_record_fails_with_the_drafting_command(self):
         result = dod.upstream_tests(module(), root=self.root, caches=[self.cache])

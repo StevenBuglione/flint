@@ -1,0 +1,334 @@
+{
+  "classes": {
+    "org/springframework/boot/test/context/AnnotatedClassFinderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/AnnotationsPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/ConfigDataApplicationContextInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/ConfigDataApplicationContextInitializerWithLegacySwitchTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/FilteredClassLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/ImportsContextCustomizerFactoryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/ImportsContextCustomizerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/ImportsContextCustomizerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/LoggingApplicationListenerWithContextPausingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/PropertyMappingContextCustomizerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/PropertyMappingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootContextLoaderAotTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootContextLoaderMockMvcTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootContextLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestActiveProfileTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestArgsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestContextHierarchyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestCustomConfigNameTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestCustomPortTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestDefaultConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestGroovyConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestGroovyConventionConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestImportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestJmxTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestMixedConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestUseMainMethodWithPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestWebEnvironmentMockTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestWebEnvironmentMockWithWebAppConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestWithActiveProfilesAndEnvironmentPropertyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestWithActiveProfilesAndSystemEnvironmentPropertyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestWithClassesIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestWithContextConfigurationIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestWithCustomEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestWithTestPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/SpringBootTestXmlConventionConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/TestConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/assertj/ApplicationContextAssertProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/assertj/ApplicationContextAssertTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/assertj/AssertableApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/assertj/AssertableReactiveWebApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/assertj/AssertableWebApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/bootstrap/SpringBootTestContextBootstrapperIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/bootstrap/SpringBootTestContextBootstrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/bootstrap/SpringBootTestContextBootstrapperWithContextConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/bootstrap/SpringBootTestContextBootstrapperWithInitializersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/filter/ExcludeFilterApplicationContextInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/filter/TestTypeExcludeFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/filter/annotation/FilterAnnotationsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/filter/annotation/TypeExcludeFiltersContextCustomizerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/filter/annotation/TypeIncludesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/nestedtests/InheritedNestedTestConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/runner/AbstractApplicationContextRunnerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/runner/ApplicationContextRunnerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/runner/ContextConsumerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/runner/ReactiveWebApplicationContextRunnerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/runner/WebApplicationContextRunnerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/http/client/DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/http/server/LocalTestWebServerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/AbstractJsonMarshalTesterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/BasicJsonTesterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/DuplicateJsonObjectContextCustomizerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/GsonTesterIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/GsonTesterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/Jackson2TesterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/JacksonTesterIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/JacksonTesterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/JsonContentAssertTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/JsonContentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/JsonbTesterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/ObjectContentAssertTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/json/ObjectContentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/mock/web/SpringBootMockServletContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/system/OutputCaptureRuleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/system/OutputCaptureTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/system/OutputExtensionExtendWithTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/util/ApplicationContextTestUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/util/TestPropertyValuesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/web/htmlunit/UriBuilderFactoryWebClientTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/web/htmlunit/UriBuilderFactoryWebConnectionHtmlUnitDriverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/web/server/LocalManagementPortTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/web/server/LocalServerPortTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-test",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-test"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

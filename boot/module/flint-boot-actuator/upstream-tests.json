@@ -1,0 +1,485 @@
+{
+  "classes": {
+    "org/springframework/boot/actuate/audit/AuditEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/audit/AuditEventsEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/audit/InMemoryAuditEventRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/audit/listener/AuditListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/audit/AuditAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/audit/AuditEventsEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/beans/BeansEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/condition/ConditionsReportEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/condition/ConditionsReportEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/context/ShutdownEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/context/properties/ConfigurationPropertiesReportEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/EndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/EndpointIdTimeToLivePropertyFunctionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/PropertiesEndpointAccessResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/condition/ConditionalOnAvailableEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/expose/IncludeExcludeEndpointFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/jackson/Jackson2EndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/jackson/JacksonEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/jmx/DefaultEndpointObjectNameFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/jmx/JmxEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/web/MappingWebEndpointPathMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/web/WebEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/endpoint/web/WebEndpointPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/env/EnvironmentEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/info/InfoContributorAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/info/InfoEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/logging/LogFileWebEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/logging/LoggersEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/management/HeapDumpWebEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/management/ThreadDumpEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/sbom/SbomEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/scheduling/ScheduledTasksEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/startup/StartupEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/web/ManagementContextConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/web/exchanges/HttpExchangesEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/web/mappings/MappingsEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/web/server/ChildManagementContextInitializerAotTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/web/server/ManagementContextConfigurationImportSelectorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/autoconfigure/web/server/ManagementServerPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/beans/BeansEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/context/ShutdownEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointFilteringTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointMethodAnnotationsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointParentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointProxyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointSerializationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointWebExtensionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/AccessTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/EndpointIdTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/InvocationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/OperationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/OperationResponseBodyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/ProducibleOperationArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/SanitizableDataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/SanitizerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/SanitizingFunctionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/ShowTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/annotation/DiscoveredOperationMethodTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/annotation/DiscoveredOperationsFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/annotation/DiscovererEndpointFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/annotation/EndpointDiscovererTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/annotation/OperationReflectiveProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/invoke/convert/ConversionServiceParameterValueMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/invoke/convert/IsoOffsetDateTimeConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/invoke/reflect/OperationMethodParameterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/invoke/reflect/OperationMethodParametersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/invoke/reflect/OperationMethodTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/invoke/reflect/ReflectiveOperationInvokerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/invoker/cache/CachingOperationInvokerAdvisorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/invoker/cache/CachingOperationInvokerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/jmx/EndpointMBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/jmx/JacksonJmxOperationResponseMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/jmx/JmxEndpointExporterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/jmx/MBeanInfoFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/jmx/annotation/DiscoveredJmxOperationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/jmx/annotation/JmxEndpointDiscovererTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/EndpointLinksResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/EndpointMappingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/EndpointMediaTypesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/EndpointServletTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/LinkTests.java": {
+      "d": "boot/module/flint-boot-actuator/tests/actuate_test.d",
+      "methods": {
+        "ported": []
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/actuate/endpoint/web/PathMappedEndpointsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/ServletEndpointRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/WebEndpointResponseTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/WebOperationInvocationArgumentsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/WebOperationRequestPredicateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/WebServerNamespaceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/annotation/ControllerEndpointDiscovererTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/annotation/RequestPredicateFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/annotation/ServletEndpointDiscovererTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/endpoint/web/annotation/WebEndpointDiscovererTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/env/EnvironmentEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/env/EnvironmentEndpointWebExtensionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/BuildInfoContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/EnvironmentInfoContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/GitInfoContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/InfoEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/InfoTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/JavaInfoContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/OsInfoContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/ProcessInfoContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/SimpleInfoContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/info/SslInfoContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/logging/LogFileWebEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/logging/LoggersEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/management/HeapDumpWebEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/management/ThreadDumpEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/sbom/SbomEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/sbom/SbomEndpointWebExtensionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/scheduling/ScheduledTasksEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/security/AuthenticationAuditListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/security/AuthorizationAuditListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/startup/StartupEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/web/exchanges/HttpExchangeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/web/exchanges/HttpExchangesEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/web/exchanges/InMemoryHttpExchangeRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/actuate/web/mappings/MappingsEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-actuate",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-actuate"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

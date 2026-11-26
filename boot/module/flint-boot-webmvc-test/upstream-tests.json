@@ -1,0 +1,122 @@
+{
+  "classes": {
+    "org/springframework/boot/webmvc/test/autoconfigure/MockMvcAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/SpringBootMockMvcBuilderCustomizerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/WebMvcTestAutoConfigurationIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/WebMvcTestPropertiesIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/WebMvcTypeExcludeFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/MockMvcSpringBootTestIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/MockMvcTesterSpringBootTestIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestAllControllersIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestConverterIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestCustomDispatcherServletIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestHtmlUnitWebClientIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestHtmlUnitWebDriverCustomScopeIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestHtmlUnitWebDriverIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestJacksonComponentIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestJsonComponentIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestMessageSourceIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestNestedIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestOneControllerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestPrintAlwaysIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestPrintDefaultIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestPrintDefaultOverrideIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestPrintOverrideIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestServletContextResourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestServletFilterIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestServletFilterRegistrationDisabledIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestServletFilterRegistrationIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestWithAutoConfigureMockMvcIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/test/autoconfigure/mockmvc/WebMvcTestWithWebAppConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-webmvc-test",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-webmvc-test"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

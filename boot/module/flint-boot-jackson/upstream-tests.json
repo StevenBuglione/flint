@@ -1,0 +1,138 @@
+{
+  "classes": {
+    "org/springframework/boot/jackson/JacksonComponentModuleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/JacksonMixinModuleEntriesBeanRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/JacksonMixinModuleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/ObjectValueDeserializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/ObjectValueSerializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/autoconfigure/JacksonAutoConfigurationTests.java": {
+      "d": [
+        "boot/module/flint-boot-jackson/tests/jackson_auto_configuration_upstream_test.d",
+        "boot/module/flint-boot-jackson/tests/jackson_autoconfiguration_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "additionalCborMapperBuilderCustomization",
+          "additionalJsonMapperBuilderCustomization",
+          "additionalXmlMapperBuilderCustomization",
+          "cborMapperBuilderIsNotSharedAcrossMultipleInjectionPoints",
+          "constructorDetectorWithDefaultStrategy",
+          "constructorDetectorWithExplicitOnlyStrategy",
+          "constructorDetectorWithNoStrategyUseDefault",
+          "constructorDetectorWithUseDelegatingStrategy",
+          "constructorDetectorWithUsePropertiesBasedStrategy",
+          "customDateFormat",
+          "customDateFormatClass",
+          "customModulesRegisteredByCborMapperBuilderCustomizerShouldBeRetained",
+          "customModulesRegisteredByJsonMapperBuilderCustomizerShouldBeRetained",
+          "customModulesRegisteredByXmlMapperBuilderCustomizerShouldBeRetained",
+          "customPropertyInclusion",
+          "customPropertyNamingStrategyClass",
+          "customPropertyNamingStrategyField",
+          "customStreamReadConstraintsAreAppliedToAutoConfiguredFactory",
+          "customStreamWriteConstraintsAreAppliedToAutoConfiguredFactory",
+          "customTimeZoneFormattingADateToCbor",
+          "customTimeZoneFormattingADateToJson",
+          "customTimeZoneFormattingADateToXml",
+          "defaultJsonMapper",
+          "defaultPropertyInclusion",
+          "defaultStreamReadConstraintsMatchJacksonDefaults",
+          "defaultStreamWriteConstraintsMatchJacksonDefaults",
+          "definesFactory",
+          "definesMapper",
+          "definesMapperBuilder",
+          "disableDatetimeFeature",
+          "disableDefaultLeniency",
+          "disableDeserializationFeature",
+          "disableDeserializationFeatureByConstantName",
+          "disableJsonNodeFeature",
+          "disableJsonWriteFeature",
+          "disableMapperFeature",
+          "disableSerializationFeature",
+          "doubleModuleRegistration",
+          "enableDatetimeFeature",
+          "enableDefaultLeniency",
+          "enableDeserializationFeature",
+          "enableEnumFeature",
+          "enableJsonReadFeature",
+          "enableJsonWriteFeature",
+          "enableMapperFeature",
+          "enableReadFeature",
+          "enableSerializationFeature",
+          "enableWriteFeature",
+          "factoryBacksOffWhenCustomFactoryIsDefined",
+          "jacksonComponentThatInjectsJsonMapperCausesBeanCurrentlyInCreationException",
+          "jsonMapperBuilderIsNotSharedAcrossMultipleInjectionPoints",
+          "jsonMixinModuleShouldBeAutoConfiguredWithBasePackages",
+          "mapperBacksOffWhenCustomMapperIsDefined",
+          "mapperBuilderDoesNotBackOffWhenMapperIsDefined",
+          "mapperDoesNotBackOffWhenObjectMapperIsDefined",
+          "mapperHasASpringBeanHandlerInstantiator",
+          "moduleBeansAndWellKnownModulesAreRegisteredWithTheMapperBuilder",
+          "noCustomDateFormat",
+          "noCustomPropertyNamingStrategy",
+          "shouldRegisterProblemDetailsMixinWithJsonMapper",
+          "shouldRegisterProblemDetailsMixinWithXmlMapper",
+          "standardCborFactoryBuilderCustomizerDoesNotBackOffWhenCustomizerIsDefined",
+          "standardCborMapperBuilderCustomizerDoesNotBackOffWhenCustomizerIsDefined",
+          "standardJsonFactoryBuilderCustomizerDoesNotBackOffWhenCustomizerIsDefined",
+          "standardJsonMapperBuilderCustomizerDoesNotBackOffWhenCustomizerIsDefined",
+          "standardXmlFactoryBuilderCustomizerDoesNotBackOffWhenCustomizerIsDefined",
+          "standardXmlMapperBuilderCustomizerDoesNotBackOffWhenCustomizerIsDefined",
+          "whenUsingJackson2DefaultsCborMapperShouldBeConfiguredUsingConfigureForJackson2",
+          "whenUsingJackson2DefaultsJsonMapperShouldBeConfiguredUsingConfigureForJackson2",
+          "whenUsingJackson2DefaultsXmlMapperShouldBeConfiguredUsingConfigureForJackson2",
+          "writeDurationAsTimestampsDefault",
+          "writeWithVisibility",
+          "xmlMapperBuilderIsNotSharedAcrossMultipleInjectionPoints"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/jackson/autoconfigure/JacksonTesterAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/autoconfigure/SpringBeanHandlerInstantiatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/autoconfigure/jsontest/JacksonAutoConfigureJsonIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/autoconfigure/jsontest/JsonTestIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/autoconfigure/jsontest/JsonTestWithAutoConfigureJsonTestersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/jackson/autoconfigure/jsontest/SpringBootTestWithAutoConfigureJsonTestersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-jackson",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-jackson"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

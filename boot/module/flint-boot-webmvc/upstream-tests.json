@@ -1,0 +1,374 @@
+{
+  "classes": {
+    "org/springframework/boot/webmvc/actuate/endpoint/web/AbstractWebMvcEndpointHandlerMappingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/actuate/endpoint/web/ControllerEndpointHandlerMappingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/actuate/endpoint/web/WebMvcEndpointHandlerMappingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/actuate/web/mappings/DispatcherServletsMappingDescriptionProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/DispatcherServletAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/dispatcher_servlet_auto_configuration_test.d",
+      "methods": {
+        "ported": [
+          "dispatcherServletCustomConfig",
+          "dispatcherServletDefaultConfig",
+          "dispatcherServletPathNotCreatedWhenCustomRegistrationBeanPresent",
+          "dispatcherServletPathNotCreatedWhenDefaultDispatcherServletNotAvailable",
+          "multipartConfig",
+          "registrationNonServletBean",
+          "registrationOverrideWithAutowiredServlet",
+          "registrationProperties",
+          "renamesMultipartResolver",
+          "servletPath"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/DispatcherServletPathTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/dispatcher_servlet_path_upstream_test.d",
+      "methods": {
+        "ported": [
+          "getPathWhenPathEndsWithSlashRemovesSlash",
+          "getPrefixWhenHasPatternRemovesPattern",
+          "getPrefixWhenHasSimplePathReturnPath",
+          "getRelativePathReturnsRelativePath",
+          "getServletUrlMappingWhenPathContainsStarReturnsPath"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/DispatcherServletRegistrationBeanTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/dispatcher_servlet_registration_bean_test.d",
+      "methods": {
+        "ported": [
+          "addUrlMappingsCannotBeCalled",
+          "createWhenPathIsNullThrowsException",
+          "getPathReturnsPath",
+          "getUrlMappingsReturnsSinglePathMappedPattern",
+          "setUrlMappingsCannotBeCalled"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/JspTemplateAvailabilityProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/WebMvcAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/web_mvc_auto_configuration_test.d",
+      "methods": {
+        "ported": [
+          "addResourceHandlersAppliesToChildAndParentContext",
+          "apiVersionBeansAreInjected",
+          "apiVersionDefaultVersionPropertyIsApplied",
+          "apiVersionPropertiesAreApplied",
+          "apiVersionUseHeaderPropertyIsApplied",
+          "apiVersionUseMediaTypeParameterPropertyIsApplied",
+          "apiVersionUsePathSegmentPropertyIsApplied",
+          "apiVersionUseQueryParameterPropertyIsApplied",
+          "apiVersionUsesPathSegmentLast",
+          "asyncTaskExecutorWithApplicationTaskExecutor",
+          "asyncTaskExecutorWithCustomNonApplicationTaskExecutor",
+          "asyncTaskExecutorWithMvcConfigurerCanOverrideExecutor",
+          "asyncTaskExecutorWithNonMatchApplicationTaskExecutorBean",
+          "cacheControl",
+          "cachePeriod",
+          "customAsyncRequestTimeout",
+          "customConfigurableWebBindingInitializer",
+          "customContentNegotiatingViewResolver",
+          "customDateFormat",
+          "customDateTimeTimeFormat",
+          "customDefaultContentTypes",
+          "customExceptionHandlerExceptionResolver",
+          "customFlashMapManagerWithDifferentNameDoesNotReplaceDefaultFlashMapManager",
+          "customFlashMapManagerWithMatchingNameReplacesDefaultFlashMapManager",
+          "customLocaleResolverWithDifferentNameDoesNotReplaceAutoConfiguredLocaleResolver",
+          "customLocaleResolverWithMatchingNameReplacesAutoConfiguredLocaleResolver",
+          "customLogResolvedException",
+          "customMediaTypes",
+          "customPrinterAndParserShouldBeRegisteredAsConverters",
+          "customRequestMappingHandlerAdapter",
+          "customRequestMappingHandlerMapping",
+          "customResourceHandlerMapping",
+          "customTimeFormat",
+          "customViewNameTranslatorWithDifferentNameDoesNotReplaceDefaultViewNameTranslator",
+          "customViewNameTranslatorWithMatchingNameReplacesDefaultViewNameTranslator",
+          "customViewResolver",
+          "customWebjarsHandlerMapping",
+          "defaultAsyncRequestTimeout",
+          "defaultDateFormat",
+          "defaultDateTimeFormat",
+          "defaultLocaleResolver",
+          "defaultLogResolvedException",
+          "defaultTimeFormat",
+          "embeddedValueResolverIsAppliedToConversionService",
+          "formContentFilterCanBeDisabled",
+          "formContentFilterCanBeOverridden",
+          "formContentFilterIsAutoConfigured",
+          "handlerAdaptersCreated",
+          "handlerMappingsCreated",
+          "hiddenHttpMethodFilterCanBeEnabled",
+          "hiddenHttpMethodFilterDisabledByDefault",
+          "httpMessageConverterThatUsesConversionServiceDoesNotCreateACycle",
+          "lastModifiedNotUsedIfDisabled",
+          "multipleWebMvcRegistrations",
+          "noMessageCodesResolver",
+          "overrideLocale",
+          "overrideMessageCodesFormat",
+          "problemDetailsBacksOffWhenExceptionHandler",
+          "problemDetailsDisabledByDefault",
+          "problemDetailsEnabledAddsExceptionHandler",
+          "problemDetailsExceptionHandlerIsOrderedAt0",
+          "queryParameterContentNegotiation",
+          "requestContextFilterIsAutoConfigured",
+          "resourceHandlerChainCustomized",
+          "resourceHandlerChainEnabled",
+          "resourceHandlerContentStrategyEnabled",
+          "resourceHandlerFixedStrategyEnabled",
+          "resourceHandlerMapping",
+          "resourceHandlerMappingDisabled",
+          "resourceHandlerMappingOverrideAll",
+          "resourceHandlerMappingOverrideWebjars",
+          "serverHttpMessageConverterCustomizersAreAppliedInOrder",
+          "urlPathHelperDoesNotUseFullPathWithAdditionalDispatcherServlet",
+          "urlPathHelperDoesNotUseFullPathWithAdditionalUntypedDispatcherServlet",
+          "useAcceptHeaderLocale",
+          "useDefaultLocaleIfAcceptHeaderNoSet",
+          "usePathPatternParser",
+          "validatorWhenNoCustomizationShouldUseAutoConfigured",
+          "validatorWhenNoValidatorShouldUseDefault",
+          "validatorWithConfigurerAloneShouldUseSpringValidator",
+          "validatorWithConfigurerDoesNotExposeJsr303",
+          "validatorWithConfigurerShouldUseSpringValidator",
+          "validatorWithConfigurerTakesPrecedence",
+          "validatorWithCustomJsr303ValidatorExposedAsSpringValidator",
+          "validatorWithCustomSpringValidatorIgnored",
+          "welcomePageHandlerIncludesCorsConfiguration",
+          "welcomePageHandlerMappingIsAutoConfigured",
+          "whenUserDefinesARequestContextFilterRegistrationTheAutoConfiguredFilterBacksOff",
+          "whenUserDefinesARequestContextFilterTheAutoConfiguredRegistrationBacksOff"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/WebMvcObservationAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/WebMvcPropertiesTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/webmvc_properties_upstream_test.d",
+      "methods": {
+        "ported": [
+          "servletPathWhenDoesNotEndWithSlashHasValidMappingAndPrefix",
+          "servletPathWhenEndsWithSlashHasValidMappingAndPrefix",
+          "servletPathWhenHasWildcardThrowsException"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/WelcomePageHandlerMappingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/WelcomePageIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/WelcomePageNotAcceptableHandlerMappingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/endpoint/web/WebMvcHealthEndpointAdditionalPathIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/endpoint/web/WebMvcHealthEndpointExtensionAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/CompositeHandlerExceptionResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/ControllerEndpointWebMvcIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/ManagementErrorEndpointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/WebMvcEndpointAccessIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/WebMvcEndpointChildContextConfigurationIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/WebMvcEndpointChildContextConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/WebMvcEndpointCorsIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/WebMvcEndpointExposureIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/WebMvcEndpointIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/WebMvcEndpointManagementContextConfigurationTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/web_mvc_endpoint_management_context_configuration_test.d",
+      "methods": {
+        "ported": [
+          "contextShouldContainServletEndpointRegistrar",
+          "refreshSucceedsWithoutHealth"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/actuate/web/mappings/WebMvcMappingsAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/error/BasicErrorControllerDirectMockMvcTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/basic_error_controller_direct_mock_mvc_upstream_test.d",
+      "methods": {
+        "ported": [
+          "errorPageAvailableWithMvcIncluded",
+          "errorPageAvailableWithParentContext",
+          "errorPageNotAvailableWithWhitelabelDisabled"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/error/BasicErrorControllerIntegrationTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/basic_error_controller_integration_test.d",
+      "methods": {
+        "ported": [
+          "customErrorControllerWithoutStatusConfiguration",
+          "testBindingExceptionForMachineClientAlwaysErrors",
+          "testBindingExceptionForMachineClientAlwaysMessage",
+          "testBindingExceptionForMachineClientDefault",
+          "testBindingExceptionForMachineClientNeverErrors",
+          "testBindingExceptionForMachineClientNeverMessage",
+          "testBindingExceptionForMachineClientWithErrorsParamAbsent",
+          "testBindingExceptionForMachineClientWithErrorsParamFalse",
+          "testBindingExceptionForMachineClientWithErrorsParamTrue",
+          "testBindingExceptionForMachineClientWithMessageParamAbsent",
+          "testBindingExceptionForMachineClientWithMessageParamFalse",
+          "testBindingExceptionForMachineClientWithMessageParamTrue",
+          "testErrorForAnnotatedExceptionWithMessage",
+          "testErrorForAnnotatedExceptionWithoutMessage",
+          "testErrorForAnnotatedNoMessageExceptionWithMessage",
+          "testErrorForAnnotatedNoReasonExceptionWithMessage",
+          "testErrorForAnnotatedNoReasonExceptionWithoutMessage",
+          "testErrorForMachineClientAlwaysParams",
+          "testErrorForMachineClientAlwaysParamsWithoutMessage",
+          "testErrorForMachineClientDefault",
+          "testErrorForMachineClientNeverParams",
+          "testErrorForMachineClientWithParamsAbsent",
+          "testErrorForMachineClientWithParamsFalse",
+          "testErrorForMachineClientWithParamsTrue",
+          "testIncompatibleMediaType",
+          "testRequestBodyValidationForMachineClient"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/error/BasicErrorControllerMockMvcTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/basic_error_controller_mock_mvc_test.d",
+      "methods": {
+        "ported": [
+          "FlintErrorTimestampIsJavaUtilDate",
+          "testBindingExceptionForMachineClient",
+          "testDirectAccessForBrowserClient",
+          "testDirectAccessForMachineClient",
+          "testErrorWithNoContentResponseStatus",
+          "testErrorWithNotFoundResponseStatus"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/error/DefaultErrorViewIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/error/DefaultErrorViewResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/error/ErrorMvcAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-webmvc/tests/error_mvc_auto_configuration_test.d",
+      "methods": {
+        "ported": [
+          "renderCanUseJavaTimeTypeAsTimestamp",
+          "renderContainsViewWithExceptionDetails",
+          "renderEscapesHtmlInErrorAttributes",
+          "renderWhenAlreadyCommittedLogsMessage"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/webmvc/autoconfigure/error/RemappedErrorViewIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/webmvc/error/DefaultErrorAttributesTests.java": {
+      "d": [
+        "boot/module/flint-boot-webmvc/tests/default_error_attributes_upstream_test.d",
+        "boot/module/flint-boot-webmvc/tests/error_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "excludeError",
+          "excludeStatus",
+          "getError",
+          "includeTimeStamp",
+          "missingStatusCode",
+          "mvcError",
+          "nullExceptionMessage",
+          "nullExceptionMessageAndServletMessage",
+          "servletErrorWithMessage",
+          "servletErrorWithoutMessage",
+          "servletMessageWithMessage",
+          "servletMessageWithoutMessage",
+          "shouldExcludePath",
+          "shouldIncludePath",
+          "specificStatusCode",
+          "unwrapServletException",
+          "whenGetMessageIsOverriddenThenMessageAttributeContainsValueReturnedFromIt",
+          "withBindingErrors",
+          "withExceptionAttribute",
+          "withHandlerMethodValidationExceptionBindingErrors",
+          "withMethodArgumentNotValidExceptionBindingErrors",
+          "withStackTraceAttribute",
+          "withoutBindingErrors",
+          "withoutStackTraceAttribute"
+        ]
+      },
+      "status": "ported"
+    }
+  },
+  "module": "boot-webmvc",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-webmvc"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

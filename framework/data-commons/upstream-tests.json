@@ -1,0 +1,1162 @@
+{
+  "classes": {
+    "org/springframework/data/DependencyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/annotation/TypeAliasUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/aot/AotContextUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/aot/AotMappingContextUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/aot/AuditingBeanRegistrationAotProcessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/aot/DefaultAotContextUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/aot/ManagedTypesBeanFactoryInitializationAotProcessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/aot/ManagedTypesBeanRegistrationAotProcessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/aot/TypeCollectorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/auditing/AnnotationAuditingMetadataUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/auditing/AuditingHandlerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/auditing/AuditorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/auditing/DefaultAuditableBeanWrapperFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/auditing/IsNewAwareAuditingHandlerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/auditing/MappingAuditableBeanWrapperFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/auditing/ReactiveAuditingHandlerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/auditing/ReflectionAuditingBeanWrapperUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/auditing/config/AuditingBeanDefinitionRegistrarSupportUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/config/TypeFilterParserUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/ConfigurableTypeInformationMapperUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/ConverterBuilderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/CustomConversionsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/DefaultTypeMapperUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/DtoInstantiatingConverterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/Jsr310ConvertersUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/MappingContextTypeInformationMapperUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/PropertyValueConverterFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/PropertyValueConverterRegistrarUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/SimplePropertyValueConversionsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/SimplePropertyValueConverterRegistryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/convert/SimpleTypeInformationMapperUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/ClassTypeInformationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/CustomCollectionsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/DataCmns511Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/NullableWrapperConvertersUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/PropertyPathUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/PropertyPathUtilUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/PropertyReferenceExceptionUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/PropertyReferenceUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/ReactiveWrappersUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/TypeDiscovererUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/core/TypedPropertyPathUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/AbstractAggregateRootUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/AbstractPageRequestUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/DirectionUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/DoubleVectorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/ExampleMatcherUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/ExampleUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/FloatVectorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/LimitUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/ManagedTypesUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/NumberVectorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/PageImplUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/PageRequestUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/RangeUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/ScrollPositionUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/SearchResultUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/SearchResultsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/SimilarityUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/SortUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/VectorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/WindowIteratorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/WindowUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/domain/jaxb/SpringDataJaxbUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/expression/ValueEvaluationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/BoxUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/CircleUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/DistanceUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/GeoJacksonModuleIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/GeoModuleIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/GeoResultUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/GeoResultsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/PointUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/PolygonUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/format/DistanceFormatterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/geo/format/PointFormatterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/history/AnnotationRevisionMetadataUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/history/RevisionUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/history/RevisionsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/javapoet/JavaPoetUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/javapoet/TypeNamesUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/InstantiationAwarePersistentPropertyAccessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/MappingMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/ParameterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/PersistentPropertyAccessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/PreferredConstructorDiscovererUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/SimpleTypeHolderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/TargetAwareIdentifierAccessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/callback/DefaultEntityCallbacksUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/callback/DefaultReactiveEntityCallbacksUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/callback/EntityCallbackDiscovererUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/context/AbstractMappingContextIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/context/AbstractMappingContextUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/context/DefaultPersistentPropertyPathUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/context/EntityProjectionIntrospectorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/context/MappingContextEventUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/context/PersistentEntitiesUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/context/PersistentPropertyPathFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/context/PropertyMatchUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/AbstractPersistentPropertyUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/AnnotationBasedPersistentPropertyUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/BasicPersistentEntityUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/CachingValueExpressionEvaluatorFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/CamelCaseAbbreviatingFieldNamingStrategyUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/ClassGeneratingEntityInstantiatorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/ClassGeneratingPropertyAccessorFactoryDatatypeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/ClassGeneratingPropertyAccessorFactoryEntityTypeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/ClassGeneratingPropertyAccessorFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/ConvertingPropertyAccessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/EntityCreatorMetadataDiscovererUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/EntityInstantiatorIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/EntityInstantiatorsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/FactoryMethodUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/IdPropertyIdentifierAccessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/InstanceCreatorMetadataDiscovererUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/KotlinCopyMethodUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/KotlinPropertyAccessorFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/ParameterizedKotlinInstantiatorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/PersistentEntityIsNewStrategyUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/PersistentEntityParameterValueProviderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/PersistentPropertyAccessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/PropertyAccessorClassGeneratorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/PropertyUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/ReflectionEntityInstantiatorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/SimplePersistentPropertyPathAccessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/SnakeCaseFieldNamingStrategyUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/mapping/model/ValueExpressionParameterValueProviderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/projection/DefaultMethodInvokingMethodInterceptorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/projection/DefaultProjectionInformationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/projection/MapAccessingMethodInterceptorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/projection/ProjectingMethodInterceptorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/projection/ProjectionIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/projection/PropertyAccessingMethodInterceptorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/projection/ProxyProjectionFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/projection/SpelAwareProxyProjectionFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/projection/SpelEvaluatingMethodInterceptorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/QPageRequestUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/QSortUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/QuerydslRepositoryInvokerAdapterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/QuerydslUtilsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/SimpleEntityPathResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/binding/PropertyPathInformationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/binding/QuerydslBindingsFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/binding/QuerydslBindingsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/binding/QuerydslDefaultBindingUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/querydsl/binding/QuerydslPredicateBuilderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/GeneratedClassesCaptureIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/RepositoryRegistrationAotProcessorIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/generate/AotQueryMethodGenerationContextUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/generate/AotRepositoryBeanDefinitionPropertiesDecoratorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/generate/AotRepositoryConfigurationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/generate/AotRepositoryCreatorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/generate/AotRepositoryMethodBuilderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/generate/LocalVariableNameFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/generate/MethodMetadataUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/generate/RepositoryBuilderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/aot/generate/RepositoryContributorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/cdi/CdiConfigurationIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/cdi/CdiRepositoryBeanUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/cdi/CdiRepositoryExtensionSupportIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/cdi/RepositoryFragmentsIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/cdi/WebbeansCdiRepositoryExtensionSupportIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/AnnotationRepositoryConfigurationSourceUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/CustomRepositoryImplementationDetectorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/DefaultImplementationLookupConfigurationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/DefaultRepositoryConfigurationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/DeferredRepositoryInitializationListenerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/ImplementationDetectionConfigurationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/PrimaryRepositoryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/RepositoryBeanDefinitionReaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/RepositoryBeanDefinitionRegistrarSupportIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/RepositoryBeanDefinitionRegistrarSupportUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/RepositoryBeanNameGeneratorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/RepositoryComponentProviderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/RepositoryConfigurationDelegateUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/RepositoryConfigurationExtensionSupportUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/RepositoryFragmentConfigurationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/ResourceReaderRepositoryPopulatorBeanDefinitionParserIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/SelectionSetUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/config/XmlRepositoryConfigurationSourceUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/AbstractEntityInformationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/AbstractRepositoryMetadataUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/AnnotationRepositoryMetadataUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/DefaultCrudMethodsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/DefaultRepositoryInformationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/DefaultRepositoryMetadataUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/EventPublishingRepositoryProxyPostProcessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/ExampleSpecificationAccessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/PersistenceExceptionTranslationRepositoryProxyPostProcessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/PersistentEntityInformationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/QueryExecutionResultHandlerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/QueryExecutorMethodInterceptorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/ReactiveRepositoryInformationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/ReactiveWrapperRepositoryFactorySupportUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/RepositoryCompositionUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/RepositoryFactoryBeanSupportUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/RepositoryFactorySupportUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/RepositoryFragmentUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/RepositoryInformationPreferringAnnotationTransactionAttributeSourceUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/RepositoryMethodInvokerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/SurroundingTransactionDetectorMethodInterceptorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/TransactionRepositoryFactoryBeanSupportUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/core/support/TransactionRepositoryProxyPostProcessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/init/Jackson2ResourceReaderIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/init/JacksonResourceReaderIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/init/ResourceReaderRepositoryInitializerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/ParameterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/ParametersParameterAccessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/ParametersUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/QueryCreationExceptionUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/QueryMethodUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/ResultProcessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/ReturnedTypeUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/SimpleParameterAccessorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/ValueExpressionQueryRewriterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/parser/OrderBySourceUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/query/parser/PartTreeUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/support/AnnotationAttributeUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/support/CrudRepositoryInvokerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/support/DefaultRepositoryInvokerFactoryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/support/DomainClassConverterIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/support/DomainClassConverterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/support/MethodParametersUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/support/ReflectionRepositoryInvokerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/support/RepositoriesIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/support/RepositoriesUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/util/QueryExecutionConvertersUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/repository/util/ReactiveWrapperConvertersUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/spel/EvaluationContextExtensionInformationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/spel/ExpressionDependenciesUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/spel/ExtensionAwareEvaluationContextProviderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/spel/ReactiveExtensionAwareEvaluationContextProviderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/spel/spi/FunctionUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/spel/spi/ParameterTypesUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/support/PageableExecutionUtilsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/support/PersistableIsNewStrategyUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/support/ReactivePageableExecutionUtilsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/transaction/ChainedTransactionManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/AnnotatedTypeScannerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/AnnotationDetectionFieldCallbackUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/AnnotationDetectionMethodCallbackUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/BeanLookupUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/CloseableIteratorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/DirectFieldAccessFallbackBeanWrapperUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/KotlinReflectionUtilsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/LazyUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/LockUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/MethodInvocationRecorderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/NullableUtilsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/PairUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/ParameterTypesUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/ParsingUtilsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/ProxyUtilsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/QTypeContributorUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/ReflectionUtilsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/StreamUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/StreamableUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/TypeScannerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/util/VersionUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/HateoasPageableHandlerMethodArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/HateoasSortHandlerMethodArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/JsonProjectingMethodInterceptorFactoryUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/MapDataBinderUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/OffsetScrollPositionHandlerMethodArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/PageImplJsonJackson2SerializationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/PageImplJsonSerializationUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/PageableDefaultUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/PageableHandlerMethodArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/PagedResourcesAssemblerArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/PagedResourcesAssemblerUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/ProjectingJackson2HttpMessageConverterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/ProjectingJacksonHttpMessageConverterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/ProxyingHandlerMethodArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/ReactiveOffsetScrollPositionHandlerMethodArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/ReactivePageableHandlerMethodArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/ReactiveSortHandlerMethodArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/SlicedResourcesAssemblerArgumentResolverUnitTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/SlicedResourcesAssemblerUnitTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/SortDefaultUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/SortHandlerMethodArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/XmlBeamHttpMessageConverterUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/aot/WebRuntimeHintsUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/config/EnableSpringDataWebSupportIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/config/PageableResourcesAssemblerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/config/SliceableResourcesAssemblerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/config/SpringDataWebConfigurationIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/querydsl/QuerydslPredicateArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/data/web/querydsl/ReactiveQuerydslPredicateArgumentResolverUnitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "data-commons",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":data-commons"
+  ],
+  "upstream": "spring-data-commons@4.2.0"
+}

@@ -1,0 +1,1230 @@
+{
+  "classes": {
+    "org/springframework/security/web/DefaultRedirectStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/FilterChainProxyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/FilterInvocationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/FormPostRedirectStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/ObservationFilterChainDecoratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/PortMapperImplTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/RequestMatcherRedirectFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/ServerWebExchangeThreadLocalAccessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/AuthorizationManagerWebInvocationPrivilegeEvaluatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/DelegatingAccessDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/DelegatingMissingAuthorityAccessDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/ExceptionTranslationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/HttpStatusAccessDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/NoOpAccessDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/RequestMatcherDelegatingAccessDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/RequestMatcherDelegatingWebInvocationPrivilegeEvaluatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/expression/AbstractVariableEvaluationContextPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/expression/DefaultHttpSecurityExpressionHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/expression/DelegatingEvaluationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/expression/WebExpressionAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/expression/WebSecurityExpressionRootTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/intercept/AuthorizationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/intercept/RequestKeyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/access/intercept/RequestMatcherDelegatingAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/aot/hint/WebMvcSecurityRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/AbstractAuthenticationProcessingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/AbstractAuthenticationTargetUrlRequestHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/AnonymousAuthenticationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/AuthenticationEntryPointFailureHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/AuthenticationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/DefaultLoginPageGeneratingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/DelegatingAuthenticationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/DelegatingAuthenticationEntryPointContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/DelegatingAuthenticationEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/DelegatingAuthenticationFailureHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ExceptionMappingAuthenticationFailureHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ForwardAuthenticaionSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ForwardAuthenticationFailureHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/HttpMessageConverterAuthenticationSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/HttpStatusEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/LoginUrlAuthenticationEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/NoOpAuthenticationEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/RequestMatcherDelegatingAuthenticationManagerResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/SavedRequestAwareAuthenticationSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/SimpleUrlAuthenticationFailureHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/SimpleUrlAuthenticationSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/UsernamePasswordAuthenticationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/CompositeLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/CookieClearingLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/DelegatingLogoutSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/ForwardLogoutSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/HeaderWriterLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/HttpStatusReturningLogoutSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/LogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/LogoutSuccessEventPublishingLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/SecurityContextLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/logout/SimpleUrlLogoutSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ott/DefaultGenerateOneTimeTokenRequestResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ott/GenerateOneTimeTokenFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ott/OneTimeTokenAuthenticationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ott/OneTimeTokenAuthenticationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ott/RedirectOneTimeTokenGenerationSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/password/HaveIBeenPwnedRestApiPasswordCheckerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/password/HaveIBeenPwnedRestApiReactivePasswordCheckerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/AbstractPreAuthenticatedProcessingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/Http403ForbiddenEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/PreAuthenticatedAuthenticationProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/PreAuthenticatedAuthenticationTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/PreAuthenticatedGrantedAuthoritiesUserDetailsServiceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/PreAuthenticatedGrantedAuthoritiesWebAuthenticationDetailsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/RequestAttributeAuthenticationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/header/RequestHeaderAuthenticationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/j2ee/J2eeBasedPreAuthenticatedWebAuthenticationDetailsSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/j2ee/J2eePreAuthenticatedProcessingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/j2ee/WebXmlJ2eeDefinedRolesRetrieverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/websphere/WebSpherePreAuthenticatedProcessingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/x509/SubjectDnX509PrincipalExtractorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/preauth/x509/SubjectX500PrincipalExtractorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/rememberme/AbstractRememberMeServicesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/rememberme/JdbcTokenRepositoryImplTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/rememberme/NullRememberMeServicesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/rememberme/PersistentTokenBasedRememberMeServicesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/rememberme/RememberMeAuthenticationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/rememberme/TokenBasedRememberMeServicesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/session/ChangeSessionIdAuthenticationStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/session/CompositeSessionAuthenticationStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/session/ConcurrentSessionControlAuthenticationStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/session/RegisterSessionAuthenticationStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/session/SessionLimitTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/switchuser/SwitchUserFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/switchuser/SwitchUserGrantedAuthorityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ui/DefaultLogoutPageGeneratingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ui/DefaultOneTimeTokenSubmitPageGeneratingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ui/DefaultResourcesFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/ui/HtmlTemplatesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/www/BasicAuthenticationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/www/BasicAuthenticationEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/www/BasicAuthenticationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/www/DigestAuthUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/www/DigestAuthenticationEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/authentication/www/DigestAuthenticationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/bind/support/AuthenticationPrincipalArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/concurrent/ConcurrentSessionFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/AbstractSecurityWebApplicationInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/DelegatingSecurityContextRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/HttpSessionSecurityContextRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/RequestAttributeSecurityContextRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/SaveContextOnUpdateOrErrorResponseWrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/SecurityContextHolderFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/SecurityContextPersistenceFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/SecurityContextRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/request/async/SecurityContextCallableProcessingInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/context/request/async/WebAsyncManagerIntegrationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/csrf/CookieCsrfTokenRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/csrf/CsrfAuthenticationStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/csrf/CsrfFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/csrf/CsrfLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/csrf/CsrfTokenRequestAttributeHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/csrf/DefaultCsrfTokenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/csrf/HttpSessionCsrfTokenRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/csrf/MissingCsrfTokenExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/csrf/XorCsrfTokenRequestAttributeHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/debug/DebugFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/firewall/CompositeRequestRejectedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/firewall/DefaultHttpFirewallTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/firewall/DefaultRequestRejectedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/firewall/FirewalledResponseTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/firewall/HttpStatusRequestRejectedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/firewall/RequestWrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/firewall/StrictHttpFirewallTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/ContentSecurityPolicyNonceGeneratingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/HeaderWriterFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/CacheControlHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/ClearSiteDataHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/CompositeHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/ContentSecurityPolicyHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/CrossOriginEmbedderPolicyHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/CrossOriginOpenerPolicyHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/CrossOriginResourcePolicyHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/DelegatingRequestMatcherHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/FeaturePolicyHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/HpkpHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/HstsHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/PermissionsPolicyHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/ReferrerPolicyHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/StaticHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/XContentTypeOptionsHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/XXssProtectionHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/frameoptions/AbstractRequestParameterAllowFromStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/frameoptions/FrameOptionsHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/frameoptions/RegExpAllowFromStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/frameoptions/StaticAllowFromStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/frameoptions/WhiteListedAllowFromStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/header/writers/frameoptions/XFrameOptionsHeaderWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jaasapi/JaasApiIntegrationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson/AbstractMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson/CookieMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson/DefaultCsrfTokenMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson/DefaultSavedRequestMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson/PreAuthenticatedAuthenticationTokenMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson/SavedCookieMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson/SwitchUserGrantedAuthorityMixInTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson/WebAuthenticationDetailsMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson2/AbstractMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson2/CookieMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson2/DefaultCsrfTokenMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson2/DefaultSavedRequestMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson2/PreAuthenticatedAuthenticationTokenMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson2/SavedCookieMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson2/SwitchUserGrantedAuthorityMixInTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/jackson2/WebAuthenticationDetailsMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/method/annotation/AuthenticationPrincipalArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/method/annotation/CsrfTokenArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/method/annotation/CurrentSecurityContextArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/reactive/result/method/annotation/AuthenticationPrincipalArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/reactive/result/method/annotation/CurrentSecurityContextArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/reactive/result/view/CsrfRequestDataValueProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/savedrequest/CookieRequestCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/savedrequest/DefaultSavedRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/savedrequest/HttpSessionRequestCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/savedrequest/RequestCacheAwareFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/savedrequest/SavedCookieTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/savedrequest/SavedRequestAwareWrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/savedrequest/SimpleSavedRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/DefaultServerRedirectStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/DelegatingServerAuthenticationEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/ExchangeMatcherRedirectWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/FormPostServerRedirectStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/ObservationWebFilterChainDecoratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/WebFilterChainProxyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/WebFilterExchangeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/AnonymousAuthenticationWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/AuthenticationConverterServerWebExchangeMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/AuthenticationWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/DelegatingServerAuthenticationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/DelegatingServerAuthenticationSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/HttpBasicServerAuthenticationEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/HttpStatusServerEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ReactivePreAuthenticatedAuthenticationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/RedirectServerAuthenticationEntryPointTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/RedirectServerAuthenticationFailureHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/RedirectServerAuthenticationSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ServerAuthenticationEntryPointFailureHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ServerFormLoginAuthenticationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ServerHttpBasicAuthenticationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ServerWebExchangeDelegatingReactiveAuthenticationManagerResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ServerX509AuthenticationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/SwitchUserWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/logout/DelegatingServerLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/logout/HeaderWriterServerLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/logout/HttpStatusReturningServerLogoutSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/logout/LogoutWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/logout/WebSessionServerLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ott/DefaultServerGenerateOneTimeTokenRequestResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ott/GenerateOneTimeTokenWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ott/ServerOneTimeTokenAuthenticationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/ott/ServerRedirectOneTimeTokenGenerationSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/session/ConcurrentSessionControlServerAuthenticationSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/session/InMemoryReactiveSessionRegistryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/session/InvalidateLeastUsedServerMaximumSessionsExceededHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/session/PreventLoginServerMaximumSessionsExceededHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authentication/session/RegisterSessionServerAuthenticationSuccessHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authorization/AuthorizationWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authorization/DelegatingReactiveAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authorization/ExceptionTranslationWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authorization/HttpStatusServerAccessDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authorization/IpAddressReactiveAuthorizationManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/authorization/ServerWebExchangeDelegatingServerAccessDeniedHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/context/NoOpServerSecurityContextRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/context/ReactorContextWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/context/SecurityContextServerWebExchangeWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/context/WebSessionServerSecurityContextRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/csrf/CookieServerCsrfTokenRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/csrf/CsrfServerLogoutHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/csrf/CsrfWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/csrf/ServerCsrfTokenRequestAttributeHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/csrf/WebSessionServerCsrfTokenRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/csrf/XorServerCsrfTokenRequestAttributeHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/firewall/StrictServerWebExchangeFirewallTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/CacheControlServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/ClearSiteDataServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/CompositeServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/ContentSecurityPolicyNonceGeneratingWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/ContentSecurityPolicyServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/ContentTypeOptionsServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/CrossOriginEmbedderPolicyServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/CrossOriginOpenerPolicyServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/CrossOriginResourcePolicyServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/FeaturePolicyServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/HttpHeaderWriterWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/PermissionsPolicyServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/ReferrerPolicyServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/ServerWebExchangeDelegatingServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/StaticServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/StrictTransportSecurityServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/XContentTypeOptionsServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/XFrameOptionsServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/header/XXssProtectionServerHttpHeadersWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/jackson/DefaultCsrfServerTokenMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/jackson2/DefaultCsrfServerTokenMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/savedrequest/CookieServerRequestCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/savedrequest/ServerRequestCacheWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/savedrequest/WebSessionServerRequestCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/transport/HttpsRedirectWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/ui/DefaultResourcesWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/ui/LoginPageGeneratingWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/ui/LogoutPageGeneratingWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/ui/OneTimeTokenSubmitPageGeneratingWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/util/matcher/AndServerWebExchangeMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/util/matcher/IpAddressServerWebExchangeMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/util/matcher/MediaTypeServerWebExchangeMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/util/matcher/NegatedServerWebExchangeMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/util/matcher/OrServerWebExchangeMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/util/matcher/PathMatcherServerWebExchangeMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/util/matcher/PathPatternParserServerWebExchangeMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/server/util/matcher/ServerWebExchangeMatchersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/servlet/support/csrf/CsrfRequestDataValueProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/servlet/util/matcher/PathPatternRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/servletapi/SecurityContextHolderAwareRequestFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/servletapi/SecurityContextHolderAwareRequestWrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/session/DefaultSessionAuthenticationStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/session/DisableEncodeUrlFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/session/ForceEagerSessionCreationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/session/HttpSessionDestroyedEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/session/HttpSessionEventPublisherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/session/SessionInformationExpiredEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/session/SessionManagementFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/transport/HttpsRedirectFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/OnCommittedResponseWrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/TextEscapeUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/ThrowableAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/UrlUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/AndRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/DispatcherTypeRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/ELRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/IpAddressMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/MediaTypeRequestMatcherRequestHCNSTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/MediaTypeRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/NegatedRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/OrRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/ParameterRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/RegexRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/RequestHeaderRequestMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/RequestMatcherEntryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/security/web/util/matcher/RequestMatchersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "security-web",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":security-web"
+  ],
+  "upstream": "spring-security@7.2.0"
+}

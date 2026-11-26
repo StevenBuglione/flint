@@ -1,5 +1,13 @@
 {
   "classes": {
+    "org/springframework/http/CacheControlTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/ContentDispositionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/http/HttpEntityTests.java": {
       "d": "framework/web/tests/http_entity_tests.d",
       "methods": {
@@ -68,6 +76,14 @@
       },
       "status": "ported"
     },
+    "org/springframework/http/HttpMethodTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/HttpRangeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/http/HttpStatusTests.java": {
       "d": "framework/web/tests/http_status_tests.d",
       "methods": {
@@ -78,6 +94,10 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/http/MediaTypeFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/http/MediaTypeTests.java": {
       "d": "framework/web/tests/media_type_tests.d",
@@ -113,6 +133,14 @@
       },
       "status": "ported"
     },
+    "org/springframework/http/RequestEntityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/ResponseCookieTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/http/ResponseEntityTests.java": {
       "d": "framework/web/tests/response_entity_tests.d",
       "methods": {
@@ -133,6 +161,302 @@
       },
       "status": "ported"
     },
+    "org/springframework/http/WebBeanUtilsRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/AbstractHttpRequestFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/AbstractMockWebServerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/BufferingClientHttpRequestFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/HttpComponentsClientHttpRequestFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/InterceptingClientHttpRequestFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/InterceptingStreamingHttpComponentsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/JdkClientHttpRequestFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/JdkClientHttpRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/JettyClientHttpRequestFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/MultipartBodyBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/OutputStreamPublisherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/ReactorClientHttpRequestFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/ReactorResourceFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/SimpleClientHttpRequestFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/SimpleClientHttpResponseTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/SubscriberInputStreamTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/observation/DefaultClientRequestObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/reactive/ClientHttpConnectorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/reactive/JdkClientHttpRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/reactive/ReactorClientHttpConnectorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/support/InterceptingHttpAccessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/client/support/ProxyFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/CancelWithoutDemandCodecTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/EncoderHttpMessageWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/FormHttpMessageReaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/FormHttpMessageWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/JacksonTokenizerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/ResourceHttpMessageReaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/ResourceHttpMessageWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/ServerSentEventHttpMessageReaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/ServerSentEventHttpMessageWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/ServerSentEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/cbor/Jackson2CborDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/cbor/Jackson2CborEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/cbor/JacksonCborDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/cbor/JacksonCborEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/CustomizedJackson2JsonDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/CustomizedJackson2JsonEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/CustomizedJacksonJsonDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/CustomizedJacksonJsonEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/GsonDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/GsonEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/Jackson2JsonDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/Jackson2JsonEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/Jackson2SmileDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/Jackson2SmileEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/Jackson2TokenizerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/JacksonCsvEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/JacksonJsonDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/json/JacksonJsonEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/multipart/DefaultPartHttpMessageReaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/multipart/FileStorageTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/multipart/MultipartHttpMessageWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/multipart/MultipartParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/multipart/PartEventHttpMessageReaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/multipart/PartEventHttpMessageWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/multipart/PartHttpMessageWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/protobuf/ProtobufDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/protobuf/ProtobufEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/protobuf/ProtobufJsonDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/protobuf/ProtobufJsonEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/smile/JacksonSmileDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/smile/JacksonSmileEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/support/ClientCodecConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/support/CodecConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/support/ServerCodecConfigurerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/xml/JacksonXmlDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/xml/JacksonXmlEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/xml/Jaxb2HelperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/xml/Jaxb2XmlDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/xml/Jaxb2XmlEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/codec/xml/XmlEventDecoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/BufferedImageHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/http/converter/ByteArrayHttpMessageConverterTests.java": {
       "d": "framework/web/tests/byte_array_http_message_converter_tests.d",
       "methods": {
@@ -147,6 +471,14 @@
       },
       "status": "ported"
     },
+    "org/springframework/http/converter/DefaultHttpMessageConvertersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/FormHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/http/converter/HttpMessageConverterTests.java": {
       "d": "framework/web/tests/http_message_converter_tests.d",
       "methods": {
@@ -158,6 +490,18 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/http/converter/ObjectToStringHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/ResourceHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/ResourceRegionHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/http/converter/StringHttpMessageConverterTests.java": {
       "d": "framework/web/tests/string_http_message_converter_tests.d",
@@ -179,6 +523,34 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/http/converter/cbor/JacksonCborHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/feed/AtomFeedHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/feed/RssChannelHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/json/GsonFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/json/GsonHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/json/Jackson2ObjectMapperBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/json/Jackson2ObjectMapperFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/http/converter/json/JacksonJsonHttpMessageConverterTests.java": {
       "d": "framework/web/tests/jackson_json_http_message_converter_tests.d",
@@ -221,6 +593,214 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/http/converter/json/JsonbHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/json/MappingJackson2HttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/json/ProblemDetailJacksonMixinTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/json/ProblemDetailRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/json/SpringHandlerInstantiatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/multipart/MultipartHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/multipart/MultipartParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/protobuf/ProtobufHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/protobuf/ProtobufJsonFormatHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/smile/JacksonSmileHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/smile/MappingJackson2SmileHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/xml/JacksonXmlHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/xml/Jaxb2CollectionHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/xml/Jaxb2RootElementHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/xml/MappingJackson2XmlHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/xml/MarshallingHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/xml/SourceHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/converter/yaml/JacksonYamlHttpMessageConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/DefaultPathContainerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/DefaultRequestPathTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/ServletRequestHeadersAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/ServletResponseHeadersAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/ServletServerHttpRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/ServletServerHttpResponseTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/observation/DefaultServerRequestObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/observation/OpenTelemetryServerRequestObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/observation/ServerRequestObservationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/AsyncIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ChannelSendOperatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ContextPathCompositeHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/CookieIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/DefaultServerHttpRequestBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/EchoHandlerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ErrorHandlerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/HeadersAdaptersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/HttpHeadResponseDecoratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ListenerReadPublisherTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ListenerWriteProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/MultipartHttpHandlerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/RandomHandlerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ReactorUriHelperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ServerHttpRequestIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ServerHttpRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ServerHttpResponseTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ServerHttpsRequestIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/TomcatHeadersAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/WriteOnlyHandlerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/ZeroCopyIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/observation/DefaultServerRequestObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/observation/OpenTelemetryServerRequestObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/server/reactive/observation/ServerRequestObservationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/http/support/JacksonHandlerInstantiatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/web/ErrorResponseExceptionTests.java": {
       "d": "framework/web/tests/error_response_exception_tests.d",
@@ -266,6 +846,84 @@
       },
       "status": "ported"
     },
+    "org/springframework/web/accept/ContentNegotiationManagerFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/accept/DefaultApiVersionStrategiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/accept/HeaderApiVersionResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/accept/HeaderContentNegotiationStrategyTests.java": {
+      "d": "framework/framework-test/tests/header_content_negotiation_strategy_tests.d",
+      "methods": {
+        "ported": [
+          "resolveMediaTypes",
+          "resolveMediaTypesFromMultipleHeaderValues",
+          "resolveMediaTypesParseError",
+          "resolveMediaTypesWithMaxElements",
+          "resolveMediaTypesWithTooManyElements"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/accept/MappingContentNegotiationStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/accept/MappingMediaTypeFileExtensionResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/accept/MediaTypeParamApiVersionResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/accept/PathApiVersionResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/accept/QueryApiVersionResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/accept/SemanticApiVersionParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/accept/StandardApiVersionDeprecationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/EscapedErrorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/MethodArgumentNotValidExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/ServletRequestDataBinderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/ServletRequestUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/annotation/ComponentScannedControllerAdviceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/annotation/ControllerMappingReflectiveProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/web/bind/annotation/RequestMethodTests.java": {
       "d": "framework/web/tests/request_method_tests.d",
       "methods": {
@@ -276,6 +934,202 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/web/bind/support/DefaultDataBinderFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/support/ServletRequestParameterPropertyValuesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/support/WebExchangeDataBinderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/support/WebRequestDataBinderIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/bind/support/WebRequestDataBinderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/AbstractMockWebServerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/DefaultApiVersionInsertersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/DefaultResponseErrorHandlerHttpStatusTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/DefaultResponseErrorHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/DefaultRestClientTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/ExtractingResponseErrorHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/HttpMessageConverterExtractorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/HttpStatusCodeExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/IntrospectingClientHttpResponseTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/RestClientBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/RestClientIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/RestClientObservationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/RestClientResponseExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/RestClientVersionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/RestTemplateIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/RestTemplateObservationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/RestTemplateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/support/RestClientAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/support/RestClientHttpServiceGroupAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/client/support/RestClientProxyRegistryIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/ContextLoaderInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/RequestAndSessionScopedBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/RequestAttributesThreadLocalAccessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/RequestContextListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/RequestScopeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/RequestScopedProxyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/ServletRequestAttributesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/ServletWebRequestHttpMethodsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/ServletWebRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/SessionScopeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/WebApplicationContextScopeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/async/AsyncRequestNotUsableTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/async/DeferredResultTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/async/StandardServletAsyncWebRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/async/WebAsyncManagerErrorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/async/WebAsyncManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/request/async/WebAsyncManagerTimeoutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/support/AnnotationConfigWebApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/support/RequestHandledEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/support/ServletContextResourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/support/ServletRequestHandledEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/support/Spr8510Tests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/support/SpringBeanAutowiringSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/context/support/StandardServletEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/web/cors/CorsConfigurationTests.java": {
       "d": "framework/web/tests/cors_configuration_tests.d",
@@ -305,12 +1159,650 @@
       },
       "status": "ported"
     },
+    "org/springframework/web/cors/CorsUtilsTests.java": {
+      "d": "framework/framework-test/tests/cors_utils_tests.d",
+      "methods": {
+        "ported": [
+          "isCorsRequest",
+          "isNotCorsRequest",
+          "isNotPreFlightRequest",
+          "isPreFlightRequest"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/cors/DefaultCorsProcessorTests.java": {
+      "d": "framework/framework-test/tests/default_cors_processor_tests.d",
+      "methods": {
+        "ported": [
+          "actualRequestCaseInsensitiveOriginMatch",
+          "actualRequestCredentials",
+          "actualRequestCredentialsWithWildcardOrigin",
+          "actualRequestExposedHeaders",
+          "actualRequestMalformedOriginRejected",
+          "actualRequestTrailingSlashOriginMatch",
+          "actualRequestWithOriginHeader",
+          "actualRequestWithOriginHeaderAndAllowedOrigin",
+          "actualRequestWithOriginHeaderAndNullConfig",
+          "preflightRequestAllOriginsAllowed",
+          "preflightRequestAllowedHeaders",
+          "preflightRequestAllowsAllHeaders",
+          "preflightRequestCredentials",
+          "preflightRequestCredentialsWithWildcardOrigin",
+          "preflightRequestMatchedAllowedMethod",
+          "preflightRequestPrivateNetworkWithWildcardOrigin",
+          "preflightRequestTestWithOriginButWithoutOtherHeaders",
+          "preflightRequestValidRequestAndConfig",
+          "preflightRequestWithAccessControlRequestPrivateNetworkAllowed",
+          "preflightRequestWithAccessControlRequestPrivateNetworkNotAllowed",
+          "preflightRequestWithEmptyHeaders",
+          "preflightRequestWithNullConfig",
+          "preflightRequestWithRequestAndMethodHeaderButNoConfig",
+          "preflightRequestWithoutAccessControlRequestPrivateNetwork",
+          "preflightRequestWithoutRequestMethod",
+          "preflightRequestWrongAllowedMethod",
+          "preventDuplicatedVaryHeaders",
+          "requestWithoutOriginHeader",
+          "sameOriginRequest"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/cors/UrlBasedCorsConfigurationSourceTests.java": {
+      "d": "framework/framework-test/tests/url_based_cors_configuration_source_tests.d",
+      "methods": {
+        "ported": [
+          "allowInitLookupPath",
+          "empty",
+          "registerAndMatch",
+          "unmodifiableConfigurationsMap"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/cors/reactive/CorsUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/cors/reactive/CorsWebFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/cors/reactive/DefaultCorsProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/cors/reactive/UrlBasedCorsConfigurationSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/CharacterEncodingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/CompositeFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/ContentCachingResponseWrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/CorsFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/DelegatingFilterProxyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/FormContentFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/ForwardedHeaderFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/HiddenHttpMethodFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/OncePerRequestFilterTests.java": {
+      "d": "framework/framework-test/tests/once_per_request_filter_tests.d",
+      "methods": {
+        "ported": [
+          "filterNestedErrorDispatch",
+          "filterOnce",
+          "shouldNotFilterErrorDispatch",
+          "shouldNotFilterNestedErrorDispatch"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/filter/RelativeRedirectFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/RequestContextFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/RequestLoggingFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/ServerHttpObservationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/ShallowEtagHeaderFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/UrlHandlerFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/reactive/HiddenHttpMethodFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/reactive/ServerWebExchangeContextFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/filter/reactive/UrlHandlerFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/jsf/DelegatingNavigationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/jsf/DelegatingPhaseListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/ControllerAdviceBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/HandlerMethodTests.java": {
+      "d": "framework/framework-test/tests/handler_method_tests.d",
+      "methods": {
+        "ported": [
+          "classLevelValidatedAnnotation",
+          "createWithResolvedBeanSameInstance",
+          "resolvedFromHandlerMethod",
+          "shouldValidateArgsWithConstraintsDirectlyInClass",
+          "shouldValidateArgsWithConstraintsInGenericAbstractSuperclass",
+          "shouldValidateArgsWithConstraintsInGenericInterface",
+          "shouldValidateArgsWithConstraintsInInterface",
+          "shouldValidateReturnValueWithConstraintsDirectlyInClass",
+          "shouldValidateReturnValueWithConstraintsInInterface"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/method/HandlerTypePredicateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/CookieValueMethodArgumentResolverTests.java": {
+      "d": "framework/framework-test/tests/cookie_value_method_argument_resolver_tests.d",
+      "methods": {
+        "ported": [
+          "notFound",
+          "resolveCookieDefaultValue",
+          "supportsParameter"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/method/annotation/ErrorsMethodArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/ExceptionHandlerMethodResolverTests.java": {
+      "d": "framework/framework-test/tests/exception_handler_method_resolver_tests.d",
+      "methods": {
+        "ported": [
+          "ShouldResolveMethodWithExceptionCause",
+          "shouldFavorMethodWithExplicitAcceptAll",
+          "shouldNotResolveMethodWhenExceptionNoMatch",
+          "shouldResolveMethodFromAnnotationAttribute",
+          "shouldResolveMethodFromMethodArgument",
+          "shouldResolveMethodFromSuperClass",
+          "shouldResolveMethodWithCompatibleMediaType",
+          "shouldResolveMethodWithExceptionBestMatch",
+          "shouldResolveMethodWithExceptionSubType",
+          "shouldResolveMethodWithMediaType",
+          "shouldResolveMethodWithMediaTypeFallback",
+          "shouldRetainOriginalOrderOfProducibleMediaTypes",
+          "shouldThrowExceptionWhenAmbiguousExceptionMapping",
+          "shouldThrowExceptionWhenAmbiguousMediaTypeMapping",
+          "shouldThrowExceptionWhenInvalidMediaTypeMapping",
+          "shouldThrowExceptionWhenNoExceptionMapping"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/method/annotation/ExpressionValueMethodArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/HandlerMethodValidationExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/InitBinderDataBinderFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/MapMethodProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/web/method/annotation/MethodArgumentTypeMismatchExceptionTests.java": {
       "d": "framework/web/tests/method_argument_type_mismatch_exception_tests.d",
       "methods": {
         "ported": []
       },
       "status": "ported"
+    },
+    "org/springframework/web/method/annotation/ModelAttributeMethodProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/ModelFactoryOrderingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/ModelFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/ModelMethodProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/ProblemDetailExceptionHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/RequestHeaderMapMethodArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/RequestHeaderMethodArgumentResolverTests.java": {
+      "d": "framework/framework-test/tests/request_header_method_argument_resolver_tests.d",
+      "methods": {
+        "ported": [
+          "dateConversion",
+          "instantConversion",
+          "missingParameterFromSystemPropertyThroughPlaceholder",
+          "notFound",
+          "resolveDefaultValue",
+          "resolveDefaultValueFromRequest",
+          "resolveDefaultValueFromSystemProperty",
+          "resolveNameFromSystemPropertyThroughExpression",
+          "resolveNameFromSystemPropertyThroughPlaceholder",
+          "resolveStringArgument",
+          "resolveStringArrayArgument",
+          "supportsParameter",
+          "uuidConversionWithBlankValue",
+          "uuidConversionWithBlankValueOptional",
+          "uuidConversionWithEmptyValue",
+          "uuidConversionWithEmptyValueOptional",
+          "uuidConversionWithInvalidValue",
+          "uuidConversionWithValidValue",
+          "uuidPlaceholderConversionWithEmptyValue"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/method/annotation/RequestParamMapMethodArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/RequestParamMethodArgumentResolverTests.java": {
+      "d": "framework/framework-test/tests/request_param_method_argument_resolver_tests.d",
+      "methods": {
+        "ported": [
+          "isMultipartRequest",
+          "isMultipartRequestHttpPut",
+          "missingMultipartFile",
+          "missingOptionalMultipartFile",
+          "missingOptionalParamArray",
+          "missingOptionalParamList",
+          "missingOptionalParamValue",
+          "missingParameterFromSystemPropertyThroughPlaceholder",
+          "missingRequestParam",
+          "missingRequestParamAfterConversionWithDefaultValue",
+          "missingRequestParamEmptyValueConvertedToNull",
+          "missingRequestParamEmptyValueNotRequired",
+          "missingRequestParamEmptyValueNotRequiredWithDefaultValue",
+          "noMultipartContent",
+          "notNullablePrimitiveParameterFromSystemPropertyThroughPlaceholder",
+          "optionalMultipartFileWithoutMultipartRequest",
+          "resolveDefaultValue",
+          "resolveEmptyValueRequiredWithoutDefault",
+          "resolveEmptyValueToDefault",
+          "resolveEmptyValueWithoutDefault",
+          "resolveMultipartFile",
+          "resolveMultipartFileArray",
+          "resolveMultipartFileArrayMissing",
+          "resolveMultipartFileList",
+          "resolveMultipartFileListMissing",
+          "resolveMultipartFileListNotannot",
+          "resolveMultipartFileNotAnnot",
+          "resolveNameFromSystemPropertyThroughPlaceholder",
+          "resolveOptionalMultipartFile",
+          "resolveOptionalParamArray",
+          "resolveOptionalParamList",
+          "resolveOptionalParamValue",
+          "resolvePart",
+          "resolvePartArray",
+          "resolvePartArrayMissing",
+          "resolvePartList",
+          "resolvePartListMissing",
+          "resolvePartNotAnnot",
+          "resolveSimpleTypeParam",
+          "resolveSimpleTypeParamToNull",
+          "resolveString",
+          "resolveStringArray",
+          "resolveStringArrayWithEmptyArraySuffix",
+          "supportsParameter"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/method/annotation/SessionAttributesHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/annotation/WebArgumentResolverAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/support/CompositeUriComponentsContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/support/HandlerMethodArgumentResolverCompositeTests.java": {
+      "d": "framework/framework-test/tests/handler_method_argument_resolver_composite_tests.d",
+      "methods": {
+        "ported": [
+          "checkArgumentResolverOrder",
+          "noSuitableArgumentResolver",
+          "resolveArgument",
+          "supportsParameter"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/method/support/HandlerMethodReturnValueHandlerCompositeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/method/support/InvocableHandlerMethodTests.java": {
+      "d": "framework/framework-test/tests/invocable_handler_method_tests.d",
+      "methods": {
+        "ported": [
+          "cannotResolveArg",
+          "exceptionInResolvingArg",
+          "illegalArgumentException",
+          "invocationErrorMessage",
+          "invocationTargetException",
+          "resolveArg",
+          "resolveHandlerMethodArgToNull",
+          "resolveNoArgValue",
+          "resolveProvidedArg",
+          "resolveProvidedArgFirst"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/method/support/ModelAndViewContainerTests.java": {
+      "d": "framework/framework-test/tests/model_and_view_container_tests.d",
+      "methods": {
+        "ported": [
+          "getModel",
+          "ignoreDefaultModel",
+          "ignoreDefaultModelAndWithoutRedirectModel",
+          "redirectScenarioWithRedirectModel"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
+    },
+    "org/springframework/web/multipart/support/ByteArrayMultipartFileEditorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/multipart/support/DefaultMultipartHttpServletRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/multipart/support/RequestPartServletServerHttpRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/multipart/support/StandardMultipartHttpServletRequestTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/multipart/support/StandardServletMultipartResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/adapter/DefaultServerWebExchangeCheckNotModifiedTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/adapter/DefaultServerWebExchangeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/adapter/ForwardedHeaderTransformerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/adapter/HttpWebHandlerAdapterObservabilityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/adapter/OpenTelemetryServerRequestObservationConventionIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/adapter/WebHttpHandlerBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/handler/ExceptionHandlingWebHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/handler/FilteringWebHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/handler/ResponseStatusExceptionHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/i18n/AcceptHeaderLocaleContextResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/i18n/FixedLocaleContextResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/session/CookieWebSessionIdResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/session/DefaultWebSessionManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/session/HeaderWebSessionIdResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/session/InMemoryWebSessionStoreTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/server/session/WebSessionIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/annotation/HttpExchangeBeanRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/annotation/HttpExchangeReflectiveProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/AbstractReactorHttpExchangeAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/CookieValueArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/HttpMethodArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/HttpRequestValuesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/HttpServiceMethodTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/HttpServiceProxyFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/NamedValueArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/PathVariableArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/RequestAttributeArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/RequestBodyArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/RequestHeaderArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/RequestParamArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/RequestPartArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/UriBuilderFactoryArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/invoker/UrlArgumentResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/registry/GroupsMetadataValueDelegateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/registry/HttpServiceProxyRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/registry/HttpServiceProxyRegistryFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/registry/HttpServiceRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/service/registry/ImportHttpServiceRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/ContentCachingRequestWrapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/DefaultUriBuilderFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/DisconnectedClientHelperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/ForwardedHeaderUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/HtmlCharacterEntityReferencesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/HtmlUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/JavaScriptUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/ServletContextPropertyUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/ServletRequestPathUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/SseUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/TagUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/web/util/UriComponentsBuilderTests.java": {
       "d": "framework/web/tests/uri_components_builder_tests.d",
@@ -358,6 +1850,10 @@
       },
       "status": "ported"
     },
+    "org/springframework/web/util/UriTemplateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/web/util/UriUtilsTests.java": {
       "d": "framework/web/tests/uri_utils_tests.d",
       "methods": {
@@ -379,6 +1875,18 @@
       },
       "status": "ported"
     },
+    "org/springframework/web/util/UrlPathHelperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/WebUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/web/util/WhatWgUrlParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/web/util/pattern/PathPatternParserTests.java": {
       "d": "framework/web/tests/path_pattern_parser_tests.d",
       "methods": {
@@ -395,6 +1903,10 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/web/util/pattern/PathPatternRouteMatcherTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/web/util/pattern/PathPatternTests.java": {
       "d": "framework/web/tests/path_pattern_tests.d",

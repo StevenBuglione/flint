@@ -1,0 +1,307 @@
+{
+  "classes": {
+    "org/springframework/boot/tomcat/autoconfigure/TomcatServerPropertiesTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/server_properties_test.d",
+      "methods": {
+        "ported": [
+          "testCustomizeTomcatMaxKeepAliveRequests",
+          "testCustomizeTomcatMaxKeepAliveRequestsWithInfinite"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/tomcat/autoconfigure/TomcatWebServerFactoryCustomizerTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/web_server_test.d",
+      "methods": {
+        "ported": []
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/web/server/AbstractConfigurableWebServerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/CompressionTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/compression_test.d",
+      "methods": {
+        "ported": [
+          "defaultCompressibleMimeTypesMatchesTomcatsDefault"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/web/server/ForwardedRequestHeadersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/MimeMappingsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/SpringApplicationWebServerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/WebServerFactoryCustomizerBeanPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/WebServerSslBundleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/autoconfigure/ConditionalOnForwardedHeaderStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/autoconfigure/ForwardedHeaderStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/autoconfigure/ServerPropertiesTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/server_properties_upstream_test.d",
+      "methods": {
+        "ported": [
+          "additionalCompressionMimeTypesAreAddedToDefaults",
+          "defaultMaxHttpRequestHeaderSizeMatchesTomcatsDefault",
+          "testAddressBinding",
+          "testContextPathWithLeadingAndTrailingWhitespace",
+          "testContextPathWithLeadingAndTrailingWhitespaceAndContextWithSpace",
+          "testContextPathWithLeadingWhitespace",
+          "testContextPathWithTrailingWhitespace",
+          "testCustomizeMaxHttpRequestHeaderSize",
+          "testCustomizeMaxHttpRequestHeaderSizeUseBytesByDefault",
+          "testCustomizedMimeMapping",
+          "testDefaultMimeMapping",
+          "testPortBinding",
+          "testServerHeader",
+          "testServerHeaderDefault",
+          "testSlashOfContextPathIsDefaultValue",
+          "testTrailingSlashOfContextPathIsRemoved"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/web/server/autoconfigure/ServerPropertyAdaptersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/autoconfigure/reactive/ReactiveWebServerFactoryCustomizerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/autoconfigure/servlet/ServletWebServerFactoryCustomizerTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/servlet_web_server_factory_customizer_test.d",
+      "methods": {
+        "ported": [
+          "customLocaleCharsetMappings",
+          "customizeServletDisplayName",
+          "customizeSessionProperties",
+          "noLocaleCharsetMapping",
+          "sessionStoreDir",
+          "testCustomizeDefaultServlet",
+          "testCustomizeDisplayName",
+          "testCustomizeJsp",
+          "testCustomizeSsl",
+          "testCustomizeTomcatPort",
+          "testDefaultDisplayName",
+          "whenShutdownPropertyIsSetThenShutdownIsCustomized",
+          "withCustomMimeMappingsThenPopulatedMimeMappingsIsAdded",
+          "withNoCustomMimeMappingsThenEmptyMimeMappingsIsAdded"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/web/server/context/MissingWebServerFactoryBeanFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/context/SpringBootTestRandomPortContextCustomizerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/context/WebServerApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/context/WebServerPortFileWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/reactive/context/AnnotationConfigReactiveWebServerApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/reactive/context/ApplicationReactiveWebEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/reactive/context/ReactiveWebServerApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/CookieSameSiteSupplierTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/DocumentRootTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/StaticResourceJarsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/context/AnnotationConfigServletWebServerApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/context/ApplicationServletEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/context/MockWebEnvironmentServletComponentScanIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/context/ServletComponentScanIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/context/ServletComponentScanRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/context/ServletWebServerApplicationContextTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/servlet_web_server_application_context_test.d",
+      "methods": {
+        "ported": [
+          "ServletWebServerInitializedEventPublished",
+          "applicationIsUnreadyDuringShutdown",
+          "cannotSecondRefresh",
+          "delegatingFilterProxyRegistrationBeansSkipsTargetBeanNames",
+          "doesNotRegistersShutdownHook",
+          "doesNotReplaceExistingScopes",
+          "filterRegistrationBeansSkipsRegisteredFilters",
+          "localPortIsAvailable",
+          "missingServletWebServerFactory",
+          "multipleServletBeans",
+          "multipleServletBeansWithMainDispatcher",
+          "orderedBeanInsertedCorrectly",
+          "postProcessWebServerFactory",
+          "servletAndFilterBeans",
+          "servletContextAwareBeansAreInjected",
+          "servletContextInitializerBeans",
+          "servletContextInitializerBeansDoesNotSkipServletsAndFilters",
+          "servletContextInitializerBeansSkipsRegisteredServletsAndFilters",
+          "servletContextListenerBeans",
+          "servletRequestCanBeInjectedEarly",
+          "singleServletBean",
+          "startOnStartAfterStop",
+          "startRegistrations",
+          "stopAndDestroyOnClose",
+          "stopOnStop",
+          "tooManyWebServerFactories",
+          "unorderedServletContextInitializerBeans",
+          "webApplicationScopeIsRegistered",
+          "whenContextIsNotActiveThenCloseDoesNotChangeTheApplicationAvailability",
+          "whenContextRefreshFailedThenWebServerIsStoppedAndDestroyed",
+          "whenContextRefreshFailedThenWebServerStopFailedCatchStopException"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/web/server/servlet/context/WebFilterHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/context/WebListenerHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/context/WebServletHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/server/servlet/context/XmlServletWebServerApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/servlet/AbstractFilterRegistrationBeanTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/abstract_filter_registration_bean_tests.d",
+      "methods": {
+        "ported": []
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/web/servlet/DelegatingFilterProxyRegistrationBeanTests.java": {
+      "d": [
+        "boot/module/flint-boot-web-server/tests/delegating_filter_proxy_registration_bean_upstream_test.d",
+        "boot/module/flint-boot-web-server/tests/web_server_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "targetBeanNameMustNotBeNull"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/web/servlet/FilterRegistrationBeanTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/filter_registration_bean_test.d",
+      "methods": {
+        "ported": [
+          "constructFilterMustNotBeNull",
+          "setFilter",
+          "setFilterMustNotBeNull",
+          "startupWithOncePerRequestDefaults"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/web/servlet/ServletContextInitializerBeansTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/servlet_context_initializer_beans_test.d",
+      "methods": {
+        "ported": [
+          "classesThatImplementMultipleInterfacesAreRegisteredForAllOfThem",
+          "filterThatImplementsServletContextInitializerIsOnlyRegisteredOnce",
+          "looksForInitializerBeansOfSpecifiedType",
+          "orderedInterfaceShouldTakePrecedenceOverOrderAnnotation",
+          "servletThatImplementsServletContextInitializerIsOnlyRegisteredOnce",
+          "shouldApplyFilterRegistrationAnnotation",
+          "shouldApplyFilterRegistrationAnnotationWithDefaultDispatcherTypes",
+          "shouldApplyOrderFromBean",
+          "shouldApplyOrderFromOrderAnnotationOnBeanMethod",
+          "shouldApplyOrderFromOrderAttribute",
+          "shouldApplyServletRegistrationAnnotation",
+          "whenAnHttpSessionIdListenerBeanIsDefinedThenARegistrationBeanIsCreatedForIt"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/web/servlet/ServletRegistrationBeanTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/servlet_registration_bean_test.d",
+      "methods": {
+        "ported": [
+          "createServletMustNotBeNull",
+          "deducedName",
+          "disable",
+          "failsWithDoubleRegistration",
+          "modifyInitParameters",
+          "setMappingReplacesValue",
+          "setServletMustNotBeNull",
+          "specificName",
+          "startupWithDefaults",
+          "startupWithSpecifiedValues",
+          "withoutDefaultMappings"
+        ]
+      },
+      "status": "ported"
+    }
+  },
+  "module": "boot-web-server",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-web-server"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

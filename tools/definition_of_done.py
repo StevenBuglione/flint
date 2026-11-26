@@ -494,8 +494,11 @@ def upstream_inventory(module, root=ROOT, caches=None):
             base = cache / key
             if not base.is_dir():
                 continue
+            # A module that alone ports its upstream (Hibernate Validator, Jackson) owns tests whose packages no
+            # mapped element names (org.hibernate.validator.test...).
+            sole = sum(up == module.upstream for _, _, up, _ in ported_modules(root).values()) == 1
             keys = set()
-            for path in base.rglob('*Tests.java'):
+            for path in [*base.rglob('*Tests.java'), *base.rglob('*Test.java')]:
                 text = str(path.relative_to(base))
                 if '/src/test/java/' not in '/' + text:
                     continue
@@ -503,20 +506,54 @@ def upstream_inventory(module, root=ROOT, caches=None):
                 if module.upstream_modules and built not in module.upstream_modules:
                     continue
                 key = test_key('/' + text)
-                if owner(key[:-len('.java')], table) == module.name:
+                found = owner(key[:-len('.java')], table)
+                if found == module.name or (found is None and sole):
                     keys.add(key)
             return sorted(keys)
     return None
 
 
-def check_upstream_tests(module, record, root=ROOT, inventory=None):
+DEFERRED_BASELINE = 'policy/upstream-tests-baseline.json'
+DEFERRED_SCHEMA = 'flint.upstream-tests-baseline/1'
+PHASES = ('2', '3')
+
+
+def deferred_baseline(root=ROOT):
+    """{module: set of deferred class keys}: the ratchet (coordinator decision, 2026-11-26). A deferral is allowed only
+    for a class the seed recorded as deferred; the set only shrinks."""
+    path = root / DEFERRED_BASELINE
+    if not path.is_file():
+        return {}
+    data = json.loads(path.read_text())
+    if data.get('schema') != DEFERRED_SCHEMA:
+        raise ValueError(f'{DEFERRED_BASELINE}: "schema" must be "{DEFERRED_SCHEMA}"')
+    return {name: set(keys) for name, keys in data.get('modules', {}).items()}
+
+
+def write_deferred_baseline(baseline, root=ROOT):
+    (root / DEFERRED_BASELINE).write_text(json.dumps({
+        'schema': DEFERRED_SCHEMA,
+        'note': ('Upstream test classes each module may record as "deferred", a ratchet like policy/quality-baseline.json '
+                 '(coordinator decision, 2026-11-26): the definition of done fails on a deferred class not listed here '
+                 'and on a listed class no longer deferred, until --shrink-upstream-tests removes it. Only the seed '
+                 '(--seed-upstream-tests, the integration owner\'s) adds entries.'),
+        'modules': {name: sorted(keys) for name, keys in sorted(baseline.items()) if keys}}, indent=2) + '\n')
+
+
+def check_upstream_tests(module, record, root=ROOT, inventory=None, release=False, allowed=None):
+    """The record's problems. `allowed` is the module's deferred baseline (None: no ratchet check)."""
     if record.get('schema') != SCHEMA:
         return [f'{UPSTREAM_TESTS}: "schema" must be "{SCHEMA}"']
     messages, names = [], {}
-    for key, entry in sorted(record.get('classes', {}).items()):
+    classes = record.get('classes', {})
+    for key, entry in sorted(classes.items()):
         status = entry.get('status')
-        if status not in ('ported', 'partial', 'excluded'):
-            messages.append(f'{key}: "status" must be ported, partial or excluded, not {status!r}')
+        if status not in ('ported', 'partial', 'excluded', 'deferred'):
+            messages.append(f'{key}: "status" must be ported, partial, excluded or deferred, not {status!r}')
+            continue
+        if status == 'deferred':
+            if str(entry.get('phase')) not in PHASES:
+                messages.append(f'{key}: deferred without "phase": "2" or "3"')
             continue
         if status == 'excluded':
             if not str(entry.get('reason', '')).strip():
@@ -541,14 +578,29 @@ def check_upstream_tests(module, record, root=ROOT, inventory=None):
                 messages.append(f'{key}: skipped method {method} has no reason')
         if status == 'partial' and not methods.get('skipped'):
             messages.append(f'{key}: "partial", but "methods.skipped" lists no method with its reason')
+    deferred = sorted(k for k, e in classes.items() if e.get('status') == 'deferred')
+    if allowed is not None:
+        added = [k for k in deferred if k not in allowed]
+        if added:
+            messages.append(f'{len(added)} classes are deferred but not in {DEFERRED_BASELINE}; deferrals only '
+                            'shrink, so port each, or record it as partial or excluded with a reason:')
+            messages += ['  ' + k for k in added[:20]] + (['  ...'] if len(added) > 20 else [])
+        gone = sorted(k for k in allowed if classes.get(k, {}).get('status') != 'deferred')
+        if gone:
+            messages.append(f'{len(gone)} classes in {DEFERRED_BASELINE} are no longer deferred; shrink it: '
+                            f'python3 tools/gates.py --module {module.directory} --definition-of-done --step '
+                            'upstream-tests --shrink-upstream-tests')
+    if release and deferred:
+        messages.append(f'{len(deferred)} upstream test classes are deferred; a release ports or excludes each:')
+        messages += ['  ' + k for k in deferred[:20]] + (['  ...'] if len(deferred) > 20 else [])
     if len(messages) > 40:
         messages = messages[:40] + [f'... and {len(messages) - 40} more problems in the record']
     if inventory:
-        missing = [k for k in inventory if k not in record.get('classes', {})]
-        if missing:
-            messages.append(f'{len(missing)} upstream test classes are not in {UPSTREAM_TESTS}; port each, or record '
+        unrecorded = [k for k in inventory if k not in classes]
+        if unrecorded:
+            messages.append(f'{len(unrecorded)} upstream test classes are not in {UPSTREAM_TESTS}; port each, or record '
                             'it as partial or excluded with a reason:')
-            messages += ['  ' + k for k in missing[:20]] + (['  ...'] if len(missing) > 20 else [])
+            messages += ['  ' + k for k in unrecorded[:20]] + (['  ...'] if len(unrecorded) > 20 else [])
     return messages
 
 
@@ -558,6 +610,7 @@ def counts(record):
             'ported': sum(c.get('status') == 'ported' for c in classes),
             'partial': sum(c.get('status') == 'partial' for c in classes),
             'excluded': sum(c.get('status') == 'excluded' for c in classes),
+            'deferred': sum(c.get('status') == 'deferred' for c in classes),
             'methods_ported': sum(len(c.get('methods', {}).get('ported', [])) for c in classes),
             'methods_skipped': sum(len(c.get('methods', {}).get('skipped', {})) for c in classes)}
 
@@ -575,28 +628,95 @@ def draft(module, root=ROOT):
     return record
 
 
-def upstream_tests(module, write=False, root=ROOT, caches=None):
+def ported_elsewhere(module, root=ROOT):
+    """{key: entry} for upstream test classes another ported module's files port (framework-test ports some of web's
+    and webmvc's tests, where MockMvc lives)."""
+    found = {}
+    for name, (kind, _, upstream, meta) in sorted(ported_modules(root).items()):
+        directory = meta.get('directory')
+        if name == module.name or upstream != module.upstream or not directory or not (root / directory).is_dir():
+            continue
+        other = Module(name, kind, '', directory, [directory], [], upstream)
+        for key, entry in scan_tests(module_files(other, root), root).items():
+            found.setdefault(key, dict(entry, note=f'ported in {name}'))
+    return found
+
+
+def seed(module, inventory, phase='2', root=ROOT):
+    """Draft the record, then record every upstream test class it still lacks: as ported when another module ports
+    it, otherwise as deferred, added to the ratchet. Never changes a recorded entry. Returns the keys it deferred."""
+    record = draft(module, root)
+    elsewhere = ported_elsewhere(module, root)
+    added = []
+    for key in sorted(k for k in inventory if k not in record['classes']):
+        if key in elsewhere:
+            record['classes'][key] = elsewhere[key]
+        else:
+            record['classes'][key] = {'status': 'deferred', 'phase': phase}
+            added.append(key)
+    (root / module.directory / UPSTREAM_TESTS).write_text(json.dumps(record, indent=2, sort_keys=True) + '\n')
+    baseline = deferred_baseline(root)
+    baseline.setdefault(module.name, set()).update(added)
+    write_deferred_baseline(baseline, root)
+    return added
+
+
+def shrink(module, root=ROOT):
+    """Remove from the ratchet the module's classes that are no longer deferred; never adds one."""
+    path = root / module.directory / UPSTREAM_TESTS
+    classes = json.loads(path.read_text()).get('classes', {}) if path.is_file() else {}
+    baseline = deferred_baseline(root)
+    kept = {k for k in baseline.get(module.name, set()) if classes.get(k, {}).get('status') == 'deferred'}
+    removed = len(baseline.get(module.name, set())) - len(kept)
+    baseline[module.name] = kept
+    write_deferred_baseline(baseline, root)
+    return removed
+
+
+def test_sources_pinned(module, root=ROOT):
+    """Whether the module's upstream pins sources that include its tests: a full-source archive in api/upstreams.json
+    (the GitHub tags), or a test archive in api/upstream-tests.json. Maven -sources.jar pins hold main sources only."""
+    project, _, version = str(module.upstream).partition('@')
+    pins = json.loads((root / 'api' / 'upstreams.json').read_text())['upstreams']
+    if any(u['project'] == project and u['version'] == version and u.get('format') == 'tar.gz' for u in pins):
+        return True
+    tests = root / 'api' / 'upstream-tests.json'
+    archives = json.loads(tests.read_text()).get('archives', []) if tests.is_file() else []
+    return any(a['project'] == project and a['version'] == version for a in archives)
+
+
+def upstream_tests(module, write=False, root=ROOT, caches=None, release=False, seed_phase=None, shrink_baseline=False):
     path = root / module.directory / UPSTREAM_TESTS
     pinned = bool(module.upstream and '@' in module.upstream)
     if write and pinned:
         draft(module, root)
+    if not pinned:
+        return Result('upstream-tests', 'skip', [f'{module.kind} module with no pinned upstream: no upstream tests '
+                                                 'to record'])
+    inventory = upstream_inventory(module, root, caches)
+    sources = test_sources_pinned(module, root)
+    if seed_phase:
+        if inventory is None:
+            return Result('upstream-tests', 'error', [f'cannot seed without the upstream test inventory: '
+                                                      f'{"run `flint api fetch --tests`" if sources else "no test sources are pinned for " + module.upstream}'])
+        seed(module, inventory, seed_phase, root)
+    if shrink_baseline:
+        shrink(module, root)
     if not path.is_file():
-        if not pinned:
-            return Result('upstream-tests', 'skip', [f'{module.kind} module with no pinned upstream: no upstream tests '
-                                                     'to record'])
         return Result('upstream-tests', 'fail', [f'{module.directory}/{UPSTREAM_TESTS} is missing; every ported module '
                                                  'ports its upstream tests (AGENTS.md "Proof obligations")',
                                                  f'draft it with: python3 tools/gates.py --module {module.directory} '
                                                  '--definition-of-done --step upstream-tests --write-upstream-tests, '
                                                  'then give each exclusion and skip its reason'])
     record = json.loads(path.read_text())
-    inventory = upstream_inventory(module, root, caches)
-    messages = check_upstream_tests(module, record, root, inventory)
+    allowed = deferred_baseline(root).get(module.name, set())
+    messages = check_upstream_tests(module, record, root, inventory, release, allowed)
     details = counts(record)
-    details['inventory'] = len(inventory) if inventory is not None else 'unavailable'
+    details['inventory'] = (len(inventory) if inventory is not None
+                            else 'unavailable: fetch it' if sources else 'none: no test sources are pinned')
     if messages:
         return Result('upstream-tests', 'fail', messages, details=details)
-    if inventory is None and pinned:
+    if inventory is None and sources:
         return Result('upstream-tests', 'error', [f'the record is consistent, but there are no fetched {module.upstream} '
                                                   'sources to check it against: run `flint api fetch --tests` (the '
                                                   'cache is FLINT_CACHE or ~/.flint/cache)'], details=details)
@@ -739,7 +859,7 @@ def applications(module, run, which='auto', flint=None, root=ROOT):
 
 
 def run_all(directory, steps=STEPS, apps='auto', release=False, hold=True, flint=None, write_upstream_tests=False,
-            runner=None, root=ROOT):
+            runner=None, root=ROOT, seed_phase=None, shrink_baseline=False):
     run = runner or Runner(hold=hold, root=root)
     flint = Path(flint) if flint else root / '.flint' / 'bin' / 'flint'
     began = time.monotonic()
@@ -755,7 +875,8 @@ def run_all(directory, steps=STEPS, apps='auto', release=False, hold=True, flint
              'api': lambda: api(module, run, flint, release, root),
              'quality': lambda: quality(module, run),
              'tests': lambda: tests(module, run, json.loads(record_path.read_text()) if record_path.is_file() else None),
-             'upstream-tests': lambda: upstream_tests(module, write_upstream_tests, root),
+             'upstream-tests': lambda: upstream_tests(module, write_upstream_tests, root, release=release,
+                                                      seed_phase=seed_phase, shrink_baseline=shrink_baseline),
              'budgets': lambda: budgets(module, run),
              'apps': lambda: applications(module, run, apps, flint, root)}
     for step in steps:
@@ -808,6 +929,11 @@ def main(argv=None):
     p.add_argument('--flint', type=Path, help='the flint executable (default: .flint/bin/flint)')
     p.add_argument('--write-upstream-tests', action='store_true',
                    help='draft or extend <dir>/upstream-tests.json from the module\'s ported test files first')
+    p.add_argument('--seed-upstream-tests', nargs='?', const='2', choices=PHASES, metavar='PHASE',
+                   help='record every upstream test class the record lacks as deferred (phase 2 by default) and add '
+                        'them to policy/upstream-tests-baseline.json; never changes a recorded entry (integration owner)')
+    p.add_argument('--shrink-upstream-tests', action='store_true',
+                   help='remove from policy/upstream-tests-baseline.json the module\'s classes no longer deferred')
     p.add_argument('--json', action='store_true', help='print the report as JSON')
     a = p.parse_args(argv)
     if not a.no_hold:
@@ -818,7 +944,8 @@ def main(argv=None):
                    str(Path(__file__).resolve()), *argv, '--no-hold']
         return subprocess.run(command, cwd=ROOT).returncode
     steps =[s for s in STEPS if s == 'resolve' or not a.step or s in a.step]
-    module, results = run_all(a.module, steps, a.apps, a.release, not a.no_hold, a.flint, a.write_upstream_tests)
+    module, results = run_all(a.module, steps, a.apps, a.release, not a.no_hold, a.flint, a.write_upstream_tests,
+                              seed_phase=a.seed_upstream_tests, shrink_baseline=a.shrink_upstream_tests)
     out = report(module, results, a.module)
     if module:
         REPORT_DIR.mkdir(parents=True, exist_ok=True)

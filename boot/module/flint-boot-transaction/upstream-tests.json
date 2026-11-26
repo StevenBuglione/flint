@@ -1,0 +1,53 @@
+{
+  "classes": {
+    "org/springframework/boot/transaction/autoconfigure/ExecutionListenersTransactionManagerCustomizerTests.java": {
+      "d": "boot/module/flint-boot-transaction/tests/execution_listeners_transaction_manager_customizer_test.d",
+      "methods": {
+        "ported": []
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/transaction/autoconfigure/TransactionAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-transaction/tests/transaction_auto_configuration_upstream_test.d",
+      "methods": {
+        "ported": [
+          "transactionManagementIsEnabledWhenThereIsATransactionManager",
+          "whenAUserProvidesATransactionTemplateTheAutoConfiguredTemplateBacksOff",
+          "whenThereIsASinglePlatformTransactionManagerATransactionTemplateIsAutoConfigured",
+          "whenThereIsNoPlatformTransactionManagerNoTransactionTemplateIsAutoConfigured"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/transaction/autoconfigure/TransactionManagerCustomizationAutoConfigurationTests.java": {
+      "d": "boot/module/flint-boot-transaction/tests/transaction_manager_customization_autoconfiguration_test.d",
+      "methods": {
+        "ported": [
+          "autoConfiguredTransactionManagerCustomizersBacksOff",
+          "autoConfiguresTransactionManagerCustomizers"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/transaction/autoconfigure/TransactionManagerCustomizersTests.java": {
+      "d": "boot/module/flint-boot-transaction/tests/transaction_manager_customizers_test.d",
+      "methods": {
+        "ported": [
+          "customizeShouldCheckGeneric",
+          "customizeWithNullCustomizersShouldDoNothing"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/transaction/jta/autoconfigure/JtaAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-transaction",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-transaction"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

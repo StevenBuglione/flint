@@ -1,0 +1,1859 @@
+{
+  "classes": {
+    "org/springframework/boot/ApplicationEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ApplicationInfoPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ApplicationPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/BannerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/BeanDefinitionLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ClearCachesApplicationListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/DefaultApplicationArgumentsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/EnvironmentConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ExitCodeGeneratorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/LazyInitializationBeanFactoryPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/LazyInitializationExcludeFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/OverrideSourcesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ResourceBannerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/SimpleMainTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/SpringApplicationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/SpringApplicationBannerPrinterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/SpringApplicationNoWebTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/SpringApplicationShutdownHookTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/SpringApplicationTests.java": {
+      "d": [
+        "boot/core/flint-boot/tests/boot_tests/application_test.d",
+        "boot/core/flint-boot/tests/boot_tests/application_upstream_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "addBootstrapRegistryInitializer",
+          "addBootstrapRegistryInitializerCanRegisterBeans",
+          "addProfiles",
+          "addProfilesOrderWithProperties",
+          "additionalProfilesOrderedBeforeActiveProfiles",
+          "applicationListenerFromApplicationIsCalledWhenContextFailsRefreshAfterListenerRegistration",
+          "applicationListenerFromApplicationIsCalledWhenContextFailsRefreshBeforeListenerRegistration",
+          "applicationListenerFromContextIsCalledWhenContextFailsRefreshAfterListenerRegistration",
+          "applicationListenerFromContextIsCalledWhenContextFailsRefreshBeforeListenerRegistration",
+          "applicationReadyEventHasReadyTime",
+          "applicationRunnerFailureCausesApplicationFailedEventToBePublished",
+          "applicationRunningEventListener",
+          "applicationStartedEventHasStartedTime",
+          "bannerModeOff",
+          "bannerModeOffViaProperty",
+          "beanDefinitionOverridingCanBeEnabled",
+          "beanDefinitionOverridingIsAppliedToInitializer",
+          "beanDefinitionOverridingIsDisabledByDefault",
+          "bindsBooleanAsStringBannerModeToSpringApplication",
+          "bindsEnvironmentPrefixToSpringApplication",
+          "bindsSystemPropertyToSpringApplication",
+          "bindsYamlStyleBannerModeToSpringApplication",
+          "circularReferencesAreDisabledByDefault",
+          "circularReferencesCanBeEnabled",
+          "commandLineArgsApplyToSpringApplication",
+          "commandLinePropertySource",
+          "commandLinePropertySourceEnhancesEnvironment",
+          "commandLineRunnerFailureCausesApplicationFailedEventToBePublished",
+          "containsOption",
+          "contextRefreshedEventListener",
+          "contextUsesApplicationConversionService",
+          "contextWhenHasAddConversionServiceFalseUsesRegularConversionService",
+          "customApplicationStartupPublishStartupSteps",
+          "customApplicationStartupPublishStartupStepsWithFailure",
+          "customBanner",
+          "customBannerWithProperties",
+          "customId",
+          "defaultApplicationContext",
+          "defaultBannerShowsFlintBootVersion",
+          "defaultCommandLineArgs",
+          "defaultPropertiesShouldBeMerged",
+          "disableCommandLinePropertySource",
+          "disableLogStartupInfo",
+          "emptyCommandLinePropertySourceNotAdded",
+          "enableBannerInLogViaProperty",
+          "eventsArePublishedInExpectedOrder",
+          "exit",
+          "exitWithExplicitCode",
+          "exitWithExplicitCodeFromBean",
+          "exitWithExplicitCodeFromException",
+          "exitWithExplicitCodeFromMappedException",
+          "failureAnalysisIsReportedForBindFailure",
+          "failureInReadyEventListenerCloseApplicationContext",
+          "failureInReadyEventListenerDoesNotCausePublicationOfFailedEvent",
+          "failureInRunnerClosesContextAndRethrows",
+          "failureOnTheJvmLogsApplicationRunFailed",
+          "failureResultsInSingleStackTrace",
+          "fromAppliesProfiles",
+          "fromReturnsApplicationContext",
+          "fromRunsWithAdditionalSources",
+          "fromWithMultipleApplicationsOnlyAppliesAdditionalSourcesOnce",
+          "getApplicationArgumentsBean",
+          "getArgs",
+          "getNoNonOptionArgs",
+          "getNonOptionArgs",
+          "getOptionValues",
+          "getVersionShouldReturnVersionMatchingGradleProperties",
+          "lazyInitializationCanBeEnabled",
+          "lazyInitializationIgnoresBeansThatAreExplicitlyNotLazy",
+          "lazyInitializationIgnoresLazyInitializationExcludeFilteredBeans",
+          "lazyInitializationIsDisabledByDefault",
+          "loadSources",
+          "logsActiveProfilesWithMultipleProfiles",
+          "logsActiveProfilesWithSingleProfile",
+          "logsActiveProfilesWithoutProfileAndMultipleDefaults",
+          "logsActiveProfilesWithoutProfileAndSingleDefault",
+          "logsStartedLine",
+          "movesConfigClassPropertySourcesToEnd",
+          "nonWebApplicationConfiguredViaAPropertyHasTheCorrectTypeOfContextAndEnvironment",
+          "optionNames",
+          "profileAndProperties",
+          "propertiesAsMap",
+          "propertiesFileEnhancesEnvironment",
+          "propertiesWithRepeatSeparator",
+          "registerListener",
+          "registerListenerWithCustomMulticaster",
+          "registersArgumentsAndBannerAsSingletons",
+          "relaxedBindingShouldWorkBeforeEnvironmentIsPrepared",
+          "renderFormattedVersions",
+          "renderVersions",
+          "renderWith256Colors",
+          "renderWith256ColorsButDisabled",
+          "renderWithColors",
+          "renderWithColorsButDisabled",
+          "renderWithDefaultValues",
+          "renderWithMutation",
+          "renderWithTitle",
+          "renderWithoutFormattedVersions",
+          "renderWithoutFormattedVersionsWithDefaultValues",
+          "renderWithoutTitle",
+          "renderWithoutTitleWithDefaultValue",
+          "renderWithoutVersions",
+          "renderWithoutVersionsWithDefaultValues",
+          "run",
+          "runCommandLineRunnersAndApplicationRunners",
+          "runCommandLineRunnersAndApplicationRunnersUsingOrderOnBeanDefinitions",
+          "runCommandLineRunnersAndApplicationRunnersWithParentContext",
+          "runComponents",
+          "runnersAreCalledAfterStartedIsLoggedAndBeforeApplicationReadyEventIsPublished",
+          "runnersAreCalledOnceWhenContextIsRefreshed",
+          "runnersAreNotCalledWhenContextIsClosedImmediatelyAfterRefresh",
+          "runnersAreNotCalledWhenContextIsClosedWhileHandlingApplicationStartedEvent",
+          "settingEnvironmentPrefixViaPropertiesThrowsException",
+          "shouldUseUtf8",
+          "sourcesMustNotBeEmpty",
+          "specificApplicationContextFactory",
+          "specificApplicationContextInitializer",
+          "specificWebApplicationType",
+          "specificWebApplicationTypeViaProperty",
+          "startedFormat",
+          "startingFormat",
+          "startingFormatWhenVersionIsNotAvailable",
+          "triggersConfigFileApplicationListenerBeforeBinding",
+          "withCallableHookRunsWithHook",
+          "withHookWhenHookThrowsAbandonedRunExceptionAbandonsRun",
+          "withRunnableHookRunsWithHook"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/SpringBootConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/SpringBootExceptionHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/SpringBootVersionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/StartupInfoLoggerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/admin/SpringApplicationAdminMXBeanRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ansi/Ansi8BitColorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ansi/AnsiOutputTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ansi/AnsiPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/availability/ApplicationAvailabilityBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/availability/AvailabilityChangeEventTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/bootstrap/DefaultBootstrapContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/builder/SpringApplicationBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/cloud/CloudFoundryVcapEnvironmentPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/cloud/CloudPlatformTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/ApplicationPidFileWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/ConfigurationWarningsApplicationContextInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/ContextIdApplicationContextInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/FileEncodingApplicationListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/TypeExcludeFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/annotation/ConfigurationsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/annotation/ImportCandidatesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/annotation/UserConfigurationsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataActivationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataEnvironmentContributorPlaceholdersResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataEnvironmentContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataEnvironmentContributorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataEnvironmentPostProcessorBootstrapContextIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataEnvironmentPostProcessorImportCombinedWithProfileSpecificIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataEnvironmentPostProcessorIntegrationTests.java": {
+      "d": "boot/core/flint-boot/tests/boot_tests/config_data_test.d",
+      "methods": {
+        "ported": [
+          "loadWhenCustomDefaultProfileAndActiveFromPreviousSourceDoesNotActivateDefault",
+          "loadWhenHasConfigLocationAsFile",
+          "loadWhenHasRelativeConfigLocationUsesFileLocation",
+          "runLoadsApplicationPropertiesOnClasspath",
+          "runLoadsApplicationYamlOnClasspath",
+          "runLoadsFileWithCustomName",
+          "runWhenConfigLocationHasNonOptionalMissingFileDirectoryThrowsResourceNotFoundException",
+          "runWhenConfigLocationHasOptionalMissingDirectoryContinuesToLoad",
+          "runWhenConfigLocationHasUnknownFileExtensionFailsFast",
+          "runWhenDuplicateProfileSetProgrammaticallyAndViaPropertyLoadsWithProfiles",
+          "runWhenHasActiveProfilesFromDefaultPropertiesAndFileLoadsWithActiveProfilesFromFileTakingPrecedence",
+          "runWhenHasCustomDefaultProfileLoadsDefaultProfileFile",
+          "runWhenHasDefaultPropertiesIncludesDefaultPropertiesLast",
+          "runWhenHasDefaultPropertiesWithConfigNameLoadsExpectedProperties",
+          "runWhenHasLocalFileLoadsWithLocalFileTakingPrecedenceOverClasspath",
+          "runWhenHasSystemPropertyLoadsWithSystemPropertyTakingPrecedence",
+          "runWhenNoActiveProfilesLoadsDefaultProfileFile",
+          "runWhenOptionalWildcardDirectoryHasNoSubdirectoriesDoesNotThrow",
+          "runWhenProfileActivatedViaSystemEnvironmentVariableWithPrefix",
+          "runWhenProfilesActivatedViaBracketNotationSetsProfiles",
+          "runWhenProgrammaticallySetProfilesLoadsWithSetProfilesTakePrecedenceOverDefaultProfile",
+          "runWhenTwoProfilesSetProgrammaticallyLoadsWithPreservedProfileOrder",
+          "runWhenUsingInvalidPropertyThrowsException"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/context/config/ConfigDataEnvironmentPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataEnvironmentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataImporterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataLoadersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataLocationBindHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataLocationNotFoundExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataLocationResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataLocationResolversTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataLocationRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataLocationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataNotFoundFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataPropertiesRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataResourceNotFoundExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigDataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigTreeConfigDataLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigTreeConfigDataLocationResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ConfigTreeConfigDataResourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/FileHintTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/InactiveConfigDataAccessExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/InvalidConfigDataPropertyExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/LocationResourceLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ProfilesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/ProfilesValidatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/StandardConfigDataLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/StandardConfigDataLocationResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/StandardConfigDataResourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/SystemEnvironmentConfigDataLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/SystemEnvironmentConfigDataLocationResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/SystemEnvironmentConfigDataResourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/config/UnsupportedConfigDataLocationExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/event/EventPublishingRunListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/logging/LoggingApplicationListenerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/logging/LoggingApplicationListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/metrics/buffering/BufferingApplicationStartupTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesBeanFactoryInitializationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesBeanRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesBeanRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesBindExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesBindHandlerAdvisorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesCharSequenceToObjectConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesScanRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesScanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesTestBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConfigurationPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/ConversionServiceDeducerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/EnableConfigurationPropertiesRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/IncompatibleConfigurationFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/NotConstructorBoundInjectionFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/PropertyMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/PropertySourcesDeducerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/ArrayBinderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/BackCompatibilityBinderIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/BindConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/BindResultTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/BindableRuntimeHintsRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/BindableTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/BinderTests.java": {
+      "d": "boot/core/flint-boot/tests/boot_tests/binder_test.d",
+      "methods": {
+        "ported": [
+          "bindOrCreateWhenBindSuccessfulShouldReturnBoundValue",
+          "bindOrCreateWhenUnboundShouldReturnCreatedValue",
+          "bindOrCreateWithNestedShouldReturnCreatedValue",
+          "bindRenamedPropertyToClassBean",
+          "bindToClassShouldBindNested",
+          "bindToClassShouldCreateBoundBean",
+          "bindToClassShouldLeaveDefaults",
+          "bindToClassWhenHasNoPrefixShouldCreateBoundBean",
+          "bindToClassWhenPropertiesMissingShouldReturnUnbound",
+          "bindToClassWhenPropertyCannotBeConvertedShouldThrowException",
+          "bindToExistingInstanceShouldLeaveDefaults",
+          "bindToInstanceShouldBindToInstance",
+          "bindToInstanceWhenNoNestedShouldLeaveNestedAsNull",
+          "bindToInstanceWithNoPropertiesShouldReturnUnbound",
+          "bindToJavaBeanShouldReturnPopulatedBean",
+          "bindToJavaBeanWhenNonIterableShouldReturnPopulatedBean",
+          "bindToValueShouldReturnConvertedPropertyValue",
+          "bindToValueShouldReturnPropertyValue",
+          "bindToValueShouldReturnPropertyValueFromSecondSource",
+          "bindToValueWhenMultipleCandidatesShouldReturnFirst",
+          "bindToValueWhenPropertyIsMissingShouldReturnUnbound",
+          "bindToValueWithMissingPlaceholderShouldResolveToValueWithPlaceholder",
+          "bindToValueWithPlaceholdersShouldResolve",
+          "bindUsesConsistentPropertyOrder",
+          "bindWhenHasMalformedDateShouldThrowException",
+          "bindWithEmptyPrefixShouldIgnorePropertiesWithEmptyName",
+          "detectAndParseWhenBadFormatShouldThrowException",
+          "detectAndParseWhenIsoShouldReturnDuration",
+          "detectAndParseWhenSimpleShouldReturnDuration",
+          "getWhenHasNoValueShouldThrowException",
+          "getWhenHasValueShouldReturnValue",
+          "ifBoundWhenHasNoValueShouldNotCallConsumer",
+          "ifBoundWhenHasValueShouldCallConsumer",
+          "isBoundWhenHasNoValueShouldFalse",
+          "isBoundWhenHasValueShouldReturnTrue",
+          "mapWhenHasNoValueShouldNotCallMapper",
+          "mapWhenHasValueShouldCallMapper",
+          "orElseGetWhenHasValueNoShouldReturnOther",
+          "orElseGetWhenHasValueShouldReturnValue",
+          "orElseWhenHasValueNoShouldReturnOther",
+          "orElseWhenHasValueShouldReturnValue",
+          "resolveIfPlaceholderAbsentAndNoDefaultUsesPlaceholder",
+          "resolveIfPlaceholderAbsentUsesDefault",
+          "resolveIfPlaceholderPresentResolvesProperty",
+          "toDashedCaseConvertsValue",
+          "toDashedFormWhenContainsIndexedAddsNoDashToIndex"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/context/properties/bind/BoundPropertiesTrackingBindHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/CollectionBinderTests.java": {
+      "d": "boot/core/flint-boot/tests/boot_tests/collection_binder_test.d",
+      "methods": {
+        "ported": [
+          "bindToArrayWhenHasSpacesShouldTrim",
+          "bindToBeanWithNestedCollectionShouldPopulateCollection",
+          "bindToCollectionShouldRespectCollectionType",
+          "bindToCollectionShouldReturnPopulatedCollection",
+          "bindToCollectionWhenCommaListAndIndexedShouldOnlyUseFirst",
+          "bindToCollectionWhenCommaListShouldReturnPopulatedCollection",
+          "bindToCollectionWhenCommaListWithPlaceholdersShouldReturnPopulatedCollection",
+          "bindToCollectionWhenEmptyStringShouldReturnEmptyCollection",
+          "bindToCollectionWhenHasExistingCollectionShouldReplaceAllContents",
+          "bindToCollectionWhenIndexedAndCommaListShouldOnlyUseFirst",
+          "bindToCollectionWhenMultipleSourceShouldOnlyUseFirst",
+          "bindToCollectionWhenNoValueShouldReturnUnbound",
+          "bindToCollectionWhenNotInOrderShouldReturnPopulatedCollection",
+          "bindToListShouldAllowDuplicateValues",
+          "bindToMapShouldBeGreedyForStrings",
+          "bindToMapShouldBindToMapValue",
+          "bindToMapShouldConvertKey",
+          "bindToMapShouldConvertMapValue",
+          "bindToMapShouldReturnPopulatedMap",
+          "bindToMapWhenEmptyStringShouldReturnEmptyMap",
+          "bindToMapWhenHasExistingMapShouldReplaceOnlyNewContents",
+          "bindToMapWhenMultipleCandidateShouldBindFirst",
+          "bindToMapWhenNoValueShouldReturnUnbound",
+          "bindToNonScalarCollectionShouldReturnPopulatedCollection",
+          "bindToPropertiesShouldBeEquivalentToMapOfStringString",
+          "bindingWithSquareBracketMap"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/context/properties/bind/DataObjectPropertyNameTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/DefaultBindConstructorProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/JavaBeanBinderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/MapBinderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/PropertySourcesPlaceholdersResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/ValueObjectBinderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/handler/IgnoreErrorsBindHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/handler/IgnoreTopLevelConverterNotFoundBindHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/handler/NoUnboundElementsBindHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/test/PackagePrivateBeanBindingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/validation/BindValidationExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/validation/OriginTrackedFieldErrorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/validation/ValidationBindHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/bind/validation/ValidationErrorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/AbstractPropertyMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/AliasedConfigurationPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/AliasedIterableConfigurationPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/CachingConfigurationPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertyCachingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertyNameAliasesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertyNameTests.java": {
+      "d": "boot/core/flint-boot/tests/boot_tests/configuration_property_name_test.d",
+      "methods": {
+        "ported": [
+          "adaptShouldCreateName",
+          "adaptShouldStripInvalidChars",
+          "adaptShouldSupportIndexedElements",
+          "adaptShouldSupportMixedCase",
+          "adaptShouldSupportUnderscore",
+          "adaptShouldUseElementValueProcessor",
+          "adaptUnderscoreShouldReturnEmpty",
+          "adaptWhenElementValueProcessorIsNullShouldAdapt",
+          "adaptWhenNameEndsWithOpenBracketShouldNotAddEmptyElement",
+          "adaptWhenNameIsNullShouldThrowException",
+          "adaptWhenNameIsOnlyAnOpenBracketShouldReturnEmpty",
+          "appendConfigurationPropertyNameShouldReturnAppendedName",
+          "appendConfigurationPropertyNameWhenNullShouldReturnName",
+          "appendWhenElementNameIsNotValidShouldThrowException",
+          "appendWhenElementNameIsNullShouldReturnName",
+          "appendWhenElementNameMultiDotShouldAppend",
+          "appendWhenIndexedShouldAppendWithBrackets",
+          "appendWhenNotIndexedShouldAppendWithDot",
+          "chopWhenEqualToSizeShouldReturnExisting",
+          "chopWhenGreaterThanSizeShouldReturnExisting",
+          "chopWhenLessThenSizeShouldReturnChopped",
+          "compareDifferentLengthsShouldSortNames",
+          "compareShouldSortNames",
+          "equalsAndHashCode",
+          "equalsAndHashCodeAfterOperations",
+          "equalsSymmetricWhenNameMatchesDueToIgnoredTrailingDashes",
+          "equalsWhenAdaptedNameMatchesDueToRemovalOfTrailingNonUniformCharacters",
+          "equalsWhenNameStartsTheSameUsingDashedCompare",
+          "equalsWhenStartsWith",
+          "equalsWhenStartsWithOfAdaptedName",
+          "equalsWhenStartsWithOfAdaptedNameOfIllegalChars",
+          "getElementInOriginalFormShouldReturnElement",
+          "getElementInUniformFormShouldNotIncludeDashes",
+          "getElementInUniformFormShouldReturnElement",
+          "getElementShouldNotIncludeAngleBrackets",
+          "getLastElementShouldGetLastElement",
+          "getLastElementWhenEmptyShouldReturnEmptyString",
+          "getNumberOfElementsShouldReturnNumberOfElement",
+          "getParentShouldReturnParent",
+          "getParentWhenEmptyShouldReturnEmpty",
+          "hasIndexedElementWhenHasIndexedElementReturnsTrue",
+          "hasIndexedElementWhenHasNoIndexedElementReturnsFalse",
+          "isAncestorOfWhenGrandparentShouldReturnTrue",
+          "isAncestorOfWhenParentShouldReturnTrue",
+          "isAncestorOfWhenRootShouldReturnTrue",
+          "isAncestorOfWhenSameShouldReturnFalse",
+          "isEmptyWhenEmptyShouldReturnTrue",
+          "isEmptyWhenNotEmptyShouldReturnFalse",
+          "isLastElementIndexedWhenIndexedShouldReturnTrue",
+          "isLastElementIndexedWhenNotIndexedShouldReturnFalse",
+          "isParentOfWhenGrandparentShouldReturnFalse",
+          "isParentOfWhenParentShouldReturnTrue",
+          "isParentOfWhenRootReturnTrue",
+          "isParentOfWhenSameShouldReturnFalse",
+          "isValidWhenNotValidShouldReturnFalse",
+          "isValidWhenValidShouldReturnTrue",
+          "ofIfValidWhenNameIsNotValidReturnsNull",
+          "ofIfValidWhenNameIsValidReturnsName",
+          "ofNameShouldNotBeNull",
+          "ofNameShouldNotContainInvalidChars",
+          "ofNameShouldNotContainUppercase",
+          "ofNameShouldNotEndWithDot",
+          "ofNameShouldNotStartWithDash",
+          "ofNameShouldNotStartWithDot",
+          "ofNameWhenDotAndAssociative",
+          "ofNameWhenDotOnAssociative",
+          "ofNameWhenDoubleDotAndAssociative",
+          "ofNameWhenDoubleRunOnAndAssociative",
+          "ofNameWhenMissingCloseBracket",
+          "ofNameWhenMissingCloseBracketAtEndOfName",
+          "ofNameWhenMissingOpenBracket",
+          "ofNameWhenMultipleMismatchedBrackets",
+          "ofNameWhenNestedBrackets",
+          "ofNameWhenOnlyMissingCloseBracket",
+          "ofNameWhenRunOnAssociative",
+          "ofNameWhenSimple",
+          "ofNameWhenStartsWithNumber",
+          "ofNameWithUppercaseInAssociativeElement",
+          "ofNameWithWhitespaceInAssociativeElement",
+          "ofNameWithWhitespaceInName",
+          "ofWhenNameIsEmptyShouldReturnEmptyName",
+          "subNameOfAdaptedNameWhenOffsetLessThanSizeShouldReturnSubName",
+          "subNameOfAdaptedNameWithValueProcessorWhenOffsetLessThanSizeShouldReturnSubName",
+          "subNameWhenOffsetEqualToSizeShouldReturnEmpty",
+          "subNameWhenOffsetLessThanSizeShouldReturnSubName",
+          "subNameWhenOffsetMoreThanSizeShouldReturnEmpty",
+          "subNameWhenOffsetNegativeShouldThrowException",
+          "subNameWhenOffsetZeroShouldReturnName",
+          "toStringFromOfShouldBeLowerCaseDashed",
+          "toStringShouldBeLowerCaseDashed"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertySourcesCachingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertySourcesPropertyResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertySourcesPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertySourcesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertyStateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/ConfigurationPropertyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/DefaultPropertyMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/FilteredConfigurationPropertiesSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/FilteredIterableConfigurationPropertiesSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/MapConfigurationPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/MutuallyExclusiveConfigurationPropertiesExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/PrefixedConfigurationPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/PrefixedIterableConfigurationPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/SoftReferenceConfigurationPropertyCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/SpringConfigurationPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/SpringConfigurationPropertySourcesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/SpringIterableConfigurationPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/SystemEnvironmentPropertyMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/context/properties/source/UnboundElementsSourceFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/ApplicationConversionServiceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/ArrayToDelimitedStringConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/CharArrayFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/CharSequenceToObjectConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/CollectionToDelimitedStringConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/ConversionServiceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/DelimitedStringToArrayConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/DelimitedStringToCollectionConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/DurationStyleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/DurationToNumberConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/DurationToStringConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/InetAddressFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/InputStreamSourceToByteArrayConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/IsoOffsetFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/LenientBooleanToEnumConverterFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/LenientStringToEnumConverterFactoryTests.java": {
+      "d": "boot/core/flint-boot/tests/boot_tests/enum_binding_test.d",
+      "methods": {
+        "ported": [
+          "bindExceptionForUnknownValueInEnumListsValidValuesInAction",
+          "convertFromStringToEnumWhenExactMatchShouldConvertValue",
+          "convertFromStringToEnumWhenFuzzyMatchShouldConvertValue",
+          "convertFromStringToEnumWhenYamlBooleanShouldConvertValue"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/convert/NumberToDataSizeConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/NumberToDurationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/NumberToPeriodConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/PeriodStyleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/PeriodToStringConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/StringToDataSizeConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/StringToDurationConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/StringToFileConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/convert/StringToPeriodConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/AbstractFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/FailureAnalyzersIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/FailureAnalyzersTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/AotInitializerNotFoundFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/BeanCurrentlyInCreationFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/BeanDefinitionOverrideFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/BeanNotOfRequiredTypeFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/BindFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/BindValidationFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/InvalidConfigurationPropertyNameFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/InvalidConfigurationPropertyValueFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/JakartaApiValidationExceptionFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/MissingParameterNamesFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/MutuallyExclusiveConfigurationPropertiesFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/NoSuchMethodFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/NoUniqueBeanDefinitionFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/PatternParseFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/diagnostics/analyzer/UnboundConfigurationPropertyFailureAnalyzerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/env/ConfigTreePropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/env/DefaultPropertiesPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/env/EnvironmentPostProcessorsFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/env/NoSnakeYamlPropertySourceLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/env/OriginTrackedMapPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/env/OriginTrackedPropertiesLoaderTests.java": {
+      "d": "boot/core/flint-boot/tests/boot_tests/origin_tracked_properties_loader_test.d",
+      "methods": {
+        "ported": [
+          "existingCommentsAreNotTreatedAsMultiDoc",
+          "getCommentedOutPropertyShouldBeNull",
+          "getEscapedProperty",
+          "getImmediateMultiline",
+          "getListProperty",
+          "getMalformedUnicodeProperty",
+          "getMultiline",
+          "getPropertyAfterPoundCharacter",
+          "getPropertyWithBackslashEscaped",
+          "getPropertyWithBackslashEscapedInValue",
+          "getPropertyWithBang",
+          "getPropertyWithCarriageReturn",
+          "getPropertyWithEmptyValue",
+          "getPropertyWithEscapedCommentPrefixCharacter",
+          "getPropertyWithEscapedTrailingSpace",
+          "getPropertyWithFormFeed",
+          "getPropertyWithISO88591Character",
+          "getPropertyWithMultilineImmediateBang",
+          "getPropertyWithNewLine",
+          "getPropertyWithSeparatorInValue",
+          "getPropertyWithSeparatorSurroundedBySpaces",
+          "getPropertyWithSpaceSeparator",
+          "getPropertyWithTab",
+          "getPropertyWithTrailingSpace",
+          "getPropertyWithValueComment",
+          "getPropertyWithWhiteSpace",
+          "getPropertyWithWhitespaceAfterKey",
+          "getSimpleProperty",
+          "getSimplePropertyWithColonSeparator",
+          "getUnicodeProperty",
+          "loadWhenCommentEndsWithBackslashLoadsFollowingProperties",
+          "loadWhenCommentWithExclamationPrefixEndsWithBackslashLoadsFollowingProperties",
+          "loadWhenDocumentSeparatorEndsWithBackslashLoadsSingleDocument",
+          "loadWhenMultiDocumentSeparatorPrefixDifferentFromCommentPrefixLoadsMultiDoc",
+          "loadWhenMultiDocumentWithExclamationPrefixAndLeadingWhitespaceLoadsSingleDoc",
+          "loadWhenMultiDocumentWithExclamationPrefixAndTrailingCharsLoadsSingleDoc",
+          "loadWhenMultiDocumentWithExclamationPrefixAndTrailingWhitespaceLoadsMultiDoc",
+          "loadWhenMultiDocumentWithExclamationPrefixAndWithoutWhitespaceLoadsMultiDoc",
+          "loadWhenMultiDocumentWithPoundPrefixAndLeadingWhitespaceLoadsSingleDoc",
+          "loadWhenMultiDocumentWithPoundPrefixAndTrailingCharsLoadsSingleDoc",
+          "loadWhenMultiDocumentWithPoundPrefixAndTrailingWhitespaceLoadsMultiDoc",
+          "loadWhenMultiDocumentWithPoundPrefixAndWithoutWhitespaceLoadsMultiDoc",
+          "loadWhenMultiDocumentWithTrailingWhitespaceAndIndentedNextLineLoadsFollowingProperties",
+          "loadWhenMultiDocumentWithTrailingWhitespaceTracksLocationOfFollowingProperties",
+          "shouldRespectEncoding"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/env/OriginTrackedYamlLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/env/PropertiesPropertySourceLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/env/RandomValuePropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/env/YamlPropertySourceLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/info/BuildPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/info/GitPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/info/InfoPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/info/JavaInfoTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/info/OsInfoTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/info/ProcessInfoTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/info/SslInfoTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/io/ApplicationResourceLoaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/io/Base64ProtocolResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/io/ProtocolResolverApplicationContextInitializerIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/io/ProtocolResolverApplicationContextInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/json/AbstractJsonParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/json/AppendableByteArrayTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/json/BasicJsonParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/json/GsonJsonParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/json/JacksonJsonParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/json/JsonValueWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/json/JsonWriterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/json/WritableJsonTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/AbstractLoggingSystemTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/CorrelationIdFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/DeferredLogFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/DeferredLogTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/DeferredLogsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/DelegatingLoggingSystemFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/LogFileTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/LogLevelTests.java": {
+      "d": "boot/core/flint-boot/tests/boot_tests/log_level_test.d",
+      "methods": {
+        "ported": [
+          "logWhenDebugLogsAtDebug",
+          "logWhenErrorLogsAtError",
+          "logWhenFatalLogsAtFatal",
+          "logWhenInfoLogsAtInfo",
+          "logWhenOffDoesNotLog",
+          "logWhenTraceLogsAtTrace",
+          "logWhenWarnLogsAtWarn"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/logging/LogbackAndLog4J2ExcludedLoggingSystemTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/LoggerConfigurationComparatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/LoggerConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/LoggerGroupsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/LoggingSystemPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/LoggingSystemTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/StandardStackTracePrinterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/java/JavaLoggingSystemTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/AbstractStructuredLoggingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/ColorConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/CorrelationIdConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/ElasticCommonSchemaStructuredLogFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/EnclosedInSquareBracketsConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/ExtendedWhitespaceThrowablePatternConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/ExtractorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/GraylogExtendedLogFormatStructuredLogFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/Log4J2LoggingSystemTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/Log4J2RuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/Log4j2FileXmlTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/Log4j2LoggingSystemPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/Log4j2XmlTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/LogstashStructuredLogFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/SpringBootPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/SpringEnvironmentLookupTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/SpringEnvironmentPropertySourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/SpringProfileArbiterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/StructuredLogLayoutTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/log4j2/WhitespaceThrowablePatternConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/AbstractStructuredLoggingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/ColorConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/CorrelationIdConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/DefaultLogbackConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/ElasticCommonSchemaStructuredLogFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/EnclosedInSquareBracketsConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/ExtendedWhitespaceThrowableProxyConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/ExtractorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/GraylogExtendedLogFormatStructuredLogFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/LogbackConfigurationAotContributionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/LogbackConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/LogbackLoggingSystemParallelInitializationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/LogbackLoggingSystemPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/LogbackLoggingSystemTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/LogbackRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/LogstashStructuredLogFormatterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/RootLogLevelConfiguratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/SpringBootJoranConfiguratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/SpringProfileModelHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/StructuredLogEncoderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/SystemStatusListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/logback/WhitespaceThrowableProxyConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/structured/CommonStructuredLogFormatTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/structured/ContextPairsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/structured/ElasticCommonSchemaPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/structured/GraylogExtendedLogFormatPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/structured/StructuredLogFormatterFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/structured/StructuredLoggingJsonPropertiesBeanFactoryInitializationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/structured/StructuredLoggingJsonPropertiesJsonMembersCustomizerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/logging/structured/StructuredLoggingJsonPropertiesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/origin/JarUriTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/origin/OriginLookupTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/origin/OriginTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/origin/OriginTrackedResourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/origin/OriginTrackedValueTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/origin/PropertySourceOriginTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/origin/SystemEnvironmentOriginTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/origin/TextResourceOriginTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/retry/RetryPolicySettingsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/AliasKeyManagerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/DefaultSslBundleRegistryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/DefaultSslManagerBundleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/FixedTrustManagerFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/NoSuchSslBundleExceptionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/SslBundleKeyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/SslBundleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/SslManagerBundleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/SslOptionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/SslStoreBundleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/jks/JksSslStoreBundleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/pem/LoadedPemSslStoreTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/pem/PemCertificateParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/pem/PemContentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/pem/PemPrivateKeyParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/pem/PemSslStoreBundleTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/ssl/pem/PemSslStoreTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/support/AnsiOutputApplicationListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/support/EnvironmentPostProcessorApplicationListenerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/support/RandomValuePropertySourceEnvironmentPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/support/ReflectionEnvironmentPostProcessorsFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/support/SpringApplicationJsonEnvironmentPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/support/SystemEnvironmentPropertySourceEnvironmentPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/system/ApplicationHomeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/system/ApplicationPidTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/system/ApplicationTempTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/system/JavaVersionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/task/SimpleAsyncTaskExecutorBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/task/SimpleAsyncTaskSchedulerBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/task/ThreadPoolTaskExecutorBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/task/ThreadPoolTaskSchedulerBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/util/InstantiatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/util/LambdaSafeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/context/reactive/FilteredReactiveWebContextResourceFilePathResolverIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/context/reactive/GenericReactiveWebApplicationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/context/servlet/ServletContextResourceFilePathResolverIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/error/ErrorAttributesOptionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/error/ErrorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/servlet/AbstractFilterRegistrationBeanTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/abstract_filter_registration_bean_tests.d",
+      "methods": {
+        "ported": []
+      },
+      "note": "ported in boot-web-server",
+      "status": "ported"
+    },
+    "org/springframework/boot/web/servlet/DelegatingFilterProxyRegistrationBeanTests.java": {
+      "d": [
+        "boot/module/flint-boot-web-server/tests/delegating_filter_proxy_registration_bean_upstream_test.d",
+        "boot/module/flint-boot-web-server/tests/web_server_test.d"
+      ],
+      "methods": {
+        "ported": [
+          "targetBeanNameMustNotBeNull"
+        ]
+      },
+      "note": "ported in boot-web-server",
+      "status": "ported"
+    },
+    "org/springframework/boot/web/servlet/DynamicRegistrationBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/servlet/FilterRegistrationBeanTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/filter_registration_bean_test.d",
+      "methods": {
+        "ported": [
+          "constructFilterMustNotBeNull",
+          "setFilter",
+          "setFilterMustNotBeNull",
+          "startupWithOncePerRequestDefaults"
+        ]
+      },
+      "note": "ported in boot-web-server",
+      "status": "ported"
+    },
+    "org/springframework/boot/web/servlet/FilterRegistrationIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/servlet/NoSpringWebFilterRegistrationBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/servlet/ServletContextInitializerBeansTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/servlet_context_initializer_beans_test.d",
+      "methods": {
+        "ported": [
+          "classesThatImplementMultipleInterfacesAreRegisteredForAllOfThem",
+          "filterThatImplementsServletContextInitializerIsOnlyRegisteredOnce",
+          "looksForInitializerBeansOfSpecifiedType",
+          "orderedInterfaceShouldTakePrecedenceOverOrderAnnotation",
+          "servletThatImplementsServletContextInitializerIsOnlyRegisteredOnce",
+          "shouldApplyFilterRegistrationAnnotation",
+          "shouldApplyFilterRegistrationAnnotationWithDefaultDispatcherTypes",
+          "shouldApplyOrderFromBean",
+          "shouldApplyOrderFromOrderAnnotationOnBeanMethod",
+          "shouldApplyOrderFromOrderAttribute",
+          "shouldApplyServletRegistrationAnnotation",
+          "whenAnHttpSessionIdListenerBeanIsDefinedThenARegistrationBeanIsCreatedForIt"
+        ]
+      },
+      "note": "ported in boot-web-server",
+      "status": "ported"
+    },
+    "org/springframework/boot/web/servlet/ServletListenerRegistrationBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/servlet/ServletRegistrationBeanTests.java": {
+      "d": "boot/module/flint-boot-web-server/tests/servlet_registration_bean_test.d",
+      "methods": {
+        "ported": [
+          "createServletMustNotBeNull",
+          "deducedName",
+          "disable",
+          "failsWithDoubleRegistration",
+          "modifyInitParameters",
+          "setMappingReplacesValue",
+          "setServletMustNotBeNull",
+          "specificName",
+          "startupWithDefaults",
+          "startupWithSpecifiedValues",
+          "withoutDefaultMappings"
+        ]
+      },
+      "note": "ported in boot-web-server",
+      "status": "ported"
+    },
+    "org/springframework/boot/web/servlet/support/ErrorPageFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/servlet/support/ServletContextApplicationContextInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/web/servlet/support/SpringBootServletInitializerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-core",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-core"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

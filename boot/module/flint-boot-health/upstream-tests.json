@@ -1,0 +1,277 @@
+{
+  "classes": {
+    "org/springframework/boot/health/actuate/endpoint/AdditionalHealthEndpointPathTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/CompositeHealthDescriptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/HealthEndpointGroupsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/HealthEndpointSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/HealthEndpointTests.java": {
+      "d": "boot/module/flint-boot-health/tests/health_endpoint_test.d",
+      "methods": {
+        "ported": []
+      },
+      "status": "ported"
+    },
+    "org/springframework/boot/health/actuate/endpoint/HealthEndpointWebExtensionRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/HealthEndpointWebExtensionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/HttpCodeStatusMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/IndicatedHealthDescriptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/ReactiveHealthEndpointWebExtensionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/ReactiveHealthIndicatorImplementationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/SimpleHttpCodeStatusMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/SimpleStatusAggregatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/StatusAggregatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/actuate/endpoint/SystemHealthDescriptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/application/AvailabilityStateHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/application/DiskSpaceHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/application/LivenessStateHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/application/ReadinessStateHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/application/SslHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/actuate/endpoint/AutoConfiguredHealthEndpointGroupTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/actuate/endpoint/AutoConfiguredHealthEndpointGroupsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/actuate/endpoint/AvailabilityProbesAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/actuate/endpoint/AvailabilityProbesHealthEndpointGroupTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/actuate/endpoint/AvailabilityProbesHealthEndpointGroupsPostProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/actuate/endpoint/AvailabilityProbesHealthEndpointGroupsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/actuate/endpoint/DelegatingAvailabilityProbesHealthEndpointGroupTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/actuate/endpoint/HealthEndpointAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/application/AvailabilityHealthContributorAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/application/DiskSpaceHealthContributorAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/application/SslHealthContributorAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/contributor/AbstractCompositeHealthContributorConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/contributor/CompositeHealthContributorConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/contributor/CompositeReactiveHealthContributorConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/contributor/ConditionalOnEnabledHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/contributor/HealthContributorAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/contributor/HealthContributorMembershipTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/contributor/HealthContributorMembershipValidatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/registry/HealthContributorNameGeneratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/autoconfigure/registry/HealthContributorRegistryAutoConfigurationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/AbstractHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/AbstractReactiveHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/CompositeHealthContributorAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/CompositeHealthContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/CompositeHealthContributorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/CompositeReactiveHealthContributorAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/CompositeReactiveHealthContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/CompositeReactiveHealthContributorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/HealthContributorsAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/HealthContributorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/HealthIndicatorAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/HealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/HealthTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/MapCompositeHealthContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/MapCompositeReactiveHealthContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/MapCompositeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/PingHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/ReactiveHealthContributorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/ReactiveHealthContributorsAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/ReactiveHealthContributorsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/ReactiveHealthIndicatorAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/ReactiveHealthIndicatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/contributor/StatusTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/registry/AbstractHealthContributorRegistryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/registry/DefaultHealthContributorRegistryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/health/registry/DefaultReactiveHealthContributorRegistryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "boot-health",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":boot-health"
+  ],
+  "upstream": "spring-boot@v4.2.0"
+}

@@ -1,5 +1,17 @@
 {
   "classes": {
+    "org/springframework/jdbc/config/InitializeDatabaseIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/config/JdbcNamespaceIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/core/AbstractRowMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/jdbc/core/BeanPropertyRowMapperTests.java": {
       "d": "framework/jdbc/tests/bean_property_row_mapper_tests.d",
       "methods": {
@@ -36,6 +48,10 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/jdbc/core/JdbcTemplateQueryTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/jdbc/core/JdbcTemplateTests.java": {
       "d": [
@@ -113,6 +129,10 @@
       },
       "status": "ported"
     },
+    "org/springframework/jdbc/core/SimplePropertyRowMapperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/jdbc/core/SingleColumnRowMapperTests.java": {
       "d": "framework/jdbc/tests/single_column_row_mapper_tests.d",
       "methods": {
@@ -157,6 +177,10 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/jdbc/core/metadata/GenericCallMetaDataProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/jdbc/core/namedparam/BeanPropertySqlParameterSourceTests.java": {
       "d": "framework/jdbc/tests/bean_property_sql_parameter_source_tests.d",
@@ -221,6 +245,10 @@
       },
       "status": "ported"
     },
+    "org/springframework/jdbc/core/namedparam/NamedParameterQueryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/jdbc/core/namedparam/NamedParameterUtilsTests.java": {
       "d": "framework/jdbc/tests/named_parameters.d",
       "methods": {
@@ -243,6 +271,10 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/jdbc/core/simple/CallMetaDataContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/jdbc/core/simple/JdbcClientIndexedParameterTests.java": {
       "d": "framework/jdbc/tests/jdbc_client_indexed_parameter_tests.d",
@@ -269,6 +301,10 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/jdbc/core/simple/JdbcClientIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/jdbc/core/simple/JdbcClientNamedParameterTests.java": {
       "d": "framework/jdbc/tests/jdbc_client_named_parameter_tests.d",
@@ -340,6 +376,14 @@
       },
       "status": "ported"
     },
+    "org/springframework/jdbc/core/simple/SimpleJdbcCallTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/core/simple/SimpleJdbcInsertIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/jdbc/core/simple/SimpleJdbcInsertTests.java": {
       "d": "framework/jdbc/tests/simple_jdbc_insert_tests.d",
       "methods": {
@@ -372,6 +416,34 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/jdbc/core/support/JdbcBeanDefinitionReaderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/core/support/JdbcDaoSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/core/support/LobSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/core/support/SqlBinaryValueTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/core/support/SqlCharacterValueTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/core/support/SqlLobValueTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/DataSourceJtaTransactionTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/jdbc/datasource/DataSourceTransactionManagerTests.java": {
       "d": [
@@ -476,6 +548,50 @@
       },
       "status": "ported"
     },
+    "org/springframework/jdbc/datasource/IsolationLevelDataSourceAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/LazyConnectionDataSourceProxyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/ShardingKeyDataSourceAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/SingleConnectionDataSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/UserCredentialsDataSourceAdapterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/embedded/EmbeddedDatabaseBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/embedded/EmbeddedDatabaseFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/embedded/EmbeddedDatabaseFactoryRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/embedded/EmbeddedDatabaseFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/init/AbstractDatabaseInitializationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/init/AbstractDatabasePopulatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/jdbc/datasource/init/CompositeDatabasePopulatorTests.java": {
       "d": "framework/jdbc/tests/composite_database_populator_tests.d",
       "methods": {
@@ -488,6 +604,14 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/jdbc/datasource/init/H2DatabasePopulatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/init/HsqlDatabasePopulatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/jdbc/datasource/init/ResourceDatabasePopulatorTests.java": {
       "d": "framework/jdbc/tests/resource_database_populator_tests.d",
@@ -507,6 +631,10 @@
       },
       "status": "ported"
     },
+    "org/springframework/jdbc/datasource/init/ScriptUtilsIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/jdbc/datasource/init/ScriptUtilsTests.java": {
       "d": "framework/jdbc/tests/scripts.d",
       "methods": {
@@ -518,6 +646,66 @@
       },
       "status": "ported"
     },
+    "org/springframework/jdbc/datasource/lookup/AbstractRoutingDataSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/lookup/BeanFactoryDataSourceLookupTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/lookup/IsolationLevelDataSourceRouterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/lookup/JndiDataSourceLookupTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/datasource/lookup/MapDataSourceLookupTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/object/BatchSqlUpdateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/object/GenericSqlQueryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/object/GenericStoredProcedureTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/object/RdbmsOperationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/object/SqlQueryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/object/SqlUpdateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/object/StoredProcedureTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/support/CustomSQLExceptionTranslatorRegistrarTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/support/DatabaseStartupValidatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/support/DefaultLobHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/jdbc/support/JdbcTransactionManagerTests.java": {
       "d": "framework/jdbc/tests/jdbc_transaction_manager_upstream_tests.d",
       "methods": {
@@ -526,6 +714,10 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/jdbc/support/JdbcUtilsRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/jdbc/support/JdbcUtilsTests.java": {
       "d": "framework/jdbc/tests/jdbc_utils_tests.d",
@@ -553,6 +745,22 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/jdbc/support/SQLErrorCodeSQLExceptionTranslatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/support/SQLErrorCodesFactoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/support/SQLExceptionCustomTranslatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/support/SQLExceptionSubclassTranslatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/jdbc/support/SQLStateSQLExceptionTranslatorTests.java": {
       "d": [
@@ -582,6 +790,22 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/jdbc/support/SqlArrayValueTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/support/incrementer/DataFieldMaxValueIncrementerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/support/incrementer/H2SequenceMaxValueIncrementerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/jdbc/support/rowset/ResultSetWrappingRowSetTests.java": {
+      "phase": "2",
+      "status": "deferred"
     }
   },
   "module": "jdbc",

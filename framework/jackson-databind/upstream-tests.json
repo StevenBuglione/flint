@@ -1,0 +1,2790 @@
+{
+  "classes": {
+    "tools/jackson/databind/BoundsChecksForInputTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/DeserializationContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/HandlerInstantiationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/MapperViaParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ObjectMapperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ObjectReaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ObjectWriterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ObjectWriterValueToTree5710Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/PropertyNameTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/RootNameTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/SerializeUsingJDKTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/VersionInfoTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/access/AnyGetterAccessTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/cfg/CacheProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/cfg/ConfigOverridesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/cfg/DeserializationConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/cfg/SerializationConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/contextual/ContextAttributeWithDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/contextual/ContextAttributeWithSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/contextual/ContextualDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/contextual/ContextualKeyTypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/contextual/ContextualSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/contextual/ContextualWithAnnDeserializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/ArrayConversionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/BeanConversionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceArrayToStringToken6040Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceBoolToStringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceContainersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceEmptyArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceEmptyToInt3234Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceEnumTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceFloatToIntTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceFloatToStringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceIntToFloatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceIntToStringTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceJDKScalarsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceMiscScalarsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceNaNStringToNumberTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoercePojosTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceStringToIntsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/CoerceToBooleanTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/ConvertFromTokenBufferTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/ConverterFromInterface2617Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/ConvertingAbstractSerializer795Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/ConvertingDeserializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/ConvertingSerializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/DisableCoercions3690Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/EmptyStringAsSingleValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/MapConversion4878Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/MapConversionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/PolymorphicUpdateValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/ScalarConversionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/StringConversionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/UpdateValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/convert/UpdateViaObjectReaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/AnnotationUsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/AnySetterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/BasicAnnotationsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/BeanPropertyDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/CachingOfDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/CollectingErrorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/CustomDeserializers4225NullCacheTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/CustomDeserializersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/CustomValueInstantiatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/DeserConcurrencyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/DeserFromNonBlockingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/DeserializerFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/ErrorThrowingDeserializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/FunctionalScalarDeserializer4004Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/GenericTypeDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/JacksonTypesDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/MergePolymorphicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/NullHandlingDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/NullStringValueDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/PropertyAliasTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/PropertyFilteringDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/StdValueInstantiatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/StructuralTypeDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/UnwrappedCustomDeserCreator6001Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/ValueAnnotationsDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/WithoutParamNamesModule5314Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/bean/BeanDeserializerModifier4216Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/bean/BeanDeserializerModifier4356Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/bean/BeanDeserializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/bean/BeanPropertyMapTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderAdvancedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderCreatorSubtype4742Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderErrorHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderFailTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderInfiniteLoop1979Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderSimpleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderViaUpdateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderWithCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderWithNestedFieldsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderWithTypeParametersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderWithUnwrappedSingleArray2608Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderWithUnwrappedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/builder/BuilderWithViewTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/AnySetterForCreator562Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/BeanDeserializerFactory4920Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/ConstructorDetectorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/CreatorImplicitNameTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/CreatorNullPrimitivesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/CreatorPropertyConstraintsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/CreatorReturningNullTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/CreatorWithNamingStrategyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/CreatorWithObjectIdTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/CreatorWithUnwrapped2369Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/DelegatingArrayCreatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/DelegatingCreatorAnnotationsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/DelegatingCreatorImplicitNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/DelegatingCreatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/DisablingCreatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/EnumCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/FactoryCreatorTypeBinding2894Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/ImplicitParamsForCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/InnerClassCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/JsonCreatorDefaultAndPropertiesCtors5840Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/JsonCreatorModeForEnum3566Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/JsonCreatorNoArgs4777Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/MultiArgConstructorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/MultipleCreatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/NoParamsCreator5318Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/PolymorphicPropsCreatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/SingleArgCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/SingleImmutableFieldCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/BiggerDataTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/DeepArrayWrappingForDeser3582Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/DeepArrayWrappingForDeser3590Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/DeepJsonNodeDeser3397Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/DeepJsonNodeSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/DeepJsonParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/DeepJsonTreeTraversingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/DeepNestingUntypedDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/DoubleFPLengthConstraintTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/HugeIntegerCoerceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/dos/StreamReadStringConstraintsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumAliasDeser2352Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumAltIdTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumDefaultReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumDeserDupName4409Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumDeserFromIntJsonValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumDeserMixin2787Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumDeserialization3369Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumDeserialization3638Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumDeserializationFeatureOrderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumDeserializerJsonValue5271Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumMapDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumNamingDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumSameName4302Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumSetDeserializationWithDefaultTyping4849Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumSetDeserializer5203Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumSetPolymorphicDeser4214Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/enums/EnumWithNullToString4355Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/AnySetterIgnoreProperties6115Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/DeserializationProblemHandler1767Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/DeserializationProblemHandler2973Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/DeserializationProblemHandler3349Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/DeserializationProblemHandler3450Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/DeserializationProblemHandler4656Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/DeserializationProblemHandler5469Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/DeserializationProblemHandlerLocation1440Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/DeserializationProblemHandlerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/DeserializationProblemHandlerUnknownTypeId2221Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/IgnorePropertiesCaseInsensitive5962Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/IgnoreUnknownPropertyUsingPropertyBasedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/JsonIgnoreCreatorProp1317Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/JsonIgnoreProperties2803Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/JsonIgnorePropertiesDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/NullConversionsForContent4200Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/NullConversionsForContentTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/NullConversionsForEnumsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/NullConversionsGenericTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/NullConversionsPojoTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/NullConversionsSkipTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/NullConversionsViaCreator2458Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/NullSkipForCollections4309Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/ParserFilterViaMapTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/ReadOnlyDeser95Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/ReadOnlyDeserFailOnUnknown2719Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/ReadOnlyListDeser2118Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/ReadOnlyListDeser2283Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/ReadOrWriteOnlyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/RecursiveIgnorePropertiesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/SkipNulls4441Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/filter/UnknownPropertyDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/InjectableWithoutDeser962Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/InvalidInjectionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/JacksonInject1381DeserializationFeatureDisabledTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/JacksonInject1381Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/JacksonInject1381WithOptionalDeserializationFeatureDisabledTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/JacksonInject1381WithOptionalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/JacksonInject2465Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/JacksonInject2678Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/JacksonInject3072Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/inject/JacksonInject4218Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/ArrayBlockingQueueDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/ArrayDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/Base64DecodingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/BigNumbersDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/ByteBufferDeserializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/ClassDeserNoStaticInitTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/CollectionDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/CustomMapKeyDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/DateDeserializationTZTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/DateDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/JDK7TypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/JDKAtomicTypesDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/JDKNumberDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/JDKNumberLeniencyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/JDKScalarsDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/JDKStringLikeTypeDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/JavaLangObjectDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/JavaUtilCollectionsTypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/JavaUtilPropertiesDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/LocaleDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/MapDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/MapDeserializerCachingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/MapEntryDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/MapKeyDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/MapRawWithGeneric2846Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/NullContentHandling5165Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/ObjectArrayDeserArrayStoreExc5646Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/StackTraceElementDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/ThreadGroupDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/UUIDDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/jdk/VoidValuedPropertiesDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/lazy/LazyIgnoralForNumbers3730Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/ArrayMergeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/ArrayNode3338MergeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/CollectionMergeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/CustomCollectionMerge4783Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/CustomMapMerge4922Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/CustomMapMerge5237Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/MapMerge1844Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/MapMergeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/MapPolymorphicMerge2336Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/MergeWithNullTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/NodeMergeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/PropertyMergeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/merge/UpdateValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/validate/FullStreamReadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/exc/BasicExceptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/exc/DeserExceptionTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/exc/ExceptionPathTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/exc/StackTraceElementTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/exc/ThrowableDeserializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/exc/ThrowableSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/exc/UnresolvedForwardReferenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/exc/UnwrapRootCause4603Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/cglib/CglibFiltering5354Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/desktop/ConstructorPropertiesAnnotationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/desktop/ReadOnlyDeserWithConstructorProperties1890Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/desktop/TransientTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/TruncateToMillisecondsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/DateTimeExceptionHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/DefaultTypingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/DurationDeser337Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/DurationDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/InstantDeser291Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/InstantDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/InstantDeserViaBigDecimal307Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/InstantDeserializerNegative359Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/LocalDateDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/LocalDateTimeDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/LocalTimeDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/MonthDayDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/MonthDeserializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/OffsetDateTimeDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/OffsetTimeDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/PeriodDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/YearDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/YearMonthDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/ZoneIdDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/ZoneOffsetDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/ZonedDateTimeDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/deser/key/ZonedDateTimeKeyDeserializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/DurationAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/InstantAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/LocalDateAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/LocalDateTimeAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/LocalTimeAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/MonthDayAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/OffsetDateTimeAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/OffsetTimeAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/PeriodAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/YearAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/YearMonthAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/ZoneIdAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/ZoneOffsetAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/key/ZonedDateTimeAsKeyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/misc/DateTimeExceptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/misc/DateTimeSchemasTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/misc/JDKSerializabilityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/misc/UnsupportedTypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/DurationSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/InstantSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/LocalDateSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/LocalDateTimeSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/LocalTimeSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/MonthDaySerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/MonthSerializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/OffsetDateTimeSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/OffsetTimeSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/PeriodSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/WriteDatesAsTimestamps5142JavaTimeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/WriteNanosecondsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/WriteZoneIdTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/YearMonthSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/YearSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/ZoneIdSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/ZoneOffsetSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/ZonedDateTimeSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/ZonedDateTimeSerWithJsonFormat333Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/util/DurationUnitConverterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk17/Java17CollectionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/AdditionalOptionalNumbersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/ContextualOptionalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/CreatorForOptionalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/DoubleStreamSerializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/IntStreamSerializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/JDK8TypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/Jdk8HandlersStdImplTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/LongStreamSerializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalBasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalBooleanTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalMapsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalMergeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalNumbersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalSubtypeSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalUnwrappedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalWithEmptyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalWithPolymorphicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/OptionalnclusionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/PolymorphicOptionalTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/SchemaVisitorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk8/StreamSerializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/jdk9/Java9ListsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/sql/SqlBlobSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/sql/SqlDateDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/sql/SqlDateSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/sql/SqlTimestampDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/xml/DOMElementWithCustomSerializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/xml/DOMTypeReadWriteTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/xml/MiscJavaXMLTypesReadWriteTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/xml/QNameAsObjectReadWrite4771Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/format/BooleanFormatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/format/CollectionFormatShapeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/format/DateFormatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/format/DifferentRadixNumberFormatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/format/EnumFormatShapeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/format/EnumNumberFormatShape3580PojoTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/format/MapEntryFormatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/format/MapFormatShapeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/interop/ExceptionJDKSerializable1195Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/interop/ImmutablesTypeSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/interop/JDKProxyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/interop/KotlinIssue308JsonIgnoreTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/interop/KotlinIssue56UnwrappedWithCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/interop/UntypedObjectWithDupsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/AccessorNamingForBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/AccessorNamingStrategyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/AnnotatedMemberEqualityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/AnnotationBundlesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/BeanDescriptionConcurrent6227Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/BeanDescriptionDefaultViewsRaceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/BeanDescriptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/BeanNamingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/CustomAnnotationIntrospector1756Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/DefaultCreatorDetection4584Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/DefaultCreatorResolution4620Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/EnumNamingStrategiesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/IgnoredCreatorProperty1572Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/IntrospectorPairTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/IsGetterBooleanTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/JacksonAnnotationIntrospectorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/JsonIgnoreSetterFieldBypass5398Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/JsonPropertyRename5398Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/MethodGenericTypeResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/POJOPropertiesCollectorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/PropertyMetadataTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/SetterConflictTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TypeCoercion1592Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/VisibilityForSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/json/JsonMapperBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsonschema/FormatVisitor5393Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsonschema/NewSchemaTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsonschema/SchemaWithUUIDTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/AbstractTypeNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/BaseTypeAsDefaultTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/CustomTypeIdResolver4407Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/CustomTypeIdResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/ExistingPropertyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/JsonTypeInfoCaseInsensitive1983Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/JsonTypeInfoCustomResolver2811Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/JsonTypeInfoIgnored2968Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/JsonTypeInfoSimpleClassName4061Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/NoTypeInfoTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/PolymorphicDeserErrorHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/PolymorphicViaRefTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/RegisteredClassDeser5027Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/SealedTypesWithExistingPropertyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/SealedTypesWithJsonTypeInfoSimpleClassName4061Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/SealedTypesWithSubtypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/SealedTypesWithTypedDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/SealedTypesWithTypedSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/StrictJsonTypeInfoHandling3853Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/SubTypeResolutionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TypeDeserializerUtilMethodsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TypeResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/UnknownTypeIdCachingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/WrapperObjectWithObjectIdTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deduct/DeductionTypeSerialization296Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deduct/DeductionWithAbstractSubtype4708Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deduct/PolymorphicDeductionObjectVsArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deduct/SealedTypesWithPolymorphicDeductionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/DefaultTypeResolver3505Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/DefaultTypeResolverForLong2753Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/ext/ExternalPropertyWithArrayShape4277Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/ext/ExternalTypeCustomResolver1288Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/ext/ExternalTypeId2588Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/ext/ExternalTypeIdTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/ext/ExternalTypeIdWithCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/impl/TypeIdCacheGrowthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/jdk/AbstractContainerTypingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/jdk/BigDecimalForFloatDisabled3133Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/jdk/EnumTypingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/jdk/ScalarTypingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/jdk/TypeRefinementForMapTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/jdk/TypedArrayDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/jdk/TypedArraySerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/jdk/TypedContainerSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/vld/AnnotatedPolymorphicValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/vld/BasicPTVArrayComponentBypassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/vld/BasicPTVGenericParameterBypassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/vld/BasicPTVTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/vld/BasicPTVWithArraysTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/vld/CustomPTVMatchersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/vld/GenericTypeIdParameterValidationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/vld/ValidatePolymBaseTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/vld/ValidatePolymSubTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/AccessFixTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/CaseInsensitiveDeser953Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/CaseInsensitiveDeserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/IPhoneStyleProperty5152Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/IPhoneStyleProperty5292Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/IPhoneStyleProperty5335Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/JDKHandlersStdImplTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/ParsingContext2525Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/PropertyMismatch5372Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/RaceCondition738Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/ThreadSafety1759Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/misc/ThreadSafetyWithConverterMixin5813Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/MapperMixinsCopy1998Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/MixinForFactoryMethod3220Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/MixinsCircularTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/MixinsWithBundlesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/module/BuilderModuleReuse5481Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/module/SimpleModuleArgCheckTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/module/SimpleModuleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/AbsentNodeViaCreator3214Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/ArrayNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/DecimalNodeBigIntegerScaleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/DoubleNodeToInt5309Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/EmptyContentAsTreeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeAsContainerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeBasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeBigIntegerValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeBooleanValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeConversionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeDecimalValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeDeepCopyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeDoubleValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeFindMethodsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeFloatValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeIntValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeLongValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeMapTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeNumberValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeShortValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonNodeStringValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonPointerCore1361Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonPointerRemoval1981Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/JsonPointerWithNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/MissingNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/NodeContext2049Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/NodeFeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/NodeJDKSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/NotANumberConversionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/NullNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/NumberNodes1770Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/NumberNodesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/NumberToIntegralConversionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/ObjectNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/POJONodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/RequiredAccessorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/StringNodeNumberLengthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/StringNodeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/ToStringForNodesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/TreeBuildingGeneratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/TreeDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/TreeFromIncompleteJsonTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/TreeReadViaMapperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/TreeSerializationViaMapperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/TreeTraversingParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/TreeWithTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/node/WithPathTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/AlwaysAsReferenceFirstTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ForwardReferenceResolutionOrder6204Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/JSOGDeserialize622Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/JsonIdentityInfoAndBackReferences3964Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectArrayForwardReference6205Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectId3838Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectId825Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdInObjectArray5413Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdReordering1388Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdSubTypes4610Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdWithCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdWithCustomDeserializer2245Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdWithEqualsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdWithPolymorphicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/ObjectIdWithReader5542Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/objectid/PolymorphicWithObjectId1551Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/DuplicatePropertyDeserializationRecord4690Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/JsonAliasWithDeduction4327RecordTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/JsonIncludeNonDefaultOnRecord5312Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordBackReference5188Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordBasicsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordCreatorWithAnySetterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordCreatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordExplicitCreatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordExternalPropertyGeneric3786Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordFailingSetter3938Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordIgnoreGettersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordIgnoreNamingStrategy5974Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordImplicitCreatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordImplicitSingleValueUsePropertiesBasedCreatorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordJsonCreatorAndJsonValue5923Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordJsonSerDeser188Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordJsonValue3063Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordMapKeyAnnotationsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordNamingStrategyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordNullFiltering5418Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordNullHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordPrivate4175Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordRenamedPropertyIgnoreFieldBypass5967Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordSerializationOrderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordTypeInfo3342Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordUnwrappedOrdering5716Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordUpdate3079Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordViaParser5683Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordWithEnumAsNumberFormatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordWithJsonIdentityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordWithJsonIgnoreTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordWithJsonIncludeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordWithJsonSetter2974Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordWithJsonUnwrappedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordWithReadOnlyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/records/RecordWithView4085Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/seq/PolyMapWriter827Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/seq/ReadRecoveryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/seq/ReadTreesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/seq/ReadValuesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/seq/SequenceWriterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/AnyGetterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/CustomSerializersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/GenericTypeSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/JsonSerializeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/JsonValueCycleSer6206Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/JsonValueSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/SerializationAnnotationsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/SerializationFeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/SerializationOrderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/SimpleTypeSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/dos/CyclicDataSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/enums/EnumAsFormatObject4564Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/enums/EnumAsMapKeySerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/enums/EnumNamingSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/enums/EnumSerializationMixinTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/enums/EnumSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/enums/EnumsToLCvsJsonProperty4788Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/CurrentObject3160Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/CurrentValueDeser4184Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/CustomNullSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/IgnorePropsForSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/IgnoredTypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/IncludePropsForSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonFilterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonInclude4464Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonIncludeArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonIncludeCollectionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonIncludeCustomTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonIncludeEmptyAtEveryLevel5548Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonIncludeMapContentFilter6101Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonIncludeOverrideTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonIncludeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/JsonValueIgnore3647Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/MapInclusionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/SerializationIgnoreTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/jdk/CollectionSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/jdk/JDKTypeSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/jdk/JavaUtilDateSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/jdk/MapEntrySerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/jdk/MapSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/jdk/NumberSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/struct/FormatFeatureAcceptSingleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/struct/POJOAsArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/struct/ParentChildReferencesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/struct/UnwrapSingleArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/struct/UnwrappedBasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/struct/UnwrappedWithAlias5884Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/struct/UnwrappedWithAlias5911Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/struct/UnwrappedWithAnySetterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/struct/UnwrappedWithDelegatingDeser5728Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/AnyGetterNameConflictSerialization5342Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/AsEmptyPOJONoDefaultCtor2572Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/CreatorWithIgnoreProperties3355Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/DefaultTypingWithObjectId2780Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ExternalTypeIdDup1410Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ExternalTypeIdWithUnwrapped2039Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ExternalTypeIdWithVisible1329Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/JsonIdentityHashCodeIssue1546Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/JsonIdentityKotlinGithub54Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/JsonIgnoreProperties1622Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/JsonTypeIdConflict3681Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/MergeWithCreator1921Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ObjectIdDeserializationFailTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ObjectIdWithBuilder1496Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ObjectIdWithCreatorForwardRef3030Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ObjectIdWithInjectable639Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ObjectIdWithTypeInfo4014Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ObjectIdWithUnwrapping1298Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ParsingContextExtTypeId2747Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/PolymorphicArrays3194Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/PolymorphicDeserWithJsonUnwrapped4792Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/ReaderForUpdating5281Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/RecursiveIgnoreProperties1755Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/SetterlessProperties501Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/StaticTyping1515Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/tofix/UnwrappedWithIgnore1075Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/type/AnnotatedClassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/type/ContainerTypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/type/GenericTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/type/JavaTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/type/RecursiveTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/type/TypeBindingsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/type/TypeFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/type/TypeFactoryWithClassLoaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/type/TypeResolutionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/ArrayBuildersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/BeanUtilTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/BufferRecyclersDatabindTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/ByteBufferUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/ClassUtilTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/CompactStringObjectMapTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/EnumValuesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/ExceptionUtilTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/JSONPObjectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/JacksonCollectorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/JsonParserSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/NameTransformerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/NamingStrategyLocaleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/ObjectBufferTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/RawValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/SimpleBeanPropertyDefinitionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/SimpleLookupCacheTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/StdDateFormatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/TokenBufferTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/internal/CLHMTestlibTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/internal/PrivateMaxEntriesMapStressTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/internal/PrivateMaxEntriesMapTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/BuilderViewBypassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/DefaultViewConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/DefaultViewTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/ExternalTypeIdViewBypassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/JsonViewExternalTypeId6055Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/MultipleViewsDeser437Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/POJOAsArrayUpdateViewBypassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/RecordUpdateViewBypassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/SetterlessViewBypass5969Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/ThrowableViewDeserializationBypassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/UnwrappedCreatorViewBypass5971Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/UnwrappedPojoViewBypassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/UnwrappedViewBypass6060Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/ViewDeserializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/ViewSerialization2Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/ViewSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/ViewsWithCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/views/ViewsWithSchemaTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "jackson-databind",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":jackson-databind"
+  ],
+  "upstream": "jackson-databind@3.1.8"
+}
