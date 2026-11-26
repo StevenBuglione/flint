@@ -321,7 +321,6 @@
   "java.sql.Wrapper#unwrap(java.lang.Class)",
   "java.text.DateFormat",
   "java.text.DateFormat#<init>()",
-  "java.text.DateFormat#parse(String,ParsePosition)",
   "java.text.SimpleDateFormat",
   "java.util.AbstractCollection",
   "java.util.AbstractCollection#<init>()",
