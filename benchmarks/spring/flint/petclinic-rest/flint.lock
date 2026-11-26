@@ -194,7 +194,7 @@ name = "flint:data-commons"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:engine-aot", "flint:java"]
+dependencies = ["flint:beans", "flint:core", "flint:engine-aot", "flint:java"]
 
 [[package]]
 name = "flint:engine-aot"
