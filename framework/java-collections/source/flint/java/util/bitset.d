@@ -415,14 +415,15 @@ class BitSet
         const stop = forward ? liveWords : -1;
         const step = forward ? 1 : -1;
         const invert = set ? 0UL : ulong.max;
-        auto matches = (words[word] ^ invert) & mask;
-        while (matches == 0)
+        do
         {
+            const matches = (words[word] ^ invert) & mask;
+            if (matches != 0)
+                return word * wordBits + (forward ? bsf(matches) : bsr(matches));
+            mask = ulong.max;
             word += step;
-            if (word == stop)
-                return forward && !set ? cast(int)(cast(uint) word * wordBits) : -1;
-            matches = words[word] ^ invert;
         }
-        return word * wordBits + (forward ? bsf(matches) : bsr(matches));
+        while (word != stop);
+        return forward && !set ? cast(int)(cast(uint) word * wordBits) : -1;
     }
 }
