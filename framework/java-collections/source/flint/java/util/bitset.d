@@ -58,7 +58,8 @@ class BitSet
     {
         checkIndex(bitIndex, 0, "bitIndex < 0: ");
         const word = bitIndex >> wordShift;
-        return word < wordsInUse && (words[word] & maskAt(bitIndex)) != 0;
+        // Unused capacity holds zero words, so the capacity check also guards the load.
+        return cast(size_t) word < words.length && (words[word] & maskAt(bitIndex)) != 0;
     }
 
     /// Sets one bit, growing the capacity if necessary.

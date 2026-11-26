@@ -226,15 +226,17 @@ unittest
     assert(bits.size() == 128 && bits.length() == 66 && bits.cardinality() == 2);
     assert(bits.get(63) && !bits.get(64) && bits.get(65));
     bits.set(65, false);
-    assert(bits.length() == 64 && bits.cardinality() == 1);
+    assert(bits.length() == 64 && bits.cardinality() == 1 && !bits.get(65));
 
     bits.flip(128);
     assert(bits.size() == 256 && bits.length() == 129 && bits.cardinality() == 2);
     bits.flip(128);
     bits.clear(600);
     assert(bits.size() == 256 && bits.length() == 64 && bits.cardinality() == 1);
+    assert(!bits.get(128));
     bits.clear();
     assert(bits.size() == 256 && bits.isEmpty() && bits.cardinality() == 0);
+    assert(!bits.get(63));
 }
 
 @("bit searches agree with a scalar model across dense and sparse words")
