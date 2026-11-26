@@ -890,6 +890,61 @@ unittest
             "tests", "aot", "sample", "expected.txt")));
 }
 
+@("Boot class-presence conditions control which configurations register beans")
+unittest
+{
+    import std.file : copy, dirEntries, mkdirRecurse, SpanMode;
+    import std.path : buildPath, dirName;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+    import flint_tool.support.process : Launch, capture;
+
+    const project = copyFixture("class-conditions");
+    scope (exit)
+        remove(project);
+    const root = repositoryRoot();
+    const overlay = buildPath(project, "boot-annotations");
+    const condition = buildPath(overlay, "flint", "boot", "autoconfigure", "condition.d");
+    const properties = buildPath(overlay, "flint", "boot", "context", "properties", "package.d");
+    mkdirRecurse(dirName(condition));
+    mkdirRecurse(dirName(properties));
+    // Resolve both real Boot UDA modules ahead of the fixture's other annotation stubs.
+    copy(buildPath(root, "boot", "core", "flint-boot-autoconfigure", "source", "flint", "boot",
+            "autoconfigure", "condition.d"), condition);
+    copy(buildPath(root, "boot", "core", "flint-boot", "source", "flint", "boot", "context",
+            "properties", "package.d"), properties);
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = [
+        "-I" ~ overlay, "-I" ~ buildPath(root, "tests", "aot", "annotations"), "-I" ~ runtimeSource()
+    ];
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    const outcome = runAot(request);
+    assert(outcome.extractionErrors.length == 0, outcome.extractionErrors);
+    foreach (ref diagnostic; outcome.diagnostics)
+        assert(false, diagnostic.code ~ " " ~ diagnostic.message);
+    assert(outcome.active && outcome.ok);
+
+    const source = buildPath(project, "src");
+    const generated = buildPath(project, ".flint", "generated", "aot");
+    string[] sources;
+    foreach (directory; [source, generated])
+        foreach (entry; dirEntries(directory, "*.d", SpanMode.depth))
+            sources ~= entry.name;
+    const binary = buildPath(project, "class-conditions");
+    Launch launch;
+    launch.directory = project;
+    const built = capture([compiler(), "-preview=dip1000",
+        "-unittest"] ~ request.importPaths ~ [
+        "-I" ~ buildPath(root, "tests", "aot", "support"), "-I" ~ source, "-I" ~ generated, "-i",
+        "-of=" ~ binary, buildPath(project, "main.d")
+    ] ~ sources, launch);
+    assert(built.ok, built.combined());
+    const ran = capture([binary], launch);
+    assert(ran.ok, ran.combined());
+}
+
 @("the array invokers' scope is DIP1000-checked: a body that keeps the argument slice does not compile")
 unittest
 {

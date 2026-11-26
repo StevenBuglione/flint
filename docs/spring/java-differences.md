@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 142 | 256 | 0 | 15,398 |
-| boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
+| boot | spring-boot@v4.2.0 | 36 | 19 | 2,133 | 13,415 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,403 | 1,339 | 4,848 | 30,244 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -540,6 +540,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty#name` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty.name` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty#value` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnClass` | `flint.boot.autoconfigure.condition.ConditionalOnClass` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnClass#name` | `flint.boot.autoconfigure.condition.ConditionalOnClass.name` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnClass#value` | `flint.boot.autoconfigure.condition.ConditionalOnClass.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass` | `flint.boot.autoconfigure.condition.ConditionalOnMissingClass` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass#value` | `flint.boot.autoconfigure.condition.ConditionalOnMissingClass.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 ### data-commons
 
@@ -8327,7 +8332,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.autoconfigure.aop | 2 | 0 |
 | org.springframework.boot.autoconfigure.availability | 2 | 0 |
 | org.springframework.boot.autoconfigure.cache | 11 | 0 |
-| org.springframework.boot.autoconfigure.condition | 173 | 0 |
+| org.springframework.boot.autoconfigure.condition | 168 | 0 |
 | org.springframework.boot.autoconfigure.container | 6 | 0 |
 | org.springframework.boot.autoconfigure.context | 34 | 0 |
 | org.springframework.boot.autoconfigure.data | 20 | 0 |

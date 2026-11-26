@@ -139,8 +139,19 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnClassTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "tests/aot/class-conditions/main.d",
+      "methods": {
+        "ported": [
+          "testMissingOnClassCondition",
+          "testVanillaOnClassCondition"
+        ],
+        "skipped": {
+          "onClassConditionOutputShouldNotContainConditionalOnMissingClassInMessage": "Condition evaluation report output is deferred.",
+          "testOnClassConditionWithCombinedXml": "XML configuration is deferred.",
+          "testOnClassConditionWithXml": "XML configuration is deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnCloudPlatformTests.java": {
       "phase": "2",
@@ -167,8 +178,14 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingClassTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "tests/aot/class-conditions/main.d",
+      "methods": {
+        "ported": [
+          "testMissingOnClassCondition",
+          "testVanillaOnClassCondition"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingFilterBeanTests.java": {
       "phase": "2",
