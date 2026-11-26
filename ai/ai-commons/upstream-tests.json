@@ -4,6 +4,9 @@
       "d": "ai/ai-commons/tests/document_explicit_formatter_tests.d",
       "methods": {
         "ported": [
+          "differentIds",
+          "differentText",
+          "equalDocuments",
           "shouldThrowWhenFormatterIsNull",
           "shouldThrowWhenIdIsEmpty",
           "shouldThrowWhenIdIsNull",
@@ -18,9 +21,6 @@
           "builderWithCustomIdGenerator": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
           "builderWithMetadataMap": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
           "defaultConfigTextFormatter": "The explicit formatter assertions run locally. The comparison with the default getFormattedContent overload requires the process-wide Document default formatter.",
-          "differentIds": "Document equality and hash parity remain deferred with full content construction.",
-          "differentText": "Document equality and hash parity remain deferred with full content construction.",
-          "equalDocuments": "Document equality and hash parity remain deferred with full content construction.",
           "isTextReturnsTrueForTextDocument": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
           "metadataImmutability": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
           "mutateTextDocument": "This additional text, score, or metadata case remains to be transcribed for the partial class.",

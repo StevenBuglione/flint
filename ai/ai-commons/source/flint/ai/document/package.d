@@ -19,7 +19,7 @@
 module flint.ai.document;
 
 import flint.engine.aot.any : Any;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, JavaObject;
 import flint.java.util : HashMap, List, Map;
 import flint.java.util.function_ : Consumer, Function, Supplier;
 import std.typecons : Nullable;
@@ -460,6 +460,39 @@ class Document
             throw new IllegalArgumentException("Metadata mode must not be null");
         return formatter.format(this, mode.get());
     }
+
+    /// Compares document data with another instance of the same runtime class.
+    bool equals(Object other)
+    {
+        if (other is this)
+            return true;
+        auto that = cast(Document) other;
+        return that !is null && typeid(this) is typeid(that) && id_ == that.id_
+            && text_.isNull == that.text_.isNull && (text_.isNull
+                    || text_.get() == that.text_.get()) && metadata_.equals(cast(Object) that.metadata_);
+    }
+
+    /// Hashes the document fields in Java's order, including absent media and score.
+    int hashCode()
+    {
+        import flint.java.lang : stringHashCode;
+
+        int hash = 31 + stringHashCode(id_);
+        hash = 31 * hash + (text_.isNull ? 0 : stringHashCode(text_.get()));
+        hash *= 31; // No media on this construction path.
+        hash = 31 * hash + metadata_.hashCode();
+        return 31 * hash; // No score on this construction path.
+    }
+
+    /// Renders the document data, including absent media and score.
+    override string toString()
+    {
+        const text = text_.isNull ? "null" : text_.get();
+        return "Document{id='" ~ id_ ~ "', text='" ~ text ~ "', media='null', metadata=" ~ metadata_.toString()
+            ~ ", score=null}";
+    }
+
+    mixin JavaObject;
 }
 
 private void validateDocumentText(string text, string message)

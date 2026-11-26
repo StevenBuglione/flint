@@ -207,3 +207,91 @@ unittest
     const formatted = formatter.format(document, MetadataMode.NONE);
     assert(formatted !is null && formatted.length == 0);
 }
+
+@("equalDocuments")
+unittest
+{
+    auto metadata = new HashMap!(string, Any)();
+    metadata.put("key", Any.of("value"));
+    auto first = new Document("id", Text("text"), metadata);
+    auto second = new Document("id", Text("text"), metadata);
+    assert(first == second);
+    assert(first.hashCode() == second.hashCode());
+}
+
+@("differentIds")
+unittest
+{
+    auto metadata = new HashMap!(string, Any)();
+    metadata.put("key", Any.of("value"));
+    auto first = new Document("id1", Text("text"), metadata);
+    auto second = new Document("id2", Text("text"), metadata);
+    assert(first != second);
+}
+
+@("differentText")
+unittest
+{
+    auto metadata = new HashMap!(string, Any)();
+    metadata.put("key", Any.of("value"));
+    auto first = new Document("id", Text("text1"), metadata);
+    auto second = new Document("id", Text("text2"), metadata);
+    assert(first != second);
+}
+
+private final class TestDocument : Document
+{
+    this(string id)
+    {
+        super(id, Text(""), new HashMap!(string, Any)());
+    }
+}
+
+@("document equality requires the same runtime class")
+unittest
+{
+    auto base = new Document("id", Text(""), new HashMap!(string, Any)());
+    auto derived = new TestDocument("id");
+    auto peer = new TestDocument("id");
+    assert(base.equals(base));
+    assert(!base.equals(derived) && !derived.equals(base));
+    assert(derived.equals(peer));
+    assert(!base.equals(null) && !base.equals(new Object()));
+}
+
+@("document equality and hash follow the live metadata map")
+unittest
+{
+    auto firstMetadata = new HashMap!(string, Any)();
+    firstMetadata.put("a", Any.of("one"));
+    firstMetadata.put("b", Any.of("two"));
+    auto secondMetadata = new HashMap!(string, Any)();
+    secondMetadata.put("b", Any.of("two"));
+    secondMetadata.put("a", Any.of("one"));
+    auto first = new Document("id", Text("text"), firstMetadata);
+    auto second = new Document("id", Text("text"), secondMetadata);
+    assert(first.equals(second));
+    assert(first.hashCode() == second.hashCode());
+    second.getMetadata().put("a", Any.of("changed"));
+    assert(!first.equals(second));
+}
+
+@("document hash includes the absent media and score fields")
+unittest
+{
+    auto document = new Document("a", Text("b"), new HashMap!(string, Any)());
+    // Java 21 Objects.hash("a", "b", null, Map.of(), null).
+    assert(document.hashCode() == 121_130_206);
+}
+
+@("explicit text documents display null media and score")
+unittest
+{
+    auto metadata = new HashMap!(string, Any)();
+    auto document = new Document("a", Text("b"), metadata);
+    assert(document.toString() == "Document{id='a', text='b', media='null', metadata={}, score=null}");
+    metadata.put("key", Any.of("value"));
+    document = new Document("customId", Text("Test content"), metadata);
+    enum expected = "Document{id='customId', text='Test content', media='null', metadata={key=value}, score=null}";
+    assert(document.toString() == expected);
+}
