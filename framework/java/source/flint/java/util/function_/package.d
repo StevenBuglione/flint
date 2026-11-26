@@ -13,6 +13,7 @@ public import flint.java.util.function_.intbinaryoperator : IntBinaryOperator;
 public import flint.java.util.function_.intsupplier : IntSupplier;
 public import flint.java.util.function_.longsupplier : LongSupplier;
 public import flint.java.util.function_.supplier : Supplier;
+public import flint.java.util.function_.unaryoperator : UnaryOperator;
 
 @safe:
 
@@ -33,11 +34,6 @@ interface BiFunction(T, U, R)
     {
         return new DelegateBiFunction!(T, U, R)(dg);
     }
-}
-
-/// Java's `UnaryOperator`: a `Function` from a type to itself.
-interface UnaryOperator(T) : Function!(T, T)
-{
 }
 
 /// Java's `BinaryOperator`: a `BiFunction` of two values of a type to that type.
