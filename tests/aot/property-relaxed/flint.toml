@@ -11,6 +11,7 @@ description = "Flint AOT fixture for relaxed property names in Boot's applicatio
 "flint:boot-autoconfigure" = {}
 "flint:context" = {}
 "flint:core" = {}
+"flint:java" = {}
 
 [test-dependencies]
 "flint:engine-aot" = {}
