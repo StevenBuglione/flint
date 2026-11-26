@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 156 | 268 | 0 | 15,372 |
 | boot | spring-boot@v4.2.0 | 40 | 22 | 2,133 | 13,408 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,449 | 1,365 | 4,848 | 30,172 |
+| framework | spring-framework@v7.1.0 | 3,450 | 1,366 | 4,848 | 30,170 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2250,6 +2250,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.expression.spel.support.StandardEvaluationContext#getPropertyAccessors()` | `flint.expression.spel.support.StandardEvaluationContext.getPropertyAccessors` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.expression.spel.support.StandardEvaluationContext#getTypeConverter()` | `flint.expression.spel.support.StandardEvaluationContext.getTypeConverter` | [D-SPEL-5](api-mapping.md#deviations) |  |
 | `org.springframework.expression.spel.support.StandardEvaluationContext#setPropertyAccessors(List)` | `flint.expression.spel.support.StandardEvaluationContext.setPropertyAccessors` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.expression.spel.support.StandardTypeConverter#<init>(Supplier)` | `flint.expression.spel.support.StandardTypeConverter` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.expression.spel.support.StandardTypeConverter#convertValue(Object,TypeDescriptor,TypeDescriptor)` | `flint.expression.spel.support.StandardTypeConverter.convertValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -9136,7 +9137,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.expression.spel | 167 | 0 |
 | org.springframework.expression.spel.ast | 267 | 0 |
 | org.springframework.expression.spel.standard | 26 | 0 |
-| org.springframework.expression.spel.support | 145 | 0 |
+| org.springframework.expression.spel.support | 143 | 0 |
 | org.springframework.format | 18 | 0 |
 | org.springframework.format.annotation | 40 | 0 |
 | org.springframework.format.datetime | 25 | 0 |
@@ -9879,6 +9880,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ChronoUnit#isSupportedBy(Temporal)` | 2 | Requires the Temporal contract. |
 | framework | `java.time.temporal.ValueRange#checkValidIntValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
+| framework | `org.springframework.expression.EvaluationContext#getTypeConverter()` | 2 | Deferred until indexed assignment uses the context conversion strategy. See D-SPEL-5. |
 | framework | `org.springframework.test.util.JsonPathExpectationsHelper#<init>(String,Configuration)` | 2 | Requires Jayway JsonPath provider configuration |
 | framework | `org.springframework.test.util.JsonPathExpectationsHelper#assertValue(String,Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.util.JsonPathExpectationsHelper#assertValue(String,Matcher,Class)` | 2 | Requires a Flint port of Hamcrest Matcher |

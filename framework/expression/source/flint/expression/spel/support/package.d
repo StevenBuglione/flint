@@ -20,7 +20,7 @@
  */
 module flint.expression.spel.support;
 
-import core.atomic : atomicLoad, atomicStore, MemoryOrder;
+import core.atomic : atomicLoad, atomicStore, cas, MemoryOrder;
 import flint.core.convert : ConversionException, ConversionService, TypeDescriptor;
 import flint.core.convert.support : DefaultConversionService;
 import flint.engine.aot.any : Any;
@@ -110,6 +110,7 @@ class StandardEvaluationContext : EvaluationContextAccess
     private Bindings* variables;
     private Rebindable!(const DescriptorTable) descriptors;
     private List!PropertyAccessor propertyAccessors;
+    private TypeConverter typeConverter;
 
     /// Start with a null root and no variables.
     this()
@@ -144,6 +145,26 @@ class StandardEvaluationContext : EvaluationContextAccess
     override TypedValue getRootObject()
     {
         return readRootObject();
+    }
+
+    /// The configured converter. Create the default only when first requested.
+    final TypeConverter getTypeConverter()
+    {
+        if (auto current = atomicLoad!(MemoryOrder.acq)(typeConverter))
+            return current;
+        TypeConverter initial = new StandardTypeConverter;
+        // A configured replacement can win while the default is being constructed.
+        if (cas!(MemoryOrder.rel, MemoryOrder.raw)(&typeConverter, cast(TypeConverter) null, initial))
+            return initial;
+        return atomicLoad!(MemoryOrder.acq)(typeConverter);
+    }
+
+    /// Replace the converter used for subsequent conversions.
+    void setTypeConverter(TypeConverter converter)
+    {
+        if (converter is null)
+            throw new IllegalArgumentException("TypeConverter must not be null");
+        atomicStore!(MemoryOrder.rel)(typeConverter, converter);
     }
 
     /// Supply the frozen AOT property descriptors during context setup, before publishing this context.

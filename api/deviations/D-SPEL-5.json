@@ -1,0 +1,5 @@
+{
+  "id": "D-SPEL-5",
+  "deviation": "StandardEvaluationContext.getTypeConverter is final and available on the concrete context. The EvaluationContext interface member remains deferred until converter dispatch is wired for indexed assignment.",
+  "reason": "A virtual lazy getter links the entire default conversion registry into a read-only context. The matched O3 read-only probe added 105,344 loadable bytes with virtual dispatch. The final getter keeps default creation available to callers while leaving the registry out of read-only executables."
+}

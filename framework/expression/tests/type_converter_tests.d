@@ -24,11 +24,65 @@ import flint.core.convert.support : GenericConversionService;
 import flint.engine.aot.any : Any;
 import flint.expression : TypeConverter;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
-import flint.expression.spel.support : StandardTypeConverter;
+import flint.expression.spel.support : StandardEvaluationContext, StandardTypeConverter;
 import flint.java.lang : IllegalArgumentException, NullPointerException;
 import flint.java.util.function_ : Supplier;
 
 @safe:
+
+@("an evaluation context retains its default and accepts a configured converter")
+unittest
+{
+    auto context = new StandardEvaluationContext;
+    const initial = context.getTypeConverter();
+    assert(cast(const StandardTypeConverter) initial !is null);
+    assert(context.getTypeConverter() is initial);
+    assert((new StandardEvaluationContext).getTypeConverter() !is initial);
+
+    auto registry = new GenericConversionService;
+    registry.addConverter!(string, int)((string text) => cast(int) text.length);
+    auto custom = new StandardTypeConverter(registry);
+    context.setTypeConverter(custom);
+    assert(context.getTypeConverter() is custom);
+    const result = context.getTypeConverter().convertValue(Any.of("abc"),
+            TypeDescriptor.valueOf!string, TypeDescriptor.valueOf!int);
+    assert(result.get!int == 3);
+
+    try
+    {
+        context.setTypeConverter(null);
+        assert(false);
+    }
+    catch (IllegalArgumentException error)
+    {
+        assert(error.msg == "TypeConverter must not be null");
+        assert(context.getTypeConverter() is custom);
+    }
+}
+
+@("concurrent first context readers receive the same converter")
+@system unittest
+{
+    import core.thread : Thread;
+
+    auto context = new StandardEvaluationContext;
+    TypeConverter first, second;
+    auto reader = new Thread({ first = context.getTypeConverter(); });
+    auto other = new Thread({ second = context.getTypeConverter(); });
+    reader.start();
+    other.start();
+    reader.join();
+    other.join();
+    assert(first !is null && first is second);
+
+    auto replacing = new StandardEvaluationContext;
+    auto configured = new StandardTypeConverter(new GenericConversionService);
+    auto initialReader = new Thread({ assert(replacing.getTypeConverter() !is null); });
+    initialReader.start();
+    replacing.setTypeConverter(configured);
+    initialReader.join();
+    assert(replacing.getTypeConverter() is configured);
+}
 
 @("default SpEL converter delegates scalar conversions")
 unittest
