@@ -81,6 +81,19 @@ Owner[] owners = jdbcTemplate.query(sql, new BeanPropertyRowMapper!Owner());
 
 A template wrapper stays a one-liner over an erased engine that takes `T`'s Flint AOT descriptor (ADR-030 section 5).
 
+**Compile-time and runtime class values.** Java's `Class<?>` maps to one of two Flint types (coordinator, 2026-11-26, sol-jdk-core's design):
+- **`ClassRef`** (`classOf!T`) holds a type's canonical name only. Use it in annotation attributes and other compile-time uses.
+- **`RuntimeClassRef`** (`runtimeClassOf!T`, module `flint.java.runtimeclassref`) is a runtime value that answers `isInstance` and `isAssignableFrom`, through Flint AOT's descriptors. Use it for parameters and returns that need those answers. It converts to `ClassRef` by name. `RuntimeClassRef.init` is Java's `null` `Class`, and calling a method on it throws `NullPointerException`. sol-web's `ApplicationObjectSupport.requiredContextClass` is the first user.
+
+```java
+protected Class<?> requiredContextClass() { return ApplicationContext.class; }
+if (requiredContextClass().isInstance(context)) ...
+```
+```d
+protected RuntimeClassRef requiredContextClass() { return runtimeClassOf!ApplicationContext; }
+if (requiredContextClass().isInstance(context)) ...
+```
+
 **"No class" sentinels in annotation attributes.** Java marks "unset" with a placeholder class: `void.class`, or the attribute's own bound, as in `Class<? extends AttributeConverter> converter() default AttributeConverter.class`. Either becomes `ClassRef.init`, as the Jakarta `@Convert` port does. The entry records the sentinel in its `note`.
 
 ### R5: `Optional` and nullable values
