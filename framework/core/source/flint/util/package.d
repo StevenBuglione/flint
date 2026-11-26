@@ -4432,6 +4432,92 @@ interface PathMatcher
     string combine(string pattern1, string pattern2);
 }
 
+/// Strategy for matching patterns against parsed routes.
+interface RouteMatcher
+{
+    /// A parsed route that can expose its original value.
+    interface Route
+    {
+        string value();
+    }
+
+    Route parseRoute(string routeValue);
+    bool isPattern(string route);
+    string combine(string pattern1, string pattern2);
+    bool match(string pattern, Route route);
+    Map!(string, string) matchAndExtract(string pattern, Route route);
+    Comparator!string getPatternComparator(Route route);
+}
+
+/// A route matcher backed by a string-based PathMatcher.
+class SimpleRouteMatcher : RouteMatcher
+{
+    private PathMatcher pathMatcher;
+
+    this(PathMatcher pathMatcher)
+    {
+        Assert.notNull(pathMatcher, "PathMatcher is required");
+        this.pathMatcher = pathMatcher;
+    }
+
+    PathMatcher getPathMatcher()
+    {
+        return pathMatcher;
+    }
+
+    Route parseRoute(string routeValue)
+    {
+        return new DefaultRoute(routeValue);
+    }
+
+    bool isPattern(string route)
+    {
+        return pathMatcher.isPattern(route);
+    }
+
+    string combine(string pattern1, string pattern2)
+    {
+        return pathMatcher.combine(pattern1, pattern2);
+    }
+
+    bool match(string pattern, Route route)
+    {
+        return pathMatcher.match(pattern, route.value());
+    }
+
+    Map!(string, string) matchAndExtract(string pattern, Route route)
+    {
+        if (!match(pattern, route))
+            return null;
+        return pathMatcher.extractUriTemplateVariables(pattern, route.value());
+    }
+
+    Comparator!string getPatternComparator(Route route)
+    {
+        return pathMatcher.getPatternComparator(route.value());
+    }
+
+    private static final class DefaultRoute : Route
+    {
+        private string path;
+
+        this(string path)
+        {
+            this.path = path;
+        }
+
+        string value()
+        {
+            return path;
+        }
+
+        override string toString()
+        {
+            return value();
+        }
+    }
+}
+
 /++
 `PathMatcher` for Ant-style path patterns: `?` matches one character, `*` zero or more characters within a path
 segment, `**` zero or more directories, and `{name:[a-z]+}` matches the regular expression `[a-z]+` as a path

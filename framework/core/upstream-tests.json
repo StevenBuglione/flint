@@ -625,8 +625,39 @@
       "status": "deferred"
     },
     "org/springframework/util/AntPathMatcherTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/core/tests/util_ant_path_matcher_test.d",
+      "methods": {
+        "ported": [
+          "cachePatternsSetToFalse",
+          "cachePatternsSetToTrue",
+          "caseInsensitive",
+          "combine",
+          "combineWithTwoFileExtensionPatterns",
+          "consistentMatchWithWildcardsAndTrailingSlash",
+          "creatingStringMatchersIfPatternPrefixCannotDetermineIfPathMatch",
+          "defaultCacheSetting",
+          "extensionMappingWithDotPathSeparator",
+          "extractPathWithinPattern",
+          "extractUriTemplateVariables",
+          "extractUriTemplateVariablesFromDotSeparatedPath",
+          "extractUriTemplateVariablesRegex",
+          "extractUriTemplateVarsRegexCapturingGroups",
+          "extractUriTemplateVarsRegexQualifiers",
+          "isPattern",
+          "isPatternWithNullPath",
+          "match",
+          "matchStart",
+          "matchWithNullPath",
+          "matchWithTrimTokensEnabled",
+          "patternComparator",
+          "patternComparatorSort",
+          "patternComparatorWithDotSeparator",
+          "preventCreatingStringMatchersIfPathDoesNotStartsWithPatternPrefix",
+          "trimTokensOff",
+          "uniqueDeliminator"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/util/AssertTests.java": {
       "phase": "2",

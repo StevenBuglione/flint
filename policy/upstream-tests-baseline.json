@@ -1489,7 +1489,6 @@
       "org/springframework/core/type/classreading/DefaultMethodMetadataTests.java",
       "org/springframework/core/type/classreading/MergedAnnotationMetadataVisitorTests.java",
       "org/springframework/core/type/classreading/SimpleAnnotationMetadataTests.java",
-      "org/springframework/util/AntPathMatcherTests.java",
       "org/springframework/util/AssertTests.java",
       "org/springframework/util/AutoPopulatingListTests.java",
       "org/springframework/util/ClassUtilsTests.java",

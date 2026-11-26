@@ -12,13 +12,42 @@ instead of `Collections.shuffle`.
 +/
 module flint.util.ant_path_matcher_test;
 
+import flint.engine.aot.objects : objectToString;
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.util : ArrayList, LinkedHashMap, Map;
-import flint.util : AntPathMatcher;
+import flint.util : AntPathMatcher, RouteMatcher, SimpleRouteMatcher;
 import flint.util.test_support : contains, expectThrows;
 import std.conv : to;
 
 @safe:
+
+@("SimpleRouteMatcher delegates parsed route matching and extraction to the configured path matcher")
+unittest
+{
+    auto delegateMatcher = new AntPathMatcher(".");
+    auto simpleMatcher = new SimpleRouteMatcher(delegateMatcher);
+    RouteMatcher matcher = simpleMatcher;
+    assert(simpleMatcher.getPathMatcher() is delegateMatcher);
+
+    auto route = matcher.parseRoute("orders.42");
+    assert(route.value() == "orders.42");
+    assert(objectToString(cast(Object) route) == "orders.42");
+    assert(matcher.isPattern("orders.{id}"));
+    assert(!matcher.isPattern(route.value()));
+    assert(matcher.combine("orders", "{id}") == "orders.{id}");
+    assert(matcher.match("orders.*", route));
+    assert(matcher.matchAndExtract("orders.{id}", route).get("id") == "42");
+    assert(matcher.matchAndExtract("users.{id}", route) is null);
+    assert(matcher.matchAndExtract("orders.42", route).isEmpty());
+    assert(matcher.getPatternComparator(route).compare("orders.42", "orders.*") < 0);
+}
+
+@("SimpleRouteMatcher rejects a null path matcher")
+unittest
+{
+    auto error = expectThrows!IllegalArgumentException(() { new SimpleRouteMatcher(null); });
+    assert(error.getMessage() == "PathMatcher is required");
+}
 
 private void checkMatch(AntPathMatcher pathMatcher)
 {
@@ -100,13 +129,13 @@ private void checkMatch(AntPathMatcher pathMatcher)
     assert(pathMatcher.match("/{var:.*}", "/x\ny"));
 }
 
-// match
+@("match")
 unittest
 {
     checkMatch(new AntPathMatcher());
 }
 
-// matchWithNullPath
+@("matchWithNullPath")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -115,7 +144,7 @@ unittest
     assert(!pathMatcher.match(null, null));
 }
 
-// matchWithTrimTokensEnabled
+@("matchWithTrimTokensEnabled")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -123,7 +152,7 @@ unittest
     assert(pathMatcher.match("/foo/bar", "/foo /bar"));
 }
 
-// matchStart
+@("matchStart")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -203,7 +232,7 @@ unittest
     assert(pathMatcher.matchStart("", ""));
 }
 
-// uniqueDeliminator
+@("uniqueDeliminator")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -262,7 +291,7 @@ unittest
     assert(!pathMatcher.match(".*bla.test", "XXXbl.test"));
 }
 
-// extractPathWithinPattern
+@("extractPathWithinPattern")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -291,7 +320,7 @@ unittest
     assert(pathMatcher.extractPathWithinPattern("/d?cs/**/*.html", "/docs/cvs/commit.html") == "docs/cvs/commit.html");
 }
 
-// extractUriTemplateVariables
+@("extractUriTemplateVariables")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -320,7 +349,7 @@ unittest
     assert(result.equals(expected));
 }
 
-// extractUriTemplateVariablesFromDotSeparatedPath
+@("extractUriTemplateVariablesFromDotSeparatedPath")
 unittest
 {
     auto dotSeparatedPathMatcher = new AntPathMatcher(".");
@@ -337,7 +366,7 @@ unittest
     assert(result.equals(cast(Object) Map!(string, string).of("operation", "feed")));
 }
 
-// extractUriTemplateVariablesRegex
+@("extractUriTemplateVariablesRegex")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -351,7 +380,7 @@ unittest
     assert(result.get("version") == "1.0.0");
 }
 
-// extractUriTemplateVarsRegexQualifiers
+@("extractUriTemplateVarsRegexQualifiers")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -374,7 +403,7 @@ unittest
     assert(result.get("version") == "1.0.0.{12}");
 }
 
-// extractUriTemplateVarsRegexCapturingGroups
+@("extractUriTemplateVarsRegexCapturingGroups")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -384,7 +413,7 @@ unittest
     assert(e.getMessage().contains("The number of capturing groups in the pattern"));
 }
 
-// combine
+@("combine")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -423,14 +452,14 @@ unittest
     assert(pathMatcher.combine("/hotel/", "/booking") == "/hotel/booking");
 }
 
-// combineWithTwoFileExtensionPatterns
+@("combineWithTwoFileExtensionPatterns")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
     expectThrows!IllegalArgumentException(() { pathMatcher.combine("/*.html", "/*.txt"); });
 }
 
-// patternComparator
+@("patternComparator")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -473,7 +502,7 @@ unittest
     assert(comparator.compare("*/**", "*") == 1);
 }
 
-// patternComparatorWithDotSeparator
+@("patternComparatorWithDotSeparator")
 unittest
 {
     auto dotSeparatedPathMatcher = new AntPathMatcher(".");
@@ -483,7 +512,7 @@ unittest
     assert(comparator.compare("price.stock.**", "price.stock.ticker") == 1);
 }
 
-// patternComparatorSort
+@("patternComparatorSort")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -521,7 +550,7 @@ unittest
     ]);
 }
 
-// trimTokensOff
+@("trimTokensOff")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -531,7 +560,7 @@ unittest
     assert(!pathMatcher.match("/group/{groupName}/members", "/Group/  Sales/Members"));
 }
 
-// caseInsensitive
+@("caseInsensitive")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -541,7 +570,7 @@ unittest
     assert(pathMatcher.match("/Group/{groupName}/Members", "/group/Sales/members"));
 }
 
-// defaultCacheSetting
+@("defaultCacheSetting")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -553,7 +582,7 @@ unittest
     assert(pathMatcher.stringMatcherCache.length == 0);
 }
 
-// cachePatternsSetToTrue
+@("cachePatternsSetToTrue")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -566,7 +595,7 @@ unittest
     assert(pathMatcher.stringMatcherCache.length > 65_536);
 }
 
-// preventCreatingStringMatchersIfPathDoesNotStartsWithPatternPrefix
+@("preventCreatingStringMatchersIfPathDoesNotStartsWithPatternPrefix")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -581,7 +610,7 @@ unittest
     assert(pathMatcher.stringMatcherCache.length == 1);
 }
 
-// creatingStringMatchersIfPatternPrefixCannotDetermineIfPathMatch
+@("creatingStringMatchersIfPatternPrefixCannotDetermineIfPathMatch")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -598,7 +627,7 @@ unittest
     assert(pathMatcher.stringMatcherCache.length == 7);
 }
 
-// cachePatternsSetToFalse
+@("cachePatternsSetToFalse")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -607,7 +636,7 @@ unittest
     assert(pathMatcher.stringMatcherCache.length == 0);
 }
 
-// extensionMappingWithDotPathSeparator
+@("extensionMappingWithDotPathSeparator")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -616,7 +645,7 @@ unittest
             "Extension mapping should be disabled with \".\" as path separator");
 }
 
-// isPattern
+@("isPattern")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
@@ -628,14 +657,14 @@ unittest
     assert(!pathMatcher.isPattern("/test/foo{bar"));
 }
 
-// isPatternWithNullPath
+@("isPatternWithNullPath")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();
     assert(!pathMatcher.isPattern(null));
 }
 
-// consistentMatchWithWildcardsAndTrailingSlash
+@("consistentMatchWithWildcardsAndTrailingSlash")
 unittest
 {
     auto pathMatcher = new AntPathMatcher();

@@ -272,6 +272,8 @@ Multipart boundary generation uses `flint.conc.fillSecureRandom` from the method
 
 Character-to-number conversion normalizes the UTF-16 code unit to a signed short inside the existing erased numeric converter. It shares target range checks and needs no additional converter registration. The Core probe on venus against `dd109d0e` kept 8,844 loadable bytes and moved from 5,491 to 5,502 DMD template instances against the 8,550 cap.
 
+SimpleRouteMatcher retains the original route string and delegates matching, extraction and ordering to its configured PathMatcher. The Core probe on venus against `b63261658` kept 8,844 loadable bytes and moved from 5,491 to 5,510 DMD template instances against the 8,550 cap.
+
 ### Jackson tree search
 
 The first-match operations check an object's own property and then walk its stored children. A failed path lookup returns a missing node through the existing factory. The plural operations require Java List façades. Both their template counts (B-1) and the application cost of collection methods retained by virtual accumulator overloads (S-1) determine when the plural API can land.
