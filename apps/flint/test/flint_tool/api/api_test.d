@@ -739,7 +739,7 @@ unittest
     expect(mixed.length).toEqual(1);
     expect(mixed[0].message).toEqual(
             "openjdk is ported only into `" ~ ce
-            ~ "` packages (the -openjdk ones), but the package declares `Apache-2.0`");
+            ~ "` packages (the flint:java* ones), but the package declares `Apache-2.0`");
     enum spdx = " * SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0\n";
     expect(statesLicence(spdx, jdk)).toEqual(true);
 }

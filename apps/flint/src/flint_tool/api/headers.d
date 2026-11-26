@@ -24,8 +24,8 @@
 /// - An `epl-module` port must live in a package whose `dub.sdl` declares `license "EPL-2.0"`.
 /// - A `gpl-ce-module` port (OpenJDK) must state both GPL-2.0 and the Classpath Exception, so a file under plain GPL
 ///   (many jtreg tests) is refused. It must live in a package whose `dub.sdl` declares
-///   `license "GPL-2.0-only WITH Classpath-exception-2.0"` (the `-openjdk` packages), never mixed with Apache-derived
-///   files.
+///   `license "GPL-2.0-only WITH Classpath-exception-2.0"`: the `flint:java*` packages, which are an OpenJDK port and
+///   never mix in Apache-derived files.
 module flint_tool.api.headers;
 
 import flint_tool.api.upstreams : Upstream;
@@ -336,7 +336,7 @@ private string[] contentProblems(string header, const ref LicenceEntry entry, st
         problems ~= entry.name ~ " is ported only into EPL-2.0 packages, but the package declares `" ~ (
                 packageLicence.length ? packageLicence : "no licence") ~ "`";
     if (entry.use == "gpl-ce-module" && packageLicence != gplClasspath)
-        problems ~= entry.name ~ " is ported only into `" ~ gplClasspath ~ "` packages (the -openjdk ones), but the "
+        problems ~= entry.name ~ " is ported only into `" ~ gplClasspath ~ "` packages (the flint:java* ones), but the "
             ~ "package declares `" ~ (packageLicence.length ? packageLicence : "no licence") ~ "`";
     return problems;
 }
