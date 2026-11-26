@@ -108,6 +108,14 @@ pragma(inline, false) private string firstHeaderValue(const(Pair)[] headers, str
     return i >= 0 && headers[i].values.length != 0 ? headers[i].values[0] : null;
 }
 
+pragma(inline, false) private string[] pairNames(const(Pair)[] pairs) pure nothrow
+{
+    string[] names;
+    foreach (ref pair; pairs)
+        names ~= pair.name;
+    return names;
+}
+
 pragma(inline, false) private bool tryParseContentType(string type, out MediaType mediaType)
 {
     try
@@ -392,10 +400,7 @@ class MockHttpServletRequest : HttpServletRequest
 
     string[] getParameterNames()
     {
-        string[] names;
-        foreach (p; parameters)
-            names ~= p.name;
-        return names;
+        return pairNames(parameters);
     }
 
     string[] getParameterValues(string name)
@@ -583,10 +588,7 @@ class MockHttpServletRequest : HttpServletRequest
 
     string[] getHeaderNames()
     {
-        string[] names;
-        foreach (h; headers)
-            names ~= h.name;
-        return names;
+        return pairNames(headers);
     }
 
     int getIntHeader(string name)
@@ -730,6 +732,8 @@ class MockHttpServletResponse : HttpServletResponse
     private ubyte[] content;
     private int bufferSize = 4096;
     private bool committed;
+    private bool outputStreamAccessAllowed = true;
+    private bool writerAccessAllowed = true;
     private Cookie[] cookies;
     private ServletOutputStream outputStream;
     private PrintWriter writer;
@@ -826,8 +830,34 @@ class MockHttpServletResponse : HttpServletResponse
         return contentType;
     }
 
+    /// Controls whether callers may acquire the output stream.
+    void setOutputStreamAccessAllowed(bool allowed) pure nothrow @nogc
+    {
+        outputStreamAccessAllowed = allowed;
+    }
+
+    /// Whether callers may acquire the output stream.
+    bool isOutputStreamAccessAllowed() const pure nothrow @nogc
+    {
+        return outputStreamAccessAllowed;
+    }
+
+    /// Controls whether callers may acquire the writer.
+    void setWriterAccessAllowed(bool allowed) pure nothrow @nogc
+    {
+        writerAccessAllowed = allowed;
+    }
+
+    /// Whether callers may acquire the writer.
+    bool isWriterAccessAllowed() const pure nothrow @nogc
+    {
+        return writerAccessAllowed;
+    }
+
     pragma(inline, false) ServletOutputStream getOutputStream()
     {
+        if (!outputStreamAccessAllowed)
+            rejectResponseState("OutputStream access not allowed");
         if (writer !is null)
             rejectResponseState("getWriter() has already been called");
         if (outputStream is null)
@@ -837,6 +867,8 @@ class MockHttpServletResponse : HttpServletResponse
 
     pragma(inline, false) PrintWriter getWriter()
     {
+        if (!writerAccessAllowed)
+            rejectResponseState("Writer access not allowed");
         if (outputStream !is null)
             rejectResponseState("getOutputStream() has already been called");
         if (writer is null)
@@ -1137,10 +1169,7 @@ class MockHttpServletResponse : HttpServletResponse
 
     string[] getHeaderNames()
     {
-        string[] names;
-        foreach (h; headers)
-            names ~= h.name;
-        return names;
+        return pairNames(headers);
     }
 
     private void setHeaderValue(string name, string value, bool add)

@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 199 | 330 | 0 | 15,267 |
 | boot | spring-boot@v4.2.0 | 43 | 40 | 2,133 | 13,387 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,507 | 1,401 | 4,850 | 30,076 |
+| framework | spring-framework@v7.1.0 | 3,511 | 1,401 | 4,850 | 30,072 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -9687,7 +9687,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.mock.http.client | 23 | 0 |
 | org.springframework.mock.http.client.reactive | 0 | 28 |
 | org.springframework.mock.http.server.reactive | 0 | 53 |
-| org.springframework.mock.web | 539 | 0 |
+| org.springframework.mock.web | 535 | 0 |
 | org.springframework.mock.web.reactive.function.server | 0 | 51 |
 | org.springframework.mock.web.server | 30 | 0 |
 | org.springframework.objenesis | 9 | 0 |

@@ -196,3 +196,98 @@ unittest
     assert(response.getWriter() !is writer);
     assert(response.getContentAsByteArray().length == 0);
 }
+
+@("servletWriterAutoFlushedForChar")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    response.getWriter().write('X');
+    assert(response.getContentAsString() == "X");
+}
+
+@("servletWriterAutoFlushedForCharArray")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    const char[2] text = ['X', 'Y'];
+    response.getWriter().write(text[]);
+    assert(response.getContentAsString() == "XY");
+}
+
+@("servletWriterAutoFlushedForString")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    response.getWriter().write("X");
+    assert(response.getContentAsString() == "X");
+}
+
+@("The writer access flag applies on every acquisition and survives reset")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    assert(response.isWriterAccessAllowed());
+    auto writer = response.getWriter();
+
+    response.setWriterAccessAllowed(false);
+    assert(!response.isWriterAccessAllowed());
+    try
+    {
+        response.getWriter();
+        assert(false, "expected writer access to be disabled");
+    }
+    catch (IllegalStateException failure)
+        assert(failure.getMessage() == "Writer access not allowed");
+
+    writer.write("still usable");
+    assert(response.getContentAsString() == "still usable");
+    response.reset();
+    assert(!response.isWriterAccessAllowed());
+    assert(response.isOutputStreamAccessAllowed());
+
+    auto stream = response.getOutputStream();
+    stream.write('X');
+    assert(response.getContentAsString() == "X");
+}
+
+@("The stream access flag takes precedence over the existing writer")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    assert(response.isOutputStreamAccessAllowed());
+    response.setOutputStreamAccessAllowed(false);
+    assert(!response.isOutputStreamAccessAllowed());
+    const writer = response.getWriter();
+
+    try
+    {
+        response.getOutputStream();
+        assert(false, "expected stream access to be disabled");
+    }
+    catch (IllegalStateException failure)
+        assert(failure.getMessage() == "OutputStream access not allowed");
+
+    response.setOutputStreamAccessAllowed(true);
+    try
+    {
+        response.getOutputStream();
+        assert(false, "expected the current writer to prevent stream access");
+    }
+    catch (IllegalStateException failure)
+        assert(failure.getMessage() == "getWriter() has already been called");
+
+    assert(response.getWriter() is writer);
+    response.reset();
+    const stream = response.getOutputStream();
+    response.setOutputStreamAccessAllowed(false);
+    try
+    {
+        response.getOutputStream();
+        assert(false, "expected stream reacquisition to be disabled");
+    }
+    catch (IllegalStateException failure)
+        assert(failure.getMessage() == "OutputStream access not allowed");
+
+    response.setOutputStreamAccessAllowed(true);
+    assert(response.getOutputStream() is stream);
+}
