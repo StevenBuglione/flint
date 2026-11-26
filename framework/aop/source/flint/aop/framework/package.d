@@ -1,16 +1,104 @@
 /*
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/ProxyConfig.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/AopConfigException.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/Advised.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
  * Modified by the Flint authors.
  */
 module flint.aop.framework;
 
+import flint.aop : Advisor, TargetClassAware, TargetSource;
+import flint.aopalliance.aop : Advice;
 import flint.core : NestedRuntimeException;
+import flint.engine.aot.descriptor : Descriptor;
 import flint.java.lang : IllegalArgumentException;
 
 @safe:
+
+/// Exposes a proxy's target source, proxied interfaces and advisor configuration.
+interface Advised : TargetClassAware
+{
+    /// Whether changes to the advice configuration are prohibited.
+    bool isFrozen();
+
+    /// Whether the full target class is proxied.
+    bool isProxyTargetClass();
+
+    /// Returns the descriptors of the proxied interfaces.
+    const(Descriptor)[] getProxiedInterfaces();
+
+    /// Whether the given interface is proxied.
+    bool isInterfaceProxied(const Descriptor interfaceType);
+
+    /// Replaces the target source on an unfrozen proxy.
+    void setTargetSource(TargetSource targetSource);
+
+    /// Returns the target source.
+    TargetSource getTargetSource();
+
+    /// Configures whether the current proxy is exposed during an invocation.
+    void setExposeProxy(bool exposeProxy);
+
+    /// Whether to expose the proxy during an invocation.
+    bool isExposeProxy();
+
+    /// Records whether the advisors are already filtered for the target class.
+    void setPreFiltered(bool preFiltered);
+
+    /// Whether advisor class filters may be skipped when the chain is built.
+    bool isPreFiltered();
+
+    /// Returns the current advisors in chain order.
+    Advisor[] getAdvisors();
+
+    /// Returns the number of current advisors.
+    int getAdvisorCount();
+
+    /// Appends an advisor to the chain.
+    void addAdvisor(Advisor advisor);
+
+    /// Inserts an advisor at the zero-based position.
+    void addAdvisor(int position, Advisor advisor);
+
+    /// Removes a matching advisor and reports whether it was present.
+    bool removeAdvisor(Advisor advisor);
+
+    /// Removes the advisor at the given position.
+    void removeAdvisor(int index);
+
+    /// Returns the position of the advisor, or -1 if it is absent.
+    int indexOf(Advisor advisor);
+
+    /// Replaces the advisor and reports whether it was present.
+    bool replaceAdvisor(Advisor original, Advisor replacement);
+
+    /// Appends advice with a pointcut that applies to all invocations.
+    void addAdvice(Advice advice);
+
+    /// Inserts advice at the zero-based position.
+    void addAdvice(int position, Advice advice);
+
+    /// Removes the advisor that contains the advice.
+    bool removeAdvice(Advice advice);
+
+    /// Returns the position of the advice, or -1 if it is absent.
+    int indexOf(Advice advice);
+
+    /// Describes the proxy configuration directly.
+    string toProxyConfigString();
+
+    /// R3 implementation of the Java default method.
+    mixin template Defaults()
+    {
+        /// Counts the advisors supplied by the implementation.
+        int getAdvisorCount()
+        {
+            Advised proxy = this;
+            return cast(int) proxy.getAdvisors().length;
+        }
+    }
+}
 
 private enum ProxyFlag : ubyte
 {

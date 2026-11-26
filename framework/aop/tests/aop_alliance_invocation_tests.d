@@ -1,5 +1,7 @@
 module aop_alliance_invocation_tests;
 
+import flint.aop : IntroductionInterceptor;
+import flint.aop.support : DefaultIntroductionAdvisor;
 import flint.aopalliance.intercept : ConstructorInterceptor, ConstructorInvocation, Invocation,
     Joinpoint, MethodInterceptor, MethodInvocation;
 import flint.engine.aot.any : Any;
@@ -69,6 +71,26 @@ private final class DoubleAmount : MethodInterceptor
     {
         auto arguments = invocation.getArguments();
         arguments[0] = Any.of(arguments[0].get!int() * 2);
+        return invocation.proceed();
+    }
+}
+
+private final class AccumulatorIntroduction : IntroductionInterceptor
+{
+    private const Descriptor introduced;
+
+    this(const Descriptor introduced)
+    {
+        this.introduced = introduced;
+    }
+
+    bool implementsInterface(const Descriptor type)
+    {
+        return introduced is type;
+    }
+
+    Any invoke(MethodInvocation invocation)
+    {
         return invocation.proceed();
     }
 }
@@ -160,4 +182,20 @@ private Any createAccumulator(scope Any[] arguments)
     const result = interceptor.construct(invocation).get!Accumulator();
     assert(result.value == 42);
     assert(joinpoint.getThis().asObject() is result);
+}
+
+@("An introduction interceptor provides the introduced interface and handles the call") unittest
+{
+    auto introduced = new Descriptor("example.Addable", TypeKind.interface_);
+    introduced.methods = [MethodDescriptor("add", "int")];
+    IntroductionInterceptor introduction = new AccumulatorIntroduction(introduced);
+    auto advisor = new DefaultIntroductionAdvisor(introduction, introduced);
+    advisor.validateInterfaces();
+    assert(advisor.getInterfaces()[0] is introduced);
+
+    auto target = new Accumulator(10);
+    auto invocation = new AddInvocation(MemberDescriptorRef(introduced, 0, MemberKind.method), target, 2);
+    auto interceptor = cast(MethodInterceptor) advisor.getAdvice();
+    assert(interceptor.invoke(invocation).get!int() == 12);
+    assert(target.value == 12);
 }

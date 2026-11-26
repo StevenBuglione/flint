@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 148 | 258 | 0 | 15,390 |
 | boot | spring-boot@v4.2.0 | 36 | 19 | 2,133 | 13,415 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,412 | 1,344 | 4,848 | 30,230 |
+| framework | spring-framework@v7.1.0 | 3,436 | 1,352 | 4,848 | 30,198 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1840,6 +1840,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.MethodMatcher#matches(Method,Class,Object...)` | `flint.aop.MethodMatcher.matches` | [R4](api-mapping.md#r4-classt-parameters), [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.aop.Pointcut#TRUE` | `flint.aop.Pointcut.TRUE` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.aop.Pointcut#getClassFilter()` | `flint.aop.Pointcut.getClassFilter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.ProxyMethodInvocation#getProxy()` | `flint.aop.ProxyMethodInvocation.getProxy` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.aop.ProxyMethodInvocation#getUserAttribute(String)` | `flint.aop.ProxyMethodInvocation.getUserAttribute` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.aop.ProxyMethodInvocation#invocableClone(Object...)` | `flint.aop.ProxyMethodInvocation.invocableClone` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.aop.ProxyMethodInvocation#setArguments(Object...)` | `flint.aop.ProxyMethodInvocation.setArguments` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.aop.ProxyMethodInvocation#setUserAttribute(String,Object)` | `flint.aop.ProxyMethodInvocation.setUserAttribute` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.aop.TargetClassAware#getTargetClass()` | `flint.aop.TargetClassAware.getTargetClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.TargetSource#getTarget()` | `flint.aop.TargetSource.getTarget` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.aop.TargetSource#getTargetClass()` | `flint.aop.TargetSource.getTargetClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -1850,6 +1855,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.aop.framework.Advised#getAdvisorCount()` | `flint.aop.framework.Advised.getAdvisorCount` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.aop.framework.Advised#getProxiedInterfaces()` | `flint.aop.framework.Advised.getProxiedInterfaces` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.framework.Advised#isInterfaceProxied(Class)` | `flint.aop.framework.Advised.isInterfaceProxied` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.framework.AopConfigException#<init>(String,Throwable)` | `flint.aop.framework.AopConfigException` | [R8](api-mapping.md#r8-exceptions) |  |
 | `org.springframework.aop.framework.ProxyConfig#toString()` | `flint.aop.framework.ProxyConfig.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
@@ -8978,12 +8986,11 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.slf4j.event | 36 | 0 |
 | org.slf4j.helpers | 208 | 0 |
 | org.slf4j.spi | 7 | 0 |
-| org.springframework.aop | 8 | 0 |
 | org.springframework.aop.aspectj | 184 | 0 |
 | org.springframework.aop.aspectj.annotation | 102 | 0 |
 | org.springframework.aop.aspectj.autoproxy | 7 | 0 |
 | org.springframework.aop.config | 70 | 0 |
-| org.springframework.aop.framework | 196 | 0 |
+| org.springframework.aop.framework | 172 | 0 |
 | org.springframework.aop.framework.adapter | 16 | 0 |
 | org.springframework.aop.framework.autoproxy | 83 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |

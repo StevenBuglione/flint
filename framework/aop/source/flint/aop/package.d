@@ -16,6 +16,8 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/DynamicIntroductionAdvice.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/IntroductionAwareMethodMatcher.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/IntroductionAdvisor.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/IntroductionInterceptor.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/ProxyMethodInvocation.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/IntroductionInfo.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/MethodMatcher.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/Pointcut.java
@@ -28,6 +30,7 @@
 module flint.aop;
 
 import flint.aopalliance.aop : Advice;
+import flint.aopalliance.intercept : MethodInterceptor, MethodInvocation;
 import flint.core : NestedRuntimeException;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MethodDescriptor;
@@ -203,6 +206,33 @@ interface DynamicIntroductionAdvice : Advice
 {
     /// Whether the advice implements the described interface.
     bool implementsInterface(const Descriptor interfaceType);
+}
+
+/// Intercepts method calls and supplies additional interfaces to the proxy.
+interface IntroductionInterceptor : MethodInterceptor, DynamicIntroductionAdvice
+{
+}
+
+/// A method invocation with access to the proxy and invocation-specific state.
+interface ProxyMethodInvocation : MethodInvocation
+{
+    /// Returns the proxy through which the call was made.
+    Any getProxy();
+
+    /// Copies the invocation at its current position with the same arguments.
+    MethodInvocation invocableClone();
+
+    /// Copies the invocation at its current position with replacement arguments.
+    MethodInvocation invocableClone(Any[] arguments...);
+
+    /// Replaces the arguments used by the remainder of the chain.
+    void setArguments(Any[] arguments...);
+
+    /// Stores an invocation attribute. A null value removes the attribute.
+    void setUserAttribute(string key, Any value);
+
+    /// Reads the attribute, or returns Any.init if it is absent.
+    Any getUserAttribute(string key);
 }
 
 /// Exposes the known target type behind a proxy or target source.
