@@ -5936,7 +5936,7 @@ struct MimeTypeUtils
 
     private static size_t fillMultipartBoundary(ref ubyte[40] boundary)
     {
-        import flint.conc : fillSecureRandom;
+        import flint.conc.random : fillSecureRandom;
 
         enum alphabet = "-_1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         static assert(alphabet.length == 64);
