@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 168 | 278 | 0 | 15,350 |
 | boot | spring-boot@v4.2.0 | 43 | 28 | 2,133 | 13,399 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,464 | 1,379 | 4,848 | 30,143 |
+| framework | spring-framework@v7.1.0 | 3,466 | 1,383 | 4,848 | 30,137 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1994,6 +1994,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.framework.adapter.AfterReturningAdviceInterceptor#invoke(MethodInvocation)` | `flint.aop.framework.adapter.AfterReturningAdviceInterceptor.invoke` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.aop.framework.adapter.MethodBeforeAdviceInterceptor#invoke(MethodInvocation)` | `flint.aop.framework.adapter.MethodBeforeAdviceInterceptor.invoke` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.aop.framework.adapter.UnknownAdviceTypeException#<init>(Object)` | `flint.aop.framework.adapter.UnknownAdviceTypeException` | [R23](api-mapping.md#r23-object-typed-values) |  |
+
+#### org.springframework.aop.framework.autoproxy
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.aop.framework.autoproxy.AutoProxyUtils#DEFAULT_PROXY_CONFIG_BEAN_NAME` | `flint.aop.framework.autoproxy.AutoProxyUtils.DEFAULT_PROXY_CONFIG_BEAN_NAME` | [R1](api-mapping.md#r1-packages-and-names) |  |
+| `org.springframework.aop.framework.autoproxy.AutoProxyUtils#EXPOSED_INTERFACES_ATTRIBUTE` | `flint.aop.framework.autoproxy.AutoProxyUtils.EXPOSED_INTERFACES_ATTRIBUTE` | [R1](api-mapping.md#r1-packages-and-names) |  |
+| `org.springframework.aop.framework.autoproxy.AutoProxyUtils#ORIGINAL_TARGET_CLASS_ATTRIBUTE` | `flint.aop.framework.autoproxy.AutoProxyUtils.ORIGINAL_TARGET_CLASS_ATTRIBUTE` | [R1](api-mapping.md#r1-packages-and-names) |  |
+| `org.springframework.aop.framework.autoproxy.AutoProxyUtils#PRESERVE_TARGET_CLASS_ATTRIBUTE` | `flint.aop.framework.autoproxy.AutoProxyUtils.PRESERVE_TARGET_CLASS_ATTRIBUTE` | [R1](api-mapping.md#r1-packages-and-names) |  |
 
 #### org.springframework.aop.interceptor
 
@@ -9158,7 +9167,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.config | 70 | 0 |
 | org.springframework.aop.framework | 169 | 0 |
 | org.springframework.aop.framework.adapter | 16 | 0 |
-| org.springframework.aop.framework.autoproxy | 83 | 0 |
+| org.springframework.aop.framework.autoproxy | 77 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
 | org.springframework.aop.interceptor | 91 | 0 |
 | org.springframework.aop.scope | 12 | 0 |
