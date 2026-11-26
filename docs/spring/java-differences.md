@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,220 | 393 | 1,871 | 14,937 |
+| framework | openjdk@21.0.13 | 1,220 | 394 | 1,871 | 14,936 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 88 | 11,744 |
@@ -2464,6 +2464,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.format.DateTimeFormatter` | `flint.java.time.format.DateTimeFormatter` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable D value using concrete Flint temporal values and the existing parsed Fields representation. |
 | `java.time.format.DateTimeFormatter#ISO_OFFSET_DATE` | `flint.java.time.format.DateTimeFormatter.ISO_OFFSET_DATE` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
 | `java.time.format.DateTimeFormatter#ISO_OFFSET_TIME` | `flint.java.time.format.DateTimeFormatter.ISO_OFFSET_TIME` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
+| `java.time.format.DateTimeFormatter#ISO_ORDINAL_DATE` | `flint.java.time.format.DateTimeFormatter.ISO_ORDINAL_DATE` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
 | `java.time.format.DateTimeParseException` | `flint.java.time.format.DateTimeParseException` | [R26](api-mapping.md#r26-null-arrays) | A null parsed text counts as empty (R26). Java throws NullPointerException. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
@@ -10727,7 +10728,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
-| java.time.format | 127 | 0 |
+| java.time.format | 126 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,900 | 0 |
