@@ -1554,7 +1554,6 @@
       "org/springframework/data/core/PropertyReferenceExceptionUnitTests.java",
       "org/springframework/data/core/PropertyReferenceUnitTests.java",
       "org/springframework/data/core/ReactiveWrappersUnitTests.java",
-      "org/springframework/data/core/TypeDiscovererUnitTests.java",
       "org/springframework/data/core/TypedPropertyPathUnitTests.java",
       "org/springframework/data/domain/DoubleVectorUnitTests.java",
       "org/springframework/data/domain/ExampleMatcherUnitTests.java",

@@ -5,6 +5,7 @@
 module flint.data.core;
 
 import flint.java.lang : IllegalArgumentException, NullPointerException;
+public import flint.data.core.type_information : TypeInformation;
 
 @safe:
 

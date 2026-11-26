@@ -175,8 +175,47 @@
       "status": "deferred"
     },
     "org/springframework/data/core/TypeDiscovererUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/type_discoverer_tests.d",
+      "methods": {
+        "ported": [
+          "detectsSubTypes",
+          "isNotEqualIfTypesDiffer",
+          "returnsComponentAndValueTypesForMapExtensions",
+          "returnsComponentTypeForArrays",
+          "returnsComponentTypeForCollectionExtension"
+        ],
+        "skipped": {
+          "considerVavrListToBeCollectionLike": "Third-party Vavr collection descriptors are deferred.",
+          "considerVavrMapToBeAMap": "Third-party Vavr collection descriptors are deferred.",
+          "considerVavrSeqToBeCollectionLike": "Third-party Vavr collection descriptors are deferred.",
+          "considerVavrSetToBeCollectionLike": "Third-party Vavr collection descriptors are deferred.",
+          "considersNestedGenericsInEquality": "Generic property and ResolvableType discovery are deferred.",
+          "considersNestedGenericsInEqualityForRecursiveUnresolvableTypes": "Generic property and ResolvableType discovery are deferred.",
+          "considersStreamableToBeCollectionLike": "The Streamable contract and property lookup are deferred.",
+          "dealsWithTypesReferencingThemselves": "Generic property and ResolvableType discovery are deferred.",
+          "dealsWithTypesReferencingThemselvesInAMap": "Generic property and ResolvableType discovery are deferred.",
+          "detectsComponentTypeOfTypedClass": "Generic property and ResolvableType discovery are deferred.",
+          "detectsMapKeyAndValueOnEnumMaps": "EnumMap descriptors are deferred.",
+          "differentEqualsAndHashCodeForTypeDiscovererAndClassTypeInformation": "The Java raw ClassTypeInformation and ResolvableType representations are deferred.",
+          "discoveresConstructorParameterTypesCorrectly": "Constructor parameter metadata is deferred.",
+          "doesNotConsiderTypeImplementingIterableACollection": "Generic property and ResolvableType discovery are deferred.",
+          "genericFieldOfType": "Generic property and ResolvableType discovery are deferred.",
+          "isNotEqualIfFieldsDiffer": "Generic property and ResolvableType discovery are deferred.",
+          "rejectsNullType": "The ResolvableType constructor is deferred. The typed factory validates its descriptor table.",
+          "returnsComponentAndValueTypesForVavrMapExtensions": "Third-party Vavr collection descriptors are deferred.",
+          "returnsNullForComponentAndValueTypesForRawMaps": "Java raw generic type tokens are deferred.",
+          "sameFieldNoGenericsInfoShouldBeEqual": "Generic property and ResolvableType discovery are deferred.",
+          "sameFieldNoGenericsOnDifferentTypes": "Generic property and ResolvableType discovery are deferred.",
+          "sameFieldNoGenericsWhenInherited": "Generic property and ResolvableType discovery are deferred.",
+          "sameFieldWithDifferentGenericsSet": "Generic property and ResolvableType discovery are deferred.",
+          "sameFieldWithDifferentNoGenericsAndObjectOneSet": "Generic property and ResolvableType discovery are deferred.",
+          "sameFieldWithGenerics": "Generic property and ResolvableType discovery are deferred.",
+          "sameFieldWithGenericsSet": "Generic property and ResolvableType discovery are deferred.",
+          "superclassFieldsDoNotHideSubclassFields": "Generic property and ResolvableType discovery are deferred.",
+          "typeInfoShouldPreserveGenericParameter": "Generic property and ResolvableType discovery are deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/core/TypedPropertyPathUnitTests.java": {
       "phase": "2",
