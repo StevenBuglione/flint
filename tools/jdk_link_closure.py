@@ -159,8 +159,11 @@ def is_module_record(symbol, end):
     return symbol[end:].partition('.')[0] in ('11__moduleRefZ', '12__ModuleInfoZ')
 
 
-def violations(symbols, modules, leaves, data):
+def violations(symbols, modules, leaves, data, *, probe_module=None):
     """Attribute to the longest known module. A type name in a signature is only a reference."""
+    if probe_module in modules:
+        raise ValueError(f'{probe_module}: probe module is a registered JDK module')
+    owners = set(modules) | {probe_module} if probe_module else modules
     families = {mangle_prefix(name): name for name in BANNED_PHOBOS}
     roots = tuple(mangle_prefix(name) for name in JDK_ROOTS)
     problems = {}
@@ -171,7 +174,11 @@ def violations(symbols, modules, leaves, data):
                 problems.setdefault(f'banned Phobos {family}', symbol)
         if not symbol.startswith(roots):
             continue
-        owner = symbol_owner(symbol, modules)
+        owner = symbol_owner(symbol, owners)
+        if owner is not None and owner[0] == probe_module:
+            if is_module_record(symbol, owner[1]):
+                continue
+            owner = symbol_owner(symbol, modules)
         if owner is None:
             problems.setdefault('unrecognized JDK symbol owner', symbol)
             continue
@@ -475,10 +482,12 @@ def audit(package, evidence):
             for leaf, probes in entries.items():
                 for name, entry in probes.items():
                     directory = workspace / f'.jdk-{leaf}-{name}-{profile}'
-                    loadable, symbols, map_text = build_probe(workspace, directory, package,
-                                                              packages[package] / entry['source'],
+                    source = packages[package] / entry['source']
+                    fixture_module = declared_module(tokens(source.read_text()))
+                    loadable, symbols, map_text = build_probe(workspace, directory, package, source,
                                                               profiles[profile], evidence)
-                    problems = violations(symbols, all_modules, {leaf, *entry['leaves']}, set(entry['data']))
+                    problems = violations(symbols, all_modules, {leaf, *entry['leaves']}, set(entry['data']),
+                                          probe_module=fixture_module)
                     families = {issue.removeprefix('banned Phobos ') for issue in problems
                                 if issue.startswith('banned Phobos ')}
                     report.setdefault(leaf, {}).setdefault(name, {})[profile] = {

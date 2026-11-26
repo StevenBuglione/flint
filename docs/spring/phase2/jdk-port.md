@@ -119,6 +119,9 @@ Existing `closure.json` files use schema `flint.jdk-closure/1` and map each leaf
 `probes`. The gate reads both layouts and requires each leaf and probe name pair and each source fixture
 to be unique in a package. When moving a record to its own file, remove the old entry in the same commit
 and keep its leaf and probe name so its closure history stays intact.
+A fixture may declare its own module in the JDK namespace to exercise package access. The audit excludes
+that declaration's two compiler-generated module metadata records. Fixture helper code and other metadata
+still go through ordinary symbol attribution. A fixture module name must differ from all registered JDK modules.
 
 Put new table-only modules under a `.data` component so the gate can identify their symbols. Write separate
 probes for common operations and operations that intentionally need optional data. Use runtime input to exercise

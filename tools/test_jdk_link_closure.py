@@ -117,6 +117,30 @@ Discarded input sections
         self.assertEqual(closure.check_violations(set(leaking), set(existing)),
                          ['new violation: undeclared leaf flint.java.time'])
 
+    def test_only_exact_fixture_module_records_are_exempt(self):
+        aggregate = 'flint.java'
+        other = 'flint.java.text'
+        module = 'flint.java.nio.buffer_state_probe'
+        prefix = closure.mangle_prefix(module)
+        own = prefix + '11__moduleRefZ'
+        own_info = prefix + '12__ModuleInfoZ.llvm.0'
+        helper = prefix + '6helperFZv'
+        aggregate_record = closure.mangle_prefix(aggregate) + '11__moduleRefZ'
+        other_record = closure.mangle_prefix(other) + '11__moduleRefZ'
+        phobos = '_D3std3uni4testFZv'
+        modules = {aggregate, other}
+        symbols = {own, own_info, helper, aggregate_record, other_record, phobos}
+
+        findings = closure.violations(symbols, modules, set(), set(), probe_module=module)
+        self.assertEqual(findings, {
+            'banned Phobos std.uni': phobos,
+            'undeclared leaf flint.java': helper,
+            'undeclared module records flint.java': aggregate_record,
+            'undeclared module records flint.java.text': other_record,
+        })
+        with self.assertRaisesRegex(ValueError, 'probe module is a registered JDK module'):
+            closure.violations(symbols, modules, set(), set(), probe_module=aggregate)
+
     def test_repeated_module_segments_resolve_identifier_backreferences(self):
         root = 'flint.java.util.regex'
         internal = root + '.internal.regex'
@@ -241,9 +265,11 @@ Discarded input sections
             (root / 'policy/framework.json').write_text('{"modules":{"java":{"directory":"framework/java"}}}')
             (modules / 'data/table.d').write_text('module flint.java.data.table;\n@safe:\n'
                                                   'immutable int[6] values = [7, 5, 2, 8, 4, 0];\n')
+            (modules / 'package.d').write_text('module flint.java;\npublic import flint.java.sample;\n@safe:\n')
             (modules / 'sample.d').write_text('module flint.java.sample;\n@safe:\n'
                 'int lookup(size_t index) { import flint.java.data.table : values; return values[index % values.length]; }\n')
-            (package / 'closure/sample.d').write_text('module app;\nimport flint.java.sample : lookup;\n@safe:\n'
+            (package / 'closure/sample.d').write_text('module flint.java.sample_probe;\n'
+                                                      'import flint.java.sample : lookup;\n@safe:\n'
                                                       'int main(string[] args) { return lookup(args.length); }\n')
             entry = {'source': 'closure/sample.d', 'leaves': [], 'data': []}
             document = {'schema': closure.SCHEMA, 'probes': {'flint.java.sample': {'sample': entry}}}
