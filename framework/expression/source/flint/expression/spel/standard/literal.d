@@ -24,7 +24,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.text : ParsedLong, decodeUtf8, tryParseDouble, tryParseFloat, tryParseLong;
 import flint.expression.spel : SpelMessage, SpelParseException;
 import flint.java.character : isLetter;
-import std.ascii : isAlpha, isDigit, isHexDigit, toLower;
+import std.ascii : isDigit, isHexDigit, toLower;
 
 @safe:
 
@@ -40,6 +40,34 @@ package(flint.expression) size_t utf16Length(scope const(char)[] text, size_t st
 package(flint.expression.spel.standard) bool startsIdentifier(dchar c) pure nothrow @nogc
 {
     return c == '_' || c == '$' || (c <= 0xFFFF && isLetter(c));
+}
+
+package(flint.expression.spel.standard) enum LiteralName : ubyte
+{
+    other,
+    true_,
+    false_,
+    null_,
+}
+
+package(flint.expression.spel.standard) pragma(inline, false) LiteralName literalName(string name) pure nothrow @nogc
+{
+    char[5] lower;
+    if (name.length > lower.length)
+        return LiteralName.other;
+    foreach (i, c; name)
+        lower[i] = toLower(c);
+    switch (lower[0 .. name.length])
+    {
+    case "true":
+        return LiteralName.true_;
+    case "false":
+        return LiteralName.false_;
+    case "null":
+        return LiteralName.null_;
+    default:
+        return LiteralName.other;
+    }
 }
 
 package(flint.expression.spel.standard) struct LiteralParser
@@ -102,23 +130,15 @@ package(flint.expression.spel.standard) struct LiteralParser
     Any readIdentifier()
     {
         const start = position;
-        char[5] name;
-        while (isAlpha(peek) || isDigit(peek) || peek == '_' || peek == '$')
+        final switch (literalName(readIdentifierName()))
         {
-            if (position - start == name.length)
-                throw errorAt(start, SpelMessage.OOD);
-            name[position - start] = toLower(peek);
-            ++position;
-        }
-        switch (name[0 .. position - start])
-        {
-        case "true":
+        case LiteralName.true_:
             return Any.of(true);
-        case "false":
+        case LiteralName.false_:
             return Any.of(false);
-        case "null":
+        case LiteralName.null_:
             return Any.init;
-        default:
+        case LiteralName.other:
             throw errorAt(start, SpelMessage.OOD);
         }
     }

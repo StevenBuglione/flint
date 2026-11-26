@@ -23,8 +23,8 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, PropertyDescriptor;
 import flint.engine.aot.name : canonicalTypeName;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
-import flint.expression.spel.standard.literal : LiteralParser, utf16Length;
-import std.ascii : isAlphaNum, toLower;
+import flint.expression.spel.standard.literal : LiteralName, LiteralParser, literalName, utf16Length;
+import std.ascii : isAlphaNum;
 
 @safe:
 package(flint.expression.spel.standard):
@@ -59,7 +59,7 @@ immutable(PropertyStep)[] parsePropertyPath(string source)
         reader.skipWhitespace();
         const position = reader.position;
         const name = reader.readIdentifierName();
-        if (name is null || (!explicitRoot && steps.length == 0 && isLiteralName(name)))
+        if (name is null || (!explicitRoot && steps.length == 0 && literalName(name) != LiteralName.other))
             return null;
         steps ~= PropertyStep(name, position, nullSafe);
         if (!readSeparator(reader, nullSafe))
@@ -82,17 +82,6 @@ private bool readSeparator(ref LiteralParser reader, out bool nullSafe) pure not
         return true;
     }
     return false;
-}
-
-private bool isLiteralName(scope const(char)[] name) pure nothrow @nogc
-{
-    char[5] lower;
-    if (name.length > lower.length)
-        return false;
-    foreach (i, c; name)
-        lower[i] = toLower(c);
-    const word = lower[0 .. name.length];
-    return word == "null" || word == "true" || word == "false";
 }
 
 /// Read through erased AOT accessors at the Spring API boundary.
