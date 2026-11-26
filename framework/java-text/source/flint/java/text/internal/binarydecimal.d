@@ -121,25 +121,55 @@ private BinaryDecimal developIntegerDigits(ulong whole, int exponent) pure nothr
     return result;
 }
 
-/// Converts binary64 using the integral path or signed-long digit generation.
-/// Returns false and leaves `result` untouched when the general path is needed.
+/// Converts the integral and signed-long paths without entering limb arithmetic.
 bool tryBoundedBinaryDecimal(ulong bits, ref BinaryDecimal result) pure nothrow @nogc
 {
+    return tryBinaryDecimal(bits, false, result);
+}
+
+/// Converts finite binary64 values. Special values leave the result untouched.
+bool tryFiniteBinaryDecimal(ulong bits, ref BinaryDecimal result) pure nothrow @nogc
+{
+    return tryBinaryDecimal(bits, true, result);
+}
+
+private bool tryBinaryDecimal(ulong bits, bool allowLimbs, ref BinaryDecimal result) pure nothrow @nogc
+{
+    import core.bitop : bsr;
+
     if (tryIntegerBinaryDecimal(bits, result))
         return true;
-
     const rawExponent = cast(int)((bits >> 52) & 0x7ff);
-    if (rawExponent == 0 || rawExponent == 0x7ff)
+    if (rawExponent == 0x7ff || (rawExponent == 0 && !allowLimbs))
         return false;
-    const significand = (1UL << 52) | (bits & ((1UL << 52) - 1));
+    const fraction = bits & ((1UL << 52) - 1);
+    const shift = rawExponent == 0 ? 52 - bsr(fraction) : 0;
+    const significand = rawExponent == 0 ? fraction << shift : (1UL << 52) | fraction;
+    const exponent = (rawExponent == 0 ? 1 - shift : rawExponent) - 1023;
 
+    const scale = prepareScale(significand, exponent, 53 - shift);
     ScaledBinary scaled;
-    if (!tryLongScale(significand, rawExponent - 1023, scaled))
+    BinaryDecimal converted;
+    if (tryLongScale(scale, scaled))
+        converted = developBoundedDigits(scaled);
+    else if (!allowLimbs || !developGeneralDigits(scale, converted))
         return false;
 
-    result = developBoundedDigits(scaled);
-    result.negative = (bits >> 63) != 0;
+    converted.negative = (bits >> 63) != 0;
+    result = converted;
     return true;
+}
+
+private struct BinaryScale
+{
+    ulong significand;
+    int width;
+    int numeratorFives;
+    int denominatorFives;
+    int numeratorTwos;
+    int denominatorTwos;
+    int marginTwos;
+    int decimalExponent;
 }
 
 private struct ScaledBinary
@@ -150,7 +180,7 @@ private struct ScaledBinary
     int decimalExponent;
 }
 
-private bool tryLongScale(ulong significand, int exponent, out ScaledBinary scaled) pure nothrow @nogc
+private BinaryScale prepareScale(ulong significand, int exponent, int significantBits) pure nothrow @nogc
 {
     import core.bitop : bsf;
 
@@ -160,9 +190,10 @@ private bool tryLongScale(ulong significand, int exponent, out ScaledBinary scal
     const decimalExponent = estimateDecimalExponent(significand, exponent);
     const numeratorFives = decimalExponent < 0 ? -decimalExponent : 0;
     const denominatorFives = decimalExponent > 0 ? decimalExponent : 0;
+
     int numeratorTwos = numeratorFives + fractionBits + exponent;
     int denominatorTwos = denominatorFives + fractionBits;
-    int marginTwos = numeratorTwos - 53;
+    int marginTwos = numeratorTwos - significantBits;
     numeratorTwos -= width - 1;
 
     const commonTwos = numeratorTwos < denominatorTwos ? numeratorTwos : denominatorTwos;
@@ -177,18 +208,24 @@ private bool tryLongScale(ulong significand, int exponent, out ScaledBinary scal
         denominatorTwos -= marginTwos;
         marginTwos = 0;
     }
+    return BinaryScale(significand >> trailing, width, numeratorFives, denominatorFives,
+            numeratorTwos, denominatorTwos, marginTwos, decimalExponent);
+}
 
+private bool tryLongScale(ref scope const BinaryScale scale, out ScaledBinary scaled) pure nothrow @nogc
+{
     // With 53 significant bits, width plus numeratorTwos is at least 54.
-    // The int branch of the upstream routine is only needed for float.
-    const numeratorBits = width + numeratorTwos + bitsForFivePower(numeratorFives);
-    const tenDenominatorBits = denominatorTwos + 1 + bitsForFivePower(denominatorFives + 1);
+    // Subnormals need larger powers, so binary64 does not use the upstream int path.
+    const numeratorBits = scale.width + scale.numeratorTwos + bitsForFivePower(scale.numeratorFives);
+    const tenDenominatorBits = scale.denominatorTwos + 1 + bitsForFivePower(scale.denominatorFives + 1);
     if (numeratorBits >= 64 || tenDenominatorBits >= 64)
         return false;
 
-    scaled.numerator = (cast(long)(significand >> trailing) * powersOfFive[numeratorFives]) << numeratorTwos;
-    scaled.denominator = powersOfFive[denominatorFives] << denominatorTwos;
-    scaled.margin = powersOfFive[numeratorFives] << marginTwos;
-    scaled.decimalExponent = decimalExponent;
+    const numeratorPower = powersOfFive[scale.numeratorFives];
+    scaled.numerator = (cast(long) scale.significand * numeratorPower) << scale.numeratorTwos;
+    scaled.denominator = powersOfFive[scale.denominatorFives] << scale.denominatorTwos;
+    scaled.margin = numeratorPower << scale.marginTwos;
+    scaled.decimalExponent = scale.decimalExponent;
     return true;
 }
 
@@ -237,11 +274,81 @@ private BinaryDecimal developBoundedDigits(ScaledBinary scaled) pure nothrow @no
     result.exact = remainder == 0;
     const difference = (remainder << 1) - tenDenominator;
     if (high && (!low || difference > 0 || (difference == 0 && (result.digits[result.count - 1] & 1) != 0)))
-        roundBoundedDigits(result);
+        roundDigits(result);
     return result;
 }
 
-private void roundBoundedDigits(ref BinaryDecimal result) pure nothrow @nogc
+private struct GeneralScale
+{
+    import flint.java.internal.math.fdbiginteger : FDBigInteger;
+
+    FDBigInteger remainder;
+    FDBigInteger denominator;
+    FDBigInteger margin;
+    FDBigInteger tenDenominator;
+}
+
+private bool prepareGeneralScale(ref scope const BinaryScale scale, out GeneralScale operands) pure nothrow @nogc
+{
+    import flint.java.internal.math.fdbiginteger : FDBigInteger;
+
+    return FDBigInteger.tryScale(scale.significand, scale.numeratorFives, scale.numeratorTwos,
+            operands.remainder) && FDBigInteger.tryScale(1, scale.denominatorFives, scale.denominatorTwos,
+            operands.denominator) && FDBigInteger.tryScale(1, scale.numeratorFives + 1,
+            scale.marginTwos + 1, operands.margin) && FDBigInteger.tryScale(1,
+            scale.denominatorFives + 1, scale.denominatorTwos + 1, operands.tenDenominator);
+}
+
+private bool developGeneralDigits(ref scope const BinaryScale scale, out BinaryDecimal result) pure nothrow @nogc
+{
+    GeneralScale operands;
+    if (!prepareGeneralScale(scale, operands))
+        return false;
+
+    int decimalExponent = scale.decimalExponent;
+    uint digit;
+    if (!operands.remainder.tryQuoRemIteration(operands.denominator, digit))
+        return false;
+    bool low = operands.remainder.cmp(operands.margin) < 0;
+    bool high = operands.tenDenominator.addAndCmp(operands.remainder, operands.margin) <= 0;
+    if (digit == 0 && !high)
+        --decimalExponent;
+    else
+        result.digits[result.count++] = cast(char)('0' + digit);
+
+    if (decimalExponent < -3 || decimalExponent >= 8)
+        low = high = false;
+    while (!low && !high)
+    {
+        if (result.count == result.digits.length || !operands.remainder.tryQuoRemIteration(operands.denominator,
+                digit) || !operands.margin.tryMultiplyBy10())
+            return false;
+        low = operands.remainder.cmp(operands.margin) < 0;
+        high = operands.tenDenominator.addAndCmp(operands.remainder, operands.margin) <= 0;
+        result.digits[result.count++] = cast(char)('0' + digit);
+    }
+
+    result.decimalAt = decimalExponent + 1;
+    finishGeneralDigits(operands, result, low, high);
+    return true;
+}
+
+private pure nothrow @nogc void finishGeneralDigits(ref scope const GeneralScale operands,
+        ref BinaryDecimal result, bool low, bool high)
+{
+    import flint.java.internal.math.fdbiginteger : FDBigInteger;
+
+    const zero = FDBigInteger.init;
+    result.exact = operands.remainder.cmp(zero) == 0;
+    if (high)
+    {
+        const difference = -operands.tenDenominator.addAndCmp(operands.remainder, operands.remainder);
+        if (!low || difference > 0 || (difference == 0 && (result.digits[result.count - 1] & 1) != 0))
+            roundDigits(result);
+    }
+}
+
+private void roundDigits(ref BinaryDecimal result) pure nothrow @nogc
 {
     foreach_reverse (index; 0 .. result.count)
     {
