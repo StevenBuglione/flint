@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,907 | 632 | 0 | 1,915 | 13,967 |
+| framework | openjdk@21.0.13 | 1,912 | 634 | 0 | 1,915 | 13,960 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2342,6 +2342,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.Short#valueOf(String,int)` | `flint.java.lang.short_.Short.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a short: a boxed Short is a D short. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
 | `java.lang.Short#valueOf(short)` | `flint.java.lang.short_.Short.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns the short itself: a boxed Short is a D short. |
 | `java.lang.StrictMath` | `flint.java.lang.strictmath.StrictMath` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.lang.strictmath; flint.java.lang does not re-export it until the JDK aggregate exists. NaN results are the canonical quiet NaN (Double.NaN's bits); HotSpot on x86-64 returns the sign-set default NaN for computed paths, which only doubleToRawLongBits can observe. |
+| `java.lang.ThreadLocal` | `flint.java.lang.ThreadLocal` | [D-JDK-6](api-mapping.md#deviations) | Bindings hold keys strongly until remove() or the owning thread or fiber ends. Java holds keys weakly, so an unreachable ThreadLocal need not keep its value alive. |
+| `java.lang.ThreadLocal#withInitial(Supplier)` | `flint.java.lang.ThreadLocal.withInitial` | [R8](api-mapping.md#r8-exceptions), [R9](api-mapping.md#r9-functional-interfaces), [D-7](api-mapping.md#deviations), [D-JDK-6](api-mapping.md#deviations) | Accepts covariant reference suppliers and a concrete D delegate. Bare null selects the Java Supplier overload. All null forms throw the canonical NullPointerException during factory invocation. |
 | `java.lang.UnsupportedOperationException` | `flint.java.lang.UnsupportedOperationException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.UnsupportedOperationException#<init>(String)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.UnsupportedOperationException#<init>(String,Throwable)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
@@ -10949,7 +10951,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 770 | 0 |
-| java.lang | 1,614 | 0 |
+| java.lang | 1,607 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
