@@ -1,0 +1,8 @@
+{
+  "covered_by": {
+    "leaf": "flint.java.nio.bytebuffer",
+    "probe": "heap-cursor",
+    "abstract_type": "Buffer",
+    "concrete_type": "ByteBuffer"
+  }
+}

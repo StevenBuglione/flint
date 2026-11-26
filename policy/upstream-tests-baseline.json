@@ -3969,6 +3969,23 @@
       "java/math/BigInteger/largeMemory/SymmetricRangeTests.java",
       "java/math/RoundingMode/RoundingModeTests.java"
     ],
+    "java-nio-buffers": [
+      "java/nio/Buffer/AllocateDirectInit.java",
+      "java/nio/Buffer/Basic.java",
+      "java/nio/Buffer/BulkPutBuffer.java",
+      "java/nio/Buffer/ByteBufferViews.java",
+      "java/nio/Buffer/CharAt.java",
+      "java/nio/Buffer/Chars.java",
+      "java/nio/Buffer/Chew.java",
+      "java/nio/Buffer/CopyDirectMemory.java",
+      "java/nio/Buffer/DirectBufferAllocTest.java",
+      "java/nio/Buffer/EqualsCompareTest.java",
+      "java/nio/Buffer/LimitDirectMemory.java",
+      "java/nio/Buffer/LimitDirectMemoryNegativeTest.java",
+      "java/nio/Buffer/Order.java",
+      "java/nio/Buffer/ReachabilityTest.java",
+      "java/nio/Buffer/StringCharBufferSliceTest.java"
+    ],
     "java-regex": [
       "java/util/regex/ImmutableMatchResultTest.java",
       "java/util/regex/NamedGroupsTests.java",

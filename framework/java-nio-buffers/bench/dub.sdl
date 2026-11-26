@@ -1,0 +1,5 @@
+name "probe-java-nio-buffers"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-nio-buffers" path="../../.."

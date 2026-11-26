@@ -371,6 +371,8 @@ The Spring Beans factory exception types reuse the existing `BeanCreationExcepti
 
 **Reuse the canonical UnsupportedOperationException for writes to read-only buffers.** The leaf adds a zero-argument subclass and inherits message and cause handling. The matched standalone probe at `d1eb6b57f` added 640 O3 and 640 Oz loadable bytes over the UnsupportedOperationException control, with 436 DMD instances on venus. The jdk-leaf-rule caps are 704 bytes and 480 instances. The package benchmark exercises all the buffer exceptions through one handler.
 
+**Keep heap buffers outside the Java NIO exception archive.** The heap cursor and views share backing storage and use the separate java-nio-buffers package. The matched probe at `b514499f4` added 20,324 O3 and 18,508 Oz loadable bytes with 572 DMD instances on venus. The five existing NIO probe reports match their previous stock results exactly. The concrete heap probe covers the abstract Buffer and tracks only the known flint.java.lang module records.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

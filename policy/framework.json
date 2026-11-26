@@ -750,6 +750,47 @@
     "template_instances": 494
    }
   },
+  "java-nio-buffers": {
+   "directory": "framework/java-nio-buffers",
+   "module": "flint.java.nio.buffer",
+   "also": [
+    "flint.java.nio.bytebuffer",
+    "flint.java.nio.internal.buffercursor"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "engine-aot",
+    "java",
+    "java-nio"
+   ],
+   "bench": {
+    "fixture": "framework/java-nio-buffers/bench",
+    "baseline": "framework/java-nio-buffers/bench/baseline",
+    "edit_source": "framework/java-nio-buffers/source/flint/java/nio/bytebuffer.d"
+   },
+   "java_types": [
+    "java.nio.Buffer",
+    "java.nio.ByteBuffer"
+   ],
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ],
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "compiler_peak_rss_bytes": 536870912,
+    "incremental_linked_bytes": 22357,
+    "template_instances": 630
+   }
+  },
   "java-regex": {
    "directory": "framework/java-regex",
    "module": "flint.java.util.regex",

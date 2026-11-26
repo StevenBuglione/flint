@@ -1,0 +1,4 @@
+name "probe-java-nio-buffers-baseline"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
