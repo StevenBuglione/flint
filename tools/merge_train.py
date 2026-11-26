@@ -106,7 +106,7 @@ cleanup() {
   for pid in $(pgrep -u "$USER" -f 'dmd' || true); do
     if tr '\0' '\n' < /proc/$pid/environ 2>/dev/null | grep -qx "FLINT_CACHE=$FLINT_CACHE"; then kill "$pid" 2>/dev/null; fi
   done
-  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$FLINT_CACHE.budget.json" "$FLINT_CACHE.tight.json" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
+  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$FLINT_CACHE.budget.json" "$FLINT_CACHE.tight.json" "$FLINT_CACHE.median.json" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
   # Each app's whole .flint (its dub cache grew to 5 GB on posidon) and the CLI's build tree; the natives stay.
   rm -rf "$WT"/benchmarks/spring/flint/*/.flint "$WT"/benchmarks/spring/flint/*/.dub "$WT/apps/flint/.flint/build"
   find "$WT" -xdev -name .dub -type d -prune -exec rm -rf {} + 2>/dev/null
@@ -183,8 +183,13 @@ if [ $rc -ne 0 ]; then
 @TIGHT@
 TIGHT
   apps=$(python3 - "$FLINT_CACHE.dod.json" "$FLINT_CACHE.tight.json" <<'PY'
-import json, re, sys
+import json, os, re, sys
 text, tight = open(sys.argv[1]).read(), json.load(open(sys.argv[2]))
+final = len(sys.argv) > 3 and sys.argv[3] == 'final'
+# Main's own open misses (benchmarks/spring/train-budget-relative.json, a temporary coordinator decision): such an
+# endpoint fails only if the candidate regresses past main's measured value by more than the tolerance.
+RELATIVE = 'benchmarks/spring/train-budget-relative.json'
+relative = json.load(open(RELATIVE)).get('endpoints', {}) if os.path.exists(RELATIVE) else {}
 objects, at = [], 0
 while text.find('{', at) >= 0:
     at = text.find('{', at)
@@ -209,7 +214,20 @@ elif report is not None:
     problems = list(report.get('problems', []))
 else:
     sys.exit(1)
-if not problems:
+FULL = re.compile(r"([\w.-]+): '([^']+)': instructions ([0-9,]+) -> ([0-9,]+) \(\+([0-9.]+)%, tolerance \+([0-9.]+)%\)")
+kept = []
+for problem in problems:
+    found = FULL.search(problem)
+    if found and found.group(2) in relative.get(found.group(1), {}):
+        entry = relative[found.group(1)][found.group(2)]
+        if int(found.group(4).replace(',', '')) <= entry['main'] * (1 + entry['tolerance']):
+            continue
+    kept.append(problem)
+if problems and not kept:
+    print('RELATIVE-GREEN')
+    sys.exit(0)
+problems = kept
+if not problems or final:
     sys.exit(1)
 apps = set()
 for problem in problems:
@@ -222,9 +240,15 @@ for problem in problems:
 print(' '.join(sorted(apps)))
 PY
 ) || exit $rc
+  if [ "$apps" = RELATIVE-GREEN ]; then echo "only main's open budget misses, within tolerance of main"; exit 0; fi
   echo "== borderline flint budget miss: re-measuring $apps (median of 5, decision 6478897a)"
   set -- ; for app in $apps; do set -- "$@" --app "$app"; done
-  $H flint budget "$@" --repeat 5 && { echo "the median of 5 is within budget"; exit 0; }
+  $H flint budget "$@" --repeat 5 --report "$FLINT_CACHE.median.json" && { echo "the median of 5 is within budget"; exit 0; }
+  cat "$FLINT_CACHE.median.json" 2>/dev/null
+  verdict=$(python3 - "$FLINT_CACHE.median.json" "$FLINT_CACHE.tight.json" final <<'PY'
+@CLASSIFIER@
+PY
+) && [ "$verdict" = RELATIVE-GREEN ] && { echo "the median of 5 misses only main's open endpoints, within tolerance of main"; exit 0; }
   exit 1
 fi
 """
@@ -320,6 +344,8 @@ class RemoteVerifier:
                   '@MODE@': mode, '@BUDGET_APPS@': ' '.join(apps or APPS), '@TIGHT@': json.dumps(tight or {}),
                   '@COMMIT@': commit, '@REF@': ref, '@STAMP@': stamp}
         text = VERIFY_SCRIPT
+        start = text.index("<<'PY'\n", text.index('TIGHT\n  apps=')) + len("<<'PY'\n")
+        text = text.replace('@CLASSIFIER@', text[start:text.index('\nPY\n', start)])
         for token, value in values.items():
             text = text.replace(token, value)
         return text

@@ -469,6 +469,30 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(posidon.modes[0][0], 'full')
         self.assertTrue(all(mode == ('budget', ('petclinic-rest',)) for mode in posidon.modes[1:]), posidon.modes)
 
+    def test_main_s_open_misses_are_judged_relative_to_main(self):
+        s = merge_train.VERIFY_SCRIPT
+        start = s.index("<<'PY'\n", s.index('TIGHT\n  apps=')) + len("<<'PY'\n")
+        classifier = s[start:s.index('\nPY\n', start)]
+        work = Path(self.temp.name) / 'relative'
+        (work / 'benchmarks' / 'spring').mkdir(parents=True)
+        (work / 'benchmarks' / 'spring' / 'train-budget-relative.json').write_text(json.dumps({'endpoints': {
+            'gs-rest-service': {'name with spaces and plus': {'main': 24097, 'tolerance': 0.005}}}}))
+        (work / 'tight.json').write_text('{}')
+
+        def judge(*problems, final=False):
+            (work / 'report.json').write_text(json.dumps({'schema': 'flint.budget/1-report', 'problems': list(problems)}))
+            done = subprocess.run([sys.executable, '-c', classifier, 'report.json', 'tight.json', *(['final'] if final else [])],
+                                  cwd=work, capture_output=True, text=True)
+            return done.returncode, done.stdout.strip()
+        main_miss = "gs-rest-service: 'name with spaces and plus': instructions 23,968 -> 24,106 (+0.58%, tolerance +0.50%)"
+        worse = "gs-rest-service: 'name with spaces and plus': instructions 23,968 -> 24,400 (+1.80%, tolerance +0.50%)"
+        other = "gs-rest-service: 'JSON escaping': instructions 24,630 -> 24,800 (+0.69%, tolerance +0.50%)"
+        self.assertEqual(judge(main_miss), (0, 'RELATIVE-GREEN'))
+        self.assertEqual(judge(worse)[0], 1)  # past main by more than the tolerance, and not borderline
+        self.assertEqual(judge(main_miss, other), (0, 'gs-rest-service'))  # the other one is re-measured
+        self.assertEqual(judge(main_miss, final=True), (0, 'RELATIVE-GREEN'))
+        self.assertEqual(judge(other, final=True)[0], 1)
+
     def test_budget_logs_are_parsed(self):
         dod = json.dumps({'steps': [{'step': 'apps', 'details': {'petclinic-rest allocation tests': 'pass',
                                                                   'petclinic-rest flint budget': 'regression'},

@@ -1,0 +1,13 @@
+{
+  "schema": "flint.train-budget-relative/1",
+  "decision": "coordinator, 2026-11-26 08:45Z: not a re-baseline (raising a flint budget is the owner's). Main itself misses these gs-rest-service endpoints; until the fix-forward lands, the merge train fails a candidate on them only if it regresses past main's measured value by more than the tolerance. Main's own miss stays an open blocker. The fix commit deletes this file.",
+  "main": "a1e841e8fc02ae6dd793f4afd53795c4ce778cc4",
+  "blocker": "bisect: coordination/notes/gs-rest-bisect/bisect.log",
+  "measured": "flint budget --app gs-rest-service on posidon at main a1e841e8, 2026-11-26 08:3xZ: 'name with spaces and plus' median of 5; 'unknown parameter is ignored' a single run (its median of 5 was within budget)",
+  "endpoints": {
+    "gs-rest-service": {
+      "name with spaces and plus": {"main": 24097, "budget": 23968, "tolerance": 0.005},
+      "unknown parameter is ignored": {"main": 23304, "budget": 23142, "tolerance": 0.0063}
+    }
+  }
+}
