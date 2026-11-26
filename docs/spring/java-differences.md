@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,056 | 278 | 1,871 | 15,216 |
+| framework | openjdk@21.0.13 | 1,055 | 278 | 1,871 | 15,217 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10055,7 +10055,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
 | java.sql | 1,005 | 0 |
-| java.text | 531 | 0 |
+| java.text | 532 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
@@ -10979,6 +10979,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat#parse(String)` | 2 | SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14). |
 | framework | `java.text.DateFormat#setLenient(boolean)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#setTimeZone(TimeZone)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
+| framework | `java.text.MessageFormat` | 2 | Flint declares the class final. Java lets callers subclass MessageFormat and override methods such as toPattern(). |
 | framework | `java.text.MessageFormat#<init>(String)` | 2 | Accepts a null pattern and unknown format types. The default locale also needs Locale.Category.FORMAT. |
 | framework | `java.text.MessageFormat#<init>(String,Locale)` | 2 | Accepts unknown format types when applying the pattern. |
 | framework | `java.text.MessageFormat#format(String,Object...)` | 2 | Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type. |

@@ -6131,7 +6131,7 @@
 "java.text.DateFormat#setCalendar(Calendar)":{"d":"flint.java.text.DateFormat.setCalendar","status":"ported"},
 "java.text.DateFormat#setLenient(boolean)":{"status":"excluded","category":"deferred","phase":"2","reason":"After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8)."},
 "java.text.DateFormat#setTimeZone(TimeZone)":{"status":"excluded","category":"deferred","phase":"2","reason":"After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8)."},
-"java.text.MessageFormat":{"d":"flint.java.text.MessageFormat","status":"ported"},
+"java.text.MessageFormat":{"status":"excluded","category":"deferred","phase":"2","reason":"Flint declares the class final. Java lets callers subclass MessageFormat and override methods such as toPattern()."},
 "java.text.MessageFormat#<init>(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"Accepts a null pattern and unknown format types. The default locale also needs Locale.Category.FORMAT."},
 "java.text.MessageFormat#<init>(String,Locale)":{"status":"excluded","category":"deferred","phase":"2","reason":"Accepts unknown format types when applying the pattern."},
 "java.text.MessageFormat#format(String,Object...)":{"status":"excluded","category":"deferred","phase":"2","reason":"Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type."},
