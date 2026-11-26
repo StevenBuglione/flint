@@ -632,7 +632,12 @@ int javaHashCode(T)(T value)
     static if (is(T : const(char)[]))
         return stringHashCode(value);
     else static if (is(T == bool))
-        return Boolean.hashCode(value);
+    {
+        // A runtime call retains the Boolean leaf in probes that use the erased Formatter.
+        enum trueHash = Boolean.hashCode(true);
+        enum falseHash = Boolean.hashCode(false);
+        return value ? trueHash : falseHash;
+    }
     else static if (is(T == long) || is(T == ulong))
         return Long.hashCode(cast(long) value);
     else static if (__traits(isIntegral, T) || is(T == char) || is(T == wchar) || is(T == dchar))

@@ -4,15 +4,17 @@ one non-template engine over erased arguments (`Any[]`), so a call site instanti
 boxing (rulebook R7) and never `std.format`.
 
 Specifiers are `%[argument_index$][flags][width][.precision]conversion`, with `<` for the previous argument.
-Conversions: `b B s S c C d o x X f e E g G a A n %`; flags `- # + space 0 , (`. Arguments format as Java's would: `%s` as
+Conversions: `b B h H s S c C d o x X f e E g G a A n %`; flags `- # + space 0 , (`. Arguments format as Java's would: `%s` as
 `String.valueOf` (null, `true`, `Double.toString`, an object's `toString`), `%d`/`%o`/`%x` for integral types (`%x`
 of a negative `int` is its 32-bit two's complement, of a `long` its 64-bit one), `%c` for a character or code
 point, and `%f`, `%e`/`%E`, `%g`/`%G` and `%a`/`%A` for floating point. Decimal conversions round half up
 with a default precision of six digits. Hexadecimal formatting uses exact digits by default and rounds ties to even
 at reduced precision.
 
-The renderer uses the root locale's `.` and `,`. `%h` and the date/time conversions throw
-`UnknownFormatConversionException`.
+The renderer uses the root locale's `.` and `,`. `%h` uses the Java boxed scalar hash. For object references it
+uses virtual `toHash` (R11). A `JavaObject` mixin calls `hashCode` and returns zero for an exception. A class
+without the mixin uses its D `toHash`. Erased native aggregates have no Java object to hash.
+Date/time conversions throw `UnknownFormatConversionException`.
 +/
 module flint.java.util.formatter;
 
@@ -687,6 +689,8 @@ private string convert(const ref Spec spec, Any argument)
     {
     case 'b', 'B':
         return cased(spec, truncate(spec, booleanText(argument)));
+    case 'h', 'H':
+        return cased(spec, truncate(spec, hashText(argument)));
     case 's', 'S':
         return cased(spec, truncate(spec, stringText(argument)));
     case 'c', 'C':
@@ -720,7 +724,7 @@ private string cased(const ref Spec spec, string text) pure nothrow
             if (c >= 0x80)
                 return uppercaseUnicode(text);
     }
-    else if (spec.conversion != 'B' && spec.conversion != 'X')
+    else if (spec.conversion != 'B' && spec.conversion != 'H' && spec.conversion != 'X')
         return text;
     auto upper = text.dup;
     foreach (ref c; upper)
@@ -882,6 +886,42 @@ private string booleanText(Any argument)
     if (argument.typeName == "bool")
         return argument.get!bool ? "true" : "false";
     return "true";
+}
+
+pragma(inline, false) private string hashText(Any argument)
+{
+    if (argument.isNull)
+        return "null";
+    return hex(cast(uint) boxedHashCode(argument));
+}
+
+private int boxedHashCode(Any argument)
+{
+    import flint.java.lang : javaHashCode;
+
+    switch (argument.typeName)
+    {
+    case "string":
+        return javaHashCode(argument.get!string);
+    case "bool":
+        return javaHashCode(argument.get!bool);
+    case "char", "wchar", "dchar":
+        return javaHashCode(argument.get!dchar);
+    case "byte", "short", "int", "ubyte", "ushort", "uint":
+        return javaHashCode(cast(int) argument.get!long);
+    case "long":
+        return javaHashCode(argument.get!long);
+    case "ulong":
+        return javaHashCode(argument.get!ulong);
+    case "float":
+        return javaHashCode(cast(float) argument.get!double);
+    case "double", "real":
+        return javaHashCode(argument.get!double);
+    default:
+        if (auto object = argument.asObject())
+            return javaHashCode(object);
+        throw new IllegalFormatConversionException('h', javaTypeName(argument));
+    }
 }
 
 /// `String.valueOf` of the argument.
