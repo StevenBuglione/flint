@@ -15,8 +15,6 @@
   "org.springframework.beans.factory.UnsatisfiedDependencyException#<init>(String,String,InjectionPoint,String) -> InjectionPoint": "framework: org.springframework.beans.factory.InjectionPoint is deferred",
   "org.springframework.beans.factory.config.ConfigurableBeanFactory#getConversionService() -> ConversionService": "framework: org.springframework.core.convert.ConversionService is deferred",
   "org.springframework.beans.factory.config.ConfigurableBeanFactory#setConversionService(ConversionService) -> ConversionService": "framework: org.springframework.core.convert.ConversionService is deferred",
-  "org.springframework.beans.factory.support.DefaultListableBeanFactory#determineAutowireCandidate(Map,DependencyDescriptor) -> DependencyDescriptor": "framework: org.springframework.beans.factory.config.DependencyDescriptor is deferred",
-  "org.springframework.beans.factory.support.DefaultListableBeanFactory#resolveNamedBean(Class) -> NamedBeanHolder": "framework: org.springframework.beans.factory.config.NamedBeanHolder is deferred",
   "org.springframework.boot.diagnostics.FailureAnalyzedException#analysis() -> FailureAnalysis": "boot: org.springframework.boot.diagnostics.FailureAnalysis is deferred",
   "org.springframework.context.PayloadApplicationEvent#<init>(Object,T,ResolvableType) -> ResolvableType": "framework: org.springframework.core.ResolvableType is excluded",
   "org.springframework.context.event.ApplicationEventMulticaster#multicastEvent(ApplicationEvent,ResolvableType) -> ResolvableType": "framework: org.springframework.core.ResolvableType is excluded",

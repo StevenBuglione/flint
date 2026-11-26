@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 204 | 374 | 0 | 15,218 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,616 | 1,464 | 4,870 | 29,884 |
+| framework | spring-framework@v7.1.0 | 3,615 | 1,463 | 4,870 | 29,886 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2566,7 +2566,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#findAnnotationOnBean(String,Class)` | `flint.beans.factory.support.DefaultListableBeanFactory.findAnnotationOnBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#findAnnotationOnBean(String,Class,boolean)` | `flint.beans.factory.support.DefaultListableBeanFactory.findAnnotationOnBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#registerResolvableDependency(Class,Object)` | `flint.beans.factory.support.DefaultListableBeanFactory.registerResolvableDependency` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.support.DefaultListableBeanFactory#resolveNamedBean(Class)` | `flint.beans.factory.support.DefaultListableBeanFactory.resolveNamedBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class)` | `flint.beans.factory.support.RootBeanDefinition.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,String,Supplier)` | `flint.beans.factory.support.RootBeanDefinition.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,Supplier)` | `flint.beans.factory.support.RootBeanDefinition.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -9927,7 +9926,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.beans.factory.config | 486 | 0 |
 | org.springframework.beans.factory.parsing | 133 | 0 |
 | org.springframework.beans.factory.serviceloader | 19 | 0 |
-| org.springframework.beans.factory.support | 733 | 0 |
+| org.springframework.beans.factory.support | 735 | 0 |
 | org.springframework.beans.factory.wiring | 26 | 0 |
 | org.springframework.beans.factory.xml | 0 | 320 |
 | org.springframework.beans.propertyeditors | 155 | 0 |
@@ -10795,6 +10794,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.beans.factory.NoSuchBeanDefinitionException#<init>(ResolvableType,String)` | 2 | Requires retaining the full ResolvableType for the type accessors. |
 | framework | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(ResolvableType,Collection)` | 2 | Requires retaining the full ResolvableType for the inherited type accessors. |
 | framework | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(ResolvableType,String...)` | 2 | Requires retaining the full ResolvableType for the inherited type accessors. |
+| framework | `org.springframework.beans.factory.support.DefaultListableBeanFactory#determineAutowireCandidate(Map,DependencyDescriptor)` | 2 | Requires a candidate map and DependencyDescriptor. |
+| framework | `org.springframework.beans.factory.support.DefaultListableBeanFactory#resolveNamedBean(Class)` | 2 | Requires a public lookup returning NamedBeanHolder. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(ResolvableType)` | 2 | Requires ResolvableType, which is classified as runtime reflection. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(String,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
