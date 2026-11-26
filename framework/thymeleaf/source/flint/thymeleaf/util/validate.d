@@ -20,8 +20,10 @@
 module flint.thymeleaf.util.validate;
 
 import flint.engine.aot.any : Any;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
 import flint.java.util : Collection;
+import flint.thymeleaf.util.nulls : isNullValue;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -49,6 +51,25 @@ final class Validate
     {
         if (values.length == 0)
             throw new IllegalArgumentException(message);
+    }
+
+    /// Require a present iterable whose elements all represent values (R5, R10).
+    static void containsNoNulls(T)(Iterable!T values, string message)
+    {
+        if (values is null)
+            throw new NullPointerException();
+        foreach (value; values)
+            if (isNullValue(value))
+                throw new IllegalArgumentException(message);
+    }
+
+    /// Require a present array with no null object values (R5, R23).
+    static void containsNoNulls()(scope const Nullable!(const(Any)[]) values, string message)
+    {
+        if (values.isNull)
+            throw new NullPointerException();
+        foreach (ref value; values.get)
+            notNull(value, message);
     }
 
     /// Require a true condition.

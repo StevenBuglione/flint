@@ -23,8 +23,7 @@ public import flint.thymeleaf.util.loggingutils : LoggingUtils;
 public import flint.thymeleaf.util.numberpointtype : NumberPointType;
 public import flint.thymeleaf.util.validate : Validate;
 
-import flint.engine.aot.any : Any;
-import std.typecons : Nullable;
+import flint.thymeleaf.util.nulls : isNullValue;
 
 @safe:
 
@@ -36,12 +35,6 @@ final class ObjectUtils
     /// Use the fallback only when the target represents null (R5, R23).
     static T nullSafe(T)(T target, T defaultValue) pure nothrow @nogc
     {
-        alias Value = typeof(cast() target);
-        static if (is(Value == Any) || is(Value == Nullable!U, U))
-            return target.isNull() ? defaultValue : target;
-        else static if (is(T == class) || is(T == interface))
-            return target is null ? defaultValue : target;
-        else
-            return target;
+        return isNullValue(target) ? defaultValue : target;
     }
 }

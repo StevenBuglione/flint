@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 182 | 155 | 0 | 2,053 |
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
-| framework | thymeleaf@3.1.7.RELEASE | 65 | 83 | 0 | 4,304 |
+| framework | thymeleaf@3.1.7.RELEASE | 65 | 85 | 0 | 4,302 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 234 | 137 | 1,871 | 16,179 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -4269,6 +4269,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.thymeleaf.util.NumberPointType#WHITESPACE` | `flint.thymeleaf.util.NumberPointType.WHITESPACE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.thymeleaf.util.NumberPointType#match(String)` | `flint.thymeleaf.util.NumberPointType.match` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R15](api-mapping.md#r15-enums-with-fields) | An absent result represents Java null for null and unrecognized input. The nullable adapter is instantiated by callers of this static method. |
 | `org.thymeleaf.util.ObjectUtils#nullSafe(T,T)` | `flint.thymeleaf.util.ObjectUtils.nullSafe` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) | A default-initialized D string or slice remains empty. Use Nullable when null must select the fallback. |
+| `org.thymeleaf.util.Validate#containsNoNulls(Iterable,String)` | `flint.thymeleaf.util.Validate.containsNoNulls` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R10](api-mapping.md#r10-streams-and-collections), [D-7](api-mapping.md#deviations) | Call with an Iterable of the element type or a typed null iterable. A missing container raises NullPointerException with no detail message. A null element raises IllegalArgumentException with the caller's message. |
+| `org.thymeleaf.util.Validate#containsNoNulls(Object[],String)` | `flint.thymeleaf.util.Validate.containsNoNulls` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R23](api-mapping.md#r23-object-typed-values), [D-7](api-mapping.md#deviations) | Use Nullable to distinguish a missing Any slice from a present empty slice. A missing container raises NullPointerException with no detail message. A null element raises IllegalArgumentException with the caller's message. |
 | `org.thymeleaf.util.Validate#notEmpty(Collection,String)` | `flint.thymeleaf.util.Validate.notEmpty` | [R7](api-mapping.md#r7-overloads), [R10](api-mapping.md#r10-streams-and-collections), [D-7](api-mapping.md#deviations) | The caller's Collection element type selects the overload. Use a typed null collection when calling the overload with null. |
 | `org.thymeleaf.util.Validate#notEmpty(Object[],String)` | `flint.thymeleaf.util.Validate.notEmpty` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R23](api-mapping.md#r23-object-typed-values), [D-7](api-mapping.md#deviations) | Use an Any slice for Java Object[]. A typed null slice is checked like an empty slice. |
 | `org.thymeleaf.util.Validate#notNull(Object,String)` | `flint.thymeleaf.util.Validate.notNull` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -10316,7 +10318,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.templateparser.text | 60 | 0 |
 | org.thymeleaf.templateresolver | 128 | 0 |
 | org.thymeleaf.templateresource | 44 | 0 |
-| org.thymeleaf.util | 354 | 0 |
+| org.thymeleaf.util | 352 | 0 |
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |

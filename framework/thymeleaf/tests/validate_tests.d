@@ -45,3 +45,50 @@ private void expectInvalid(scope void delegate() @safe operation, string message
         assert(error.getMessage() == message);
     }
 }
+
+@("Validate distinguishes an absent array from an empty one") unittest
+{
+    import std.typecons : Nullable;
+
+    alias Array = Nullable!(const(Any)[]);
+    const(Any)[] empty;
+    Validate.containsNoNulls(Array(empty), "ignored");
+    expectMissing(() => Validate.containsNoNulls(Array.init, "unused"));
+
+    const Any[2] present = [Any.of(false), Any.of("")];
+    Validate.containsNoNulls(Array(present[]), "ignored");
+    const Any[2] invalid = [Any.of(false), Any.init];
+    const badArray = Array(invalid[]);
+    expectInvalid(() => Validate.containsNoNulls(badArray, "invalid element"), "invalid element");
+}
+
+@("Validate iterates missing and null elements with Java exceptions") unittest
+{
+    import flint.java.lang : Iterable;
+    import std.typecons : Nullable;
+
+    alias Text = Nullable!string;
+    Iterable!Text missing;
+    expectMissing(() => Validate.containsNoNulls(missing, "unused"));
+
+    auto values = new ArrayList!Text;
+    Validate.containsNoNulls(values, "ignored");
+    values.add(Text(""));
+    Validate.containsNoNulls(values, "ignored");
+    values.add(Text.init);
+    expectInvalid(() => Validate.containsNoNulls(values, "invalid iterable element"), "invalid iterable element");
+}
+
+private void expectMissing(scope void delegate() @safe operation)
+{
+    import flint.java.lang : NullPointerException;
+
+    try
+    {
+        operation();
+        assert(false, "expected NullPointerException");
+    }
+    catch (NullPointerException)
+    {
+    }
+}
