@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 204 | 374 | 0 | 15,218 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,615 | 1,460 | 4,870 | 29,889 |
+| framework | spring-framework@v7.1.0 | 3,613 | 1,460 | 4,870 | 29,891 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -9959,7 +9959,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.context.expression | 61 | 0 |
 | org.springframework.context.i18n | 19 | 0 |
 | org.springframework.context.index | 14 | 0 |
-| org.springframework.context.support | 205 | 32 |
+| org.springframework.context.support | 207 | 32 |
 | org.springframework.core | 174 | 0 |
 | org.springframework.core.annotation | 151 | 0 |
 | org.springframework.core.codec | 0 | 147 |
@@ -10816,6 +10816,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.context.support.GenericApplicationContext#registerBean(Class,Object...)` | 2 | Requires explicit constructor argument values. |
 | framework | `org.springframework.context.support.GenericApplicationContext#registerBean(String,Class,BeanDefinitionCustomizer...)` | 2 | Requires customizers when using a default constructor. |
 | framework | `org.springframework.context.support.GenericApplicationContext#registerBean(String,Class,Object...)` | 2 | Requires explicit constructor argument values. |
+| framework | `org.springframework.context.support.ResourceBundleMessageSource#loadBundle(InputStream)` | 2 | Requires an input stream hook returning ResourceBundle. |
+| framework | `org.springframework.context.support.ResourceBundleMessageSource#loadBundle(Reader)` | 2 | Requires a reader hook returning ResourceBundle. |
 | framework | `org.springframework.core.io.FileSystemResource#<init>(FileSystem,String)` | 2 | Requires the Java NIO FileSystem resource constructor. |
 | framework | `org.springframework.core.io.FileSystemResource#<init>(Path)` | 2 | Requires the Java NIO Path resource constructor. |
 | framework | `org.springframework.expression.EvaluationContext#getTypeConverter()` | 2 | Deferred until indexed assignment uses the context conversion strategy. See D-SPEL-5. |
