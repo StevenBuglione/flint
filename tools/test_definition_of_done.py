@@ -98,6 +98,58 @@ class Resolve(unittest.TestCase):
         })
         self.assertEqual(dod.owner('org/springframework/ai/template/NoOpTemplateRendererTests', table), 'ai-commons')
 
+    def jtreg_root(self, modules):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        (root / 'policy').mkdir()
+        (root / 'api' / 'framework').mkdir(parents=True)
+        (root / 'policy' / 'framework.json').write_text(json.dumps({'modules': modules}))
+        (root / 'api' / 'framework' / 'mapping.json').write_text(json.dumps({'elements': {}}))
+        self.addCleanup(dod._OWNERSHIP.pop, root, None)
+        return root
+
+    def test_jtreg_paths_assign_a_directory_or_an_exact_file_over_java_types_and_packages(self):
+        root = self.jtreg_root({
+            'java': {'module': 'flint.java.util.concurrent', 'upstream': 'openjdk@21.0.13'},
+            'java-concurrent-sync': {'module': 'flint.java.util.concurrent.locks', 'upstream': 'openjdk@21.0.13',
+                                     'java_types': ['java.util.concurrent.CountDownLatch'],
+                                     'jtreg_paths': ['java/util/concurrent/tck/CountDownLatchTest.java']},
+            'java-concurrent-exec': {'module': 'flint.java.util.concurrent.exec', 'upstream': 'openjdk@21.0.13',
+                                     'jtreg_paths': ['java/util/concurrent/tck/', 'java/util/stream/test']},
+        })
+        table, paths = dod.ownership(root), dod.jtreg_paths(root)
+        self.assertEqual(paths['java/util/concurrent/tck'], 'java-concurrent-exec')       # trailing '/' dropped
+        owner = lambda key: dod.test_owner(key, table, paths)  # noqa: E731
+        # The exact file beats its directory; the directory covers the rest of the tck tree.
+        self.assertEqual(owner('java/util/concurrent/tck/CountDownLatchTest.java'), 'java-concurrent-sync')
+        self.assertEqual(owner('java/util/concurrent/tck/ExecutorsTest.java'), 'java-concurrent-exec')
+        self.assertEqual(owner('java/util/stream/test/org/openjdk/tests/java/util/stream/MapOpTest.java'),
+                         'java-concurrent-exec')
+        # Outside jtreg_paths: java_types, then the package.
+        self.assertEqual(owner('java/util/concurrent/CountDownLatch/Basic.java'), 'java-concurrent-sync')
+        self.assertEqual(owner('java/util/concurrent/Executors/Smoke.java'), 'java')
+        # Whole directories only: tckx/ is not tck/.
+        self.assertEqual(owner('java/util/concurrent/tckx/A.java'), 'java')
+
+    def test_a_jtreg_path_listed_twice_or_inside_another_module_s_type_raises(self):
+        root = self.jtreg_root({
+            'a': {'module': 'flint.java.util.concurrent.a', 'upstream': 'openjdk@21.0.13',
+                  'jtreg_paths': ['java/util/concurrent/tck']},
+            'b': {'module': 'flint.java.util.concurrent.b', 'upstream': 'openjdk@21.0.13',
+                  'jtreg_paths': ['java/util/concurrent/tck/']},
+        })
+        with self.assertRaisesRegex(ValueError, 'jtreg path java/util/concurrent/tck is already owned by a'):
+            dod.jtreg_paths(root)
+        root = self.jtreg_root({
+            'sync': {'module': 'flint.java.util.concurrent.sync', 'upstream': 'openjdk@21.0.13',
+                     'java_types': ['java.util.concurrent.CountDownLatch']},
+            'exec': {'module': 'flint.java.util.concurrent.exec', 'upstream': 'openjdk@21.0.13',
+                     'jtreg_paths': ['java/util/concurrent/CountDownLatch/Basic.java']},
+        })
+        with self.assertRaisesRegex(ValueError, 'lies in java.util.concurrent.CountDownLatch, which java_types gives to sync'):
+            dod.jtreg_paths(root)
+
     def test_openjdk_type_scope_keeps_unrelated_package_ownership(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

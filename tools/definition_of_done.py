@@ -530,7 +530,8 @@ def upstream_inventory(module, root=ROOT, caches=None):
             # mapped element names (org.hibernate.validator.test...).
             sole = sum(up == module.upstream for _, _, up, _ in ported_modules(root).values()) == 1
             if (base / 'test' / 'jdk').is_dir():
-                return jtreg_inventory(module, base / 'test' / 'jdk', table, manifest_packages(module, root))
+                return jtreg_inventory(module, base / 'test' / 'jdk', table, manifest_packages(module, root),
+                                       jtreg_paths(root))
             keys = set()
             for path in base.rglob('*.java'):
                 text = str(path.relative_to(base))
@@ -577,11 +578,12 @@ def is_test_class(path):
     return not re.search(r'\babstract\s+(?:[a-z]+\s+)*class\s+' + re.escape(path.stem) + r'\b', text)
 
 
-def jtreg_inventory(module, jdk, table, packages=None):
+def jtreg_inventory(module, jdk, table, packages=None, paths=None):
     """OpenJDK's tests: files under test/jdk/java/ and test/jdk/javax/ that are tests, either a jtreg `@test` tag or a
     TestNG/JUnit `@Test` method (java.time's and java.util.stream's TestNG trees), keyed by their path below test/jdk
     (java/util/HashMap/KeySetRemove.java) and owned by the module that owns the Java package their directory names
-    (java.util), whatever package the file itself declares.
+    (java.util), whatever package the file itself declares, unless a module's java_types or jtreg_paths claim it
+    (jtreg_paths, owner).
 
     Only tests of the JDK modules the API manifest pins are in scope: a test counts when the package its directory
     names is a manifest package or lies below one (java.util.concurrent.tck under java.util.concurrent). Every other
@@ -597,9 +599,41 @@ def jtreg_inventory(module, jdk, table, packages=None):
             package = java_package(key[:-len('.java')])
             if packages is not None and not any(package == p or package.startswith(p + '.') for p in packages):
                 continue
-            if owner(key[:-len('.java')], table) == module.name:
+            if test_owner(key, table, paths or {}) == module.name:
                 keys.add(key)
     return sorted(keys)
+
+
+def jtreg_paths(root=ROOT):
+    """{jtreg path prefix below test/jdk: module} from the optional 'jtreg_paths' list beside 'java_types' in an
+    OpenJDK module's policy entry: whole directories (java/util/concurrent/tck) or exact files
+    (java/util/concurrent/tck/ConcurrentHashMapTest.java). They cover test trees that aren't named after a type, which
+    java_types can't express: java.util.concurrent's tck tree and java.util.stream's TestNG tree (coordinator,
+    2026-11-26). The longest prefix wins over java_types and package ownership. A path listed twice, or a path inside
+    a type that java_types gives to another module, raises."""
+    table = ownership(root)
+    paths = {}
+    for name, (_, _, upstream, meta) in ported_modules(root).items():
+        if not str(upstream).startswith('openjdk@'):
+            continue
+        for raw in meta.get('jtreg_paths', []):
+            path = raw.strip('/')
+            if path in paths:
+                raise ValueError(f'jtreg path {path} is already owned by {paths[path]}')
+            dotted = path.removesuffix('.java').replace('/', '.')
+            for scope, scoped in table.items():
+                if scope != scope.lower() and scoped != name and (dotted == scope or dotted.startswith(scope + '.')):
+                    raise ValueError(f'jtreg path {path} lies in {scope}, which java_types gives to {scoped}')
+            paths[path] = name
+    return paths
+
+
+def test_owner(key, table, paths):
+    """The module that owns a jtreg test: the longest jtreg_paths prefix, else owner() (java_types, then package)."""
+    best = max((p for p in paths if key == p or key.startswith(p + '/')), key=len, default=None)
+    if best is not None:
+        return paths[best]
+    return owner(key[:-len('.java')], table)
 
 
 # A jtreg test under plain GPL-2.0 (no Classpath Exception) can never be ported into a GPL+CE package (owner licensing
