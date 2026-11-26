@@ -11176,7 +11176,13 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Optional#equals(Object)` | 2 | Java compares Optional values across generic arguments and accepts other objects and null. The current R5 value facade accepts only the same instantiation, so separately typed empty values cannot compare equal. |
 | framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
+| framework | `java.util.function.BiConsumer#andThen(BiConsumer)` | 2 | The existing interface exposes accept and lacks Java's overridable composition default (R3). |
 | framework | `java.util.function.BiFunction#andThen(Function)` | 2 | The existing interface exposes apply and has no composition method. Java's default is overridable and rejects a null function before invocation (R3, R8). |
+| framework | `java.util.function.BiPredicate#and(BiPredicate)` | 2 | The existing interface lacks Java's short-circuiting conjunction default (R3). |
+| framework | `java.util.function.BiPredicate#negate()` | 2 | The existing interface lacks Java's negation default (R3). |
+| framework | `java.util.function.BiPredicate#or(BiPredicate)` | 2 | The existing interface lacks Java's short-circuiting disjunction default (R3). |
+| framework | `java.util.function.BinaryOperator#maxBy(Comparator)` | 2 | The nominal BinaryOperator interface exists. Its comparator-based maximum factory is deferred. |
+| framework | `java.util.function.BinaryOperator#minBy(Comparator)` | 2 | The nominal BinaryOperator interface exists. Its comparator-based minimum factory is deferred. |
 | framework | `java.util.function.Consumer#andThen(Consumer)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null consumer at composition time. Java throws NullPointerException there (R8). |
 | framework | `java.util.function.Function#andThen(Function)` | 2 | The current D method template is non-virtual, so an interface call bypasses the implementor's method (R3). It also accepts a null function at composition time, where Java throws NullPointerException (R8). |
 | framework | `java.util.function.Function#compose(Function)` | 2 | The current D method template is non-virtual, so an interface call bypasses the implementor's method (R3). It also accepts a null function at composition time, where Java throws NullPointerException (R8). |
@@ -11184,6 +11190,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.function.Predicate#negate()` | 2 | The existing final D method prevents implementor overrides of Java's default method (R3). |
 | framework | `java.util.function.Predicate#not(Predicate)` | 2 | The existing D method accepts a null predicate at composition time (R8). Its call to the final negate method also prevents dispatch to an implementor's negate override (R3). |
 | framework | `java.util.function.Predicate#or(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |
+| framework | `java.util.function.UnaryOperator#identity()` | 2 | The inherited Function.identity factory returns Function. Java's UnaryOperator factory returns the nominal UnaryOperator. |
 | framework | `java.util.regex.Matcher` | 2 | Assignment to Java MatchResult and access to recorded match positions and groups await the Matcher state port. |
 | framework | `java.util.regex.Pattern#compile(String,int)` | 2 | CANON_EQ, LITERAL and UNICODE_CHARACTER_CLASS still throw RegexUnsupportedException. |
 | framework | `java.util.regex.PatternSyntaxException#<init>(String,String,int)` | 2 | The constructor still takes plain D strings. Java preserves null separately from empty text for both fields (R5). |
