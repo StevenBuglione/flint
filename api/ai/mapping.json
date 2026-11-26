@@ -52,6 +52,8 @@
 "org.springframework.ai.chat.messages.MessageType#TOOL":{"d":"flint.ai.chat.messages.MessageType.TOOL","rules":["R15"],"status":"adapted"},
 "org.springframework.ai.chat.messages.MessageType#USER":{"d":"flint.ai.chat.messages.MessageType.USER","rules":["R15"],"status":"adapted"},
 "org.springframework.ai.chat.messages.MessageType#getValue()":{"d":"flint.ai.chat.messages.MessageType.getValue","status":"ported"},
+"org.springframework.ai.chat.messages.SystemMessage":{"d":"flint.ai.chat.messages.SystemMessage","status":"ported"},
+"org.springframework.ai.chat.messages.SystemMessage#<init>(String)":{"d":"flint.ai.chat.messages.SystemMessage.this","rules":["R5"],"status":"adapted"},
 "org.springframework.ai.chat.messages.part.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.ai.chat.messages.part.MessagePart":{"d":"flint.ai.chat.messages.part.MessagePart","status":"ported"},
 "org.springframework.ai.chat.messages.part.MessagePart#PROVIDER_ATTRIBUTE":{"d":"flint.ai.chat.messages.part.MessagePart.PROVIDER_ATTRIBUTE","status":"ported"},

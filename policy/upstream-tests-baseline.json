@@ -38,7 +38,6 @@
       "org/springframework/ai/chat/messages/AssistantMessagePartsTests.java",
       "org/springframework/ai/chat/messages/AssistantMessageTests.java",
       "org/springframework/ai/chat/messages/MessageUtilsTests.java",
-      "org/springframework/ai/chat/messages/SystemMessageTests.java",
       "org/springframework/ai/chat/messages/ToolResponseMessagePartsTests.java",
       "org/springframework/ai/chat/messages/UserMessagePartsTests.java",
       "org/springframework/ai/chat/messages/UserMessageTests.java",

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/{AbstractMessage,Message,MessageType}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/{AbstractMessage,Message,MessageType,SystemMessage}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages;
 
@@ -183,5 +183,15 @@ abstract class AbstractMessage : Message
     override MessageType getMessageType()
     {
         return messageType_;
+    }
+}
+
+/// A system instruction for a model conversation.
+class SystemMessage : AbstractMessage
+{
+    /// Creates a system message from its text.
+    this(MessageText text)
+    {
+        super(MessageType.SYSTEM, text, MessageMetadata.of());
     }
 }
