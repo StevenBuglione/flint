@@ -8274,7 +8274,7 @@
 "java.util.Properties#defaults":{"d":"flint.java.util.Properties.defaults","status":"ported"},
 "java.util.Properties#getProperty(String)":{"d":"flint.java.util.Properties.getProperty","status":"ported"},
 "java.util.Properties#getProperty(String,String)":{"d":"flint.java.util.Properties.getProperty","status":"ported"},
-"java.util.Properties#load(InputStream)":{"status":"excluded","category":"deferred","phase":"2","reason":"The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open."},
+"java.util.Properties#load(InputStream)":{"status":"adapted","d":"flint.java.util.Properties.load","rules":["R14"],"note":"Decodes ISO-8859-1 and leaves the stream open. An isolated UTF-16 surrogate escape becomes U+FFFD in the D UTF-8 string."},
 "java.util.Properties#setProperty(String,String)":{"d":"flint.java.util.Properties.setProperty","rules":["R23"],"status":"adapted"},
 "java.util.Properties#stringPropertyNames()":{"d":"flint.java.util.Properties.stringPropertyNames","status":"ported"},
 "java.util.Scanner#<init>(Readable)":{"category":"deferred","note":"The Readable constructor awaits the interface's cross-package placement. Its method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27.","phase":"2","status":"excluded"},
