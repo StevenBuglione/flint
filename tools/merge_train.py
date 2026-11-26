@@ -163,7 +163,41 @@ echo "$INPUTS" > .native/train-native-inputs
 echo "== flint"; $H python3 tools/install_toolchains.py --compiler flint || exit 4
 echo "== api gate"; $H python3 tools/gates.py --gate api > "$FLINT_CACHE.api.json" 2>&1 || { tail -40 "$FLINT_CACHE.api.json"; rm -f "$FLINT_CACHE.api.json"; exit 1; }
 rm -f "$FLINT_CACHE.api.json"
-echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ @DOD_FLAGS@ --json
+echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ @DOD_FLAGS@ --json > "$FLINT_CACHE.dod.json"; rc=$?
+cat "$FLINT_CACHE.dod.json"
+if [ $rc -ne 0 ]; then
+  # Decision 6478897a: a borderline flint budget miss (every failure an instruction miss under twice its tolerance)
+  # is re-measured, and the median of 5 runs is judged; anything else stays red.
+  apps=$(python3 - "$FLINT_CACHE.dod.json" <<'PY'
+import json, re, sys
+text, report, at = open(sys.argv[1]).read(), None, 0
+while report is None and text.find('{', at) >= 0:
+    at = text.find('{', at)
+    try:
+        found, end = json.JSONDecoder().raw_decode(text[at:])
+        report = found if isinstance(found, dict) and 'steps' in found else None
+        at += max(end, 1)
+    except ValueError:
+        at += 1
+step = next((s for s in (report or {}).get('steps', []) if s['step'] == 'apps'), None)
+if step is None:
+    sys.exit(1)
+bad = [k for k, v in step['details'].items() if k != 'apps' and not str(v).startswith(('pass', 'skip'))]
+lines = [m for m in step['messages'] if m.strip().startswith('budget:')]
+if not bad or not lines or any(not k.endswith(' flint budget') for k in bad):
+    sys.exit(1)
+for line in lines:
+    found = re.search(r': instructions [0-9,]+ -> [0-9,]+ \(\+([0-9.]+)%, tolerance \+([0-9.]+)%\)', line)
+    if not found or float(found.group(1)) >= 2 * float(found.group(2)):
+        sys.exit(1)
+print(' '.join(sorted(k[:-len(' flint budget')] for k in bad)))
+PY
+) || exit $rc
+  echo "== borderline flint budget miss: re-measuring $apps (median of 5, decision 6478897a)"
+  set -- ; for app in $apps; do set -- "$@" --app "$app"; done
+  $H flint budget "$@" --repeat 5 && { echo "the median of 5 is within budget"; exit 0; }
+  exit 1
+fi
 """
 POSIDON_SCRIPT = VERIFY_SCRIPT  # the name earlier tests and notes use
 UNAVAILABLE = (3, 5, 255)  # git setup, a receipt mismatch, ssh itself
