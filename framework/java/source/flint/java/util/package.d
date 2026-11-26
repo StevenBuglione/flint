@@ -3268,6 +3268,13 @@ module state.
 +/
 struct Locale
 {
+    /// Selects the default locale for display or formatting.
+    enum Category
+    {
+        DISPLAY, /// Locale for displaying names and user-facing labels.
+        FORMAT, /// Locale for formatting dates, numbers, and currencies.
+    }
+
     private string language;
     private string country;
     private string variant;

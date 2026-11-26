@@ -596,6 +596,9 @@ unittest
     // java.util.Locale: normalization, toString, language tags, constants and the POSIX default.
     import flint.java.util : Locale;
 
+    static assert(cast(int) Locale.Category.DISPLAY == 0);
+    static assert(cast(int) Locale.Category.FORMAT == 1);
+
     auto us = Locale("EN", "us");
     assert(us == Locale.US && us.getLanguage() == "en" && us.getCountry() == "US");
     assert(us.toString() == "en_US" && us.toLanguageTag() == "en-US"
