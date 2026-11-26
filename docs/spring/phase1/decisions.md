@@ -1043,3 +1043,9 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - the seed records missing classes as `deferred` and never overwrites a recorded entry;
     - a module's deferred count may only shrink, like the quality baseline.
   - **No bar is lowered:** no module passed this step before. proof-harness implements the change and seeds the Phase 1 modules.
+- 2026-11-26 00:50Z, coordinator: **partial slices.**
+  - **Every landed slice** must pass the normal definition of done.
+  - **`--release` is the "module complete" check.** What a lane hasn't ported yet is recorded as `deferred` with its phase, in both api mappings and upstream-tests, as api/framework already does. It is never left unclassified.
+  - **Deferred counts only shrink.**
+  - **api-coverage seeds the newly pinned upstreams:** spring-ai, Thymeleaf and Jakarta Persistence.
+  - The porting guide, step 5, now says this.
