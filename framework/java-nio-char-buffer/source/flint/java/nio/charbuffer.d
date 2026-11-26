@@ -417,6 +417,50 @@ class CharBuffer : Buffer, Comparable!CharBuffer
         return index < 0 && left != right ? common : index;
     }
 
+    /// Render the remaining UTF-16 units as UTF-8. Each lone surrogate becomes U+FFFD (R14).
+    override string toString() pure nothrow
+    {
+        if (!hasRemaining())
+            return "";
+        return (cast(const CharBuffer) this).utf8Text();
+    }
+
+    private char[] utf8Text() const pure nothrow
+    {
+        const end = limit();
+        size_t byteCount;
+        for (int index = position(); index < end;)
+            byteCount += utf8Width(nextScalar(index, end));
+
+        auto output = new char[byteCount];
+        size_t offset;
+        for (int index = position(); index < end;)
+        {
+            const scalar = nextScalar(index, end);
+            const width = utf8Width(scalar);
+            writeUtf8(output[offset .. offset + width], scalar);
+            offset += width;
+        }
+        return output;
+    }
+
+    private dchar nextScalar(ref int index, int end) const pure nothrow @nogc
+    {
+        const first = load(index++);
+        if (first < 0xD800 || first > 0xDFFF)
+            return first;
+        if (first < 0xDC00 && index < end)
+        {
+            const second = load(index);
+            if (second >= 0xDC00 && second <= 0xDFFF)
+            {
+                ++index;
+                return cast(dchar)(0x10000 + ((first - 0xD800) << 10) + second - 0xDC00);
+            }
+        }
+        return '\uFFFD';
+    }
+
     private int firstMismatch(scope const(CharBuffer) other, int length) const scope pure nothrow @nogc
     {
         pragma(inline, false);
@@ -505,6 +549,23 @@ class CharBuffer : Buffer, Comparable!CharBuffer
         if ((storageFlags & readOnlyFlag) != 0)
             throw new ReadOnlyBufferException;
     }
+}
+
+private size_t utf8Width(dchar scalar) pure nothrow @nogc
+{
+    return 1 + (scalar > 0x7F) + (scalar > 0x7FF) + (scalar > 0xFFFF);
+}
+
+private void writeUtf8(scope char[] output, dchar scalar) pure nothrow @nogc
+{
+    // Fill continuation bytes from the low bits, then write the leading byte.
+    static immutable ubyte[5] leadingBits = [0, 0, 0xC0, 0xE0, 0xF0];
+    for (size_t index = output.length; index > 1;)
+    {
+        output[--index] = cast(char)(0x80 | (scalar & 0x3F));
+        scalar >>= 6;
+    }
+    output[0] = cast(char)(leadingBits[output.length] | scalar);
 }
 
 private void requireBuffer(scope CharBuffer source) pure

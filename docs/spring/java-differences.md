@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,126 | 327 | 1,871 | 15,097 |
+| framework | openjdk@21.0.13 | 1,126 | 328 | 1,871 | 15,096 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2286,6 +2286,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.CharBuffer#put(char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#put(int,char[])` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#put(int,char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.CharBuffer#toString()` | `flint.java.nio.charbuffer.CharBuffer.toString` | [R14](api-mapping.md#r14-strings-and-text) | Returns UTF-8 and replaces each lone UTF-16 surrogate with U+FFFD. |
 | `java.nio.CharBuffer#wrap(char[])` | `flint.java.nio.charbuffer.CharBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#wrap(char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.InvalidMarkException` | `flint.java.nio.invalidmarkexception.InvalidMarkException` | [R1](api-mapping.md#r1-packages-and-names) | Import the exception from flint.java.nio.invalidmarkexception. It extends the canonical Java IllegalStateException. |
@@ -10506,7 +10507,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 137 | 0 |
 | java.net | 817 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 233 | 0 |
+| java.nio | 232 | 0 |
 | java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 103 | 0 |
@@ -11584,7 +11585,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.CharBuffer#chars()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#put(String)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#put(String,int,int)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#toString()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence,int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.security.DigestException#<init>()` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |

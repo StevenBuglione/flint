@@ -191,3 +191,13 @@ unittest
     auto end = buffer.subSequence(1, 3);
     assert(end.charAt(0) == 'f' && end.charAt(1) == 'g');
 }
+
+@("BasicChar.test text windows")
+unittest
+{
+    wchar[] words = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    auto buffer = CharBuffer.wrap(words).position(1).limit(7);
+    assert(buffer.toString() == "bcdefg");
+    assert(buffer.position(2).subSequence(1, 4).toString() == "def");
+    assert(buffer.position(4).subSequence(1, 3).toString() == "fg");
+}

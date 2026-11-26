@@ -6064,7 +6064,7 @@
 "java.nio.CharBuffer#slice()":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.slice"},
 "java.nio.CharBuffer#slice(int,int)":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.slice"},
 "java.nio.CharBuffer#subSequence(int,int)":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.subSequence"},
-"java.nio.CharBuffer#toString()":{"status":"excluded","category":"deferred","phase":"2","reason":"Character sequence, append and read contracts follow the heap array cursor slice."},
+"java.nio.CharBuffer#toString()":{"status":"adapted","d":"flint.java.nio.charbuffer.CharBuffer.toString","rules":["R14"],"note":"Returns UTF-8 and replaces each lone UTF-16 surrogate with U+FFFD."},
 "java.nio.CharBuffer#wrap(CharSequence)":{"status":"excluded","category":"deferred","phase":"2","reason":"Character sequence, append and read contracts follow the heap array cursor slice."},
 "java.nio.CharBuffer#wrap(CharSequence,int,int)":{"status":"excluded","category":"deferred","phase":"2","reason":"Character sequence, append and read contracts follow the heap array cursor slice."},
 "java.nio.CharBuffer#wrap(char[])":{"status":"adapted","d":"flint.java.nio.charbuffer.CharBuffer.wrap","rules":["R26"]},

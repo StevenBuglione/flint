@@ -436,6 +436,7 @@ The instruction probe used 1,000 warmup requests and 2,000 measured requests per
 | gs-rest greeting | 19,801.75 to 19,800.935 | 1,783 to 1,783 | 2 | 32 |
 | petclinic validation 400 | 103,184.693 to 103,188.658 | 13,652.54 to 13,652.776 | 40 | 3,504 |
 | petclinic owner 1 | 215,843.864 to 214,870.07 | 10,873.499 to 10,873.499 | 86 | 7,040 |
+**Size the character window before rendering UTF-8.** CharBuffer scans the remaining UTF-16 units for the result size, then writes into that one allocation. The scalar load works across both backing kinds and byte orders, and R14 gives each lone half one U+FFFD. Both compilers match the allocation cost of one same-size array for nonempty output and zero for empty output. On venus the unchanged package probe moved from 24,860 O3 and 22,900 Oz loadable bytes with 534 DMD instances to 25,724 and 23,740 bytes with 538. The enforced leaf moved from 24,940 and 22,980 bytes with 516 instances to 25,804 and 23,820 with 520. The fixed-stack Phobos encoder trial measured 25,868 and 23,900 bytes with 566 package instances, over the 560 template cap. Writing bounded UTF-8 directly keeps template counts under that cap. Starting the reverse loop at the array length and decrementing after the bounds check adds 16 O3 bytes and saves 112 Oz bytes against the initial bounded writer. Both ByteBuffer probes retain their linked sizes and template counts.
 
 ## 3. Build time
 
