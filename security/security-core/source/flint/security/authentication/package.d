@@ -4,12 +4,13 @@
 // Modified by the Flint authors.
 /*
  * Ported from spring-security 7.2.0, core/src/main/java/org/springframework/security/authentication/{
- * AuthenticationManager,AuthenticationProvider,AuthenticationEventPublisher,ProviderManager,AbstractAuthenticationToken,
- * UsernamePasswordAuthenticationToken,AnonymousAuthenticationToken,AuthenticationTrustResolver,
+ * AuthenticationManager,AuthenticationProvider,AuthenticationEventPublisher,DefaultAuthenticationEventPublisher,
+ * ProviderManager,AbstractAuthenticationToken,UsernamePasswordAuthenticationToken,AnonymousAuthenticationToken,
+ * AuthenticationTrustResolver,
  * AuthenticationTrustResolverImpl,BadCredentialsException,AccountStatusException,DisabledException,LockedException,
  * AccountExpiredException,CredentialsExpiredException,ProviderNotFoundException,InsufficientAuthenticationException,
- * AuthenticationCredentialsNotFoundException,InternalAuthenticationServiceException}.java. supports(Class) takes the
- * token's type name (R4).
+ * AuthenticationCredentialsNotFoundException,AuthenticationServiceException,InternalAuthenticationServiceException}.java.
+ * supports(Class) takes the token's type name (R4).
  */
 
 /++
@@ -17,11 +18,21 @@
 +/
 module flint.security.authentication;
 
+import flint.context : ApplicationEvent, ApplicationEventPublisher, ApplicationEventPublisherAware;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : canonicalTypeName, simpleTypeName;
-import flint.java.lang : IllegalArgumentException, valueOf;
+import flint.engine.aot.objects : statelessInstance;
+import flint.java.lang : IllegalArgumentException, NullPointerException, valueOf;
+import flint.security.authentication.event : AbstractAuthenticationFailureEvent,
+    AuthenticationFailureBadCredentialsEvent,
+    AuthenticationFailureCredentialsExpiredEvent, AuthenticationFailureDisabledEvent,
+    AuthenticationFailureExpiredEvent,
+    AuthenticationFailureLockedEvent,
+    AuthenticationFailureProviderNotFoundEvent,
+    AuthenticationFailureProxyUntrustedEvent, AuthenticationFailureServiceExceptionEvent, AuthenticationSuccessEvent;
 import flint.security.core : Authentication, AuthenticationException, authoritiesText,
     CredentialsContainer, GrantedAuthority;
+import flint.security.core.userdetails : UsernameNotFoundException;
 
 @safe:
 
@@ -48,6 +59,96 @@ interface AuthenticationEventPublisher
     void publishAuthenticationFailure(AuthenticationException exception, Authentication authentication);
     /// Publish the successful authentication.
     void publishAuthenticationSuccess(Authentication authentication);
+}
+
+private final class NoOpApplicationEventPublisher : ApplicationEventPublisher
+{
+    void publishEventErased(ApplicationEvent event) nothrow @nogc
+    {
+    }
+}
+
+/// Publishes successful authentication and maps known, exact exception classes to failure events.
+class DefaultAuthenticationEventPublisher : AuthenticationEventPublisher, ApplicationEventPublisherAware
+{
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    /// Start with a no-op event publisher until a context supplies one.
+    this()
+    {
+        this(statelessInstance!NoOpApplicationEventPublisher());
+    }
+
+    /// Publish to the given application event publisher.
+    this(ApplicationEventPublisher applicationEventPublisher)
+    {
+        if (applicationEventPublisher is null)
+            throw new IllegalArgumentException("applicationEventPublisher cannot be null");
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
+
+    /// Use this publisher for subsequent events. A null publisher disables publication.
+    void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher)
+    {
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
+
+    /// Publish the successful authentication.
+    void publishAuthenticationSuccess(Authentication authentication)
+    {
+        if (applicationEventPublisher !is null)
+            applicationEventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
+    }
+
+    /// Publish a failure event for an exception with a built-in mapping.
+    void publishAuthenticationFailure(AuthenticationException exception, Authentication authentication)
+    {
+        if (exception is null)
+            throw new NullPointerException();
+        // Spring ignores constructor failures when the input has no authentication source.
+        if (applicationEventPublisher is null || authentication is null)
+            return;
+        auto event = failureEvent(exception, authentication);
+        if (event !is null)
+            applicationEventPublisher.publishEvent(event);
+    }
+
+    private static AbstractAuthenticationFailureEvent failureEvent(AuthenticationException exception,
+            Authentication authentication)
+    {
+        auto exceptionType = typeid(exception);
+        if (exceptionType is typeid(BadCredentialsException) || exceptionType is typeid(UsernameNotFoundException))
+            return new AuthenticationFailureBadCredentialsEvent(authentication, exception);
+        if (exceptionType is typeid(AccountExpiredException))
+            return new AuthenticationFailureExpiredEvent(authentication, exception);
+        if (exceptionType is typeid(ProviderNotFoundException))
+            return new AuthenticationFailureProviderNotFoundEvent(authentication, exception);
+        if (exceptionType is typeid(DisabledException))
+            return new AuthenticationFailureDisabledEvent(authentication, exception);
+        if (exceptionType is typeid(LockedException))
+            return new AuthenticationFailureLockedEvent(authentication, exception);
+        if (exceptionType is typeid(AuthenticationServiceException))
+            return new AuthenticationFailureServiceExceptionEvent(authentication, exception);
+        if (exceptionType is typeid(CredentialsExpiredException))
+            return new AuthenticationFailureCredentialsExpiredEvent(authentication, exception);
+
+        return optionalFailureEvent(exceptionType.name, exception, authentication);
+    }
+
+    // Spring recognizes these exact optional classes without depending on CAS or the resource server.
+    private static AbstractAuthenticationFailureEvent optionalFailureEvent(string exceptionName,
+            AuthenticationException exception, Authentication authentication)
+    {
+        switch (exceptionName)
+        {
+        case "flint.security.authentication.cas.ProxyUntrustedException":
+            return new AuthenticationFailureProxyUntrustedEvent(authentication, exception);
+        case "flint.security.oauth2.server.resource.InvalidBearerTokenException":
+            return new AuthenticationFailureBadCredentialsEvent(authentication, exception);
+        default:
+            return null;
+        }
+    }
 }
 
 /// The canonical type name of `authentication`'s class.
@@ -400,8 +501,18 @@ class AuthenticationCredentialsNotFoundException : AuthenticationException
     }
 }
 
-/// Thrown when authentication fails for a system reason.
-class InternalAuthenticationServiceException : AuthenticationException
+/// Thrown when a system problem prevents authentication.
+class AuthenticationServiceException : AuthenticationException
+{
+    /// A failure with `message` and optional root cause.
+    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, cause, file, line);
+    }
+}
+
+/// Thrown when an internal system problem prevents authentication.
+class InternalAuthenticationServiceException : AuthenticationServiceException
 {
     /// A failure with `message`.
     this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow

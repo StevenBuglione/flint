@@ -3530,7 +3530,6 @@
       "org/springframework/security/authentication/AbstractAuthenticationBuilderTests.java",
       "org/springframework/security/authentication/AbstractAuthenticationTokenTests.java",
       "org/springframework/security/authentication/AuthenticationTrustResolverImplTests.java",
-      "org/springframework/security/authentication/DefaultAuthenticationEventPublisherTests.java",
       "org/springframework/security/authentication/DelegatingReactiveAuthenticationManagerTests.java",
       "org/springframework/security/authentication/ObservationAuthenticationManagerTests.java",
       "org/springframework/security/authentication/ObservationReactiveAuthenticationManagerTests.java",

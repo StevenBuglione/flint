@@ -14,9 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Modified by the Flint authors: ported AbstractAuthenticationEvent,
- * AbstractAuthenticationFailureEvent, AuthenticationFailureDisabledEvent,
- * and AuthenticationSuccessEvent.
+ * Modified by the Flint authors: ported the base, success and failure event classes.
  */
 module flint.security.authentication.event;
 
@@ -65,10 +63,80 @@ abstract class AbstractAuthenticationFailureEvent : AbstractAuthenticationEvent
     }
 }
 
+/// Authentication failed because the credentials were invalid.
+class AuthenticationFailureBadCredentialsEvent : AbstractAuthenticationFailureEvent
+{
+    /// A failure due to invalid credentials.
+    this(Authentication authentication, AuthenticationException exception)
+    {
+        super(authentication, exception);
+    }
+}
+
+/// Authentication failed because the credentials expired.
+class AuthenticationFailureCredentialsExpiredEvent : AbstractAuthenticationFailureEvent
+{
+    /// A failure due to expired credentials.
+    this(Authentication authentication, AuthenticationException exception)
+    {
+        super(authentication, exception);
+    }
+}
+
 /// Authentication failed because the account was disabled.
 class AuthenticationFailureDisabledEvent : AbstractAuthenticationFailureEvent
 {
     /// An authentication failure on a disabled account.
+    this(Authentication authentication, AuthenticationException exception)
+    {
+        super(authentication, exception);
+    }
+}
+
+/// Authentication failed because the account expired.
+class AuthenticationFailureExpiredEvent : AbstractAuthenticationFailureEvent
+{
+    /// A failure due to an expired account.
+    this(Authentication authentication, AuthenticationException exception)
+    {
+        super(authentication, exception);
+    }
+}
+
+/// Authentication failed because the account was locked.
+class AuthenticationFailureLockedEvent : AbstractAuthenticationFailureEvent
+{
+    /// A failure on a locked account.
+    this(Authentication authentication, AuthenticationException exception)
+    {
+        super(authentication, exception);
+    }
+}
+
+/// Authentication failed because no provider could process the request.
+class AuthenticationFailureProviderNotFoundEvent : AbstractAuthenticationFailureEvent
+{
+    /// A failure due to a missing provider.
+    this(Authentication authentication, AuthenticationException exception)
+    {
+        super(authentication, exception);
+    }
+}
+
+/// Authentication failed because the CAS ticket came from an untrusted proxy.
+class AuthenticationFailureProxyUntrustedEvent : AbstractAuthenticationFailureEvent
+{
+    /// A failure due to an untrusted CAS proxy.
+    this(Authentication authentication, AuthenticationException exception)
+    {
+        super(authentication, exception);
+    }
+}
+
+/// Authentication failed due to a service problem.
+class AuthenticationFailureServiceExceptionEvent : AbstractAuthenticationFailureEvent
+{
+    /// A failure due to an authentication service exception.
     this(Authentication authentication, AuthenticationException exception)
     {
         super(authentication, exception);

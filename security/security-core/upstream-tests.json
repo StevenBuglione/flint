@@ -41,8 +41,26 @@
       "status": "deferred"
     },
     "org/springframework/security/authentication/DefaultAuthenticationEventPublisherTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-core/tests/default_authentication_event_publisher_test.d",
+      "methods": {
+        "ported": [
+          "authenticationSuccessIsPublished",
+          "expectedDefaultMappingsAreSatisfied"
+        ],
+        "skipped": {
+          "additionalExceptionMappingsAreSupported": "Phase 2: deferred with the deprecated name-based Properties mapping.",
+          "additionalExceptionMappingsUsingMapAreSupported": "Phase 2: deferred with the Class-token customization API under R4.",
+          "defaultAuthenticationFailureEventClassSetNullThen": "Phase 2: deferred with the Class-token customization API under R4.",
+          "defaultAuthenticationFailureEventIsPublished": "Phase 2: deferred with the Class-token customization API under R4.",
+          "defaultAuthenticationFailureEventMissingAppropriateConstructorThen": "Phase 2: deferred with the Class-token customization API under R4.",
+          "emptyMapCausesException": "Phase 2: deferred with the Class-token customization API under R4.",
+          "missingEventClassAsMapValueCausesException": "Phase 2: deferred with the Class-token customization API under R4.",
+          "missingEventClassExceptionCausesException": "Phase 2: deferred with the deprecated name-based Properties mapping.",
+          "missingExceptionClassCausesException": "Phase 2: deferred with the Class-token customization API under R4.",
+          "unknownFailureExceptionIsIgnored": "Phase 2: deferred with the deprecated name-based Properties mapping."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/security/authentication/DelegatingReactiveAuthenticationManagerTests.java": {
       "phase": "3",
