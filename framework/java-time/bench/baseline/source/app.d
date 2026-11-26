@@ -30,6 +30,8 @@ private int metadataProbe(string name, bool odd)
 {
     switch (name)
     {
+    case "partial-date":
+        return odd ? 29 : 28;
     case "year-month":
         return odd ? 29 : 28;
     case "chrono-unit":

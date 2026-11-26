@@ -1,6 +1,30 @@
 {
   "schema": "flint.jdk-closure/1",
   "probes": {
+    "flint.java.time.monthday": {
+      "parse-render": {
+        "source": "closure/month-day-text.d",
+        "leaves": ["flint.java.lang", "flint.java.time", "flint.java.time.format"],
+        "data": []
+      },
+      "calendar": {
+        "source": "closure/month-day-calendar.d",
+        "leaves": ["flint.java.lang", "flint.java.time"],
+        "data": []
+      }
+    },
+    "flint.java.time.year": {
+      "parse-render": {
+        "source": "closure/year-text.d",
+        "leaves": ["flint.java.lang", "flint.java.time", "flint.java.time.format"],
+        "data": []
+      },
+      "calendar": {
+        "source": "closure/year-calendar.d",
+        "leaves": ["flint.java.lang", "flint.java.time", "flint.java.time.monthday", "flint.java.time.yearmonth"],
+        "data": []
+      }
+    },
     "flint.java.time.yearmonth": {
       "parse-render": {
         "source": "closure/year-month-text.d",

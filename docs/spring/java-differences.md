@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 0 | 0 | 0 | 4,452 |
 | framework | micrometer-observation@1.18.0 | 30 | 19 | 0 | 263 |
-| framework | openjdk@21.0.13 | 168 | 102 | 1,871 | 15,838 |
+| framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 15,798 |
 | framework | aspectj@1.9.27 | 0 | 31 | 191 | 88 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
@@ -1590,9 +1590,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.time.MonthDay` | `flint.java.time.monthday.MonthDay` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.MonthDay#equals(Object)` | `flint.java.time.monthday.MonthDay.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.MonthDay#parse(CharSequence)` | `flint.java.time.monthday.MonthDay.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.MonthDay#with(Month)` | `flint.java.time.monthday.MonthDay.with_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `java.time.Period` | `flint.java.time.period.Period` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Period#equals(Object)` | `flint.java.time.period.Period.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Period#parse(CharSequence)` | `flint.java.time.period.Period.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.Year` | `flint.java.time.year.Year` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.Year#equals(Object)` | `flint.java.time.year.Year.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.Year#isValidMonthDay(MonthDay)` | `flint.java.time.year.Year.isValidMonthDay` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.Year#parse(CharSequence)` | `flint.java.time.year.Year.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.time.YearMonth` | `flint.java.time.yearmonth.YearMonth` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.YearMonth#equals(Object)` | `flint.java.time.yearmonth.YearMonth.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.YearMonth#parse(CharSequence)` | `flint.java.time.yearmonth.YearMonth.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
@@ -9036,7 +9044,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.sql | 1,291 | 0 |
 | java.text | 550 | 0 |
 | java.text.spi | 0 | 27 |
-| java.time | 749 | 0 |
+| java.time | 709 | 0 |
 | java.time.chrono | 405 | 0 |
 | java.time.format | 141 | 0 |
 | java.time.temporal | 111 | 0 |
@@ -9889,8 +9897,40 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#setRoles(List)` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#getDispatcherTypes()` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#setDispatcherTypes(Set)` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |
+| framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.MonthDay#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
+| framework | `java.time.MonthDay#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.MonthDay#get(TemporalField)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.MonthDay#getLong(TemporalField)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.MonthDay#isSupported(TemporalField)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.MonthDay#now()` | 2 | Requires clock and zone contracts. |
+| framework | `java.time.MonthDay#now(Clock)` | 2 | Requires clock and zone contracts. |
+| framework | `java.time.MonthDay#now(ZoneId)` | 2 | Requires clock and zone contracts. |
+| framework | `java.time.MonthDay#parse(CharSequence,DateTimeFormatter)` | 2 | Requires the formatter contract. |
+| framework | `java.time.MonthDay#query(TemporalQuery)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.MonthDay#range(TemporalField)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.Period#minus(TemporalAmount)` | 2 | The current overload accepts Period; other amounts require java.time.temporal. |
 | framework | `java.time.Period#plus(TemporalAmount)` | 2 | The current overload accepts Period; other amounts require java.time.temporal. |
+| framework | `java.time.Year#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
+| framework | `java.time.Year#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#get(TemporalField)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#getLong(TemporalField)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#isSupported(TemporalField)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#isSupported(TemporalUnit)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#minus(TemporalAmount)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#minus(long,TemporalUnit)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#now()` | 2 | Requires clock and zone contracts. |
+| framework | `java.time.Year#now(Clock)` | 2 | Requires clock and zone contracts. |
+| framework | `java.time.Year#now(ZoneId)` | 2 | Requires clock and zone contracts. |
+| framework | `java.time.Year#parse(CharSequence,DateTimeFormatter)` | 2 | Requires the formatter contract. |
+| framework | `java.time.Year#plus(TemporalAmount)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#plus(long,TemporalUnit)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#query(TemporalQuery)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#range(TemporalField)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#until(Temporal,TemporalUnit)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#with(TemporalAdjuster)` | 2 | Requires temporal interfaces and dispatch. |
+| framework | `java.time.Year#with(TemporalField,long)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.YearMonth#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.YearMonth#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
 | framework | `java.time.YearMonth#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |

@@ -2,10 +2,12 @@ module app;
 
 import core.stdc.stdio : fputc, stdout;
 import flint.java.time : LocalDate;
+import flint.java.time.monthday : MonthDay;
 import flint.java.time.period : Period;
 import flint.java.time.temporal.chronofield : ChronoField, getBaseUnit, range;
 import flint.java.time.temporal.chronounit : getDuration;
 import flint.java.time.temporal.valuerange : ValueRange;
+import flint.java.time.year : Year;
 import flint.java.time.yearmonth : YearMonth;
 
 @safe:
@@ -60,6 +62,8 @@ private int metadataProbe(string name, bool odd)
     const field = odd ? ChronoField.DAY_OF_MONTH : ChronoField.NANO_OF_DAY;
     switch (name)
     {
+    case "partial-date":
+        return Year.of(odd ? 2000 : 1900).atMonthDay(MonthDay.of(2, 29)).getDayOfMonth();
     case "year-month":
         return YearMonth.of(odd ? 2000 : 1900, 2).atEndOfMonth().getDayOfMonth();
     case "chrono-unit":

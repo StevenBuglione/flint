@@ -564,7 +564,9 @@
     "flint.java.time.temporal.valuerange",
     "flint.java.time.temporal.chronofield",
     "flint.java.time.temporal.chronounit",
-    "flint.java.time.yearmonth"
+    "flint.java.time.yearmonth",
+    "flint.java.time.monthday",
+    "flint.java.time.year"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",

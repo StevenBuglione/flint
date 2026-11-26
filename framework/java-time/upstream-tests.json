@@ -8,7 +8,8 @@
     "framework/java-time/tests/value_range_test.d",
     "framework/java-time/tests/chrono_field_test.d",
     "framework/java-time/tests/temporal_metadata_test.d",
-    "framework/java-time/tests/year_month_test.d"
+    "framework/java-time/tests/year_month_test.d",
+    "framework/java-time/tests/date_values_test.d"
   ],
   "classes": {}
 }
