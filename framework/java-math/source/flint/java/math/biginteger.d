@@ -4,6 +4,7 @@ module flint.java.math.biginteger;
 import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsException, JavaObject,
     NullPointerException, NumberFormatException;
 import flint.java.lang.number : Number;
+import flint.java.math.internal.division : divideByWord, divideWords;
 import flint.java.math.internal.floating : roundedFloating;
 import flint.java.math.internal.limbs : combineLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
     magnitudeBitLength, signedLength, significantBytes, significantLimbs, storeSignedBytes;
@@ -307,6 +308,95 @@ class BigInteger : Number, Comparable!BigInteger
     {
         const uint high = magnitude[$ - 1];
         return (high & (high - 1)) == 0 && firstNonzeroLimb(magnitude) + 1 == magnitude.length;
+    }
+
+    /// Divide with truncation toward zero.
+    BigInteger divide(BigInteger other)
+    {
+        return divideTo(other, true, false).quotient;
+    }
+
+    /// Return the remainder with the sign of this integer.
+    BigInteger remainder(BigInteger other)
+    {
+        return divideTo(other, false, true).remainder;
+    }
+
+    /// Return the nonnegative remainder for a strictly positive modulus.
+    BigInteger mod(BigInteger modulus)
+    {
+        if (modulus is null)
+            throw new NullPointerException();
+        if (modulus.sign <= 0)
+            throw new ArithmeticException("BigInteger: modulus not positive");
+        auto rest = remainder(modulus);
+        return rest.sign < 0 ? rest.add(modulus) : rest;
+    }
+
+    /// Return the quotient followed by the remainder.
+    BigInteger[] divideAndRemainder(BigInteger other)
+    {
+        auto result = divideTo(other, true, true);
+        return [result.quotient, result.remainder];
+    }
+
+    private struct Division
+    {
+        BigInteger quotient;
+        BigInteger remainder;
+    }
+
+    private Division divideTo(BigInteger other, bool wantQuotient, bool wantRemainder)
+    {
+        if (other is null)
+            throw new NullPointerException();
+        if (!other.sign)
+            throw new ArithmeticException("BigInteger divide by zero");
+
+        const int order = compareLimbs(magnitude, other.magnitude);
+        const int quotientSign = sign * other.sign;
+        Division result;
+        if (order <= 0)
+        {
+            if (wantQuotient)
+                result.quotient = valueOf(order < 0 ? 0 : quotientSign);
+            if (wantRemainder)
+                result.remainder = order < 0 ? this : valueOf(0);
+            return result;
+        }
+
+        auto quotient = wantQuotient ? new uint[magnitude.length - other.magnitude.length + 1] : null;
+        const divisor = other.magnitude;
+        if (divisor.length == 1)
+        {
+            const uint rest = divideByWord(quotient, magnitude, divisor[0]);
+            if (wantRemainder)
+                result.remainder = valueOf(cast(long) rest * sign);
+        }
+        else
+        {
+            result.remainder = divideLarge(quotient, divisor, wantRemainder);
+        }
+        if (wantQuotient)
+            result.quotient = new BigInteger(quotient, quotientSign);
+        return result;
+    }
+
+    private BigInteger divideLarge(scope uint[] quotient, scope const(uint)[] divisor, bool wantRemainder)
+    {
+        uint[32] smallNumerator = void;
+        uint[32] smallDivisor = void;
+        const size_t length = magnitude.length + 1;
+        scope uint[] work = length <= smallNumerator.length ? smallNumerator[0 .. length] : new uint[length];
+        scope uint[] normalized = divisor.length <= smallDivisor.length
+            ? smallDivisor[0 .. divisor.length] : new uint[divisor.length];
+        divideWords(quotient, work, normalized, magnitude, divisor);
+        if (!wantRemainder)
+            return null;
+        const size_t remaining = significantLimbs(work[0 .. divisor.length]);
+        auto owned = new uint[remaining];
+        owned[] = work[0 .. remaining];
+        return new BigInteger(owned, sign);
     }
 
     private BigInteger combine(const(uint)[] other, int otherSign)

@@ -1,6 +1,7 @@
 module flint.java.math.internal.radix;
 
 import core.bitop : bsr;
+import flint.java.math.internal.division : divideByWord;
 
 @safe:
 
@@ -63,7 +64,7 @@ private size_t writeGroups(scope char[] text, scope uint[] scratch, bool negativ
     size_t at = text.length;
     do
     {
-        uint remainder = divideWord(scratch, divisor);
+        uint remainder = divideByWord(scratch, scratch, divisor);
         // Dividing by one word can remove at most one leading word.
         if (!scratch[$ - 1])
             scratch = scratch[0 .. $ - 1];
@@ -81,18 +82,6 @@ private size_t writeGroups(scope char[] text, scope uint[] scratch, bool negativ
     if (negative)
         text[--at] = '-';
     return at;
-}
-
-private uint divideWord(scope uint[] value, uint divisor) pure nothrow @nogc
-{
-    ulong remainder;
-    foreach_reverse (ref word; value)
-    {
-        const ulong dividend = (remainder << 32) | word;
-        word = cast(uint)(dividend / divisor);
-        remainder = dividend % divisor;
-    }
-    return cast(uint) remainder;
 }
 
 private char digit(uint value) pure nothrow @nogc

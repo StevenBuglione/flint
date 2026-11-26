@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,132 | 347 | 1,871 | 15,071 |
+| framework | openjdk@21.0.13 | 1,135 | 348 | 1,871 | 15,067 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2237,6 +2237,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.math.BigInteger#<init>(byte[],int,int)` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.math.BigInteger#<init>(int,byte[])` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.math.BigInteger#<init>(int,byte[],int,int)` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.math.BigInteger#divideAndRemainder(BigInteger)` | `flint.java.math.biginteger.BigInteger.divideAndRemainder` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.math.BigInteger#equals(Object)` | `flint.java.math.biginteger.BigInteger.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.math.BigInteger#hashCode()` | `flint.java.math.biginteger.BigInteger.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.math.BigInteger#toString()` | `flint.java.math.biginteger.BigInteger.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -10534,7 +10535,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang | 1,985 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
-| java.math | 137 | 0 |
+| java.math | 133 | 0 |
 | java.net | 809 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 229 | 0 |
