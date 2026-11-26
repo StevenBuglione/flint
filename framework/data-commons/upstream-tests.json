@@ -371,8 +371,15 @@
       "status": "deferred"
     },
     "org/springframework/data/domain/WindowUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/window_tests.d",
+      "methods": {
+        "ported": [
+          "allowsIteration",
+          "equalsAndHashCode",
+          "shouldCreateCorrectPositions"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/jaxb/SpringDataJaxbUnitTests.java": {
       "phase": "2",

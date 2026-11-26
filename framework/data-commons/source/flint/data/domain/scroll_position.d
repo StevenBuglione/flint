@@ -153,6 +153,19 @@ private final class OffsetPositionFunction : IntFunction!OffsetScrollPosition
             throw new IndexOutOfBoundsException(index);
         return ScrollPosition.offset(startOffset + index);
     }
+
+    bool equals(Object other)
+    {
+        auto that = cast(OffsetPositionFunction) other;
+        return that !is null && startOffset == that.startOffset;
+    }
+
+    int hashCode()
+    {
+        return Long.hashCode(startOffset);
+    }
+
+    mixin JavaObject;
 }
 
 /// A scroll position based on the keyset of the last result seen.
