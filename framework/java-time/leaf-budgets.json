@@ -34,5 +34,9 @@
   "flint.java.time.zone.zoneoffsettransitionrule": {
     "incremental_linked_bytes": 17138,
     "template_instances": 637
+  },
+  "flint.java.time.zone.zonerules": {
+    "incremental_linked_bytes": 103854,
+    "template_instances": 1481
   }
 }
