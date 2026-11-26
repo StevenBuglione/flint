@@ -6036,7 +6036,7 @@
 "java.nio.CharBuffer#put(int,char)":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.put"},
 "java.nio.CharBuffer#put(int,char[])":{"status":"adapted","d":"flint.java.nio.charbuffer.CharBuffer.put","rules":["R26"]},
 "java.nio.CharBuffer#put(int,char[],int,int)":{"status":"adapted","d":"flint.java.nio.charbuffer.CharBuffer.put","rules":["R26"]},
-"java.nio.CharBuffer#read(CharBuffer)":{"status":"excluded","category":"deferred","phase":"2","reason":"Character sequence, append and read contracts follow the heap array cursor slice."},
+"java.nio.CharBuffer#read(CharBuffer)":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.read"},
 "java.nio.CharBuffer#reset()":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.reset"},
 "java.nio.CharBuffer#rewind()":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.rewind"},
 "java.nio.CharBuffer#slice()":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.slice"},

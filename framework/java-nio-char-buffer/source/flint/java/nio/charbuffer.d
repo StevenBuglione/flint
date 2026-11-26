@@ -346,6 +346,29 @@ class CharBuffer : Buffer, Comparable!CharBuffer
         return this;
     }
 
+    /// Transfer remaining characters to target. Java's signature declares IOException.
+    int read(CharBuffer target) pure
+    {
+        const sourceLimit = limit();
+        const sourcePosition = position();
+        const available = sourceLimit - sourcePosition;
+        if (available == 0)
+            return -1;
+
+        requireBuffer(target);
+        const room = target.remaining();
+        if (room == 0)
+            return 0;
+
+        const count = room < available ? room : available;
+        if (count < available)
+            limit(sourcePosition + count);
+        scope (exit)
+            limit(sourceLimit);
+        target.put(this);
+        return count;
+    }
+
     CharBuffer compact() pure
     {
         checkWritable();

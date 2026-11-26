@@ -385,6 +385,8 @@ The Spring Beans factory exception types reuse the existing `BeanCreationExcepti
 
 **Keep the original character-buffer window when forming a subsequence.** Relative reads use the existing scalar load and bare bounds check. A subsequence allocates one user-visible view with the same capacity and storage, an independent cursor, and a fresh mark. Invalid endpoints use the shared stack formatter and Java's start/end diagnostic. The unchanged CharBuffer package probe on venus moved from 23,932 O3 and 21,964 Oz loadable bytes with 531 DMD instances to 24,612 and 22,652 with 534. The enforced leaf moved from 24,012 O3 and 22,044 Oz bytes with 515 instances to 24,692 and 22,732 with 516. Both ByteBuffer probes retain their linked sizes and template counts.
 
+**Reuse relative put for character-buffer reads.** CharBuffer reads transfer into the caller's view through the existing overlap and byte-order copy, with the source limit restored by a scope guard. EOF and full destinations return before copying. On venus the unchanged CharBuffer package probe moved from 24,612 O3 and 22,652 Oz loadable bytes to 24,860 and 22,900, with 534 DMD instances in both runs. The enforced leaf moved from 24,692 O3 and 22,732 Oz bytes to 24,940 and 22,980, with 516 instances in both runs. Both ByteBuffer probes retain their linked sizes and template counts.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |
