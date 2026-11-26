@@ -41,8 +41,6 @@ unittest
     size_t required;
     assert(compileFixedDecimalPattern("#,##0.###", pattern) == DecimalCompileStatus.accepted);
     assert(!tryRenderDecimalDouble(0x3f40_624d_d2f1_a9fc, pattern, symbols, output[], required));
-    assert(compileFixedDecimalPattern("0%", pattern) == DecimalCompileStatus.accepted);
-    assert(!tryRenderDecimalDouble(0, pattern, symbols, output[], required));
     assert(output[0] == 'x' && required == 0);
 }
 
@@ -74,4 +72,27 @@ private struct SpecialValue
 {
     ulong bits;
     string expected;
+}
+
+@("Java pattern multipliers apply in binary64 before decimal rounding")
+unittest
+{
+    static void check(string patternText, ulong bits, string expected)
+    {
+        DecimalFixedPattern pattern;
+        assert(compileFixedDecimalPattern(patternText, pattern) == DecimalCompileStatus.accepted);
+        DecimalSymbolData symbols;
+        char[32] output;
+        size_t required;
+        assert(tryRenderDecimalDouble(bits, pattern, symbols, output[], required), "pattern multiplier was declined");
+        assert(output[0 .. required] == expected);
+    }
+
+    check("0.00%", 0x4005_6666_6666_6666, "267.50%");
+    check("0.00%;(0.00%)", 0xc005_6666_6666_6666, "(267.50%)");
+    check("0.0‰", 0x4005_6666_6666_6666, "2675.0‰");
+    check("0%", 0x7fef_ffff_ffff_ffff, "∞%");
+    check("0%", 0xffef_ffff_ffff_ffff, "-∞%");
+    check("0%", 0x8000_0000_0000_0000, "-0%");
+    check("0%", 0xfff8_0000_0000_0000, "NaN");
 }
