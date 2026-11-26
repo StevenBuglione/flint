@@ -6553,6 +6553,7 @@
 "java.util.BitSet#set(int,int)":{"status":"ported","d":"flint.java.util.bitset.BitSet.set"},
 "java.util.BitSet#set(int,int,boolean)":{"status":"ported","d":"flint.java.util.bitset.BitSet.set"},
 "java.util.BitSet#size()":{"status":"ported","d":"flint.java.util.bitset.BitSet.size"},
+"java.util.BitSet#toLongArray()":{"status":"ported","d":"flint.java.util.bitset.BitSet.toLongArray"},
 "java.util.HexFormat#parseHex(char[],int,int)":{"d":"flint.java.util.hexformat.HexFormat.parseHex","status":"ported"},
 "java.util.IllegalFormatConversionException":{"d":"flint.java.util.formatter.IllegalFormatConversionException","rules":["R1"],"status":"adapted","note":"Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists."},
 "java.util.IllegalFormatConversionException#<init>(char,Class)":{"status":"excluded","category":"deferred","phase":"2","reason":"Flint currently accepts a string name. Java retains the argument Class and exposes it through getArgumentClass()."},

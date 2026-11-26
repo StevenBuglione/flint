@@ -8,6 +8,47 @@ import std.exception : assertThrown;
 
 @safe:
 
+@("toLongArray copies the live words in increasing index order")
+unittest
+{
+    auto bits = new BitSet();
+    assert(bits.toLongArray().length == 0);
+    bits.set(63);
+    bits.set(64);
+    bits.set(127);
+    bits.set(4_096);
+    bits.clear(4_096);
+    assert(bits.size() > 128);
+
+    auto copy = bits.toLongArray();
+    assert(copy.length == 2);
+    assert(copy[0] == long.min && copy[1] == long.min + 1);
+    copy[0] = 0;
+    assert(bits.get(63));
+    bits.clear();
+    assert(copy[1] == long.min + 1 && bits.toLongArray().length == 0);
+}
+
+@("toLongArray agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto bits = new BitSet();
+    uint state = 0x42ae_99bb;
+    uint digest;
+    foreach (step; 0 .. 512)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        if ((step & 15) == 0)
+            bits.clear();
+        bits.flip(cast(int)((state >> 13) & 511));
+        const words = bits.toLongArray();
+        digest = 31 * digest + cast(uint) words.length;
+        foreach (word; words)
+            digest = 31 * digest + cast(uint)(word ^ (cast(ulong) word >> 32));
+    }
+    assert(digest == 944_109_785);
+}
+
 @("and clears unmatched words without shrinking or growing capacity")
 unittest
 {

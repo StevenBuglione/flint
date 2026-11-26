@@ -180,6 +180,14 @@ class BitSet
         return cast(int) count;
     }
 
+    /// Returns the set bits as an owned array of signed words, lowest indices first.
+    long[] toLongArray() const pure nothrow
+    {
+        auto copy = new ulong[wordsInUse];
+        copy[] = words[0 .. wordsInUse];
+        return cast(long[]) copy;
+    }
+
     /// Reports whether the two bit sets have any set bit in common.
     bool intersects(BitSet set) const pure
     {
@@ -316,12 +324,13 @@ class BitSet
         // Set writes ones, clear writes zeroes, and flip XORs the selected bits.
         const overwrite = change == RangeChange.flip ? 0UL : ulong.max;
         const writeOnes = change == RangeChange.clear ? 0UL : ulong.max;
-        const first = firstWord == lastWord ? firstMask & lastMask : firstMask;
-        words[firstWord] = (words[firstWord] & ~(first & overwrite)) ^ (first & writeOnes);
-        if (firstWord != lastWord)
+        auto affected = words[firstWord .. lastWord + 1];
+        const first = affected.length == 1 ? firstMask & lastMask : firstMask;
+        affected[0] = (affected[0] & ~(first & overwrite)) ^ (first & writeOnes);
+        if (affected.length > 1)
         {
-            words[lastWord] = (words[lastWord] & ~(lastMask & overwrite)) ^ (lastMask & writeOnes);
-            foreach (ref word; words[firstWord + 1 .. lastWord])
+            affected[$ - 1] = (affected[$ - 1] & ~(lastMask & overwrite)) ^ (lastMask & writeOnes);
+            foreach (ref word; affected[1 .. $ - 1])
                 word = (word & ~overwrite) ^ writeOnes;
         }
         if (change != RangeChange.set)
