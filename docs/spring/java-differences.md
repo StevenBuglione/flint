@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 518 | 23 | 1 | 2,753 |
+| framework | jackson-core@3.1.8 | 508 | 23 | 1 | 2,763 |
 | framework | jackson-databind@3.1.8 | 611 | 61 | 5 | 9,790 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -10177,7 +10177,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
-| tools.jackson.core | 595 | 0 |
+| tools.jackson.core | 603 | 0 |
 | tools.jackson.core.async | 7 | 0 |
 | tools.jackson.core.base | 363 | 0 |
 | tools.jackson.core.exc | 11 | 0 |
@@ -10189,7 +10189,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.sym | 147 | 0 |
 | tools.jackson.core.tree | 2 | 0 |
 | tools.jackson.core.type | 48 | 0 |
-| tools.jackson.core.util | 458 | 0 |
+| tools.jackson.core.util | 460 | 0 |
 | tools.jackson.databind | 1,496 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
 | tools.jackson.databind.cfg | 763 | 0 |
@@ -10671,7 +10671,15 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.thymeleaf.expression.ExpressionObjects` | 2 | Requires IExpressionContext and IEngineConfiguration before per-render expression objects can be configured. |
 | framework | `org.thymeleaf.expression.IExpressionObjectFactory` | 2 | Requires IExpressionContext and IEngineConfiguration before per-render expression objects can be configured. |
 | framework | `org.thymeleaf.templatemode.TemplateMode#parse(String)` | 2 | Unknown-mode warnings use TemplateEngine.threadIndex and its logger. |
+| framework | `tools.jackson.core.JacksonException#<init>(Closeable,String)` | 2 | The Java overload takes a Closeable processor. Flint exposes a processor-free exception constructor. |
+| framework | `tools.jackson.core.JacksonException#<init>(Closeable,String,Throwable)` | 2 | The Java overload takes a Closeable processor. Flint exposes a processor-free exception constructor. |
+| framework | `tools.jackson.core.JacksonException#<init>(Closeable,String,TokenStreamLocation)` | 2 | The Java overload takes a Closeable processor. Flint exposes a processor-free exception constructor. |
+| framework | `tools.jackson.core.JacksonException#<init>(Closeable,String,TokenStreamLocation,Throwable)` | 2 | The Java overload takes a Closeable processor. Flint exposes a processor-free exception constructor. |
+| framework | `tools.jackson.core.JacksonException#<init>(Closeable,Throwable)` | 2 | The Java overload takes a Closeable processor. Flint exposes a processor-free exception constructor. |
 | framework | `tools.jackson.core.JsonParser#nextName(SerializableString)` | 2 | The overload requires the deferred SerializableString API. |
+| framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
+| framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
+| framework | `tools.jackson.core.TokenStreamLocation#toString(StringBuilder)` | 2 | The Java overload appends to a StringBuilder. Flint exposes a zero-argument formatter returning a string. |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_JAVA_COMMENTS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
@@ -10689,6 +10697,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char)` | 2 | Requires SerializableString and the explicit generator context and output configuration. |
 | framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char,byte[],int,boolean)` | 2 | Requires SerializableString and the constructor with a caller-provided byte buffer, offset and recycling flag. |
 | framework | `tools.jackson.core.json.UTF8StreamJsonParser#<init>(ObjectReadContext,IOContext,int,int,InputStream,ByteQuadsCanonicalizer,byte[],int,int,int,boolean)` | 2 | Requires the explicit IOContext, input stream, and caller-provided byte-buffer constructor. |
+| framework | `tools.jackson.core.util.ByteArrayBuilder#<init>(BufferRecycler)` | 2 | The Java overload accepts a BufferRecycler. Flint's builder owns its byte buffer directly. |
+| framework | `tools.jackson.core.util.ByteArrayBuilder#<init>(BufferRecycler,int)` | 2 | The Java overload accepts a BufferRecycler. Flint's builder owns its byte buffer directly. |
 | framework | `tools.jackson.databind.JsonNode#findParents(String)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
