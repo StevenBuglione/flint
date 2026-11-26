@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 138 | 255 | 0 | 15,403 |
+| ai | spring-ai@v2.1.0 | 142 | 256 | 0 | 15,398 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,379 | 1,322 | 4,848 | 30,285 |
@@ -313,6 +313,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.ai.converter.MarkdownCodeBlockCleaner#clean(String)` | `flint.ai.converter.MarkdownCodeBlockCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.ResponseTextCleaner#clean(String)` | `flint.ai.converter.ResponseTextCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.converter.StructuredOutputConverter#getJsonSchema()` | `flint.ai.converter.StructuredOutputConverter.getJsonSchema` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.ai.converter.WhitespaceCleaner#clean(String)` | `flint.ai.converter.WhitespaceCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.ai.embedding
@@ -7964,7 +7965,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chroma.vectorstore | 0 | 128 |
 | org.springframework.ai.chroma.vectorstore.common | 0 | 5 |
 | org.springframework.ai.content | 23 | 0 |
-| org.springframework.ai.converter | 53 | 0 |
+| org.springframework.ai.converter | 48 | 0 |
 | org.springframework.ai.decision | 92 | 0 |
 | org.springframework.ai.decision.answer | 53 | 0 |
 | org.springframework.ai.decision.input | 24 | 0 |

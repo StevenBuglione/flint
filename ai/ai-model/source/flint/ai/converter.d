@@ -14,15 +14,42 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/converter/{MarkdownCodeBlockCleaner,ResponseTextCleaner,WhitespaceCleaner}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/converter/{FormatProvider,MarkdownCodeBlockCleaner,ResponseTextCleaner,StructuredOutputConverter,WhitespaceCleaner}.java
 // Modified by the Flint authors.
 module flint.ai.converter;
 
+import flint.core.convert.converter : Converter;
 import std.typecons : Nullable;
 
 @safe:
 
 private alias Text = Nullable!string;
+
+/// Supplies formatting instructions for a model response.
+interface FormatProvider
+{
+    /// Returns instructions describing the desired response format.
+    string getFormat();
+}
+
+/// Converts a model's text response to a typed value.
+interface StructuredOutputConverter(T) : Converter!(string, T), FormatProvider
+{
+    /// The schema value when no JSON schema is available.
+    enum string NO_JSON_SCHEMA = "";
+
+    /// Returns the converter's JSON schema.
+    string getJsonSchema();
+
+    /// Supplies the default schema for implementations that only provide formatting instructions (R3).
+    mixin template Defaults()
+    {
+        override string getJsonSchema()
+        {
+            return "";
+        }
+    }
+}
 
 /// Cleans text returned by a model before a converter parses it.
 interface ResponseTextCleaner
