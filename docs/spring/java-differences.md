@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 498 | 22 | 1 | 2,774 |
-| framework | jackson-databind@3.1.8 | 534 | 56 | 5 | 9,872 |
+| framework | jackson-databind@3.1.8 | 532 | 56 | 5 | 9,874 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 182 | 155 | 0 | 2,053 |
@@ -209,6 +209,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
 | framework | `org.springframework.expression.spel.support.StandardTypeConverter#<init>()` | `flint.expression.spel.support.StandardTypeConverter` | Creates and retains one default conversion service per converter. Flint's core getSharedInstance factory creates a fresh service. |
 | framework | `tools.jackson.core.JsonPointer#length()` | `flint.jackson.core.JsonPointer.length` | Returns UTF-16 code units. |
+| framework | `tools.jackson.databind.json.JsonMapper#tokenStreamFactory()` | `flint.jackson.databind.JsonMapper.tokenStreamFactory` | The D JsonMapper inherits the JsonFactory-returning getter. |
 | framework | `tools.jackson.databind.json.JsonMapper.Builder` | `flint.jackson.databind.JsonMapper.Builder` | Flint's JSON builder defines its methods directly while the Java MapperBuilder superclass is deferred. |
 | security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.InMemoryUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
 | security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.JdbcUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.JdbcUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
@@ -10359,7 +10360,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.tree | 2 | 0 |
 | tools.jackson.core.type | 48 | 0 |
 | tools.jackson.core.util | 460 | 0 |
-| tools.jackson.databind | 1,537 | 0 |
+| tools.jackson.databind | 1,542 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
 | tools.jackson.databind.cfg | 764 | 0 |
 | tools.jackson.databind.deser | 587 | 0 |
@@ -10380,7 +10381,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.databind.ext.jdk8 | 60 | 0 |
 | tools.jackson.databind.ext.sql | 40 | 0 |
 | tools.jackson.databind.introspect | 925 | 0 |
-| tools.jackson.databind.json | 25 | 0 |
+| tools.jackson.databind.json | 22 | 0 |
 | tools.jackson.databind.jsonFormatVisitors | 119 | 0 |
 | tools.jackson.databind.jsontype | 138 | 0 |
 | tools.jackson.databind.jsontype.impl | 277 | 0 |
@@ -10904,6 +10905,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.JsonNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
+| framework | `tools.jackson.databind.ObjectMapper#<init>(MapperBuilder)` | 2 | The protected D implementation constructor accepts MapperConfig. The generic Java MapperBuilder constructor is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#<init>(TokenStreamFactory)` | 2 | The D base mapper has a no-argument constructor. The Java TokenStreamFactory constructor is deferred. |
 | framework | `tools.jackson.databind.ObjectMapper#createGenerator(DataOutput)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
 | framework | `tools.jackson.databind.ObjectMapper#createGenerator(File,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
 | framework | `tools.jackson.databind.ObjectMapper#createGenerator(OutputStream,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
@@ -10923,6 +10926,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,Class)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,JavaType)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
 | framework | `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,TypeReference)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#rebuild()` | 2 | The D rebuild operation is on JsonMapper and returns its concrete builder. The generic ObjectMapper method is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#serializationConfig()` | 2 | The existing D getter returns Flint's aggregate MapperConfig. The Java SerializationConfig return contract is deferred. |
+| framework | `tools.jackson.databind.ObjectMapper#tokenStreamFactory()` | 2 | The existing D getter returns JsonFactory. The Java TokenStreamFactory return contract is deferred. |
 | framework | `tools.jackson.databind.ObjectMapper#writeValue(DataOutput,Object)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
 | framework | `tools.jackson.databind.ObjectMapper#writer(Base64Variant)` | 2 | Flint constructs writers from the mapper's existing configuration. The Java overload accepts per-writer options. |
 | framework | `tools.jackson.databind.ObjectMapper#writer(CharacterEscapes)` | 2 | Flint constructs writers from the mapper's existing configuration. The Java overload accepts per-writer options. |
