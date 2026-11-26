@@ -7,21 +7,32 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # this directory is native/. They build into flint_ffi_framework, which framework and portfolio packages link before
 # the flint repo's flint_ffi_base (native/ffi in the flint repo). tools/native_build.py builds that project first and
 # installs it into the same prefix, so this one finds flint_ffi_base there.
-file(GLOB FLINT_ENGINE_DIRS LIST_DIRECTORIES true
+file(GLOB FLINT_FRAMEWORK_FFI_DIRS LIST_DIRECTORIES true
   "${CMAKE_CURRENT_SOURCE_DIR}/../../packages/engine-*/native/ffi"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../engine/*/native/ffi")
-list(SORT FLINT_ENGINE_DIRS)
+  "${CMAKE_CURRENT_SOURCE_DIR}/../engine/*/native/ffi"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../framework/java-*/native/ffi"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../java-*/native/ffi")
+list(SORT FLINT_FRAMEWORK_FFI_DIRS)
 set(FLINT_FFI_FRAMEWORK_SHIMS)
-foreach(dir IN LISTS FLINT_ENGINE_DIRS)
+set(FLINT_FRAMEWORK_FFI_BASENAMES)
+foreach(dir IN LISTS FLINT_FRAMEWORK_FFI_DIRS)
+  file(GLOB files LIST_DIRECTORIES false CONFIGURE_DEPENDS "${dir}/*")
+  foreach(file IN LISTS files)
+    get_filename_component(basename "${file}" NAME)
+    if(basename IN_LIST FLINT_FRAMEWORK_FFI_BASENAMES)
+      message(FATAL_ERROR "Duplicate framework native shim basename '${basename}' in ${dir}")
+    endif()
+    list(APPEND FLINT_FRAMEWORK_FFI_BASENAMES "${basename}")
+  endforeach()
   file(GLOB shims CONFIGURE_DEPENDS "${dir}/flint_*.c")
   list(APPEND FLINT_FFI_FRAMEWORK_SHIMS ${shims})
 endforeach()
 if(NOT FLINT_FFI_FRAMEWORK_SHIMS)
-  message(FATAL_ERROR "no engine shims under ../../packages/engine-*/native/ffi or ../engine/*/native/ffi")
+  message(FATAL_ERROR "no framework native shims found")
 endif()
 # The engine directory that holds `name`, or "" when no engine ships it.
 function(flint_engine_file name out)
-  foreach(dir IN LISTS FLINT_ENGINE_DIRS)
+  foreach(dir IN LISTS FLINT_FRAMEWORK_FFI_DIRS)
     if(EXISTS "${dir}/${name}")
       set(${out} "${dir}/${name}" PARENT_SCOPE)
       return()
@@ -30,7 +41,7 @@ function(flint_engine_file name out)
   set(${out} "" PARENT_SCOPE)
 endfunction()
 add_library(flint_ffi_framework STATIC ${FLINT_FFI_FRAMEWORK_SHIMS})
-target_include_directories(flint_ffi_framework PRIVATE ${FLINT_ENGINE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(flint_ffi_framework PRIVATE ${FLINT_FRAMEWORK_FFI_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(flint_ffi flint_ffi_framework)
 target_include_directories(${flint_ffi} PRIVATE "${CMAKE_INSTALL_PREFIX}/include")
 # One section per function and object, so a linked program keeps only the shim entry points it reaches
