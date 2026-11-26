@@ -1,0 +1,5 @@
+{
+ "id": "D-JDK-6",
+ "deviation": "`ThreadLocal` and `InheritableThreadLocal` values belong to the current fiber, and `Thread.currentThread()` is the current fiber's facade. Code that relies on several fibers sharing one OS thread's value sees separate values. This matches Java's behaviour for virtual threads, where each virtual thread has its own `ThreadLocal` values; it differs only for code that expects platform-thread sharing.",
+ "reason": "Flint schedules work on fibers; `FiberLocal` is the only per-execution storage framework packages may keep (AGENTS.md; coordinator approval, 2026-11-26)."
+}
