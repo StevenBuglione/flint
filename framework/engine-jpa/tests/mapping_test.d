@@ -8,6 +8,7 @@ module flint.engine.jpa.mapping_test;
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping,
     ResultBinding, planResult, validateEntity, validateMapping;
+import flint.engine.jpa.registry : registerMappings;
 import flint.java.sql : Types;
 
 @safe:
@@ -50,6 +51,62 @@ private immutable EntityMapping recordMapping = EntityMapping("Record",
             AttributeMapping(0, "id", "id", AttributeKind.integer, &readId, &writeId, false,
                 false, true, false, 0, Types.BIGINT)
 ], &constructRecord, [], &isExactRecordType, [0]);
+
+@("a persistence unit resolves its canonical mappings by entity name and D type name")
+unittest
+{
+    static immutable EntityMapping[] descriptors = [recordMapping];
+    const registered = registerMappings(descriptors);
+    assert(registered.ok);
+    assert(registered.value.findEntity("Record") is &descriptors[0]);
+    assert(registered.value.findType("flint.engine.jpa.mapping_test.Record") is &descriptors[0]);
+    assert(registered.value.findEntity("record") is null);
+    assert(registered.value.findType("Record") is null);
+
+    EntityMapping otherUnit = recordMapping;
+    otherUnit.table = "other_records";
+    const separate = registerMappings([otherUnit].idup);
+    assert(separate.ok && separate.value.findEntity("Record").table == "other_records");
+    assert(registered.value.findEntity("Record").table == "records");
+}
+
+@("registration rejects invalid or ambiguous mappings before publishing any entries")
+unittest
+{
+    EntityMapping duplicate = recordMapping;
+    duplicate.typeName = "flint.engine.jpa.mapping_test.OtherRecord";
+    const duplicateEntity = registerMappings([recordMapping, duplicate].idup);
+    assert(duplicateEntity.error.code == Status.invalidArgument && duplicateEntity.error.offset == 1);
+    assert(duplicateEntity.error.message == "duplicate JPA entity name");
+    assert(duplicateEntity.value.findEntity("Record") is null);
+
+    duplicate = recordMapping;
+    duplicate.entityName = "OtherRecord";
+    const duplicateType = registerMappings([recordMapping, duplicate].idup);
+    assert(duplicateType.error.code == Status.invalidArgument && duplicateType.error.offset == 1);
+    assert(duplicateType.error.message == "duplicate JPA D type name");
+
+    duplicate.typeName = "flint.engine.jpa.mapping_test.OtherRecord";
+    const sharedTable = registerMappings([recordMapping, duplicate].idup);
+    assert(sharedTable.ok && sharedTable.value.findEntity("OtherRecord").table == "records");
+
+    duplicate.table = "";
+    const invalid = registerMappings([recordMapping, duplicate].idup);
+    assert(invalid.error.code == Status.invalidArgument && invalid.error.offset == 1);
+    assert(invalid.value.findEntity("Record") is null);
+
+    const empty = registerMappings([]);
+    assert(empty.ok && empty.value.findEntity("Record") is null);
+}
+
+@("a mapping registry cannot retain stack storage")
+unittest
+{
+    static assert(!__traits(compiles, () @safe {
+            immutable(EntityMapping)[1] localMappings = [recordMapping];
+            return registerMappings(localMappings[]);
+        }));
+}
 
 @("an exact type guard rejects missing metadata, null entities and subclasses")
 unittest

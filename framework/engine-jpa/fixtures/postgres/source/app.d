@@ -11,6 +11,7 @@ import flint.conc : Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding,
     RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult, validateEntity, validateMapping;
+import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
 import flint.engine.reactor : Backend, Reactor, ReactorOptions, TaskContext, TaskDelegate;
 import flint.java.sql : PreparedStatement, ResultSet, SQLException, Types;
@@ -345,7 +346,12 @@ private RowMaterializationPlan verifyMappingContract()
             .error.code == Status.invalidArgument);
     assert(planResult(&ownerMapping, [ResultBinding(1, 1), ResultBinding(2, 2), ResultBinding(0, 0)], ownerCodec)
             .error.code == Status.invalidArgument);
-    const planned = planResult(&ownerMapping, ownerBindings, ownerCodec);
+    static immutable EntityMapping[] descriptors = [ownerMapping];
+    const registered = registerMappings(descriptors);
+    assert(registered.ok);
+    const mapping = registered.value.findEntity("Owner");
+    assert(mapping is &descriptors[0] && mapping is registered.value.findType("app.Owner"));
+    const planned = planResult(mapping, ownerBindings, ownerCodec);
     assert(planned.ok);
     assert(validateMapping(ownerMapping).code == Status.ok);
     assert(validateEntity(ownerMapping, new Owner).code == Status.ok);
