@@ -128,6 +128,40 @@ class TrainTests(unittest.TestCase):
         self.assertIn('R-2 from a', text)
         self.assertIn('R-3 from b', text)
 
+    GENERATOR = """import json, pathlib
+rows = sorted(json.loads(p.read_text())['id'] for p in pathlib.Path('api/deviations').glob('*.json'))
+for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
+    path = pathlib.Path(out); path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('# generated\\n' + ''.join(f'- {r}\\n' for r in rows))
+"""
+
+    def test_a_conflict_only_in_generated_pages_is_regenerated(self):
+        (self.work / 'tools').mkdir()
+        (self.work / 'tools' / 'api_differences.py').write_text(self.GENERATOR)
+        (self.work / 'api' / 'deviations').mkdir(parents=True)
+        for page in ('java-differences.md', 'api-mapping.md'):
+            (self.work / 'docs' / 'spring').mkdir(parents=True, exist_ok=True)
+            (self.work / 'docs' / 'spring' / page).write_text('# generated\n')
+        git(self.work, 'checkout', '-q', '--detach', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'generator')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        for role, dev in (('sol-a', 'D-A-1'), ('sol-b', 'D-B-1')):
+            self.lane(role, {f'api/deviations/{dev}.json': json.dumps({'id': dev}),
+                             'docs/spring/java-differences.md': f'# generated\n- {dev}\n',
+                             'docs/spring/api-mapping.md': f'# generated\n- {dev}\n'})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b'], []))
+        page = git(self.work, 'show', 'origin/main:docs/spring/java-differences.md')
+        self.assertEqual(page, '# generated\n- D-A-1\n- D-B-1')
+
+    def test_a_conflict_beyond_the_generated_pages_still_fails(self):
+        self.lane('sol-a', {'src/app.txt': 'a\n'})
+        self.lane('sol-b', {'src/app.txt': 'b\n'})
+        self.hold_slot()
+        self.assertEqual(self.train.run('runner')['failed'], ['sol-b'])
+
     def test_a_conflicting_submission_fails_alone(self):
         self.lane('sol-a', {'src/app.txt': 'a\n'})
         self.lane('sol-b', {'src/app.txt': 'b\n'})
@@ -344,6 +378,34 @@ class TrainTests(unittest.TestCase):
         result = self.stacked(self.FakeVerifier(self, 'desktop'), self.FakeVerifier(self, 'posidon', True)).run('runner')
         self.assertEqual((result['landed'], result['failed']), (['sol-a'], ['sol-b']))
         self.assertEqual(result['pending'], ['sol-c', 'sol-d', 'sol-e', 'sol-f'])
+
+    class SlowAwareVerifier(FakeVerifier):
+        """posidon's budget: red when the candidate has src/SLOW (an instruction regression acceptance can't see)."""
+
+        def __call__(self, commit, repo):
+            ok, log = super().__call__(commit, repo)
+            files = git(self.test.work, 'ls-tree', '-r', '--name-only', commit).split()
+            return (ok and 'src/SLOW' not in files), log
+
+    def test_a_budget_failure_rechecks_a_prefix_only_acceptance_verified(self):
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e', 'sol-f')):
+            self.lane(role, {'src/SLOW' if role == 'sol-b' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        desktop = self.FakeVerifier(self, 'desktop')
+        posidon = self.SlowAwareVerifier(self, 'posidon', budget=True)
+        result = self.stacked(desktop, posidon).run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a'], ['sol-b']))
+        self.assertEqual(result['pending'], ['sol-c', 'sol-d', 'sol-e', 'sol-f'])
+
+    def test_returned_lanes_do_not_block_the_scheduler(self):
+        self.store.queue('apps-landing', 'front', 'sol-x')  # returned by a train, not resubmitted yet
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.store.queue('apps-landing', 'leave', 'sol-a')
+        self.store.queue('apps-landing', 'join', 'sol-a')
+        self.assertTrue(merge_train.next_train(self.store, self.train.submissions()))
+        self.store.queue('apps-landing', 'join', 'hand-lander')
+        self.store.queue('apps-landing', 'leave', 'sol-a')
+        self.assertFalse(merge_train.next_train(self.store, self.train.submissions()))
 
     def test_an_unavailable_verifier_blames_nobody(self):
         self.lane('sol-a', {'src/a.txt': 'a'})

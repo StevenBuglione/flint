@@ -65,6 +65,10 @@ NOT_BUILD_PREFIXES = ('apps/flint/test/', 'apps/flint/src/flint_tool/api/', 'doc
 # Append-only logs every lane adds to: two lanes' entries at the end conflict textually but never in meaning, so the
 # train's own rebases keep both (git's built-in union driver). Lanes' own rebases are unaffected.
 UNION_FILES = ('docs/spring/performance-playbook.md', 'docs/spring/phase1/decisions.md')
+# Generated pages: a conflict confined to them is resolved by regenerating them (coordinator, 2026-11-26); the API gate
+# on the candidate then proves the result.
+GENERATED_FILES = ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md')
+REGENERATE = [sys.executable, 'tools/api_differences.py', '--write']
 
 
 def git(args, cwd, check=True):
@@ -155,6 +159,8 @@ echo "== native blocks ${SHIMS:-full build}"
 $H python3 tools/native_build.py --profile ci --target linux-x86_64-glibc --phase build $SHIMS --emit-dub || exit 4
 echo "$INPUTS" > .native/train-native-inputs
 echo "== flint"; $H python3 tools/install_toolchains.py --compiler flint || exit 4
+echo "== api gate"; $H python3 tools/gates.py --gate api > "$FLINT_CACHE.api.json" 2>&1 || { tail -40 "$FLINT_CACHE.api.json"; rm -f "$FLINT_CACHE.api.json"; exit 1; }
+rm -f "$FLINT_CACHE.api.json"
 echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ @DOD_FLAGS@ --json
 """
 POSIDON_SCRIPT = VERIFY_SCRIPT  # the name earlier tests and notes use
@@ -339,6 +345,8 @@ class Train:
             done = git(['-c', f'core.attributesFile={self.attributes()}', 'rebase', '-q', '--onto', tip, fork],
                        self.worktree, check=False)
             if done.returncode != 0:
+                done = self.regenerate_through(done)
+            if done.returncode != 0:
                 git(['rebase', '--abort'], self.worktree, check=False)
                 git(['checkout', '-q', '--detach', tip], self.worktree)
                 failed.append((submission, f'rebase onto the train failed (conflict):\n{done.stdout}{done.stderr}'))
@@ -363,6 +371,27 @@ class Train:
                 return False, '\n'.join(log)
         return True, '\n'.join(log)
 
+    def regenerate_through(self, done):
+        """Continue a stopped rebase while each stop conflicts only in generated pages: regenerate them, stage them,
+        continue. Returns the last git result (returncode 0 when the rebase completed)."""
+        for _ in range(50):
+            conflicted = git(['diff', '--name-only', '--diff-filter=U'], self.worktree, check=False).stdout.split()
+            if not conflicted or any(path not in GENERATED_FILES for path in conflicted):
+                return done
+            regenerated = subprocess.run(REGENERATE, cwd=self.worktree, capture_output=True, text=True)
+            if regenerated.returncode != 0:
+                return regenerated
+            if any('<<<<<<<' in (self.worktree / path).read_text() for path in GENERATED_FILES
+                   if (self.worktree / path).is_file()):
+                return done  # a conflict in a hand-written part of the page: a real one
+            git(['add', '--', *GENERATED_FILES], self.worktree, check=False)
+            self.store.event('train-regenerated', files=conflicted)
+            done = git(['-c', 'core.editor=true', '-c', f'core.attributesFile={self.attributes()}', 'rebase',
+                        '--continue'], self.worktree, check=False)
+            if done.returncode == 0:
+                return done
+        return done
+
     def attributes(self):
         path = self.log_dir / 'merge.attributes'
         text = ''.join(f'{name} merge=union\n' for name in UNION_FILES)
@@ -370,6 +399,11 @@ class Train:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text)
         return path
+
+    def budget_lanes(self, count):
+        """Whether candidate k of `count` is verified with flint budget (the verifier verify_all gives it)."""
+        lanes = self.verifiers[-count:] if self.verifiers else []
+        return [bool(getattr(v, 'budget', False)) for v in lanes] or [False] * count
 
     def verify_all(self, commits):
         """Verify candidate k on verifier k, concurrently; results in candidate order."""
@@ -419,6 +453,12 @@ class Train:
             ends = [min(len(applied), (k + 1) * max_train) for k in range(lanes) if k * max_train < len(applied)]
             results = self.verify_all([applied[end - 1][1] for end in ends])
             first = next((k for k, (ok, _) in enumerate(results) if ok is not True), None)
+            if first is not None and first > 0 and results[first][0] is False and self.budget_lanes(len(ends))[first] \
+                    and not all(self.budget_lanes(len(ends))[:first]):
+                # Red on the budget verifier, but the green candidates before it were checked without flint budget:
+                # that green is no budget baseline, so the whole prefix is bisected on the budget verifier.
+                self.store.event('train-budget-prefix', candidates=first)
+                ends, results, first = ends[first:], results[first:], 0
             if first is None:
                 landed, verified_tip = applied, applied[-1][1]
             else:
@@ -544,8 +584,12 @@ def next_train(store, submissions):
     if lease and store.lease_live(lease):
         return False
     queue, _, _ = store.queue_view(SLOT)
-    members = [m['agent'] for m in queue.get('members', [])]
-    return not members or members[0] in {s['agent'] for s in submissions}
+    submitters = {s['agent'] for s in submissions}
+    members = [m for m in queue.get('members', [])]
+    # Lanes the train returned ('retry') keep their place for when they resubmit, but don't block it meanwhile.
+    while members and members[0].get('retry') and members[0]['agent'] not in submitters:
+        members.pop(0)
+    return not members or members[0]['agent'] in submitters
 
 
 def serve(store, train, agent='merge-train', poll=15, once=False, log=print):

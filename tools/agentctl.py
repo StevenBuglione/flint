@@ -255,7 +255,8 @@ class Store:
             elif action == 'front':  # the merge train returns a failed submission's agent to the head
                 if agent in names:
                     members.pop(names.index(agent))
-                members.insert(0, {'agent': agent, 'joined': utc_now()})
+                # 'retry': returned by the merge train; it waits to resubmit and does not block the train meanwhile.
+                members.insert(0, {'agent': agent, 'joined': utc_now(), 'retry': True})
                 queue['head_since'] = utc_now()
                 self.event('queue-front', role=role, agent=agent)
             elif action == 'leave':
