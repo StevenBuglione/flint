@@ -21,12 +21,22 @@
       "status": "deferred"
     },
     "org/springframework/mock/web/MockHttpServletResponseTests.java": {
-      "d": "framework/framework-test/tests/mock_http_servlet_response_encoding_tests.d",
+      "d": [
+        "framework/framework-test/tests/mock_http_servlet_response_encoding_tests.d",
+        "framework/framework-test/tests/mock_http_servlet_response_output_tests.d"
+      ],
       "methods": {
         "ported": [
           "contentAsStringEncodingWithJson",
           "isoShouldBeDefault",
+          "outputStreamShouldFailWhenWriterCalled",
           "resetResponseShouldResetCharset",
+          "servletOutputStreamCommittedOnFlushBuffer",
+          "servletOutputStreamCommittedOnOutputStreamFlush",
+          "servletOutputStreamCommittedWhenBufferSizeExceeded",
+          "servletWriterCommittedOnWriterClose",
+          "servletWriterCommittedOnWriterFlush",
+          "servletWriterCommittedWhenBufferSizeExceeded",
           "setCharacterEncodingNull",
           "setCharacterEncodingThenContentType",
           "setContentTypeHeaderWithNullValueShouldRemoveHeader",
@@ -37,7 +47,8 @@
           "shouldSetDefault",
           "shouldSetEncodingWithComplexContentTypeSyntax",
           "shouldSetEncodingWithContentType",
-          "shouldSetUtf8EncodingForJson"
+          "shouldSetUtf8EncodingForJson",
+          "writerShouldFailWhenOutputStreamCalled"
         ],
         "skipped": {
           "addCookie": "Deferred response cookie and Set-Cookie header behavior.",
@@ -62,17 +73,10 @@
           "locationHeaderUpdatesGetRedirectedUrl": "Deferred redirect and sendError behavior.",
           "modifyStatusAfterSendError": "Deferred redirect and sendError behavior.",
           "modifyStatusMessageAfterSendError": "Deferred redirect and sendError behavior.",
-          "outputStreamShouldFailWhenWriterCalled": "Deferred response writer, output stream and commitment behavior.",
           "sendRedirect": "Deferred redirect and sendError behavior.",
-          "servletOutputStreamCommittedOnFlushBuffer": "Deferred response writer, output stream and commitment behavior.",
-          "servletOutputStreamCommittedOnOutputStreamFlush": "Deferred response writer, output stream and commitment behavior.",
-          "servletOutputStreamCommittedWhenBufferSizeExceeded": "Deferred response writer, output stream and commitment behavior.",
           "servletWriterAutoFlushedForChar": "Deferred response writer, output stream and commitment behavior.",
           "servletWriterAutoFlushedForCharArray": "Deferred response writer, output stream and commitment behavior.",
           "servletWriterAutoFlushedForString": "Deferred response writer, output stream and commitment behavior.",
-          "servletWriterCommittedOnWriterClose": "Deferred response writer, output stream and commitment behavior.",
-          "servletWriterCommittedOnWriterFlush": "Deferred response writer, output stream and commitment behavior.",
-          "servletWriterCommittedWhenBufferSizeExceeded": "Deferred response writer, output stream and commitment behavior.",
           "setCookieHeader": "Deferred response cookie and Set-Cookie header behavior.",
           "setCookieHeaderWithMaxAgeAndExpiresAttributes": "Deferred response cookie and Set-Cookie header behavior.",
           "setCookieHeaderWithZeroExpiresAttribute": "Deferred response cookie and Set-Cookie header behavior.",
@@ -83,8 +87,7 @@
           "shouldAddContentTypeHeader": "Deferred response header behavior.",
           "shouldAddMultipleContentLanguage": "Deferred locale and Content-Language header behavior.",
           "shouldSetContentType": "Deferred response header behavior.",
-          "shouldSetContentTypeHeader": "Deferred response header behavior.",
-          "writerShouldFailWhenOutputStreamCalled": "Deferred response writer, output stream and commitment behavior."
+          "shouldSetContentTypeHeader": "Deferred response header behavior."
         }
       },
       "status": "partial"

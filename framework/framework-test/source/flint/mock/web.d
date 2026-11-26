@@ -663,12 +663,14 @@ private final class BytesOutput : ServletOutputStream
 
     override void write(int b)
     {
-        response.content ~= cast(ubyte) b;
+        const ubyte[1] bytes = [cast(ubyte) b];
+        response.appendContent(bytes[]);
     }
 
     override void write(scope const(ubyte)[] b)
     {
-        response.content ~= b;
+        if (b.length != 0)
+            response.appendContent(b);
     }
 
     override void flush()
@@ -680,6 +682,7 @@ private final class BytesOutput : ServletOutputStream
 private final class ContentWriter : Writer
 {
     private MockHttpServletResponse response;
+    private bool closed;
 
     this(MockHttpServletResponse response) pure nothrow @nogc
     {
@@ -688,12 +691,19 @@ private final class ContentWriter : Writer
 
     override void write(scope const(char)[] text)
     {
-        response.content ~= cast(const(ubyte)[]) text;
+        if (!closed)
+            response.appendContent(cast(const(ubyte)[]) text);
     }
 
     override void flush()
     {
         response.setCommitted(true);
+    }
+
+    override void close()
+    {
+        closed = true;
+        flush();
     }
 }
 
@@ -711,8 +721,9 @@ class MockHttpServletResponse : HttpServletResponse
     private string defaultCharacterEncoding = defaultEncoding;
     private string characterEncoding = defaultEncoding;
     private bool characterEncodingSet;
-    private long contentLength = -1;
-    package ubyte[] content;
+    private long contentLength;
+    private ubyte[] content;
+    private int bufferSize = 4096;
     private bool committed;
     private Cookie[] cookies;
     private string redirectedUrl;
@@ -776,6 +787,14 @@ class MockHttpServletResponse : HttpServletResponse
         this.committed = committed;
     }
 
+    pragma(inline, false) private void appendContent(scope const(ubyte)[] bytes)
+    {
+        content ~= bytes;
+        const limit = getBufferSize();
+        if (limit > 0 && content.length > cast(size_t) limit)
+            setCommitted(true);
+    }
+
     // ----- ServletResponse
 
     /// Sets the fallback encoding without marking a charset as explicitly set.
@@ -803,15 +822,19 @@ class MockHttpServletResponse : HttpServletResponse
         return contentType;
     }
 
-    ServletOutputStream getOutputStream()
+    pragma(inline, false) ServletOutputStream getOutputStream()
     {
+        if (writer !is null)
+            rejectResponseState("getWriter() has already been called");
         if (outputStream is null)
             outputStream = new BytesOutput(this);
         return outputStream;
     }
 
-    PrintWriter getWriter()
+    pragma(inline, false) PrintWriter getWriter()
     {
+        if (outputStream !is null)
+            rejectResponseState("getOutputStream() has already been called");
         if (writer is null)
             writer = new PrintWriter(new ContentWriter(this));
         return writer;
@@ -864,7 +887,7 @@ class MockHttpServletResponse : HttpServletResponse
         setHeaderValue(HttpHeaders.CONTENT_LENGTH, decimal(len), false);
     }
 
-    /// The content length set, or `-1`.
+    /// The content length set, or zero.
     long getContentLengthLong() const pure nothrow @nogc
     {
         return contentLength;
@@ -933,22 +956,23 @@ class MockHttpServletResponse : HttpServletResponse
 
     void setBufferSize(int size)
     {
+        bufferSize = size;
     }
 
     int getBufferSize()
     {
-        return 4096;
+        return bufferSize;
     }
 
     void flushBuffer()
     {
-        committed = true;
+        setCommitted(true);
     }
 
     void resetBuffer()
     {
-        if (committed)
-            throw new IllegalStateException("Cannot reset buffer - response is already committed");
+        if (isCommitted())
+            rejectResponseState("Cannot reset buffer - response is already committed");
         content = null;
     }
 
@@ -976,11 +1000,16 @@ class MockHttpServletResponse : HttpServletResponse
         resetBuffer();
         characterEncoding = defaultCharacterEncoding;
         characterEncodingSet = false;
-        contentLength = -1;
+        contentLength = 0;
         contentType = null;
+        localeSet = false;
+        cookies = null;
         headers = null;
         status = HttpServletResponse.SC_OK;
         errorMessage = null;
+        redirectedUrl = null;
+        writer = null;
+        outputStream = null;
     }
 
     // ----- HttpServletResponse
@@ -1009,7 +1038,7 @@ class MockHttpServletResponse : HttpServletResponse
     void sendError(int sc, string msg)
     {
         if (committed)
-            throw new IllegalStateException("Cannot set error status - response is already committed");
+            rejectResponseState("Cannot set error status - response is already committed");
         status = sc;
         errorMessage = msg;
         committed = true;
@@ -1023,7 +1052,7 @@ class MockHttpServletResponse : HttpServletResponse
     void sendRedirect(string location)
     {
         if (committed)
-            throw new IllegalStateException("Cannot send redirect - response is already committed");
+            rejectResponseState("Cannot send redirect - response is already committed");
         setHeader(HttpHeaders.LOCATION, location);
         setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
         redirectedUrl = location;
@@ -1114,6 +1143,11 @@ class MockHttpServletResponse : HttpServletResponse
         else
             headers ~= Pair(name, [value]);
     }
+}
+
+pragma(inline, false) private noreturn rejectResponseState(string message)
+{
+    throw new IllegalStateException(message);
 }
 
 /// A signed Java decimal header value within the caller's integer range.
