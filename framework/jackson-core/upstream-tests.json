@@ -517,8 +517,31 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/jsonptr/JsonPointerTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/json_pointer_test.d",
+      "methods": {
+        "ported": [
+          "emptyPointer",
+          "iZeroIndex",
+          "pointerWithEmptyPropertyName",
+          "simpleTail"
+        ],
+        "skipped": {
+          "append": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "appendIndex": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "appendProperty": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "appendPropertyEmpty": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "appendWithFinalSlash": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "equality": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "last": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "longNumbers": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "properties": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "quotedPath": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "simplePath": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "simplePathLonger": "The additional pointer operations and standalone assertions await the next core pointer slice.",
+          "wonkyNumber173": "The additional pointer operations and standalone assertions await the next core pointer slice."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/jsonptr/PointerFromContextTest.java": {
       "phase": "2",
@@ -621,8 +644,19 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/read/NumberOverflowTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/upstream_test.d",
+      "methods": {
+        "ported": [
+          "simpleLongOverflow"
+        ],
+        "skipped": {
+          "maliciousBigIntToDouble": "The additional numeric bound assertions await the streaming parity slice.",
+          "maliciousBigIntToFloat": "The additional numeric bound assertions await the streaming parity slice.",
+          "maliciousIntOverflow": "The additional numeric bound assertions await the streaming parity slice.",
+          "maliciousLongOverflow": "The additional numeric bound assertions await the streaming parity slice."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/read/NumberParsing1397Test.java": {
       "phase": "2",
@@ -637,8 +671,50 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/read/NumberParsingTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/upstream_test.d",
+      "methods": {
+        "ported": [
+          "intRange",
+          "longRange",
+          "simpleDouble",
+          "simpleInt",
+          "simpleLong"
+        ],
+        "skipped": {
+          "bigDecimalRange": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "bigIntegerWithENotation": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "bigNumbers": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "biggerThanFloatHandling": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "databind4694": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "floatBoundary146Bytes": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "floatBoundary146Chars": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "intOverflow": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "intParsing": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "intParsingWithStrings": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "intWithENotation": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "intsWith19Chars": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "invalidBooleanAccess": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "invalidIntAccess": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "invalidLongAccess": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "invalidNumber": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "largeBigIntegerWithENotation": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "longBoundsChecks": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "longNumbers": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "longNumbers2": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "longOverflow": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "longParsing": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "longParsingWithStrings": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "longWithENotation": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "longerFloatingPoint": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "negativeMaxNumberLength": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "numbers": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "parsingOfLongerSequences": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "parsingOfLongerSequencesWithNonNumeric": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "simpleBoolean": "The additional numeric conversion or input-mode assertions await the streaming parity slice.",
+          "veryLongIntRootValue": "The additional numeric conversion or input-mode assertions await the streaming parity slice."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/read/ParserClosingTest.java": {
       "phase": "2",
@@ -665,8 +741,23 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/read/ParserScopeMatchingTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/upstream_test.d",
+      "methods": {
+        "ported": [
+          "eofInName",
+          "mismatchArrayToObject",
+          "mismatchObjectToArray",
+          "misssingColon",
+          "unclosedArray",
+          "unclosedObject",
+          "weirdToken"
+        ],
+        "skipped": {
+          "extraEndArray": "The closing delimiter case awaits the remaining parser scope tests.",
+          "extraEndObject": "The closing delimiter case awaits the remaining parser scope tests."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/read/ParserSequenceTest.java": {
       "phase": "2",
@@ -893,8 +984,24 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/write/GeneratorBasicTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/upstream_test.d",
+      "methods": {
+        "ported": [
+          "fieldValueWrites",
+          "rootIntsWrite"
+        ],
+        "skipped": {
+          "booleanWrite": "The additional generator operation or output-mode assertions await the streaming parity slice.",
+          "getOutputBufferd": "The additional generator operation or output-mode assertions await the streaming parity slice.",
+          "getOutputTarget": "The additional generator operation or output-mode assertions await the streaming parity slice.",
+          "intValueWrite": "The additional generator operation or output-mode assertions await the streaming parity slice.",
+          "longValueWrite": "The additional generator operation or output-mode assertions await the streaming parity slice.",
+          "nullWrite": "The additional generator operation or output-mode assertions await the streaming parity slice.",
+          "outputContext": "The additional generator operation or output-mode assertions await the streaming parity slice.",
+          "stringWrite": "The additional generator operation or output-mode assertions await the streaming parity slice."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/write/GeneratorCloseTest.java": {
       "phase": "2",
@@ -937,8 +1044,19 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/write/UTF8GeneratorTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/write_constraints_test.d",
+      "methods": {
+        "ported": [
+          "nestingDepthWithSmallLimit",
+          "nestingDepthWithSmallLimitNestedObject"
+        ],
+        "skipped": {
+          "filteringWithEscapedChars": "The additional UTF-8 generator assertions await the streaming parity slice.",
+          "surrogatesWithRaw": "The additional UTF-8 generator assertions await the streaming parity slice.",
+          "utf8Issue462": "The additional UTF-8 generator assertions await the streaming parity slice."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/write/WriteTypeIdTest.java": {
       "phase": "2",
