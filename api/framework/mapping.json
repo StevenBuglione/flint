@@ -6303,6 +6303,8 @@
 "java.text.MessageFormat#toPattern()":{"status":"excluded","category":"deferred","phase":"2","reason":"Returns the input pattern text instead of serializing the parsed pattern in Java canonical form."},
 "java.text.NumberFormat#format(double)":{"status":"excluded","category":"deferred","phase":"2","reason":"Loses the sign of negative zero and of negative values that round to zero. Floating-point scaling misrounds some half-even boundaries, and Double.MAX_VALUE loses its full width."},
 "java.text.NumberFormat#format(long)":{"status":"excluded","category":"deferred","phase":"2","reason":"Uses ASCII digits for Arabic (Egypt) and for an explicit Devanagari numbering system. Java uses localized digits and the Arabic thousands separator for Arabic (Egypt)."},
+"java.text.NumberFormat#getInstance()":{"status":"excluded","category":"deferred","phase":"2","reason":"Uses the general environment-derived locale. Java uses the independent Locale.Category.FORMAT default for decimal formatting."},
+"java.text.NumberFormat#getIntegerInstance()":{"status":"excluded","category":"deferred","phase":"2","reason":"Uses the general environment-derived locale. Java uses the independent Locale.Category.FORMAT default for integer formatting."},
 "java.text.ParseException":{"d":"flint.java.text.ParseException","status":"ported"},
 "java.text.ParseException#<init>(String,int)":{"d":"flint.java.text.ParseException.this","status":"ported"},
 "java.text.ParseException#getErrorOffset()":{"d":"flint.java.text.ParseException.getErrorOffset","status":"ported"},
