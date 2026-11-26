@@ -361,6 +361,35 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-concurrent": {
+   "directory": "framework/java-concurrent",
+   "module": "flint.java.util.concurrent.callable",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [],
+   "bench": {
+    "fixture": "framework/java-concurrent/bench",
+    "baseline": "framework/java-concurrent/bench/baseline",
+    "edit_source": "framework/java-concurrent/source/flint/java/util/concurrent/callable.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 5600,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 50
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-math": {
    "directory": "framework/java-math",
    "module": "flint.java.math",

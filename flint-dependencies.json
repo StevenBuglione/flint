@@ -315,6 +315,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-concurrent": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-math": {
       "repo": "framework",
       "version": "monorepo"
