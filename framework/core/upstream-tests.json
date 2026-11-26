@@ -357,8 +357,52 @@
       "status": "deferred"
     },
     "org/springframework/core/io/ResourceTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/core/tests/core_io_input_stream_resource_test.d",
+      "methods": {
+        "ported": [
+          "InputStreamResourceTests.hasContent",
+          "InputStreamResourceTests.hasDescription",
+          "InputStreamResourceTests.isOpen"
+        ],
+        "skipped": {
+          "AbstractResourceTests.hasContentLength": "The abstract resource compatibility matrix is outside this slice.",
+          "AbstractResourceTests.missingResourceIsNotReadable": "The abstract resource compatibility matrix is outside this slice.",
+          "ByteArrayResourceTests.hasContent": "The existing ByteArrayResource tests will be reconciled in the byte-array resource slice.",
+          "ByteArrayResourceTests.hasDescription": "The existing ByteArrayResource tests will be reconciled in the byte-array resource slice.",
+          "ByteArrayResourceTests.isNotOpen": "The existing ByteArrayResource tests will be reconciled in the byte-array resource slice.",
+          "FileSystemResourceTests.getFilePath": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.isReadableChecksCanReadAfterExists": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.isReadableChecksExistsFirst": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.readableChannelProvidesContent": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.relativeResourcesAreEqual": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.sameResourceFromDotPathIsEqual": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.sameResourceFromFileIsEqual": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.sameResourceFromFilePathIsEqual": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.sameResourceIsEqual": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.urlAndUriAreNormalizedWhenCreatedFromFile": "The file resource matrix is outside this slice.",
+          "FileSystemResourceTests.urlAndUriAreNormalizedWhenCreatedFromPath": "The file resource matrix is outside this slice.",
+          "UrlResourceTests.canCustomizeHttpUrlConnectionForExists": "The URL resource API is outside this slice.",
+          "UrlResourceTests.canCustomizeHttpUrlConnectionForExistsFallback": "The URL resource API is outside this slice.",
+          "UrlResourceTests.canCustomizeHttpUrlConnectionForRead": "The URL resource API is outside this slice.",
+          "UrlResourceTests.factoryMethodsProduceEqualResources": "The URL resource API is outside this slice.",
+          "UrlResourceTests.filenameContainingHashTagIsExtractedFromFilePathUnencoded": "The URL resource API is outside this slice.",
+          "UrlResourceTests.filenameIsExtractedFromFilePath": "The URL resource API is outside this slice.",
+          "UrlResourceTests.filenameIsExtractedFromURL": "The URL resource API is outside this slice.",
+          "UrlResourceTests.missingRemoteResourceDoesNotExist": "The URL resource API is outside this slice.",
+          "UrlResourceTests.relativeResourcesAreEqual": "The URL resource API is outside this slice.",
+          "UrlResourceTests.remoteResourceExists": "The URL resource API is outside this slice.",
+          "UrlResourceTests.remoteResourceExistsFallback": "The URL resource API is outside this slice.",
+          "UrlResourceTests.sameResourceWithRelativePathIsEqual": "The URL resource API is outside this slice.",
+          "UrlResourceTests.unusualRelativeResourcesAreEqual": "The URL resource API is outside this slice.",
+          "UrlResourceTests.useUserInfoToSetBasicAuth": "The URL resource API is outside this slice.",
+          "resourceCreateRelative": "The parameterized file, URL and NIO resource matrix is outside this slice.",
+          "resourceCreateRelativeUnknown": "The parameterized file, URL and NIO resource matrix is outside this slice.",
+          "resourceCreateRelativeWithDotPath": "The parameterized file, URL and NIO resource matrix is outside this slice.",
+          "resourceCreateRelativeWithFolder": "The parameterized file, URL and NIO resource matrix is outside this slice.",
+          "resourceIsValid": "The parameterized file, URL and NIO resource matrix is outside this slice."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/core/io/buffer/DataBufferTests.java": {
       "phase": "2",

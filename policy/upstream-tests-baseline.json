@@ -1444,7 +1444,6 @@
       "org/springframework/core/io/ModuleResourceTests.java",
       "org/springframework/core/io/PathResourceTests.java",
       "org/springframework/core/io/ResourceEditorTests.java",
-      "org/springframework/core/io/ResourceTests.java",
       "org/springframework/core/io/buffer/DataBufferTests.java",
       "org/springframework/core/io/buffer/DataBufferUtilsTests.java",
       "org/springframework/core/io/buffer/DefaultDataBufferTests.java",

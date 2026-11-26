@@ -190,6 +190,8 @@ The largest costs are per-request allocation and the collector pauses it causes.
 The MockMvc header and content matcher port reuses Jackson for comparison, `HttpHeaders` for date parsing, and Java `Long` for the numeric header assertion. On venus the unchanged `framework-test` probe moved from 1,748,022 to 1,748,142 incremental loadable bytes against `cbf1e27b`. DMD library-plus-probe templates moved from 9,905 to 9,973, within the 12,450 cap. The S-9 ratchet covers the 120-byte growth of this API slice.
 ResourceRegion validates its coordinates without opening a stream. Its independent Spring Core module follows S-1. On venus, the pinned DMD and LDC probe (`tools/measure_builds.py --framework-sizes --framework core`) measured 8,708 loadable bytes on both d89572cf and its ResourceRegion candidate, with DMD templates moving from 6,387 to 6,389 against the 8,550 cap.
 
+InputStreamResource reuses Java's stream and Object operations. On the same Core probe, 0016ed2e to a8182248 kept 8,708 loadable bytes and moved DMD templates from 6,389 to 6,407.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

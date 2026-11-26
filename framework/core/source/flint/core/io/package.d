@@ -39,8 +39,9 @@ $(UL
 module flint.core.io;
 
 import core.atomic : atomicLoad, atomicStore;
+import flint.engine.aot.objects : objectEquals, objectToHash;
 import flint.java.io : ByteArrayInputStream, File, FileInputStream, FileNotFoundException, IOException, InputStream;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.util : Assert, StringUtils;
 
 @safe:
@@ -660,5 +661,108 @@ class DefaultResourceLoader : ResourceLoader
     protected Resource getResourceByPath(string path)
     {
         return new ClassPathResource(path);
+    }
+}
+
+// Ported from spring-framework v7.1.0, spring-core/src/main/java/org/springframework/core/io/InputStreamResource.java
+// Modified by the Flint authors.
+
+/// A resource that supplies an existing or on-demand stream once.
+/// Calling the inherited contentLength consumes that stream.
+class InputStreamResource : AbstractResource
+{
+    private Object source;
+    private InputStream delegate() @safe openStream;
+    private string description;
+    private bool consumed;
+
+    /// Wraps an existing stream for one read.
+    this(InputStream inputStream)
+    {
+        this(inputStream, "resource loaded through InputStream");
+    }
+
+    /// Wraps an existing stream and uses the supplied description.
+    this(InputStream inputStream, string description)
+    {
+        Assert.isTrue(inputStream !is null, "InputStream must not be null");
+        source = inputStream;
+        this.description = description;
+    }
+
+    /// Wraps a source to obtain the stream on demand.
+    this(InputStreamSource inputStreamSource)
+    {
+        this(inputStreamSource, "resource loaded from InputStreamSource");
+    }
+
+    /// Wraps a source to obtain the stream on demand and uses the supplied description.
+    this(InputStreamSource inputStreamSource, string description)
+    {
+        Assert.isTrue(inputStreamSource !is null, "InputStreamSource must not be null");
+        source = cast(Object) inputStreamSource;
+        openStream = &inputStreamSource.getInputStream;
+        this.description = description;
+    }
+
+    /// Wraps a delegate to obtain the stream on demand (R9).
+    this(InputStream delegate() @safe inputStreamSource)
+    {
+        this(inputStreamSource, "resource loaded from InputStreamSource");
+    }
+
+    /// Wraps a delegate to obtain the stream on demand and uses the supplied description (R9).
+    this(InputStream delegate() @safe inputStreamSource, string description)
+    {
+        Assert.isTrue(inputStreamSource !is null, "InputStreamSource must not be null");
+        openStream = inputStreamSource;
+        this.description = description;
+    }
+
+    /// Always true for a stream resource.
+    override bool exists()
+    {
+        return true;
+    }
+
+    /// Indicates that this resource supports a single read.
+    override bool isOpen()
+    {
+        return true;
+    }
+
+    /// Returns the stream once. Throws IOException on a source failure and IllegalStateException on further calls.
+    override InputStream getInputStream()
+    {
+        if (consumed)
+            throw new IllegalStateException("InputStream has already been read (possibly for early content length "
+                    ~ "determination) - do not use InputStreamResource if a stream needs to be read multiple times");
+        consumed = true;
+        return openStream is null ? cast(InputStream) source : openStream();
+    }
+
+    /// Describes the resource.
+    override string getDescription()
+    {
+        return "InputStream resource [" ~ description ~ "]";
+    }
+
+    /// Compares the underlying stream or source.
+    override bool opEquals(Object other)
+    {
+        if (other is this)
+            return true;
+        auto that = cast(InputStreamResource) other;
+        if (that is null)
+            return false;
+        if (source !is null)
+            return objectEquals(source, that.source);
+        return that.source is null && openStream == that.openStream;
+    }
+
+    /// Hashes the underlying stream or source.
+    override size_t toHash() nothrow
+    {
+        return source is null ? hashOf(openStream) : objectToHash(source);
     }
 }
