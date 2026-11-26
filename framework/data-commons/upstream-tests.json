@@ -285,8 +285,31 @@
       "status": "ported"
     },
     "org/springframework/data/domain/RangeUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/range_tests.d",
+      "methods": {
+        "ported": [
+          "createsClosedRange",
+          "createsExclusiveBoundaryCorrectly",
+          "createsInclusiveBoundaryCorrectly",
+          "createsLeftOpenRange",
+          "createsLeftUnboundedRange",
+          "createsOpenRange",
+          "createsRangeFromBoundariesCorrectly",
+          "createsRightOpenRange",
+          "createsRightUnboundedRange",
+          "createsSingleValueRange",
+          "createsUnboundedRange",
+          "excludesLowerBoundIfConfigured",
+          "excludesUpperBoundIfConfigured",
+          "handlesOpenLowerBoundCorrectly",
+          "handlesOpenUpperBoundCorrectly",
+          "mapsBoundaryValues",
+          "rejectsNullReferenceValuesForContains",
+          "shouldBuildRange",
+          "shouldExclusiveBuildRangeLowerFirst"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/ScrollPositionUnitTests.java": {
       "d": "framework/data-commons/tests/scroll_position_tests.d",
