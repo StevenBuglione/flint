@@ -17,7 +17,7 @@ parsed date. 'Y' parses as the calendar year.
 module flint.java.text.simpledateformat;
 
 import flint.engine.aot.text : decodeUtf8;
-import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, NullPointerException;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, NullPointerException, javaToString;
 import flint.java.util : Locale;
 import flint.java.util.calendar : Calendar, GregorianCalendar;
 import flint.java.util.date : Date;
@@ -31,10 +31,10 @@ class ParseException : Exception
 {
     private int errorOffset;
 
-    /// `message`, at `errorOffset` in the text.
+    /// `message`, at `errorOffset` in the text. Empty detail is absent (R26).
     this(string message, int errorOffset, string file = __FILE__, size_t line = __LINE__) pure nothrow @nogc
     {
-        super(message, file, line);
+        super(message.length == 0 ? null : message, file, line);
         this.errorOffset = errorOffset;
     }
 
@@ -48,6 +48,12 @@ class ParseException : Exception
     string getMessage() const pure nothrow @nogc
     {
         return msg;
+    }
+
+    /// The dynamic exception class name and its detail, if present.
+    override string toString() const
+    {
+        return javaToString(this);
     }
 }
 
