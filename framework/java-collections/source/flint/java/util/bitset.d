@@ -249,7 +249,10 @@ class BitSet
     /// Clears the bits that are also set in the supplied mask.
     void andNot(BitSet set) pure
     {
-        applyMask(set, ulong.max);
+        if (this is set)
+            clearTail(0);
+        else
+            applyMask(set, ulong.max);
     }
 
     pragma(inline, false) private void applyMask(scope BitSet set, ulong invert) pure
