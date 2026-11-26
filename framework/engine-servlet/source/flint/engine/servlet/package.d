@@ -126,12 +126,12 @@ alias FastOffer = FastOutcome function(ServletEngine engine, FastDispatch dispat
 /// affinity mask), at most the engine's 16.
 private uint reactorThreads(uint cores) nothrow @nogc
 {
-    import std.parallelism : totalCPUs;
+    import flint.engine.web : availableCores;
 
     enum engineLimit = 16; // flint.engine.web's ceiling on reactor workers
     if (cores != 0)
         return cores;
-    const count = totalCPUs;
+    const count = availableCores();
     return count == 0 ? 1 : count > engineLimit ? engineLimit : count;
 }
 

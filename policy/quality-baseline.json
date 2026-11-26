@@ -82,7 +82,6 @@
         "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 2
       },
       "framework/engine-servlet/source/flint/engine/servlet/package.d": {
-        "dfmt: formatter difference": 1,
         "dscanner.suspicious.unmodified: Variable generation is never modified and could have been declared const or immutable.": 2
       },
       "framework/engine-servlet/source/flint/engine/servlet/request.d": {

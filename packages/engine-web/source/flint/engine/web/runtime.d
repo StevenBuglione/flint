@@ -121,6 +121,15 @@ private struct Connection
 
 private enum uint noQueued = uint.max;
 
+/// The CPUs this process may run on (on Linux and Windows, its affinity mask), at least 1: what `ServerOptions.cores`
+/// should be to serve on every one, up to the engine's 16.
+uint availableCores() nothrow @nogc
+{
+    import flint.engine.web.sys.cpus : availableCpuCount;
+
+    return availableCpuCount();
+}
+
 /// Handler fibers per worker for `maxHandlers` across `cores` workers (`ServerOptions.maxHandlers`), never more
 /// than the worker's request slots; zero keeps one per slot up to 1,088.
 package(flint.engine.web) uint handlerFibers(uint maxHandlers, uint cores, uint requestSlots) pure nothrow @nogc
