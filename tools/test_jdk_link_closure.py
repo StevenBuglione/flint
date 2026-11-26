@@ -534,7 +534,7 @@ Discarded input sections
                     'flint.java.sample': {'control': 'framework/java/closure-controls/minimal.d',
                                           'incremental_linked_bytes': 0, 'template_instances': 100}}))
                 output = io.StringIO()
-                with (patch.object(sys, 'argv', ['jdk_link_closure.py', '--package', 'java', '--enforce-leaf-budgets']),
+                with (patch.object(sys, 'argv', ['jdk_link_closure.py', '--package', 'java']),
                       patch.object(closure, 'baseline_at', return_value=set()),
                       patch.object(closure, 'baseline_growth', return_value=[]),
                       contextlib.redirect_stdout(output)):
@@ -544,15 +544,6 @@ Discarded input sections
                 self.assertEqual(budget['control'], 'framework/java/closure-controls/minimal.d')
                 self.assertEqual(len(result['problems']), 2)
                 self.assertEqual(result['budget_problems'], result['problems'])
-                output = io.StringIO()
-                with (patch.object(sys, 'argv', ['jdk_link_closure.py', '--package', 'java']),
-                      patch.object(closure, 'baseline_at', return_value=set()),
-                      patch.object(closure, 'baseline_growth', return_value=[]),
-                      contextlib.redirect_stdout(output)):
-                    self.assertEqual(closure.main(), 0)
-                reported = json.loads(output.getvalue())
-                self.assertEqual(reported['budget_problems'], result['budget_problems'])
-                self.assertEqual(reported['problems'], [])
                 for profile, actual in budget['profiles'].items():
                     self.assertGreater(actual['incremental_linked_bytes'], 0)
                     self.assertTrue(any(profile in problem for problem in result['problems']))

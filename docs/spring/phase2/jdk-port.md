@@ -112,10 +112,8 @@ repository-relative D control source in `control`. It counts DMD templates
 from one invocation on the leaf source and its exact probe. Existing caps
 that use two invocations specify `"template_compile": "separate"`.
 The DMD invocation uses the native provider versions resolved by DUB.
-The JSON report includes all observations and any overruns.
-Use `--enforce-leaf-budgets` with the standalone audit to make overruns fail.
-The definition-of-done step reports overruns while their historical
-measurements are reconciled.
+The JSON report includes all observations and any overruns. An overrun
+fails the standalone audit and the definition-of-done link-closure step.
 
 Run `python3 tools/gates.py --module framework/java --definition-of-done --step link-closure` on the Linux ELF
 runner. The audit uses `dub`, `dmd`, `ldc2`, `readelf` and `nm`. For investigation, run

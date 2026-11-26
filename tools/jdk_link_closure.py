@@ -897,8 +897,8 @@ def main():
     parser.add_argument('--package', required=True, help='DUB subpackage name, e.g. java')
     parser.add_argument('--evidence', type=Path, help='keep linker maps and build logs in this directory')
     parser.add_argument('--release', action='store_true', help='fail on all retained violations')
-    parser.add_argument('--enforce-leaf-budgets', action='store_true',
-                        help='fail on leaf budget overruns while they are report-only by default')
+    # Preserve callers using the flag from the report-only rollout.
+    parser.add_argument('--enforce-leaf-budgets', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     try:
         budgets = {}
@@ -908,8 +908,7 @@ def main():
         problems = baseline_growth(ROOT, baseline)
         problems += check_violations(link_violations(args.package, report), current, args.release)
         budget_problems = leaf_budget_violations(budgets)
-        if args.enforce_leaf_budgets:
-            problems += budget_problems
+        problems += budget_problems
         for leaf, probes in report.items():
             for probe, profiles in probes.items():
                 for profile, result in profiles.items():
