@@ -35,6 +35,8 @@
 "org.springframework.ai.chat.memory.repository.neo4j.**":{"status":"excluded","category":"deferred","phase":"3"},
 "org.springframework.ai.chat.memory.repository.redis.**":{"status":"excluded","category":"deferred","phase":"3"},
 "org.springframework.ai.chat.messages.**":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.ai.chat.messages.Message":{"d":"flint.ai.chat.messages.Message","status":"ported"},
+"org.springframework.ai.chat.messages.Message#getMessageType()":{"d":"flint.ai.chat.messages.Message.getMessageType","status":"ported"},
 "org.springframework.ai.chat.messages.MessageType":{"d":"flint.ai.chat.messages.MessageType","rules":["R15"],"status":"adapted"},
 "org.springframework.ai.chat.messages.MessageType#ASSISTANT":{"d":"flint.ai.chat.messages.MessageType.ASSISTANT","rules":["R15"],"status":"adapted"},
 "org.springframework.ai.chat.messages.MessageType#SYSTEM":{"d":"flint.ai.chat.messages.MessageType.SYSTEM","rules":["R15"],"status":"adapted"},

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/MessageType.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/{Message,MessageType}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages;
+
+import flint.ai.content : Content;
 
 @safe:
 
@@ -85,4 +87,11 @@ struct MessageType
     {
         return name();
     }
+}
+
+/// A message with text, metadata and a role in a model conversation.
+interface Message : Content
+{
+    /// Returns the role of this message.
+    MessageType getMessageType();
 }

@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 195 | 323 | 0 | 15,278 |
+| ai | spring-ai@v2.1.0 | 197 | 323 | 0 | 15,276 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,500 | 1,393 | 4,849 | 30,092 |
@@ -8441,7 +8441,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.memory.repository.mongo | 0 | 20 |
 | org.springframework.ai.chat.memory.repository.neo4j | 0 | 63 |
 | org.springframework.ai.chat.memory.repository.redis | 0 | 65 |
-| org.springframework.ai.chat.messages | 112 | 0 |
+| org.springframework.ai.chat.messages | 110 | 0 |
 | org.springframework.ai.chat.messages.part | 43 | 0 |
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |

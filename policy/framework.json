@@ -1355,6 +1355,7 @@
    "licence": "Apache-2.0",
    "upstream": "spring-ai@v2.1.0",
    "dependencies": [
+    "ai-commons",
     "core",
     "engine-aot",
     "java"
