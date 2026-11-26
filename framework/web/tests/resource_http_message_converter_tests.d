@@ -257,9 +257,9 @@ unittest
     auto resource = new ResourceHttpMessageConverter().read(typeNameOf!Resource, input).get!Resource;
     assert(resource.getFilename() == "café.png");
 
-    input = imageMessage("attachment; filename*=UTF-8''%F0%9F%8D%B5%FF%EF%BF%BD.png");
+    input = imageMessage("attachment; filename*=UTF-8''%F0%9F%8D%B5%EF%BF%BD.png%FF");
     resource = new ResourceHttpMessageConverter().read(typeNameOf!Resource, input).get!Resource;
-    assert(resource.getFilename() == "🍵\uFFFD\uFFFD.png");
+    assert(resource.getFilename() == "🍵\uFFFD.png\uFFFD");
 
     input = imageMessage("attachment; filename*=ISO-8859-1''caf%E9.png");
     resource = new ResourceHttpMessageConverter().read(typeNameOf!Resource, input).get!Resource;

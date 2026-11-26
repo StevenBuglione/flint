@@ -714,6 +714,8 @@ request wrapper is constructed. Both apps' request-allocation gates cover this c
 
 `ServletWebRequest` scans conditional entity tags without constructing an `ArrayList!ETag`. The public list parser shares the scanner and still returns tags in wire order. On Venus, 128 nonmatching checks in a warmed GET request dropped from 22,528 GC bytes to zero in the DMD witness. LDC also allocated zero bytes with the scanner. The matched S-77 Web stack's stock MVC probe dropped from 1,630,306 to 1,600,142 linked bytes and Framework Test from 1,800,866 to 1,770,710. No template count changed in these two modules. The LDC MVC link map no longer contains the 40 `ArrayList!ETag` symbols retained by the original probe.
 
+Resource filename decoding uses Flint's UTF-8 decoder and encoder. It copies valid UTF-8 sequences and preserves replacement characters for malformed input. With the matched S-77 dependency closure, dropping `std.utf.encode` removes the `utf.o` to `curl.o` archive edge. The stock LDC O3 Web probe goes from 529,241 to 70,644 linked bytes, against 70,388 bytes before the Web batch. The system library dependencies are identical across those three probes.
+
 The final `ResourceHttpRequestHandler.setLocations` installs the classpath serving
 implementation through a private interface. The stock empty handler freezes its
 configuration during the 404 proof. Method and path hooks remain virtual. The matched
