@@ -5,5 +5,42 @@
   "upstream_modules": [
     "spring-ai-commons"
   ],
-  "classes": {}
+  "classes": {
+    "org/springframework/ai/observation/conventions/AiOperationTypeTests.java": {
+      "d": "ai/ai-commons/tests/ai_operation_type_tests.d",
+      "methods": {
+        "ported": [
+          "enumValuesShouldBeSortedAlphabetically"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/ai/observation/conventions/AiProviderTests.java": {
+      "d": "ai/ai-commons/tests/ai_provider_tests.d",
+      "methods": {
+        "ported": [
+          "enumValuesShouldBeSortedAlphabetically"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/ai/observation/conventions/SpringAiKindTests.java": {
+      "d": "ai/ai-commons/tests/flint_ai_kind_tests.d",
+      "methods": {
+        "ported": [
+          "enumValuesShouldBeSortedAlphabetically"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/ai/observation/conventions/VectorStoreProviderTests.java": {
+      "d": "ai/ai-commons/tests/vector_store_provider_tests.d",
+      "methods": {
+        "ported": [
+          "enumValuesShouldBeSortedAlphabetically"
+        ]
+      },
+      "status": "ported"
+    }
+  }
 }
