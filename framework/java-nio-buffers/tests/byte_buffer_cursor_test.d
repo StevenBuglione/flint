@@ -21,7 +21,7 @@ private void rejectsMessage(T)(scope void delegate() @safe attempt, string expec
         attempt();
     catch (T exception)
     {
-        assert(exception.getMessage() == expected);
+        assert(expected is null ? exception.getMessage() is null : exception.getMessage() == expected);
         return;
     }
     assert(false, "Expected Java exception");
@@ -96,7 +96,8 @@ unittest
     assert(bytes.put(cast(byte)-2) is bytes);
     assertThrown!BufferOverflowException(bytes.put(cast(byte) 10));
     assert(bytes.position() == 1 && bytes.get(0) == -2);
-    rejectsMessage!IndexOutOfBoundsException(() { bytes.get(1); }, "Index 1 out of bounds for length 1");
+    rejectsMessage!IndexOutOfBoundsException(() { bytes.get(1); }, null);
+    rejectsMessage!IndexOutOfBoundsException(() { bytes.put(-1, cast(byte) 4); }, null);
     assert(bytes.flip().get() == -2);
     assertThrown!BufferUnderflowException(bytes.get());
     assert(bytes.position() == 1);

@@ -32,8 +32,7 @@
 module flint.java.nio.bytebuffer;
 
 import flint.engine.aot.any : Any;
-import flint.java.lang : Comparable, IllegalArgumentException, IndexOutOfBoundsException,
-    JavaObject, NullPointerException;
+import flint.java.lang : Comparable, IllegalArgumentException, JavaObject, NullPointerException;
 import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkIndex, checkRange;
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
@@ -217,7 +216,7 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
 
     byte get(int index) const pure
     {
-        checkIndex(index, limit());
+        checkIndex(index, 1, limit());
         return backing[origin + index];
     }
 
@@ -262,7 +261,7 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     ByteBuffer put(int index, byte value) pure
     {
         checkWritable();
-        checkIndex(index, limit());
+        checkIndex(index, 1, limit());
         backing[origin + index] = value;
         return this;
     }

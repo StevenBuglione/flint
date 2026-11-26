@@ -186,15 +186,15 @@ pragma(inline, false) private noreturn throwRangeError(int index, int count, int
     throw new IndexOutOfBoundsException(text[0 .. used].idup);
 }
 
-package(flint.java.nio) void checkIndex(int index, int limit) pure
+package(flint.java.nio) void checkIndex(int index, int width, int limit) pure
 {
-    if (index >= 0 && index < limit)
-        return;
-    char[64] text;
-    size_t used;
-    appendField(text[], used, "Index ", index);
-    appendField(text[], used, " out of bounds for length ", limit);
-    throw new IndexOutOfBoundsException(text[0 .. used].idup);
+    if (index < 0 || index > limit - width)
+        throwIndexError();
+}
+
+pragma(inline, false) private noreturn throwIndexError() pure
+{
+    throw new IndexOutOfBoundsException;
 }
 
 package(flint.java.nio) string boundMessage(scope string name, int value, scope string upper, int bound) pure nothrow
