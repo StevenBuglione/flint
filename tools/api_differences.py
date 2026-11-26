@@ -31,6 +31,13 @@ OUTPUT = Path('docs/spring/java-differences.md')
 INTRO = Path('api/java-differences-intro.md')
 RULEBOOK = Path('docs/spring/api-mapping.md')
 DEVIATIONS = Path('api/deviations')
+DEPENDENCY_BASELINE = Path('api/dependency-baseline.json')
+# Java types every port maps by rule rather than by a classified element: primitives, String (R14), Object (R23),
+# Class (R4), boxed values (R5), the exception roots (R8, D exceptions) and reflection members (D-AOT-MEMBER).
+RULE_MAPPED = {'void', 'boolean', 'byte', 'char', 'short', 'int', 'long', 'float', 'double', 'String', 'Object', 'Class',
+               'Integer', 'Long', 'Double', 'Float', 'Boolean', 'Short', 'Byte', 'Character', 'CharSequence', 'Number',
+               'Throwable', 'Exception', 'RuntimeException', 'Error', 'Method', 'Constructor', 'Field', 'Member',
+               'AccessibleObject', 'Executable'}
 BEGIN = '<!-- BEGIN GENERATED deviations: tools/api_differences.py --write from api/deviations/*.json -->'
 END = '<!-- END GENERATED deviations -->'
 SEPARATORS = '.#(),'
@@ -164,6 +171,105 @@ class Classifier:
                 # A longer literal prefix always ranks first, so no shorter prefix can win.
                 return best[1], best[2]
         return None
+
+
+def erase_type(text):
+    """A Java type as written, reduced to its simple (or Outer.Inner) name: annotations, type arguments, arrays and
+    varargs removed."""
+    text = re.sub(r'@[\w.]+(\([^)]*\))?\s*', '', text or '')
+    while '<' in text:
+        text = re.sub(r'<[^<>]*>', '', text)
+    text = text.replace('...', '').replace('[]', '').strip()
+    return text.split(' ')[-1] if text else ''
+
+
+def flint_java_types(root):
+    """Type names flint:java* declares in D: a JDK type that exists there is available even before the Java SE
+    manifest's classification catches up."""
+    names = set()
+    for path in (root / 'framework').glob('java*/source/**/*.d'):
+        names |= set(re.findall(r'\b(?:class|interface|struct|enum|union|alias)\s+([A-Z]\w*)',
+                                path.read_text(errors='replace')))
+    return names
+
+
+def dependency_gaps(root, found=None):
+    """Every ported or adapted method or constructor whose Java parameter or return type has no D counterpart, as
+    {"<element id> -> <type>": "<repo>: <resolved type id> is <status>"}. A type is available when it is rule-mapped
+    (RULE_MAPPED), a type variable, classified ported or adapted, or a JDK type flint:java declares. Without imports a
+    simple name can be ambiguous, so an entry fails only when no candidate with that name is available."""
+    found = repos(root) if found is None else found
+    jdk_types = flint_java_types(root)
+    index, classifiers = collections.defaultdict(list), {}
+    for repo, (elements, manifests) in found.items():
+        classifier = classifiers[repo] = Classifier(elements)
+        for _, manifest in manifests:
+            for t in manifest['types']:
+                match = classifier.classify(t['id'])
+                status = 'unclassified' if match is None else match[1]['status']
+                if match and status == 'excluded' and match[1].get('category') == 'deferred':
+                    status = 'deferred'
+                short = t['id'][len(t['package']) + 1:]
+                for name in {short, short.split('.')[-1]}:
+                    index[name].append((t['id'], t['package'], status))
+
+    def available(name, candidate):
+        identifier, package, status = candidate
+        return status in ('ported', 'adapted') or (package.startswith(('java.', 'javax.')) and name in jdk_types)
+
+    gaps = {}
+    for repo, (elements, manifests) in found.items():
+        classifier = classifiers[repo]
+        for _, manifest in manifests:
+            for t in manifest['types']:
+                type_parameters = {p.split(' ')[0] for p in t.get('typeParameters', [])}
+                for member in t['members']:
+                    if member['kind'] not in ('method', 'constructor'):
+                        continue
+                    element = t['id'] + '#' + member['signature']
+                    match = classifier.classify(element)
+                    if match is None or match[1]['status'] not in ('ported', 'adapted'):
+                        continue
+                    signature = member['signature']
+                    written = [p for p in signature[signature.index('(') + 1:-1].split(',') if p]
+                    written += [member['type']] if member.get('type') else []
+                    for raw in written:
+                        name = erase_type(raw)
+                        if (not name or name in RULE_MAPPED or name in type_parameters
+                                or re.fullmatch(r'[A-Z][0-9A-Z]?', name)):
+                            continue
+                        candidates = index.get(name, [])
+                        if not candidates or any(available(name, c) for c in candidates):
+                            continue
+                        best = ([c for c in candidates if c[1] == t['package']] or candidates)[0]
+                        gaps[f'{element} -> {name}'] = f'{repo}: {best[0]} is {best[2]}'
+    return gaps
+
+
+def dependency_problems(root, write=False):
+    """The ratchet over dependency_gaps: api/dependency-baseline.json lists the gaps recorded when the check landed
+    (coordinator, 2026-11-26). A gap not listed fails ('mark it deferred, or port <type> first'); a listed gap that is
+    resolved must leave the list, which --write does. --write never adds an entry."""
+    path = root / DEPENDENCY_BASELINE
+    if not path.is_file():
+        return []
+    baseline = json.loads(path.read_text())
+    allowed = baseline.get('gaps', {})
+    gaps = dependency_gaps(root)
+    problems = []
+    for key in sorted(gaps):
+        if key not in allowed:
+            element, _, name = key.partition(' -> ')
+            problems.append(f'{element} is ported or adapted, but its type {name} has no D counterpart '
+                            f'({gaps[key]}): mark it deferred, or port {name} first')
+    resolved = sorted(k for k in allowed if k not in gaps)
+    if resolved and write:
+        baseline['gaps'] = {k: v for k, v in allowed.items() if k in gaps}
+        path.write_text(json.dumps(baseline, indent=1, sort_keys=True) + '\n')
+    elif resolved:
+        problems.append(f'{len(resolved)} gaps in {DEPENDENCY_BASELINE} are resolved; shrink it: '
+                        'python3 tools/api_differences.py --write')
+    return problems
 
 
 def repos(root):
@@ -349,6 +455,7 @@ def main(argv=None):
         elif not a.write and expected != current:
             problems += table_problems(current, expected)
     page, problems = render(a.root, problems)
+    problems += dependency_problems(a.root, write=a.write)
     target = a.root / OUTPUT
     if a.write:
         target.write_text(page)

@@ -145,5 +145,36 @@ class ApiDifferencesTest(unittest.TestCase):
         self.assertIn('match the file name', problems[0])
 
 
+    def test_a_ported_member_whose_type_has_no_d_counterpart_is_a_gap(self):
+        types = [type_('p.A'), type_('p.Bee'), type_('p.Cee')]
+        types[0]['members'] = [
+            {'kind': 'method', 'name': 'm', 'signature': 'm(Bee)', 'type': 'void'},
+            {'kind': 'method', 'name': 'n', 'signature': 'n(Cee,int,String)', 'type': 'List<T>'},
+            {'kind': 'method', 'name': 'o', 'signature': 'o()', 'type': '@Nullable Bee[]'}]
+        (self.root / 'api' / 'upstream' / 'lib-1.0.json').write_text(json.dumps(manifest(types)))
+        self.mapping({
+            '**': {'status': 'excluded', 'category': 'deferred', 'phase': '2'},
+            'p.A': {'status': 'ported', 'd': 'flint.p.A'},
+            'p.A#m(Bee)': {'status': 'ported', 'd': 'flint.p.A.m'},
+            'p.A#n(Cee,int,String)': {'status': 'ported', 'd': 'flint.p.A.n'},
+            'p.A#o()': {'status': 'adapted', 'rules': ['R5'], 'd': 'flint.p.A.o'},
+            'p.Cee': {'status': 'ported', 'd': 'flint.p.C'},
+        })
+        gaps = api_differences.dependency_gaps(self.root)
+        self.assertEqual(sorted(gaps), ['p.A#m(Bee) -> Bee', 'p.A#o() -> Bee'])   # C ported; int, String, T rule-mapped
+        self.assertEqual(gaps['p.A#m(Bee) -> Bee'], 'r: p.Bee is deferred')
+        baseline = self.root / 'api' / 'dependency-baseline.json'
+        baseline.write_text(json.dumps({'gaps': {'p.A#m(Bee) -> Bee': 'r: p.Bee is deferred'}}))
+        problems = api_differences.dependency_problems(self.root)
+        self.assertEqual(len(problems), 1)
+        self.assertIn('p.A#o() is ported or adapted, but its type Bee has no D counterpart', problems[0])
+        self.mapping({'**': {'status': 'excluded', 'category': 'deferred', 'phase': '2'},
+                      'p.A': {'status': 'ported', 'd': 'flint.p.A'}, 'p.Bee': {'status': 'ported', 'd': 'flint.p.B'},
+                      'p.A#m(Bee)': {'status': 'ported', 'd': 'flint.p.A.m'}})
+        self.assertIn('resolved; shrink it', api_differences.dependency_problems(self.root)[0])
+        self.assertEqual(api_differences.dependency_problems(self.root, write=True), [])
+        self.assertEqual(json.loads(baseline.read_text())['gaps'], {})
+
+
 if __name__ == '__main__':
     unittest.main()
