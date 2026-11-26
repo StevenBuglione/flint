@@ -37,6 +37,12 @@ version (LDC)
 else
     private enum inlinePayloadConstructor = false;
 
+// The inlined constructor keeps its checks on the ordinary path and shares the failure code.
+pragma(inline, false) private void invalidPayloadArgument(string message)
+{
+    throw new IllegalArgumentException(message);
+}
+
 // Collect the fragments on the stack and allocate only the returned string.
 private string renderRecord(string prefix, string first, string secondLabel, string second,
         string thirdLabel, string third, string fourthLabel = "", string fourth = "") pure
@@ -211,11 +217,11 @@ struct OpaquePayload
         import flint.util : StringUtils;
 
         if (!StringUtils.hasText(provider))
-            throw new IllegalArgumentException("provider must not be empty");
+            invalidPayloadArgument("provider must not be empty");
         if (!StringUtils.hasText(kind))
-            throw new IllegalArgumentException("kind must not be empty");
+            invalidPayloadArgument("kind must not be empty");
         if (data is null)
-            throw new IllegalArgumentException("data must not be null");
+            invalidPayloadArgument("data must not be null");
         this.provider_ = provider;
         this.kind_ = kind;
         this.data_ = data;
