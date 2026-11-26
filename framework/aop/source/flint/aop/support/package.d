@@ -13,6 +13,7 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/AbstractGenericPointcutAdvisor.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DefaultPointcutAdvisor.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DefaultIntroductionAdvisor.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/IntroductionInfoSupport.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/StaticMethodMatcherPointcutAdvisor.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
@@ -27,13 +28,15 @@ import flint.aop : Advisor, ClassFilter, DynamicIntroductionAdvice, Introduction
     IntroductionInfo, MethodMatcher, Pointcut, PointcutAdvisor;
 import flint.aop.support.class_filters : ClassPredicate, asClassFilter;
 import flint.aopalliance.aop : Advice;
+import flint.aopalliance.intercept : MethodInvocation;
 import flint.core : Ordered;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : Descriptor, MethodDescriptor, TypeKind;
+import flint.engine.aot.descriptor : Descriptor, MemberKind, MethodDescriptor, TypeKind;
 import flint.engine.aot.name : typeNameOf;
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString, statelessInstance;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException,
     UnsupportedOperationException, stringHashCode;
+import flint.java.util : LinkedHashSet, Set;
 import flint.util : PatternMatchUtils;
 import std.typecons : Nullable;
 
@@ -594,6 +597,54 @@ abstract class StaticMethodMatcherPointcutAdvisor : StaticMethodMatcherPointcut,
     Pointcut getPointcut()
     {
         return this;
+    }
+}
+
+/// Keeps the interfaces an introduction is configured to publish.
+class IntroductionInfoSupport : IntroductionInfo
+{
+    private Set!Descriptor interfaces;
+
+    /// Starts with no published interfaces.
+    this()
+    {
+        interfaces = new LinkedHashSet!Descriptor;
+    }
+
+    /// The ordered set that subclasses populate when configuring the introduction.
+    protected final Set!Descriptor publishedInterfaces() nothrow @nogc
+    {
+        return interfaces;
+    }
+
+    /// Removes an interface from this introduction.
+    void suppressInterface(const Descriptor interfaceType)
+    {
+        interfaces.removeIf(candidate => candidate is interfaceType);
+    }
+
+    /// Returns a snapshot in publication order.
+    const(Descriptor)[] getInterfaces()
+    {
+        return interfaces.toArray();
+    }
+
+    /// Whether a published type provides this interface.
+    bool implementsInterface(const Descriptor interfaceType)
+    {
+        if (interfaceType is null || interfaceType.kind != TypeKind.interface_)
+            return false;
+        foreach (published; interfaces)
+            if (published.isAssignableTo(interfaceType.name))
+                return true;
+        return false;
+    }
+
+    /// Whether the invoked method is declared by an interface this introduction provides.
+    protected final bool isMethodOnIntroducedInterface(MethodInvocation invocation)
+    {
+        const member = invocation.getStaticPart();
+        return member.kind == MemberKind.method && implementsInterface(member.declaringType());
     }
 }
 
