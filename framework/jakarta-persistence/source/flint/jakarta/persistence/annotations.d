@@ -44,8 +44,11 @@
  *   LockModeType.java, NamedQuery.java, NamedQueries.java
  *
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
- *   CascadeType.java, ElementCollection.java, IdClass.java, ManyToMany.java, ManyToOne.java,
+ *   CascadeType.java, ElementCollection.java, FlushModeType.java, IdClass.java, ManyToMany.java, ManyToOne.java,
  *   MapKeyClass.java, OneToMany.java, OneToOne.java
+ *
+ * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
+ *   Converter.java
  */
 
 /// Jakarta Persistence mapping annotations and their option enums.
@@ -907,7 +910,24 @@ struct IdClass
     ClassRef value;
 }
 
-// JPQL declarations
+/// Declares an AttributeConverter and controls whether it is applied automatically.
+struct Converter
+{
+    /// Automatically applies the converter to eligible attributes of the target type.
+    bool autoApply = false;
+}
+
+// Query options and JPQL declarations
+
+/// Controls when the persistence provider flushes pending updates.
+enum FlushModeType
+{
+    /// Flush at transaction commit. The provider may also flush earlier.
+    COMMIT,
+
+    /// Default mode. Queries in a joined transaction must see pending updates that affect their results.
+    AUTO,
+}
 
 /// Lock mode for a persistence operation. D-JPA-2 adapts this enum at the EntityManager option boundary.
 enum LockModeType
