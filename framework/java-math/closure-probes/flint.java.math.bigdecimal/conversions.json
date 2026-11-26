@@ -1,0 +1,21 @@
+{
+  "source": "closure/bigdecimal.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.lang.character",
+    "flint.java.lang.character.decimaldigits",
+    "flint.java.lang.internal.asciidigits",
+    "flint.java.lang.internal.bmpdigits",
+    "flint.java.lang.number",
+    "flint.java.math.biginteger",
+    "flint.java.math.internal.decimalcoefficient",
+    "flint.java.math.internal.decimalparse",
+    "flint.java.math.internal.division",
+    "flint.java.math.internal.floating",
+    "flint.java.math.internal.limbs",
+    "flint.java.math.internal.products",
+    "flint.java.math.internal.radix",
+    "flint.java.math.internal.radixparse"
+  ],
+  "data": []
+}
