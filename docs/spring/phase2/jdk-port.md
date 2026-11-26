@@ -5,7 +5,7 @@ The owner decided on 2026-11-26 to port the parts of the Java SE standard librar
 ## Target and licence
 
 - **API:** Java SE 21, the release `flint:java` already uses for its Unicode tables. Later additions (Java 25) are added only when Spring v7.1.0 or Boot v4.2.0 code calls them. Names follow rulebook R1: `java.util.HashMap` becomes `flint.java.util.HashMap`.
-- **OpenJDK (GPL-2.0 with the Classpath Exception) MAY BE PORTED FROM SOURCE** (owner, 2026-11-26 04:25Z), into dedicated GPL-2.0+CE packages (suffix `-openjdk`, for example `flint:java-regex-openjdk`) that keep each file's OpenJDK header and the Classpath Exception, add "Modified by the Flint authors", and never mix in Apache-2.0-derived files (Harmony, Spring). Earlier clean-room code stays as it is. The previous rule was (ADR-030 section 6, `policy/upstream-licences.json`):
+- **flint.java is ported from OpenJDK (owner, 2026-11-26 04:30Z).** Every `flint:java*` package is GPL-2.0-only WITH Classpath-exception-2.0, like OpenJDK. Port OpenJDK implementations and jtreg tests from source, keeping each file's header and adding "Modified by the Flint authors". Spring and Apache-2.0 code use these packages freely, because the Classpath Exception covers linking. Apache Harmony is no longer used; its few derived files are replaced. The previous rule was (ADR-030 section 6, `policy/upstream-licences.json`):
   - Implement from the Java SE API specification's behaviour, never from OpenJDK source.
   - Never copy OpenJDK code, Javadoc prose, or jtreg tests.
   - Public API names and signatures may be extracted for the API manifest. That is interface information, not implementation (*Google v. Oracle*).

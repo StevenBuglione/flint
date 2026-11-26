@@ -1215,3 +1215,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - **No mixing:** GPL-2.0+CE files never share a package with Apache-2.0-derived files (Apache-2.0 and GPL-2.0-only cannot be combined into one work). Packages depend on each other freely, which is what the exception allows.
   - **Not without a coordinator review** (default clean-room): LGPL, because D links statically and the relinking obligations could burden users.
   - **Never:** strong copyleft without a linking exception (GPL or AGPL, which would force users' applications to be GPL), and source-available, non-commercial or paid licences (FSL, BSL, SSPL, commercial).
+- 2026-11-26 04:30Z, owner: **flint.java is ported from OpenJDK.** This amends 04:25Z: there are no separate `-openjdk` packages.
+  - **Licence:** every `flint:java*` package is GPL-2.0-only WITH Classpath-exception-2.0, like OpenJDK. Flint's own code in those packages is contributed under the same terms.
+  - **Spring and other Apache-2.0 code** depends on `flint:java*` freely. The Classpath Exception means applications and Flint's other repositories are not affected.
+  - **Apache Harmony is no longer used.** The few Harmony-derived files (BigInteger tests and code in `flint:java-math`) are replaced by OpenJDK ports, or by original code, so no `flint:java*` package mixes Apache-2.0 and GPL-2.0 files.
+  - **The repo licence stays Apache-2.0.** Each `flint:java*` package states its own licence in `dub.sdl` and carries its own LICENSE file (with the Classpath Exception text) and NOTICE.
