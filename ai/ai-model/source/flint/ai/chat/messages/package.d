@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/{Message,MessageType}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/{AbstractMessage,Message,MessageType}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages;
 
-import flint.ai.content : Content;
+import flint.ai.chat.messages.part : MessagePart, TextPart;
+import flint.ai.content : Content, copyContentMetadata;
+import flint.engine.aot.any : Any;
+import flint.java.util : List, Map;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -94,4 +98,90 @@ interface Message : Content
 {
     /// Returns the role of this message.
     MessageType getMessageType();
+}
+
+private alias MessageText = Nullable!string;
+private alias MessageParts = List!MessagePart;
+private alias MessageMetadata = Map!(string, Any);
+
+/// Base implementation of a message with ordered content parts.
+abstract class AbstractMessage : Message
+{
+    /// The metadata key for the message type.
+    enum string MESSAGE_TYPE = "messageType";
+
+    private MessageType messageType_;
+    private MessageText text_;
+    private MessageMetadata metadata_;
+    private MessageParts parts_;
+
+    /// Creates a message from its legacy nullable text.
+    protected this(MessageType messageType, MessageText text, MessageMetadata metadata)
+    {
+        this(messageType, legacyParts(text), metadata);
+    }
+
+    /// Takes a read-only snapshot of the parts and a mutable copy of the metadata.
+    protected this(MessageType messageType, MessageParts parts, MessageMetadata metadata)
+    {
+        import flint.java.lang : IllegalArgumentException, NullPointerException;
+
+        if (parts is null)
+            throw new IllegalArgumentException("Parts must not be null");
+        if (metadata is null)
+            throw new IllegalArgumentException("Metadata must not be null");
+
+        auto snapshot = MessageParts.copyOf(parts);
+        const empty = snapshot.isEmpty();
+        if (empty && (messageType == MessageType.SYSTEM || messageType == MessageType.USER))
+            throw new IllegalArgumentException("Content must not be null for SYSTEM or USER messages");
+
+        string text = "";
+        foreach (part; snapshot)
+        {
+            if (part is null)
+                throw new NullPointerException();
+            if (auto textPart = cast(TextPart) part)
+                text ~= textPart.text();
+        }
+
+        messageType_ = messageType;
+        parts_ = snapshot;
+        text_ = empty ? MessageText.init : MessageText(text);
+        metadata_ = copyContentMetadata(metadata);
+        metadata_.put(MESSAGE_TYPE, Any.of(messageType));
+    }
+
+    /// Converts legacy nullable text into zero or one part.
+    protected static MessageParts legacyParts(MessageText text)
+    {
+        if (text.isNull)
+            return MessageParts.of();
+        const content = text.get();
+        return MessageParts.of(TextPart.of(content.length == 0 ? "" : content));
+    }
+
+    /// Returns the unmodifiable snapshot in message order.
+    MessageParts getParts()
+    {
+        return parts_;
+    }
+
+    /// Returns absent text only when the message has no parts.
+    override MessageText getText()
+    {
+        return text_;
+    }
+
+    /// Returns the message's live metadata map.
+    override MessageMetadata getMetadata()
+    {
+        return metadata_;
+    }
+
+    /// Returns the message role supplied during construction.
+    override MessageType getMessageType()
+    {
+        return messageType_;
+    }
 }

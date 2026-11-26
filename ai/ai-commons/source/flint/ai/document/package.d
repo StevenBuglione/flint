@@ -18,9 +18,10 @@
 // Modified by the Flint authors.
 module flint.ai.document;
 
+import flint.ai.content : copyContentMetadata;
 import flint.engine.aot.any : Any;
 import flint.java.lang : IllegalArgumentException, JavaObject;
-import flint.java.util : HashMap, List, Map;
+import flint.java.util : List, Map;
 import flint.java.util.function_ : Consumer, Function, Supplier;
 import std.typecons : Nullable;
 
@@ -418,7 +419,7 @@ class Document
 
         id_ = id;
         text_ = text;
-        metadata_ = new HashMap!(string, Any)(metadata);
+        metadata_ = copyContentMetadata(metadata);
     }
 
     /// Returns the unique document identifier.

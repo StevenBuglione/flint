@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 197 | 323 | 0 | 15,276 |
+| ai | spring-ai@v2.1.0 | 199 | 330 | 0 | 15,267 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,507 | 1,401 | 4,850 | 30,076 |
@@ -208,6 +208,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,List,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R10](api-mapping.md#r10-streams-and-collections), [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,String,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#getMessageType()` | `flint.ai.chat.messages.AbstractMessage.getMessageType` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#getMetadata()` | `flint.ai.chat.messages.AbstractMessage.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#getParts()` | `flint.ai.chat.messages.AbstractMessage.getParts` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#getText()` | `flint.ai.chat.messages.AbstractMessage.getText` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#legacyParts(String)` | `flint.ai.chat.messages.AbstractMessage.legacyParts` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.MessageType` | `flint.ai.chat.messages.MessageType` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.chat.messages.MessageType#ASSISTANT` | `flint.ai.chat.messages.MessageType.ASSISTANT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.chat.messages.MessageType#SYSTEM` | `flint.ai.chat.messages.MessageType.SYSTEM` | [R15](api-mapping.md#r15-enums-with-fields) |  |
@@ -8481,7 +8488,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.memory.repository.mongo | 0 | 20 |
 | org.springframework.ai.chat.memory.repository.neo4j | 0 | 63 |
 | org.springframework.ai.chat.memory.repository.redis | 0 | 65 |
-| org.springframework.ai.chat.messages | 110 | 0 |
+| org.springframework.ai.chat.messages | 101 | 0 |
 | org.springframework.ai.chat.messages.part | 43 | 0 |
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |

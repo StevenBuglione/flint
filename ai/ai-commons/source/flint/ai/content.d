@@ -35,6 +35,14 @@ interface Content
     Map!(string, Any) getMetadata();
 }
 
+// The common mutable snapshot used by documents and chat messages.
+package(flint.ai) Map!(string, Any) copyContentMetadata(Map!(string, Any) source)
+{
+    import flint.java.util : HashMap;
+
+    return new HashMap!(string, Any)(source);
+}
+
 /// Content with an associated list of media.
 interface MediaContent : Content
 {
