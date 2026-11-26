@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 276 | 249 | 0 | 3,457 |
+| data-commons | spring-data-commons@4.2.0 | 279 | 254 | 0 | 3,449 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1041,6 +1041,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.PersistentPropertyAccessor#getBean()` | `flint.data.mapping.PersistentPropertyAccessor.getBean` | [D-DATA-13](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.PersistentPropertyAccessor#getProperty(PersistentProperty)` | `flint.data.mapping.PersistentPropertyAccessor.getProperty` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-13](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.PersistentPropertyAccessor#setProperty(PersistentProperty,Object)` | `flint.data.mapping.PersistentPropertyAccessor.setProperty` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-13](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.PreferredConstructor` | `flint.data.mapping.PreferredConstructor` | [D-DATA-23](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.PreferredConstructor#<init>(Constructor,Parameter...)` | `flint.data.mapping.PreferredConstructor.this` | [D-DATA-23](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.PreferredConstructor#getConstructor()` | `flint.data.mapping.PreferredConstructor.getConstructor` | [D-DATA-23](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.TargetAwareIdentifierAccessor#<init>(Object)` | `flint.data.mapping.TargetAwareIdentifierAccessor.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.TargetAwareIdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.TargetAwareIdentifierAccessor.getRequiredIdentifier` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
@@ -1078,6 +1081,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.model.PersistentPropertyAccessorFactory` | `flint.data.mapping.model.PersistentPropertyAccessorFactory` | [D-DATA-17](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.PersistentPropertyAccessorFactory#getPropertyAccessor(PersistentEntity,T)` | `flint.data.mapping.model.PersistentPropertyAccessorFactory.getPropertyAccessor` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-17](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.PersistentPropertyAccessorFactory#isSupported(PersistentEntity)` | `flint.data.mapping.model.PersistentPropertyAccessorFactory.isSupported` | [D-DATA-17](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.PreferredConstructorDiscoverer#discover(Class)` | `flint.data.mapping.model.PreferredConstructorDiscoverer.discover` | [R4](api-mapping.md#r4-classt-parameters), [D-DATA-23](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.PreferredConstructorDiscoverer#discover(PersistentEntity)` | `flint.data.mapping.model.PreferredConstructorDiscoverer.discover` | [D-DATA-23](api-mapping.md#deviations) |  |
 
 #### org.springframework.data.repository
 
@@ -10182,10 +10187,10 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.geo.format | 11 | 0 |
 | org.springframework.data.history | 42 | 0 |
 | org.springframework.data.javapoet | 69 | 0 |
-| org.springframework.data.mapping | 109 | 0 |
+| org.springframework.data.mapping | 104 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
-| org.springframework.data.mapping.model | 173 | 0 |
+| org.springframework.data.mapping.model | 170 | 0 |
 | org.springframework.data.projection | 70 | 0 |
 | org.springframework.data.querydsl | 66 | 0 |
 | org.springframework.data.querydsl.binding | 45 | 0 |

@@ -622,8 +622,26 @@
       "status": "deferred"
     },
     "org/springframework/data/mapping/PreferredConstructorDiscovererUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/parameter_tests.d",
+      "methods": {
+        "ported": [
+          "detectsAnnotatedRecordConstructor",
+          "detectsCanonicalRecordConstructorWhenRecordHasNoArgConstructor",
+          "detectsCanonicalRecordConstructorWhenRecordHasSingleArgConstructor",
+          "detectsMetaAnnotatedValueAnnotation",
+          "doesNotThrowExceptionForMultipleConstructorsAndNoNoArgConstructorWithoutAnnotation",
+          "findsNoArgConstructorForClassWithMultipleConstructorsAndNoArgOne",
+          "findsNoArgConstructorForClassWithoutExplicitConstructor",
+          "usesConstructorWithAnnotationOverEveryOther"
+        ],
+        "skipped": {
+          "capturesEnclosingTypeParameterOfNonStaticInnerClass": "Enclosing-class parameter metadata remains deferred.",
+          "capturesSuperClassEnclosingTypeParameterOfNonStaticInnerClass": "Inherited enclosing-class parameter metadata remains deferred.",
+          "discoversInnerClassConstructorCorrectly": "Enclosing-class parameter metadata remains deferred.",
+          "skipsSyntheticConstructor": "JVM synthetic constructor detection remains deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/mapping/SimpleTypeHolderUnitTests.java": {
       "phase": "2",

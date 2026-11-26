@@ -1,8 +1,8 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,AssociationHandler,IdentifierAccessor,InstanceCreatorMetadata,MappingException,Parameter,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,PropertyHandler,TargetAwareIdentifierAccessor}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,AssociationHandler,IdentifierAccessor,InstanceCreatorMetadata,MappingException,Parameter,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,PreferredConstructor,PropertyHandler,TargetAwareIdentifierAccessor}.java
 // Alias: Copyright 2016-present the original author or authors.
 // Association, AssociationHandler and PropertyHandler: Copyright 2011-present the original author or authors.
 // IdentifierAccessor: Copyright 2014-present the original author or authors.
-// MappingException, PersistentEntity and PersistentProperty: Copyright 2011-present the original author or authors.
+// MappingException, PersistentEntity, PersistentProperty and PreferredConstructor: Copyright 2011-present the original author or authors.
 // InstanceCreatorMetadata and Parameter: Copyright 2021-present the original author or authors.
 // PersistentPropertyAccessor: Copyright 2014-present the original author or authors.
 // TargetAwareIdentifierAccessor: Copyright 2017-present the original author or authors.
@@ -12,11 +12,11 @@ module flint.data.mapping;
 
 import flint.beans.factory.annotation : Value;
 import flint.core.annotation.types : MergedAnnotations, SearchStrategy;
-import flint.data.annotation : Transient;
+import flint.data.annotation : PersistenceCreator, Transient;
 import flint.data.core : TypeInformation;
 import flint.data.domain.persistable : NullableId;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : MergedAnnotation;
+import flint.engine.aot.descriptor : ConstructorDescriptor, MergedAnnotation, findAnnotation;
 import flint.engine.aot.objects : statelessInstance;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, Iterable, JavaObject,
@@ -533,6 +533,58 @@ class Parameter(T, P) : ParameterValue if (is(P : PersistentProperty!P))
     {
         return property !is null && entity !is null && hasName() && Objects.equals(property,
                 entity.getPersistentProperty(name.get));
+    }
+}
+
+/// The selected constructor and its parameters for a persistent entity.
+final class PreferredConstructor(T, P) : InstanceCreatorMetadata!(T, P) if (is(P : PersistentProperty!P))
+{
+    private const(ConstructorDescriptor) constructor;
+    private List!(Parameter!(T, P)) parameters;
+
+    /// Captures a registered constructor and its parameters in declaration order (D-DATA-23).
+    this(const(ConstructorDescriptor) constructor, Parameter!(T, P)[] parameters...)
+    {
+        this(constructor, List!(Parameter!(T, P)).of(parameters));
+    }
+
+    package(flint.data) this(const(ConstructorDescriptor) constructor, List!(Parameter!(T, P)) parameters)
+    {
+        this.constructor = constructor;
+        this.parameters = parameters;
+    }
+
+    /// The read-only registered constructor descriptor (D-DATA-23).
+    const(ConstructorDescriptor) getConstructor()
+    {
+        return constructor;
+    }
+
+    /// Whether the selected constructor takes no arguments.
+    bool isNoArgConstructor()
+    {
+        return !hasParameters();
+    }
+
+    /// Whether PersistenceCreator marks the selected constructor.
+    bool isExplicitlyAnnotated() const nothrow @nogc
+    {
+        return findAnnotation(constructor.annotations, classOf!PersistenceCreator.name) !is null;
+    }
+
+    mixin InstanceCreatorMetadata!(T, P).Defaults;
+
+    override bool isCreatorParameter(PersistentProperty!() property)
+    {
+        foreach (parameter; parameters)
+            if (parameter.maps(property))
+                return true;
+        return false;
+    }
+
+    override List!(Parameter!(T, P)) getParameters()
+    {
+        return parameters;
     }
 }
 

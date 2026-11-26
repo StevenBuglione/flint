@@ -1,4 +1,4 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/model/{BasicPersistentEntity,BeanWrapper,BeanWrapperPropertyAccessorFactory,MutablePersistentEntity,PersistentPropertyAccessorFactory}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/model/{BasicPersistentEntity,BeanWrapper,BeanWrapperPropertyAccessorFactory,MutablePersistentEntity,PersistentPropertyAccessorFactory,PreferredConstructorDiscoverer}.java
 // Copyright 2011-present the original author or authors.
 // Accessor factories: Copyright 2016-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
@@ -14,10 +14,11 @@ import flint.data.domain.persistable : PersistableState;
 import flint.data.mapping : Alias, Association, AssociationHandler, IdentifierAccessor,
     InstanceCreatorMetadata, MappingException, Parameter, PersistentEntity,
     PersistentProperty, PersistentPropertyAccessor,
-    PrimitivePropertyKind, PropertyHandler, TargetAwareIdentifierAccessor, primitivePropertyKind;
+    PreferredConstructor, PrimitivePropertyKind, PropertyHandler, TargetAwareIdentifierAccessor,
+    primitivePropertyKind;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : ConstructorDescriptor, Descriptor, MergedAnnotation,
-    ParameterDescriptor, PropertyDescriptor, findMergedAnnotation = findAnnotation;
+import flint.engine.aot.descriptor : ConstructorDescriptor, Descriptor, DescriptorTable,
+    MergedAnnotation, PropertyDescriptor, findMergedAnnotation = findAnnotation;
 import flint.engine.aot.objects : statelessInstance;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
@@ -179,9 +180,7 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
         {
             if (!creatorResolved)
             {
-                if (descriptor !is null)
-                    if (const selected = preferredConstructor(descriptor.constructors))
-                        creator = new DescriptorCreatorMetadata!(T, P)(this, information, selected.parameters);
+                creator = PreferredConstructorDiscoverer.discover!(T, P)(this);
                 creatorResolved = true;
             }
             return creator;
@@ -528,41 +527,44 @@ private const(ConstructorDescriptor)* preferredConstructor(return scope const(Co
     return constructors.length == 1 ? &constructors[0] : null;
 }
 
-private final class DescriptorCreatorMetadata(T, P) : InstanceCreatorMetadata!(T, P)
+/// Discovers the preferred constructor from registered Flint AOT metadata.
+interface PreferredConstructorDiscoverer
 {
-    private List!(Parameter!(T, P)) parameters;
-
-    this(PersistentEntity!(T, P) entity, TypeInformation owner, const(ParameterDescriptor)[] declaredParameters)
+    /// Finds the preferred constructor for the given type and descriptor table (R4, D-DATA-23).
+    static PreferredConstructor!(T, P) discover(T, P)(const(DescriptorTable) descriptors)
+            if (is(P : PersistentProperty!P))
     {
-        if (!declaredParameters.length)
-        {
-            parameters = Collections.emptyList!(Parameter!(T, P))();
-            return;
-        }
+        return discoverType!(T, P)(TypeInformation.of!T(descriptors), null);
+    }
 
-        auto items = new ArrayList!(Parameter!(T, P))(cast(int) declaredParameters.length);
-        foreach (ref declared; declaredParameters)
+    /// Finds the preferred constructor using the entity's registered type metadata.
+    static PreferredConstructor!(T, P) discover(T, P)(PersistentEntity!(T, P) entity)
+            if (is(P : PersistentProperty!P))
+    {
+        if (entity is null)
+            throw new IllegalArgumentException("PersistentEntity must not be null");
+        return discoverType!(T, P)(entity.getTypeInformation(), entity);
+    }
+
+    private static PreferredConstructor!(T, P) discoverType(T, P)(TypeInformation owner, PersistentEntity!(T, P) entity)
+    {
+        auto descriptor = registeredDescriptor(owner);
+        if (descriptor is null)
+            return null;
+        auto selected = preferredConstructor(descriptor.constructors);
+        if (selected is null)
+            return null;
+        if (!selected.parameters.length)
+            return new PreferredConstructor!(T, P)(*selected);
+
+        auto items = new ArrayList!(Parameter!(T, P))(cast(int) selected.parameters.length);
+        foreach (ref declared; selected.parameters)
         {
             const name = declared.name is null ? Nullable!string.init : Nullable!string(declared.name);
             auto type = registeredTypeInformation(owner, declared.type);
             items.add(new Parameter!(T, P)(name, type, declared.annotations, entity));
         }
-        parameters = Collections.unmodifiableList(items);
-    }
-
-    mixin InstanceCreatorMetadata!(T, P).Defaults;
-
-    override bool isCreatorParameter(PersistentProperty!() property)
-    {
-        foreach (parameter; parameters)
-            if (parameter.maps(property))
-                return true;
-        return false;
-    }
-
-    override List!(Parameter!(T, P)) getParameters()
-    {
-        return parameters;
+        return new PreferredConstructor!(T, P)(*selected, Collections.unmodifiableList(items));
     }
 }
 

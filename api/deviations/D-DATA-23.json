@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-23",
+ "deviation": "PreferredConstructor implements the typed InstanceCreatorMetadata contract and exposes a read-only ConstructorDescriptor with a read-only list of Parameter values. PreferredConstructorDiscoverer uses an explicit descriptor table for the type overload and the entity's registry for the entity overload.",
+ "reason": "Registered constructor descriptors provide the parameter order, merged annotations and canonical marker for closed-world discovery. BasicPersistentEntity caches the selected metadata after successful discovery."
+}

@@ -1,5 +1,6 @@
-// Ported from spring-data-commons 4.2.0: src/test/java/org/springframework/data/mapping/ParameterUnitTests.java
-// Copyright 2012-present the original author or authors.
+// Ported from spring-data-commons 4.2.0: src/test/java/org/springframework/data/mapping/{ParameterUnitTests,PreferredConstructorDiscovererUnitTests}.java
+// ParameterUnitTests: Copyright 2012-present the original author or authors.
+// PreferredConstructorDiscovererUnitTests: Copyright 2011-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 module parameter_tests;
@@ -7,8 +8,8 @@ module parameter_tests;
 import flint.beans.factory.annotation : Value;
 import flint.data.annotation : PersistenceCreator, Transient;
 import flint.data.core : TypeInformation;
-import flint.data.mapping : Parameter, PersistentEntity, PersistentProperty;
-import flint.data.mapping.model : BasicPersistentEntity;
+import flint.data.mapping : Parameter, PersistentEntity, PersistentProperty, PreferredConstructor;
+import flint.data.mapping.model : BasicPersistentEntity, PreferredConstructorDiscoverer;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : ConstructorDescriptor, DescriptorTable, MergedAnnotation,
     ParameterDescriptor, descriptorOf;
@@ -64,12 +65,18 @@ private final class RevisionProperty : PersistentProperty!RevisionProperty
     }
 }
 
-private PersistentEntity!(Document, RevisionProperty) withConstructors(DescriptorTable descriptors,
-        ConstructorDescriptor[] constructors)
+private alias DocumentEntity = PersistentEntity!(Document, RevisionProperty);
+
+private void registerConstructors(DescriptorTable descriptors, ConstructorDescriptor[] constructors)
 {
     auto descriptor = descriptorOf!Document();
     descriptor.constructors = constructors;
     descriptors.add(descriptor);
+}
+
+private DocumentEntity withConstructors(DescriptorTable descriptors, ConstructorDescriptor[] constructors)
+{
+    registerConstructors(descriptors, constructors);
     auto entity = new BasicPersistentEntity!(Document, RevisionProperty)(TypeInformation.of!Document(descriptors));
     entity.addPersistentProperty(new RevisionProperty(false));
     return entity;
@@ -278,4 +285,131 @@ unittest
     assertThrown!IllegalStateException(entity.getInstanceCreatorMetadata());
     descriptors.add(descriptorOf!LateParameterType());
     assert(entity.getInstanceCreatorMetadata().getParameters().get(0).getRawType() == classOf!LateParameterType);
+}
+
+private alias Discoverer = PreferredConstructorDiscoverer;
+private alias DocumentConstructor = PreferredConstructor!(Document, RevisionProperty);
+
+private ConstructorDescriptor revisionConstructor()
+{
+    return ConstructorDescriptor([ParameterDescriptor("revision", classOf!long.name)]);
+}
+
+private ConstructorDescriptor taggedConstructor(bool annotated = false)
+{
+    return ConstructorDescriptor([ParameterDescriptor("tag", classOf!string.name)], annotated
+            ? [MergedAnnotation(classOf!PersistenceCreator.name, Any.of(PersistenceCreator.init))] : null);
+}
+
+private ConstructorDescriptor canonicalConstructor()
+{
+    return ConstructorDescriptor([
+        ParameterDescriptor("revision", classOf!long.name),
+        ParameterDescriptor("tag", classOf!string.name),
+    ], canonical: true);
+}
+
+@("findsNoArgConstructorForClassWithoutExplicitConstructor")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    descriptors.add(descriptorOf!Document());
+    auto constructor = Discoverer.discover!(Document, RevisionProperty)(descriptors);
+    assert(constructor !is null && constructor.isNoArgConstructor());
+    assert(!constructor.isExplicitlyAnnotated() && constructor.getConstructor().invoke !is null);
+}
+
+@("findsNoArgConstructorForClassWithMultipleConstructorsAndNoArgOne")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto entity = withConstructors(descriptors, [revisionConstructor(), ConstructorDescriptor.init]);
+    auto constructor = Discoverer.discover(entity);
+    assert(constructor !is null && constructor.isNoArgConstructor());
+    assert(!constructor.isExplicitlyAnnotated() && constructor.getParameters().isEmpty());
+}
+
+@("doesNotThrowExceptionForMultipleConstructorsAndNoNoArgConstructorWithoutAnnotation")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto entity = withConstructors(descriptors, [revisionConstructor(), taggedConstructor()]);
+    assert(Discoverer.discover!(Document, RevisionProperty)(descriptors) is null);
+    assert(entity.getInstanceCreatorMetadata() is null);
+}
+
+@("usesConstructorWithAnnotationOverEveryOther")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto annotated = revisionConstructor();
+    annotated.annotations = [
+        MergedAnnotation(classOf!PersistenceCreator.name, Any.of(PersistenceCreator.init))
+    ];
+    auto entity = withConstructors(descriptors, [
+        ConstructorDescriptor.init, taggedConstructor(), annotated
+    ]);
+    auto constructor = Discoverer.discover(entity);
+    assert(constructor !is null && !constructor.isNoArgConstructor() && constructor.isExplicitlyAnnotated());
+    assert(constructor.getParameters().size() == 1 && constructor.getParameters().get(0).getRawType() == classOf!long);
+    assert(constructor.isCreatorParameter(entity.getRequiredPersistentProperty("revision")));
+    auto cached = cast(DocumentConstructor) entity.getInstanceCreatorMetadata();
+    assert(cached !is null && cached is entity.getInstanceCreatorMetadata());
+    assert(cached.getParameters().get(0).equals(constructor.getParameters().get(0)));
+}
+
+@("detectsCanonicalRecordConstructorWhenRecordHasSingleArgConstructor")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    registerConstructors(descriptors, [revisionConstructor(), canonicalConstructor()]);
+    auto constructor = Discoverer.discover!(Document, RevisionProperty)(descriptors);
+    assert(constructor !is null && constructor.getConstructor().canonical);
+    auto parameters = constructor.getParameters();
+    assert(parameters.size() == 2);
+    assert(parameters.get(0).getRawType() == classOf!long && parameters.get(1).getRawType() == classOf!string);
+}
+
+@("detectsMetaAnnotatedValueAnnotation")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto recorded = ParameterDescriptor("revision", classOf!long.name,
+            [MergedAnnotation(classOf!Value.name, Any.of(Value("${hello-world}")), distance: 1),]);
+    registerConstructors(descriptors, [ConstructorDescriptor([recorded])]);
+    auto constructor = Discoverer.discover!(Document, RevisionProperty)(descriptors);
+    assert(constructor !is null && constructor.getParameterCount() == 1);
+    auto param = constructor.getParameters().get(0);
+    assert(param.getRequiredValueExpression() == "${hello-world}" && param.getAnnotations().isPresent!Value());
+}
+
+@("detectsCanonicalRecordConstructorWhenRecordHasNoArgConstructor")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    registerConstructors(descriptors, [ConstructorDescriptor.init, canonicalConstructor()]);
+    auto constructor = Discoverer.discover!(Document, RevisionProperty)(descriptors);
+    assert(constructor !is null && !constructor.isNoArgConstructor() && constructor.getConstructor().canonical);
+    assert(constructor.getParameterCount() == 2);
+}
+
+@("detectsAnnotatedRecordConstructor")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    registerConstructors(descriptors, [canonicalConstructor(), taggedConstructor(true)]);
+    auto constructor = Discoverer.discover!(Document, RevisionProperty)(descriptors);
+    assert(constructor !is null && constructor.isExplicitlyAnnotated() && !constructor.getConstructor().canonical);
+    assert(constructor.getParameterCount() == 1 && constructor.getParameters().get(0).getRawType() == classOf!string);
+}
+
+@("preferred constructor accepts typed parameters and exposes a read-only list")
+unittest
+{
+    auto revision = parameter(Nullable!string("revision"));
+    auto constructor = new DocumentConstructor(revisionConstructor(), revision);
+    assert(constructor.getConstructor().parameters[0].name == "revision");
+    assert(constructor.getParameters().get(0) is revision);
+    assertThrown!UnsupportedOperationException(constructor.getParameters().clear());
+    assertThrown!IllegalArgumentException(Discoverer.discover(cast(DocumentEntity) null));
 }

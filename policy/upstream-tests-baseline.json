@@ -1632,7 +1632,6 @@
       "org/springframework/data/mapping/InstantiationAwarePersistentPropertyAccessorUnitTests.java",
       "org/springframework/data/mapping/MappingMetadataTests.java",
       "org/springframework/data/mapping/PersistentPropertyAccessorUnitTests.java",
-      "org/springframework/data/mapping/PreferredConstructorDiscovererUnitTests.java",
       "org/springframework/data/mapping/SimpleTypeHolderUnitTests.java",
       "org/springframework/data/mapping/callback/DefaultEntityCallbacksUnitTests.java",
       "org/springframework/data/mapping/callback/DefaultReactiveEntityCallbacksUnitTests.java",
