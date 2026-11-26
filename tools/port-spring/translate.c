@@ -28,6 +28,7 @@ typedef struct {
     TSNode node;
     Slice reference_type;
     TSNode reference_default;
+    Slice class_sentinel;
     size_t offset;
     bool array;
 } Field;
@@ -599,7 +600,35 @@ static bool integral_default(Text *output, Slice value, const Type *type, unsign
     return append(output, (Slice){number_text, (size_t)length});
 }
 
-static bool scalar_default(const JavaFile *annotation, Text *output, TSNode value, const Type *type)
+static Slice upper_class_bound(const JavaFile *java, TSNode type)
+{
+    if (!kind(type, "generic_type"))
+        return (Slice){0};
+    TSNode arguments = child_of_kind(type, "type_arguments");
+    if (ts_node_is_null(arguments) || ts_node_named_child_count(arguments) != 1)
+        return (Slice){0};
+    TSNode wildcard = ts_node_named_child(arguments, 0);
+    if (!kind(wildcard, "wildcard") || ts_node_named_child_count(wildcard) != 1 ||
+        ts_node_is_null(child_of_kind(wildcard, "extends")))
+        return (Slice){0};
+    Slice bound = node_text(java, ts_node_named_child(wildcard, 0));
+    return qualified_identifier(bound) ? bound : (Slice){0};
+}
+
+static bool class_default(Text *output, Slice literal_, Slice bound, Slice *sentinel)
+{
+    const size_t suffix = sizeof ".class" - 1;
+    bool own_bound = literal_.length > suffix && literal_.length - suffix == bound.length &&
+        equal(bound, (Slice){literal_.bytes, bound.length}) &&
+        is((Slice){literal_.bytes + bound.length, suffix}, ".class");
+    if ((!own_bound && !is(literal_, "void.class")) || (sentinel->length && !equal(*sentinel, literal_)))
+        return false;
+    *sentinel = literal_;
+    return append(output, literal("ClassRef.init"));
+}
+
+static bool scalar_default(const JavaFile *annotation, Text *output, TSNode value, const Type *type,
+                           Slice bound, Slice *sentinel)
 {
     bool negative = false;
     bool signed_expression = kind(value, "unary_expression");
@@ -616,10 +645,8 @@ static bool scalar_default(const JavaFile *annotation, Text *output, TSNode valu
         return integral_default(output, text, type, base, negative);
     if (signed_expression)
         return false;
-    if (!strcmp(type->java, "Class") && kind(value, "class_literal") && is(text, "void.class")) {
-        add(output, "ClassRef.init");
-        return !output->failed;
-    }
+    if (!strcmp(type->java, "Class") && kind(value, "class_literal"))
+        return class_default(output, text, bound, sentinel);
     if ((!strcmp(type->java, "boolean") && (kind(value, "true") || kind(value, "false"))) ||
         (!strcmp(type->java, "String") && kind(value, "string_literal") && text_literal(text)) ||
         (!strcmp(type->java, "char") && kind(value, "character_literal") && text_literal(text)))
@@ -627,7 +654,8 @@ static bool scalar_default(const JavaFile *annotation, Text *output, TSNode valu
     return false;
 }
 
-static bool array_default(const JavaFile *annotation, Text *output, TSNode value, const Type *type)
+static bool array_default(const JavaFile *annotation, Text *output, TSNode value, const Type *type,
+                          Slice bound, Slice *sentinel)
 {
     add(output, "[");
     if (kind(value, "element_value_array_initializer")) {
@@ -638,11 +666,11 @@ static bool array_default(const JavaFile *annotation, Text *output, TSNode value
                 continue;
             if (!first)
                 add(output, ", ");
-            if (!scalar_default(annotation, output, element, type))
+            if (!scalar_default(annotation, output, element, type, bound, sentinel))
                 return false;
             first = false;
         }
-    } else if (!scalar_default(annotation, output, value, type)) {
+    } else if (!scalar_default(annotation, output, value, type, bound, sentinel)) {
         return false;
     }
     add(output, "]");
@@ -748,9 +776,10 @@ static int emit_field(JavaFile *annotation, Field *field, Text *output)
     append(output, contents(&field->symbol));
     TSNode value = member(node, "value");
     if (!ts_node_is_null(value)) {
+        Slice bound = !strcmp(type->java, "Class") ? upper_class_bound(annotation, type_node) : (Slice){0};
         add(output, " = ");
-        bool supported = array ? array_default(annotation, output, value, type)
-                               : scalar_default(annotation, output, value, type);
+        bool supported = array ? array_default(annotation, output, value, type, bound, &field->class_sentinel)
+                               : scalar_default(annotation, output, value, type, bound, &field->class_sentinel);
         if (!supported)
             return diagnostic(annotation, value, "unsupported annotation default");
     }
@@ -904,6 +933,10 @@ static void emit_candidate(const JavaFile *annotation, Slice name, const Text *s
         if (fields[index].reference_type.length) {
             has_references = true;
             emit_field_reference(annotation, &fields[index]);
+        }
+        if (fields[index].class_sentinel.length) {
+            fputs(",\"classSentinel\":", stdout);
+            json_string(fields[index].class_sentinel);
         }
         putchar('}');
     }

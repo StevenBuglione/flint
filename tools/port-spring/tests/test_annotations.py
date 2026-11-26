@@ -213,16 +213,25 @@ static assert(Settings.init.array == [5, 1, 63]);
 public @interface Settings {
     Class<? extends Number>[] types() default {};
     Class<?> value() default void.class;
+    Class<? extends example.Converter> converter() default example.Converter.class;
+    Class<? extends Number>[] bounds() default {Number.class, Number.class};
 }""")
         self.assertEqual(result.returncode, 0, result.stderr.decode())
         candidate = json.loads(result.stdout)
         self.assertTrue(candidate["classRef"])
+        members = {member["name"]: member for member in candidate["members"]}
+        self.assertEqual(members["value"]["classSentinel"], "void.class")
+        self.assertEqual(members["converter"]["classSentinel"], "example.Converter.class")
+        self.assertEqual(members["bounds"]["classSentinel"], "Number.class")
+        self.assertNotIn("classSentinel", members["types"])
         probe = """module flint.demo;
 import flint.java.classref : ClassRef;
 @safe:
 """ + candidate["body"] + """
 static assert(Settings.init.value == ClassRef.init);
 static assert(Settings.init.types.length == 0);
+static assert(Settings.init.converter == ClassRef.init);
+static assert(Settings.init.bounds == [ClassRef.init, ClassRef.init]);
 @Settings(ClassRef("flint.Foo")) struct Example {}
 static assert(__traits(getAttributes, Example)[0].value.name == "flint.Foo");
 """
@@ -236,6 +245,19 @@ static assert(__traits(getAttributes, Example)[0].value.name == "flint.Foo");
                     cwd=scratch,
                     check=True,
                 )
+
+    def test_real_class_literals_are_not_treated_as_unset(self):
+        for type_, literal in (("Class<? extends Number>", "Integer.class"),
+                               ("Class<? super Integer>", "Integer.class"),
+                               ("Class<Integer>", "Integer.class"),
+                               ("Class<?>", "Integer.class")):
+            with self.subTest(type_=type_, literal=literal):
+                result = self.run_helper(
+                    f"package example; public @interface Settings {{ {type_} value() default {literal}; }}"
+                )
+                self.assertEqual(result.returncode, 2)
+                self.assertFalse(result.stdout)
+                self.assertIn(b"unsupported annotation default", result.stderr)
 
     def test_custom_meta_annotation_is_never_dropped(self):
         result = self.run_helper(

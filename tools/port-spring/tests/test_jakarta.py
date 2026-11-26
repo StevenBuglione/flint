@@ -51,6 +51,15 @@ def rejects(flint, args, diagnostic):
 
 
 def check_cli(flint, helper, cache, scratch):
+    args = command(PROJECT, TAG, PACKAGE + ".Convert", helper, cache)
+    result = run(flint, *args, "--replace-ported")
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    output = json.loads(result.stdout)
+    assert "    ClassRef converter = ClassRef.init;" in output["source"], output
+    entry = json.loads(output["mapping"])["elements"][PACKAGE + ".Convert#converter"]
+    assert entry["rules"] == ["R2", "R4"], entry
+    assert entry["note"] == "Java sentinel AttributeConverter.class maps to ClassRef.init.", entry
+
     for type_name in ("Temporal", "MapKeyTemporal"):
         result = run(flint, *command(PROJECT, TAG, PACKAGE + "." + type_name, helper, cache))
         assert result.returncode == 0, (result.stdout, result.stderr)
@@ -126,6 +135,7 @@ def main():
     generated = []
     matched = 0
     class_rules = 0
+    sentinel_notes = 0
     deferred = []
     rejected = Counter()
     for annotation in annotations:
@@ -141,13 +151,24 @@ def main():
         fragment = json.loads(output["mapping"])
         expected = {annotation["id"], *(annotation["id"] + "#" + m["signature"] for m in annotation["members"])}
         assert fragment["rulebook"] == 2 and set(fragment["elements"]) == expected, fragment
+        expected_notes = {
+            annotation["id"] + "#" + member["signature"]:
+                f"Java sentinel {member['default']} maps to ClassRef.init."
+            for member in annotation["members"]
+            if member.get("default") in {"void.class", "AttributeConverter.class"}
+        }
+        notes = {element: entry["note"] for element, entry in fragment["elements"].items() if "note" in entry}
+        assert notes == expected_notes, (annotation["id"], notes, expected_notes)
+        sentinel_notes += len(notes)
         name = annotation["id"].split(".")[-1]
         body = declarations(output["source"])[name]
         if name in hand:
             for element, entry in fragment["elements"].items():
                 old = mapping[element]
-                if entry != old:
-                    assert (entry["status"], entry["d"]) == (old["status"], old["d"]), (element, entry, old)
+                ignored = {"rules", "note"} if element in expected_notes else {"rules"}
+                assert ({key: value for key, value in entry.items() if key not in ignored}
+                        == {key: value for key, value in old.items() if key not in ignored}), (element, entry, old)
+                if entry["rules"] != old["rules"]:
                     assert set(entry["rules"]) ^ set(old["rules"]) == {"R4"}, (element, entry, old)
                     class_rules += 1
             assert compare_fields(body) == compare_fields(hand[name]), (name, body, hand[name])
@@ -180,6 +201,7 @@ def main():
     print(f"{len(generated)}/{len(annotations)} annotations compile unchanged on DMD and LDC")
     print(f"{sum(count for _, _, count in generated)} mapping entries, {matched} annotations match the hand port")
     print(f"Class-token mappings differ only in R4 citations for {class_rules} existing entries")
+    print(f"Class-token sentinel notes: {sentinel_notes}")
     print(f"Deferred annotations with generated candidates: {', '.join(deferred)}")
     print(f"Rejected: {dict(sorted(rejected.items()))}")
 

@@ -272,7 +272,8 @@ private string nestedDefault(const ref JavaReferences references, const ref ApiT
     return null;
 }
 
-private string[] manifestDefaults(string text)
+/// Split a canonical manifest default whose elements are single tokens or comma-free expressions.
+package string[] manifestDefaults(string text)
 {
     import std.algorithm.iteration : splitter;
     import std.string : strip;

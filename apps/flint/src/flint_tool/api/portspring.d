@@ -3,7 +3,7 @@ module flint_tool.api.portspring;
 
 import flint_tool.api.coverage : Classifier, Mapping, MappingEntry, Status;
 import flint_tool.api.headers : LicenceEntry;
-import flint_tool.api.java : MemberKind, TypeDecl, TypeKind;
+import flint_tool.api.java : Member, MemberKind, TypeDecl, TypeKind;
 import flint_tool.api.manifest : ApiType, Manifest, memberId;
 import flint_tool.api.upstreams : Upstream;
 import std.json : JSONValue;
@@ -341,9 +341,18 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
     import std.array : join;
 
     const dName = candidate["symbol"].str;
-    string[string] fields;
+    struct Field
+    {
+        string symbol;
+        string sentinel;
+    }
+
+    Field[string] fields;
     foreach (ref field; candidate["members"].arrayNoRef)
-        fields[field["name"].str] = field["symbol"].str;
+    {
+        const sentinel = "classSentinel" in field;
+        fields[field["name"].str] = Field(field["symbol"].str, sentinel is null ? null : sentinel.str);
+    }
     if (!identifier(dName) || fields.length != type.decl.members.length)
     {
         error = "translator symbols do not match the manifest for " ~ type.decl.id;
@@ -351,19 +360,26 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
     }
     const dType = module_ ~ "." ~ dName;
     MappingEntry[string] entries;
+    string[string] notes;
     const annotation = type.decl.kind == TypeKind.annotation;
     const memberKind = annotation ? MemberKind.attribute : MemberKind.constant;
     entries[type.decl.id] = mappingEntry(dType, type.decl.name, dName, annotation);
     foreach (ref member; type.decl.members)
     {
         const field = member.name in fields;
-        if (member.kind != memberKind || field is null || !identifier(*field))
+        if (member.kind != memberKind || field is null || !identifier(field.symbol))
         {
             error = "translator field does not match " ~ memberId(type.decl, member) ~ " in the manifest";
             return null;
         }
-        entries[memberId(type.decl, member)] = mappingEntry(dType ~ "." ~ *field, member.name,
-                *field, annotation, member.type);
+        const id = memberId(type.decl, member);
+        entries[id] = mappingEntry(dType ~ "." ~ field.symbol, member.name, field.symbol, annotation, member.type);
+        if (field.sentinel.length)
+        {
+            notes[id] = classSentinelNote(member, field.sentinel, error);
+            if (error.length)
+                return null;
+        }
     }
     const classifier = Classifier(mapping);
     string[] lines;
@@ -371,7 +387,7 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
     {
         const proposed = entries[key];
         const current = classifier.classify(key);
-        const line = replacement(key, current, proposed, replacePorted, error);
+        const line = replacement(key, current, proposed, notes.get(key, null), replacePorted, error);
         if (error.length)
             return null;
         if (line.length)
@@ -381,15 +397,36 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
             pin.project ~ "@" ~ pin.version_) ~ "],\n\"elements\":{\n" ~ lines.join(",\n") ~ "\n}}\n";
 }
 
+private string classSentinelNote(const ref Member member, string sentinel, out string error)
+{
+    import flint_tool.api.annotation_references : manifestDefaults;
+    import std.algorithm.searching : all, endsWith, startsWith;
+
+    const base = attributeBaseType(member.type);
+    const array = member.type.endsWith("[]");
+    const type = array ? member.type[0 .. $ - 2] : member.type;
+    const prefix = base ~ "<? extends ";
+    const bound = type.startsWith(prefix) && type.endsWith(">") ? type[prefix.length .. $ - 1] : "";
+    const defaults = array ? manifestDefaults(member.defaultValue) : [member.defaultValue];
+    if (member.kind != MemberKind.attribute || (base != "Class" && base != "java.lang.Class")
+            || (sentinel != "void.class" && (!bound.length || sentinel != bound ~ ".class"))
+            || !defaults.length || !defaults.all!(value => value == sentinel))
+    {
+        error = member.name ~ ": unsupported class sentinel does not match the pinned manifest: " ~ sentinel;
+        return null;
+    }
+    return "Java sentinel " ~ sentinel ~ " maps to ClassRef.init.";
+}
+
 private string replacement(string key, const MappingEntry* current, const ref MappingEntry proposed,
-        bool replacePorted, out string error)
+        string note, bool replacePorted, out string error)
 {
     if (current is null)
     {
         error = "no existing mapping classification for " ~ key;
         return null;
     }
-    const line = quote(key) ~ ":" ~ renderEntry(proposed);
+    const line = quote(key) ~ ":" ~ renderEntry(proposed, note);
     if (current.status == Status.excluded && current.category == "deferred")
         return line;
     if (current.status == Status.ported || current.status == Status.adapted)
@@ -400,7 +437,7 @@ private string replacement(string key, const MappingEntry* current, const ref Ma
             return null;
     }
     error = key ~ ": mapping conflict at " ~ current.match ~ "; existing " ~ renderEntry(
-            *current) ~ "; proposed " ~ renderEntry(proposed);
+            *current) ~ "; proposed " ~ renderEntry(proposed, note);
     return null;
 }
 
@@ -429,13 +466,14 @@ private MappingEntry mappingEntry(string symbol, string javaName, string dName, 
     return entry;
 }
 
-private string renderEntry(const ref MappingEntry entry)
+private string renderEntry(const ref MappingEntry entry, string note = "")
 {
     const status = "{\"status\":" ~ quote(cast(string) entry.status);
     if (entry.status == Status.excluded)
         return status ~ ",\"category\":" ~ quote(entry.category) ~ ",\"phase\":" ~ quote(entry.phase) ~ "}";
     const rules = entry.rules.length ? ",\"rules\":" ~ JSONValue(entry.rules).toString() : "";
-    return status ~ rules ~ ",\"d\":" ~ quote(entry.symbol) ~ "}";
+    const explanation = note.length ? ",\"note\":" ~ quote(note) : "";
+    return status ~ rules ~ ",\"d\":" ~ quote(entry.symbol) ~ explanation ~ "}";
 }
 
 private string checkedSource(const ref Upstream pin, const(Upstream)[] pins,
@@ -513,7 +551,6 @@ version (unittest)
 {
     private ApiType annotationFixture()
     {
-        import flint_tool.api.java : Member;
 
         ApiType annotation;
         annotation.decl.kind = TypeKind.annotation;
@@ -655,6 +692,51 @@ unittest
     manifest.types[0].decl.members = null;
     assert(supportedType(manifest, pin, id, error) is null);
     assert(error.indexOf("unsupported enum shape") >= 0, error);
+}
+
+@("class sentinel notes require the exact pinned class bound and default")
+unittest
+{
+    import flint_tool.api.coverage : parseMapping;
+    import std.json : parseJSON;
+    import std.string : indexOf;
+
+    auto annotation = annotationFixture();
+    auto member = &annotation.decl.members[0];
+    member.type = "Class<? extends example.Converter>";
+    member.defaultValue = "example.Converter.class";
+    const candidate = parseJSON(`{"symbol":"FlintHint","members":[{"name":"version","symbol":"version_",
+            "classSentinel":"example.Converter.class"}]}`);
+    Upstream pin;
+    Mapping mapping;
+    string error;
+    assert(parseMapping(`{"elements":{
+        "org.springframework.example.SpringHint":{"status":"adapted","rules":["R2","R1"],
+            "d":"flint.example.FlintHint"},
+        "org.springframework.example.SpringHint#version":{"status":"adapted","rules":["R2","R4","R19"],
+            "d":"flint.example.FlintHint.version_"}
+    }}`, mapping, error), error);
+    const existing = classifiedFragment(pin, annotation, "flint.example", candidate, mapping, error);
+    assert(existing.length && !parseJSON(existing)["elements"].objectNoRef.length, error);
+    const fragment = classifiedFragment(pin, annotation, "flint.example", candidate, mapping, error, true);
+    assert(fragment.length, error);
+    const entries = parseJSON(fragment)["elements"];
+    assert(entries["org.springframework.example.SpringHint#version"]["note"].str
+            == "Java sentinel example.Converter.class maps to ClassRef.init.");
+
+    member.type = "Class<? super example.Converter>";
+    assert(!classifiedFragment(pin, annotation, "flint.example", candidate, mapping, error, true).length);
+    assert(error.indexOf("does not match the pinned manifest") >= 0, error);
+    member.type = "Class<? extends example.Converter>";
+    member.defaultValue = "example.Other.class";
+    assert(!classifiedFragment(pin, annotation, "flint.example", candidate, mapping, error, true).length);
+    assert(error.indexOf("does not match the pinned manifest") >= 0, error);
+
+    member.type = "Class<? extends example.Converter>[]";
+    member.defaultValue = "{example.Converter.class, example.Converter.class}";
+    assert(classSentinelNote(*member, "example.Converter.class", error).length, error);
+    member.defaultValue = "{example.Converter.class, example.Other.class}";
+    assert(!classSentinelNote(*member, "example.Converter.class", error).length);
 }
 
 unittest
