@@ -26,7 +26,7 @@ import flint.expression : EvaluationContext, EvaluationException, Expression, Ex
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
 import flint.expression.spel.standard.arithmetic : ArithmeticExpression, isRootReference, parseArithmetic;
 import flint.expression.spel.standard.literal : utf16Length;
-import flint.expression.spel.standard.property : parsePropertyPath, PropertyStep, readPropertyPath;
+import flint.expression.spel.standard.property : PropertyStep, readPropertyPath;
 import flint.expression.spel.support : StandardEvaluationContext;
 import flint.java.lang : ArithmeticException, IllegalArgumentException;
 
@@ -46,8 +46,6 @@ class SpelExpressionParser : ExpressionParser
         enum maxLength = 10_000;
         if (expressionString.length > maxLength && utf16Length(expressionString, maxLength) > maxLength)
             throw new SpelEvaluationException(SpelMessage.MAX_EXPRESSION_LENGTH_EXCEEDED, "10000");
-        if (auto path = parsePropertyPath(expressionString))
-            return new SpelExpression(expressionString, ArithmeticExpression.init, path);
         return new SpelExpression(expressionString, parseArithmetic(expressionString));
     }
 }
@@ -57,14 +55,11 @@ class SpelExpression : Expression
 {
     private string expressionString;
     private ArithmeticExpression expression;
-    private immutable(PropertyStep)[] properties;
 
-    package(flint.expression.spel.standard) this(string expressionString,
-            ArithmeticExpression expression, immutable(PropertyStep)[] properties = null)
+    package(flint.expression.spel.standard) this(string expressionString, ArithmeticExpression expression)
     {
         this.expressionString = expressionString;
         this.expression = expression;
-        this.properties = properties;
     }
 
     override string getExpressionString() const pure nothrow @nogc
@@ -98,7 +93,7 @@ class SpelExpression : Expression
     override bool isWritable(EvaluationContext context)
     {
         requireContext(context);
-        if (properties.length)
+        if (expression.hasProperties())
             return false;
         if (typeid(cast(Object) context) !is typeid(StandardEvaluationContext))
             context.getRootObject();
@@ -107,20 +102,19 @@ class SpelExpression : Expression
 
     private Any evaluateWithContext(EvaluationContext context, Any rootObject, bool useContextRoot)
     {
-        if (properties.length)
-        {
-            if (useContextRoot && context !is null)
-                rootObject = context.getRootObject().getValue();
-            auto standard = cast(StandardEvaluationContext) context;
-            const table = standard is null ? null : standard.descriptorTable();
-            return readPropertyPath(expressionString, properties, rootObject, table);
-        }
+        auto standard = cast(StandardEvaluationContext) context;
         // Guard virtual behavior: a subclass may override either lookup.
-        if (context is null || typeid(cast(Object) context) is typeid(StandardEvaluationContext))
-            return unwrap(evaluate(cast(StandardEvaluationContext) context, rootObject, useContextRoot));
-        if (useContextRoot)
+        if (!expression.hasProperties() && (context is null
+                || typeid(cast(Object) context) is typeid(StandardEvaluationContext)))
+            return unwrap(evaluate(standard, rootObject, useContextRoot));
+        if (useContextRoot && context !is null)
             rootObject = context.getRootObject().getValue();
-        return unwrap(expression.evaluate(rootObject, &context.lookupVariable));
+        const table = standard is null ? null : standard.descriptorTable();
+        return unwrap(expression.evaluate(rootObject, (string name, scope const(PropertyStep)[] path) {
+                const useRoot = name is null || isRootReference(name);
+                auto receiver = useRoot ? rootObject : context is null ? Any.init : context.lookupVariable(name);
+                return path.length ? readPropertyPath(expressionString, path, receiver, table) : receiver;
+            }));
     }
 
     private Any unwrap(Result!Any result)
@@ -141,12 +135,12 @@ class SpelExpression : Expression
     package(flint.expression) Result!Any evaluate(StandardEvaluationContext context = null,
             Any rootObject = Any.init, bool useContextRoot = true) nothrow @nogc
     {
-        if (properties.length)
+        if (expression.hasProperties())
             return Result!Any(Any.init, Error(Status.unsupported, "Property reads use the SpEL API boundary"));
         if (useContextRoot && expression.readsRoot && context !is null)
             rootObject = context.readRootObject().getValue();
-        return expression.evaluate(rootObject, (string name) nothrow @nogc => context is null ? Any.init
-                : context.readVariable(name));
+        return expression.evaluate(rootObject, (string name,
+                scope const(PropertyStep)[]) nothrow @nogc => context is null ? Any.init : context.readVariable(name));
     }
 }
 

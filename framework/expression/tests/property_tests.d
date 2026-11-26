@@ -36,6 +36,11 @@ private final class Place
     {
         return city;
     }
+
+    int getPopulation() const
+    {
+        return 400;
+    }
 }
 
 private class Inventor
@@ -221,4 +226,35 @@ unittest
     auto error = failure(new SpelExpressionParser, "#root.broken", context,
             SpelMessage.EXCEPTION_DURING_PROPERTY_READ, 6);
     assert(cast(IllegalStateException) error.getCause() !is null);
+}
+
+@("property paths are operands in arithmetic and boolean expressions")
+unittest
+{
+    auto inventor = new Inventor;
+    inventor.birthplace = new Place;
+    auto context = new StandardEvaluationContext(Any.of(inventor));
+    context.setDescriptorTable(table());
+    context.setVariable("other", Any.of(inventor));
+    auto parser = new SpelExpressionParser;
+
+    assert(parser.parseExpression("placeOfBirth.population + 2").getValue(context).get!int == 402);
+    assert(parser.parseExpression("#other.placeOfBirth.population / 2").getValue(context).get!int == 200);
+    assert(parser.parseExpression("name == 'Nikola Tesla' && #this.placeOfBirth.population > 300")
+            .getValue(context).get!bool);
+    assert(parser.parseExpression("#other.placeOfBirth").getValue(context).asObject() is inventor.birthplace);
+}
+
+@("conditionals read properties only in evaluated branches")
+unittest
+{
+    auto context = new StandardEvaluationContext(Any.of(new Inventor));
+    context.setDescriptorTable(table());
+    auto parser = new SpelExpressionParser;
+
+    assert(parser.parseExpression("false && broken == 'called'").getValue(context).get!bool == false);
+    assert(parser.parseExpression("true ? 20 : #root.broken").getValue(context).get!int == 20);
+    assert(parser.parseExpression("name ?: broken").getValue(context).get!string == "Nikola Tesla");
+    assert(parser.parseExpression("placeOfBirth?.population ?: 21").getValue(context).get!int == 21);
+    failure(parser, "false ? 'unused' : broken", context, SpelMessage.EXCEPTION_DURING_PROPERTY_READ, 19);
 }

@@ -26,7 +26,8 @@ import flint.arena : Error, Result, Status;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decodeUtf8;
 import flint.expression.spel : SpelMessage;
-import flint.expression.spel.standard.literal : LiteralParser, startsIdentifier;
+import flint.expression.spel.standard.literal : LiteralName, LiteralParser, literalName, startsIdentifier;
+import flint.expression.spel.standard.property : PropertySeparator, PropertyStep, readPropertyStep, readSeparator;
 import flint.java.lang : IllegalArgumentException;
 import std.ascii : isAlpha, isDigit, toLower;
 
@@ -44,13 +45,21 @@ struct ArithmeticExpression
     private immutable(Instruction)[] instructions;
     string variable;
     bool readsRoot;
+    private immutable(PropertyStep[])[] propertyPaths;
+
+    bool hasProperties() const pure nothrow @nogc
+    {
+        return propertyPaths.length != 0;
+    }
 
     Result!Any evaluate(Read)(Any root, scope Read read)
     {
         if (variable !is null)
-            return Result!Any(isRootReference(variable) ? root : read(variable));
+            return Result!Any(isRootReference(variable) ? root : read(variable, null));
         if (instructions.length == 0)
             return Result!Any(constant);
+        if (instructions.length == 1 && instructions[0].op == Op.property)
+            return Result!Any(read(instructions[0].variable, propertyPaths[instructions[0].jump]));
         enum shortStack = 16;
         if (instructions.length < 2 * shortStack)
         {
@@ -61,46 +70,43 @@ struct ArithmeticExpression
         return evaluateStack(stack, root, read);
     }
 
+private:
     // The evaluator advances to a lookup or the final result. Only the lookup may dispatch to user code.
-    private Result!Any evaluateStack(Read)(scope Scalar[] stack, const ref Any root, scope Read read)
+    Result!Any evaluateStack(Read)(scope Scalar[] stack, const ref Any root, scope Read read)
     {
         size_t depth, next;
         Result!Any result;
-        while (auto variable = advance(stack, root, depth, next, result))
+        while (auto instruction = advance(stack, depth, next, result))
         {
-            const value = read(variable);
+            const path = instruction.op == Op.property ? propertyPaths[instruction.jump] : null;
+            const value = path.length == 0 && isRootReference(instruction.variable) ? root
+                : read(instruction.variable, path);
             stack[depth++] = Scalar.from(value);
         }
         return result;
     }
 
-    private string advance(scope Scalar[] stack, const ref Any root, ref size_t depth, ref size_t next,
-            ref Result!Any result) nothrow @nogc
+    const(Instruction)* advance(scope Scalar[] stack, ref size_t sp, ref size_t pc, ref Result!Any result) nothrow @nogc
     {
-        for (; next < instructions.length;)
+        for (; pc < instructions.length;)
         {
-            const instruction = &instructions[next++];
+            const instruction = &instructions[pc++];
             if (instruction.op == Op.literal)
             {
-                stack[depth++] = instruction.value;
+                stack[sp++] = instruction.value;
                 continue;
             }
-            if (instruction.op == Op.variable)
-            {
-                if (!isRootReference(instruction.variable))
-                    return instruction.variable;
-                stack[depth++] = Scalar.from(root);
-                continue;
-            }
+            if (instruction.op == Op.variable || instruction.op == Op.property)
+                return instruction;
             if (instruction.op == Op.elvis || instruction.op == Op.jump)
             {
-                stepJump(*instruction, stack[depth - 1], depth, next);
+                stepJump(*instruction, stack[sp - 1], sp, pc);
                 continue;
             }
             if (instruction.op >= Op.positive)
             {
                 const error = instruction.op < Op.and_ ? stepSign(*instruction,
-                        stack[depth - 1]) : stepBoolean(*instruction, stack[depth - 1], depth, next);
+                        stack[sp - 1]) : stepBoolean(*instruction, stack[sp - 1], sp, pc);
                 if (error.code != Status.ok)
                 {
                     result.error = error;
@@ -108,14 +114,14 @@ struct ArithmeticExpression
                 }
                 continue;
             }
-            const right = stack[--depth];
-            const applied = applyOperator(instruction.op, stack[depth - 1], right);
+            const right = stack[--sp];
+            const applied = applyOperator(instruction.op, stack[sp - 1], right);
             if (!applied.ok())
             {
                 result.error = Error(applied.error.code, applied.error.message, instruction.position);
                 return null;
             }
-            stack[depth - 1] = applied.value;
+            stack[sp - 1] = applied.value;
         }
         if (stack[0].kind == ValueKind.other)
             result.error = Error(Status.unsupported, "SpEL conditional result requires a scalar value");
@@ -137,13 +143,14 @@ ArithmeticExpression parseArithmetic(string source)
         throw parser.reader.errorAt(end, SpelMessage.MORE_INPUT, source[end .. $]);
     if (parser.instructions.length == 0)
         return ArithmeticExpression(parser.firstLiteral, null, parser.firstVariable, parser.readsRoot);
-    return ArithmeticExpression(Any.init, parser.instructions.idup, null, parser.readsRoot);
+    return ArithmeticExpression(Any.init, parser.instructions.idup, null, parser.readsRoot, parser.propertyPaths.idup);
 }
 
 private enum Op : ubyte
 {
     literal,
     variable,
+    property,
     add,
     subtract,
     multiply,
@@ -184,6 +191,7 @@ private struct ArithmeticParser
     size_t firstPosition = size_t.max;
     string firstVariable;
     bool readsRoot;
+    immutable(PropertyStep)[][] propertyPaths;
 
     size_t conditional(uint nesting)
     {
@@ -322,10 +330,26 @@ private struct ArithmeticParser
         {
             const name = readVariableName();
             readsRoot |= isRootReference(name);
-            operand(position, Any.init, name);
+            const separator = readSeparator(reader);
+            if (separator != PropertySeparator.absent)
+                property(position, name, readPropertyStep(reader, separator == PropertySeparator.safeDot));
+            else
+                operand(position, Any.init, name);
         }
         else
-            operand(position, reader.readLiteral());
+        {
+            const name = reader.readIdentifierName();
+            if (name !is null && literalName(name) == LiteralName.other)
+            {
+                readsRoot = true;
+                property(position, null, PropertyStep(name, position, false));
+            }
+            else
+            {
+                reader.position = position;
+                operand(position, reader.readLiteral());
+            }
+        }
         return position;
     }
 
@@ -370,7 +394,7 @@ private struct ArithmeticParser
 
     void operand(size_t position, Any value, string variable = null)
     {
-        if (firstPosition == size_t.max)
+        if (firstPosition == size_t.max && instructions.length == 0)
         {
             firstLiteral = value;
             firstPosition = position;
@@ -383,7 +407,7 @@ private struct ArithmeticParser
 
     void emitFirstOperand()
     {
-        if (instructions.length == 0)
+        if (instructions.length == 0 && firstPosition != size_t.max)
             emitOperand(firstPosition, firstLiteral, firstVariable);
     }
 
@@ -393,6 +417,20 @@ private struct ArithmeticParser
             instructions ~= Instruction(Op.literal, position, Scalar.from(value));
         else
             instructions ~= Instruction(Op.variable, position, Scalar.init, 0, variable);
+    }
+
+    void property(size_t position, string target, PropertyStep first)
+    {
+        emitFirstOperand();
+        auto steps = [first];
+        auto separator = readSeparator(reader);
+        while (separator != PropertySeparator.absent)
+        {
+            steps ~= readPropertyStep(reader, separator == PropertySeparator.safeDot);
+            separator = readSeparator(reader);
+        }
+        instructions ~= Instruction(Op.property, position, Scalar.init, propertyPaths.length, target);
+        propertyPaths ~= steps.idup;
     }
 }
 

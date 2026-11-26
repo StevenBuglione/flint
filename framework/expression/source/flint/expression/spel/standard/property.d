@@ -23,7 +23,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, PropertyDescriptor;
 import flint.engine.aot.name : canonicalTypeName;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
-import flint.expression.spel.standard.literal : LiteralName, LiteralParser, literalName, utf16Length;
+import flint.expression.spel.standard.literal : LiteralParser, utf16Length;
 import std.ascii : isAlphaNum;
 
 @safe:
@@ -36,52 +36,37 @@ struct PropertyStep
     bool nullSafe;
 }
 
-/// Recognize a complete root-relative property path. The scalar parser handles other expressions.
-immutable(PropertyStep)[] parsePropertyPath(string source)
+enum PropertySeparator : ubyte
 {
-    auto reader = LiteralParser(source);
-    reader.skipWhitespace();
-
-    bool nullSafe;
-    const explicitRoot = reader.peek == '#';
-    if (explicitRoot)
-    {
-        ++reader.position;
-        reader.skipWhitespace();
-        const root = reader.readIdentifierName();
-        if ((root != "root" && root != "this") || !readSeparator(reader, nullSafe))
-            return null;
-    }
-
-    PropertyStep[] steps;
-    while (true)
-    {
-        reader.skipWhitespace();
-        const position = reader.position;
-        const name = reader.readIdentifierName();
-        if (name is null || (!explicitRoot && steps.length == 0 && literalName(name) != LiteralName.other))
-            return null;
-        steps ~= PropertyStep(name, position, nullSafe);
-        if (!readSeparator(reader, nullSafe))
-            return reader.position == source.length ? steps.idup : null;
-    }
+    absent,
+    dot,
+    safeDot,
 }
 
-private bool readSeparator(ref LiteralParser reader, out bool nullSafe) pure nothrow @nogc
+PropertyStep readPropertyStep(ref LiteralParser reader, bool nullSafe)
+{
+    reader.skipWhitespace();
+    const position = reader.position;
+    const name = reader.readIdentifierName();
+    if (name is null)
+        throw reader.errorAt(position, SpelMessage.OOD);
+    return PropertyStep(name, position, nullSafe);
+}
+
+PropertySeparator readSeparator(ref LiteralParser reader) pure nothrow @nogc
 {
     reader.skipWhitespace();
     if (reader.peek == '.')
     {
         ++reader.position;
-        return true;
+        return PropertySeparator.dot;
     }
     if (reader.peek == '?' && reader.position + 1 < reader.text.length && reader.text[reader.position + 1] == '.')
     {
         reader.position += 2;
-        nullSafe = true;
-        return true;
+        return PropertySeparator.safeDot;
     }
-    return false;
+    return PropertySeparator.absent;
 }
 
 /// Read through erased AOT accessors at the Spring API boundary.
