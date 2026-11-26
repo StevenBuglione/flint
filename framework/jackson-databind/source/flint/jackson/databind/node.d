@@ -287,7 +287,7 @@ abstract class JsonNode
     }
 
     /// Find the node selected by the expression or report the first unmatched segment.
-    JsonNode requiredAt(string expression)
+    final JsonNode requiredAt(string expression)
     {
         return requiredAt(JsonPointer.compile(expression));
     }
@@ -298,8 +298,8 @@ abstract class JsonNode
         auto remaining = pointer;
         if (auto node = followPointer(remaining))
             return node;
-        throw new JsonNodeException(
-                "No node at '" ~ pointer.toString() ~ "' (unmatched part: '" ~ remaining.toString() ~ "')");
+        return requiredViolation("No node at '" ~ pointer.toString() ~ "' (unmatched part: '" ~ remaining.toString()
+                ~ "')");
     }
 
     private JsonNode followPointer(ref JsonPointer remaining)
@@ -331,7 +331,7 @@ abstract class JsonNode
     JsonNode require()
     {
         if (isMissingNode())
-            throw new JsonNodeException("require() called on `MissingNode`");
+            return requiredViolation("require() called on `MissingNode`");
         return this;
     }
 
@@ -345,9 +345,9 @@ abstract class JsonNode
     JsonNode requireNonNull()
     {
         if (isNull())
-            throw new JsonNodeException("requireNonNull() called on `NullNode`");
+            return requiredViolation("requireNonNull() called on `NullNode`");
         if (isMissingNode())
-            throw new JsonNodeException("requireNonNull() called on `MissingNode`");
+            return requiredViolation("requireNonNull() called on `MissingNode`");
         return this;
     }
 
@@ -359,12 +359,25 @@ abstract class JsonNode
 
     private static T castRequiredNode(T : JsonNode)(JsonNode node)
     {
-        import flint.java.lang : ClassCastException;
-
         auto typed = cast(T) node;
         if (typed is null && node !is null)
-            throw new ClassCastException("class " ~ typeid(node).name ~ " cannot be cast to class " ~ typeid(T).name);
+            reportRequiredCastFailure(node, typeid(T).name);
         return typed;
+    }
+
+    pragma(inline, false) private static JsonNode requiredViolation(string message,
+            string file = __FILE__, size_t line = __LINE__)
+    {
+        throw new JsonNodeException(message, file, line);
+    }
+
+    pragma(inline, false) private static void reportRequiredCastFailure(JsonNode node, string target,
+            string file = __FILE__, size_t line = __LINE__)
+    {
+        import flint.java.lang : ClassCastException;
+
+        throw new ClassCastException("class " ~ typeid(node).name ~ " cannot be cast to class " ~ target,
+                null, file, line);
     }
 
     /// Like `get(propertyName)`, but throws when the property is absent.
@@ -373,9 +386,9 @@ abstract class JsonNode
         if (auto node = get(propertyName))
             return node;
         if (!isObject())
-            throw new JsonNodeException("Node of type `" ~ typeid(this).name ~ "` has no fields");
+            return requiredViolation("Node of type `" ~ typeid(this).name ~ "` has no fields");
         const name = propertyName is null ? "null" : propertyName;
-        throw new JsonNodeException("No value for property '" ~ name ~ "' of `" ~ className() ~ "`");
+        return requiredViolation("No value for property '" ~ name ~ "' of `" ~ className() ~ "`");
     }
 
     /// Like `get(index)`, but throws when there is no such element.
@@ -386,9 +399,9 @@ abstract class JsonNode
         if (auto node = get(index))
             return node;
         if (!isArray())
-            throw new JsonNodeException("Node of type `" ~ typeid(this).name ~ "` has no indexed values");
-        throw new JsonNodeException("No value at index #" ~ decimal(
-                cast(long) index) ~ " [0, " ~ decimal(cast(long) size()) ~ ") of `" ~ className() ~ "`");
+            return requiredViolation("Node of type `" ~ typeid(this).name ~ "` has no indexed values");
+        return requiredViolation("No value at index #" ~ decimal(cast(long) index) ~ " [0, " ~ decimal(
+                cast(long) size()) ~ ") of `" ~ className() ~ "`");
     }
 
     /// Whether an Object node has property `propertyName` (even if its value is null).

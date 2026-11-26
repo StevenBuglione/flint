@@ -43799,7 +43799,7 @@
 "tools.jackson.databind.JsonNode#required(String)":{"status":"ported","d":"flint.jackson.databind.node.JsonNode.required"},
 "tools.jackson.databind.JsonNode#required(int)":{"status":"ported","d":"flint.jackson.databind.node.JsonNode.required"},
 "tools.jackson.databind.JsonNode#requiredAt(JsonPointer)":{"status":"ported","d":"flint.jackson.databind.node.JsonNode.requiredAt"},
-"tools.jackson.databind.JsonNode#requiredAt(String)":{"status":"ported","d":"flint.jackson.databind.node.JsonNode.requiredAt"},
+"tools.jackson.databind.JsonNode#requiredAt(String)":{"status":"adapted","d":"flint.jackson.databind.node.JsonNode.requiredAt","rules":["R3","D-JACKSON-11"]},
 "tools.jackson.databind.JsonNode**":{"status":"excluded","category":"deferred","phase":"2"},
 "tools.jackson.databind.JsonNode.OverwriteMode**":{"status":"excluded","category":"deferred","phase":"2"},
 "tools.jackson.databind.KeyDeserializer**":{"status":"excluded","category":"deferred","phase":"2"},

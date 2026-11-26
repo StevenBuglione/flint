@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 514 | 17 | 1 | 2,763 |
-| framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
+| framework | jackson-databind@3.1.8 | 608 | 55 | 5 | 9,799 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 159 | 143 | 0 | 2,088 |
@@ -4185,6 +4185,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `tools.jackson.databind.JsonNode#require()` | `flint.jackson.databind.node.JsonNode.require` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requireNonNull()` | `flint.jackson.databind.node.JsonNode.requireNonNull` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
+| `tools.jackson.databind.JsonNode#requiredAt(String)` | `flint.jackson.databind.node.JsonNode.requiredAt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [D-JACKSON-11](api-mapping.md#deviations) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,Class)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,JavaType)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,TypeReference)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R7](api-mapping.md#r7-overloads) |  |

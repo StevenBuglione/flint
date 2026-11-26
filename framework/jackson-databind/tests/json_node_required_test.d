@@ -10,9 +10,10 @@
  */
 module json_node_required_test;
 
-import flint.jackson.core : JsonPointer;
+import flint.jackson.core : JsonGenerator, JsonPointer, JsonToken;
 import flint.jackson.databind : JsonMapper;
-import flint.jackson.databind.node : ArrayNode, JsonNode, JsonNodeException, MissingNode, NullNode, ObjectNode;
+import flint.jackson.databind.node : ArrayNode, JsonNode, JsonNodeException, JsonNodeType,
+    MissingNode, NullNode, ObjectNode, ValueNode;
 import flint.java.lang : ClassCastException, NullPointerException;
 import std.exception : assertThrown;
 
@@ -198,4 +199,51 @@ unittest
     auto nullable = cast(NullNode) root.path("data").path("nullable");
     assert(nullable.require!NullNode() is nullable);
     assertRequiredViolation(() => nullable.requireNonNull!NullNode(), "requireNonNull() called on `NullNode`");
+}
+
+private final class PointerExtensionNode : ValueNode
+{
+    private JsonNode child;
+
+    this(JsonNode child)
+    {
+        this.child = child;
+    }
+
+    override JsonNodeType getNodeType() const pure nothrow @nogc
+    {
+        return JsonNodeType.STRING;
+    }
+
+    override JsonToken asToken() const pure nothrow @nogc
+    {
+        return JsonToken.VALUE_STRING;
+    }
+
+    override void serialize(JsonGenerator generator)
+    {
+        generator.writeString("extension");
+    }
+
+    override bool equals(const JsonNode other) const
+    {
+        return other is this;
+    }
+
+    protected override JsonNode _at(JsonPointer pointer)
+    {
+        return pointer.matchesProperty("child") ? child : null;
+    }
+}
+
+@("requiredAt string and pointer overloads dispatch through _at")
+unittest
+{
+    auto child = NullNode.getInstance();
+    JsonNode root = new PointerExtensionNode(child);
+    auto pointer = JsonPointer.compile("/child");
+    assert(root.at(pointer) is child);
+    assert(root.requiredAt(pointer) is child);
+    assert(root.requiredAt("/child") is child);
+    checkRequiredAtFailure(root, "/child/missing", "/missing");
 }
