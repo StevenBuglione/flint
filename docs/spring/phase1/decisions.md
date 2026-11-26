@@ -1241,3 +1241,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **If the per-T interface table keeps the floor above about 2 KiB,** an erased marker interface with non-virtual typed methods comes back for review before coding, with an R10 note.
   - **Deferred:** the DUB namespace move.
 - 2026-11-26 04:55Z, coordinator, under the owner's standing approval: **Boot autoconfigure gains direct dependencies on `flint:beans` and `flint:core`** (sol-boot). They follow the tier direction and are already in the link closure. Each edge lands with the first import that needs it, followed by `tools/check_locks.py` over every project. Deferred contracts (`AnnotatedTypeMetadata`, `Condition`, `ConditionContext`) are not imported until they land.
+- 2026-11-26 05:05Z, coordinator, under the owner's standing approval: **module size probes link with the flags that apps ship with (`probe-flags-rebaseline`).**
+  - **Finding** (sol-boot S-36): `measure_builds --framework-sizes` links each module probe without the release profile's LDC `-fno-moduleinfo-localclasses` and `--gc-sections`.
+    - Without those flags, ModuleInfo class lists keep every class of every imported module alive.
+    - Importing two beans interfaces cost +181,600 B in the probe but +11,824 B with the release flags.
+    - gs-rest-service's O3 binary changed by −16 B.
+  - **Decision:** module probes use the release profile's link flags. proof-harness makes the change.
+  - **Re-baseline:** every module's linked-byte cap is re-baselined once, on the same machine, at the new measurement plus 10%, and never above its old cap. The commit carries `Budget-Raise-Approved: probe-flags-rebaseline` and a before/after table for every module. Template caps are unchanged, because templates don't depend on link flags.
+  - **Until it lands:** slices whose probe growth comes from ModuleInfo retention wait, unless their release-flag growth fits the existing rules. sol-boot's report slice waits.
