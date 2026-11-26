@@ -1337,3 +1337,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - No engine or hot-path caller loses `@nogc`. On main, the only outside caller is `LocalDateTime.atZone`, which is already unattributed.
   - The effect change goes into the mapping and the generated java-differences page, with a migration note.
   - The prototype stays private until the apps' closure passes the train's budgets.
+- 2026-11-26 14:46Z, coordinator: **aop may depend directly on java-regex** (sol-aop, for Spring's ~30 regexp pointcut elements; the MemberDescriptorRef boundary was approved by flint-aot). aop isn't in the apps' closure, and java-regex already is through hibernate-validator, so no app gains a package. There's no cycle.
+  - The policy and DUB edges land in one commit, followed by `tools/check_locks.py` over every project.
+  - Spring's full-match semantics (`matcher.matches()`) are kept, with pinned full-match versus `find()` cases.
+  - The pattern is compiled once during configuration, and the matching path is allocation-asserted.
+  - Any cap change follows the normal rules with measured numbers.
