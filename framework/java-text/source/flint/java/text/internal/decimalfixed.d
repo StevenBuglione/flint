@@ -40,6 +40,24 @@ size_t renderDecimalLong(long value, ref scope const DecimalFixedPattern pattern
     return renderFixedDigits(digits[start .. $], decimalAt, negative, pattern, symbols, output);
 }
 
+/// Formats an exact signed long product with the explicit Java multiplier and the pattern's affixes.
+size_t renderDecimalLong(long value, int multiplier, ref scope const DecimalFixedPattern pattern,
+        ref scope const DecimalSymbolData symbols, scope char[] output) pure nothrow @nogc
+{
+    const negativeValue = value < 0;
+    const negativeMultiplier = multiplier < 0;
+    const magnitude = negativeValue ? -cast(ulong) value : cast(ulong) value;
+    const factor = negativeMultiplier ? -cast(uint) multiplier : cast(uint) multiplier;
+    uint upper;
+    const lower = multiplyUnsignedWord(magnitude, factor, upper);
+
+    char[29] digits;
+    const start = writeWideUnsignedDigits(lower, upper, digits);
+    const count = cast(int)(digits.length - start);
+    const negative = count != 0 && negativeValue != negativeMultiplier;
+    return renderFixedDigits(digits[start .. $], count, negative, pattern, symbols, output);
+}
+
 /// Uses the multiplier implied by the fixed-point pattern.
 pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output, out size_t required)
@@ -118,25 +136,19 @@ private ulong scaleFiniteBinary(ulong magnitude, ulong sign, uint factor) pure n
     const exponent = cast(uint)(magnitude >> 52);
     const significand = binarySignificand(magnitude, exponent);
     ulong product;
-    ulong upper;
+    uint upper;
     if (factor <= 1023)
         product = significand * factor;
     else
-    {
-        // The exact product of the 53-bit significand and the magnitude of an int fits in 84 bits.
-        const lowerProduct = (significand & uint.max) * factor;
-        const upperProduct = (significand >> 32) * factor;
-        product = lowerProduct + (upperProduct << 32);
-        upper = (upperProduct >> 32) + (product < lowerProduct);
-    }
+        product = multiplyUnsignedWord(significand, factor, upper);
     if (upper == 0 && product < implicitBit)
         return sign | product;
 
-    const discarded = upper == 0 ? cast(uint)(bsr(product) - 52) : cast(uint)(bsr(upper) + 12);
+    const discarded = upper == 0 ? cast(uint)(bsr(product) - 52) : cast(uint)(bsr(cast(ulong) upper) + 12);
     ulong rounded = roundSignificandRight(product, discarded);
     // Any upper contribution is even after the shift, so the low word decides ties.
     if (upper != 0)
-        rounded += upper << (64 - discarded);
+        rounded += cast(ulong) upper << (64 - discarded);
     uint outputExponent = (exponent == 0 ? 1u : exponent) + discarded;
     if (rounded == (implicitBit << 1))
     {
@@ -186,7 +198,33 @@ private pure nothrow @nogc size_t renderGroupedFast(ulong bits,
     return renderFixedDigits(digits[start .. end], decimalAt, (bits & signBit) != 0, pattern, symbols, output);
 }
 
-private size_t writeUnsignedDigits(ulong magnitude, ref scope char[20] digits) pure nothrow @nogc
+// The carry from adding the low 64 bits belongs in the high 32-bit word.
+private ulong multiplyUnsignedWord(ulong magnitude, uint factor, out uint upper) pure nothrow @nogc
+{
+    const lowerProduct = (magnitude & uint.max) * factor;
+    const upperProduct = (magnitude >> 32) * factor;
+    const lower = lowerProduct + (upperProduct << 32);
+    upper = cast(uint)(upperProduct >> 32) + (lower < lowerProduct);
+    return lower;
+}
+
+private size_t writeWideUnsignedDigits(ulong lower, uint upper, ref scope char[29] digits) pure nothrow @nogc
+{
+    size_t end = digits.length;
+    while (upper != 0)
+    {
+        // Divide the upper 64 bits first and carry their remainder into the low 32 bits.
+        const leading = (cast(ulong) upper << 32) | (lower >> 32);
+        const quotient = leading / 10;
+        const trailing = ((leading % 10) << 32) | (lower & uint.max);
+        upper = cast(uint)(quotient >> 32);
+        lower = (quotient << 32) | (trailing / 10);
+        digits[--end] = cast(char)('0' + trailing % 10);
+    }
+    return writeUnsignedDigits(lower, digits[0 .. end]);
+}
+
+private size_t writeUnsignedDigits(ulong magnitude, scope char[] digits) pure nothrow @nogc
 {
     size_t start = digits.length;
     while (magnitude != 0)

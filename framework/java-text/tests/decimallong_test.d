@@ -82,3 +82,29 @@ unittest
     const integral = renderDecimalLong(7, pattern, *symbols, output[]);
     assert(output[0 .. integral] == "7.");
 }
+
+@("Java explicit long multipliers preserve the full product and clear zero's sign")
+unittest
+{
+    import flint.java.text.internal.decimalpattern : DecimalCompileStatus, compileFixedDecimalPattern;
+
+    static void check(string text, long value, int multiplier, string expected)
+    {
+        DecimalFixedPattern pattern;
+        assert(compileFixedDecimalPattern(text, pattern) == DecimalCompileStatus.accepted);
+        auto symbols = decimalSymbolData("", "", "");
+        char[64] output;
+        output[] = 'x';
+        const required = renderDecimalLong(value, multiplier, pattern, *symbols, output[0 .. 0]);
+        assert(required == expected.length && output[0] == 'x');
+        const written = renderDecimalLong(value, multiplier, pattern, *symbols, output[]);
+        assert(written == required && output[0 .. written] == expected && output[written] == 'x');
+    }
+
+    check("0", long.min, int.min, "19807040628566084398385987584");
+    check("#,##0.00%", long.min, int.min, "19,807,040,628,566,084,398,385,987,584.00%");
+    check("0", long.min, 0, "0");
+    check("#,##0.00%", 123, 1, "123.00%");
+    check("#,##0.00%", 123, -2, "-246.00%");
+    check("'p'0's';'n'0'z'", 0, -2, "p0s");
+}
