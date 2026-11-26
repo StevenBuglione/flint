@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,072 | 310 | 1,871 | 15,168 |
+| framework | openjdk@21.0.13 | 1,072 | 311 | 1,871 | 15,167 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1955,6 +1955,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.IllegalStateException#<init>(String,Throwable)` | `flint.java.lang.IllegalStateException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | `java.lang.IndexOutOfBoundsException` | `flint.java.lang.IndexOutOfBoundsException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.IndexOutOfBoundsException#<init>(String)` | `flint.java.lang.IndexOutOfBoundsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.IndexOutOfBoundsException#<init>(int)` | `flint.java.lang.IndexOutOfBoundsException.this` | [R7](api-mapping.md#r7-overloads) | An int argument implicitly widens to the long overload. The index detail matches Java across the int range. |
 | `java.lang.NullPointerException` | `flint.java.lang.NullPointerException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.NullPointerException#<init>(String)` | `flint.java.lang.NullPointerException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.NumberFormatException` | `flint.java.lang.NumberFormatException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
@@ -10071,7 +10072,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 766 | 0 |
-| java.lang | 1,992 | 0 |
+| java.lang | 1,991 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 137 | 0 |
@@ -11021,6 +11022,12 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.Writer#flush()` | 2 | Java requires subclasses to implement flush. The existing method is a concrete no-op. |
 | framework | `java.io.Writer#write(String)` | 2 | Java forwards a whole string to the virtual string-range overload with UTF-16 length. The existing method is abstract and has no string-range overload. |
 | framework | `java.lang.AssertionError#<init>(Object)` | 2 | Requires converting an Object detail to its Java string and retaining a Throwable detail as the cause. |
+| framework | `java.lang.AssertionError#<init>(boolean)` | 2 | Missing primitive overload. Java makes the detail true or false and leaves the cause absent. |
+| framework | `java.lang.AssertionError#<init>(char)` | 2 | Missing primitive overload. Java preserves one UTF-16 code unit in the detail, including NUL or an unpaired surrogate. |
+| framework | `java.lang.AssertionError#<init>(double)` | 2 | Missing primitive overload. Java uses Double.toString for the detail, including signed zero and special values. |
+| framework | `java.lang.AssertionError#<init>(float)` | 2 | Missing primitive overload. Java uses Float.toString for the detail, including signed zero and special values. |
+| framework | `java.lang.AssertionError#<init>(int)` | 2 | Missing primitive overload. Java stores the signed decimal detail of the int. |
+| framework | `java.lang.AssertionError#<init>(long)` | 2 | Missing primitive overload. Java stores the signed decimal detail of the long. |
 | framework | `java.lang.Double#parseDouble(String)` | 2 | The current parser throws NumberFormatException for null input, gives a different message for whitespace-only input, accepts lowercase nan, NaNd, hexadecimal syntax without a binary exponent, and a mantissa underscore, and rejects Infinity, +Infinity, and -Infinity. Decimal overflow (positive, negative, a very long exponent, and rounding past the largest finite value) and hexadecimal overflow currently throw instead of returning signed infinity. |
 | framework | `java.lang.Integer#parseInt(String)` | 2 | The current parser rejects BMP decimal digits accepted by Java Character.digit(char, int). Flint reports For input string: "" for both null and empty input (R26). Temurin reports Cannot parse null string for null input. |
 | framework | `java.lang.Integer#parseInt(String,int)` | 2 | The current parser rejects BMP decimal digits and fullwidth Latin letters accepted by Java Character.digit(char, int). It omits the " under radix N" suffix on invalid nondecimal input. It also omits the "radix N less than Character.MIN_RADIX" and "radix N greater than Character.MAX_RADIX" diagnostics for out-of-range radixes. Flint reports For input string: "" for both null and empty input (R26). Temurin reports Cannot parse null string for null input. |
