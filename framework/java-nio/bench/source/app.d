@@ -1,7 +1,9 @@
 module app;
 
+import flint.java.lang : RuntimeException;
 import flint.java.nio.byteorder : ByteOrder;
 
+import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
 
 @safe:
@@ -9,7 +11,7 @@ import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
 int main(string[] args)
 {
     if (args.length >= 4)
-        return readPastLimit();
+        return accessPastLimit(args.length == 4);
 
     const mode = args.length % 3;
     if (mode == 0)
@@ -18,10 +20,14 @@ int main(string[] args)
     return cast(int)(order.toString().length);
 }
 
-private int readPastLimit()
+private int accessPastLimit(bool read)
 {
     try
-        throw new BufferUnderflowException;
-    catch (BufferUnderflowException error)
+    {
+        if (read)
+            throw new BufferUnderflowException;
+        throw new BufferOverflowException;
+    }
+    catch (RuntimeException error)
         return error.getMessage() is null ? 1 : 2;
 }

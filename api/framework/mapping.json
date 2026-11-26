@@ -5758,6 +5758,8 @@
 "java.net.URI#isAbsolute()":{"status":"ported","d":"flint.java.net.URI.isAbsolute"},
 "java.net.URI#toString()":{"status":"ported","d":"flint.java.net.URI.toString"},
 "java.net.spi.**":{"status":"excluded","category":"deferred","phase":"3"},
+"java.nio.BufferOverflowException":{"status":"adapted","rules":["R1"],"d":"flint.java.nio.bufferoverflowexception.BufferOverflowException","note":"Import the exception from flint.java.nio.bufferoverflowexception. It extends the canonical Java RuntimeException."},
+"java.nio.BufferOverflowException#<init>()":{"status":"ported","d":"flint.java.nio.bufferoverflowexception.BufferOverflowException.this"},
 "java.nio.BufferUnderflowException":{"status":"adapted","rules":["R1"],"d":"flint.java.nio.bufferunderflowexception.BufferUnderflowException","note":"Import the exception from flint.java.nio.bufferunderflowexception. It extends the canonical Java RuntimeException."},
 "java.nio.BufferUnderflowException#<init>()":{"status":"ported","d":"flint.java.nio.bufferunderflowexception.BufferUnderflowException.this"},
 "java.nio.ByteOrder":{"status":"adapted","rules":["R1","R15"],"d":"flint.java.nio.byteorder.ByteOrder","note":"The standalone leaf uses distinct private byte-order flags for the two named values, so R15 value equality preserves their distinction. The default value is BIG_ENDIAN."},

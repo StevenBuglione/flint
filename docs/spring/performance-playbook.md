@@ -362,6 +362,8 @@ The Spring Beans factory exception types reuse the existing `BeanCreationExcepti
 
 **Reuse the canonical RuntimeException for relative buffer underflow.** The leaf adds a zero-argument subclass and inherits message and cause handling. The matched standalone probe at `ff9a41a2f` added 640 O3 and 640 Oz loadable bytes over a RuntimeException control with 436 DMD instances on venus. The jdk-leaf-rule caps are 704 bytes and 480 instances. The stock underflow probe retains nine known aggregate module records in each profile, tracked by the new-probe ratchet. The independent ByteOrder probe retains none.
 
+**Reuse the canonical RuntimeException for relative buffer overflow.** The leaf adds a zero-argument subclass and inherits message and cause handling. The matched standalone probe at `3d29a30b1` added 624 loadable bytes at O3 and Oz over the RuntimeException control, with 436 DMD instances on venus. The jdk-leaf-rule caps are 687 bytes and 480 instances. Independent stock probes cover the exception and the existing byte order and underflow paths.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

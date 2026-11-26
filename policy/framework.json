@@ -700,6 +700,7 @@
    "directory": "framework/java-nio",
    "module": "flint.java.nio.byteorder",
    "also": [
+    "flint.java.nio.bufferoverflowexception",
     "flint.java.nio.bufferunderflowexception"
    ],
    "repo": "framework",
@@ -714,6 +715,7 @@
     "edit_source": "framework/java-nio/source/flint/java/nio/byteorder.d"
    },
    "java_types": [
+    "java.nio.BufferOverflowException",
     "java.nio.BufferUnderflowException",
     "java.nio.ByteOrder"
    ],
