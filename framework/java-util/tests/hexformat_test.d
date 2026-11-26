@@ -128,3 +128,46 @@ unittest
     assertThrown!IndexOutOfBoundsException(decorated.formatHex(bytes, 2, 1));
     assertThrown!IndexOutOfBoundsException(decorated.formatHex(bytes, 0, 5));
 }
+
+@("HexFormat parses exact decorations and accepts either case for digits")
+unittest
+{
+    const plain = HexFormat.of();
+    const decorated = HexFormat.ofDelimiter("·").withPrefix("[😀").withSuffix("]").withUpperCase();
+    const byte[] expected = [0, 15, -128, -1];
+    assert(plain.parseHex("000f80fF") == expected);
+    assert(decorated.parseHex("[😀00]·[😀0f]·[😀80]·[😀fF]") == expected);
+    assert(decorated.parseHex("").length == 0);
+    assert(decorated.parseHex("😀é[😀0f]·[😀80]!", 3, 16) == expected[1 .. 3]);
+    assert(plain.parseHex("😀00", 1, 1).length == 0);
+    assertThrown!IllegalArgumentException(plain.parseHex("000"));
+    assertThrown!NumberFormatException(plain.parseHex("0x"));
+    assertThrown!NumberFormatException(plain.parseHex("éa"));
+    assertThrown!NumberFormatException(decorated.parseHex("[😀0g]"));
+    try
+    {
+        decorated.parseHex("[😀0g!");
+        assert(0, "Expected a decoration error");
+    }
+    catch (IllegalArgumentException failure)
+    {
+        assert(typeid(failure) is typeid(IllegalArgumentException));
+    }
+    assertThrown!IllegalArgumentException(decorated.parseHex("[😀00],[😀0f]"));
+    assertThrown!IllegalArgumentException(decorated.parseHex("[😀00!"));
+    assertThrown!IllegalArgumentException(plain.parseHex("😀00", 1, 4));
+    assertThrown!IndexOutOfBoundsException(plain.parseHex("😀00", 2, 5));
+}
+
+@("HexFormat primitive ranges use Java UTF-16 indices and checked widths")
+unittest
+{
+    assert(HexFormat.fromHexDigits("😀éFf!", 3, 5) == 255);
+    assert(HexFormat.fromHexDigitsToLong("é😀FFFFFFFFffffffff!", 3, 19) == -1);
+    assert(HexFormat.fromHexDigits("😀", 1, 1) == 0);
+    assertThrown!NumberFormatException(HexFormat.fromHexDigits("😀", 1, 2));
+    assertThrown!NumberFormatException(HexFormat.fromHexDigitsToLong("😀", 0, 1));
+    assertThrown!IllegalArgumentException(HexFormat.fromHexDigits("!123456789!", 1, 10));
+    assertThrown!IndexOutOfBoundsException(HexFormat.fromHexDigits("éé", 0, 3));
+    assertThrown!IndexOutOfBoundsException(HexFormat.fromHexDigitsToLong("0", 1, 0));
+}

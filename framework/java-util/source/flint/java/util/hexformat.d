@@ -100,6 +100,21 @@ final class HexFormat
         return formatHex(bytes[fromIndex .. toIndex]);
     }
 
+    /// Decode the bytes framed by this formatter's decorations.
+    byte[] parseHex(scope const(char)[] text) const pure
+    {
+        return parseBytes(text, separator, beforeByte, afterByte);
+    }
+
+    /// Decode the text in the given half-open range of Java UTF-16 code units.
+    byte[] parseHex(scope const(char)[] text, int fromIndex, int toIndex) const pure
+    {
+        const range = textRange(text, fromIndex, toIndex);
+        if (range.splitsPair)
+            failParse("Invalid hexadecimal framing");
+        return parseHex(text[range.first .. range.last]);
+    }
+
     /// Report the output case.
     bool isUpperCase() const pure nothrow @nogc
     {
@@ -181,10 +196,22 @@ final class HexFormat
         return cast(int) parseDigits(text, 8);
     }
 
+    /// Decode up to eight digits in the given half-open UTF-16 range.
+    static int fromHexDigits(scope const(char)[] text, int fromIndex, int toIndex) pure
+    {
+        return cast(int) parseDigitRange(text, fromIndex, toIndex, 8);
+    }
+
     /// Decode up to sixteen hexadecimal digits into the bits of a Java long.
     static long fromHexDigitsToLong(scope const(char)[] text) pure
     {
         return cast(long) parseDigits(text, 16);
+    }
+
+    /// Decode up to sixteen digits in the given half-open UTF-16 range.
+    static long fromHexDigitsToLong(scope const(char)[] text, int fromIndex, int toIndex) pure
+    {
+        return cast(long) parseDigitRange(text, fromIndex, toIndex, 16);
     }
 
     private string alphabet() const pure nothrow @nogc
@@ -237,6 +264,126 @@ char[] renderBytes(scope const(byte)[] bytes, string table, string delimiter, st
     return text;
 }
 
+pragma(inline, false) byte[] parseBytes(scope const(char)[] text, string delimiter, string prefix, string suffix) pure
+{
+    if (text.length == 0)
+        return null;
+
+    const count = parsedByteCount(text, delimiter, prefix, suffix);
+    // Java checks both decorations before decoding a single byte.
+    if (count == 1 && (suffix.length > text.length || text[$ - suffix.length .. $] != suffix))
+        failParse("Invalid hexadecimal framing");
+
+    auto bytes = new byte[count];
+    size_t at;
+    foreach (index, ref value; bytes)
+    {
+        if (index != 0)
+            consumeMarker(text, at, delimiter);
+        consumeMarker(text, at, prefix);
+        const high = HexFormat.fromHexDigit(text[at++]);
+        const low = HexFormat.fromHexDigit(text[at++]);
+        value = cast(byte)((high << 4) | low);
+        consumeMarker(text, at, suffix);
+    }
+    return bytes;
+}
+
+size_t parsedByteCount(scope const(char)[] text, string delimiter, string prefix, string suffix) pure
+{
+    import core.checkedint : addu;
+
+    const length = utf16Width(text);
+    bool overflow;
+    const adornment = addu(utf16Width(prefix), utf16Width(suffix), overflow);
+    const width = addu(adornment, cast(size_t) 2, overflow);
+    if (overflow || length < width)
+        failParse("Invalid hexadecimal length");
+    const extra = length - width;
+    if (extra == 0)
+        return 1;
+    const stride = addu(width, utf16Width(delimiter), overflow);
+    if (overflow || extra % stride != 0)
+        failParse("Invalid hexadecimal length");
+    return 1 + extra / stride;
+}
+
+pragma(inline, false) size_t utf16Width(scope const(char)[] text) pure nothrow @nogc
+{
+    size_t units;
+    foreach (ubyte octet; text)
+        units += ((octet & 0xc0) != 0x80) + (octet >= 0xf0);
+    return units;
+}
+
+pragma(inline, false) void consumeMarker(scope const(char)[] text, ref size_t at, string expected) pure
+{
+    const remaining = text[at .. $];
+    if (expected.length > remaining.length || remaining[0 .. expected.length] != expected)
+        failParse("Invalid hexadecimal framing");
+    at += expected.length;
+}
+
+pragma(inline, false) noreturn failParse(string message) pure
+{
+    import flint.java.lang : IllegalArgumentException;
+
+    throw new IllegalArgumentException(message);
+}
+
+struct TextRange
+{
+    size_t first;
+    size_t last;
+    bool splitsPair;
+}
+
+pragma(inline, false) TextRange textRange(scope const(char)[] text, int fromIndex, int toIndex) pure
+{
+    if (fromIndex < 0 || toIndex < fromIndex || toIndex > text.length)
+        failTextRange();
+
+    uint units;
+    size_t at;
+    advanceUnits(text, units, at, cast(uint) fromIndex);
+    const first = at;
+    const startSplits = units != fromIndex;
+    advanceUnits(text, units, at, cast(uint) toIndex);
+    if (units < toIndex)
+        failTextRange();
+    return TextRange(first, at, fromIndex != toIndex && (startSplits || units != toIndex));
+}
+
+pragma(inline, false) noreturn failTextRange() pure
+{
+    import flint.java.lang : IndexOutOfBoundsException;
+
+    throw new IndexOutOfBoundsException("Hexadecimal text range is out of bounds");
+}
+
+pragma(inline, false)
+{
+    void advanceUnits(scope const(char)[] text, ref uint units, ref size_t at, uint goal) pure nothrow @nogc
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        while (units < goal && at < text.length)
+            units += decodeUtf8(text, at) > 0xffff ? 2 : 1;
+    }
+}
+
+pragma(inline, false) ulong parseDigitRange(scope const(char)[] text, int fromIndex, int toIndex, uint limit) pure
+{
+    import flint.java.lang : NumberFormatException;
+
+    const range = textRange(text, fromIndex, toIndex);
+    if (toIndex - fromIndex > limit)
+        failParse("Too many hexadecimal digits");
+    if (range.splitsPair)
+        throw new NumberFormatException("Invalid hexadecimal digit");
+    return decodeDigits(text[range.first .. range.last]);
+}
+
 ulong parseDigits(scope const(char)[] text, uint limit) pure
 {
     import flint.java.lang : IllegalArgumentException;
@@ -258,6 +405,11 @@ ulong parseDigits(scope const(char)[] text, uint limit) pure
             throw new IllegalArgumentException("Too many hexadecimal digits");
     }
 
+    return decodeDigits(text);
+}
+
+ulong decodeDigits(scope const(char)[] text) pure
+{
     ulong result;
     foreach (char digit; text)
         result = (result << 4) | cast(uint) HexFormat.fromHexDigit(digit);
