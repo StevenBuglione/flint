@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,076 | 271 | 1,871 | 15,203 |
+| framework | openjdk@21.0.13 | 1,076 | 280 | 1,871 | 15,194 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2173,7 +2173,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.List#of(E...)` | `flint.java.util.List.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.Locale` | `flint.java.util.Locale` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable D value for language, country and variant. The current constructor does not canonicalize legacy language aliases. Script and extension data are deferred. |
 | `java.util.Locale#CANADA` | `flint.java.util.Locale.CANADA` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#CHINESE` | `flint.java.util.Locale.CHINESE` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#ENGLISH` | `flint.java.util.Locale.ENGLISH` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#FRANCE` | `flint.java.util.Locale.FRANCE` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#FRENCH` | `flint.java.util.Locale.FRENCH` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#GERMAN` | `flint.java.util.Locale.GERMAN` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#GERMANY` | `flint.java.util.Locale.GERMANY` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#ITALIAN` | `flint.java.util.Locale.ITALIAN` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#ITALY` | `flint.java.util.Locale.ITALY` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#JAPAN` | `flint.java.util.Locale.JAPAN` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#JAPANESE` | `flint.java.util.Locale.JAPANESE` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#ROOT` | `flint.java.util.Locale.ROOT` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#UK` | `flint.java.util.Locale.UK` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#US` | `flint.java.util.Locale.US` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -10055,7 +10064,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,916 | 0 |
+| java.util | 1,907 | 0 |
 | java.util.concurrent | 1,235 | 0 |
 | java.util.concurrent.atomic | 285 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -11040,6 +11049,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Collections#emptyMap()` | 2 | Java permits no-op clear and removal of a missing key on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptySet()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.IllegalFormatConversionException#<init>(char,Class)` | 2 | Flint currently accepts a string name. Java retains the argument Class and exposes it through getArgumentClass(). |
+| framework | `java.util.Locale#forLanguageTag(String)` | 2 | The existing parser drops scripts, extensions and private-use subtags. Grandfathered tags such as en-GB-oed lose their Java canonical private-use data. |
+| framework | `java.util.Locale#getDefault()` | 2 | Flint reads LC_ALL and LANG per call. Java initializes its default from startup properties and exposes a setDefault path. |
+| framework | `java.util.Locale#toLanguageTag()` | 2 | The existing renderer cannot emit script or extension data. A legacy variant such as BAD is appended directly where Java moves it into x-lvariant. |
 | framework | `java.util.Objects#requireNonNull(T,String)` | 2 | Java distinguishes an absent exception detail message from a present empty message. The R5 Nullable!string message parameter is missing. |
 | framework | `java.util.Objects#requireNonNull(T,Supplier)` | 2 | Java calls the message Supplier only for a null object. The Supplier overload is missing. |
 | framework | `java.util.Objects#requireNonNullElse(T,T)` | 2 | Java selects the fallback when the first boxed value is absent and throws NullPointerException when both values are absent. The current method ignores absence in an R5 Nullable payload. |
