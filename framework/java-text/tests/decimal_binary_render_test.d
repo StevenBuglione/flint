@@ -175,3 +175,28 @@ unittest
     check("0.00", 0, 0x40c8_1cc0_0000_0000, ".50");
     check("0.", 0, 0x40c8_1cc0_0000_0000, "0.");
 }
+
+@("Binary64 fraction settings affect rounding, minimum padding and the signed zero")
+unittest
+{
+    DecimalFixedPattern pattern;
+    DecimalSymbolData symbols;
+    char[350] output;
+    size_t required;
+
+    pattern.setMinimumFractionDigits(4);
+    pattern.setMaximumFractionDigits(2);
+    assert(pattern.minimumFractionDigits == 2 && pattern.maximumFractionDigits == 2);
+    assert(tryRenderDecimalDouble(0x4005_6666_6666_6666, pattern, symbols, output[], required));
+    assert(output[0 .. required] == "2.67");
+
+    pattern.setMaximumFractionDigits(-1);
+    assert(tryRenderDecimalDouble(0x8000_0000_0000_0000, pattern, symbols, output[], required));
+    assert(output[0 .. required] == "-0");
+
+    pattern.setMinimumFractionDigits(500);
+    assert(tryRenderDecimalDouble(0x3ff0_0000_0000_0000, pattern, symbols, output[], required));
+    assert(required == 342 && output[0 .. 2] == "1.");
+    foreach (digit; output[2 .. required])
+        assert(digit == '0');
+}

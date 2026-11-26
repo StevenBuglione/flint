@@ -40,6 +40,20 @@ struct DecimalFixedPattern
         if (minimumIntegerDigits > maximumIntegerDigits)
             minimumIntegerDigits = maximumIntegerDigits;
     }
+
+    void setMinimumFractionDigits(int width) pure nothrow @nogc
+    {
+        minimumFractionDigits = width < 0 ? 0 : cast(uint) width;
+        if (maximumFractionDigits < minimumFractionDigits)
+            maximumFractionDigits = minimumFractionDigits;
+    }
+
+    void setMaximumFractionDigits(int width) pure nothrow @nogc
+    {
+        maximumFractionDigits = width < 0 ? 0 : cast(uint) width;
+        if (minimumFractionDigits > maximumFractionDigits)
+            minimumFractionDigits = maximumFractionDigits;
+    }
 }
 
 /// Writes using the ASCII numeric symbols of the explicit ROOT and English profiles.
@@ -117,8 +131,8 @@ pure nothrow @nogc size_t renderFixedDigits(scope const(char)[] digits, int deci
     const integralDigits = decimalAt > 0 ? cast(size_t) decimalAt : 0;
     const visibleFraction = cast(int) digits.length - decimalAt;
     const fractionDigits = visibleFraction > 0 ? cast(size_t) visibleFraction : 0;
-    const fractionCount = fractionDigits > pattern.minimumFractionDigits ? fractionDigits : pattern
-        .minimumFractionDigits;
+    const minimumFraction = primitiveFractionWidth(pattern.minimumFractionDigits);
+    const fractionCount = fractionDigits > minimumFraction ? fractionDigits : minimumFraction;
     size_t integerCount = primitiveWidth(integralDigits, pattern);
     const fallbackZero = integerCount == 0 && fractionCount == 0;
     // A negative start pads with zeros. A positive start skips truncated leading digits.
@@ -158,6 +172,12 @@ private size_t primitiveWidth(size_t integralDigits, ref scope const DecimalFixe
     const maximum = pattern.maximumIntegerDigits < primitiveLimit ? pattern.maximumIntegerDigits : primitiveLimit;
     const width = integralDigits > pattern.minimumIntegerDigits ? integralDigits : pattern.minimumIntegerDigits;
     return width < maximum ? width : maximum;
+}
+
+uint primitiveFractionWidth(uint width) pure nothrow @nogc
+{
+    enum limit = 340;
+    return width < limit ? width : limit;
 }
 
 private void writeInteger(scope const(char)[] digits, int firstDigit, size_t integerCount,
