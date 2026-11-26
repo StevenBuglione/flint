@@ -4,12 +4,14 @@ one non-template engine over erased arguments (`Any[]`), so a call site instanti
 boxing (rulebook R7) and never `std.format`.
 
 Specifiers are `%[argument_index$][flags][width][.precision]conversion`, with `<` for the previous argument.
-Conversions: `b B s S c d o x X f e E g G n %`; flags `- # + space 0 , (`. Arguments format as Java's would: `%s` as
+Conversions: `b B s S c d o x X f e E g G a A n %`; flags `- # + space 0 , (`. Arguments format as Java's would: `%s` as
 `String.valueOf` (null, `true`, `Double.toString`, an object's `toString`), `%d`/`%o`/`%x` for integral types (`%x`
 of a negative `int` is its 32-bit two's complement, of a `long` its 64-bit one), `%c` for a character or code
-point, and `%f`, `%e`/`%E` and `%g`/`%G` for floating point (precision 6 by default, rounded half up).
+point, and `%f`, `%e`/`%E`, `%g`/`%G` and `%a`/`%A` for floating point. Decimal conversions round half up
+with a default precision of six digits. Hexadecimal formatting uses exact digits by default and rounds ties to even
+at reduced precision.
 
-The renderer uses the root locale's `.` and `,`. `%a`, `%h` and the date/time conversions throw
+The renderer uses the root locale's `.` and `,`. `%h` and the date/time conversions throw
 `UnknownFormatConversionException`.
 +/
 module flint.java.util.formatter;
@@ -693,7 +695,7 @@ private string convert(const ref Spec spec, Any argument)
         return integralText(spec, argument);
     case 'o', 'x', 'X':
         return radixText(spec, argument);
-    case 'f', 'e', 'E', 'g', 'G':
+    case 'f', 'e', 'E', 'g', 'G', 'a', 'A':
         return floatingText(spec, argument);
     default:
         throw new UnknownFormatConversionException([spec.conversion]);
@@ -874,10 +876,23 @@ private string integralText(const ref Spec spec, Any argument)
 /// Apply the sign flags and zero padding to `body`, the magnitude's digits.
 private string signed(const ref Spec spec, string body, bool negative) pure nothrow
 {
-    const prefix = negative ? (spec.has(Flag.parentheses) ? "(" : "-") : spec.has(Flag.plus)
-        ? "+" : spec.has(Flag.space) ? " " : "";
     const suffix = negative && spec.has(Flag.parentheses) ? ")" : "";
-    return paddedNumber(spec, prefix, body, suffix);
+    return paddedNumber(spec, numberSign(spec, negative), body, suffix);
+}
+
+private string numberSign(const ref Spec spec, bool negative) pure nothrow @nogc
+{
+    return negative ? (spec.has(Flag.parentheses) ? "(" : "-") : spec.has(Flag.plus)
+        ? "+" : spec.has(Flag.space) ? " " : "";
+}
+
+private string numberZeros(size_t count) pure nothrow
+{
+    if (count == 0)
+        return "";
+    auto zeros = new char[count];
+    zeros[] = '0';
+    return zeros.idup;
 }
 
 /// Zero padding follows a sign or radix indicator and precedes the digits.
@@ -887,11 +902,7 @@ private string paddedNumber(const ref Spec spec, string prefix, string body, str
     {
         const used = prefix.length + body.length + suffix.length;
         if (used < spec.width)
-        {
-            auto zeros = new char[](spec.width - used);
-            zeros[] = '0';
-            body = zeros.idup ~ body;
-        }
+            body = numberZeros(spec.width - used) ~ body;
     }
     return prefix ~ body ~ suffix;
 }
@@ -937,11 +948,94 @@ private string floatingText(const ref Spec spec, Any argument)
     const negative = value < 0 || (value == 0 && 1 / value < 0);
     if (value != value || value == double.infinity || value == -double.infinity)
         return nonFinite(spec, value, negative, uppercase);
-    const precision = spec.precision < 0 ? 6 : spec.precision;
     const magnitude = negative ? -value : value;
+    if (asciiLower(spec.conversion) == 'a')
+        return hexadecimalFloatingText(spec, magnitude, negative, uppercase);
+    const precision = spec.precision < 0 ? 6 : spec.precision;
     const text = spec.conversion == 'f' ? fixedMagnitude(spec, magnitude,
             precision) : significantMagnitude(spec, magnitude, precision);
     return signed(spec, text, negative);
+}
+
+private union HexDoubleBits
+{
+    double value;
+    ulong bits;
+}
+
+private enum doubleHiddenBit = 1UL << 52;
+private enum hexFractionDigits = 13;
+
+private string hexadecimalFloatingText(const ref Spec spec, double magnitude, bool negative, bool uppercase)
+{
+    const precision = spec.precision == 0 ? 1 : spec.precision;
+    int exponent;
+    const mantissa = hexFloatMantissa(magnitude, precision, uppercase, exponent);
+    const ending = (uppercase ? "P" : "p") ~ decimal(exponent);
+    const sign = numberSign(spec, negative);
+    const prefix = uppercase ? "0X" : "0x";
+
+    // Java measures width padding before adding any fractional zeros requested by precision.
+    const used = sign.length + prefix.length + mantissa.length + ending.length;
+    const widthZeros = spec.has(Flag.zero) && spec.width > 0 && cast(size_t) spec.width > used
+        ? numberZeros(spec.width - used) : "";
+    const present = cast(int) mantissa.length - 2;
+    const precisionZeros = precision > present ? numberZeros(precision - present) : "";
+    return sign ~ prefix ~ widthZeros ~ mantissa ~ precisionZeros ~ ending;
+}
+
+private string hexFloatMantissa(double magnitude, int precision, bool uppercase, out int exponent)
+{
+    HexDoubleBits data;
+    data.value = magnitude;
+    const encodedExponent = cast(int)((data.bits >> 52) & 0x7ff);
+    ulong significand = data.bits & (doubleHiddenBit - 1);
+    if (encodedExponent != 0)
+    {
+        significand |= doubleHiddenBit;
+        exponent = encodedExponent - 1023;
+    }
+    else if (significand != 0)
+        exponent = -1022;
+
+    if (significand != 0 && precision > 0 && precision < hexFractionDigits)
+        significand = roundHexSignificand(significand, precision, exponent);
+
+    char[2 + hexFractionDigits] buffer;
+    buffer[0] = (significand & doubleHiddenBit) != 0 ? '1' : '0';
+    buffer[1] = '.';
+    const alphabet = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
+    foreach (i; 0 .. hexFractionDigits)
+    {
+        const shift = 4 * (hexFractionDigits - 1 - i);
+        buffer[i + 2] = alphabet[(significand >> shift) & 0xF];
+    }
+    size_t end = buffer.length;
+    while (end > 3 && buffer[end - 1] == '0')
+        --end;
+    return buffer[0 .. end].idup;
+}
+
+private ulong roundHexSignificand(ulong significand, int precision, ref int exponent) pure nothrow @nogc
+{
+    while ((significand & doubleHiddenBit) == 0)
+    {
+        significand <<= 1;
+        --exponent;
+    }
+    const discard = 4 * (hexFractionDigits - precision);
+    const halfway = 1UL << (discard - 1);
+    const remainder = significand & ((1UL << discard) - 1);
+    auto retained = significand >> discard;
+    if (remainder > halfway || (remainder == halfway && (retained & 1) != 0))
+        ++retained;
+    auto rounded = retained << discard;
+    if ((rounded & (doubleHiddenBit << 1)) != 0)
+    {
+        rounded >>= 1;
+        ++exponent;
+    }
+    return rounded;
 }
 
 private string fixedMagnitude(const ref Spec spec, double magnitude, int precision)
