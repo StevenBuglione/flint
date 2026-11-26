@@ -4,7 +4,7 @@ that asks for the time (ADR-030 section 5).
 +/
 module flint.engine.aot.clock;
 
-import flint.engine.aot.sys.clock : epochTicks;
+import flint.engine.aot.sys.clock : epochTicks, localOffsetSeconds;
 
 @safe:
 
@@ -22,6 +22,20 @@ long currentTimeTicks() nothrow @nogc
 {
     const ticks = epochTicks();
     return ticks < 0 ? 0 : ticks;
+}
+
+/// The local zone's current offset from UTC in minutes (east positive), as std.datetime's
+/// `Clock.currTime.utcOffset.total!"minutes"`; 0 when it cannot be read.
+int localOffsetMinutes() nothrow @nogc
+{
+    return cast(int)(localOffsetSeconds(currentTimeMillis() / 1000) / 60);
+}
+
+unittest
+{
+    import std.datetime.systime : Clock;
+
+    assert(localOffsetMinutes() == Clock.currTime.utcOffset.total!"minutes");
 }
 
 unittest

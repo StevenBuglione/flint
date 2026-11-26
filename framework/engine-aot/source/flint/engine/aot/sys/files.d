@@ -1,5 +1,6 @@
 /++
-The file system behind `flint.engine.aot.host`: one `stat`, a whole-file read, and the current directory.
+The file system behind `flint.engine.aot.host`: one `stat`, a whole-file read and write, a directory's entry names,
+the executable's path and the current directory.
 Private to `flint:engine-aot`; applications never import it.
 
 Paths arrive NUL-terminated (UTF-8 on POSIX, UTF-16 on Windows) from the facade, which refuses paths holding a
@@ -32,7 +33,7 @@ struct FileFacts
 version (Windows)
 {
     import core.sys.windows.windef : BOOL, DWORD, HANDLE;
-    import core.sys.windows.winbase : FILETIME, WIN32_FILE_ATTRIBUTE_DATA;
+    import core.sys.windows.winbase : FILETIME, WIN32_FILE_ATTRIBUTE_DATA, WIN32_FIND_DATAW;
 
     private extern (Windows) nothrow @nogc
     {
@@ -169,6 +170,117 @@ version (Windows)
         const length = GetCurrentDirectoryW(cast(DWORD) buffer.length, &buffer[0]);
         return length < buffer.length ? length : length + 1;
     }
+
+    /// An open directory listing: the search handle and the entry it found but has not given yet.
+    struct DirectoryHandle
+    {
+        private HANDLE search;
+        private WIN32_FIND_DATAW found;
+        private bool pending;
+    }
+
+    /// The listing of `patternz` (UTF-16 `directory\*`, NUL-terminated); false with `error` set when it cannot be
+    /// opened.
+    // SAFETY: patternz is NUL-terminated (checked); FindFirstFileW writes only the handle's WIN32_FIND_DATAW.
+    @trusted bool openDirectory(scope const(wchar)[] patternz, out DirectoryHandle directory, out FileError error)
+        nothrow @nogc
+    {
+        import core.sys.windows.winbase : FindFirstFileW, INVALID_HANDLE_VALUE;
+
+        if (patternz.length == 0 || patternz[$ - 1] != '\0')
+        {
+            error = FileError.notFound;
+            return false;
+        }
+        directory.search = FindFirstFileW(&patternz[0], &directory.found);
+        if (directory.search == INVALID_HANDLE_VALUE)
+        {
+            error = mapError(GetLastError());
+            return false;
+        }
+        directory.pending = true;
+        return true;
+    }
+
+    /// The next entry's name (UTF-8, `.` and `..` included), or null at the end.
+    // SAFETY: cFileName is a fixed MAX_PATH array; the name is read only up to its NUL, found within the array;
+    // FindNextFileW writes only the handle's WIN32_FIND_DATAW.
+    @trusted string nextEntryName(ref DirectoryHandle directory) nothrow
+    {
+        import core.sys.windows.winbase : FindNextFileW;
+
+        if (directory.search is null)
+            return null;
+        if (!directory.pending && !FindNextFileW(directory.search, &directory.found))
+            return null;
+        directory.pending = false;
+        size_t length;
+        while (length < directory.found.cFileName.length && directory.found.cFileName[length] != 0)
+            length++;
+        auto name = narrow(directory.found.cFileName[0 .. length]);
+        return name is null ? "" : name;
+    }
+
+    /// Close a listing `openDirectory` opened.
+    // SAFETY: FindClose takes the handle by value; it is passed once, then forgotten.
+    @trusted void closeDirectory(ref DirectoryHandle directory) nothrow @nogc
+    {
+        import core.sys.windows.winbase : FindClose;
+
+        if (directory.search !is null)
+            FindClose(directory.search);
+        directory.search = null;
+    }
+
+    /// `pathz` (UTF-16, NUL-terminated) created or truncated for writing; null with `error` set when it cannot be.
+    // SAFETY: pathz is NUL-terminated (checked); CreateFileW reads only the name.
+    @trusted FileHandle openWrite(scope const(wchar)[] pathz, out FileError error) nothrow @nogc
+    {
+        enum DWORD genericWrite = 0x4000_0000, createAlways = 2, normal = 0x80;
+        if (pathz.length == 0 || pathz[$ - 1] != '\0')
+        {
+            error = FileError.notFound;
+            return null;
+        }
+        auto file = CreateFileW(&pathz[0], genericWrite, 0, null, createAlways, normal, null);
+        if (file == cast(HANDLE) -1)
+        {
+            error = mapError(GetLastError());
+            return null;
+        }
+        return file;
+    }
+
+    /// Up to `bytes.length` bytes written from `bytes` to `file`: the count, or -1 on failure.
+    // SAFETY: WriteFile reads at most bytes.length bytes of bytes and writes only the local count.
+    @trusted ptrdiff_t writeFrom(FileHandle file, scope const(ubyte)[] bytes) nothrow @nogc
+    {
+        import core.sys.windows.winbase : WriteFile;
+
+        if (file is null || bytes.length == 0)
+            return -1;
+        DWORD written;
+        const length = cast(DWORD)(bytes.length > int.max ? int.max : bytes.length);
+        return WriteFile(file, &bytes[0], length, &written, null) ? cast(ptrdiff_t) written : -1;
+    }
+
+    /// The running executable's path as UTF-16 (no NUL), or null.
+    // SAFETY: GetModuleFileNameW writes at most buffer.length units into the GC buffer and returns the count.
+    @trusted wchar[] executablePathWide() nothrow
+    {
+        import core.sys.windows.winbase : GetModuleFileNameW;
+
+        for (DWORD size = 260; size <= 32_768; size *= 2)
+        {
+            auto buffer = new wchar[](size);
+            const length = GetModuleFileNameW(null, &buffer[0], size);
+            if (length == 0)
+                return null;
+            if (length < size)
+                return buffer[0 .. length];
+        }
+        return null;
+    }
 }
 else version (Posix)
 {
@@ -179,6 +291,7 @@ else version (Posix)
         private enum int O_CLOEXEC = 0x0100_0000; // <sys/fcntl.h>; druntime does not declare it for macOS
     else
         import core.sys.posix.fcntl : O_CLOEXEC;
+    import core.sys.posix.dirent : closedir, DIR, opendir, readdir;
     import core.sys.posix.sys.stat : S_IFDIR, S_IFMT, S_IFREG, stat, stat_t;
     import core.sys.posix.unistd : close, getcwd, read;
 
@@ -284,6 +397,126 @@ else version (Posix)
                 return i;
         return 0;
     }
+
+    /// An open directory listing, or null.
+    struct DirectoryHandle
+    {
+        private DIR* stream;
+    }
+
+    /// The listing of `pathz` (NUL-terminated); false with `error` set when it cannot be opened.
+    // SAFETY: pathz is NUL-terminated (checked); opendir reads only the name and returns a stream this module owns
+    // until closeDirectory.
+    @trusted bool openDirectory(scope const(char)[] pathz, out DirectoryHandle directory, out FileError error)
+        nothrow @nogc
+    {
+        if (pathz.length == 0 || pathz[$ - 1] != '\0')
+        {
+            error = FileError.notFound;
+            return false;
+        }
+        directory.stream = opendir(&pathz[0]);
+        if (directory.stream is null)
+        {
+            error = mapError(errno);
+            return false;
+        }
+        return true;
+    }
+
+    /// The next entry's name (`.` and `..` included), copied to the GC, or null at the end or on failure.
+    // SAFETY: readdir returns an entry valid until the next readdir or closedir on this stream; its d_name is
+    // NUL-terminated (POSIX), so strlen stays within it, and the name is copied before returning.
+    @trusted string nextEntryName(ref DirectoryHandle directory) nothrow
+    {
+        import core.stdc.string : strlen;
+
+        if (directory.stream is null)
+            return null;
+        const entry = readdir(directory.stream);
+        if (entry is null)
+            return null;
+        const name = entry.d_name.ptr;
+        return name[0 .. strlen(name)].idup;
+    }
+
+    /// Close a listing `openDirectory` opened.
+    // SAFETY: closedir takes the stream once; it is forgotten after, so no entry or stream pointer outlives it.
+    @trusted void closeDirectory(ref DirectoryHandle directory) nothrow @nogc
+    {
+        if (directory.stream !is null)
+            closedir(directory.stream);
+        directory.stream = null;
+    }
+
+    /// `pathz` (NUL-terminated) created or truncated for writing (mode 0666 before the umask); -1 with `error` set
+    /// when it cannot be.
+    // SAFETY: pathz is NUL-terminated (checked); open reads only the name.
+    @trusted FileHandle openWrite(scope const(char)[] pathz, out FileError error) nothrow @nogc
+    {
+        import core.sys.posix.fcntl : O_CREAT, O_TRUNC, O_WRONLY;
+
+        if (pathz.length == 0 || pathz[$ - 1] != '\0')
+        {
+            error = FileError.notFound;
+            return -1;
+        }
+        int descriptor;
+        do
+            descriptor = open(&pathz[0], O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0x1B6); // 0666
+        while (descriptor < 0 && errno == EINTR);
+        if (descriptor < 0)
+            error = mapError(errno);
+        return descriptor;
+    }
+
+    /// Up to `bytes.length` bytes written from `bytes` to `file`: the count, or -1 on failure.
+    // SAFETY: write reads at most bytes.length bytes of bytes, which the caller owns.
+    @trusted ptrdiff_t writeFrom(FileHandle file, scope const(ubyte)[] bytes) nothrow @nogc
+    {
+        import core.sys.posix.unistd : write;
+
+        if (file < 0 || bytes.length == 0)
+            return -1;
+        ptrdiff_t count;
+        do
+            count = write(file, &bytes[0], bytes.length);
+        while (count < 0 && errno == EINTR);
+        return count;
+    }
+
+    /// The running executable's path written into `buffer` (no NUL): the length, buffer.length + 1 when the buffer
+    /// is too small, or 0 when it cannot be read (Linux's /proc/self/exe, macOS's _NSGetExecutablePath).
+    // SAFETY: readlink writes at most buffer.length bytes into buffer and returns the count it wrote;
+    // _NSGetExecutablePath writes at most size bytes, NUL included, and the NUL is found within buffer.
+    @trusted size_t executablePathInto(scope char[] buffer) nothrow @nogc
+    {
+        if (buffer.length == 0)
+            return 0;
+        version (linux)
+        {
+            import core.sys.posix.unistd : readlink;
+
+            const length = readlink("/proc/self/exe", &buffer[0], buffer.length);
+            if (length <= 0)
+                return 0;
+            return cast(size_t) length < buffer.length ? cast(size_t) length : buffer.length + 1;
+        }
+        else version (OSX)
+        {
+            static extern (C) int _NSGetExecutablePath(char* buffer, uint* size) nothrow @nogc @system;
+
+            uint size = buffer.length > uint.max ? uint.max : cast(uint) buffer.length;
+            if (_NSGetExecutablePath(&buffer[0], &size) != 0)
+                return buffer.length + 1;
+            foreach (i, c; buffer)
+                if (c == '\0')
+                    return i;
+            return 0;
+        }
+        else
+            static assert(0, "flint.engine.aot.sys.files: no executable path for this platform");
+    }
 }
 else
     static assert(0, "flint.engine.aot.sys.files: unsupported platform");
@@ -320,4 +553,71 @@ version (Posix) unittest
     assert(readInto(-1, bytes[]) == -1 && readInto(handle, bytes[0 .. 0]) == -1);
     char[1] tiny;
     assert(currentDirectoryInto(tiny[]) == 2 && currentDirectoryInto(tiny[0 .. 0]) == 0);
+}
+
+version (Posix) unittest
+{
+    import std.file : mkdirRecurse, rmdirRecurse, tempDir, write;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+    import std.conv : to;
+
+    const root = buildPath(tempDir, "flint-aot-files-dir-" ~ thisProcessID.to!string);
+    mkdirRecurse(buildPath(root, "sub"));
+    scope (exit)
+        rmdirRecurse(root);
+    write(buildPath(root, "file"), "x");
+    DirectoryHandle directory;
+    FileError error;
+    assert(openDirectory(root ~ '\0', directory, error) && error == FileError.none);
+    string[] names;
+    for (auto name = nextEntryName(directory); name !is null; name = nextEntryName(directory))
+        names ~= name;
+    closeDirectory(directory);
+    closeDirectory(directory); // a second close does nothing
+    assert(nextEntryName(directory) is null);
+    import std.algorithm.sorting : sort;
+
+    names.sort();
+    assert(names == [".", "..", "file", "sub"], names.to!string);
+
+    assert(!openDirectory(root ~ "/missing\0", directory, error) && error == FileError.notFound);
+    assert(!openDirectory(buildPath(root, "file") ~ '\0', directory, error) && error == FileError.notFound);
+    assert(!openDirectory(root, directory, error) && error == FileError.notFound); // no NUL
+    assert(!openDirectory("", directory, error));
+}
+
+version (Posix) unittest
+{
+    import std.conv : to;
+    import std.file : read, readText, remove, tempDir, thisExePath;
+    import std.process : thisProcessID;
+
+    // Write, positive: create, then truncate; the bytes read back.
+    const path = tempDir ~ "/flint-aot-files-write-" ~ thisProcessID.to!string;
+    FileError error;
+    foreach (content; ["first content", "second"])
+    {
+        auto file = openWrite(path ~ '\0', error);
+        assert(file >= 0 && error == FileError.none);
+        assert(writeFrom(file, cast(const(ubyte)[]) content) == content.length);
+        closeFile(file);
+        assert(readText(path) == content);
+    }
+    remove(path);
+    // Write, negative: a missing directory, a directory, no NUL, nothing to write or no file.
+    assert(openWrite(path ~ "/missing/x\0", error) < 0 && error == FileError.notFound);
+    assert(openWrite(tempDir ~ '\0', error) < 0 && error == FileError.isDirectory);
+    assert(openWrite(path, error) < 0 && error == FileError.notFound);
+    assert(writeFrom(-1, [1]) == -1 && writeFrom(0, null) == -1);
+
+    // The executable, as std.file's thisExePath; a buffer too small says so, an empty one gives 0.
+    version (linux)
+    {
+        char[4096] buffer;
+        const length = executablePathInto(buffer[]);
+        assert(length > 0 && length <= buffer.length && buffer[0 .. length] == thisExePath());
+        char[2] tiny;
+        assert(executablePathInto(tiny[]) == tiny.length + 1 && executablePathInto(tiny[0 .. 0]) == 0);
+    }
 }

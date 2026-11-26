@@ -87,6 +87,15 @@ version (Windows)
             &upper[0], cast(int) upper.length, null, null, 0);
         return written == name.length ? upper : name.dup;
     }
+
+    /// This process's id.
+    // SAFETY: GetCurrentProcessId takes no arguments and touches no memory of ours.
+    @trusted long currentProcessId() nothrow @nogc
+    {
+        import core.sys.windows.winbase : GetCurrentProcessId;
+
+        return GetCurrentProcessId();
+    }
 }
 else version (Posix)
 {
@@ -122,6 +131,15 @@ else version (Posix)
         for (size_t i = 0; entries[i] !is null; i++)
             copies ~= entries[i][0 .. strlen(entries[i])].idup;
         return copies;
+    }
+
+    /// This process's id.
+    // SAFETY: getpid takes no arguments and touches no memory of ours.
+    @trusted long currentProcessId() nothrow @nogc
+    {
+        import core.sys.posix.unistd : getpid;
+
+        return getpid();
     }
 }
 else

@@ -1,7 +1,7 @@
 /++
-The host process for flint:java and flint:core: environment variables, file facts, whole-file reads and the
-current directory, without std.process, std.file or std.path, whose templates each caller instantiated
-(ADR-030 section 5, the template diet).
+The host process for flint:java and flint:core: environment variables, the process id and executable, file facts,
+whole-file reads and writes, a directory's subdirectories, the current directory and path normalization, without std.process, std.file or std.path, whose
+templates each caller instantiated (ADR-030 section 5, the template diet).
 
 Everything here is `@safe` and `package(flint)`: framework modules call it, applications never do. The `@trusted`
 calls live in `flint.engine.aot.sys.environment` and `flint.engine.aot.sys.files`. The behaviour is std.process's
@@ -9,8 +9,9 @@ and std.file's, except where a function's documentation says otherwise.
 +/
 module flint.engine.aot.host;
 
-import flint.engine.aot.sys.environment : readVariable;
-import flint.engine.aot.sys.files : closeFile, currentDirectoryInto, FileHandle, openRead, readInto, statPath;
+import flint.engine.aot.sys.environment : currentProcessId, readVariable;
+import flint.engine.aot.sys.files : closeDirectory, closeFile, currentDirectoryInto, DirectoryHandle,
+    FileHandle, nextEntryName, openDirectory, openRead, openWrite, readInto, statPath, writeFrom;
 public import flint.engine.aot.sys.files : FileError, FileFacts;
 
 @safe:
@@ -102,6 +103,12 @@ private void addFirst(ref EnvironmentEntry[] entries, string name, string value)
         if (existing.name == name)
             return;
     entries ~= EnvironmentEntry(name, value);
+}
+
+/// This process's id, as std.process's `thisProcessID`.
+package(flint) long processId() nothrow @nogc
+{
+    return currentProcessId();
 }
 
 /++
@@ -200,6 +207,49 @@ package(flint) string describe(FileError error) pure nothrow @nogc
     }
 }
 
+/++
+The paths of the directories directly inside `directory`, unsorted: the names std.file's
+`dirEntries(directory, SpanMode.shallow)` gives for the entries whose `isDir` holds, that is `directory` and the
+entry joined by one separator, symbolic links followed, `.` and `..` left out. Null with `error` set when
+`directory` cannot be listed (std.file throws).
++/
+package(flint) string[] subdirectoryPaths(string directory, out FileError error) nothrow
+{
+    if (directory.length == 0 || holdsNul(directory))
+    {
+        error = FileError.notFound;
+        return null;
+    }
+    DirectoryHandle listing;
+    version (Windows)
+    {
+        import flint.engine.aot.sys.files : widen;
+
+        const pattern = widen(isSeparator(directory[$ - 1]) ? directory ~ "*" : directory ~ "\\*");
+        if (pattern is null)
+        {
+            error = FileError.notFound;
+            return null;
+        }
+    }
+    else
+        const pattern = nulTerminated(directory);
+    if (!openDirectory(pattern, listing, error))
+        return null;
+    scope (exit)
+        closeDirectory(listing);
+    string[] paths;
+    for (auto name = nextEntryName(listing); name !is null; name = nextEntryName(listing))
+    {
+        if (name.length == 0 || name == "." || name == "..")
+            continue;
+        const path = joinPath(directory, name);
+        if (fileFacts(path).directory)
+            paths ~= path;
+    }
+    return paths;
+}
+
 /// The current working directory, as std.file's `getcwd`; null when it cannot be read.
 package(flint) string currentDirectory() nothrow
 {
@@ -230,6 +280,75 @@ package(flint) string currentDirectory() nothrow
 }
 
 /++
+Write `bytes` to the file at `path`, creating or truncating it, as std.file's `write`; false with `error` set when
+it cannot be opened or written (std.file throws).
++/
+package(flint) bool writeFile(scope const(char)[] path, scope const(ubyte)[] bytes, out FileError error) nothrow
+{
+    if (path.length == 0 || holdsNul(path))
+    {
+        error = FileError.notFound;
+        return false;
+    }
+    version (Windows)
+    {
+        import flint.engine.aot.sys.files : widen;
+
+        const name = widen(path);
+        if (name is null)
+        {
+            error = FileError.notFound;
+            return false;
+        }
+    }
+    else
+        const name = nulTerminated(path);
+    auto file = openWrite(name, error);
+    if (error != FileError.none)
+        return false;
+    scope (exit)
+        closeFile(file);
+    while (bytes.length)
+    {
+        const written = writeFrom(file, bytes);
+        if (written <= 0)
+        {
+            error = FileError.other;
+            return false;
+        }
+        bytes = bytes[written .. $];
+    }
+    return true;
+}
+
+/// The running executable's absolute path, as std.file's `thisExePath`; null when the platform does not say.
+package(flint) string executablePath() nothrow
+{
+    version (Windows)
+    {
+        import flint.engine.aot.sys.files : executablePathWide, narrow;
+
+        auto wide = executablePathWide();
+        return wide is null ? null : narrow(wide);
+    }
+    else
+    {
+        import flint.engine.aot.sys.files : executablePathInto;
+
+        for (size_t size = 1024; size <= 1 << 20; size *= 2)
+        {
+            auto buffer = new char[](size);
+            const length = executablePathInto(buffer);
+            if (length == 0)
+                return null;
+            if (length <= buffer.length)
+                return buffer[0 .. length].idup;
+        }
+        return null;
+    }
+}
+
+/++
 `path` made absolute against the current directory, as std.path's `absolutePath(path)`: null for an empty path,
 `path` itself when it is already absolute, else the directory and the path joined by one separator. When the
 current directory cannot be read, `path` itself (std.path throws; Java's `getAbsolutePath` never does).
@@ -246,6 +365,61 @@ package(flint) string absolutePath(string path) nothrow
     return joinPath(base, path);
 }
 
+/++
+`parts` joined and normalized, as std.path's `buildNormalizedPath(parts)`: a rooted part starts the path again
+(on Windows, one rooted without a drive keeps the drive); separators are collapsed (to `\` on Windows); `.`
+segments are dropped; `..` removes the segment before it, is dropped at a root, and stays at the start of a
+relative path; a trailing separator is dropped. Empty input gives "", a path that normalizes away gives ".".
++/
+package(flint) string normalizedPath(scope const(char)[][] parts...) pure nothrow
+{
+    const joined = joinedParts(parts);
+    if (joined.length == 0)
+        return "";
+    const root = rootOf(joined);
+    string result = root;
+    const rest = root.length < joined.length ? joined[root.length .. $] : null;
+    foreach (i, segment; resolvedSegments(rest, root.length != 0))
+        result ~= i == 0 ? segment : separator ~ segment;
+    return result.length ? result : ".";
+}
+
+// std.path's chainPath: each rooted part starts the path again.
+private string joinedParts(scope const(char)[][] parts) pure nothrow
+{
+    string joined;
+    foreach (part; parts)
+    {
+        if (part.length == 0)
+            continue;
+        joined = joined.length == 0 || isAbsolute(part) ? part.idup : joinPath(joined, part.idup);
+    }
+    return joined;
+}
+
+// The segments of `path` (after its root) with `.` dropped and `..` resolved, as std.path's asNormalizedPath.
+private string[] resolvedSegments(string path, bool rooted) pure nothrow
+{
+    string[] segments;
+    size_t start;
+    foreach (i; 0 .. path.length + 1)
+    {
+        if (i < path.length && !isSeparator(path[i]))
+            continue;
+        const segment = path[start .. i];
+        start = i + 1;
+        if (segment.length == 0 || segment == ".")
+            continue;
+        if (segment != "..")
+            segments ~= segment;
+        else if (segments.length && segments[$ - 1] != "..")
+            segments = segments[0 .. $ - 1];
+        else if (!rooted)
+            segments ~= segment;
+    }
+    return segments;
+}
+
 version (Windows)
 {
     private enum char separator = '\\';
@@ -253,6 +427,22 @@ version (Windows)
     private bool isSeparator(char c) pure nothrow @nogc
     {
         return c == '\\' || c == '/';
+    }
+
+    // std.path's root of a normalized path: `C:\`, `C:` (drive-relative), `\` (rooted), `\\server\share\`, or none.
+    private string rootOf(string path) pure nothrow
+    {
+        if (path.length >= 2 && path[1] == ':')
+            return path.length >= 3 && isSeparator(path[2]) ? path[0 .. 2] ~ separator : path[0 .. 2];
+        if (path.length >= 3 && isAbsolute(path))
+        {
+            const length = rootLength(path);
+            string root = "\\\\";
+            foreach (c; path[2 .. length])
+                root ~= isSeparator(c) ? separator : c;
+            return isSeparator(root[$ - 1]) ? root : root ~ separator;
+        }
+        return path.length && isSeparator(path[0]) ? [separator] : "";
     }
 
     // std.path: a drive root (`C:\`) or a UNC path (`\\server`).
@@ -302,9 +492,22 @@ version (Windows)
 }
 else
 {
+    private enum char separator = '/';
+
+    private bool isSeparator(char c) pure nothrow @nogc
+    {
+        return c == '/';
+    }
+
     private bool isAbsolute(scope const(char)[] path) pure nothrow @nogc
     {
         return path.length != 0 && path[0] == '/';
+    }
+
+    // The root of a path: "/" when it is absolute.
+    private string rootOf(string path) pure nothrow
+    {
+        return isAbsolute(path) ? "/" : "";
     }
 
     private string joinPath(string base, string path) pure nothrow
@@ -390,4 +593,84 @@ version (Posix) unittest
     // modifiedMillis truncates toward zero, as SysTime.toUnixTime.
     assert(modifiedMillis(FileFacts(true, true, false, 0, -5_000_000)) == 0);
     assert(modifiedMillis(FileFacts(true, true, false, 0, 15_000_000)) == 1000);
+}
+
+version (Posix) unittest
+{
+    import std.algorithm.sorting : sort;
+    import std.conv : to;
+    import std.file : dirEntries, mkdir, rmdirRecurse, SpanMode, symlink, tempDir, write;
+    import std.process : thisProcessID;
+
+    // Subdirectories, positive: directories and a link to one, not files, a dangling link or `.`/`..`; the same
+    // names as std.file's dirEntries/isDir, with and without a trailing separator.
+    const root = tempDir ~ "/flint-host-dirs-" ~ thisProcessID.to!string;
+    mkdir(root);
+    scope (exit)
+        rmdirRecurse(root);
+    mkdir(root ~ "/b");
+    mkdir(root ~ "/a");
+    write(root ~ "/file", "x");
+    symlink(root ~ "/a", root ~ "/link");
+    symlink(root ~ "/gone", root ~ "/dangling");
+    FileError error;
+    auto paths = subdirectoryPaths(root, error);
+    assert(error == FileError.none);
+    paths.sort();
+    assert(paths == [root ~ "/a", root ~ "/b", root ~ "/link"], paths.to!string);
+    string[] expected;
+    foreach (entry; dirEntries(root, SpanMode.shallow))
+        if (entry.isDir)
+            expected ~= entry.name;
+    expected.sort();
+    assert(paths == expected);
+    auto slashed = subdirectoryPaths(root ~ "/", error);
+    slashed.sort();
+    assert(slashed == paths);
+    assert(subdirectoryPaths(root ~ "/b", error).length == 0 && error == FileError.none);
+    // Negative: missing, a file, empty or NUL-holding paths.
+    assert(subdirectoryPaths(root ~ "/missing", error) is null && error == FileError.notFound);
+    assert(subdirectoryPaths(root ~ "/file", error) is null && error == FileError.notFound);
+    assert(subdirectoryPaths("", error) is null && error == FileError.notFound);
+    assert(subdirectoryPaths(root ~ "\0x", error) is null && error == FileError.notFound);
+}
+
+version (Posix) unittest
+{
+    import std.path : buildNormalizedPath;
+
+    // Normalization, positive: std.path's buildNormalizedPath for one and two parts.
+    static immutable string[] paths = [
+        "", ".", "..", "/", "//", "a", "a/", "a//b", "./a", "a/.", "a/./b", "a/..", "a/../..",
+        "../a", "../../a/b", "/..", "/../a", "/a/../../b", "/a/b/../c/", "a/b/c/../../d",
+        "resources/./config/", "x/../y/./z//", "/a/./b/../../c", "./", "a/b/../..", "../", "/./"
+    ];
+    foreach (path; paths)
+        assert(normalizedPath(path) == buildNormalizedPath(path), path);
+    foreach (base; ["", "/root", "rel", "/root/", "./w"])
+        foreach (path; paths)
+            assert(normalizedPath(base, path) == buildNormalizedPath(base, path), base ~ " + " ~ path);
+    // Negative: no parts, empty parts.
+    assert(normalizedPath() == "" && normalizedPath("", "") == "");
+}
+
+version (Posix) unittest
+{
+    import std.conv : to;
+    import std.file : read, readText, remove, tempDir, thisExePath;
+    import std.process : thisProcessID;
+
+    // Writes, positive and negative (a missing directory, an empty or NUL-holding path).
+    const written = tempDir ~ "/flint-host-write-" ~ thisProcessID.to!string;
+    FileError error;
+    assert(writeFile(written, cast(const(ubyte)[]) "12 34\n", error) && error == FileError.none);
+    assert(readText(written) == "12 34\n");
+    assert(writeFile(written, null, error) && read(written).length == 0);
+    remove(written);
+    assert(!writeFile(written ~ ".missing/x", [1], error) && error == FileError.notFound);
+    assert(!writeFile("", [1], error) && !writeFile(written ~ "\0", [1], error));
+    // The executable and the process id, as std.file and std.process give them.
+    version (linux)
+        assert(executablePath() == thisExePath());
+    assert(processId() == thisProcessID && processId() > 0);
 }
