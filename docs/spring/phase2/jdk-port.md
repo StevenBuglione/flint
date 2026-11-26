@@ -9,7 +9,7 @@ The owner decided on 2026-11-26 to port the parts of the Java SE standard librar
 - **Apache Harmony is not used.** Its few derived files have been replaced by OpenJDK ports or original code. Don't port new Harmony code or tests.
 - **Unicode and IANA tz data** are data under their own licences. Generate them into tables with a checked-in generator, as `framework/java/tools/GenCharacter.java` already does.
 - **Tests:**
-  - OpenJDK's jtreg tests where they apply;
+  - OpenJDK's jtreg tests where they apply, **but only files that carry the Classpath exception.** Many jtreg test files are GPL-2.0-only without it, and the owner's licence rule forbids plain GPL in the repository. Don't copy or port those files. Running them unmodified against the pinned Temurin oracle is fine, because they stay outside the repository. Cover the same behaviour with original tests written from the specification, and record the deferred upstream test with its reason in the inventory. (Coordinator, 2026-11-26 16:30Z, from sol-jpa's CRC32 finding.)
   - original tests written against the specification;
   - Spring's own tests that exercise these classes.
 
