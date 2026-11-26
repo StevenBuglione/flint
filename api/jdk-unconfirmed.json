@@ -309,8 +309,6 @@
   "java.sql.Wrapper",
   "java.sql.Wrapper#isWrapperFor(java.lang.Class)",
   "java.sql.Wrapper#unwrap(java.lang.Class)",
-  "java.text.DateFormat",
-  "java.text.SimpleDateFormat",
   "java.util.AbstractCollection",
   "java.util.AbstractCollection#<init>()",
   "java.util.AbstractCollection#add(E)",

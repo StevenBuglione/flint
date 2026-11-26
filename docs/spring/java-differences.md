@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,075 | 306 | 1,871 | 15,169 |
+| framework | openjdk@21.0.13 | 1,073 | 306 | 1,871 | 15,171 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10086,7 +10086,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
 | java.sql | 1,005 | 0 |
-| java.text | 533 | 0 |
+| java.text | 535 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
@@ -11064,6 +11064,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.ByteBuffer#putLong(long)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#putShort(int,short)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#putShort(short)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
+| framework | `java.text.DateFormat` | 2 | Java DateFormat extends Format and is usable through its generic format(Object) contract. Flint has no Format supertype. |
 | framework | `java.text.DateFormat#<init>()` | 2 | Subclass initialization is implicit. Flint has no DateFormat constructor for an explicit super() call, which Java subclasses can make. |
 | framework | `java.text.DateFormat#format(Date)` | 2 | With SimpleDateFormat, a null Date or an absent Calendar can terminate the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#getTimeZone()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
@@ -11077,6 +11078,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.MessageFormat#format(String,Object...)` | 2 | Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type. |
 | framework | `java.text.MessageFormat#getLocale()` | 2 | Java preserves an explicitly absent locale and returns null. Flint returns a plain Locale value and cannot represent absence (R5). |
 | framework | `java.text.MessageFormat#toPattern()` | 2 | Returns the input pattern text instead of serializing the parsed pattern in Java canonical form. |
+| framework | `java.text.SimpleDateFormat` | 2 | The Java class inherits the Format hierarchy and generic formatting contract through DateFormat. Flint has no Format supertype. |
 | framework | `java.text.SimpleDateFormat#<init>(String)` | 2 | Uses Locale.US for named fields instead of Java's default Locale.Category.FORMAT. |
 | framework | `java.text.SimpleDateFormat#<init>(String,Locale)` | 2 | Rejects named fields with a non-English locale. Java uses that locale's date and time names. |
 | framework | `java.text.SimpleDateFormat#applyPattern(String)` | 2 | Reports only the last digit of an invalid ISO 8601 X repeat count of ten or more. Java reports the full count. |
