@@ -89,7 +89,7 @@ name = "flint:context"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:beans", "flint:conc", "flint:core", "flint:engine-aot", "flint:engine-reactor", "flint:jakarta-validation", "flint:java", "flint:java-concurrent"]
+dependencies = ["flint:beans", "flint:conc", "flint:core", "flint:engine-aot", "flint:engine-reactor", "flint:jakarta-validation", "flint:java", "flint:java-concurrent", "flint:java-text"]
 
 [[package]]
 name = "flint:core"
@@ -153,6 +153,13 @@ kind = "core"
 source = "workspace"
 scope = "build"
 dependencies = []
+
+[[package]]
+name = "flint:java-text"
+kind = "core"
+source = "workspace"
+scope = "build"
+dependencies = ["flint:engine-aot", "flint:java"]
 
 [[package]]
 name = "flint:jdbc"
