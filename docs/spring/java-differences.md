@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 168 | 147 | 0 | 2,075 |
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
-| framework | thymeleaf@3.1.7.RELEASE | 59 | 77 | 0 | 4,316 |
+| framework | thymeleaf@3.1.7.RELEASE | 63 | 80 | 0 | 4,309 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 234 | 135 | 1,871 | 16,181 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -4127,6 +4127,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.thymeleaf.expression.Objects#listNullSafe(List,T)` | `flint.thymeleaf.expression.Objects.listNullSafe` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.thymeleaf.expression.Objects#nullSafe(T,T)` | `flint.thymeleaf.expression.Objects.nullSafe` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.thymeleaf.expression.Objects#setNullSafe(Set,T)` | `flint.thymeleaf.expression.Objects.setNullSafe` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+
+#### org.thymeleaf.processor
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.processor.AbstractProcessor#<init>(TemplateMode,int)` | `flint.thymeleaf.processor.AbstractProcessor` | [R15](api-mapping.md#r15-enums-with-fields), [D-7](api-mapping.md#deviations) | Use the TemplateMode value. An explicit null overload preserves the Java IllegalArgumentException. |
+| `org.thymeleaf.processor.AbstractProcessor#getTemplateMode()` | `flint.thymeleaf.processor.AbstractProcessor.getTemplateMode` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.processor.IProcessor#getTemplateMode()` | `flint.thymeleaf.processor.IProcessor.getTemplateMode` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 
 #### org.thymeleaf.standard.expression
 
@@ -10140,7 +10148,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.model | 139 | 0 |
 | org.thymeleaf.postprocessor | 9 | 0 |
 | org.thymeleaf.preprocessor | 9 | 0 |
-| org.thymeleaf.processor | 7 | 0 |
 | org.thymeleaf.processor.cdatasection | 11 | 0 |
 | org.thymeleaf.processor.comment | 11 | 0 |
 | org.thymeleaf.processor.doctype | 11 | 0 |

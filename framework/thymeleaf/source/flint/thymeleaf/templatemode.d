@@ -46,7 +46,6 @@ struct TemplateMode
     /// Raw content.
     static immutable TemplateMode RAW = TemplateMode(5);
 
-    private static immutable modes = [HTML, XML, TEXT, JAVASCRIPT, CSS, RAW];
     private static immutable names = ["HTML", "XML", "TEXT", "JAVASCRIPT", "CSS", "RAW"];
 
     /// The declared name.
@@ -64,7 +63,7 @@ struct TemplateMode
     /// All modes in declaration order, in a fresh array.
     static TemplateMode[] values() pure
     {
-        return modes.dup;
+        return [HTML, XML, TEXT, JAVASCRIPT, CSS, RAW];
     }
 
     /// Resolve the exact declared name.
@@ -74,7 +73,7 @@ struct TemplateMode
             throw new NullPointerException("Name is null");
         foreach (ordinal, candidate; names)
             if (name == candidate)
-                return modes[ordinal];
+                return TemplateMode(cast(ubyte) ordinal);
         throw new IllegalArgumentException("No enum constant org.thymeleaf.templatemode.TemplateMode." ~ name);
     }
 
