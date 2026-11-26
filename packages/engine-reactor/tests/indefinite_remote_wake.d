@@ -32,6 +32,11 @@ private final class InterleavedWaits
         assert(reactor.retireRemoteWake(abandoned.value).code == Status.ok);
         assert(abandoned.value.signal() == Status.notFound);
 
+        auto timed = reactor.armRemoteWake();
+        assert(timed.ok());
+        assert(reactor.yieldUntil(Deadline.none).code == Status.invalidArgument);
+        assert(timed.value.signal() == Status.notFound);
+
         auto replaced = reactor.armRemoteWake();
         auto armed = reactor.armRemoteWake();
         assert(replaced.ok() && armed.ok());
@@ -128,4 +133,39 @@ unittest
     assert(reactor.value.postStartup(0, &waits.stop, TaskContext(2)).code == Status.ok);
     assert(reactor.value.run().code == Status.ok);
     assert(waits.resumed);
+}
+
+private final class IdleDeadline
+{
+    bool expired;
+    bool resumedWithinLimit;
+
+    void wait() nothrow @nogc
+    {
+        auto reactor = Reactor.current();
+        auto task = reactor.currentTask();
+        assert(task.ok() && task.value.cancellation.check().code == Status.ok);
+        auto armed = reactor.armRemoteWake();
+        assert(armed.ok());
+        const limit = Deadline.afterMillis(200);
+        expired = reactor.yieldForRemoteWake().code == Status.timedOut;
+        resumedWithinLimit = Deadline.afterMillis(0).monotonicNanoseconds < limit.monotonicNanoseconds;
+        assert(armed.value.signal() == Status.notFound);
+        reactor.stop();
+    }
+}
+
+@("an idle reactor observes the task deadline during a remote wait")
+unittest
+{
+    auto configuration = options();
+    configuration.fiberPoolSize = 1;
+    auto reactor = Reactor.create(configuration);
+    assert(reactor.ok());
+    auto wait = new IdleDeadline;
+    auto context = Context.init.withDeadline(Deadline.afterMillis(50));
+    assert(reactor.value.postStartup(0, &wait.wait, TaskContext(1, context)).code == Status.ok);
+    assert(reactor.value.run().code == Status.ok);
+    assert(wait.expired);
+    assert(wait.resumedWithinLimit, "idle reactor did not observe the task deadline within 200 ms");
 }
