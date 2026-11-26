@@ -47,7 +47,7 @@ private string renderRecord(string prefix, string first, string secondLabel, str
     return joinRecord(parts[]);
 }
 
-private char[] joinRecord(scope const(string)[] parts) pure
+package(flint.ai.chat) char[] joinRecord(scope const(string)[] parts) pure
 {
     size_t length;
     foreach (part; parts)

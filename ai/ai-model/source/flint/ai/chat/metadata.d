@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/metadata/{ChatGenerationMetadata,EmptyRateLimit,FinishReasonCategory,RateLimit,Usage}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/metadata/{ChatGenerationMetadata,DefaultUsage,EmptyRateLimit,FinishReasonCategory,RateLimit,Usage}.java
 // Modified by the Flint authors.
 module flint.ai.chat.metadata;
 
 import flint.ai.model : ResultMetadata;
 import flint.engine.aot.any : Any;
+import flint.java.lang : JavaObject;
 import flint.java.time : Duration;
 import std.typecons : Nullable;
 
@@ -233,4 +234,148 @@ interface Usage
             return Nullable!long.init;
         }
     }
+}
+
+/// Token counts and optional provider data from a model invocation.
+class DefaultUsage : Usage
+{
+    private int prompt_;
+    private int completion_;
+    private int total_;
+    private Any native_;
+    private LongCount cacheRead_;
+    private LongCount cacheWrite_;
+
+    /// Creates usage with a total computed from the prompt and completion counts.
+    this(TokenCount promptTokens, TokenCount completionTokens) pure nothrow @nogc
+    {
+        this(promptTokens, completionTokens, TokenCount.init, Any.init);
+    }
+
+    /// Creates usage with an explicit total, or computes it if absent.
+    this(TokenCount promptTokens, TokenCount completionTokens, TokenCount totalTokens) pure nothrow @nogc
+    {
+        this(promptTokens, completionTokens, totalTokens, Any.init);
+    }
+
+    /// Creates usage with optional native provider data.
+    this(TokenCount promptTokens, TokenCount completionTokens, TokenCount total, Any nativeUsage) pure nothrow @nogc
+    {
+        this(promptTokens, completionTokens, total, nativeUsage, LongCount.init, LongCount.init);
+    }
+
+    /// Creates usage with provider data and optional prompt cache counts.
+    this(TokenCount promptTokens, TokenCount completionTokens, TokenCount totalTokens, Any nativeUsage,
+            LongCount cacheReadInputTokens, LongCount cacheWriteInputTokens) pure nothrow @nogc
+    {
+        prompt_ = promptTokens.isNull ? 0 : promptTokens.get();
+        completion_ = completionTokens.isNull ? 0 : completionTokens.get();
+        total_ = totalTokens.isNull ? cast(int)(cast(uint) prompt_ + cast(uint) completion_) : totalTokens.get();
+        native_ = nativeUsage;
+        cacheRead_ = cacheReadInputTokens;
+        cacheWrite_ = cacheWriteInputTokens;
+    }
+
+    override TokenCount getPromptTokens() pure nothrow @nogc
+    {
+        return TokenCount(prompt_);
+    }
+
+    override TokenCount getCompletionTokens() pure nothrow @nogc
+    {
+        return TokenCount(completion_);
+    }
+
+    override int getTotalTokens() pure nothrow @nogc
+    {
+        return total_;
+    }
+
+    override Any getNativeUsage() pure nothrow @nogc
+    {
+        return native_;
+    }
+
+    override LongCount getCacheReadInputTokens() pure nothrow @nogc
+    {
+        return cacheRead_;
+    }
+
+    override LongCount getCacheWriteInputTokens() pure nothrow @nogc
+    {
+        return cacheWrite_;
+    }
+
+    /// Compares counts and native data for objects of the same concrete class.
+    bool equals(Object other)
+    {
+        auto that = cast(DefaultUsage) other;
+        return this is that || (that !is null && typeid(this) is typeid(that) && prompt_ == that.prompt_
+                && completion_ == that.completion_ && total_ == that.total_ && sameCacheCount(cacheRead_,
+                    that.cacheRead_) && sameCacheCount(cacheWrite_, that.cacheWrite_)
+                && equalNativeUsage(native_, that.native_));
+    }
+
+    /// Combines the hashes of the counts and native data.
+    int hashCode()
+    {
+        import flint.java.lang : Long;
+
+        const int read = cacheRead_.isNull ? 0 : Long.hashCode(cacheRead_.get());
+        const int written = cacheWrite_.isNull ? 0 : Long.hashCode(cacheWrite_.get());
+        int result = 31 * (31 * prompt_ + completion_) + total_;
+        result = 31 * result + hashNativeUsage(native_);
+        return 31 * (31 * result + read) + written;
+    }
+
+    /// Formats counts and any available cache fields.
+    override string toString()
+    {
+        import flint.ai.chat.messages.part : joinRecord;
+        import flint.engine.aot.text : decimal;
+
+        const bool hasRead = !cacheRead_.isNull;
+        const bool hasWritten = !cacheWrite_.isNull;
+        string[11] parts = [
+            "DefaultUsage{promptTokens=", decimal(prompt_), ", completionTokens=",
+            decimal(completion_), ", totalTokens=", decimal(total_),
+            hasRead ? ", cacheReadInputTokens=" : "", hasRead ? decimal(cacheRead_.get()) : "",
+            hasWritten ? ", cacheWriteInputTokens=" : "", hasWritten ? decimal(cacheWrite_.get()) : "",
+            "}"
+        ];
+        return joinRecord(parts[]);
+    }
+
+    mixin JavaObject;
+}
+
+private bool sameCacheCount(ref const LongCount left, ref const LongCount right) pure nothrow @nogc
+{
+    if (left.isNull)
+        return right.isNull;
+    return !right.isNull && left.get() == right.get();
+}
+
+private bool equalNativeUsage(ref Any left, ref Any right)
+{
+    import flint.engine.aot.objects : objectEquals;
+
+    if (left.isNull() || right.isNull())
+        return left.isNull() && right.isNull();
+    auto leftObject = left.asObject();
+    auto rightObject = right.asObject();
+    if (leftObject !is null || rightObject !is null)
+        return objectEquals(leftObject, rightObject);
+    return left == right;
+}
+
+private int hashNativeUsage(ref Any value)
+{
+    import flint.engine.aot.objects : objectToHash;
+
+    if (value.isNull())
+        return 0;
+    if (auto object = value.asObject())
+        return cast(int) objectToHash(object);
+    return cast(int) value.toHash();
 }

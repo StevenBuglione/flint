@@ -189,8 +189,45 @@
       "status": "deferred"
     },
     "org/springframework/ai/chat/metadata/DefaultUsageTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-model/tests/default_usage_tests.d",
+      "methods": {
+        "ported": [
+          "testCacheFields",
+          "testCacheFieldsNullByDefault",
+          "testCalculatedTotalTokens",
+          "testEqualsAndHashCode",
+          "testToString",
+          "testToStringWithCacheFields"
+        ],
+        "skipped": {
+          "testArbitraryNativeUsageMap": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testChatResponseWithNonSerializableNativeUsageIsSerializable": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testDeserializationWithAllFields": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testDeserializationWithCacheFields": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testDeserializationWithCustomNativeUsage": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testDeserializationWithDifferentPropertyOrder": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testDeserializationWithLegacyGenerationTokens": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testDeserializationWithLegacyGenerationTokensAndNoTotalTokens": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testDeserializationWithMissingFields": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testDeserializationWithNullFields": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testDeserializationWithoutCacheFields": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testNegativeTokenValues": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testRoundTripSerialization": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationFallsBackToToStringForNonSerializableNativeUsage": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationFallsBackToToStringForSelfReferencingNativeUsage": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationOfSerializableNativeUsageIsUnchanged": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationUsesCompletionTokensOnly": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationWithAllFields": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationWithCacheFields": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationWithCustomNativeUsage": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationWithDefaultTypingFallsBackToToStringForNonSerializableNativeUsage": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationWithDefaultTypingKeepsTypeIdForSerializableNativeUsage": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testSerializationWithNullFields": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testTwoArgumentConstructorAndSerialization": "DefaultUsage Jackson serialization or deserialization is pending.",
+          "testTwoArgumentConstructorWithNullValues": "DefaultUsage Jackson serialization or deserialization is pending."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/ai/chat/metadata/EmptyUsageTests.java": {
       "phase": "2",
