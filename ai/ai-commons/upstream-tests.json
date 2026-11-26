@@ -41,6 +41,21 @@
         ]
       },
       "status": "ported"
+    },
+    "org/springframework/ai/template/NoOpTemplateRendererTests.java": {
+      "d": "ai/ai-commons/tests/no_op_template_renderer_tests.d",
+      "methods": {
+        "ported": [
+          "shouldNotAcceptEmptyTemplate",
+          "shouldNotAcceptNullTemplate",
+          "shouldNotAcceptNullVariables",
+          "shouldNotAcceptVariablesWithNullKeySet",
+          "shouldReturnUnchangedComplexTemplate",
+          "shouldReturnUnchangedTemplate",
+          "shouldReturnUnchangedTemplateWithMultipleVariables"
+        ]
+      },
+      "status": "ported"
     }
   }
 }
