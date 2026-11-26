@@ -190,9 +190,9 @@ class PortInUseException : WebServerException
     /// The port `port` is in use, as `cause` reported.
     this(int port, Throwable cause = null)
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
-        super("Port " ~ port.to!string ~ " is already in use", cause);
+        super("Port " ~ decimal(port) ~ " is already in use", cause);
         this.port = port;
     }
 
@@ -208,9 +208,9 @@ final class PortInUseFailureAnalyzer : AbstractFailureAnalyzer!PortInUseExceptio
 {
     protected override FailureAnalysis analyze(Throwable rootFailure, PortInUseException cause)
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
-        const port = cause.getPort().to!string;
+        const port = decimal(cause.getPort());
         return new FailureAnalysis("Web server failed to start. Port " ~ port ~ " was already in use.",
                 "Identify and stop the process that's listening on port "
                 ~ port ~ " or configure this application to listen on another port.", cause);

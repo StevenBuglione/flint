@@ -73,14 +73,18 @@ abstract class RegistrationBean : ServletContextInitializer, Ordered
     // Boot's getOrDeduceName: the explicit name, else the class's simple name with a lower-case first letter.
     protected static string deduceName(string name, Object value)
     {
-        import std.string : lastIndexOf;
-        import std.uni : toLower;
-
         if (name.length)
             return name;
+        // Flint: plain code, not std.string/std.uni (playbook S-9). D class names start with an ASCII letter or '_'.
         const type = typeid(value).name;
-        const simple = type[type.lastIndexOf('.') + 1 .. $];
-        return simple.length ? simple[0 .. 1].toLower ~ simple[1 .. $] : simple;
+        size_t start = type.length;
+        while (start > 0 && type[start - 1] != '.')
+            start--;
+        const simple = type[start .. $];
+        if (simple.length == 0)
+            return simple;
+        const first = simple[0];
+        return (first >= 'A' && first <= 'Z' ? cast(char)(first + ('a' - 'A')) : first) ~ simple[1 .. $];
     }
 }
 

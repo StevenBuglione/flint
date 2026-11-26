@@ -114,15 +114,16 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
         import core.thread.osthread : Thread;
         import core.time : msecs;
 
+        // A compile-time pause: a run-time core.time.dur instance comes from Phobos's std.socket object (S-9).
+        enum pause = 200.msecs;
         while (!atomicLoad(terminated))
-            Thread.sleep(200.msecs);
+            Thread.sleep(pause);
     }
 
     /// The single `ServletWebServerFactory` bean.
     protected ServletWebServerFactory getWebServerFactory()
     {
         import flint.engine.aot.name : typeNameOf;
-        import std.array : join;
 
         auto names = getBeanFactory().getBeanNamesForTypeErased(typeNameOf!ServletWebServerFactory);
         if (names.length == 0)
@@ -131,7 +132,7 @@ class ServletWebServerApplicationContext : GenericApplicationContext, KeepAliveA
                     ~ "missing ServletWebServerFactory bean");
         if (names.length > 1)
             throw new ApplicationContextException("Unable to start ServletWebServerApplicationContext due to "
-                    ~ "multiple ServletWebServerFactory beans : " ~ names.join(","));
+                    ~ "multiple ServletWebServerFactory beans : " ~ joinedNames(names));
         return cast(ServletWebServerFactory) getBeanFactory().getBean(names[0]);
     }
 
@@ -166,7 +167,6 @@ final class ServletContextInitializerBeans
             DelegatingFilterProxyRegistrationBean, FilterRegistrationBean, ServletRegistrationBean;
         import flint.engine.aot.name : typeNameOf;
         import flint.jakarta.servlet : Filter, Servlet;
-        import std.algorithm.searching : canFind;
 
         auto factory = context.getBeanFactory();
         Object[] seen;
@@ -186,7 +186,7 @@ final class ServletContextInitializerBeans
         string[] servletNames;
         foreach (name; factory.getBeanNamesForTypeErased(typeNameOf!Servlet))
         {
-            if (!seen.canFind!((a, b) => a is b)(factory.getBean(name)))
+            if (!holdsSame(seen, factory.getBean(name)))
                 servletNames ~= name;
         }
         foreach (name; servletNames)
@@ -202,10 +202,10 @@ final class ServletContextInitializerBeans
         }
         foreach (name; factory.getBeanNamesForTypeErased(typeNameOf!Filter))
         {
-            if (seenNames.canFind(name))
+            if (holdsName(seenNames, name))
                 continue;
             auto bean = factory.getBean(name);
-            if (seen.canFind!((a, b) => a is b)(bean))
+            if (holdsSame(seen, bean))
                 continue;
             auto registration = new FilterRegistrationBean(cast(Filter) bean);
             registration.setName(name);
@@ -232,12 +232,44 @@ final class ServletContextInitializerBeans
 
     private static ServletContextInitializer[] sortedByOrder(ServletContextInitializer[] items)
     {
-        import std.algorithm.mutation : SwapStrategy;
-        import std.algorithm.sorting : sort;
-
-        sort!((a, b) => orderOf(cast(Object) a) < orderOf(cast(Object) b), SwapStrategy.stable)(items);
+        // A stable insertion sort (a handful of initializers), not std.algorithm's stable sort, whose TimSort
+        // checks link std.format and through it std.net.curl and the rest of Phobos's network objects (S-9).
+        foreach (i; 1 .. items.length)
+        {
+            auto item = items[i];
+            const order = orderOf(cast(Object) item);
+            size_t j = i;
+            for (; j > 0 && order < orderOf(cast(Object) items[j - 1]); j--)
+                items[j] = items[j - 1];
+            items[j] = item;
+        }
         return items;
     }
+}
+
+// Flint: plain loops, not std.algorithm and std.array (playbook S-9).
+private bool holdsSame(scope Object[] items, Object item) pure nothrow @nogc
+{
+    foreach (existing; items)
+        if (existing is item)
+            return true;
+    return false;
+}
+
+private bool holdsName(scope string[] names, string name) pure nothrow @nogc
+{
+    foreach (existing; names)
+        if (existing == name)
+            return true;
+    return false;
+}
+
+private string joinedNames(scope const string[] names) pure nothrow
+{
+    string result;
+    foreach (i, name; names)
+        result ~= i == 0 ? name : "," ~ name;
+    return result;
 }
 
 // The context only waits for the drain; Boot logs the result, which Flint's servers report through their own logs.

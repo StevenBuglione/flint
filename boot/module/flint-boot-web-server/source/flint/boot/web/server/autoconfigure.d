@@ -33,22 +33,7 @@ final class ServerProperties
     {
         private int threads = 0;
         private int maxHandlers = 200;
-        private bool mainThread;
-
-        /// Whether the main thread serves requests once the application has started, as one of the reactor
-        /// threads, instead of waiting idle for the context to close: one thread fewer for every stop-the-world
-        /// collection to signal (docs/spring/phase1/gc.md, section 3c). `FlintApplication.runMain` sets it by
-        /// default; an application that calls `run` itself leaves it off.
-        bool isMainThread() const pure nothrow @nogc
-        {
-            return mainThread;
-        }
-
-        /// Set `mainThread`.
-        void setMainThread(bool mainThread) pure nothrow @nogc
-        {
-            this.mainThread = mainThread;
-        }
+        private bool mainThread = false;
 
         /// Number of reactor threads serving requests. 0 uses every CPU the process may run on, up to 16, as Tomcat's
         /// request thread pool spans the CPUs.
@@ -82,6 +67,21 @@ final class ServerProperties
             }
             this.maxHandlers = maxHandlers;
         }
+
+        /// Whether the main thread serves requests once the application has started, as one of the reactor threads,
+        /// instead of waiting idle for the context to close: one thread fewer for every stop-the-world collection to
+        /// signal (docs/spring/phase1/gc.md, section 3c). `FlintApplication.runMain` sets it by default; an application
+        /// that calls `run` itself leaves it off.
+        bool isMainThread() const pure nothrow @nogc
+        {
+            return mainThread;
+        }
+
+        /// Set `mainThread`.
+        void setMainThread(bool mainThread) pure nothrow @nogc
+        {
+            this.mainThread = mainThread;
+        }
     }
 
     /// Servlet properties.
@@ -94,9 +94,9 @@ final class ServerProperties
         // Boot's cleanContextPath: trimmed, without a trailing slash ("/petclinic/" is "/petclinic", "/" is "").
         private static string cleanContextPath(string contextPath) pure nothrow @nogc
         {
-            import std.string : strip;
+            import flint.engine.aot.text : stripWhite;
 
-            const candidate = contextPath.length ? contextPath.strip : null;
+            const candidate = contextPath.length ? contextPath.stripWhite : null;
             return candidate.length && candidate[$ - 1] == '/' ? candidate[0 .. $ - 1] : candidate;
         }
 

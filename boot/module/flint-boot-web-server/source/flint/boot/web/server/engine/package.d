@@ -44,9 +44,11 @@ final class FlintWebServer : WebServer, HostedWebServer
             engine.start();
         catch (ServletEngineException failure)
         {
-            import std.algorithm.searching : canFind;
-
-            if (failure.msg.canFind("already in use"))
+            enum phrase = "already in use";
+            bool inUse;
+            foreach (i; 0 .. failure.msg.length >= phrase.length ? failure.msg.length - phrase.length + 1 : 0)
+                inUse = inUse || failure.msg[i .. i + phrase.length] == phrase;
+            if (inUse)
                 throw new PortInUseException(failure.port, failure);
             throw new WebServerException("Unable to start embedded Flint server", failure);
         }

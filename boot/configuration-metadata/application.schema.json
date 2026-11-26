@@ -1719,6 +1719,11 @@
               "type": "integer",
               "description": "Maximum number of requests handled at once, across the reactor threads, as Tomcat's server.tomcat.threads.max. Requests past it wait on their connections. 0 runs one handler per connection slot.",
               "default": 200
+            },
+            "main-thread": {
+              "type": "boolean",
+              "description": "Whether the main thread serves requests once the application has started, as one of the reactor threads, instead of waiting idle for the context to close: one thread fewer for every stop-the-world collection to signal (docs/spring/phase1/gc.md, section 3c). `FlintApplication.runMain` sets it by default; an application that calls `run` itself leaves it off.",
+              "default": false
             }
           }
         },

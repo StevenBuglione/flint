@@ -128,6 +128,13 @@
       "defaultValue": 200
     },
     {
+      "name": "server.flint.main-thread",
+      "type": "java.lang.Boolean",
+      "description": "Whether the main thread serves requests once the application has started, as one of the reactor threads, instead of waiting idle for the context to close: one thread fewer for every stop-the-world collection to signal (docs/spring/phase1/gc.md, section 3c). `FlintApplication.runMain` sets it by default; an application that calls `run` itself leaves it off.",
+      "sourceType": "flint.boot.web.server.autoconfigure.ServerProperties$Flint",
+      "defaultValue": false
+    },
+    {
       "name": "server.tomcat.max-keep-alive-requests",
       "type": "java.lang.Integer",
       "description": "Maximum number of HTTP requests that can be pipelined before the connection is closed. When set to 0 or 1, keep-alive and pipelining are disabled. When set to -1, an unlimited number of pipelined or keep-alive requests are allowed.",
