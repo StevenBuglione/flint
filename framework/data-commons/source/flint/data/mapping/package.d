@@ -205,6 +205,9 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// Whether the given annotation is present in the type hierarchy.
     bool isAnnotationPresent(ClassRef annotationType);
 
+    /// Whether the entity is marked as immutable.
+    bool isImmutable();
+
     /// Creates an accessor for a compatible bean.
     PersistentPropertyAccessor!(T, P) getPropertyAccessor(Any bean);
 

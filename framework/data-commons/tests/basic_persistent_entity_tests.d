@@ -6,7 +6,7 @@ module basic_persistent_entity_tests;
 
 import flint.core.annotation : AliasFor;
 import flint.core.annotation.types : AnnotationConfigurationException;
-import flint.data.annotation : CreatedBy, CreatedDate, LastModifiedBy, Transient, TypeAlias;
+import flint.data.annotation : CreatedBy, CreatedDate, Immutable, LastModifiedBy, Transient, TypeAlias;
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
 import flint.data.mapping : Alias, MappingException, PersistentEntity, PersistentProperty;
@@ -92,6 +92,15 @@ private final class EntityWithInvalidAlias
 
 @TypeAlias("\u2003\t")
 private final class WhitespaceAlias
+{
+}
+
+@Immutable
+private class ImmutableEntity
+{
+}
+
+private final class DerivedImmutableEntity : ImmutableEntity
 {
 }
 
@@ -227,6 +236,21 @@ unittest
 unittest
 {
     assert(mapped!DerivedAliasedEntity().getTypeAlias() == Alias.of(Any.of("foo")));
+}
+
+@("detectsImmutableEntity")
+unittest
+{
+    PersistentEntity!(ImmutableEntity, Property) immutableEntity = mapped!ImmutableEntity();
+    PersistentEntity!(Person, Property) ordinaryEntity = mapped!Person();
+    assert(immutableEntity.isImmutable());
+    assert(!ordinaryEntity.isImmutable());
+}
+
+@("immutable metadata follows the registered type hierarchy")
+unittest
+{
+    assert(mapped!DerivedImmutableEntity().isImmutable());
 }
 
 @("requires text in a type alias annotation")

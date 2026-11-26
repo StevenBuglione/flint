@@ -5,7 +5,7 @@
 module flint.data.mapping.model;
 
 import flint.core.annotation.types : AnnotationConfigurationException;
-import flint.data.annotation : TypeAlias;
+import flint.data.annotation : Immutable, TypeAlias;
 import flint.data.core.type_information : TypeInformation, registeredDescriptor;
 import flint.data.domain.persistable : PersistableState;
 import flint.data.mapping : Alias, IdentifierAccessor, MappingException, PersistentEntity, PersistentProperty,
@@ -89,6 +89,11 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     override bool isAnnotationPresent(ClassRef annotationType)
     {
         return !readEntityAnnotation(descriptor, annotationType).isNull();
+    }
+
+    override bool isImmutable()
+    {
+        return isAnnotationPresent(classOf!Immutable);
     }
 
     override P getIdProperty()
