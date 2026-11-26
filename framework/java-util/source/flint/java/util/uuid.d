@@ -1,11 +1,15 @@
 /// Java SE 21 UUID values (R1, R5, R8, R11). Import this leaf directly from flint:java-util.
 module flint.java.util.uuid;
 
+import flint.java.lang : Comparable, JavaObject, NullPointerException;
+
 @safe:
 
 /// An immutable 128-bit universally unique identifier.
-final class UUID
+final class UUID : Comparable!UUID
 {
+    mixin JavaObject;
+
     private immutable ulong most;
     private immutable ulong least;
 
@@ -89,6 +93,30 @@ final class UUID
 
         if (version_() != 1)
             throw new UnsupportedOperationException("Not a time-based UUID");
+    }
+
+    /// Compare the two signed words, starting with the most significant word.
+    override int compareTo(UUID other) pure
+    {
+        if (other is null)
+            throw new NullPointerException();
+        if (most != other.most)
+            return cast(long) most < cast(long) other.most ? -1 : 1;
+        return (cast(long) least > cast(long) other.least) - (cast(long) least < cast(long) other.least);
+    }
+
+    /// Compare the UUID's complete bit pattern.
+    bool equals(scope const Object other) const pure nothrow @nogc
+    {
+        const value = cast(const UUID) other;
+        return value !is null && most == value.most && least == value.least;
+    }
+
+    /// Fold the four 32-bit words with XOR.
+    int hashCode() const pure nothrow @nogc
+    {
+        const ulong folded = most ^ least;
+        return cast(int)(folded ^ (folded >> 32));
     }
 
     /// Render the standard 8-4-4-4-12 layout in lowercase hexadecimal.

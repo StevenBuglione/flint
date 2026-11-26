@@ -8,6 +8,7 @@
   "note": "UUIDOracle.java generates the UUID corpus using public Java SE 21 APIs. The random UUID layout and entropy smoke test is an original Flint test.",
   "flint_tests": [
     "framework/java-util/tests/uuid_java21_test.d",
+    "framework/java-util/tests/uuid_order_test.d",
     "framework/java-util/tests/uuid_test.d"
   ],
   "classes": {}
