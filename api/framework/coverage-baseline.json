@@ -1,5 +1,5 @@
 {"schema":"flint.api-coverage-baseline/1",
-"unclassified":19624,
+"unclassified":15172,
 "upstreams":{
 "hibernate-validator@9.1.6.Final":{"unclassified":0,"modules":{
 "hibernate-validator":0
@@ -55,9 +55,9 @@
 "spring-webmvc":2559,
 "spring-websocket":0
 }},
-"thymeleaf@3.1.7.RELEASE":{"unclassified":4452,"modules":{
-"thymeleaf":3595,
-"thymeleaf-extras-springsecurity6":107,
-"thymeleaf-spring6":750
+"thymeleaf@3.1.7.RELEASE":{"unclassified":0,"modules":{
+"thymeleaf":0,
+"thymeleaf-extras-springsecurity6":0,
+"thymeleaf-spring6":0
 }}
 }}
