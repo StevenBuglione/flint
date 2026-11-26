@@ -3300,6 +3300,7 @@ struct Locale
             this.language = "id";
         this.country = asciiCase(country, true);
         this.variant = variant;
+        addCompatibilityExtensions();
     }
 
     static immutable Locale ROOT = Locale(""); ///
@@ -3614,7 +3615,18 @@ struct Locale
         Locale locale = Locale(lang, region);
         locale.script = parsedScript;
         parseTagSuffix(subtags[next .. $], locale);
+        locale.addCompatibilityExtensions();
         return locale;
+    }
+
+    private void addCompatibilityExtensions() pure nothrow @nogc
+    {
+        if (script.length || extensions.length)
+            return;
+        if (language == "ja" && country == "JP" && variant == "JP")
+            extensions = "u-ca-japanese";
+        else if (language == "th" && country == "TH" && variant == "TH")
+            extensions = "u-nu-thai";
     }
 
     private static string canonicalScript(string subtag) pure nothrow
