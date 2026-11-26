@@ -851,12 +851,12 @@
         "ported": [
           "capturesContextOnInstantiationException",
           "instantiatesSimpleObjectCorrectly",
-          "instantiatesTypeWithPreferredConstructorUsingParameterValueProvider"
+          "instantiatesTypeWithPreferredConstructorUsingParameterValueProvider",
+          "throwsExceptionOnBeanInstantiationException"
         ],
         "skipped": {
           "createsInnerClassInstanceCorrectly": "Enclosing-class constructor metadata remains deferred.",
-          "instantiatesArrayCorrectly": "Array instantiation remains deferred.",
-          "throwsExceptionOnBeanInstantiationException": "The bean-level reflection exception fixture remains deferred."
+          "instantiatesArrayCorrectly": "Array instantiation remains deferred."
         }
       },
       "status": "partial"

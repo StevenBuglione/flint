@@ -5,6 +5,8 @@
 // Modified by the Flint authors.
 module flint.data.mapping.model.entity_instantiator;
 
+import flint.beans : BeanInstantiationException;
+import flint.data.core.type_information : registeredDescriptor;
 import flint.data.mapping : InstanceCreatorMetadata, PersistentEntity, PersistentProperty, PreferredConstructor;
 import flint.data.mapping.model.parameter_value_provider : ParameterValueProvider;
 import flint.engine.aot.any : Any;
@@ -124,6 +126,9 @@ private final class RegisteredEntityInstantiator(T, P) : EntityInstantiator!(T, 
             throw new IllegalArgumentException("Entity and parameter provider must not be null");
 
         auto metadata = entity.getInstanceCreatorMetadata();
+        if (metadata is null)
+            return createDefaultInstance(entity);
+
         auto creator = cast(PreferredConstructor!(T, P)) metadata;
         const descriptor = creator is null ? ConstructorDescriptor.init : creator.getConstructor();
         const invoke = descriptor.invoke;
@@ -143,10 +148,7 @@ private final class RegisteredEntityInstantiator(T, P) : EntityInstantiator!(T, 
 
         try
         {
-            auto instance = invoke(arguments);
-            if (instance.isNull())
-                throw new IllegalStateException("Registered constructor returned no instance");
-            return instance.get!T();
+            return requireInstance!T(invoke(arguments));
         }
         catch (Exception cause)
         {
@@ -154,4 +156,34 @@ private final class RegisteredEntityInstantiator(T, P) : EntityInstantiator!(T, 
                     new ArrayList!Any(arguments), cause);
         }
     }
+}
+
+private T createDefaultInstance(T, P)(PersistentEntity!(T, P) entity)
+{
+    const type = entity.getType();
+    const descriptor = registeredDescriptor(entity.getTypeInformation());
+    if (descriptor is null || descriptor.create is null)
+        throw defaultInstantiationFailure(type, "No registered default constructor");
+
+    try
+    {
+        return requireInstance!T(descriptor.create());
+    }
+    catch (Exception cause)
+    {
+        throw defaultInstantiationFailure(type, "Default constructor failed", cause);
+    }
+}
+
+private MappingInstantiationException defaultInstantiationFailure(ClassRef type, string message, Exception cause = null)
+{
+    auto failure = new BeanInstantiationException(type.name, message, cause);
+    return new MappingInstantiationException(type, null, null, Collections.emptyList!Any(), failure);
+}
+
+private T requireInstance(T)(Any instance)
+{
+    if (instance.isNull())
+        throw new IllegalStateException("Registered constructor returned no instance");
+    return instance.get!T();
 }

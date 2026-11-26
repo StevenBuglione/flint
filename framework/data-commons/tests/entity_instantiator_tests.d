@@ -6,6 +6,7 @@
 // Modified by the Flint authors.
 module entity_instantiator_tests;
 
+import flint.beans : BeanInstantiationException;
 import flint.data.annotation : Transient;
 import flint.data.core : TypeInformation;
 import flint.data.mapping : InstanceCreatorMetadata, Parameter, PersistentEntity, PersistentProperty;
@@ -163,6 +164,81 @@ unittest
     auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
     const result = instantiator.createInstance(entity, valuesFor(entity));
     assert(result !is null && typeid(result) is typeid(Object));
+}
+
+@("creates an object from its registered default when no creator is selected")
+unittest
+{
+    auto table = DescriptorTable.withBuiltins();
+    auto descriptor = descriptorOf!Object();
+    assert(descriptor.create !is null);
+    descriptor.constructors = null;
+    table.add(descriptor);
+    PersistentEntity!(Object, ConstructorProperty) entity = new BasicPersistentEntity!(Object, ConstructorProperty)(
+            TypeInformation.of!Object(table));
+    assert(entity.getInstanceCreatorMetadata() is null);
+    auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
+    const result = instantiator.createInstance(entity, valuesFor(entity));
+    assert(result !is null && typeid(result) is typeid(Object));
+}
+
+@("a selected constructor without invoke does not use the registered default")
+unittest
+{
+    auto table = DescriptorTable.withBuiltins();
+    auto descriptor = descriptorOf!Object();
+    assert(descriptor.create !is null);
+    descriptor.constructors = [ConstructorDescriptor.init];
+    table.add(descriptor);
+    PersistentEntity!(Object, ConstructorProperty) entity = new BasicPersistentEntity!(Object, ConstructorProperty)(
+            TypeInformation.of!Object(table));
+    const selected = entity.getInstanceCreatorMetadata();
+    assert(selected !is null);
+    auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
+    auto error = collectException!MappingInstantiationException(instantiator.createInstance(entity, valuesFor(entity)));
+    assert(error !is null && error.getEntityCreator() is selected);
+    assert(error.getConstructorArguments().isEmpty());
+}
+
+@("throwsExceptionOnBeanInstantiationException")
+unittest
+{
+    alias InterfaceEntity = PersistentEntity!(Object, ConstructorProperty);
+    auto table = DescriptorTable.withBuiltins();
+    auto descriptor = descriptorOf!InterfaceEntity();
+    assert(descriptor.create is null);
+    table.add(descriptor);
+    PersistentEntity!(InterfaceEntity, ConstructorProperty) entity = new BasicPersistentEntity!(
+            InterfaceEntity, ConstructorProperty)(TypeInformation.of!InterfaceEntity(table));
+    assert(entity.getInstanceCreatorMetadata() is null);
+    auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
+    auto error = collectException!MappingInstantiationException(instantiator.createInstance(entity, valuesFor(entity)));
+    assert(error !is null && error.getEntityType() == classOf!InterfaceEntity && error.getEntityCreator() is null);
+    assert(error.getConstructorArguments().isEmpty());
+    const cause = cast(BeanInstantiationException) error.getCause();
+    assert(cause !is null && cause.getBeanClass() == classOf!InterfaceEntity.name);
+    assert(cause.msg.canFind("No registered default constructor"));
+}
+
+@("default construction failure preserves its callback cause")
+unittest
+{
+    auto table = DescriptorTable.withBuiltins();
+    auto descriptor = descriptorOf!Object();
+    descriptor.constructors = null;
+    descriptor.create = function Any() @safe {
+        throw new IllegalStateException("default callback rejected the object");
+    };
+    table.add(descriptor);
+    PersistentEntity!(Object, ConstructorProperty) entity = new BasicPersistentEntity!(Object, ConstructorProperty)(
+            TypeInformation.of!Object(table));
+    auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
+    auto error = collectException!MappingInstantiationException(instantiator.createInstance(entity, valuesFor(entity)));
+    assert(error !is null && error.getEntityCreator() is null && error.getConstructorArguments().isEmpty());
+    const failure = cast(BeanInstantiationException) error.getCause();
+    assert(failure !is null && failure.getBeanClass() == classOf!Object.name);
+    const cause = cast(const IllegalStateException) failure.getCause();
+    assert(cause !is null && cause.msg == "default callback rejected the object");
 }
 
 private Any failInvocation(scope Any[])
