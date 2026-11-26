@@ -4,6 +4,7 @@ module flint.expression.aot_parity_tests;
 import flint.engine.aot.any : Any;
 import flint.expression.spel : SpelParseException;
 import flint.expression.spel.standard : SpelExpressionParser;
+import flint.expression.spel.support : StandardEvaluationContext;
 import flint.java.lang : doubleToString, floatToString;
 import std.file : exists, readText;
 import std.json : JSONValue, parseJSON;
@@ -59,7 +60,6 @@ private void checkCase(SpelExpressionParser parser, const ref JSONValue row)
         assert(mode.str.length && ("runtimeOnly" in row) is null, id);
         return;
     }
-    assert(("context" in row) is null, id ~ ": the interpreter driver needs a context for this case");
     if (auto error = "error" in expected)
     {
         assert(error.str == "syntax", id);
@@ -74,7 +74,17 @@ private void checkCase(SpelExpressionParser parser, const ref JSONValue row)
         }
         return;
     }
-    const value = parser.parseExpression(row["expression"].str).getValue();
+    auto expression = parser.parseExpression(row["expression"].str);
+    Any value;
+    if (auto fixture = "context" in row)
+    {
+        auto context = new StandardEvaluationContext;
+        foreach (name, ref literal; (*fixture)["variables"].objectNoRef)
+            context.setVariable(name, parser.parseExpression(literal.str).getValue());
+        value = expression.getValue(context);
+    }
+    else
+        value = expression.getValue();
     const expectedType = expected["type"].str;
     assert((value.isNull() ? "null" : value.typeName()) == expectedType, id);
     assert(valueText(value) == expected["value"].str, id);

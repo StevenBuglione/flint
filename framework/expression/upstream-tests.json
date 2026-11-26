@@ -256,8 +256,30 @@
       "status": "deferred"
     },
     "org/springframework/expression/spel/VariableAndFunctionTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/expression/tests/context_tests.d",
+      "methods": {
+        "ported": [
+          "variableAccess"
+        ],
+        "skipped": {
+          "variableAccessWithWellKnownVariables": "Standalone root variables are covered. Method resolution for getName() remains.",
+          "functionInvocationWithIncorrectNumberOfArguments": "Function registration and invocation with arity checks.",
+          "functionInvocationWithPrimitiveArguments": "Function invocation, arrays and argument conversion.",
+          "functionInvocationWithStringArgument": "Function invocation and argument conversion.",
+          "functionWithVarargs": "Function invocation and variable-length argument conversion.",
+          "functionWithVarargsViaMethodHandle": "Method handle equivalent and variable-length argument conversion.",
+          "functionWithPrimitiveVarargsViaMethodHandle": "Method handle equivalent and variable-length numeric arguments.",
+          "functionFromMethodWithVarargsAndPrimitiveArrayToObjectArrayConversion": "Function invocation and primitive array conversion.",
+          "functionFromMethodHandleWithVarargsAndPrimitiveArrayToObjectArrayConversion": "Method handle equivalent and primitive array conversion.",
+          "functionFromMethodWithListConvertedToVarargsArray": "Function invocation and list conversion.",
+          "functionFromMethodHandleWithListConvertedToVarargsArray": "Method handle equivalent and list conversion.",
+          "functionViaMethodHandleForStaticMethodThatAcceptsOnlyVarargs": "Method handle equivalent and variable-length arguments.",
+          "functionMethodMustBeStatic": "Function registration and method validity checks.",
+          "functionWithVarargsAndPojoToArrayConversion": "Function invocation and object-array conversion.",
+          "functionWithVarargsAndPojoToArrayConversionViaMethodHandle": "Method handle equivalent and object-array conversion."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/expression/spel/ast/AccessorUtilsTests.java": {
       "phase": "2",

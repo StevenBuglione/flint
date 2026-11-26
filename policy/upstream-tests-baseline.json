@@ -1817,7 +1817,6 @@
       "org/springframework/expression/spel/StandardTypeComparatorTests.java",
       "org/springframework/expression/spel/StandardTypeLocatorTests.java",
       "org/springframework/expression/spel/TemplateExpressionParsingTests.java",
-      "org/springframework/expression/spel/VariableAndFunctionTests.java",
       "org/springframework/expression/spel/ast/AccessorUtilsTests.java",
       "org/springframework/expression/spel/ast/FormatHelperTests.java",
       "org/springframework/expression/spel/ast/InlineCollectionTests.java",

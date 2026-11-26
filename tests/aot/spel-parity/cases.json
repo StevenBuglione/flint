@@ -264,5 +264,23 @@
     "id": "computed-negation-wrap",
     "expression": "-(2147483647 + 1)",
     "expected": {"type": "int", "value": "-2147483648"}
+  },
+  {
+    "id": "context-variable-division",
+    "expression": "#answer / 2",
+    "context": {"variables": {"answer": "42"}},
+    "expected": {"type": "int", "value": "21"}
+  },
+  {
+    "id": "context-mixed-numeric-types",
+    "expression": "#answer * #factor",
+    "context": {"variables": {"answer": "42", "factor": "3L"}},
+    "expected": {"type": "long", "value": "126"}
+  },
+  {
+    "id": "context-short-circuit",
+    "expression": "#enabled && (1 / #divisor > 0)",
+    "context": {"variables": {"enabled": "false", "divisor": "0"}},
+    "expected": {"type": "bool", "value": "false"}
   }
 ]

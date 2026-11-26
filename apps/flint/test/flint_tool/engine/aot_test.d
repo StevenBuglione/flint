@@ -414,8 +414,15 @@ private final class TestScope : imported!"flint_tool.engine.aot.spel".SpelScope
 {
     import flint_tool.engine.aot.spel : Compiled;
 
+    private Compiled[string] variables;
+
     bool variable(string name, out Compiled result)
     {
+        if (auto bound = name in variables)
+        {
+            result = *bound;
+            return true;
+        }
         if (name != "id")
             return false;
         result = Compiled("id", "long");
@@ -563,7 +570,6 @@ unittest
         remove(project);
     const cases = parseJSON(readText(buildPath(project, "cases.json"))).arrayNoRef;
     assert(cases.length > 0);
-    auto context = new TestScope;
     string definitions, calls, expectedOutput;
     foreach (index, ref row; cases)
     {
@@ -574,7 +580,17 @@ unittest
             assert(mode.str.length && ("compiledOnly" in row) is null, id);
             continue;
         }
-        assert(("context" in row) is null, id ~ ": the compiled driver needs a scope for this case");
+        auto context = new TestScope;
+        if (auto fixture = "context" in row)
+        {
+            foreach (name, ref literal; (*fixture)["variables"].objectNoRef)
+            {
+                Compiled value;
+                SpelError bindingError;
+                assert(compileSpel(literal.str, context, value, bindingError), id ~ ": " ~ bindingError.message);
+                context.variables[name] = value;
+            }
+        }
         Compiled result;
         SpelError error;
         const ok = compileSpel(row["expression"].str, context, result, error);

@@ -21,7 +21,7 @@
 module flint.expression.context_tests;
 
 import flint.engine.aot.any : Any;
-import flint.expression : EvaluationContext, TypedValue;
+import flint.expression : EvaluationContext, EvaluationException, TypedValue;
 import flint.expression.spel : SpelParseException;
 import flint.expression.spel.standard : SpelExpressionParser;
 import flint.expression.spel.support : StandardEvaluationContext;
@@ -193,4 +193,85 @@ unittest
     otherWriter.join();
     assert(context.lookupVariable("value") == Any.of(31));
     assert(context.lookupVariable("other").isNull());
+}
+
+@("variableAccess") unittest
+{
+    auto context = new StandardEvaluationContext;
+    context.setVariable("answer", Any.of(42));
+    auto parser = new SpelExpressionParser;
+
+    auto variable = parser.parseExpression("#answer");
+    assert(variable.getValue(context).typeName() == "int");
+    assert(variable.getValue(context).get!int == 42);
+    assert(variable.isWritable(context));
+
+    auto quotient = parser.parseRaw("#answer / 2");
+    assert(quotient.getValue(context).typeName() == "int");
+    assert(quotient.getValue(context).get!int == 21);
+    assert(!quotient.isWritable(context));
+    auto read = () nothrow @nogc => quotient.evaluate(context);
+    auto evaluated = read();
+    assert(evaluated.ok() && evaluated.value == Any.of(21));
+
+    context.setVariable("answer", Any.of(42L));
+    assert(quotient.getValue(context).typeName() == "long");
+    assert(quotient.getValue(context).get!long == 21L);
+    context.setVariable("answer", Any.of(cast(short) 42));
+    assert(quotient.getValue(context) == Any.of(21));
+}
+
+@("numeric references use explicit roots and late-bound context lookups") unittest
+{
+    static final class CustomContext : EvaluationContext
+    {
+        int calls;
+
+        TypedValue getRootObject()
+        {
+            return TypedValue(Any.of(calls++));
+        }
+
+        void setVariable(string, Any)
+        {
+        }
+
+        Any lookupVariable(string name)
+        {
+            if (name == "skipped")
+                throw new IllegalStateException("skipped variable was read");
+            calls++;
+            return Any.of(name == "scale" ? 2L : 5L);
+        }
+    }
+
+    auto standard = new StandardEvaluationContext(Any.of(1));
+    standard.setVariable("scale", Any.of(2L));
+    standard.setVariable("offset", Any.of(5L));
+    auto custom = new CustomContext;
+
+    auto expression = (new SpelExpressionParser).parseRaw("#root + (#this + #scale) * #offset");
+    assert(expression.getValue(standard, Any.of(3)) == Any.of(28L));
+    assert(expression.getValue(custom, Any.of(3)) == Any.of(28L));
+    assert(custom.calls == 2);
+    assert(expression.getValue(custom) == Any.of(22L));
+    assert(custom.calls == 5);
+
+    auto branch = (new SpelExpressionParser).parseRaw("false && #skipped");
+    assert(branch.getValue(custom).get!bool == false);
+    assert(custom.calls == 6);
+}
+
+@("a missing numeric variable fails during evaluation") unittest
+{
+    auto context = new StandardEvaluationContext;
+    auto expression = (new SpelExpressionParser).parseExpression("#missing + 1");
+    try
+    {
+        expression.getValue(context);
+        assert(false, "The numeric operator requires a bound number");
+    }
+    catch (EvaluationException)
+    {
+    }
 }

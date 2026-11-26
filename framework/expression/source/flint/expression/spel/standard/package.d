@@ -24,7 +24,7 @@ import flint.arena : Error, Result, Status;
 import flint.engine.aot.any : Any;
 import flint.expression : EvaluationContext, EvaluationException, Expression, ExpressionParser;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
-import flint.expression.spel.standard.arithmetic : ArithmeticExpression, parseArithmetic;
+import flint.expression.spel.standard.arithmetic : ArithmeticExpression, isRootReference, parseArithmetic;
 import flint.expression.spel.standard.literal : utf16Length;
 import flint.expression.spel.standard.property : parsePropertyPath, PropertyStep, readPropertyPath;
 import flint.expression.spel.support : StandardEvaluationContext;
@@ -120,11 +120,7 @@ class SpelExpression : Expression
             return unwrap(evaluate(cast(StandardEvaluationContext) context, rootObject, useContextRoot));
         if (useContextRoot)
             rootObject = context.getRootObject().getValue();
-        if (expression.variable is null)
-            return unwrap(expression.evaluate());
-        if (isRootReference(expression.variable))
-            return rootObject;
-        return context.lookupVariable(expression.variable);
+        return unwrap(expression.evaluate(rootObject, &context.lookupVariable));
     }
 
     private Any unwrap(Result!Any result)
@@ -147,18 +143,11 @@ class SpelExpression : Expression
     {
         if (properties.length)
             return Result!Any(Any.init, Error(Status.unsupported, "Property reads use the SpEL API boundary"));
-        const name = expression.variable;
-        if (name is null)
-            return expression.evaluate();
-        if (isRootReference(name))
-            return Result!Any(useContextRoot && context !is null ? context.readRootObject().getValue() : rootObject);
-        return Result!Any(context is null ? Any.init : context.readVariable(name));
+        if (useContextRoot && expression.readsRoot && context !is null)
+            rootObject = context.readRootObject().getValue();
+        return expression.evaluate(rootObject, (string name) nothrow @nogc => context is null ? Any.init
+                : context.readVariable(name));
     }
-}
-
-private bool isRootReference(string name) pure nothrow @nogc
-{
-    return name == "root" || name == "this";
 }
 
 private void requireContext(EvaluationContext context)

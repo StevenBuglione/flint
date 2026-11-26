@@ -43,25 +43,41 @@ struct ArithmeticExpression
     private Any constant;
     private immutable(Instruction)[] instructions;
     string variable;
+    bool readsRoot;
 
-    Result!Any evaluate() nothrow @nogc
+    Result!Any evaluate(Read)(Any root, scope Read read)
     {
+        if (variable !is null)
+            return Result!Any(isRootReference(variable) ? root : read(variable));
         if (instructions.length == 0)
             return Result!Any(constant);
         enum shortStack = 16;
         if (instructions.length < 2 * shortStack)
         {
             Scalar[shortStack] stack;
-            return evaluateStack(stack);
+            return evaluateStack(stack, root, read);
         }
         Scalar[maxStack] stack;
-        return evaluateStack(stack);
+        return evaluateStack(stack, root, read);
     }
 
-    private Result!Any evaluateStack(scope Scalar[] stack) nothrow @nogc
+    // The evaluator advances to a lookup or the final result. Only the lookup may dispatch to user code.
+    private Result!Any evaluateStack(Read)(scope Scalar[] stack, const ref Any root, scope Read read)
     {
-        size_t depth;
-        for (size_t next; next < instructions.length;)
+        size_t depth, next;
+        Result!Any result;
+        while (auto variable = advance(stack, root, depth, next, result))
+        {
+            const value = read(variable);
+            stack[depth++] = Scalar.from(value);
+        }
+        return result;
+    }
+
+    private string advance(scope Scalar[] stack, const ref Any root, ref size_t depth, ref size_t next,
+            ref Result!Any result) nothrow @nogc
+    {
+        for (; next < instructions.length;)
         {
             const instruction = &instructions[next++];
             if (instruction.op == Op.literal)
@@ -69,21 +85,35 @@ struct ArithmeticExpression
                 stack[depth++] = instruction.value;
                 continue;
             }
+            if (instruction.op == Op.variable)
+            {
+                if (!isRootReference(instruction.variable))
+                    return instruction.variable;
+                stack[depth++] = Scalar.from(root);
+                continue;
+            }
             if (instruction.op >= Op.positive)
             {
                 const error = instruction.op < Op.and_ ? stepSign(*instruction,
                         stack[depth - 1]) : stepBoolean(*instruction, stack[depth - 1], depth, next);
                 if (error.code != Status.ok)
-                    return Result!Any(Any.init, error);
+                {
+                    result.error = error;
+                    return null;
+                }
                 continue;
             }
             const right = stack[--depth];
-            const result = applyOperator(instruction.op, stack[depth - 1], right);
-            if (!result.ok())
-                return Result!Any(Any.init, Error(result.error.code, result.error.message, instruction.position));
-            stack[depth - 1] = result.value;
+            const applied = applyOperator(instruction.op, stack[depth - 1], right);
+            if (!applied.ok())
+            {
+                result.error = Error(applied.error.code, applied.error.message, instruction.position);
+                return null;
+            }
+            stack[depth - 1] = applied.value;
         }
-        return Result!Any(stack[0].pack());
+        result.value = stack[0].pack();
+        return null;
     }
 }
 
@@ -98,13 +128,14 @@ ArithmeticExpression parseArithmetic(string source)
     if (end < source.length)
         throw parser.reader.errorAt(end, SpelMessage.MORE_INPUT, source[end .. $]);
     if (parser.instructions.length == 0)
-        return ArithmeticExpression(parser.firstLiteral, null, parser.variable);
-    return ArithmeticExpression(Any.init, parser.instructions.idup);
+        return ArithmeticExpression(parser.firstLiteral, null, parser.firstVariable, parser.readsRoot);
+    return ArithmeticExpression(Any.init, parser.instructions.idup, null, parser.readsRoot);
 }
 
 private enum Op : ubyte
 {
     literal,
+    variable,
     add,
     subtract,
     multiply,
@@ -131,6 +162,7 @@ private struct Instruction
     size_t position;
     Scalar value;
     size_t jump;
+    string variable;
 }
 
 private struct ArithmeticParser
@@ -139,7 +171,8 @@ private struct ArithmeticParser
     Instruction[] instructions;
     Any firstLiteral;
     size_t firstPosition = size_t.max;
-    string variable;
+    string firstVariable;
+    bool readsRoot;
 
     size_t parse(ubyte minimumPrecedence, uint nesting)
     {
@@ -150,7 +183,7 @@ private struct ArithmeticParser
             reader.skipWhitespace();
             const position = reader.position;
             const token = operatorToken(reader.text[position .. $]);
-            if (token.precedence < minimumPrecedence || token.precedence > maximumPrecedence || variable !is null)
+            if (token.precedence < minimumPrecedence || token.precedence > maximumPrecedence)
                 return left;
             reader.position += token.length;
             const rhsPrecedence = cast(ubyte)(token.precedence + 1);
@@ -172,7 +205,7 @@ private struct ArithmeticParser
     {
         const left = primary(nesting);
         reader.skipWhitespace();
-        if (reader.peek != '^' || variable !is null)
+        if (reader.peek != '^')
             return left;
         const position = reader.position++;
         primary(nesting);
@@ -182,7 +215,7 @@ private struct ArithmeticParser
 
     void logical(Op op, size_t left, ubyte rhsPrecedence, uint nesting)
     {
-        emitFirstLiteral();
+        emitFirstOperand();
         const branch = instructions.length;
         instructions ~= Instruction(op, left);
         const right = parse(rhsPrecedence, nesting);
@@ -200,7 +233,7 @@ private struct ArithmeticParser
             checkNesting(nesting);
             reader.position += negation;
             const operand = primary(nesting + 1);
-            emitFirstLiteral();
+            emitFirstOperand();
             instructions ~= Instruction(Op.not_, operand);
             return position;
         }
@@ -216,13 +249,14 @@ private struct ArithmeticParser
             ++reader.position;
             return inner;
         }
-        if (reader.peek == '#' && firstPosition == size_t.max)
+        if (reader.peek == '#')
         {
-            variable = readVariableName();
-            firstPosition = position;
+            const name = readVariableName();
+            readsRoot |= isRootReference(name);
+            operand(position, Any.init, name);
         }
         else
-            literal(position);
+            operand(position, reader.readLiteral());
         return position;
     }
 
@@ -244,7 +278,7 @@ private struct ArithmeticParser
         checkNesting(nesting);
         reader.position = operand.position;
         primary(nesting + 1);
-        emitFirstLiteral();
+        emitFirstOperand();
         instructions ~= Instruction(sign == '+' ? Op.positive : Op.negative, position);
         return true;
     }
@@ -265,27 +299,37 @@ private struct ArithmeticParser
         return name;
     }
 
-    void literal(size_t position)
+    void operand(size_t position, Any value, string variable = null)
     {
         if (firstPosition == size_t.max)
         {
-            firstLiteral = reader.readLiteral();
+            firstLiteral = value;
             firstPosition = position;
+            firstVariable = variable;
             return;
         }
-        emitFirstLiteral();
-        const scalar = reader.readLiteral();
-        instructions ~= Instruction(Op.literal, position, Scalar.from(scalar));
+        emitFirstOperand();
+        emitOperand(position, value, variable);
     }
 
-    void emitFirstLiteral()
+    void emitFirstOperand()
     {
-        if (instructions.length != 0)
-            return;
-        if (variable !is null)
-            throw reader.errorAt(firstPosition, SpelMessage.OOD);
-        instructions ~= Instruction(Op.literal, firstPosition, Scalar.from(firstLiteral));
+        if (instructions.length == 0)
+            emitOperand(firstPosition, firstLiteral, firstVariable);
     }
+
+    void emitOperand(size_t position, const ref Any value, string variable)
+    {
+        if (variable is null)
+            instructions ~= Instruction(Op.literal, position, Scalar.from(value));
+        else
+            instructions ~= Instruction(Op.variable, position, Scalar.init, 0, variable);
+    }
+}
+
+bool isRootReference(string name) pure nothrow @nogc
+{
+    return name == "root" || name == "this";
 }
 
 private enum ubyte orPrecedence = 1;
@@ -391,6 +435,8 @@ private bool continuesIdentifier(scope const(char)[] tail, size_t index) pure no
 private enum ValueKind : ubyte
 {
     other,
+    byte_,
+    short_,
     int_,
     long_,
     float_,
@@ -407,27 +453,51 @@ private struct Scalar
     double realValue;
     string text;
 
-    static Scalar from(const ref Any scalar)
+    static Scalar from(const ref Any scalar) pure nothrow @nogc
     {
         if (scalar.isNull())
             return Scalar(ValueKind.null_);
-        switch (scalar.typeName())
+        const type = scalar.typeName();
+        if (type == "bool")
+            return fromNumber!bool(scalar, ValueKind.bool_);
+        if (type == "string")
         {
-        case "bool":
-            return Scalar(ValueKind.bool_, scalar.get!bool);
-        case "string":
-            return Scalar(ValueKind.string_, 0, 0, scalar.get!string);
+            string decoded;
+            return scalar.tryGet(decoded) ? Scalar(ValueKind.string_, 0, 0, decoded) : Scalar.init;
+        }
+        return fromNumeric(scalar, type);
+    }
+
+    private static Scalar fromNumeric(const ref Any scalar, string type) pure nothrow @nogc
+    {
+        switch (type)
+        {
+        case "byte":
+            return fromNumber!byte(scalar, ValueKind.byte_);
+        case "short":
+            return fromNumber!short(scalar, ValueKind.short_);
         case "int":
-            return Scalar(ValueKind.int_, scalar.get!int);
+            return fromNumber!int(scalar, ValueKind.int_);
         case "long":
-            return Scalar(ValueKind.long_, scalar.get!long);
+            return fromNumber!long(scalar, ValueKind.long_);
         case "float":
-            return Scalar(ValueKind.float_, 0, scalar.get!float);
+            return fromNumber!float(scalar, ValueKind.float_);
         case "double":
-            return Scalar(ValueKind.double_, 0, scalar.get!double);
+            return fromNumber!double(scalar, ValueKind.double_);
         default:
             return Scalar.init;
         }
+    }
+
+    private static Scalar fromNumber(T)(const ref Any scalar, ValueKind kind) pure nothrow @nogc
+    {
+        T value;
+        if (!scalar.tryGet(value))
+            return Scalar.init;
+        static if (is(T == double) || is(T == float))
+            return Scalar(kind, 0, value);
+        else
+            return Scalar(kind, value);
     }
 
     float asFloat() const pure nothrow @nogc
@@ -450,6 +520,10 @@ private struct Scalar
             return Any.of(integer != 0);
         case ValueKind.string_:
             return Any.of(text);
+        case ValueKind.byte_:
+            return Any.of(cast(byte) integer);
+        case ValueKind.short_:
+            return Any.of(cast(short) integer);
         case ValueKind.int_:
             return Any.of(cast(int) integer);
         case ValueKind.long_:
@@ -468,7 +542,8 @@ private Result!Scalar applyOperator(Op op, Scalar left, Scalar right) nothrow @n
         return compare(op, left, right);
     if (!isNumber(left.kind) || !isNumber(right.kind))
         return Result!Scalar(Scalar.init, Error(Status.unsupported, "SpEL arithmetic requires numeric operands"));
-    const kind = left.kind >= right.kind ? left.kind : right.kind;
+    const widest = left.kind >= right.kind ? left.kind : right.kind;
+    const kind = widest >= ValueKind.int_ ? widest : ValueKind.int_;
     if (op == Op.power)
         return Result!Scalar(power(kind, left, right));
     if (kind == ValueKind.double_)
@@ -566,30 +641,16 @@ private BooleanValue textBoolean(scope const(char)[] text) pure nothrow @nogc
 
 private string sourceType(ValueKind kind) pure nothrow @nogc
 {
-    final switch (kind)
-    {
-    case ValueKind.other:
-        return "java.lang.Object";
-    case ValueKind.int_:
-        return "java.lang.Integer";
-    case ValueKind.long_:
-        return "java.lang.Long";
-    case ValueKind.float_:
-        return "java.lang.Float";
-    case ValueKind.double_:
-        return "java.lang.Double";
-    case ValueKind.null_:
-        return "null";
-    case ValueKind.bool_:
-        return "java.lang.Boolean";
-    case ValueKind.string_:
-        return "java.lang.String";
-    }
+    static immutable string[] names = [
+        "java.lang.Object", "java.lang.Byte", "java.lang.Short", "java.lang.Integer", "java.lang.Long",
+        "java.lang.Float", "java.lang.Double", "null", "java.lang.Boolean", "java.lang.String"
+    ];
+    return names[kind];
 }
 
 private bool isNumber(ValueKind kind) pure nothrow @nogc
 {
-    return kind >= ValueKind.int_ && kind <= ValueKind.double_;
+    return kind >= ValueKind.byte_ && kind <= ValueKind.double_;
 }
 
 private enum Order : ubyte
