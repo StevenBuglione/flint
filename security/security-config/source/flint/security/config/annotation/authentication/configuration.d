@@ -3,8 +3,9 @@
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 /*
- * The global AuthenticationManagerBuilder takes the context's PasswordEncoder bean lazily, as Spring's
- * DefaultPasswordEncoderAuthenticationManagerBuilder does. Without a configured builder, the manager comes from a
+ * The global AuthenticationManagerBuilder resolves the AuthenticationEventPublisher once and takes the
+ * context's PasswordEncoder bean lazily, as Spring's DefaultPasswordEncoderAuthenticationManagerBuilder does.
+ * Without a configured builder, the manager comes from a
  * single UserDetailsService bean (InitializeUserDetailsBeanManagerConfigurer) or AuthenticationProvider bean
  * (InitializeAuthenticationProviderBeanManagerConfigurer). The manager is built on first use.
  */
@@ -18,7 +19,8 @@ import flint.beans.factory : ListableBeanFactory;
 import flint.context : ApplicationContext;
 import flint.context.annotation : Bean, Configuration;
 import flint.engine.aot.name : typeNameOf;
-import flint.security.authentication : AuthenticationManager, AuthenticationProvider, ProviderManager;
+import flint.security.authentication : AuthenticationEventPublisher, AuthenticationManager,
+    AuthenticationProvider, DefaultAuthenticationEventPublisher, ProviderManager;
 import flint.security.authentication.dao : DaoAuthenticationProvider;
 import flint.security.config.annotation.authentication.builders : AuthenticationManagerBuilder;
 import flint.security.core : Authentication;
@@ -47,7 +49,12 @@ class AuthenticationConfiguration
     AuthenticationManagerBuilder authenticationManagerBuilder()
     {
         if (builder is null)
-            builder = new AuthenticationManagerBuilder(&passwordEncoderBean);
+        {
+            auto names = context.getBeanNamesForTypeErased(typeNameOf!AuthenticationEventPublisher);
+            auto publisher = names.length == 0
+                ? new DefaultAuthenticationEventPublisher(context) : context.getBean!AuthenticationEventPublisher();
+            builder = new AuthenticationManagerBuilder(&passwordEncoderBean).authenticationEventPublisher(publisher);
+        }
         return builder;
     }
 
@@ -64,10 +71,10 @@ class AuthenticationConfiguration
             auto dao = new DaoAuthenticationProvider(service);
             if (auto encoder = passwordEncoderBean())
                 dao.setPasswordEncoder(encoder);
-            return manager = new ProviderManager(dao);
+            return manager = configured.configureEventPublisher(new ProviderManager(dao));
         }
         if (auto provider = single!AuthenticationProvider())
-            return manager = new ProviderManager(provider);
+            return manager = configured.configureEventPublisher(new ProviderManager(provider));
         return null;
     }
 

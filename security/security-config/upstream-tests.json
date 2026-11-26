@@ -63,8 +63,13 @@
       "status": "deferred"
     },
     "org/springframework/security/config/annotation/authentication/configuration/AuthenticationConfigurationPublishTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-config/tests/authentication_configuration_events_test.d",
+      "methods": {
+        "ported": [
+          "authenticationEventPublisherBeanUsedByDefault"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/security/config/annotation/authentication/configuration/AuthenticationConfigurationTests.java": {
       "phase": "2",

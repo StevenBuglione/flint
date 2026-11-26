@@ -3520,7 +3520,6 @@
       "org/springframework/security/config/annotation/authentication/NamespaceJdbcUserServiceTests.java",
       "org/springframework/security/config/annotation/authentication/NamespacePasswordEncoderTests.java",
       "org/springframework/security/config/annotation/authentication/PasswordEncoderConfigurerTests.java",
-      "org/springframework/security/config/annotation/authentication/configuration/AuthenticationConfigurationPublishTests.java",
       "org/springframework/security/config/annotation/authentication/configuration/AuthenticationConfigurationTests.java",
       "org/springframework/security/config/annotation/authentication/configuration/AuthenticationManagerBeanRegistrationAotProcessorTests.java",
       "org/springframework/security/config/annotation/authentication/configuration/EnableGlobalAuthenticationTests.java",
