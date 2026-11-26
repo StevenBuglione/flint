@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 142 | 139 | 0 | 2,109 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 45 | 55 | 0 | 4,352 |
+| framework | thymeleaf@3.1.7.RELEASE | 49 | 57 | 0 | 4,346 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 231 | 133 | 1,871 | 16,186 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -3995,6 +3995,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.thymeleaf.exceptions.TemplateProcessingException#getLine()` | `flint.thymeleaf.exceptions.TemplateProcessingException.getLine` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.thymeleaf.exceptions.TemplateProcessingException#getTemplateName()` | `flint.thymeleaf.exceptions.TemplateProcessingException.getTemplateName` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.thymeleaf.exceptions.TemplateProcessingException#setTemplateName(String)` | `flint.thymeleaf.exceptions.TemplateProcessingException.setTemplateName` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.thymeleaf.expression
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.expression.IExpressionObjects#getObject(String)` | `flint.thymeleaf.expression.IExpressionObjects.getObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.thymeleaf.expression.IExpressionObjects#getObjectNames()` | `flint.thymeleaf.expression.IExpressionObjects.getObjectNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.thymeleaf.standard.inline
 
@@ -9911,7 +9918,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.dialect | 18 | 0 |
 | org.thymeleaf.engine | 441 | 0 |
 | org.thymeleaf.exceptions | 3 | 0 |
-| org.thymeleaf.expression | 576 | 0 |
+| org.thymeleaf.expression | 570 | 0 |
 | org.thymeleaf.extras.springsecurity6.auth | 0 | 22 |
 | org.thymeleaf.extras.springsecurity6.dialect | 0 | 10 |
 | org.thymeleaf.extras.springsecurity6.dialect.expression | 0 | 8 |
@@ -10429,6 +10436,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.thymeleaf.context.AbstractContext` | 2 | Requires a backed insertion-ordered LinkedHashMap.keySet view and verified Locale default handling. |
 | framework | `org.thymeleaf.context.Context` | 2 | Requires a backed insertion-ordered LinkedHashMap.keySet view and verified Locale default handling. |
 | framework | `org.thymeleaf.exceptions.TemplateAssertionException` | 2 | The positioned constructor uses locale-sensitive decimal formatting from Java String.format. |
+| framework | `org.thymeleaf.expression.ExpressionObjects` | 2 | Requires IExpressionContext and IEngineConfiguration before per-render expression objects can be configured. |
+| framework | `org.thymeleaf.expression.IExpressionObjectFactory` | 2 | Requires IExpressionContext and IEngineConfiguration before per-render expression objects can be configured. |
 | framework | `org.thymeleaf.templatemode.TemplateMode#parse(String)` | 2 | Unknown-mode warnings use TemplateEngine.threadIndex and its logger. |
 | framework | `tools.jackson.core.JsonParser#nextName(SerializableString)` | 2 | The overload requires the deferred SerializableString API. |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
