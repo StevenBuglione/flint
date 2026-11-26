@@ -138,34 +138,34 @@ struct MemberDescriptorRef
     MemberKind kind;
 
     /// The method metadata if this refers to a method.
-    const(MethodDescriptor)* method() const nothrow @nogc
+    const(MethodDescriptor)* method() const return scope nothrow @nogc
     {
         return kind == MemberKind.method && owner !is null && index < owner.methods.length
             ? &owner.methods[index] : null;
     }
 
     /// The constructor metadata if this refers to a constructor.
-    const(ConstructorDescriptor)* constructor() const nothrow @nogc
+    const(ConstructorDescriptor)* constructor() const return scope nothrow @nogc
     {
         return kind == MemberKind.constructor && owner !is null && index < owner.constructors.length
             ? &owner.constructors[index] : null;
     }
 
     /// The AOT property metadata associated with this field member.
-    const(PropertyDescriptor)* field() const nothrow @nogc
+    const(PropertyDescriptor)* field() const return scope nothrow @nogc
     {
         return kind == MemberKind.field && owner !is null && index < owner.properties.length
             ? &owner.properties[index] : null;
     }
 
     /// The declaring type, or null when no member is present.
-    const(Descriptor) declaringType() const nothrow @nogc
+    const(Descriptor) declaringType() const return scope nothrow @nogc
     {
         return method() !is null || constructor() !is null || field() !is null ? owner : null;
     }
 
     /// The member name, or the declaring type's name for a constructor.
-    string name() const nothrow @nogc
+    string name() const return scope nothrow @nogc
     {
         if (const entry = method())
             return entry.name;
@@ -175,7 +175,7 @@ struct MemberDescriptorRef
     }
 
     /// The annotations the generated table records for this member.
-    const(MergedAnnotation)[] annotations() const nothrow @nogc
+    const(MergedAnnotation)[] annotations() const return scope nothrow @nogc
     {
         if (const entry = method())
             return entry.annotations;
@@ -187,13 +187,13 @@ struct MemberDescriptorRef
     }
 
     /// Whether both references identify the same table entry.
-    bool opEquals(const MemberDescriptorRef other) const nothrow @nogc
+    bool opEquals(scope const MemberDescriptorRef other) const scope nothrow @nogc
     {
         return owner is other.owner && index == other.index && kind == other.kind;
     }
 
     /// Hashes the published type name, member kind, and index.
-    size_t toHash() const nothrow @nogc
+    size_t toHash() const scope nothrow @nogc
     {
         const ownerHash = owner is null ? 0 : hashOf(owner.name);
         return (ownerHash * 31 + index) * 31 + cast(ubyte) kind;

@@ -76,3 +76,25 @@ private Descriptor ownerFixture()
     const MemberDescriptorRef first = MemberDescriptorRef(owner, 0, MemberKind.method);
     assert(getMethod(first) is &owner.methods[0]);
 }
+
+@("Scoped member descriptors can be inspected without escaping their owner") unittest
+{
+    bool canInspect(scope MemberDescriptorRef member, scope MemberDescriptorRef same,
+            string expectedName, string expectedAnnotation) @safe nothrow @nogc
+    {
+        auto method = member.method();
+        auto constructor = member.constructor();
+        auto field = member.field();
+        return (method !is null || constructor !is null || field !is null) && member.declaringType() !is null
+            && member.name() == expectedName && member.annotations()[0].type == expectedAnnotation
+            && member.opEquals(same) && member.toHash() == same.toHash();
+    }
+
+    auto owner = ownerFixture();
+    const method = MemberDescriptorRef(owner, 1, MemberKind.method);
+    const constructor = MemberDescriptorRef(owner, 0, MemberKind.constructor);
+    const field = MemberDescriptorRef(owner, 0, MemberKind.field);
+    assert(canInspect(method, method, "rename", "fixtures.MethodAnnotation"));
+    assert(canInspect(constructor, constructor, "fixtures.Service", "fixtures.ConstructorAnnotation"));
+    assert(canInspect(field, field, "name", "fixtures.PropertyAnnotation"));
+}
