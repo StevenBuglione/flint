@@ -58,7 +58,9 @@
           "flint.java.character.upperRuns"
         ],
         "leaves": [
-          "flint.java.util.formatter"
+          "flint.java.util.formatter",
+          "flint.java.util.internal.formatter_date_time",
+          "flint.java.util.internal.gregorian"
         ],
         "source": "closure/string-format.d"
       },
@@ -136,6 +138,7 @@
           "flint.java.lang",
           "flint.java.util.calendar",
           "flint.java.util.date",
+          "flint.java.util.internal.gregorian",
           "flint.java.util.timezone"
         ],
         "source": "closure/date-format.d"
@@ -191,6 +194,7 @@
           "flint.java.lang",
           "flint.java.time",
           "flint.java.util.date",
+          "flint.java.util.internal.gregorian",
           "flint.java.util.timezone"
         ],
         "source": "closure/calendar.d"
@@ -249,7 +253,9 @@
           "flint.java.character.upperRuns"
         ],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.util.internal.formatter_date_time",
+          "flint.java.util.internal.gregorian"
         ],
         "source": "closure/formatter.d"
       }
