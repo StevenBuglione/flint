@@ -1,8 +1,8 @@
 module flint.java.format_test;
 
 import flint.java.lang : IllegalArgumentException, String;
-import flint.java.util.formatter : IllegalFormatConversionException, MissingFormatArgumentException,
-    UnknownFormatConversionException;
+import flint.java.util.formatter : DuplicateFormatFlagsException, IllegalFormatConversionException,
+    IllegalFormatException, MissingFormatArgumentException, UnknownFormatConversionException;
 
 @safe:
 
@@ -71,6 +71,40 @@ unittest
     assert(String.format("%s", "y".replicate(300)) == "y".replicate(300));
     assert(String.format("%300s", "r").length == 300);
     assert(String.format("").length == 0);
+}
+
+@("String.format reports invalid specifiers before resolving arguments") unittest
+{
+    import std.exception : collectException;
+
+    assert(collectException!UnknownFormatConversionException(String.format("%s %q")).getConversion() == "q");
+    assert(collectException!UnknownFormatConversionException(String.format("%0$")).getConversion() == "0");
+    assert(collectException!UnknownFormatConversionException(String.format("%é")).getConversion() == "é");
+    assert(collectException!UnknownFormatConversionException(String.format("%😀")).getConversion() == "\uFFFD");
+    assert(collectException!UnknownFormatConversionException(String.format("%\xFF")).getConversion() == "\uFFFD");
+    const duplicate = collectException!DuplicateFormatFlagsException(String.format("%--5s"));
+    assert(duplicate.getFlags() == "-");
+    assert(duplicate.getMessage() == "Flags = '-'");
+    assert((new DuplicateFormatFlagsException(null)).getMessage() == "Flags = ''"); // R26
+    assert(collectException!DuplicateFormatFlagsException(String.format("%s %<<s")).getFlags() == "<");
+    const badIndex = collectException!IllegalFormatException(String.format("%s %0$s"));
+    assert(badIndex.msg == "Illegal format argument index = 0");
+    const overflowingIndex = collectException!IllegalFormatException(String.format("%2147483648$s"));
+    assert(overflowingIndex.msg == "Format argument index: (not representable as int)");
+    const indexBeforeFlags = collectException!IllegalFormatException(String.format("%0$--5s"));
+    assert(indexBeforeFlags.msg == "Illegal format argument index = 0");
+    assert(collectException!MissingFormatArgumentException(String.format("%e")).getFormatSpecifier() == "%e");
+    assert(collectException!MissingFormatArgumentException(String.format("%tY")).getFormatSpecifier() == "%tY");
+    assert(collectException!UnknownFormatConversionException(String.format("%Tq")).getConversion() == "tq");
+}
+
+@("String.format validates formats beyond the cached specifiers") unittest
+{
+    import std.exception : collectException;
+
+    assert(String.format("%s %-<5s", "a") == "a a    ");
+    assert(String.format("%s/%s/%s/%s/%s/%s", "a", "b", "c", "d", "e", "f") == "a/b/c/d/e/f");
+    assert(collectException!UnknownFormatConversionException(String.format("%s/%s/%s/%s/%q")).getConversion() == "q");
 }
 
 @("String.format counts UTF-16 code units for width and precision")
