@@ -19,6 +19,7 @@
  */
 module biginteger_multiply_tests;
 
+import flint.java.lang : ArithmeticException;
 import flint.java.math.biginteger : BigInteger;
 
 @safe:
@@ -168,4 +169,95 @@ unittest
     assert(value.multiply(value).toByteArray() == [
         0, -1, -1, -1, -1, -1, -1, -1, -2, 0, 0, 0, 0, 0, 0, 0, 1
     ]);
+}
+
+@("BigIntegerMultiplyTest.testPowNegativeNumToOddExp")
+unittest
+{
+    auto value = new BigInteger(-1, [50, -26, 90, 69, 120, 32, 63, -103, -14, 35]);
+    auto result = value.pow(5);
+    assert(result.toByteArray() == [
+        -21, -94, -42, -15, -127, 113, -50, -88, 115, -35, 3, 59, -92, 111, -75, 103, -42,
+        41, 34, -114, 99, -32, 105, -59, 127, 45, 108, 74, -93, 105, 33, 12, -5, -20, 17, -21,
+        -119, -127, -115, 27, -122, 26, -67, 109, -125, 16, 91, -70, 109
+    ]);
+    assert(result.signum() == -1);
+}
+
+@("BigIntegerMultiplyTest.testPowNegativeNumToEvenExp")
+unittest
+{
+    auto value = new BigInteger(-1, [50, -26, 90, 69, 120, 32, 63, -103, -14, 35]);
+    auto result = value.pow(4);
+    assert(result.toByteArray() == [
+        102, 107, -122, -43, -52, -20, -27, 25, -9, 88, -13, 75, 78, 81, -33, -77, 39, 27, -37,
+        106, 121, -73, 108, -47, -101, 80, -25, 71, 13, 94, -7, -33, 1, -17, -65, -70, -61, -3, -47
+    ]);
+    assert(result.signum() == 1);
+}
+
+@("BigIntegerMultiplyTest.testPowNegativeNumToZeroExp")
+unittest
+{
+    auto value = new BigInteger(-1, [50, -26, 90, 69, 120, 32, 63, -103, -14, 35]);
+    auto result = value.pow(0);
+    assert(result.toByteArray() == [1]);
+    assert(result.signum() == 1);
+}
+
+@("BigIntegerMultiplyTest.testPowPositiveNum")
+unittest
+{
+    auto value = new BigInteger(1, [50, -26, 90, 69, 120, 32, 63, -103, -14, 35]);
+    auto result = value.pow(5);
+    assert(result.toByteArray() == [
+        20, 93, 41, 14, 126, -114, 49, 87, -116, 34, -4, -60, 91, -112, 74, -104, 41, -42,
+        -35, 113, -100, 31, -106, 58, -128, -46, -109, -75, 92, -106, -34, -13, 4, 19, -18,
+        20, 118, 126, 114, -28, 121, -27, 66, -110, 124, -17, -92, 69, -109
+    ]);
+    assert(result.signum() == 1);
+}
+
+@("BigIntegerMultiplyTest.testPowPositiveNumToZeroExp")
+unittest
+{
+    auto value = new BigInteger(1, [50, -26, 90, 69, 120, 32, 63, -103, -14, 35]);
+    auto result = value.pow(0);
+    assert(result.toByteArray() == [1]);
+    assert(result.signum() == 1);
+}
+
+@("BigIntegerMultiplyTest.testPowException")
+unittest
+{
+    auto value = new BigInteger(1, [1, 2, 3, 4, 5, 6, 7]);
+    try
+    {
+        value.pow(-5);
+        assert(0, "negative exponent accepted");
+    }
+    catch (ArithmeticException failure)
+    {
+        assert(failure.getMessage() == "Negative exponent");
+    }
+}
+
+@("BigInteger exponentiation handles zero and rejects out-of-range powers before allocation")
+unittest
+{
+    assert(BigInteger.valueOf(0).pow(0).intValueExact() == 1);
+    assert(BigInteger.valueOf(0).pow(int.max).signum() == 0);
+    assert(BigInteger.valueOf(-1).pow(int.max).intValueExact() == -1);
+    assert(BigInteger.valueOf(-1).pow(int.max - 1).intValueExact() == 1);
+    auto power = BigInteger.valueOf(-16).pow(25);
+    assert(power.signum() == -1);
+    assert(power.toString(16) == "-10000000000000000000000000");
+    try
+    {
+        BigInteger.valueOf(2).pow(int.max);
+        assert(0, "power exceeds the supported range");
+    }
+    catch (ArithmeticException)
+    {
+    }
 }

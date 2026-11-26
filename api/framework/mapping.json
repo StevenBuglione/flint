@@ -4821,6 +4821,7 @@
 "java.math.BigInteger#longValue()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.longValue"},
 "java.math.BigInteger#longValueExact()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.longValueExact"},
 "java.math.BigInteger#multiply(BigInteger)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.multiply"},
+"java.math.BigInteger#pow(int)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.pow"},
 "java.math.BigInteger#shortValueExact()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.shortValueExact"},
 "java.math.BigInteger#signum()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.signum"},
 "java.math.BigInteger#subtract(BigInteger)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.subtract"},

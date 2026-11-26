@@ -5,7 +5,7 @@ import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsExcept
     NullPointerException, NumberFormatException;
 import flint.java.math.internal.floating : roundedFloating;
 import flint.java.math.internal.limbs : addLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
-    signedLength, significantBytes, significantLimbs, storeSignedBytes, subtractLimbs;
+    magnitudeBitLength, signedLength, significantBytes, significantLimbs, storeSignedBytes, subtractLimbs;
 import flint.java.math.internal.products : multiplyLimbs;
 import flint.java.math.internal.radix : formatRadix;
 
@@ -222,12 +222,35 @@ class BigInteger : Comparable!BigInteger
             return this;
         if (!other.sign)
             return other;
-        const size_t length = magnitude.length + other.magnitude.length;
-        if (length > maxLimbs + 1)
+        return new BigInteger(multiplyWords(magnitude, other.magnitude), sign * other.sign);
+    }
+
+    /// Raise this integer to a nonnegative exponent.
+    BigInteger pow(int exponent)
+    {
+        if (exponent < 0)
+            throw new ArithmeticException("Negative exponent");
+        if (exponent == 0)
+            return valueOf(1);
+        if (exponent == 1 || !sign)
+            return this;
+
+        const ulong topBit = cast(ulong)(magnitudeBitLength(magnitude) - 1) * exponent;
+        if (topBit >= int.max)
             throw new ArithmeticException("BigInteger exceeds supported range");
-        auto product = new uint[length];
-        multiplyLimbs(product, magnitude, other.magnitude);
-        return new BigInteger(product, sign * other.sign);
+        const int resultSign = sign < 0 && (exponent & 1) ? -1 : 1;
+        if (topBit == 0)
+            return sign == resultSign ? this : valueOf(1);
+
+        const uint topWord = magnitude[$ - 1];
+        if (!(topWord & (topWord - 1)) && firstNonzeroLimb(magnitude) + 1 == magnitude.length)
+        {
+            auto words = new uint[cast(size_t)(topBit / 32 + 1)];
+            words[$ - 1] = 1U << (topBit % 32);
+            return new BigInteger(words, resultSign);
+        }
+
+        return new BigInteger(powerMagnitude(magnitude, cast(uint) exponent), resultSign);
     }
 
     private BigInteger combine(const(uint)[] other, int otherSign)
@@ -252,6 +275,37 @@ class BigInteger : Comparable!BigInteger
         subtractLimbs(difference, high, low);
         return new BigInteger(difference, order < 0 ? otherSign : sign);
     }
+}
+
+private uint[] multiplyWords(scope const(uint)[] left, scope const(uint)[] right)
+{
+    const size_t length = left.length + right.length;
+    if (length > maxLimbs + 1)
+        throw new ArithmeticException("BigInteger exceeds supported range");
+    auto product = new uint[length];
+    multiplyLimbs(product, left, right);
+    return product;
+}
+
+private const(uint)[] checkedProduct(scope const(uint)[] left, scope const(uint)[] right)
+{
+    const words = multiplyWords(left, right);
+    const result = words[0 .. significantLimbs(words)];
+    checkRange(result);
+    return result;
+}
+
+private const(uint)[] powerMagnitude(return scope const(uint)[] factor, uint exponent)
+{
+    const(uint)[] result;
+    for (uint remaining = exponent; remaining; remaining >>= 1)
+    {
+        if (remaining & 1)
+            result = result.length ? checkedProduct(result, factor) : factor;
+        if (remaining > 1)
+            factor = checkedProduct(factor, factor);
+    }
+    return result;
 }
 
 private const(byte)[] byteRange(return scope const(byte)[] bytes, int offset, int length)
