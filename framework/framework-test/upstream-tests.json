@@ -40,6 +40,30 @@
       "phase": "2",
       "status": "deferred"
     },
+    "org/springframework/test/json/AbstractJsonContentAssertTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/test/json/DefaultJsonConverterDelegateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/test/json/JsonComparatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/test/json/JsonComparatorUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/test/json/JsonContentTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/test/json/JsonPathValueAssertTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/test/util/AopTestUtilsTests.java": {
       "phase": "2",
       "status": "deferred"

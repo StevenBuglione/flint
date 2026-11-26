@@ -1075,6 +1075,7 @@
    "directory": "framework/framework-test",
    "module": "flint.test.web",
    "also": [
+    "flint.test.json",
     "flint.test.util",
     "flint.mock"
    ],
