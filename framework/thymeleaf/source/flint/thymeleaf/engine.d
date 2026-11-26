@@ -15,6 +15,7 @@
  *
  * Ported from thymeleaf 3.1.7.RELEASE:
  * lib/thymeleaf/src/main/java/org/thymeleaf/engine/HTMLElementType.java
+ * lib/thymeleaf/src/main/java/org/thymeleaf/engine/IThrottledTemplateWriterControl.java
  * Modified by the Flint authors.
  */
 module flint.thymeleaf.engine;
@@ -86,4 +87,25 @@ struct HTMLElementType
     {
         return index == VOID.index;
     }
+}
+
+/// Status reported by the writer during a throttled template execution.
+interface IThrottledTemplateWriterControl
+{
+    /// Whether the writer has pending overflow.
+    /// Throws IOException if the writer cannot report its state (D-8).
+    bool isOverflown();
+
+    /// Whether the writer has stopped producing output.
+    /// Throws IOException if the writer cannot report its state (D-8).
+    bool isStopped();
+
+    /// The output count reported by the writer.
+    int getWrittenCount();
+
+    /// The writer's peak overflow buffer size.
+    int getMaxOverflowSize();
+
+    /// The number of overflow buffer growth operations.
+    int getOverflowGrowCount();
 }

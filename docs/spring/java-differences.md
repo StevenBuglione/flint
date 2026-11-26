@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 182 | 155 | 0 | 2,053 |
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
-| framework | thymeleaf@3.1.7.RELEASE | 67 | 88 | 0 | 4,297 |
+| framework | thymeleaf@3.1.7.RELEASE | 71 | 90 | 0 | 4,291 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 236 | 147 | 1,871 | 16,167 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -4193,6 +4193,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.thymeleaf.engine.HTMLElementType#NORMAL` | `flint.thymeleaf.engine.HTMLElementType.NORMAL` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.thymeleaf.engine.HTMLElementType#RAW_TEXT` | `flint.thymeleaf.engine.HTMLElementType.RAW_TEXT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.thymeleaf.engine.HTMLElementType#VOID` | `flint.thymeleaf.engine.HTMLElementType.VOID` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.engine.IThrottledTemplateWriterControl#isOverflown()` | `flint.thymeleaf.engine.IThrottledTemplateWriterControl.isOverflown` | [D-8](api-mapping.md#deviations) | The IOException contract is documented in DDoc. |
+| `org.thymeleaf.engine.IThrottledTemplateWriterControl#isStopped()` | `flint.thymeleaf.engine.IThrottledTemplateWriterControl.isStopped` | [D-8](api-mapping.md#deviations) | The IOException contract is documented in DDoc. |
 
 #### org.thymeleaf.exceptions
 
@@ -10282,7 +10284,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.cache | 117 | 0 |
 | org.thymeleaf.context | 152 | 0 |
 | org.thymeleaf.dialect | 18 | 0 |
-| org.thymeleaf.engine | 441 | 0 |
+| org.thymeleaf.engine | 435 | 0 |
 | org.thymeleaf.exceptions | 3 | 0 |
 | org.thymeleaf.expression | 564 | 0 |
 | org.thymeleaf.extras.springsecurity6.auth | 0 | 22 |
