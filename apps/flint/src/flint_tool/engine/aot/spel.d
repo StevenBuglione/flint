@@ -15,7 +15,8 @@ struct Compiled
 {
     /// D expression.
     string code;
-    /// D type: "long", "double", "bool", "string", "null", a model type's name, or "Any" for runtime values.
+    /// D type: "int", "long", "float", "double", "bool", "string", "null", a model type's name, or "Any" for runtime
+    /// values.
     string type;
 }
 
@@ -120,6 +121,30 @@ bool numeric(string type)
 private bool integral(string type)
 {
     return numeric(type) && type != "float" && type != "double" && type != "real";
+}
+
+/++
+Java's binary numeric promotion, which SpEL's operators apply to their operands: `double` if either is (D's `real`
+counts as `double`), else `float`, else `long` (D's unsigned and 64-bit types count as `long`), else `int`. So
+`int` arithmetic stays `int` and wraps at 32 bits as Java's does (D defines two's complement overflow).
++/
+private string promoted(string a, string b)
+{
+    static bool any(string a, string b, scope const string[] types...)
+    {
+        foreach (type; types)
+            if (a == type || b == type)
+                return true;
+        return false;
+    }
+
+    if (any(a, b, "double", "real"))
+        return "double";
+    if (any(a, b, "float"))
+        return "float";
+    if (any(a, b, "long", "ulong", "uint"))
+        return "long";
+    return "int";
 }
 
 /// D code converting `value` to `type`; the generated module may instantiate `std.conv.to`.
@@ -387,8 +412,9 @@ private struct Parser
             return Compiled("!" ~ truth(unary()), "bool");
         if (accept("-"))
         {
-            auto operand = unary();
-            return Compiled("(-" ~ numericOf(operand).code ~ ")", numericOf(operand).type);
+            auto operand = numericOf(unary());
+            const type = promoted(operand.type, "int");
+            return Compiled("(-" ~ convert(operand, type) ~ ")", type);
         }
         if (accept("+"))
             return unary();
@@ -574,7 +600,8 @@ private struct Parser
             return false;
         if (name == "length" || name == "size")
         {
-            result = Compiled("cast(long) (" ~ target.code ~ ").length", "long");
+            // Java's String.length(), array length and Collection.size() are ints.
+            result = Compiled("cast(int) (" ~ target.code ~ ").length", "int");
             return true;
         }
         if (name == "isEmpty")
@@ -626,6 +653,11 @@ private struct Parser
 
     // ---- typing ----
 
+    /++
+    A numeric literal, typed as Spring's tokenizer types it: a real literal has a '.', an exponent or a d/f suffix
+    ('f' makes it a float); an integer literal is an int unless it has the 'L' suffix, and an int literal outside the
+    int range is an error (SpelMessage.NOT_AN_INTEGER), not a long.
+    +/
     Compiled number(string text)
     {
         import std.algorithm.searching : canFind;
@@ -633,10 +665,59 @@ private struct Parser
 
         const hex = text.canFind("0x") || text.canFind("0X");
         const suffix = text.length > 1 ? toLower(text[$ - 1]) : ' ';
-        const floating = !hex && (suffix == 'd' || suffix == 'f');
-        const type = (text.canFind('.') || floating) ? "double" : "long";
-        const digits = (suffix == 'l' || floating) ? text[0 .. $ - 1] : text;
-        return Compiled(type == "long" ? digits ~ "L" : digits, type);
+        const exponent = !hex && (text.canFind('e') || text.canFind('E'));
+        if (!hex && (text.canFind('.') || exponent || suffix == 'd' || suffix == 'f'))
+            return realLiteral(suffix == 'd' || suffix == 'f' ? text[0 .. $ - 1] : text, suffix == 'f', exponent);
+        if (suffix == 'l')
+            return Compiled(text[0 .. $ - 1] ~ "L", "long");
+        if (!fitsInt(text, hex))
+        {
+            fail("the value '" ~ text ~ "' cannot be parsed as an int");
+            return Compiled("0", "int");
+        }
+        return Compiled(text, "int");
+    }
+
+    // A real literal's digits, through spelDouble/spelFloat: DMD would otherwise fold an operation on constants at
+    // 80-bit precision (0.1 + 0.2 printing 0.3, not Java's 0.30000000000000004).
+    static Compiled realLiteral(string digits, bool isFloat, bool exponent)
+    {
+        import std.algorithm.searching : canFind;
+
+        const whole = digits.canFind('.') || exponent ? digits : digits ~ ".0";
+        return isFloat ? Compiled(runtime ~ "spelFloat(" ~ whole ~ "f)", "float") : Compiled(
+                runtime ~ "spelDouble(" ~ whole ~ ")", "double");
+    }
+
+    // The runtime module that keeps real literals out of constant folding.
+    enum runtime = `imported!"flint.engine.aot.expression".`;
+
+    // Whether an integer literal's digits (decimal, or hex after 0x) are within Java's int range, as
+    // Integer.parseInt accepts them (radix 16 for hex) in Spring's tokenizer.
+    static bool fitsInt(string digits, bool hex)
+    {
+        static uint digitValue(char c) pure nothrow @nogc
+        {
+            if (c >= '0' && c <= '9')
+                return c - '0';
+            if (c >= 'a' && c <= 'f')
+                return c - 'a' + 10;
+            return c >= 'A' && c <= 'F' ? c - 'A' + 10 : uint.max;
+        }
+
+        ulong value;
+        const rest = hex ? digits[2 .. $] : digits;
+        const base = hex ? 16 : 10;
+        foreach (c; rest)
+        {
+            const d = digitValue(c);
+            if (d >= base)
+                return false;
+            value = value * base + d;
+            if (value > int.max)
+                return false;
+        }
+        return rest.length != 0;
     }
 
     /// Placeholders take the type their use needs: a number beside a number, a string elsewhere.
@@ -692,7 +773,9 @@ private struct Parser
     {
         auto a = numericOf(resolved(left, resolved(right, "long").type == "double" ? "double" : "long"));
         auto b = numericOf(resolved(right, a.type == "double" ? "double" : "long"));
-        const type = integral(a.type) && integral(b.type) ? "long" : "double";
+        // OpPower on integers computes in long (Math.pow, then a long when the result leaves the int range);
+        // every other operator applies Java's binary numeric promotion.
+        const type = operator == "^^" && integral(a.type) && integral(b.type) ? "long" : promoted(a.type, b.type);
         return Compiled("(" ~ convert(a, type) ~ " " ~ operator ~ " " ~ convert(b, type) ~ ")", type);
     }
 
@@ -706,7 +789,7 @@ private struct Parser
         {
             auto a = numericOf(left);
             auto b = numericOf(right);
-            const type = integral(a.type) && integral(b.type) ? "long" : "double";
+            const type = promoted(a.type, b.type);
             return Compiled("(" ~ convert(a, type) ~ " " ~ operator ~ " " ~ convert(b, type) ~ ")", "bool");
         }
         if (left.type == "Any" && right.type != "Any")

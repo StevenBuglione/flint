@@ -83,7 +83,7 @@ final class PriceCut : PriceEvent
         priceEvents ~= "cut " ~ event.label;
     }
 
-    /// Large numbers only: the condition compiles to `context.argument(0).get!(long)() > 10L`.
+    /// Large numbers only: the condition compiles to `context.argument(0).get!(long)() > cast(long) (10)`.
     @EventListener(condition: "#event > 10") void onNumber(long event)
     {
         doubled = event;

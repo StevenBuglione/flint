@@ -33,6 +33,31 @@ interface EvaluationContext
 /// An expression compiled by Flint AOT.
 alias CompiledExpression = Any function(EvaluationContext context) @safe;
 
+/++
+A `double` literal of compiled SpEL, opaque to constant folding. DMD folds floating-point constants at 80-bit
+precision, so a folded `0.1 + 0.2` would print as 0.3 instead of Java's 0.30000000000000004. Every real literal goes
+through this call, so each operation on it runs at run time in IEEE double, one rounding per operation as in Java.
++/
+pragma(inline, false) double spelDouble(double value) pure nothrow @nogc
+{
+    return value;
+}
+
+/// The `float` counterpart of `spelDouble`, for a literal with the `f` suffix.
+pragma(inline, false) float spelFloat(float value) pure nothrow @nogc
+{
+    return value;
+}
+
+unittest
+{
+    // What Java computes: one double rounding per operation (sol-template's parity corpus).
+    assert(spelDouble(0.1) + spelDouble(0.2) == 0.30000000000000004);
+    assert(spelDouble(0.1) + spelDouble(0.2) != 0.3);
+    const float sum = spelFloat(0.1f) + spelFloat(0.2f);
+    assert(sum == 0.3f); // Java's 0.1f + 0.2f is 0.3f, rounded once to float
+}
+
 /// One SpEL-valued attribute of a method's merged annotations.
 struct ExpressionSpec
 {

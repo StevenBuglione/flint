@@ -47,7 +47,6 @@
   {
     "id": "binary-rounding",
     "expression": "0.1 + 0.2",
-    "runtimeOnly": "The generated D expression evaluated to 0.3 on DMD. Java rounds the double operands before addition and produces 0.30000000000000004. flint-aot owns the fix.",
     "expected": {"type": "double", "value": "0.30000000000000004"}
   },
   {
@@ -68,7 +67,6 @@
   {
     "id": "signed-integer-overflow",
     "expression": "2147483647 + 1",
-    "runtimeOnly": "Spring uses Integer for unsuffixed integral literals. The AOT emitter widens them to long. flint-aot owns the fix.",
     "expected": {"type": "int", "value": "-2147483648"}
   },
   {

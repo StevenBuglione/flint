@@ -659,7 +659,16 @@ SpEL is compiled to typed D at build time (`engine/aot/spel.d`); nothing interpr
 
 - **`@Value("#{...}")`** compiles completely today, including templates that mix text and several `#{...}` (`"Shop #{...} is #{...}"`). The generated factory computes the value inline and converts it to the parameter's or field's type.
 - **The subset:**
-  - literals: integers (`L` suffix optional), reals, `'text'` with `''` escapes, `true`, `false`, `null`;
+  - literals: integers, reals, `'text'` with `''` escapes, `true`, `false`, `null`. Literals are typed as Spring's
+    tokenizer types them: an unsuffixed integer (decimal or `0x` hex) is an `int`, and one outside the int range is
+    an error (Spring's NOT_AN_INTEGER); `L` makes a `long`; a `.`, an exponent or `d` makes a `double`, and `f` a
+    `float`. Operators apply Java's binary numeric promotion, so `int` arithmetic wraps at 32 bits.
+    `String.length()` and `size()` are `int`. Real literals go through `flint.engine.aot.expression.spelDouble`
+    (`spelFloat`), which keeps DMD from folding them at 80-bit precision, so `0.1 + 0.2` is Java's
+    0.30000000000000004. Placeholders in a numeric position still convert to `long`. Integer `^` computes in
+    `long`, where Spring returns an `int` when the result fits; the value is the same. The shared parity corpus
+    `tests/aot/spel-parity/cases.json` runs every case through this compiler and the runtime interpreter
+    (`flint:expression`);
   - `${key:default}` placeholders. Spring resolves them before parsing, so a placeholder takes the type its use needs: a number beside a number, `true`/`false` in a boolean context, a string elsewhere, including inside quotes;
   - `@bean` references, typed from the bean definitions by name, with their public fields, Java Beans getters (`@clock.time` → `getTime()`) and public methods;
   - `#variables` and root functions where the use site provides them (section 9.1);

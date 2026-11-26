@@ -475,19 +475,31 @@ private string spelError(string source)
 @("SpEL compiles to typed D: literals, arithmetic, strings, logic, ternary and Elvis")
 unittest
 {
-    expect(spel("1 + 2 * 3")).toEqual("(1L + (2L * 3L)) : long");
-    expect(spel("10 / 4.0")).toEqual("(cast(double) (10L) / 4.0) : double");
-    expect(spel("2 ^ 10")).toEqual("(2L ^^ 10L) : long");
-    expect(spel("'a' + 1")).toEqual(`("a" ~ imported!"std.conv".to!(string)(1L)) : string`);
+    expect(spel("1 + 2 * 3")).toEqual("(1 + (2 * 3)) : int");
+    enum runtime = `imported!"flint.engine.aot.expression".`;
+    expect(spel("10 / 4.0")).toEqual("(cast(double) (10) / " ~ runtime ~ "spelDouble(4.0)) : double");
+    expect(spel("2 ^ 10")).toEqual("(cast(long) (2) ^^ cast(long) (10)) : long");
+    expect(spel("'a' + 1")).toEqual(`("a" ~ imported!"std.conv".to!(string)(1)) : string`);
     expect(spel("'it''s'")).toEqual(`"it's" : string`);
-    expect(spel("#id > 10 and not (#id == 99)")).toEqual("((id > 10L) && !((id == 99L))) : bool");
-    expect(spel("#id gt 1 ? 'big' : 'small'")).toEqual(`((id > 1L) ? "big" : "small") : string`);
-    expect(spel("'x'.toUpperCase().length()")).toEqual(`cast(long) (imported!"std.uni".toUpper("x")).length : long`);
+    expect(spel("#id > 10 and not (#id == 99)")).toEqual(
+            "((id > cast(long) (10)) && !((id == cast(long) (99)))) : bool");
+    expect(spel("#id gt 1 ? 'big' : 'small'")).toEqual(`((id > cast(long) (1)) ? "big" : "small") : string`);
+    expect(spel("'x'.toUpperCase().length()")).toEqual(`cast(int) (imported!"std.uni".toUpper("x")).length : int`);
     expect(spel("${a} ?: 'none'")).toEqual(`((p("${a}")).length ? p("${a}") : "none") : string`);
-    expect(spel("${port} + 1")).toEqual(`(imported!"std.conv".to!(long)(p("${port}")) + 1L) : long`);
-    expect(spel("@clock.now() * 2")).toEqual("(clock.now() * 2L) : long");
-    expect(spel("hasRole('ADMIN') or #id == 1")).toEqual(`((ctx.hasRole("ADMIN")).get!(bool)() || (id == 1L)) : bool`);
+    expect(spel("${port} + 1")).toEqual(`(imported!"std.conv".to!(long)(p("${port}")) + cast(long) (1)) : long`);
+    expect(spel("@clock.now() * 2")).toEqual("(clock.now() * cast(long) (2)) : long");
+    expect(spel("hasRole('ADMIN') or #id == 1")).toEqual(
+            `((ctx.hasRole("ADMIN")).get!(bool)() || (id == cast(long) (1))) : bool`);
     expect(spel("#id == null")).toEqual("((id) is null) : bool");
+    // Java's literal typing and binary numeric promotion (sol-template's parity corpus): an unsuffixed integer
+    // literal is an int, so int arithmetic wraps at 32 bits; L makes a long, f a float, '.', an exponent or d a
+    // double; an int literal outside the int range is an error, as Spring's NOT_AN_INTEGER.
+    expect(spel("2147483647 + 1")).toEqual("(2147483647 + 1) : int");
+    expect(spel("2147483647L + 1")).toEqual("(2147483647L + cast(long) (1)) : long");
+    expect(spel("1.5f * 2")).toEqual("(" ~ runtime ~ "spelFloat(1.5f) * cast(float) (2)) : float");
+    expect(spel("1e3 + 2d")).toEqual("(" ~ runtime ~ "spelDouble(1e3) + " ~ runtime ~ "spelDouble(2.0)) : double");
+    expect(spel("-0x7F")).toEqual("(-0x7F) : int");
+    expect(spel("'abc'.length() + 1L")).toEqual(`(cast(long) (cast(int) ("abc").length) + 1L) : long`);
 }
 
 @("SpEL outside the compiled subset is reported, never interpreted at runtime")
@@ -500,6 +512,8 @@ unittest
     expect(spelError("'a' - 1").canFind("is not a number")).toBeTrue();
     expect(spelError("#id > ").canFind("ends early")).toBeTrue();
     expect(spelError("names.?[length() > 1]").length > 0).toBeTrue();
+    expect(spelError("2147483648").canFind("cannot be parsed as an int")).toBeTrue();
+    expect(spelError("0x80000000").canFind("cannot be parsed as an int")).toBeTrue();
 }
 
 @("Spring's naming rules: bean names, table names, entry points and path combination")
@@ -818,7 +832,7 @@ unittest
     expect(web.canFind(", permanent.any(() { ")).toBeTrue();
     expect(web.canFind("definition.rank = ")).toBeTrue();
     const pricing = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "pricing.d"));
-    expect(pricing.canFind("return Any.of((context.argument(0).get!(long)() > 10L));")).toBeTrue();
+    expect(pricing.canFind("return Any.of((context.argument(0).get!(long)() > cast(long) (10)));")).toBeTrue();
     expect(pricing.canFind("listener.conditionExpression = &condition_shop_pricing_Pricing_onNumber;")).toBeTrue();
     expect(pricing.canFind("listener.invokeForResult = &listen_shop_pricing_Pricing_onGreeting;")).toBeTrue();
     expect(pricing.canFind("listener.invoke = &listen_shop_pricing_Pricing_onNumber;")).toBeTrue();
