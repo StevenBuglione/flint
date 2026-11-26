@@ -18,10 +18,6 @@
     "metric-rebaseline": {
       "decision": "docs/spring/phase1/decisions.md, 2026-11-26 03:30Z",
       "summary": "Once, a Phase 2 byte cap set in stripped-file bytes is re-baselined in loadable bytes at the measured value plus 10%, measuring the same executables in both metrics."
-    },
-    "probe-flags-rebaseline": {
-      "decision": "docs/spring/phase1/decisions.md, 2026-11-26 05:05Z",
-      "summary": "Once, when module probes switch to the release profile's link flags (-fno-moduleinfo-localclasses, --gc-sections): each linked-byte cap becomes the new measurement plus 10%, never above the old cap, with a before/after table."
     }
   }
 }
