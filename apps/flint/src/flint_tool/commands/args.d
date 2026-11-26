@@ -751,6 +751,39 @@ struct ApiArgs
     ApiHeadersArgs headers;
 }
 
+/// `flint port-spring`.
+@Command("flint port-spring", "Translate a pinned upstream annotation for review")
+struct PortSpringArgs
+{
+    /// Upstream project name.
+    @Option("project", 'p', "Pinned upstream project")
+    string project;
+    /// Upstream tag.
+    @Option("tag", 0, "Pinned upstream tag")
+    string tag;
+    /// Canonical Java annotation id.
+    @Option("type", 't', "Canonical Java annotation id")
+    string type;
+    /// Destination D module name.
+    @Option("module", 'm', "Destination D module under flint.*")
+    string module_;
+    /// API source reference cache.
+    @Option("cache", 0, "Override the flint api fetch reference cache")
+    string cache;
+    /// Opt-in native helper.
+    @Option("helper", 0, "Override the native translator executable")
+    string helper;
+    /// Candidate source and mapping directory.
+    @Option("output", 'o', "Write both files into a new directory")
+    string output;
+    /// Existing hand classifications require an explicit opt-in.
+    @Option("replace-ported", 0, "Include proposed replacements for already ported or adapted elements")
+    bool replacePorted;
+    /// JSON output.
+    @Option("json", 0, "Emit flint.port-spring/1 JSON on stdout")
+    bool json;
+}
+
 /// The root command.
 @Command("flint", "One tool to create, build, run, test and check Flint projects with the pinned toolchain.", "0.7.0")
 struct FlintArgs
@@ -833,4 +866,7 @@ struct FlintArgs
     /// api.
     @Subcommand("api", "Upstream API manifests, coverage and diffs")
     ApiArgs api;
+    /// port-spring.
+    @Subcommand("port-spring", "Translate a pinned upstream annotation for review")
+    PortSpringArgs portSpring;
 }

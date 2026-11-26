@@ -108,7 +108,8 @@ class SharedPolicyTests(unittest.TestCase):
 
     def test_bootstrap_recipe_equals_the_recipe_flint_generates(self):
         # The bootstrap compiles the platform modules from source, as --no-platform-cache does (ADR-030 section 5).
-        flint('build', '--no-platform-cache', '--project', str(ROOT / 'apps/flint'))
+        result = flint('build', '--no-platform-cache', '--project', str(ROOT / 'apps/flint'))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         generated = ROOT / 'apps/flint/.flint/generated/dub/dub.sdl'
         manifest = tomllib.loads((ROOT / 'apps/flint/flint.toml').read_text(encoding='utf-8'))
         # A verified DMD fork adds `-verror-hide`, which only changes how diagnostics read (ADR-027 section 5).
@@ -134,6 +135,8 @@ class StructuralParityTests(unittest.TestCase):
         for name in ('dub.sdl', 'flint.toml', 'dscanner.ini', 'dfmt.ini', '.editorconfig', 'platform.lock'):
             shutil.copy2(ROOT / name, cls.base / name)
         shutil.copy2(ROOT / 'flint-dependencies.json', cls.base / 'flint-dependencies.json')
+        (cls.base / 'tests').mkdir()
+        shutil.copy2(ROOT / 'tests/test_flint_toolchain.py', cls.base / 'tests/test_flint_toolchain.py')
         (cls.base / '.tools').symlink_to((ROOT / '.tools').resolve())
 
     @classmethod
@@ -155,12 +158,13 @@ class StructuralParityTests(unittest.TestCase):
             # The text output is byte-identical; the JSON schema always carries compiler_profiles.
             human = flint('check', '--gate', 'structural', '--package', package, cwd=work,
                           env=environment(FLINT_HOME=str(work)))
-            # flint check does not run gates.py's framework_layers yet (policy/framework.json, a77bb57), so the
-            # framework module count is gates.py's alone.
+            # gates.py also checks framework layers and runs the compile-server probes.
             python_text = re.sub(r'\n  "framework_modules": \d+,', '', gate.stdout)
+            python_text = re.sub(r',\n  "compile_server": "[^"]+"', '', python_text)
             self.assertEqual(human.stdout, python_text)
             expected = json.loads(gate.stdout)
             expected.pop('framework_modules', None)
+            self.assertIn(expected.pop('compile_server'), ('passed', 'skipped (no Flint DMD fork installed)'))
             expected['generated_dependencies'].setdefault('compiler_profiles', 0)
             expected.setdefault('repo', '')
             expected.setdefault('pending_repo_edges', [])
@@ -496,6 +500,18 @@ class KnowledgeTests(unittest.TestCase):
         status, listing = flint_json('explain', '--list')
         self.assertGreater(len(listing['codes']), 60)
         self.assertEqual(len({item['code'] for item in listing['codes']}), len(listing['codes']))
+
+    def test_port_spring_help_and_diagnostics(self):
+        help_text = flint('port-spring', '--help')
+        self.assertEqual(help_text.returncode, 0, help_text.stderr)
+        self.assertIn('--helper', help_text.stdout)
+        self.assertIn('--replace-ported', help_text.stdout)
+        for code in ('FLINT-E1009', 'FLINT-E1010'):
+            with self.subTest(code=code):
+                status, document = flint_json('explain', code)
+                self.assertEqual(status, 0, document)
+                self.assertEqual(document['codes'][0]['code'], code)
+                self.assertIn('port-spring', document['codes'][0]['example'])
 
     def test_version_doctor_and_daemon_report_json(self):
         status, version = flint_json('version')

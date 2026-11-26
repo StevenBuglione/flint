@@ -62,6 +62,7 @@ flint check
 | `flint api diff <old> <new>` | List the API elements added, removed or changed between two manifests. |
 | `flint api headers [paths...]` | Check that every D file ported from an upstream carries ADR-030's header, for an upstream the licence matrix lets Flint port at that tag. |
 | `flint api checklist --slice FILE --output DIR` | Write one Markdown checklist per module of a porting slice, each element with the status the repo's mapping gives it, and an index `README.md`. |
+| `flint port-spring --project P --tag TAG --type ID --module MODULE [--output DIR] [--replace-ported]` | Draft D source and a mapping fragment from a pinned Java declaration. Build the opt-in helper with `cmake -S tools/port-spring -B .flint/port-spring` and `cmake --build .flint/port-spring`. Pass `--json` to print both results. See the [translator guide](../tools/port-spring/README.md). |
 
 Every command accepts `--json` and `--help`. Commands acting on a project take `--project DIR` (or `-C DIR`). `flint` never prompts.
 
@@ -176,6 +177,7 @@ Command fields:
 | `flint.api-headers/1` | `files`, `ported`, `problems` |
 | `flint.api-checklist/1` | `checklists` (`name`, `file`, `types`, `elements`, `open`) |
 | `flint.api-diff/1` | `older`, `newer`, `added`, `removed`, `changed`, `differences` (`change`, `kind`, `id`, `details`) |
+| `flint.port-spring/1` | `source` (D module text), `mapping` (rulebook v2 JSON fragment), `inherited` |
 
 Usage errors that occur before a command runs use `flint.usage/1`. A field is added only with a new schema version.
 

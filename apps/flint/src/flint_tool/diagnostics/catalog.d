@@ -616,6 +616,15 @@ immutable CodeInfo[] catalog = [
             ~ "deferred, keeps it from being complete.",
             `{"name": "spring-jdbc", "upstream": "spring-framework@v7.1.0", "module": "spring-jdbc", `
             ~ `"complete": true}`),
+    CodeInfo("FLINT-E1009", ExitCode.user, "port-spring could not translate the declaration",
+            "The mechanical translator needs a supported declaration from a pinned upstream and its API manifest. "
+            ~ "The detail names an unsupported Java construct, a missing translator input or a mapping conflict.",
+            "flint port-spring --project jakarta-persistence --tag 3.2.0 --type jakarta.persistence.Entity "
+            ~ "--module flint.jakarta.persistence --json"),
+    CodeInfo("FLINT-E1010", ExitCode.environment, "port-spring could not write the candidate",
+            "The candidate needs a new output directory with a writable parent. An existing directory is preserved.",
+            "flint port-spring --project jakarta-persistence --tag 3.2.0 --type jakarta.persistence.Entity "
+            ~ "--module flint.jakarta.persistence --output .flint/entity-port"),
     // 11xx: Flint AOT, the build-time generator of the Spring port (ADR-030 section 3, docs/spring/aot-contract.md).
     CodeInfo("FLINT-E1100", ExitCode.user, "the Flint AOT extraction compile failed",
             "Flint AOT reads the application's modules with the compiler: it compiles a describer over them with "

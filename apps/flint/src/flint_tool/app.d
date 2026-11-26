@@ -234,6 +234,8 @@ private int knowledgeCommand(ref Session session, string name, ref FlintArgs opt
 
             return commandLsp(session);
         }
+    case "flint port-spring":
+        return portSpringCommand(session, options.portSpring);
     default:
         return -1;
     }
@@ -287,6 +289,16 @@ private int evidenceCommand(ref Session session, string name, ref FlintArgs opti
     default:
         return -1;
     }
+}
+
+private int portSpringCommand(ref Session session, const ref PortSpringArgs args)
+{
+    import flint_tool.api.portspring : SpringPortRequest;
+    import flint_tool.commands.portspring : commandPortSpring;
+
+    const request = SpringPortRequest(args.project, args.tag, args.type, args.module_, args.cache,
+            args.helper, args.replacePorted);
+    return commandPortSpring(session, request, args.output);
 }
 
 private int depsCommand(ref Session session, string name, ref FlintArgs options)
@@ -485,6 +497,9 @@ private bool printApiHelp(string commandName, scope void delegate(scope const(ch
         return true;
     case "flint api headers":
         writeHelp!ApiHeadersArgs(sink);
+        return true;
+    case "flint port-spring":
+        writeHelp!PortSpringArgs(sink);
         return true;
     default:
         return false;
