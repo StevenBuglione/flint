@@ -163,7 +163,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 107 | 235 | 0 | 15,454 |
+| ai | spring-ai@v2.1.0 | 120 | 244 | 0 | 15,432 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,306 | 1,257 | 4,848 | 30,423 |
@@ -300,6 +300,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.converter.MarkdownCodeBlockCleaner#clean(String)` | `flint.ai.converter.MarkdownCodeBlockCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.ResponseTextCleaner#clean(String)` | `flint.ai.converter.ResponseTextCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.WhitespaceCleaner#clean(String)` | `flint.ai.converter.WhitespaceCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.ai.embedding
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.embedding.DefaultEmbeddingOptions#<init>(String,Integer)` | `flint.ai.embedding.DefaultEmbeddingOptions.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.DefaultEmbeddingOptions#getDimensions()` | `flint.ai.embedding.DefaultEmbeddingOptions.getDimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.DefaultEmbeddingOptions#getModel()` | `flint.ai.embedding.DefaultEmbeddingOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.DefaultEmbeddingOptions.Builder#dimensions(Integer)` | `flint.ai.embedding.DefaultEmbeddingOptions.Builder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.DefaultEmbeddingOptions.Builder#model(String)` | `flint.ai.embedding.DefaultEmbeddingOptions.Builder.model` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.DefaultEmbeddingOptionsBuilder#dimensions(Integer)` | `flint.ai.embedding.DefaultEmbeddingOptionsBuilder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.EmbeddingOptions#getDimensions()` | `flint.ai.embedding.EmbeddingOptions.getDimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.EmbeddingOptions#getModel()` | `flint.ai.embedding.EmbeddingOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.EmbeddingOptions.Builder#dimensions(Integer)` | `flint.ai.embedding.EmbeddingOptions.Builder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.ai.image
 
@@ -7847,7 +7861,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.elevenlabs | 0 | 61 |
 | org.springframework.ai.elevenlabs.aot | 0 | 3 |
 | org.springframework.ai.elevenlabs.api | 0 | 290 |
-| org.springframework.ai.embedding | 99 | 0 |
+| org.springframework.ai.embedding | 77 | 0 |
 | org.springframework.ai.embedding.observation | 37 | 0 |
 | org.springframework.ai.evaluation | 23 | 0 |
 | org.springframework.ai.google.genai | 0 | 150 |
