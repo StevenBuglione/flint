@@ -14,7 +14,8 @@
  * limitations under the License.
  *
  * Ported from spring-framework v7.1.0: spring-expression/src/main/java/org/springframework/expression/spel/ast/OpPlus.java
- * Also from OpMinus.java, OpMultiply.java, OpDivide.java, OpModulus.java and OperatorPower.java.
+ * Also from OpMinus.java, OpMultiply.java, OpDivide.java, OpModulus.java, OperatorPower.java,
+ * Operator.java, OpEQ.java, OpNE.java, OpLT.java, OpLE.java, OpGT.java and OpGE.java.
  * Modified by the Flint authors.
  */
 module flint.expression.spel.standard.arithmetic;
@@ -27,7 +28,7 @@ import flint.expression.spel : SpelMessage;
 import flint.expression.spel.standard.literal : LiteralParser;
 import flint.java.character : isLetter;
 import flint.java.lang : IllegalArgumentException;
-import std.ascii : isAlpha, isDigit, toLower;
+import std.ascii : isAlpha, toLower;
 
 @safe:
 package(flint.expression.spel.standard):
@@ -36,7 +37,7 @@ package(flint.expression.spel.standard):
 private enum maxNesting = 200;
 private enum maxStack = 2 * (maxNesting + 1) + 1;
 
-/// A scalar, a standalone variable, or an arithmetic tree stored in evaluation order.
+/// A scalar, a standalone variable, or a scalar expression stored in evaluation order.
 struct ArithmeticExpression
 {
     private Any constant;
@@ -47,7 +48,18 @@ struct ArithmeticExpression
     {
         if (instructions.length == 0)
             return Result!Any(constant);
-        Numeric[maxStack] stack = void;
+        enum shortStack = 16;
+        if (instructions.length < 2 * shortStack)
+        {
+            Scalar[shortStack] stack;
+            return evaluateStack(stack);
+        }
+        Scalar[maxStack] stack;
+        return evaluateStack(stack);
+    }
+
+    private Result!Any evaluateStack(scope Scalar[] stack) nothrow @nogc
+    {
         size_t depth;
         foreach (ref instruction; instructions)
         {
@@ -90,13 +102,19 @@ private enum Op : ubyte
     divide,
     modulus,
     power,
+    equal,
+    notEqual,
+    less,
+    lessEqual,
+    greater,
+    greaterEqual,
 }
 
 private struct Instruction
 {
     Op op;
     size_t position;
-    Numeric value;
+    Scalar value;
 }
 
 private struct ArithmeticParser
@@ -127,6 +145,8 @@ private struct ArithmeticParser
             reader.position += token.length;
             parse(cast(ubyte)(token.precedence + 1), nesting);
             instructions ~= Instruction(token.op, position);
+            if (token.precedence == comparisonPrecedence)
+                return;
         }
     }
 
@@ -182,9 +202,9 @@ private struct ArithmeticParser
             return;
         }
         if (instructions.length == 0)
-            instructions ~= Instruction(Op.literal, firstPosition, Numeric.from(firstLiteral));
+            instructions ~= Instruction(Op.literal, firstPosition, Scalar.from(firstLiteral));
         const scalar = reader.readLiteral();
-        instructions ~= Instruction(Op.literal, position, Numeric.from(scalar));
+        instructions ~= Instruction(Op.literal, position, Scalar.from(scalar));
     }
 }
 
@@ -194,6 +214,10 @@ private bool startsIdentifier(dchar c) pure nothrow @nogc
     return c == '_' || c == '$' || (c <= 0xFFFF && isLetter(c));
 }
 
+private enum ubyte comparisonPrecedence = 1;
+private enum ubyte sumPrecedence = 2;
+private enum ubyte productPrecedence = 3;
+
 private struct OperatorToken
 {
     Op op;
@@ -201,155 +225,298 @@ private struct OperatorToken
     ubyte length;
 }
 
+private struct OperatorSpelling
+{
+    string text;
+    Op op;
+    ubyte precedence;
+
+    OperatorToken token() const pure nothrow @nogc
+    {
+        return OperatorToken(op, precedence, cast(ubyte) text.length);
+    }
+}
+
+private immutable OperatorSpelling[] symbolOperators = [
+    OperatorSpelling("==", Op.equal, comparisonPrecedence),
+    OperatorSpelling("!=", Op.notEqual, comparisonPrecedence),
+    OperatorSpelling("<=", Op.lessEqual, comparisonPrecedence),
+    OperatorSpelling(">=", Op.greaterEqual, comparisonPrecedence),
+    OperatorSpelling("<", Op.less, comparisonPrecedence),
+    OperatorSpelling(">", Op.greater, comparisonPrecedence),
+    OperatorSpelling("+", Op.add, sumPrecedence), OperatorSpelling("-", Op.subtract,
+            sumPrecedence), OperatorSpelling("*", Op.multiply, productPrecedence),
+    OperatorSpelling("/", Op.divide, productPrecedence),
+    OperatorSpelling("%", Op.modulus, productPrecedence),
+];
+
+private immutable OperatorSpelling[] alternateOperators = [
+    OperatorSpelling("eq", Op.equal, comparisonPrecedence),
+    OperatorSpelling("ne", Op.notEqual, comparisonPrecedence),
+    OperatorSpelling("lt", Op.less, comparisonPrecedence),
+    OperatorSpelling("le", Op.lessEqual, comparisonPrecedence),
+    OperatorSpelling("gt", Op.greater, comparisonPrecedence),
+    OperatorSpelling("ge", Op.greaterEqual, comparisonPrecedence),
+    OperatorSpelling("div", Op.divide, productPrecedence),
+    OperatorSpelling("mod", Op.modulus, productPrecedence),
+];
+
 private OperatorToken operatorToken(scope const(char)[] tail) pure nothrow @nogc
 {
     if (tail.length == 0)
         return OperatorToken.init;
-    switch (tail[0])
-    {
-    case '+', '-':
-        if (tail.length >= 2 && tail[1] == tail[0])
-            return OperatorToken.init;
-        return OperatorToken(tail[0] == '+' ? Op.add : Op.subtract, 1, 1);
-    case '*':
-        return OperatorToken(Op.multiply, 2, 1);
-    case '/':
-        return OperatorToken(Op.divide, 2, 1);
-    case '%':
-        return OperatorToken(Op.modulus, 2, 1);
-    default:
+    if (tail.length >= 2 && tail[0] == tail[1] && (tail[0] == '+' || tail[0] == '-'))
+        return OperatorToken.init;
+    if (isAlpha(tail[0]))
         return wordOperator(tail);
-    }
+    foreach (entry; symbolOperators)
+        if (tail.length >= entry.text.length && tail[0 .. entry.text.length] == entry.text)
+            return entry.token();
+    return OperatorToken.init;
 }
 
 private OperatorToken wordOperator(scope const(char)[] tail) pure nothrow @nogc
 {
-    if (tail.length < 3 || (tail.length > 3 && isIdentifier(tail[3])))
+    char[3] word;
+    size_t width;
+    while (width < tail.length && width < word.length && isAlpha(tail[width]))
+    {
+        word[width] = toLower(tail[width]);
+        ++width;
+    }
+    if (width < 2 || continuesIdentifier(tail, width))
         return OperatorToken.init;
-    char[3] word = [toLower(tail[0]), toLower(tail[1]), toLower(tail[2])];
-    if (word[] == "div")
-        return OperatorToken(Op.divide, 2, 3);
-    if (word[] == "mod")
-        return OperatorToken(Op.modulus, 2, 3);
+    foreach (entry; alternateOperators)
+        if (word[0 .. width] == entry.text)
+            return entry.token();
     return OperatorToken.init;
 }
 
-private bool isIdentifier(char c) pure nothrow @nogc
+private bool continuesIdentifier(scope const(char)[] tail, size_t index) pure nothrow @nogc
 {
-    return isAlpha(c) || isDigit(c) || c == '_' || c == '$';
+    if (index == tail.length)
+        return false;
+    const next = decodeUtf8(tail, index);
+    return startsIdentifier(next) || (next >= '0' && next <= '9');
 }
 
-private enum NumberKind : ubyte
+private enum ValueKind : ubyte
 {
     other,
     int_,
     long_,
     float_,
     double_,
+    null_,
+    bool_,
+    string_,
 }
 
-private struct Numeric
+private struct Scalar
 {
-    NumberKind kind;
+    ValueKind kind;
     long integer;
     double realValue;
+    string text;
 
-    static Numeric from(const ref Any scalar)
+    static Scalar from(const ref Any scalar)
     {
+        if (scalar.isNull())
+            return Scalar(ValueKind.null_);
         switch (scalar.typeName())
         {
+        case "bool":
+            return Scalar(ValueKind.bool_, scalar.get!bool);
+        case "string":
+            return Scalar(ValueKind.string_, 0, 0, scalar.get!string);
         case "int":
-            return Numeric(NumberKind.int_, scalar.get!int);
+            return Scalar(ValueKind.int_, scalar.get!int);
         case "long":
-            return Numeric(NumberKind.long_, scalar.get!long);
+            return Scalar(ValueKind.long_, scalar.get!long);
         case "float":
-            return Numeric(NumberKind.float_, 0, scalar.get!float);
+            return Scalar(ValueKind.float_, 0, scalar.get!float);
         case "double":
-            return Numeric(NumberKind.double_, 0, scalar.get!double);
+            return Scalar(ValueKind.double_, 0, scalar.get!double);
         default:
-            return Numeric.init;
+            return Scalar.init;
         }
     }
 
     float asFloat() const pure nothrow @nogc
     {
-        return kind >= NumberKind.float_ ? cast(float) realValue : cast(float) integer;
+        return kind >= ValueKind.float_ ? cast(float) realValue : cast(float) integer;
     }
 
     double asDouble() const pure nothrow @nogc
     {
-        return kind >= NumberKind.float_ ? realValue : cast(double) integer;
+        return kind >= ValueKind.float_ ? realValue : cast(double) integer;
     }
 
     Any pack() const pure nothrow @nogc
     {
         final switch (kind)
         {
-        case NumberKind.other:
+        case ValueKind.other, ValueKind.null_:
             return Any.init;
-        case NumberKind.int_:
+        case ValueKind.bool_:
+            return Any.of(integer != 0);
+        case ValueKind.string_:
+            return Any.of(text);
+        case ValueKind.int_:
             return Any.of(cast(int) integer);
-        case NumberKind.long_:
+        case ValueKind.long_:
             return Any.of(integer);
-        case NumberKind.float_:
+        case ValueKind.float_:
             return Any.of(cast(float) realValue);
-        case NumberKind.double_:
+        case ValueKind.double_:
             return Any.of(realValue);
         }
     }
 }
 
-private Result!Numeric applyOperator(Op op, Numeric left, Numeric right) nothrow @nogc
+private Result!Scalar applyOperator(Op op, Scalar left, Scalar right) nothrow @nogc
 {
-    if (left.kind == NumberKind.other || right.kind == NumberKind.other)
-        return Result!Numeric(Numeric.init, Error(Status.unsupported, "SpEL arithmetic requires numeric operands"));
+    if (op >= Op.equal && op <= Op.greaterEqual)
+        return compare(op, left, right);
+    if (!isNumber(left.kind) || !isNumber(right.kind))
+        return Result!Scalar(Scalar.init, Error(Status.unsupported, "SpEL arithmetic requires numeric operands"));
     const kind = left.kind >= right.kind ? left.kind : right.kind;
     if (op == Op.power)
-        return Result!Numeric(power(kind, left, right));
-    if (kind == NumberKind.double_)
-        return Result!Numeric(Numeric(kind, 0, arithmetic(op, left.asDouble(), right.asDouble())));
-    if (kind == NumberKind.float_)
-        return Result!Numeric(Numeric(kind, 0, arithmetic(op, left.asFloat(), right.asFloat())));
+        return Result!Scalar(power(kind, left, right));
+    if (kind == ValueKind.double_)
+        return Result!Scalar(Scalar(kind, 0, arithmetic(op, left.asDouble(), right.asDouble())));
+    if (kind == ValueKind.float_)
+        return Result!Scalar(Scalar(kind, 0, arithmetic(op, left.asFloat(), right.asFloat())));
     return integerArithmetic(op, kind, left.integer, right.integer);
 }
 
-private Numeric power(NumberKind kind, Numeric left, Numeric right) nothrow @nogc
+private bool isNumber(ValueKind kind) pure nothrow @nogc
 {
-    const double base = kind == NumberKind.float_ ? left.asFloat() : left.asDouble();
-    const double exponent = kind == NumberKind.float_ ? right.asFloat() : right.asDouble();
+    return kind >= ValueKind.int_ && kind <= ValueKind.double_;
+}
+
+private enum Order : ubyte
+{
+    less,
+    equal,
+    greater,
+    unordered,
+    incomparable,
+}
+
+private Result!Scalar compare(Op op, Scalar left, Scalar right) pure nothrow @nogc
+{
+    const order = compareValues(left, right);
+    if (order == Order.incomparable && op != Op.equal && op != Op.notEqual)
+        return Result!Scalar(Scalar.init, Error(Status.unsupported, "SpEL operands are not comparable"));
+    return Result!Scalar(Scalar(ValueKind.bool_, comparisonMatches(op, order)));
+}
+
+private bool comparisonMatches(Op op, Order order) pure nothrow @nogc
+{
+    switch (op)
+    {
+    case Op.equal:
+        return order == Order.equal;
+    case Op.notEqual:
+        return order != Order.equal;
+    case Op.less:
+        return order == Order.less;
+    case Op.lessEqual:
+        return order == Order.less || order == Order.equal;
+    case Op.greater:
+        return order == Order.greater;
+    case Op.greaterEqual:
+        return order == Order.greater || order == Order.equal;
+    default:
+        assert(0, "Not a comparison operator");
+    }
+}
+
+private Order compareValues(Scalar left, Scalar right) pure nothrow @nogc
+{
+    if (left.kind == ValueKind.null_ || right.kind == ValueKind.null_)
+        return compareOrdered(left.kind != ValueKind.null_, right.kind != ValueKind.null_);
+    if (isNumber(left.kind) && isNumber(right.kind))
+    {
+        if (left.kind == ValueKind.double_ || right.kind == ValueKind.double_)
+            return compareOrdered(left.asDouble(), right.asDouble());
+        if (left.kind == ValueKind.float_ || right.kind == ValueKind.float_)
+            return compareOrdered(left.asFloat(), right.asFloat());
+        return compareOrdered(left.integer, right.integer);
+    }
+    if (left.kind == ValueKind.string_ && right.kind == ValueKind.string_)
+        return compareText(left.text, right.text);
+    if (left.kind == ValueKind.bool_ && right.kind == ValueKind.bool_)
+        return compareOrdered(left.integer, right.integer);
+    return Order.incomparable;
+}
+
+private Order compareOrdered(T)(T left, T right) pure nothrow @nogc
+{
+    if (left < right)
+        return Order.less;
+    if (left > right)
+        return Order.greater;
+    return left == right ? Order.equal : Order.unordered;
+}
+
+private Order compareText(scope const(char)[] left, scope const(char)[] right) pure nothrow @nogc
+{
+    size_t i, j;
+    while (i < left.length && j < right.length)
+    {
+        const a = decodeUtf8(left, i);
+        const b = decodeUtf8(right, j);
+        if (a != b)
+            return compareOrdered(utf16Order(a), utf16Order(b));
+    }
+    return compareOrdered(left.length - i, right.length - j);
+}
+
+private uint utf16Order(dchar codePoint) pure nothrow @nogc
+{
+    // Supplementary code points lead with a surrogate and sort before BMP values after the surrogate range.
+    return codePoint >= 0xE000 && codePoint <= 0xFFFF ? codePoint + 0x110000 : codePoint;
+}
+
+private Scalar power(ValueKind kind, Scalar left, Scalar right) nothrow @nogc
+{
+    const double base = kind == ValueKind.float_ ? left.asFloat() : left.asDouble();
+    const double exponent = kind == ValueKind.float_ ? right.asFloat() : right.asDouble();
     // Math.pow returns NaN here, while C pow treats an absolute base of one as a special case.
     const unitBase = base == 1 || base == -1;
     const nonfiniteExponent = exponent != exponent || exponent == double.infinity || exponent == -double.infinity;
     const result = unitBase && nonfiniteExponent ? double.nan : pow(base, exponent);
-    if (kind >= NumberKind.float_)
-        return Numeric(NumberKind.double_, 0, result);
-    if (kind == NumberKind.long_ || result > int.max)
+    if (kind >= ValueKind.float_)
+        return Scalar(ValueKind.double_, 0, result);
+    if (kind == ValueKind.long_ || result > int.max)
     {
         if (result >= 0x1p63)
-            return Numeric(NumberKind.long_, long.max);
+            return Scalar(ValueKind.long_, long.max);
         if (result <= -0x1p63)
-            return Numeric(NumberKind.long_, long.min);
-        return Numeric(NumberKind.long_, cast(long) result);
+            return Scalar(ValueKind.long_, long.min);
+        return Scalar(ValueKind.long_, cast(long) result);
     }
-    return Numeric(NumberKind.int_, result <= int.min ? int.min : cast(int) result);
+    return Scalar(ValueKind.int_, result <= int.min ? int.min : cast(int) result);
 }
 
-private Result!Numeric integerArithmetic(Op op, NumberKind kind, long left, long right) pure nothrow @nogc
+private Result!Scalar integerArithmetic(Op op, ValueKind kind, long left, long right) pure nothrow @nogc
 {
     if (op == Op.divide || op == Op.modulus)
     {
         if (right == 0)
-            return Result!Numeric(Numeric.init, Error(Status.invalidArgument, "/ by zero"));
+            return Result!Scalar(Scalar.init, Error(Status.invalidArgument, "/ by zero"));
         if (left == long.min && right == -1)
-            return Result!Numeric(Numeric(kind, op == Op.divide ? long.min : 0));
+            return Result!Scalar(Scalar(kind, op == Op.divide ? long.min : 0));
     }
     const value = arithmetic(op, left, right);
-    return Result!Numeric(Numeric(kind, kind == NumberKind.int_ ? cast(int) value : value));
+    return Result!Scalar(Scalar(kind, kind == ValueKind.int_ ? cast(int) value : value));
 }
 
 private T arithmetic(T)(Op op, T left, T right) pure nothrow @nogc
 {
-    final switch (op)
+    switch (op)
     {
     case Op.add:
         return left + right;
@@ -361,7 +528,7 @@ private T arithmetic(T)(Op op, T left, T right) pure nothrow @nogc
         return left / right;
     case Op.modulus:
         return left % right;
-    case Op.literal, Op.power:
-        assert(0, "An operand or power is handled by the evaluator");
+    default:
+        assert(0, "Not a basic arithmetic operator");
     }
 }

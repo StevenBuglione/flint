@@ -56,6 +56,30 @@ private void evaluate(T)(string expression, T expected)
         evaluate("3 " ~ op ~ " 2", 1);
 }
 
+@("doubles") unittest
+{
+    evaluate("3.0d == 5.0d", false);
+    evaluate("3.0d == 3.0d", true);
+    evaluate("3.0d != 5.0d", true);
+    evaluate("3.0d != 3.0d", false);
+    evaluate("3.0d + 5.0d", 8.0);
+    evaluate("3.0d - 5.0d", -2.0);
+    evaluate("3.0d * 5.0d", 15.0);
+    evaluate("3.0d / 5.0d", 0.6);
+    evaluate("6.0d % 3.5d", 2.5);
+}
+
+@("longs") unittest
+{
+    evaluate("3L == 4L", false);
+    evaluate("3L == 3L", true);
+    evaluate("3L != 4L", true);
+    evaluate("3L != 3L", false);
+    evaluate("3L * 50L", 150L);
+    evaluate("3L + 50L", 53L);
+    evaluate("3L - 50L", -47L);
+}
+
 @("parentheses, precedence, and numeric promotion")
 unittest
 {

@@ -102,5 +102,48 @@
     "expression": "10L ^ 30L",
     "runtimeOnly": "The AOT integer power path defers Spring's saturation on overflow.",
     "expected": {"type": "long", "value": "9223372036854775807"}
+  },
+  {
+    "id": "comparison-after-arithmetic",
+    "expression": "1 + 2 * 3 == 7L",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "comparison-alias",
+    "expression": "2.5 ge 2.5f",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "comparison-alias-case",
+    "expression": "2.5 Ge 2.5f",
+    "runtimeOnly": "The AOT comparison parser currently matches word operators case-sensitively.",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "comparison-long-width",
+    "expression": "9007199254740993L > 9007199254740992L",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "string-equality",
+    "expression": "'abc' ne 'abc'",
+    "expected": {"type": "bool", "value": "false"}
+  },
+  {
+    "id": "null-equality",
+    "expression": "'abc' != null",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "string-utf16-order",
+    "expression": "'😀' < '\uE000'",
+    "runtimeOnly": "Compiled comparisons order strings by D UTF-8 bytes, which differ from Java UTF-16 here.",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "null-order",
+    "expression": "null < 0",
+    "runtimeOnly": "The compiled null path only handles equality and inequality. Spring orders null first.",
+    "expected": {"type": "bool", "value": "true"}
   }
 ]

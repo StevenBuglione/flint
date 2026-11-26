@@ -99,26 +99,30 @@
       "status": "deferred"
     },
     "org/springframework/expression/spel/OperatorTests.java": {
-      "d": "framework/expression/tests/operator_tests.d",
+      "d": [
+        "framework/expression/tests/comparison_tests.d",
+        "framework/expression/tests/operator_tests.d"
+      ],
       "methods": {
         "ported": [
           "multiplyDoubleDoubleGivesDouble",
           "mathOperatorsInChains",
-          "integerArithmetic"
+          "integerArithmetic",
+          "doubles",
+          "longs",
+          "strings"
         ],
         "skipped": {
           "bigDecimals": "BigDecimal or BigInteger values",
           "bigIntFunction": "BigDecimal or BigInteger values",
           "bigIntegers": "BigDecimal or BigInteger values",
           "divide": "string and arbitrary Number operands, public AST accessors, or operator diagnostics",
-          "doubles": "comparisons and Java numeric promotion across arbitrary Number values",
-          "equal": "comparisons and Java numeric promotion across arbitrary Number values",
-          "greaterThan": "comparisons and Java numeric promotion across arbitrary Number values",
-          "greaterThanOrEqual": "comparisons and Java numeric promotion across arbitrary Number values",
+          "equal": "Scalar comparisons are covered. BigDecimal, CharSequence and custom Comparable cases remain.",
+          "greaterThan": "Scalar comparisons are covered. Arbitrary Number and custom Comparable cases remain.",
+          "greaterThanOrEqual": "Scalar comparisons are covered. Arbitrary Number and custom Comparable cases remain.",
           "integerLiteral": "scalar literal behavior is exercised by LiteralTests",
-          "lessThan": "comparisons and Java numeric promotion across arbitrary Number values",
-          "lessThanOrEqual": "comparisons and Java numeric promotion across arbitrary Number values",
-          "longs": "comparisons and Java numeric promotion across arbitrary Number values",
+          "lessThan": "Scalar comparisons are covered. Arbitrary Number and custom Comparable cases remain.",
+          "lessThanOrEqual": "Scalar comparisons are covered. Arbitrary Number and custom Comparable cases remain.",
           "mathOperatorAdd02": "string arithmetic",
           "mathOperatorDivide04_ConvertToFloat": "requested-result conversion",
           "mathOperatorDivide_ConvertToDouble": "requested-result conversion",
@@ -127,7 +131,7 @@
           "mixedOperands_DoublesAndInts": "mixed numeric operations including relational or power expressions",
           "mixedOperands_FloatsAndDoubles": "mixed numeric operations including relational or power expressions",
           "modulus": "string and arbitrary Number operands, public AST accessors, or operator diagnostics",
-          "notEqual": "comparisons and Java numeric promotion across arbitrary Number values",
+          "notEqual": "Scalar comparisons are covered. BigDecimal, CharSequence and custom Comparable cases remain.",
           "operatorNames": "operator metadata and overloaders",
           "operatorOverloading": "operator metadata and overloaders",
           "plus": "string and arbitrary Number operands, public AST accessors, or operator diagnostics",
@@ -135,8 +139,7 @@
           "realLiteral": "scalar literal behavior is exercised by LiteralTests",
           "stringConcatenation": "string arithmetic",
           "stringRepeat": "string arithmetic",
-          "stringRepeatWithNegativeRepeatCount": "string arithmetic",
-          "strings": "string arithmetic"
+          "stringRepeatWithNegativeRepeatCount": "string arithmetic"
         }
       },
       "status": "partial"
