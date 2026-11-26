@@ -4,7 +4,7 @@
 Ported from spring-projects/spring-framework v7.1.0,
 spring-test/src/main/java/org/springframework/test/web/servlet/result/ (MockMvcResultMatchers.java,
 StatusResultMatchers.java, ContentResultMatchers.java, HeaderResultMatchers.java, JsonPathResultMatchers.java,
-ModelResultMatchers.java, ViewResultMatchers.java, HandlerResultMatchers.java,
+ModelResultMatchers.java, ViewResultMatchers.java, HandlerResultMatchers.java, CookieResultMatchers.java,
 MockMvcResultHandlers.java, PrintingResultHandler.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
@@ -17,7 +17,8 @@ module flint.test.web.servlet.result;
 import flint.http : HttpHeaders, HttpStatus, MediaType;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : canonicalTypeName, typeNameOf;
-import flint.java.lang : AssertionError, IllegalStateException, Integer, Long, String, valueOf;
+import flint.jakarta.servlet.http : Cookie;
+import flint.java.lang : AssertionError, Boolean, IllegalStateException, Integer, Long, String, valueOf;
 import flint.java.nio.charset : Charset;
 import flint.test.json : JsonComparator, JsonCompareMode, JsonComparison;
 import flint.test.util : AssertionErrors, JsonPathExpectationsHelper;
@@ -52,6 +53,12 @@ struct MockMvcResultMatchers
     static HeaderResultMatchers header()
     {
         return new HeaderResultMatchers;
+    }
+
+    /// Matchers on cookies added to the response.
+    static CookieResultMatchers cookie()
+    {
+        return new CookieResultMatchers;
     }
 
     /// Matchers on the JSON body at `expression`, formatted with Java's format specifiers.
@@ -157,6 +164,159 @@ private void assertCount(string message, int expected, int actual)
 {
     if (expected != actual)
         AssertionErrors.fail(message, Integer.toString(expected), Integer.toString(actual));
+}
+
+/// `CookieResultMatchers`.
+class CookieResultMatchers
+{
+    /// Obtain the standard instance through `MockMvcResultMatchers.cookie()`.
+    protected this() pure nothrow @nogc
+    {
+    }
+
+    /// Asserts the cookie's value.
+    ResultMatcher value(string name, string expectedValue)
+    {
+        return this.value(name, nullableText(expectedValue));
+    }
+
+    /// ditto, distinguishing a missing value from an empty string (R5)
+    ResultMatcher value(string name, Nullable!string expectedValue)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            assertTextEquals("Response cookie", expectedValue, requireCookie(result, name).getValue());
+        });
+    }
+
+    /// Asserts the cookie's path.
+    ResultMatcher path(string name, string path)
+    {
+        return this.path(name, nullableText(path));
+    }
+
+    /// ditto, distinguishing a missing value from an empty string (R5)
+    ResultMatcher path(string name, Nullable!string path)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            assertTextEquals(cookieLabel(name) ~ " path", path, requireCookie(result, name).getPath());
+        });
+    }
+
+    /// Asserts the cookie's domain.
+    ResultMatcher domain(string name, string domain)
+    {
+        return this.domain(name, nullableText(domain));
+    }
+
+    /// ditto, distinguishing a missing value from an empty string (R5)
+    ResultMatcher domain(string name, Nullable!string domain)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            assertTextEquals(cookieLabel(name) ~ " domain", domain, requireCookie(result, name).getDomain());
+        });
+    }
+
+    /// Asserts the response contains the cookie, including expired cookies.
+    ResultMatcher exists(string name)
+    {
+        return ResultMatcher.of((MvcResult result) { requireCookie(result, name); });
+    }
+
+    /// Asserts the response contains no cookie with this name.
+    ResultMatcher doesNotExist(string name)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            if (findCookie(result, name) !is null)
+                AssertionErrors.fail("Unexpected cookie with name '" ~ name ~ "'");
+        });
+    }
+
+    /// Asserts the cookie's maximum age in seconds.
+    ResultMatcher maxAge(string name, int maxAge)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            assertCount(cookieLabel(name) ~ " maxAge", maxAge, requireCookie(result, name).getMaxAge());
+        });
+    }
+
+    /// Asserts the cookie's SameSite attribute.
+    ResultMatcher sameSite(string name, string sameSite)
+    {
+        return attribute(name, "SameSite", sameSite);
+    }
+
+    /// ditto, with an explicit nullable attribute value (R5)
+    ResultMatcher sameSite(string name, Nullable!string sameSite)
+    {
+        return attribute(name, "SameSite", sameSite);
+    }
+
+    /// Asserts whether the cookie is secure.
+    ResultMatcher secure(string name, bool secure)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            assertFlag(name, "secure", secure, requireCookie(result, name).getSecure());
+        });
+    }
+
+    /// Asserts whether the cookie is HTTP-only.
+    ResultMatcher httpOnly(string name, bool httpOnly)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            assertFlag(name, "httpOnly", httpOnly, requireCookie(result, name).isHttpOnly());
+        });
+    }
+
+    /// Asserts whether the Partitioned attribute is present.
+    ResultMatcher partitioned(string name, bool partitioned)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            const present = requireCookie(result, name).getAttribute("Partitioned") !is null;
+            assertFlag(name, "partitioned", partitioned, present);
+        });
+    }
+
+    /// Asserts the named cookie attribute's value. Attribute names are case-insensitive.
+    ResultMatcher attribute(string cookieName, string cookieAttribute, string attributeValue)
+    {
+        return attribute(cookieName, cookieAttribute, nullableText(attributeValue));
+    }
+
+    /// ditto, distinguishing an absent attribute from an empty value (R5)
+    ResultMatcher attribute(string cookieName, string cookieAttribute, Nullable!string attributeValue)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            const actual = requireCookie(result, cookieName).getAttribute(cookieAttribute);
+            assertTextEquals(cookieLabel(cookieName) ~ " attribute '" ~ cookieAttribute ~ "'", attributeValue, actual);
+        });
+    }
+
+    private static string cookieLabel(string name)
+    {
+        return "Response cookie '" ~ name ~ "'";
+    }
+
+    private static void assertFlag(string name, string flag, bool expected, bool actual)
+    {
+        if (expected != actual)
+            AssertionErrors.fail(cookieLabel(name) ~ " " ~ flag, Boolean.toString(expected), Boolean.toString(actual));
+    }
+
+    private static Cookie requireCookie(MvcResult result, string name)
+    {
+        auto cookie = findCookie(result, name);
+        if (cookie is null)
+            AssertionErrors.fail("No cookie with name '" ~ name ~ "'");
+        return cookie;
+    }
+
+    private static Cookie findCookie(MvcResult result, string name)
+    {
+        foreach (cookie; result.getResponse().getCookies())
+            if (cookie.getName() == name)
+                return cookie;
+        return null;
+    }
 }
 
 private ModelAndView requireModelAndView(MvcResult result)

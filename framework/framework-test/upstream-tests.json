@@ -1016,8 +1016,32 @@
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/samples/standalone/resultmatchers/CookieAssertionTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/cookie_result_matchers_tests.d",
+      "methods": {
+        "ported": [
+          "attribute",
+          "attributeNotEquals",
+          "domain",
+          "exists",
+          "httpOnly",
+          "maxAge",
+          "notExists",
+          "path",
+          "sameSite",
+          "sameSiteNotEquals",
+          "secured"
+        ],
+        "skipped": {
+          "attributeMatcher": "Requires the separate Hamcrest matcher API.",
+          "attributeNotPresent": "Requires the separate Hamcrest matcher API.",
+          "hamcrestEqualTo": "Requires the separate Hamcrest matcher API.",
+          "matcher": "Requires the separate Hamcrest matcher API.",
+          "sameSiteMatcher": "Requires the separate Hamcrest matcher API.",
+          "version": "The Servlet Cookie façade has no legacy version accessor."
+        }
+      },
+      "note": "An interceptor supplies the same fixture cookies directly without the locale resolver.",
+      "status": "partial"
     },
     "org/springframework/test/web/servlet/samples/standalone/resultmatchers/FlashAttributeAssertionTests.java": {
       "phase": "2",

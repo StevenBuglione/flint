@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 142 | 256 | 0 | 15,398 |
 | boot | spring-boot@v4.2.0 | 36 | 19 | 2,133 | 13,415 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,403 | 1,339 | 4,848 | 30,244 |
+| framework | spring-framework@v7.1.0 | 3,412 | 1,344 | 4,848 | 30,230 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -3025,6 +3025,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.test.web.servlet.result.ContentResultMatchers#json(String,JsonComparator)` | `flint.test.web.servlet.result.ContentResultMatchers.json` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.test.web.servlet.result.CookieResultMatchers#attribute(String,String,String)` | `flint.test.web.servlet.result.CookieResultMatchers.attribute` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Nullable!string distinguishes a missing cookie value from an empty string. The string overload delegates. |
+| `org.springframework.test.web.servlet.result.CookieResultMatchers#domain(String,String)` | `flint.test.web.servlet.result.CookieResultMatchers.domain` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Nullable!string distinguishes a missing cookie value from an empty string. The string overload delegates. |
+| `org.springframework.test.web.servlet.result.CookieResultMatchers#path(String,String)` | `flint.test.web.servlet.result.CookieResultMatchers.path` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Nullable!string distinguishes a missing cookie value from an empty string. The string overload delegates. |
+| `org.springframework.test.web.servlet.result.CookieResultMatchers#sameSite(String,String)` | `flint.test.web.servlet.result.CookieResultMatchers.sameSite` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Nullable!string distinguishes a missing cookie value from an empty string. The string overload delegates. |
+| `org.springframework.test.web.servlet.result.CookieResultMatchers#value(String,String)` | `flint.test.web.servlet.result.CookieResultMatchers.value` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Nullable!string distinguishes a missing cookie value from an empty string. The string overload delegates. |
 | `org.springframework.test.web.servlet.result.HandlerResultMatchers#handlerType(Class)` | `flint.test.web.servlet.result.HandlerResultMatchers.handlerType` | [R4](api-mapping.md#r4-classt-parameters) | The template type token resolves to the same canonical type name used by HandlerMethod. |
 | `org.springframework.test.web.servlet.result.HeaderResultMatchers#stringValues(String,String...)` | `flint.test.web.servlet.result.HeaderResultMatchers.stringValues` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.test.web.servlet.result.JsonPathResultMatchers` | `flint.test.web.servlet.result.JsonPathResultMatchers` | [R1](api-mapping.md#r1-packages-and-names) | Jackson-backed path selection under D-TEST-2 |
@@ -9217,7 +9222,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.test.web.servlet.htmlunit | 40 | 0 |
 | org.springframework.test.web.servlet.htmlunit.webdriver | 20 | 0 |
 | org.springframework.test.web.servlet.request | 31 | 0 |
-| org.springframework.test.web.servlet.result | 106 | 0 |
+| org.springframework.test.web.servlet.result | 92 | 0 |
 | org.springframework.test.web.servlet.setup | 85 | 0 |
 | org.springframework.test.web.support | 118 | 0 |
 | org.springframework.transaction | 5 | 0 |
@@ -9803,6 +9808,16 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.test.web.servlet.result.ContentResultMatchers#source(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.ContentResultMatchers#string(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.ContentResultMatchers#xml(String)` | 2 | Requires the XMLUnit comparison API |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#attribute(String,String,Matcher)` | 2 | Requires the separate Hamcrest matcher API. |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#comment(String,Matcher)` | 2 | The Servlet Cookie façade has no legacy comment or version accessors. |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#comment(String,String)` | 2 | The Servlet Cookie façade has no legacy comment or version accessors. |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#domain(String,Matcher)` | 2 | Requires the separate Hamcrest matcher API. |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#maxAge(String,Matcher)` | 2 | Requires the separate Hamcrest matcher API. |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#path(String,Matcher)` | 2 | Requires the separate Hamcrest matcher API. |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#sameSite(String,Matcher)` | 2 | Requires the separate Hamcrest matcher API. |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#value(String,Matcher)` | 2 | Requires the separate Hamcrest matcher API. |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#version(String,Matcher)` | 2 | The Servlet Cookie façade has no legacy comment or version accessors. |
+| framework | `org.springframework.test.web.servlet.result.CookieResultMatchers#version(String,int)` | 2 | The Servlet Cookie façade has no legacy comment or version accessors. |
 | framework | `org.springframework.test.web.servlet.result.HeaderResultMatchers#string(String,Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.HeaderResultMatchers#stringValues(String,Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.JsonPathResultMatchers#value(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
