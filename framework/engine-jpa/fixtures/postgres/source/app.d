@@ -6,7 +6,7 @@
 module app;
 
 import core.memory : GC;
-import flint.arena : Error, Result, Status;
+import flint.arena : Error, RequestArena, Result, Status;
 import flint.conc : Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding,
@@ -16,6 +16,7 @@ import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jpa.result_binding : materializeManagedRow, planManagedResult;
+import flint.engine.jpa.snapshot : captureAttribute, matchesAttribute;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
 import flint.engine.reactor : Backend, Reactor, ReactorOptions, TaskContext, TaskDelegate;
 import flint.java.sql : PreparedStatement, ResultSet, SQLException, Types;
@@ -295,6 +296,41 @@ private void verifyManagedIdentity(DataSource dataSource)
     }
     foreach (entity; entities)
         assert(entity is null);
+}
+
+private void verifyDirtySnapshots(Owner owner)
+{
+    ubyte[64] backing;
+    scope arena = RequestArena(backing[]);
+    const priorName = owner.name;
+    const priorBirthDate = owner.birthDate;
+    const nextBirthDate = LocalDate.of(1968, 3, 1);
+    scope (exit)
+    {
+        owner.name = priorName;
+        owner.birthDate = priorBirthDate;
+    }
+
+    const before = GC.stats().allocatedInCurrentThread;
+    const name = ownerMapping.attributes[1].read(owner);
+    const birthDate = ownerMapping.attributes[2].read(owner);
+    assert(name.ok && birthDate.ok);
+    const nameSnapshot = captureAttribute(arena, name.value);
+    const dateSnapshot = captureAttribute(arena, birthDate.value);
+    assert(nameSnapshot.ok && dateSnapshot.ok);
+    assert(matchesAttribute(arena, nameSnapshot.value, name.value).value);
+    assert(matchesAttribute(arena, dateSnapshot.value, birthDate.value).value);
+
+    owner.name = "Edited";
+    owner.birthDate = nextBirthDate;
+    const newName = ownerMapping.attributes[1].read(owner);
+    const newBirthDate = ownerMapping.attributes[2].read(owner);
+    assert(newName.ok && newBirthDate.ok);
+    const dirtyName = matchesAttribute(arena, nameSnapshot.value, newName.value);
+    const dirtyDate = matchesAttribute(arena, dateSnapshot.value, newBirthDate.value);
+    assert(dirtyName.ok && !dirtyName.value);
+    assert(dirtyDate.ok && !dirtyDate.value);
+    assert(GC.stats().allocatedInCurrentThread == before);
 }
 
 private void providerInsert(DataSource dataSource, long id, string name)
@@ -713,6 +749,7 @@ void main() @system
         materialized = providerLoadOwner(dataSource, ownerPlan, 1);
         assert(materialized.loadOrder == 3);
         verifyManagedIdentity(dataSource);
+        verifyDirtySnapshots(materialized);
         requireNullRejection(dataSource, ownerPlan,
             "select name, birth_date, null::bigint from jpa_seam_probe where id = ?", "id");
         requireNullRejection(dataSource, ownerPlan,
