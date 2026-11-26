@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 194 | 322 | 0 | 15,280 |
+| ai | spring-ai@v2.1.0 | 195 | 323 | 0 | 15,278 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,490 | 1,390 | 4,849 | 30,105 |
@@ -588,6 +588,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfBottomTextLinesToDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfBottomTextLinesToDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopPagesToSkipBeforeDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopPagesToSkipBeforeDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopTextLinesToDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopTextLinesToDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.reader.JsonMetadataGenerator#generate(Map)` | `flint.ai.reader.JsonMetadataGenerator.generate` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.ai.template
 
@@ -8569,7 +8570,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.rag.retrieval.join | 6 | 0 |
 | org.springframework.ai.rag.retrieval.search | 15 | 0 |
 | org.springframework.ai.rag.util | 2 | 0 |
-| org.springframework.ai.reader | 22 | 0 |
+| org.springframework.ai.reader | 20 | 0 |
 | org.springframework.ai.reader.jsoup | 0 | 6 |
 | org.springframework.ai.reader.jsoup.config | 0 | 23 |
 | org.springframework.ai.reader.markdown | 0 | 6 |

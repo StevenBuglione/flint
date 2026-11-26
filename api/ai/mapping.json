@@ -701,6 +701,8 @@
 "org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfBottomTextLinesToDelete(int)":{"d":"flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfBottomTextLinesToDelete","rules":["R12"],"status":"adapted"},
 "org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopPagesToSkipBeforeDelete(int)":{"d":"flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopPagesToSkipBeforeDelete","rules":["R12"],"status":"adapted"},
 "org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopTextLinesToDelete(int)":{"d":"flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopTextLinesToDelete","rules":["R12"],"status":"adapted"},
+"org.springframework.ai.reader.JsonMetadataGenerator":{"d":"flint.ai.reader.JsonMetadataGenerator","status":"ported"},
+"org.springframework.ai.reader.JsonMetadataGenerator#generate(Map)":{"d":"flint.ai.reader.JsonMetadataGenerator.generate","rules":["R10","R23"],"status":"adapted"},
 "org.springframework.ai.reader.jsoup.**":{"status":"excluded","category":"deferred","phase":"3"},
 "org.springframework.ai.reader.jsoup.config.**":{"status":"excluded","category":"deferred","phase":"3"},
 "org.springframework.ai.reader.markdown.**":{"status":"excluded","category":"deferred","phase":"3"},

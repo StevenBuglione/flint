@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/reader/ExtractedTextFormatter.java
+// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/reader/{ExtractedTextFormatter,JsonMetadataGenerator}.java
 // Modified by the Flint authors.
 module flint.ai.reader;
 
+import flint.engine.aot.any : Any;
 import flint.java.lang : NullPointerException;
+import flint.java.util : Map;
 import flint.util : StringUtils;
 
 @safe:
@@ -308,4 +310,13 @@ private string dropUtf16UnitsFromEnd(string text, int count)
 private bool isContinuation(char byte_) pure nothrow @nogc
 {
     return (cast(ubyte) byte_ & 0xc0) == 0x80;
+}
+
+private alias JsonFields = Map!(string, Any);
+
+/// Extracts metadata from the fields of a JSON document.
+interface JsonMetadataGenerator
+{
+    /// Returns the fields to use as document metadata.
+    JsonFields generate(JsonFields jsonMap);
 }
