@@ -1,0 +1,5 @@
+{
+  "data": ["flint.java.lang.internal.data.supplementarydigits"],
+  "leaves": ["flint.java.lang.character.decimaldigits", "flint.java.lang.internal.asciidigits", "flint.java.lang.internal.bmpdigits", "flint.java.lang.internal.unicodedigits"],
+  "source": "closure/character-digit-unicode.d"
+}
