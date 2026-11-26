@@ -20,31 +20,35 @@
       "d": [
         "framework/framework-test/tests/mock_http_servlet_request_content_tests.d",
         "framework/framework-test/tests/mock_http_servlet_request_content_type_tests.d",
-        "framework/framework-test/tests/mock_http_servlet_request_header_tests.d"
+        "framework/framework-test/tests/mock_http_servlet_request_header_tests.d",
+        "framework/framework-test/tests/mock_http_servlet_request_locale_tests.d"
       ],
       "methods": {
         "ported": [
           "contentTypeHeader",
           "contentTypeHeaderUTF8",
           "contentTypeMultipleCalls",
+          "emptyAcceptLanguageHeader",
           "httpHeaderFirstVariantFormattedDate",
           "httpHeaderFormattedDateError",
           "httpHeaderNameCasingIsPreserved",
           "httpHeaderRfcFormattedDate",
           "httpHeaderSecondVariantFormattedDate",
           "noContent",
+          "preferredLocalesFromAcceptLanguageHeader",
           "readEmptyInputStreamWorksAcrossRequests",
           "setContentAndGetContentAsByteArray",
           "setContentAndGetInputStream",
           "setContentType",
           "setContentTypeHeaderWithMoreComplexCharsetSyntax",
-          "setContentTypeUTF8"
+          "setContentTypeUTF8",
+          "setPreferredLocalesWithEmptyList",
+          "setPreferredLocalesWithNullList"
         ],
         "skipped": {
           "addMultipleParameters": "Deferred request parameter map semantics.",
           "cookies": "Deferred request cookie header semantics.",
           "defaultLocale": "Deferred request locale contract.",
-          "emptyAcceptLanguageHeader": "Deferred request locale contract.",
           "getContentAsStringWithoutSettingCharacterEncoding": "Deferred request body readers and stream lifecycle.",
           "getInputStreamAfterGettingReader": "Deferred request body readers and stream lifecycle.",
           "getInputStreamTwice": "Deferred request body readers and stream lifecycle.",
@@ -85,7 +89,6 @@
           "isSecureWithHttpsSchemeAndSecureFlagIsFalse": "Deferred request protocol, origin and URL derivation.",
           "isSecureWithHttpsSchemeAndSecureFlagIsTrue": "Deferred request protocol, origin and URL derivation.",
           "noCookies": "Deferred request cookie header semantics.",
-          "preferredLocalesFromAcceptLanguageHeader": "Deferred request locale contract.",
           "protocolAndScheme": "Deferred request protocol, origin and URL derivation.",
           "readEmptyReaderWorksAcrossRequests": "Deferred request body readers and stream lifecycle.",
           "removeAllParameters": "Deferred request parameter map semantics.",
@@ -99,8 +102,6 @@
           "setContentTypeThenCharacterEncoding": "Deferred charset recovery and Content-Type updates when the request encoding changes.",
           "setMultipleParameters": "Deferred request parameter map semantics.",
           "setPreferredLocales": "Deferred request locale contract.",
-          "setPreferredLocalesWithEmptyList": "Deferred request locale contract.",
-          "setPreferredLocalesWithNullList": "Deferred request locale contract.",
           "shouldNotifyAsyncListeners": "Deferred request async lifecycle.",
           "shouldNotifyAsyncListenersWhenNewAsyncStarted": "Deferred request async lifecycle.",
           "shouldRejectAsyncStartsIfUnsupported": "Deferred request async lifecycle.",
