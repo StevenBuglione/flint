@@ -54,7 +54,12 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const Decim
     import flint.java.text.internal.binarydecimal : BinaryDecimal;
     import flint.java.text.internal.decimaldigitlist : tryFixedBinaryDecimal;
 
-    if (pattern.scale != 0 || usesGroupedFastPath(bits, pattern))
+    if (pattern.scale != 0)
+    {
+        if (!scaleBinary(bits, pattern.scale))
+            return false;
+    }
+    else if (usesGroupedFastPath(bits, pattern))
         return false;
 
     if ((bits & (ulong.max >> 1)) >= infinityBits)
@@ -83,6 +88,50 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const Decim
 }
 
 private enum ulong infinityBits = 0x7ff0_0000_0000_0000;
+
+private bool scaleBinary(ref ulong bits, ubyte scale) pure nothrow @nogc
+{
+    import core.bitop : bsr;
+
+    if (scale != 2 && scale != 3)
+        return false;
+    enum implicitBit = 1UL << 52;
+    enum signBit = 1UL << 63;
+    const magnitude = bits & (signBit - 1);
+    const sign = bits & signBit;
+    if (magnitude == 0 || magnitude >= infinityBits)
+        return true;
+
+    const exponent = cast(uint)(magnitude >> 52);
+    const fraction = magnitude & (implicitBit - 1);
+    const significand = exponent == 0 ? fraction : fraction | implicitBit;
+    // The exact product fits in 63 bits. Round once when restoring the 53-bit precision.
+    const product = significand * (scale == 2 ? 100 : 1000);
+    if (product < implicitBit)
+    {
+        bits = sign | product;
+        return true;
+    }
+
+    const discarded = bsr(product) - 52;
+    ulong rounded = product >> discarded;
+    if (discarded != 0)
+    {
+        const halfway = 1UL << (discarded - 1);
+        const remainder = product & ((1UL << discarded) - 1);
+        if (remainder > halfway || (remainder == halfway && (rounded & 1) != 0))
+            ++rounded;
+    }
+    uint outputExponent = (exponent == 0 ? 1u : exponent) + cast(uint) discarded;
+    if (rounded == (implicitBit << 1))
+    {
+        rounded >>= 1;
+        ++outputExponent;
+    }
+    bits = sign | (outputExponent >= 0x7ff ? infinityBits : (cast(ulong) outputExponent << 52) | (
+            rounded & (implicitBit - 1)));
+    return true;
+}
 
 private pure nothrow @nogc size_t renderSpecial(ulong bits, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output)
