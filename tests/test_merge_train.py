@@ -526,6 +526,29 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertIn('extended by b', rows['S-2'][0])
         self.assertIn(f'{playbook} S-1', Path(result['logs']['sol-c']).read_text())
 
+    def test_a_main_that_misses_its_budget_returns_no_screened_lane_only_conflicts(self):
+        # 16:45Z: main a2c47a78 was red; screening every submission alone on it would have returned each for main's miss.
+        (self.work / 'src' / 'SLOW').write_text('main')
+        git(self.work, 'checkout', '-q', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'main regresses')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        git(self.work, 'fetch', '-q', 'origin')
+        self.store.register('coordinator', 'coordinator', None, None)
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.lane('sol-b', {'src/app.txt': 'b\n'})
+        self.lane('sol-c', {'src/app.txt': 'c\n'})
+        self.hold_slot()
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
+        self.assertIn('main_red', result)
+        self.assertEqual((result['landed'], result['failed']), ([], ['sol-c']))  # only the real conflict goes back
+        self.assertEqual(sorted(s['role'] for s in self.store._read_json('train.json', {})['submissions']),
+                         ['sol-a', 'sol-b'])
+        self.assertIn('list vets', Path(result['main_red_log']).read_text())
+        self.assertIn('itself fails verification', self.store.inbox('coordinator', True, False))
+        self.assertNotIn('train-screened', (self.store.root / 'events.jsonl').read_text())
+
     def test_a_reused_entry_id_and_a_real_conflict_are_returned_with_their_paths(self):
         path = self.playbook_base(['S-1'])
         playbook = 'docs/spring/performance-playbook.md'

@@ -754,8 +754,10 @@ class Train:
             outcome = self._screened(batch, base, max_train, budget_verifier, others)
         else:
             outcome = self._stacked(batch, base, max_train)
-        if 'main_red' in outcome:
-            return outcome
+        if 'main_red' in outcome:  # settle only the rebase conflicts; everything else waits for main
+            settled = self.settle(batch, [], outcome.get('failed', []), None)
+            settled.update({k: outcome[k] for k in ('main_red', 'main_red_log') if k in outcome})
+            return settled
         batch, applied, failed, landed, verified_tip = (outcome[k] for k in ('batch', 'applied', 'failed', 'landed', 'tip'))
         pushed = None
         if landed:
@@ -817,11 +819,9 @@ class Train:
                     bad, bad_log = middle, middle_log
             if bad is None:
                 self.store.event('train-verifier-failed', log=middle_log[-2000:])
-            elif bad == 1 and self.verify(base, verifier, **step)[0] is not True:
+            elif bad == 1 and (main := self.verify(base, verifier, **step))[0] is not True:
                 # Main itself is red: blame nobody; every submission waits for main to be fixed.
-                self.store.event('train-main-red', base=base)
-                return {'landed': [], 'failed': [], 'pushed': None, 'logs': {}, 'main_red': base,
-                        'pending': [s['role'] for s in self.ordered()], 'verifications': self.verifications}
+                return self._main_red(base, main[1], failed)
             else:
                 failed.append((applied[bad - 1][0], 'the apps verification failed with this submission on the '
                                'train:\n' + bad_log))
@@ -878,6 +878,22 @@ class Train:
             return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
         return self._budget_red(batch, applied, failed, base, max_train, budget_verifier, verdict)
 
+    def _main_red(self, base, log, failed):
+        """Main itself fails verification: blame nobody for it. The log is kept (coordination/train/main-red-*.log), and
+        only the rebase conflicts found on the way, which are real whatever main's state, go back to their lanes."""
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        path = self.log_dir / f"main-red-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-{base[:8]}.log"
+        path.write_text(log)
+        self.store.event('train-main-red', base=base, log=str(path), misses=[f'{a}: {e}' for a, e, *_ in budget_misses(log)])
+        conflicts = [(s, why) for s, why in failed if why.startswith('rebase onto the train failed')]
+        if self.mail:
+            misses = '; '.join(f"{a} '{e}' {b} -> {x} (+{pct:.2f}%)" for a, e, b, x, pct, _ in budget_misses(log)[:8])
+            self._send('coordinator', f'merge train: main {base[:12]} itself fails verification, so nothing lands until '
+                                      f'it is fixed (a fix at the queue head still can).'
+                                      + (f' flint budget misses: {misses}.' if misses else '') + f' Log: {path}')
+        return {'landed': [], 'failed': conflicts, 'pushed': None, 'logs': {}, 'main_red': base, 'main_red_log': str(path),
+                'pending': [s['role'] for s in self.ordered()], 'verifications': self.verifications}
+
     def _budget_red(self, batch, applied, failed, base, max_train, budget_verifier, verdict):
         """The stack `applied` (acceptance-green) failed flint budget. Screen each closure-touching submission alone on
         main: one that regresses alone is returned at once and the rest are stacked again and verified as usual
@@ -885,6 +901,13 @@ class Train:
         budget. A verifier that could not run blames nobody and lands nothing."""
         if verdict[0] is None:
             return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
+        # Main first: if main itself misses its budgets, every submission screened alone on it would miss them too and
+        # be returned for main's miss (16:45Z: main a2c47a78 red). One posidon run, only on a red stack.
+        main_ok, main_log = self.verify(base, budget_verifier, mode='budget', apps=list(APPS))
+        if main_ok is None:
+            return self._resolve(batch, applied, failed, 0, len(applied), (None, main_log), base)
+        if main_ok is False:
+            return self._main_red(base, main_log, failed)
         singles = self.singles([submission for submission, _ in applied], base)
         screened = [(submission, self.verify(tip, budget_verifier, mode='budget', apps=list(APPS)))
                     for submission, tip in singles]
