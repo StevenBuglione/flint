@@ -25,6 +25,7 @@ import flint.engine.aot.any : Any;
 import flint.java.util.formatter : formatJava;
 
 @safe:
+package(flint) import flint.java.lang.character.decimaldigits : javaDecimalDigit;
 
 // ---------------------------------------------------------------------------------------------------------------
 // Exceptions (R8)
