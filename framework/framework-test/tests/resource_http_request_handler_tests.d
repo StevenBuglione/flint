@@ -128,6 +128,8 @@ private immutable(ubyte)[] handlerResources(string path) nothrow
     case resourcePackage ~ "testalternatepath/baz.css":
         return cast(
                 immutable(ubyte)[]) "h1 { color:red; }";
+    case resourcePackage ~ "test/foo.txt":
+        return cast(immutable(ubyte)[]) "Some text.";
     case resourcePackage ~ "test/foo.html":
         return cast(immutable(ubyte)[]) "<html></html>";
     default:
@@ -340,26 +342,22 @@ unittest
 // ---------------------------------------------------------------------------------------------------------------
 // RangeRequestTests
 
-// ResourceHttpRequestHandler has no byte-range support (Accept-Ranges, Range, If-Range, multipart/byteranges).
-version (FlintResourceRangeRequests)
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.supportsRangeRequest")
+unittest
 {
-    import flint.http : HttpHeaders;
-
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.supportsRangeRequest")
-    unittest
-    {
-        auto f = setupInitialized();
+    withClasspathFixture((ref Fixture f) {
         f.setPathWithinHandlerMapping("foo.css");
         f.handler.handleRequest(f.request, f.response);
 
         assert(f.response.getHeader("Accept-Ranges") == "bytes");
         assert(f.response.getHeaders("Accept-Ranges").length == 1);
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentByteRange")
-    unittest
-    {
-        auto f = setupInitialized();
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentByteRange")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.request.addHeader("Range", "bytes=0-1");
         f.setPathWithinHandlerMapping("foo.txt");
         f.handler.handleRequest(f.request, f.response);
@@ -371,13 +369,14 @@ version (FlintResourceRangeRequests)
         assert(f.response.getContentAsString() == "So");
         assert(f.response.getHeader("Accept-Ranges") == "bytes");
         assert(f.response.getHeaders("Accept-Ranges").length == 1);
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.ignoreRangeWhenIfRangeETagDoesNotMatch")
-    unittest
-    {
-        auto f = setupInitialized();
-        f.handler.setEtagGenerator((Resource resource) => "\"current\"");
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.ignoreRangeWhenIfRangeETagDoesNotMatch")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
+        f.handler.setEtagGenerator(EtagGenerator.of((Resource resource) => "\"current\""));
         f.request.addHeader(HttpHeaders.RANGE, "bytes=0-1");
         f.request.addHeader(HttpHeaders.IF_RANGE, "\"stale\"");
         f.setPathWithinHandlerMapping("foo.txt");
@@ -388,13 +387,14 @@ version (FlintResourceRangeRequests)
         assert(f.response.getHeader(HttpHeaders.CONTENT_RANGE) is null);
         assert(f.response.getContentLengthLong() == 10);
         assert(f.response.getContentAsString() == "Some text.");
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentByteRangeWhenIfRangeETagMatches")
-    unittest
-    {
-        auto f = setupInitialized();
-        f.handler.setEtagGenerator((Resource resource) => "\"current\"");
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentByteRangeWhenIfRangeETagMatches")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
+        f.handler.setEtagGenerator(EtagGenerator.of((Resource resource) => "\"current\""));
         f.request.addHeader(HttpHeaders.RANGE, "bytes=0-1");
         f.request.addHeader(HttpHeaders.IF_RANGE, "\"current\"");
         f.setPathWithinHandlerMapping("foo.txt");
@@ -404,12 +404,13 @@ version (FlintResourceRangeRequests)
         assert(f.response.getHeader(HttpHeaders.ETAG) == "\"current\"");
         assert(f.response.getHeader(HttpHeaders.CONTENT_RANGE) == "bytes 0-1/10");
         assert(f.response.getContentAsString() == "So");
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentByteRangeNoEnd")
-    unittest
-    {
-        auto f = setupInitialized();
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentByteRangeNoEnd")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.request.addHeader("Range", "bytes=9-");
         f.setPathWithinHandlerMapping("foo.txt");
         f.handler.handleRequest(f.request, f.response);
@@ -421,12 +422,13 @@ version (FlintResourceRangeRequests)
         assert(f.response.getContentAsString() == ".");
         assert(f.response.getHeader("Accept-Ranges") == "bytes");
         assert(f.response.getHeaders("Accept-Ranges").length == 1);
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentByteRangeLargeEnd")
-    unittest
-    {
-        auto f = setupInitialized();
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentByteRangeLargeEnd")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.request.addHeader("Range", "bytes=9-10000");
         f.setPathWithinHandlerMapping("foo.txt");
         f.handler.handleRequest(f.request, f.response);
@@ -438,12 +440,13 @@ version (FlintResourceRangeRequests)
         assert(f.response.getContentAsString() == ".");
         assert(f.response.getHeader("Accept-Ranges") == "bytes");
         assert(f.response.getHeaders("Accept-Ranges").length == 1);
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentSuffixRange")
-    unittest
-    {
-        auto f = setupInitialized();
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentSuffixRange")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.request.addHeader("Range", "bytes=-1");
         f.setPathWithinHandlerMapping("foo.txt");
         f.handler.handleRequest(f.request, f.response);
@@ -455,12 +458,13 @@ version (FlintResourceRangeRequests)
         assert(f.response.getContentAsString() == ".");
         assert(f.response.getHeader("Accept-Ranges") == "bytes");
         assert(f.response.getHeaders("Accept-Ranges").length == 1);
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentSuffixRangeLargeSuffix")
-    unittest
-    {
-        auto f = setupInitialized();
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentSuffixRangeLargeSuffix")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.request.addHeader("Range", "bytes=-11");
         f.setPathWithinHandlerMapping("foo.txt");
         f.handler.handleRequest(f.request, f.response);
@@ -472,14 +476,15 @@ version (FlintResourceRangeRequests)
         assert(f.response.getContentAsString() == "Some text.");
         assert(f.response.getHeader("Accept-Ranges") == "bytes");
         assert(f.response.getHeaders("Accept-Ranges").length == 1);
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentInvalidRangeHeader")
-    unittest
-    {
-        import std.algorithm.searching : canFind;
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentInvalidRangeHeader")
+unittest
+{
+    import std.algorithm.searching : canFind;
 
-        auto f = setupInitialized();
+    withClasspathFixture((ref Fixture f) {
         f.request.addHeader("Range", "bytes= foo bar");
         f.setPathWithinHandlerMapping("foo.txt");
         f.handler.handleRequest(f.request, f.response);
@@ -489,15 +494,16 @@ version (FlintResourceRangeRequests)
         assert(f.response.getHeader("Content-Range") == "bytes */10");
         assert(f.response.getHeader("Accept-Ranges") == "bytes");
         assert(f.response.getHeaders("Accept-Ranges").length == 1);
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentMultipleByteRanges")
-    unittest
-    {
-        import flint.util : StringUtils;
-        import std.algorithm.searching : startsWith;
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentMultipleByteRanges")
+unittest
+{
+    import flint.util : StringUtils;
+    import std.algorithm.searching : startsWith;
 
-        auto f = setupInitialized();
+    withClasspathFixture((ref Fixture f) {
         f.request.addHeader("Range", "bytes=0-1, 4-5, 8-9");
         f.setPathWithinHandlerMapping("foo.txt");
         f.handler.handleRequest(f.request, f.response);
@@ -505,7 +511,8 @@ version (FlintResourceRangeRequests)
         assert(f.response.getStatus() == 206);
         assert(f.response.getContentType().startsWith("multipart/byteranges; boundary="));
 
-        const boundary = "--" ~ f.response.getContentType()[31 .. $];
+        enum prefix = "multipart/byteranges; boundary=";
+        const boundary = "--" ~ f.response.getContentType()[prefix.length .. $];
 
         const content = f.response.getContentAsString();
         const ranges = StringUtils.tokenizeToStringArray(content, "\r\n", false, true);
@@ -524,13 +531,16 @@ version (FlintResourceRangeRequests)
         assert(ranges[9] == "Content-Type: text/plain");
         assert(ranges[10] == "Content-Range: bytes 8-9/10");
         assert(ranges[11] == "t.");
-    }
+        assert(ranges[12] == boundary ~ "--");
+        assert(ranges.length == 13);
+    });
+}
 
-    // gh-25976
-    @("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentWithHttpHead")
-    unittest
-    {
-        auto f = setupInitialized();
+// gh-25976
+@("ResourceHttpRequestHandlerTests.RangeRequestTests.partialContentWithHttpHead")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.request.setMethod("HEAD");
         f.request.addHeader("Range", "bytes=0-1");
         f.setPathWithinHandlerMapping("foo.txt");
@@ -541,7 +551,41 @@ version (FlintResourceRangeRequests)
         assert(f.response.getContentLengthLong() == 2);
         assert(f.response.getHeader("Content-Range") == "bytes 0-1/10");
         assert(f.response.getHeaders("Accept-Ranges") == ["bytes"]);
-    }
+        assert(f.response.getContentAsString().length == 0);
+    });
+}
+
+@("Flint.ResourceHttpRequestHandler.notModifiedPrecedesRange")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
+        f.handler.setEtagGenerator(EtagGenerator.of((Resource resource) => "\"current\""));
+        f.request.addHeader(HttpHeaders.IF_NONE_MATCH, "\"current\"");
+        f.request.addHeader(HttpHeaders.RANGE, "bytes=0-1");
+        f.setPathWithinHandlerMapping("foo.txt");
+        f.handler.handleRequest(f.request, f.response);
+
+        assert(f.response.getStatus() == 304);
+        assert(f.response.getHeader(HttpHeaders.ACCEPT_RANGES) is null);
+        assert(f.response.getHeader(HttpHeaders.CONTENT_RANGE) is null);
+        assert(f.response.getContentAsString().length == 0);
+    });
+}
+
+@("Flint.ResourceHttpRequestHandler.usesResponseDateForIfRange")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
+        f.response.setDateHeader(HttpHeaders.LAST_MODIFIED, 1_437_472_800_000);
+        f.request.addHeader(HttpHeaders.IF_RANGE, f.response.getHeader(HttpHeaders.LAST_MODIFIED));
+        f.request.addHeader(HttpHeaders.RANGE, "bytes=0-1");
+        f.setPathWithinHandlerMapping("foo.txt");
+        f.handler.handleRequest(f.request, f.response);
+
+        assert(f.response.getStatus() == 206);
+        assert(f.response.getHeader(HttpHeaders.CONTENT_RANGE) == "bytes 0-1/10");
+        assert(f.response.getContentAsString() == "So");
+    });
 }
 
 // flint.web.servlet.resource has no resource resolver chain (PathResourceResolver, VersionResourceResolver,

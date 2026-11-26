@@ -880,6 +880,15 @@ Web probe held O3 and saved 8 Oz bytes. DMD templates fell from 7,062 to
 bytes in each profile. Both downstream template counts held. Decision
 `6c9e5f49` covers the inherited Phobos overage.
 
+Configured MVC classpath resources use the existing range resolver and
+region converter after evaluating conditional requests. Request header
+snapshots are needed only when a Range header is present. The two stock
+404 shortcuts still use their existing handlers. Matched native probes
+at `f4016ee4f` and `5af6b0dfd` saved 72 O3 bytes each in Web MVC and
+framework-test and held Oz at 1,553,762 and 1,713,818 bytes respectively.
+DMD templates moved from 6,144 to 6,159 in Web MVC and held at 8,559 in
+framework-test. Decision `6c9e5f49` covers the inherited Phobos overage.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

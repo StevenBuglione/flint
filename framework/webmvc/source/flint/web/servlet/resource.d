@@ -17,9 +17,10 @@ module flint.web.servlet.resource;
 import core.atomic : MemoryOrder, atomicLoad, atomicStore;
 import flint.core.io : ClassPathResource, FileSystemResource, Resource;
 import flint.engine.aot.any : Any;
-import flint.http : HttpHeaders, HttpMethod, HttpStatus, HttpStatusCode, MediaType, MediaTypeFactory, ProblemDetail;
-import flint.http.converter : ResourceHttpMessageConverter;
-import flint.http.server : ServletServerHttpResponse;
+import flint.http : HttpHeaders, HttpMethod, HttpRange, HttpStatus, HttpStatusCode, MediaType,
+    MediaTypeFactory, ProblemDetail, decimal;
+import flint.http.converter : ResourceHttpMessageConverter, ResourceRegionHttpMessageConverter;
+import flint.http.server : ServletServerHttpRequest, ServletServerHttpResponse;
 import flint.jakarta.servlet : ServletException;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.java.io : IOException;
@@ -511,6 +512,7 @@ private final class ClassPathResourceHandlerConfiguration : ResourceHandlerConfi
     private List!Resource locations;
     private PathResourceResolver resolver;
     private ResourceHttpMessageConverter converter;
+    private ResourceRegionHttpMessageConverter regionConverter;
 
     this(List!Resource sources)
     {
@@ -527,6 +529,7 @@ private final class ClassPathResourceHandlerConfiguration : ResourceHandlerConfi
         }
         resolver = new PathResourceResolver();
         converter = new ResourceHttpMessageConverter();
+        regionConverter = new ResourceRegionHttpMessageConverter();
     }
 
     Resource resolve(ResourceHttpRequestHandler handler, HttpServletRequest request, string rawPath)
@@ -580,6 +583,11 @@ private final class ClassPathResourceHandlerConfiguration : ResourceHandlerConfi
 
         auto contentType = handler.getMediaType(request, resource);
         const(MediaType)* media = contentType.isNull ? null : &contentType.get();
+        response.setHeader(HttpHeaders.ACCEPT_RANGES, "bytes");
+        if (request.getHeader(HttpHeaders.RANGE) !is null && writeRanges(request, response, resource,
+                media, method == "HEAD"))
+            return;
+
         auto message = new ServletServerHttpResponse(response);
         if (method == "HEAD")
         {
@@ -590,6 +598,55 @@ private final class ClassPathResourceHandlerConfiguration : ResourceHandlerConfi
             converter.write(Any.of(resource), media, message);
     }
 
+    private bool writeRanges(HttpServletRequest request, HttpServletResponse response,
+            Resource resource, scope const(MediaType)* media, bool head)
+    {
+        const requestHeaders = (new ServletServerHttpRequest(request)).getHeaders();
+        HttpHeaders validators;
+        if (requestHeaders.containsHeader(HttpHeaders.IF_RANGE))
+        {
+            validators = HttpHeaders.create();
+            const etag = response.getHeader(HttpHeaders.ETAG);
+            if (etag !is null)
+                validators.set(HttpHeaders.ETAG, etag);
+            const lastModified = response.getHeader(HttpHeaders.LAST_MODIFIED);
+            if (lastModified !is null)
+                validators.set(HttpHeaders.LAST_MODIFIED, lastModified);
+        }
+
+        try
+        {
+            auto ranges = HttpRange.resolveRanges(requestHeaders, validators);
+            if (ranges.isEmpty())
+                return false;
+
+            auto regions = HttpRange.toResourceRegions(ranges, resource);
+            auto message = head ? new HeadRangeHttpResponse(response) : new ServletServerHttpResponse(response);
+            response.setStatus(HttpStatus.PARTIAL_CONTENT.value());
+            regionConverter.write(Any.of(regions), media, message);
+        }
+        catch (IllegalArgumentException)
+        {
+            response.setContentType(null);
+            response.setHeader(HttpHeaders.CONTENT_RANGE, "bytes */" ~ decimal(resource.contentLength()));
+            response.sendError(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE.value());
+        }
+        return true;
+    }
+}
+
+// Keep the range converter's header handling when the Servlet response has no body.
+private final class HeadRangeHttpResponse : ServletServerHttpResponse
+{
+    this(HttpServletResponse response) pure nothrow
+    {
+        super(response);
+    }
+
+    override void writeBody(scope const(ubyte)[])
+    {
+        flush();
+    }
 }
 
 /++

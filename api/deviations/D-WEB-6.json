@@ -1,5 +1,5 @@
 {
  "id": "D-WEB-6",
  "deviation": "The configured servlet resource handler serves explicit classpath locations with the default path resolver. The final setLocations method installs serving and snapshots locations. Initialization or Flint's stock empty-handler proof freezes them. Embedded classpath resources have no filesystem timestamp. The unconfigured handler retains Flint's lookup-path fallback for 404 responses.",
- "reason": "Stock 404 dispatch depends on the handler remaining empty after its startup proof. The nonvirtual configuration entry point keeps serving code out of stock links. Filesystem locations, resolver configuration, range handling and the remaining Spring location configuration APIs are deferred."
+ "reason": "Stock 404 dispatch depends on the handler remaining empty after its startup proof. The nonvirtual configuration entry point keeps serving code out of stock links. Configured classpath resources support byte ranges. Filesystem locations, resolver configuration and the remaining Spring location configuration APIs are deferred."
 }
