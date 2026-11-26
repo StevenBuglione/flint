@@ -307,12 +307,13 @@ class BitSet
         // Set writes ones, clear writes zeroes, and flip XORs the selected bits.
         const overwrite = change == RangeChange.flip ? 0UL : ulong.max;
         const writeOnes = change == RangeChange.clear ? 0UL : ulong.max;
-        foreach (word; firstWord .. lastWord + 1)
+        const first = firstWord == lastWord ? firstMask & lastMask : firstMask;
+        words[firstWord] = (words[firstWord] & ~(first & overwrite)) ^ (first & writeOnes);
+        if (firstWord != lastWord)
         {
-            const lower = word == firstWord ? firstMask : ulong.max;
-            const upper = word == lastWord ? lastMask : ulong.max;
-            const mask = lower & upper;
-            words[word] = (words[word] & ~(mask & overwrite)) ^ (mask & writeOnes);
+            words[lastWord] = (words[lastWord] & ~(lastMask & overwrite)) ^ (lastMask & writeOnes);
+            foreach (ref word; words[firstWord + 1 .. lastWord])
+                word = (word & ~overwrite) ^ writeOnes;
         }
         if (change != RangeChange.set)
             recalculateWordsInUse();
