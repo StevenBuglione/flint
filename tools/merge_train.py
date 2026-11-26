@@ -13,8 +13,12 @@ on its own module's definition of done submits its branch; the agent holding the
  1. it takes the first N submissions (N up to 4) in apps-landing queue order, then by submission time;
  2. it rebases each, in that order, onto fp/main in the train's worktree (`git rebase --onto`, so commits already on
     main drop out); a submission that conflicts fails alone, with its log;
- 3. it runs ONE apps verification of the whole train: by default the definition of done's apps step for gs-rest-service
-    and petclinic-rest (both compilers, as built and with the static trim, exact acceptance), under hold;
+ 3. it runs ONE apps verification of the whole train ON POSIDON (owner direction, 2026-11-26: venus stays free for lane
+    development). The candidate is pushed to posidon's bare repository as refs/heads/train-<stamp>; in the dedicated
+    worktree ~/flint-work/wt-train, under posidon's host-wide hold, it emits the native blocks, builds flint, and runs
+    the definition of done's apps step for gs-rest-service and petclinic-rest: both compilers, as built and with the
+    static trim, exact acceptance, and `flint budget` once the CLI has it. Every run then deletes its private
+    FLINT_CACHE and build outputs (posidon has about 18 GB free) and stops only its own DMD servers;
  4. green: it pushes them all. Red: it bisects by submission, pushes the green prefix, and puts the first failing role
     back at the head of the apps-landing queue with its log; later submissions stay for the next train;
  5. if main moved meanwhile, it rebases again; commits touching nothing in the apps' closure (the cheap-rebase rule)
@@ -55,11 +59,66 @@ def git(args, cwd, check=True):
     return done
 
 
-def default_verify(worktree):
-    hold = [sys.executable, 'tools/measure_queue.py', 'hold', '--']
-    return [hold + [sys.executable, 'tools/install_toolchains.py', '--compiler', 'flint'],
-            [sys.executable, 'tools/gates.py', '--module', 'framework/web', '--definition-of-done', '--step', 'apps',
-             '--apps', ','.join(APPS)]]
+POSIDON = 'olfa@10.10.10.12'
+POSIDON_KEY = Path.home() / '.ssh' / 'full-access-ssh-key'
+POSIDON_SSH = ['ssh', '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes', '-i', str(POSIDON_KEY)]
+
+# Runs on posidon with bash -s; @COMMIT@, @REF@, @STAMP@ and @APPS@ are filled in. Its exit status is the verification's.
+POSIDON_SCRIPT = r'''
+set -uo pipefail
+source "$HOME/flint-work/posidon.env"
+SHARED="$HOME/flint-work/flint"
+WT="$HOME/flint-work/wt-train"
+export FLINT_HOME="$WT" FLINT_CACHE="$HOME/flint-work/train-cache-@STAMP@"
+cleanup() {
+  # Only this run's servers: DMD fork servers whose environment names this run's FLINT_CACHE.
+  for pid in $(pgrep -u "$USER" -f 'dmd' || true); do
+    if tr '\0' '\n' < /proc/$pid/environ 2>/dev/null | grep -qx "FLINT_CACHE=$FLINT_CACHE"; then kill "$pid" 2>/dev/null; fi
+  done
+  rm -rf "$FLINT_CACHE" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
+  rm -rf "$WT"/benchmarks/spring/flint/*/.flint/build "$WT"/benchmarks/spring/flint/*/.dub
+  find "$WT" -xdev -name .dub -type d -prune -exec rm -rf {} + 2>/dev/null
+  git --git-dir="$HOME/flint-work/flint.git" update-ref -d "refs/heads/@REF@"
+}
+trap cleanup EXIT
+git -C "$SHARED" fetch -q origin "refs/heads/@REF@" || exit 3
+[ -d "$WT" ] || git -C "$SHARED" worktree add -q --detach "$WT" "@COMMIT@" || exit 3
+cd "$WT"
+git checkout -q -f --detach "@COMMIT@" || exit 3
+[ -e .tools ] || ln -s "$SHARED/.tools" .tools
+mkdir -p .flint && { [ -e .flint/peers ] || ln -s "$SHARED/.flint/peers" .flint/peers; }
+[ -d .native/install ] || { mkdir -p .native && cp -a "$SHARED/.native/install" .native/; }
+export PATH="$WT/.flint/bin:$WT/.tools/dmd2/linux/bin64:$PATH"
+H="python3 tools/measure_queue.py hold --"
+echo "== native blocks"; $H python3 tools/native_build.py --profile ci --target linux-x86_64-glibc --phase build --emit-dub || exit 4
+echo "== flint"; $H python3 tools/install_toolchains.py --compiler flint || exit 4
+echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@
+'''
+
+
+class PosidonVerifier:
+    """The train's apps verification on posidon. Called with a commit (and the venus repository that has it);
+    returns (ok, log)."""
+
+    def __init__(self, host=POSIDON, ssh=None, bare='flint-work/flint.git', url=None):
+        self.host = host
+        self.ssh = list(ssh or POSIDON_SSH)
+        self.url = url or f'{host}:{bare}'
+
+    def __call__(self, commit, repo):
+        stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()) + '-' + commit[:8]
+        ref = f'train-{stamp}'
+        env = dict(os.environ, GIT_SSH_COMMAND=shlex.join(self.ssh))
+        pushed = subprocess.run(['git', 'push', '-q', self.url, f'{commit}:refs/heads/{ref}'],
+                                cwd=repo, env=env, capture_output=True, text=True)
+        if pushed.returncode != 0:
+            return False, f'pushing the candidate to posidon failed:\n{pushed.stderr}'
+        script = POSIDON_SCRIPT
+        for token, value in (('@COMMIT@', commit), ('@REF@', ref), ('@STAMP@', stamp), ('@APPS@', ','.join(APPS))):
+            script = script.replace(token, value)
+        done = subprocess.run([*self.ssh, self.host, 'bash', '-s'], input=script, capture_output=True, text=True)
+        log = f'posidon {self.host}, ~/flint-work/wt-train at {commit} ({ref}):\n{done.stdout}{done.stderr}'
+        return done.returncode == 0, log
 
 
 def closure_paths(root):
@@ -86,13 +145,14 @@ def touches(paths, prefixes):
 
 class Train:
     def __init__(self, store, repo=ROOT, worktree=DEFAULT_WORKTREE, remote='fp', branch='main', verify=None,
-                 closure=None, log_dir=None, mail=True):
+                 closure=None, log_dir=None, mail=True, verifier=None):
         self.store = store
         self.repo = Path(repo)
         self.worktree = Path(worktree)
         self.remote = remote
         self.branch = branch
-        self.verify_commands = verify
+        self.verify_commands = verify  # local commands (tests); otherwise the verifier, posidon by default
+        self.verifier = verifier or (None if verify else PosidonVerifier())
         self.closure = closure
         self.log_dir = Path(log_dir) if log_dir else store.root / 'train'
         self.mail = mail
@@ -155,8 +215,10 @@ class Train:
     def verify(self, commit):
         git(['checkout', '-q', '--detach', commit], self.worktree)
         self.verifications += 1
+        if self.verifier:
+            return self.verifier(commit, self.worktree)
         log = []
-        for command in (self.verify_commands or default_verify(self.worktree)):
+        for command in self.verify_commands:
             done = subprocess.run(command, cwd=self.worktree, capture_output=True, text=True,
                                   shell=isinstance(command, str))
             log.append(f'$ {command if isinstance(command, str) else shlex.join(command)}\n{done.stdout}{done.stderr}')
@@ -272,23 +334,12 @@ class Train:
 
 
 def setup(worktree, repo=ROOT):
-    """The train's worktree: detached at fp/main, with the shared toolchains, natives and PostgreSQL peer linked in as
-    the lanes' worktrees have them."""
+    """The train's venus worktree, detached at fp/main. Venus only rebases and pushes there; the apps verification
+    runs on posidon, whose ~/flint-work/wt-train the verification creates on first use."""
     worktree = Path(worktree)
     if not worktree.exists():
         git(['fetch', '-q', 'fp', 'main'], repo)
         git(['worktree', 'add', '--detach', str(worktree), 'fp/main'], repo)
-    main_checkout = Path(git(['rev-parse', '--path-format=absolute', '--git-common-dir'], repo).stdout.strip()).parent
-    links = {'.tools': main_checkout / '.tools', '.native': Path.home() / 'flint-work' / 'native-lanes'}
-    peers = sorted((repo / '.flint' / 'peers').glob('postgresql-*'))
-    for name, target in links.items():
-        if not (worktree / name).exists() and target.exists():
-            (worktree / name).symlink_to(target)
-    for peer in peers:
-        link = worktree / '.flint' / 'peers' / peer.name
-        link.parent.mkdir(parents=True, exist_ok=True)
-        if not link.exists():
-            link.symlink_to(peer.resolve())
     return worktree
 
 

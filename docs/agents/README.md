@@ -48,9 +48,12 @@ python3 tools/merge_train.py submit --role <role> --agent <name> --ref <your rea
 python3 tools/merge_train.py show
 ```
 
-The agent holding `apps-landing` runs `python3 tools/merge_train.py run --agent <name>` (once: `merge_train.py setup` creates its worktree):
+The agent holding `apps-landing` runs `python3 tools/merge_train.py run --agent <name>` (once: `merge_train.py setup` creates its venus worktree, which only rebases and pushes):
 1. It takes the first four submissions in queue order and rebases them onto `fp/main`, so commits already on main drop out.
-2. It runs one apps verification for all of them: the definition of done's apps step for both apps, under `hold`.
+2. It runs one apps verification for all of them, **on posidon**, so venus stays free for development:
+   - the candidate is pushed to posidon's bare repository as `train-<stamp>`;
+   - in `~/flint-work/wt-train`, under posidon's host-wide `hold`, it runs the definition of done's apps step for both apps: both compilers, both allocation modes, exact acceptance, and `flint budget` once it exists;
+   - every run deletes its private cache and build outputs.
 3. **Green:** it pushes them all.
 4. **Red:** it bisects by submission, pushes the green prefix, and returns the failing role to the head of the queue. The log goes to `coordination/train/`, and the role gets mail.
 5. **Main moved meanwhile:** it rebases again. If the new commits touch the apps' closure, it verifies again first.

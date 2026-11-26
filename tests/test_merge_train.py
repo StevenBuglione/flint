@@ -173,6 +173,47 @@ class TrainTests(unittest.TestCase):
         self.assertEqual(len(submissions), 1)
         self.assertNotEqual(submissions[0]['commit'], first)
 
+    def fake_posidon(self, status):
+        """A posidon stand-in: `host` is a local bare repository, and `ssh` records the script it is given."""
+        base = Path(self.temp.name)
+        bare = base / 'posidon.git'
+        if not bare.exists():
+            git(base, 'init', '-q', '--bare', str(bare))
+        recorder = base / 'fake_ssh.py'
+        recorder.write_text('import sys\nopen(sys.argv[1], "a").write(sys.stdin.read() + "\\n====\\n")\n'
+                            f'sys.exit({status})\n')
+        self.scripts = base / 'scripts.txt'
+        return merge_train.PosidonVerifier(host='posidon', url=str(bare),
+                                           ssh=[sys.executable, str(recorder), str(self.scripts)]), bare
+
+    def test_the_verification_runs_on_posidon_and_lands_only_when_green(self):
+        verifier, bare = self.fake_posidon(0)
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.hold_slot()
+        train = merge_train.Train(self.store, repo=self.work, worktree=self.tree, remote='origin', closure=('src/',),
+                                  verifier=verifier)
+        result = train.run('runner')
+        self.assertEqual((result['landed'], result['verifications']), (['sol-a'], 1))
+        script = self.scripts.read_text()
+        tip = git(self.work, 'rev-parse', 'origin/main')
+        self.assertIn(f'git checkout -q -f --detach "{tip}"', script)
+        for needed in ('source "$HOME/flint-work/posidon.env"', 'export FLINT_HOME="$WT"', 'measure_queue.py hold --',
+                       '--emit-dub', '--step apps --apps gs-rest-service,petclinic-rest', 'trap cleanup EXIT',
+                       'rm -rf "$FLINT_CACHE"'):
+            self.assertIn(needed, script)
+        self.assertIn('refs/heads/train-', git(bare, 'for-each-ref', '--format=%(refname)'))
+
+    def test_a_red_posidon_verification_lands_nothing(self):
+        verifier, _ = self.fake_posidon(1)
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.hold_slot()
+        train = merge_train.Train(self.store, repo=self.work, worktree=self.tree, remote='origin', closure=('src/',),
+                                  verifier=verifier)
+        result = train.run('runner')
+        self.assertEqual((result['landed'], result['failed']), ([], ['sol-a']))
+        self.assertEqual(self.main_log(), ['base'])
+        self.assertIn('posidon', Path(result['logs']['sol-a']).read_text())
+
     def test_the_closure_covers_the_apps_packages_and_shared_paths(self):
         paths = merge_train.closure_paths(merge_train.ROOT)
         for expected in ('framework/web/', 'framework/jdbc/', 'boot/core/flint-boot/', 'policy/', 'benchmarks/spring/'):
