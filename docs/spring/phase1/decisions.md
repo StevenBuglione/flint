@@ -1137,3 +1137,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Where Java gives null its own meaning,** such as an optional array parameter, `Nullable!(T[])` is used.
   - api-coverage records this as an R5 clarification.
 - 2026-11-26 01:52Z, coordinator: **until m7 lands the loadable-section metric,** JDK leaf budgets (`jdk-leaf-rule`) are set in the definition of done's current stripped-byte metric, at the measured value plus 10%. Every JDK leaf is re-baselined in loadable bytes in one commit when the switch lands.
+- 2026-11-26 01:55Z, coordinator, under the owner's standing approval:
+  - **`java.net.URL.equals` and `hashCode` never resolve DNS.** They compare normalised components only.
+    - **Why:** Java's DNS-based equality blocks on network I/O inside `equals`, which is incompatible with fibers, and makes hashing nondeterministic.
+    - **Recorded as** a deviation by sol-jdk-concurrent-io. `URI` keeps Java's semantics.
+  - **R5 now covers nullable value types** (for example `Persistable!long.getId()` returns `Nullable!long`). `Optional!T` stays reserved for `java.util.Optional`.
