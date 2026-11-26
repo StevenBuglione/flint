@@ -5,6 +5,9 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/Pointcuts.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/StaticMethodMatcherPointcut.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/NameMatchMethodPointcut.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/NameMatchMethodPointcutAdvisor.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/ExpressionPointcut.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/AbstractExpressionPointcut.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/AbstractPointcutAdvisor.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/AbstractGenericPointcutAdvisor.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DefaultPointcutAdvisor.java
@@ -30,6 +33,7 @@ import flint.engine.aot.objects : objectEquals, objectToHash, objectToString, st
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException,
     UnsupportedOperationException, stringHashCode;
 import flint.util : PatternMatchUtils;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -156,6 +160,58 @@ class NameMatchMethodPointcut : StaticMethodMatcherPointcut
             text ~= pattern;
         }
         return text ~ "]";
+    }
+}
+
+/// A pointcut with a user-supplied selector expression.
+interface ExpressionPointcut : Pointcut
+{
+    /// Returns the configured expression, if present.
+    Nullable!string getExpression();
+}
+
+/// Base class that stores an expression and its optional diagnostic location.
+abstract class AbstractExpressionPointcut : ExpressionPointcut
+{
+    private Nullable!string location;
+    private Nullable!string expression;
+
+    /// Sets the location used to report configuration errors.
+    void setLocation(Nullable!string location)
+    {
+        this.location = location;
+    }
+
+    /// Returns the configured diagnostic location, if present.
+    Nullable!string getLocation()
+    {
+        return location;
+    }
+
+    /// Stores the expression and invokes the subclass's configuration hook.
+    void setExpression(Nullable!string expression)
+    {
+        this.expression = expression;
+        try
+            onSetExpression(expression);
+        catch (IllegalArgumentException failure)
+        {
+            if (location.isNull)
+                throw failure;
+            throw new IllegalArgumentException(
+                    "Invalid expression at location [" ~ location.get ~ "]: " ~ failure.toString());
+        }
+    }
+
+    /// Lets a subclass parse the expression. Throws IllegalArgumentException for an invalid expression.
+    protected void onSetExpression(Nullable!string)
+    {
+    }
+
+    /// Returns the stored expression, if present.
+    Nullable!string getExpression()
+    {
+        return expression;
     }
 }
 
@@ -394,6 +450,61 @@ class DefaultPointcutAdvisor : AbstractGenericPointcutAdvisor
     {
         return typeid(this).name ~ ": pointcut [" ~ objectToString(
                 cast(Object) getPointcut()) ~ "]; advice [" ~ objectToString(cast(Object) getAdvice()) ~ "]";
+    }
+}
+
+/// An advisor that selects methods by name.
+class NameMatchMethodPointcutAdvisor : AbstractGenericPointcutAdvisor
+{
+    private NameMatchMethodPointcut pointcut;
+
+    /// Starts with no configured advice or method names.
+    this()
+    {
+        pointcut = new NameMatchMethodPointcut;
+    }
+
+    /// Installs the supplied advice and starts with no configured method names.
+    this(Advice advice)
+    {
+        this();
+        setAdvice(advice);
+    }
+
+    /// Sets the class filter used by the advisor's pointcut.
+    void setClassFilter(ClassFilter classFilter)
+    {
+        pointcut.setClassFilter(classFilter);
+    }
+
+    /// R9 delegate overload.
+    void setClassFilter(ClassPredicate classFilter)
+    {
+        pointcut.setClassFilter(classFilter);
+    }
+
+    /// Replaces the configured method names with one pattern.
+    void setMappedName(string mappedName)
+    {
+        pointcut.setMappedName(mappedName);
+    }
+
+    /// Replaces the configured method names with the supplied patterns.
+    void setMappedNames(scope string[] mappedNames...)
+    {
+        pointcut.setMappedNames(mappedNames);
+    }
+
+    /// Adds a method name and returns the advisor's pointcut for further configuration.
+    NameMatchMethodPointcut addMethodName(string name)
+    {
+        return pointcut.addMethodName(name);
+    }
+
+    /// Returns this advisor's configurable pointcut.
+    Pointcut getPointcut()
+    {
+        return pointcut;
     }
 }
 

@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 151 | 264 | 0 | 15,381 |
 | boot | spring-boot@v4.2.0 | 36 | 19 | 2,133 | 13,415 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,436 | 1,352 | 4,848 | 30,198 |
+| framework | spring-framework@v7.1.0 | 3,445 | 1,360 | 4,848 | 30,181 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1906,6 +1906,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.aop.support.AbstractExpressionPointcut#getExpression()` | `flint.aop.support.AbstractExpressionPointcut.getExpression` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.aop.support.AbstractExpressionPointcut#getLocation()` | `flint.aop.support.AbstractExpressionPointcut.getLocation` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.aop.support.AbstractExpressionPointcut#onSetExpression(String)` | `flint.aop.support.AbstractExpressionPointcut.onSetExpression` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
+| `org.springframework.aop.support.AbstractExpressionPointcut#setExpression(String)` | `flint.aop.support.AbstractExpressionPointcut.setExpression` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.aop.support.AbstractExpressionPointcut#setLocation(String)` | `flint.aop.support.AbstractExpressionPointcut.setLocation` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.aop.support.AbstractGenericPointcutAdvisor#toString()` | `flint.aop.support.AbstractGenericPointcutAdvisor.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.AbstractPointcutAdvisor#equals(Object)` | `flint.aop.support.AbstractPointcutAdvisor.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.AbstractPointcutAdvisor#hashCode()` | `flint.aop.support.AbstractPointcutAdvisor.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -1931,6 +1936,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.support.DefaultIntroductionAdvisor#toString()` | `flint.aop.support.DefaultIntroductionAdvisor.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.DefaultPointcutAdvisor#toString()` | `flint.aop.support.DefaultPointcutAdvisor.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.DynamicMethodMatcher#matches(Method,Class)` | `flint.aop.support.DynamicMethodMatcher.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.support.ExpressionPointcut#getExpression()` | `flint.aop.support.ExpressionPointcut.getExpression` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.aop.support.MethodMatchers#matches(MethodMatcher,Method,Class,boolean)` | `flint.aop.support.MethodMatchers.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.support.MethodMatchers#union(MethodMatcher,MethodMatcher)` | `flint.aop.support.MethodMatchers.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.aop.support.NameMatchMethodPointcut#equals(Object)` | `flint.aop.support.NameMatchMethodPointcut.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -1938,6 +1944,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.support.NameMatchMethodPointcut#matches(Method,Class)` | `flint.aop.support.NameMatchMethodPointcut.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.support.NameMatchMethodPointcut#setMappedNames(String...)` | `flint.aop.support.NameMatchMethodPointcut.setMappedNames` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.aop.support.NameMatchMethodPointcut#toString()` | `flint.aop.support.NameMatchMethodPointcut.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.NameMatchMethodPointcutAdvisor#setClassFilter(ClassFilter)` | `flint.aop.support.NameMatchMethodPointcutAdvisor.setClassFilter` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.aop.support.NameMatchMethodPointcutAdvisor#setMappedNames(String...)` | `flint.aop.support.NameMatchMethodPointcutAdvisor.setMappedNames` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.aop.support.Pointcuts#GETTERS` | `flint.aop.support.Pointcuts.GETTERS` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.aop.support.Pointcuts#SETTERS` | `flint.aop.support.Pointcuts.SETTERS` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.aop.support.Pointcuts#matches(Pointcut,Method,Class,Object...)` | `flint.aop.support.Pointcuts.matches` | [R4](api-mapping.md#r4-classt-parameters), [R7](api-mapping.md#r7-overloads) |  |
@@ -9028,7 +9036,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
 | org.springframework.aop.interceptor | 97 | 0 |
 | org.springframework.aop.scope | 20 | 0 |
-| org.springframework.aop.support | 118 | 0 |
+| org.springframework.aop.support | 101 | 0 |
 | org.springframework.aop.support.annotation | 10 | 0 |
 | org.springframework.aop.target | 116 | 0 |
 | org.springframework.aop.target.dynamic | 20 | 0 |
