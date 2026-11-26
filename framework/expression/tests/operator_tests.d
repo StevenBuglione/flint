@@ -18,6 +18,7 @@
  */
 module flint.expression.operator_tests;
 
+import flint.expression : EvaluationException;
 import flint.expression.spel : SpelMessage, SpelParseException;
 import flint.expression.spel.standard : SpelExpressionParser;
 import flint.java.lang : ArithmeticException;
@@ -99,6 +100,66 @@ unittest
     auto result = read();
     assert(result.ok() && result.value.typeName() == "long");
     assert(result.value.get!long == 5);
+}
+
+@("unary plus and minus keep precedence and the scalar result type")
+unittest
+{
+    evaluate("-5", -5);
+    evaluate("+5", 5);
+    evaluate("-(2 + 3) * 4", -20);
+    evaluate("2 * +(3L - 5L)", -4L);
+    evaluate("-(2.0f / 4)", -0.5f);
+    evaluate("-(1.0d + 2.5d)", -3.5);
+    evaluate("-(2147483647 + 1)", int.min);
+    evaluate("-(0L - 9223372036854775807L - 1L)", long.min);
+    evaluate("- -5", 5);
+    evaluate("-+(2^3)", -8);
+}
+
+@("unary signs use the bounded evaluator and report failures at evaluation")
+unittest
+{
+    auto parser = new SpelExpressionParser;
+    auto expression = parser.parseRaw("-(1L + 2)");
+    auto read = () nothrow @nogc => expression.evaluate();
+    assert(read().value.get!long == -3L);
+
+    auto invalid = parser.parseExpression("+('text')");
+    try
+    {
+        invalid.getValue();
+        assert(false);
+    }
+    catch (EvaluationException expected)
+    {
+        assert(expected.getSimpleMessage() == "SpEL unary sign requires a numeric operand");
+    }
+
+    try
+    {
+        parser.parseExpression("--(1 + 2)");
+        assert(false);
+    }
+    catch (SpelParseException expected)
+    {
+        assert(expected.getPosition() == 1);
+    }
+
+    string deep = "1";
+    foreach (_; 0 .. 200)
+        deep = "- " ~ deep;
+    assert(parser.parseExpression(deep).getValue().get!int == 1);
+    // The final sign directly precedes a number and needs no nested node.
+    try
+    {
+        parser.parseExpression("- - " ~ deep);
+        assert(false);
+    }
+    catch (SpelParseException expected)
+    {
+        assert(expected.getMessageCode() == SpelMessage.MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED);
+    }
 }
 
 @("power rounds and narrows like Spring for scalar numbers")

@@ -244,5 +244,25 @@
     "upstreamTest": "SpelCompilationCoverageTests.ArithmeticOperatorTests.opDivide",
     "expression": "3.0d/4.0d",
     "expected": {"type": "double", "value": "0.75"}
+  },
+  {
+    "id": "computed-unary-minus",
+    "expression": "-(2 + 3) * 4",
+    "expected": {"type": "int", "value": "-20"}
+  },
+  {
+    "id": "computed-unary-plus",
+    "expression": "2 * +(3L - 5L)",
+    "expected": {"type": "long", "value": "-4"}
+  },
+  {
+    "id": "computed-float-negation",
+    "expression": "-(2.0f / 4)",
+    "expected": {"type": "float", "value": "-0.5"}
+  },
+  {
+    "id": "computed-negation-wrap",
+    "expression": "-(2147483647 + 1)",
+    "expected": {"type": "int", "value": "-2147483648"}
   }
 ]

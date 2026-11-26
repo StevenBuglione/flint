@@ -29,7 +29,7 @@ import flint.expression.spel : SpelMessage;
 import flint.expression.spel.standard.literal : LiteralParser;
 import flint.java.character : isLetter;
 import flint.java.lang : IllegalArgumentException;
-import std.ascii : isAlpha, toLower;
+import std.ascii : isAlpha, isDigit, toLower;
 
 @safe:
 package(flint.expression.spel.standard):
@@ -70,9 +70,10 @@ struct ArithmeticExpression
                 stack[depth++] = instruction.value;
                 continue;
             }
-            if (instruction.op >= Op.and_)
+            if (instruction.op >= Op.positive)
             {
-                const error = stepBoolean(*instruction, stack[depth - 1], depth, next);
+                const error = instruction.op < Op.and_ ? stepSign(*instruction,
+                        stack[depth - 1]) : stepBoolean(*instruction, stack[depth - 1], depth, next);
                 if (error.code != Status.ok)
                     return Result!Any(Any.init, error);
                 continue;
@@ -117,6 +118,8 @@ private enum Op : ubyte
     lessEqual,
     greater,
     greaterEqual,
+    positive,
+    negative,
     and_,
     or_,
     not_,
@@ -202,6 +205,8 @@ private struct ArithmeticParser
             instructions ~= Instruction(Op.not_, operand);
             return position;
         }
+        if (readSign(nesting))
+            return position;
         if (reader.peek == '(')
         {
             checkNesting(nesting);
@@ -220,6 +225,29 @@ private struct ArithmeticParser
         else
             literal(position);
         return position;
+    }
+
+    bool readSign(uint nesting)
+    {
+        const sign = reader.peek;
+        if (sign != '+' && sign != '-')
+            return false;
+        auto operand = reader;
+        ++operand.position;
+        // Spring considers an adjacent pair an increment or decrement operator.
+        if (operand.peek == sign)
+            throw reader.errorAt(operand.position, SpelMessage.OOD);
+        operand.skipWhitespace();
+        if (isDigit(operand.peek))
+            return false;
+
+        const position = reader.position;
+        checkNesting(nesting);
+        reader.position = operand.position;
+        primary(nesting + 1);
+        emitFirstLiteral();
+        instructions ~= Instruction(sign == '+' ? Op.positive : Op.negative, position);
+        return true;
     }
 
     void checkNesting(uint nesting)
@@ -464,6 +492,20 @@ private Result!Scalar applyOperator(Op op, Scalar left, Scalar right) nothrow @n
     if (kind == ValueKind.float_)
         return Result!Scalar(Scalar(kind, 0, arithmetic(op, left.asFloat(), right.asFloat())));
     return integerArithmetic(op, kind, left.integer, right.integer);
+}
+
+private Error stepSign(const ref Instruction step, ref Scalar value) nothrow @nogc
+{
+    if (!isNumber(value.kind))
+        return Error(Status.unsupported, "SpEL unary sign requires a numeric operand", step.position);
+    if (step.op == Op.negative)
+    {
+        const result = applyOperator(Op.subtract, Scalar(value.kind, 0, 0), value);
+        if (!result.ok())
+            return Error(result.error.code, result.error.message, step.position);
+        value = result.value;
+    }
+    return Error.init;
 }
 
 private enum BooleanValue : ubyte
