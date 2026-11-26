@@ -46,7 +46,7 @@ size_t renderDecimalLong(long value, ref scope const DecimalFixedPattern pattern
     return renderFixedDigits(digits[start .. $], decimalAt, negative, pattern, symbols, output);
 }
 
-/// Renders finite binary64 through the general fixed-point path using the explicit Latin symbols.
+/// Renders binary64 through the general path using the explicit Latin symbols.
 /// A successful call reports bytes required. A short buffer or unsupported value is untouched.
 pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output, out size_t required)
@@ -56,6 +56,12 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const Decim
 
     if (pattern.scale != 0 || usesGroupedFastPath(bits, pattern))
         return false;
+
+    if ((bits & (ulong.max >> 1)) >= infinityBits)
+    {
+        required = renderSpecial(bits, pattern, symbols, output);
+        return true;
+    }
 
     // These are the floating-point limits of Java's DecimalFormat, independent of long padding.
     scope DecimalFixedPattern effective = pattern;
@@ -74,6 +80,26 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const Decim
     required = renderFixedDigits(converted.digits[0 .. converted.count], decimalAt,
             converted.negative, effective, symbols, output);
     return true;
+}
+
+private enum ulong infinityBits = 0x7ff0_0000_0000_0000;
+
+private pure nothrow @nogc size_t renderSpecial(ulong bits, ref scope const DecimalFixedPattern pattern,
+        ref scope const DecimalSymbolData symbols, scope char[] output)
+{
+    const infinity = (bits & (ulong.max >> 1)) == infinityBits;
+    const token = infinity ? symbols.infinity : symbols.nan;
+    const affixes = infinity ? ((bits >> 63) != 0 ? pattern.negative : pattern.positive) : DecimalAffixes.init;
+    const required = cast(ulong) affixes.prefix.length + token.length + affixes.suffix.length;
+    if (required > output.length)
+        return required > size_t.max ? size_t.max : cast(size_t) required;
+
+    const tokenStart = affixes.prefix.length;
+    const tokenEnd = tokenStart + token.length;
+    output[0 .. tokenStart] = affixes.prefix;
+    output[tokenStart .. tokenEnd] = token;
+    output[tokenEnd .. cast(size_t) required] = affixes.suffix;
+    return cast(size_t) required;
 }
 
 private bool usesGroupedFastPath(ulong bits, ref scope const DecimalFixedPattern pattern) pure nothrow @nogc

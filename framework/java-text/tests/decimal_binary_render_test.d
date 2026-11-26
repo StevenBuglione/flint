@@ -43,7 +43,35 @@ unittest
     assert(!tryRenderDecimalDouble(0x3f40_624d_d2f1_a9fc, pattern, symbols, output[], required));
     assert(compileFixedDecimalPattern("0%", pattern) == DecimalCompileStatus.accepted);
     assert(!tryRenderDecimalDouble(0, pattern, symbols, output[], required));
-    assert(compileFixedDecimalPattern("0", pattern) == DecimalCompileStatus.accepted);
-    assert(!tryRenderDecimalDouble(0x7ff0_0000_0000_0000, pattern, symbols, output[], required));
     assert(output[0] == 'x' && required == 0);
+}
+
+@("Java special decimal values preserve the correct symbols and affixes")
+unittest
+{
+    DecimalFixedPattern pattern;
+    assert(compileFixedDecimalPattern("'p'0.00's';'n'0.00'z'", pattern) == DecimalCompileStatus.accepted);
+    DecimalSymbolData symbols;
+    symbols.nan = "undef";
+    symbols.infinity = "∞!";
+    char[24] output;
+    size_t required;
+    foreach (example; [
+        SpecialValue(0x7ff8_0000_0000_0000, "undef"), SpecialValue(0xfff8_0000_0000_0000, "undef"),
+        SpecialValue(0x7ff0_0000_0000_0000, "p∞!s"), SpecialValue(0xfff0_0000_0000_0000, "n∞!z"),
+    ])
+    {
+        output[] = 'x';
+        assert(tryRenderDecimalDouble(example.bits, pattern, symbols, output[0 .. 1], required),
+                "special value was declined");
+        assert(output[0] == 'x' && required == example.expected.length);
+        assert(tryRenderDecimalDouble(example.bits, pattern, symbols, output[], required));
+        assert(output[0 .. required] == example.expected && output[required] == 'x');
+    }
+}
+
+private struct SpecialValue
+{
+    ulong bits;
+    string expected;
 }
