@@ -72,3 +72,13 @@ unittest
     assert(String.format("%300s", "r").length == 300);
     assert(String.format("").length == 0);
 }
+
+@("String.format counts UTF-16 code units for width and precision")
+unittest
+{
+    assert(String.format("[%4s][%-4s][%4c]", "😀", "é", 0x1f600) == "[  😀][é   ][  😀]");
+    assert(String.format("[%1s]", "😀") == "[😀]");
+    assert(String.format("%.1s|%.2s|%.3s", "éz", "😀x", "é😀x") == "é|😀|é😀");
+    assert(String.format("[%.1s][%.2s]", "😀x", "é😀x") == "[\ufffd][é\ufffd]");
+    assert(String.format("[%4.2S][%3.0s]", "a😀z", "é") == "[  A\ufffd][   ]");
+}

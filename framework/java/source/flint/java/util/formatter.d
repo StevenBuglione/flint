@@ -283,9 +283,14 @@ private string convert(const ref Spec spec, Any argument)
     }
 }
 
-private string truncate(const ref Spec spec, string text) pure nothrow @nogc
+private string truncate(const ref Spec spec, string text) pure nothrow
 {
-    return spec.precision >= 0 && spec.precision < text.length ? text[0 .. spec.precision] : text;
+    if (spec.precision < 0 || spec.precision >= text.length)
+        return text;
+    const prefix = utf16Prefix(text, spec.precision);
+    if (prefix.end < text.length && prefix.units < spec.precision)
+        return text[0 .. prefix.end] ~ "\uFFFD"; // R14 covers the high half of a split surrogate pair.
+    return text[0 .. prefix.end];
 }
 
 private string cased(const ref Spec spec, string text) pure nothrow
@@ -299,14 +304,47 @@ private string cased(const ref Spec spec, string text) pure nothrow
     return upper.idup;
 }
 
-/// Pad to the width: spaces on the left, or the right with `-`.
+/// Pad to the UTF-16 width with spaces on the left, or on the right with `-`.
 private string pad(const ref Spec spec, string text) pure nothrow
 {
-    if (spec.width < 0 || text.length >= spec.width)
+    if (spec.width <= 0)
         return text;
-    auto spaces = new char[](spec.width - text.length);
+    const prefix = utf16Prefix(text, spec.width);
+    if (prefix.end < text.length || prefix.units == spec.width)
+        return text;
+    auto spaces = new char[](spec.width - prefix.units);
     spaces[] = ' ';
     return spec.leftJustify ? text ~ spaces : spaces ~ text;
+}
+
+private struct TextPrefix
+{
+    size_t end;
+    size_t units;
+}
+
+// Find the last complete UTF-8 boundary within the UTF-16 limit.
+private TextPrefix utf16Prefix(scope const(char)[] text, size_t limit) pure nothrow @nogc
+{
+    import flint.engine.aot.text : decodeUtf8;
+
+    TextPrefix prefix;
+    while (prefix.end < text.length && prefix.units < limit)
+    {
+        if (text[prefix.end] < 0x80)
+        {
+            prefix.end++;
+            prefix.units++;
+            continue;
+        }
+        auto next = prefix.end;
+        const units = decodeUtf8(text, next) > 0xffff ? 2u : 1u;
+        if (units > limit - prefix.units)
+            break;
+        prefix.end = next;
+        prefix.units += units;
+    }
+    return prefix;
 }
 
 private string booleanText(Any argument)
