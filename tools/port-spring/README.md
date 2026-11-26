@@ -33,6 +33,8 @@ The R8 exception slice accepts a public subclass of Spring's `TransactionUsageEx
 
 The R3 marker interface recipe accepts a public top-level interface with an empty body and one parent, Spring's `Ordered`. The CLI resolves the parent through the pinned manifest and requires the exact ported mapping to `flint.core.Ordered`. A DMD and LDC golden verifies that the mapped parent is a D interface and that the generated subtype preserves inheritance.
 
+The R1 constant-holder recipe accepts a public final class with one private empty constructor and public static final `String` fields initialized by supported literals. The draft uses a final D class with a disabled constructor and `enum string` fields. Configuration keys beginning with `spring.` and constant expressions require separate translation rules.
+
 ## Verification
 
 `test_annotations.py` exercises the C helper and compiles the emitted UDA with DMD and LDC. `test_jakarta.py` walks every Jakarta Persistence annotation in the pinned manifest, compares generated fields and mappings to the existing hand port where available, checks the emitted headers, and compiles every generated D file on both compilers.
@@ -45,11 +47,14 @@ The R3 marker interface recipe accepts a public top-level interface with an empt
 
 `test_interface.py` exercises the native marker interface checks. `test_spring_interface.py` compares Spring's `PriorityOrdered` with the hand port and tests implementing it and upcasting to `Ordered` on DMD and LDC.
 
+`test_holder.py` exercises native validation of constant holders. `test_spring_holder.py` checks the final class, disabled constructor, and all 18 literal values of Spring AI's `SpringAIModels` on DMD and LDC. It also verifies the 19 mapping rows.
+
 ```sh
 python3 tools/port-spring/tests/test_annotations.py
 python3 tools/port-spring/tests/test_enum.py
 python3 tools/port-spring/tests/test_exceptions.py
 python3 tools/port-spring/tests/test_interface.py
+python3 tools/port-spring/tests/test_holder.py
 python3 tools/port-spring/tests/test_jakarta.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 python3 tools/port-spring/tests/test_jakarta_enums.py --flint /path/to/flint \
@@ -61,6 +66,8 @@ python3 tools/port-spring/tests/test_boot_enum_method.py --flint /path/to/flint 
 python3 tools/port-spring/tests/test_spring_exception.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 python3 tools/port-spring/tests/test_spring_interface.py --flint /path/to/flint \
+  --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
+python3 tools/port-spring/tests/test_spring_holder.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 ```
 

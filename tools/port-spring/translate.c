@@ -1050,6 +1050,140 @@ static bool has_static_import(const JavaFile *java)
     return false;
 }
 
+static bool exact_modifiers(TSNode owner, const char *const *expected, uint32_t count)
+{
+    TSNode modifiers = child_of_kind(owner, "modifiers");
+    if (ts_node_is_null(modifiers))
+        return false;
+    unsigned seen = 0;
+    for (uint32_t index = 0; index < ts_node_child_count(modifiers); ++index) {
+        TSNode node = ts_node_child(modifiers, index);
+        if (ts_node_is_extra(node))
+            continue;
+        uint32_t match = 0;
+        while (match < count && !kind(node, expected[match]))
+            ++match;
+        if (match == count || (seen & (1U << match)))
+            return false;
+        seen |= 1U << match;
+    }
+    return seen == (1U << count) - 1;
+}
+
+typedef struct {
+    Slice name;
+    Slice type;
+    Slice value;
+    Text symbol;
+} HolderField;
+
+static bool holder_field(const JavaFile *java, TSNode field, HolderField *result, bool *implicit_string)
+{
+    const char *const modifiers[] = {"public", "static", "final"};
+    if (!kind(field, "field_declaration") || !exact_modifiers(field, modifiers, 3))
+        return false;
+    TSNode declarator = member(field, "declarator");
+    if (ts_node_is_null(declarator) || !ts_node_is_null(code_child(field, 3)) ||
+        !ts_node_is_null(member(declarator, "dimensions")))
+        return false;
+    TSNode value = member(declarator, "value");
+    result->value = node_text(java, value);
+    if (!kind(value, "string_literal") || !text_literal(result->value) ||
+        (result->value.length >= 8 && !memcmp(result->value.bytes, "\"spring.", 8)))
+        return false;
+    result->type = node_text(java, member(field, "type"));
+    bool implicit;
+    if (!resolves(java, result->type, "java.lang.String", true, &implicit))
+        return false;
+    *implicit_string |= implicit;
+    result->name = node_text(java, member(declarator, "name"));
+    return lower_name(result->name, &result->symbol);
+}
+
+static bool empty_private_constructor(const JavaFile *java, TSNode constructor, Slice name)
+{
+    const char *const modifiers[] = {"private"};
+    return exact_modifiers(constructor, modifiers, 1) &&
+        equal(node_text(java, member(constructor, "name")), name) &&
+        ts_node_is_null(member(constructor, "type_parameters")) &&
+        ts_node_is_null(child_of_kind(constructor, "throws")) &&
+        ts_node_is_null(code_child(member(constructor, "parameters"), 0)) &&
+        ts_node_is_null(code_child(member(constructor, "body"), 0));
+}
+
+static int collect_holder_fields(const JavaFile *java, TSNode body, Slice name, HolderField *fields,
+                                 size_t *count, bool *implicit_string)
+{
+    bool saw_constructor = false;
+    for (uint32_t index = 0; index < ts_node_named_child_count(body); ++index) {
+        TSNode node = ts_node_named_child(body, index);
+        if (ts_node_is_extra(node))
+            continue;
+        if (kind(node, "constructor_declaration") && !saw_constructor && empty_private_constructor(java, node, name))
+            saw_constructor = true;
+        else if (holder_field(java, node, &fields[*count], implicit_string))
+            ++*count;
+        else
+            return diagnostic(java, node, "unsupported constant holder member. Expected literal static String or private empty constructor");
+    }
+    if (!saw_constructor || !*count)
+        return diagnostic(java, body, "unsupported constant holder without a private empty constructor and literal fields");
+    return 0;
+}
+
+static void emit_holder_fields(const HolderField *fields, size_t count)
+{
+    fputs(",\"members\":[", stdout);
+    for (size_t index = 0; index < count; ++index) {
+        fputs(index ? ",{\"name\":" : "{\"name\":", stdout);
+        json_string(fields[index].name);
+        fputs(",\"symbol\":", stdout);
+        json_string(contents(&fields[index].symbol));
+        fputs(",\"stringType\":", stdout);
+        json_string(fields[index].type);
+        fputs(",\"literal\":", stdout);
+        json_string(fields[index].value);
+        putchar('}');
+    }
+    putchar(']');
+}
+
+static int translate_static_holder(const JavaFile *java)
+{
+    TSNode declaration = java->declaration;
+    const char *const modifiers[] = {"public", "final"};
+    if (!exact_modifiers(declaration, modifiers, 2) || !ts_node_is_null(member(declaration, "interfaces")) ||
+        !ts_node_is_null(member(declaration, "type_parameters")) || !ts_node_is_null(member(declaration, "permits")))
+        return diagnostic(java, declaration, "unsupported constant holder declaration");
+
+    TSNode body = member(declaration, "body");
+    size_t slots = ts_node_named_child_count(body);
+    HolderField *fields = calloc(slots ? slots : 1, sizeof *fields);
+    if (!fields)
+        return diagnostic(java, body, "cannot allocate constant holder fields");
+    size_t count = 0;
+    bool implicit_string = false;
+    Slice name = node_text(java, member(declaration, "name"));
+    Text symbol = {0};
+    int status = collect_holder_fields(java, body, name, fields, &count, &implicit_string);
+    if (!status && !lower_name(name, &symbol))
+        status = diagnostic(java, declaration, "unsupported constant holder name");
+    if (!status) {
+        emit_declaration(java, name, contents(&symbol), "class");
+        printf(",\"inherited\":false,\"classRef\":false,\"staticHolder\":true,\"implicitString\":%s",
+               implicit_string ? "true" : "false");
+        emit_holder_fields(fields, count);
+        puts("}");
+        if (fflush(stdout) == EOF)
+            status = diagnostic(java, java->root, "cannot write output");
+    }
+    free(symbol.bytes);
+    for (size_t index = 0; index < slots; ++index)
+        free(fields[index].symbol.bytes);
+    free(fields);
+    return status;
+}
+
 static int translate_interface(const JavaFile *java)
 {
     TSNode declaration = java->declaration;
@@ -1242,8 +1376,13 @@ static int translate(JavaFile *annotation, bool scope_only)
         puts("}");
         return fflush(stdout) == EOF ? diagnostic(annotation, annotation->root, "cannot write output") : 0;
     }
-    if (kind(annotation->declaration, "class_declaration"))
+    if (kind(annotation->declaration, "class_declaration")) {
+        TSNode declaration = annotation->declaration;
+        if (ts_node_is_null(member(declaration, "superclass")) &&
+            !ts_node_is_null(child_of_kind(child_of_kind(declaration, "modifiers"), "final")))
+            return translate_static_holder(annotation);
         return translate_exception(annotation);
+    }
     if (kind(annotation->declaration, "interface_declaration"))
         return translate_interface(annotation);
     if (annotation->is_enum && !ts_node_is_null(member(annotation->declaration, "interfaces")))

@@ -170,6 +170,7 @@ private const(ApiType)* supportedType(ref const Manifest manifest, const ref Ups
 
 private bool supportedDeclaration(const ref TypeDecl decl)
 {
+    import flint_tool.api.constant_holder : supportedConstantHolder;
     import flint_tool.api.exception_references : supportedException;
     import flint_tool.api.interface_references : supportedMarkerInterface;
 
@@ -178,7 +179,7 @@ private bool supportedDeclaration(const ref TypeDecl decl)
     case TypeKind.annotation:
         return true;
     case TypeKind.class_:
-        return supportedException(decl);
+        return supportedException(decl) || supportedConstantHolder(decl);
     case TypeKind.interface_:
         return supportedMarkerInterface(decl);
     case TypeKind.enum_:
@@ -311,11 +312,14 @@ private string translatedBody(string root, const ref Upstream pin, const ref Man
         const ref Mapping mapping, out string error)
 {
     import flint_tool.api.annotation_references : resolveReferenceBody;
+    import flint_tool.api.constant_holder : renderConstantHolder, supportedConstantHolder;
     import flint_tool.api.exception_references : renderException;
     import flint_tool.api.interface_references : renderMarkerInterface;
 
     if (type.decl.kind == TypeKind.class_)
     {
+        if (supportedConstantHolder(type.decl))
+            return renderConstantHolder(manifest, type.decl, candidate, error);
         const classifier = Classifier(mapping);
         return renderException(manifest, type.decl, classifier, request.module_, candidate, error);
     }
@@ -484,7 +488,8 @@ private MappingEntry proposedMember(const ref TypeDecl decl, const ref Member me
         return entry;
     }
     const annotation = decl.kind == TypeKind.annotation;
-    if (member.kind == (annotation ? MemberKind.attribute : MemberKind.constant))
+    if (member.kind == (annotation ? MemberKind.attribute : MemberKind.constant)
+            || (decl.kind == TypeKind.class_ && member.kind == MemberKind.field))
         return mappingEntry(dType ~ "." ~ field.symbol, member.name, field.symbol, annotation, member.type);
 
     error = "translator field does not match " ~ memberId(decl, member) ~ " in the manifest";
