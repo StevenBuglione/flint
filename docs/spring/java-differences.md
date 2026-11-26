@@ -196,7 +196,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | openjdk@21.0.13 | 236 | 151 | 1,871 | 16,163 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 554 | 24 | 88 | 11,747 |
+| security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
 
 ## Known gaps
 
@@ -4498,6 +4498,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion` | `flint.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion` | [R15](api-mapping.md#r15-enums-with-fields) | The nested D enum uses the fixed Java version strings as backing values. |
+| `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#$2A` | `flint.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion._2A` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#$2B` | `flint.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion._2B` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#$2Y` | `flint.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion._2Y` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 
 #### org.springframework.security.provisioning
 
@@ -10533,7 +10536,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.core.userdetails.jdbc | 12 | 0 |
 | org.springframework.security.core.userdetails.memory | 14 | 0 |
 | org.springframework.security.crypto.argon2 | 7 | 0 |
-| org.springframework.security.crypto.bcrypt | 17 | 0 |
+| org.springframework.security.crypto.bcrypt | 14 | 0 |
 | org.springframework.security.crypto.codec | 7 | 0 |
 | org.springframework.security.crypto.encrypt | 105 | 0 |
 | org.springframework.security.crypto.keygen | 16 | 0 |
@@ -11083,9 +11086,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(BCryptVersion,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(BCryptVersion,int,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(int,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
-| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#$2A` | 2 | The current D constant is _2A. The adaptation of dollar-prefixed Java names is pending. |
-| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#$2B` | 2 | The current D constant is _2B. The adaptation of dollar-prefixed Java names is pending. |
-| security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#$2Y` | 2 | The current D constant is _2Y. The adaptation of dollar-prefixed Java names is pending. |
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion#getVersion()` | 2 | Casting the D enum to string gives its backing value. The named accessor is deferred. |
 | security | `org.springframework.security.web.access.ExceptionTranslationFilter#<init>(AuthenticationEntryPoint,RequestCache)` | 2 | The request-caching overload requires the deferred RequestCache contract. |
 | security | `org.springframework.security.web.context.RequestAttributeSecurityContextRepository#loadContext(HttpRequestResponseHolder)` | 2 | The current Flint method accepts HttpServletRequest. The holder-based method waits on HttpRequestResponseHolder. |
