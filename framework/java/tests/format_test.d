@@ -277,3 +277,25 @@ unittest
     const wrongType = collectException!IllegalFormatConversionException(String.format("%G", 7));
     assert(wrongType.getMessage() == "g != java.lang.Integer");
 }
+
+@("String.format rounds hexadecimal floating values to even")
+unittest
+{
+    assert(String.format("%a|%A|%.0a", 0.0, -0.0, 1.0) == "0x0.0p0|-0X0.0P0|0x1.0p0");
+    assert(String.format("%.1a|%.1a|%.1a", 1.03125, 1.09375, 1.96875) == "0x1.0p0|0x1.2p0|0x1.0p1");
+    const tiny = double.min_normal * double.epsilon;
+    assert(String.format("%a|%.12a|%.13A", tiny, tiny,
+            tiny) == "0x0.0000000000001p-1022|0x1.000000000000p-1074|0X0.0000000000001P-1022");
+    assert(String.format("%.1A", double.max) == "0X1.0P1024");
+}
+
+@("String.format applies hexadecimal floating width before precision padding")
+unittest
+{
+    import std.exception : collectException;
+
+    assert(String.format("[%+014A][%020.6a]", 1.5, 1.0) == "[+0X0000001.8P0][0x00000000000001.000000p0]");
+    assert(String.format("[%012A][%+012A]", cast(Object) null, double.nan) == "[        NULL][         NAN]");
+    const wrongType = collectException!IllegalFormatConversionException(String.format("%A", 7));
+    assert(wrongType.getMessage() == "a != java.lang.Integer");
+}
