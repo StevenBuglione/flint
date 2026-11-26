@@ -38,7 +38,7 @@ private final class Place
     }
 }
 
-private final class Inventor
+private class Inventor
 {
     private string name = "Nikola Tesla";
     private Place birthplace;
@@ -63,6 +63,14 @@ private final class Inventor
     string getBroken()
     {
         throw new IllegalStateException("getter failed");
+    }
+}
+
+private final class Engineer(Arguments...) : Inventor
+{
+    string getSpecialty() const
+    {
+        return "electrical";
     }
 }
 
@@ -113,6 +121,29 @@ private SpelEvaluationException failure(SpelExpressionParser parser, string sour
     assert(parser.parseExpression("#this . placeOfBirth").getValue(context).asObject() is root.birthplace);
 }
 
+@("property lookup uses the registered runtime subtype of a boxed base reference")
+unittest
+{
+    Inventor root = new Engineer!int;
+    auto descriptors = table();
+    descriptors.add(descriptorOf!(Engineer!int));
+    auto context = new StandardEvaluationContext(Any.of(root));
+    context.setDescriptorTable(descriptors);
+    auto parser = new SpelExpressionParser;
+    assert(parser.parseExpression("specialty").getValue(context).get!string == "electrical");
+
+    auto baseOnly = new StandardEvaluationContext(Any.of(root));
+    baseOnly.setDescriptorTable(table());
+    assert(parser.parseExpression("name").getValue(baseOnly).get!string == "Nikola Tesla");
+
+    auto complexDescriptors = table();
+    complexDescriptors.add(descriptorOf!(Engineer!(int, string)));
+    Inventor complexRoot = new Engineer!(int, string);
+    auto complex = new StandardEvaluationContext(Any.of(complexRoot));
+    complex.setDescriptorTable(complexDescriptors);
+    assert(parser.parseExpression("specialty").getValue(complex).get!string == "electrical");
+}
+
 @("nonExistentPropertiesAndMethods") unittest
 {
     auto context = new StandardEvaluationContext(Any.of(new Inventor));
@@ -133,6 +164,9 @@ unittest
     auto parser = new SpelExpressionParser;
     auto path = parser.parseExpression("#root?.name");
     assert(path.getValue().isNull());
+    assert(parser.parseExpression("#root?.placeOfBirth?.city").getValue().isNull());
+    failure(parser, "#root?.placeOfBirth.city", new StandardEvaluationContext,
+            SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL, 20);
 }
 
 @("null navigation checks each hop and keeps UTF-16 diagnostic positions")
