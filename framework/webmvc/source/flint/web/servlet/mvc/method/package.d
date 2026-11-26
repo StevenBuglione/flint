@@ -590,6 +590,54 @@ final class RequestMappingInfo
         return compareMediaTypes([first[firstIndex]], [second[secondIndex]]);
     }
 
+    // Spring identifies registrations by their conditions. Path, method, parameter and header
+    // conditions are sets. Media conditions retain their order for negotiation.
+    private bool sameConditions(scope const RequestMappingInfo other) const pure nothrow @nogc
+    {
+        alias samePath = (a, b) => a.getPatternString() == b.getPatternString();
+        alias sameValue = (a, b) => a == b;
+        alias sameHeader = (a, b) => equalsIgnoreCase(a.name, b.name) && a.value == b.value
+            && a.isNegated == b.isNegated && a.hasValue == b.hasValue;
+
+        return this is other || (sameSet!samePath(patterns, other.patterns)
+                && sameSet!sameValue(methods, other.methods) && sameSet!sameValue(params, other.params)
+                && sameSet!sameHeader(headers, other.headers) && sameMediaConditions(consumes,
+                    other.consumes) && sameMediaConditions(produces, other.produces));
+    }
+
+    private static bool sameSet(alias equal, T)(scope const(T)[] first, scope const(T)[] second) pure nothrow @nogc
+    {
+        return containsAll!equal(first, second) && containsAll!equal(second, first);
+    }
+
+    private static bool containsAll(alias equal, T)(scope const(T)[] first, scope const(T)[] second) pure nothrow @nogc
+    {
+        foreach (ref entry; first)
+        {
+            bool found;
+            foreach (ref element; second)
+                if (equal(entry, element))
+                {
+                    found = true;
+                    break;
+                }
+            if (!found)
+                return false;
+        }
+        return true;
+    }
+
+    private static bool sameMediaConditions(scope const(MediaTypeExpression)[] first,
+            scope const(MediaTypeExpression)[] second) pure nothrow @nogc
+    {
+        if (first.length != second.length)
+            return false;
+        foreach (i, ref expression; first)
+            if (expression.isNegated != second[i].isNegated || expression.mediaType != second[i].mediaType)
+                return false;
+        return true;
+    }
+
     override string toString() const
     {
         string text = "{";
@@ -692,7 +740,7 @@ abstract class RequestMappingInfoHandlerMapping : AbstractHandlerMapping
     {
         foreach (existing; registrations)
         {
-            if (existing.info.toString() != info.toString() || existing.handlerMethod is handlerMethod)
+            if (existing.handlerMethod is handlerMethod || !existing.info.sameConditions(info))
                 continue;
             string message = "Ambiguous mapping. Cannot map '" ~ handlerMethod.getBeanName() ~ "' method \n";
             message ~= handlerMethod.toString() ~ "\nto " ~ info.toString() ~ ": There is already '";

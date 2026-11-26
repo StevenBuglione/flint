@@ -725,6 +725,14 @@ The explicit configuration entry point brings the delta to 1,624,310 bytes at
 The framework-test cases verify an independent location snapshot, proof activation
 only for the stock empty handler, and configured dispatch through the adapter.
 
+MVC registration compares parsed conditions directly and renders the mapping only
+when reporting an ambiguity. In a matched LDC release probe of 64 preconstructed
+GET mappings with distinct parameters on one path, startup registration allocated
+653,280 bytes at `e120e79a` and 8,160 bytes at `8e48b55a`. The stock webmvc size probe
+measured 1,624,310 to 1,626,958 loadable bytes at O3, 1,548,006 to 1,550,270 at Oz,
+and 5,960 to 5,976 DMD templates. The regression tests cover distinct headers and
+consumes conditions and reject reordered equivalent mappings.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
