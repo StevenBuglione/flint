@@ -11080,6 +11080,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat` | 2 | Java DateFormat extends Format and is usable through its generic format(Object) contract. Flint has no Format supertype. |
 | framework | `java.text.DateFormat#<init>()` | 2 | Subclass initialization is implicit. Flint has no DateFormat constructor for an explicit super() call, which Java subclasses can make. |
 | framework | `java.text.DateFormat#format(Date)` | 2 | With SimpleDateFormat, a null Date or an absent Calendar can terminate the process. Java throws NullPointerException (R8). |
+| framework | `java.text.DateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | The date append overload needs canonical java.lang.StringBuffer and a FieldPosition for UTF-16 offsets. |
+| framework | `java.text.DateFormat#format(Object,StringBuffer,FieldPosition)` | 2 | Generic date formatting needs canonical java.lang.StringBuffer and Format dispatch to the date append overload. |
 | framework | `java.text.DateFormat#getTimeZone()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#isLenient()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#parse(String)` | 2 | SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14). The convenience overload accepts a returned date even when the parser consumes no input. Java rejects a parse that leaves the start position unchanged. |
@@ -11087,16 +11089,19 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat#setTimeZone(TimeZone)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.FieldPosition` | 2 | Flint has no FieldPosition binding for numeric or attribute field positions and UTF-16 output offsets. |
 | framework | `java.text.Format` | 2 | Flint has no shared Format superclass. The generic formatting contract needs StringBuffer, FieldPosition and AttributedCharacterIterator. |
+| framework | `java.text.Format#format(Object,StringBuffer,FieldPosition)` | 2 | The virtual append contract needs canonical java.lang.StringBuffer, including caller buffer identity and UTF-16 length. |
 | framework | `java.text.MessageFormat` | 2 | Flint declares the class final. Java lets callers subclass MessageFormat and override methods such as toPattern(). |
 | framework | `java.text.MessageFormat#<init>(String)` | 2 | Accepts a null pattern and unknown format types. The default locale also needs Locale.Category.FORMAT. |
 | framework | `java.text.MessageFormat#<init>(String,Locale)` | 2 | Accepts unknown format types when applying the pattern. |
 | framework | `java.text.MessageFormat#format(String,Object...)` | 2 | Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type. |
 | framework | `java.text.MessageFormat#getLocale()` | 2 | Java preserves an explicitly absent locale and returns null. Flint returns a plain Locale value and cannot represent absence (R5). |
 | framework | `java.text.MessageFormat#toPattern()` | 2 | Returns the input pattern text instead of serializing the parsed pattern in Java canonical form. |
+| framework | `java.text.NumberFormat#format(double)` | 2 | Loses the sign of negative zero and of negative values that round to zero. Floating-point scaling misrounds some half-even boundaries, and Double.MAX_VALUE loses its full width. |
 | framework | `java.text.SimpleDateFormat` | 2 | The Java class inherits the Format hierarchy and generic formatting contract through DateFormat. Flint has no Format supertype. |
 | framework | `java.text.SimpleDateFormat#<init>(String)` | 2 | Uses Locale.US for named fields instead of Java's default Locale.Category.FORMAT. |
 | framework | `java.text.SimpleDateFormat#<init>(String,Locale)` | 2 | Rejects named fields with a non-English locale. Java uses that locale's date and time names. |
 | framework | `java.text.SimpleDateFormat#applyPattern(String)` | 2 | Reports only the last digit of an invalid ISO 8601 X repeat count of ten or more. Java reports the full count. When an unsupported letter immediately follows an invalid X run, Java reports the unsupported letter first. Flint reports the invalid run first. |
+| framework | `java.text.SimpleDateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | Appending the date to the caller buffer and updating UTF-16 field offsets needs canonical java.lang.StringBuffer and FieldPosition. |
 | framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Interprets the initial ParsePosition index and reports consumed and error indices in UTF-8 bytes. Java uses UTF-16 code units (R14). Passing a null ParsePosition terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.SimpleDateFormat#set2DigitYearStart(Date)` | 2 | Computes the year window in a separate calendar. Java sets the time of the formatter's caller-visible calendar when applying the requested start. |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
