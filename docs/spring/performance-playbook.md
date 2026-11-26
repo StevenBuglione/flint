@@ -645,6 +645,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Match grandfathered Locale tags without case-fold allocation.** The immutable Java replacement table checks whole tags, with ordinary short language-region tags bypassing lookup. On venus against `5b42d9dd1`, the Java module probe measured 129,496 O3 and 122,144 Oz incremental loadable bytes before and after the change with LDC 1.43.0. DMD template instances rose from 4,449 to 4,451 against the 7,350 cap.
 
+- **Preserve the script-free Locale hash path.** Parsed scripts are normalized once and participate in equality and hashing. A title-cased script keeps the original tag slice. On venus against `50ee99785`, the Java module probe stayed at 129,496 O3 and 122,144 Oz incremental loadable bytes with LDC 1.43.0. DMD template instances rose from 4,451 to 4,460 against the 7,350 cap. The Locale value grew from 48 to 64 bytes on x86_64. Matched canonical DMD dev builds regenerated identical AOT source for gs-rest-service and petclinic-rest.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:
