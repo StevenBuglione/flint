@@ -1,5 +1,6 @@
 module flint.java.date_test;
 
+import flint.java.lang : ArithmeticException, IllegalArgumentException;
 import flint.java.time : Instant;
 import flint.java.util : Date, HashSet;
 
@@ -16,6 +17,32 @@ unittest
     assert(Date.from(Instant.ofEpochMilli(1_795_445_460_123)) == date);
     assert(new Date(-1).toString() == "Wed Dec 31 23:59:59 UTC 1969");
     assert(new Date(951_782_400_000).toString() == "Tue Feb 29 00:00:00 UTC 2000"); // a leap day
+}
+
+@("Date.from floors fractions and checks the full signed millisecond range")
+unittest
+{
+    assert(Date.from(Instant.ofEpochMilli(long.min)).getTime() == long.min);
+    assert(Date.from(Instant.ofEpochMilli(long.max)).getTime() == long.max);
+    assert(Date.from(Instant.ofEpochSecond(9_223_372_036_854_775, 807_999_999)).getTime() == long.max);
+    assert(Date.from(Instant.ofEpochSecond(-1, 999_999_999)).getTime() == -1);
+
+    foreach (instant; [
+        Instant.ofEpochSecond(-9_223_372_036_854_776, 191_999_999),
+        Instant.ofEpochSecond(9_223_372_036_854_775, 808_000_000)
+    ])
+    {
+        try
+        {
+            Date.from(instant);
+            assert(false, "Expected Date.from to reject a millisecond outside the signed range");
+        }
+        catch (IllegalArgumentException error)
+        {
+            assert(error.msg == "java.lang.ArithmeticException: long overflow");
+            assert(cast(ArithmeticException) error.getCause() !is null);
+        }
+    }
 }
 
 unittest

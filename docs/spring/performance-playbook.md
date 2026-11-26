@@ -536,6 +536,7 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 - **Treat null calendar parse slices as empty under R26.** Period, Year, YearMonth and MonthDay share their existing empty-input diagnostic for every zero-length text slice. On venus with stock LDC 1.43.0 and DMD against base `cb82fade1`, the java-time module probe fell from 23,084 to 22,252 incremental loadable bytes and from 693 to 689 template instances. Each affected parser-and-renderer closure declined by 816 to 848 bytes across O3 and Oz. The other 42 closure results retained the same byte counts.
 
 - **Use the empty-name path for null TimeDefinition slices under R26.** Dropping the dedicated null overload and branch reduced the enum link probe by 920 incremental loadable bytes in each of the stock LDC 1.43.0 O3 and Oz profiles against `6db8c28c6` on venus. The other 48 closure results and the java-time module's 22,252 incremental bytes stayed unchanged. The module's DMD template count fell from 689 to 687.
+- **Check epoch milliseconds with both seconds and the fractional part.** `Date.from` accepts the first partial second within the signed millisecond range and rejects overflow with the Java cause chain. The Java 21 witness and both D compiler tests cover the endpoints and the fractional boundaries. The stock O3/Oz conversion probe against `18199b85` adds 444/460 loadable bytes and retains the same Java module records. The extra exception allocation occurs only when conversion overflows.
 
 ## 6. Checklist for porting a module
 

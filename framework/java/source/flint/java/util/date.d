@@ -38,11 +38,21 @@ class Date : Comparable!Date
     /// The `Date` of `instant`. Throws `IllegalArgumentException` when it is too large for epoch milliseconds.
     static Date from(imported!"flint.java.time".Instant instant)
     {
-        import flint.java.lang : IllegalArgumentException;
+        import flint.java.lang : ArithmeticException, IllegalArgumentException;
 
+        enum millisPerSecond = 1_000;
+        enum firstSecond = long.min / millisPerSecond - 1;
+        enum firstFraction = millisPerSecond + long.min % millisPerSecond;
+        enum lastSecond = long.max / millisPerSecond;
+        enum lastFraction = long.max % millisPerSecond;
         const seconds = instant.getEpochSecond();
-        if (seconds > long.max / 1000 || seconds < long.min / 1000)
-            throw new IllegalArgumentException("java.lang.ArithmeticException: long overflow");
+        const fraction = instant.getNano() / 1_000_000;
+        // The first representable second starts before the signed millisecond range.
+        if (seconds == firstSecond && fraction >= firstFraction)
+            return new Date(long.min + (fraction - firstFraction));
+        if (seconds <= firstSecond || seconds > lastSecond || (seconds == lastSecond && fraction > lastFraction))
+            throw new IllegalArgumentException("java.lang.ArithmeticException: long overflow",
+                    new ArithmeticException("long overflow"));
         return new Date(instant.toEpochMilli());
     }
 
