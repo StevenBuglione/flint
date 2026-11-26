@@ -3,6 +3,7 @@ module bitset_test;
 
 import core.memory : GC;
 import flint.java.lang : IndexOutOfBoundsException, NullPointerException;
+import flint.java.util : HashMap;
 import flint.java.util.bitset : BitSet;
 import std.exception : assertThrown;
 
@@ -132,6 +133,71 @@ unittest
             digest = 31 * digest + cast(uint)(word ^ (cast(ulong) word >> 32));
     }
     assert(digest == 944_109_785);
+}
+
+@("equal bit sets have value semantics and ignore spare capacity")
+unittest
+{
+    auto left = new BitSet();
+    auto right = new BitSet();
+    right.set(2_048);
+    right.clear();
+    assert(left.size() < right.size() && left.equals(right) && left.hashCode() == 1_234);
+    assert(!left.equals(null) && !left.equals(new Object()));
+    left.set(63, 130);
+    right.set(63, 130);
+    assert(left.equals(left) && left.equals(right) && right.equals(left));
+    assert(left == right && left.hashCode() == right.hashCode() && left.toHash() == right.toHash());
+
+    auto keys = new HashMap!(BitSet, int)();
+    keys.put(left, 42);
+    assert(keys.containsKey(right) && keys.get(right) == 42);
+    int[BitSet] associations;
+    associations[left] = 42;
+    assert(associations[right] == 42);
+
+    right.clear(127);
+    assert(!left.equals(right) && !right.equals(left) && !keys.containsKey(right));
+    right.set(127);
+    right.set(191);
+    assert(!left.equals(right));
+}
+
+@("bit set equality and hashing agree with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto left = new BitSet();
+    auto right = new BitSet();
+    right.set(2_048);
+    right.clear();
+    uint state = 0x4da1_2b76;
+    uint digest;
+    foreach (step; 0 .. 512)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        if ((step & 31) == 0)
+        {
+            left.clear();
+            right.clear();
+        }
+        const start = cast(int)((state >> 13) % 511);
+        const end = start + 1 + cast(int)(state & 63);
+        left.flip(start, end);
+        right.flip(start, end + ((step & 15) == 9 ? 1 : 0));
+        digest = 31 * digest + cast(uint) left.hashCode();
+        digest = 31 * digest + cast(uint) right.hashCode();
+        digest = 31 * digest + (left.equals(right) ? 1u : 0u);
+    }
+    assert(digest == 1_652_774_671);
+
+    const hash = left.hashCode();
+    const before = GC.stats().allocatedInCurrentThread;
+    foreach (_; 0 .. 500)
+    {
+        assert(left.equals(left) && left.hashCode() == hash);
+        assert(left.equals(right) == right.equals(left));
+    }
+    assert(GC.stats().allocatedInCurrentThread == before);
 }
 
 @("and clears unmatched words without shrinking or growing capacity")
