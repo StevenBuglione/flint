@@ -10,3 +10,4 @@ description = "Flint AOT fixture for relaxed property names in Boot's applicatio
 "flint:boot-core" = {}
 "flint:boot-autoconfigure" = {}
 "flint:context" = {}
+"flint:core" = {}

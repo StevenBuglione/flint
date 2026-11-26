@@ -74,3 +74,27 @@ unittest
 {
     expectBean("withRequiredString", true, [["simple.my-property", "bar"]]);
 }
+
+@("ConditionalOnPropertyTests.metaAnnotationConditionMatchesWhenPropertyIsSet")
+unittest
+{
+    expectBean("withMeta", true, [["my.feature.enabled", "true"]]);
+}
+
+@("ConditionalOnPropertyTests.metaAnnotationConditionDoesNotMatchWhenPropertyIsNotSet")
+unittest
+{
+    expectBean("withMeta", false, []);
+}
+
+@("ConditionalOnPropertyTests.metaAnnotationWithAliasConditionMatchesWhenPropertyIsSet")
+unittest
+{
+    expectBean("withAliasedMeta", true, [["my.feature.enabled", "true"]]);
+}
+
+@("A composed property condition with a prefix alias requires the prefixed key")
+unittest
+{
+    expectBean("withAliasedMeta", false, [["enabled", "true"]]);
+}

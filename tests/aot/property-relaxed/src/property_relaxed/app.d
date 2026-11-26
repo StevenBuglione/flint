@@ -7,6 +7,7 @@ module property_relaxed.app;
 import flint.boot.autoconfigure : FlintBootApplication;
 import flint.boot.autoconfigure.condition : ConditionalOnProperty;
 import flint.context.annotation : Bean, Configuration;
+import flint.core.annotation : AliasFor, ClassRef;
 
 @safe:
 
@@ -67,6 +68,47 @@ class RequiredStringConfiguration
     /// Registered when the value of the prefixed key matches.
     @Bean
     Object withRequiredString()
+    {
+        return new Object();
+    }
+}
+
+/// Composes the property condition for the feature's enabled key.
+@ConditionalOnProperty(prefix: "my.feature", name: ["enabled"], havingValue: "true")
+struct ConditionalOnMyFeature
+{
+}
+
+/// Composes a property condition with a caller-selected prefix.
+@ConditionalOnProperty(name: ["enabled"], havingValue: "true")
+struct ConditionalOnMyFeatureWithAlias
+{
+    /// Overrides the property's prefix in the composed condition.
+    @AliasFor(annotation: ClassRef("flint.boot.autoconfigure.condition.ConditionalOnProperty"), attribute: "prefix")
+    string value;
+}
+
+/// Uses the feature's composed condition.
+@Configuration(proxyBeanMethods: false)
+@ConditionalOnMyFeature
+class MetaAnnotation
+{
+    /// Registered when the composed property condition matches.
+    @Bean
+    Object withMeta()
+    {
+        return new Object();
+    }
+}
+
+/// Supplies the feature prefix through the annotation's value alias.
+@Configuration(proxyBeanMethods: false)
+@ConditionalOnMyFeatureWithAlias("my.feature")
+class MetaAnnotationWithAlias
+{
+    /// Registered when the aliased property condition matches.
+    @Bean
+    Object withAliasedMeta()
     {
         return new Object();
     }
