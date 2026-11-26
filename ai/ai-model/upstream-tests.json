@@ -406,8 +406,27 @@
       "status": "deferred"
     },
     "org/springframework/ai/model/EmbeddingUtilsTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-model/tests/embedding_utils_tests.d",
+      "methods": {
+        "ported": [
+          "toFloatArrayShouldConvertCorrectly",
+          "toFloatArrayShouldReturnEmptyArrayForEmptyInput",
+          "toFloatArrayShouldReturnEmptyArrayForNullInput"
+        ],
+        "skipped": {
+          "doubleToFloatShouldConvertCorrectly": "Requires the typed boxed-float or boxed-double List conversion.",
+          "doubleToFloatShouldReturnEmptyListForEmptyInput": "Requires the typed boxed-float or boxed-double List conversion.",
+          "toListShouldConvertCorrectly": "Requires the typed boxed-float or boxed-double List conversion.",
+          "toListShouldReturnEmptyListForEmptyInput": "Requires the typed boxed-float or boxed-double List conversion.",
+          "toPrimitiveArrayShouldConvertCorrectly": "Requires the shared primitive empty-array representation.",
+          "toPrimitiveArrayShouldReturnEmptyArrayForEmptyInput": "Requires the shared primitive empty-array representation.",
+          "toPrimitiveArrayShouldReturnEmptyArrayForNullInput": "Requires the shared primitive empty-array representation.",
+          "toPrimitiveListShouldConvertCorrectly": "Requires the typed boxed-float or boxed-double List conversion.",
+          "toPrimitiveListShouldReturnEmptyArrayForEmptyInput": "Requires the typed boxed-float or boxed-double List conversion.",
+          "toPrimitiveListShouldReturnEmptyArrayForNullInput": "Requires the typed boxed-float or boxed-double List conversion."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/ai/model/MediaTests.java": {
       "phase": "2",

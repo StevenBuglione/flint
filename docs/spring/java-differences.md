@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 137 | 254 | 0 | 15,405 |
+| ai | spring-ai@v2.1.0 | 138 | 255 | 0 | 15,403 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,375 | 1,310 | 4,848 | 30,301 |
@@ -370,6 +370,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.ai.model.EmbeddingModelDescription#getDimensions()` | `flint.ai.model.EmbeddingModelDescription.getDimensions` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.ai.model.EmbeddingUtils#toFloatArray(float[])` | `flint.ai.model.EmbeddingUtils.toFloatArray` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.model.ModelDescription#getDescription()` | `flint.ai.model.ModelDescription.getDescription` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.ai.model.ModelDescription#getVersion()` | `flint.ai.model.ModelDescription.getVersion` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.ai.model.SimpleApiKey` | `flint.ai.model.SimpleApiKey` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
@@ -8032,7 +8033,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.mistralai.api | 0 | 321 |
 | org.springframework.ai.mistralai.moderation | 0 | 17 |
 | org.springframework.ai.mistralai.ocr | 0 | 82 |
-| org.springframework.ai.model | 54 | 0 |
+| org.springframework.ai.model | 52 | 0 |
 | org.springframework.ai.model.anthropic.autoconfigure | 0 | 103 |
 | org.springframework.ai.model.audio.observation.autoconfigure | 12 | 0 |
 | org.springframework.ai.model.bedrock.autoconfigure | 0 | 35 |

@@ -70,7 +70,6 @@
       "org/springframework/ai/image/observation/ImageModelObservationContextTests.java",
       "org/springframework/ai/image/observation/ImageModelPromptContentObservationHandlerTests.java",
       "org/springframework/ai/metadata/UsageTests.java",
-      "org/springframework/ai/model/EmbeddingUtilsTests.java",
       "org/springframework/ai/model/MediaTests.java",
       "org/springframework/ai/model/MutableResponseMetadataTests.java",
       "org/springframework/ai/model/observation/ModelObservationContextTests.java",
