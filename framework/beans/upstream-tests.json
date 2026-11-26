@@ -61,8 +61,24 @@
       "status": "deferred"
     },
     "org/springframework/beans/PropertyMatchesTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/beans/tests/property_matches_tests.d",
+      "methods": {
+        "ported": [
+          "complexBeanPropertyErrorMessage",
+          "complexBeanPropertyTypo",
+          "complexFieldPropertyErrorMessage",
+          "complexFieldPropertyTypo",
+          "severalMatchesBeanProperty",
+          "severalMatchesFieldProperty",
+          "simpleBeanPropertyErrorMessage",
+          "simpleBeanPropertyTypo",
+          "simpleFieldPropertyErrorMessage",
+          "simpleFieldPropertyTypo",
+          "unknownBeanProperty",
+          "unknownFieldProperty"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/beans/PropertyPathTests.java": {
       "phase": "2",

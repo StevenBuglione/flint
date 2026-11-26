@@ -184,7 +184,6 @@
       "org/springframework/beans/PropertyAccessorUtilsTests.java",
       "org/springframework/beans/PropertyDescriptorUtilsPropertyResolutionTests.java",
       "org/springframework/beans/PropertyEditorRegistrySupportTests.java",
-      "org/springframework/beans/PropertyMatchesTests.java",
       "org/springframework/beans/PropertyPathTests.java",
       "org/springframework/beans/SimplePropertyDescriptorTests.java",
       "org/springframework/beans/factory/BeanFactoryLockingTests.java",

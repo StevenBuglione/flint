@@ -1,0 +1,5 @@
+{
+ "id": "D-BEANS-1",
+ "deviation": "PropertyMatches uses a shared implementation for both kinds of suggestions. Its protected appendHintMessage appends to a ref string (R14).",
+ "reason": "The matching algorithm can share candidate-name handling. Flint has no Java StringBuilder."
+}

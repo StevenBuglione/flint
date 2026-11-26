@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
 | data-commons | spring-data-commons@4.2.0 | 206 | 104 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,615 | 1,482 | 4,870 | 29,867 |
+| framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2776,6 +2776,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.beans.BeanInstantiationException#<init>(Class,String)` | `flint.beans.BeanInstantiationException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.BeanInstantiationException#<init>(Class,String,Throwable)` | `flint.beans.BeanInstantiationException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.beans.PropertyMatches#appendHintMessage(StringBuilder)` | `flint.beans.propertymatches.PropertyMatches.appendHintMessage` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `org.springframework.beans.PropertyMatches#forField(String,Class)` | `flint.beans.propertymatches.PropertyMatches.forField` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.beans.PropertyMatches#forField(String,Class,int)` | `flint.beans.propertymatches.PropertyMatches.forField` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.beans.PropertyMatches#forProperty(String,Class)` | `flint.beans.propertymatches.PropertyMatches.forProperty` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.beans.PropertyMatches#forProperty(String,Class,int)` | `flint.beans.propertymatches.PropertyMatches.forProperty` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.beans.factory
 
@@ -10217,7 +10222,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.target.dynamic | 16 | 0 |
 | org.springframework.aot | 4 | 0 |
 | org.springframework.aot.nativex | 8 | 0 |
-| org.springframework.beans | 334 | 0 |
+| org.springframework.beans | 324 | 0 |
 | org.springframework.beans.factory | 127 | 0 |
 | org.springframework.beans.factory.annotation | 103 | 0 |
 | org.springframework.beans.factory.aot | 123 | 0 |
