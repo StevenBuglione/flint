@@ -1291,3 +1291,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - the seed adds only that module's or namespace's upstream test classes as deferred.
 
   The commit body lists the exact class paths. Seeding never changes a recorded entry, and the upstream-tests step must PASS. Anything wider still goes to the coordinator. Budget-raise trailers stay with the coordinator (the lanes' own AGENTS rule).
+- 2026-11-26 07:22Z, coordinator, under the owner's standing approval: **main is within its `flint budget`** (proof-harness, posidon, `--repeat 5` on 962c64a8).
+  - **'update owner pet':** median 561,003 against a budget of 562,146, with a spread under 0.1%. The +1.3% misses seen on train candidates are therefore real and come from a submission. The train's median re-measure (962c64a8) bisects them to their submission. No re-baseline is needed.
+  - **'create owner: telephone with letters':** bimodal on main, with runs of 103.2k and 104.4k, about 1.2% apart. That explains main's earlier +1.17%.
+  - **Tolerance for that one endpoint:** m7 may set it from its measured spread (`--update --repeat 5`, 3× the spread), in a commit with the samples. This is the separate decision the 05:55Z rule asked for. All other endpoints keep 1%. The source of the bimodality (likely GC timing) is worth finding later.
