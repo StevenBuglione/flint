@@ -12,6 +12,7 @@
   "java.time.zone.ZoneOffsetTransition": "flint.java.time.zone.zoneoffsettransition",
   "java.time.zone.ZoneOffsetTransitionRule": "flint.java.time.zone.zoneoffsettransitionrule",
   "java.time.zone.ZoneRules": "flint.java.time.zone.zonerules",
+  "java.util.BitSet": "flint.java.util.bitset",
   "java.util.HexFormat": "flint.java.util.hexformat",
   "java.util.IllegalFormatConversionException": "flint.java.util.formatter",
   "java.util.IllegalFormatException": "flint.java.util.formatter",

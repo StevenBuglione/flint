@@ -156,38 +156,6 @@
       "phase": "2",
       "status": "deferred"
     },
-    "java/util/BitSet/And.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/BitSet/BSMethods.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/BitSet/HugeToString.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/BitSet/ImportExport.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/BitSet/MemoryLeak.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/BitSet/PreviousBits.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/BitSet/StickySize.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/util/BitSet/stream/BitSetStreamTest.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
     "java/util/Calendar/BuddhistCalendarTest.java": {
       "phase": "2",
       "status": "deferred"

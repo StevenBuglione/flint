@@ -1,0 +1,8 @@
+name "probe-java-collections"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-java-collections"
+dflags "-preview=dip1000"
+dependency "flint:java-collections" path="../../.."

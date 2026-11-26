@@ -3355,6 +3355,16 @@
       "tools/jackson/databind/views/ViewsWithCreatorTest.java",
       "tools/jackson/databind/views/ViewsWithSchemaTest.java"
     ],
+    "java-collections": [
+      "java/util/BitSet/And.java",
+      "java/util/BitSet/BSMethods.java",
+      "java/util/BitSet/HugeToString.java",
+      "java/util/BitSet/ImportExport.java",
+      "java/util/BitSet/MemoryLeak.java",
+      "java/util/BitSet/PreviousBits.java",
+      "java/util/BitSet/StickySize.java",
+      "java/util/BitSet/stream/BitSetStreamTest.java"
+    ],
     "java-concurrent": [
       "java/util/concurrent/ArrayBlockingQueue/WhiteBox.java",
       "java/util/concurrent/BlockingQueue/CancelledProducerConsumerLoops.java",
@@ -4182,14 +4192,6 @@
       "java/util/Base64/TestBase64.java",
       "java/util/Base64/TestBase64Golden.java",
       "java/util/Base64/TestEncodingDecodingLength.java",
-      "java/util/BitSet/And.java",
-      "java/util/BitSet/BSMethods.java",
-      "java/util/BitSet/HugeToString.java",
-      "java/util/BitSet/ImportExport.java",
-      "java/util/BitSet/MemoryLeak.java",
-      "java/util/BitSet/PreviousBits.java",
-      "java/util/BitSet/StickySize.java",
-      "java/util/BitSet/stream/BitSetStreamTest.java",
       "java/util/Calendar/BuddhistCalendarTest.java",
       "java/util/Calendar/Bug4302966.java",
       "java/util/Calendar/Bug4766302.java",
