@@ -884,6 +884,79 @@ interface HistogramSupport : Meter
 /// Count nonnegative samples and report their total and recent maximum.
 interface DistributionSummary : HistogramSupport
 {
+    /// Configure a distribution summary before registering it.
+    static Builder builder(string name)
+    {
+        return Builder(name);
+    }
+
+    /// Register a distribution summary with a name, dimensions, metadata and scale.
+    static struct Builder
+    {
+        private string name;
+        private Tags dimensions;
+        private NullableString description_;
+        private NullableString baseUnit_;
+        private double scale_ = 1.0;
+
+        private this(string name)
+        {
+            this.name = name;
+            dimensions = Tags.empty();
+        }
+
+        /// Add alternating tag keys and values.
+        ref Builder tags(scope const(string)[] keyValues...) return
+        {
+            dimensions = dimensions.and(keyValues);
+            return this;
+        }
+
+        /// Add dimensions. Later entries override the same key.
+        ref Builder tags(TagIterable tags) return
+        {
+            dimensions = dimensions.and(tags);
+            return this;
+        }
+
+        /// Add or replace one dimension.
+        ref Builder tag(string key, string value) return
+        {
+            dimensions = dimensions.and(key, value);
+            return this;
+        }
+
+        /// Set the description of the registered meter.
+        ref Builder description(NullableString description) return
+        {
+            description_ = description;
+            return this;
+        }
+
+        /// Set the base unit of the registered meter.
+        ref Builder baseUnit(NullableString baseUnit) return
+        {
+            baseUnit_ = baseUnit;
+            return this;
+        }
+
+        /// Multiply each accepted amount by the given scale.
+        ref Builder scale(double scale) return
+        {
+            scale_ = scale;
+            return this;
+        }
+
+        /// Register the summary and return its retained handle.
+        DistributionSummary register(MeterRegistry registry)
+        {
+            if (registry is null)
+                throw new NullPointerException("registry");
+            auto id = new Meter.Id(name, dimensions, baseUnit_, description_, Type.DISTRIBUTION_SUMMARY);
+            return registry.summary(id, scale_);
+        }
+    }
+
     /// Record an amount. Negative values and NaN are ignored.
     void record(double amount) nothrow @nogc;
 
@@ -1326,7 +1399,7 @@ abstract class MeterRegistry
     private Clock registryClock;
     private Config configuration;
     private alias TimerFactory = Timer function(Meter.Id) @safe;
-    private alias SummaryFactory = DistributionSummary function(Meter.Id) @safe;
+    private alias SummaryFactory = DistributionSummary function(Meter.Id, double) @safe;
     private TimerFactory timerFactory;
     private SummaryFactory summaryFactory;
     private bool closed;
@@ -1446,10 +1519,15 @@ abstract class MeterRegistry
     {
         auto id = new Meter.Id(name, Tags.of(tags), NullableString.init, NullableString.init,
                 Meter.Type.DISTRIBUTION_SUMMARY);
-        return cast(DistributionSummary) registerMeter(id);
+        return summary(id, 1.0);
     }
 
-    private Meter registerMeter(Meter.Id id)
+    private DistributionSummary summary(Meter.Id id, double scale)
+    {
+        return cast(DistributionSummary) registerMeter(id, scale);
+    }
+
+    private Meter registerMeter(Meter.Id id, double summaryScale = 1.0)
     {
         gate.lock_nothrow();
         scope (exit)
@@ -1464,7 +1542,7 @@ abstract class MeterRegistry
         }
 
         const wasClosed = closed;
-        auto created = createMeter(id, wasClosed);
+        auto created = createMeter(id, wasClosed, summaryScale);
         if (!wasClosed)
             meters ~= created;
         return created;
@@ -1499,7 +1577,7 @@ abstract class MeterRegistry
                 ~ registered ~ " vs. " ~ requested ~ ") with the same name: " ~ id.getName());
     }
 
-    private Meter createMeter(Meter.Id id, bool noop)
+    private Meter createMeter(Meter.Id id, bool noop, double summaryScale)
     {
         string unavailable;
         switch (id.getType())
@@ -1517,7 +1595,7 @@ abstract class MeterRegistry
             if (noop)
                 return new NoopDistributionSummary(id);
             if (summaryFactory !is null)
-                return summaryFactory(id);
+                return summaryFactory(id, summaryScale);
             unavailable = "This registry does not provide distribution summaries";
             break;
         default:

@@ -51,9 +51,9 @@ class SimpleMeterRegistry : MeterRegistry
         return new CumulativeTimer(id.withBaseUnit(Nullable!string("seconds")), Clock.SYSTEM);
     }
 
-    private static DistributionSummary createSummary(Meter.Id id)
+    private static DistributionSummary createSummary(Meter.Id id, double scale)
     {
-        return new CumulativeDistributionSummary(id, Clock.SYSTEM);
+        return new CumulativeDistributionSummary(id, Clock.SYSTEM, scale);
     }
 }
 
@@ -135,12 +135,14 @@ private final class CumulativeDistributionSummary : DistributionSummary
 {
     private Meter.Id id;
     private TimeWindowMax window;
+    private immutable double scale;
     private shared long events;
     private shared double total = 0.0;
 
-    this(Meter.Id id, Clock clock)
+    this(Meter.Id id, Clock clock, double scale)
     {
         this.id = id;
+        this.scale = scale;
         window = defaultWindow(clock);
     }
 
@@ -153,6 +155,7 @@ private final class CumulativeDistributionSummary : DistributionSummary
     {
         if (!(amount >= 0.0))
             return;
+        amount *= scale;
         atomicOp!"+="(events, 1L);
         atomicOp!"+="(total, amount);
         window.record(amount);

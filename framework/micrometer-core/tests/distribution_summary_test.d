@@ -19,11 +19,12 @@ module micrometer_distribution_summary_test;
 
 import core.memory : GC;
 import core.thread : Thread;
-import flint.java.lang : IllegalArgumentException, Iterable;
+import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
 import flint.micrometer.core.instrument : Counter, DistributionSummary, Measurement, Meter, Statistic, Tag, Tags;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 import std.exception : assertThrown;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -164,4 +165,63 @@ unittest
         thread.join();
     assert(summary.count() == threads.length * samples && summary.totalAmount() == threads.length * samples * 1.25);
     assert(summary.max() == 1.25);
+}
+
+@("summary builder preserves the first metadata and scale for a registered identity")
+unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    Iterable!Tag tags = Tags.of("region", "east", "response", "ok");
+    auto builder = DistributionSummary.builder("response.size");
+    assertThrown!NullPointerException(builder.register(null));
+    auto summary = builder.tags("region", "west").tags(tags).tag("region", "north")
+        .description(Nullable!string("Response size")).baseUnit(Nullable!string("bytes")).scale(2).register(registry);
+
+    const duplicate = DistributionSummary.builder("response.size").tags("region", "north",
+            "response", "ok").description(Nullable!string("Discard this")).scale(10).register(registry);
+    assert(duplicate is summary);
+    assert(registry.summary("response.size", "region", "north", "response", "ok") is summary);
+    assert(summary.getId().getDescription().get() == "Response size");
+    assert(summary.getId().getBaseUnit().get() == "bytes");
+
+    auto direct = registry.summary("direct");
+    assert(DistributionSummary.builder("direct").scale(10).register(registry) is direct);
+    direct.record(2);
+    assert(direct.totalAmount() == 2);
+
+    summary.record(1.5);
+    assert(summary.count() == 1 && summary.totalAmount() == 3 && summary.max() == 3);
+    registry.close();
+    assert(builder.register(registry) is summary);
+
+    auto fresh = builder.tag("region", "south").description(Nullable!string.init)
+        .baseUnit(Nullable!string.init).register(registry);
+    fresh.record(1.5);
+    assert(fresh.getId().getDescription().isNull && fresh.getId().getBaseUnit().isNull);
+    assert(fresh.count() == 0 && fresh.totalAmount() == 0 && fresh.max() == 0);
+}
+
+// The scaling case follows MeterRegistryCompatibilityKit.DistributionSummaryTck.scale from micrometer-test 1.18.0.
+@("the summary scale applies after rejecting negative and NaN amounts without allocating")
+@system unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    auto scaled = DistributionSummary.builder("scaled").scale(0.5).register(registry);
+    auto negative = DistributionSummary.builder("negative.scale").scale(-2).register(registry);
+    auto nan = DistributionSummary.builder("nan.scale").scale(double.nan).register(registry);
+
+    const before = GC.stats().allocatedInCurrentThread;
+    scaled.record(5.5);
+    scaled.record(-1);
+    scaled.record(double.nan);
+    negative.record(2.5);
+    negative.record(-1);
+    nan.record(1);
+    nan.record(2);
+    assert(GC.stats().allocatedInCurrentThread == before);
+    assert(scaled.count() == 1 && scaled.totalAmount() == 2.75 && scaled.max() == 2.75);
+    assert(negative.count() == 1 && negative.totalAmount() == -5 && negative.max() == 0);
+    const nanTotal = nan.totalAmount();
+    const nanMax = nan.max();
+    assert(nan.count() == 2 && nanTotal != nanTotal && nanMax != nanMax);
 }

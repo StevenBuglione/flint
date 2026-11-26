@@ -189,7 +189,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 130 | 123 | 0 | 2,137 |
+| framework | micrometer-core@1.18.0 | 130 | 132 | 0 | 2,128 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 7 | 40 | 0 | 4,405 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
@@ -821,8 +821,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.Counter.Builder#tag(String,String)` | `flint.micrometer.core.instrument.Counter.Builder.tag` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `io.micrometer.core.instrument.Counter.Builder#tags(Iterable)` | `flint.micrometer.core.instrument.Counter.Builder.tags` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `io.micrometer.core.instrument.Counter.Builder#tags(String...)` | `flint.micrometer.core.instrument.Counter.Builder.tags` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `io.micrometer.core.instrument.DistributionSummary#builder(String)` | `flint.micrometer.core.instrument.DistributionSummary.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `io.micrometer.core.instrument.DistributionSummary#mean()` | `flint.micrometer.core.instrument.DistributionSummary.Defaults.mean` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.core.instrument.DistributionSummary#measure()` | `flint.micrometer.core.instrument.DistributionSummary.Defaults.measure` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.core.instrument.DistributionSummary.Builder` | `flint.micrometer.core.instrument.DistributionSummary.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `io.micrometer.core.instrument.DistributionSummary.Builder#baseUnit(String)` | `flint.micrometer.core.instrument.DistributionSummary.Builder.baseUnit` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `io.micrometer.core.instrument.DistributionSummary.Builder#description(String)` | `flint.micrometer.core.instrument.DistributionSummary.Builder.description` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `io.micrometer.core.instrument.DistributionSummary.Builder#register(MeterRegistry)` | `flint.micrometer.core.instrument.DistributionSummary.Builder.register` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `io.micrometer.core.instrument.DistributionSummary.Builder#scale(double)` | `flint.micrometer.core.instrument.DistributionSummary.Builder.scale` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `io.micrometer.core.instrument.DistributionSummary.Builder#tag(String,String)` | `flint.micrometer.core.instrument.DistributionSummary.Builder.tag` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `io.micrometer.core.instrument.DistributionSummary.Builder#tags(Iterable)` | `flint.micrometer.core.instrument.DistributionSummary.Builder.tags` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `io.micrometer.core.instrument.DistributionSummary.Builder#tags(String...)` | `flint.micrometer.core.instrument.DistributionSummary.Builder.tags` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `io.micrometer.core.instrument.ImmutableTag` | `flint.micrometer.core.instrument.ImmutableTag` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `io.micrometer.core.instrument.ImmutableTag#equals(Object)` | `flint.micrometer.core.instrument.ImmutableTag.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `io.micrometer.core.instrument.ImmutableTag#hashCode()` | `flint.micrometer.core.instrument.ImmutableTag.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality), [R14](api-mapping.md#r14-strings-and-text) |  |
@@ -9186,7 +9195,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.common.util | 7 | 0 |
 | io.micrometer.core.annotation | 17 | 0 |
 | io.micrometer.core.aop | 35 | 0 |
-| io.micrometer.core.instrument | 325 | 0 |
+| io.micrometer.core.instrument | 316 | 0 |
 | io.micrometer.core.instrument.binder | 27 | 0 |
 | io.micrometer.core.instrument.binder.cache | 79 | 0 |
 | io.micrometer.core.instrument.binder.commonspool2 | 6 | 0 |
