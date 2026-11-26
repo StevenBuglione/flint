@@ -653,9 +653,12 @@ final class ShutdownHook
         import core.thread.osthread : Thread;
         import core.time : msecs;
 
+        // A compile-time constant: a run-time `msecs` instantiates core.time's dur!"msecs", which the link
+        // resolves from Phobos's socket.o, the head of the network cascade (playbook S-24).
+        enum pause = 50.msecs;
         while (!context.isTerminated() && !(isShutdownRequested() && (!atomicLoad(closingSet)
                 || atomicLoad(closeDone))))
-            Thread.sleep(50.msecs);
+            Thread.sleep(pause);
     }
 
     private void closeOnce() nothrow
