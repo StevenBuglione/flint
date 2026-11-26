@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 195 | 323 | 0 | 15,278 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,490 | 1,390 | 4,849 | 30,105 |
+| framework | spring-framework@v7.1.0 | 3,491 | 1,393 | 4,849 | 30,101 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -3282,6 +3282,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.mock.web.MockHttpServletRequest#getUriTemplate()` | `flint.mock.web.MockHttpServletRequest.getUriTemplate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.mock.web.MockHttpServletRequest#setPathInfo(String)` | `flint.mock.web.MockHttpServletRequest.setPathInfo` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.mock.web.MockHttpServletRequest#setUriTemplate(String)` | `flint.mock.web.MockHttpServletRequest.setUriTemplate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.mock.web.MockHttpServletResponse#getContentType()` | `flint.mock.web.MockHttpServletResponse.getContentType` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Uses the existing Jakarta ServletResponse string signature. A null slice represents absence. |
+| `org.springframework.mock.web.MockHttpServletResponse#setCharacterEncoding(String)` | `flint.mock.web.MockHttpServletResponse.setCharacterEncoding` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Uses the existing Jakarta ServletResponse string signature. A null slice represents absence. |
+| `org.springframework.mock.web.MockHttpServletResponse#setContentType(String)` | `flint.mock.web.MockHttpServletResponse.setContentType` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Uses the existing Jakarta ServletResponse string signature. A null slice represents absence. |
 
 #### org.springframework.orm
 
@@ -9560,7 +9563,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.mock.http.client | 23 | 0 |
 | org.springframework.mock.http.client.reactive | 0 | 28 |
 | org.springframework.mock.http.server.reactive | 0 | 53 |
-| org.springframework.mock.web | 560 | 0 |
+| org.springframework.mock.web | 556 | 0 |
 | org.springframework.mock.web.reactive.function.server | 0 | 51 |
 | org.springframework.mock.web.server | 30 | 0 |
 | org.springframework.objenesis | 9 | 0 |

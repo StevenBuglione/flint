@@ -94,12 +94,21 @@ private struct Pair
     string[] values;
 }
 
-private ptrdiff_t findPair(Pair[] pairs, scope const(char)[] name, bool ignoreCase) pure nothrow @nogc
+pragma(inline, false) private ptrdiff_t findPair(Pair[] pairs, string name, bool ignoreCase) pure nothrow @nogc
 {
     foreach (i, ref p; pairs)
         if (ignoreCase ? equalsIgnoreCase(p.name, name) : p.name == name)
             return i;
     return -1;
+}
+
+pragma(inline, false) private bool tryParseContentType(string type, out MediaType mediaType)
+{
+    try
+        mediaType = MediaType.parseMediaType(type);
+    catch (Exception)
+        return false;
+    return true;
 }
 
 private final class BytesInput : ServletInputStream
@@ -269,14 +278,11 @@ class MockHttpServletRequest : HttpServletRequest
         this.contentType = contentType;
         if (contentType !is null)
         {
-            try
+            MediaType mediaType;
+            if (tryParseContentType(contentType, mediaType))
             {
-                auto mediaType = MediaType.parseMediaType(contentType);
                 if (auto charset = mediaType.getCharset())
                     characterEncoding = charset.name();
-            }
-            catch (Exception)
-            {
             }
             const i = findPair(headers, HttpHeaders.CONTENT_TYPE, true);
             if (i >= 0)
@@ -581,7 +587,7 @@ class MockHttpServletRequest : HttpServletRequest
     int getIntHeader(string name)
     {
         const value = getHeader(name);
-        return value is null ? -1 : parseIntHeader(value);
+        return value is null ? -1 : cast(int) parseIntegerHeader(value, int.min, int.max);
     }
 
     string getMethod()
@@ -695,6 +701,8 @@ private final class ContentWriter : Writer
 class MockHttpServletResponse : HttpServletResponse
 {
     private enum string defaultEncoding = "ISO-8859-1";
+    private enum string charsetPrefix = "charset=";
+    private static immutable MediaType applicationPlusJson = MediaType.constant("application", "*+json");
 
     private int status = HttpServletResponse.SC_OK;
     private string errorMessage;
@@ -811,9 +819,38 @@ class MockHttpServletResponse : HttpServletResponse
 
     void setCharacterEncoding(string charset)
     {
-        characterEncoding = charset;
-        characterEncodingSet = true;
+        characterEncodingSet = charset !is null;
+        characterEncoding = characterEncodingSet ? charset : defaultCharacterEncoding;
+        if (!characterEncodingSet && contentType !is null)
+            removeContentTypeCharset();
         updateContentTypeHeader();
+    }
+
+    private void removeContentTypeCharset()
+    {
+        MediaType mediaType;
+        if (tryParseContentType(contentType, mediaType))
+        {
+            if (mediaType.getCharset() is null)
+                return;
+            const parameters = mediaType.getParameters().entrySet();
+            foreach (i, ref entry; parameters)
+            {
+                if (!equalsIgnoreCase(entry.key, "charset"))
+                    continue;
+                contentType = MediaType(mediaType, parameters[0 .. i] ~ parameters[i + 1 .. $]).toString();
+                return;
+            }
+        }
+        else
+        {
+            const index = charsetIndex(contentType);
+            if (index != contentType.length)
+            {
+                const remaining = trimAscii(contentType[0 .. index]);
+                contentType = remaining.length != 0 && remaining[$ - 1] == ';' ? remaining[0 .. $ - 1] : remaining;
+            }
+        }
     }
 
     void setContentLength(int len)
@@ -838,17 +875,26 @@ class MockHttpServletResponse : HttpServletResponse
         contentType = type;
         if (type !is null)
         {
-            try
+            MediaType mediaType;
+            if (tryParseContentType(type, mediaType))
             {
-                auto mediaType = MediaType.parseMediaType(type);
                 if (auto charset = mediaType.getCharset())
                 {
                     characterEncoding = charset.name();
                     characterEncodingSet = true;
                 }
+                else if (mediaType.isCompatibleWith(MediaType.APPLICATION_JSON)
+                        || mediaType.isCompatibleWith(applicationPlusJson))
+                    characterEncoding = "UTF-8";
             }
-            catch (Exception)
+            else
             {
+                const index = charsetIndex(type);
+                if (index != type.length)
+                {
+                    characterEncoding = type[index + charsetPrefix.length .. $];
+                    characterEncodingSet = true;
+                }
             }
             updateContentTypeHeader();
         }
@@ -856,27 +902,33 @@ class MockHttpServletResponse : HttpServletResponse
         {
             const i = findPair(headers, HttpHeaders.CONTENT_TYPE, true);
             if (i >= 0)
-                headers = headers[0 .. i] ~ headers[i + 1 .. $];
+            {
+                for (size_t position = i + 1; position < headers.length; ++position)
+                    headers[position - 1] = headers[position];
+                headers[$ - 1] = Pair.init;
+                headers = headers[0 .. $ - 1];
+            }
         }
     }
 
-    private void updateContentTypeHeader()
+    pragma(inline, false) private void updateContentTypeHeader()
     {
         if (contentType is null)
             return;
         string value = contentType;
-        if (characterEncodingSet && !containsCharset(value))
-            value ~= ";charset=" ~ characterEncoding;
+        if (characterEncodingSet && charsetIndex(value) == value.length)
+            value ~= ";" ~ charsetPrefix ~ characterEncoding;
         contentType = value;
         setHeaderValue(HttpHeaders.CONTENT_TYPE, value, false);
     }
 
-    private static bool containsCharset(string type)
+    pragma(inline, false) private static size_t charsetIndex(string type) pure nothrow @nogc
     {
-        foreach (i; 0 .. type.length)
-            if (i + 8 <= type.length && equalsIgnoreCase(type[i .. i + 8], "charset="))
-                return true;
-        return false;
+        if (type.length >= charsetPrefix.length)
+            foreach (i; 0 .. type.length - charsetPrefix.length + 1)
+                if (equalsIgnoreCase(type[i .. i + charsetPrefix.length], charsetPrefix))
+                    return i;
+        return type.length;
     }
 
     void setBufferSize(int size)
@@ -993,12 +1045,7 @@ class MockHttpServletResponse : HttpServletResponse
         if (equalsIgnoreCase(name, HttpHeaders.CONTENT_TYPE))
             setContentType(value);
         else if (equalsIgnoreCase(name, HttpHeaders.CONTENT_LENGTH))
-        {
-            long length;
-            if (!parseLong(value, length))
-                throw new NumberFormatException("For input string: \"" ~ value ~ "\"");
-            setContentLengthLong(length);
-        }
+            setContentLengthLong(parseIntegerHeader(value, long.min, long.max));
         else
             setHeaderValue(name, value, false);
     }
@@ -1069,18 +1116,17 @@ class MockHttpServletResponse : HttpServletResponse
     }
 }
 
-/// Java's `String.equalsIgnoreCase` for ASCII header names.
-/// `Integer.parseInt`: an optional sign and decimal digits within `int`'s range, else `NumberFormatException`.
-private int parseIntHeader(string value)
+/// A signed Java decimal header value within the caller's integer range.
+pragma(inline, false) private long parseIntegerHeader(string value, long minimum, long maximum)
 {
     long parsed;
-    if (!parseLong(value, parsed) || parsed < int.min || parsed > int.max)
+    if (!parseLong(value, parsed) || parsed < minimum || parsed > maximum)
         throw new NumberFormatException("For input string: \"" ~ value ~ "\"");
-    return cast(int) parsed;
+    return parsed;
 }
 
 /// `value` without leading and trailing ASCII whitespace.
-private inout(char)[] trimAscii(return scope inout(char)[] value) pure nothrow @nogc
+pragma(inline, false) private inout(char)[] trimAscii(return scope inout(char)[] value) pure nothrow @nogc
 {
     size_t start;
     size_t end = value.length;
