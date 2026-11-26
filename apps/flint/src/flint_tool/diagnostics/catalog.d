@@ -61,7 +61,18 @@ const(CodeInfo)* lookup(scope const(char)[] code)
 }
 
 /// Every code flint can raise, in numeric order.
-immutable CodeInfo[] catalog = [
+immutable CodeInfo[] catalog = generalCodes ~ [
+    CodeInfo("FLINT-E1180", ExitCode.user,
+            "an AspectJ execution selector is unsupported or names an undeclared method",
+            "Use the qualified name of a concrete class without subclasses and one of its declared instance methods.",
+            `@Before("execution(* shop.owners.OwnerService.save(..))") void audit() { ... }`),
+    CodeInfo("FLINT-E1181", ExitCode.user, "an AspectJ advice declaration is unsupported",
+            "Use an unconditional singleton component and public, @safe, no-argument void @Before advice.",
+            `@Component @Aspect class Audit { ... }`),
+];
+
+// Only catalog materializes these compile-time entries at runtime.
+private enum CodeInfo[] generalCodes = [
     // 00xx: command line.
     CodeInfo("FLINT-E0001", ExitCode.usage,
             "unknown command or option",

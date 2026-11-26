@@ -635,12 +635,27 @@ string[] importedClasses(const Annotation[] annotations, const AnnotationType[st
 
 private final class Analysis
 {
+    private struct AspectBefore
+    {
+        import flint_tool.engine.aot.aspects : ExecutionSelector;
+
+        const(TypeDecl)* owner;
+        string beanName;
+        string adviceMethod;
+        int order;
+        ExecutionSelector selector;
+        uint[] methodIndexes;
+        string source;
+    }
+
     const Model model;
     AnalysisInput input;
     Plan plan;
     uint rank;
     size_t[string] moduleIndex;
     BeanPlan[] allBeans;
+    AspectBefore[] beforeAdvice;
+    size_t[][string] beforeAdviceByTarget;
     /// Auto-configurations the application excludes at build time.
     bool[string] excluded;
     /// Defined classes (scanned, auto-configured or imported) by fully qualified name.
@@ -737,6 +752,7 @@ private final class Analysis
         // then each auto-configuration's class, imports and @Bean methods.
         Candidate[] user = userCandidates();
         Candidate[] autos = autoConfigurationCandidates();
+        collectBeforeAdvice(user);
         collectImporters(user ~ autos);
         foreach (ref candidate; user)
             defineClass(candidate);
@@ -750,6 +766,7 @@ private final class Analysis
             processConfiguration(candidate);
         }
         placeRemainingImports();
+        registerBeforeAdvisors();
         compileExpressions();
         checkInjection();
         checkCycles();
@@ -1101,6 +1118,166 @@ private final class Analysis
 
     /// `exclude` and `excludeName` of `@FlintBootApplication` and `@EnableAutoConfiguration` (merged, so declared
     /// directly or as a meta-annotation).
+    void collectBeforeAdvice(Candidate[] candidates)
+    {
+        import flint_tool.engine.aot.aspects : aspectAnnotation;
+        import flint_tool.engine.aot.conditions : evaluate;
+        import flint_tool.engine.aot.names : order;
+
+        foreach (ref candidate; candidates)
+        {
+            const aspect = candidate.merged.get(aspectAnnotation);
+            if (aspect is null || candidate.decl.abstract_)
+                continue;
+            const target = candidate.decl;
+            const conditions = evaluate(candidate.merged, target.fqn, model.present);
+            if (!conditions.included || conditions.unknownClasses.length || conditions.errors.length)
+                continue;
+            if (aspect.text("value").length || conditions.terms.length || !singletonAspect(candidate.merged))
+            {
+                error("FLINT-E1181", "@Aspect " ~ target.fqn ~ " requires an unconditional singleton component",
+                        target.file, target.line);
+                continue;
+            }
+            if (target.isA("flint.core.Ordered"))
+            {
+                error("FLINT-E1181", "@Aspect " ~ target.fqn ~ " requires a compile-time @Order instead of Ordered",
+                        target.file, target.line);
+                continue;
+            }
+            const orderAnnotation = candidate.merged.get(order);
+            const rank = orderAnnotation is null ? int.max : cast(int) orderAnnotation.get("value").integer;
+            const name = componentName(candidate);
+            foreach (ref method; target.methods)
+                collectBeforeAdviceMethod(target, method, name, rank);
+        }
+    }
+
+    static bool singletonAspect(const ref MergedSet merged)
+    {
+        import flint_tool.engine.aot.names : scope_;
+
+        const annotation = merged.get(scope_);
+        if (annotation is null)
+            return true;
+        const value = annotation.text("value");
+        const declared = value.length ? value : annotation.text("scopeName");
+        return declared.length == 0 || declared == "singleton";
+    }
+
+    void collectBeforeAdviceMethod(const(TypeDecl)* owner, const ref Method method, string beanName, int order)
+    {
+        import flint_tool.engine.aot.aspects : beforeAnnotation, otherAdvice, parseExecution;
+
+        const annotations = mergedOf(method);
+        if (annotations.hasAny(otherAdvice))
+        {
+            error("FLINT-E1181", owner.fqn ~ "." ~ method.name ~ " uses an unsupported AspectJ advice kind",
+                    method.file, method.line);
+            return;
+        }
+        const annotation = annotations.get(beforeAnnotation);
+        if (annotation is null)
+            return;
+        const selector = parseExecution(annotation.text("value"));
+        if (selector.target.length == 0)
+        {
+            error("FLINT-E1180", owner.fqn ~ "." ~ method.name ~ " requires execution(* qualified.Type.method(..))",
+                    method.file, method.line);
+            return;
+        }
+        const targetError = beforeTargetError(selector);
+        if (targetError.length)
+        {
+            error("FLINT-E1180", owner.fqn ~ "." ~ method.name ~ " " ~ targetError, method.file, method.line);
+            return;
+        }
+        if (!validBeforeMethod(method) || annotation.text("argNames").length)
+        {
+            error("FLINT-E1181", owner.fqn ~ "." ~ method.name ~ " must be a public @safe void instance method with "
+                    ~ "no arguments or bindings", method.file, method.line);
+            return;
+        }
+        beforeAdviceByTarget[selector.target] ~= beforeAdvice.length;
+        beforeAdvice ~= AspectBefore(owner, beanName, method.name, order, selector, null,
+                location(method.file, method.line));
+    }
+
+    string beforeTargetError(const ref AspectBefore.ExecutionSelector selector)
+    {
+        const target = model.type(selector.target);
+        const selected = selector.target ~ "." ~ selector.method;
+        if (target is null || !target.methods.canFind!(item => !item.inherited && overridable(item)
+                && item.name == selector.method))
+            return "selects undeclared instance method " ~ selected;
+        if (target.kind != "class" || target.abstract_)
+            return "selects " ~ selected ~ ", which requires a concrete class";
+        foreach (ref module_; model.modules)
+            foreach (ref type; module_.types)
+                if (type.fqn != selector.target && type.kind == "class" && type.isA(selector.target))
+                    return "selects " ~ selected ~ ", whose subclass " ~ type.fqn ~ " requires inherited dispatch";
+        return null;
+    }
+
+    static bool validBeforeMethod(const ref Method method)
+    {
+        return method.visibility == "public" && !method.static_ && method.parameters.length == 0
+            && method.returns.name == "void" && (method.has("@safe") || method.has("@trusted"));
+    }
+
+    void registerBeforeAdvisors()
+    {
+        foreach (ref advice; beforeAdvice)
+            if (advice.methodIndexes.length)
+                addBean(advice.owner.module_, beforeAdvisor(advice));
+    }
+
+    BeanPlan beforeAdvisor(const ref AspectBefore advice)
+    {
+        import std.array : join;
+        import std.conv : to;
+        import flint_tool.engine.aot.conditions : literal;
+
+        enum engine = "flint.engine.aot.";
+        enum advisor = engine ~ "proxy.Advisor";
+        const orderText = advice.order.to!string;
+        BeanPlan bean;
+        bean.name = "__FlintBeforeAdvisor" ~ rank.to!string;
+        bean.type = advisor;
+        bean.types = [advisor];
+        bean.className = advisor;
+        bean.rank = rank++;
+        bean.order = advice.order;
+        bean.source = advice.source;
+        bean.factory = FactoryKind.expression;
+        bean.expressionModules = [
+            "core.atomic", engine ~ "bean", engine ~ "descriptor", engine ~ "proxy"
+        ];
+        string[] methods;
+        foreach (index; advice.methodIndexes)
+            methods ~= "method.index == " ~ index.to!string;
+        bean.expression = "new class(factory) " ~ advisor ~ " {\n" ~ "        private " ~ engine
+            ~ "bean.BeanFactory aspectFactory;\n" ~ "        private " ~ advice.owner.fqn ~ " aspectInstance;\n"
+            ~ "        private shared bool aspectReady;\n"
+            ~ "        this(" ~ engine ~ "bean.BeanFactory beans) @safe { aspectFactory = beans; }\n"
+            ~ "        bool appliesTo(const " ~ engine ~ "descriptor.Descriptor type, const(" ~ engine
+            ~ "descriptor.MethodDescriptor)* method) @safe\n        {\n" ~ "            return type.name == " ~ literal(
+                    advice.selector.target) ~ " && (" ~ methods.join(" || ") ~ ");\n        }\n"
+            ~ "        int getOrder() @safe { return " ~ orderText ~ "; }\n" ~ "        void invoke(ref "
+            ~ engine ~ "proxy.Invocation call, scope " ~ engine ~ "proxy.Proceed proceed) @safe\n        {\n"
+            ~ "            if (!core.atomic.atomicLoad!(core.atomic.MemoryOrder.acq)(aspectReady))\n"
+            ~ "                initializeAspect();\n" ~ "            aspectInstance."
+            ~ advice.adviceMethod ~ "();\n" ~ "            proceed(call);\n        }\n"
+            ~ "        private void initializeAspect() @safe\n        {\n"
+            ~ "            synchronized (this)\n            {\n"
+            ~ "                if (core.atomic.atomicLoad!(core.atomic.MemoryOrder.raw)(aspectReady))\n"
+            ~ "                    return;\n" ~ "                aspectInstance = cast("
+            ~ advice.owner.fqn ~ ") aspectFactory.getBean(" ~ literal(advice.beanName) ~ ");\n"
+            ~ "                core.atomic.atomicStore!(core.atomic.MemoryOrder.rel)(aspectReady, true);\n"
+            ~ "            }\n        }\n    }";
+        return bean;
+    }
+
     void exclusionsOf(const ref MergedSet merged)
     {
         import flint_tool.engine.aot.names : enableAutoConfiguration, flintBootApplication;
@@ -1253,6 +1430,7 @@ private final class Analysis
     bool defineClass(ref Candidate candidate)
     {
         decided[candidate.decl.fqn] = true;
+        import flint_tool.engine.aot.aspects : aspectAnnotation;
         import flint_tool.engine.aot.conditions : evaluate;
         import flint_tool.engine.aot.names : beanName, component;
 
@@ -1268,6 +1446,9 @@ private final class Analysis
         auto outcome = evaluate(candidate.merged, decl.fqn, model.present);
         if (!acceptOutcome(outcome, decl.name, decl.file, decl.line))
             return false;
+        const aspect = candidate.merged.has(aspectAnnotation);
+        if (aspect && (candidate.imported || candidate.autoConfiguration))
+            error("FLINT-E1181", "@Aspect " ~ decl.fqn ~ " requires a scanned component", decl.file, decl.line);
         // Boot's spring.boot.enableautoconfiguration=false turns every auto-configuration off at startup.
         if (candidate.autoConfiguration)
             outcome.terms = autoConfigurationTerms(decl.fqn) ~ outcome.terms;
@@ -1291,7 +1472,10 @@ private final class Analysis
         propertiesOf(candidate.merged, bean);
         const proxyConfiguration = configurationProxy(candidate, bean);
         const inherited = typeHierarchyMerged(*decl);
-        bean.proxied = !proxyConfiguration && planProxy(*decl, inherited, bean);
+        if (proxyConfiguration && decl.fqn in beforeAdviceByTarget)
+            error("FLINT-E1181", "AspectJ advice cannot target a proxied configuration " ~ decl.fqn,
+                    decl.file, decl.line);
+        bean.proxied = !proxyConfiguration && !aspect && planProxy(*decl, inherited, bean);
         bean.rank = rank++;
         addBean(decl.module_, bean);
         definedClasses[decl.fqn] = DefinedClass(bean, proxyConfiguration);
@@ -1887,6 +2071,7 @@ private final class Analysis
 
     void defineBeanMethods(ref Candidate candidate, const ref BeanPlan owner, const string[] classTerms, bool proxied)
     {
+        import flint_tool.engine.aot.aspects : aspectAnnotation;
         import flint_tool.engine.aot.conditions : evaluate;
         import flint_tool.engine.aot.names : bean;
 
@@ -1906,6 +2091,13 @@ private final class Analysis
             auto outcome = evaluate(merged, method.returns.name, model.present);
             if (!acceptOutcome(outcome, method.name, method.file, method.line))
                 continue;
+            if (const returned = model.type(method.returns.name))
+                if (mergedOf(*returned).has(aspectAnnotation))
+                    error("FLINT-E1181", "@Bean aspect " ~ returned.fqn ~ " requires a scanned component",
+                            method.file, method.line);
+            if (method.returns.name in beforeAdviceByTarget)
+                error("FLINT-E1181", "AspectJ advice cannot target an @Bean method product " ~ method.returns.name,
+                        method.file, method.line);
             BeanPlan definition;
             definition.name = beanMethodName(method, merged);
             definition.type = method.returns.name;
@@ -1974,6 +2166,12 @@ private final class Analysis
 
     bool planProxy(const ref TypeDecl decl, const ref MergedSet classMerged, ref BeanPlan bean)
     {
+        auto before = decl.fqn in beforeAdviceByTarget;
+        if (before !is null && decl.final_)
+        {
+            error("FLINT-E1181", "AspectJ advice cannot subclass final target " ~ decl.fqn, decl.file, decl.line);
+            return false;
+        }
         ProxyPlan proxy;
         proxy.className = decl.fqn;
         proxy.simple = decl.name;
@@ -1988,7 +2186,7 @@ private final class Analysis
             if (signature in seen)
                 continue;
             seen[signature] = true;
-            proxyMethod(decl, method, classMerged, proxy, descriptor);
+            proxyMethod(decl, method, classMerged, proxy, descriptor, before is null ? null : *before);
         }
         if (descriptor.methods.length == 0)
             return false;
@@ -2008,12 +2206,14 @@ private final class Analysis
 
     /// Add one method to a proxy: advised through the chain, or forwarded.
     void proxyMethod(const ref TypeDecl decl, const ref Method method, const ref MergedSet classMerged,
-            ref ProxyPlan proxy, ref DescriptorPlan descriptor)
+            ref ProxyPlan proxy, ref DescriptorPlan descriptor, const(size_t)[] before)
     {
         import flint_tool.engine.aot.names : adviceAnnotations, async_;
 
         auto merged = hierarchyMerged(decl, method);
-        const advised = classMerged.hasAny(adviceAnnotations) || merged.hasAny(adviceAnnotations);
+        bool advised = classMerged.hasAny(adviceAnnotations) || merged.hasAny(adviceAnnotations);
+        foreach (index; before)
+            advised |= beforeAdvice[index].selector.method == method.name;
         if (!checkAdvisable(decl, method, advised))
             return;
         // Generated code is @safe: a @system method (Object.toString) is left to the base class.
@@ -2023,6 +2223,9 @@ private final class Analysis
         if (advised)
         {
             item.index = descriptor.methods.length;
+            foreach (index; before)
+                if (beforeAdvice[index].selector.method == method.name)
+                    beforeAdvice[index].methodIndexes ~= cast(uint) item.index;
             // Constraint annotations on an implemented interface's parameters are in the parameters' aggregates.
             descriptor.methods ~= methodPlan(decl, method, merged, classMerged);
         }

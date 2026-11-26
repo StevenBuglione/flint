@@ -642,6 +642,28 @@ private Object proxy_ownerService(Object target, BeanFactory factory)
 - **Ordering, propagation, rollback rules, cache resolution, retry and security expressions** are the runtime's: the generated code only provides the merged annotations on the `MethodDescriptor` and the boxed arguments and result.
 - **Interfaces.** When the bean is injected by an interface it implements, the same subclass serves, so Flint never needs a second, JDK-style proxy.
 
+### 7.1 Static AspectJ before advice
+
+A scanned singleton component with `@Aspect` may declare public `@safe` instance methods with `@Before`, no
+parameters and a `void` return type. An aspect on its own does not register a component. This slice accepts
+unconditional singleton aspect beans and the selector `execution(* qualified.Type.method(..))`. The class name
+must be the extracted D name of a concrete class with no extracted subclasses. The method name selects its declared
+instance overloads across return and parameter types. Selectors that require inherited dispatch, named pointcuts,
+other advice kinds, and argument bindings require later proxy slices.
+
+Flint AOT selects methods before writing the existing proxy subclass. It records their descriptor indexes in a
+generated advisor, registered in the same container as transaction, cache and other advisors. When a bean's
+chain is assembled, the generated advisor checks its target name and those indexes. Advising the call executes the
+aspect method and continues through the same chain. Each advisor resolves and caches the aspect singleton on the
+first invocation, so chain assembly can finish before resolving an aspect that may inject the bean being proxied.
+Equal-order advisors keep
+definition order, with the generated aspect advisors registered after the ordinary definitions. An explicit
+`@Order` sets the aspect order, with `int.max` as the default. Runtime ordering through `Ordered` is deferred.
+
+Unselected methods follow the existing forwarding rule, and target self-invocations bypass the subclass. The
+generated advisor uses existing contract 3 interfaces and fields. An unsupported selector produces FLINT-E1180
+on the advice declaration. Unsupported advice or registration shapes produce FLINT-E1181.
+
 ## 8. Derived queries
 
 Methods of an interface that derives from `flint.data.repository.Repository!(T, ID)` (directly or through `CrudRepository`, `ListCrudRepository`, `PagingAndSortingRepository`) and carries no `@Query` are parsed with Spring Data's `PartTree` grammar:
@@ -723,6 +745,13 @@ through the descriptors it resolves once per advised method.
 
 Every diagnostic names the source file and line of the declaration that caused it.
 
+AspectJ diagnostics:
+
+| Code | Meaning |
+| --- | --- |
+| FLINT-E1180 | an AspectJ execution selector uses unsupported syntax, requires inherited dispatch, or names an undeclared method |
+| FLINT-E1181 | an AspectJ advice or registration shape is unsupported |
+
 Reserved blocks for the Phase 2 lanes (flint-aot, 2026-11-26). A lane takes the next free code in its block, adds its
 row above in the commit that first emits it, and has flint-aot review the commit:
 
@@ -733,6 +762,7 @@ row above in the commit that first emits it, and has flint-aot review the commit
 | FLINT-E1140–E1159 | `sol-jpa` | JPA entity mappings, accessors, lazy proxies, build-time JPQL |
 | FLINT-E1160–E1169 | `sol-template` | SpEL beyond section 9, compiled templates |
 | FLINT-E1170–E1179 | `sol-context` | cache, scheduling, `@Async`, HTTP service proxies |
+| FLINT-E1180–E1189 | `sol-aop` | aspects, pointcut expressions, programmatic proxies |
 
 ## 11. Ownership and change
 

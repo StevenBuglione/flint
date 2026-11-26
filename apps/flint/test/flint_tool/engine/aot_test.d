@@ -2397,6 +2397,115 @@ unittest
     expect(checked.ok).toBeTrue();
 }
 
+private string[] aspectFixtureImportPaths()
+{
+    import std.path : buildPath;
+
+    const root = repositoryRoot();
+    return [
+        "-I" ~ buildPath(root, "tests", "aot", "annotations"), "-I" ~ runtimeSource(),
+        "-I" ~ buildPath(root, "framework", "aspectj", "source"),
+        "-I" ~ buildPath(root, "framework", "java", "source"),
+    ];
+}
+
+private imported!"flint_tool.engine.aot.driver".AotOutcome generateAspectFixture(string project)
+{
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = aspectFixtureImportPaths();
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test-aspect";
+    return runAot(request);
+}
+
+@("static before advice joins the ordered proxy chain and skips self-invocation")
+unittest
+{
+    import std.file : dirEntries, SpanMode;
+    import std.path : buildPath;
+    import flint_tool.support.process : Launch, capture;
+
+    const project = copyFixture("aspects");
+    scope (exit)
+        remove(project);
+    const outcome = generateAspectFixture(project);
+    assert(outcome.ok);
+
+    string[] sources;
+    foreach (directory; ["src", ".flint/generated/aot"])
+        foreach (entry; dirEntries(buildPath(project, directory), "*.d", SpanMode.depth))
+            sources ~= entry.name;
+    const binary = buildPath(project, "aspects-app");
+    Launch launch;
+    launch.directory = project;
+    const built = capture([
+        compiler(), "-preview=dip1000", "-i", "-of=" ~ binary,
+        "-I" ~ buildPath(repositoryRoot(), "tests", "aot", "support"), "-I" ~ buildPath(project,
+                "src"), "-I" ~ buildPath(project, ".flint", "generated", "aot"),
+        buildPath(project, "main.d")
+    ] ~ aspectFixtureImportPaths() ~ sources, launch);
+    assert(built.ok, built.combined());
+    const ran = capture([binary], launch);
+    assert(ran.ok, ran.combined());
+}
+
+@("an unsupported aspect selector names the advice declaration")
+unittest
+{
+    import std.path : buildPath;
+
+    const project = copyFixture("aspects");
+    scope (exit)
+        remove(project);
+    const source = buildPath(project, "src", "aspects", "app.d");
+    edit(source, "execution(* aspects.app.OwnerService.update(..))", "call(* aspects.app.OwnerService.update(..))");
+    const result = generateAspectFixture(project);
+    assert(!result.ok);
+    bool found;
+    foreach (ref diagnostic; result.diagnostics)
+        found |= diagnostic.code == "FLINT-E1180" && diagnostic.file.canFind("app.d")
+            && diagnostic.message.canFind("beforeUpdate");
+    assert(found);
+
+    edit(source, "call(* aspects.app.OwnerService.update(..))", "execution(* aspects.app.OwnerService.missing(..))");
+    const missing = generateAspectFixture(project);
+    assert(!missing.ok);
+    assert(missing.diagnostics.canFind!(diagnostic => diagnostic.code == "FLINT-E1180"
+            && diagnostic.message.canFind("OwnerService.missing")));
+}
+
+@("an aspect selector requiring inherited dispatch fails at the declaration")
+unittest
+{
+    import std.path : buildPath;
+
+    const project = copyFixture("aspects");
+    scope (exit)
+        remove(project);
+    const source = buildPath(project, "src", "aspects", "app.d");
+    edit(source, "class OwnerService\n", "class OwnerService : OwnerOperations\n");
+    edit(source, "/// Target bean", "interface OwnerOperations { int update(int) @safe; }\n\n/// Target bean");
+    edit(source, "execution(* aspects.app.OwnerService.update(..))",
+            "execution(* aspects.app.OwnerOperations.update(..))");
+    const interfaceSelector = generateAspectFixture(project);
+    assert(!interfaceSelector.ok);
+    assert(interfaceSelector.diagnostics.canFind!(diagnostic => diagnostic.code == "FLINT-E1180"
+            && diagnostic.message.canFind("OwnerOperations") && diagnostic.message.canFind("concrete")));
+
+    edit(source, "execution(* aspects.app.OwnerOperations.update(..))",
+            "execution(* aspects.app.OwnerService.update(..))");
+    edit(source, "/// Target bean",
+            "class DerivedOwner : OwnerService { this(Journal log) { super(log); } }\n\n/// Target bean");
+    const baseSelector = generateAspectFixture(project);
+    assert(!baseSelector.ok);
+    assert(baseSelector.diagnostics.canFind!(diagnostic => diagnostic.code == "FLINT-E1180"
+            && diagnostic.message.canFind("OwnerService") && diagnostic.message.canFind("DerivedOwner")));
+}
+
 @("a project without @FlintBootApplication runs no extraction")
 unittest
 {
