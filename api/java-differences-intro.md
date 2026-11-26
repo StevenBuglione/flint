@@ -56,7 +56,7 @@ import flint.boot.autoconfigure.condition_runtime : ConditionOutcome;
 @GetMapping(value: "/owners/{id}", produces: "application/json")
 ```
 
-**R4: `Class<T>` parameters** become template parameters, because D types are not runtime values. In an annotation attribute, a class is written `classOf!T` (a `ClassRef`, a name only). Where a `Class` value is used at run time (`isInstance`, `isAssignableFrom`), it is a `RuntimeClassRef` (`runtimeClassOf!T`), and `RuntimeClassRef.init` is Java's `null` class.
+**R4: `Class<T>` parameters** become template parameters, because D types are not runtime values. In an annotation attribute, a class is written `classOf!T` (a `ClassRef`, a name only). Where a `Class` value is used at run time (`isInstance`, `isAssignableFrom`), it is a `RuntimeClassRef` (`runtimeClassOf!T`), which answers through druntime's `ClassInfo`, and `RuntimeClassRef.init` is Java's `null` class. For now `isInstance` takes a D `Object`, so pass an interface value as `cast(Object) value`.
 
 ```java
 Note note = restClient.get().uri("/notes/1").retrieve().body(Note.class);
