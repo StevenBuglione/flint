@@ -102,6 +102,7 @@
   "java.util.EnumSet": "flint.java.util.enumset",
   "java.util.FormatFlagsConversionMismatchException": "flint.java.util.formatter",
   "java.util.HexFormat": "flint.java.util.hexformat",
+  "java.util.IllegalFormatCodePointException": "flint.java.util.formatter",
   "java.util.IllegalFormatConversionException": "flint.java.util.formatter",
   "java.util.IllegalFormatException": "flint.java.util.formatter",
   "java.util.IllegalFormatFlagsException": "flint.java.util.formatter",
