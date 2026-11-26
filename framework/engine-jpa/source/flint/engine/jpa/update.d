@@ -427,16 +427,54 @@ private VersionResult executeStaticUpdate(const ref UpdatePlan plan, Connection 
         return VersionResult(VersionedUpdate.init, Error(Status.invalidArgument, "missing update plan or connection"));
 
     ManagedTarget target;
-    const dirty = entities.dirtyTarget(key, plan.mapping, dirtyOrdinals, target, plan.versions.next != 0);
-    if (!dirty.ok)
-        return VersionResult(VersionedUpdate.init, dirty.error);
+    const resolved = entities.resolveTarget(key, plan.mapping, target);
+    if (resolved.code != Status.ok)
+        return VersionResult(VersionedUpdate.init, resolved);
+    auto slot = entities.snapshotFor(target);
+    assert(slot !is null);
+    const alreadyUpdating = slot.setUpdating(true);
+    scope (exit)
+        if (!alreadyUpdating)
+            slot.setUpdating(false);
 
-    const identifier = checkIdentifier(*plan.mapping, target.entity, key.identifier);
-    if (identifier.code != Status.ok)
-        return VersionResult(VersionedUpdate.init, identifier);
-    if (dirty.value == 0)
+    const checked = checkUpdateTarget(plan, key.identifier, target.entity, *slot, dirtyOrdinals,
+            target.loadedVersion);
+    if (!checked.ok)
+        return VersionResult(VersionedUpdate.init, checked.error);
+    if (!checked.value)
         return VersionResult(VersionedUpdate.init);
-    if (connection.getAutoCommit())
+    return executeAttachedUpdate(plan, connection, entities, target, key, *slot, values, refresh);
+}
+
+private UpdateResult checkUpdateTarget(scope const ref UpdatePlan plan, long identifier, Object entity,
+        scope ref ManagedSnapshotSlot slot, scope uint[] dirtyOrdinals, out long loadedVersion) nothrow @nogc
+{
+    const dirty = slot.dirty(entity, dirtyOrdinals);
+    if (!slot.updateInProgress())
+        return UpdateResult(false, updateRetired);
+    if (!dirty.ok)
+        return UpdateResult(false, dirty.error);
+    const changed = dirty.value != 0;
+    if (changed && plan.versions.next != 0)
+    {
+        const loaded = slot.loadedVersion(loadedVersion);
+        if (loaded.code != Status.ok)
+            return UpdateResult(false, loaded);
+    }
+
+    const keyError = checkIdentifier(*plan.mapping, entity, identifier);
+    return slot.updateInProgress() ? UpdateResult(changed, keyError) : UpdateResult(false, updateRetired);
+}
+
+private VersionResult executeAttachedUpdate(const ref UpdatePlan plan, Connection connection,
+        scope ref ManagedEntities entities,
+        ManagedTarget target, EntityIdentity key, scope ref ManagedSnapshotSlot slot,
+        AttributeValue[] values, bool refresh)
+{
+    const autoCommit = connection.getAutoCommit();
+    if (!slot.updateInProgress())
+        return updateConflict();
+    if (autoCommit)
         return VersionResult(VersionedUpdate.init, Error(Status.invalidArgument,
                 "managed update requires a JDBC transaction"));
     const versioned = plan.versions.next != 0;
@@ -445,20 +483,18 @@ private VersionResult executeStaticUpdate(const ref UpdatePlan plan, Connection 
                 "managed entity version exhausted", plan.mapping.versionOrdinal));
     const nextRevision = versioned ? target.loadedVersion + 1 : 0;
     if (refresh)
-        return executeWithRefresh(plan, connection, entities, target, key, nextRevision, values);
-    return executeStatement(plan, connection, target, key.identifier, nextRevision);
+        return flushRow(plan, connection, entities, target, key, nextRevision, slot, values);
+    const result = executeStatement(plan, connection, target, key.identifier, nextRevision, slot);
+    return result.ok && !slot.updateInProgress() ? updateConflict() : result;
 }
 
-private VersionResult executeWithRefresh(const ref UpdatePlan plan, Connection connection,
-        scope ref ManagedEntities entities, ManagedTarget target, EntityIdentity key,
-        long nextRevision, AttributeValue[] values)
+private VersionResult flushRow(const ref UpdatePlan plan, Connection connection, scope ref ManagedEntities entities,
+        ManagedTarget target, EntityIdentity key, long nextRevision, scope ref ManagedSnapshotSlot slot,
+        AttributeValue[] values)
 {
     const count = plan.mapping.attributes.length;
     if (values.length < count)
         return VersionResult(VersionedUpdate.init, Error(Status.resourceExhausted, "insufficient update value slots"));
-    auto slot = entities.snapshotFor(target);
-    if (slot is null || !slot.usesMapping(plan.mapping))
-        return refreshConflict();
     auto captured = values[0 .. count];
     scope (exit)
         captured[] = AttributeValue.init;
@@ -468,33 +504,34 @@ private VersionResult executeWithRefresh(const ref UpdatePlan plan, Connection c
     scope (exit)
         slot.discard();
 
-    const result = executeStatement(plan, connection, target, key.identifier, nextRevision, captured, slot);
+    const result = executeStatement(plan, connection, target, key.identifier, nextRevision, slot, captured);
     if (!result.ok)
         return result;
-    if (entities.snapshotFor(target) is null || !slot.hasStaged())
-        return refreshConflict();
+    if (!slot.hasStaged())
+        return updateConflict();
     if (plan.versions.next != 0)
     {
         scope (failure)
-            if (entities.snapshotFor(target) !is null && slot.hasStaged())
+            if (slot.hasStaged())
                 entities.detach(key);
         const ordinal = plan.mapping.versionOrdinal;
         plan.mapping.attributes[ordinal].write(target.entity, captured[ordinal]);
-        if (entities.snapshotFor(target) is null || !slot.hasStaged())
-            return refreshConflict();
+        if (!slot.hasStaged())
+            return updateConflict();
     }
     slot.publish();
     return result;
 }
 
-private VersionResult refreshConflict() pure nothrow @nogc
+private enum updateRetired = Error(Status.conflict, "managed entity retired during update");
+
+private VersionResult updateConflict() pure nothrow @nogc
 {
-    return VersionResult(VersionedUpdate.init, Error(Status.conflict, "managed entity retired during update"));
+    return VersionResult(VersionedUpdate.init, updateRetired);
 }
 
 private VersionResult executeStatement(const ref UpdatePlan plan, Connection connection, ManagedTarget target,
-        long id, long nextRevision, const(AttributeValue)[] captured = null,
-        scope const ManagedSnapshotSlot* staged = null)
+        long id, long nextRevision, scope const ref ManagedSnapshotSlot slot, const(AttributeValue)[] captured = null)
 {
     auto statement = connection.prepareStatement(plan.sql);
     scope (exit)
@@ -509,8 +546,8 @@ private VersionResult executeStatement(const ref UpdatePlan plan, Connection con
         statement.setLong(plan.versions.next, nextRevision);
         statement.setLong(plan.versions.expected, target.loadedVersion);
     }
-    if (staged !is null && !staged.hasStaged())
-        return refreshConflict();
+    if (!slot.updateInProgress())
+        return updateConflict();
     const affected = statement.executeUpdate();
     if (affected == 0)
         return VersionResult(VersionedUpdate.init, Error(Status.conflict, "managed update predicate matched no row"));

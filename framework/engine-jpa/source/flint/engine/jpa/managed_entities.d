@@ -268,7 +268,10 @@ struct ManagedEntities
     Result!size_t dirty(EntityIdentity key, scope uint[] ordinals) scope nothrow @nogc
     {
         ManagedTarget target;
-        return dirtyTarget(key, null, ordinals, target);
+        const resolved = resolveTarget(key, null, target);
+        if (resolved.code != Status.ok)
+            return Result!size_t(0, resolved);
+        return snapshots[target.slot].dirty(target.entity, ordinals);
     }
 
     /// Resolves an identity and verifies descriptor ownership before a mutation.
@@ -287,25 +290,7 @@ struct ManagedEntities
         return Error.init;
     }
 
-    /// Checks the resolved target and collects dirty fields with one identity lookup.
-    package Result!size_t dirtyTarget(EntityIdentity key, scope immutable(EntityMapping)* mapping,
-            scope uint[] ordinals, out ManagedTarget target, bool versioned = false) scope nothrow @nogc
-    {
-        const resolved = resolveTarget(key, mapping, target);
-        if (resolved.code != Status.ok)
-            return Result!size_t(0, resolved);
-        auto snapshot = &snapshots[target.slot];
-        const dirty = snapshot.dirty(target.entity, ordinals);
-        if (dirty.ok && dirty.value != 0 && versioned)
-        {
-            const versionError = snapshot.loadedVersion(target.loadedVersion);
-            if (versionError.code != Status.ok)
-                return Result!size_t(0, versionError);
-        }
-        return dirty;
-    }
-
-    /// Borrows the checked target slot while its original entity is still managed.
+    /// Borrows the slot if it still holds the resolved entity.
     package ManagedSnapshotSlot* snapshotFor(scope const ref ManagedTarget target) return scope nothrow @nogc
     {
         if (target.slot >= snapshots.length || roots[target.slot]!is target.entity)

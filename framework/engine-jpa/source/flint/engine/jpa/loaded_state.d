@@ -59,6 +59,7 @@ struct ManagedSnapshotSlot
     private LoadedSnapshotPlan plan;
     private uint active;
     private bool pending;
+    private bool updating;
 
     @disable this(this);
     @disable void opAssign(ManagedSnapshotSlot replacement);
@@ -129,6 +130,19 @@ struct ManagedSnapshotSlot
         return compareSnapshots(plan, entity, bank(active).fields, bank(active).arena, ordinals);
     }
 
+    /// The previous marker lets a synchronous nested update borrow its caller's mark.
+    package bool setUpdating(bool value) scope nothrow @nogc
+    {
+        const previous = updating;
+        updating = value;
+        return previous;
+    }
+
+    package bool updateInProgress() const scope nothrow @nogc
+    {
+        return updating;
+    }
+
     /// Captures a replacement for the type-checked target while its active bank remains readable.
     package Error stageChecked(Object entity, scope AttributeValue[] values, long nextRevision) scope nothrow @nogc
     {
@@ -178,6 +192,7 @@ struct ManagedSnapshotSlot
         alternate.arena.reset();
         active = 0;
         pending = false;
+        updating = false;
     }
 }
 
