@@ -280,7 +280,7 @@ class BitSet
         return 1UL << (index & bitMask);
     }
 
-    private void changeBit(int bitIndex, RangeChange change) pure
+    pragma(inline, false) private void changeBit(int bitIndex, RangeChange change) pure
     {
         checkIndex(bitIndex, 0, "bitIndex < 0: ");
         changeIncludedBits(bitIndex, bitIndex, change);
@@ -317,7 +317,7 @@ class BitSet
         throw new IndexOutOfBoundsException(message);
     }
 
-    private void changeRange(int fromIndex, int toIndex, RangeChange change) pure
+    pragma(inline, false) private void changeRange(int fromIndex, int toIndex, RangeChange change) pure
     {
         if (fromIndex < 0 || toIndex < fromIndex)
             rejectRange(fromIndex, toIndex);
