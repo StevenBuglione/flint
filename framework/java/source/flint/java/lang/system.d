@@ -23,14 +23,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-// Modified by the Flint authors: use the target platform's fixed line separator.
+// Modified by the Flint authors: use the target platform's line separator and Flint's wall clock.
 module flint.java.lang.system;
+
+import flint.engine.aot.clock : wallMillis = currentTimeMillis;
 
 @safe:
 
 /// Process-wide system facilities.
 struct System
 {
+    /// Read the wall clock in signed milliseconds since the Unix epoch.
+    alias currentTimeMillis = wallMillis;
+
     /// The target platform's initial line separator, independent of later property changes.
     static string lineSeparator() pure nothrow @nogc
     {
