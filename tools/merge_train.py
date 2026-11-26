@@ -53,6 +53,11 @@ SHARED_PATHS = ('benchmarks/spring/', 'policy/', 'apps/flint/', 'dub.sdl', 'dub.
                 'toolchain/', 'native/', 'tools/definition_of_done.py', 'tools/spring_bench.py')
 
 
+# Append-only logs every lane adds to: two lanes' entries at the end conflict textually but never in meaning, so the
+# train's own rebases keep both (git's built-in union driver). Lanes' own rebases are unaffected.
+UNION_FILES = ('docs/spring/performance-playbook.md', 'docs/spring/phase1/decisions.md')
+
+
 def git(args, cwd, check=True):
     done = subprocess.run(['git', *args], cwd=cwd, capture_output=True, text=True)
     if check and done.returncode != 0:
@@ -104,7 +109,32 @@ cd "$WT"
 git checkout -q -f --detach "@COMMIT@" || exit 3
 [ -e .tools ] || ln -s "@TOOLS@" .tools
 mkdir -p .flint && { [ -e .flint/peers ] || ln -s "@PEERS@" .flint/peers; }
-[ -d .native/install ] || { mkdir -p .native && cp -a "@NATIVE_INSTALL@" .native/ && @NATIVE_FIX@; } || exit 3
+relocate() {
+  # A native prefix built elsewhere (its receipt and .pc files name that machine's path): copy the build-tree link
+  # metadata the receipt digests, rewrite the old prefix to this one, and re-digest what the rewrite changed.
+  local old="$1" from; from="$(dirname "@NATIVE_INSTALL@")/build"
+  mkdir -p .native/build
+  ( cd "$from" && find . \( -name native-static-link.json -o -name system-link.json \) -exec cp --parents {} "$WT/.native/build/" \; )
+  grep -rlI "$old" .native/install .native/build | xargs -r sed -i "s#$old#$WT/.native#g"
+  python3 - <<'PY'
+import hashlib, json, pathlib
+def walk(node):
+    if isinstance(node, dict):
+        if isinstance(node.get('path'), str) and isinstance(node.get('sha256'), str) and pathlib.Path(node['path']).is_file():
+            node['sha256'] = hashlib.sha256(pathlib.Path(node['path']).read_bytes()).hexdigest()
+        for value in node.values():
+            walk(value)
+    elif isinstance(node, list):
+        for value in node:
+            walk(value)
+for receipt in pathlib.Path('.native/install').glob('*/flint-native-install.json'):
+    data = json.loads(receipt.read_text()); walk(data); receipt.write_text(json.dumps(data, indent=2) + '\n')
+PY
+}
+if [ ! -d .native/install ]; then
+  { mkdir -p .native && cp -a "@NATIVE_INSTALL@" .native/ && @NATIVE_FIX@; } || exit 3
+  [ -z "@RELOCATE_FROM@" ] || relocate "@RELOCATE_FROM@" || exit 3
+fi
 export PATH="$WT/.flint/bin:$WT/.tools/dmd2/linux/bin64:$PATH"
 H="python3 tools/measure_queue.py hold --"
 # A full native build only when what defines the libraries changed since the last one here; otherwise just the Flint
@@ -147,6 +177,7 @@ class RemoteVerifier:
         values = {'@PRELUDE@': e.get('prelude', ''), '@BARE@': e['bare'], '@REPO@': e.get('repo', e['bare']),
                   '@WORKTREE@': e['worktree'], '@TOOLS@': e['tools'], '@PEERS@': e['peers'],
                   '@NATIVE_INSTALL@': e['native_install'], '@NATIVE_FIX@': e.get('native_fix', 'true'),
+                  '@RELOCATE_FROM@': e.get('native_relocate_from', ''),
                   '@FULL_NATIVE@': 'yes' if e.get('full_native', True) else 'no',
                   '@CACHE_ROOT@': e.get('cache_root', '$HOME'), '@RECEIPTS@': receipts,
                   '@DOD_FLAGS@': '' if self.budget else '--no-flint-budget', '@APPS@': ','.join(APPS),
@@ -267,7 +298,8 @@ class Train:
         for submission in batch:
             fork = git(['merge-base', base, submission['commit']], self.worktree).stdout.strip()
             git(['checkout', '-q', '--detach', submission['commit']], self.worktree)
-            done = git(['rebase', '-q', '--onto', tip, fork], self.worktree, check=False)
+            done = git(['-c', f'core.attributesFile={self.attributes()}', 'rebase', '-q', '--onto', tip, fork],
+                       self.worktree, check=False)
             if done.returncode != 0:
                 git(['rebase', '--abort'], self.worktree, check=False)
                 git(['checkout', '-q', '--detach', tip], self.worktree)
@@ -292,6 +324,14 @@ class Train:
             if done.returncode != 0:
                 return False, '\n'.join(log)
         return True, '\n'.join(log)
+
+    def attributes(self):
+        path = self.log_dir / 'merge.attributes'
+        text = ''.join(f'{name} merge=union\n' for name in UNION_FILES)
+        if not path.is_file() or path.read_text() != text:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text)
+        return path
 
     def verify_all(self, commits):
         """Verify candidate k on verifier k, concurrently; results in candidate order."""

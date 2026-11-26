@@ -111,6 +111,23 @@ class TrainTests(unittest.TestCase):
         self.assertEqual((result['landed'], result['failed'], result['pending']), ([], [], ['sol-a', 'sol-b']))
         self.assertIn('main_red', result)
 
+    def test_appends_to_the_playbook_by_two_lanes_both_land(self):
+        playbook = 'docs/spring/performance-playbook.md'
+        (self.work / 'docs' / 'spring').mkdir(parents=True)
+        (self.work / playbook).write_text('# Playbook\n- R-1 old\n')
+        git(self.work, 'checkout', '-q', '--detach', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'playbook')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        self.lane('sol-a', {playbook: '# Playbook\n- R-1 old\n- R-2 from a\n'})
+        self.lane('sol-b', {playbook: '# Playbook\n- R-1 old\n- R-3 from b\n'})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b'], []))
+        text = git(self.work, 'show', f'origin/main:{playbook}')
+        self.assertIn('R-2 from a', text)
+        self.assertIn('R-3 from b', text)
+
     def test_a_conflicting_submission_fails_alone(self):
         self.lane('sol-a', {'src/app.txt': 'a\n'})
         self.lane('sol-b', {'src/app.txt': 'b\n'})
