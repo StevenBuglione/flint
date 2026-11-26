@@ -20,16 +20,17 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Statistic.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/MeterRegistry.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Counter.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Measurement.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument;
 
 import core.sync.mutex : Mutex;
 import flint.engine.aot.objects : objectToString, statelessInstance;
 import flint.engine.aot.text : decodeUtf8;
-import flint.java.lang : Comparable, IllegalArgumentException, Iterable, JavaObject,
-    NullPointerException, UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode;
+import flint.java.lang : Comparable, IllegalArgumentException, Iterable, JavaObject, NullPointerException,
+    UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode, valueOf;
 import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
-import flint.java.util.function_ : Consumer;
+import flint.java.util.function_ : Consumer, DoubleSupplier, Supplier;
 import flint.java.util.stream : Stream;
 import std.typecons : Nullable;
 
@@ -474,11 +475,61 @@ struct Statistic
     }
 }
 
+/// A reading of a statistic supplied by a meter.
+class Measurement
+{
+    private double delegate() @safe sample;
+    private immutable Statistic statistic;
+
+    /// Read the statistic through a primitive-double supplier.
+    this(DoubleSupplier valueFunction, Statistic statistic)
+    {
+        this(&valueFunction.getAsDouble, statistic);
+    }
+
+    /// Read the statistic through a boxed Java supplier.
+    this(Supplier!double valueFunction, Statistic statistic)
+    {
+        this(&valueFunction.get, statistic);
+    }
+
+    /// Read the statistic through a D delegate (R9).
+    this(double delegate() @safe valueFunction, Statistic statistic)
+    {
+        sample = valueFunction;
+        this.statistic = statistic;
+    }
+
+    /// Sample the current value.
+    double getValue() const
+    {
+        return sample();
+    }
+
+    /// The meaning of the sampled value.
+    Statistic getStatistic() const nothrow @nogc
+    {
+        return statistic;
+    }
+
+    /// Render the statistic and current value.
+    override string toString() const
+    {
+        static immutable string[8] names = [
+            "UNKNOWN", "TOTAL", "TOTAL_TIME", "COUNT", "MAX", "VALUE", "ACTIVE_TASKS", "DURATION"
+        ];
+        return "Measurement{statistic='" ~ names[statistic.ordinal] ~ "', value=" ~ valueOf(getValue()) ~ "}";
+    }
+}
+
 /// A named source of measurements.
 interface Meter
 {
     /// The meter's registered identity.
     Id getId();
+
+    /// Measurements sampled from this meter.
+    Iterable!Measurement measure();
 
     /// The kind of measurements the meter reports.
     enum Type : ubyte
@@ -694,13 +745,23 @@ interface Counter : Meter
     /// The total since this counter was created.
     double count() nothrow @nogc;
 
-    /// Micrometer's default increment by one (R3).
-    mixin template Defaults()
+    private static Iterable!Measurement countMeasurement(Counter counter)
+    {
+        return new CounterMeasurement(counter);
+    }
+
+    /// Micrometer's default increment and count measurement (R3).
+    mixin template Defaults(alias Measurements = Iterable!Measurement, alias countSample = countMeasurement)
     {
         override void increment() nothrow @nogc
         {
             Counter counter = this;
             counter.increment(1.0);
+        }
+
+        override Measurements measure()
+        {
+            return countSample(this);
         }
     }
 }
@@ -860,4 +921,56 @@ private final class NoopCounter : Counter
     }
 
     mixin Counter.Defaults;
+}
+
+private final class CounterMeasurement : Measurement, Iterable!Measurement
+{
+    this(Counter counter)
+    {
+        super(&counter.count, Statistic.COUNT);
+    }
+
+    override Iterator!Measurement iterator()
+    {
+        return new MeasurementIterator(this);
+    }
+
+    override void forEach(void delegate(Measurement) @safe action)
+    {
+        action(this);
+    }
+
+    override int opApply(scope int delegate(Measurement) @safe visit)
+    {
+        return visit(this);
+    }
+}
+
+private final class MeasurementIterator : Iterator!Measurement
+{
+    private Measurement remaining;
+
+    this(Measurement sample) nothrow @nogc
+    {
+        remaining = sample;
+    }
+
+    override bool hasNext() nothrow @nogc
+    {
+        return remaining !is null;
+    }
+
+    override Measurement next()
+    {
+        if (!hasNext())
+            throw new NoSuchElementException("no more measurements");
+        auto current = remaining;
+        remaining = null;
+        return current;
+    }
+
+    override void remove()
+    {
+        throw new UnsupportedOperationException("cannot remove measurements");
+    }
 }
