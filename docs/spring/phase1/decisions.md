@@ -1147,3 +1147,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - **Why:** Java's `toString`, `equals` and `hashCode` on Object references cannot be `const` in D.
     - **Never excluded:** engines (`flint.engine.*`, arena, conc, `packages/*`).
   - **JDK lanes don't hold slices for module-ref retention** that comes only from today's aggregate `flint.java.lang` import. It is baselined in the closure gate's ratchet, and sol-jdk-core's split removes it.
+- 2026-11-26 02:00Z, coordinator, under the owner's standing approval: **`new-module-rule`.**
+  - **First caps:** a new module's first caps are its measured linked bytes and templates plus 10%, cited by receipt, with the trailer `Budget-Raise-Approved: new-module-rule`.
+  - **After that:** caps only shrink.
+  - **First use:** engine-jpa, at 4,840 B and 1,305 templates.
