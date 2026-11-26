@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 163 | 271 | 0 | 15,362 |
 | boot | spring-boot@v4.2.0 | 40 | 22 | 2,133 | 13,408 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,461 | 1,372 | 4,848 | 30,153 |
+| framework | spring-framework@v7.1.0 | 3,461 | 1,377 | 4,848 | 30,148 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1960,6 +1960,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.scope.ScopedObject` | `flint.aop.scope_.ScopedObject` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.aop.scope.ScopedObject#getTargetObject()` | `flint.aop.scope_.ScopedObject.getTargetObject` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.aop.scope.ScopedObject#removeFromScope()` | `flint.aop.scope_.ScopedObject.removeFromScope` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.aop.scope.ScopedProxyUtils` | `flint.aop.scope_.ScopedProxyUtils` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.aop.scope.ScopedProxyUtils#<init>()` | `flint.aop.scope_.ScopedProxyUtils` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.aop.scope.ScopedProxyUtils#getOriginalBeanName(String)` | `flint.aop.scope_.ScopedProxyUtils.getOriginalBeanName` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.aop.scope.ScopedProxyUtils#getTargetBeanName(String)` | `flint.aop.scope_.ScopedProxyUtils.getTargetBeanName` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.aop.scope.ScopedProxyUtils#isScopedTarget(String)` | `flint.aop.scope_.ScopedProxyUtils.isScopedTarget` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 
 #### org.springframework.aop.support
 
@@ -9106,7 +9111,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.framework.autoproxy | 83 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
 | org.springframework.aop.interceptor | 95 | 0 |
-| org.springframework.aop.scope | 17 | 0 |
+| org.springframework.aop.scope | 12 | 0 |
 | org.springframework.aop.support | 95 | 0 |
 | org.springframework.aop.support.annotation | 10 | 0 |
 | org.springframework.aop.target | 108 | 0 |

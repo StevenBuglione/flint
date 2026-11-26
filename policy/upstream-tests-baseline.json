@@ -150,7 +150,6 @@
       "org/springframework/aop/scope/DefaultScopedObjectTests.java",
       "org/springframework/aop/scope/ScopedProxyAutowireTests.java",
       "org/springframework/aop/scope/ScopedProxyBeanRegistrationAotProcessorTests.java",
-      "org/springframework/aop/scope/ScopedProxyUtilsTests.java",
       "org/springframework/aop/support/AopUtilsTests.java",
       "org/springframework/aop/support/ClassUtilsTests.java",
       "org/springframework/aop/support/ControlFlowPointcutTests.java",
