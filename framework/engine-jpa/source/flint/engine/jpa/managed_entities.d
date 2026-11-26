@@ -15,6 +15,13 @@ import flint.engine.jpa.mapping : EntityMapping;
 
 private alias EntityResult = Result!Object;
 
+/// A checked managed entity and, when requested for a dirty row, its loaded version.
+package struct DirtyTarget
+{
+    Object entity;
+    long loadedVersion;
+}
+
 /// One context's managed entities. The caller reserves both backing slices exclusively and supplies GC-scanned roots.
 struct ManagedEntities
 {
@@ -90,13 +97,13 @@ struct ManagedEntities
     /// Reports changed updatable ordinals for a managed identity with a captured baseline.
     Result!size_t dirty(EntityIdentity key, scope uint[] ordinals) scope nothrow @nogc
     {
-        Object entity;
-        return dirtyTarget(key, null, ordinals, entity);
+        DirtyTarget target;
+        return dirtyTarget(key, null, ordinals, target);
     }
 
     /// Resolves and type-checks the target with its loaded descriptor in one identity lookup.
     package Result!size_t dirtyTarget(EntityIdentity key, scope immutable(EntityMapping)* mapping,
-            scope uint[] ordinals, out Object entity) scope nothrow @nogc
+            scope uint[] ordinals, out DirtyTarget target, bool versioned = false) scope nothrow @nogc
     {
         const found = index.find(key);
         if (!found.ok)
@@ -106,8 +113,15 @@ struct ManagedEntities
         auto snapshot = &snapshots[found.value];
         if (mapping !is null && !snapshot.usesMapping(mapping))
             return Result!size_t(0, Error(Status.invalidArgument, "update plan does not match the loaded mapping"));
-        entity = roots[found.value];
-        return snapshot.dirty(entity, ordinals);
+        target.entity = roots[found.value];
+        const dirty = snapshot.dirty(target.entity, ordinals);
+        if (dirty.ok && dirty.value != 0 && versioned)
+        {
+            const versionError = snapshot.loadedVersion(target.loadedVersion);
+            if (versionError.code != Status.ok)
+                return Result!size_t(0, versionError);
+        }
+        return dirty;
     }
 
     /// Releases the entity's root and baseline, then returns the detached instance.

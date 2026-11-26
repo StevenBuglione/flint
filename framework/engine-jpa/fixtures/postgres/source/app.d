@@ -30,6 +30,7 @@ import flint.transaction : CannotCreateTransactionException, TransactionDefiniti
     TransactionStatus, UnexpectedRollbackException;
 import flint.transaction.support : TransactionSynchronization, TransactionSynchronizationManager, TransactionTemplate;
 import jpa_timestamp : verifyTimestampMapping;
+import jpa_version_update : verifyVersionedUpdate;
 import std.process : environment;
 
 @safe:
@@ -918,6 +919,7 @@ void main() @system
     assert(!TransactionSynchronizationManager.hasResource(cast(Object) dataSource));
     assert(jdbc.queryForObject!long("select sum(id)::bigint from jpa_seam_probe") == 3);
     verifyManagedUpdate(dataSource, jdbc, outer);
+    verifyVersionedUpdate(dataSource, jdbc);
     verifyFlushFailure(dataSource, outer, true);
     verifyFlushFailure(dataSource, outer, false);
     verifySynchronizationOnly(dataSource, manager, jdbc);

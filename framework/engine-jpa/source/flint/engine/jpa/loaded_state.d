@@ -75,6 +75,17 @@ struct ManagedSnapshotSlot
         return plan.mapping is mapping;
     }
 
+    /// Reads the loaded scalar version for an optimistic predicate.
+    package Error loadedVersion(out long value) const scope nothrow @nogc
+    {
+        if (plan.mapping is null || plan.mapping.versionOrdinal == uint.max)
+            return Error(Status.invalidArgument, "missing loaded version");
+        const ordinal = plan.mapping.versionOrdinal;
+        if (!fields[ordinal].readInteger(value))
+            return Error(Status.invalidArgument, "loaded version is not an integer", ordinal);
+        return Error.init;
+    }
+
     /// Checks the live baseline against its managed entity.
     package Result!size_t dirty(Object entity, scope uint[] ordinals) scope nothrow @nogc
     {
@@ -104,7 +115,7 @@ PlanResult planLoadedSnapshot(immutable(EntityMapping)* mapping) nothrow @nogc
         return PlanResult(LoadedSnapshotPlan.init, error);
     size_t updatable;
     foreach (ref attribute; mapping.attributes)
-        updatable += attribute.updatable;
+        updatable += attribute.updatable && attribute.ordinal != mapping.versionOrdinal;
     return PlanResult(LoadedSnapshotPlan(mapping, updatable));
 }
 
@@ -144,7 +155,7 @@ private Error writeSnapshots(scope const LoadedSnapshotPlan plan, Object entity,
     return Error.init;
 }
 
-/// Writes changed updatable ordinals in mapping order. Reserve one slot per updatable attribute and use the
+/// Writes changed updatable ordinals in mapping order, excluding the provider-owned version. Reserve one slot per updatable attribute and use the
 /// returned prefix after success. Byte comparisons use the baseline's original arena.
 DirtyResult dirtyOrdinals(scope const ref LoadedSnapshot loaded, Object entity,
         scope ref RequestArena arena, scope uint[] ordinals) nothrow @nogc
@@ -166,7 +177,7 @@ private DirtyResult compareSnapshots(scope const LoadedSnapshotPlan plan, Object
     size_t count;
     foreach (ref attribute; plan.mapping.attributes)
     {
-        if (!attribute.updatable)
+        if (!attribute.updatable || attribute.ordinal == plan.mapping.versionOrdinal)
             continue;
         const current = readMapped(attribute, entity);
         if (!current.ok)

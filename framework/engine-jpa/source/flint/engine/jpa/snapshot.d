@@ -27,6 +27,15 @@ struct AttributeSnapshot
     {
         this.kind = kind;
     }
+
+    /// Reads an exact integer snapshot, excluding NULL and other scalar representations.
+    package bool readInteger(out long value) const pure nothrow @nogc
+    {
+        if (kind != AttributeKind.integer)
+            return false;
+        value = integer;
+        return true;
+    }
 }
 
 private alias SnapshotResult = Result!AttributeSnapshot;
