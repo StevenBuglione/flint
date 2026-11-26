@@ -1066,3 +1066,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - deleting another session's work;
     - D language or shared-toolchain changes;
     - changes to a certified workload, the TLS profile or a Go comparator.
+- 2026-11-26 01:00Z, coordinator, under the owner's standing approval: **D-MICROMETER-1 is approved** (sol-observability, ad531599).
+  - **The change:** Micrometer's `Tags`, a Java `final class`, becomes an abstract class with a module-private constructor and private final implementations.
+  - **Why it's equivalent:** users can neither subclass nor construct it, and the static API is unchanged.
+  - **What it buys:** an allocation-free canonical empty set (R-109).
+  - **Null overloads** use typed null under D-7.
