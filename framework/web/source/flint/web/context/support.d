@@ -1,18 +1,82 @@
 /++
 Ported from spring-projects/spring-framework v7.1.0,
-spring-web/src/main/java/org/springframework/web/context/support/WebApplicationContextUtils.java.
+spring-web/src/main/java/org/springframework/web/context/support/
+(ServletContextAwareProcessor.java, WebApplicationContextUtils.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
-Modified by the Flint authors: translated the named and root servlet-context lookups to D.
+Modified by the Flint authors: translated servlet callbacks and context lookup to D.
 +/
 module flint.web.context.support;
 
+import flint.beans.factory.config : BeanPostProcessor;
 import flint.engine.aot.objects : objectToString;
-import flint.jakarta.servlet : ServletContext;
+import flint.jakarta.servlet : ServletConfig, ServletContext;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, RuntimeException;
-import flint.web.context : WebApplicationContext;
+import flint.web.context : ServletConfigAware, ServletContextAware, WebApplicationContext;
 
 @safe:
+
+/// Supplies servlet context and config to aware beans before initialization.
+class ServletContextAwareProcessor : BeanPostProcessor
+{
+    private ServletContext servletContext;
+    private ServletConfig servletConfig;
+
+    /// Lets a subclass supply the context or config later.
+    protected this() pure nothrow @nogc
+    {
+    }
+
+    /// With an explicit servlet context.
+    this(ServletContext servletContext) pure nothrow @nogc
+    {
+        this(servletContext, null);
+    }
+
+    /// With a servlet config and its associated context.
+    this(ServletConfig servletConfig) pure nothrow @nogc
+    {
+        this(null, servletConfig);
+    }
+
+    /// With an optional explicit context and config.
+    this(ServletContext servletContext, ServletConfig servletConfig) pure nothrow @nogc
+    {
+        this.servletContext = servletContext;
+        this.servletConfig = servletConfig;
+    }
+
+    /// Returns the context to inject, preferring the explicit value.
+    protected ServletContext getServletContext()
+    {
+        if (servletContext !is null)
+            return servletContext;
+        auto config = getServletConfig();
+        return config is null ? null : config.getServletContext();
+    }
+
+    /// Returns the servlet config to inject, or null.
+    protected ServletConfig getServletConfig()
+    {
+        return servletConfig;
+    }
+
+    override Object postProcessBeforeInitialization(Object bean, string beanName)
+    {
+        if (auto context = getServletContext())
+            if (auto aware = cast(ServletContextAware) bean)
+                aware.setServletContext(context);
+        if (auto config = getServletConfig())
+            if (auto aware = cast(ServletConfigAware) bean)
+                aware.setServletConfig(config);
+        return bean;
+    }
+
+    override Object postProcessAfterInitialization(Object bean, string beanName)
+    {
+        return bean;
+    }
+}
 
 /// Looks up application contexts published as servlet context attributes.
 abstract class WebApplicationContextUtils

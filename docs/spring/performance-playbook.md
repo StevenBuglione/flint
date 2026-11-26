@@ -779,6 +779,13 @@ increased DMD templates from 6,899 to 6,914. The inherited Phobos overage
 uses the base-relative rule in `6c9e5f49`. The matched framework-test probe
 also added 40 bytes in both profiles and retained 8,486 templates.
 
+The servlet-aware post-processor resolves the context and config during bean
+initialization. Matched venus probes at `733371beb` and `a6c28a3e7` retained
+528,953 O3 and 522,513 Oz loadable bytes for Web and 1,801,258 O3 and
+1,713,634 Oz for framework-test. Web templates went from 6,914 to 6,924.
+The framework-test count stayed at 8,486. Both probes retain the inherited
+Phobos overage under `6c9e5f49`.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
