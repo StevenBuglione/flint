@@ -72,6 +72,7 @@ The agent holding `apps-landing` runs `python3 tools/merge_train.py run --agent 
    - in `~/flint-work/wt-train`, under posidon's host-wide `hold`, it runs the definition of done's apps step for both apps: both compilers, both allocation modes, exact acceptance, and `flint budget` once it exists;
    - every run deletes its private cache and build outputs.
    - With the acceptance verifiers (desktop, neptune) in `coordination/train/verifiers.json`, a train takes four submissions per acceptance verifier. They check the stacked candidates, and posidon, the only budget runner, runs `flint budget` once over the whole stack at the same time. Only when that is red does posidon budget-check each closure-touching submission alone on main: one that regresses alone is returned with its misses, and if none does, the stack is bisected with `flint budget`.
+   - After the apps pass, each acceptance verifier runs `tools/module_probes.py` against main: the size and template probes (the definition of done's `budgets` step) of every framework module whose dependency closure the candidate touches. A new cap breach fails the candidate, as does an open breach on main that grows by more than 1%; the log names each module.
 3. **Green:** it pushes them all.
 4. **Red:** it bisects by submission, pushes the green prefix, and returns the failing role to the head of the queue. The log goes to `coordination/train/`, and the role gets mail.
 5. **Main moved meanwhile:** it rebases again. If the new commits touch the apps' closure, it verifies again first.

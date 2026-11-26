@@ -155,7 +155,7 @@ cleanup() {
   for pid in $(pgrep -u "$USER" -f 'dmd' || true); do
     if tr '\0' '\n' < /proc/$pid/environ 2>/dev/null | grep -qx "FLINT_CACHE=$FLINT_CACHE"; then kill "$pid" 2>/dev/null; fi
   done
-  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$FLINT_CACHE.budget.json" "$FLINT_CACHE.tight.json" "$FLINT_CACHE.median.json" "$FLINT_CACHE.load" "$FLINT_CACHE.noisy" "$FLINT_CACHE.notight.json" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
+  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$FLINT_CACHE.budget.json" "$FLINT_CACHE.tight.json" "$FLINT_CACHE.median.json" "$FLINT_CACHE.load" "$FLINT_CACHE.noisy" "$FLINT_CACHE.notight.json" "$FLINT_CACHE.modules.log" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
   # Each app's whole .flint (its dub cache grew to 5 GB on posidon) and the CLI's build tree; the natives stay.
   rm -rf "$WT"/benchmarks/spring/flint/*/.flint "$WT"/benchmarks/spring/flint/*/.dub "$WT/apps/flint/.flint/build"
   find "$WT" -xdev -name .dub -type d -prune -exec rm -rf {} + 2>/dev/null
@@ -244,6 +244,16 @@ else
   rm -f "$FLINT_CACHE.api.json"
   echo "== apps"; load_start; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ @DOD_FLAGS@ --json > "$FLINT_CACHE.dod.json"; rc=$?; load_stop
   cat "$FLINT_CACHE.dod.json"
+  # Module caps (coordinator, 2026-11-26 15:14Z): the size and template probes of every framework module whose closure
+  # the candidate touches; a breach the candidate causes (new, or worse than main's) is red, naming the module.
+  if [ $rc -eq 0 ] && [ -n "@BASE@" ] && [ -f tools/module_probes.py ]; then
+    echo "== module probes against main @BASE@"
+    LDC_BIN=$(ls -d "$WT"/.tools/ldc2-*-linux-x86_64/bin 2>/dev/null | head -1)
+    PATH="${LDC_BIN:+$LDC_BIN:}$PATH" $H python3 tools/module_probes.py --base "@BASE@" > "$FLINT_CACHE.modules.log" 2>&1; mrc=$?
+    cat "$FLINT_CACHE.modules.log"
+    [ $mrc -eq 2 ] && { echo "the module probes could not run: the verifier, not the candidate"; exit 3; }
+    [ $mrc -ne 0 ] && exit 1
+  fi
 fi
 if [ $rc -ne 0 ]; then
   # Decision 6478897a: a borderline flint budget miss (every failure an instruction miss under twice its tolerance)
@@ -407,7 +417,7 @@ class RemoteVerifier:
 
     supports_modes = True
 
-    def script(self, commit, ref, stamp, mode='full', apps=None, tight=None):
+    def script(self, commit, ref, stamp, mode='full', apps=None, tight=None, base=None):
         e = self.entry
         receipts = ''.join(f'{digest}  {path}\n' for path, digest in sorted(e.get('receipts', {}).items()))
         values = {'@PRELUDE@': e.get('prelude', ''), '@BARE@': e['bare'], '@REPO@': e.get('repo', e['bare']),
@@ -418,7 +428,7 @@ class RemoteVerifier:
                   '@CACHE_ROOT@': e.get('cache_root', '$HOME'), '@RECEIPTS@': receipts,
                   '@DOD_FLAGS@': '' if self.budget else '--no-flint-budget', '@APPS@': ','.join(APPS),
                   '@MODE@': mode, '@BUDGET_APPS@': ' '.join(apps or APPS), '@TIGHT@': json.dumps(tight or {}),
-                  '@COMMIT@': commit, '@REF@': ref, '@STAMP@': stamp}
+                  '@COMMIT@': commit, '@REF@': ref, '@STAMP@': stamp, '@BASE@': base or ''}
         text = VERIFY_SCRIPT
         start = text.index("<<'PY'\n", text.index('TIGHT\n  apps=')) + len("<<'PY'\n")
         text = text.replace('@CLASSIFIER@', text[start:text.index('\nPY\n', start)])
@@ -426,7 +436,9 @@ class RemoteVerifier:
             text = text.replace(token, value)
         return text
 
-    def __call__(self, commit, repo, mode='full', apps=None, tight=None):
+    takes_base = True  # the module probes judge a candidate against the train's base
+
+    def __call__(self, commit, repo, mode='full', apps=None, tight=None, base=None):
         stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()) + '-' + commit[:8]
         ref = f'train-{stamp}'
         env = dict(os.environ, GIT_SSH_COMMAND=shlex.join(self.ssh))
@@ -434,7 +446,7 @@ class RemoteVerifier:
                                 cwd=repo, env=env, capture_output=True, text=True)
         if pushed.returncode != 0:
             return None, f'{self.name}: pushing the candidate failed:\n{pushed.stderr}'
-        done = subprocess.run([*self.ssh, self.host, 'bash', '-s'], input=self.script(commit, ref, stamp, mode, apps, tight),
+        done = subprocess.run([*self.ssh, self.host, 'bash', '-s'], input=self.script(commit, ref, stamp, mode, apps, tight, base),
                               capture_output=True, text=True)
         log = f'{self.name} ({self.host}), {self.entry["worktree"]} at {commit} ({ref}):\n{done.stdout}{done.stderr}'
         if done.returncode in UNAVAILABLE:
@@ -532,6 +544,7 @@ class Train:
         self.log_dir = Path(log_dir) if log_dir else store.root / 'train'
         self.mail = mail
         self.verifications = 0
+        self.base = None  # main at the train's start: the module probes judge candidates against it
 
     # State.
     def submissions(self):
@@ -648,7 +661,8 @@ class Train:
         if self.verifiers:
             chosen = verifier or self.verifiers[-1]
             if getattr(chosen, 'supports_modes', False):
-                return chosen(commit, self.worktree, mode=mode, apps=apps, tight=tight_endpoints(self.store))
+                extra = {'base': self.base} if getattr(chosen, 'takes_base', False) else {}
+                return chosen(commit, self.worktree, mode=mode, apps=apps, tight=tight_endpoints(self.store), **extra)
             return chosen(commit, self.worktree)
         git(['checkout', '-q', '--detach', commit], self.worktree)
         log = []
@@ -733,7 +747,7 @@ class Train:
             return {'batch': [s['role'] for s in batch]}
         if git(['status', '--porcelain', '--untracked-files=no'], self.worktree).stdout.strip():
             raise SystemExit(f'merge_train: {self.worktree} has uncommitted tracked changes; the train needs it clean')
-        base = self._fetch()
+        base = self.base = self._fetch()
         budget_verifier = next((v for v in reversed(self.verifiers) if getattr(v, 'budget', False)), None)
         others = [v for v in self.verifiers if not getattr(v, 'budget', False)]
         if budget_verifier is not None and others and getattr(budget_verifier, 'supports_modes', False):
@@ -901,6 +915,7 @@ class Train:
             if failed or len(applied) != len(submissions):
                 return None
             tip, base = applied[-1][1], new_base
+            self.base = new_base
             if moved:
                 ok, _ = self.verify(tip)
                 if not ok:
