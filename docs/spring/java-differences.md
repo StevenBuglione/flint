@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 201 | 338 | 0 | 15,257 |
 | boot | spring-boot@v4.2.0 | 44 | 43 | 2,133 | 13,383 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,515 | 1,402 | 4,850 | 30,067 |
+| framework | spring-framework@v7.1.0 | 3,515 | 1,402 | 4,870 | 30,047 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -6140,8 +6140,48 @@ These Java elements have no Flint counterpart, for the reason the category gives
 
 | Java | Reason | Note |
 | --- | --- | --- |
+| `org.springframework.aop.aspectj.AbstractAspectJAdvice#getAspectClassLoader()` | `jvm-runtime` |  |
 | `org.springframework.aop.aspectj.AspectInstanceFactory#getAspectClassLoader()` | `jvm-runtime` |  |
 | `org.springframework.aop.aspectj.SimpleAspectInstanceFactory#getAspectClassLoader()` | `jvm-runtime` |  |
+| `org.springframework.aop.aspectj.SingletonAspectInstanceFactory#getAspectClassLoader()` | `jvm-runtime` |  |
+
+#### org.springframework.aop.aspectj.annotation
+
+| Java | Reason | Note |
+| --- | --- | --- |
+| `org.springframework.aop.aspectj.annotation.AspectJProxyFactory#getProxy(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.aspectj.annotation.BeanFactoryAspectInstanceFactory#getAspectClassLoader()` | `jvm-runtime` |  |
+| `org.springframework.aop.aspectj.annotation.LazySingletonAspectInstanceFactoryDecorator#getAspectClassLoader()` | `jvm-runtime` |  |
+
+#### org.springframework.aop.config
+
+| Java | Reason | Note |
+| --- | --- | --- |
+| `org.springframework.aop.config.SimpleBeanFactoryAwareAspectInstanceFactory#getAspectClassLoader()` | `jvm-runtime` |  |
+
+#### org.springframework.aop.framework
+
+| Java | Reason | Note |
+| --- | --- | --- |
+| `org.springframework.aop.framework.AbstractSingletonProxyFactoryBean#setBeanClassLoader(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.AbstractSingletonProxyFactoryBean#setProxyClassLoader(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.AopProxy#getProxy(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.AopProxy#getProxyClass(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.AopProxyUtils#completeJdkProxyInterfaces(Class...)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.ProxyFactory#getProxy(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.ProxyFactory#getProxyClass(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.ProxyFactoryBean#setBeanClassLoader(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.ProxyFactoryBean#setProxyClassLoader(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.ProxyProcessorSupport#getProxyClassLoader()` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.ProxyProcessorSupport#setBeanClassLoader(ClassLoader)` | `jvm-runtime` |  |
+| `org.springframework.aop.framework.ProxyProcessorSupport#setProxyClassLoader(ClassLoader)` | `jvm-runtime` |  |
+
+#### org.springframework.aop.support
+
+| Java | Reason | Note |
+| --- | --- | --- |
+| `org.springframework.aop.support.AopUtils#isCglibProxy(Object)` | `jvm-runtime` |  |
+| `org.springframework.aop.support.AopUtils#isJdkDynamicProxy(Object)` | `jvm-runtime` |  |
 
 #### org.springframework.aot.agent
 
@@ -9560,17 +9600,17 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.slf4j.event | 36 | 0 |
 | org.slf4j.helpers | 208 | 0 |
 | org.slf4j.spi | 7 | 0 |
-| org.springframework.aop.aspectj | 161 | 0 |
-| org.springframework.aop.aspectj.annotation | 102 | 0 |
+| org.springframework.aop.aspectj | 159 | 0 |
+| org.springframework.aop.aspectj.annotation | 99 | 0 |
 | org.springframework.aop.aspectj.autoproxy | 7 | 0 |
-| org.springframework.aop.config | 70 | 0 |
-| org.springframework.aop.framework | 169 | 0 |
+| org.springframework.aop.config | 69 | 0 |
+| org.springframework.aop.framework | 157 | 0 |
 | org.springframework.aop.framework.adapter | 16 | 0 |
 | org.springframework.aop.framework.autoproxy | 75 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
 | org.springframework.aop.interceptor | 91 | 0 |
 | org.springframework.aop.scope | 12 | 0 |
-| org.springframework.aop.support | 88 | 0 |
+| org.springframework.aop.support | 86 | 0 |
 | org.springframework.aop.support.annotation | 10 | 0 |
 | org.springframework.aop.target | 108 | 0 |
 | org.springframework.aop.target.dynamic | 16 | 0 |
