@@ -966,3 +966,29 @@ unittest
     iterator.next();
     assertThrown!UnsupportedOperationException(iterator.remove());
 }
+
+@("Locale synthesizes legacy Japanese and Thai extensions only for the matching bare locale")
+unittest
+{
+    import flint.java.util : Locale;
+
+    const japanese = Locale("JA", "jp", "JP");
+    const thai = Locale("TH", "th", "TH");
+    assert(japanese.hasExtensions());
+    assert(thai.hasExtensions());
+    assert(japanese.getUnicodeLocaleType("ca").get() == "japanese");
+    assert(thai.getUnicodeLocaleType("nu").get() == "thai");
+    assert(japanese.toString() == "ja_JP_JP_#u-ca-japanese");
+    assert(thai.toLanguageTag() == "th-TH-u-nu-thai-x-lvariant-TH");
+    assert(Locale.forLanguageTag("ja-JP-x-lvariant-JP") == japanese);
+    assert(Locale.forLanguageTag("th-TH-x-lvariant-TH") == thai);
+    assert(!Locale.forLanguageTag("ja-Latn-JP-x-lvariant-JP").hasExtensions());
+    assert(!Locale.forLanguageTag("th-TH-x-lvariant-th").hasExtensions());
+    assert(Locale.forLanguageTag("ja-JP-a-aaa-x-lvariant-JP").getUnicodeLocaleType("ca").isNull);
+    assert(Locale.forLanguageTag("th-TH-x-opaque-lvariant-TH").getUnicodeLocaleType("nu").isNull);
+    const stripped = japanese.stripExtensions();
+    assert(stripped.getVariant() == "JP");
+    assert(!stripped.hasExtensions());
+    assert(stripped.toLanguageTag() == "ja-JP-x-lvariant-JP");
+    assert(Locale.forLanguageTag(stripped.toLanguageTag()) == japanese);
+}
