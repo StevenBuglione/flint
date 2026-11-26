@@ -17,7 +17,9 @@ It also renders the Deviations table of docs/spring/api-mapping.md from api/devi
 deviation: id, deviation, reason), so parallel lanes add deviations without touching the same lines.
 
 --write rewrites the page and the table; --check (the API gate) fails when either is stale, or when an adapted entry
-cites a rule or deviation that is not defined.
+cites a rule or deviation that is not defined. Two ratchets also run: a ported or adapted member whose Java type has
+no D counterpart (api/dependency-baseline.json), and a ported type whose D declaration kind differs from its Java kind
+(api/kind-baseline.json).
 """
 import argparse
 import collections
@@ -32,6 +34,7 @@ INTRO = Path('api/java-differences-intro.md')
 RULEBOOK = Path('docs/spring/api-mapping.md')
 DEVIATIONS = Path('api/deviations')
 DEPENDENCY_BASELINE = Path('api/dependency-baseline.json')
+KIND_BASELINE = Path('api/kind-baseline.json')
 # Java types every port maps by rule rather than by a classified element: primitives, String (R14), Object (R23),
 # Class (R4), boxed values (R5), the exception roots (R8, D exceptions), reflection members (D-AOT-MEMBER), and
 # java.lang.Enum, Java's 'any enum', which maps to a template parameter constrained to D enums (is(E == enum)).
@@ -277,6 +280,86 @@ def dependency_problems(root, write=False):
     return problems
 
 
+D_DECLARATION = re.compile(r'^[ \t]*(?:(?:public|private|package|protected|final|abstract|static|extern\([^)]*\)|@\S+)'
+                           r'[ \t]+)*(struct|class|interface|enum|union)[ \t]+([A-Za-z_]\w*)\b', re.M)
+# The D declaration kinds a 'ported' Java type may have: interfaces stay interfaces and classes stay classes (R3),
+# annotations are structs (R2), records are structs or, implementing an interface, final classes (R11, R16).
+PORTED_KINDS = {'interface': {'interface'}, 'class': {'class'}, 'enum': {'enum'}, 'annotation': {'struct'},
+                'record': {'struct', 'class'}}
+OBJECT_METHODS = {'toString()', 'equals(Object)', 'hashCode()'}
+
+
+def d_declarations(root):
+    """{module: {name: {kinds}}} for every type declared, at any nesting, in a D source file under a source/ tree."""
+    found = collections.defaultdict(lambda: collections.defaultdict(set))
+    for path in root.rglob('*.d'):
+        parts = path.relative_to(root).parts
+        if 'source' not in parts or any(p.startswith('.') for p in parts):
+            continue
+        text = path.read_text(errors='replace')
+        module = re.search(r'^module\s+([\w.]+)\s*;', text, re.M)
+        if module:
+            for kind, name in D_DECLARATION.findall(text):
+                found[module.group(1)][name].add(kind)
+    return found
+
+
+def static_only(java_type):
+    """Whether a Java type's public and protected API is only static members and constants (a utility class with a
+    private constructor, a constants-only interface): R1 lets it be a D struct of static members (coordinator,
+    2026-11-26, da29538cb). Constructors and java.lang.Object's toString/equals/hashCode overrides do not count: a holder
+    such as SecurityContextHolder overrides toString yet is used only through its static members."""
+    visible = [m for m in java_type['members'] if m.get('visibility') in ('public', 'protected')
+               and m['kind'] != 'constructor' and m['signature'] not in OBJECT_METHODS]
+    return bool(visible) and all('static' in m.get('modifiers', []) for m in visible)
+
+
+def kind_mismatches(root, found=None):
+    """Every 'ported' type entry whose D declaration kind differs from its Java kind, as {type id: "<repo>: Java
+    <kind>, D <kind>"}. A different kind is an adaptation: it cites the rule or deviation that allows it. A symbol whose
+    declaration is not found (a re-export, an alias, a module function) is not judged."""
+    found = repos(root) if found is None else found
+    declarations = d_declarations(root)
+    mismatches = {}
+    for repo, (elements, manifests) in found.items():
+        for _, manifest in manifests:
+            for t in manifest['types']:
+                entry = elements.get(t['id'])
+                if not entry or entry.get('status') != 'ported' or t['kind'] not in PORTED_KINDS:
+                    continue
+                module, _, name = entry.get('d', '').rpartition('.')
+                while module and module not in declarations:
+                    module = module.rpartition('.')[0]
+                kinds = declarations.get(module, {}).get(name, set())
+                allowed = PORTED_KINDS[t['kind']] | ({'struct'} if static_only(t) else set())
+                if kinds and not kinds & allowed:
+                    mismatches[t['id']] = f'{repo}: Java {t["kind"]}, D {"/".join(sorted(kinds))}'
+    return mismatches
+
+
+def kind_problems(root, write=False):
+    """The ratchet over kind_mismatches: api/kind-baseline.json lists the mismatches recorded when the check landed
+    (coordinator, 2026-11-26). An unlisted one fails; a listed one that is fixed must leave the list, which --write
+    does. --write never adds an entry."""
+    path = root / KIND_BASELINE
+    if not path.is_file():
+        return []
+    baseline = json.loads(path.read_text())
+    allowed = baseline.get('mismatches', {})
+    mismatches = kind_mismatches(root)
+    problems = [f'{key} is ported, but {mismatches[key].partition(": ")[2]}: classify it adapted with the rule or '
+                f'deviation that allows the different kind, or declare the Java kind'
+                for key in sorted(mismatches) if key not in allowed]
+    resolved = sorted(k for k in allowed if k not in mismatches)
+    if resolved and write:
+        baseline['mismatches'] = {k: v for k, v in allowed.items() if k in mismatches}
+        path.write_text(json.dumps(baseline, indent=1, sort_keys=True) + '\n')
+    elif resolved:
+        problems.append(f'{len(resolved)} mismatches in {KIND_BASELINE} are resolved; shrink it: '
+                        'python3 tools/api_differences.py --write')
+    return problems
+
+
 def repos(root):
     """Each repo's mapping elements and the manifests of the upstreams it classifies."""
     pins = json.loads((root / 'api' / 'upstreams.json').read_text())['upstreams']
@@ -472,6 +555,7 @@ def main(argv=None):
             problems += table_problems(current, expected)
     page, problems = render(a.root, problems)
     problems += dependency_problems(a.root, write=a.write)
+    problems += kind_problems(a.root, write=a.write)
     target = a.root / OUTPUT
     if a.write:
         target.write_text(page)

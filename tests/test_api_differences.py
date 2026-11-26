@@ -185,6 +185,45 @@ class ApiDifferencesTest(unittest.TestCase):
                       'p.A#o()': {'status': 'ported', 'd': 'flint.p.A.o', 'substitutes': {'Bee': 'flint.p.MergedBee'}}})
         self.assertEqual(sorted(api_differences.dependency_gaps(self.root)), ['p.A#o() -> Bee'])
 
+    def test_a_ported_type_whose_d_kind_differs_is_a_mismatch(self):
+        def java(tid, kind, members):
+            t = type_(tid)
+            t['kind'] = kind
+            t['members'] = [{'kind': k, 'name': s.split('(')[0], 'signature': s, 'visibility': 'public',
+                             'modifiers': mods} for k, s, mods in members]
+            return t
+        (self.root / 'api' / 'upstream' / 'lib-1.0.json').write_text(json.dumps(manifest([
+            java('p.Conv', 'interface', [('method', 'convert()', [])]),
+            java('p.Utils', 'class', [('constructor', '<init>()', []), ('method', 'of()', ['static']),
+                                      ('method', 'toString()', [])]),
+            java('p.Value', 'class', [('method', 'get()', [])]),
+            java('p.Iface', 'interface', [('method', 'run()', [])]),
+            java('p.Gone', 'class', [('method', 'get()', [])])])))
+        source = self.root / 'lib' / 'source' / 'flint' / 'p.d'
+        source.parent.mkdir(parents=True)
+        source.write_text('module flint.p;\n@safe:\nstruct Conv\n{\n}\nstruct Utils\n{\n    static int of() { return 1; }\n}\n'
+                          'final class Value\n{\n    struct Inner\n    {\n    }\n}\ninterface Iface\n{\n}\n')
+        self.mapping({'**': {'status': 'excluded', 'category': 'deferred', 'phase': '2'},
+                      'p.Conv': {'status': 'ported', 'd': 'flint.p.Conv'},       # interface -> struct: mismatch
+                      'p.Utils': {'status': 'ported', 'd': 'flint.p.Utils'},     # static-only (R1): allowed
+                      'p.Value': {'status': 'ported', 'd': 'flint.p.Value'},     # class -> final class: fine
+                      'p.Iface': {'status': 'adapted', 'rules': ['R2'], 'd': 'flint.p.Iface'},
+                      'p.Gone': {'status': 'ported', 'd': 'flint.p.reexported.Gone'}})  # not found: not judged
+        self.assertEqual(api_differences.kind_mismatches(self.root),
+                         {'p.Conv': 'r: Java interface, D struct'})
+        baseline = self.root / 'api' / 'kind-baseline.json'
+        baseline.write_text(json.dumps({'mismatches': {}}))
+        problems = api_differences.kind_problems(self.root)
+        self.assertEqual(len(problems), 1)
+        self.assertIn('p.Conv is ported, but Java interface, D struct', problems[0])
+        baseline.write_text(json.dumps({'mismatches': {'p.Conv': 'r: Java interface, D struct'}}))
+        self.assertEqual(api_differences.kind_problems(self.root), [])
+        self.mapping({'**': {'status': 'excluded', 'category': 'deferred', 'phase': '2'},
+                      'p.Conv': {'status': 'adapted', 'rules': ['R2'], 'd': 'flint.p.Conv'}})
+        self.assertIn('resolved; shrink it', api_differences.kind_problems(self.root)[0])
+        self.assertEqual(api_differences.kind_problems(self.root, write=True), [])
+        self.assertEqual(json.loads(baseline.read_text())['mismatches'], {})
+
 
 if __name__ == '__main__':
     unittest.main()
