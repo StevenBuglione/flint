@@ -39,7 +39,9 @@ class BeanDefinitionDefaults
     /// Records whether singleton beans should be initialized lazily by default.
     void setLazyInit(bool value) pure nothrow @nogc
     {
-        lazyInit = value;
+        // Construct, then assign the whole Nullable: Nullable.opAssign(T) instantiates std.algorithm.mutation's
+        // move, whose Phobos archive member pulls the network cascade into every program (S-9).
+        lazyInit = Nullable!bool(value);
     }
 
     /// Whether lazy initialization was enabled explicitly.
