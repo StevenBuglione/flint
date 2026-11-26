@@ -397,6 +397,9 @@
   "java-concurrent": {
    "directory": "framework/java-concurrent",
    "module": "flint.java.util.concurrent.callable",
+   "also": [
+    "flint.java.util.concurrent.timeoutexception"
+   ],
    "repo": "framework",
    "licence": "Apache-2.0",
    "upstream": "openjdk@21.0.13",
@@ -411,9 +414,9 @@
     "dmd_incremental_seconds": 0.6,
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
-    "incremental_linked_bytes": 5600,
+    "incremental_linked_bytes": 10400,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 50
+    "template_instances": 90
    },
    "provisional": [
     "dmd_cold_seconds",

@@ -2,5 +2,9 @@
   "flint.java.util.concurrent.callable": {
     "incremental_linked_bytes": 4928,
     "template_instances": 40
+  },
+  "flint.java.util.concurrent.timeoutexception": {
+    "incremental_linked_bytes": 4800,
+    "template_instances": 40
   }
 }
