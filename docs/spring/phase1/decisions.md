@@ -1151,3 +1151,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **First caps:** a new module's first caps are its measured linked bytes and templates plus 10%, cited by receipt, with the trailer `Budget-Raise-Approved: new-module-rule`.
   - **After that:** caps only shrink.
   - **First use:** engine-jpa, at 4,840 B and 1,305 templates.
+- 2026-11-26 02:03Z, coordinator, under the owner's standing approval: **`api-growth-rule`.**
+  - **What it allows:** an API module (not an engine) whose cap is reached only by newly ported public API may raise the cap by that slice's measured delta plus 10%.
+  - **Conditions:** the commit proves the delta comes from the new declarations (probe with and without them, nothing existing grew), and carries the trailer `Budget-Raise-Approved: api-growth-rule` with the numbers.
+  - **Not covered:** growth of existing code, or an avoidable implementation cost, still needs a request.
+  - **First use:** sol-ai's RateLimit, +51 templates, so ai-model's template cap goes from 1,200 to 1,260.
