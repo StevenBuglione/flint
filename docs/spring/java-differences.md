@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
 | boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,558 | 1,453 | 4,870 | 29,953 |
+| framework | spring-framework@v7.1.0 | 3,558 | 1,455 | 4,870 | 29,951 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3503,6 +3503,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.mock.web.MockHttpServletRequest#getCharacterEncoding()` | `flint.mock.web.MockHttpServletRequest.getCharacterEncoding` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Uses the existing Jakarta ServletRequest string signature. A null slice represents absence. |
+| `org.springframework.mock.web.MockHttpServletRequest#getContentType()` | `flint.mock.web.MockHttpServletRequest.getContentType` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) | Uses the existing Jakarta ServletRequest string signature. A null slice represents absence. |
 | `org.springframework.mock.web.MockHttpServletRequest#getUriTemplate()` | `flint.mock.web.MockHttpServletRequest.getUriTemplate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.mock.web.MockHttpServletRequest#setPathInfo(String)` | `flint.mock.web.MockHttpServletRequest.setPathInfo` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.mock.web.MockHttpServletRequest#setUriTemplate(String)` | `flint.mock.web.MockHttpServletRequest.setUriTemplate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -9914,7 +9916,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.mock.http.client | 23 | 0 |
 | org.springframework.mock.http.client.reactive | 0 | 28 |
 | org.springframework.mock.http.server.reactive | 0 | 53 |
-| org.springframework.mock.web | 527 | 0 |
+| org.springframework.mock.web | 525 | 0 |
 | org.springframework.mock.web.reactive.function.server | 0 | 51 |
 | org.springframework.mock.web.server | 30 | 0 |
 | org.springframework.objenesis | 9 | 0 |

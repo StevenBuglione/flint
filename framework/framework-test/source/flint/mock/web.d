@@ -275,8 +275,11 @@ class MockHttpServletRequest : HttpServletRequest
     /// Adds a header value; `Content-Type` also sets the content type.
     void addHeader(string name, string value)
     {
-        if (equalsIgnoreCase(name, HttpHeaders.CONTENT_TYPE) && contentType is null)
+        if (equalsIgnoreCase(name, HttpHeaders.CONTENT_TYPE))
+        {
             setContentType(value);
+            return;
+        }
         // Spring's mock: the first Accept-Language header replaces the preferred locales (ENGLISH when empty).
         if (equalsIgnoreCase(name, "Accept-Language") && findPair(headers, name, true) < 0)
         {
@@ -572,9 +575,11 @@ class MockHttpServletRequest : HttpServletRequest
 
     long getDateHeader(string name)
     {
+        const values = getHeaders(name);
+        if (!values.length || values[0] is null)
+            return -1;
         auto headersView = HttpHeaders.create();
-        foreach (value; getHeaders(name))
-            headersView.add(name, value);
+        headersView.add(name, values[0]);
         return headersView.getFirstDate(name);
     }
 

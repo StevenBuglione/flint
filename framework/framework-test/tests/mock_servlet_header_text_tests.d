@@ -12,6 +12,16 @@ import flint.mock.web : MockHttpServletRequest, MockHttpServletResponse;
 
 @safe:
 
+@("Mock request reads only the first date header value")
+unittest
+{
+    auto request = new MockHttpServletRequest;
+    assert(request.getDateHeader("If-Modified-Since") == -1);
+    request.addHeader("If-Modified-Since", "Tue, 21 Jul 2015 10:00:00 GMT");
+    request.addHeader("if-modified-since", "not a date");
+    assert(request.getDateHeader("If-Modified-Since") == 1_437_472_800_000);
+}
+
 @("MockHttpServletRequest.getIntHeader parses a signed int, is -1 when absent, and rejects malformed or wide values")
 unittest
 {

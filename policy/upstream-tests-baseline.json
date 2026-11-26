@@ -1885,7 +1885,6 @@
       "org/springframework/mock/http/server/reactive/MockServerHttpResponseTests.java",
       "org/springframework/mock/web/MockCookieTests.java",
       "org/springframework/mock/web/MockFilterChainTests.java",
-      "org/springframework/mock/web/MockHttpServletRequestTests.java",
       "org/springframework/mock/web/MockHttpSessionTests.java",
       "org/springframework/mock/web/MockMultipartHttpServletRequestTests.java",
       "org/springframework/mock/web/MockPageContextTests.java",
