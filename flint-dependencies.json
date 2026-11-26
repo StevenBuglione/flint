@@ -191,6 +191,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:engine-jpa": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:engine-mail": {
       "repo": "framework",
       "version": "monorepo"

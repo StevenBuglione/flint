@@ -71,6 +71,39 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "engine-jpa": {
+   "directory": "framework/engine-jpa",
+   "module": "flint.engine.jpa",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "Flint's generated Jakarta Persistence mapping adapter (ADR-034)",
+   "dependencies": [
+    "arena",
+    "jakarta-persistence",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/engine-jpa/bench",
+    "baseline": "framework/engine-jpa/bench/baseline",
+    "edit_source": "framework/engine-jpa/source/flint/engine/jpa/mapping.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 4840,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1305
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "engine-jdbc": {
    "directory": "framework/engine-jdbc",
    "module": "flint.engine.jdbc",
