@@ -52,11 +52,7 @@
   "org.springframework.transaction.interceptor.DefaultTransactionAttribute#getAttributeDescription() -> StringBuilder": "framework: java.lang.StringBuilder is deferred",
   "org.springframework.transaction.interceptor.TransactionAspectSupport#completeTransactionAfterThrowing(TransactionInfo,InvocationCallback,Throwable) -> InvocationCallback": "framework: org.springframework.transaction.interceptor.TransactionAspectSupport.InvocationCallback is deferred",
   "org.springframework.transaction.interceptor.TransactionAspectSupport#invokeWithinTransaction(Method,Class,InvocationCallback) -> InvocationCallback": "framework: org.springframework.transaction.interceptor.TransactionAspectSupport.InvocationCallback is deferred",
-  "org.springframework.transaction.support.DefaultTransactionDefinition#getDefinitionDescription() -> StringBuilder": "framework: java.lang.StringBuilder is deferred",
-  "tools.jackson.databind.ObjectMapper#isEnabled(DeserializationFeature) -> DeserializationFeature": "framework: tools.jackson.databind.DeserializationFeature is deferred",
-  "tools.jackson.databind.ObjectMapper#isEnabled(MapperFeature) -> MapperFeature": "framework: tools.jackson.databind.MapperFeature is deferred",
-  "tools.jackson.databind.ObjectMapper#isEnabled(SerializationFeature) -> SerializationFeature": "framework: tools.jackson.databind.SerializationFeature is deferred",
-  "tools.jackson.databind.cfg.MapperConfig#isEnabled(MapperFeature) -> MapperFeature": "framework: tools.jackson.databind.MapperFeature is deferred"
+  "org.springframework.transaction.support.DefaultTransactionDefinition#getDefinitionDescription() -> StringBuilder": "framework: java.lang.StringBuilder is deferred"
  },
  "note": "Ported or adapted methods and constructors whose Java parameter or return type has no D counterpart, recorded when tools/api_differences.py's dependency check landed (coordinator, 2026-11-26). A ratchet: a new gap fails the api gate; a resolved gap must leave this list (python3 tools/api_differences.py --write removes it); nothing is ever added. Fix each by marking the element deferred, or by porting the type it depends on.",
  "schema": "flint.api-dependency-baseline/1"

@@ -435,6 +435,42 @@ bool enabledByDefault(MapperFeature f) pure nothrow @nogc
     }
 }
 
+/// The bit mask for this serialization feature.
+int getMask(SerializationFeature f) pure nothrow @nogc
+{
+    return 1 << cast(int) f;
+}
+
+/// Whether the serialization feature bit is present in `flags`.
+bool enabledIn(SerializationFeature f, int flags) pure nothrow @nogc
+{
+    return (flags & f.getMask()) != 0;
+}
+
+/// The bit mask for this deserialization feature.
+int getMask(DeserializationFeature f) pure nothrow @nogc
+{
+    return 1 << cast(int) f;
+}
+
+/// Whether the deserialization feature bit is present in `flags`.
+bool enabledIn(DeserializationFeature f, int flags) pure nothrow @nogc
+{
+    return (flags & f.getMask()) != 0;
+}
+
+/// The long bit mask for this mapper feature.
+long getLongMask(MapperFeature f) pure nothrow @nogc
+{
+    return 1L << cast(int) f;
+}
+
+/// Whether the mapper feature bit is present in `flags`.
+bool enabledIn(MapperFeature f, long flags) pure nothrow @nogc
+{
+    return (flags & f.getLongMask()) != 0;
+}
+
 /// The bits of features enabled by default, one bit per member.
 ulong defaultFeatures(E)() pure nothrow @nogc
 {

@@ -417,6 +417,19 @@ Jackson's `JsonFactory.copy` creates a factory from the original's configuration
 Jackson's UTF-8 parser and generator expose stream feature masks directly from their factory. Custom stream implementations can derive the same mask from their existing `isEnabled` method. The matched jackson-core probe on venus at `4a2a41311` and `e56d436ce` moved from 44,037 to 44,109 loadable bytes and stayed at 659 DMD template instances. Pinned LDC with `flint build --profile size` moved gs-rest-service from 3,683,487 to 3,683,607 allocated ELF bytes and petclinic-rest from 10,404,541 to 10,404,597.
 
 Jackson's `writePropertyId` renders a signed decimal ID using the existing numeric writer and passes one owned name to `writeName`. The matched jackson-core probe on venus at `e56d436ce` and `8ff0d3ae8` moved from 44,109 to 44,389 loadable bytes and from 659 to 660 DMD template instances. Pinned LDC with `flint build --profile size` moved gs-rest-service from 3,683,607 to 3,684,095 allocated ELF bytes and petclinic-rest from 10,404,597 to 10,405,085.
+### Jackson feature masks
+
+The six UFCS helpers use the pinned Java ordinal shifts with signed 32-bit masks for the serialization and deserialization enums and signed 64-bit masks for MapperFeature. The existing default routines still supply mapper startup configuration. The 76-case Jackson 3.1.8 fixture covers declaration order, default flags, masks and enabledIn on DMD and LDC.
+
+Matched release O3 builds on venus with the same pinned LDC, Flint binary and native providers compared `3f156885b` with `eccebbb7d`. File-backed allocated sections went from 3,879,367 to 3,879,351 bytes for gs-rest-service and from 10,848,189 to 10,848,157 bytes for petclinic-rest. The Databind module probe measured 455,361 to 455,361 incremental loadable bytes and 3,933 to 3,933 DMD template instances.
+
+The instruction probe used 1,000 warmup requests and 2,000 measured requests per route. The last two columns were equal on both builds.
+
+| Request | Instructions per request | Jackson instructions per request | Allocations per request | Bytes per request |
+|---|---:|---:|---:|---:|
+| gs-rest greeting | 19,801.75 to 19,800.935 | 1,783 to 1,783 | 2 | 32 |
+| petclinic validation 400 | 103,184.693 to 103,188.658 | 13,652.54 to 13,652.776 | 40 | 3,504 |
+| petclinic owner 1 | 215,843.864 to 214,870.07 | 10,873.499 to 10,873.499 | 86 | 7,040 |
 
 ## 3. Build time
 

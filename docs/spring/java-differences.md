@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 515 | 28 | 1 | 2,751 |
-| framework | jackson-databind@3.1.8 | 511 | 49 | 5 | 9,902 |
+| framework | jackson-databind@3.1.8 | 511 | 137 | 5 | 9,814 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 200 | 162 | 0 | 2,028 |
@@ -4875,11 +4875,78 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `tools.jackson.databind.DeserializationFeature` | `flint.jackson.databind.cfg.DeserializationFeature` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) | The D enum supplies the typed configuration options. R20 UFCS helpers expose the fixed Java state and mask. |
+| `tools.jackson.databind.DeserializationFeature#ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT` | `flint.jackson.databind.cfg.DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#ACCEPT_EMPTY_STRING_AS_NULL_OBJECT` | `flint.jackson.databind.cfg.DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#ACCEPT_FLOAT_AS_INT` | `flint.jackson.databind.cfg.DeserializationFeature.ACCEPT_FLOAT_AS_INT` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#ACCEPT_SINGLE_VALUE_AS_ARRAY` | `flint.jackson.databind.cfg.DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#EAGER_DESERIALIZER_FETCH` | `flint.jackson.databind.cfg.DeserializationFeature.EAGER_DESERIALIZER_FETCH` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_IGNORED_PROPERTIES` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_INVALID_SUBTYPE` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_INVALID_SUBTYPE` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_MISSING_CREATOR_PROPERTIES` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_MISSING_EXTERNAL_TYPE_ID_PROPERTY` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_MISSING_EXTERNAL_TYPE_ID_PROPERTY` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_NULL_CREATOR_PROPERTIES` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_NULL_FOR_PRIMITIVES` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_READING_DUP_TREE_KEY` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_READING_DUP_TREE_KEY` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_SUBTYPE_CLASS_NOT_REGISTERED` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_SUBTYPE_CLASS_NOT_REGISTERED` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_TRAILING_TOKENS` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_TRAILING_TOKENS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_UNEXPECTED_VIEW_PROPERTIES` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_UNEXPECTED_VIEW_PROPERTIES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_UNKNOWN_INJECT_VALUE` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_UNKNOWN_INJECT_VALUE` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_UNKNOWN_PROPERTIES` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#FAIL_ON_UNRESOLVED_OBJECT_IDS` | `flint.jackson.databind.cfg.DeserializationFeature.FAIL_ON_UNRESOLVED_OBJECT_IDS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#IGNORE_ABSTRACT_TYPES_FOR_DEDUCTION` | `flint.jackson.databind.cfg.DeserializationFeature.IGNORE_ABSTRACT_TYPES_FOR_DEDUCTION` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#UNWRAP_ROOT_VALUE` | `flint.jackson.databind.cfg.DeserializationFeature.UNWRAP_ROOT_VALUE` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#UNWRAP_SINGLE_VALUE_ARRAYS` | `flint.jackson.databind.cfg.DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#USE_BIG_DECIMAL_FOR_FLOATS` | `flint.jackson.databind.cfg.DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#USE_BIG_INTEGER_FOR_INTS` | `flint.jackson.databind.cfg.DeserializationFeature.USE_BIG_INTEGER_FOR_INTS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#USE_JAVA_ARRAY_FOR_JSON_ARRAY` | `flint.jackson.databind.cfg.DeserializationFeature.USE_JAVA_ARRAY_FOR_JSON_ARRAY` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#USE_LONG_FOR_INTS` | `flint.jackson.databind.cfg.DeserializationFeature.USE_LONG_FOR_INTS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#USE_NULL_FOR_EMPTY_UNWRAPPED` | `flint.jackson.databind.cfg.DeserializationFeature.USE_NULL_FOR_EMPTY_UNWRAPPED` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#USE_NULL_FOR_MISSING_REFERENCE_VALUES` | `flint.jackson.databind.cfg.DeserializationFeature.USE_NULL_FOR_MISSING_REFERENCE_VALUES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#WRAP_EXCEPTIONS` | `flint.jackson.databind.cfg.DeserializationFeature.WRAP_EXCEPTIONS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.DeserializationFeature#enabledByDefault()` | `flint.jackson.databind.cfg.enabledByDefault` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `tools.jackson.databind.DeserializationFeature#enabledIn(int)` | `flint.jackson.databind.cfg.enabledIn` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `tools.jackson.databind.DeserializationFeature#getMask()` | `flint.jackson.databind.cfg.getMask` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `tools.jackson.databind.JsonNode#findValuesAsString(String)` | `flint.jackson.databind.node.JsonNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.JsonNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.JsonNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.JsonNode#require()` | `flint.jackson.databind.node.JsonNode.require` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requireNonNull()` | `flint.jackson.databind.node.JsonNode.requireNonNull` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requiredAt(String)` | `flint.jackson.databind.node.JsonNode.requiredAt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [D-JACKSON-11](api-mapping.md#deviations) |  |
+| `tools.jackson.databind.MapperFeature` | `flint.jackson.databind.cfg.MapperFeature` | [R15](api-mapping.md#r15-enums-with-fields) | The private fields are fixed per constant. The D enum keeps the Java ordinals and uses UFCS helpers. |
+| `tools.jackson.databind.MapperFeature#ACCEPT_CASE_INSENSITIVE_ENUMS` | `flint.jackson.databind.cfg.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#ACCEPT_CASE_INSENSITIVE_PROPERTIES` | `flint.jackson.databind.cfg.MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#ACCEPT_CASE_INSENSITIVE_VALUES` | `flint.jackson.databind.cfg.MapperFeature.ACCEPT_CASE_INSENSITIVE_VALUES` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#ALLOW_COERCION_OF_SCALARS` | `flint.jackson.databind.cfg.MapperFeature.ALLOW_COERCION_OF_SCALARS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#ALLOW_EXPLICIT_PROPERTY_RENAMING` | `flint.jackson.databind.cfg.MapperFeature.ALLOW_EXPLICIT_PROPERTY_RENAMING` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#ALLOW_FINAL_FIELDS_AS_MUTATORS` | `flint.jackson.databind.cfg.MapperFeature.ALLOW_FINAL_FIELDS_AS_MUTATORS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#ALLOW_IS_GETTERS_FOR_NON_BOOLEAN` | `flint.jackson.databind.cfg.MapperFeature.ALLOW_IS_GETTERS_FOR_NON_BOOLEAN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#ALLOW_VOID_VALUED_PROPERTIES` | `flint.jackson.databind.cfg.MapperFeature.ALLOW_VOID_VALUED_PROPERTIES` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#APPLY_DEFAULT_VALUES` | `flint.jackson.databind.cfg.MapperFeature.APPLY_DEFAULT_VALUES` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#CAN_OVERRIDE_ACCESS_MODIFIERS` | `flint.jackson.databind.cfg.MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#DEFAULT_VIEW_INCLUSION` | `flint.jackson.databind.cfg.MapperFeature.DEFAULT_VIEW_INCLUSION` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#DETECT_PARAMETER_NAMES` | `flint.jackson.databind.cfg.MapperFeature.DETECT_PARAMETER_NAMES` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#FIX_FIELD_NAME_UPPER_CASE_PREFIX` | `flint.jackson.databind.cfg.MapperFeature.FIX_FIELD_NAME_UPPER_CASE_PREFIX` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#IGNORE_MERGE_FOR_UNMERGEABLE` | `flint.jackson.databind.cfg.MapperFeature.IGNORE_MERGE_FOR_UNMERGEABLE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#INFER_BUILDER_TYPE_BINDINGS` | `flint.jackson.databind.cfg.MapperFeature.INFER_BUILDER_TYPE_BINDINGS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#INFER_CREATOR_FROM_CONSTRUCTOR_PROPERTIES` | `flint.jackson.databind.cfg.MapperFeature.INFER_CREATOR_FROM_CONSTRUCTOR_PROPERTIES` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#INFER_PROPERTY_MUTATORS` | `flint.jackson.databind.cfg.MapperFeature.INFER_PROPERTY_MUTATORS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#INFER_RECORD_GETTERS_FROM_COMPONENTS_ONLY` | `flint.jackson.databind.cfg.MapperFeature.INFER_RECORD_GETTERS_FROM_COMPONENTS_ONLY` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#INVERSE_READ_WRITE_ACCESS` | `flint.jackson.databind.cfg.MapperFeature.INVERSE_READ_WRITE_ACCESS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#OVERRIDE_PUBLIC_ACCESS_MODIFIERS` | `flint.jackson.databind.cfg.MapperFeature.OVERRIDE_PUBLIC_ACCESS_MODIFIERS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#PROPAGATE_TRANSIENT_MARKER` | `flint.jackson.databind.cfg.MapperFeature.PROPAGATE_TRANSIENT_MARKER` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#REQUIRE_SETTERS_FOR_GETTERS` | `flint.jackson.databind.cfg.MapperFeature.REQUIRE_SETTERS_FOR_GETTERS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#REQUIRE_TYPE_ID_FOR_SUBTYPES` | `flint.jackson.databind.cfg.MapperFeature.REQUIRE_TYPE_ID_FOR_SUBTYPES` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#SORT_CREATOR_PROPERTIES_FIRST` | `flint.jackson.databind.cfg.MapperFeature.SORT_CREATOR_PROPERTIES_FIRST` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#SORT_PROPERTIES_ALPHABETICALLY` | `flint.jackson.databind.cfg.MapperFeature.SORT_PROPERTIES_ALPHABETICALLY` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#USE_ANNOTATIONS` | `flint.jackson.databind.cfg.MapperFeature.USE_ANNOTATIONS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#USE_BASE_TYPE_AS_DEFAULT_IMPL` | `flint.jackson.databind.cfg.MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#USE_GETTERS_AS_SETTERS` | `flint.jackson.databind.cfg.MapperFeature.USE_GETTERS_AS_SETTERS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#USE_STATIC_TYPING` | `flint.jackson.databind.cfg.MapperFeature.USE_STATIC_TYPING` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#USE_WRAPPER_NAME_AS_PROPERTY_NAME` | `flint.jackson.databind.cfg.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#WRAPPERS_DEFAULT_TO_NULL` | `flint.jackson.databind.cfg.MapperFeature.WRAPPERS_DEFAULT_TO_NULL` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `tools.jackson.databind.MapperFeature#enabledByDefault()` | `flint.jackson.databind.cfg.enabledByDefault` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `tools.jackson.databind.MapperFeature#enabledIn(long)` | `flint.jackson.databind.cfg.enabledIn` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `tools.jackson.databind.MapperFeature#getLongMask()` | `flint.jackson.databind.cfg.getLongMask` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,Class)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(JsonParser,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(String,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -4901,6 +4968,27 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.databind.ObjectWriter#writeValue(Writer,Object)` | `flint.jackson.databind.ObjectWriter.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectWriter#writeValueAsBytes(Object)` | `flint.jackson.databind.ObjectWriter.writeValueAsBytes` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectWriter#writeValueAsString(Object)` | `flint.jackson.databind.ObjectWriter.writeValueAsString` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.databind.SerializationFeature` | `flint.jackson.databind.cfg.SerializationFeature` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) | The D enum supplies the typed configuration options. R20 UFCS helpers expose the fixed Java state and mask. |
+| `tools.jackson.databind.SerializationFeature#APPLY_JSON_INCLUDE_FOR_CONTAINERS` | `flint.jackson.databind.cfg.SerializationFeature.APPLY_JSON_INCLUDE_FOR_CONTAINERS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#CLOSE_CLOSEABLE` | `flint.jackson.databind.cfg.SerializationFeature.CLOSE_CLOSEABLE` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#EAGER_SERIALIZER_FETCH` | `flint.jackson.databind.cfg.SerializationFeature.EAGER_SERIALIZER_FETCH` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#FAIL_ON_EMPTY_BEANS` | `flint.jackson.databind.cfg.SerializationFeature.FAIL_ON_EMPTY_BEANS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#FAIL_ON_ORDER_MAP_BY_INCOMPARABLE_KEY` | `flint.jackson.databind.cfg.SerializationFeature.FAIL_ON_ORDER_MAP_BY_INCOMPARABLE_KEY` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#FAIL_ON_SELF_REFERENCES` | `flint.jackson.databind.cfg.SerializationFeature.FAIL_ON_SELF_REFERENCES` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#FAIL_ON_UNWRAPPED_TYPE_IDENTIFIERS` | `flint.jackson.databind.cfg.SerializationFeature.FAIL_ON_UNWRAPPED_TYPE_IDENTIFIERS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#FLUSH_AFTER_WRITE_VALUE` | `flint.jackson.databind.cfg.SerializationFeature.FLUSH_AFTER_WRITE_VALUE` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#INDENT_OUTPUT` | `flint.jackson.databind.cfg.SerializationFeature.INDENT_OUTPUT` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#ORDER_MAP_ENTRIES_BY_KEYS` | `flint.jackson.databind.cfg.SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#USE_EQUALITY_FOR_OBJECT_ID` | `flint.jackson.databind.cfg.SerializationFeature.USE_EQUALITY_FOR_OBJECT_ID` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#WRAP_EXCEPTIONS` | `flint.jackson.databind.cfg.SerializationFeature.WRAP_EXCEPTIONS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#WRAP_ROOT_VALUE` | `flint.jackson.databind.cfg.SerializationFeature.WRAP_ROOT_VALUE` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#WRITE_CHAR_ARRAYS_AS_JSON_ARRAYS` | `flint.jackson.databind.cfg.SerializationFeature.WRITE_CHAR_ARRAYS_AS_JSON_ARRAYS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#WRITE_EMPTY_JSON_ARRAYS` | `flint.jackson.databind.cfg.SerializationFeature.WRITE_EMPTY_JSON_ARRAYS` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#WRITE_SELF_REFERENCES_AS_NULL` | `flint.jackson.databind.cfg.SerializationFeature.WRITE_SELF_REFERENCES_AS_NULL` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED` | `flint.jackson.databind.cfg.SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `tools.jackson.databind.SerializationFeature#enabledByDefault()` | `flint.jackson.databind.cfg.enabledByDefault` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `tools.jackson.databind.SerializationFeature#enabledIn(int)` | `flint.jackson.databind.cfg.enabledIn` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `tools.jackson.databind.SerializationFeature#getMask()` | `flint.jackson.databind.cfg.getMask` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 
 #### tools.jackson.databind.exc
 
@@ -10893,7 +10981,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.tree | 2 | 0 |
 | tools.jackson.core.type | 48 | 0 |
 | tools.jackson.core.util | 460 | 0 |
-| tools.jackson.databind | 1,568 | 0 |
+| tools.jackson.databind | 1,480 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
 | tools.jackson.databind.cfg | 765 | 0 |
 | tools.jackson.databind.deser | 587 | 0 |
