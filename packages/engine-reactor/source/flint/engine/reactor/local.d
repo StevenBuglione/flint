@@ -51,41 +51,64 @@ struct FiberLocal(T) if (localStorable!T && localWords!T < maxFiberLocalWords)
     /// The calling task's value, or `T.init` when it set none.
     T get() shared nothrow @nogc
     {
-        const offset = atomicLoad(key);
-        if (offset == 0)
-            return T.init;
-        size_t stamp;
-        auto cell = localCell(offset, localWords!T, stamp);
-        if (cell.length == 0 || cellStamp(cell) != stamp)
-            return T.init;
-        return loadCell!T(cell);
+        auto cell = readableCell(key, localWords!T);
+        return cell.length == 0 ? T.init : loadCell!T(cell);
     }
 
     /// Replace the calling task's value. Fails with `resourceExhausted` when the process claimed
     /// `maxFiberLocalWords` or the task fiber's `ReactorOptions.fiberLocalWords` is too small.
     Error set(T value) shared nothrow @nogc
     {
-        const offset = claimLocal(key, localWords!T);
-        if (offset == 0)
-            return Error(Status.resourceExhausted, "FiberLocal words exhausted for this process");
+        void*[] cell;
         size_t stamp;
-        auto cell = localCell(offset, localWords!T, stamp, true);
-        if (cell.length == 0)
-            return Error(Status.resourceExhausted, "raise ReactorOptions.fiberLocalWords for this FiberLocal");
-        storeCell!T(cell, stamp, value);
-        return Error.init;
+        const error = writableCell(key, localWords!T, cell, stamp);
+        if (error.code == Status.ok)
+            storeCell!T(cell, stamp, value);
+        return error;
     }
 
     /// Forget the calling task's value, so `get` returns `T.init` and its references are released.
     void remove() shared nothrow @nogc
     {
-        const offset = atomicLoad(key);
-        if (offset == 0)
-            return;
-        size_t stamp;
-        auto cell = localCell(offset, localWords!T, stamp);
-        cell[] = null; // empty when the cell was never allocated
+        clearCell(key, localWords!T);
     }
+}
+
+// The type-independent halves of FiberLocal's methods, compiled once here rather than in every module that
+// instantiates FiberLocal!T: the key load, the claim, the cell lookup and the stamp check.
+
+/// The calling task's cell for a local of `words` words, or empty when it has no current value.
+private void*[] readableCell(ref shared uint key, size_t words) nothrow @nogc
+{
+    const offset = atomicLoad(key);
+    if (offset == 0)
+        return null;
+    size_t stamp;
+    auto cell = localCell(offset, words, stamp);
+    return cell.length == 0 || cellStamp(cell) != stamp ? null : cell;
+}
+
+/// The calling task's cell to write, claiming the local's words on first use.
+private Error writableCell(ref shared uint key, size_t words, out void*[] cell, out size_t stamp) nothrow @nogc
+{
+    const offset = claimLocal(key, words);
+    if (offset == 0)
+        return Error(Status.resourceExhausted, "FiberLocal words exhausted for this process");
+    cell = localCell(offset, words, stamp, true);
+    if (cell.length == 0)
+        return Error(Status.resourceExhausted, "raise ReactorOptions.fiberLocalWords for this FiberLocal");
+    return Error.init;
+}
+
+/// Clear the calling task's cell for a local of `words` words.
+private void clearCell(ref shared uint key, size_t words) nothrow @nogc
+{
+    const offset = atomicLoad(key);
+    if (offset == 0)
+        return;
+    size_t stamp;
+    auto cell = localCell(offset, words, stamp);
+    cell[] = null; // empty when the cell was never allocated
 }
 
 /// The offset of a local's cell, claiming `words` plus a stamp on first use. Zero when the process ran out.
