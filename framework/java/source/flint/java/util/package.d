@@ -3117,10 +3117,118 @@ class Properties : LinkedHashMap!(string, string)
         }
     }
 
-    /// Load properties from `stream` (UTF-8, as `Properties.load(Reader)` reads text).
+    /// Load ISO-8859-1 properties from `stream`, leaving it open.
     void load(imported!"flint.java.io".InputStream stream)
     {
-        load(cast(string) stream.readAllBytes().idup);
+        if (stream is null)
+            throw new NullPointerException();
+        PropertyInput input;
+        input.stream = stream;
+        char[] line;
+        while (input.readLine(line))
+            parseLine(line);
+    }
+
+    private static bool isLineBreak(ubyte octet) pure nothrow @nogc
+    {
+        return octet == '\n' || octet == '\r';
+    }
+
+    private static struct PropertyInput
+    {
+        imported!"flint.java.io".InputStream stream;
+        ubyte[8192] buffer;
+        size_t position;
+        size_t limit;
+        bool ended;
+
+        bool readLine(ref char[] line)
+        {
+            line.length = 0;
+            bool escaped;
+            skipLeading(false);
+            while (available())
+            {
+                const octet = buffer[position++];
+                if (line.length == 0 && (octet == '#' || octet == '!'))
+                {
+                    skipComment();
+                    skipLeading(false);
+                    continue;
+                }
+                if (isLineBreak(octet))
+                {
+                    if (line.length == 0)
+                    {
+                        skipLeading(false);
+                        continue;
+                    }
+                    // Java refills at the end of the buffer before returning a terminated line.
+                    if (!available() || !escaped)
+                        break;
+                    line.length--;
+                    escaped = false;
+                    skipContinuation(octet);
+                    continue;
+                }
+                appendLatin1(line, octet);
+                escaped = octet == '\\' && !escaped;
+            }
+            if (line.length == 0)
+                return false;
+            if (escaped)
+                line.length--;
+            return true;
+        }
+
+        static void appendLatin1(ref char[] line, ubyte octet)
+        {
+            if (octet < 0x80)
+                line ~= cast(char) octet;
+            else
+            {
+                line ~= cast(char)(0xc0 | (octet >> 6));
+                line ~= cast(char)(0x80 | (octet & 0x3f));
+            }
+        }
+
+        bool available()
+        {
+            if (position < limit)
+                return true;
+            if (ended)
+                return false;
+            const count = stream.read(buffer[]);
+            ended = count <= 0;
+            position = 0;
+            limit = ended ? 0 : cast(size_t) count;
+            return !ended;
+        }
+
+        void skipLeading(bool continuation)
+        {
+            while (available())
+            {
+                const octet = buffer[position];
+                if (!isBlank(cast(char) octet) && (continuation || !isLineBreak(octet)))
+                    return;
+                position++;
+            }
+        }
+
+        void skipComment()
+        {
+            while (available() && !isLineBreak(buffer[position]))
+                position++;
+        }
+
+        void skipContinuation(ubyte terminator)
+        {
+            // The line-ending refill guarantees the next byte is buffered.
+            if (terminator == '\r' && buffer[position] == '\n')
+                position++;
+            skipLeading(true);
+        }
     }
 
     private static string logicalLine(string text, ref size_t position)
@@ -3152,7 +3260,7 @@ class Properties : LinkedHashMap!(string, string)
         return line;
     }
 
-    private void parseLine(string line)
+    private void parseLine(scope const(char)[] line)
     {
         size_t keyEnd;
         bool escaped;
@@ -3178,7 +3286,7 @@ class Properties : LinkedHashMap!(string, string)
         return c == ' ' || c == '\t' || c == '\f';
     }
 
-    private static size_t skipBlanks(string text, size_t from) pure nothrow @nogc
+    private static size_t skipBlanks(scope const(char)[] text, size_t from) pure nothrow @nogc
     {
         while (from < text.length && isBlank(text[from]))
             from++;
@@ -3198,7 +3306,7 @@ class Properties : LinkedHashMap!(string, string)
         return count;
     }
 
-    private static string unescape(string text)
+    private static string unescape(scope const(char)[] text)
     {
         string result = "";
         for (size_t i = 0; i < text.length; i++)
@@ -3233,15 +3341,32 @@ class Properties : LinkedHashMap!(string, string)
         return result;
     }
 
-    private static string unicodeEscape(string text, ref size_t i)
+    private static string unicodeEscape(scope const(char)[] text, ref size_t i)
     {
         import flint.engine.aot.text : utf8;
 
+        auto value = escapeCodeUnit(text, i);
+        if (value >= 0xd800 && value <= 0xdbff && text.length - i > 2 && text[i + 1 .. i + 3] == "\\u")
+        {
+            auto following = i + 2;
+            const low = escapeCodeUnit(text, following);
+            if (low >= 0xdc00 && low <= 0xdfff)
+            {
+                value = 0x10000 + ((value - 0xd800) << 10) + (low - 0xdc00);
+                i = following;
+            }
+        }
+        const encoded = utf8(value);
+        return encoded is null ? "\uFFFD" : encoded; // A lone UTF-16 surrogate becomes U+FFFD under R14.
+    }
+
+    private static dchar escapeCodeUnit(scope const(char)[] text, ref size_t i)
+    {
+        if (text.length - i <= 4)
+            throw new IllegalArgumentException("Malformed \\uxxxx encoding.");
         dchar value = 0;
         foreach (j; 1 .. 5)
         {
-            if (i + j >= text.length)
-                throw new IllegalArgumentException("Malformed \\uxxxx encoding.");
             const h = text[i + j];
             int digit;
             if (h >= '0' && h <= '9')
@@ -3255,8 +3380,7 @@ class Properties : LinkedHashMap!(string, string)
             value = value * 16 + digit;
         }
         i += 4;
-        const encoded = utf8(value);
-        return encoded is null ? "\uFFFD" : encoded; // a lone surrogate has no UTF-8 form
+        return value;
     }
 }
 

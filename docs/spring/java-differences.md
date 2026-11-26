@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,907 | 632 | 0 | 1,915 | 13,967 |
+| framework | openjdk@21.0.13 | 1,907 | 633 | 0 | 1,915 | 13,966 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2867,6 +2867,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Objects#toString(Object)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Objects#toString(Object,String)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Optional` | `flint.java.util.Optional` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.Properties#load(InputStream)` | `flint.java.util.Properties.load` | [R14](api-mapping.md#r14-strings-and-text) | Decodes ISO-8859-1 and leaves the stream open. An isolated UTF-16 surrogate escape becomes U+FFFD in the D UTF-8 string. |
 | `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Random#nextBytes(byte[])` | `flint.java.util.random.random.Random.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
@@ -10974,7 +10975,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,899 | 0 |
+| java.util | 1,898 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -12282,7 +12283,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Optional#map(Function)` | 2 | Java rejects a null mapper even when the Optional is empty. Flint returns the empty value. |
 | framework | `java.util.Optional#of(T)` | 2 | Optional.of must keep empty string and array values present under R26. The current null check rejects zero-length D slices whose storage compares to null. |
 | framework | `java.util.Optional#or(Supplier)` | 2 | Java rejects a null supplier even when a value is present. Flint returns the present value. |
-| framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
 | framework | `java.util.Random` | 2 | The seeded constructor and core generator methods (setSeed, next, nextBytes, nextInt, nextLong, nextBoolean, nextFloat, nextDouble) are available. The default constructor, bounded draws, nextGaussian, RandomGenerator interface and streams are deferred. |
 | framework | `java.util.Scanner#<init>(Readable)` | 2 | The Readable constructor awaits the interface's cross-package placement. Its method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
 | framework | `java.util.SplittableRandom` | 2 | The seeded constructor, split(), split(SplittableGenerator), nextInt(), nextLong() and nextBytes(byte[]) are available at flint.java.util.splittablerandom.SplittableRandom, which implements RandomGenerator.SplittableGenerator with Java's isDeprecated, nextBoolean, nextFloat and nextDouble defaults. The default constructor and the stream methods (splits, ints, longs, doubles) are deferred. |
