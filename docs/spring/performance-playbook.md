@@ -810,6 +810,17 @@ bytes. Web MVC and framework-test each grew by 1,160 O3 and 1,352 Oz bytes.
 Template counts were 6,991 for Web, 6,060 for Web MVC and 8,486 for framework-test
 in both variants. The coordinator approved the deltas under `6c9e5f49`.
 
+Servlet response Content-Type goes through the container's header setter,
+which applies the charset during transfer. Matched LDC release probes at
+`5a06a992e` and `244fe9f49` saved
+32 GC bytes per UTF-8 response in both the close-only and body-write cases
+over 2,000 operations each. The absent and plain Content-Type cases matched
+the parent, and the engine loopback suite passed. Web size and template
+counts matched the parent. Web MVC and framework-test each shrank by 800
+loadable bytes at O3 and grew by 576 at Oz, with template counts of 6,060
+and 8,481 in both variants. The stock maps identify the inherited Phobos
+objects covered by `6c9e5f49`.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

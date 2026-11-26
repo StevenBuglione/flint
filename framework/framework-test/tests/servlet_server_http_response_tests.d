@@ -89,3 +89,46 @@ unittest
     response.flush();
     assert(mock.isCommitted());
 }
+
+@("ServletServerHttpResponseTests.contentTypeHeaderNotCopiedToProperties")
+unittest
+{
+    auto mock = new ContentTypeResponse;
+    auto response = new ServletServerHttpResponse(mock);
+    response.getHeaders().setContentType(MediaType("text", "plain", StandardCharsets.UTF_8));
+
+    response.close();
+    response.flush();
+    response.close();
+
+    assert(mock.headerWrites == 1, "Content-Type should be sent as a header exactly once");
+    assert(mock.headerValue == "text/plain;charset=UTF-8");
+    assert(mock.contentTypeWrites == 0);
+    assert(mock.encodingWrites == 0);
+}
+
+private final class ContentTypeResponse : MockHttpServletResponse
+{
+    string headerValue;
+    size_t headerWrites;
+    size_t contentTypeWrites;
+    size_t encodingWrites;
+
+    // Record the calls at the servlet boundary, as the upstream Mockito fixture does.
+    override void setHeader(string name, string value)
+    {
+        assert(name == HttpHeaders.CONTENT_TYPE);
+        headerValue = value;
+        ++headerWrites;
+    }
+
+    override void setContentType(string value)
+    {
+        ++contentTypeWrites;
+    }
+
+    override void setCharacterEncoding(string value)
+    {
+        ++encodingWrites;
+    }
+}

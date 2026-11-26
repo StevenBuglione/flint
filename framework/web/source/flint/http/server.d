@@ -3,7 +3,7 @@
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/http/server/
 (ServerHttpRequest.java, ServerHttpResponse.java, ServletRequestHeadersAdapter.java,
-ServletServerHttpRequest.java, ServletServerHttpResponse.java).
+ServletResponseHeadersAdapter.java, ServletServerHttpRequest.java, ServletServerHttpResponse.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook (docs/spring/api-mapping.md). As in Spring 7,
@@ -181,7 +181,7 @@ class ServletServerHttpResponse : ServerHttpResponse
         foreach (name, values; headers)
         {
             if (equalsAscii(name, HttpHeaders.CONTENT_TYPE))
-                servletResponse.setContentType(values.length != 0 ? values[0] : null);
+                servletResponse.setHeader(HttpHeaders.CONTENT_TYPE, values.length != 0 ? values[0] : null);
             else if (equalsAscii(name, HttpHeaders.CONTENT_LENGTH))
             {
                 import flint.http : parseJavaLong;
@@ -192,13 +192,6 @@ class ServletServerHttpResponse : ServerHttpResponse
             else
                 foreach (value; values)
                     servletResponse.addHeader(name, value);
-        }
-        // Spring: a Content-Type with a charset sets the response encoding too.
-        if (servletResponse.getContentType() is null)
-        {
-            if (auto contentType = headers.getContentType())
-                if (auto charset = contentType.getCharset())
-                    servletResponse.setCharacterEncoding(charset.name());
         }
         headersWritten = true;
     }
