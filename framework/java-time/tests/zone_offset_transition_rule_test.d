@@ -1,9 +1,9 @@
 module flint.java.time.zone_offset_transition_rule_test;
 
 import core.memory : GC;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, NullPointerException;
 import flint.java.time : DateTimeException, DayOfWeek, LocalDateTime, LocalTime, Month, ZoneOffset;
-import flint.java.time.zone.zoneoffsettransitionrule : ZoneOffsetTransitionRule, createDateTime;
+import flint.java.time.zone.zoneoffsettransitionrule : ZoneOffsetTransitionRule, createDateTime, valueOf, values;
 import std.typecons : Nullable;
 
 @safe:
@@ -11,6 +11,36 @@ import std.typecons : Nullable;
 private alias TimeDefinition = ZoneOffsetTransitionRule.TimeDefinition;
 private enum standard = ZoneOffset.ofHours(1);
 private enum summer = ZoneOffset.ofHours(2);
+
+@("time definition names and order match the Java enum") unittest
+{
+    auto first = values();
+    assert(first == [TimeDefinition.UTC, TimeDefinition.WALL, TimeDefinition.STANDARD]);
+    first[0] = TimeDefinition.WALL;
+    assert(values()[0] == TimeDefinition.UTC && valueOf("STANDARD") == TimeDefinition.STANDARD);
+    foreach (bad; ["wall", ""])
+    {
+        try
+        {
+            valueOf(bad);
+            assert(false);
+        }
+        catch (IllegalArgumentException error)
+        {
+            assert(error.getMessage() == "No enum constant java.time.zone.ZoneOffsetTransitionRule.TimeDefinition."
+                    ~ bad);
+        }
+    }
+    try
+    {
+        valueOf(null);
+        assert(false);
+    }
+    catch (NullPointerException error)
+    {
+        assert(error.getMessage() == "Name is null");
+    }
+}
 
 @("a negative day rule selects the last matching weekday without allocation") unittest
 {

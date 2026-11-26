@@ -63,7 +63,7 @@
 // Modified by the Flint authors.
 module flint.java.time.zone.zoneoffsettransitionrule;
 
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, NullPointerException;
 import flint.java.time : DayOfWeek, LocalDate, LocalDateTime, LocalTime, Month, ZoneOffset;
 import std.typecons : Nullable;
 
@@ -292,6 +292,43 @@ LocalDateTime createDateTime(ZoneOffsetTransitionRule.TimeDefinition definition,
     case TimeDefinition.STANDARD:
         return dateTime.plusSeconds(wallOffset.getTotalSeconds() - standardOffset.getTotalSeconds());
     }
+}
+
+/// Return a fresh array of the time definitions in declaration order.
+ZoneOffsetTransitionRule.TimeDefinition[] values() pure nothrow
+{
+    alias TimeDefinition = ZoneOffsetTransitionRule.TimeDefinition;
+    auto definitions = new TimeDefinition[definitionNames.length];
+    foreach (index, ref definition; definitions)
+        definition = cast(TimeDefinition) index;
+    return definitions;
+}
+
+/// Resolve the exact declared Java enum name.
+ZoneOffsetTransitionRule.TimeDefinition valueOf(scope const(char)[] spelling) pure
+{
+    if (spelling is null)
+        return valueOf(null);
+    foreach (index, name; definitionNames)
+    {
+        if (name == spelling)
+            return cast(ZoneOffsetTransitionRule.TimeDefinition) index;
+    }
+    throw new IllegalArgumentException(unknownDefinitionMessage(spelling));
+}
+
+ZoneOffsetTransitionRule.TimeDefinition valueOf(typeof(null)) pure
+{
+    throw new NullPointerException("Name is null");
+}
+
+private string unknownDefinitionMessage(scope const(char)[] spelling) pure nothrow
+{
+    enum prefix = "No enum constant java.time.zone.ZoneOffsetTransitionRule.TimeDefinition.";
+    auto message = new char[prefix.length + spelling.length];
+    message[0 .. prefix.length] = prefix[];
+    message[prefix.length .. $] = spelling;
+    return message;
 }
 
 private immutable string[12] monthNames = [
