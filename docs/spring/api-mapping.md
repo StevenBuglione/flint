@@ -186,6 +186,8 @@ An enum with fields becomes a struct:
 - **Equality** is by value, per R11: two constants are equal when they are the same constant.
 - **Existing ports:** `HttpStatus` and `HttpMethod` (D-15 in web-mvc.md). `HttpStatus` also converts to `HttpStatusCode` through `alias this`, and keeps that shape.
 
+**The pre-enum "typesafe enum" pattern** follows R15 too: a final class with a private constructor, whose only instances are its public static final constants (Thymeleaf's `StandardExpressionExecutionContext.NORMAL`, `RESTRICTED`, ...). It becomes a struct with `static immutable` constants and value equality, so Java's reference identity becomes value equality. Condition: the constants' field values must be pairwise distinct, so value equality never merges two constants. The lane checks this and records it in the mapping `note`. If two constants share every field, flag it; they then need an explicit ordinal or tag field to stay distinct (coordinator, 2026-11-26).
+
 Mapping: the enum, its constants and its members are `adapted` with rule `R15`, or `ported` where a member keeps Java's exact shape.
 
 ### R16: Sealed interfaces and the records that implement them
