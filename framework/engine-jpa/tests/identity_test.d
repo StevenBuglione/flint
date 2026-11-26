@@ -71,3 +71,33 @@ unittest
     scope empty = IdentityIndex(null);
     assert(empty.claim(EntityIdentity(0, 0)).error.code == Status.resourceExhausted);
 }
+
+@("a completed nested PostLoad clears its marker before the retired outer callback unwinds")
+unittest
+{
+    IdentitySlot[1] slots;
+    scope index = IdentityIndex(slots[]);
+    enum key = EntityIdentity(0, 1);
+    assert(index.claim(key).ok);
+    const outer = index.beginPostLoad(key);
+
+    assert(index.detach(key).ok);
+    assert(index.claim(key).ok);
+    const inner = index.beginPostLoad(key);
+    assert(inner == outer);
+    assert(index.finishPostLoad(inner));
+    assert(!index.finishPostLoad(outer));
+    assert(index.find(key).ok);
+}
+
+@("PostLoad cleanup accepts retirement of the entire index")
+unittest
+{
+    IdentitySlot[1] slots;
+    scope index = IdentityIndex(slots[]);
+    enum key = EntityIdentity(0, 1);
+    assert(index.claim(key).ok);
+    const position = index.beginPostLoad(key);
+    destroy(index);
+    assert(!index.finishPostLoad(position));
+}

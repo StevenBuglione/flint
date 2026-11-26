@@ -11,8 +11,9 @@ import flint.conc : Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding,
     RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult, validateEntity, validateMapping;
-import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
-import flint.engine.jpa.loaded_state : ManagedSnapshotSlot, captureLoadedState, dirtyOrdinals, planLoadedSnapshot;
+import flint.engine.jpa.identity : EntityIdentity, IdentitySlot, LazyHandle;
+import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, ManagedSnapshotSlot, captureLoadedState,
+    dirtyOrdinals, planLoadedSnapshot;
 import flint.engine.jpa.managed_entities : LazyLoadState, ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.engine.jpa.registry : registerMappings;
@@ -259,6 +260,77 @@ private void verifyManagedLoadFailure(ResultSet rows, scope ref ManagedEntities 
     assert(managed.find(EntityIdentity(0, 1)).ok);
 }
 
+private final class PostLoadReattachment
+{
+    IdentitySlot[1] identities;
+    Object[1] roots;
+    ManagedSnapshotSlot[1] snapshots;
+    ManagedEntities managed;
+    LoadedSnapshotPlan plan;
+    Object replacement;
+    LazyHandle originalHandle;
+
+    this(LoadedSnapshotPlan loadedPlan)
+    {
+        plan = loadedPlan;
+        snapshots = [ManagedSnapshotSlot(new AttributeSnapshot[3], new ubyte[8])];
+        Error error;
+        managed = ManagedEntities(identities[], roots[], error, snapshots[]);
+        assert(error.code == Status.ok);
+    }
+}
+
+private void reattachAndFailPostLoad(Object entity)
+{
+    auto retry = cast(PostLoadReattachment) TransactionSynchronizationManager.getResource(typeid(PostLoadReattachment));
+    auto owner = cast(Owner) entity;
+    const key = EntityIdentity(0, owner.id);
+    const original = retry.managed.lazyHandle(key);
+    assert(original.ok);
+    retry.originalHandle = original.value;
+
+    const detached = retry.managed.detach(key);
+    assert(detached.ok && detached.value is owner);
+    owner.name = "Rebound";
+    assert(retry.managed.manage(key, owner, retry.plan).code == Status.ok);
+    retry.replacement = owner;
+    throw new Exception("intentional reattaching PostLoad failure");
+}
+
+private void verifyReattachedPostLoadFailure(ResultSet rows)
+{
+    static immutable EntityMapping mapped = EntityMapping("Owner", "app.Owner", "jpa_seam_probe",
+            ownerAttributes, &constructOwner, [&reattachAndFailPostLoad], &isExactOwnerType, [0]);
+    const loaded = planLoadedSnapshot(&mapped);
+    const plan = planManagedResult(&mapped, ownerBindings, 0, ownerCodec);
+    assert(loaded.ok && plan.ok);
+    auto retry = new PostLoadReattachment(loaded.value);
+    scope (exit)
+        retry.managed.clear();
+    auto resourceKey = typeid(PostLoadReattachment);
+    TransactionSynchronizationManager.bindResource(resourceKey, retry);
+    scope (exit)
+        TransactionSynchronizationManager.unbindResource(resourceKey);
+    try
+    {
+        cast(void) materializeManagedRow(plan.value, rows, retry.managed);
+        assert(false, "reattaching PostLoad failure must propagate");
+    }
+    catch (Exception failure)
+    {
+        assert(failure.msg == "intentional reattaching PostLoad failure");
+    }
+    enum key = EntityIdentity(0, 1);
+    const found = retry.managed.find(key);
+    assert(found.ok && found.value is retry.replacement, "reattached owner was retired by earlier PostLoad cleanup");
+    assert(retry.managed.resolveLazyOwner(retry.originalHandle).error.code == Status.notFound);
+    const rebound = retry.managed.lazyHandle(key);
+    assert(rebound.ok && retry.managed.resolveLazyOwner(rebound.value).value is found.value);
+    uint[2] ordinals;
+    const dirty = retry.managed.dirty(key, ordinals[]);
+    assert(dirty.ok && dirty.value == 0);
+}
+
 private void verifyManagedIdentity(DataSource dataSource)
 {
     const plan = planManagedResult(&ownerMapping, ownerBindings, 0, ownerCodec);
@@ -274,6 +346,7 @@ private void verifyManagedIdentity(DataSource dataSource)
     scope (exit)
         rows.close();
     assert(rows.next());
+    verifyReattachedPostLoadFailure(rows);
 
     IdentitySlot[2] backing;
     Object[2] entities;

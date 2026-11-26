@@ -243,6 +243,17 @@ struct ManagedEntities
         return EntityResult(roots[found.value]);
     }
 
+    package size_t beginPostLoad(EntityIdentity key) scope nothrow @nogc
+    {
+        return index.beginPostLoad(key);
+    }
+
+    package void finishPostLoad(size_t slot, EntityIdentity key, bool failed) scope nothrow @nogc
+    {
+        if (index.finishPostLoad(slot) && failed)
+            detach(key);
+    }
+
     /// Reports changed updatable ordinals for a managed identity with a captured baseline.
     Result!size_t dirty(EntityIdentity key, scope uint[] ordinals) scope nothrow @nogc
     {

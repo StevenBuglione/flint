@@ -36,6 +36,7 @@ struct IdentitySlot
 {
     private EntityIdentity key;
     private SlotState state;
+    private bool postLoadPending;
     private uint generation;
 }
 
@@ -132,6 +133,27 @@ struct IdentityIndex
                 return Result!size_t(handle.slot);
         }
         return Result!size_t(size_t.max, Error(Status.notFound, "JPA lazy owner is no longer managed"));
+    }
+
+    /// Marks the current attachment for a synchronous, possibly reentrant PostLoad call.
+    package size_t beginPostLoad(EntityIdentity key) scope nothrow @nogc
+    {
+        const found = find(key);
+        assert(found.ok && !slots[found.value].postLoadPending);
+        slots[found.value].postLoadPending = true;
+        return found.value;
+    }
+
+    /// Nested callbacks settle before the outer callback resumes. Reusing a slot drops the previous marker.
+    package bool finishPostLoad(size_t position) scope nothrow @nogc
+    {
+        if (position >= slots.length)
+            return false;
+        auto slot = &slots[position];
+        if (slot.state != SlotState.live || !slot.postLoadPending)
+            return false;
+        slot.postLoadPending = false;
+        return true;
     }
 
     /// Assigns a slot for a new identity or returns the existing claim without changing it.

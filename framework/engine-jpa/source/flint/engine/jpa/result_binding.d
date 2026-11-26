@@ -159,14 +159,15 @@ RowResult materializeManagedRow(const ref ManagedRowMaterializationPlan plan, Re
     const error = entities.manage(key, loaded.value, plan.snapshot);
     if (error.code != Status.ok)
         return RowResult(null, error);
-    scope (failure)
-    {
-        // A callback can detach or replace the current instance before it throws.
-        const current = entities.find(key);
-        if (current.ok && current.value is loaded.value)
-            entities.detach(key);
-    }
+    if (plan.row.mapping.postLoad.length == 0)
+        return loaded;
+
+    const slot = entities.beginPostLoad(key);
+    bool failed = true;
+    scope (exit)
+        entities.finishPostLoad(slot, key, failed);
     notifyPostLoad(*plan.row.mapping, loaded.value);
+    failed = false;
     return loaded;
 }
 
