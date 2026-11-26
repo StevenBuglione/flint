@@ -2422,8 +2422,51 @@
       "status": "partial"
     },
     "tools/jackson/databind/ser/SimpleTypeSerializationTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/simple_type_serialization_test.d",
+      "methods": {
+        "ported": [
+          "testBigIntArray",
+          "testBoolean",
+          "testBooleanArray",
+          "testByteArray",
+          "testDefaults",
+          "testDoubleArray",
+          "testFloatArray",
+          "testIntArray",
+          "testLinkedButNotCyclic",
+          "testLongArray",
+          "testMethodPrecedence",
+          "testOkDupFields",
+          "testResolvedDuplicate",
+          "testSimpleAutoDetect",
+          "testStaticFields",
+          "testStaticMethods",
+          "testStringArray"
+        ],
+        "skipped": {
+          "testAttributePropInclusion": "Virtual property inclusion and ObjectWriter.withAttribute are version-gated.",
+          "testAttributeProperties": "JsonAppend and contextual writer attributes are version-gated.",
+          "testBase64Variants": "The Base64Variant writer overload is version-gated.",
+          "testBasicSetup": "The default visibility builder fixture is version-gated.",
+          "testClass": "Class value serialization is version-gated.",
+          "testCustomProperties": "Custom virtual bean properties are version-gated.",
+          "testFailureDueToDupField1": "The fixture with JsonSerialize on the duplicate field is version-gated.",
+          "testIssue240": "The static typing annotation fixture is version-gated.",
+          "testLocation": "The active test covers the four serialized coordinates without supplying the Java fixture's file source.",
+          "testLongStringArray": "The active UTF-8 test omits the surrogate code units exercised by the Java fixture.",
+          "testMapperShortcutMethods": "The default visibility property-accessor overload is version-gated.",
+          "testNoAutoDetect": "The JsonAutoDetect fixture is version-gated.",
+          "testPrivateUsingGlobals": "Global field and getter visibility configuration is version-gated.",
+          "testProtectedViaAnnotations": "Protected field and getter visibility annotations are version-gated.",
+          "testReplacedCycle": "Writer features for replacing cycles with null and the array-shaped POJO fixture are version-gated.",
+          "testSimpleAnnotation": "The JsonSerialize and JsonDeserialize field annotation fixture is version-gated.",
+          "testSimpleDirectSelfReference": "The active fixture checks the exception message only if an exception occurs. The dedicated self-reference fixture asserts rejection separately.",
+          "testTokenBuffer": "The TokenBuffer fixture is version-gated.",
+          "testTransientAndStatic": "The active fixture substitutes a private field for the Java public transient field."
+        }
+      },
+      "note": "The fixtures use explicit AOT descriptors for member discovery and Nullable value elements for the boxed Boolean and Byte arrays under R5.",
+      "status": "partial"
     },
     "tools/jackson/databind/ser/dos/CyclicDataSerTest.java": {
       "phase": "2",
