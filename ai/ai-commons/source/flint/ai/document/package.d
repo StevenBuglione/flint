@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/document/{ContentFormatter,Document,DocumentMetadata,MetadataMode}.java
+// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/document/{ContentFormatter,Document,DocumentMetadata,DocumentReader,DocumentTransformer,DocumentWriter,MetadataMode}.java
 // Modified by the Flint authors.
 module flint.ai.document;
 
 import flint.engine.aot.any : Any;
 import flint.java.lang : IllegalArgumentException;
-import flint.java.util : HashMap, Map;
+import flint.java.util : HashMap, List, Map;
+import flint.java.util.function_ : Consumer, Function, Supplier;
 import std.typecons : Nullable;
 
 @safe:
@@ -203,5 +204,67 @@ class Document
             }
         }
         throw new IllegalArgumentException("id cannot be null or empty");
+    }
+}
+
+private alias DocumentList = List!Document;
+
+/// Supplies documents from a source.
+interface DocumentReader : Supplier!DocumentList
+{
+    /// Reads the documents.
+    DocumentList read();
+
+    /// Supplies the reader's default implementation (R3).
+    mixin template Defaults()
+    {
+        import flint.ai.document : Document, DocumentReader;
+        import flint.java.util : List;
+
+        override List!Document read()
+        {
+            DocumentReader reader = this;
+            return reader.get();
+        }
+    }
+}
+
+/// Accepts documents for writing.
+interface DocumentWriter : Consumer!DocumentList
+{
+    /// Writes the documents.
+    void write(DocumentList documents);
+
+    /// Supplies the writer's default implementation (R3).
+    mixin template Defaults()
+    {
+        import flint.ai.document : Document, DocumentWriter;
+        import flint.java.util : List;
+
+        override void write(List!Document documents)
+        {
+            DocumentWriter writer = this;
+            writer.accept(documents);
+        }
+    }
+}
+
+/// Transforms a list of documents.
+interface DocumentTransformer : Function!(DocumentList, DocumentList)
+{
+    /// Returns the transformed documents.
+    DocumentList transform(DocumentList documents);
+
+    /// Supplies the transformer's default implementation (R3).
+    mixin template Defaults()
+    {
+        import flint.ai.document : Document, DocumentTransformer;
+        import flint.java.util : List;
+
+        override List!Document transform(List!Document documents)
+        {
+            DocumentTransformer transformer = this;
+            return transformer.apply(documents);
+        }
     }
 }
