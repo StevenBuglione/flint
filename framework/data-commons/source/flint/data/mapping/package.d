@@ -382,9 +382,9 @@ interface InstanceCreatorMetadata(T, P) if (is(P : PersistentProperty!P))
     bool hasParameters();
 
     /// Supplies the default parameter queries (R3).
-    mixin template Defaults()
+    mixin template Defaults(ParameterType = Parameter!(T, P))
     {
-        bool isParentParameter(Parameter!(T, P))
+        bool isParentParameter(ParameterType)
         {
             return false;
         }

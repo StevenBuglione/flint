@@ -480,19 +480,16 @@ unittest
 
 private alias DocumentCreator = InstanceCreatorMetadata!(Document, RevisionProperty);
 
-private final class ParentCreator : DocumentCreator
+private class DefaultingCreator : DocumentCreator
 {
-    private CreatorParameter parentParameter;
+    private List!CreatorParameter parameters;
 
-    this(CreatorParameter parentParameter)
+    this(CreatorParameter[] parameters...)
     {
-        this.parentParameter = parentParameter;
+        this.parameters = List!CreatorParameter.of(parameters);
     }
 
-    override bool isParentParameter(CreatorParameter parameter)
-    {
-        return parentParameter is parameter;
-    }
+    mixin DocumentCreator.Defaults;
 
     override bool isCreatorParameter(PersistentProperty!())
     {
@@ -501,18 +498,33 @@ private final class ParentCreator : DocumentCreator
 
     override List!CreatorParameter getParameters()
     {
-        return List!CreatorParameter.of(parentParameter);
+        return parameters;
+    }
+}
+
+private final class ParentCreator : DefaultingCreator
+{
+    this(CreatorParameter parentParameter)
+    {
+        super(parentParameter);
     }
 
-    override int getParameterCount()
+    override bool isParentParameter(CreatorParameter parameter)
     {
-        return 1;
+        return getParameters().get(0) is parameter;
     }
+}
 
-    override bool hasParameters()
-    {
-        return true;
-    }
+@("creator defaults work in a concrete implementation outside their source module")
+unittest
+{
+    auto argument = parameter(Nullable!string("revision"));
+    DocumentCreator creator = new DefaultingCreator(argument);
+    assert(creator.hasParameters() && creator.getParameterCount() == 1);
+    assert(!creator.isParentParameter(argument));
+
+    DocumentCreator empty = new DefaultingCreator();
+    assert(!empty.hasParameters() && empty.getParameterCount() == 0);
 }
 
 private final class ParentDocumentEntity : BasicPersistentEntity!(Document, RevisionProperty)
