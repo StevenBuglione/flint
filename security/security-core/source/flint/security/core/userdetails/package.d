@@ -1,10 +1,11 @@
 // Ported from spring-security 7.2.0: core/src/main/java/org/springframework/security/core/userdetails
 // Copyright 2004-present the original author or authors.
+// Copyright 2004, 2005, 2006 Acegi Technology Pty Limited (UserCache).
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 /*
  * Ported from spring-security 7.2.0, core/src/main/java/org/springframework/security/core/userdetails/{UserDetails,
- * User,UserDetailsService,UsernameNotFoundException,UserDetailsChecker}.java. User's builder is UserBuilder with
+ * User,UserDetailsService,UsernameNotFoundException,UserDetailsChecker,UserCache}.java. User's builder is UserBuilder with
  * Java's methods; withDefaultPasswordEncoder is not ported.
  */
 
@@ -43,6 +44,19 @@ interface UserDetailsService
 {
     /// The user named `username`. Throws `UsernameNotFoundException` when there is none.
     UserDetails loadUserByUsername(string username);
+}
+
+/// Stores user details under the user's name.
+interface UserCache
+{
+    /// Return the cached user, or null when the entry is absent or expired.
+    UserDetails getUserFromCache(string username);
+
+    /// Store the user using its user name as the key.
+    void putUserInCache(UserDetails user);
+
+    /// Remove the entry for the given user name.
+    void removeUserFromCache(string username);
 }
 
 /// Checks a loaded user's account status.

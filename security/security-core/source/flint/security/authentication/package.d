@@ -6,7 +6,7 @@
  * Ported from spring-security 7.2.0, core/src/main/java/org/springframework/security/authentication/{
  * AuthenticationManager,AuthenticationProvider,AuthenticationEventPublisher,DefaultAuthenticationEventPublisher,
  * ProviderManager,AbstractAuthenticationToken,UsernamePasswordAuthenticationToken,AnonymousAuthenticationToken,
- * AuthenticationTrustResolver,
+ * AuthenticationTrustResolver,CachingUserDetailsService,
  * AuthenticationTrustResolverImpl,BadCredentialsException,AccountStatusException,DisabledException,LockedException,
  * AccountExpiredException,CredentialsExpiredException,ProviderNotFoundException,InsufficientAuthenticationException,
  * AuthenticationCredentialsNotFoundException,AuthenticationServiceException,InternalAuthenticationServiceException}.java.
@@ -32,7 +32,8 @@ import flint.security.authentication.event : AbstractAuthenticationFailureEvent,
     AuthenticationFailureProxyUntrustedEvent, AuthenticationFailureServiceExceptionEvent, AuthenticationSuccessEvent;
 import flint.security.core : Authentication, AuthenticationException, authoritiesText,
     CredentialsContainer, GrantedAuthority;
-import flint.security.core.userdetails : UsernameNotFoundException;
+import flint.security.core.userdetails : UserCache, UserDetails, UserDetailsService, UsernameNotFoundException;
+import flint.security.core.userdetails.cache : NullUserCache;
 
 @safe:
 
@@ -50,6 +51,51 @@ interface AuthenticationProvider
     Authentication authenticate(Authentication authentication);
     /// Whether tokens of the type named `authenticationType` are supported.
     bool supports(string authenticationType);
+}
+
+/// Loads user details through a configured cache, using the backing service on a miss.
+class CachingUserDetailsService : UserDetailsService
+{
+    private UserCache userCache;
+    private UserDetailsService backingService;
+
+    /// Wrap a user-details service with a no-op cache by default.
+    this(UserDetailsService backingService)
+    {
+        this.backingService = backingService;
+        userCache = new NullUserCache;
+    }
+
+    /// The current user cache.
+    UserCache getUserCache()
+    {
+        return userCache;
+    }
+
+    /// Select the user cache during configuration.
+    void setUserCache(UserCache userCache)
+    {
+        this.userCache = userCache;
+    }
+
+    /// Return the cached or loaded user and store it in the configured cache.
+    UserDetails loadUserByUsername(string username)
+    {
+        if (userCache is null)
+            throw new NullPointerException();
+        auto user = userCache.getUserFromCache(username);
+        if (user is null)
+        {
+            if (backingService is null)
+                throw new NullPointerException();
+            user = backingService.loadUserByUsername(username);
+            if (user is null)
+                throw new IllegalArgumentException("UserDetailsService " ~ valueOf(cast(Object) backingService)
+                        ~ " returned null for username " ~ username ~ ". This is an interface contract violation");
+        }
+        userCache.putUserInCache(user);
+        return user;
+    }
 }
 
 /// Receives the outcome of an authentication request.

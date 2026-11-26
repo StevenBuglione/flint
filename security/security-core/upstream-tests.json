@@ -534,8 +534,13 @@
       "status": "deferred"
     },
     "org/springframework/security/core/userdetails/cache/NullUserCacheTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-core/tests/null_user_cache_test.d",
+      "methods": {
+        "ported": [
+          "testCacheOperation"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/security/core/userdetails/cache/SpringCacheBasedUserCacheTests.java": {
       "phase": "2",
