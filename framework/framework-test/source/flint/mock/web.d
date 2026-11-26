@@ -13,12 +13,13 @@ Spring mock does; there is no container, so no error page is rendered.
 module flint.mock.web;
 
 import flint.engine.aot.any : Any;
+import flint.engine.aot.text : decimal, parseDouble, parseLong;
 import flint.http : HttpHeaders, MediaType;
 import flint.jakarta.servlet : DispatcherType, Filter, FilterRegistration, RequestDispatcher,
     Servlet, ServletContext, ServletInputStream, ServletOutputStream, ServletRegistration;
 import flint.jakarta.servlet.http : Cookie, HttpServletRequest, HttpServletResponse;
 import flint.java.io : PrintWriter, Writer;
-import flint.java.lang : IllegalStateException, UnsupportedOperationException;
+import flint.java.lang : IllegalStateException, NumberFormatException, UnsupportedOperationException;
 import flint.java.util : Locale;
 import std.typecons : Nullable;
 
@@ -578,10 +579,8 @@ class MockHttpServletRequest : HttpServletRequest
 
     int getIntHeader(string name)
     {
-        import std.conv : to;
-
         const value = getHeader(name);
-        return value is null ? -1 : value.to!int;
+        return value is null ? -1 : parseIntHeader(value);
     }
 
     string getMethod()
@@ -631,10 +630,8 @@ class MockHttpServletRequest : HttpServletRequest
 
     string getRequestURL()
     {
-        import std.conv : to;
-
         const defaultPort = (scheme == "http" && serverPort == 80) || (scheme == "https" && serverPort == 443);
-        return scheme ~ "://" ~ serverName ~ (defaultPort ? "" : ":" ~ serverPort.to!string) ~ requestURI;
+        return scheme ~ "://" ~ serverName ~ (defaultPort ? "" : ":" ~ decimal(serverPort)) ~ requestURI;
     }
 
     string getServletPath()
@@ -807,10 +804,8 @@ class MockHttpServletResponse : HttpServletResponse
 
     void setContentLengthLong(long len)
     {
-        import std.conv : to;
-
         contentLength = len;
-        setHeaderValue(HttpHeaders.CONTENT_LENGTH, len.to!string, false);
+        setHeaderValue(HttpHeaders.CONTENT_LENGTH, decimal(len), false);
     }
 
     /// The content length set, or `-1`.
@@ -859,10 +854,8 @@ class MockHttpServletResponse : HttpServletResponse
 
     private static bool containsCharset(string type)
     {
-        import std.uni : toLower;
-
         foreach (i; 0 .. type.length)
-            if (i + 8 <= type.length && type[i .. i + 8].toLower == "charset=")
+            if (i + 8 <= type.length && equalsIgnoreCase(type[i .. i + 8], "charset="))
                 return true;
         return false;
     }
@@ -982,9 +975,10 @@ class MockHttpServletResponse : HttpServletResponse
             setContentType(value);
         else if (equalsIgnoreCase(name, HttpHeaders.CONTENT_LENGTH))
         {
-            import std.conv : to;
-
-            setContentLengthLong(value.to!long);
+            long length;
+            if (!parseLong(value, length))
+                throw new NumberFormatException("For input string: \"" ~ value ~ "\"");
+            setContentLengthLong(length);
         }
         else
             setHeaderValue(name, value, false);
@@ -1002,16 +996,12 @@ class MockHttpServletResponse : HttpServletResponse
 
     void setIntHeader(string name, int value)
     {
-        import std.conv : to;
-
-        setHeaderValue(name, value.to!string, false);
+        setHeaderValue(name, decimal(value), false);
     }
 
     void addIntHeader(string name, int value)
     {
-        import std.conv : to;
-
-        setHeaderValue(name, value.to!string, true);
+        setHeaderValue(name, decimal(value), true);
     }
 
     void setStatus(int sc)
@@ -1061,6 +1051,27 @@ class MockHttpServletResponse : HttpServletResponse
 }
 
 /// Java's `String.equalsIgnoreCase` for ASCII header names.
+/// `Integer.parseInt`: an optional sign and decimal digits within `int`'s range, else `NumberFormatException`.
+private int parseIntHeader(string value)
+{
+    long parsed;
+    if (!parseLong(value, parsed) || parsed < int.min || parsed > int.max)
+        throw new NumberFormatException("For input string: \"" ~ value ~ "\"");
+    return cast(int) parsed;
+}
+
+/// `value` without leading and trailing ASCII whitespace.
+private inout(char)[] trimAscii(return scope inout(char)[] value) pure nothrow @nogc
+{
+    size_t start;
+    size_t end = value.length;
+    while (start < end && (value[start] == ' ' || value[start] == '\t'))
+        ++start;
+    while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t'))
+        --end;
+    return value[start .. end];
+}
+
 private bool equalsIgnoreCase(scope const(char)[] a, scope const(char)[] b) pure nothrow @nogc
 {
     if (a.length != b.length)
@@ -1103,21 +1114,11 @@ private Locale[] acceptLanguageLocales(string value)
             }
         if (semicolon < entry.length)
         {
-            import std.conv : ConvException, to;
-            import std.string : strip;
-
-            const parameter = entry[semicolon + 1 .. $].strip;
-            if (parameter.length > 2 && parameter[0 .. 2] == "q=")
-            {
-                try
-                    weight = parameter[2 .. $].to!double;
-                catch (ConvException)
-                    continue;
-            }
+            const parameter = trimAscii(entry[semicolon + 1 .. $]);
+            if (parameter.length > 2 && parameter[0 .. 2] == "q=" && !parseDouble(parameter[2 .. $], weight))
+                continue;
         }
-        import std.string : strip;
-
-        const range = entry[0 .. semicolon].strip;
+        const range = trimAscii(entry[0 .. semicolon]);
         if (range.length == 0 || range == "*" || !(weight > 0))
             continue;
         ranked ~= Ranked(weight, Locale.forLanguageTag(range));
