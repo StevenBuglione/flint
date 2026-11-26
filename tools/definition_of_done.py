@@ -85,6 +85,25 @@ def tail(text, lines=15):
 # Running commands
 
 
+def host_ldc(tools, system=None, machine=None, libc=None):
+    """The one LDC under `tools` built for this host: ldc2-<version>-<os>-<arch>, the newest version. A sorted glob of
+    every ldc2-* put the alpine (musl) LDC first on glibc Linux, whose druntime lacks core.sys.posix.unistd.pread
+    (sol-security, 2026-11-26)."""
+    import platform
+    system = system or platform.system()
+    machine = machine or platform.machine()
+    libc = libc if libc is not None else platform.libc_ver()[0]
+    arch = {'amd64': 'x86_64', 'arm64': 'arm64' if system == 'Darwin' else 'aarch64'}.get(machine.lower(), machine.lower())
+    host = {'Linux': 'linux' if libc == 'glibc' else 'alpine', 'Darwin': 'osx', 'FreeBSD': 'freebsd',
+            'Windows': 'windows'}.get(system, system.lower())
+    names = [f'-{host}-{arch}'] + (['-osx-universal'] if host == 'osx' else [])
+    found = [d for d in tools.glob('ldc2-*') if d.is_dir() and d.name.endswith(tuple(names)) and (d / 'bin').is_dir()]
+
+    def version(d):
+        return tuple(int(n) for n in re.findall(r'\d+', d.name.split('-')[1])) if len(d.name.split('-')) > 1 else ()
+    return max(found, key=version) / 'bin' if found else None
+
+
 class Runner:
     """Runs a command from the repository root with the pinned toolchains on PATH, under `measure_queue.py hold`
     unless told not to. Returns (exit status, stdout, stderr)."""
@@ -101,15 +120,15 @@ class Runner:
         shared = [self.root / '.tools'] + [p / '.tools' for p in self.root.parents if (p / '.tools' / 'dmd2').is_dir()][:1]
         extra = []
         for tools in shared:
-            extra += [tools / 'dmd2' / 'linux' / 'bin64', tools / 'bin', *sorted(tools.glob('ldc2-*/bin'))]
+            extra += [tools / 'dmd2' / 'linux' / 'bin64', tools / 'bin', host_ldc(tools)]
         extra.append(self.root / '.flint' / 'bin')
-        env['PATH'] = os.pathsep.join([str(p) for p in extra if p.is_dir()] + [env.get('PATH', '')])
+        env['PATH'] = os.pathsep.join([str(p) for p in extra if p and p.is_dir()] + [env.get('PATH', '')])
         return env
 
-    def __call__(self, argv, timeout=3600):
+    def __call__(self, argv, timeout=3600, env=None):
         command = ([sys.executable, str(self.root / 'tools' / 'measure_queue.py'), 'hold', '--'] if self.hold else [])
         try:
-            done = subprocess.run(command + [str(a) for a in argv], cwd=self.root, env=self.environment(),
+            done = subprocess.run(command + [str(a) for a in argv], cwd=self.root, env={**self.environment(), **(env or {})},
                                   capture_output=True, text=True, timeout=timeout)
         except FileNotFoundError as exc:
             return 127, '', str(exc)
@@ -379,9 +398,15 @@ NATIVE_MISSING = ('pinned llhttp provider is unavailable', 'cannot find -lflint'
 def tests(module, run, record=None):
     packages = [':' + module.name] + [p for p in (record or {}).get('test_packages', []) if p != ':' + module.name]
     messages, details = [], {}
+    # --temp-build keeps the test binary out of the module directory, where an untracked file blocks the budgets
+    # step's commit identity (the .gitignore patterns cover only one level of packages/, boot/ and framework/); a
+    # private TMPDIR per module keeps concurrent lanes apart and keeps the build cache.
+    scratch = ROOT / '.flint' / 'definition-of-done' / module.name
+    scratch.mkdir(parents=True, exist_ok=True)
     for package in packages:
         for compiler in ('dmd', 'ldc2'):
-            code, out, err = run(['dub', 'test', package, f'--compiler={compiler}', '--build=unittest'])
+            code, out, err = run(['dub', 'test', package, f'--compiler={compiler}', '--build=unittest', '--temp-build'],
+                                 env={'TMPDIR': str(scratch)})
             details[f'{package} {compiler}'] = 'pass' if code == 0 else f'exit {code}'
             if code == 0:
                 continue
@@ -634,6 +659,40 @@ def using_apps(module, root=ROOT):
     return apps
 
 
+class DatabaseUnavailable(Exception):
+    pass
+
+
+def postgres_apps(root=ROOT):
+    """The Spring apps whose suite needs PostgreSQL (benchmarks/spring/apps.json "database": "postgres")."""
+    rows = json.loads((root / 'benchmarks' / 'spring' / 'apps.json').read_text())['apps']
+    return {name for name, row in rows.items() if row.get('database') == 'postgres'}
+
+
+def app_database(app, root=ROOT):
+    """A context giving `database()`, a fresh database's environment (POSTGRES_URL, _USER, _PASS) on a disposable
+    cluster of the pinned PostgreSQL peer (TCP on loopback, no Unix socket, stopped at the end), as ci.py's allocation
+    gate does; for an app without a database, `database()` is empty."""
+    import contextlib
+
+    @contextlib.contextmanager
+    def nothing():
+        yield dict
+
+    if app not in postgres_apps(root):
+        return nothing()
+    import spring_bench
+    try:
+        spring_bench.postgres_bin()
+    except SystemExit as exc:
+        raise DatabaseUnavailable(str(exc)) from None
+    return spring_bench.postgres_cluster()
+
+
+# ci.py's allocation gate runs each app twice: as built, and with the static-data map applied in the test binaries.
+ALLOCATION_CONFIGURATIONS = (('allocation tests', {}), ('allocation tests, static trim', {'FLINT_GC_STATIC_VERIFY': '0'}))
+
+
 def applications(module, run, which='auto', flint=None, root=ROOT):
     if which == 'none':
         return Result('apps', 'skip', ['--apps none'])
@@ -645,12 +704,18 @@ def applications(module, run, which='auto', flint=None, root=ROOT):
     messages, details = [], {'apps': apps}
     budget_cli = run([flint, 'budget', '--help'])[0] == 0
     for app in apps:
-        code, out, err = run([flint, 'test', '-C', f'benchmarks/spring/flint/{app}', '--compiler', 'both', '--verify'])
-        details[f'{app} allocation tests'] = 'pass' if code == 0 else f'exit {code}'
-        if code != 0:
-            messages.append(f'{app}: its tests or request-allocation budgets fail (policy/request-allocations.json; '
-                            'budgets only go down):')
-            messages += tail(out + err, 10)
+        try:
+            with app_database(app, root) as database:
+                for label, extra in ALLOCATION_CONFIGURATIONS:
+                    code, out, err = run([flint, 'test', '-C', f'benchmarks/spring/flint/{app}', '--compiler', 'both',
+                                          '--verify'], env={**extra, **database()})
+                    details[f'{app} {label}'] = 'pass' if code == 0 else f'exit {code}'
+                    if code != 0:
+                        messages.append(f'{app}: its {label} fail (budgets in policy/request-allocations.json only go '
+                                        'down):')
+                        messages += tail(out + err, 10)
+        except DatabaseUnavailable as exc:
+            return Result('apps', 'error', [f'{app} needs PostgreSQL: {exc}'], details=details)
         code, out, err = run([sys.executable, 'tools/spring_bench.py', 'accept', app, '--impl', 'flint'])
         details[f'{app} acceptance'] = 'pass' if code == 0 else f'exit {code}'
         if code != 0:

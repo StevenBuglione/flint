@@ -23,10 +23,12 @@ class FakeRunner:
         self.rules = rules
         self.default = default
         self.calls = []
+        self.envs = []
 
-    def __call__(self, argv, timeout=3600):
+    def __call__(self, argv, timeout=3600, env=None):
         argv = [str(a) for a in argv]
         self.calls.append(argv)
+        self.envs.append(env or {})
         for words, answer in self.rules:
             if all(w in argv for w in words):
                 return answer(argv) if callable(answer) else answer
@@ -78,6 +80,34 @@ class Resolve(unittest.TestCase):
     def test_apps_are_chosen_by_dependency_closure(self):
         self.assertEqual(dod.using_apps(dod.resolve('framework/jdbc')), ['gs-relational-data-access', 'petclinic-rest'])
         self.assertNotIn('gs-relational-data-access', dod.using_apps(dod.resolve('framework/webmvc')))
+
+
+class HostToolchain(unittest.TestCase):
+    """sol-security, 2026-11-26: a sorted glob put the alpine (musl) LDC first on glibc Linux."""
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.tools = self.root / '.tools'
+        for name in ('ldc2-1.43.0-alpine-x86_64', 'ldc2-1.43.0-linux-x86_64', 'ldc2-1.42.0-linux-x86_64',
+                     'ldc2-1.43.0-linux-aarch64'):
+            (self.tools / name / 'bin').mkdir(parents=True)
+        (self.tools / 'ldc2-1.44.0-linux-x86_64.tar.xz').write_text('')
+
+    def test_glibc_linux_takes_the_newest_linux_ldc_never_alpine(self):
+        self.assertEqual(dod.host_ldc(self.tools, 'Linux', 'x86_64', 'glibc'),
+                         self.tools / 'ldc2-1.43.0-linux-x86_64' / 'bin')
+
+    def test_musl_takes_alpine_and_arm_takes_its_own(self):
+        self.assertEqual(dod.host_ldc(self.tools, 'Linux', 'x86_64', ''), self.tools / 'ldc2-1.43.0-alpine-x86_64' / 'bin')
+        self.assertEqual(dod.host_ldc(self.tools, 'Linux', 'aarch64', 'glibc'),
+                         self.tools / 'ldc2-1.43.0-linux-aarch64' / 'bin')
+        self.assertIsNone(dod.host_ldc(self.tools, 'Darwin', 'arm64', ''))
+
+    def test_the_runner_s_path_has_one_ldc_and_it_is_the_host_s(self):
+        path = dod.Runner(hold=False, root=self.root).environment()['PATH'].split(os.pathsep)
+        ldcs = [p for p in path if 'ldc2-' in p and p.startswith(str(self.tools))]
+        self.assertEqual(ldcs, [str(dod.host_ldc(self.tools))])
+        self.assertNotIn('alpine', ldcs[0]) if 'glibc' in __import__('platform').libc_ver()[0] else None
 
 
 class Structural(unittest.TestCase):
@@ -163,6 +193,12 @@ class Tests(unittest.TestCase):
         self.assertEqual([c[2:4] for c in run.calls], [[':webmvc', '--compiler=dmd'], [':webmvc', '--compiler=ldc2'],
                                                        [':framework-test', '--compiler=dmd'],
                                                        [':framework-test', '--compiler=ldc2']])
+
+    def test_test_binaries_build_outside_the_module_in_a_private_temp_directory(self):
+        run = FakeRunner()
+        dod.tests(module(name='security-core'), run)
+        self.assertTrue(all('--temp-build' in c for c in run.calls))
+        self.assertEqual({e['TMPDIR'] for e in run.envs}, {str(ROOT / '.flint' / 'definition-of-done' / 'security-core')})
 
     def test_a_failing_compiler_names_the_command(self):
         run = FakeRunner((['--compiler=ldc2'], (1, 'core.exception.AssertError@x.d(9): unittest failure\n', '')))
@@ -368,6 +404,54 @@ class Apps(unittest.TestCase):
         result = dod.applications(module(), run, 'petclinic-rest', self.flint)
         self.assertIn('petclinic-rest: the golden suite fails in exact mode (benchmarks/spring/suites):',
                       result.messages)
+
+    def fake_database(self, opened):
+        import contextlib
+
+        @contextlib.contextmanager
+        def cluster(app, root=ROOT):
+            opened.append(app)
+            yield (lambda: {'POSTGRES_URL': f'jdbc:postgresql://127.0.0.1:5999/{app}'}) if app == 'petclinic-rest' else dict
+        return cluster
+
+    def test_petclinic_gets_a_disposable_database_and_both_ci_configurations(self):
+        opened = []
+        original, dod.app_database = dod.app_database, self.fake_database(opened)
+        try:
+            run = FakeRunner((['budget', '--help'], (1, '', '')))
+            result = dod.applications(module(), run, 'petclinic-rest,gs-rest-service', self.flint)
+        finally:
+            dod.app_database = original
+        self.assertEqual(result.status, 'pass', result.messages)
+        self.assertEqual(opened, ['petclinic-rest', 'gs-rest-service'])
+        tests = [(c[3], e) for c, e in zip(run.calls, run.envs) if c[1] == 'test']
+        self.assertEqual([(app.rsplit('/', 1)[-1], e.get('POSTGRES_URL', '-'), e.get('FLINT_GC_STATIC_VERIFY', '-'))
+                          for app, e in tests],
+                         [('petclinic-rest', 'jdbc:postgresql://127.0.0.1:5999/petclinic-rest', '-'),
+                          ('petclinic-rest', 'jdbc:postgresql://127.0.0.1:5999/petclinic-rest', '0'),
+                          ('gs-rest-service', '-', '-'), ('gs-rest-service', '-', '0')])
+
+    def test_only_petclinic_needs_postgresql(self):
+        self.assertEqual(dod.postgres_apps(), {'petclinic-rest'})
+
+    def test_a_missing_postgresql_peer_is_an_environment_error(self):
+        def missing(app, root=ROOT):
+            raise dod.DatabaseUnavailable('PostgreSQL 18.7 is missing; install it with python3 tools/install_peers.py')
+        original, dod.app_database = dod.app_database, missing
+        try:
+            result = dod.applications(module(), FakeRunner(), 'petclinic-rest', self.flint)
+        finally:
+            dod.app_database = original
+        self.assertEqual(result.status, 'error')
+        self.assertIn('install_peers.py', result.messages[0])
+
+    def test_a_postmaster_pg_ctl_left_running_is_stopped_by_pid(self):
+        import spring_bench
+        data = Path(tempfile.mkdtemp())
+        server = subprocess.Popen(['sleep', '60'])
+        (data / 'postmaster.pid').write_text(f'{server.pid}\n{data}\n')
+        spring_bench.stop_postmaster(data, grace=0.2)
+        self.assertEqual(server.wait(timeout=5), -15)
 
     def test_none_skips(self):
         self.assertEqual(dod.applications(module(), FakeRunner(), 'none', self.flint).status, 'skip')

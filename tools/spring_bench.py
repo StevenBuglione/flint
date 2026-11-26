@@ -315,6 +315,31 @@ def postgres_cluster(cpus=None):
             yield database
         finally:
             subprocess.run([str(prefix / 'pg_ctl'), '-D', str(data), '-m', 'fast', '-w', 'stop'], check=False, **quiet)
+            stop_postmaster(data)
+
+
+def stop_postmaster(data, grace=10.0):
+    """Stop a cluster's postmaster by the pid in its postmaster.pid if pg_ctl left it running: no server outlives
+    its step."""
+    import signal
+    import time
+    pid_file = Path(data) / 'postmaster.pid'
+    try:
+        pid = int(pid_file.read_text().split()[0])
+    except (OSError, ValueError, IndexError):
+        return
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        try:
+            os.kill(pid, sig)
+        except ProcessLookupError:
+            return
+        deadline = time.monotonic() + grace
+        while time.monotonic() < deadline:
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                return
+            time.sleep(0.1)
 
 
 # ---------------------------------------------------------------------------------------------------------------

@@ -24,10 +24,10 @@ Each failure names what is wrong, where, the rule it breaks, and the command tha
 | `structural` | `gates.py --gate structural`, with `--package` for an engine package and `--repo` otherwise | no structural failure names this module. A repo-wide failure elsewhere is an ERROR |
 | `api` | `flint api headers <dir>`, then `flint api coverage --repo R`, filtered to the module's Java packages | every ported file has its header, and no upstream element the module owns is unclassified. `--release` also fails `deferred` exclusions |
 | `quality` | `quality.py --path <dir> --baseline policy/quality-baseline.json` | no dfmt (`+flint.stack-udas`), D-Scanner or complexity-allowlist finding beyond the baseline, and no baseline entry that is gone (see below) |
-| `tests` | `dub test :<name> --build=unittest` on DMD and LDC, plus the record's `test_packages` | both compilers pass |
+| `tests` | `dub test :<name> --build=unittest --temp-build` on DMD and LDC (the host's LDC, never the alpine one), plus the record's `test_packages`; the test binaries build under `.flint/definition-of-done/<name>/`, never in the module directory | both compilers pass |
 | `upstream-tests` | `<dir>/upstream-tests.json`, checked against the D files and the fetched upstream | see below |
 | `budgets` | `measure_builds.py --framework-sizes --framework <name>` | `incremental_linked_bytes` and `template_instances` are within `policy/framework.json`. Provisional keys are reported, not gated |
-| `apps` | for each Spring app whose dependency closure has the module: `flint test --compiler both --verify`, `spring_bench.py accept --impl flint`, and `flint budget` once m7 lands it | allocation budgets hold, the golden suite passes in `exact` mode, and no budget regresses |
+| `apps` | for each Spring app whose dependency closure has the module: `flint test --compiler both --verify` as built and with the static trim (`FLINT_GC_STATIC_VERIFY=0`), as `ci.py` runs it, with a disposable cluster of the pinned PostgreSQL peer for petclinic-rest; then `spring_bench.py accept --impl flint`, and `flint budget` once m7 lands it | allocation budgets hold, the golden suite passes in `exact` mode, and no budget regresses |
 
 ### Ownership of Java packages
 
