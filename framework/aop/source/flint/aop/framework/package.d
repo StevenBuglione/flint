@@ -2,6 +2,8 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/ProxyConfig.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/AopConfigException.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/Advised.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/AdvisorChainFactory.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/AopInfrastructureBean.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
  * Modified by the Flint authors.
@@ -11,10 +13,26 @@ module flint.aop.framework;
 import flint.aop : Advisor, TargetClassAware, TargetSource;
 import flint.aopalliance.aop : Advice;
 import flint.core : NestedRuntimeException;
-import flint.engine.aot.descriptor : Descriptor;
+import flint.engine.aot.any : Any;
+import flint.engine.aot.descriptor : Descriptor, MemberDescriptorRef;
 import flint.java.lang : IllegalArgumentException;
+import flint.java.util : List;
 
 @safe:
+
+/// Builds interception chains for the methods of an advised proxy.
+interface AdvisorChainFactory
+{
+    /// Returns interceptors and dynamically matched chain entries in invocation order.
+    /// A null targetClass uses the method's declaring type.
+    List!Any getInterceptorsAndDynamicInterceptionAdvice(Advised config, MemberDescriptorRef method,
+            const Descriptor targetClass);
+}
+
+/// Marks AOP infrastructure beans for exclusion from auto-proxying.
+interface AopInfrastructureBean
+{
+}
 
 /// Exposes a proxy's target source, proxied interfaces and advisor configuration.
 interface Advised : TargetClassAware

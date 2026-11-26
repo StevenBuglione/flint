@@ -3,6 +3,7 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DynamicMethodMatcher.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DynamicMethodMatcherPointcut.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/Pointcuts.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/AopUtils.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/StaticMethodMatcherPointcut.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/NameMatchMethodPointcut.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/NameMatchMethodPointcutAdvisor.java
@@ -29,6 +30,7 @@ import flint.aopalliance.aop : Advice;
 import flint.core : Ordered;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MethodDescriptor, TypeKind;
+import flint.engine.aot.name : typeNameOf;
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString, statelessInstance;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException,
     UnsupportedOperationException, stringHashCode;
@@ -36,6 +38,40 @@ import flint.util : PatternMatchUtils;
 import std.typecons : Nullable;
 
 @safe:
+
+/// Utility methods for working with AOP metadata.
+abstract class AopUtils
+{
+    /// Whether the method has the signature of Object.equals.
+    static bool isEqualsMethod(scope const(MethodDescriptor)* method) pure nothrow @nogc
+    {
+        return method !is null && method.name == "equals" && method.parameters.length == 1
+            && method.parameters[0].type == typeNameOf!Object;
+    }
+
+    /// Whether the method has the signature of Object.hashCode.
+    static bool isHashCodeMethod(scope const(MethodDescriptor)* method) pure nothrow @nogc
+    {
+        return isNoArgMethod(method, "hashCode");
+    }
+
+    /// Whether the method has the signature of Object.toString.
+    static bool isToStringMethod(scope const(MethodDescriptor)* method) pure nothrow @nogc
+    {
+        return isNoArgMethod(method, "toString");
+    }
+
+    /// Whether the method has the signature of Object.finalize.
+    static bool isFinalizeMethod(scope const(MethodDescriptor)* method) pure nothrow @nogc
+    {
+        return isNoArgMethod(method, "finalize");
+    }
+
+    private static bool isNoArgMethod(scope const(MethodDescriptor)* method, string name) pure nothrow @nogc
+    {
+        return method !is null && method.name == name && method.parameters.length == 0;
+    }
+}
 
 /// Base class for matchers whose result depends only on generated type and method metadata.
 abstract class StaticMethodMatcher : MethodMatcher
