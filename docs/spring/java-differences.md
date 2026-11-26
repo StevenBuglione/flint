@@ -2969,7 +2969,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.beans.BeanInstantiationException#<init>(Class,String)` | `flint.beans.BeanInstantiationException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.BeanInstantiationException#<init>(Class,String,Throwable)` | `flint.beans.BeanInstantiationException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.PropertyMatches#appendHintMessage(StringBuilder)` | `flint.beans.propertymatches.PropertyMatches.appendHintMessage` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `org.springframework.beans.PropertyMatches#appendHintMessage(StringBuilder)` | `flint.beans.propertymatches.PropertyMatches.appendHintMessage` | [R14](api-mapping.md#r14-strings-and-text), [D-BEANS-1](api-mapping.md#deviations) |  |
 | `org.springframework.beans.PropertyMatches#forField(String,Class)` | `flint.beans.propertymatches.PropertyMatches.forField` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.PropertyMatches#forField(String,Class,int)` | `flint.beans.propertymatches.PropertyMatches.forField` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.PropertyMatches#forProperty(String,Class)` | `flint.beans.propertymatches.PropertyMatches.forProperty` | [R4](api-mapping.md#r4-classt-parameters) |  |
