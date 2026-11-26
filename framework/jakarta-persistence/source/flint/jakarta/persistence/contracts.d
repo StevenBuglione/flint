@@ -3,20 +3,22 @@
  * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
  * jakarta/persistence/EntityTransaction.java:
  * Copyright (c) 2008, 2024 Oracle and/or its affiliates. All rights reserved.
- * jakarta/persistence/CacheRetrieveMode.java, CacheStoreMode.java, PessimisticLockScope.java:
+ * jakarta/persistence/CacheRetrieveMode.java, CacheStoreMode.java, Parameter.java, PessimisticLockScope.java,
+ * TupleElement.java:
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  * jakarta/persistence/FindOption.java, LockOption.java, RefreshOption.java:
  * Copyright (c) 2023 Oracle and/or its affiliates. All rights reserved.
  * jakarta/persistence/ParameterMode.java:
  * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
- * Modified by the Flint authors: D interfaces (R3), nullable integer (R5), DDoc exceptions (R8),
+ * Modified by the Flint authors: D interfaces (R3), class tokens (R4), nullable values (R5), DDoc exceptions (R8),
  * and built-in options as enums (D-JPA-2).
  */
 
 /// Internal declarations re-exported from the Jakarta Persistence public modules (D-JPA-1).
 module flint.jakarta.persistence.contracts;
 
+import flint.java.classref : ClassRef;
 import std.typecons : Nullable;
 
 @safe:
@@ -29,6 +31,30 @@ interface AttributeConverter(X, Y)
 
     /// Converts the column value to the entity attribute type. The caller supplies the database type Y.
     X convertToEntityAttribute(Y dbData);
+}
+
+/// Describes a query parameter whose bound values have type T.
+interface Parameter(T)
+{
+    /// Returns the assigned parameter name, or a null value if there is no name.
+    Nullable!string getName();
+
+    /// Returns the parameter position, or a null value for a non-positional parameter.
+    Nullable!int getPosition();
+
+    /// Returns the type accepted for bound values. Criteria queries support this operation.
+    /// A JPQL or native query provider that does not support it throws IllegalStateException.
+    ClassRef getParameterType();
+}
+
+/// Describes one element of a query result tuple.
+interface TupleElement(X)
+{
+    /// Returns the concrete element type, which may be a subtype of X.
+    ClassRef getJavaType();
+
+    /// Returns the assigned alias, or a null value if none was assigned.
+    Nullable!string getAlias();
 }
 
 /// Controls resource-local transactions obtained through an entity manager.
