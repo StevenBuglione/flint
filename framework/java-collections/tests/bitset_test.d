@@ -2,11 +2,99 @@
 module bitset_test;
 
 import core.memory : GC;
-import flint.java.lang : IndexOutOfBoundsException;
+import flint.java.lang : IndexOutOfBoundsException, NullPointerException;
 import flint.java.util.bitset : BitSet;
 import std.exception : assertThrown;
 
 @safe:
+
+@("andNot preserves capacity and clears only overlapping bits")
+unittest
+{
+    auto bits = new BitSet();
+    bits.set(64, 140);
+    bits.set(1);
+    auto mask = new BitSet();
+    mask.set(128, 144);
+    mask.set(2);
+    mask.set(4_096);
+    const maskSize = mask.size();
+
+    bits.andNot(mask);
+    assert(bits.size() == 192 && bits.length() == 128 && bits.cardinality() == 65);
+    assert(bits.get(1) && bits.get(64) && bits.get(127) && !bits.get(128));
+    assert(mask.size() == maskSize && mask.length() == 4_097 && mask.cardinality() == 18);
+    assert(mask.get(2) && mask.get(128) && mask.get(143) && mask.get(4_096));
+
+    auto shortMask = new BitSet();
+    bits.andNot(shortMask);
+    assert(bits.cardinality() == 65);
+    shortMask.set(1);
+    bits.andNot(shortMask);
+    assert(bits.size() == 192 && bits.length() == 128 && bits.cardinality() == 64);
+    assert(!bits.get(1) && bits.get(64) && bits.get(127));
+}
+
+@("andNot rejects null and self-subtraction clears without shrinking")
+unittest
+{
+    auto bits = new BitSet();
+    bits.set(63, 130);
+    assertThrown!NullPointerException(bits.andNot(null));
+    assert(bits.length() == 130 && bits.cardinality() == 67);
+    bits.andNot(bits);
+    assert(bits.size() == 192 && bits.isEmpty() && bits.cardinality() == 0);
+    bits.set(129);
+    assert(bits.cardinality() == 1);
+}
+
+@("warmed andNot does not allocate")
+unittest
+{
+    auto bits = new BitSet();
+    bits.set(129);
+    auto mask = new BitSet();
+    mask.set(64, 129);
+    const before = GC.stats().allocatedInCurrentThread;
+    foreach (_; 0 .. 500)
+    {
+        bits.set(63, 130);
+        bits.andNot(mask);
+        assert(bits.get(63) && bits.get(129) && bits.cardinality() == 2);
+    }
+    assert(GC.stats().allocatedInCurrentThread == before);
+}
+
+@("andNot agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto bits = new BitSet();
+    auto mask = new BitSet();
+    mask.set(2_048);
+    uint state = 0x376a_c921;
+    uint digest;
+    foreach (step; 0 .. 1_024)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        const a = cast(int)((state >> 16) % 321);
+        const b = cast(int)((state >> 3) % 321);
+        const start = a < b ? a : b;
+        const end = a > b ? a : b;
+        bits.set(start, end, (state & 64) != 0);
+        mask.flip(b);
+        if ((step & 7) == 0)
+            mask.set(start, end);
+        bits.andNot((step & 31) == 0 ? bits : mask);
+        foreach (value; [bits.size(), bits.length(), bits.cardinality(), mask.cardinality()])
+            digest = 31 * digest + cast(uint) value;
+        foreach (bit; 0 .. 321)
+        {
+            digest = 31 * digest + (bits.get(bit) ? 1u : 0u);
+            digest = 31 * digest + (mask.get(bit) ? 1u : 0u);
+        }
+    }
+    assert(digest == 3_409_050_004);
+}
 
 @("bit set capacity grows by words and survives clears")
 unittest

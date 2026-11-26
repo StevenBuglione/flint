@@ -191,6 +191,24 @@ class BitSet
         return cast(int) count;
     }
 
+    /// Clears the bits that are also set in the supplied mask.
+    void andNot(BitSet set) pure
+    {
+        if (set is null)
+        {
+            import flint.java.lang : NullPointerException;
+
+            throw new NullPointerException();
+        }
+        int common = wordsInUse < set.wordsInUse ? wordsInUse : set.wordsInUse;
+        while (common > 0)
+        {
+            --common;
+            words[common] &= ~set.words[common];
+        }
+        recalculateWordsInUse();
+    }
+
     private static ulong maskAt(int index) pure nothrow @nogc
     {
         return 1UL << (index & bitMask);
@@ -280,7 +298,7 @@ class BitSet
             wordsInUse = cast(int) required;
     }
 
-    private void recalculateWordsInUse() pure nothrow @nogc
+    pragma(inline, false) private void recalculateWordsInUse() pure nothrow @nogc
     {
         while (wordsInUse != 0 && words[wordsInUse - 1] == 0)
             --wordsInUse;

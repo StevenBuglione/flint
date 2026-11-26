@@ -26,6 +26,7 @@ class BitSetOracle {
         }
         System.out.println(Integer.toUnsignedString(digest));
         System.out.println(Integer.toUnsignedString(rangeDigest()));
+        System.out.println(Integer.toUnsignedString(andNotDigest()));
     }
 
     private static int rangeDigest() {
@@ -49,6 +50,36 @@ class BitSetOracle {
             digest = 31 * digest + bits.cardinality();
             for (int bit = 0; bit < 320; ++bit) {
                 digest = 31 * digest + (bits.get(bit) ? 1 : 0);
+            }
+        }
+        return digest;
+    }
+
+    private static int andNotDigest() {
+        var left = new BitSet();
+        var mask = new BitSet();
+        mask.set(2048);
+        int state = 0x376ac921;
+        int digest = 0;
+        for (int step = 0; step < 1024; ++step) {
+            state = state * 1_664_525 + 1_013_904_223;
+            int a = (state >>> 16) % 321;
+            int b = (state >>> 3) % 321;
+            int start = Math.min(a, b);
+            int end = Math.max(a, b);
+            left.set(start, end, (state & 64) != 0);
+            mask.flip(b);
+            if ((step & 7) == 0) {
+                mask.set(start, end);
+            }
+            left.andNot((step & 31) == 0 ? left : mask);
+            digest = 31 * digest + left.size();
+            digest = 31 * digest + left.length();
+            digest = 31 * digest + left.cardinality();
+            digest = 31 * digest + mask.cardinality();
+            for (int bit = 0; bit <= 320; ++bit) {
+                digest = 31 * digest + (left.get(bit) ? 1 : 0);
+                digest = 31 * digest + (mask.get(bit) ? 1 : 0);
             }
         }
         return digest;
