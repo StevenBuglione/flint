@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
-| boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
+| boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
 | framework | spring-framework@v7.1.0 | 3,615 | 1,482 | 4,870 | 29,867 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -829,6 +829,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnProperty#prefix` | `flint.boot.autoconfigure.condition.ConditionalOnProperty.prefix` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication` | `flint.boot.autoconfigure.condition.ConditionalOnWebApplication` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication#type` | `flint.boot.autoconfigure.condition.ConditionalOnWebApplication.type` | [R2](api-mapping.md#r2-annotations) |  |
+
+#### org.springframework.boot.context.properties.source
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#<init>(Collection,Collection)` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#getConfiguredNames()` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.getConfiguredNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#getMutuallyExclusiveNames()` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.getMutuallyExclusiveNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#throwIfMultipleNonNullValuesIn(Consumer)` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.throwIfMultipleNonNullValuesIn` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.springframework.boot.test.util
 
@@ -9606,7 +9615,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.context.properties.bind | 108 | 0 |
 | org.springframework.boot.context.properties.bind.handler | 15 | 0 |
 | org.springframework.boot.context.properties.bind.validation | 15 | 0 |
-| org.springframework.boot.context.properties.source | 114 | 0 |
+| org.springframework.boot.context.properties.source | 109 | 0 |
 | org.springframework.boot.convert | 59 | 0 |
 | org.springframework.boot.couchbase.autoconfigure | 75 | 0 |
 | org.springframework.boot.couchbase.autoconfigure.health | 2 | 0 |
