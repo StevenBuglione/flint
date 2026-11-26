@@ -530,6 +530,24 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-concurrent-exec": {
+   "directory": "framework/java-concurrent-exec",
+   "module": "flint.java.util.concurrent.executionexception",
+   "java_types": [
+    "java.util.concurrent.ExecutionException"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-concurrent-exec/bench",
+    "baseline": "framework/java-concurrent-exec/bench/baseline",
+    "edit_source": "framework/java-concurrent-exec/source/flint/java/util/concurrent/executionexception.d"
+   }
+  },
   "java-concurrent-sync": {
    "directory": "framework/java-concurrent-sync",
    "module": "flint.java.util.concurrent.locks",

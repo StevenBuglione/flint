@@ -1,0 +1,6 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "module": "java-concurrent-exec",
+  "upstream": "openjdk@21.0.13",
+  "classes": {}
+}

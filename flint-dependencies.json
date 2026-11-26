@@ -339,6 +339,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-concurrent-exec": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-concurrent-sync": {
       "repo": "framework",
       "version": "monorepo"
