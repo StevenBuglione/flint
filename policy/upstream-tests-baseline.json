@@ -286,7 +286,6 @@
       "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointSerializationTests.java",
       "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointTests.java",
       "org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpointWebExtensionTests.java",
-      "org/springframework/boot/actuate/endpoint/AccessTests.java",
       "org/springframework/boot/actuate/endpoint/EndpointIdTests.java",
       "org/springframework/boot/actuate/endpoint/InvocationContextTests.java",
       "org/springframework/boot/actuate/endpoint/OperationFilterTests.java",

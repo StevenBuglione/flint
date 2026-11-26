@@ -193,8 +193,15 @@
       "status": "deferred"
     },
     "org/springframework/boot/actuate/endpoint/AccessTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/module/flint-boot-actuator/tests/endpoint_access_test.d",
+      "methods": {
+        "ported": [
+          "capWhenAboveMaximum",
+          "capWhenAtMaximum",
+          "capWhenBelowMaximum"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/boot/actuate/endpoint/EndpointIdTests.java": {
       "phase": "2",

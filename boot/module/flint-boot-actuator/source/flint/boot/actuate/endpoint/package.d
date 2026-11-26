@@ -1,5 +1,5 @@
 // Ported from spring-boot v4.2.0: module/spring-boot-actuator/src/main/java/org/springframework/boot/actuate/endpoint/ApiVersion.java
-// with EndpointId.java, OperationResponseBody.java, OperationType.java and SecurityContext.java from the same
+// with Access.java, EndpointId.java, OperationResponseBody.java, OperationType.java and SecurityContext.java from the same
 // directory.
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
@@ -9,7 +9,32 @@
 /// `org.springframework.boot.actuate.endpoint`: actuator endpoints.
 module flint.boot.actuate.endpoint;
 
+import flint.java.lang : IllegalArgumentException;
+
 @safe:
+
+/// Access to an endpoint and its operations, ordered from least to most permissive.
+enum Access
+{
+    /// No access to the endpoint.
+    NONE,
+    /// Access to read operations.
+    READ_ONLY,
+    /// Access to all operations.
+    UNRESTRICTED
+}
+
+/// Limit the access to the configured maximum (R20).
+Access cap(Access access, Access maxPermitted) pure nothrow @nogc
+{
+    return access <= maxPermitted ? access : maxPermitted;
+}
+
+/// Preserve the null argument exception of Java's Access.cap.
+Access cap(Access, typeof(null))
+{
+    throw new IllegalArgumentException("'maxPermitted' must not be null");
+}
 
 /// The version of the actuator's API, and the media type it produces.
 enum ApiVersion
