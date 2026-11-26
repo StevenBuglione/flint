@@ -89,6 +89,27 @@ unittest
     assert(different.count() == 0);
 }
 
+@("no-op meters publish no measurements")
+unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    registry.close();
+    Meter[3] meters = [
+        registry.counter("counter"), registry.timer("timer"), registry.summary("summary")
+    ];
+    const empty = meters[0].measure();
+    foreach (meter; meters)
+    {
+        const before = GC.stats().allocatedInCurrentThread;
+        auto reported = meter.measure();
+        assert(GC.stats().allocatedInCurrentThread == before);
+        assert(reported is empty && !reported.iterator().hasNext());
+        reported.forEach((_) { assert(0, "a no-op meter published a measurement"); });
+        foreach (_; reported)
+            assert(0, "a no-op meter published a measurement");
+    }
+}
+
 @("shouldNotLetRegisteringMetersTwice")
 unittest
 {

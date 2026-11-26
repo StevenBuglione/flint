@@ -161,6 +161,8 @@ The largest costs are per-request allocation and the collector pauses it causes.
 
 | R-134 | **Use atomic scalar totals and the existing maximum window for cumulative summaries.** Wait until collection to allocate live Measurement objects. Share their iterator and cold construction with timers. | On venus, DMD and LDC each recorded 40,000 fractional samples across four threads with zero GC bytes after setup. The parent probe at `53750ff7` measured 125,184 incremental loadable bytes and 3,021 DMD template instances. The first summary probe measured 132,628 bytes and 3,095 instances. Sharing the measurement container and cold construction paths brought the probe to 130,948 bytes and 3,084 instances within caps of 131,072 and 3,251. | `framework/micrometer-core/tests/distribution_summary_test.d` and the Micrometer module probe. |
 
+| R-135 | **Share the empty measurement view and the cold snapshot allocator.** No-op counters, timers and summaries return one stateless empty iterable. Keep scalar snapshot construction in one factory. | On venus, DMD and LDC verified zero GC bytes for the empty view lookup and no measurements in iterator and callback traversal. With the unchanged fixture, parent `c247acb4` measured 130,948 incremental loadable bytes and 3,084 DMD template instances. The empty view alone measured 130,972 bytes and 3,092 instances. Sharing the snapshot allocation brought the probe to 130,852 bytes and 3,092 instances within caps of 131,072 and 3,251. | `framework/micrometer-core/tests/registry_test.d` and the Micrometer module probe. |
+
 ## 2. Binary size
 
 | ID | Rule | Evidence | Enforced by |

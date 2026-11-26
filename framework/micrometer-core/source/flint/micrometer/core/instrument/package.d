@@ -29,6 +29,7 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopDistributionSummary.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/HistogramSupport.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopMeter.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument;
 
@@ -1627,10 +1628,15 @@ private final class NoopCounter : Counter
         return 0.0;
     }
 
+    override MeasurementIterable measure()
+    {
+        return statelessInstance!EmptyMeasurements();
+    }
+
     mixin Counter.Defaults;
 }
 
-private final class NoopTimer : Timer, MeasurementIterable
+private final class NoopTimer : Timer
 {
     private Meter.Id id;
 
@@ -1682,27 +1688,13 @@ private final class NoopTimer : Timer, MeasurementIterable
 
     override MeasurementIterable measure()
     {
-        return this;
-    }
-
-    override Iterator!Measurement iterator()
-    {
-        return new MeasurementIterator(null);
-    }
-
-    override void forEach(void delegate(Measurement) @safe)
-    {
-    }
-
-    override int opApply(scope int delegate(Measurement) @safe)
-    {
-        return 0;
+        return statelessInstance!EmptyMeasurements();
     }
 
     mixin Timer.Defaults;
 }
 
-private final class NoopDistributionSummary : DistributionSummary, MeasurementIterable
+private final class NoopDistributionSummary : DistributionSummary
 {
     private Meter.Id id;
 
@@ -1742,9 +1734,15 @@ private final class NoopDistributionSummary : DistributionSummary, MeasurementIt
 
     override MeasurementIterable measure()
     {
-        return this;
+        return statelessInstance!EmptyMeasurements();
     }
 
+    mixin DistributionSummary.Defaults;
+}
+
+// Java's no-op meters share an empty list of readings.
+private final class EmptyMeasurements : MeasurementIterable
+{
     override Iterator!Measurement iterator()
     {
         return new MeasurementIterator(null);
@@ -1758,8 +1756,6 @@ private final class NoopDistributionSummary : DistributionSummary, MeasurementIt
     {
         return 0;
     }
-
-    mixin DistributionSummary.Defaults;
 }
 
 private final class CounterMeasurement : Measurement, MeasurementIterable

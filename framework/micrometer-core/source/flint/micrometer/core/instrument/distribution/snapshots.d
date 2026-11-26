@@ -152,8 +152,9 @@ final class HistogramSnapshot
         maximum = max;
     }
 
+    // Share the cold allocation across meters that capture only their scalar totals.
     /// Capture totals without percentile values or bucket counts.
-    static HistogramSnapshot empty(long count, double total, double max)
+    pragma(inline, false) static HistogramSnapshot empty(long count, double total, double max)
     {
         return new HistogramSnapshot(count, total, max);
     }
