@@ -52,6 +52,31 @@ def check_thread_locals(module,ts,where):
     stale=sorted(entry for entry in allowed if entry.rsplit('.',1)[0]==module and entry not in found)
     require(not stale,where+': stale thread_local_allowlist entries '+', '.join(stale))
 
+def check_no_moduleinfo(module, ts, where):
+    """The Gregorian leaf may omit LDC metadata only while it has no metadata consumers."""
+    pragmas = [i - 2 for i, token in enumerate(ts) if token.value == 'LDC_no_moduleinfo'
+               and i >= 2 and ts[i - 2].value == 'pragma' and ts[i - 1].value == '(']
+    if not pragmas:
+        return
+    values = [t.value for t in ts]
+    require(module == 'flint.java.util.internal.gregorian',
+            where + ': LDC_no_moduleinfo requires an approved module')
+    start = pragmas[0] - 4
+    required = ['version', '(', 'LDC', ')', 'pragma', '(', 'LDC_no_moduleinfo', ')', ';']
+    require(len(pragmas) == 1 and start >= 0 and values[start:start + len(required)] == required,
+            where + ': LDC_no_moduleinfo must be a single version (LDC) pragma')
+    forbidden = {'class', 'interface', 'unittest', 'import', 'imported', 'mixin', 'shared', '__gshared'}
+    for i, token in enumerate(ts):
+        require(token.value not in forbidden,
+                f'{where}:{token.line}: {token.value} may require module metadata')
+        if token.value == 'static':
+            next_token = values[i + 1:i + 2]
+            constant = next_token == ['immutable'] and values[i + 2:i + 3] not in (['('], ['{'], [':'])
+            require(constant or next_token in (['if'], ['assert']),
+                    f'{where}:{token.line}: static declaration may require module metadata')
+    for name, line in module_thread_locals(ts):
+        require(False, f'{where}:{line}: thread-local {name} requires module metadata')
+
 def project_mixin_tokens(text, compiler):
     # DMD dumps Phobos and druntime template expansions in the same file as Flint's.
     # Skip only expansions located inside the bundled compiler's standard library sources.
@@ -130,7 +155,9 @@ def boot_layers():
         jdk_package_licences.check_headers(home(meta),'Apache-2.0')
         base=home(meta)/'source'
         for f in sorted(base.rglob('*.d')) if base.is_dir() else []:
-            for module in imported_modules(tokens(f.read_text(encoding='utf-8'))):
+            ts = list(tokens(f.read_text(encoding='utf-8')))
+            check_no_moduleinfo(declared_module(ts), ts, str(f))
+            for module in imported_modules(ts):
                 deps=boot_owners(module)
                 require(None in deps or name in deps or any(dep in meta['dependencies'] for dep in deps),str(f.relative_to(base.parent))+': undeclared Boot-layer import '+module)
 
@@ -236,6 +263,7 @@ def framework_layers():
                 if dep is not None:
                     private=[P[dep]['module']+'.'+part for part in ['internal','sys','ffi']]
                     require(not prefix_match(imported,private),where+': cross-package private boundary import '+imported)
+            check_no_moduleinfo(module, ts, where)
             check_thread_locals(module,ts,where)
         if jdk_link_closure.is_jdk_package(name):
             recorded={row for row in jdk_baseline if row.startswith(f'import|{name}|')}
@@ -380,6 +408,7 @@ def structural(selected):
                 mixin_packages.add(n)
             for mod in imported_modules(ts):
                 check_import(n,mod,str(f))
+            check_no_moduleinfo(module, ts, str(f))
             check_thread_locals(module,ts,str(f))
             lines=text.splitlines()
             for i,t in enumerate(ts[:-1]):

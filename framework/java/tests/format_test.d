@@ -445,3 +445,17 @@ unittest
     auto unknown = collectException!UnknownFormatConversionException(String.format("%ts %q", "value"));
     assert(unknown.getConversion() == "q");
 }
+
+@("String.format renders boxed Long date and time fields and composites")
+unittest
+{
+    assert(String.format("%1$tH %1$tI %1$tk %1$tl %1$tL %1$tN %1$tp", -1L) == "23 11 23 11 999 999000000 pm");
+    assert(String.format("%1$tB %1$tA %1$tz %1$tZ %1$Tc", 0L) == "Jan Thu +0000 UTC THU JAN 01 00:00:00 UTC 1970");
+    assert(String.format("%1$tR %1$tT %1$tr %1$tD %1$tF",
+            1_709_247_845_678L) == "23:04 23:04:05 11:04:05 PM 02/29/24 2024-02-29");
+    assert(String.format("%1$tF %1$tj %2$tF %2$tj", -12_219_292_800_001L,
+            -12_219_292_800_000L) == "1582-10-04 277 1582-10-15 278");
+    assert(String.format("%1$tF %1$tT", long.min) == "292269055-12-02 16:47:04");
+    assert(String.format("%1$tF %1$tT", long.max) == "292278994-08-17 07:12:55");
+    assert(String.format("[%11tc][%-9TA]", cast(Object) null, cast(Object) null) == "[       null][NULL     ]");
+}

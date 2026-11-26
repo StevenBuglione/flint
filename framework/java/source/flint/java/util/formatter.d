@@ -14,8 +14,8 @@ at reduced precision.
 The renderer uses the root locale's `.` and `,`. `%h` uses the Java boxed scalar hash. For object references it
 uses virtual `toHash` (R11). A `JavaObject` mixin calls `hashCode` and returns zero for an exception. A class
 without the mixin uses its D `toHash`. Erased native aggregates have no Java object to hash.
-The epoch conversions `%tQ` and `%ts` accept a boxed `long`, with uppercase `T` equivalents.
-Other date/time conversions throw `UnknownFormatConversionException`.
+The date/time conversions accept a boxed `long` in Flint's default UTC zone. Calendar, Date and temporal
+objects require their own projections.
 +/
 module flint.java.util.formatter;
 
@@ -332,6 +332,7 @@ private struct Spec
     int width = -1;
     int precision = -1;
     char conversion;
+    ubyte datePattern;
 
     bool has(Flag flag) const pure nothrow @nogc
     {
@@ -395,7 +396,7 @@ private size_t conversionEnd(string format, size_t end, size_t indexStart)
     return end + 1;
 }
 
-private void validateSpec(const ref Spec spec, string conversion)
+private void validateSpec(ref Spec spec, string conversion)
 {
     if (conversion.length == 2)
     {
@@ -434,12 +435,17 @@ private void validateGeneral(const ref Spec spec, char lower)
     rejectFlags(spec, generalFlags, lower);
 }
 
-private void validateDate(const ref Spec spec, string conversion)
+private void validateDate(ref Spec spec, string conversion)
 {
+    import flint.java.util.internal.formatter_date_time : datePatternIndex;
+
     requireNoPrecision(spec);
-    if (!includes("HIklMSLNpzZsQBbhAaCYyjmdeRTrDFc", conversion[1]))
+    const suffix = conversion[1];
+    const pattern = datePatternIndex(suffix);
+    if (pattern < 0)
         throw new UnknownFormatConversionException("t" ~ conversion[1 .. $]);
-    rejectFlags(spec, characterFlags, conversion[1]);
+    spec.datePattern = cast(ubyte) pattern;
+    rejectFlags(spec, characterFlags, suffix);
     requireWidth(spec, Flag.left);
 }
 
@@ -703,24 +709,22 @@ private string convert(const ref Spec spec, Any argument)
     case 'f', 'e', 'E', 'g', 'G', 'a', 'A':
         return floatingText(spec, argument);
     case 't', 'T':
-        return epochText(spec, argument);
+        return dateTimeText(spec, argument);
     default:
         throw new UnknownFormatConversionException([spec.conversion]);
     }
 }
 
-pragma(inline, false) private string epochText(const ref Spec spec, Any argument)
+private string dateTimeText(const ref Spec spec, Any argument)
 {
-    const suffix = spec.text[$ - 1];
-    if (suffix != 'Q' && suffix != 's')
-        throw new UnknownFormatConversionException([spec.conversion]);
+    import flint.java.util.internal.formatter_date_time : dateTimeValue;
+
     if (argument.isNull)
         return spec.conversion == 'T' ? "NULL" : "null";
-
     if (argument.typeName != "long")
-        throw new IllegalFormatConversionException(suffix, javaTypeName(argument));
-    const millis = argument.get!long;
-    return decimal(suffix == 's' ? millis / 1000 : millis);
+        throw new IllegalFormatConversionException(spec.text[$ - 1], javaTypeName(argument));
+
+    return dateTimeValue(argument.get!long, spec.datePattern, spec.conversion == 'T');
 }
 
 private string truncate(const ref Spec spec, string text) pure nothrow
