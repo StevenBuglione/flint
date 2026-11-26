@@ -27,6 +27,9 @@ import std.typecons : Nullable;
 
 @safe:
 
+private alias TemplateName = Nullable!string;
+private alias SourceCoordinate = Nullable!int;
+
 /// Base for errors raised by the template engine (R8).
 abstract class TemplateEngineException : RuntimeException
 {
@@ -113,7 +116,7 @@ class ParserInitializationException : TemplateEngineException
 class TemplateProcessingException : TemplateEngineException
 {
     private const string detail;
-    private Nullable!string templateName;
+    private TemplateName templateName;
     private int lineNumber = -1;
     private int columnNumber = -1;
 
@@ -126,17 +129,17 @@ class TemplateProcessingException : TemplateEngineException
     /// Report a processing error with a cause.
     this(string message, Throwable cause)
     {
-        this(message, Nullable!string.init, cause);
+        this(message, TemplateName.init, cause);
     }
 
     /// Report a processing error in a named template.
-    this(string message, Nullable!string templateName, Throwable cause)
+    this(string message, TemplateName templateName, Throwable cause)
     {
         this(message, templateName, -1, -1, cause);
     }
 
     /// Report a positioned error. Negative coordinates are absent.
-    this(string message, Nullable!string templateName, int line, int col)
+    this(string message, TemplateName templateName, int line, int col)
     {
         super(message);
         detail = message;
@@ -144,7 +147,7 @@ class TemplateProcessingException : TemplateEngineException
     }
 
     /// Report a positioned error caused by another throwable.
-    this(string message, Nullable!string templateName, int line, int col, Throwable cause)
+    this(string message, TemplateName templateName, int line, int col, Throwable cause)
     {
         super(message, cause);
         detail = message;
@@ -152,7 +155,7 @@ class TemplateProcessingException : TemplateEngineException
     }
 
     /// The template associated with the failure, if present.
-    Nullable!string getTemplateName() const pure nothrow @nogc
+    TemplateName getTemplateName() const pure nothrow @nogc
     {
         return templateName;
     }
@@ -164,15 +167,15 @@ class TemplateProcessingException : TemplateEngineException
     }
 
     /// The source line of the error, if known.
-    Nullable!int getLine() const pure nothrow @nogc
+    SourceCoordinate getLine() const pure nothrow @nogc
     {
-        return lineNumber < 0 ? Nullable!int.init : Nullable!int(lineNumber);
+        return lineNumber < 0 ? SourceCoordinate.init : SourceCoordinate(lineNumber);
     }
 
     /// The source column of the error, if known.
-    Nullable!int getCol() const pure nothrow @nogc
+    SourceCoordinate getCol() const pure nothrow @nogc
     {
-        return columnNumber < 0 ? Nullable!int.init : Nullable!int(columnNumber);
+        return columnNumber < 0 ? SourceCoordinate.init : SourceCoordinate(columnNumber);
     }
 
     /// Whether both coordinates are known.
@@ -182,7 +185,7 @@ class TemplateProcessingException : TemplateEngineException
     }
 
     /// Set or clear the name of the template associated with the failure.
-    void setTemplateName(Nullable!string templateName)
+    void setTemplateName(TemplateName templateName)
     {
         setLocation(templateName, lineNumber, columnNumber);
     }
@@ -194,7 +197,7 @@ class TemplateProcessingException : TemplateEngineException
     }
 
     // Format only when the location changes so RuntimeException.getMessage stays allocation-free.
-    private void setLocation(Nullable!string templateName, int line, int col)
+    private void setLocation(TemplateName templateName, int line, int col)
     {
         const message = formatMessage(detail, templateName, line, col);
         this.templateName = templateName;
@@ -220,19 +223,19 @@ class TemplateInputException : TemplateProcessingException
     }
 
     /// Report an input error in a named template.
-    this(string message, Nullable!string templateName, Throwable cause)
+    this(string message, TemplateName templateName, Throwable cause)
     {
         super(message, templateName, cause);
     }
 
     /// Report an input error with a source position.
-    this(string message, Nullable!string templateName, int line, int col)
+    this(string message, TemplateName templateName, int line, int col)
     {
         super(message, templateName, line, col);
     }
 
     /// Report a positioned input error and its cause.
-    this(string message, Nullable!string templateName, int line, int col, Throwable cause)
+    this(string message, TemplateName templateName, int line, int col, Throwable cause)
     {
         super(message, templateName, line, col, cause);
     }
@@ -242,13 +245,13 @@ class TemplateInputException : TemplateProcessingException
 class TemplateOutputException : TemplateProcessingException
 {
     /// Report an output failure, including its cause and any known position.
-    this(string message, Nullable!string templateName, int line, int col, Throwable cause)
+    this(string message, TemplateName templateName, int line, int col, Throwable cause)
     {
         super(message, templateName, line, col, cause);
     }
 }
 
-private string formatMessage(string detail, Nullable!string templateName, int line, int col) pure nothrow
+private string formatMessage(string detail, TemplateName templateName, int line, int col) pure nothrow
 {
     const message = detail is null ? "null" : detail;
     if (templateName.isNull)
