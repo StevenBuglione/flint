@@ -19,6 +19,7 @@
 module flint.ai.chat.prompt;
 
 import flint.ai.model : ModelOptions;
+import flint.java.lang : JavaObject;
 import flint.java.util : List;
 import std.typecons : Nullable;
 
@@ -139,4 +140,66 @@ class DefaultChatOptions : ChatOptions
     {
         return topP_;
     }
+
+    /// Compares the captured values of options with the same runtime class.
+    bool equals(Object other)
+    {
+        if (this is other)
+            return true;
+        auto that = cast(DefaultChatOptions) other;
+        if (that is null || typeid(this) !is typeid(that))
+            return false;
+
+        return model_.isNull == that.model_.isNull && (model_.isNull
+                || model_.get() == that.model_.get()) && sameRatio(frequencyPenalty_,
+                that.frequencyPenalty_) && sameCount(maxTokens_,
+                that.maxTokens_) && sameRatio(presencePenalty_, that.presencePenalty_)
+            && (stopSequences_ is that.stopSequences_
+                    || (stopSequences_ !is null && stopSequences_.equals(cast(Object) that.stopSequences_)))
+            && sameRatio(temperature_,
+                    that.temperature_) && sameCount(topK_, that.topK_) && sameRatio(topP_, that.topP_);
+    }
+
+    /// Hashes the captured fields in Java constructor order.
+    int hashCode()
+    {
+        import flint.java.lang : stringHashCode;
+
+        uint hash = 31 + (model_.isNull ? 0 : cast(uint) stringHashCode(model_.get()));
+        hash = 31 * hash + ratioHash(frequencyPenalty_);
+        hash = 31 * hash + (maxTokens_.isNull ? 0 : cast(uint) maxTokens_.get());
+        hash = 31 * hash + ratioHash(presencePenalty_);
+        hash = 31 * hash + (stopSequences_ is null ? 0 : cast(uint) stopSequences_.hashCode());
+        hash = 31 * hash + ratioHash(temperature_);
+        hash = 31 * hash + (topK_.isNull ? 0 : cast(uint) topK_.get());
+        return cast(int)(31 * hash + ratioHash(topP_));
+    }
+
+    mixin JavaObject;
+}
+
+private bool sameCount(Count left, Count right)
+{
+    return left.isNull == right.isNull && (left.isNull || left.get() == right.get());
+}
+
+private bool sameRatio(Ratio left, Ratio right)
+{
+    import flint.java.lang : javaHashCode;
+
+    if (left.isNull || right.isNull)
+        return left.isNull == right.isNull;
+
+    const a = left.get();
+    const b = right.get();
+    if (a != b)
+        return a != a && b != b; // Java Double.equals treats all NaNs as equal.
+    return a != 0.0 || javaHashCode(a) == javaHashCode(b); // Distinguish signed zeros.
+}
+
+private uint ratioHash(Ratio ratio)
+{
+    import flint.java.lang : javaHashCode;
+
+    return ratio.isNull ? 0 : cast(uint) javaHashCode(ratio.get());
 }

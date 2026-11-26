@@ -100,11 +100,18 @@ unittest
     assert(chat.getStopSequences() is empty && chat.getStopSequences().isEmpty());
 }
 
-private final class SnapshotOptions : DefaultChatOptions
+private class SnapshotOptions : DefaultChatOptions
 {
     this(StopSequences stops)
     {
         super(ModelName(""), Ratio.init, Count(128), Ratio(-0.5), stops, Ratio(0.0), Count(0), Ratio(0.875));
+    }
+
+    this(StopSequences stops, Ratio frequency, Ratio temperature = Ratio(0.0),
+            ModelName model = ModelName("m😀"), Count maxTokens = Count(128),
+            Ratio presence = Ratio(-0.5), Count topK = Count(0), Ratio topP = Ratio(0.875))
+    {
+        super(model, frequency, maxTokens, presence, stops, temperature, topK, topP);
     }
 }
 
@@ -150,4 +157,50 @@ unittest
     stops.add("");
     stops.add(null);
     assert(collectException!NullPointerException(new SnapshotOptions(stops)) !is null);
+}
+
+@("default options use Java equality for all stored fields")
+unittest
+{
+    auto stops = StopSequences.of("β", "");
+    auto frequency = Ratio(double.nan);
+    auto temperature = Ratio(0.0);
+    auto model = ModelName("m😀");
+    auto maxTokens = Count(128);
+    auto presence = Ratio(-0.5);
+    auto topK = Count(0);
+    auto left = new SnapshotOptions(stops, frequency);
+    auto equal = new SnapshotOptions(StopSequences.of("β", ""), Ratio(-double.nan));
+    assert(left.equals(equal) && equal.equals(left) && left == equal);
+    assert(left.hashCode() == -1_268_627_134 && left.hashCode() == equal.hashCode());
+    assert(!left.equals(null) && !left.equals(new Object()));
+    assert(!left.equals(new SnapshotOptions(StopSequences.of("", "β"), frequency)));
+    assert(!left.equals(new SnapshotOptions(stops, Ratio.init)));
+    assert(!left.equals(new SnapshotOptions(stops, frequency, Ratio(-0.0))));
+    assert(!left.equals(new SnapshotOptions(stops, frequency, temperature, ModelName.init)));
+    assert(!left.equals(new SnapshotOptions(stops, frequency, temperature, model, Count(127))));
+    assert(!left.equals(new SnapshotOptions(stops, frequency, temperature, model, maxTokens, Ratio.init)));
+    assert(!left.equals(new SnapshotOptions(stops, frequency, temperature, model, maxTokens, presence, Count.init)));
+    auto absentTopP = new SnapshotOptions(stops, frequency, temperature, model, maxTokens, presence, topK, Ratio.init);
+    assert(!left.equals(absentTopP));
+}
+
+@("default options distinguish absent stops and check the runtime class")
+unittest
+{
+    static final class DerivedOptions : SnapshotOptions
+    {
+        this()
+        {
+            super(null, Ratio(double.nan));
+        }
+    }
+
+    auto absent = new SnapshotOptions(null, Ratio(double.nan));
+    auto empty = new SnapshotOptions(StopSequences.of(), Ratio(double.nan));
+    auto derived = new DerivedOptions();
+    assert(!absent.equals(empty));
+    assert(absent.hashCode() == 2_124_060_145 && empty.hashCode() == 2_124_089_936);
+    assert(!absent.equals(derived) && !derived.equals(absent));
+    assert(derived.equals(new DerivedOptions()) && derived.hashCode() == absent.hashCode());
 }
