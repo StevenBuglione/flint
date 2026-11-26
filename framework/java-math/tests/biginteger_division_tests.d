@@ -56,3 +56,15 @@ unittest
     {
     }
 }
+
+@("BigInteger modulus is nonnegative and requires a positive divisor")
+unittest
+{
+    import std.exception : assertThrown;
+
+    auto value = BigInteger.valueOf(-17);
+    assert(value.mod(BigInteger.valueOf(5)).intValueExact() == 3);
+    assertThrown!ArithmeticException(value.mod(BigInteger.valueOf(-5)));
+    assertThrown!ArithmeticException(value.mod(BigInteger.valueOf(0)));
+    assertThrown!NullPointerException(value.mod(null));
+}

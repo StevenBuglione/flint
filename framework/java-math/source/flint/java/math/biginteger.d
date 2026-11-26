@@ -325,10 +325,8 @@ class BigInteger : Number, Comparable!BigInteger
     /// Return the nonnegative remainder for a strictly positive modulus.
     BigInteger mod(BigInteger modulus)
     {
-        if (modulus is null)
-            throw new NullPointerException();
-        if (modulus.sign <= 0)
-            throw new ArithmeticException("BigInteger: modulus not positive");
+        if (modulus is null || modulus.sign <= 0)
+            failDivision(modulus, "BigInteger: modulus not positive");
         auto rest = remainder(modulus);
         return rest.sign < 0 ? rest.add(modulus) : rest;
     }
@@ -348,10 +346,8 @@ class BigInteger : Number, Comparable!BigInteger
 
     private Division divideTo(BigInteger other, bool wantQuotient, bool wantRemainder)
     {
-        if (other is null)
-            throw new NullPointerException();
-        if (!other.sign)
-            throw new ArithmeticException("BigInteger divide by zero");
+        if (other is null || !other.sign)
+            failDivision(other, "BigInteger divide by zero");
 
         const int order = compareLimbs(magnitude, other.magnitude);
         const int quotientSign = sign * other.sign;
@@ -380,6 +376,13 @@ class BigInteger : Number, Comparable!BigInteger
         if (wantQuotient)
             result.quotient = new BigInteger(quotient, quotientSign);
         return result;
+    }
+
+    pragma(inline, false) private static void failDivision(scope const BigInteger divisor, string message)
+    {
+        if (divisor is null)
+            throw new NullPointerException();
+        throw new ArithmeticException(message);
     }
 
     private BigInteger divideLarge(scope uint[] quotient, scope const(uint)[] divisor, bool wantRemainder)
