@@ -682,7 +682,23 @@
     "fixture": "framework/micrometer-commons/bench",
     "baseline": "framework/micrometer-commons/bench/baseline",
     "edit_source": "framework/micrometer-commons/source/flint/micrometer/common/package.d"
-   }
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 68231,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 2684
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },
   "micrometer-core": {
    "directory": "framework/micrometer-core",
