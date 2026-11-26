@@ -105,3 +105,5 @@ def check_headers(base, licence):
                 raise ValueError(f'{path}: GPL with Classpath Exception source requires a matching package licence and no Apache-licensed material')
             if migrated and apache:
                 raise ValueError(f'{path}: Apache-licensed source cannot share a GPL with Classpath Exception package')
+            if gpl2 and not classpath and not epl_option:
+                raise ValueError(f'{path}: GPL version 2 without the Classpath Exception is not permitted')

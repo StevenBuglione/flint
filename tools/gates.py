@@ -118,6 +118,7 @@ def boot_layers():
         return WORKSPACE.locate(meta.get('repo','boot'),meta['directory']) if WORKSPACE.file else ROOT/meta['directory']
     for name,meta in policy['starters'].items():
         base=home(meta)
+        jdk_package_licences.check_headers(base,'Apache-2.0')
         sources=sorted(str(f.relative_to(base)) for f in base.rglob('*.d') if f.relative_to(base).parts[0]!='example') if base.is_dir() else []
         require(not sources,name+': a starter has no D source: '+(meta['directory']+'/'+sources[0] if sources else ''))
     def boot_owners(module):

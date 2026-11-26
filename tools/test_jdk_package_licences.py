@@ -67,6 +67,13 @@ class JdkPackageLicenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'matching package licence'):
             licences.check_headers(self.root, 'Apache-2.0')
 
+    def test_gpl_source_needs_the_exception_regardless_of_package_licence(self):
+        self.write('source/example.d', '// SPDX-License-Identifier: GPL-2.0-only\nmodule example;\n')
+        for licence in ('Apache-2.0', 'EPL-2.0', licences.GPL_CLASSPATH):
+            with self.subTest(licence=licence):
+                with self.assertRaisesRegex(ValueError, r'example\.d.*without the Classpath Exception'):
+                    licences.check_headers(self.root, licence)
+
     def test_pending_names_cannot_be_readded_after_licence_migration(self):
         subprocess.run(['git', 'init', '-q', self.root], check=True)
 
