@@ -28,7 +28,8 @@
  *   Column.java, MapKeyColumn.java, MapsId.java
  *
  * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
- *   ForeignKey.java, Index.java
+ *   ForeignKey.java, Index.java, NamedAttributeNode.java, NamedEntityGraph.java, NamedEntityGraphs.java,
+ *   NamedSubgraph.java
  *
  * Copyright (c) 2013, 2023 Oracle and/or its affiliates. All rights reserved.
  *   ConstraintMode.java
@@ -1056,4 +1057,50 @@ struct NamedQueries
 {
     /// The query declarations.
     NamedQuery[] value;
+}
+
+// Named fetch graphs
+
+/// Includes a persistent attribute in a named graph.
+struct NamedAttributeNode
+{
+    /// Name of the attribute.
+    string value;
+    /// Name of the subgraph for the attribute's managed value.
+    string subgraph = "";
+    /// Name of the subgraph for the attribute's managed map key.
+    string keySubgraph = "";
+}
+
+/// Defines the attributes included when retrieving an entity through a named graph.
+struct NamedEntityGraph
+{
+    /// Name of the graph within the persistence unit. Defaults to the root entity name.
+    string name = "";
+    /// Attributes explicitly included in the graph.
+    NamedAttributeNode[] attributeNodes = [];
+    /// Includes every attribute of the root entity. Explicit nodes can still select subgraphs.
+    bool includeAllAttributes = false;
+    /// Subgraphs referenced by attribute nodes.
+    NamedSubgraph[] subgraphs = [];
+    /// Additional attributes for subclasses of the root entity.
+    NamedSubgraph[] subclassSubgraphs = [];
+}
+
+/// Groups multiple named fetch graphs on one entity.
+struct NamedEntityGraphs
+{
+    /// The graph declarations.
+    NamedEntityGraph[] value;
+}
+
+/// Defines nested attributes referenced within a named graph.
+struct NamedSubgraph
+{
+    /// Name by which an attribute node refers to the subgraph.
+    string name;
+    /// The managed type. An unset value leaves inference to the provider.
+    ClassRef type = ClassRef.init;
+    /// Attributes included in the subgraph.
+    NamedAttributeNode[] attributeNodes;
 }
