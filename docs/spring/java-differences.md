@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,087 | 212 | 1,871 | 15,251 |
+| framework | openjdk@21.0.13 | 1,085 | 213 | 1,871 | 15,252 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1927,6 +1927,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D exception hierarchy for Java's checked I/O exception. |
 | `java.io.PrintWriter#append(CharSequence)` | `flint.java.io.PrintWriter.append` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.io.PrintWriter#print(Object)` | `flint.java.io.PrintWriter.print` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.io.PrintWriter#println(Object)` | `flint.java.io.PrintWriter.println` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -9958,7 +9959,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 706 | 0 |
+| java.io | 707 | 0 |
 | java.lang | 2,016 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10842,6 +10843,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#setDispatcherTypes(Set)` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |
 | framework | `jakarta.validation.Validation#byDefaultProvider()` | 2 | Flint's byDefaultProvider() returns the Configuration itself; GenericBootstrap is deferred. |
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
+| framework | `java.io.IOException#<init>(Throwable)` | 2 | The current constructor accepts a message and an optional cause. Java's cause-only constructor is pending. |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.MonthDay#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
 | framework | `java.time.MonthDay#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |
