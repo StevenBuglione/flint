@@ -4,6 +4,13 @@ import flint.arena : Error, Result, Status;
 
 @safe:
 
+/// `bindListener`'s pause between attempts while an address is in use. A compile-time constant: a runtime call to
+/// core.time's `dur!"msecs"` would make the link take that instance from the first Phobos object defining it,
+/// socket.o, and with it std.string, std.uni and curl.o: about 450 KB in every executable (playbook S-9).
+private enum bindRetryDelay = imported!"core.time".msecs(25);
+
+static assert(bindRetryDelay == imported!"core.time".msecs(25), "the retry pause is 25 ms");
+
 version (Posix)
 {
     import core.stdc.errno : EACCES, EADDRINUSE, EAGAIN, ECONNABORTED, EINTR, EMFILE, ENFILE,
@@ -181,7 +188,6 @@ version (Posix)
     package(flint.engine.reactor) Result!Socket bindListener(string host, ushort port, uint backlog) nothrow @nogc
     {
         import core.thread.osthread : Thread;
-        import core.time : msecs;
 
         enum attempts = 40;
         foreach (attempt; 0 .. attempts)
@@ -189,7 +195,7 @@ version (Posix)
             auto bound = bindOnce(host, port, backlog);
             if (bound.ok() || bound.error.code != Status.conflict || port == 0 || attempt + 1 == attempts)
                 return bound;
-            Thread.sleep(25.msecs);
+            Thread.sleep(bindRetryDelay);
         }
         assert(0);
     }

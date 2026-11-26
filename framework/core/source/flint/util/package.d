@@ -136,13 +136,13 @@ private size_t codePointCount(scope const(char)[] s) pure nothrow @nogc
 /// Java's `regionMatches(true, ...)` comparison of two characters.
 private bool charsEqualIgnoreCase(dchar a, dchar b) pure nothrow @nogc
 {
-    import std.uni : toLower, toUpper;
+    import flint.java.character : toLowerCase, toUpperCase;
 
     if (a == b)
         return true;
-    const ua = toUpper(a);
-    const ub = toUpper(b);
-    return ua == ub || toLower(ua) == toLower(ub);
+    const ua = toUpperCase(a);
+    const ub = toUpperCase(b);
+    return ua == ub || toLowerCase(ua) == toLowerCase(ub);
 }
 
 /// The end offset in `s` when `other` matches at byte `start` ignoring case, else -1.
@@ -1144,13 +1144,13 @@ abstract class StringUtils
         return index < 0 ? qualifiedName : qualifiedName[index + utf8Length(separator) .. $];
     }
 
-    /// `str` with its first character in upper case (`std.uni.toUpper`).
+    /// `str` with its first character in upper case (Java's `Character.toUpperCase`).
     static string capitalize(string str)
     {
         return changeFirstCharacterCase(str, true);
     }
 
-    /// `str` with its first character in lower case (`std.uni.toLower`).
+    /// `str` with its first character in lower case (Java's `Character.toLowerCase`).
     static string uncapitalize(string str)
     {
         return changeFirstCharacterCase(str, false);
@@ -1159,26 +1159,26 @@ abstract class StringUtils
     /// `uncapitalize`, except that a name starting with two upper-case characters is kept (JavaBeans rules).
     static string uncapitalizeAsProperty(string str)
     {
-        import std.uni : isUpper;
+        import flint.java.character : isUpperCase;
 
         if (!hasLength(str))
             return str;
         size_t i;
         const first = decodeAt(str, i);
-        if (i < str.length && isUpper(first) && isUpper(decodeAt(str, i)))
+        if (i < str.length && isUpperCase(first) && isUpperCase(decodeAt(str, i)))
             return str;
         return changeFirstCharacterCase(str, false);
     }
 
     private static string changeFirstCharacterCase(string str, bool upper)
     {
-        import std.uni : toLower, toUpper;
+        import flint.java.character : toLowerCase, toUpperCase;
 
         if (!hasLength(str))
             return str;
         size_t i;
         const baseChar = decodeAt(str, i);
-        const updatedChar = upper ? toUpper(baseChar) : toLower(baseChar);
+        const updatedChar = upper ? toUpperCase(baseChar) : toLowerCase(baseChar);
         if (baseChar == updatedChar)
             return str;
         return encodeCodePoint(updatedChar) ~ str[i .. $];
@@ -4154,16 +4154,17 @@ private bool namedClassContains(RegexNamed named, dchar c)
 
 private bool namedClassTest(char code, dchar c)
 {
-    import std.uni : isAlpha, isLower, isNumber, isUpper;
+    // Java's regex classes are general categories (java.lang.Character's), from flint.java.character's JDK tables.
+    import flint.java.character : isLetter, isLowercaseLetter, isNumber, isUppercaseLetter;
 
     switch (code)
     {
     case 'L':
-        return isAlpha(c);
+        return isLetter(c);
     case 'U':
-        return isUpper(c);
+        return isUppercaseLetter(c);
     case 'l':
-        return isLower(c);
+        return isLowercaseLetter(c);
     case 'N':
         return isNumber(c);
     default:
