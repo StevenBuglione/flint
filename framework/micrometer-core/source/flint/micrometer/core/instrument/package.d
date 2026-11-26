@@ -1580,16 +1580,14 @@ interface Timer : HistogramSupport
         return result;
     }
 
-    /// Micrometer's default duration conversion, wrappers, mean and live measurements (R3).
-    mixin template Defaults(alias Measurements = MeasurementIterable,
-            alias samples = timerMeasurements, alias DurationType = Duration,
-            alias Unit = TimeUnit, alias RunnableType = Runnable,
-            alias makeTimedRunnable = timedRunnable, alias DoubleSupplierType = DoubleSupplier,
-            alias BooleanSupplierType = BooleanSupplier,
+    package mixin template CallbackDefaults(alias DurationType = Duration, alias Unit = TimeUnit,
+            alias RunnableType = Runnable,
+            alias makeTimedRunnable = timedRunnable,
+            alias DoubleSupplierType = DoubleSupplier, alias BooleanSupplierType = BooleanSupplier,
             alias NullAction = NullPointerException, alias makeNullAction = nullCallback,
             alias SnapshotDefaults = HistogramSupport.Defaults,
-            alias IntSupplierType = IntSupplier,
-            alias LongSupplierType = LongSupplier, alias timePrimitive = recordPrimitive)
+            alias IntSupplierType = IntSupplier, alias LongSupplierType = LongSupplier,
+            alias timePrimitive = recordPrimitive)
     {
         mixin SnapshotDefaults;
 
@@ -1668,6 +1666,22 @@ interface Timer : HistogramSupport
             const events = timer.count();
             return events == 0 ? 0.0 : timer.totalTime(unit) / events;
         }
+    }
+
+    /// Micrometer's default duration conversion, wrappers, mean and live measurements (R3).
+    mixin template Defaults(alias Measurements = MeasurementIterable,
+            alias samples = timerMeasurements, alias DurationType = Duration,
+            alias Unit = TimeUnit, alias RunnableType = Runnable,
+            alias makeTimedRunnable = timedRunnable, alias DoubleSupplierType = DoubleSupplier,
+            alias BooleanSupplierType = BooleanSupplier,
+            alias NullAction = NullPointerException, alias makeNullAction = nullCallback,
+            alias SnapshotDefaults = HistogramSupport.Defaults,
+            alias IntSupplierType = IntSupplier,
+            alias LongSupplierType = LongSupplier,
+            alias timePrimitive = recordPrimitive, alias Callbacks = CallbackDefaults)
+    {
+        mixin Callbacks!(DurationType, Unit, RunnableType, makeTimedRunnable, DoubleSupplierType, BooleanSupplierType,
+                NullAction, makeNullAction, SnapshotDefaults, IntSupplierType, LongSupplierType, timePrimitive);
 
         override Measurements measure()
         {

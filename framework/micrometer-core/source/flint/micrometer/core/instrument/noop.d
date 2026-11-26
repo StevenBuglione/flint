@@ -19,13 +19,14 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopDistributionSummary.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopFunctionCounter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopFunctionTimer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.noop;
 
 import flint.java.util : Collections, List;
 import flint.java.util.concurrent : TimeUnit;
 import flint.micrometer.core.instrument : AbstractMeter, Counter, DistributionSummary,
-    FunctionCounter, FunctionTimer, Gauge, Measurement, Meter;
+    FunctionCounter, FunctionTimer, Gauge, Measurement, Meter, Timer;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot;
 
 @safe:
@@ -103,6 +104,74 @@ class NoopDistributionSummary : NoopMeter, DistributionSummary
     }
 
     mixin DistributionSummary.StatisticsDefaults;
+}
+
+/// A disabled timer that executes callbacks and keeps no timing statistics.
+class NoopTimer : NoopMeter, Timer
+{
+    alias record = Timer.record;
+    alias takeSnapshot = Timer.takeSnapshot;
+    alias wrap = Timer.wrap;
+
+    /// Retain the ID of the disabled timer.
+    this(Meter.Id id)
+    {
+        super(id);
+    }
+
+    override void record(long, TimeUnit) nothrow @nogc
+    {
+    }
+
+    // Keep the concrete Java overloads virtual and seal the D-only dispatch adapters.
+    final override void record(scope void delegate() @safe action)
+    {
+        invoke(action);
+    }
+
+    final override bool record(scope bool delegate() @safe action)
+    {
+        return invoke(action);
+    }
+
+    final override double record(scope double delegate() @safe action)
+    {
+        return invoke(action);
+    }
+
+    private static T invoke(T)(scope T delegate() @safe action)
+    {
+        if (action is null)
+            throw Timer.nullCallback();
+        return action();
+    }
+
+    override long count() nothrow @nogc
+    {
+        return 0;
+    }
+
+    override double totalTime(TimeUnit) nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override double max(TimeUnit) nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override TimeUnit baseTimeUnit() nothrow @nogc
+    {
+        return TimeUnit.SECONDS;
+    }
+
+    override HistogramSnapshot takeSnapshot()
+    {
+        return HistogramSnapshot.empty(0, 0, 0);
+    }
+
+    mixin Timer.CallbackDefaults;
 }
 
 /// A disabled function counter whose count is zero.

@@ -19,16 +19,62 @@ module micrometer_timer_runnable_test;
 
 import core.memory : GC;
 import flint.java.lang : NullPointerException, Runnable;
+import flint.java.util : List;
+import flint.java.util.concurrent : TimeUnit;
 import flint.java.util.concurrent.callable : Callable;
-import flint.java.util.function_ : Supplier;
-import flint.micrometer.core.instrument : Timer;
-import flint.micrometer.core.instrument.distribution : CountAtBucket, HistogramSnapshot,
-    HistogramSupport, ValueAtPercentile;
+import flint.java.util.function_ : BooleanSupplier, DoubleSupplier, Supplier;
+import flint.java.util.function_.intsupplier : IntSupplier;
+import flint.java.util.function_.longsupplier : LongSupplier;
+import flint.micrometer.core.instrument : Measurement, Meter, Tags, Timer;
+import flint.micrometer.core.instrument.distribution : CountAtBucket, HistogramSnapshot, ValueAtPercentile;
+import flint.micrometer.core.instrument.noop : NoopMeter, NoopTimer;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 import std.exception : assertThrown;
 import std.typecons : Nullable;
 
 @safe:
+
+private Meter.Id testId()
+{
+    return new Meter.Id("test", Tags.of("name", "value"), Nullable!string(""),
+            Nullable!string(""), Meter.Type.TIMER);
+}
+
+@("returnsId")
+unittest
+{
+    auto id = testId();
+    NoopMeter meter = new NoopTimer(id);
+    assert(meter.getId() is id);
+}
+
+@("returnsCountAsZero")
+unittest
+{
+    auto timer = new NoopTimer(testId());
+    assert(timer.count() == 0);
+}
+
+@("returnsTotalTimeAsZero")
+unittest
+{
+    auto timer = new NoopTimer(testId());
+    assert(timer.totalTime(TimeUnit.SECONDS) == 0.0);
+}
+
+@("returnsMaxAsZero")
+unittest
+{
+    auto timer = new NoopTimer(testId());
+    assert(timer.max(TimeUnit.SECONDS) == 0.0);
+}
+
+@("returnsBaseTimeUnit")
+unittest
+{
+    auto timer = new NoopTimer(testId());
+    assert(timer.baseTimeUnit() == TimeUnit.SECONDS);
+}
 
 @("recordSupplier")
 unittest
@@ -54,9 +100,7 @@ unittest
             timer.wrap(stackValue);
         }));
 
-    auto registry = new SimpleMeterRegistry;
-    registry.close();
-    auto timer = registry.timer("test");
+    auto timer = new NoopTimer(testId());
     auto supplier = new Value;
     const allocatedBefore = GC.stats().allocatedInCurrentThread;
     assert(timer.record(supplier).get() == "value");
@@ -90,9 +134,7 @@ unittest
             timer.wrap(stackValue);
         }));
 
-    auto registry = new SimpleMeterRegistry;
-    registry.close();
-    auto timer = registry.timer("test");
+    auto timer = new NoopTimer(testId());
     Callable!(Nullable!string) callable = new Value;
     const allocatedBefore = GC.stats().allocatedInCurrentThread;
     assert(timer.recordCallable(callable).get() == "value");
@@ -115,9 +157,7 @@ unittest
         }
     }
 
-    auto registry = new SimpleMeterRegistry;
-    registry.close();
-    auto timer = registry.timer("test");
+    auto timer = new NoopTimer(testId());
     auto action = new Action;
     timer.record(action);
     assert(action.runs == 1 && timer.count() == 0);
@@ -141,11 +181,8 @@ unittest
 @("returnsEmptySnapshot")
 unittest
 {
-    auto registry = new SimpleMeterRegistry;
-    registry.close();
-    Timer timer = registry.timer("test");
-    HistogramSupport histogram = timer;
-    HistogramSnapshot snapshot = histogram.takeSnapshot();
+    auto timer = new NoopTimer(testId());
+    HistogramSnapshot snapshot = timer.takeSnapshot();
     auto expected = HistogramSnapshot.empty(0, 0, 0);
     assert(snapshot.count() == expected.count());
     assert(snapshot.total() == expected.total());
@@ -153,6 +190,87 @@ unittest
     const CountAtBucket[] buckets = snapshot.histogramCounts();
     const ValueAtPercentile[] percentiles = snapshot.percentileValues();
     assert(buckets.length == 0 && percentiles.length == 0);
+}
+
+@("a public no-op timer shares empty measurements and executes callbacks without allocating")
+unittest
+{
+    static final class True : BooleanSupplier
+    {
+        override bool getAsBoolean()
+        {
+            return true;
+        }
+    }
+
+    auto timer = new NoopTimer(testId());
+    Timer meter = timer;
+    List!Measurement measurements = timer.measure();
+    assert(measurements.isEmpty());
+    auto intSupplier = IntSupplier.of(() => int.min);
+    auto longSupplier = LongSupplier.of(() => long.max);
+    auto booleanSupplier = new True;
+    auto doubleSupplier = DoubleSupplier.of(() => -1.25);
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    foreach (iteration; 0 .. 256)
+    {
+        meter.record(1L, TimeUnit.SECONDS);
+        assert(timer.record(intSupplier) == int.min);
+        assert(timer.record(longSupplier) == long.max);
+        assert(timer.record(booleanSupplier));
+        assert(timer.record(doubleSupplier) == -1.25);
+        assert(meter.count() == 0 && meter.mean(TimeUnit.NANOSECONDS) == 0.0);
+        assert(meter.measure() is measurements);
+    }
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+}
+
+@("a public no-op timer propagates the original callback exception")
+unittest
+{
+    auto timer = new NoopTimer(testId());
+    auto failure = new Exception("no-op timer callback");
+    auto action = IntSupplier.of(delegate int() @safe { throw failure; });
+    bool caught;
+    try
+        timer.record(action);
+    catch (Exception error)
+        caught = error is failure;
+    assert(caught && timer.count() == 0);
+}
+
+@("the Java runnable overload stays overridable")
+unittest
+{
+    static final class RunnableOverride : NoopTimer
+    {
+        bool called;
+
+        this(Meter.Id id) @safe
+        {
+            super(id);
+        }
+
+        override void record(Runnable) @safe
+        {
+            called = true;
+        }
+    }
+
+    auto timer = new RunnableOverride(testId());
+    Timer meter = timer;
+    meter.record(cast(Runnable) null);
+    assert(timer.called);
+}
+
+@("a public no-op timer exposes inherited wrap and legacy snapshot overloads")
+unittest
+{
+    auto timer = new NoopTimer(testId());
+    int delegate() @safe action = () => 42;
+    auto wrapped = timer.wrap(action);
+    assert(wrapped() == 42 && timer.count() == 0);
+    assert(timer.takeSnapshot(true).count() == 0);
 }
 
 @("snapshot descriptors agree with type names from the public import")

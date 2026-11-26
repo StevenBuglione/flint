@@ -697,17 +697,15 @@
           "recordCallable",
           "recordRunnable",
           "recordSupplier",
-          "returnsEmptySnapshot"
-        ],
-        "skipped": {
-          "returnsBaseTimeUnit": "Deferred as a direct test of the public NoopTimer type.",
-          "returnsCountAsZero": "Deferred as a direct test of the public NoopTimer type.",
-          "returnsId": "Deferred as a direct test of the public NoopTimer type.",
-          "returnsMaxAsZero": "Deferred as a direct test of the public NoopTimer type.",
-          "returnsTotalTimeAsZero": "Deferred as a direct test of the public NoopTimer type."
-        }
+          "returnsBaseTimeUnit",
+          "returnsCountAsZero",
+          "returnsEmptySnapshot",
+          "returnsId",
+          "returnsMaxAsZero",
+          "returnsTotalTimeAsZero"
+        ]
       },
-      "status": "partial"
+      "status": "ported"
     },
     "io/micrometer/core/instrument/observation/DefaultMeterObservationHandlerTest.java": {
       "phase": "2",

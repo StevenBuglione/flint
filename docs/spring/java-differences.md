@@ -189,7 +189,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-databind@3.1.8 | 572 | 61 | 5 | 9,829 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 168 | 147 | 0 | 2,075 |
+| framework | micrometer-core@1.18.0 | 176 | 154 | 0 | 2,060 |
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 65 | 83 | 0 | 4,304 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
@@ -1112,6 +1112,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `io.micrometer.core.instrument.noop.NoopMeter#measure()` | `flint.micrometer.core.instrument.noop.NoopMeter.measure` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.core.instrument.noop.NoopTimer#record(BooleanSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `io.micrometer.core.instrument.noop.NoopTimer#record(DoubleSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `io.micrometer.core.instrument.noop.NoopTimer#record(IntSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `io.micrometer.core.instrument.noop.NoopTimer#record(LongSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `io.micrometer.core.instrument.noop.NoopTimer#record(Runnable)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `io.micrometer.core.instrument.noop.NoopTimer#record(Supplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `io.micrometer.core.instrument.noop.NoopTimer#recordCallable(Callable)` | `flint.micrometer.core.instrument.noop.NoopTimer.recordCallable` | [R8](api-mapping.md#r8-exceptions), [R9](api-mapping.md#r9-functional-interfaces) |  |
 
 #### io.micrometer.core.instrument.util
 
@@ -9764,7 +9771,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.docs | 10 | 0 |
 | io.micrometer.core.instrument.dropwizard | 45 | 0 |
 | io.micrometer.core.instrument.logging | 20 | 0 |
-| io.micrometer.core.instrument.noop | 27 | 0 |
+| io.micrometer.core.instrument.noop | 12 | 0 |
 | io.micrometer.core.instrument.observation | 19 | 0 |
 | io.micrometer.core.instrument.push | 20 | 0 |
 | io.micrometer.core.instrument.search | 56 | 0 |
