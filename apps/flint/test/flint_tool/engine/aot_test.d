@@ -917,7 +917,9 @@ unittest
 @("Boot property conditions resolve relaxed names through the real application environment")
 unittest
 {
-    import std.file : getcwd;
+    import std.algorithm.searching : count;
+    import std.file : getcwd, readText;
+    import std.path : buildPath;
     import std.process : environment;
     import flint_tool.app : dispatch;
 
@@ -938,6 +940,12 @@ unittest
         enum testCompiler = "dmd";
     assert(dispatch(["lock", "-C", project]) == 0, "property-relaxed lock");
     assert(dispatch(["test", "-C", project, "--compiler", testCompiler, "--locked"]) == 0, "property-relaxed test");
+
+    // EnableConfigurationPropertiesRegistrarTests.registrationWithDuplicatedTypeShouldRegisterSingleBeanDefinition.
+    const generated = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
+            "property_relaxed", "binding.d"));
+    enum namedPrefixBean = `definition.name = "proof.named-property_relaxed.binding.NamedPrefixProperties";`;
+    assert(generated.count(namedPrefixBean) == 1, "a duplicated properties type needs one generated definition");
 }
 
 private void runGeneratedContextStartup(string fixture)

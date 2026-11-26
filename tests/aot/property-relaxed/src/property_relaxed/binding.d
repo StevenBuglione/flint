@@ -12,7 +12,8 @@ import flint.context.annotation : Configuration;
 @ConditionalOnProperty(prefix: "proof.properties", name: ["enabled"], havingValue: "true")
 @EnableConfigurationProperties([
     ClassRef("property_relaxed.binding.NamedPrefixProperties"),
-    ClassRef("property_relaxed.binding.ValuePrefixProperties")
+    ClassRef("property_relaxed.binding.ValuePrefixProperties"),
+    ClassRef("property_relaxed.binding.NamedPrefixProperties")
 ])
 final class BindingConfiguration
 {
