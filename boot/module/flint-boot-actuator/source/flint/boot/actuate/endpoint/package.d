@@ -10,7 +10,6 @@
 module flint.boot.actuate.endpoint;
 
 public import flint.boot.actuate.endpoint.access : Access;
-import flint.java.lang : IllegalArgumentException;
 
 @safe:
 
@@ -18,12 +17,6 @@ import flint.java.lang : IllegalArgumentException;
 Access cap(Access access, Access maxPermitted) pure nothrow @nogc
 {
     return access <= maxPermitted ? access : maxPermitted;
-}
-
-/// Preserve the null argument exception of Java's Access.cap.
-Access cap(Access, typeof(null))
-{
-    throw new IllegalArgumentException("'maxPermitted' must not be null");
 }
 
 /// The version of the actuator's API, and the media type it produces.

@@ -6,8 +6,6 @@ module endpoint_access_test;
 
 import flint.boot.actuate.endpoint : Access, cap;
 import flint.boot.actuate.endpoint.annotation : Endpoint;
-import flint.java.lang : IllegalArgumentException;
-import std.exception : assertThrown;
 
 @safe:
 
@@ -29,10 +27,10 @@ unittest
     assert(Access.NONE.cap(Access.READ_ONLY) == Access.NONE);
 }
 
-@("a null maximum is rejected")
+@("a null maximum is rejected at compile time")
 unittest
 {
-    assertThrown!IllegalArgumentException(Access.UNRESTRICTED.cap(null));
+    static assert(!__traits(compiles, Access.UNRESTRICTED.cap(null)));
 }
 
 @("endpoint annotations carry typed default access")
