@@ -1,5 +1,102 @@
 {
   "classes": {
+    "org/springframework/cache/CacheReproTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/NoOpCacheManagerTests.java": {
+      "d": "framework/context/tests/cache/no_op_cache_manager_tests.d",
+      "methods": {
+        "ported": [
+          "cacheCallable",
+          "cacheGetCallableFail",
+          "cacheName",
+          "getCache",
+          "noOpCache"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/cache/annotation/AnnotationCacheOperationSourceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/annotation/ReactiveCachingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/concurrent/ConcurrentMapCacheManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/concurrent/ConcurrentMapCacheTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/config/AnnotationDrivenCacheConfigTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/config/AnnotationNamespaceDrivenTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/config/CacheAdviceNamespaceTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/config/CacheAdviceParserTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/config/CustomInterceptorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/config/EnableCachingIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/config/EnableCachingTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/config/ExpressionCachingIntegrationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/interceptor/CacheErrorHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/interceptor/CacheOperationExpressionEvaluatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/interceptor/CacheProxyFactoryBeanTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/interceptor/CachePutEvaluationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/interceptor/CacheResolverCustomizationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/interceptor/CacheSyncFailureTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/interceptor/LoggingCacheErrorHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/cache/interceptor/SimpleKeyGeneratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/context/annotation/AbstractCircularImportDetectionTests.java": {
       "phase": "2",
       "status": "deferred"
