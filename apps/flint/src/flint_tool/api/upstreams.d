@@ -31,12 +31,18 @@ struct Upstream
     string licence;
     /// Root-relative prefixes `flint api extract` leaves out.
     string[] exclude;
+    /// When not empty, the only root-relative prefixes `flint api extract` reads (an OpenJDK pin's exported
+    /// package roots).
+    string[] include;
 
     /// Test-source archive (api/upstream-tests.json): cached apart, as `<project>-<version>-tests`.
     bool tests;
     /// Whether its API is ported: false for runtime sources (druntime), pinned only so ported files' headers resolve;
     /// they are never extracted into a manifest or classified.
     bool api = true;
+    /// A clean-room upstream (OpenJDK) whose sources are read only to extract API signatures: `flint api fetch`
+    /// without arguments skips it, so implementers never receive its code.
+    bool signaturesOnly;
 
     /// Directory name in the cache: `<project>-<version>`, or `<project>-<version>-tests` for a test archive.
     string key() const
@@ -60,19 +66,7 @@ bool parseUpstreams(string text, out Upstream[] upstreams, out string error)
         }
         foreach (ref item; root["upstreams"].arrayNoRef)
         {
-            Upstream upstream;
-            upstream.project = item["project"].str;
-            upstream.version_ = item["version"].str;
-            upstream.repo = "repo" in item ? item["repo"].str : null;
-            upstream.matrix = "matrix" in item ? item["matrix"].str : upstream.project;
-            upstream.api = !("api" in item) || item["api"].boolean;
-            upstream.url = item["url"].str;
-            upstream.sha256 = item["sha256"].str;
-            upstream.format = item["format"].str;
-            upstream.licence = "licence" in item ? item["licence"].str : null;
-            if ("exclude" in item)
-                foreach (ref value; item["exclude"].arrayNoRef)
-                    upstream.exclude ~= value.str;
+            auto upstream = upstreamOf(item);
             if (upstream.format != "tar.gz" && upstream.format != "jar")
             {
                 error = upstream.key ~ ": format must be tar.gz or jar";
@@ -92,6 +86,35 @@ bool parseUpstreams(string text, out Upstream[] upstreams, out string error)
         return false;
     }
     return true;
+}
+
+/// One `api/upstreams.json` entry; `parseUpstreams` validates it.
+private Upstream upstreamOf(const ref imported!"std.json".JSONValue item)
+{
+    Upstream upstream;
+    upstream.project = item["project"].str;
+    upstream.version_ = item["version"].str;
+    upstream.repo = "repo" in item ? item["repo"].str : null;
+    upstream.matrix = "matrix" in item ? item["matrix"].str : upstream.project;
+    upstream.api = !("api" in item) || item["api"].boolean;
+    upstream.signaturesOnly = "signatures_only" in item && item["signatures_only"].boolean;
+    upstream.url = item["url"].str;
+    upstream.sha256 = item["sha256"].str;
+    upstream.format = item["format"].str;
+    upstream.licence = "licence" in item ? item["licence"].str : null;
+    upstream.exclude = stringsOf(item, "exclude");
+    upstream.include = stringsOf(item, "include");
+    return upstream;
+}
+
+/// The strings of an optional array member.
+private string[] stringsOf(const ref imported!"std.json".JSONValue item, string key)
+{
+    string[] values;
+    if (key in item)
+        foreach (ref value; item[key].arrayNoRef)
+            values ~= value.str;
+    return values;
 }
 
 /// Parse `api/upstream-tests.json`: the pinned archives that carry the upstream test suites, for porting tests.

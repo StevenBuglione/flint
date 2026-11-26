@@ -31,6 +31,25 @@ private string fixtureTree(string flavour)
         put("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n");
         return root;
     }
+    if (flavour == "jdk")
+    {
+        put("src/java.base/share/classes/java/lang/Runnable.java",
+                "package java.lang;\npublic interface Runnable { void run(); }\n");
+        put("src/java.base/share/classes/java/util/Optional.java",
+                "package java.util;\npublic final class Optional<T> {\n"
+                ~ "    public boolean isPresent() { return false; }\n}\n");
+        put("src/java.base/share/classes/jdk/internal/misc/Unsafe.java",
+                "package jdk.internal.misc;\npublic final class Unsafe { }\n");
+        put("src/java.base/share/classes/sun/nio/ch/Net.java", "package sun.nio.ch;\npublic class Net { }\n");
+        put("src/java.base/unix/classes/java/io/UnixFileSystem.java",
+                "package java.io;\npublic class UnixFileSystem { }\n");
+        put("src/java.sql/share/classes/java/sql/Connection.java",
+                "package java.sql;\npublic interface Connection { void close(); }\n");
+        put("src/java.desktop/share/classes/java/awt/Frame.java", "package java.awt;\npublic class Frame { }\n");
+        put("test/jdk/java/lang/RunnableTest.java", "package java.lang;\npublic class RunnableTest { }\n");
+        put("make/src/classes/build/tools/Gen.java", "package build.tools;\npublic class Gen { }\n");
+        return root;
+    }
     put("spring-core/src/main/java/org/x/core/Resource.java",
             "package org.x.core;\npublic interface Resource {\n    boolean exists();\n    String getFilename();\n}\n");
     put("spring-core/src/main/java/org/x/core/package-info.java", "@NullMarked\npackage org.x.core;\n");
@@ -107,6 +126,31 @@ unittest
     request.version_ = "2.0.20";
     auto extraction = extract(request);
     expect(typeIds(extraction.manifest)).toEqual(["slf4j-api:org.slf4j.Logger"]);
+}
+
+@("an OpenJDK tree: src/<module>/share/classes, the JDK module as module, only the included package roots")
+unittest
+{
+    const root = fixtureTree("jdk");
+    scope (exit)
+        removeTree(root);
+    ExtractRequest request;
+    request.source = root;
+    request.project = "openjdk";
+    request.version_ = "jdk-21.0.13-ga";
+    auto everything = extract(request);
+    expect(typeIds(everything.manifest)).toEqual([
+        "java.desktop:java.awt.Frame", "java.base:java.lang.Runnable",
+        "java.sql:java.sql.Connection", "java.base:java.util.Optional", "java.base:sun.nio.ch.Net"
+    ]);
+    request.includes = ["src/java.base/share/classes/java/", "src/java.sql/share/classes/java"];
+    auto exported = extract(request);
+    expect(exported.problems.length).toEqual(0);
+    expect(exported.files).toEqual(3);
+    expect(typeIds(exported.manifest)).toEqual([
+        "java.base:java.lang.Runnable", "java.sql:java.sql.Connection", "java.base:java.util.Optional"
+    ]);
+    expect(exported.manifest.types[0].file).toEqual("src/java.base/share/classes/java/lang/Runnable.java");
 }
 
 @("a manifest renders one type per line and reads back to the same elements")
@@ -286,6 +330,7 @@ public final class A {
 unittest
 {
     import std.file : exists, mkdirRecurse, readText, rmdirRecurse, tempDir, write;
+    import std.array : replicate;
     import std.path : buildPath;
     import std.uuid : randomUUID;
     import flint_tool.support.files : sha256File;
@@ -304,12 +349,15 @@ unittest
 
     Upstream[] upstreams;
     string error;
-    expect(parseUpstreams(`{"schema":"flint.api-upstreams/1","upstreams":[{"project":"lib","version":"1.0",
-        "url":"` ~ fileUrl(archive) ~ `","sha256":"` ~ digest ~ `","format":"tar.gz","exclude":["docs"]}]}`,
-            upstreams, error)).toEqual(true);
+    const head = `{"schema":"flint.api-upstreams/1","upstreams":[{"project":"lib","version":"1.0","url":"`;
+    const tail = `","format":"tar.gz","exclude":["docs"],"include":["src"]}]}`;
+    const pins = head ~ fileUrl(archive) ~ `","sha256":"` ~ digest ~ tail;
+    expect(parseUpstreams(pins, upstreams, error)).toEqual(true);
     expect(error).toEqual("");
     const pinned = findUpstream(upstreams, "lib", "1.0");
     expect(pinned.exclude).toEqual(["docs"]);
+    expect(pinned.include).toEqual(["src"]);
+    expect(pinned.signaturesOnly).toEqual(false);
     expect(findUpstream(upstreams, "lib", "2.0") is null).toEqual(true);
 
     const cache = buildPath(work, "cache");
@@ -330,6 +378,10 @@ unittest
     expect(exists(buildPath(cache, "lib-1.0-bad"))).toEqual(false);
     expect(parseUpstreams(`{"schema":"flint.api-upstreams/1","upstreams":[{"project":"x","version":"1",
         "url":"u","sha256":"abc","format":"zip"}]}`, upstreams, error)).toEqual(false);
+    const jdk = `{"schema":"flint.api-upstreams/1","upstreams":[{"project":"openjdk","version":"21","url":"u",`
+        ~ `"sha256":"` ~ replicate("0", 64) ~ `","format":"tar.gz","signatures_only":true}]}`;
+    expect(parseUpstreams(jdk, upstreams, error)).toEqual(true);
+    expect(upstreams[0].signaturesOnly).toEqual(true);
 }
 
 @("`flint api extract --version TAG` reaches the --tag option; other commands keep --version")

@@ -186,6 +186,8 @@ ADR-030 makes Flint a port of Spring. The `flint api` commands prove the port is
 - the Spring projects as GitHub tag archives: Framework v7.1.0, Boot v4.2.0, and the portfolio tags Boot v4.2.0 manages (Security 7.2.0, Data Commons, Relational and JPA 4.2.0, Batch v6.1.0), plus Spring AI v2.1.0 and Thymeleaf 3.1.7.RELEASE (its `thymeleaf`, `thymeleaf-spring6` and `thymeleaf-extras-springsecurity6` modules);
 - third-party APIs as Maven `-sources.jar`s, at the versions Boot v4.2.0 manages: Jakarta Validation 3.1.1, Persistence 3.2.0 and Servlet 6.1.0, Jackson databind 3.1.8, SLF4J 2.0.20, and Micrometer core and observation 1.18.0.
 
+**Clean-room upstreams.** OpenJDK is GPL-2.0 with the Classpath Exception, so the JDK lanes implement from the Java SE specification, never from its source (`docs/spring/phase2/jdk-port.md`). Its pin (`openjdk` 21.0.13, tag `jdk-21.0.13-ga`) carries `"signatures_only": true`. A bare `flint api fetch` skips it, so only `flint api fetch openjdk` downloads it, and only to re-extract the Java SE 21 manifest. Delete that cache directory after extracting. The licence matrix lists OpenJDK as `clean-room`, so `flint api headers` rejects any file that claims to be ported from it.
+
 `flint api fetch` unpacks them into `<flint home>/.flint/cache/api/<project>-<version>/` (`FLINT_CACHE` relocates the cache, `--cache` overrides it). A digest mismatch is an error, and nothing in the cache is ever compiled. `FLINT_OFFLINE=1` uses the cache only.
 
 **Extract.** `flint api extract` reads declarations with a Java parser written in D. It skips method bodies and initializers by balanced brackets, after a lexer that understands comments, strings, characters and text blocks. Its output is the manifest, `api/upstream/<project>-<version>.json` by default (`flint.api-manifest/1`). That manifest lists:
@@ -194,9 +196,11 @@ ADR-030 makes Flint a port of Spring. The `flint api` commands prove the port is
 
 Interface members count as public, and the members of a type that is not visible are not listed. Which files count:
 - In a Gradle or Maven tree, only `<module>/src/main/java`, where no other `src` directory lies above it. That leaves out `src/test`, `src/testFixtures`, `src/jmh` and build plugins' sample projects. The module is the directory above `src`.
+- In an OpenJDK tree, only `src/<module>/share/classes`. The module is the JDK module (`java.base`, `java.sql`). Platform-specific trees (`unix/classes`), jtreg tests and build tools are left out.
 - A flat `-sources.jar` is one module named after the project.
 - Packages named `internal` are always left out, as are `package-info.java` and `module-info.java`.
 - Each pin's `exclude` prefixes are left out (`buildSrc`, `framework-docs`, Boot's smoke and integration tests), plus any `--exclude`.
+- A pin's `include` prefixes, when present, are the only paths read. The OpenJDK pin lists the exported `java` and `javax` roots of `java.base` and `java.sql`, which leaves out `sun.*`, `jdk.*` and every other JDK module.
 
 Kotlin and Groovy sources are not read.
 

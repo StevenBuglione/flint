@@ -59,7 +59,10 @@ int commandApiExtract(ref Session session, const ref ExtractCommand command)
     request.version_ = command.tag;
     string ignored;
     if (auto pinned = findUpstream(loadUpstreams(session.home.root, ignored), command.project, command.tag))
+    {
         request.excludes = pinned.exclude.dup;
+        request.includes = pinned.include.dup;
+    }
     request.excludes ~= command.excludes;
     auto extraction = extract(request);
     foreach (ref problem; extraction.problems)
@@ -77,6 +80,7 @@ int commandApiExtract(ref Session session, const ref ExtractCommand command)
     payload.version_ = command.tag;
     payload.files = extraction.files;
     payload.excludes = request.excludes;
+    payload.includes = request.includes;
     foreach (ref counts; extraction.manifest.modules)
         payload.modules ~= ModuleRow(counts.name, counts.types, counts.methods, counts.constructors,
                 counts.fields, counts.constants, counts.attributes, counts.components);
@@ -122,7 +126,7 @@ int commandApiFetch(ref Session session, const(string)[] projects, string cacheO
         return finish(session, report, payload);
     foreach (ref upstream; upstreams)
     {
-        if (projects.length && !listed(projects, upstream.project))
+        if (projects.length ? !listed(projects, upstream.project) : upstream.signaturesOnly)
             continue;
         const fetched = fetchUpstream(upstream, payload.cache, offline);
         if (fetched.failure.length)
@@ -674,6 +678,7 @@ private struct ExtractReport
     size_t types;
     size_t methods;
     string[] excludes;
+    string[] includes;
     ModuleRow[] modules;
 }
 
