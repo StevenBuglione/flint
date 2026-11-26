@@ -128,6 +128,7 @@ Overloads are kept as written.
 - **`throws` clauses** are dropped from signatures and kept in DDoc. D has no checked exceptions (deviation D-8).
 - **Java `Error`s that application code catches**, such as `AssertionError` in tests, map to D `Exception` subclasses, because D `Error` skips cleanup.
 - **Control-flow exceptions** that the framework throws and catches internally skip backtrace capture (ADR-030 section 4).
+- **`NullPointerException` is explicit.** In D, calling through a `null` class reference crashes the process (SIGSEGV, exit 139). Wherever Java's contract throws `NullPointerException` (for a `null` argument, or `null` internal state such as `DateFormat.format` after `setCalendar(null)`), Flint checks explicitly and throws `flint.java.lang.NullPointerException` at the same point Java does: eagerly where Java checks eagerly, and at first use where Java fails at first use. A crash is never an acceptable stand-in. The check calls one shared out-of-line, cold helper per package, so the common path stays small. Until the check exists, the row is deferred with that reason, not ported. Arrays follow R26, and throw-only typed-`null` overloads stay forbidden (R5). Coordinator, 2026-11-26, from api-coverage.
 
 ### R9: Functional interfaces
 
