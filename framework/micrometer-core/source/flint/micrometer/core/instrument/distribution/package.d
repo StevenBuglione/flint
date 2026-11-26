@@ -17,13 +17,14 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/DistributionStatisticConfig.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/CountAtBucket.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/ValueAtPercentile.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/HistogramSnapshot.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.distribution;
 
 import core.atomic : atomicLoad, atomicStore, cas;
 import core.sync.mutex : Mutex;
 import flint.java.lang : ArithmeticException, Double, IllegalArgumentException, Integer, JavaObject,
-    NullPointerException;
+    Long, NullPointerException;
 import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.micrometer.core.instrument : Clock;
@@ -143,6 +144,88 @@ final class ValueAtPercentile
     }
 
     mixin JavaObject;
+}
+
+/// A point-in-time view of distribution statistics.
+final class HistogramSnapshot
+{
+    private immutable long events;
+    private immutable double sum;
+    private immutable double maximum;
+
+    private this(long count, double total, double max) nothrow @nogc
+    {
+        events = count;
+        sum = total;
+        maximum = max;
+    }
+
+    /// Capture totals without percentile values or bucket counts.
+    static HistogramSnapshot empty(long count, double total, double max)
+    {
+        return new HistogramSnapshot(count, total, max);
+    }
+
+    /// The total number of recorded events.
+    long count() const nothrow @nogc
+    {
+        return events;
+    }
+
+    /// The sum of the recorded values.
+    double total() const nothrow @nogc
+    {
+        return sum;
+    }
+
+    /// Convert the sum from nanoseconds to unit.
+    double total(TimeUnit unit) const nothrow @nogc
+    {
+        return nanosToUnit(sum, unit);
+    }
+
+    /// The maximum recorded value.
+    double max() const nothrow @nogc
+    {
+        return maximum;
+    }
+
+    /// Convert the maximum from nanoseconds to unit.
+    double max(TimeUnit unit) const nothrow @nogc
+    {
+        return nanosToUnit(maximum, unit);
+    }
+
+    /// The mean recorded value, or zero for an empty recording count.
+    double mean() const nothrow @nogc
+    {
+        return events == 0 ? 0.0 : sum / events;
+    }
+
+    /// Convert the mean from nanoseconds to unit.
+    double mean(TimeUnit unit) const nothrow @nogc
+    {
+        return nanosToUnit(mean(), unit);
+    }
+
+    /// The precomputed percentiles. An empty snapshot returns a zero-length D slice (R5).
+    ValueAtPercentile[] percentileValues() const nothrow @nogc
+    {
+        return ValueAtPercentile[].init;
+    }
+
+    /// The bucket counts. An empty snapshot returns a zero-length D slice (R5).
+    CountAtBucket[] histogramCounts() const nothrow @nogc
+    {
+        return CountAtBucket[].init;
+    }
+
+    /// Format the captured totals.
+    override string toString() const
+    {
+        return "HistogramSnapshot{count=" ~ Long.toString(events) ~ ", total=" ~ Double.toString(
+                sum) ~ ", mean=" ~ Double.toString(mean()) ~ ", max=" ~ Double.toString(maximum) ~ "}";
+    }
 }
 
 private double nanosToUnit(double nanos, TimeUnit unit) nothrow @nogc

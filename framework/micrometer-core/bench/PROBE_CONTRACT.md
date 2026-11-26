@@ -9,7 +9,8 @@ result and updated count before invoking reusable callable, supplier and D
 delegate wrappers. It checks each result and the final count. It merges
 distribution configuration with the defaults and checks that the configured
 maximum decays on schedule. It checks unit conversion and diagnostic text for
-bucket and percentile values before writing the formatted set. The baseline
+bucket values, percentile values and an empty histogram snapshot before writing
+the formatted set. The baseline
 writes the same line directly. Both use the first
 command-line argument as the region and default to `west`.
 The control lists the feature package's direct dependencies.

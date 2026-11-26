@@ -149,6 +149,8 @@ The largest costs are per-request allocation and the collector pauses it causes.
 
 | R-126 | **Use canonical Java double bits for histogram value comparisons and hashes.** Bucket and percentile values keep their original doubles. Compare canonical NaN bits and preserve the sign bit of zero. Share the unit conversion and formatting routines across both value types. | On venus, DMD and LDC verified Java equality, signed-zero hashing and allocation-free reads. Under the same toolchain and providers, the parent probe at `3c6e97ad` measured 118,096 loadable bytes and 2,972 templates. With value declarations and the original fixture, `37cf8d22` measured 118,096 bytes and 2,991 instances. The probe exercising the value types at `65db7bf3` measured 121,288 bytes and 2,995 instances within 131,072 and 3,251. | `framework/micrometer-core/tests/histogram_values_test.d` and the Micrometer module probe. |
 
+| R-127 | **Read empty histogram snapshots from their captured totals.** Capture count, sum and maximum once. Calculate the mean and time-unit conversions on those values. Return zero-length slices for the empty bucket and percentile arrays. | On venus, DMD and LDC verified zero GC bytes in the read methods after snapshot creation. Under the same toolchain and providers, the parent at `2ad6c2d2` measured 121,288 loadable bytes and 2,995 templates. With the existing fixture at `0cdb5036`, the snapshot declarations measured 121,288 bytes and 3,015 instances. Exercising the snapshot at `e7d075b5` measured 122,920 bytes and 3,015 instances within the 131,072 and 3,251 caps. | `framework/micrometer-core/tests/histogram_snapshot_test.d` and the Micrometer module probe. |
+
 ## 2. Binary size
 
 | ID | Rule | Evidence | Enforced by |

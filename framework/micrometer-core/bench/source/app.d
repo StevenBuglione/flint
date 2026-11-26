@@ -7,7 +7,7 @@ import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.function_ : Supplier;
 import flint.micrometer.core.instrument : Clock, MockClock, Tags, Timer;
 import flint.micrometer.core.instrument.distribution : CountAtBucket, DistributionStatisticConfig,
-    TimeWindowMax, ValueAtPercentile;
+    HistogramSnapshot, TimeWindowMax, ValueAtPercentile;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 
 @safe:
@@ -49,7 +49,16 @@ private bool verifyHistogramValues()
     auto bucket = new CountAtBucket(2_500_000.0, 3.0);
     auto percentile = new ValueAtPercentile(0.95, 2_500_000.0);
     return bucket.bucket(TimeUnit.MILLISECONDS) == 2.5 && percentile.value(TimeUnit.MILLISECONDS) == 2.5
-        && bucket.toString() == "(3.0 at 2500000.0)" && percentile.toString() == "(2500000.0 at 95.0%)";
+        && bucket.toString() == "(3.0 at 2500000.0)"
+        && percentile.toString() == "(2500000.0 at 95.0%)" && verifyEmptySnapshot();
+}
+
+private bool verifyEmptySnapshot()
+{
+    auto snapshot = HistogramSnapshot.empty(2, 5_000_000.0, 3_000_000.0);
+    return snapshot.mean(TimeUnit.MILLISECONDS) == 2.5 && snapshot.max(TimeUnit.MILLISECONDS) == 3.0
+        && snapshot.percentileValues().length == 0 && snapshot.histogramCounts().length == 0
+        && snapshot.toString() == "HistogramSnapshot{count=2, total=5000000.0, mean=2500000.0, max=3000000.0}";
 }
 
 private bool verifyDistribution(MockClock clock)
