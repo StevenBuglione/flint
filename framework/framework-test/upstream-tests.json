@@ -1727,9 +1727,59 @@
     "org/springframework/web/servlet/resource/ResourceHttpRequestHandlerTests.java": {
       "d": "framework/framework-test/tests/resource_http_request_handler_tests.d",
       "methods": {
-        "ported": []
+        "ported": [
+          "HttpCachingTests.defaultCachingHeaders",
+          "HttpCachingTests.shouldRespondWithModifiedResource",
+          "ResourceHandlingTests.resourceNotFound",
+          "ResourceHandlingTests.servesHtmlResources",
+          "ResourceHandlingTests.servesResource",
+          "ResourceHandlingTests.supportsHeadRequests",
+          "ResourceHandlingTests.supportsOptionsRequests",
+          "ResourceHandlingTests.unsupportedHttpMethod",
+          "ResourceLocationTests.noPathWithinHandlerMappingAttribute",
+          "ResourceLocationTests.servesResourcesFromAlternatePath",
+          "ResourceLocationTests.shouldNotServeDirectory",
+          "ResourceLocationTests.shouldNotServeMissingResourcePath"
+        ],
+        "skipped": {
+          "HttpCachingTests.configureCacheSeconds": "Requires cache policy, ETag configuration or a file-backed fixture.",
+          "HttpCachingTests.configureCacheSecondsToZero": "Requires cache policy, ETag configuration or a file-backed fixture.",
+          "HttpCachingTests.configureVersionResourceResolver": "Requires cache policy, ETag configuration or a file-backed fixture.",
+          "HttpCachingTests.ignoreLastModified": "Requires cache policy, ETag configuration or a file-backed fixture.",
+          "HttpCachingTests.overwritesExistingCacheControlHeaders": "Requires cache policy, ETag configuration or a file-backed fixture.",
+          "HttpCachingTests.shouldRespondWithModifiedResourceWhenEtagNoMatch": "Requires cache policy, ETag configuration or a file-backed fixture.",
+          "HttpCachingTests.shouldRespondWithNotModifiedWhenEtag": "Requires cache policy, ETag configuration or a file-backed fixture.",
+          "HttpCachingTests.shouldRespondWithNotModifiedWhenEtagAndLastModified": "Requires cache policy, ETag configuration or a file-backed fixture.",
+          "HttpCachingTests.shouldRespondWithNotModifiedWhenModifiedSince": "Requires cache policy, ETag configuration or a file-backed fixture.",
+          "RangeRequestTests.ignoreRangeWhenIfRangeETagDoesNotMatch": "Requires range response integration.",
+          "RangeRequestTests.partialContentByteRange": "Requires range response integration.",
+          "RangeRequestTests.partialContentByteRangeLargeEnd": "Requires range response integration.",
+          "RangeRequestTests.partialContentByteRangeNoEnd": "Requires range response integration.",
+          "RangeRequestTests.partialContentByteRangeWhenIfRangeETagMatches": "Requires range response integration.",
+          "RangeRequestTests.partialContentByteRangeWithEncodedResource": "Requires range response integration.",
+          "RangeRequestTests.partialContentInvalidRangeHeader": "Requires range response integration.",
+          "RangeRequestTests.partialContentMultipleByteRanges": "Requires range response integration.",
+          "RangeRequestTests.partialContentSuffixRange": "Requires range response integration.",
+          "RangeRequestTests.partialContentSuffixRangeLargeSuffix": "Requires range response integration.",
+          "RangeRequestTests.partialContentWithHttpHead": "Requires range response integration.",
+          "RangeRequestTests.supportsRangeRequest": "Requires range response integration.",
+          "ResourceHandlingTests.getMediaTypeWithFavorPathExtensionOff": "Requires servlet context or custom media type configuration fixtures.",
+          "ResourceHandlingTests.getResourceWithMediaTypeResolvedThroughServletContext": "Requires servlet context or custom media type configuration fixtures.",
+          "ResourceHandlingTests.getResourceWithRegisteredMediaType": "Requires servlet context or custom media type configuration fixtures.",
+          "ResourceLocationTests.filterNonExistingLocations": "Requires the remaining classpath fixtures or location configuration.",
+          "ResourceLocationTests.ignoreInvalidEscapeSequence": "Requires URL or servlet-root resource locations.",
+          "ResourceLocationTests.initAllowedLocations": "Requires custom resolver initialization.",
+          "ResourceLocationTests.initAllowedLocationsWithExplicitConfiguration": "Requires custom resolver initialization.",
+          "ResourceLocationTests.processPath": "Requires a subclass exposing the protected processing hook to the fixture.",
+          "ResourceLocationTests.servesResourcesFromSubDirectory": "Requires the remaining classpath fixtures or location configuration.",
+          "ResourceLocationTests.servesResourcesFromSubDirectoryOfAlternatePath": "Requires the remaining classpath fixtures or location configuration.",
+          "ResourceLocationTests.servletContextRootValidation": "Requires URL or servlet-root resource locations.",
+          "ResourceLocationTests.shouldNotServeDirectoryInJarFile": "Requires the remaining classpath fixtures or location configuration.",
+          "ResourceLocationTests.shouldRejectInvalidPath": "Requires the remaining classpath fixtures or location configuration.",
+          "ResourceLocationTests.shouldRejectPathWithTraversal": "Requires URL or servlet-root resource locations."
+        }
       },
-      "status": "ported"
+      "status": "partial"
     }
   },
   "module": "framework-test",

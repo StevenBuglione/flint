@@ -9,22 +9,24 @@ AbstractResourceResolver.java, PathResourceResolver.java) and .../mvc/HttpReques
 spring-web's HttpRequestHandler.java.
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
-Modified by the Flint authors: Spring Boot maps `/**` to the static locations; a Flint application has no
-classpath resources, so `ResourceHttpRequestHandler` serves nothing yet and raises `NoResourceFoundException`, which
-is how Boot answers an unmapped path (a JSON 404 from the error controller).
+Modified by the Flint authors. Explicitly configured classpath locations serve static resources.
+Boot's unconfigured catch-all raises `NoResourceFoundException` for the error controller.
 +/
 module flint.web.servlet.resource;
 
 import flint.core.io : ClassPathResource, FileSystemResource, Resource;
 import flint.engine.aot.any : Any;
-import flint.http : HttpMethod, HttpStatus, HttpStatusCode, ProblemDetail;
+import flint.http : HttpHeaders, HttpMethod, HttpStatus, HttpStatusCode, MediaType, MediaTypeFactory, ProblemDetail;
+import flint.http.converter : ResourceHttpMessageConverter;
+import flint.http.server : ServletServerHttpResponse;
 import flint.jakarta.servlet : ServletException;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.java.io : IOException;
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.util : List;
 import flint.util : StringUtils, toLowerAscii;
-import flint.web : ErrorResponse, skipBacktrace;
+import flint.web : ErrorResponse, HttpRequestMethodNotSupportedException, skipBacktrace;
+import flint.web.context.request : ServletWebRequest;
 import flint.web.servlet : HandlerAdapter, HandlerMapping, ImmediateFailure, ModelAndView;
 import flint.web.servlet.handler : AbstractHandlerMapping, lookupPath, parsedLookupPath;
 import flint.web.util : UriUtils;
@@ -361,20 +363,97 @@ class PathResourceResolver : AbstractResourceResolver
     }
 }
 
-/// `ResourceHttpRequestHandler`: serves static resources; none are configured, so every path is a 404.
+/// `ResourceHttpRequestHandler`: serves resources from configured classpath locations.
 class ResourceHttpRequestHandler : HttpRequestHandler, ImmediateFailure
 {
+    private ResourceHandlerConfiguration configuration;
+    private bool initialized;
+
+    /// Sets the classpath locations before the handler is initialized or proved empty.
+    final void setLocations(List!Resource sources)
+    {
+        if (sources is null)
+            throw new IllegalArgumentException("Locations list must not be null");
+        synchronized (this)
+        {
+            if (initialized)
+                throw new IllegalStateException("Resource handler locations are frozen");
+            configuration = sources.isEmpty() ? null : new ClassPathResourceHandlerConfiguration(sources);
+        }
+    }
+
+    /// Validates the explicit locations and creates their resolver and message converter.
+    void afterPropertiesSet()
+    {
+        synchronized (this)
+        {
+            if (initialized)
+                return;
+            if (configuration !is null)
+                configuration.initialize();
+            initialized = true;
+        }
+    }
+
     void handleRequest(HttpServletRequest request, HttpServletResponse response)
     {
-        throw notFound(request);
+        auto resource = getResource(request);
+        if (resource is null)
+            throw notFound(request);
+
+        if (configuration is null)
+            throw new IllegalStateException("Resource handler locations not initialized");
+        configuration.handle(this, request, response, resource);
+    }
+
+    /// Resolves a valid mapped path under the configured locations.
+    protected Resource getResource(HttpServletRequest request)
+    {
+        if (configuration is null)
+            return null;
+        auto pathWithin = request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+        if (pathWithin.isNull())
+            throw new IllegalStateException(
+                    "Required request attribute '"
+                    ~ HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE ~ "' is not set");
+        return configuration.resolve(this, request, pathWithin.get!string);
+    }
+
+    /// Normalizes the mapped resource path.
+    protected string processPath(string path)
+    {
+        return ResourceHandlerUtils.normalizeInputPath(path);
+    }
+
+    /// Subclasses can reject more paths.
+    protected bool isInvalidPath(string path)
+    {
+        return false;
+    }
+
+    /// Determines the resource media type from the servlet context or extension registry.
+    protected Nullable!MediaType getMediaType(HttpServletRequest request, Resource resource)
+    {
+        return configuration is null ? Nullable!MediaType.init : configuration.getMediaType(request, resource);
+    }
+
+    private bool freezeEmpty()
+    {
+        synchronized (this)
+        {
+            if (configuration !is null)
+                return false;
+            initialized = true;
+            return true;
+        }
     }
 
     /// Flint: through Spring's `HttpRequestHandlerAdapter`, this handler's 404 is known before it runs, so the
     /// dispatcher takes it without a throw. A subclass or another adapter keeps the usual path.
     Exception immediateFailure(Object adapter, HttpServletRequest request)
     {
-        if (typeid(this) !is typeid(ResourceHttpRequestHandler) || adapter is null
-                || typeid(adapter) !is typeid(HttpRequestHandlerAdapter))
+        if (typeid(this) !is typeid(ResourceHttpRequestHandler) || configuration !is null
+                || adapter is null || typeid(adapter) !is typeid(HttpRequestHandlerAdapter))
             return null;
         return notFound(request);
     }
@@ -387,6 +466,99 @@ class ResourceHttpRequestHandler : HttpRequestHandler, ImmediateFailure
             path = path[1 .. $];
         return new NoResourceFoundException(HttpMethod.valueOf(request.getMethod()), request.getRequestURI(), path);
     }
+}
+
+// Installed by explicit location configuration, keeping its implementation out of the stock handler.
+private interface ResourceHandlerConfiguration
+{
+    void initialize();
+    Resource resolve(ResourceHttpRequestHandler handler, HttpServletRequest request, string path);
+    Nullable!MediaType getMediaType(HttpServletRequest request, Resource resource);
+    void handle(ResourceHttpRequestHandler handler, HttpServletRequest request,
+            HttpServletResponse response, Resource resource);
+}
+
+private final class ClassPathResourceHandlerConfiguration : ResourceHandlerConfiguration
+{
+    private List!Resource locations;
+    private PathResourceResolver resolver;
+    private ResourceHttpMessageConverter converter;
+
+    this(List!Resource sources)
+    {
+        locations = List!Resource.copyOf(sources);
+    }
+
+    void initialize()
+    {
+        foreach (location; locations)
+        {
+            ResourceHandlerUtils.assertResourceLocation(location);
+            if (typeid(cast(Object) location) !is typeid(ClassPathResource))
+                throw new IllegalArgumentException("Expected a ClassPathResource location");
+        }
+        resolver = new PathResourceResolver();
+        converter = new ResourceHttpMessageConverter();
+    }
+
+    Resource resolve(ResourceHttpRequestHandler handler, HttpServletRequest request, string rawPath)
+    {
+        auto path = handler.processPath(rawPath);
+        if (ResourceHandlerUtils.shouldIgnoreInputPath(path) || handler.isInvalidPath(path))
+            return null;
+        if (resolver is null)
+            throw new IllegalStateException("ResourceResolverChain not initialized");
+        return resolver.resolveResource(request, path, locations, null);
+    }
+
+    Nullable!MediaType getMediaType(HttpServletRequest request, Resource resource)
+    {
+        Nullable!MediaType result;
+        if (auto context = request.getServletContext())
+        {
+            const mimeType = context.getMimeType(resource.getFilename());
+            if (StringUtils.hasText(mimeType))
+                result = nullable(MediaType.parseMediaType(mimeType));
+        }
+        if (result.isNull || result.get() == MediaType.APPLICATION_OCTET_STREAM)
+        {
+            auto media = MediaTypeFactory.getMediaType(resource);
+            if (media.isPresent())
+                return nullable(media.get());
+        }
+        return result;
+    }
+
+    void handle(ResourceHttpRequestHandler handler, HttpServletRequest request,
+            HttpServletResponse response, Resource resource)
+    {
+        const method = request.getMethod();
+        if (method == "OPTIONS")
+        {
+            response.setHeader(HttpHeaders.ALLOW, "GET,HEAD,OPTIONS");
+            return;
+        }
+        if (method != "GET" && method != "HEAD")
+            throw new HttpRequestMethodNotSupportedException(method, ["GET", "HEAD"]);
+        if (converter is null)
+            throw new IllegalStateException("ResourceHttpMessageConverter not initialized");
+
+        const lastModified = resource.isFile() ? resource.lastModified() : -1;
+        if (new ServletWebRequest(request, response).checkNotModified(lastModified))
+            return;
+
+        auto contentType = handler.getMediaType(request, resource);
+        const(MediaType)* media = contentType.isNull ? null : &contentType.get();
+        auto message = new ServletServerHttpResponse(response);
+        if (method == "HEAD")
+        {
+            converter.addDefaultHeaders(message, resource, media);
+            message.flush();
+        }
+        else
+            converter.write(Any.of(resource), media, message);
+    }
+
 }
 
 /++
@@ -404,7 +576,8 @@ package(flint.web) bool provedResourceFallback(HandlerMapping mapping)
         return false;
     auto entry = resources.entries[0];
     return entry.pattern.getPatternString() == "/**" && entry.handler !is null
-        && typeid(entry.handler) is typeid(ResourceHttpRequestHandler);
+        && typeid(entry.handler) is typeid(ResourceHttpRequestHandler)
+        && (cast(ResourceHttpRequestHandler) entry.handler).freezeEmpty();
 }
 
 /// `HttpRequestHandlerAdapter`.

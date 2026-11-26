@@ -714,6 +714,17 @@ web fixture at `2b28d1bb` and `bc22cde3` measures 536,737 loadable bytes at O3 a
 LDC allocation probe shows the GC block growing from 48 to 64 bytes where a servlet
 request wrapper is constructed. Both apps' request-allocation gates cover this cost.
 
+The final `ResourceHttpRequestHandler.setLocations` installs the classpath serving
+implementation through a private interface. The stock empty handler freezes its
+configuration during the 404 proof. Method and path hooks remain virtual. The matched
+venus webmvc probe measured 1,622,078 O3 loadable bytes at `e632bc45` and 1,848,035
+when the default virtual methods retained the configured implementation (`decff36b`).
+The explicit configuration entry point brings the delta to 1,624,310 bytes at
+`23bd82fe`. Oz moves from 1,545,766 to 1,548,006 and DMD templates from 5,918 to
+5,960. The absolute cap still uses the Phobos cascade rule in `6c9e5f49`.
+The framework-test cases verify an independent location snapshot, proof activation
+only for the stock empty handler, and configured dispatch through the adapter.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

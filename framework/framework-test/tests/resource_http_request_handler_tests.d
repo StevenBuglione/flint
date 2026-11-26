@@ -4,9 +4,8 @@ spring-webmvc/src/test/java/org/springframework/web/servlet/resource/ResourceHtt
 Copyright 2002-present the original author or authors. Licensed under the Apache License, Version 2.0.
 Modified by the Flint authors: JUnit and AssertJ assertions become D unittests and asserts; each `@Nested` class's
 fields become a `Fixture` that `setup` (or `setupInitialized`, whose `@BeforeEach` also calls
-`afterPropertiesSet`) returns. flint.web.servlet's `ResourceHttpRequestHandler` has no locations, resolvers or
-caching yet and answers every path with `NoResourceFoundException`, so its configuration calls and nearly every case
-wait behind version gates; the not-found cases run against it as it is. Class-relative `ClassPathResource`s are
+`afterPropertiesSet`) returns. The active configured classpath cases use an embedded fixture. Resource types,
+resolvers and features still in progress have version guards. Class-relative `ClassPathResource`s are
 spelled from the class path root (the upstream test resources sit under spring-webmvc/src/test/resources), and
 `UrlResource`s and `getURL().getPath()` become files on that class path. flint.mock.web's `MockHttpServletRequest`
 has no constructor taking a servlet context, so requests keep their own `MockHttpServletContext`; JUnit's
@@ -15,12 +14,16 @@ lives with flint.mock.web in flint:framework-test.
 +/
 module flint.web.resource_http_request_handler_tests;
 
-import flint.core.io : ClassPathResource, Resource;
+import flint.core.io : ClassPathResource, Resource, installEmbeddedResources, installedEmbeddedResources;
 import flint.engine.aot.any : Any;
-import flint.http : HttpMethod;
+import flint.http : HttpHeaders, HttpMethod;
+import flint.java.lang : IllegalStateException;
+import flint.java.util : ArrayList, List;
 import flint.mock.web : MockHttpServletRequest, MockHttpServletResponse, MockServletContext;
+import flint.web : HttpRequestMethodNotSupportedException;
 import flint.web.servlet : HandlerMapping;
-import flint.web.servlet.resource : NoResourceFoundException, ResourceHttpRequestHandler;
+import flint.web.servlet.resource : HttpRequestHandlerAdapter, NoResourceFoundException,
+    ResourceHttpRequestHandler, SimpleUrlHandlerMapping, provedResourceFallback;
 import std.exception : assertThrown;
 
 @safe:
@@ -115,28 +118,50 @@ private Fixture setupInitialized()
 // ---------------------------------------------------------------------------------------------------------------
 // ResourceHandlingTests
 
-// ResourceHttpRequestHandler has no locations, media types or servlet context: it serves no resource.
-version (FlintResourceHandlerLocations)
+private immutable(ubyte)[] handlerResources(string path) nothrow
 {
-    import flint.http : MediaType;
-    import flint.web : HttpRequestMethodNotSupportedException;
-
-    @("ResourceHttpRequestHandlerTests.ResourceHandlingTests.servesResource")
-    unittest
+    switch (path)
     {
-        auto f = setupInitialized();
+    case resourcePackage ~ "test/foo.css":
+    case resourcePackage ~ "testalternatepath/baz.css":
+        return cast(
+                immutable(ubyte)[]) "h1 { color:red; }";
+    case resourcePackage ~ "test/foo.html":
+        return cast(immutable(ubyte)[]) "<html></html>";
+    default:
+        return null;
+    }
+}
+
+private void withClasspathFixture(scope void delegate(ref Fixture) @safe body)
+{
+    auto previous = installedEmbeddedResources();
+    installEmbeddedResources(&handlerResources);
+    scope (exit)
+        installEmbeddedResources(previous);
+    auto f = setup();
+    f.handler.setLocations(List!Resource.of(testResource(), testAlternatePathResource()));
+    f.handler.afterPropertiesSet();
+    body(f);
+}
+
+@("ResourceHttpRequestHandlerTests.ResourceHandlingTests.servesResource")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.setPathWithinHandlerMapping("foo.css");
         f.handler.handleRequest(f.request, f.response);
 
         assert(f.response.getContentType() == "text/css");
         assert(f.response.getContentLengthLong() == 17);
         assert(f.response.getContentAsString() == "h1 { color:red; }");
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.ResourceHandlingTests.supportsHeadRequests")
-    unittest
-    {
-        auto f = setupInitialized();
+@("ResourceHttpRequestHandlerTests.ResourceHandlingTests.supportsHeadRequests")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.request.setMethod("HEAD");
         f.setPathWithinHandlerMapping("foo.css");
         f.handler.handleRequest(f.request, f.response);
@@ -145,29 +170,36 @@ version (FlintResourceHandlerLocations)
         assert(f.response.getContentType() == "text/css");
         assert(f.response.getContentLengthLong() == 17);
         assert(f.response.getContentAsByteArray().length == 0);
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.ResourceHandlingTests.supportsOptionsRequests")
-    unittest
-    {
-        auto f = setupInitialized();
+@("ResourceHttpRequestHandlerTests.ResourceHandlingTests.supportsOptionsRequests")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.request.setMethod("OPTIONS");
         f.setPathWithinHandlerMapping("foo.css");
         f.handler.handleRequest(f.request, f.response);
 
         assert(f.response.getStatus() == 200);
         assert(f.response.getHeader("Allow") == "GET,HEAD,OPTIONS");
-    }
+    });
+}
 
-    @("ResourceHttpRequestHandlerTests.ResourceHandlingTests.servesHtmlResources")
-    unittest
-    {
-        auto f = setupInitialized();
+@("ResourceHttpRequestHandlerTests.ResourceHandlingTests.servesHtmlResources")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.setPathWithinHandlerMapping("foo.html");
         f.handler.handleRequest(f.request, f.response);
 
         assert(f.response.getContentType() == "text/html");
-    }
+    });
+}
+
+version (FlintResourceHandlerLocations)
+{
+    import flint.http : MediaType;
 
     // SPR-13658
     @("ResourceHttpRequestHandlerTests.ResourceHandlingTests.getResourceWithRegisteredMediaType")
@@ -234,28 +266,73 @@ version (FlintResourceHandlerLocations)
         assert(f.response.getContentAsString() == "h1 { color:red; }");
     }
 
-    @("ResourceHttpRequestHandlerTests.ResourceHandlingTests.unsupportedHttpMethod")
-    unittest
-    {
-        auto f = setupInitialized();
+}
+
+@("ResourceHttpRequestHandlerTests.ResourceHandlingTests.unsupportedHttpMethod")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
         f.setPathWithinHandlerMapping("foo.css");
         f.request.setMethod("POST");
         assertThrown!HttpRequestMethodNotSupportedException(f.handler.handleRequest(f.request, f.response));
-    }
+    });
 }
 
 @("ResourceHttpRequestHandlerTests.ResourceHandlingTests.resourceNotFound")
 unittest
 {
-    auto f = setupInitialized();
-    foreach (method; HttpMethod.values())
-    {
-        f.request = new MockHttpServletRequest("GET", "");
-        f.setPathWithinHandlerMapping("not-there.css");
-        f.request.setMethod(method.name());
-        f.response = new MockHttpServletResponse();
-        f.assertNotFound();
-    }
+    withClasspathFixture((ref Fixture f) {
+        foreach (method; HttpMethod.values())
+        {
+            f.request = new MockHttpServletRequest("GET", "");
+            f.setPathWithinHandlerMapping("not-there.css");
+            f.request.setMethod(method.name());
+            f.response = new MockHttpServletResponse();
+            f.assertNotFound();
+        }
+    });
+}
+
+@("Flint.ResourceHttpRequestHandler.configuredResolverDeclinesStockProof")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
+        f.setPathWithinHandlerMapping("baz.css");
+        auto mapping = new SimpleUrlHandlerMapping();
+        mapping.registerHandler("/**", f.handler);
+        auto adapter = new HttpRequestHandlerAdapter();
+        assert(!provedResourceFallback(mapping));
+        assert(f.handler.immediateFailure(adapter, f.request) is null);
+        adapter.handle(f.request, f.response, f.handler);
+        assert(f.response.getContentAsString() == "h1 { color:red; }");
+    });
+}
+
+@("Flint.ResourceHttpRequestHandler.startupProofFreezesLocations")
+unittest
+{
+    auto handler = new ResourceHttpRequestHandler();
+    auto mapping = new SimpleUrlHandlerMapping();
+    mapping.registerHandler("/**", handler);
+    assert(provedResourceFallback(mapping));
+    assertThrown!IllegalStateException(handler.setLocations(List!Resource.of(testResource())));
+}
+
+@("Flint.ResourceHttpRequestHandler.copiesLocations")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
+        f.handler = new ResourceHttpRequestHandler();
+        auto locations = new ArrayList!Resource();
+        locations.add(testResource());
+        f.handler.setLocations(locations);
+        locations.clear();
+        f.handler.afterPropertiesSet();
+        f.setPathWithinHandlerMapping("foo.css");
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getContentAsString() == "h1 { color:red; }");
+        assertThrown!IllegalStateException(f.handler.setLocations(List!Resource.of(testResource())));
+    });
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -694,18 +771,6 @@ version (FlintResourceHttpCaching)
         return headers.getFirst(HttpHeaders.IF_MODIFIED_SINCE);
     }
 
-    @("ResourceHttpRequestHandlerTests.HttpCachingTests.defaultCachingHeaders")
-    unittest
-    {
-        auto f = setup();
-        f.handler.afterPropertiesSet();
-        f.setPathWithinHandlerMapping("foo.css");
-        f.handler.handleRequest(f.request, f.response);
-
-        assert(f.response.containsHeader("Last-Modified"));
-        assert(f.response.getDateHeader("Last-Modified") / 1000 == resourceLastModified("test/foo.css") / 1000);
-    }
-
     @("ResourceHttpRequestHandlerTests.HttpCachingTests.configureCacheSeconds")
     unittest
     {
@@ -741,18 +806,6 @@ version (FlintResourceHttpCaching)
         f.handler.handleRequest(f.request, f.response);
         assert(f.response.getStatus() == HttpServletResponse.SC_NOT_MODIFIED);
         assert(f.response.getHeader("Cache-Control") == "max-age=3600");
-    }
-
-    @("ResourceHttpRequestHandlerTests.HttpCachingTests.shouldRespondWithModifiedResource")
-    unittest
-    {
-        auto f = setup();
-        f.handler.afterPropertiesSet();
-        f.setPathWithinHandlerMapping("foo.css");
-        f.request.addHeader("If-Modified-Since", httpDate(resourceLastModified("test/foo.css") / 1000 * 1000 - 1));
-        f.handler.handleRequest(f.request, f.response);
-        assert(f.response.getStatus() == HttpServletResponse.SC_OK);
-        assert(f.response.getContentAsString() == "h1 { color:red; }");
     }
 
     @("ResourceHttpRequestHandlerTests.HttpCachingTests.shouldRespondWithNotModifiedWhenEtag")
@@ -849,19 +902,6 @@ private string classPathUrl(string name)
 version (FlintResourceHandlerLocations)
 {
     import flint.core.io : UrlResource;
-
-    @("ResourceHttpRequestHandlerTests.ResourceLocationTests.servesResourcesFromAlternatePath")
-    unittest
-    {
-        auto f = setup();
-        f.handler.afterPropertiesSet();
-        f.setPathWithinHandlerMapping("baz.css");
-        f.handler.handleRequest(f.request, f.response);
-
-        assert(f.response.getContentType() == "text/css");
-        assert(f.response.getContentLengthLong() == 17);
-        assert(f.response.getContentAsString() == "h1 { color:red; }");
-    }
 
     @("ResourceHttpRequestHandlerTests.ResourceLocationTests.servesResourcesFromSubDirectory")
     unittest
@@ -1043,11 +1083,7 @@ version (FlintResourcePathProcessing)
 @("ResourceHttpRequestHandlerTests.ResourceLocationTests.shouldNotServeDirectory")
 unittest
 {
-    auto f = setup();
-    version (FlintResourceHandlerLocations)
-        f.handler.afterPropertiesSet();
-    f.setPathWithinHandlerMapping("js/");
-    f.assertNotFound();
+    withClasspathFixture((ref Fixture f) { f.setPathWithinHandlerMapping("js/"); f.assertNotFound(); });
 }
 
 @("ResourceHttpRequestHandlerTests.ResourceLocationTests.shouldNotServeDirectoryInJarFile")
@@ -1063,25 +1099,89 @@ unittest
 @("ResourceHttpRequestHandlerTests.ResourceLocationTests.shouldNotServeMissingResourcePath")
 unittest
 {
-    auto f = setup();
-    version (FlintResourceHandlerLocations)
-        f.handler.afterPropertiesSet();
-    f.setPathWithinHandlerMapping("");
-    f.assertNotFound();
+    withClasspathFixture((ref Fixture f) { f.setPathWithinHandlerMapping(""); f.assertNotFound(); });
 }
 
-// Behaviour: without PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE the port falls back to the lookup path and answers
-// NoResourceFoundException instead of Spring's IllegalStateException (required request attribute not set).
-version (FlintResourcePathWithinMappingRequired)
+@("ResourceHttpRequestHandlerTests.ResourceLocationTests.noPathWithinHandlerMappingAttribute")
+unittest
 {
-    @("ResourceHttpRequestHandlerTests.ResourceLocationTests.noPathWithinHandlerMappingAttribute")
-    unittest
-    {
-        import flint.java.lang : IllegalStateException;
-
-        auto f = setup();
-        version (FlintResourceHandlerLocations)
-            f.handler.afterPropertiesSet();
+    withClasspathFixture((ref Fixture f) {
         assertThrown!IllegalStateException(f.handler.handleRequest(f.request, f.response));
+    });
+}
+
+@("ResourceHttpRequestHandlerTests.ResourceLocationTests.servesResourcesFromAlternatePath")
+unittest
+{
+    withClasspathFixture((ref Fixture f) {
+        f.setPathWithinHandlerMapping("baz.css");
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getContentType() == "text/css");
+        assert(f.response.getContentLengthLong() == 17);
+        assert(f.response.getContentAsString() == "h1 { color:red; }");
+    });
+}
+
+private void withFileClasspath(scope void delegate(ref Fixture, long) @safe body)
+{
+    import std.file : mkdir, rmdirRecurse, tempDir, write;
+    import std.path : buildPath;
+    import std.process : environment;
+    import std.uuid : randomUUID;
+
+    const root = buildPath(tempDir(), "flint-webmvc-resources-" ~ randomUUID().toString());
+    mkdir(root);
+    scope (exit)
+        rmdirRecurse(root);
+    mkdir(buildPath(root, "web"));
+    write(buildPath(root, "web", "foo.css"), "h1 { color:red; }");
+    write(buildPath(root, "outside.css"), "outside the resource location");
+    const previous = environment.get("FLINT_CLASSPATH", null);
+    environment["FLINT_CLASSPATH"] = root;
+    scope (exit)
+    {
+        if (previous is null)
+            environment.remove("FLINT_CLASSPATH");
+        else
+            environment["FLINT_CLASSPATH"] = previous;
     }
+    auto f = setup();
+    f.handler.setLocations(List!Resource.of(new ClassPathResource("web/")));
+    f.handler.afterPropertiesSet();
+    f.setPathWithinHandlerMapping("foo.css");
+    body(f, (new ClassPathResource("web/foo.css")).lastModified());
+}
+
+@("ResourceHttpRequestHandlerTests.HttpCachingTests.defaultCachingHeaders")
+unittest
+{
+    withFileClasspath((ref Fixture f, long timestamp) {
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getHeader(HttpHeaders.LAST_MODIFIED) == HttpHeaders.formatDate(timestamp));
+    });
+}
+
+@("ResourceHttpRequestHandlerTests.HttpCachingTests.shouldRespondWithModifiedResource")
+unittest
+{
+    withFileClasspath((ref Fixture f, long timestamp) {
+        f.request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, HttpHeaders.formatDate(timestamp / 1000 * 1000 - 1));
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getStatus() == 200);
+        assert(f.response.getContentAsString() == "h1 { color:red; }");
+    });
+}
+
+@("Flint.ResourceHttpRequestHandler.appliesFileTimestampAndLocation")
+unittest
+{
+    withFileClasspath((ref Fixture f, long timestamp) {
+        f.request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, HttpHeaders.formatDate(timestamp));
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getStatus() == 304);
+        assert(f.response.getContentAsByteArray().length == 0);
+        f.setPathWithinHandlerMapping("../outside.css");
+        auto missing = new MockHttpServletResponse();
+        assertThrown!NoResourceFoundException(f.handler.handleRequest(f.request, missing));
+    });
 }
