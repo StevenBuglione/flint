@@ -1,10 +1,44 @@
 module image_contract_tests;
 
-import flint.ai.image : Image, ImageOptions, ImageOptionsBuilder;
-import flint.ai.model : ModelOptions;
+import flint.ai.image : Image, ImageGeneration, ImageGenerationMetadata, ImageOptions, ImageOptionsBuilder;
+import flint.ai.model : ModelOptions, ModelResult;
 import std.typecons : Nullable, nullable;
 
 @safe:
+
+@("image generations share default metadata and return their original image")
+unittest
+{
+    auto image = new Image(nullable("https://example.invalid/image"), Nullable!string.init);
+    auto first = new ImageGeneration(image);
+    auto second = new ImageGeneration(image);
+    ModelResult!Image result = first;
+    assert(result.getOutput() is image);
+    assert(first.getMetadata() !is null && first.getMetadata() is second.getMetadata());
+    assert(result.getMetadata() is first.getMetadata());
+}
+
+@("image generations preserve supplied metadata and render its value")
+unittest
+{
+    static final class ProviderMetadata : ImageGenerationMetadata
+    {
+        override string toString() const
+        {
+            return "provider metadata";
+        }
+    }
+
+    auto image = new Image(Nullable!string.init, nullable("dGVzdA=="));
+    auto metadata = new ProviderMetadata();
+    auto generation = new ImageGeneration(image, metadata);
+    const ImageGenerationMetadata typedMetadata = generation.getMetadata();
+    ModelResult!Image result = generation;
+    assert(typedMetadata is metadata && result.getMetadata() is metadata);
+    enum prefix = "ImageGeneration{imageGenerationMetadata=provider metadata, ";
+    assert(generation.toString() == prefix ~ "image=Image{url='null', b64Json='dGVzdA=='}}");
+    assert(new ImageGeneration(null, null).toString() == "ImageGeneration{imageGenerationMetadata=null, image=null}");
+}
 
 @("images distinguish missing and empty fields in equality and rendering")
 unittest

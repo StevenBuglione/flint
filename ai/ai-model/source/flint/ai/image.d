@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/image/{Image,ImageOptions,ImageOptionsBuilder}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/image/{Image,ImageGeneration,ImageGenerationMetadata,ImageOptions,ImageOptionsBuilder}.java
 // Modified by the Flint authors.
 module flint.ai.image;
 
-import flint.ai.model : ModelOptions;
+import flint.ai.model : ModelOptions, ModelResult, ResultMetadata;
 import flint.java.lang : JavaObject;
 import std.typecons : Nullable;
 
@@ -95,6 +95,62 @@ class Image
     }
 
     mixin JavaObject;
+}
+
+/// Metadata associated with the generation of an image.
+interface ImageGenerationMetadata : ResultMetadata
+{
+}
+
+private final class DefaultImageGenerationMetadata : ImageGenerationMetadata
+{
+}
+
+/// A generated image and its associated metadata.
+class ImageGeneration : ModelResult!Image
+{
+    private Image image_;
+    private ImageGenerationMetadata metadata_;
+
+    /// Creates a generation with shared, empty metadata.
+    this(Image image) nothrow @nogc
+    {
+        import flint.engine.aot.objects : statelessInstance;
+
+        this(image, statelessInstance!DefaultImageGenerationMetadata());
+    }
+
+    /// Creates a generation with the supplied image and metadata.
+    this(Image image, ImageGenerationMetadata metadata) pure nothrow @nogc
+    {
+        image_ = image;
+        metadata_ = metadata;
+    }
+
+    /// Returns the original image.
+    override Image getOutput()
+    {
+        return image_;
+    }
+
+    /// Returns the metadata associated with this image.
+    override ImageGenerationMetadata getMetadata()
+    {
+        return metadata_;
+    }
+
+    /// Renders the metadata and image using their object representations.
+    override string toString()
+    {
+        import flint.ai.chat.messages.part : joinRecord;
+        import flint.engine.aot.objects : objectToString;
+
+        string[5] parts = [
+            "ImageGeneration{imageGenerationMetadata=", objectToString(cast(Object) metadata_),
+            ", image=", objectToString(image_), "}"
+        ];
+        return joinRecord(parts[]);
+    }
 }
 
 /// Common settings for image generation models.
