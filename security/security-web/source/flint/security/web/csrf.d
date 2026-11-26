@@ -27,7 +27,7 @@ class MissingCsrfTokenException : AccessDeniedException
     /// `Could not verify the provided CSRF token because no token was found to compare.`
     this(string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super("Could not verify the provided CSRF token because no token was found to compare.", null, file, line);
+        super("Could not verify the provided CSRF token because no token was found to compare.", file, line);
     }
 }
 

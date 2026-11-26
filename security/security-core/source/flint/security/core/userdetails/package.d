@@ -95,9 +95,21 @@ interface UserDetailsChecker
 class UsernameNotFoundException : AuthenticationException
 {
     /// A failure with `message`.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+    }
+
+    /// A failure with an initialized cause.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Select the cause overload for a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 
     /// For the user named `username`.

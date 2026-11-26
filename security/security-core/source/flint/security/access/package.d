@@ -16,8 +16,23 @@ import flint.java.lang : RuntimeException;
 class AccessDeniedException : RuntimeException
 {
     /// A failure with `message`.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message);
+        // Preserve the caller location across both RuntimeException constructor layouts.
+        this.file = file;
+        this.line = line;
+    }
+
+    /// A failure with an initialized cause.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Select the cause overload for a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 }

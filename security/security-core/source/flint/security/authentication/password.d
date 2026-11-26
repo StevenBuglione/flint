@@ -52,9 +52,21 @@ class CompromisedPasswordDecision
 /// A valid password that must be changed because it is compromised.
 class CompromisedPasswordException : AuthenticationException
 {
-    /// A failure with a message and optional cause.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// A failure with a message and an unset cause.
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+    }
+
+    /// A failure with an initialized cause.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Select the cause overload for a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 }

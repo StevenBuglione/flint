@@ -104,7 +104,7 @@ class AuthorizationDeniedException : AccessDeniedException
     /// A denial with `message` and its `result`.
     this(string message, AuthorizationResult result = null, string file = __FILE__, size_t line = __LINE__)
     {
-        super(message, null, file, line);
+        super(message, file, line);
         this.result = result is null ? new AuthorizationDecision(false) : result;
     }
 
