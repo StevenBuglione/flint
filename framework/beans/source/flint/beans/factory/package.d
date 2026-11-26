@@ -36,9 +36,12 @@ lookups (R4); they are `final` façades over the erased `getBeanErased`, `getBea
 +/
 module flint.beans.factory;
 
+import std.typecons : Nullable;
+
 import flint.beans : BeansException, FatalBeanException;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : typeNameOf;
+import flint.java.lang : NullPointerException;
 import flint.java.util : LinkedHashMap, Map;
 import flint.java.util.stream : Stream;
 import std.typecons : Nullable;
@@ -455,6 +458,15 @@ class BeanCreationException : FatalBeanException
         this.resourceDescription = resourceDescription;
     }
 
+    private this(Nullable!string resourceDescription, Nullable!string beanName, string msg, Throwable cause)
+    {
+        const name = beanName.isNull ? "null" : beanName.get();
+        const resource = resourceDescription.isNull ? "" : " defined in " ~ resourceDescription.get();
+        super("Error creating bean with name '" ~ name ~ "'" ~ resource ~ ": " ~ msg, cause);
+        this.beanName = beanName.isNull ? null : beanName.get();
+        this.resourceDescription = resourceDescription.isNull ? null : resourceDescription.get();
+    }
+
     /// The bean's name, or null.
     string getBeanName() const pure nothrow @nogc
     {
@@ -640,9 +652,27 @@ class UnsatisfiedDependencyException : BeanCreationException
     /// `Error creating bean with name 'b': Unsatisfied dependency expressed through bean property 'p': msg`.
     this(string resourceDescription, string beanName, string propertyName, string msg, Throwable cause = null)
     {
-        super(resourceDescription, beanName,
-                "Unsatisfied dependency expressed through bean property '" ~ propertyName ~ "'" ~ (msg.length
-                    ? ": " ~ msg : ""), cause);
+        super(resourceDescription, beanName, propertyMessage(propertyName, msg), cause);
+    }
+
+    /// The unsatisfied property with an optional resource, bean name and detail message (R5).
+    this(Nullable!string resourceDescription, Nullable!string beanName, string propertyName, Nullable!string msg)
+    {
+        super(resourceDescription, beanName, propertyMessage(propertyName, msg.isNull ? null : msg.get()), null);
+    }
+
+    /// The unsatisfied property with the supplied bean exception as its cause (R5, R7).
+    this(Nullable!string resourceDescription, Nullable!string beanName, string propertyName, BeansException cause)
+    {
+        if (cause is null)
+            throw new NullPointerException("cause");
+        super(resourceDescription, beanName, propertyMessage(propertyName, cause.msg), cause);
+    }
+
+    private static string propertyMessage(string propertyName, string detail)
+    {
+        const suffix = detail.length ? ": " ~ detail : "";
+        return "Unsatisfied dependency expressed through bean property '" ~ propertyName ~ "'" ~ suffix;
     }
 }
 
