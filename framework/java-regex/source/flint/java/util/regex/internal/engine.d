@@ -103,6 +103,18 @@ struct Regex
     /// `Pattern.matcher(input).matches()`: whether the whole input matches.
     bool matches(scope const(char)[] input) const
     {
+        return matchWhole(input, null);
+    }
+
+    /// Save numbered captures as pairs of Unicode code-point indices.
+    bool captureMatch(scope const(char)[] input, scope int[] result) const
+    {
+        assert(result.length == 2 * (groups + 1));
+        return matchWhole(input, result);
+    }
+
+    private bool matchWhole(scope const(char)[] input, scope int[] result) const
+    {
         // A request's value is short: its code points, captures and loop registers live on the (fiber) stack, and
         // only a long input or a pattern with many groups allocates.
         dchar[256] smallText = void;
@@ -115,7 +127,14 @@ struct Regex
         scope int[] state = stateCount <= smallState.length ? smallState[0 .. stateCount] : new int[stateCount];
         state[] = -1;
         scope vm = Matcher(code, sets, text, state[0 .. captureCount], state[captureCount .. $]);
-        return vm.run(0, 0, cast(int) text.length) >= 0;
+        const end = vm.run(0, 0, cast(int) text.length);
+        if (end >= 0 && result.length)
+        {
+            result[] = state[0 .. captureCount];
+            result[0] = 0;
+            result[1] = end;
+        }
+        return end >= 0;
     }
 }
 

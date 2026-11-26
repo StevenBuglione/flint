@@ -155,3 +155,41 @@ unittest
     exception = new PatternSyntaxException("bad", "x", int.max);
     assert(exception.getMessage() == "bad near index 2147483647" ~ eol ~ "x");
 }
+
+@("Matcher captures distinguish an unmatched group from an empty group and use UTF-16 offsets")
+unittest
+{
+    import core.memory : GC;
+    import flint.java.util.regex.matchresult : MatchResult;
+
+    auto matcher = Pattern.compile("(😀)(a)?()").matcher("😀");
+    MatchResult result = matcher;
+    assert(!matcher.hasMatch());
+    assert(matcher.matches() && matcher.hasMatch());
+    assert(result.groupCount() == 3);
+    assert(result.start() == 0 && result.end() == 2 && result.group().get == "😀");
+    assert(result.start(1) == 0 && result.end(1) == 2 && result.group(1).get == "😀");
+    assert(result.start(2) == -1 && result.end(2) == -1 && result.group(2).isNull);
+    assert(result.start(3) == 2 && result.end(3) == 2 && !result.group(3).isNull && result.group(3).get == "");
+
+    const before = GC.stats().allocatedInCurrentThread;
+    assert(matcher.matches());
+    assert(GC.stats().allocatedInCurrentThread == before);
+}
+
+@("Matcher rejects capture access before a successful whole-input match")
+unittest
+{
+    import flint.java.lang : IllegalStateException, IndexOutOfBoundsException;
+    import std.exception : assertThrown;
+
+    auto matcher = Pattern.compile("(a)").matcher("b");
+    assertThrown!IllegalStateException(matcher.start(99));
+    assert(!matcher.matches() && !matcher.hasMatch());
+    assertThrown!IllegalStateException(matcher.group());
+    matcher = Pattern.compile("a").matcher("a");
+    assert(matcher.matches() && matcher.hasMatch());
+    assert(matcher.group().get == "a");
+    assertThrown!IndexOutOfBoundsException(matcher.end(-1));
+    assertThrown!IndexOutOfBoundsException(matcher.group(1));
+}
