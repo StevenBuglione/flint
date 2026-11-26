@@ -1108,7 +1108,8 @@
    "directory": "ai/ai-model",
    "module": "flint.ai.chat.messages.part",
    "also": [
-    "flint.ai.chat.metadata"
+    "flint.ai.chat.metadata",
+    "flint.ai.model"
    ],
    "repo": "ai",
    "licence": "Apache-2.0",
