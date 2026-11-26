@@ -697,7 +697,6 @@
   "java.util.function.UnaryOperator",
   "java.util.regex.Matcher",
   "java.util.regex.Pattern",
-  "java.util.stream.Collectors",
   "javax.sql.CommonDataSource",
   "javax.sql.CommonDataSource#getLoginTimeout()",
   "javax.sql.CommonDataSource#setLoginTimeout(int)",

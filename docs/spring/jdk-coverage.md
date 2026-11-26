@@ -42,7 +42,7 @@ Overall: types 159/1307 (12%), members 1230/15237 (8%).
 | `java.util.random` | sol-jdk-math-regex | 0 / 7 | 0 / 89 | 0% |  |  |
 | `java.util.regex` | sol-jdk-math-regex | 3 / 4 | 20 / 82 | 24% | 2 |  |
 | `java.util.spi` | sol-jdk-core, sol-ai, sol-aop, sol-jdk-math-regex, sol-jdk-time-text (Locale) | 0 / 10 | 0 / 33 | 0% |  |  |
-| `java.util.stream` | sol-context | 1 / 16 | 0 / 272 | 0% | 1 |  |
+| `java.util.stream` | sol-context | 1 / 16 | 0 / 272 | 0% |  |  |
 | `java.util.zip` | sol-jpa | 0 / 21 | 0 / 237 | 0% |  |  |
 | `javax.crypto` | sol-security | 0 / 32 | 0 / 247 | 0% |  |  |
 | `javax.crypto.interfaces` | sol-security | 0 / 4 | 0 / 9 | 0% |  |  |
