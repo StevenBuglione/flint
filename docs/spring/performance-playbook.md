@@ -662,6 +662,11 @@ known and unknown extensions and a resource filename. On venus, the same web pro
 `ca1a2401`. The coordinator's temporary base-relative ratchet applies while the web probe retains
 the Phobos cascade (decision `6c9e5f49`). The absolute cap remains 126,976 bytes.
 
+The content negotiation manager discovers extension resolvers during construction. Extension queries
+allocate their merged list only when a resolver supplies a result. The same web probe on venus
+measured 547,393 linked bytes for both `8b049392` and `78cc0303`, with 11,852 to 11,887 DMD template
+instances. Tests cover registration order, duplicate resolvers and independently mutable results.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

@@ -3,7 +3,7 @@
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/accept/
 (ContentNegotiationStrategy.java, ContentNegotiationManager.java, FixedContentNegotiationStrategy.java,
-HeaderContentNegotiationStrategy.java).
+HeaderContentNegotiationStrategy.java, MediaTypeFileExtensionResolver.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook. Spring Boot's default manager has only the
@@ -13,7 +13,7 @@ module flint.web.accept;
 
 import flint.http : HttpHeaders, InvalidMediaTypeException, MediaType;
 import flint.java.lang : IllegalArgumentException;
-import flint.java.util : Collections, List;
+import flint.java.util : ArrayList, Collections, List, Objects;
 import flint.util : InvalidMimeTypeException, MimeTypeUtils;
 import flint.web : HttpMediaTypeNotAcceptableException;
 import flint.web.context.request : NativeWebRequest;
@@ -31,6 +31,16 @@ interface ContentNegotiationStrategy
 
     /// The requested media types, most preferred first.
     MediaType[] resolveMediaTypes(NativeWebRequest webRequest);
+}
+
+/// Resolves media types to file extensions without a leading dot.
+interface MediaTypeFileExtensionResolver
+{
+    /// The registered extensions for a media type, or an empty list.
+    List!string resolveFileExtensions(MediaType mediaType);
+
+    /// All registered extensions, or an empty list.
+    List!string getAllFileExtensions();
 }
 
 /// `FixedContentNegotiationStrategy`: supplies configured media types in preference order.
@@ -106,21 +116,69 @@ class HeaderContentNegotiationStrategy : ContentNegotiationStrategy
 }
 
 /// `ContentNegotiationManager`: consults its strategies in order.
-class ContentNegotiationManager : ContentNegotiationStrategy
+class ContentNegotiationManager : ContentNegotiationStrategy, MediaTypeFileExtensionResolver
 {
     private ContentNegotiationStrategy[] strategies;
+    private MediaTypeFileExtensionResolver[] fileExtensionResolvers;
 
     /// With `strategies`; the header strategy when none are given.
     this(ContentNegotiationStrategy[] strategies...)
     {
         this.strategies = strategies.length != 0 ? strategies.dup
             : [cast(ContentNegotiationStrategy) new HeaderContentNegotiationStrategy];
+        foreach (strategy; this.strategies)
+            if (auto resolver = cast(MediaTypeFileExtensionResolver) strategy)
+                addFileExtensionResolver(resolver);
     }
 
     /// The strategies.
     ContentNegotiationStrategy[] getStrategies() pure nothrow @nogc
     {
         return strategies;
+    }
+
+    /// Registers additional file extension resolvers in order, ignoring duplicates.
+    void addFileExtensionResolvers(MediaTypeFileExtensionResolver[] resolvers...)
+    {
+        foreach (resolver; resolvers)
+            addFileExtensionResolver(resolver);
+    }
+
+    private void addFileExtensionResolver(MediaTypeFileExtensionResolver resolver)
+    {
+        foreach (existing; fileExtensionResolvers)
+            if (Objects.equals(cast(Object) resolver, cast(Object) existing))
+                return;
+        fileExtensionResolvers ~= resolver;
+    }
+
+    /// Combines matching extensions in resolver registration order.
+    List!string resolveFileExtensions(MediaType mediaType)
+    {
+        return collectExtensions(resolver => resolver.resolveFileExtensions(mediaType));
+    }
+
+    /// Combines all registered extensions in resolver registration order.
+    List!string getAllFileExtensions()
+    {
+        return collectExtensions(resolver => resolver.getAllFileExtensions());
+    }
+
+    private List!string collectExtensions(scope List!string delegate(MediaTypeFileExtensionResolver) @safe resolve)
+    {
+        ArrayList!string result;
+        foreach (resolver; fileExtensionResolvers)
+        {
+            auto extensions = resolve(resolver);
+            if (extensions is null || extensions.isEmpty())
+                continue;
+            if (result is null)
+                result = new ArrayList!string(4);
+            foreach (extension; extensions)
+                if (!result.contains(extension))
+                    result.add(extension);
+        }
+        return result is null ? Collections.emptyList!string() : result;
     }
 
     MediaType[] resolveMediaTypes(NativeWebRequest request)
