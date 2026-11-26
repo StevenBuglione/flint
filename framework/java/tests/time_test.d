@@ -497,3 +497,38 @@ unittest
         assert(failure !is null && failure.getErrorIndex() == 12);
     }
 }
+
+@("ISO ordinal dates resolve the day of year and accept an optional strict offset")
+unittest
+{
+    import std.exception : collectException;
+
+    const formatter = DateTimeFormatter.ISO_ORDINAL_DATE;
+    assert(formatter.toString() == "ParseCaseSensitive(false)Value(Year,4,10,EXCEEDS_PAD)'-'"
+            ~ "Value(DayOfYear,3)[Offset(+HH:MM:ss,'Z')]");
+    assert(formatter.format(LocalDate.of(2024, 12, 31)) == "2024-366");
+    assert(formatter.format(LocalDate.of(-4, 12, 31)) == "-0004-366");
+    assert(formatter.format(LocalDate.of(12_000, 12, 31)) == "+12000-366");
+    const offsetValue = OffsetDateTime.parse("2024-02-29T08:09:10-05:30:15");
+    assert(formatter.format(offsetValue) == "2024-060-05:30:15");
+
+    assert(LocalDate.parse("2024-001", formatter) == LocalDate.of(2024, 1, 1));
+    assert(LocalDate.parse("2024-366", formatter) == LocalDate.of(2024, 12, 31));
+    assert(LocalDate.parse("-0004-366", formatter) == LocalDate.of(-4, 12, 31));
+    assert(LocalDate.parse("2024-060z", formatter) == LocalDate.of(2024, 2, 29));
+    assert(!formatter.parse("2024-060").hasOffset());
+    const withOffset = "2024-060-05:30:15";
+    assert(formatter.parse(withOffset).toOffset(withOffset).getTotalSeconds() == -19_815);
+    assert(formatter.parse("2024-060+19:00").hasOffset());
+
+    foreach (text; ["2023-366", "2024-367", "2024-000"])
+    {
+        auto error = collectException!DateTimeParseException(LocalDate.parse(text, formatter));
+        assert(error !is null && error.getErrorIndex() == 0);
+    }
+    foreach (text; ["2024-060+01", "2024-060+0100", "2024-060+02:60"])
+    {
+        auto error = collectException!DateTimeParseException(formatter.parse(text));
+        assert(error !is null && error.getErrorIndex() == 8);
+    }
+}

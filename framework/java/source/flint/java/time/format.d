@@ -480,6 +480,10 @@ private immutable Element[] isoDate = [op(Op.caseInsensitive)] ~ isoLocalDate ~ 
 private immutable Element[] isoTime = [op(Op.caseInsensitive)] ~ isoLocalTime ~ [
     op(Op.optionalStart), isoOffset, op(Op.optionalEnd)
 ];
+private immutable Element[] isoOrdinalDate = [
+    op(Op.caseInsensitive), num(Field.year, 4, 10, SignStyle.EXCEEDS_PAD), lit("-"),
+    num(Field.dayOfYear, 3), op(Op.optionalStart), isoStrictOffset, op(Op.optionalEnd)
+];
 private immutable Element[] isoInstant = [op(Op.caseInsensitive), op(Op.instant)];
 private immutable Element[] basicIsoDate = [
     op(Op.caseInsensitive), num(Field.year, 4), num(Field.monthOfYear, 2), num(Field.dayOfMonth,
@@ -508,6 +512,8 @@ private enum describeIsoZonedDateTime = `(` ~ describeIsoOffsetDateTime ~ `)` ~ 
 private enum describeIsoDateTime = `(` ~ describeIsoLocalDateTime ~ `)[Offset(+HH:MM:ss,'Z')` ~ describeRegion ~ `]`;
 private enum describeIsoDate = `ParseCaseSensitive(false)(` ~ describeDate ~ `)[Offset(+HH:MM:ss,'Z')]`;
 private enum describeIsoTime = `ParseCaseSensitive(false)(` ~ describeTime ~ `)[Offset(+HH:MM:ss,'Z')]`;
+private enum describeIsoOrdinalDate = `ParseCaseSensitive(false)Value(Year,4,10,EXCEEDS_PAD)'-'Value(DayOfYear,3)[`
+    ~ describeStrictOffset ~ `]`;
 private enum describeIsoInstant = `ParseCaseSensitive(false)Instant()`;
 private enum describeBasicIsoDate = `ParseCaseSensitive(false)Value(Year,4)Value(MonthOfYear,2)Value(DayOfMonth,2)`
     ~ `[ParseStrict(false)Offset(+HHMMss,'Z')ParseStrict(true)]`;
@@ -547,6 +553,8 @@ struct DateTimeFormatter
     static immutable DateTimeFormatter ISO_DATE = DateTimeFormatter(isoDate, describeIsoDate);
     /// The ISO time formatter with the offset if available, such as '10:15:30' or '10:15:30+01:00'.
     static immutable DateTimeFormatter ISO_TIME = DateTimeFormatter(isoTime, describeIsoTime);
+    /// The ISO year and day-of-year formatter with an optional offset, such as '2024-060'.
+    static immutable DateTimeFormatter ISO_ORDINAL_DATE = DateTimeFormatter(isoOrdinalDate, describeIsoOrdinalDate);
     /// The ISO instant formatter in UTC, such as '2011-12-03T10:15:30Z'.
     static immutable DateTimeFormatter ISO_INSTANT = DateTimeFormatter(isoInstant, describeIsoInstant);
     /// The ISO date formatter without punctuation, such as '20111203'.
