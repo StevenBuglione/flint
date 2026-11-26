@@ -72,7 +72,7 @@ final class OwnerListener
 @Entity("Owner")
 @Table("jpa_seam_probe")
 @EntityListeners([classOf!OwnerListener])
-final class Owner : OwnerBase
+class Owner : OwnerBase
 {
     /// Owner's display name.
     @Column(name: "name", nullable: false)
@@ -94,6 +94,20 @@ final class Owner : OwnerBase
     {
         return phase;
     }
+}
+
+/// An unannotated subtype must never resolve to its parent's mapping.
+final class DerivedOwner : Owner
+{
+}
+
+/// Supplies a second class and mapping in the same generated unit.
+@Entity
+final class Vet
+{
+    /// Assigned primary key.
+    @Id
+    long id;
 }
 
 version (JpaUnreachableConstructor)

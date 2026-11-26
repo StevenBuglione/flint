@@ -2307,6 +2307,7 @@ unittest
 
     const generated = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "jpa_probe", "entity.d"));
     expect(generated.canFind("jpaMappings()")).toBeTrue();
+    expect(generated.canFind("jpaClasses()")).toBeTrue();
     expect(generated.canFind("jpaTypedCodec()")).toBeTrue();
     string[] sources;
     foreach (directory; ["src", ".flint/generated/aot"])
@@ -2351,6 +2352,7 @@ unittest
     expect(outcome.ok).toBeTrue();
     const optional = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "jpa_probe", "entity.d"));
     expect(optional.canFind("flint.engine.jpa")).toBeFalse();
+    expect(optional.canFind("jpaClasses()")).toBeFalse();
 }
 
 /// The pinned PostgreSQL run links the same generated source used by the compiler check.

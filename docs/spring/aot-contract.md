@@ -738,8 +738,11 @@ through the descriptors it resolves once per advised method.
 
 When the application includes `flint:engine-jpa`, Flint AOT reads direct Jakarta `@Entity` declarations in
 application source, and the `@MappedSuperclass` declarations available to extraction. Each generated source
-unit with entities exports `jpaMappings()` returning an `immutable(EntityMapping)[]`. The provider can consume
-that table directly. The generic AOT registry has no dependency on the provider.
+unit with entities exports `jpaMappings()` returning an `immutable(EntityMapping)[]` and `jpaClasses()`
+returning a `const(TypeInfo_Class)[]` view of the static class table in the same order. At persistence-unit
+startup, the provider passes both tables to `registerMappings` to construct and validate the exact-class index.
+An unregistered subclass
+does not resolve through its parent. The generic AOT registry has no dependency on the provider.
 
 The first slice supports one primary table, one `@Id`, public instance fields of type `long`, `string` or
 `LocalDate`, and a reachable no-argument constructor. Field ordinals start at the oldest mapped superclass.

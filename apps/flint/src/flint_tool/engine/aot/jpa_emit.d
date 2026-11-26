@@ -17,14 +17,16 @@ bool usesJpaDate(scope const(JpaMapping)[] mappings) pure nothrow @nogc
     return false;
 }
 
-/// Emits one mapping accessor for this source unit and the thunks its tables reference.
+/// Emits mappings and the corresponding class identities for this source unit.
 string renderJpa(const(JpaMapping)[] mappings)
 {
     string declarations;
     string tables;
+    string classes;
     foreach (index, ref mapping; mappings)
     {
         const suffix = index.to!string;
+        classes ~= "    typeid(" ~ mapping.type ~ "),\n";
         declarations ~= "private Object jpaConstruct_" ~ suffix ~ "()\n{\n    return new " ~ mapping.type ~ ";\n}\n\n"
             ~ "private bool jpaExact_" ~ suffix ~ "(scope const TypeInfo_Class type) nothrow @nogc\n{\n"
             ~ "    return type is typeid(" ~ mapping.type ~ ");\n}\n\n";
@@ -55,7 +57,10 @@ string renderJpa(const(JpaMapping)[] mappings)
             ~ "        ], construct: &jpaConstruct_" ~ suffix ~ ", isExactType: &jpaExact_" ~ suffix
             ~ ", idOrdinals: [" ~ mapping.id.to!string ~ "], postLoad: [" ~ callbacks.join(", ") ~ "]),\n";
     }
-    return declarations ~ "private immutable(EntityMapping)[] jpaTables = [\n" ~ tables ~ "];\n\n"
+    return declarations ~ "private immutable(EntityMapping)[] jpaTables = [\n" ~ tables
+        ~ "];\n\n" ~ "private const(TypeInfo_Class["
+        ~ mappings.length.to!string ~ "]) jpaTypeTable = [\n" ~ classes ~ "];\n\n"
+        ~ "const(TypeInfo_Class)[] jpaClasses() nothrow @nogc\n{\n    return jpaTypeTable[];\n}\n\n"
         ~ "immutable(EntityMapping)[] jpaMappings() nothrow @nogc\n{\n    return jpaTables;\n}\n\n" ~ (
                 usesJpaDate(mappings) ? dateCodec : "");
 }

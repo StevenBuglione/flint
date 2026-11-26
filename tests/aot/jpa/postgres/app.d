@@ -3,11 +3,12 @@ module app;
 import flint.arena : Status;
 import flint.engine.jpa : AttributeKind, EntityMapping, ResultBinding, materializeRow, planResult,
     validateEntity, validateMapping;
+import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
 import flint.java.sql : Types;
 import flint.java.time : LocalDate;
-import flint_aot.jpa_probe.entity : jpaMappings, jpaTypedCodec;
-import jpa_probe.entity : Owner;
+import flint_aot.jpa_probe.entity : jpaClasses, jpaMappings, jpaTypedCodec;
+import jpa_probe.entity : DerivedOwner, Owner, Vet;
 import std.process : environment;
 
 @safe:
@@ -48,11 +49,32 @@ private void checkAttributes(scope const ref EntityMapping mapping)
     }
 }
 
-void main()
+private immutable(EntityMapping)* registerFixture(Owner owner)
 {
     const mappings = jpaMappings();
-    assert(mappings.length == 1);
-    const mapping = &mappings[0];
+    const classes = jpaClasses();
+    assert(mappings.length == 2 && classes.length == mappings.length);
+    assert(classes[0] is typeid(Owner) && classes[1] is typeid(Vet));
+    const registered = registerMappings(mappings, classes);
+    assert(registered.ok);
+    const mapping = registered.value.findExactObject(owner);
+    assert(mapping is &mappings[0]);
+    auto vet = new Vet;
+    assert(registered.value.findExactObject(vet) is &mappings[1]);
+    assert(registered.value.findExactObject(new DerivedOwner) is null);
+
+    const ownerUnit = registerMappings(mappings[0 .. 1], classes[0 .. 1]);
+    assert(ownerUnit.ok && ownerUnit.value.findExactObject(owner) is mapping);
+    assert(ownerUnit.value.findExactObject(vet) is null);
+    const vetUnit = registerMappings(mappings[1 .. $], classes[1 .. $]);
+    assert(vetUnit.ok && vetUnit.value.findExactObject(vet) is &mappings[1]);
+    assert(vetUnit.value.findExactObject(owner) is null);
+    return mapping;
+}
+
+void main()
+{
+    const mapping = registerFixture(new Owner);
     checkMetadata(*mapping);
     checkAttributes(*mapping);
     const codec = jpaTypedCodec();
