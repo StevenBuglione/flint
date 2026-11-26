@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,925 | 653 | 0 | 1,915 | 13,928 |
+| framework | openjdk@21.0.13 | 1,927 | 655 | 0 | 1,915 | 13,924 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2807,6 +2807,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Date#clone()` | `flint.java.util.Date.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.DuplicateFormatFlagsException` | `flint.java.util.formatter.DuplicateFormatFlagsException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null flag slice counts as empty under R26. |
 | `java.util.DuplicateFormatFlagsException#<init>(String)` | `flint.java.util.formatter.DuplicateFormatFlagsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Enumeration` | `flint.java.util.enumeration.Enumeration` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import the generic interface from its direct Java leaf. |
+| `java.util.Enumeration#asIterator()` | `flint.java.util.enumeration.Enumeration.asIterator` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Implementors can mix in Enumeration.Defaults for the Java default. The method delegates to the existing enumeration and returns the canonical Iterator. |
 | `java.util.EventListener` | `flint.java.util.eventlistener.EventListener` | [R1](api-mapping.md#r1-packages-and-names) | Import the marker from its direct Java leaf. |
 | `java.util.EventObject` | `flint.java.util.eventobject.EventObject` | [R1](api-mapping.md#r1-packages-and-names) | Import the event base from its direct Java leaf. Java serialization is excluded from the JDK port. |
 | `java.util.EventObject#toString()` | `flint.java.util.eventobject.EventObject.toString` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Uses the runtime D class name in the same [source=...] layout and dispatches the source's toString. |
@@ -11002,7 +11004,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,860 | 0 |
+| java.util | 1,856 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
