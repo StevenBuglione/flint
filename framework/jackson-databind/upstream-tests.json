@@ -971,8 +971,42 @@
       "status": "deferred"
     },
     "tools/jackson/databind/deser/jdk/MapDeserializationTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/map_deserialization_test.d",
+      "methods": {
+        "ported": [
+          "testFromEmptyString",
+          "testGenericStringIntMap",
+          "testMapWithEnums",
+          "testUntypedMap2"
+        ],
+        "skipped": {
+          "testAbstractMapDefault": "The AbstractMap default implementation fixture is version-gated.",
+          "testBigUntypedMap": "The large untyped object binds to a JsonNode rather than a JDK map.",
+          "testCalendarMap": "Calendar key binding is version-gated.",
+          "testCanDeserializeMap2757": "The mapper does not instantiate the requested map subclass in this fixture.",
+          "testClassKeyMap": "Class-valued map keys and the map subclass fixture are deferred.",
+          "testCurrencyKeyMap": "Currency key binding is version-gated.",
+          "testDateMap": "The Date key fixture is version-gated.",
+          "testEnumMap": "EnumMap target binding is version-gated.",
+          "testEnumPolymorphicSerializationTest": "The enum value fixture expects version-gated polymorphic type ids.",
+          "testExactStringIntMap": "The active key/value checks omit the Java assertion for exactly HashMap.",
+          "testExactStringStringMap": "The fixture's TreeMap target is version-gated.",
+          "testGenericMap": "The custom map and delegating value creator fixture is version-gated.",
+          "testIntBooleanMap": "The active key/value checks omit the exact HashMap assertion and heterogeneous key lookup.",
+          "testKeyWithCreator": "Key creators for custom map key types are version-gated.",
+          "testLocaleKeyMap": "Locale key decoding is version-gated.",
+          "testMapError": "The active shape diagnostics omit the configured ObjectReader update path.",
+          "testMapUpdate": "Updating an existing map through ObjectReader is version-gated.",
+          "testMapWithDeserializer": "The custom map deserializer is version-gated.",
+          "testNoCtorMap": "The unsupported map-subclass constructor diagnostic differs from Jackson's.",
+          "testSpecialMap": "The custom map and delegating creator fixture is version-gated.",
+          "testUUIDKeyMap": "UUID key binding is version-gated.",
+          "testUntypedMap3": "The nested untyped arrays and objects bind to JsonNodes.",
+          "testcharSequenceKeyMap": "The CharSequence key type is deferred."
+        }
+      },
+      "note": "The active fixtures use explicit map templates under R4, Any for erased values under R23, and containsKey to check absent enum keys.",
+      "status": "partial"
     },
     "tools/jackson/databind/deser/jdk/MapDeserializerCachingTest.java": {
       "phase": "2",

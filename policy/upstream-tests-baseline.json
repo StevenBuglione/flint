@@ -2808,7 +2808,6 @@
       "tools/jackson/databind/deser/jdk/JavaUtilCollectionsTypesTest.java",
       "tools/jackson/databind/deser/jdk/JavaUtilPropertiesDeserializationTest.java",
       "tools/jackson/databind/deser/jdk/LocaleDeserializationTest.java",
-      "tools/jackson/databind/deser/jdk/MapDeserializationTest.java",
       "tools/jackson/databind/deser/jdk/MapDeserializerCachingTest.java",
       "tools/jackson/databind/deser/jdk/MapEntryDeserializationTest.java",
       "tools/jackson/databind/deser/jdk/MapKeyDeserializationTest.java",
