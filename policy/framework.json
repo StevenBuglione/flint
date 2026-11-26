@@ -714,7 +714,23 @@
     "fixture": "framework/micrometer-observation/bench",
     "baseline": "framework/micrometer-observation/bench/baseline",
     "edit_source": "framework/micrometer-observation/source/flint/micrometer/observation.d"
-   }
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 35104,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1118
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },
   "micrometer-core": {
    "directory": "framework/micrometer-core",
