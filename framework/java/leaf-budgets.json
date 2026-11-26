@@ -30,5 +30,9 @@
   "flint.java.util.function_.longsupplier": {
     "incremental_linked_bytes": 1030,
     "template_instances": 37
+  },
+  "flint.java.util.function_.supplier": {
+    "incremental_linked_bytes": 968,
+    "template_instances": 39
   }
 }

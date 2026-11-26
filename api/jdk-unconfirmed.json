@@ -621,8 +621,6 @@
   "java.util.TimeZone#inDaylightTime(Date)",
   "java.util.TimeZone#setID(String)",
   "java.util.TimeZone#setRawOffset(int)",
-  "java.util.TimeZone#useDaylightTime()",
-  "java.util.function.Supplier",
-  "java.util.function.Supplier#get()"
+  "java.util.TimeZone#useDaylightTime()"
  ]
 }

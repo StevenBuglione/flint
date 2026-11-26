@@ -9,27 +9,9 @@ module flint.java.util.function_;
 
 public import flint.java.util.function_.intsupplier : IntSupplier;
 public import flint.java.util.function_.longsupplier : LongSupplier;
+public import flint.java.util.function_.supplier : Supplier;
 
 @safe:
-
-/// Java's `Supplier`: a source of results.
-interface Supplier(T)
-{
-    /// A result.
-    T get();
-
-    /// The `get` method as a delegate.
-    final T delegate() @safe asDelegate()
-    {
-        return &get;
-    }
-
-    /// A `Supplier` calling `dg`.
-    static Supplier!T of(T delegate() @safe dg)
-    {
-        return new DelegateSupplier!(T)(dg);
-    }
-}
 
 /// Java's `Function`: a one-argument function.
 interface Function(T, R)
@@ -269,21 +251,6 @@ interface ToLongFunction(T)
 {
     /// Apply the function to `value`.
     long applyAsLong(T value);
-}
-
-private final class DelegateSupplier(T) : Supplier!(T)
-{
-    private T delegate() @safe dg;
-
-    this(T delegate() @safe dg) pure nothrow @nogc
-    {
-        this.dg = dg;
-    }
-
-    T get()
-    {
-        return dg();
-    }
 }
 
 private final class DelegateFunction(T, R) : Function!(T, R)
