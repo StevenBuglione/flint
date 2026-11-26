@@ -77,6 +77,50 @@ static assert(__traits(getAttributes, Example)[0].value == "custom");
         self.assertEqual(result.stdout, b"")
         self.assertIn(b"unsupported annotation default", result.stderr)
 
+    def test_integral_defaults_preserve_java_width_and_negation(self):
+        result = self.run_helper("""package example;
+public @interface Settings {
+    int hex() default 0xffff_ffff;
+    long widened() default -0x8000_0000;
+    long wide() default 0xffffffffL;
+    long minimum() default -0x8000_0000_0000_0000L;
+    short octal() default 01_234;
+    byte binary() default -0b1000_0000;
+    byte narrowed() default 0xffff_ffff;
+    int[] array() default { 0b101, -0XFFFF_FFFF, 077 };
+}
+""")
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        probe = "module flint.demo;\n@safe:\n" + json.loads(result.stdout)["body"] + """
+static assert(Settings.init.hex == -1);
+static assert(Settings.init.widened == int.min);
+static assert(Settings.init.wide == 4_294_967_295L);
+static assert(Settings.init.minimum == long.min);
+static assert(Settings.init.octal == 668);
+static assert(Settings.init.binary == byte.min);
+static assert(Settings.init.narrowed == -1);
+static assert(Settings.init.array == [5, 1, 63]);
+"""
+        with tempfile.TemporaryDirectory() as scratch:
+            path = Path(scratch) / "demo.d"
+            path.write_text(probe, encoding="utf-8")
+            for compiler in ("dmd", "ldc2"):
+                subprocess.run([compiler, "-preview=dip1000", "-o-", "-c", path],
+                               cwd=scratch, check=True)
+
+    def test_integral_defaults_reject_overflow_and_invalid_narrowing(self):
+        for declaration in ("long value() default 0x1_0000_0000;",
+                            "long value() default 0x1_0000_0000_0000_0000L;",
+                            "byte value() default 0xff;",
+                            "byte value() default 1L;"):
+            with self.subTest(declaration=declaration):
+                result = self.run_helper(
+                    "package example; public @interface Settings { " + declaration + " }"
+                )
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, b"")
+                self.assertIn(b"unsupported annotation default", result.stderr)
+
     def test_class_tokens_use_the_leaf_classref_and_void_is_empty(self):
         result = self.run_helper("""package example;
 public @interface Settings {

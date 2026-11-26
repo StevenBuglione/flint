@@ -337,36 +337,82 @@ static bool text_literal(Slice value)
     return true;
 }
 
-static bool integral_default(Text *output, Slice value, const Type *type, bool negative)
+static unsigned integral_base(TSNode node)
 {
-    uint64_t maximum;
-    if (!strcmp(type->java, "byte"))
-        maximum = INT8_MAX;
-    else if (!strcmp(type->java, "short"))
-        maximum = INT16_MAX;
-    else if (!strcmp(type->java, "int"))
-        maximum = INT32_MAX;
-    else if (!strcmp(type->java, "long"))
-        maximum = INT64_MAX;
-    else
-        return false;
+    if (kind(node, "decimal_integer_literal"))
+        return 10;
+    if (kind(node, "hex_integer_literal"))
+        return 16;
+    if (kind(node, "octal_integer_literal"))
+        return 8;
+    if (kind(node, "binary_integer_literal"))
+        return 2;
+    return 0;
+}
 
-    bool long_literal = value.length && strchr("lL", value.bytes[value.length - 1]) != NULL;
-    if (long_literal) {
-        if (maximum != INT64_MAX)
-            return false;
-        --value.length;
-    }
-    uint64_t limit = (long_literal || maximum < INT64_MAX ? maximum : INT32_MAX) + negative;
-    uint64_t number = 0;
-    for (size_t index = 0; index < value.length; ++index) {
+static unsigned digit_value(char byte)
+{
+    if (digit(byte))
+        return (unsigned)(byte - '0');
+    if (byte >= 'a' && byte <= 'f')
+        return (unsigned)(byte - 'a') + 10;
+    if (byte >= 'A' && byte <= 'F')
+        return (unsigned)(byte - 'A') + 10;
+    return 16;
+}
+
+static bool integral_bits(Slice value, unsigned base, uint64_t limit, uint64_t *bits)
+{
+    size_t start = base == 2 || base == 16 ? 2 : 0;
+    if (start >= value.length)
+        return false;
+    *bits = 0;
+    for (size_t index = start; index < value.length; ++index) {
         char byte = value.bytes[index];
         if (byte == '_')
             continue;
-        if (!digit(byte) || number > (limit - (uint64_t)(byte - '0')) / 10)
+        unsigned digit = digit_value(byte);
+        if (digit >= base || *bits > (limit - digit) / base)
             return false;
-        number = number * 10 + (uint64_t)(byte - '0');
+        *bits = *bits * base + digit;
     }
+    return true;
+}
+
+static bool integral_default(Text *output, Slice value, const Type *type, unsigned base, bool negative)
+{
+    uint64_t field_maximum;
+    if (!strcmp(type->java, "byte"))
+        field_maximum = INT8_MAX;
+    else if (!strcmp(type->java, "short"))
+        field_maximum = INT16_MAX;
+    else if (!strcmp(type->java, "int"))
+        field_maximum = INT32_MAX;
+    else if (!strcmp(type->java, "long"))
+        field_maximum = INT64_MAX;
+    else
+        return false;
+
+    char last = value.length ? value.bytes[value.length - 1] : 0;
+    bool long_literal = last == 'l' || last == 'L';
+    if (long_literal) {
+        if (field_maximum != INT64_MAX)
+            return false;
+        --value.length;
+    }
+
+    // JLS 3.10.1 and 15.15.4: interpret the literal and negate it at its Java width before assignment.
+    uint64_t mask = long_literal ? UINT64_MAX : UINT32_MAX;
+    uint64_t limit = base == 10 ? (mask >> 1) + negative : mask;
+    uint64_t bits;
+    if (!integral_bits(value, base, limit, &bits))
+        return false;
+    if (negative)
+        bits = (0 - bits) & mask;
+    negative = bits > (mask >> 1);
+    uint64_t number = negative ? (0 - bits) & mask : bits;
+    if (number > field_maximum + negative)
+        return false;
     if (negative && number == (uint64_t)INT64_MAX + 1) {
         add(output, "long.min");
         return !output->failed;
@@ -380,22 +426,24 @@ static bool integral_default(Text *output, Slice value, const Type *type, bool n
 static bool scalar_default(const Annotation *annotation, Text *output, TSNode value, const Type *type)
 {
     bool negative = false;
-    if (kind(value, "unary_expression")) {
+    bool signed_expression = kind(value, "unary_expression");
+    if (signed_expression) {
         Slice sign = node_text(annotation, member(value, "operator"));
         negative = is(sign, "-");
         if (!negative && !is(sign, "+"))
             return false;
         value = member(value, "operand");
-        if (!kind(value, "decimal_integer_literal"))
-            return false;
     }
     Slice text = node_text(annotation, value);
+    unsigned base = integral_base(value);
+    if (base)
+        return integral_default(output, text, type, base, negative);
+    if (signed_expression)
+        return false;
     if (!strcmp(type->java, "Class") && kind(value, "class_literal") && is(text, "void.class")) {
         add(output, "ClassRef.init");
         return !output->failed;
     }
-    if (kind(value, "decimal_integer_literal"))
-        return integral_default(output, text, type, negative);
     if ((!strcmp(type->java, "boolean") && (kind(value, "true") || kind(value, "false"))) ||
         (!strcmp(type->java, "String") && kind(value, "string_literal") && text_literal(text)) ||
         (!strcmp(type->java, "char") && kind(value, "character_literal") && text_literal(text)))
