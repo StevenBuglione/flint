@@ -75,7 +75,10 @@ GENERATED_FILES = ('docs/spring/java-differences.md', 'docs/spring/api-mapping.m
 # api/jdk-unconfirmed.json). Adjacent removals conflict line by line, so the train merges them three-way as sets
 # (merge_sets; coordinator, 2026-11-26).
 SET_FILES = ('api/jdk-unconfirmed.json', 'api/kind-baseline.json', 'api/dependency-baseline.json',
-             'api/jdk-leaf-types.json')
+             'api/jdk-leaf-types.json',
+             # The upstream-tests ratchet: sorted per-module lists of deferred classes, shrink-only (sol-jackson,
+             # 2026-11-26: two lanes removing adjacent rows conflicted).
+             'policy/upstream-tests-baseline.json')
 # Files the regeneration may also rewrite; staged with the pages so `rebase --continue` does not stop on them (sol-web).
 # Both ratchets shrink on --write.
 REGENERATED_ALSO = ('api/dependency-baseline.json', 'api/kind-baseline.json')
@@ -119,6 +122,16 @@ def merge_sets(base, ours, theirs, where='$'):
     if theirs == base:
         return ours
     raise SetConflict(f'{where}: changed differently on both sides')
+
+
+def json_indent(text, default=1):
+    """The indentation a JSON file is written with (its first indented line), so a merge does not reformat the file:
+    policy/upstream-tests-baseline.json uses 2, the api/ sets 1."""
+    for line in text.splitlines()[1:]:
+        stripped = line.lstrip(' ')
+        if stripped and len(stripped) < len(line):
+            return len(line) - len(stripped)
+    return default
 
 
 def _frozen(value):
@@ -757,16 +770,17 @@ class Train:
     def merge_set_file(self, path):
         """Resolve a conflicted SET_FILES path from its index stages (1 base, 2 the train, 3 the submission) with
         merge_sets, write it back and stage it. False on a real conflict."""
-        stages = []
+        stages, texts = [], []
         for stage in (1, 2, 3):
             shown = git(['show', f':{stage}:{path}'], self.worktree, check=False)
+            texts.append(shown.stdout if shown.returncode == 0 else '')
             stages.append(json.loads(shown.stdout) if shown.returncode == 0 and shown.stdout.strip() else _ABSENT)
         try:
             merged = merge_sets(*stages)
         except SetConflict as conflict:
             self.store.event('train-set-conflict', file=path, reason=str(conflict))
             return False
-        (self.worktree / path).write_text(json.dumps(merged, indent=1) + '\n')
+        (self.worktree / path).write_text(json.dumps(merged, indent=json_indent(texts[1] or texts[2])) + '\n')
         git(['add', '--', path], self.worktree, check=False)
         self.store.event('train-set-merged', file=path)
         return True

@@ -178,6 +178,37 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(landed['ids'], sorted(i for i in ids if not i.endswith(('m2()', 'm3()', 'm4()'))))
         self.assertEqual(landed['note'], 'n')
 
+    def test_two_lanes_shrinking_the_upstream_tests_baseline_side_by_side_both_land_in_its_own_format(self):
+        # sol-jackson, 2026-11-26: adjacent deletions by two lanes conflicted in policy/upstream-tests-baseline.json.
+        path = 'policy/upstream-tests-baseline.json'
+        base = {'schema': 'flint.upstream-tests-baseline/1', 'note': 'n',
+                'modules': {'jackson-core': ['A.java', 'B.java', 'C.java', 'D.java'], 'web': ['W.java']}}
+        (self.work / 'policy').mkdir(exist_ok=True)
+        (self.work / path).write_text(json.dumps(base, indent=2) + '\n')
+        (self.work / 'tools').mkdir(exist_ok=True)
+        (self.work / 'tools' / 'api_differences.py').write_text('')  # the regeneration after a set merge: nothing here
+        git(self.work, 'checkout', '-q', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'baseline')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        git(self.work, 'fetch', '-q', 'origin')
+        for role, drop in (('sol-a', 'B.java'), ('sol-b', 'C.java')):
+            shrunk = json.loads(json.dumps(base))
+            shrunk['modules']['jackson-core'].remove(drop)
+            self.lane(role, {path: json.dumps(shrunk, indent=2) + '\n'})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b'], []))
+        text = git(self.work, 'show', f'origin/main:{path}')
+        self.assertEqual(json.loads(text)['modules']['jackson-core'], ['A.java', 'D.java'])
+        self.assertEqual(list(json.loads(text)), ['schema', 'note', 'modules'])
+        self.assertTrue(text.splitlines()[1].startswith('  "schema"'), text[:80])  # indent 2 kept, not reformatted
+
+    def test_json_indent_follows_the_file(self):
+        self.assertEqual(merge_train.json_indent('{\n  "a": 1\n}\n'), 2)
+        self.assertEqual(merge_train.json_indent('{\n "a": 1\n}\n'), 1)
+        self.assertEqual(merge_train.json_indent('[]\n'), 1)
+
     def test_merge_sets_keeps_both_sides_and_refuses_a_removed_entry_the_other_side_changed(self):
         base = {'note': 'n', 'ids': ['a', 'b', 'c', 'd']}
         self.assertEqual(merge_train.merge_sets(base, {'note': 'n', 'ids': ['a', 'c', 'd', 'e']},
