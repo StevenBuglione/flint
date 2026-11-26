@@ -42663,6 +42663,8 @@
 "org.thymeleaf.util.NumberPointType#toString()":{"status":"ported","d":"flint.thymeleaf.util.NumberPointType.toString"},
 "org.thymeleaf.util.ObjectUtils":{"status":"ported","d":"flint.thymeleaf.util.ObjectUtils"},
 "org.thymeleaf.util.ObjectUtils#nullSafe(T,T)":{"status":"adapted","d":"flint.thymeleaf.util.ObjectUtils.nullSafe","rules":["R5","R23"],"note":"A default-initialized D string or slice remains empty. Use Nullable when null must select the fallback."},
+"org.thymeleaf.util.StringUtils":{"status":"ported","d":"flint.thymeleaf.util.StringUtils"},
+"org.thymeleaf.util.StringUtils#isEmpty(String)":{"status":"ported","d":"flint.thymeleaf.util.StringUtils.isEmpty"},
 "org.thymeleaf.util.Validate":{"status":"ported","d":"flint.thymeleaf.util.Validate"},
 "org.thymeleaf.util.Validate#containsNoNulls(Iterable,String)":{"status":"adapted","d":"flint.thymeleaf.util.Validate.containsNoNulls","rules":["R5","R7","R10","D-7"],"note":"Call with an Iterable of the element type or a typed null iterable. A missing container raises NullPointerException with no detail message. A null element raises IllegalArgumentException with the caller's message."},
 "org.thymeleaf.util.Validate#containsNoNulls(Object[],String)":{"status":"adapted","d":"flint.thymeleaf.util.Validate.containsNoNulls","rules":["R5","R7","R23","D-7"],"note":"Use Nullable to distinguish a missing Any slice from a present empty slice. A missing container raises NullPointerException with no detail message. A null element raises IllegalArgumentException with the caller's message."},

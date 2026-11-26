@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 200 | 162 | 0 | 2,028 |
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
-| framework | thymeleaf@3.1.7.RELEASE | 71 | 90 | 0 | 4,291 |
+| framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 236 | 151 | 1,871 | 16,163 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -10388,7 +10388,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.templateparser.text | 60 | 0 |
 | org.thymeleaf.templateresolver | 128 | 0 |
 | org.thymeleaf.templateresource | 44 | 0 |
-| org.thymeleaf.util | 352 | 0 |
+| org.thymeleaf.util | 350 | 0 |
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
