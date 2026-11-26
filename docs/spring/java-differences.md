@@ -2020,7 +2020,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.ByteOrder` | `flint.java.nio.byteorder.ByteOrder` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) | The standalone leaf uses distinct private byte-order flags for the two named values, so R15 value equality preserves their distinction. The default value is BIG_ENDIAN. |
 | `java.nio.ByteOrder#BIG_ENDIAN` | `flint.java.nio.byteorder.ByteOrder.BIG_ENDIAN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.ByteOrder#LITTLE_ENDIAN` | `flint.java.nio.byteorder.ByteOrder.LITTLE_ENDIAN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
-| `java.nio.CharBuffer` | `flint.java.nio.charbuffer.CharBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import CharBuffer from flint.java.nio.charbuffer. Heap arrays and byte-backed views. A null array slice is empty under R26. |
+| `java.nio.CharBuffer` | `flint.java.nio.charbuffer.CharBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import CharBuffer from flint.java.nio.charbuffer. Heap arrays and byte-backed views. A null array slice is empty under R26. The Readable implementation is deferred. Cross-package placement requires a java.lang type whose method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
 | `java.nio.CharBuffer#get(char[])` | `flint.java.nio.charbuffer.CharBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#get(char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#get(int,char[])` | `flint.java.nio.charbuffer.CharBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -11077,7 +11077,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#write(char[])` | 2 | Java invokes the virtual ranged character-array write. Flint forwards the UTF-8 slice directly and propagates checked sink failures. Null arrays follow R26. |
 | framework | `java.io.PrintWriter#write(char[],int,int)` | 2 | Missing ranged character-array dispatch to the sink. Java forwards the supplied indices, records checked sink failures and lets the sink's bounds exception propagate. |
 | framework | `java.io.PrintWriter#write(int)` | 2 | Java forwards the int to the sink's single UTF-16 code-unit write. Flint encodes a Unicode code point and forwards text, propagating checked sink failures. |
-| framework | `java.io.Reader` | 2 | Missing UTF-16 reader abstraction with Java Closeable and Readable contracts. |
+| framework | `java.io.Reader` | 2 | Missing UTF-16 reader abstraction with Java Closeable. Its Readable implementation is deferred. Cross-package placement requires a java.lang type whose method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
 | framework | `java.io.Reader#<init>(Object)` | 2 | Missing protected constructor that uses the supplied monitor and rejects null eagerly. |
 | framework | `java.io.Reader#lock` | 2 | Missing protected monitor reference that defaults to the reader and may name a shared lock. |
 | framework | `java.io.Reader#nullReader()` | 2 | Missing empty reader with explicit closed state. CharBuffer reads return zero for an open empty target and EOF for an open nonempty target, even when read-only. Null is rejected before the closed-state check. |
@@ -11131,6 +11131,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.Long#valueOf(String)` | 2 | The current D method returns a scalar long. The Java factory needs the boxed Long result and the small-value cache identity. It also needs the deferred parseLong(String) parser behavior. |
 | framework | `java.lang.Long#valueOf(String,int)` | 2 | Missing radix overload. Java parses with parseLong(String,int) and uses the same boxed Long factory and small-value cache as valueOf(long). The corresponding radix parser behavior is deferred. |
 | framework | `java.lang.Long#valueOf(long)` | 2 | Missing primitive overload. Requires the boxed Long result and the shared cache identity for values from -128 through 127. |
+| framework | `java.lang.Readable` | 2 | Cross-package placement requires a java.lang type whose method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
 | framework | `java.lang.ReflectiveOperationException` | 2 | Missing checked base for reflective operation failures. It must preserve native D Exception catches (R8). |
 | framework | `java.lang.ReflectiveOperationException#<init>()` | 2 | Requires the checked ReflectiveOperationException base with absent detail and a cause that can be initialized later. |
 | framework | `java.lang.ReflectiveOperationException#<init>(String)` | 2 | Requires the checked ReflectiveOperationException base and a cause that can be initialized later. |
@@ -11356,6 +11357,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Optional#of(T)` | 2 | Optional.of must keep empty string and array values present under R26. The current null check rejects zero-length D slices whose storage compares to null. |
 | framework | `java.util.Optional#or(Supplier)` | 2 | Java rejects a null supplier even when a value is present. Flint returns the present value. |
 | framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
+| framework | `java.util.Scanner#<init>(Readable)` | 2 | The Readable constructor awaits the interface's cross-package placement. Its method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
 | framework | `java.util.UUID#fromString(String)` | 2 | The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion. |
 | framework | `java.util.UUID#nameUUIDFromBytes(byte[])` | 2 | Version 3 name-based UUIDs await the canonical Java MessageDigest MD5 provider. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
