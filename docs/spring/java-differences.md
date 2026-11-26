@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 130 | 123 | 0 | 2,137 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 0 | 0 | 0 | 4,452 |
+| framework | thymeleaf@3.1.7.RELEASE | 3 | 7 | 0 | 4,442 |
 | framework | micrometer-observation@1.18.0 | 42 | 34 | 0 | 236 |
 | framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 16,240 |
 | framework | aspectj@1.9.27 | 18 | 55 | 191 | 46 |
@@ -3701,6 +3701,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.util.pattern.PathPatternParser#parse(String)` | `flint.web.util.pattern.PathPatternParser.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PatternParseException` | `flint.web.util.pattern.PatternParseException` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PatternParseException#getPosition()` | `flint.web.util.pattern.PatternParseException.getPosition` | [R14](api-mapping.md#r14-strings-and-text) |  |
+
+#### org.thymeleaf.templatemode
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.templatemode.TemplateMode` | `flint.thymeleaf.templatemode.TemplateMode` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.templatemode.TemplateMode#CSS` | `flint.thymeleaf.templatemode.TemplateMode.CSS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.templatemode.TemplateMode#HTML` | `flint.thymeleaf.templatemode.TemplateMode.HTML` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.templatemode.TemplateMode#JAVASCRIPT` | `flint.thymeleaf.templatemode.TemplateMode.JAVASCRIPT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.templatemode.TemplateMode#RAW` | `flint.thymeleaf.templatemode.TemplateMode.RAW` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.templatemode.TemplateMode#TEXT` | `flint.thymeleaf.templatemode.TemplateMode.TEXT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.templatemode.TemplateMode#XML` | `flint.thymeleaf.templatemode.TemplateMode.XML` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 
 #### tools.jackson.core
 
@@ -9633,7 +9645,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.standard.processor | 287 | 0 |
 | org.thymeleaf.standard.serializer | 15 | 0 |
 | org.thymeleaf.standard.util | 16 | 0 |
-| org.thymeleaf.templatemode | 11 | 0 |
+| org.thymeleaf.templatemode | 1 | 0 |
 | org.thymeleaf.templateparser | 3 | 0 |
 | org.thymeleaf.templateparser.markup | 8 | 0 |
 | org.thymeleaf.templateparser.markup.decoupled | 46 | 0 |
@@ -10096,6 +10108,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.test.web.servlet.result.MockMvcResultMatchers#jsonPath(String,Matcher,Class)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#is(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#reason(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
+| framework | `org.thymeleaf.templatemode.TemplateMode#parse(String)` | 2 | Unknown-mode warnings use TemplateEngine.threadIndex and its logger. |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_JAVA_COMMENTS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |

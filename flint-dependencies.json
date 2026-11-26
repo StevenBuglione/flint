@@ -431,6 +431,10 @@
       "repo": "flint",
       "version": "monorepo"
     },
+    "flint:thymeleaf": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:tx": {
       "repo": "framework",
       "version": "monorepo"

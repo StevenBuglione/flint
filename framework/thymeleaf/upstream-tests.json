@@ -1,0 +1,754 @@
+{
+  "classes": {
+    "org/thymeleaf/DialectSetConfigurationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/TemplateEngineTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/benchmark/BenchmarkTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/benchmark/SpringBenchmarkTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/cache/StandardCacheTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/context/ContextSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/context/LazyContextVariableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/context/SpringContextSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/dialect/DialectOrderingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/dialect/DialectProcessWrappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/AttributeDefinitionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/AttributeNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/BareHtmlEngineTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/CDATASectionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/CloseElementTagTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/CommentTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/DocTypeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/ElementAttributesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/ElementDefinitionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/ElementNamesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/ElementProcessorIteratorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/EngineContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/OpenElementTagTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/ProcessingInstructionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/SSEThrottledTemplateWriterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/StandaloneElementTagTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/TextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/WebEngineContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/engine/XmlDeclarationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/expression/ExpressionAllowedClassesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/extras/springsecurity5/integration/AbstractSecurityIntegrationTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/extras/springsecurity5/integration/SecurityBootIntegrationTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/extras/springsecurity5/integration/SecurityPlainIntegrationTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/extras/springsecurity6/integration/AbstractSecurityIntegrationTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/extras/springsecurity6/integration/SecurityBootIntegrationTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/extras/springsecurity6/integration/SecurityPlainIntegrationTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/inline/ScriptInlineTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/integration/AbstractWebIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/integration/ClassLoaderResolverIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/integration/WebApplicationResolverIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/integration/WebSetupIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/linkbuilder/LinkBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/linkbuilder/SpringLinkBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/linkbuilder/StandardLinkBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/messageresolver/StandardMessageResolverFailOnMissingMessageTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/offline/OfflineTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/parsing/Parsing01Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/parsing/Parsing02Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/parsing/Parsing03Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/parsing/ParsingExceptionLineColTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/messageresolver/SpringMessageResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/AbstractSpringReactiveTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive01Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive02Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive03Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive04Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive05Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive06Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive07Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive08Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive09Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive10Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive11Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive12Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactive13Test.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringReactiveErrorsTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/SpringWebFluxTemplateEngineBufferReleaseTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/reactive/view/ThymeleafReactiveViewTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/templateresolver/SpringResourceTemplateResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring/view/ThymeleafViewResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring5/dialect/SpringStandardDialectFormActionTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/expression/SPELExpressionRestrictionsTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/expression/SPELRestrictedModeStringLiteralsTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/mvc/AbstractMvcFeaturesTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/mvc/AbstractMvcIntegrationTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/mvc/AbstractMvcTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/mvc/MvcBootFeaturesTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/mvc/MvcBootIntegrationTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/mvc/MvcPlainFeaturesTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/mvc/MvcPlainIntegrationTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/webflux/AbstractWebFluxFeaturesTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/webflux/AbstractWebFluxIntegrationTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/webflux/AbstractWebFluxTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/webflux/WebFluxBootFeaturesTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/webflux/WebFluxBootIntegrationTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/webflux/WebFluxPlainFeaturesTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/integration/webflux/WebFluxPlainIntegrationTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/util/SpelWhitespaceTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/view/SpringUErrorsBindingTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/view/ThymeleafViewLocaleTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring5/web/webflux/SpringWebFluxWebExchangeTest.java": {
+      "reason": "The Thymeleaf Spring 5 libraries are excluded by the upstream pin.",
+      "status": "excluded"
+    },
+    "org/thymeleaf/spring6/dialect/SpringStandardDialectFormActionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/expression/SPELExpressionRestrictionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/expression/SPELRestrictedModeStringLiteralsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/mvc/AbstractMvcFeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/mvc/AbstractMvcIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/mvc/AbstractMvcTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/mvc/MvcBootFeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/mvc/MvcBootIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/mvc/MvcPlainFeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/mvc/MvcPlainIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/webflux/AbstractWebFluxFeaturesTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/webflux/AbstractWebFluxIntegrationTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/webflux/AbstractWebFluxTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/webflux/WebFluxBootFeaturesTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/webflux/WebFluxBootIntegrationTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/webflux/WebFluxPlainFeaturesTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/integration/webflux/WebFluxPlainIntegrationTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/util/SpelWhitespaceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/view/SpringUErrorsBindingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/view/ThymeleafViewLocaleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/spring6/web/webflux/SpringWebFluxWebExchangeTest.java": {
+      "phase": "3",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/ExpressionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/FragmentExpressionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/FragmentSignatureTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/LiteralSubstitutionUtilTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/OGNLExpressionRestrictionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/OGNLRestrictedModeStringLiteralsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/OGNLVariableExpressionEvaluatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/TemporalsArrayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/TemporalsClassesFormattingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/TemporalsCreationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/TemporalsFormattingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/TemporalsListTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/expression/TemporalsSetTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/processor/FragmentInsertionExpressionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/standard/serializer/StandardJavaScriptSerializerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/aggregation/AggregationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/attrprocessors/AttrProcessorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/conditionalcomments/ConditionalCommentsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/context/ContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/conversion/conversion1/Conversion1Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/conversion/conversion2/Conversion2Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/conversion/conversion3/Conversion3Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/conversion/conversion4/Conversion4Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/conversion/conversion5/Conversion5Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/conversion/conversion6/Conversion6Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/conversion/conversion7/Conversion7Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/dataprefix/attrprocessors/DataPrefixAttrProcessorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/dataprefix/block/DataPrefixElementProcessorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/dataprefix/features/DataPrefixFeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/dataprefix/springsecurity/DataPrefixSpringSecurityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/dataprefix/stsm/DataPrefixSTSMTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/domselector/DOMSelectorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/elementprocessors/ElementProcessorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/encoding/EncodingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/escaping/EscapingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/features/FeaturesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/gtvg/GTVGTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/parsing/ParsingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/prepostprocessors/PrePostProcessorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/processors/ProcessorsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/springbase/SpringBaseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/springintegration/SpringIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/springintegration/util/SpringRequestUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/springintegration/util/SpringStandardExpressionUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/springsecurity/SpringSecurityTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/stsm/STSMTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/templateboundaries/TemplateBoundariesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateengine/xmlns/XmlnsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/decoupled/gtvg/DecoupledGTVGTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/decoupled/stsm/DecoupledSTSMTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/markup/HtmlBlockSelectorMarkupHandlerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/markup/ParsingDecoupled01Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/markup/TemplateFragmentMarkupReferenceResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/reader/ParserLevelCommentMarkupReaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/reader/ParserLevelCommentTextReaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/reader/PrototypeOnlyCommentMarkupReaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/reader/PrototypeOnlyCommentTextReaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateparser/text/TextParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateresolver/TemplateResolverAttributesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateresolver/TemplateResolverDecoupledLogicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/templateresource/TemplateResourceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/AggregateCharSequenceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/DateUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/EvaluationUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/ExpressionUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/ListUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/NumberUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/StandardExpressionUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/StringUtilsSanitizeHtmlFormattingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/StringUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/TextUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/util/VersionUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/web/servlet/ServletWebExchangeLocaleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/thymeleaf/web/servlet/ServletWebSessionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "thymeleaf",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":thymeleaf"
+  ],
+  "upstream": "thymeleaf@3.1.7.RELEASE"
+}

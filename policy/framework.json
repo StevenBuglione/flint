@@ -1001,6 +1001,37 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "thymeleaf": {
+   "directory": "framework/thymeleaf",
+   "module": "flint.thymeleaf",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "thymeleaf@3.1.7.RELEASE",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/thymeleaf/bench",
+    "baseline": "framework/thymeleaf/bench/baseline",
+    "edit_source": "framework/thymeleaf/source/flint/thymeleaf/templatemode.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 7608,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 513
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "jakarta-validation": {
    "directory": "framework/jakarta-validation",
    "module": "flint.jakarta.validation",

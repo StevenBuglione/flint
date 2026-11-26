@@ -1,0 +1,7 @@
+name "probe-thymeleaf"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-thymeleaf"
+dependency "flint:thymeleaf" path="../../.."

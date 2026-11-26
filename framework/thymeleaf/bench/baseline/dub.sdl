@@ -1,0 +1,7 @@
+name "probe-thymeleaf-baseline"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-thymeleaf-baseline"
+dependency "flint:java" path="../../../.."

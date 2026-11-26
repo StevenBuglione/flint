@@ -1,0 +1,17 @@
+name "thymeleaf"
+description "Thymeleaf APIs for Flint"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dependency "flint:java" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}
