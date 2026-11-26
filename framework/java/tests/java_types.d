@@ -1015,3 +1015,26 @@ unittest
     assert(two("en", "US") == Locale.US);
     assert(three("en", "US", "POSIX").getVariant() == "POSIX");
 }
+
+@("Locale.clone copies the represented value without synthesis")
+unittest
+{
+    import flint.java.util : Locale;
+
+    Locale copyOf(const Locale original) @safe pure nothrow @nogc
+    {
+        return original.clone();
+    }
+
+    const stripped = Locale.of("ja", "JP", "JP").stripExtensions();
+    const extended = Locale.forLanguageTag("en-Latn-US-u-nu-thai-x-opaque");
+    foreach (original; [Locale.ROOT, Locale.US, extended, stripped])
+    {
+        const copy = copyOf(original);
+        assert(copy == original);
+        assert(copy.hashCode() == original.hashCode());
+        assert(copy.toLanguageTag() == original.toLanguageTag());
+    }
+    assert(!copyOf(stripped).hasExtensions());
+    assert(copyOf(stripped).getVariant() == "JP");
+}
