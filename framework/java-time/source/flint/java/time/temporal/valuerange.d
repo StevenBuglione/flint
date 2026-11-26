@@ -142,6 +142,8 @@ private char[] copyText(scope const(char)[] source) pure nothrow
 
 private void prependDecimal(ref scope char[85] buffer, ref size_t start, long value) pure nothrow @nogc
 {
+    // Share the digit loop between the endpoints in optimized builds.
+    pragma(inline, false);
     ulong magnitude = cast(ulong) value;
     if (value < 0)
         magnitude = 0UL - magnitude;
