@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,073 | 310 | 1,871 | 15,167 |
+| framework | openjdk@21.0.13 | 1,074 | 310 | 1,871 | 15,166 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10071,7 +10071,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 766 | 0 |
-| java.lang | 1,993 | 0 |
+| java.lang | 1,992 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 137 | 0 |
@@ -11021,6 +11021,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.Writer#flush()` | 2 | Java requires subclasses to implement flush. The existing method is a concrete no-op. |
 | framework | `java.io.Writer#write(String)` | 2 | Java forwards a whole string to the virtual string-range overload with UTF-16 length. The existing method is abstract and has no string-range overload. |
 | framework | `java.lang.AssertionError#<init>(Object)` | 2 | Requires converting an Object detail to its Java string and retaining a Throwable detail as the cause. |
+| framework | `java.lang.Double#parseDouble(String)` | 2 | The current parser throws NumberFormatException for null input, gives a different message for whitespace-only input, accepts lowercase nan, NaNd, hexadecimal syntax without a binary exponent, and a mantissa underscore, and rejects Infinity, +Infinity, and -Infinity. Decimal overflow (positive, negative, a very long exponent, and rounding past the largest finite value) and hexadecimal overflow currently throw instead of returning signed infinity. |
 | framework | `java.lang.Iterable#forEach(Consumer)` | 2 | Requires default traversal with a Consumer for iterator-only implementations. |
 | framework | `java.net.URI#<init>(String)` | 2 | Requires a public string constructor with Java URI syntax validation and URISyntaxException diagnostics. |
 | framework | `java.net.URI#compareTo(URI)` | 2 | Requires ordering by URI component, including percent escape hex normalization and case-insensitive scheme and host comparison. |
