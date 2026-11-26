@@ -7425,7 +7425,7 @@
 "java.text.DateFormat":{"status":"excluded","category":"deferred","phase":"2","reason":"Java DateFormat extends Format and is usable through its generic format(Object) contract. Flint has no Format supertype."},
 "java.text.DateFormat#<init>()":{"status":"excluded","category":"deferred","phase":"2","reason":"Subclass initialization is implicit. Flint has no DateFormat constructor for an explicit super() call, which Java subclasses can make."},
 "java.text.DateFormat#calendar":{"d":"flint.java.text.DateFormat.calendar","status":"ported"},
-"java.text.DateFormat#format(Date)":{"status":"excluded","category":"deferred","phase":"2","reason":"With SimpleDateFormat, a null Date or an absent Calendar can terminate the process. Java throws NullPointerException (R8)."},
+"java.text.DateFormat#format(Date)":{"status":"excluded","category":"deferred","phase":"2","reason":"Flint uses an abstract string overload. Java supplies a final convenience overload that dispatches through the three-argument Format contract."},
 "java.text.DateFormat#format(Date,StringBuffer,FieldPosition)":{"status":"excluded","category":"deferred","phase":"2","reason":"The date append overload needs canonical java.lang.StringBuffer and a FieldPosition for UTF-16 offsets."},
 "java.text.DateFormat#format(Object,StringBuffer,FieldPosition)":{"status":"excluded","category":"deferred","phase":"2","reason":"Generic date formatting needs canonical java.lang.StringBuffer and Format dispatch to the date append overload."},
 "java.text.DateFormat#getCalendar()":{"d":"flint.java.text.DateFormat.getCalendar","status":"ported"},

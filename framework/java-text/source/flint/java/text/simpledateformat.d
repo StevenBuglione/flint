@@ -220,8 +220,11 @@ class SimpleDateFormat : DateFormat
         defaultCenturyStartYear = start.get(Calendar.YEAR);
     }
 
+    /// Throws `NullPointerException` if the date or the installed calendar is missing.
     override string format(const Date date)
     {
+        if (calendar is null || date is null)
+            throwNullPointerException();
         calendar.setTime(date);
         TextBuffer result;
         foreach (e; compiled)
