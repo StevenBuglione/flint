@@ -25,35 +25,45 @@ string lowerCase(string text) pure nothrow
 
 private string mapped(bool upper)(string text) pure nothrow
 {
+    foreach (i, c; text)
+    {
+        // Something changes, or might: one copy from here on.
+        if (c >= 0x80 || (upper ? c >= 'a' && c <= 'z' : c >= 'A' && c <= 'Z'))
+            return remapped!upper(text, i);
+    }
+    return text;
+}
+
+// `text` mapped from `from` on, into one buffer of the text's length (an ASCII mapping keeps it), grown only when a
+// non-ASCII mapping is longer: no append per character (each is a druntime call), and no garbage when nothing grows.
+private char[] remapped(bool upper)(scope const(char)[] text, size_t from) pure nothrow
+{
     import flint.engine.aot.text : decodeUtf8, utf8;
     import flint.java.character : toLowerCase, toUpperCase;
 
-    foreach (i, c; text)
+    auto result = new char[text.length];
+    result[0 .. from] = text[0 .. from];
+    size_t length = from, index = from;
+    while (index < text.length)
     {
-        if (c >= 0x80 || (upper ? c >= 'a' && c <= 'z' : c >= 'A' && c <= 'Z'))
+        const unit = text[index];
+        if (unit < 0x80)
         {
-            // Something changes, or might: copy the unchanged prefix, then map the rest.
-            string result = text[0 .. i];
-            size_t index = i;
-            while (index < text.length)
-            {
-                const unit = text[index];
-                if (unit < 0x80)
-                {
-                    result ~= upper ? (unit >= 'a' && unit <= 'z' ? cast(char)(unit - 32) : unit) : (unit >= 'A'
-                            && unit <= 'Z' ? cast(char)(unit + 32) : unit);
-                    index++;
-                    continue;
-                }
-                const start = index;
-                const code = decodeUtf8(text, index);
-                const changed = upper ? toUpperCase(code) : toLowerCase(code);
-                result ~= changed == code ? text[start .. index] : utf8(changed);
-            }
-            return result;
+            const lower = upper ? unit >= 'a' && unit <= 'z' : unit >= 'A' && unit <= 'Z';
+            result[length++] = lower ? cast(char)(upper ? unit - 32 : unit + 32) : unit;
+            index++;
+            continue;
         }
+        const start = index;
+        const code = decodeUtf8(text, index);
+        const changed = upper ? toUpperCase(code) : toLowerCase(code);
+        const piece = changed == code ? text[start .. index] : utf8(changed);
+        if (length + piece.length + (text.length - index) > result.length)
+            result.length = length + piece.length + (text.length - index);
+        result[length .. length + piece.length] = piece;
+        length += piece.length;
     }
-    return text;
+    return result[0 .. length];
 }
 
 /// Whether `a` and `b` are equal ignoring case, as std.uni's `sicmp(a, b) == 0` for text without multi-character
@@ -68,52 +78,105 @@ string replaced(string text, scope const(char)[] from, scope const(char)[] to) p
 {
     if (from.length == 0 || text.length < from.length)
         return text;
-    string result;
-    size_t start, i;
+    const count = occurrences(text, from);
+    if (count == 0)
+        return text;
+    return substituted(text, from, to, count);
+}
+
+// The non-overlapping `from`s in `text`, left to right.
+private size_t occurrences(scope const(char)[] text, scope const(char)[] from) pure nothrow @nogc
+{
+    size_t count, i;
     while (i + from.length <= text.length)
     {
         if (text[i .. i + from.length] == from)
         {
-            result ~= text[start .. i];
-            result ~= to;
+            count++;
             i += from.length;
-            start = i;
         }
         else
             i++;
     }
-    return start == 0 ? text : result ~ text[start .. $];
+    return count;
+}
+
+private alias Text = const(char)[];
+
+// `text` with its `n` `from`s replaced, into one buffer of the exact length.
+private char[] substituted(scope Text text, scope Text from, scope Text to, size_t n) pure nothrow
+{
+    auto result = new char[text.length - n * from.length + n * to.length];
+    size_t length, start, i;
+    while (i + from.length <= text.length)
+    {
+        if (text[i .. i + from.length] != from)
+        {
+            i++;
+            continue;
+        }
+        result[length .. length + (i - start)] = text[start .. i];
+        length += i - start;
+        result[length .. length + to.length] = to;
+        length += to.length;
+        i += from.length;
+        start = i;
+    }
+    result[length .. $] = text[start .. $];
+    return result;
 }
 
 /// `values` joined by `separator`, as std.array's `join`.
 string joined(scope const string[] values, scope const(char)[] separator) pure nothrow
 {
-    string result;
+    if (values.length == 0)
+        return "";
+    if (values.length == 1)
+        return values[0];
+    return joinedCopy(values, separator);
+}
+
+// `values` and their separators, copied into one buffer of the exact length.
+private char[] joinedCopy(scope const string[] values, scope const(char)[] separator) pure nothrow
+{
+    size_t total;
+    foreach (i, value; values)
+        total += (i == 0 ? 0 : separator.length) + value.length;
+    auto result = new char[total];
+    size_t length;
     foreach (i, value; values)
     {
         if (i != 0)
-            result ~= separator;
-        result ~= value;
+        {
+            result[length .. length + separator.length] = separator;
+            length += separator.length;
+        }
+        result[length .. length + value.length] = value;
+        length += value.length;
     }
     return result;
 }
 
 /// The pieces of `text` between `separator`s, empty ones included, as std.array's `split(text, separator)`: none
-/// for an empty text.
+/// for an empty text. The pieces are slices of `text`, in one array of the exact length.
 string[] pieces(string text, char separator) pure nothrow
 {
     if (text.length == 0)
         return null;
-    string[] result;
-    size_t start;
+    size_t count = 1;
+    foreach (c; text)
+        count += c == separator;
+    auto result = new string[count];
+    size_t start, n;
     foreach (i, c; text)
     {
         if (c != separator)
             continue;
-        result ~= text[start .. i];
+        result[n++] = text[start .. i];
         start = i + 1;
     }
-    return result ~ text[start .. $];
+    result[n] = text[start .. $];
+    return result;
 }
 
 /// The index of the first `needle` in `text`, or -1, as std.string's `indexOf`.
@@ -185,12 +248,31 @@ string[] sortStrings(string[] values) pure nothrow @nogc
 /// `chars` as UTF-8, as std.conv's `to!string` of a `dchar[]`.
 string utf8Text(scope const(dchar)[] chars) pure nothrow
 {
+    return utf8Copy(chars);
+}
+
+// `chars` encoded into one buffer of the exact length.
+private char[] utf8Copy(scope const(dchar)[] chars) pure nothrow
+{
     import flint.engine.aot.text : utf8;
 
-    string result;
+    size_t total;
     foreach (c; chars)
-        result ~= c < 0x80 ? [cast(char) c] : utf8(c);
-    return result;
+        total += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
+    auto result = new char[total];
+    size_t length;
+    foreach (c; chars)
+    {
+        if (c < 0x80)
+        {
+            result[length++] = cast(char) c;
+            continue;
+        }
+        const piece = utf8(c);
+        result[length .. length + piece.length] = piece;
+        length += piece.length;
+    }
+    return result[0 .. length];
 }
 
 /// The code points of valid UTF-8 `text`, as std.conv's `to!dstring`; null when `text` is not valid UTF-8.

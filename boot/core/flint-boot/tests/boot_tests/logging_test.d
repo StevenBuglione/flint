@@ -21,6 +21,40 @@ import flint.boot.logging : ConsoleLogFormat, LogEvent, LogLevel, abbreviate, fi
     assert(abbreviate("Short", 39) == "Short");
 }
 
+@("flint.logging.loggerNameAbbreviationMatchesSegmentRule") unittest
+{
+    import std.array : join, split;
+
+    // The rule as Logback states it, over the split segments: the one-pass version must agree.
+    static string reference(string name, size_t target)
+    {
+        if (name.length <= target)
+            return name;
+        auto parts = name.split('.');
+        if (parts.length == 1)
+            return name;
+        size_t length = name.length;
+        foreach (index; 0 .. parts.length)
+        {
+            if (length <= target || index + 1 == parts.length)
+                break;
+            if (parts[index].length > 1)
+            {
+                length = length + 1 - parts[index].length;
+                parts[index] = parts[index][0 .. 1];
+            }
+        }
+        return parts.join(".");
+    }
+
+    foreach (name; [
+        "org.springframework.web.servlet.PageNotFound", "a..bb...ccc.d", ".leading.dot.segment",
+        "trailing.dot.segment.", "x.y", "verylongsegmentwithoutdots", "ab.cd.ef.gh.ij.kl.mn.op", ""
+    ])
+        foreach (target; [0, 1, 5, 10, 20, 39, 100])
+            assert(abbreviate(name, target) == reference(name, target), name);
+}
+
 @("flint.logging.paddingAndTruncation") unittest
 {
     assert(fit("main", 15, true) == "           main");

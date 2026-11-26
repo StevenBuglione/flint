@@ -260,25 +260,38 @@ private string spaces(size_t count) pure
 /// Logback's target-length logger-name abbreviation (`%logger{39}`): when the name is longer than `target`,
 /// package segments are shortened to their first character, leftmost first, until it fits; the last segment is
 /// never shortened.
-string abbreviate(string name, size_t target) pure
+string abbreviate(string name, size_t target) pure nothrow
 {
-    import flint.boot.internal.text : joined, pieces;
+    import flint.boot.internal.text : indexOf;
 
-    if (name.length <= target)
+    if (name.length <= target || indexOf(name, '.') < 0)
         return name;
-    auto parts = pieces(name, '.');
-    if (parts.length == 1)
-        return name;
-    size_t length = name.length;
-    foreach (index; 0 .. parts.length)
+    return abbreviated(name, target);
+}
+
+// One pass into one buffer: each segment before the last dot keeps its first character while the name is still
+// longer than `target`. It runs for every log line, so it neither splits nor joins (playbook S-24).
+private char[] abbreviated(scope const(char)[] name, size_t target) pure nothrow
+{
+    auto result = new char[name.length];
+    size_t length = name.length, count, start;
+    foreach (i, c; name)
     {
-        if (length <= target || index + 1 == parts.length)
-            break;
-        if (parts[index].length > 1)
+        if (c != '.')
+            continue;
+        const segment = i - start;
+        if (length > target && segment > 1)
         {
-            length = length + 1 - parts[index].length;
-            parts[index] = parts[index][0 .. 1];
+            result[count++] = name[start];
+            length = length + 1 - segment;
         }
+        else
+            foreach (d; name[start .. i])
+                result[count++] = d;
+        result[count++] = '.';
+        start = i + 1;
     }
-    return joined(parts, ".");
+    foreach (d; name[start .. $])
+        result[count++] = d;
+    return result[0 .. count];
 }
