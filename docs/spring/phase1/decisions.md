@@ -1166,3 +1166,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 02:40Z, coordinator: **no compiler flags in package recipes.** DUB propagates a package's flags to every consumer, so they silently change how applications compile. Compiler-flag policy lives in the release profiles (`profiles.toml`), measured on both apps.
   - **First case:** sol-jdk-concurrent-io's `--linkonce-templates` was refused. Its cross-leaf `RTInfoImpl` finding is baselined in the closure ratchet instead.
   - **Next:** m7 evaluates `--linkonce-templates` as a profile-wide LDC setting, measuring size, build time and closure-gate violations.
+- 2026-11-26 02:47Z, coordinator: **the loadable-section metric is live** (520f8f11).
+  - **Expired:** the interim page-crossing rule (94badfcf).
+  - **JDK leaves:** byte caps are re-baselined in loadable bytes at measured plus 10%, one commit per package, under `jdk-leaf-rule`.
