@@ -299,3 +299,24 @@ unittest
     const wrongType = collectException!IllegalFormatConversionException(String.format("%A", 7));
     assert(wrongType.getMessage() == "a != java.lang.Integer");
 }
+
+@("String.format uppercases characters and strings with Java root-locale mappings")
+unittest
+{
+    import std.exception : collectException;
+
+    assert(String.format("%C %C [%3C]", 'q', cast(wchar) 0x00E9, 0x10428) == "Q É [ 𐐀]");
+    assert(String.format("[%3C][%-4C]", 0x00DF, 0xFB03) == "[ SS][FFI ]");
+    assert(String.format("[%6C][%3C]", cast(Object) null, 0xD800) == "[  NULL][  \uFFFD]");
+    assert(String.format("%S", "Straße é ﬃ 𐐨") == "STRASSE É FFI 𐐀");
+    const wrongType = collectException!IllegalFormatConversionException(String.format("%C", "abc"));
+    assert(wrongType.getMessage() == "c != java.lang.String");
+}
+
+@("String.format truncates UTF-16 input before uppercasing and pads the result")
+unittest
+{
+    assert(String.format("[%5.1S][%-4.1S]", "ßx", "ﬃx") == "[   SS][FFI ]");
+    assert(String.format("[%3.1S][%3.2S]", "𐐨x", "𐐨x") == "[  \uFFFD][ 𐐀]");
+    assert(String.format("[%.0S]", "ß") == "[]");
+}
