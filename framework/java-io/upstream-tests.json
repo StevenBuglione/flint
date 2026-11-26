@@ -77,15 +77,18 @@
     },
     "java/io/ByteArrayInputStream/ChunkedTransferTo.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/ByteArrayInputStream/ReadAllReadNTransferTo.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/ByteArrayInputStream/Skip.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/ByteArrayOutputStream/EncodingTest.java": {
       "status": "deferred",
