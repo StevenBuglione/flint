@@ -103,7 +103,7 @@ class Cookie
     /// Whether `Secure` is set.
     bool getSecure() const pure nothrow
     {
-        return getAttribute("Secure") == "";
+        return isEmptyAttribute("Secure");
     }
 
     /// Sets `Secure`.
@@ -115,7 +115,7 @@ class Cookie
     /// Whether `HttpOnly` is set.
     bool isHttpOnly() const pure nothrow
     {
-        return getAttribute("HttpOnly") == "";
+        return isEmptyAttribute("HttpOnly");
     }
 
     /// Sets `HttpOnly`.
@@ -145,6 +145,17 @@ class Cookie
             return;
         attributeOrder ~= name;
         attributes[name] = value;
+    }
+
+    /+ Jakarta's `"".equals(getAttribute(name))`: the attribute is present and empty. Comparing `getAttribute`'s result
+    with `""` is not that in D, where an absent attribute's `null` equals `""` (R5), so presence is checked on the
+    attribute list. +/
+    private bool isEmptyAttribute(string name) const pure nothrow
+    {
+        foreach (existing; attributeOrder)
+            if (equalsIgnoreCase(existing, name))
+                return attributes[existing].length == 0;
+        return false;
     }
 
     /// An attribute, ignoring case, or `null`.
