@@ -8,7 +8,7 @@ module flint.slf4j.provider;
 
 import flint.conc.slot : ProcessSlot;
 import flint.engine.aot.any : Any;
-import flint.engine.reactor.fiber_local : FiberLocal;
+import flint.engine.reactor.local : FiberLocal;
 import flint.java.util : HashMap, Map;
 import flint.slf4j : ILoggerFactory, IMarkerFactory, Logger, Marker;
 import flint.slf4j.event : DefaultLoggingEvent, Level, LoggingEvent;

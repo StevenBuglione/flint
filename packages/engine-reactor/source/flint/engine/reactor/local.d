@@ -5,8 +5,12 @@ A module that only keeps per-request state (a transaction holder, the MDC, the l
 leaf and pays for the key and its access. It does not compile and link the reactor's loop, sockets and
 offload pool, which importing `flint.engine.reactor` does. `flint.engine.reactor` re-exports `FiberLocal`
 and `maxFiberLocalWords`, and installs the task-fiber resolver on each worker thread while its loop runs.
+
+The file name matters: LDC compiles a DUB package in one invocation and emits the whole package's template instances
+and compiler-generated helpers into the object of the first source file. As that file, this leaf would reference the
+reactor, conc and arena objects and link them all (S-19), so its name sorts after `internal/`.
 +/
-module flint.engine.reactor.fiber_local;
+module flint.engine.reactor.local;
 
 import core.atomic : atomicLoad, cas;
 import flint.arena : Error, Status;

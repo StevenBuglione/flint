@@ -14,12 +14,12 @@ import flint.engine.reactor.sys.chunks : Chunked;
 import flint.engine.reactor.internal.queues : Mailbox, Message, Timers;
 import flint.engine.reactor.internal.wakes : Recorded, RemoteWakes, WakeLane, statusOf;
 import flint.engine.reactor.sys.fibers : createFiber, PoolFiber, releaseFiber, resetFiber, resumeFiber, yieldFiber;
-import flint.engine.reactor.fiber_local : taskCellResolver, threadLocalWords;
+import flint.engine.reactor.local : taskCellResolver, threadLocalWords;
 import flint.engine.reactor.sys.offload : OffloadPool;
 import flint.engine.reactor.sys.workers : availableCpus, callerAffinity, joinWorker, pinWorker,
     restoreAffinity, startWorker, workerUsage, yieldWorker;
 
-public import flint.engine.reactor.fiber_local : FiberLocal, maxFiberLocalWords;
+public import flint.engine.reactor.local : FiberLocal, maxFiberLocalWords;
 public import flint.engine.reactor.types : AcceptDelegate, AcceptFn, Backend, Completion, CompletionDelegate,
     CompletionFn, ConnectionId, IoId, ListenOptions, NativeInterest, NativeReadyFn, OffloadInterrupt, OffloadWork,
     ReadDelegate, ReactorOptions, ReadFn, TaskContext, TaskDelegate, TaskFn, TaskWaker, TimerId, WorkerStats;
@@ -127,7 +127,7 @@ private bool validStorage(ReactorOptions options, uint workers) pure nothrow @no
         && cast(ulong) workers * options.maxPendingIoPerCore * options.ioBufferBytes <= 512UL * 1024 * 1024;
 }
 
-/// The calling worker's active task fiber cell for `FiberLocal` (`flint.engine.reactor.fiber_local`): false off
+/// The calling worker's active task fiber cell for `FiberLocal` (`flint.engine.reactor.local`): false off
 /// a task fiber, so the thread's own words serve; true with an empty cell when the fiber's storage is too small.
 private bool taskCell(size_t first, size_t end, bool writing, out void*[] cell, out size_t stamp) nothrow @nogc
 {

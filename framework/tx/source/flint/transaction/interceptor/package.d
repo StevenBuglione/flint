@@ -31,7 +31,7 @@ import flint.engine.aot.bean : BeanFactory;
 import flint.engine.aot.descriptor : Descriptor, MethodDescriptor;
 import flint.engine.aot.proxy : Advisor, Invocation, Proceed;
 import flint.conc.slot : ProcessSlot;
-import flint.engine.reactor.fiber_local : FiberLocal;
+import flint.engine.reactor.local : FiberLocal;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, RuntimeException, javaToString;
 import flint.java.util : ArrayList, Collection, Collections, LinkedHashSet, List;
 import flint.slf4j : Logger, LoggerFactory;

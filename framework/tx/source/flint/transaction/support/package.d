@@ -26,7 +26,7 @@ $(UL
 module flint.transaction.support;
 
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
-import flint.engine.reactor.fiber_local : FiberLocal;
+import flint.engine.reactor.local : FiberLocal;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, RuntimeException,
     javaToString, stringHashCode;
 import flint.java.util : ArrayList, Collection, Collections, List;
