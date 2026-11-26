@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 151 | 264 | 0 | 15,381 |
+| ai | spring-ai@v2.1.0 | 153 | 265 | 0 | 15,378 |
 | boot | spring-boot@v4.2.0 | 36 | 19 | 2,133 | 13,415 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,445 | 1,360 | 4,848 | 30,181 |
@@ -401,6 +401,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.observation.AiOperationMetadata.Builder#build()` | `flint.ai.observation.AiOperationMetadata.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.observation.AiOperationMetadata.Builder#operationType(String)` | `flint.ai.observation.AiOperationMetadata.Builder.operationType` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.observation.AiOperationMetadata.Builder#provider(String)` | `flint.ai.observation.AiOperationMetadata.Builder.provider` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.observation.ObservabilityHelper#concatenateEntries(Map)` | `flint.ai.observation.ObservabilityHelper.concatenateEntries` | [R23](api-mapping.md#r23-object-typed-values) | Object values use Any, with virtual string conversion for class references and Any text for boxed D values. |
 
 #### org.springframework.ai.observation.conventions
 
@@ -8189,7 +8190,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.model.transformers.autoconfigure | 0 | 31 |
 | org.springframework.ai.model.vertexai.autoconfigure.embedding | 0 | 60 |
 | org.springframework.ai.moderation | 167 | 0 |
-| org.springframework.ai.observation | 13 | 0 |
+| org.springframework.ai.observation | 10 | 0 |
 | org.springframework.ai.ollama | 0 | 41 |
 | org.springframework.ai.ollama.aot | 0 | 3 |
 | org.springframework.ai.ollama.api | 0 | 407 |

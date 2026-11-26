@@ -17,8 +17,33 @@
       "status": "ported"
     },
     "org/springframework/ai/observation/ObservabilityHelperTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-commons/tests/observability_helper_tests.d",
+      "methods": {
+        "ported": [
+          "shouldFormatBracketsCorrectly",
+          "shouldGetEmptyBracketsForEmptyList",
+          "shouldGetEmptyBracketsForEmptyMap",
+          "shouldGetEntriesForNonEmptyList",
+          "shouldGetEntriesForNonEmptyMap",
+          "shouldHandleComplexObjectsAsValues",
+          "shouldHandleEmptyStringsInList",
+          "shouldHandleMapWithEmptyStringKeys",
+          "shouldHandleNullInputsGracefully",
+          "shouldHandleNullValuesInList",
+          "shouldHandleNullValuesInMap",
+          "shouldHandleNumericAndBooleanValues",
+          "shouldHandleSingleEntryList",
+          "shouldHandleSingleEntryMap",
+          "shouldHandleSpecialCharactersInList",
+          "shouldHandleSpecialCharactersInMapValues",
+          "shouldHandleWhitespaceOnlyStrings",
+          "shouldProduceConsistentOutput"
+        ],
+        "skipped": {
+          "shouldMaintainOrderForOrderedMaps": "Needs java.util.TreeMap to reproduce Java sorted-map traversal after out-of-order inserts."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/ai/observation/TracingAwareLoggingObservationHandlerTests.java": {
       "phase": "2",

@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/observation/AiOperationMetadata.java
+// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/observation/{AiOperationMetadata,ObservabilityHelper}.java
 // Modified by the Flint authors.
 module flint.ai.observation;
 
-import flint.java.lang : stringHashCode;
+import flint.engine.aot.any : Any;
+import flint.java.lang : NullPointerException, stringHashCode;
+import flint.java.util : List, Map;
 import flint.util : Assert;
 
 @safe:
@@ -113,5 +115,73 @@ struct AiOperationMetadata
         {
             return AiOperationMetadata(operationType_, provider_);
         }
+    }
+}
+
+/// Formats collections for observation attributes.
+final class ObservabilityHelper
+{
+    @disable this();
+
+    /// Quotes each key and value in the supplied map's iteration order.
+    static string concatenateEntries(Map!(string, Any) keyValues)
+    {
+        if (keyValues is null)
+            throw new NullPointerException();
+
+        string result = "[";
+        keyValues.forEach((string key, Any value) {
+            if (result.length > 1)
+                result ~= ", ";
+            result ~= '"';
+            result ~= key is null ? "null" : key;
+            result ~= `":"`;
+            result ~= observationValueText(value);
+            result ~= '"';
+        });
+        result ~= ']';
+        return result;
+    }
+
+    /// Quotes each element in list order, preserving its text verbatim.
+    static string concatenateStrings(List!string strings)
+    {
+        if (strings is null)
+            throw new NullPointerException();
+
+        string result = "[";
+        strings.forEach((string value) {
+            if (result.length > 1)
+                result ~= ", ";
+            result ~= '"';
+            result ~= value is null ? "null" : value;
+            result ~= '"';
+        });
+        result ~= ']';
+        return result;
+    }
+}
+
+private string observationValueText(Any value)
+{
+    import flint.engine.aot.objects : objectToString;
+    import flint.java.lang : doubleToString, floatToString;
+
+    if (value.isNull)
+        return "null";
+    if (auto object = value.asObject())
+    {
+        const text = objectToString(object);
+        return text is null ? "null" : text;
+    }
+
+    switch (value.typeName)
+    {
+    case "double":
+        return doubleToString(value.get!double);
+    case "float":
+        return floatToString(cast(float) value.get!double);
+    default:
+        return value.toString();
     }
 }
