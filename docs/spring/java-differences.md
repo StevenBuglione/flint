@@ -95,7 +95,7 @@ Nullable!long id = owner.getId();
 if (!id.isNull) use(id.get);
 ```
 
-**R23: `Object` values** are `Any`, Flint AOT's erased value: a type name plus the value, stored inline for scalars and small structs. A `null` reference is `Any.init`, and a class reference keeps its identity.
+**R23: `Object` values** are `Any`, Flint AOT's erased value: a type name plus the value, stored inline for scalars and small structs. A `null` reference is `Any.init`, and a class reference keeps its identity. One exception: an application event's source (`ApplicationEvent.getSource()`) stays a plain D `Object` (D-CONTEXT-1), since event sources are always objects.
 
 ```java
 Object id = accessor.getIdentifier();

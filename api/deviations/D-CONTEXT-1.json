@@ -1,0 +1,5 @@
+{
+ "id": "D-CONTEXT-1",
+ "deviation": "Spring's event family (`java.util.EventObject`, `ApplicationEvent` and their subclasses such as `RequestHandledEvent`) takes and returns its `Object` source as a native D `Object` (`getSource()`, the constructors), not R23's `Any`. framework-core owns `ApplicationEvent` and may migrate it to `Any` later.",
+ "reason": "`ApplicationEvent` landed before R23 and its subclasses must match it; an event source is always a reference object, so `Any` would add nothing but a wrapper (coordinator, 2026-11-26)."
+}
