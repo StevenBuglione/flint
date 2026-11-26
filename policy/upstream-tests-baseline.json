@@ -7797,7 +7797,9 @@
       "java/util/prefs/SerializeExceptions.java",
       "java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java",
       "java/util/spi/ToolProviderDescriptionTest.java",
-      "java/util/spi/ToolProviderTest.java",
+      "java/util/spi/ToolProviderTest.java"
+    ],
+    "java-zip": [
       "java/util/zip/Available.java",
       "java/util/zip/Bounds.java",
       "java/util/zip/CloseInflaterDeflaterTest.java",

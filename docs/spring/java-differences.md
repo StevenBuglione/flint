@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,220 | 390 | 1,871 | 14,940 |
+| framework | openjdk@21.0.13 | 1,239 | 390 | 1,871 | 14,921 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10626,7 +10626,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
-| java.util.zip | 258 | 0 |
+| java.util.zip | 239 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
 | javax.crypto.spec | 101 | 0 |
