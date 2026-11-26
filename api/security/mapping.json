@@ -8337,7 +8337,7 @@
 "org.springframework.security.provisioning.InMemoryUserDetailsManager":{"d":"flint.security.provisioning.InMemoryUserDetailsManager","status":"ported"},
 "org.springframework.security.provisioning.InMemoryUserDetailsManager#<init>()":{"d":"flint.security.provisioning.InMemoryUserDetailsManager.this","status":"ported"},
 "org.springframework.security.provisioning.InMemoryUserDetailsManager#<init>(Collection)":{"d":"flint.security.provisioning.InMemoryUserDetailsManager.this","status":"ported"},
-"org.springframework.security.provisioning.InMemoryUserDetailsManager#<init>(Properties)":{"d":"flint.security.provisioning.InMemoryUserDetailsManager.this","status":"ported"},
+"org.springframework.security.provisioning.InMemoryUserDetailsManager#<init>(Properties)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.security.provisioning.InMemoryUserDetailsManager#<init>(UserDetails...)":{"d":"flint.security.provisioning.InMemoryUserDetailsManager.this","status":"ported"},
 "org.springframework.security.provisioning.InMemoryUserDetailsManager#changePassword(String,String)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.security.provisioning.InMemoryUserDetailsManager#createUser(UserDetails)":{"d":"flint.security.provisioning.InMemoryUserDetailsManager.createUser","status":"ported"},

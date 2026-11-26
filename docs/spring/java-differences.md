@@ -196,7 +196,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | openjdk@21.0.13 | 231 | 133 | 1,871 | 16,186 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
+| security | spring-security@7.2.0 | 509 | 1 | 88 | 11,815 |
 
 ## Adapted elements
 
@@ -10108,7 +10108,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.oauth2.server.resource.web.reactive.function.client | 0 | 6 |
 | org.springframework.security.oauth2.server.resource.web.server | 0 | 4 |
 | org.springframework.security.oauth2.server.resource.web.server.authentication | 0 | 6 |
-| org.springframework.security.provisioning | 86 | 0 |
+| org.springframework.security.provisioning | 87 | 0 |
 | org.springframework.security.rsocket.api | 0 | 18 |
 | org.springframework.security.rsocket.authentication | 0 | 23 |
 | org.springframework.security.rsocket.authorization | 0 | 11 |
