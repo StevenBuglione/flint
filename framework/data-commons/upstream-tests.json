@@ -1457,7 +1457,7 @@
         ],
         "skipped": {
           "concatenatesIterable": "The lazy Iterable-to-Stream bridge and concatenation overload are deferred.",
-          "usesStreamableCollectors": "The Streamable collectors are deferred."
+          "usesStreamableCollectors": "The default collector is exercised separately. The intermediate Iterable collector and the complete upstream case are still deferred."
         }
       },
       "status": "partial"

@@ -628,6 +628,7 @@
 "org.springframework.data.util.Streamable#toList()":{"status":"adapted","d":"flint.data.util.Streamable.toList","rules":["R3","R10"]},
 "org.springframework.data.util.Streamable#toSet()":{"status":"adapted","d":"flint.data.util.Streamable.toSet","rules":["R3","R10"]},
 "org.springframework.data.util.Streamable#get()":{"status":"adapted","d":"flint.data.util.Streamable.get","rules":["R3","R10"]},
+"org.springframework.data.util.Streamable#toStreamable()":{"status":"adapted","d":"flint.data.util.Streamable.toStreamable","rules":["R10","D-DATA-27"],"substitutes":{"Collector":"flint.data.util.ToStreamable"}},
 "org.springframework.data.web.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.data.web.config.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.data.web.querydsl.**":{"status":"excluded","category":"deferred","phase":"2"}

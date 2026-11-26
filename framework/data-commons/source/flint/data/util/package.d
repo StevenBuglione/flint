@@ -40,6 +40,12 @@ interface Streamable(T) : Iterable!T, Supplier!(Stream!T)
         return new LazyStreamable!T(supplier);
     }
 
+    /// Collects a stream into a repeatable source (R10).
+    static auto toStreamable() pure nothrow @nogc
+    {
+        return ToStreamable!T.init;
+    }
+
     /// A fresh, sequential stream of the values.
     Stream!T stream();
     /// Whether the source contains no values.
@@ -203,5 +209,13 @@ private final class LazyStreamable(T) : Streamable!T
         if (factory is null)
             throw new NullPointerException("Stream supplier must not be null");
         return Objects.requireNonNull(factory(), "Stream must not be null");
+    }
+}
+
+private struct ToStreamable(T)
+{
+    Streamable!T apply(T[] values)
+    {
+        return Streamable!T.of(values);
     }
 }

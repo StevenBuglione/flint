@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 289 | 295 | 0 | 3,398 |
+| data-commons | spring-data-commons@4.2.0 | 289 | 296 | 0 | 3,397 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1193,6 +1193,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.util.Streamable#stream()` | `flint.data.util.Streamable.stream` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections), [D-DATA-27](api-mapping.md#deviations) |  |
 | `org.springframework.data.util.Streamable#toList()` | `flint.data.util.Streamable.toList` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.data.util.Streamable#toSet()` | `flint.data.util.Streamable.toSet` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.data.util.Streamable#toStreamable()` | `flint.data.util.Streamable.toStreamable` | [R10](api-mapping.md#r10-streams-and-collections), [D-DATA-27](api-mapping.md#deviations) |  |
 
 ### framework
 
@@ -10257,7 +10258,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.spel.spi | 18 | 0 |
 | org.springframework.data.support | 17 | 0 |
 | org.springframework.data.transaction | 5 | 0 |
-| org.springframework.data.util | 283 | 0 |
+| org.springframework.data.util | 282 | 0 |
 | org.springframework.data.web | 171 | 0 |
 | org.springframework.data.web.config | 71 | 0 |
 | org.springframework.data.web.querydsl | 13 | 0 |

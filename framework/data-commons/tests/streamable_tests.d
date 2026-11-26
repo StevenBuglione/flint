@@ -190,3 +190,23 @@ unittest
     assert(collectException!IllegalArgumentException(source.filter(cast(Filter) null)) !is null);
     assert(opens == 0);
 }
+
+@("usesDefaultStreamableCollector")
+unittest
+{
+    auto source = Streamable!int.of(1, 2, 1);
+    auto collected = source.stream().collect(Streamable!int.toStreamable());
+    assert(collected.toList().toArray() == [1, 2, 1]);
+    assert(collected.stream().toArray() == [1, 2, 1]);
+    assert(Stream!int.empty().collect(Streamable!int.toStreamable()).isEmpty());
+}
+
+@("collector takes ownership of its values by copying the input slice")
+unittest
+{
+    string[] input = ["first", "second"];
+    auto collected = Streamable!string.toStreamable().apply(input);
+    input[0] = "changed";
+    assert(collected.toList().toArray() == ["first", "second"]);
+    assert(collected.iterator().next() == "first");
+}
