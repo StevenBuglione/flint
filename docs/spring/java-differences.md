@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
 | boot | spring-boot@v4.2.0 | 44 | 50 | 2,133 | 13,376 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,557 | 1,455 | 4,870 | 29,952 |
+| framework | spring-framework@v7.1.0 | 3,555 | 1,451 | 4,870 | 29,958 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2439,17 +2439,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.BeanFactory#getBean(Class,Object...)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanFactory#getBean(String,Class)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanFactory#getBeanProvider(Class)` | `flint.beans.factory.BeanFactory.getBeanProvider` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.BeanFactory#getBeanProvider(ResolvableType)` | `flint.beans.factory.BeanFactory.getBeanProvider` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanFactory#isTypeMatch(String,Class)` | `flint.beans.factory.BeanFactory.isTypeMatch` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.BeanFactory#isTypeMatch(String,ResolvableType)` | `flint.beans.factory.BeanFactory.isTypeMatch` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanIsNotAFactoryException#<init>(String,Class)` | `flint.beans.factory.BeanIsNotAFactoryException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanNotOfRequiredTypeException#<init>(String,Class,Class)` | `flint.beans.factory.BeanNotOfRequiredTypeException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanNotOfRequiredTypeException#<init>(String,Type,Class)` | `flint.beans.factory.BeanNotOfRequiredTypeException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForAnnotation(Class)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForAnnotation` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(Class)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(Class,boolean,boolean)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForType` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(ResolvableType)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForType` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(ResolvableType,boolean,boolean)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.ListableBeanFactory#getBeansOfType(Class)` | `flint.beans.factory.ListableBeanFactory.getBeansOfType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.ListableBeanFactory#getBeansOfType(Class,boolean,boolean)` | `flint.beans.factory.ListableBeanFactory.getBeansOfType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.ListableBeanFactory#getBeansWithAnnotation(Class)` | `flint.beans.factory.ListableBeanFactory.getBeansWithAnnotation` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -9769,7 +9765,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aot | 4 | 0 |
 | org.springframework.aot.nativex | 8 | 0 |
 | org.springframework.beans | 334 | 0 |
-| org.springframework.beans.factory | 126 | 0 |
+| org.springframework.beans.factory | 132 | 0 |
 | org.springframework.beans.factory.annotation | 105 | 0 |
 | org.springframework.beans.factory.aot | 123 | 0 |
 | org.springframework.beans.factory.config | 486 | 0 |
@@ -10634,6 +10630,12 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
 | framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,boolean,ExpressionFactory)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
 | framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(Set,Locale,LocaleResolver,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.springframework.beans.factory.BeanFactory#getBean(String,ParameterizedTypeReference)` | 2 | Requires runtime ParameterizedTypeReference matching for captured generic types. |
+| framework | `org.springframework.beans.factory.BeanFactory#getBeanProvider(ParameterizedTypeReference)` | 2 | Requires runtime ParameterizedTypeReference matching for captured generic types. |
+| framework | `org.springframework.beans.factory.BeanFactory#getBeanProvider(ResolvableType)` | 2 | Requires runtime ResolvableType matching. |
+| framework | `org.springframework.beans.factory.BeanFactory#isTypeMatch(String,ResolvableType)` | 2 | Requires runtime ResolvableType matching. |
+| framework | `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(ResolvableType)` | 2 | Requires runtime ResolvableType matching. |
+| framework | `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(ResolvableType,boolean,boolean)` | 2 | Requires runtime ResolvableType matching. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(ResolvableType)` | 2 | Requires ResolvableType, which is classified as runtime reflection. |
 | framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(String,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
