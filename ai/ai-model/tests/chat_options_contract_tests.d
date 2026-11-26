@@ -16,9 +16,11 @@
 
 module chat_options_contract_tests;
 
-import flint.ai.chat.prompt : ChatOptions;
+import flint.ai.chat.prompt : ChatOptions, DefaultChatOptions;
 import flint.ai.model : ModelOptions;
-import flint.java.util : List;
+import flint.java.lang : NullPointerException, UnsupportedOperationException;
+import flint.java.util : ArrayList, List;
+import std.exception : collectException;
 import std.typecons : Nullable;
 
 @safe:
@@ -96,4 +98,56 @@ unittest
     auto empty = StopSequences.of();
     chat = new FixtureOptions(empty);
     assert(chat.getStopSequences() is empty && chat.getStopSequences().isEmpty());
+}
+
+private final class SnapshotOptions : DefaultChatOptions
+{
+    this(StopSequences stops)
+    {
+        super(ModelName(""), Ratio.init, Count(128), Ratio(-0.5), stops, Ratio(0.0), Count(0), Ratio(0.875));
+    }
+}
+
+@("default options preserve settings and snapshot stop sequences in order")
+unittest
+{
+    auto stops = new ArrayList!string();
+    stops.add("β");
+    stops.add("end");
+    stops.add("β");
+    stops.add("");
+
+    ChatOptions options = new SnapshotOptions(stops);
+    assert(!options.getModel().isNull && options.getModel().get().length == 0);
+    assert(options.getFrequencyPenalty().isNull);
+    assert(options.getMaxTokens().get() == 128);
+    assert(options.getPresencePenalty().get() == -0.5);
+    assert(options.getTemperature().get() == 0.0);
+    assert(options.getTopK().get() == 0);
+    assert(options.getTopP().get() == 0.875);
+
+    stops.set(0, "changed");
+    stops.add("new");
+    auto snapshot = options.getStopSequences();
+    assert(snapshot.size() == 4);
+    assert(snapshot.get(0) == "β" && snapshot.get(1) == "end" && snapshot.get(2) == "β");
+    assert(snapshot.get(3) !is null && snapshot.get(3).length == 0);
+    assert(collectException!UnsupportedOperationException(snapshot.add("invalid")) !is null);
+}
+
+@("default options distinguish absent and present empty stop lists")
+unittest
+{
+    assert((new SnapshotOptions(null)).getStopSequences() is null);
+    auto empty = (new SnapshotOptions(StopSequences.of())).getStopSequences();
+    assert(empty !is null && empty.isEmpty());
+}
+
+@("default options reject a null stop element")
+unittest
+{
+    auto stops = new ArrayList!string();
+    stops.add("");
+    stops.add(null);
+    assert(collectException!NullPointerException(new SnapshotOptions(stops)) !is null);
 }
