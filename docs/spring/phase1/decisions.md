@@ -1049,3 +1049,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Deferred counts only shrink.**
   - **api-coverage seeds the newly pinned upstreams:** spring-ai, Thymeleaf and Jakarta Persistence.
   - The porting guide, step 5, now says this.
+- 2026-11-26 00:55Z, owner: **ADR-034 (JPA engine) is approved as proposed.** It ports Hibernate ORM 7.1.0 (02eb1ac3), with build-time mappings, accessors, proxies and JPQL.
+  - **Limits:** a JPA petclinic-rest variant runs within 1.05× of the `JdbcTemplate` version's instructions and p99, keeps at least 0.95× its throughput, and adds no GC allocation for engine bookkeeping.
+  - **Scope:** PostgreSQL first.
+  - **Landing:** engine code lands after data-access and flint-aot agree the JDBC, transaction and AOT contracts. sol-jpa marks the ADR Accepted.
+  - **Still open:** classic PetClinic's Go comparator needs its own owner decision later.
+- 2026-11-26 00:55Z, owner: **context's linked-bytes cap rises to 1,196,032 B,** from 966,656 B, which is the measured 1,086,712 B at b29e4cba plus 10%, rounded up to 4 KiB.
+  - **Why:** context was 12% over its 2026-11-23 cap before any Phase 2 code, so every sol-context slice failed the budgets step.
+  - **The cap only goes down from here.** framework-core looks for recoverable growth, and lowers the cap to match what it recovers.
+  - **The commit that raises the cap** carries `Budget-Raise-Approved: <this entry's commit>`.
