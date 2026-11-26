@@ -192,7 +192,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | micrometer-core@1.18.0 | 130 | 123 | 0 | 2,137 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 3 | 7 | 0 | 4,442 |
-| framework | micrometer-observation@1.18.0 | 42 | 34 | 0 | 236 |
+| framework | micrometer-observation@1.18.0 | 42 | 35 | 0 | 235 |
 | framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 16,240 |
 | framework | aspectj@1.9.27 | 19 | 62 | 191 | 38 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
@@ -944,6 +944,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.observation.ObservationHandler#onScopeReset(T)` | `flint.micrometer.observation.ObservationHandler.onScopeReset` | [R2](api-mapping.md#r2-annotations), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.observation.ObservationHandler#onStart(T)` | `flint.micrometer.observation.ObservationHandler.onStart` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.observation.ObservationHandler#onStop(T)` | `flint.micrometer.observation.ObservationHandler.onStop` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.observation.ObservationRegistry.ObservationConfig#observationConvention(GlobalObservationConvention)` | `flint.micrometer.observation.ObservationRegistry.ObservationConfig.observationConvention` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [D-MICROMETER-3](api-mapping.md#deviations) | Typed conventions keep their original identity. A retained support-predicate delegate is also accepted. |
 | `io.micrometer.observation.ObservationRegistry.ObservationConfig#observationFilter(ObservationFilter)` | `flint.micrometer.observation.ObservationRegistry.ObservationConfig.observationFilter` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) | A retained D delegate is also accepted. A null literal selects the same null registration as the interface overload. |
 | `io.micrometer.observation.ObservationRegistry.ObservationConfig#observationHandler(ObservationHandler)` | `flint.micrometer.observation.ObservationRegistry.ObservationConfig.observationHandler` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [D-MICROMETER-3](api-mapping.md#deviations) | Typed and retained delegate overloads register through an internal append hook. The registration snapshot preserves the original handler and its support predicate. |
 | `io.micrometer.observation.ObservationRegistry.ObservationConfig#observationPredicate(ObservationPredicate)` | `flint.micrometer.observation.ObservationRegistry.ObservationConfig.observationPredicate` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) | A retained D delegate is also accepted. A null literal selects the same null registration as the interface overload. |
@@ -9120,7 +9121,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.step | 72 | 0 |
 | io.micrometer.core.instrument.util | 37 | 0 |
 | io.micrometer.core.ipc.http | 56 | 0 |
-| io.micrometer.observation | 131 | 0 |
+| io.micrometer.observation | 130 | 0 |
 | io.micrometer.observation.annotation | 12 | 0 |
 | io.micrometer.observation.aop | 17 | 0 |
 | io.micrometer.observation.contextpropagation | 14 | 0 |

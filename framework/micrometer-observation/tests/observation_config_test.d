@@ -19,8 +19,8 @@ module flint.micrometer.observation_config_test;
 
 import flint.java.lang : NullPointerException;
 import flint.micrometer.common : KeyValue;
-import flint.micrometer.observation : Observation, ObservationFilter, ObservationHandler,
-    ObservationPredicate, ObservationRegistry;
+import flint.micrometer.observation : GlobalObservationConvention, Observation, ObservationConvention,
+    ObservationFilter, ObservationHandler, ObservationPredicate, ObservationRegistry;
 import std.exception : assertThrown;
 import std.typecons : Nullable;
 
@@ -207,4 +207,87 @@ unittest
         assertThrown!NullPointerException(handler.supportsContext(null));
     }
     assert(count == 3);
+}
+
+private alias TimedConventionContract = ObservationConvention!TimedContext;
+private alias DefaultConventionContract = ObservationConvention!(Observation.Context);
+
+private final class TimedGlobalConvention : GlobalObservationConvention!TimedContext
+{
+    override bool supportsContext(Observation.Context context)
+    {
+        return cast(TimedContext) context !is null;
+    }
+
+    mixin TimedConventionContract.Defaults;
+}
+
+private final class GeneralGlobalConvention : GlobalObservationConvention!(Observation.Context)
+{
+    override bool supportsContext(Observation.Context context)
+    {
+        return true;
+    }
+
+    mixin DefaultConventionContract.Defaults;
+}
+
+@("the first matching global convention wins across context specializations")
+unittest
+{
+    auto config = new Config;
+    auto timed = new TimedGlobalConvention;
+    auto nextTimed = new TimedGlobalConvention;
+    auto general = new GeneralGlobalConvention;
+    config.observationConvention(timed).observationConvention(nextTimed);
+    assert(config.observationConvention(general) is config);
+    DefaultConventionContract fallback = DefaultConventionContract.EMPTY;
+
+    assert(config.getObservationConvention(new TimedContext, fallback) is timed);
+    assert(config.getObservationConvention(new Observation.Context, fallback) is general);
+    assert(config.getObservationConvention(new TimedContext, cast(DefaultConventionContract) null) is timed);
+    assert(config.getObservationHandlers().empty);
+}
+
+@("a nonmatching registration uses the exact default convention or rejects a missing default")
+unittest
+{
+    auto config = new Config;
+    config.observationConvention(new TimedGlobalConvention);
+    auto context = new Observation.Context;
+    DefaultConventionContract fallback = DefaultConventionContract.EMPTY;
+    assert(config.getObservationConvention(context, fallback) is cast(Object) fallback);
+    assertThrown!NullPointerException(config.getObservationConvention(context, cast(DefaultConventionContract) null));
+}
+
+@("conventions registered during selection appear on the next lookup")
+unittest
+{
+    auto config = new Config;
+    auto later = new TimedGlobalConvention;
+    config.observationConvention((context) { config.observationConvention(later); return false; });
+    auto context = new TimedContext;
+    DefaultConventionContract fallback = DefaultConventionContract.EMPTY;
+    assert(config.getObservationConvention(context, fallback) is cast(Object) fallback);
+    assert(config.getObservationConvention(context, fallback) is later);
+}
+
+@("delegate conventions can win and null conventions fail only when reached")
+unittest
+{
+    auto config = new Config;
+    config.observationConvention((context) => context is null);
+    config.observationConvention(null);
+    auto selected = config.getObservationConvention(null, cast(DefaultConventionContract) null);
+    assert(selected !is null);
+    assert(config.getObservationConvention(null, cast(DefaultConventionContract) null) is selected);
+    assertThrown!NullPointerException(config.getObservationConvention(new Observation.Context,
+            DefaultConventionContract.EMPTY));
+
+    alias Supports = bool delegate(Observation.Context) @safe;
+    foreach (registered; [
+        new Config().observationConvention(cast(GlobalObservationConvention!TimedContext) null),
+        new Config().observationConvention(cast(Supports) null)
+    ])
+        assertThrown!NullPointerException(registered.getObservationConvention(null, DefaultConventionContract.EMPTY));
 }

@@ -1,5 +1,5 @@
 {
  "id": "D-MICROMETER-3",
- "deviation": "The typed `ObservationConfig.observationHandler` overload is a D template. Registry implementations in the module override its erased append hook.",
- "reason": "Java erases the context type of `ObservationHandler<?>`. D preserves the handler specialization at the call site and binds its support callback before erasing registration."
+ "deviation": "The typed `ObservationConfig.observationHandler` and `observationConvention` overloads are D templates. Registry implementations in the module override their erased append hooks.",
+ "reason": "Java erases the context types of `ObservationHandler<?>` and `GlobalObservationConvention<?>`. D preserves each specialization at the call site and binds its support callback before erasing registration."
 }

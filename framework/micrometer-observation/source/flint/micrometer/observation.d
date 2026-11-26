@@ -474,26 +474,26 @@ interface ObservationConvention(T) : KeyValuesConvention if (isObservationContex
     Nullable!string getContextualName(T context);
 
     /// Java defaults for an implementation that only specifies when it applies (R3).
-    mixin template Defaults(alias Context = T)
+    mixin template Defaults(alias Context = T, alias Values = KeyValues, alias Name = Nullable!string)
     {
-        override KeyValues getLowCardinalityKeyValues(Context context)
+        override Values getLowCardinalityKeyValues(Context context)
         {
-            return KeyValues.empty();
+            return Values.empty();
         }
 
-        override KeyValues getHighCardinalityKeyValues(Context context)
+        override Values getHighCardinalityKeyValues(Context context)
         {
-            return KeyValues.empty();
+            return Values.empty();
         }
 
-        override Nullable!string getName()
+        override Name getName()
         {
-            return Nullable!string.init;
+            return Name.init;
         }
 
-        override Nullable!string getContextualName(Context context)
+        override Name getContextualName(Context context)
         {
-            return Nullable!string.init;
+            return Name.init;
         }
     }
 }
@@ -585,7 +585,7 @@ interface ObservationHandler(T) if (isObservationContext!T)
     }
 }
 
-private alias HandlerSupport = bool delegate(Observation.Context) @safe;
+private alias ContextSupport = bool delegate(Observation.Context) @safe;
 private alias PredicateCallback = bool delegate(string, Observation.Context) @safe;
 private alias FilterCallback = Observation.Context delegate(Observation.Context) @safe;
 
@@ -598,8 +598,8 @@ interface ObservationRegistry
         private Mutex gate;
         private ObservationPredicate[] predicates;
         private ObservationFilter[] filters;
-        private RegisteredObservationHandler firstHandler;
-        private RegisteredObservationHandler lastHandler;
+        private ObservationRegistrations handlers;
+        private ObservationRegistrations conventions;
 
         /// Construct an empty registry configuration.
         this()
@@ -610,40 +610,34 @@ interface ObservationRegistry
         /// Register a handler with its declared context type.
         ObservationConfig observationHandler(T)(ObservationHandler!T handler)
         {
-            return appendHandler(new RegisteredObservationHandler(cast(Object) handler,
-                    handler is null ? null : &handler.supportsContext));
+            return appendHandler(new ObservationRegistration(cast(Object) handler, handler is null
+                    ? null : &handler.supportsContext));
         }
 
         /// Register a support predicate with default no-op handler callbacks (R9).
-        ObservationConfig observationHandler(HandlerSupport supportsContext)
+        ObservationConfig observationHandler(ContextSupport supportsContext)
         {
-            return appendHandler(new RegisteredObservationHandler(null, supportsContext));
+            return appendHandler(new ObservationRegistration(null, supportsContext));
         }
 
         /// Register a literal null with the same semantics as a null handler.
         final ObservationConfig observationHandler(typeof(null))
         {
-            return observationHandler(cast(HandlerSupport) null);
+            return observationHandler(cast(ContextSupport) null);
         }
 
         // Allocate the adapter at registration, then publish one ordered entry.
-        protected ObservationConfig appendHandler(RegisteredObservationHandler handler)
+        protected ObservationConfig appendHandler(ObservationRegistration handler)
         {
             synchronized (gate)
-            {
-                if (lastHandler is null)
-                    firstHandler = handler;
-                else
-                    lastHandler.next = handler;
-                lastHandler = handler;
-            }
+                handlers.append(handler);
             return this;
         }
 
-        package(flint.micrometer) ObservationHandlerSnapshot getObservationHandlers()
+        package(flint.micrometer) ObservationRegistrationSnapshot getObservationHandlers()
         {
             synchronized (gate)
-                return ObservationHandlerSnapshot(firstHandler, lastHandler);
+                return handlers.snapshot();
         }
 
         /// Register a predicate after the predicates already configured.
@@ -686,6 +680,54 @@ interface ObservationRegistry
             return observationFilter(cast(ObservationFilter) null);
         }
 
+        /// Register a global convention with its declared context type.
+        ObservationConfig observationConvention(T)(GlobalObservationConvention!T convention)
+        {
+            return appendConvention(new ObservationRegistration(cast(Object) convention,
+                    convention is null ? null : &convention.supportsContext));
+        }
+
+        /// Register a support predicate with default convention metadata (R9).
+        ObservationConfig observationConvention(ContextSupport supportsContext)
+        {
+            return appendConvention(new ObservationRegistration(null, supportsContext));
+        }
+
+        /// Register a literal null with the same semantics as a null convention.
+        final ObservationConfig observationConvention(typeof(null))
+        {
+            return observationConvention(cast(ContextSupport) null);
+        }
+
+        protected ObservationConfig appendConvention(ObservationRegistration convention)
+        {
+            synchronized (gate)
+                conventions.append(convention);
+            return this;
+        }
+
+        // Preserve the selected specialization's identity across D's unrelated generic instantiations.
+        package(flint.micrometer) Object getObservationConvention(T)(Observation.Context context,
+                ObservationConvention!T defaultConvention)
+        {
+            return selectObservationConvention(context, cast(Object) defaultConvention);
+        }
+
+        private Object selectObservationConvention(Observation.Context context, Object defaultConvention)
+        {
+            ObservationRegistrationSnapshot snapshot;
+            synchronized (gate)
+                snapshot = conventions.snapshot();
+
+            foreach (registration; snapshot)
+                if (registration.supportsContext(context, "observationConvention"))
+                    return registration.source();
+
+            if (defaultConvention is null)
+                throw new NullPointerException("Default ObservationConvention must not be null");
+            return defaultConvention;
+        }
+
         package(flint.micrometer) bool isObservationEnabled(Nullable!string name, Observation.Context context)
         {
             ObservationPredicate[] snapshot;
@@ -716,18 +758,39 @@ interface ObservationRegistry
     }
 }
 
-// Readers hold the first and last entries together, and never read the last entry's mutable link.
-private struct ObservationHandlerSnapshot
+// Owned by an ObservationConfig and accessed under its registration gate.
+private struct ObservationRegistrations
 {
-    private RegisteredObservationHandler current;
-    private RegisteredObservationHandler last;
+    private ObservationRegistration first;
+    private ObservationRegistration last;
+
+    void append(ObservationRegistration registration) nothrow @nogc
+    {
+        if (last is null)
+            first = registration;
+        else
+            last.next = registration;
+        last = registration;
+    }
+
+    ObservationRegistrationSnapshot snapshot() nothrow @nogc
+    {
+        return ObservationRegistrationSnapshot(first, last);
+    }
+}
+
+// Readers hold the first and last entries together, and never read the last entry's mutable link.
+private struct ObservationRegistrationSnapshot
+{
+    private ObservationRegistration current;
+    private ObservationRegistration last;
 
     @property bool empty() const nothrow @nogc
     {
         return current is null;
     }
 
-    @property RegisteredObservationHandler front() nothrow @nogc
+    @property ObservationRegistration front() nothrow @nogc
     {
         return current;
     }
@@ -738,15 +801,15 @@ private struct ObservationHandlerSnapshot
     }
 }
 
-private final class RegisteredObservationHandler
+private final class ObservationRegistration
 {
-    private RegisteredObservationHandler next;
-    private Object handler;
-    private HandlerSupport supports;
+    private ObservationRegistration next;
+    private Object original;
+    private ContextSupport supports;
 
-    this(Object handler, HandlerSupport supports)
+    this(Object original, ContextSupport supports)
     {
-        this.handler = handler;
+        this.original = original;
         this.supports = supports;
     }
 
@@ -754,13 +817,13 @@ private final class RegisteredObservationHandler
     {
         if (supports is null)
             return null;
-        return handler is null ? this : handler;
+        return original is null ? this : original;
     }
 
-    bool supportsContext(Observation.Context context)
+    bool supportsContext(Observation.Context context, string registrationName = "observationHandler")
     {
         if (supports is null)
-            throw new NullPointerException("observationHandler");
+            throw new NullPointerException(registrationName);
         return supports(context);
     }
 }
