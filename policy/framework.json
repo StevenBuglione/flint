@@ -1348,6 +1348,7 @@
    "also": [
     "flint.ai.chat.messages",
     "flint.ai.chat.metadata",
+    "flint.ai.chat.prompt",
     "flint.ai.converter",
     "flint.ai.embedding",
     "flint.ai.image",

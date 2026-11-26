@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 201 | 340 | 0 | 15,255 |
+| ai | spring-ai@v2.1.0 | 202 | 348 | 0 | 15,246 |
 | boot | spring-boot@v4.2.0 | 44 | 48 | 2,133 | 13,378 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,517 | 1,402 | 4,870 | 30,045 |
@@ -294,6 +294,19 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.metadata.Usage#getNativeUsage()` | `flint.ai.chat.metadata.Usage.getNativeUsage` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.metadata.Usage#getPromptTokens()` | `flint.ai.chat.metadata.Usage.getPromptTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.metadata.Usage#getTotalTokens()` | `flint.ai.chat.metadata.Usage.getTotalTokens` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+
+#### org.springframework.ai.chat.prompt
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.chat.prompt.ChatOptions#getFrequencyPenalty()` | `flint.ai.chat.prompt.ChatOptions.getFrequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#getMaxTokens()` | `flint.ai.chat.prompt.ChatOptions.getMaxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#getModel()` | `flint.ai.chat.prompt.ChatOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#getPresencePenalty()` | `flint.ai.chat.prompt.ChatOptions.getPresencePenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#getStopSequences()` | `flint.ai.chat.prompt.ChatOptions.getStopSequences` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#getTemperature()` | `flint.ai.chat.prompt.ChatOptions.getTemperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#getTopK()` | `flint.ai.chat.prompt.ChatOptions.getTopK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#getTopP()` | `flint.ai.chat.prompt.ChatOptions.getTopP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.ai.content
 
@@ -8645,7 +8658,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.metadata | 76 | 0 |
 | org.springframework.ai.chat.model | 59 | 0 |
 | org.springframework.ai.chat.observation | 73 | 0 |
-| org.springframework.ai.chat.prompt | 165 | 0 |
+| org.springframework.ai.chat.prompt | 156 | 0 |
 | org.springframework.ai.chroma.vectorstore | 0 | 128 |
 | org.springframework.ai.chroma.vectorstore.common | 0 | 5 |
 | org.springframework.ai.content | 21 | 0 |
@@ -10393,6 +10406,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 
 | Repo | Java | Phase | Reason |
 | --- | --- | --- | --- |
+| ai | `org.springframework.ai.chat.prompt.ChatOptions#builder()` | 2 | Requires the default chat options builder and its self-typed result. |
+| ai | `org.springframework.ai.chat.prompt.ChatOptions#mutate()` | 2 | Requires a builder that can preserve the concrete chat option settings. |
+| ai | `org.springframework.ai.chat.prompt.ChatOptions.Builder` | 2 | Requires the self-typed fluent builder contract and its implementations. |
 | ai | `org.springframework.ai.embedding.Embedding#<init>(float[],Integer)` | 2 | Requires the shared EmbeddingResultMetadata.EMPTY instance. |
 | ai | `org.springframework.ai.embedding.EmbeddingResultMetadata#EMPTY` | 2 | Requires a reviewed engine-aot helper to preserve shared metadata identity safely. |
 | boot | `org.springframework.boot.autoconfigure.AutoConfiguration#afterName` | 2 | Known defect. AOT ignores the direct afterName field when sorting auto-configurations. |
