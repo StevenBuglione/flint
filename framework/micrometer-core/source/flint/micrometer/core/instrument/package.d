@@ -853,6 +853,60 @@ interface Counter : Meter
 /// Count recorded durations and report their total and recent maximum.
 interface Timer : Meter
 {
+    /// Configure a timer before registering it.
+    static Builder builder(string name)
+    {
+        return Builder(name);
+    }
+
+    /// Register a timer with a name, dimensions and optional description.
+    static struct Builder
+    {
+        private string name;
+        private Tags dimensions;
+        private NullableString description_;
+
+        private this(string name)
+        {
+            this.name = name;
+            dimensions = Tags.empty();
+        }
+
+        /// Add alternating tag keys and values.
+        ref Builder tags(scope const(string)[] keyValues...) return
+        {
+            dimensions = dimensions.and(keyValues);
+            return this;
+        }
+
+        /// Add dimensions. Later entries override the same key.
+        ref Builder tags(TagIterable tags) return
+        {
+            dimensions = dimensions.and(tags);
+            return this;
+        }
+
+        /// Add or replace one dimension.
+        ref Builder tag(string key, string value) return
+        {
+            dimensions = dimensions.and(key, value);
+            return this;
+        }
+
+        /// Set the description of the registered timer.
+        ref Builder description(NullableString description) return
+        {
+            description_ = description;
+            return this;
+        }
+
+        /// Register the timer using the registry's base time unit.
+        Timer register(MeterRegistry registry)
+        {
+            return registry.timer(new Meter.Id(name, dimensions, NullableString.init, description_, Type.TIMER));
+        }
+    }
+
     /// Record an event. Negative durations are ignored.
     void record(long amount, TimeUnit unit) nothrow @nogc;
 
@@ -965,7 +1019,11 @@ abstract class MeterRegistry
     {
         if (tags is null)
             tags = Tags.empty();
-        auto id = new Meter.Id(name, tags, NullableString.init, NullableString.init, Meter.Type.TIMER);
+        return timer(new Meter.Id(name, tags, NullableString.init, NullableString.init, Meter.Type.TIMER));
+    }
+
+    private Timer timer(Meter.Id id)
+    {
         return cast(Timer) registerMeter(id);
     }
 

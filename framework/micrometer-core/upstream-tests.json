@@ -108,8 +108,16 @@
       "status": "deferred"
     },
     "io/micrometer/core/instrument/MissingHdrHistogramTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/timer_builder_test.d",
+      "methods": {
+        "ported": [
+          "doesNotThrowAnyExceptionWhenPercentilesAreNotUsed"
+        ],
+        "skipped": {
+          "throwsClassNotFoundExceptionWhenPercentilesAreUsed": "Deferred with percentiles and their optional histogram implementation."
+        }
+      },
+      "status": "partial"
     },
     "io/micrometer/core/instrument/MissingLatencyUtilsTest.java": {
       "phase": "2",

@@ -3129,7 +3129,6 @@
       "io/micrometer/core/instrument/MeterRegistryLoggingTest.java",
       "io/micrometer/core/instrument/MeterTest.java",
       "io/micrometer/core/instrument/MetricsTest.java",
-      "io/micrometer/core/instrument/MissingHdrHistogramTest.java",
       "io/micrometer/core/instrument/MissingLatencyUtilsTest.java",
       "io/micrometer/core/instrument/MultiGaugeTest.java",
       "io/micrometer/core/instrument/TimeGaugeTest.java",
