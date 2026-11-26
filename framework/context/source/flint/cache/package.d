@@ -6,8 +6,7 @@
 module flint.cache;
 
 import flint.engine.aot.any : Any;
-import flint.engine.aot.name : typeNameOf;
-import flint.java.lang : ClassCastException, IllegalStateException, RuntimeException;
+import flint.java.lang : RuntimeException;
 import flint.java.util : Collection;
 import flint.java.util.concurrent.callable : Callable;
 
@@ -46,6 +45,9 @@ interface Cache
 
     private static T typedValue(T)(Any value, bool hasTypeToken)
     {
+        import flint.engine.aot.name : typeNameOf;
+        import flint.java.lang : ClassCastException, IllegalStateException;
+
         if (value.isNull())
             return T.init;
         bool matches = value.holds!T();
