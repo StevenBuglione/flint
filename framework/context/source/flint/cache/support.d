@@ -12,6 +12,7 @@ import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
 import flint.java.lang : IllegalArgumentException, JavaObject, javaHashCode, NullPointerException,
     UnsupportedOperationException;
 import flint.java.util : AbstractCollection, Collection, Iterator, NoSuchElementException, Set;
+import flint.java.util.concurrent.callable : Callable;
 
 @safe:
 
@@ -42,6 +43,12 @@ class NoOpCache : Cache
     T get(T)(Any key)
     {
         return (cast(Cache) this).get!T(key);
+    }
+
+    /// Read the value or call the typed loader on a miss (R9).
+    T get(T)(Any key, Callable!T valueLoader)
+    {
+        return (cast(Cache) this).get(key, valueLoader);
     }
 
     override ValueWrapper get(Any key) nothrow @nogc

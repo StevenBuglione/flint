@@ -797,7 +797,8 @@
     "engine-aot",
     "engine-reactor",
     "jakarta-validation",
-    "java"
+    "java",
+    "java-concurrent"
    ],
    "bench": {
     "fixture": "framework/context/bench",

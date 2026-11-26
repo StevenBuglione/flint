@@ -7,8 +7,9 @@ module flint.cache;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : typeNameOf;
-import flint.java.lang : IllegalStateException, RuntimeException;
+import flint.java.lang : ClassCastException, IllegalStateException, RuntimeException;
 import flint.java.util : Collection;
+import flint.java.util.concurrent.callable : Callable;
 
 @safe:
 
@@ -31,19 +32,32 @@ interface Cache
     T get(T)(Any key)
     {
         auto entry = get(key);
-        if (entry is null)
-            return T.init;
+        return entry is null ? T.init : typedValue!T(entry.get(), true);
+    }
 
-        auto value = entry.get();
+    /// Read the value or call the typed loader on a miss (R9).
+    T get(T)(Any key, Callable!T valueLoader)
+    {
+        scope Any delegate() @safe load;
+        if (valueLoader !is null)
+            load = () => Any.of(valueLoader.call());
+        return typedValue!T(get(key, load), false);
+    }
+
+    private static T typedValue(T)(Any value, bool hasTypeToken)
+    {
         if (value.isNull())
             return T.init;
+        bool matches = value.holds!T();
         static if (!is(T == class) && !is(T == interface) && !is(T == Any))
+            matches = matches && value.typeName() == typeNameOf!T;
+        if (!matches)
         {
-            if (value.typeName() != typeNameOf!T)
-                throw new IllegalStateException("Cached value is not of required type " ~ typeNameOf!T);
+            auto message = "Cached value is not of required type " ~ typeNameOf!T;
+            if (hasTypeToken)
+                throw new IllegalStateException(message);
+            throw new ClassCastException(message);
         }
-        if (!value.holds!T())
-            throw new IllegalStateException("Cached value is not of required type " ~ typeNameOf!T);
         return value.get!T();
     }
 

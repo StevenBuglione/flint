@@ -18,6 +18,7 @@ import flint.engine.aot.objects : objectEquals, objectToHash;
 import flint.engine.reactor : Reactor, RemoteWaker;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, NullPointerException;
 import flint.java.util : Collection;
+import flint.java.util.concurrent.callable : Callable;
 
 @safe:
 
@@ -68,6 +69,12 @@ class ConcurrentMapCache : Cache
     T get(T)(Any key)
     {
         return (cast(Cache) this).get!T(key);
+    }
+
+    /// Read the value or call the typed loader on a miss (R9).
+    T get(T)(Any key, Callable!T valueLoader)
+    {
+        return (cast(Cache) this).get(key, valueLoader);
     }
 
     override ValueWrapper get(Any key)
