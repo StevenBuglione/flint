@@ -63,6 +63,12 @@ class BigInteger : Number, Comparable!BigInteger
         this.sign = length ? sign : 0;
     }
 
+    /// Adopt package-owned magnitude storage without copying it.
+    package static BigInteger fromOwnedMagnitude(const(uint)[] words, int sign)
+    {
+        return new BigInteger(words, sign);
+    }
+
     /// Construct an integer from a signed 64-bit value.
     static BigInteger valueOf(long value) pure nothrow
     {
