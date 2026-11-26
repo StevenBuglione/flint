@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,098 | 253 | 1,871 | 15,199 |
+| framework | openjdk@21.0.13 | 1,095 | 253 | 1,871 | 15,202 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10036,7 +10036,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,913 | 0 |
+| java.util | 1,916 | 0 |
 | java.util.concurrent | 1,237 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -10996,6 +10996,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.util.IllegalFormatConversionException#<init>(char,Class)` | 2 | Flint currently accepts a string name. Java retains the argument Class and exposes it through getArgumentClass(). |
 | framework | `java.util.MissingFormatArgumentException#<init>(String)` | 2 | The current Flint constructor accepts null. Java throws NullPointerException for a null format specifier. |
+| framework | `java.util.Objects#requireNonNull(T,String)` | 2 | Java distinguishes an absent exception detail message from a present empty message. The R5 Nullable!string message parameter is missing. |
+| framework | `java.util.Objects#requireNonNull(T,Supplier)` | 2 | Java calls the message Supplier only for a null object. The Supplier overload is missing. |
+| framework | `java.util.Objects#requireNonNullElse(T,T)` | 2 | Java selects the fallback when the first boxed value is absent and throws NullPointerException when both values are absent. The current method ignores absence in an R5 Nullable payload. |
 | framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
 | framework | `java.util.UnknownFormatConversionException#<init>(String)` | 2 | The current Flint constructor accepts null. Java throws NullPointerException for a null conversion. |
 | framework | `org.hibernate.validator.HibernateValidator#buildValidatorFactory(ConfigurationState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
