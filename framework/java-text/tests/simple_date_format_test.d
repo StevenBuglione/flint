@@ -241,3 +241,40 @@ unittest
     assertThrown!NullPointerException(format.setLenient(true));
     assert(format.getCalendar() is null);
 }
+
+@("SimpleDateFormat: rejects null without changing the installed calendar")
+unittest
+{
+    import flint.java.lang : NullPointerException;
+    import flint.java.text : DateFormat;
+    import std.exception : assertThrown;
+
+    final class ObservedCalendar : GregorianCalendar
+    {
+        size_t writes;
+
+        this()
+        {
+            super(TimeZone.getTimeZone("UTC"));
+        }
+
+        override void setTimeInMillis(long millis)
+        {
+            ++writes;
+            super.setTimeInMillis(millis);
+        }
+    }
+
+    DateFormat format = new SimpleDateFormat("'day:'yyyy-MM-dd", Locale.US);
+    auto calendar = new ObservedCalendar;
+    format.setCalendar(calendar);
+    auto date = new Date(0);
+    const initialWrites = calendar.writes;
+    assert(format.format(date) == "day:1970-01-01");
+    assert(calendar.writes == initialWrites + 1 && calendar.getTimeInMillis() == 0);
+    assertThrown!NullPointerException(format.format(null));
+    assert(calendar.writes == initialWrites + 1 && format.getCalendar() is calendar);
+    format.setCalendar(null);
+    assertThrown!NullPointerException(format.format(date));
+    assert(format.getCalendar() is null);
+}
