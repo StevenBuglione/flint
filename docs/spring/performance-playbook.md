@@ -467,6 +467,8 @@ table through a dependency-free leaf. The matched venus probes at
 The Java probe measured 129,496 O3 bytes, 122,144 Oz bytes and 4,440 templates
 in both builds. The isolated digit-leaf probe adds 704 O3 and 312 Oz loadable
 bytes. Both profiles pass the JDK link-closure audit.
+| B-62 | **Keep unsupported charset failures in a standalone Java I/O leaf.** A caller can throw and catch the checked exception using the existing IOException contract. | Stock LDC O3 and Oz probes on venus add 3,260 and 2,084 loadable bytes. The provider-equivalent module probe adds 3,228 loadable bytes and the DMD library and probe use 436 template instances. The first leaf and package ceilings are 3,551 bytes and 480 instances. | The standalone throw/catch probe, link closure and the typed exception tests. |
+| B-60 | **Resolve qualified bean names before requesting an instance.** The typed facade delegates to one name scan over existing bean definitions. Only the unique match is created. | Matched Beans module probe on venus, base `a3858a64f` and implementation `0f1843d82`. Both linked 257,478 incremental bytes. DMD template instances increased from 1,632 to 1,698, within the 3,000 cap. | Beans module size and template gates, DMD/LDC lookup tests, and a generated cache fixture using qualifier-only names. |
 
 ## 4. Measuring honestly
 

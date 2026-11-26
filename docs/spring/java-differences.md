@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,610 | 1,474 | 4,870 | 29,880 |
+| framework | spring-framework@v7.1.0 | 3,610 | 1,476 | 4,870 | 29,878 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2799,6 +2799,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(Class,int,String)` | `flint.beans.factory.NoUniqueBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.UnsatisfiedDependencyException#<init>(String,String,String,BeansException)` | `flint.beans.factory.UnsatisfiedDependencyException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads) | A typed null BeansException throws NullPointerException. |
 | `org.springframework.beans.factory.UnsatisfiedDependencyException#<init>(String,String,String,String)` | `flint.beans.factory.UnsatisfiedDependencyException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads) | Nullable!string.init selects the absent detail message. |
+
+#### org.springframework.beans.factory.annotation
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils` | `flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#qualifiedBeanOfType(BeanFactory,Class,String)` | `flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils.qualifiedBeanOfType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.beans.factory.config
 
@@ -10192,7 +10199,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aot.nativex | 8 | 0 |
 | org.springframework.beans | 334 | 0 |
 | org.springframework.beans.factory | 125 | 0 |
-| org.springframework.beans.factory.annotation | 105 | 0 |
+| org.springframework.beans.factory.annotation | 103 | 0 |
 | org.springframework.beans.factory.aot | 123 | 0 |
 | org.springframework.beans.factory.config | 486 | 0 |
 | org.springframework.beans.factory.parsing | 133 | 0 |
