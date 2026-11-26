@@ -1,6 +1,6 @@
 module flint.java.text.internal.decimal_digit_list_test;
 
-import flint.java.text.internal.decimaldigitlist : roundFixedHalfEven;
+import flint.java.text.internal.decimaldigitlist : FixedRoundingMode, roundFixed;
 
 @safe:
 
@@ -13,7 +13,7 @@ unittest
         char[17] storage;
         storage[0 .. decimal.length] = decimal;
         auto digits = storage[0 .. decimal.length];
-        const count = roundFixedHalfEven(digits, point, fraction, roundedUp, exact);
+        const count = roundFixed(digits, point, fraction, roundedUp, exact);
         assert(point == expectedPoint && digits[0 .. count] == expected);
     }
 
@@ -28,4 +28,29 @@ unittest
     check("9", -4, 3, false, true, -4, "");
     check("15000", 1, 3, false, true, 1, "15");
     check("", 0, 3, false, true, 0, "");
+}
+
+@("DigitList half-up and half-down distinguish exact and converted decimal ties")
+unittest
+{
+    static void check(scope const(char)[] decimal, int point, uint fraction, bool roundedUp, bool exact,
+            FixedRoundingMode mode, int expectedPoint, scope const(char)[] expected)
+    {
+        char[17] storage;
+        storage[0 .. decimal.length] = decimal;
+        auto digits = storage[0 .. decimal.length];
+        const count = roundFixed(digits, point, fraction, roundedUp, exact, mode);
+        assert(point == expectedPoint && digits[0 .. count] == expected);
+    }
+
+    const up = FixedRoundingMode.halfUp;
+    const down = FixedRoundingMode.halfDown;
+    check("125", 1, 1, false, true, up, 1, "13");
+    check("125", 1, 1, false, true, down, 1, "12");
+    check("2675", 1, 2, true, false, up, 1, "267");
+    check("2675", 1, 2, false, false, down, 1, "268");
+    check("9995", 2, 1, false, true, up, 3, "1");
+    check("5", -3, 3, false, true, down, -3, "");
+    check("50", -3, 3, false, true, down, -2, "1");
+    check("9", -4, 3, false, true, up, -4, "");
 }

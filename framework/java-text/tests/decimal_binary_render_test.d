@@ -200,3 +200,32 @@ unittest
     foreach (digit; output[2 .. required])
         assert(digit == '0');
 }
+
+@("Binary64 half-up and half-down preserve signed zeros and use general DigitList rounding")
+unittest
+{
+    import flint.java.text.internal.decimaldigitlist : FixedRoundingMode;
+
+    DecimalFixedPattern pattern;
+    assert(compileFixedDecimalPattern("0", pattern) == DecimalCompileStatus.accepted);
+    DecimalSymbolData symbols;
+    char[24] output;
+    size_t required;
+
+    assert(tryRenderDecimalDouble(0x3fd0_0000_0000_0000, -2, pattern, symbols, output[], required,
+            FixedRoundingMode.halfUp));
+    assert(output[0 .. required] == "-1");
+    assert(tryRenderDecimalDouble(0x3fd0_0000_0000_0000, -2, pattern, symbols, output[], required,
+            FixedRoundingMode.halfDown));
+    assert(output[0 .. required] == "-0");
+
+    assert(compileFixedDecimalPattern("#,##0.###", pattern) == DecimalCompileStatus.accepted);
+    assert(tryRenderDecimalDouble(0x3f40_624d_d2f1_a9fc, pattern, symbols, output[], required));
+    assert(output[0 .. required] == "0.001");
+    assert(tryRenderDecimalDouble(0x3f40_624d_d2f1_a9fc, pattern, symbols, output[], required,
+            FixedRoundingMode.halfUp));
+    assert(output[0 .. required] == "0.001");
+    assert(tryRenderDecimalDouble(0x3fb0_0000_0000_0000, pattern, symbols, output[], required,
+            FixedRoundingMode.halfUp));
+    assert(output[0 .. required] == "0.063");
+}

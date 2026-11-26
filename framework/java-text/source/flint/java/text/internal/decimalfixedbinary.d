@@ -4,6 +4,7 @@ module flint.java.text.internal.decimalfixedbinary;
 
 import flint.java.text.internal.decimalfixed : DecimalAffixes, DecimalFixedPattern,
     multiplyUnsignedWord, primitiveFractionWidth, renderFixedDigits, writeUnsignedDigits;
+import flint.java.text.internal.decimaldigitlist : FixedRoundingMode;
 import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData;
 
 @safe:
@@ -12,25 +13,27 @@ package(flint.java.text):
 
 /// Uses the multiplier implied by the fixed-point pattern.
 pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, ref scope const DecimalFixedPattern pattern,
-        ref scope const DecimalSymbolData symbols, scope char[] output, out size_t required)
+        ref scope const DecimalSymbolData symbols,
+        scope char[] output, out size_t required, FixedRoundingMode mode = FixedRoundingMode.halfEven)
 {
     if (pattern.scale != 0 && pattern.scale != 2 && pattern.scale != 3)
         return false;
     const multiplier = pattern.scale == 0 ? 1 : (pattern.scale == 2 ? 100 : 1000);
-    return tryRenderDecimalDouble(bits, multiplier, pattern, symbols, output, required);
+    return tryRenderDecimalDouble(bits, multiplier, pattern, symbols, output, required, mode);
 }
 
 /// Uses a resolved Java multiplier while preserving the pattern's affixes.
 /// A successful call reports bytes required. A short buffer or unsupported value is untouched.
 pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref scope const DecimalFixedPattern pattern,
-        ref scope const DecimalSymbolData symbols, scope char[] output, out size_t required)
+        ref scope const DecimalSymbolData symbols, scope char[] output, out size_t required,
+        FixedRoundingMode mode = FixedRoundingMode.halfEven)
 {
     import flint.java.text.internal.binarydecimal : BinaryDecimal;
     import flint.java.text.internal.decimaldigitlist : tryFixedBinaryDecimal;
 
     if (multiplier != 1)
         bits = scaleBinary(bits, multiplier);
-    else if (usesGroupedFastPath(bits, pattern))
+    else if (mode == FixedRoundingMode.halfEven && usesGroupedFastPath(bits, pattern))
     {
         required = renderGroupedFast(bits, pattern, symbols, output);
         return true;
@@ -43,7 +46,7 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref s
     }
 
     BinaryDecimal converted;
-    if (!tryFixedBinaryDecimal(bits, primitiveFractionWidth(pattern.maximumFractionDigits), converted))
+    if (!tryFixedBinaryDecimal(bits, primitiveFractionWidth(pattern.maximumFractionDigits), converted, mode))
         return false;
 
     const decimalAt = converted.count != 0 ? converted.decimalAt : 0;
