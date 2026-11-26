@@ -38,6 +38,13 @@
           "flint.java.util.zip.data.crc32c"
         ]
       }
+    },
+    "flint.java.util.zip.dataformatexception": {
+      "catch": {
+        "source": "closure/dataformatexception.d",
+        "leaves": [],
+        "data": []
+      }
     }
   }
 }

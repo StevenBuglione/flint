@@ -1617,6 +1617,8 @@
     "link|java-util|flint.java.util.uuid|random|Oz|undeclared module records flint.java.util.calendar",
     "link|java-util|flint.java.util.uuid|random|Oz|undeclared module records flint.java.util.date",
     "link|java-util|flint.java.util.uuid|random|Oz|undeclared module records flint.java.util.timezone",
+    "link|java-zip|flint.java.util.zip.dataformatexception|catch|O3|undeclared module records flint.java.util.zip.checksum",
+    "link|java-zip|flint.java.util.zip.dataformatexception|catch|Oz|undeclared module records flint.java.util.zip.checksum",
     "link|java|flint.java.character|character-ascii-lower|O3|undeclared module records flint.java.lang",
     "link|java|flint.java.character|character-ascii-lower|O3|undeclared module records flint.java.sql",
     "link|java|flint.java.character|character-ascii-lower|O3|undeclared module records flint.java.text.simpledateformat",
