@@ -2498,7 +2498,6 @@
       "tools/jackson/core/unittest/read/LongName1516Test.java",
       "tools/jackson/core/unittest/read/NextNameParserTest.java",
       "tools/jackson/core/unittest/read/NextNameWithMatcherTest.java",
-      "tools/jackson/core/unittest/read/NextXxxAccessTest.java",
       "tools/jackson/core/unittest/read/NonStandardAllowRSTest.java",
       "tools/jackson/core/unittest/read/NonStandardAposQuotedNamesTest.java",
       "tools/jackson/core/unittest/read/NonStandardJsonReadFeaturesTest.java",

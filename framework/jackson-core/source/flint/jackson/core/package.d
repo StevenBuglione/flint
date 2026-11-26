@@ -1447,6 +1447,18 @@ abstract class JsonParser
         return nextToken() == JsonToken.VALUE_STRING ? getString() : null;
     }
 
+    /// Advance once and return an integer value, or the default for any other token.
+    int nextIntValue(int defaultValue)
+    {
+        return nextToken() == JsonToken.VALUE_NUMBER_INT ? getIntValue() : defaultValue;
+    }
+
+    /// Advance once and return a long integer value, or the default for any other token.
+    long nextLongValue(long defaultValue)
+    {
+        return nextToken() == JsonToken.VALUE_NUMBER_INT ? getLongValue() : defaultValue;
+    }
+
     /// Skip the children of the current START_OBJECT or START_ARRAY, leaving the parser on the matching end.
     abstract JsonParser skipChildren();
 
