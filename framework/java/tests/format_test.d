@@ -215,3 +215,21 @@ unittest
     assert(tail.getFormatSpecifier() == "%-9$7.0s");
     assert(String.format("%2$s %s %<s %s", "a", "b") == "b a a b");
 }
+
+@("String.format reports Java's character code-point and type diagnostics")
+unittest
+{
+    import flint.java.util.formatter : IllegalFormatCodePointException;
+    import std.exception : collectException;
+
+    const negative = collectException!IllegalFormatCodePointException(String.format("%c", cast(byte)-1));
+    assert(negative.getCodePoint() == -1 && negative.getMessage() == "Code point = 0xffffffff");
+    const tooLarge = collectException!IllegalFormatCodePointException(String.format("%c", 0x110000));
+    assert(tooLarge.getCodePoint() == 0x110000 && tooLarge.getMessage() == "Code point = 0x110000");
+    assert((new IllegalFormatCodePointException(int.min)).getMessage() == "Code point = 0x80000000");
+    const longArgument = collectException!IllegalFormatConversionException(String.format("%c", 65L));
+    assert(longArgument.getMessage() == "c != java.lang.Long");
+    assert(String.format("[%3c][%3c]", cast(wchar) 0xd800, 0xdfff) == "[  \uFFFD][  \uFFFD]");
+    assert(String.format("[%3c]", 0x1f600) == "[ 😀]");
+    assert(String.format("%c", 65u) == "A");
+}
