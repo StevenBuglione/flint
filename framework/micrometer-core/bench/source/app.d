@@ -98,6 +98,15 @@ private bool verifySample(Timer timer, MockClock clock)
     return snapshot.count() == 1 && snapshot.total() == elapsed && snapshot.max() == elapsed;
 }
 
+private bool verifySummary(SimpleMeterRegistry registry)
+{
+    auto summary = registry.summary("response.size");
+    summary.record(5.25);
+    summary.record(1.25);
+    auto snapshot = summary.takeSnapshot();
+    return summary.mean() == 3.25 && snapshot.count() == 2 && snapshot.total() == 6.5 && snapshot.max() == 5.25;
+}
+
 void main(string[] args)
 {
     string region = args.length > 1 ? args[1] : "west";
@@ -119,6 +128,8 @@ void main(string[] args)
     if (!verifyWrappers(timer, callable, supplier, region))
         return;
     if (!verifyDistribution(clock))
+        return;
+    if (!verifySummary(registry))
         return;
     foreach (character; tags.toString())
         fputc(character, stdout);

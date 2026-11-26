@@ -622,8 +622,19 @@
       "status": "deferred"
     },
     "io/micrometer/core/instrument/noop/NoopDistributionSummaryTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/distribution_summary_test.d",
+      "methods": {
+        "ported": [
+          "returnsCountAsZero",
+          "returnsEmptySnapshot",
+          "returnsMaxAsZero",
+          "returnsTotalAmountAsZero"
+        ],
+        "skipped": {
+          "returnsId": "Deferred as a direct test of the public NoopDistributionSummary type."
+        }
+      },
+      "status": "partial"
     },
     "io/micrometer/core/instrument/noop/NoopFunctionCounterTest.java": {
       "phase": "2",

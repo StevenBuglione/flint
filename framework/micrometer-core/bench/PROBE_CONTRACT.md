@@ -12,7 +12,7 @@ distribution configuration with the defaults and checks that the configured
 maximum decays on schedule. It checks unit conversion and diagnostic text for
 bucket values, percentile values and the empty snapshot from a no-op histogram
 before writing the formatted set. It also checks fractional unit conversions
-through TimeUtils.
+through TimeUtils and checks a cumulative summary with two fractional amounts.
 The baseline
 writes the same line directly. Both use the first
 command-line argument as the region and default to `west`.

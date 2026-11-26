@@ -25,6 +25,8 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Clock.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/MockClock.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Timer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/DistributionSummary.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopDistributionSummary.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/HistogramSupport.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
 // Modified by the Flint authors.
@@ -878,6 +880,49 @@ interface HistogramSupport : Meter
     }
 }
 
+/// Count nonnegative samples and report their total and recent maximum.
+interface DistributionSummary : HistogramSupport
+{
+    /// Record an amount. Negative values and NaN are ignored.
+    void record(double amount) nothrow @nogc;
+
+    /// The number of accepted observations.
+    long count() nothrow @nogc;
+
+    /// The cumulative total amount.
+    double totalAmount() nothrow @nogc;
+
+    /// The mean of accepted observations.
+    double mean() nothrow @nogc;
+
+    /// The maximum amount in the current window.
+    double max() nothrow @nogc;
+
+    package static MeasurementIterable measurementsOf(DistributionSummary summary, bool withMaximum)
+    {
+        return new MeterMeasurements(summary, withMaximum);
+    }
+
+    /// Micrometer's default mean, snapshot overload and live measurements (R3).
+    mixin template Defaults(alias Measurements = MeasurementIterable, alias samples = measurementsOf,
+            alias SnapshotDefaults = HistogramSupport.Defaults)
+    {
+        mixin SnapshotDefaults;
+
+        override double mean() nothrow @nogc
+        {
+            DistributionSummary summary = this;
+            const count = summary.count();
+            return count == 0 ? 0.0 : summary.totalAmount() / count;
+        }
+
+        override Measurements measure()
+        {
+            return samples(this, false);
+        }
+    }
+}
+
 /// Count recorded durations and report their total and recent maximum.
 interface Timer : HistogramSupport
 {
@@ -1114,7 +1159,7 @@ interface Timer : HistogramSupport
 
     private static MeasurementIterable timerMeasurements(Timer timer)
     {
-        return new TimerMeasurements(timer);
+        return new MeterMeasurements(timer);
     }
 
     private static Runnable timedRunnable(Timer timer, Runnable action)
@@ -1279,7 +1324,10 @@ abstract class MeterRegistry
     private Mutex gate;
     private Clock registryClock;
     private Config configuration;
-    private Timer function(Meter.Id) @safe timerFactory;
+    private alias TimerFactory = Timer function(Meter.Id) @safe;
+    private alias SummaryFactory = DistributionSummary function(Meter.Id) @safe;
+    private TimerFactory timerFactory;
+    private SummaryFactory summaryFactory;
     private bool closed;
 
     /// Prepare empty registry storage.
@@ -1291,15 +1339,15 @@ abstract class MeterRegistry
     /// Prepare empty registry storage using the supplied clock.
     protected this(Clock clock)
     {
-        this(clock, null);
+        this(clock, null, null);
     }
 
-    package this(Timer function(Meter.Id) @safe timerFactory)
+    package this(TimerFactory timerFactory, SummaryFactory summaryFactory = null)
     {
-        this(Clock.SYSTEM, timerFactory);
+        this(Clock.SYSTEM, timerFactory, summaryFactory);
     }
 
-    private this(Clock clock, Timer function(Meter.Id) @safe timerFactory)
+    private this(Clock clock, TimerFactory timerFactory, SummaryFactory summaryFactory)
     {
         if (clock is null)
             throw new NullPointerException("clock");
@@ -1307,6 +1355,7 @@ abstract class MeterRegistry
         registryClock = clock;
         configuration = new Config;
         this.timerFactory = timerFactory;
+        this.summaryFactory = summaryFactory;
     }
 
     /// Return the configuration owned by this registry.
@@ -1385,9 +1434,22 @@ abstract class MeterRegistry
         return cast(Timer) registerMeter(id);
     }
 
+    /// Find or register a distribution summary with the given name and tag pairs.
+    DistributionSummary summary(string name, scope const(string)[] tags...)
+    {
+        return summary(name, Tags.of(tags));
+    }
+
+    /// Find or register a distribution summary with the given name and tag iterable.
+    DistributionSummary summary(string name, TagIterable tags)
+    {
+        auto id = new Meter.Id(name, Tags.of(tags), NullableString.init, NullableString.init,
+                Meter.Type.DISTRIBUTION_SUMMARY);
+        return cast(DistributionSummary) registerMeter(id);
+    }
+
     private Meter registerMeter(Meter.Id id)
     {
-        const registeringTimer = id.getType() == Meter.Type.TIMER;
         gate.lock_nothrow();
         scope (exit)
             gate.unlock_nothrow();
@@ -1396,32 +1458,71 @@ abstract class MeterRegistry
         {
             if (!id.equals(meter.getId()))
                 continue;
-            if (registeringTimer ? cast(Timer) meter is null : cast(Counter) meter is null)
-            {
-                const conflict = registeringTimer ? "CumulativeCounter vs. Timer" : "CumulativeTimer vs. Counter";
-                throw new IllegalArgumentException("There is already a registered meter of a different type ("
-                        ~ conflict ~ ") with the same name: " ~ id.getName());
-            }
+            requireMeterType(meter, id);
             return meter;
         }
 
-        if (closed)
-        {
-            if (registeringTimer)
-                return new NoopTimer(id);
-            return new NoopCounter(id);
-        }
-        Meter created;
-        if (registeringTimer)
-        {
-            if (timerFactory is null)
-                throw new UnsupportedOperationException("This registry does not provide timers");
-            created = timerFactory(id);
-        }
-        else
-            created = newCounter(id);
-        meters ~= created;
+        const wasClosed = closed;
+        auto created = createMeter(id, wasClosed);
+        if (!wasClosed)
+            meters ~= created;
         return created;
+    }
+
+    private static void requireMeterType(Meter meter, Meter.Id id)
+    {
+        string requested;
+        switch (id.getType())
+        {
+        case Meter.Type.COUNTER:
+            if (cast(Counter) meter !is null)
+                return;
+            requested = "Counter";
+            break;
+        case Meter.Type.TIMER:
+            if (cast(Timer) meter !is null)
+                return;
+            requested = "Timer";
+            break;
+        case Meter.Type.DISTRIBUTION_SUMMARY:
+            if (cast(DistributionSummary) meter !is null)
+                return;
+            requested = "DistributionSummary";
+            break;
+        default:
+            assert(0, "unsupported meter type");
+        }
+        const registered = cast(Counter) meter !is null ? "CumulativeCounter" : cast(Timer) meter !is null
+            ? "CumulativeTimer" : "CumulativeDistributionSummary";
+        throw new IllegalArgumentException("There is already a registered meter of a different type ("
+                ~ registered ~ " vs. " ~ requested ~ ") with the same name: " ~ id.getName());
+    }
+
+    private Meter createMeter(Meter.Id id, bool noop)
+    {
+        string unavailable;
+        switch (id.getType())
+        {
+        case Meter.Type.COUNTER:
+            return noop ? new NoopCounter(id) : newCounter(id);
+        case Meter.Type.TIMER:
+            if (noop)
+                return new NoopTimer(id);
+            if (timerFactory !is null)
+                return timerFactory(id);
+            unavailable = "This registry does not provide timers";
+            break;
+        case Meter.Type.DISTRIBUTION_SUMMARY:
+            if (noop)
+                return new NoopDistributionSummary(id);
+            if (summaryFactory !is null)
+                return summaryFactory(id);
+            unavailable = "This registry does not provide distribution summaries";
+            break;
+        default:
+            assert(0, "unsupported meter type");
+        }
+        throw new UnsupportedOperationException(unavailable);
     }
 
     /// Build the concrete registry's counter.
@@ -1601,6 +1702,66 @@ private final class NoopTimer : Timer, MeasurementIterable
     mixin Timer.Defaults;
 }
 
+private final class NoopDistributionSummary : DistributionSummary, MeasurementIterable
+{
+    private Meter.Id id;
+
+    this(Meter.Id id) nothrow @nogc
+    {
+        this.id = id;
+    }
+
+    override Meter.Id getId() nothrow @nogc
+    {
+        return id;
+    }
+
+    override void record(double amount) nothrow @nogc
+    {
+    }
+
+    override long count() nothrow @nogc
+    {
+        return 0;
+    }
+
+    override double totalAmount() nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override double max() nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override HistogramSnapshot takeSnapshot()
+    {
+        return HistogramSnapshot.empty(0, 0, 0);
+    }
+
+    override MeasurementIterable measure()
+    {
+        return this;
+    }
+
+    override Iterator!Measurement iterator()
+    {
+        return new MeasurementIterator(null);
+    }
+
+    override void forEach(void delegate(Measurement) @safe)
+    {
+    }
+
+    override int opApply(scope int delegate(Measurement) @safe)
+    {
+        return 0;
+    }
+
+    mixin DistributionSummary.Defaults;
+}
+
 private final class CounterMeasurement : Measurement, MeasurementIterable
 {
     this(Counter counter)
@@ -1624,30 +1785,53 @@ private final class CounterMeasurement : Measurement, MeasurementIterable
     }
 }
 
-private final class TimerMeasurements : MeasurementIterable
+private final class MeterMeasurements : MeasurementIterable
 {
-    private Timer timer;
     private Measurement[3] measurements;
+    private size_t length;
+    private long delegate() nothrow @nogc readCount;
+    private Timer timer;
 
     this(Timer timer)
     {
         this.timer = timer;
-        measurements[0] = new Measurement(&count, Statistic.COUNT);
-        measurements[1] = new Measurement(&total, Statistic.TOTAL_TIME);
-        measurements[2] = new Measurement(&maximum, Statistic.MAX);
+        readCount = &timer.count;
+        measurements[0] = newSample(&count, Statistic.COUNT);
+        measurements[1] = newSample(&totalTime, Statistic.TOTAL_TIME);
+        measurements[2] = newSample(&maximumTime, Statistic.MAX);
+        length = 3;
+    }
+
+    this(DistributionSummary summary, bool withMaximum)
+    {
+        readCount = &summary.count;
+        measurements[0] = newSample(&count, Statistic.COUNT);
+        measurements[1] = newSample(&summary.totalAmount, Statistic.TOTAL);
+        length = 2;
+        if (withMaximum)
+        {
+            measurements[2] = newSample(&summary.max, Statistic.MAX);
+            length = 3;
+        }
+    }
+
+    // Keep the cold allocation shared across the timer and summary constructors.
+    pragma(inline, false) private static Measurement newSample(double delegate() @safe read, Statistic statistic)
+    {
+        return new Measurement(read, statistic);
     }
 
     private double count() nothrow @nogc
     {
-        return cast(double) timer.count();
+        return cast(double) readCount();
     }
 
-    private double total() nothrow @nogc
+    private double totalTime() nothrow @nogc
     {
         return timer.totalTime(timer.baseTimeUnit());
     }
 
-    private double maximum() nothrow @nogc
+    private double maximumTime() nothrow @nogc
     {
         return timer.max(timer.baseTimeUnit());
     }
@@ -1659,13 +1843,13 @@ private final class TimerMeasurements : MeasurementIterable
 
     override void forEach(void delegate(Measurement) @safe action)
     {
-        foreach (sample; measurements)
+        foreach (sample; measurements[0 .. length])
             action(sample);
     }
 
     override int opApply(scope int delegate(Measurement) @safe visit)
     {
-        foreach (sample; measurements)
+        foreach (sample; measurements[0 .. length])
             if (const result = visit(sample))
                 return result;
         return 0;

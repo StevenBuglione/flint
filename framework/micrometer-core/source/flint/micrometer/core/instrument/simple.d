@@ -16,14 +16,17 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/simple/SimpleMeterRegistry.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/cumulative/CumulativeCounter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/cumulative/CumulativeTimer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/cumulative/CumulativeDistributionSummary.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/AbstractTimer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/AbstractDistributionSummary.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.simple;
 
 import core.atomic : atomicLoad, atomicOp, cas;
-import flint.java.lang : NullPointerException;
+import flint.java.lang : Iterable, NullPointerException;
 import flint.java.util.concurrent : TimeUnit, toNanos;
-import flint.micrometer.core.instrument : Clock, Counter, Meter, MeterRegistry, Timer;
+import flint.micrometer.core.instrument : Clock, Counter, DistributionSummary, Measurement,
+    Meter, MeterRegistry, Timer;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot, TimeWindowMax;
 import std.typecons : Nullable;
 
@@ -35,7 +38,7 @@ class SimpleMeterRegistry : MeterRegistry
     /// Create an empty registry in cumulative mode.
     this()
     {
-        super(&createTimer);
+        super(&createTimer, &createSummary);
     }
 
     protected override Counter newCounter(Meter.Id id)
@@ -47,6 +50,17 @@ class SimpleMeterRegistry : MeterRegistry
     {
         return new CumulativeTimer(id.withBaseUnit(Nullable!string("seconds")), Clock.SYSTEM);
     }
+
+    private static DistributionSummary createSummary(Meter.Id id)
+    {
+        return new CumulativeDistributionSummary(id, Clock.SYSTEM);
+    }
+}
+
+private TimeWindowMax defaultWindow(Clock clock)
+{
+    // SimpleConfig's one-minute step overrides the default expiry. The default ring has three buckets.
+    return new TimeWindowMax(clock, 60_000, 3);
 }
 
 private final class CumulativeTimer : Timer
@@ -61,8 +75,7 @@ private final class CumulativeTimer : Timer
     {
         this.id = id;
         this.clock = clock;
-        // SimpleConfig's one-minute step overrides the default expiry. The default ring has three buckets.
-        window = new TimeWindowMax(clock, 60_000, 3);
+        window = defaultWindow(clock);
     }
 
     override Meter.Id getId() nothrow @nogc
@@ -116,6 +129,61 @@ private final class CumulativeTimer : Timer
     }
 
     mixin Timer.Defaults;
+}
+
+private final class CumulativeDistributionSummary : DistributionSummary
+{
+    private Meter.Id id;
+    private TimeWindowMax window;
+    private shared long events;
+    private shared double total = 0.0;
+
+    this(Meter.Id id, Clock clock)
+    {
+        this.id = id;
+        window = defaultWindow(clock);
+    }
+
+    override Meter.Id getId() nothrow @nogc
+    {
+        return id;
+    }
+
+    override void record(double amount) nothrow @nogc
+    {
+        if (!(amount >= 0.0))
+            return;
+        atomicOp!"+="(events, 1L);
+        atomicOp!"+="(total, amount);
+        window.record(amount);
+    }
+
+    override long count() nothrow @nogc
+    {
+        return atomicLoad(events);
+    }
+
+    override double totalAmount() nothrow @nogc
+    {
+        return atomicLoad(total);
+    }
+
+    override double max() nothrow @nogc
+    {
+        return window.poll();
+    }
+
+    override HistogramSnapshot takeSnapshot()
+    {
+        return HistogramSnapshot.empty(count(), totalAmount(), max());
+    }
+
+    override Iterable!Measurement measure()
+    {
+        return DistributionSummary.measurementsOf(this, true);
+    }
+
+    mixin DistributionSummary.Defaults;
 }
 
 @("the timer maximum expires after three one-minute steps while cumulative totals remain")

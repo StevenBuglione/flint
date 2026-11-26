@@ -3485,7 +3485,6 @@
       "io/micrometer/core/instrument/internal/DefaultMeterTest.java",
       "io/micrometer/core/instrument/logging/LoggingMeterRegistryTest.java",
       "io/micrometer/core/instrument/noop/NoopCounterTest.java",
-      "io/micrometer/core/instrument/noop/NoopDistributionSummaryTest.java",
       "io/micrometer/core/instrument/noop/NoopFunctionCounterTest.java",
       "io/micrometer/core/instrument/noop/NoopFunctionTimerTest.java",
       "io/micrometer/core/instrument/noop/NoopGaugeTest.java",
