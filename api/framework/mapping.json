@@ -6611,6 +6611,7 @@
 "java.util.Locale#getLanguage()":{"status":"ported","d":"flint.java.util.Locale.getLanguage"},
 "java.util.Locale#getCountry()":{"status":"ported","d":"flint.java.util.Locale.getCountry"},
 "java.util.Locale#getVariant()":{"status":"ported","d":"flint.java.util.Locale.getVariant"},
+"java.util.Locale#getScript()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java returns the title-cased four-letter script from a language tag, or an empty string when absent. Flint currently skips the script without storing it."},
 "java.util.Locale#CHINESE":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.CHINESE"},
 "java.util.Locale#FRANCE":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.FRANCE"},
 "java.util.Locale#FRENCH":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.FRENCH"},
