@@ -85,6 +85,45 @@ class FrameworkLayerTests(unittest.TestCase):
             gates.framework_layers()
 
 
+class NoModuleInfoTests(unittest.TestCase):
+    module = 'flint.java.util.internal.gregorian'
+    pragma = 'version (LDC) pragma(LDC_no_moduleinfo);'
+
+    def check(self, body, module=None, pragma=None):
+        source = f'module {module or self.module};\n@safe:\n{self.pragma if pragma is None else pragma}\n{body}'
+        gates.check_no_moduleinfo(module or self.module, list(tokens(source)), 'test.d')
+
+    def test_pure_arithmetic_and_immutable_constants_are_allowed(self):
+        self.check('enum day = 24; struct DateFields { int day; }\n'
+                   'int month(int index) pure nothrow @nogc { static immutable int[1] days = [31]; return days[index]; }')
+
+    def test_pragma_requires_exact_module_and_ldc_version(self):
+        with self.assertRaisesRegex(ValueError, 'approved'):
+            self.check('', module='flint.java.other')
+        with self.assertRaisesRegex(ValueError, 'version'):
+            self.check('', pragma='pragma(LDC_no_moduleinfo);')
+
+    def test_module_info_consumers_are_rejected(self):
+        for body in (
+            'class C {}',
+            'interface MetadataBearing {}',
+            'static this() {}',
+            'shared static ~this() {}',
+            'unittest {}',
+            'import dependency;',
+            'int timestamp;',
+            'int f() { static int calls; return calls; }',
+            'void f() { static immutable(int)* position; }',
+            'struct S { static int calls; }',
+            'mixin("static this() {}");',
+        ):
+            with self.subTest(body=body), self.assertRaisesRegex(ValueError, 'module metadata'):
+                self.check(body)
+
+    def test_comments_and_literals_do_not_count(self):
+        self.check('enum sample = "pragma(LDC_no_moduleinfo);"; // class C', module='flint.java.other', pragma='')
+
+
 class SourcePolicyTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
