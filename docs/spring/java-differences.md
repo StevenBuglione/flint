@@ -198,6 +198,16 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 509 | 1 | 88 | 11,815 |
 
+## Known gaps
+
+These elements keep Spring's signature, but their behaviour is not complete yet; the note says what differs. Each note is removed when the gap closes.
+
+| Repo | Java | Flint | Note |
+| --- | --- | --- | --- |
+| framework | `io.micrometer.observation.ObservationPredicate` | `flint.micrometer.observation.ObservationPredicate` | Inherits the test method from Flint's Java BiPredicate. Its combinators are deferred with the Java provider. |
+| framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
+| framework | `org.springframework.expression.spel.support.StandardTypeConverter#<init>()` | `flint.expression.spel.support.StandardTypeConverter` | Creates and retains one default conversion service per converter. Flint's core getSharedInstance factory creates a fresh service. |
+
 ## Adapted elements
 
 Each element below keeps its Spring meaning but changes shape in D, by the rule or deviation shown.

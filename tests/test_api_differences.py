@@ -82,15 +82,18 @@ class ApiDifferencesTest(unittest.TestCase):
                           'note': "Java's null-argument exceptions are not reproduced"},
             'q.Loader': {'status': 'excluded', 'category': 'jvm-runtime'},
             'p.B#y()': {'status': 'excluded', 'category': 'deferred', 'phase': '2', 'reason': 'waits on NavigableSet'},
+            'p.B#x()': {'status': 'ported', 'd': 'flint.p.B.x', 'note': 'Known gap: only two ids'},
         })
         page, problems = api_differences.render(self.root)
         self.assertEqual(problems, [])
         self.assertIn("| Java's null-argument exceptions are not reproduced |", page)
         self.assertIn('| r | `p.B#y()` | 2 | waits on NavigableSet |', page)
+        self.assertIn('| r | `p.B#x()` | `flint.p.B.x` | Known gap: only two ids |', page)
+        self.assertLess(page.index('## Known gaps'), page.index('## Adapted elements'))
         self.assertIn('| `p.A#get()` | `flint.p.A.get` | [R4](api-mapping.md#r4-classt-parameters), '
                       '[D-7](api-mapping.md#deviations) |', page)
         self.assertIn('| `q.Loader` | `jvm-runtime` |  |', page)
-        self.assertIn('| p | 4 | 0 |', page)                        # p.A, p.B, p.B#x(), p.B#y()
+        self.assertIn('| p | 3 | 0 |', page)                        # p.A, p.B, p.B#y()
         self.assertIn('| p.sub | 2 | 0 |', page)                    # p.sub.C, p.sub.C#z(), by their own package
         self.assertTrue(page.startswith('<!-- GENERATED'))
         self.assertIn('Intro.', page)

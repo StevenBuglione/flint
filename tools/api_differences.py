@@ -326,7 +326,7 @@ def render(root, problems=None):
     files = load_deviations(root, problems)
     deviations = {d['id'] for d in files} if (root / DEVIATIONS).is_dir() else table_deviations
     out = [(root / INTRO).read_text().rstrip('\n'), '']
-    summary, adapted, excluded, deferred, reasons = [], {}, {}, {}, {}
+    summary, adapted, excluded, deferred, reasons, gaps = [], {}, {}, {}, {}, {}
     for repo, (elements, manifests) in repos(root).items():
         classifier = Classifier(elements)
         packages, hits = {}, collections.Counter()
@@ -350,6 +350,8 @@ def render(root, problems=None):
             summary.append((repo, key, c))
         for match, entry in elements.items():
             status = entry.get('status')
+            if status == 'ported' and note_of(entry):
+                gaps.setdefault(repo, []).append((package_of(match, packages), match, entry, hits[match]))
             if status == 'adapted':
                 cited = entry.get('rules', [])
                 for rule in cited:
@@ -383,6 +385,15 @@ def render(root, problems=None):
             '| Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |', '| --- | --- | ---: | ---: | ---: | ---: |']
     for repo, key, c in summary:
         out.append(f"| {repo} | {key} | {c['ported']:,} | {c['adapted']:,} | {c['excluded']:,} | {c['deferred']:,} |")
+    if gaps:
+        out += ['', '## Known gaps', '',
+                'These elements keep Spring\'s signature, but their behaviour is not complete yet; the note says what '
+                'differs. Each note is removed when the gap closes.', '', '| Repo | Java | Flint | Note |',
+                '| --- | --- | --- | --- |']
+        for repo in sorted(gaps):
+            for _, match, entry, hit in sorted(gaps[repo], key=lambda r: r[1]):
+                out.append(f"| {repo} | `{cell(match)}`{scope(match, hit)} | `{cell(entry.get('d', ''))}` "
+                           f"| {note_of(entry)} |")
     out += ['', '## Adapted elements', '',
             'Each element below keeps its Spring meaning but changes shape in D, by the rule or deviation shown.', '']
     for repo in sorted(adapted):
