@@ -471,14 +471,14 @@ private immutable Element[] isoZonedDateTime = isoOffsetDateTime ~ [
     op(Op.optionalEnd)
 ];
 private immutable Element[] isoDateTime = isoLocalDateTime ~ [
-    op(Op.optionalStart), isoOffset, op(Op.optionalStart), lit("["), op(Op.caseSensitive),
+    op(Op.optionalStart), isoStrictOffset, op(Op.optionalStart), lit("["), op(Op.caseSensitive),
     op(Op.zoneRegion), lit("]"), op(Op.optionalEnd), op(Op.optionalEnd)
 ];
 private immutable Element[] isoDate = [op(Op.caseInsensitive)] ~ isoLocalDate ~ [
-    op(Op.optionalStart), isoOffset, op(Op.optionalEnd)
+    op(Op.optionalStart), isoStrictOffset, op(Op.optionalEnd)
 ];
 private immutable Element[] isoTime = [op(Op.caseInsensitive)] ~ isoLocalTime ~ [
-    op(Op.optionalStart), isoOffset, op(Op.optionalEnd)
+    op(Op.optionalStart), isoStrictOffset, op(Op.optionalEnd)
 ];
 private immutable Element[] isoOrdinalDate = [
     op(Op.caseInsensitive), num(Field.year, 4, 10, SignStyle.EXCEEDS_PAD), lit("-"),
