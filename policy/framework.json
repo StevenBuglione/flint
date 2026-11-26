@@ -1227,6 +1227,7 @@
     "flint.ai.chat.messages",
     "flint.ai.chat.metadata",
     "flint.ai.converter",
+    "flint.ai.embedding",
     "flint.ai.image",
     "flint.ai.model"
    ],
