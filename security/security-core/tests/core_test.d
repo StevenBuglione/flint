@@ -23,8 +23,8 @@
 /++
 Spring Security core: users, the provider manager, the DAO provider, authority decisions, the fiber-local context
 and the `@PreAuthorize` interceptor over a compiled expression. Each unittest names the Java tests it covers; the
-Java classes' remaining tests exercise Jackson serialization, events, user caches, message sources and Mockito
-interactions that have no Flint counterpart yet.
+Java classes' remaining tests exercise Jackson serialization, user caches, message sources and Mockito interactions.
+The provider event tests live in `provider_manager_events_test.d`.
 +/
 module flint.security.core_test;
 
@@ -154,8 +154,7 @@ unittest
 {
     // ProviderManagerTests: authenticationFailsWithUnsupportedToken, credentialsAreClearedByDefault,
     // authenticationSucceedsWithSupportedTokenAndReturnsExpectedObject, authenticationSucceedsWhenFirstProviderReturnsNull,
-    // testStartupFailsIfProvidersNotSetAsList, parentAuthenticationIsUsedIfProvidersDontAuthenticate,
-    // statusExceptionIsPublished (thrown, not published)
+    // testStartupFailsIfProvidersNotSetAsList, parentAuthenticationIsUsedIfProvidersDontAuthenticate
     assert(collectException!IllegalArgumentException(new ProviderManager(cast(AuthenticationProvider[]) null,
             null)) !is null);
     auto manager = new ProviderManager(new NoDecision, daoProvider());

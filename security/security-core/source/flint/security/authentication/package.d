@@ -4,12 +4,12 @@
 // Modified by the Flint authors.
 /*
  * Ported from spring-security 7.2.0, core/src/main/java/org/springframework/security/authentication/{
- * AuthenticationManager,AuthenticationProvider,ProviderManager,AbstractAuthenticationToken,
+ * AuthenticationManager,AuthenticationProvider,AuthenticationEventPublisher,ProviderManager,AbstractAuthenticationToken,
  * UsernamePasswordAuthenticationToken,AnonymousAuthenticationToken,AuthenticationTrustResolver,
  * AuthenticationTrustResolverImpl,BadCredentialsException,AccountStatusException,DisabledException,LockedException,
  * AccountExpiredException,CredentialsExpiredException,ProviderNotFoundException,InsufficientAuthenticationException,
  * AuthenticationCredentialsNotFoundException,InternalAuthenticationServiceException}.java. supports(Class) takes the
- * token's type name (R4). Authentication events are not published.
+ * token's type name (R4).
  */
 
 /++
@@ -39,6 +39,15 @@ interface AuthenticationProvider
     Authentication authenticate(Authentication authentication);
     /// Whether tokens of the type named `authenticationType` are supported.
     bool supports(string authenticationType);
+}
+
+/// Receives the outcome of an authentication request.
+interface AuthenticationEventPublisher
+{
+    /// Publish a failure with the original request.
+    void publishAuthenticationFailure(AuthenticationException exception, Authentication authentication);
+    /// Publish the successful authentication.
+    void publishAuthenticationSuccess(Authentication authentication);
 }
 
 /// The canonical type name of `authentication`'s class.
@@ -409,6 +418,7 @@ class ProviderManager : AuthenticationManager
 {
     private AuthenticationProvider[] providers;
     private AuthenticationManager parent;
+    private AuthenticationEventPublisher eventPublisher;
     private bool eraseCredentialsAfterAuthentication = true;
 
     /// A manager over `providers`.
@@ -436,6 +446,15 @@ class ProviderManager : AuthenticationManager
         return providers.dup;
     }
 
+    /// Set the publisher during configuration. It must support concurrent calls when the manager is shared.
+    /// Throws `IllegalArgumentException` for null.
+    void setAuthenticationEventPublisher(AuthenticationEventPublisher eventPublisher)
+    {
+        if (eventPublisher is null)
+            throw new IllegalArgumentException("AuthenticationEventPublisher cannot be null");
+        this.eventPublisher = eventPublisher;
+    }
+
     /// Whether to erase credentials from a successful result (default true).
     void setEraseCredentialsAfterAuthentication(bool erase) pure nothrow @nogc
     {
@@ -448,25 +467,36 @@ class ProviderManager : AuthenticationManager
         const type = authenticationType(authentication);
         AuthenticationException lastException;
         auto result = authenticateWithProviders(authentication, type, lastException);
+        bool decidedByParent;
         if (result is null && parent !is null)
         {
             try
+            {
                 result = parent.authenticate(authentication);
+                decidedByParent = result !is null;
+            }
             catch (ProviderNotFoundException)
             {
             }
             catch (AuthenticationException e)
+            {
                 lastException = e;
+                decidedByParent = true;
+            }
         }
         if (result !is null)
         {
             if (eraseCredentialsAfterAuthentication)
                 if (auto container = cast(CredentialsContainer) result)
                     container.eraseCredentials();
+            if (!decidedByParent && eventPublisher !is null)
+                eventPublisher.publishAuthenticationSuccess(result);
             return result;
         }
         if (lastException is null)
             lastException = new ProviderNotFoundException("No AuthenticationProvider found for " ~ type);
+        if (!decidedByParent)
+            prepareException(lastException, authentication);
         throw lastException;
     }
 
@@ -490,12 +520,12 @@ class ProviderManager : AuthenticationManager
             }
             catch (AccountStatusException e)
             {
-                e.setAuthenticationRequest(authentication);
+                prepareException(e, authentication);
                 throw e;
             }
             catch (InternalAuthenticationServiceException e)
             {
-                e.setAuthenticationRequest(authentication);
+                prepareException(e, authentication);
                 throw e;
             }
             catch (AuthenticationException e)
@@ -505,6 +535,13 @@ class ProviderManager : AuthenticationManager
             }
         }
         return null;
+    }
+
+    private void prepareException(AuthenticationException exception, Authentication authentication)
+    {
+        exception.setAuthenticationRequest(authentication);
+        if (eventPublisher !is null)
+            eventPublisher.publishAuthenticationFailure(exception, authentication);
     }
 
     private static void copyDetails(Authentication source, Authentication dest)

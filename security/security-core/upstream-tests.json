@@ -45,7 +45,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authentication/DelegatingReactiveAuthenticationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authentication/ObservationAuthenticationManagerTests.java": {
@@ -53,19 +54,52 @@
       "status": "deferred"
     },
     "org/springframework/security/authentication/ObservationReactiveAuthenticationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authentication/ProviderManagerTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-core/tests/provider_manager_events_test.d",
+      "methods": {
+        "ported": [
+          "authenticateWhenFailsInParentAndPublishesThenChildDoesNotPublish",
+          "providerNotFoundFromParentIsIgnored",
+          "statusExceptionIsPublished"
+        ],
+        "skipped": {
+          "accountStatusExceptionPreventsCallsToSubsequentProviders": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "authenticationExceptionFromParentOverridesPreviousOnes": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "authenticationExceptionIsIgnoredIfLaterProviderAuthenticates": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "authenticationExceptionIsRethrownIfNoLaterProviderAuthenticates": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "authenticationFailsWithUnsupportedToken": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "authenticationIsSameWhenDetailsSetAndAuthenticationToBuilderIsDefault": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "authenticationSucceedsWhenFirstProviderReturnsNullButSecondAuthenticates": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "authenticationSucceedsWithSupportedTokenAndReturnsExpectedObject": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "constructorWhenUsingListOfThenNoException": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "credentialsAreClearedByDefault": "The existing grouped core test checks default credential erasure.",
+          "detailsAreNotSetOnAuthenticationTokenIfAlreadySetByProvider": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "detailsAreSetOnAuthenticationTokenIfNotAlreadySetByProvider": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "parentAuthenticationIsUsedIfProvidersDontAuthenticate": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "parentIsNotCalledIfAccountStatusExceptionIsThrown": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "providerThrowsInternalAuthenticationServiceException": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "testStartupFailsIfProvidersContainNullElement": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "testStartupFailsIfProvidersNotSetAsList": "The existing grouped core test checks the empty provider list.",
+          "testStartupFailsIfProvidersNotSetAsVarargs": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "whenAccountStatusExceptionThenAuthenticationRequestIsIncluded": "Phase 2: the named ProviderManager parity fixture is pending.",
+          "whenAuthenticationExceptionThenAuthenticationRequestIsIncluded": "Named coverage for the local final failure without a parent is pending.",
+          "whenInternalServiceAuthenticationExceptionThenAuthenticationRequestIsIncluded": "Phase 2: the named ProviderManager parity fixture is pending."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/security/authentication/ReactiveAuthenticationManagerAdapterTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authentication/ReactiveUserDetailsServiceAuthenticationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authentication/TestingAuthenticationProviderTests.java": {
@@ -77,7 +111,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authentication/UserDetailsRepositoryReactiveAuthenticationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authentication/UsernamePasswordAuthenticationTokenTests.java": {
@@ -153,11 +188,13 @@
       "status": "deferred"
     },
     "org/springframework/security/authentication/ott/reactive/InMemoryReactiveOneTimeTokenServiceTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authentication/ott/reactive/OneTimeTokenReactiveAuthenticationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authentication/rememberme/RememberMeAuthenticationProviderTests.java": {
@@ -173,7 +210,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/AllAuthoritiesReactiveAuthorizationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/AllRequiredFactorsAuthorizationManagerTests.java": {
@@ -185,7 +223,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/AuthenticatedReactiveAuthorizationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/AuthoritiesAuthorizationManagerTests.java": {
@@ -197,7 +236,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/AuthorityReactiveAuthorizationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/AuthorizationAdvisorProxyFactoryTests.java": {
@@ -233,11 +273,13 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/ObservationReactiveAuthorizationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/ReactiveAuthorizationAdvisorProxyFactoryTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/RequiredAuthoritiesAuthorizationManagerTests.java": {
@@ -265,7 +307,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/AuthorizationManagerAfterReactiveMethodInterceptorTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/AuthorizationManagerBeforeMethodInterceptorTests.java": {
@@ -273,7 +316,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/AuthorizationManagerBeforeReactiveMethodInterceptorTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/AuthorizationMethodPointcutsTests.java": {
@@ -301,7 +345,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/PostAuthorizeReactiveAuthorizationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/PostFilterAuthorizationMethodInterceptorTests.java": {
@@ -309,7 +354,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/PostFilterAuthorizationReactiveMethodInterceptorTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/PreAuthorizeAuthorizationManagerTests.java": {
@@ -317,7 +363,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/PreAuthorizeReactiveAuthorizationManagerTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/PreFilterAuthorizationMethodInterceptorTests.java": {
@@ -325,7 +372,8 @@
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/PreFilterAuthorizationReactiveMethodInterceptorTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/authorization/method/SecuredAuthorizationManagerTests.java": {
@@ -333,8 +381,8 @@
       "status": "deferred"
     },
     "org/springframework/security/core/JavaVersionTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "reason": "JVM platform: the tests inspect Java or JVM package version metadata.",
+      "status": "excluded"
     },
     "org/springframework/security/core/SpringSecurityCoreVersionTests.java": {
       "phase": "2",
@@ -393,11 +441,13 @@
       "status": "deferred"
     },
     "org/springframework/security/core/context/ReactiveSecurityContextHolderTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/core/context/ReactiveSecurityContextHolderThreadLocalAccessorTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/core/context/SecurityContextHolderTests.java": {
@@ -445,7 +495,8 @@
       "status": "deferred"
     },
     "org/springframework/security/core/userdetails/MapReactiveUserDetailsServiceTests.java": {
-      "phase": "2",
+      "phase": "3",
+      "reason": "Reactive Security and Reactor context are deferred.",
       "status": "deferred"
     },
     "org/springframework/security/core/userdetails/UserDetailsByNameServiceWrapperTests.java": {
