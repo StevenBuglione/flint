@@ -20,6 +20,8 @@ module flint.jackson.core;
 
 import std.typecons : Nullable;
 
+import flint.engine.aot.any : Any;
+
 @safe:
 
 /**
@@ -1389,6 +1391,43 @@ abstract class JsonGenerator
     /// Whether the given feature is enabled.
     abstract bool isEnabled(StreamWriteFeature f);
 
+    /// Whether the output format can write native object ids.
+    bool canWriteObjectId()
+    {
+        return false;
+    }
+
+    /// Whether the output format can write native type ids.
+    bool canWriteTypeId()
+    {
+        return false;
+    }
+
+    /// Write a native object id. Formats without native ids report a stream write error.
+    JsonGenerator writeObjectId(Any id)
+    {
+        return rejectNativeId("No native support for writing Object Ids");
+    }
+
+    /// Write a reference to a native object id.
+    JsonGenerator writeObjectRef(Any referenced)
+    {
+        return rejectNativeId("No native support for writing Object Ids");
+    }
+
+    /// Write a native type id. Formats without native ids report a stream write error.
+    JsonGenerator writeTypeId(Any id)
+    {
+        return rejectNativeId("No native support for writing Type Ids");
+    }
+
+    private JsonGenerator rejectNativeId(string message)
+    {
+        import flint.jackson.core.exc : StreamWriteException;
+
+        throw new StreamWriteException(this, message);
+    }
+
     /// The write context this generator was created with.
     abstract ObjectWriteContext objectWriteContext();
 
@@ -1672,6 +1711,30 @@ abstract class JsonParser
 
     /// ditto, with a default.
     abstract bool getValueAsBoolean(bool def);
+
+    /// Whether the input format can read native object ids.
+    bool canReadObjectId()
+    {
+        return false;
+    }
+
+    /// Whether the input format can read native type ids.
+    bool canReadTypeId()
+    {
+        return false;
+    }
+
+    /// The current token's native object id, or null when absent.
+    Any getObjectId()
+    {
+        return Any.init;
+    }
+
+    /// The current token's native type id, or null when absent.
+    Any getTypeId()
+    {
+        return Any.init;
+    }
 
     /// The parsing context: Object, Array or root, with the current name and index.
     abstract TokenStreamContext streamReadContext();

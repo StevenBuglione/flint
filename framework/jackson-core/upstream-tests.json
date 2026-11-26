@@ -1152,8 +1152,17 @@
       "status": "partial"
     },
     "tools/jackson/core/unittest/write/WriteTypeIdTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/native_ids_test.d",
+      "methods": {
+        "ported": [
+          "noNativeTypeIdForJson"
+        ],
+        "skipped": {
+          "basicTypeIdWriteForArray": "Requires WritableTypeId and structural type-id writing.",
+          "basicTypeIdWriteForObject": "Requires WritableTypeId and structural type-id writing."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/write/WriterBasedJsonGeneratorTest.java": {
       "phase": "2",

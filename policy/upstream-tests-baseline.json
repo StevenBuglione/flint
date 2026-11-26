@@ -2587,7 +2587,6 @@
       "tools/jackson/core/unittest/write/RawStringWriteTest.java",
       "tools/jackson/core/unittest/write/SerializedStringWriteTest.java",
       "tools/jackson/core/unittest/write/SurrogateWrite223Test.java",
-      "tools/jackson/core/unittest/write/WriteTypeIdTest.java",
       "tools/jackson/core/unittest/write/WriterBasedJsonGeneratorTest.java"
     ],
     "jackson-databind": [

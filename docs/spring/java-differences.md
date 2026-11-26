@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 505 | 23 | 1 | 2,766 |
+| framework | jackson-core@3.1.8 | 509 | 28 | 1 | 2,757 |
 | framework | jackson-databind@3.1.8 | 511 | 49 | 5 | 9,902 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -4833,11 +4833,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `tools.jackson.core.JsonGenerator#assignCurrentValue(Object)` | `flint.jackson.core.JsonGenerator.assignCurrentValue` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.core.JsonGenerator#writeObjectId(Object)` | `flint.jackson.core.JsonGenerator.writeObjectId` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `tools.jackson.core.JsonGenerator#writeObjectRef(Object)` | `flint.jackson.core.JsonGenerator.writeObjectRef` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `tools.jackson.core.JsonGenerator#writeStartArray(Object)` | `flint.jackson.core.JsonGenerator.writeStartArray` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.JsonGenerator#writeStartArray(Object,int)` | `flint.jackson.core.JsonGenerator.writeStartArray` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.JsonGenerator#writeStartObject(Object)` | `flint.jackson.core.JsonGenerator.writeStartObject` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.core.JsonGenerator#writeStartObject(Object,int)` | `flint.jackson.core.JsonGenerator.writeStartObject` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.core.JsonGenerator#writeTypeId(Object)` | `flint.jackson.core.JsonGenerator.writeTypeId` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `tools.jackson.core.JsonParser#assignCurrentValue(Object)` | `flint.jackson.core.JsonParser.assignCurrentValue` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.core.JsonParser#getObjectId()` | `flint.jackson.core.JsonParser.getObjectId` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `tools.jackson.core.JsonParser#getTypeId()` | `flint.jackson.core.JsonParser.getTypeId` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `tools.jackson.core.JsonParser#nextBooleanValue()` | `flint.jackson.core.JsonParser.nextBooleanValue` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `tools.jackson.core.JsonPointer#append(JsonPointer)` | `flint.jackson.core.JsonPointer.append` | [R8](api-mapping.md#r8-exceptions), [D-JACKSON-8](api-mapping.md#deviations) |  |
 | `tools.jackson.core.JsonPointer#appendIndex(int)` | `flint.jackson.core.JsonPointer.appendIndex` | [R8](api-mapping.md#r8-exceptions), [D-JACKSON-8](api-mapping.md#deviations) |  |
@@ -10875,7 +10880,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
-| tools.jackson.core | 598 | 0 |
+| tools.jackson.core | 589 | 0 |
 | tools.jackson.core.async | 7 | 0 |
 | tools.jackson.core.base | 363 | 0 |
 | tools.jackson.core.exc | 11 | 0 |

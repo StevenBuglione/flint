@@ -408,6 +408,8 @@ Jackson's `nextBooleanValue` advances one token and returns `Nullable!bool` (R5)
 
 Jackson checks the current token for `isExpectedNumberIntToken` and reports `NumberTypeFP.UNKNOWN` for textual JSON. The accessors read the metadata without advancing the parser or decoding the value. The matched jackson-core probe on venus at `3eccea53` and `477af524` measured 43,229 loadable bytes and 657 DMD template instances on both sides. Pinned LDC with `flint build --profile size` moved gs-rest-service from 3,682,079 to 3,682,223 allocated ELF bytes and petclinic-rest from 10,401,989 to 10,402,157.
 
+Jackson's native object and type ID methods report the format's capabilities and use `Any` (R23) for ID values. Plain JSON returns false for the capability queries and uses a shared exception path for native ID writes. On venus at `c60c8f6b` and `98a7f2f5`, the matched jackson-core probe moved from 43,229 to 43,917 loadable bytes and from 657 to 658 DMD templates. With pinned LDC and `flint build --profile size`, gs-rest-service moved from 3,682,383 to 3,683,335 allocated ELF bytes and petclinic-rest moved from 10,403,421 to 10,404,357.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |
