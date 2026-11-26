@@ -494,6 +494,60 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(posidon.modes[0][0], 'full')
         self.assertTrue(all(mode == ('budget', ('petclinic-rest',)) for mode in posidon.modes[1:]), posidon.modes)
 
+    def playbook_base(self, rows):
+        path = self.work / 'docs' / 'spring' / 'performance-playbook.md'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self.playbook_text = '# Playbook\n\n| ID | Entry |\n| --- | --- |\n' + ''.join(f'| {r} | {r} entry |\n' for r in rows)
+        path.write_text(self.playbook_text)
+        git(self.work, 'checkout', '-q', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'playbook')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        git(self.work, 'fetch', '-q', 'origin')
+        return path
+
+    def edited(self, path, row, text):
+        return self.playbook_text.replace(f'| {row} | {row} entry |', f'| {row} | {text} |')
+
+    def test_rows_both_sides_edited_get_one_row_per_id_and_conflicts_name_paths(self):
+        path = self.playbook_base(['S-1', 'S-2', 'S-3'])
+        playbook = 'docs/spring/performance-playbook.md'
+        self.lane('sol-a', {playbook: self.edited(path, 'S-1', 'S-1 entry, extended by a')})
+        self.lane('sol-b', {playbook: self.edited(path, 'S-2', 'S-2 entry, extended by b')})
+        self.lane('sol-c', {playbook: self.edited(path, 'S-1', 'S-1 entry, rewritten by c')})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b'], ['sol-c']))
+        git(self.work, 'fetch', '-q', 'origin')
+        text = git(self.work, 'show', f'origin/main:{playbook}')
+        rows = merge_train.id_rows(text)
+        self.assertEqual({k: len(v) for k, v in rows.items()}, {'S-1': 1, 'S-2': 1, 'S-3': 1})
+        self.assertIn('extended by a', rows['S-1'][0])
+        self.assertIn('extended by b', rows['S-2'][0])
+        self.assertIn(f'{playbook} S-1', Path(result['logs']['sol-c']).read_text())
+
+    def test_a_reused_entry_id_and_a_real_conflict_are_returned_with_their_paths(self):
+        path = self.playbook_base(['S-1'])
+        playbook = 'docs/spring/performance-playbook.md'
+        self.lane('sol-a', {playbook: self.playbook_text + '| S-1 | a second entry under a taken ID |\n'})
+        self.lane('sol-b', {'src/app.txt': 'b\n'})
+        self.lane('sol-c', {'src/app.txt': 'c\n'})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], sorted(result['failed'])), (['sol-b'], ['sol-a', 'sol-c']))
+        self.assertIn('S-1 (duplicate entry ID', Path(result['logs']['sol-a']).read_text())
+        self.assertIn('conflict) in: src/app.txt', Path(result['logs']['sol-c']).read_text())
+
+    def test_merge_rows_keeps_old_collisions_and_reports_both_sided_changes(self):
+        base = '| B-10 | one |\n| B-10 | two |\n| S-1 | s |\n'
+        ours = '| B-10 | one |\n| B-10 | two |\n| S-1 | s, ours |\n'
+        theirs = '| B-10 | one |\n| B-10 | two |\n| S-1 | s, theirs |\n'
+        union = '| B-10 | one |\n| B-10 | two |\n| S-1 | s, ours |\n| S-1 | s, theirs |\n'
+        self.assertEqual(merge_train.merge_rows(union, base, ours, theirs), (union, ['S-1']))
+        deleted = '| B-10 | one |\n| B-10 | two |\n'
+        self.assertEqual(merge_train.merge_rows(union.replace('| S-1 | s, ours |\n', '| S-1 | s |\n'), base, base,
+                                                theirs)[0], deleted + '| S-1 | s, theirs |\n')
+
     def test_the_load_guard_marks_a_busy_run_not_quiet(self):
         s = merge_train.VERIFY_SCRIPT
         functions = s[s.index('LOAD_MEAN=0.5'):s.index('\n}\n', s.index('load_stop() {')) + 3]
