@@ -4,6 +4,7 @@
 // Modified by the Flint authors.
 module basic_persistent_entity_tests;
 
+import flint.core.annotation : AliasFor;
 import flint.data.annotation : TypeAlias;
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
@@ -42,7 +43,28 @@ private struct Snapshot
 }
 
 @TypeAlias("foo")
-private final class AliasedEntity
+private class AliasedEntity
+{
+}
+
+private final class DerivedAliasedEntity : AliasedEntity
+{
+}
+
+@TypeAlias("foo")
+private struct ComposedTypeAlias
+{
+    @AliasFor(annotation: classOf!TypeAlias, attribute: "value")
+    string name = "bar";
+}
+
+@ComposedTypeAlias
+private final class ComposedAliasedEntity
+{
+}
+
+@TypeAlias("\u2003\t")
+private final class WhitespaceAlias
 {
 }
 
@@ -136,6 +158,24 @@ unittest
 unittest
 {
     assert(mapped!AliasedEntity().getTypeAlias() == Alias.of(Any.of("foo")));
+}
+
+@("returnsTypeAliasIfAnnotatedUsingComposedAnnotation")
+unittest
+{
+    assert(mapped!ComposedAliasedEntity().getTypeAlias() == Alias.of(Any.of("bar")));
+}
+
+@("resolves a type alias on the domain type hierarchy")
+unittest
+{
+    assert(mapped!DerivedAliasedEntity().getTypeAlias() == Alias.of(Any.of("foo")));
+}
+
+@("requires text in a type alias annotation")
+unittest
+{
+    assert(mapped!WhitespaceAlias().getTypeAlias() is Alias.NONE);
 }
 
 @("considersComparatorForPropertyOrder")

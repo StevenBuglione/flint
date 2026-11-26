@@ -10,10 +10,11 @@ import flint.data.domain.persistable : PersistableState;
 import flint.data.mapping : Alias, IdentifierAccessor, MappingException, PersistentEntity, PersistentProperty,
     PersistentPropertyAccessor, PrimitivePropertyKind, TargetAwareIdentifierAccessor, primitivePropertyKind;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : Descriptor, PropertyDescriptor;
+import flint.engine.aot.descriptor : Descriptor, PropertyDescriptor, findAnnotation;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.util : ArrayList, Collections, Comparator, HashMap, Iterator, List, Map, Objects;
+import flint.util : StringUtils;
 import std.typecons : Nullable;
 
 @safe:
@@ -50,11 +51,8 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
         properties = new ArrayList!P();
         propertyView = Collections.unmodifiableList(properties);
         propertiesByName = new HashMap!(string, P)();
-        typeAlias = Alias.NONE;
         descriptor = registeredDescriptor(information);
-        if (descriptor !is null)
-            if (const annotation = descriptor.annotation(classOf!TypeAlias.name))
-                typeAlias = Alias.of(Any.of(annotation.value.get!TypeAlias.value));
+        typeAlias = getAliasFromAnnotation(descriptor);
     }
 
     mixin PersistentEntity!(T, P).Defaults;
@@ -237,6 +235,17 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
         const registered = " but already have property " ~ existing.getName() ~ " registered as " ~ role;
         throw new MappingException(Nullable!string(conflict ~ registered ~ "; Check your mapping configuration"));
     }
+}
+
+private Alias getAliasFromAnnotation(const Descriptor descriptor)
+{
+    if (descriptor is null)
+        return Alias.NONE;
+    const annotation = findAnnotation(descriptor.annotations, classOf!TypeAlias.name);
+    if (annotation is null)
+        return Alias.NONE;
+    const aliasValue = annotation.value.get!TypeAlias.value;
+    return StringUtils.hasText(aliasValue) ? Alias.of(Any.of(aliasValue)) : Alias.NONE;
 }
 
 private final class DescriptorPropertyAccessor(T, P) : PersistentPropertyAccessor!(T, P)

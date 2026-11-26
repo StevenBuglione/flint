@@ -685,6 +685,7 @@
           "reportsRequiredPropertyName",
           "returnsNullForTypeAliasIfNoneConfigured",
           "returnsTypeAliasIfAnnotated",
+          "returnsTypeAliasIfAnnotatedUsingComposedAnnotation",
           "supportsPersistableViaIdentifierAccessor",
           "supportsSubtypeInstancesOnPropertyAccessorLookup"
         ],
@@ -700,8 +701,7 @@
           "getRequiredAnnotationThrowsException": "General entity annotation lookup remains deferred.",
           "includesTransientProperty": "Automatic discovery and mapping of transient properties in entity contexts remain deferred.",
           "rejectsNullAssociation": "Association registration remains deferred.",
-          "returnsGeneratedPropertyAccessorForPropertyAccessor": "Mapping context and generated property accessors remain deferred.",
-          "returnsTypeAliasIfAnnotatedUsingComposedAnnotation": "The composed TypeAlias annotation fixture remains deferred."
+          "returnsGeneratedPropertyAccessorForPropertyAccessor": "Mapping context and generated property accessors remain deferred."
         }
       },
       "status": "partial"
