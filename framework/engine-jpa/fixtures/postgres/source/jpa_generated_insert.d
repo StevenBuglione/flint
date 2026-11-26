@@ -9,7 +9,7 @@ import core.memory : GC;
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping;
 import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
-import flint.engine.jpa.loaded_state : ManagedSnapshotSlot;
+import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, ManagedSnapshotSlot, planLoadedSnapshot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : InsertPlan, ParameterBinding, executeIdentityInsert,
     executeManagedInsert, planIdentityInsert, planInsert, readGeneratedIntegerKey;
@@ -30,6 +30,7 @@ private final class GeneratedOwner
     string name;
     uint reads;
     InsertContext retireOnRead;
+    InsertContext replaceOnWrite;
 }
 
 private alias AttrResult = Result!AttributeValue;
@@ -53,7 +54,13 @@ private AttrResult readName(Object entity) nothrow @nogc
 
 private void writeId(Object entity, const ref AttributeValue value)
 {
-    (cast(GeneratedOwner) entity).id = value.integer;
+    auto owner = cast(GeneratedOwner) entity;
+    owner.id = value.integer;
+    if (auto context = owner.replaceOnWrite)
+    {
+        owner.replaceOnWrite = null;
+        context.replaceAfterIdentifier(owner.id);
+    }
 }
 
 private void writeName(Object entity, const ref AttributeValue value)
@@ -122,6 +129,18 @@ private long countRows(Connection connection)
         rows.close();
     assert(rows.next());
     return rows.getLong(1);
+}
+
+private void assertStoredIdentity(Connection connection, long identifier, string name)
+{
+    auto statement = connection.prepareStatement("select \"Owner Key\", name from jpa_identity_probe");
+    scope (exit)
+        statement.close();
+    auto rows = statement.executeQuery();
+    scope (exit)
+        rows.close();
+    assert(rows.next() && rows.getLong(1) == identifier && rows.getString(2) == name);
+    assert(!rows.next());
 }
 
 /// Links named JDBC keys and staged managed publication on the pinned PostgreSQL peer.
@@ -210,6 +229,8 @@ void verifyGeneratedInserts(DataSource dataSource, JdbcTemplate jdbc)
     managed.clear();
     assert(managed.find(scheduledKey).error.code == Status.notFound);
     verifyRetiredInserts(connection, planned.value);
+    verifyGeneratedWriterRetirement(connection, planned.value, false);
+    verifyGeneratedWriterRetirement(connection, planned.value, true);
 }
 
 private final class InsertContext
@@ -219,6 +240,9 @@ private final class InsertContext
     private ManagedSnapshotSlot[1] snapshots;
     ManagedEntities managed;
     uint closedStatements;
+    GeneratedOwner replacement;
+    LoadedSnapshotPlan replacementPlan;
+    bool rejectIdentifierWrite;
 
     this()
     {
@@ -227,6 +251,16 @@ private final class InsertContext
         managed = ManagedEntities(slots[], roots[], error, snapshots[]);
         assert(error.code == Status.ok);
     }
+
+    void replaceAfterIdentifier(long identifier)
+    {
+        assert(closedStatements == 1);
+        managed.clear();
+        replacement.id = identifier;
+        assert(managed.manage(EntityIdentity(0, identifier), replacement, replacementPlan).code == Status.ok);
+        if (rejectIdentifierWrite)
+            throw new Exception("fixture rejects the generated identifier writer");
+    }
 }
 
 private enum RetireAt
@@ -234,6 +268,7 @@ private enum RetireAt
     capture,
     bind,
     close,
+    writeIdentifier,
 }
 
 private final class RetiringStatement : BlackHole!PreparedStatement
@@ -378,4 +413,48 @@ private Error runInsert(const ref InsertPlan plan, Connection connection, Insert
     if (generated)
         return executeIdentityInsert(plan, connection, context.managed, 0, owner, values, columns).error;
     return executeManagedInsert(plan, connection, context.managed, EntityIdentity(0, owner.id), owner, values);
+}
+
+private void verifyGeneratedWriterRetirement(Connection connection, const ref InsertPlan plan, bool rejectWrite)
+{
+    const snapshot = planLoadedSnapshot(&mapping);
+    assert(snapshot.ok);
+    auto context = new InsertContext;
+    scope (exit)
+        context.managed.clear();
+    context.replacementPlan = snapshot.value;
+    context.replacement = new GeneratedOwner;
+    context.replacement.name = "Replacement";
+    context.rejectIdentifierWrite = rejectWrite;
+    auto owner = new GeneratedOwner;
+    owner.name = "Original";
+    owner.replaceOnWrite = context;
+    auto writing = new RetiringConnection(connection, context, RetireAt.writeIdentifier);
+    auto values = new AttributeValue[2];
+    string[] columns = ["Owner Key"];
+    try
+    {
+        const retired = executeIdentityInsert(plan, writing, context.managed, 0, owner, values, columns);
+        assert(!rejectWrite && retired.error.code == Status.conflict);
+    }
+    catch (Exception failure)
+    {
+        assert(rejectWrite && failure.msg == "fixture rejects the generated identifier writer");
+    }
+
+    const identifier = owner.id;
+    assert(owner.replaceOnWrite is null && identifier > int.max);
+    assertStoredIdentity(connection, identifier, "Original");
+    const key = EntityIdentity(0, identifier);
+    assert(context.managed.find(key).value is context.replacement);
+    uint[1] ordinals;
+    const dirty = context.managed.dirty(key, ordinals[]);
+    assert(dirty.ok && dirty.value == 0);
+    foreach (ref value; values)
+        assert(value.kind == AttributeKind.nullValue && value.text is null);
+
+    connection.rollback();
+    context.managed.clear();
+    assert(countRows(connection) == 0 && owner.id == identifier);
+    assert(context.managed.find(key).error.code == Status.notFound);
 }
