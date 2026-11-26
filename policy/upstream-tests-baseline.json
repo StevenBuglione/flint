@@ -3969,7 +3969,7 @@
       "java/math/BigInteger/largeMemory/SymmetricRangeTests.java",
       "java/math/RoundingMode/RoundingModeTests.java"
     ],
-    "java-nio-buffers": [
+    "java-nio-char-buffer": [
       "java/nio/Buffer/AllocateDirectInit.java",
       "java/nio/Buffer/Basic.java",
       "java/nio/Buffer/BulkPutBuffer.java",

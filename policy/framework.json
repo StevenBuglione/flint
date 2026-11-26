@@ -752,18 +752,15 @@
   },
   "java-nio-buffers": {
    "directory": "framework/java-nio-buffers",
-   "module": "flint.java.nio.buffer",
-   "also": [
-    "flint.java.nio.bytebuffer",
-    "flint.java.nio.internal.buffercursor"
-   ],
+   "module": "flint.java.nio.bytebuffer",
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
    "upstream": "openjdk@21.0.13",
    "dependencies": [
     "engine-aot",
     "java",
-    "java-nio"
+    "java-nio",
+    "java-nio-char-buffer"
    ],
    "bench": {
     "fixture": "framework/java-nio-buffers/bench",
@@ -771,7 +768,6 @@
     "edit_source": "framework/java-nio-buffers/source/flint/java/nio/bytebuffer.d"
    },
    "java_types": [
-    "java.nio.Buffer",
     "java.nio.ByteBuffer"
    ],
    "provisional": [
@@ -789,6 +785,47 @@
     "compiler_peak_rss_bytes": 536870912,
     "incremental_linked_bytes": 24436,
     "template_instances": 630
+   }
+  },
+  "java-nio-char-buffer": {
+   "directory": "framework/java-nio-char-buffer",
+   "module": "flint.java.nio.buffer",
+   "also": [
+    "flint.java.nio.charbuffer",
+    "flint.java.nio.internal.buffercursor"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "engine-aot",
+    "java",
+    "java-nio"
+   ],
+   "bench": {
+    "fixture": "framework/java-nio-char-buffer/bench",
+    "baseline": "framework/java-nio-char-buffer/bench/baseline",
+    "edit_source": "framework/java-nio-char-buffer/source/flint/java/nio/charbuffer.d"
+   },
+   "java_types": [
+    "java.nio.Buffer",
+    "java.nio.CharBuffer"
+   ],
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ],
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "compiler_peak_rss_bytes": 536870912,
+    "incremental_linked_bytes": 18212,
+    "template_instances": 560
    }
   },
   "java-regex": {

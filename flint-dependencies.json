@@ -363,6 +363,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-nio-char-buffer": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-regex": {
       "repo": "framework",
       "version": "monorepo"

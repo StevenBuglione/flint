@@ -1,0 +1,8 @@
+{
+  "covered_by": {
+    "leaf": "flint.java.nio.charbuffer",
+    "probe": "heap-char-cursor",
+    "abstract_type": "Buffer",
+    "concrete_type": "CharBuffer"
+  }
+}
