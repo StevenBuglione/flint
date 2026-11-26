@@ -1936,12 +1936,16 @@ class ResourceBundleMessageSource : AbstractResourceBasedMessageSource
     import flint.core.io : DefaultResourceLoader, ResourceLoader;
 
     private ResourceLoader resourceLoader;
-    private Properties[string] bundles; // by file name; null for a missing file
+    private Properties[string] bundles; // by file name; null for a missing file; guarded by bundlesLock
+    // Request threads resolve messages concurrently (Spring guards its bundle cache the same way). Made with the
+    // source, so its first use cannot race; no file is read while it is held.
+    private imported!"core.sync.mutex".Mutex bundlesLock;
 
     /// A source reading from the class path.
     this()
     {
         resourceLoader = new DefaultResourceLoader;
+        bundlesLock = new imported!"core.sync.mutex".Mutex;
     }
 
     /// Read files through `resourceLoader`.
@@ -1994,11 +1998,14 @@ class ResourceBundleMessageSource : AbstractResourceBasedMessageSource
         return files;
     }
 
-    /// The properties of `file`, read once; null when it does not exist.
+    /// The properties of `file`, read once; null when it does not exist. Safe to call from several threads: the
+    /// first published result wins, and a thread that loaded the same file meanwhile discards its copy.
     protected Properties loadBundle(string file)
     {
-        if (auto cached = file in bundles)
-            return *cached;
+        bool found;
+        auto cached = cachedBundle(file, found);
+        if (found)
+            return cached;
         auto resource = resourceLoader.getResource(file);
         Properties properties;
         if (resource.exists())
@@ -2006,6 +2013,26 @@ class ResourceBundleMessageSource : AbstractResourceBasedMessageSource
             properties = new Properties;
             properties.load(decode(resource.getContentAsByteArray()));
         }
+        return publishBundle(file, properties);
+    }
+
+    private Properties cachedBundle(string file, out bool found)
+    {
+        bundlesLock.lock();
+        scope (exit)
+            bundlesLock.unlock();
+        auto cached = file in bundles;
+        found = cached !is null;
+        return found ? *cached : null;
+    }
+
+    private Properties publishBundle(string file, Properties properties)
+    {
+        bundlesLock.lock();
+        scope (exit)
+            bundlesLock.unlock();
+        if (auto existing = file in bundles)
+            return *existing;
         bundles[file] = properties;
         return properties;
     }
