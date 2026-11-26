@@ -347,6 +347,7 @@
     "jackson-annotations",
     "jackson-core",
     "java",
+    "java-text",
     "serde"
    ],
    "bench": {
@@ -1081,6 +1082,51 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-text": {
+   "directory": "framework/java-text",
+   "module": "flint.java.text",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.text.DateFormat",
+    "java.text.MessageFormat",
+    "java.text.NumberFormat",
+    "java.text.ParseException",
+    "java.text.ParsePosition",
+    "java.text.SimpleDateFormat"
+   ],
+   "jtreg_paths": [
+    "java/text/Format/DateFormat",
+    "java/text/Format/MessageFormat",
+    "java/text/Format/NumberFormat/PositionTest.java"
+   ],
+   "dependencies": [
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-text/bench",
+    "baseline": "framework/java-text/bench/baseline",
+    "edit_source": "framework/java-text/source/flint/java/text/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 57139,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 726
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-time": {
    "directory": "framework/java-time",
    "module": "flint.java.time.period",
@@ -1480,7 +1526,8 @@
     "engine-reactor",
     "jakarta-validation",
     "java",
-    "java-concurrent"
+    "java-concurrent",
+    "java-text"
    ],
    "bench": {
     "fixture": "framework/context/bench",

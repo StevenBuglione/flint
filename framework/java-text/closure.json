@@ -1,0 +1,30 @@
+{
+  "probes": {
+    "flint.java.text": {
+      "message-format": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.text.simpledateformat",
+          "flint.java.util"
+        ],
+        "source": "closure/message-format.d"
+      }
+    },
+    "flint.java.text.simpledateformat": {
+      "date-format": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.text",
+          "flint.java.util",
+          "flint.java.util.calendar",
+          "flint.java.util.date",
+          "flint.java.util.timezone"
+        ],
+        "source": "closure/date-format.d"
+      }
+    }
+  },
+  "schema": "flint.jdk-closure/1"
+}

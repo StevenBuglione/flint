@@ -391,6 +391,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-text": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-time": {
       "repo": "framework",
       "version": "monorepo"
