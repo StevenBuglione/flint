@@ -34,7 +34,11 @@ struct TypedColumnCodec
     TypedColumnReader read;
     /// Binds the supported typed kinds to a JDBC statement.
     TypedColumnWriter write;
+    /// The kinds handled by the codec, one bit per AttributeKind, shared by its reader and writer.
+    uint kinds = 1u << AttributeKind.date;
 }
+
+static assert(cast(uint) AttributeKind.max < uint.sizeof * 8);
 
 /// A checked row layout. The mapping and bindings must have provider lifetime.
 struct RowMaterializationPlan
@@ -64,7 +68,9 @@ PlanResult planResult(immutable(EntityMapping)* mapping, immutable(ResultBinding
         if (binding.ordinal >= mapping.attributes.length || binding.column < 1)
             return PlanResult(RowMaterializationPlan.init, Error(Status.invalidArgument,
                     "invalid result binding", index));
-        if (mapping.attributes[binding.ordinal].kind == AttributeKind.date && typed.read is null)
+        const kind = mapping.attributes[binding.ordinal].kind;
+        if ((kind == AttributeKind.date || kind == AttributeKind.timestamp) && (typed.read is null
+                || (typed.kinds & (1u << kind)) == 0))
             return PlanResult(RowMaterializationPlan.init, Error(Status.invalidArgument,
                     "missing typed JDBC reader", binding.ordinal));
         foreach (ref previous; bindings[0 .. index])
@@ -130,9 +136,9 @@ private AttributeValue readColumn(ResultSet row, int column, AttributeKind kind,
         value.bytes = row.getBytes(column);
         break;
     case AttributeKind.date:
+    case AttributeKind.timestamp:
         return readTyped(row, column, kind);
     case AttributeKind.time:
-    case AttributeKind.timestamp:
     case AttributeKind.timestampWithOffset:
     case AttributeKind.decimal:
     case AttributeKind.nullValue:

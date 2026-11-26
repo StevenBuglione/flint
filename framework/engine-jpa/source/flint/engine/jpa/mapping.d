@@ -157,8 +157,6 @@ private string unsupportedKind(AttributeKind kind) pure nothrow @nogc
     {
     case AttributeKind.time:
         return "JPA JDBC materialization for TIME is unavailable";
-    case AttributeKind.timestamp:
-        return "JPA JDBC materialization for TIMESTAMP is unavailable";
     case AttributeKind.timestampWithOffset:
         return "JDBC driver support for TIMESTAMP WITH TIME ZONE is unavailable";
     case AttributeKind.decimal:

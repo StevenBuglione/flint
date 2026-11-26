@@ -21,6 +21,7 @@ import flint.jdbc.datasource : ConnectionHolder, DataSourceTransactionManager, D
 import flint.transaction : CannotCreateTransactionException, TransactionDefinition,
     TransactionStatus, UnexpectedRollbackException;
 import flint.transaction.support : TransactionSynchronization, TransactionSynchronizationManager, TransactionTemplate;
+import jpa_timestamp : verifyTimestampMapping;
 import std.process : environment;
 
 @safe:
@@ -555,6 +556,7 @@ void main() @system
     scope (exit)
         dataSource.close();
 
+    verifyTimestampMapping(dataSource);
     auto jdbc = new JdbcTemplate(dataSource);
     jdbc.execute(
             "create table jpa_seam_probe (id bigint primary key, name text not null, " ~ "birth_date date not null)");

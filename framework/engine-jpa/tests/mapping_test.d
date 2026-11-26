@@ -110,3 +110,33 @@ unittest
     assert(missing.error.code == Status.invalidArgument && missing.error.offset == 0);
     assert(missing.error.message == "missing typed JDBC reader");
 }
+
+@("a timestamp projection requires an explicitly declared typed reader")
+unittest
+{
+    import flint.engine.jpa : TypedColumnCodec;
+    import flint.java.sql : ResultSet;
+
+    static immutable EntityMapping timestamps = EntityMapping("Record",
+            "flint.engine.jpa.mapping_test.Record", "records",
+            [
+                AttributeMapping(0, "id", "id", AttributeKind.integer, &readId, &writeId),
+                AttributeMapping(1, "recordedAt", "recorded_at", AttributeKind.timestamp, &readId, &writeId)
+    ], &constructRecord, [], &isExactRecordType, [0]);
+    static immutable ResultBinding[] projection = [ResultBinding(1, 1), ResultBinding(0, 2)];
+    static AttributeValue read(ResultSet, int, AttributeKind kind)
+    {
+        return AttributeValue(kind);
+    }
+
+    const dateOnly = TypedColumnCodec(&read, null);
+    const missing = planResult(&timestamps, projection, dateOnly);
+    assert(missing.error.code == Status.invalidArgument && missing.error.offset == 1);
+    assert(missing.error.message == "missing typed JDBC reader");
+
+    const explicitReader = TypedColumnCodec(read: &read, kinds: 1u << AttributeKind.timestamp);
+    assert(planResult(&timestamps, projection, explicitReader).ok);
+
+    const missingReader = TypedColumnCodec(kinds: 1u << AttributeKind.timestamp);
+    assert(planResult(&timestamps, projection, missingReader).error.code == Status.invalidArgument);
+}
