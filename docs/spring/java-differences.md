@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 206 | 104 | 0 | 3,672 |
+| data-commons | spring-data-commons@4.2.0 | 209 | 122 | 0 | 3,651 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -853,7 +853,25 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.data.annotation.AccessType` | `flint.data.annotation.AccessType` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.AccessType#value` | `flint.data.annotation.AccessType.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.CreatedBy` | `flint.data.annotation.CreatedBy` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.CreatedDate` | `flint.data.annotation.CreatedDate` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.Id` | `flint.data.annotation.Id` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.Immutable` | `flint.data.annotation.Immutable` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.LastModifiedBy` | `flint.data.annotation.LastModifiedBy` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.LastModifiedDate` | `flint.data.annotation.LastModifiedDate` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.PersistenceCreator` | `flint.data.annotation.PersistenceCreator` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.Persistent` | `flint.data.annotation.Persistent` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.QueryAnnotation` | `flint.data.annotation.QueryAnnotation` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.ReadOnlyProperty` | `flint.data.annotation.ReadOnlyProperty` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.Reference` | `flint.data.annotation.Reference` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.Reference#to` | `flint.data.annotation.Reference.to` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.data.annotation.Reference#value` | `flint.data.annotation.Reference.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.annotation.Transient` | `flint.data.annotation.Transient` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.TypeAlias` | `flint.data.annotation.TypeAlias` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.TypeAlias#value` | `flint.data.annotation.TypeAlias.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.data.annotation.Version` | `flint.data.annotation.Version` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.data.core
 
@@ -9998,7 +10016,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 
 | Java package | Phase 2 | Phase 3 |
 | --- | ---: | ---: |
-| org.springframework.data.annotation | 21 | 0 |
 | org.springframework.data.aot | 69 | 0 |
 | org.springframework.data.auditing | 44 | 0 |
 | org.springframework.data.auditing.config | 33 | 0 |
