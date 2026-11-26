@@ -98,6 +98,13 @@
         "source": "closure/charset.d"
       }
     },
+    "flint.java.object": {
+      "object": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/object.d"
+      }
+    },
     "flint.java.sql": {
       "sql-exception": {
         "data": [],
