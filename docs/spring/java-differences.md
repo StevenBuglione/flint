@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 236 | 151 | 1,871 | 16,163 |
+| framework | openjdk@21.0.13 | 1,090 | 205 | 1,871 | 15,255 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1925,7 +1925,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.io.PrintWriter#append(CharSequence)` | `flint.java.io.PrintWriter.append` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.io.PrintWriter#print(Object)` | `flint.java.io.PrintWriter.print` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.io.PrintWriter#println(Object)` | `flint.java.io.PrintWriter.println` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.io.UnsupportedEncodingException` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
+| `java.io.Writer#append(CharSequence)` | `flint.java.io.Writer.append` | [R14](api-mapping.md#r14-strings-and-text) |  |
+
+#### java.lang
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.lang.AssertionError#<init>(Object)` | `flint.java.lang.AssertionError.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### java.math
 
@@ -1942,6 +1952,23 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.math.RoundingMode#valueOf(String)` | `flint.java.math.roundingmode.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.math.RoundingMode#valueOf(int)` | `flint.java.math.roundingmode.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.math.RoundingMode#values()` | `flint.java.math.roundingmode.values` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+
+#### java.sql
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.sql.PreparedStatement#setObject(int,Object)` | `flint.java.sql.PreparedStatement.setObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.sql.PreparedStatement#setObject(int,Object,int)` | `flint.java.sql.PreparedStatement.setObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.sql.ResultSet#getObject(String)` | `flint.java.sql.ResultSet.getObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.sql.ResultSet#getObject(int)` | `flint.java.sql.ResultSet.getObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.sql.Wrapper#isWrapperFor(java.lang.Class)` | `flint.java.sql.Wrapper.isWrapperFor` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `java.sql.Wrapper#unwrap(java.lang.Class)` | `flint.java.sql.Wrapper.unwrap` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### java.text
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.text.MessageFormat#format(String,Object...)` | `flint.java.text.MessageFormat.format` | [R7](api-mapping.md#r7-overloads) |  |
 
 #### java.time
 
@@ -1961,6 +1988,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.YearMonth` | `flint.java.time.yearmonth.YearMonth` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.YearMonth#equals(Object)` | `flint.java.time.yearmonth.YearMonth.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.YearMonth#parse(CharSequence)` | `flint.java.time.yearmonth.YearMonth.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+
+#### java.time.format
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text) |  |
 
 #### java.time.temporal
 
@@ -2061,6 +2095,27 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.util.AbstractCollection#contains(Object)` | `flint.java.util.AbstractCollection.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.AbstractCollection#remove(Object)` | `flint.java.util.AbstractCollection.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.AbstractCollection#toArray()` | `flint.java.util.AbstractCollection.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.AbstractList#indexOf(Object)` | `flint.java.util.AbstractList.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.AbstractList#lastIndexOf(Object)` | `flint.java.util.AbstractList.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.ArrayList#toArray()` | `flint.java.util.ArrayList.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Arrays#asList(T...)` | `flint.java.util.Arrays.asList` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.util.Arrays#toString(Object[])` | `flint.java.util.Arrays.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Calendar#isSet` | `flint.java.util.Calendar.isSet` | [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `java.util.Collection#contains(Object)` | `flint.java.util.Collection.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Collection#remove(Object)` | `flint.java.util.Collection.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Collection#toArray()` | `flint.java.util.Collection.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Date#clone()` | `flint.java.util.Date.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.HashMap#containsKey(Object)` | `flint.java.util.HashMap.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.HashMap#containsValue(Object)` | `flint.java.util.HashMap.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.HashMap#get(Object)` | `flint.java.util.HashMap.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.HashMap#getOrDefault(Object,V)` | `flint.java.util.HashMap.getOrDefault` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.HashMap#remove(Object)` | `flint.java.util.HashMap.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.HashSet#contains(Object)` | `flint.java.util.HashSet.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.HashSet#remove(Object)` | `flint.java.util.HashSet.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.HashSet#toArray()` | `flint.java.util.HashSet.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HexFormat#delimiter()` | `flint.java.util.hexformat.HexFormat.delimiter` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#formatHex(byte[])` | `flint.java.util.hexformat.HexFormat.formatHex` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#formatHex(byte[],int,int)` | `flint.java.util.hexformat.HexFormat.formatHex` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
@@ -2082,7 +2137,26 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.HexFormat#withDelimiter(String)` | `flint.java.util.hexformat.HexFormat.withDelimiter` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#withPrefix(String)` | `flint.java.util.hexformat.HexFormat.withPrefix` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#withSuffix(String)` | `flint.java.util.hexformat.HexFormat.withSuffix` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.List#indexOf(Object)` | `flint.java.util.List.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.List#lastIndexOf(Object)` | `flint.java.util.List.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.List#of(E...)` | `flint.java.util.List.of` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.util.Map#containsKey(Object)` | `flint.java.util.Map.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Map#containsValue(Object)` | `flint.java.util.Map.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Map#get(Object)` | `flint.java.util.Map.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Map#getOrDefault(Object,V)` | `flint.java.util.Map.getOrDefault` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Map#remove(Object)` | `flint.java.util.Map.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Map.Entry` | `flint.java.util.MapEntry` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to MapEntry and exposed through Map.Entry as an alias. |
+| `java.util.Objects#equals(Object,Object)` | `flint.java.util.Objects.equals` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Objects#hash(Object...)` | `flint.java.util.Objects.hash` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.util.Objects#hashCode(Object)` | `flint.java.util.Objects.hashCode` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Objects#isNull(Object)` | `flint.java.util.Objects.isNull` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Objects#nonNull(Object)` | `flint.java.util.Objects.nonNull` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Objects#toString(Object)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Objects#toString(Object,String)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Optional` | `flint.java.util.Optional` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
+| `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.UUID#equals(Object)` | `flint.java.util.uuid.UUID.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#hashCode()` | `flint.java.util.uuid.UUID.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#toString()` | `flint.java.util.uuid.UUID.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -9875,17 +9949,17 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 800 | 0 |
-| java.lang | 2,055 | 0 |
+| java.io | 704 | 0 |
+| java.lang | 2,016 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
-| java.math | 138 | 0 |
+| java.math | 137 | 0 |
 | java.net | 821 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 377 | 0 |
 | java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
-| java.nio.charset | 115 | 0 |
+| java.nio.charset | 103 | 0 |
 | java.nio.charset.spi | 0 | 4 |
 | java.nio.file | 285 | 0 |
 | java.nio.file.attribute | 137 | 0 |
@@ -9894,24 +9968,24 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.cert | 0 | 466 |
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
-| java.sql | 1,291 | 0 |
-| java.text | 550 | 0 |
+| java.sql | 1,000 | 0 |
+| java.text | 515 | 0 |
 | java.text.spi | 0 | 27 |
-| java.time | 708 | 0 |
+| java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
-| java.time.format | 141 | 0 |
+| java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 2,305 | 0 |
-| java.util.concurrent | 1,264 | 0 |
+| java.util | 1,958 | 0 |
+| java.util.concurrent | 1,256 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |
 | java.util.concurrent.locks | 215 | 0 |
-| java.util.function | 118 | 0 |
+| java.util.function | 84 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 96 | 0 |
-| java.util.regex | 62 | 0 |
+| java.util.regex | 59 | 0 |
 | java.util.spi | 0 | 43 |
-| java.util.stream | 288 | 0 |
+| java.util.stream | 287 | 0 |
 | java.util.zip | 258 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
@@ -9924,7 +9998,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | javax.security.auth.spi | 0 | 6 |
 | javax.security.auth.x500 | 0 | 23 |
 | javax.security.cert | 0 | 39 |
-| javax.sql | 217 | 0 |
+| javax.sql | 211 | 0 |
 | org.aspectj.lang | 23 | 0 |
 | org.hibernate.validator | 85 | 0 |
 | org.hibernate.validator.cfg | 18 | 0 |
