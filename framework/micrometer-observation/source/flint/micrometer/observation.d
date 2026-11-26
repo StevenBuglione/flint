@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/Observation.java
+// Ported from micrometer-observation 1.18.0: io/micrometer/observation/GlobalObservationConvention.java
+// Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationConvention.java
+// Ported from micrometer-observation 1.18.0: io/micrometer/observation/KeyValuesConvention.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationView.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/SimpleEvent.java
 // Modified by the Flint authors.
@@ -23,6 +26,7 @@ module flint.micrometer.observation;
 import core.sync.mutex : Mutex;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.clock : currentTimeMillis;
+import flint.engine.aot.objects : statelessInstance;
 import flint.engine.aot.text : decimal;
 import flint.java.lang : Iterable, NullPointerException;
 import flint.java.util.formatter : formatJava;
@@ -427,4 +431,79 @@ private final class SimpleEvent : Observation.Event
     {
         return formatEvent(this, entries);
     }
+}
+
+/// Marker for key-value naming conventions.
+interface KeyValuesConvention
+{
+}
+
+// A Java type bound requires inheritance. D's implicit conversion also accepts alias-this wrappers.
+private template isObservationContext(T)
+{
+    static if (is(T == Observation.Context))
+        enum isObservationContext = true;
+    else static if (is(T Bases == super) && Bases.length > 0)
+        enum isObservationContext = isObservationContext!(Bases[0]);
+    else
+        enum isObservationContext = false;
+}
+
+private alias ContextConvention = ObservationConvention!(Observation.Context);
+
+/// Supplies observation names and key values for a context type.
+interface ObservationConvention(T) : KeyValuesConvention if (isObservationContext!T)
+{
+    /// The shared convention that declines every context.
+    static @property ContextConvention EMPTY() nothrow @nogc
+    {
+        return statelessInstance!EmptyObservationConvention();
+    }
+
+    /// Check whether this convention applies before passing a context of type T to its getters.
+    bool supportsContext(Observation.Context context);
+
+    KeyValues getLowCardinalityKeyValues(T context);
+    KeyValues getHighCardinalityKeyValues(T context);
+    Nullable!string getName();
+    Nullable!string getContextualName(T context);
+
+    /// Java defaults for an implementation that only specifies when it applies (R3).
+    mixin template Defaults(alias Context = T)
+    {
+        override KeyValues getLowCardinalityKeyValues(Context context)
+        {
+            return KeyValues.empty();
+        }
+
+        override KeyValues getHighCardinalityKeyValues(Context context)
+        {
+            return KeyValues.empty();
+        }
+
+        override Nullable!string getName()
+        {
+            return Nullable!string.init;
+        }
+
+        override Nullable!string getContextualName(Context context)
+        {
+            return Nullable!string.init;
+        }
+    }
+}
+
+/// A convention eligible for registration as a global observation convention.
+interface GlobalObservationConvention(T) : ObservationConvention!T if (isObservationContext!T)
+{
+}
+
+private final class EmptyObservationConvention : ContextConvention
+{
+    override bool supportsContext(Observation.Context context) nothrow @nogc
+    {
+        return false;
+    }
+
+    mixin ContextConvention.Defaults;
 }

@@ -46,8 +46,13 @@
       "status": "partial"
     },
     "io/micrometer/observation/ObservationConventionTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-observation/tests/observation_convention_test.d",
+      "methods": {
+        "ported": [
+          "keyValuesShouldBeEmptyByDefault"
+        ]
+      },
+      "status": "ported"
     },
     "io/micrometer/observation/ObservationEventTests.java": {
       "d": "framework/micrometer-observation/tests/observation_event_tests.d",
