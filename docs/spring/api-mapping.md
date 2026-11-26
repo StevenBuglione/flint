@@ -188,6 +188,7 @@ Mapping: the element is `adapted` with rule `R19`. Lanes cite R19 instead of a n
 A Java enum that declares methods but has no instance fields and implements no interface stays a D `enum`. Coordinator, 2026-11-26, under the owner's standing approval, from sol-observability's Actuator `Access`:
 - **Constants** keep Java's names and order, so a constant's position is its `ordinal()`.
 - **Methods** become free functions in the same module, called by UFCS (`access.cap(other)`), so call sites read as in Java. A selective import lists the functions beside the enum: `import flint.boot.actuate.endpoint : Access, cap;`.
+- **Static methods** become same-module free functions too, called without a receiver: Spring AI's `FinishReasonCategory.categorize(s)` is `categorize(s)`, imported by name.
 - **Java's `null` behaviour** for enum-typed parameters (`cap(null)` throws) is kept through a typed `null` overload (D-7).
 - **Enums with fields** follow the R15 proposal, and **enums that implement an interface** follow R18.
 
