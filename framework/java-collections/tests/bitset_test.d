@@ -8,6 +8,77 @@ import std.exception : assertThrown;
 
 @safe:
 
+@("and clears unmatched words without shrinking or growing capacity")
+unittest
+{
+    auto left = new BitSet();
+    left.set(63, 130);
+    auto shortMask = new BitSet();
+    shortMask.set(63);
+    const capacity = left.size();
+
+    assertThrown!NullPointerException(left.and(null));
+    left.and(left);
+    assert(left.size() == capacity && left.cardinality() == 67);
+    left.and(shortMask);
+    assert(left.size() == capacity && left.length() == 64 && left.cardinality() == 1);
+    assert(shortMask.length() == 64 && shortMask.cardinality() == 1 && shortMask.get(63));
+    left.set(129);
+    assert(left.cardinality() == 2 && !left.get(128) && !left.get(64));
+
+    auto longMask = new BitSet();
+    longMask.set(129);
+    longMask.set(4_096);
+    left.and(longMask);
+    assert(left.size() == capacity && left.cardinality() == 1 && left.get(129));
+    assert(longMask.length() == 4_097 && longMask.cardinality() == 2);
+    left.and(new BitSet());
+    assert(left.size() == capacity && left.isEmpty());
+}
+
+@("warmed and does not allocate")
+unittest
+{
+    auto left = new BitSet();
+    left.set(129);
+    auto mask = new BitSet();
+    mask.set(63, 66);
+    const before = GC.stats().allocatedInCurrentThread;
+    foreach (_; 0 .. 500)
+    {
+        left.set(62, 130);
+        left.and(mask);
+        assert(left.cardinality() == 3 && left.length() == 66 && left.get(63));
+    }
+    assert(GC.stats().allocatedInCurrentThread == before);
+}
+
+@("and agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto left = new BitSet();
+    auto mask = new BitSet();
+    uint state = 0x374e_2063;
+    uint digest;
+    foreach (step; 0 .. 512)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        const start = cast(int)((state >> 13) % 320);
+        left.set(start, start + 1 + cast(int)(state & 63));
+        if ((step & 7) == 0)
+            mask.clear();
+        const selected = cast(int)((state >> 3) % 257);
+        mask.flip(selected, selected + 1 + cast(int)((state >> 9) & 31));
+        left.and((step & 31) == 0 ? left : mask);
+        digest = 31 * digest + cast(uint) left.size();
+        digest = 31 * digest + cast(uint) left.length();
+        digest = 31 * digest + cast(uint) left.cardinality();
+        foreach (bit; 0 .. 384)
+            digest = 31 * digest + (left.get(bit) ? 1u : 0u);
+    }
+    assert(digest == 3_021_186_246);
+}
+
 @("intersects checks both operands without changing capacity or allocating")
 unittest
 {

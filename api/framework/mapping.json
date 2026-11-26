@@ -6372,6 +6372,7 @@
 "java.util.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.util.BitSet":{"status":"adapted","d":"flint.java.util.bitset.BitSet","rules":["R1"],"note":"Import from flint.java.util.bitset. Re-exporting from the lower-tier flint.java.util module would create a DUB dependency cycle."},
 "java.util.BitSet#<init>()":{"status":"ported","d":"flint.java.util.bitset.BitSet.this"},
+"java.util.BitSet#and(BitSet)":{"status":"ported","d":"flint.java.util.bitset.BitSet.and"},
 "java.util.BitSet#andNot(BitSet)":{"status":"ported","d":"flint.java.util.bitset.BitSet.andNot"},
 "java.util.BitSet#cardinality()":{"status":"ported","d":"flint.java.util.bitset.BitSet.cardinality"},
 "java.util.BitSet#clear()":{"status":"ported","d":"flint.java.util.bitset.BitSet.clear"},

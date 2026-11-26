@@ -204,17 +204,34 @@ class BitSet
         return false;
     }
 
+    /// Keeps the bits that are also set in the supplied mask.
+    void and(BitSet set) pure
+    {
+        if (this !is set)
+            applyMask(set, 0);
+    }
+
     /// Clears the bits that are also set in the supplied mask.
     void andNot(BitSet set) pure
+    {
+        applyMask(set, ulong.max);
+    }
+
+    pragma(inline, false) private void applyMask(scope BitSet set, ulong invert) pure
     {
         if (set is null)
             rejectNullSet();
 
         int common = wordsInUse < set.wordsInUse ? wordsInUse : set.wordsInUse;
+        if (invert == 0 && common < wordsInUse)
+        {
+            words[common .. wordsInUse] = 0;
+            wordsInUse = common;
+        }
         while (common > 0)
         {
             --common;
-            words[common] &= ~set.words[common];
+            words[common] &= set.words[common] ^ invert;
         }
         recalculateWordsInUse();
     }
@@ -239,21 +256,27 @@ class BitSet
 
     pragma(inline, false) private static void rejectIndex(int index, string label) pure
     {
-        import flint.java.lang : IndexOutOfBoundsException, Integer;
+        import flint.java.lang : Integer;
 
-        throw new IndexOutOfBoundsException(label ~ Integer.toString(index));
+        rejectBounds(label ~ Integer.toString(index));
     }
 
     pragma(inline, false) private static void rejectRange(int fromIndex, int toIndex) pure
     {
-        import flint.java.lang : IndexOutOfBoundsException, Integer;
+        import flint.java.lang : Integer;
 
         if (fromIndex < 0)
             rejectIndex(fromIndex, "fromIndex < 0: ");
         if (toIndex < 0)
             rejectIndex(toIndex, "toIndex < 0: ");
-        throw new IndexOutOfBoundsException(
-                "fromIndex: " ~ Integer.toString(fromIndex) ~ " > toIndex: " ~ Integer.toString(toIndex));
+        rejectBounds("fromIndex: " ~ Integer.toString(fromIndex) ~ " > toIndex: " ~ Integer.toString(toIndex));
+    }
+
+    pragma(inline, false) private static void rejectBounds(string message) pure
+    {
+        import flint.java.lang : IndexOutOfBoundsException;
+
+        throw new IndexOutOfBoundsException(message);
     }
 
     pragma(inline, false) private void changeRange(int fromIndex, int toIndex, RangeChange change) pure
@@ -281,29 +304,21 @@ class BitSet
             expandTo(lastWord);
 
         const firstMask = ulong.max << (fromIndex & bitMask);
+        // Set writes ones, clear writes zeroes, and flip XORs the selected bits.
+        const overwrite = change == RangeChange.flip ? 0UL : ulong.max;
+        const writeOnes = change == RangeChange.clear ? 0UL : ulong.max;
         foreach (word; firstWord .. lastWord + 1)
         {
             const lower = word == firstWord ? firstMask : ulong.max;
             const upper = word == lastWord ? lastMask : ulong.max;
             const mask = lower & upper;
-            final switch (change)
-            {
-            case RangeChange.set:
-                words[word] |= mask;
-                break;
-            case RangeChange.clear:
-                words[word] &= ~mask;
-                break;
-            case RangeChange.flip:
-                words[word] ^= mask;
-                break;
-            }
+            words[word] = (words[word] & ~(mask & overwrite)) ^ (mask & writeOnes);
         }
         if (change != RangeChange.set)
             recalculateWordsInUse();
     }
 
-    private void expandTo(int word) pure nothrow
+    pragma(inline, false) private void expandTo(int word) pure nothrow
     {
         const required = cast(size_t) word + 1;
         if (required > words.length)
@@ -324,7 +339,7 @@ class BitSet
             --wordsInUse;
     }
 
-    private int nextBit(int fromIndex, bool set) const pure nothrow @nogc
+    pragma(inline, false) private int nextBit(int fromIndex, bool set) const pure nothrow @nogc
     {
         auto word = fromIndex >> wordShift;
         if (word >= wordsInUse)

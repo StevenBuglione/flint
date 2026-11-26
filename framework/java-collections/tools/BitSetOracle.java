@@ -28,6 +28,7 @@ class BitSetOracle {
         System.out.println(Integer.toUnsignedString(rangeDigest()));
         System.out.println(Integer.toUnsignedString(andNotDigest()));
         System.out.println(Integer.toUnsignedString(intersectionDigest()));
+        System.out.println(Integer.toUnsignedString(andDigest()));
     }
 
     private static int rangeDigest() {
@@ -103,6 +104,31 @@ class BitSetOracle {
             right.set((state >>> 14) % 257);
             digest = 31 * digest + (left.intersects(right) ? 1 : 0);
             digest = 31 * digest + (right.intersects(left) ? 1 : 0);
+        }
+        return digest;
+    }
+
+    private static int andDigest() {
+        var left = new BitSet();
+        var mask = new BitSet();
+        int state = 0x374e2063;
+        int digest = 0;
+        for (int step = 0; step < 512; ++step) {
+            state = state * 1_664_525 + 1_013_904_223;
+            int start = (state >>> 13) % 320;
+            left.set(start, start + 1 + (state & 63));
+            if ((step & 7) == 0) {
+                mask.clear();
+            }
+            int selected = (state >>> 3) % 257;
+            mask.flip(selected, selected + 1 + ((state >>> 9) & 31));
+            left.and((step & 31) == 0 ? left : mask);
+            digest = 31 * digest + left.size();
+            digest = 31 * digest + left.length();
+            digest = 31 * digest + left.cardinality();
+            for (int bit = 0; bit < 384; ++bit) {
+                digest = 31 * digest + (left.get(bit) ? 1 : 0);
+            }
         }
         return digest;
     }
