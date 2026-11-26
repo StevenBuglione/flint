@@ -11359,6 +11359,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Locale.IsoCountryCode#PART1_ALPHA2` | 2 | Selects current two-letter ISO 3166 country codes. |
 | framework | `java.util.Locale.IsoCountryCode#PART1_ALPHA3` | 2 | Selects current three-letter ISO 3166 country codes. |
 | framework | `java.util.Locale.IsoCountryCode#PART3` | 2 | Selects the four-letter ISO 3166 codes for formerly used country names. |
+| framework | `java.util.MissingResourceException` | 2 | Java's RuntimeException subclass identifies an unavailable resource and retains its resource class name and key. The canonical Flint type is deferred. |
+| framework | `java.util.MissingResourceException#<init>(String,String,String)` | 2 | Java preserves the message, resource class name and key. The public constructor leaves the cause open to a later initCause. |
+| framework | `java.util.MissingResourceException#<init>(String,String,String,Throwable)` | 2 | The Java constructor is package-private and initializes the cause, including an explicit null. This internal constructor is outside the public API baseline. |
+| framework | `java.util.MissingResourceException#getClassName()` | 2 | Java returns the resource class name supplied to the constructor, including null if supplied. |
+| framework | `java.util.MissingResourceException#getKey()` | 2 | Java returns the resource key supplied to the constructor, including null if supplied. |
 | framework | `java.util.Objects#requireNonNull(T,String)` | 2 | Java distinguishes an absent exception detail message from a present empty message. The R5 Nullable!string message parameter is missing. |
 | framework | `java.util.Objects#requireNonNull(T,Supplier)` | 2 | Java calls the message Supplier only for a null object. The Supplier overload is missing. |
 | framework | `java.util.Objects#requireNonNullElse(T,T)` | 2 | Java selects the fallback when the first boxed value is absent and throws NullPointerException when both values are absent. The current method ignores absence in an R5 Nullable payload. |
