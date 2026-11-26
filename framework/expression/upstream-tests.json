@@ -1,62 +1,58 @@
 {
-  "schema": "flint.upstream-tests/1",
-  "upstream": "spring-framework@v7.1.0",
-  "module": "expression",
   "classes": {
     "org/springframework/expression/spel/AbstractExpressionTests.java": {
-      "status": "excluded",
-      "reason": "Abstract test fixture; assertions are exercised by the ported subclasses."
+      "reason": "Abstract test fixture; assertions are exercised by the ported subclasses.",
+      "status": "excluded"
     },
     "org/springframework/expression/spel/ArrayConstructorTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: Java type lookup and constructor invocation."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/BooleanExpressionTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: binary operators, precedence and evaluation."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/CachedMethodExecutorTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: property and method resolution via closed-world descriptors."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ComparatorTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: binary operators, precedence and evaluation."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ConstructorInvocationTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: Java type lookup and constructor invocation."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/EvaluationTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: evaluation context, expression configuration and conversions."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ExpressionLanguageScenarioTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: broader language features beyond scalar literals."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ExpressionStateTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: evaluation context, expression configuration and conversions."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ExpressionWithConversionTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: evaluation context, expression configuration and conversions."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/IndexingTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: collection literals and indexing."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ListTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: collection literals and indexing."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/LiteralExpressionTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: template and composite string expressions."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/LiteralTests.java": {
-      "status": "partial",
       "d": "framework/expression/tests/literal_tests.d",
       "methods": {
         "ported": [
@@ -76,151 +72,155 @@
           "nullLiteral"
         ],
         "skipped": {
-          "hexLongAndIntInteractions": "Phase 2: mixed-width multiplication and requested-type conversion.",
           "conversions": "Phase 2: property resolution and type conversion.",
+          "hexLongAndIntInteractions": "Phase 2: mixed-width multiplication and requested-type conversion.",
           "notWritable": "Phase 2: the EvaluationContext and isWritable overloads."
         }
-      }
+      },
+      "status": "partial"
     },
     "org/springframework/expression/spel/MapAccessTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: collection literals and indexing."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/MapTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: collection literals and indexing."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/MethodInvocationTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: property and method resolution via closed-world descriptors."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/OperatorOverloaderTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: evaluation context, expression configuration and conversions."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/OperatorTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: binary operators, precedence and evaluation."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/OptionalNullSafetyTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: navigation and collection selection or projection."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ParserErrorMessagesTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: remaining grammar and diagnostic surface."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ParsingTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: remaining grammar and diagnostic surface."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/PropertyAccessTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: property and method resolution via closed-world descriptors."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ScenariosForSpringSecurityExpressionTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: variable and function resolution."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/SelectionAndProjectionTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: navigation and collection selection or projection."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/SetValueTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: assignment and writable nodes."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/SpelCompilationCoverageTests.java": {
-      "status": "excluded",
-      "reason": "Spring JVM bytecode compiler; Flint AOT tests cover ahead-of-time generation."
+      "reason": "SpelCompiler emits JVM bytecode. Flint compiles SpEL to D in Flint AOT.",
+      "status": "excluded"
     },
     "org/springframework/expression/spel/SpelCompilationPerformanceTests.java": {
-      "status": "excluded",
-      "reason": "Spring JVM bytecode compiler; Flint AOT tests cover ahead-of-time generation."
+      "reason": "SpelCompiler emits JVM bytecode. Flint compiles SpEL to D in Flint AOT.",
+      "status": "excluded"
     },
     "org/springframework/expression/spel/SpelDocumentationTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: broader language features beyond scalar literals."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/SpelExceptionTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: remaining grammar and diagnostic surface."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/SpelParserConfigurationTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: evaluation context, expression configuration and conversions."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/SpelReproTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: broader language features beyond scalar literals."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/StandardTypeComparatorTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: binary operators, precedence and evaluation."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/StandardTypeLocatorTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: Java type lookup and constructor invocation."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/TemplateExpressionParsingTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: template and composite string expressions."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/VariableAndFunctionTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: variable and function resolution."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ast/AccessorUtilsTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: property and method resolution via closed-world descriptors."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ast/FormatHelperTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: type formatting and typed diagnostics."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ast/InlineCollectionTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: collection literals and indexing."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/ast/OpPlusTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: binary operators, precedence and evaluation."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/standard/PropertiesConversionSpelTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: property and method resolution via closed-world descriptors."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/standard/SpelCompilerTests.java": {
-      "status": "excluded",
-      "reason": "Spring JVM bytecode compiler; Flint AOT tests cover ahead-of-time generation."
+      "reason": "SpelCompiler emits JVM bytecode. Flint compiles SpEL to D in Flint AOT.",
+      "status": "excluded"
     },
     "org/springframework/expression/spel/standard/SpelParserTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: remaining grammar and diagnostic surface."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/support/MapAccessorTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: property and method resolution via closed-world descriptors."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/support/ReflectionHelperTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: property and method resolution via closed-world descriptors."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/support/ReflectiveIndexAccessorTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: property and method resolution via closed-world descriptors."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/support/SimpleEvaluationContextTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: evaluation context, expression configuration and conversions."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/support/StandardComponentsTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: evaluation context, expression configuration and conversions."
+      "phase": "2",
+      "status": "deferred"
     },
     "org/springframework/expression/spel/support/StandardEvaluationContextTests.java": {
-      "status": "excluded",
-      "reason": "Phase 2: evaluation context, expression configuration and conversions."
+      "phase": "2",
+      "status": "deferred"
     }
-  }
+  },
+  "module": "expression",
+  "schema": "flint.upstream-tests/1",
+  "upstream": "spring-framework@v7.1.0"
 }

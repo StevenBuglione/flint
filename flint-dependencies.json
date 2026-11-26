@@ -271,6 +271,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:expression": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:framework-test": {
       "repo": "framework",
       "version": "monorepo"
