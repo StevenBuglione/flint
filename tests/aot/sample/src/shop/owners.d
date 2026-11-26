@@ -63,6 +63,16 @@ import flint.transaction.annotation : Transactional;
         return store.find(id);
     }
 
+    /// Advised: the "owner-sets" cache keyed by its array argument (SimpleKeyGenerator compares it element by
+    /// element, so the generator registers the array's descriptor).
+    @Cacheable("owner-sets") string findNames(long[] ids)
+    {
+        string names;
+        foreach (id; ids)
+            names ~= (names.length ? "," : "") ~ store.find(id);
+        return names;
+    }
+
     /// Whether @PostConstruct ran; read through a method, since a proxy's own fields are never initialized.
     bool isReady()
     {

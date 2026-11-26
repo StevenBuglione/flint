@@ -665,15 +665,19 @@ SpEL is compiled to typed D at build time (`engine/aot/spel.d`); nothing interpr
     `float`. Operators apply Java's binary numeric promotion, so `int` arithmetic wraps at 32 bits.
     `String.length()` and `size()` are `int`. Real literals go through `flint.engine.aot.expression.spelDouble`
     (`spelFloat`), which keeps DMD from folding them at 80-bit precision, so `0.1 + 0.2` is Java's
-    0.30000000000000004. Placeholders in a numeric position still convert to `long`. Integer `^` computes in
-    `long`, where Spring returns an `int` when the result fits; the value is the same. The shared parity corpus
+    0.30000000000000004. Placeholders in a numeric position still convert to `long`. Integer `^` is Spring's
+    `(long) Math.pow` (`spelPowLong`: a negative exponent truncates toward zero, an overflow saturates); it is typed
+    `long`, where Spring returns an `int` when both operands are ints and the result fits, with the same value. The shared parity corpus
     `tests/aot/spel-parity/cases.json` runs every case through this compiler and the runtime interpreter
     (`flint:expression`);
   - `${key:default}` placeholders. Spring resolves them before parsing, so a placeholder takes the type its use needs: a number beside a number, `true`/`false` in a boolean context, a string elsewhere, including inside quotes;
   - `@bean` references, typed from the bean definitions by name, with their public fields, Java Beans getters (`@clock.time` → `getTime()`) and public methods;
   - `#variables` and root functions where the use site provides them (section 9.1);
   - the arithmetic operators `+ - * / % ^` (also `div`, `mod`), with `+` concatenating when either side is text;
-  - comparisons `== != < <= > >=` (also `eq ne lt le gt ge`) and `null` tests;
+  - comparisons `== != < <= > >=` (also `eq ne lt le gt ge`) and `null` tests. Textual operators (`eq`, `and`,
+    `div`, ...) ignore case, as Spring's do. Strings order by UTF-16 code units, as `String.compareTo`
+    (`spelCompareStrings`). `null` orders before every value (Spring's StandardTypeComparator), and the other
+    operand is still evaluated;
   - `and`, `or`, `not`, `&&`, `||`, `!`;
   - `?:` ternary, `?:` Elvis and `?.` safe navigation;
   - indexing of arrays and strings;
@@ -684,6 +688,11 @@ SpEL is compiled to typed D at build time (`engine/aot/spel.d`); nothing interpr
 ### 9.1 Method-level expressions
 
 `@Cacheable(key, condition, unless)`, `@CacheEvict`, `@CachePut`, `@PreAuthorize`, `@PostAuthorize` and `@EventListener(condition)` use the same compiler. There `#name`, `#p0` and `#a0` are the method's arguments (typed from its signature), `#result` is its result, `#root.methodName` and `#root.args` are available, and the security root's functions (`hasRole`, `hasAnyRole`, `hasAuthority`, `isAuthenticated`, `principal`, `authentication`) are runtime calls whose results are converted where used. Each compiles to a function `Any spel_<type>_<method>_<n>(EvaluationContext context)`, listed in the method descriptor's `expressions` (contract 3), or set as `EventListenerSpec.conditionExpression`. petclinic-rest's `@PreAuthorize("hasRole(@roles.OWNER_ADMIN)")` becomes `context.rootFunction("hasRole", [Any.of((cast(Roles) context.bean("roles")).OWNER_ADMIN)])`.
+
+A method carrying `@Cacheable`, `@CachePut`, `@CacheEvict` or `@Caching` also gets a container descriptor
+(`descriptorOf`, contract 3's `length`/`element` builders) for each array or collection parameter. The cache advice's
+key generator compares those arguments element by element, as Spring's `SimpleKey` does with `Arrays.deepEquals`,
+through the descriptors it resolves once per advised method.
 
 ## 10. Diagnostics
 

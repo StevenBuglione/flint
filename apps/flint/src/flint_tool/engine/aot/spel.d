@@ -299,7 +299,36 @@ private struct Parser
 
     bool peek(string text)
     {
-        return position < tokens.length && tokens[position].kind != Kind.text && tokens[position].text == text;
+        if (position >= tokens.length || tokens[position].kind == Kind.text)
+            return false;
+        const token = tokens[position].text;
+        // Spring matches its textual operators ignoring case (`Ge`, `AND`, `Div`): peekIdentifierToken's
+        // equalsIgnoreCase and the tokenizer's upper-cased ALTERNATIVE_OPERATOR_NAMES.
+        if (tokens[position].kind == Kind.name && textualOperator(text))
+            return token.length == text.length && asciiEqualIgnoringCase(token, text);
+        return token == text;
+    }
+
+    static bool textualOperator(string text) pure nothrow @nogc
+    {
+        switch (text)
+        {
+        case "and", "or", "not", "div", "mod", "eq", "ne", "lt", "le", "gt", "ge":
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    static bool asciiEqualIgnoringCase(scope const(char)[] a, scope const(char)[] b) pure nothrow @nogc
+    {
+        foreach (i, c; a)
+        {
+            const lower = c >= 'A' && c <= 'Z' ? cast(char)(c + 32) : c;
+            if (lower != b[i])
+                return false;
+        }
+        return true;
     }
 
     bool accept(string text)
@@ -773,16 +802,18 @@ private struct Parser
     {
         auto a = numericOf(resolved(left, resolved(right, "long").type == "double" ? "double" : "long"));
         auto b = numericOf(resolved(right, a.type == "double" ? "double" : "long"));
-        // OpPower on integers computes in long (Math.pow, then a long when the result leaves the int range);
-        // every other operator applies Java's binary numeric promotion.
-        const type = operator == "^^" && integral(a.type) && integral(b.type) ? "long" : promoted(a.type, b.type);
+        // OpPower on integers is Java's (long) Math.pow (spelPowLong: truncation toward zero, saturation); every
+        // other operator applies Java's binary numeric promotion.
+        if (operator == "^^" && integral(a.type) && integral(b.type))
+            return Compiled(runtime ~ "spelPowLong(" ~ convert(a, "long") ~ ", " ~ convert(b, "long") ~ ")", "long");
+        const type = promoted(a.type, b.type);
         return Compiled("(" ~ convert(a, type) ~ " " ~ operator ~ " " ~ convert(b, type) ~ ")", type);
     }
 
     Compiled compare(Compiled left, string operator, Compiled right)
     {
         if (left.type == "null" || right.type == "null")
-            return compareNull(left.type == "null" ? right : left, operator);
+            return compareNull(left.type == "null" ? right : left, operator, left.type == "null");
         left = resolved(left, right.type);
         right = resolved(right, left.type);
         if (numeric(left.type) || numeric(right.type))
@@ -796,15 +827,52 @@ private struct Parser
             left = Compiled(convert(left, right.type), right.type);
         if (right.type == "Any" && left.type != "Any")
             right = Compiled(convert(right, left.type), left.type);
-        if (operator != "==" && operator != "!=" && left.type != "string")
+        const ordering = operator != "==" && operator != "!=";
+        if (ordering && left.type != "string")
             fail("`" ~ operator ~ "` compares numbers and strings only");
+        // Java's String.compareTo orders by UTF-16 code units, where D's operators compare UTF-8 bytes: a
+        // supplementary character (a surrogate pair) sorts before U+E000..U+FFFF in Java.
+        if (ordering)
+            return Compiled("(" ~ runtime ~ "spelCompareStrings(" ~ left.code ~ ", " ~ right.code ~ ") " ~ operator ~ " 0)",
+                    "bool");
         return Compiled("(" ~ left.code ~ " " ~ operator ~ " " ~ right.code ~ ")", "bool");
     }
 
-    static Compiled compareNull(Compiled value, string operator)
+    /++
+    A comparison with the `null` literal. Spring's StandardTypeComparator orders null before every value, and two
+    nulls are equal, so an ordering operator's result depends only on whether the other operand is null. That
+    operand is still evaluated once (`|| true`, `&& false`), as Spring evaluates both sides.
+    +/
+    static Compiled compareNull(Compiled value, string operator, bool nullOnLeft)
     {
-        const test = value.type == "Any" ? "(" ~ value.code ~ ").isNull" : "(" ~ value.code ~ ") is null";
-        return Compiled(operator == "==" ? "(" ~ test ~ ")" : "!(" ~ test ~ ")", "bool");
+        if (value.type == "null")
+            return Compiled(operator == "==" || operator == "<=" || operator == ">=" ? "true" : "false", "bool");
+        // A number or boolean is never null; spelIsNull still evaluates it (D rejects `is null` on it).
+        const test = value.type == "Any" ? "(" ~ value.code ~ ").isNull" : numeric(value.type)
+            || value.type == "bool" ? runtime ~ "spelIsNull(" ~ value.code ~ ")" : "(" ~ value.code ~ ") is null";
+        string code;
+        switch (operator)
+        {
+        case "==":
+            code = "(" ~ test ~ ")";
+            break;
+        case "!=":
+            code = "!(" ~ test ~ ")";
+            break;
+        case "<":
+            code = nullOnLeft ? "!(" ~ test ~ ")" : "(" ~ test ~ " && false)";
+            break;
+        case "<=":
+            code = nullOnLeft ? "(" ~ test ~ " || true)" : "(" ~ test ~ ")";
+            break;
+        case ">":
+            code = nullOnLeft ? "(" ~ test ~ " && false)" : "!(" ~ test ~ ")";
+            break;
+        default: // ">="
+            code = nullOnLeft ? "(" ~ test ~ ")" : "(" ~ test ~ " || true)";
+            break;
+        }
+        return Compiled(code, "bool");
     }
 
     Compiled elvis(Compiled value, Compiled fallback)

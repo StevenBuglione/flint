@@ -478,7 +478,7 @@ unittest
     expect(spel("1 + 2 * 3")).toEqual("(1 + (2 * 3)) : int");
     enum runtime = `imported!"flint.engine.aot.expression".`;
     expect(spel("10 / 4.0")).toEqual("(cast(double) (10) / " ~ runtime ~ "spelDouble(4.0)) : double");
-    expect(spel("2 ^ 10")).toEqual("(cast(long) (2) ^^ cast(long) (10)) : long");
+    expect(spel("2 ^ 10")).toEqual(runtime ~ "spelPowLong(cast(long) (2), cast(long) (10)) : long");
     expect(spel("'a' + 1")).toEqual(`("a" ~ imported!"std.conv".to!(string)(1)) : string`);
     expect(spel("'it''s'")).toEqual(`"it's" : string`);
     expect(spel("#id > 10 and not (#id == 99)")).toEqual(
@@ -490,11 +490,17 @@ unittest
     expect(spel("@clock.now() * 2")).toEqual("(clock.now() * cast(long) (2)) : long");
     expect(spel("hasRole('ADMIN') or #id == 1")).toEqual(
             `((ctx.hasRole("ADMIN")).get!(bool)() || (id == cast(long) (1))) : bool`);
-    expect(spel("#id == null")).toEqual("((id) is null) : bool");
+    expect(spel("#id == null")).toEqual("(" ~ runtime ~ "spelIsNull(id)) : bool");
     // Java's literal typing and binary numeric promotion (sol-template's parity corpus): an unsuffixed integer
     // literal is an int, so int arithmetic wraps at 32 bits; L makes a long, f a float, '.', an exponent or d a
     // double; an int literal outside the int range is an error, as Spring's NOT_AN_INTEGER.
     expect(spel("2147483647 + 1")).toEqual("(2147483647 + 1) : int");
+    // Spring orders null first and compares strings by UTF-16 units; its textual operators ignore case.
+    expect(spel("null < 0")).toEqual("!(" ~ runtime ~ "spelIsNull(0)) : bool");
+    expect(spel("#id >= null")).toEqual("(" ~ runtime ~ "spelIsNull(id) || true) : bool");
+    expect(spel("null <= null")).toEqual("true : bool");
+    expect(spel("'a' lt 'b'")).toEqual("(" ~ runtime ~ `spelCompareStrings("a", "b") < 0) : bool`);
+    expect(spel("2 Ge 1 AND NOT (3 Div 2 EQ 2)")).toEqual("((2 >= 1) && !(((3 / 2) == 2))) : bool");
     expect(spel("2147483647L + 1")).toEqual("(2147483647L + cast(long) (1)) : long");
     expect(spel("1.5f * 2")).toEqual("(" ~ runtime ~ "spelFloat(1.5f) * cast(float) (2)) : float");
     expect(spel("1e3 + 2d")).toEqual("(" ~ runtime ~ "spelDouble(1e3) + " ~ runtime ~ "spelDouble(2.0)) : double");
@@ -836,6 +842,9 @@ unittest
     expect(pricing.canFind("listener.conditionExpression = &condition_shop_pricing_Pricing_onNumber;")).toBeTrue();
     expect(pricing.canFind("listener.invokeForResult = &listen_shop_pricing_Pricing_onGreeting;")).toBeTrue();
     expect(pricing.canFind("listener.invoke = &listen_shop_pricing_Pricing_onNumber;")).toBeTrue();
+    // A cache-advised method's array argument gets its descriptor, for SimpleKeyGenerator's element-wise keys.
+    const owners = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "owners.d"));
+    expect(owners.canFind("descriptorOf!(long[])()")).toBeTrue();
     const data = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "shop", "data.d"));
     expect(data.canFind("&construct_Owner_0, true)")).toBeTrue();
     expect(data.canFind("descriptor.enumValue = &enum_OwnerStatus;")).toBeTrue();

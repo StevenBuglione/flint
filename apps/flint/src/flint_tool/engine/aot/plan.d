@@ -255,6 +255,12 @@ struct ExpressionPlan
     string[] modules;
 }
 
+/// The cache annotations whose advice builds keys from the method's arguments.
+immutable string[] cacheAnnotations = [
+    "flint.cache.annotation.Cacheable", "flint.cache.annotation.CachePut",
+    "flint.cache.annotation.CacheEvict", "flint.cache.annotation.Caching"
+];
+
 /// Annotation attributes that hold SpEL.
 immutable string[2][] spelAttributes = [
     ["flint.cache.annotation.Cacheable", "key"], ["flint.cache.annotation.Cacheable", "condition"],
@@ -2105,6 +2111,11 @@ private final class Analysis
             result.parameterInherited ~= aggregates;
         }
         result.expressions = expressionsOf(method, merged);
+        // Cache key generation (SimpleKeyGenerator) compares array and collection arguments element by element,
+        // through their descriptors' length/element builders: register one for each such parameter.
+        if (merged.hasAny(cacheAnnotations))
+            foreach (ref parameter; method.parameters)
+                containerArgument(decl, parameter.type);
         return result;
     }
 
