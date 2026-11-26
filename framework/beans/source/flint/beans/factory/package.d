@@ -44,9 +44,10 @@ import flint.engine.aot.name : typeNameOf;
 import flint.java.lang : NullPointerException;
 import flint.java.util : LinkedHashMap, Map;
 import flint.java.util.stream : Stream;
-import std.typecons : Nullable;
 
 @safe:
+
+package(flint.beans) alias NullableString = Nullable!string;
 
 /++
 The root interface for accessing a bean container.
@@ -458,7 +459,7 @@ class BeanCreationException : FatalBeanException
         this.resourceDescription = resourceDescription;
     }
 
-    private this(Nullable!string resourceDescription, Nullable!string beanName, string msg, Throwable cause)
+    private this(NullableString resourceDescription, NullableString beanName, string msg, Throwable cause)
     {
         const name = beanName.isNull ? "null" : beanName.get();
         const resource = resourceDescription.isNull ? "" : " defined in " ~ resourceDescription.get();
@@ -656,13 +657,13 @@ class UnsatisfiedDependencyException : BeanCreationException
     }
 
     /// The unsatisfied property with an optional resource, bean name and detail message (R5).
-    this(Nullable!string resourceDescription, Nullable!string beanName, string propertyName, Nullable!string msg)
+    this(NullableString resourceDescription, NullableString beanName, string propertyName, NullableString msg)
     {
         super(resourceDescription, beanName, propertyMessage(propertyName, msg.isNull ? null : msg.get()), null);
     }
 
     /// The unsatisfied property with the supplied bean exception as its cause (R5, R7).
-    this(Nullable!string resourceDescription, Nullable!string beanName, string propertyName, BeansException cause)
+    this(NullableString resourceDescription, NullableString beanName, string propertyName, BeansException cause)
     {
         if (cause is null)
             throw new NullPointerException("cause");
@@ -680,7 +681,7 @@ class UnsatisfiedDependencyException : BeanCreationException
 class BeanDefinitionStoreException : FatalBeanException
 {
     private string beanName;
-    private Nullable!string resourceDescription;
+    private NullableString resourceDescription;
 
     /// `msg`, and optionally a `cause`.
     this(string msg, Throwable cause = null)
@@ -689,7 +690,7 @@ class BeanDefinitionStoreException : FatalBeanException
     }
 
     /// A resource reference with the supplied detail message and optional cause.
-    this(Nullable!string resourceDescription, string msg, Throwable cause = null)
+    this(NullableString resourceDescription, string msg, Throwable cause = null)
     {
         super(msg, cause);
         this.resourceDescription = resourceDescription;
@@ -702,7 +703,7 @@ class BeanDefinitionStoreException : FatalBeanException
     }
 
     /// A named definition with an optional resource description and detail message.
-    this(Nullable!string resourceDescription, string beanName, Nullable!string msg, Throwable cause = null)
+    this(NullableString resourceDescription, string beanName, NullableString msg, Throwable cause = null)
     {
         const name = beanName is null ? "null" : beanName;
         const resource = resourceDescription.isNull ? "null" : resourceDescription.get();
@@ -713,7 +714,7 @@ class BeanDefinitionStoreException : FatalBeanException
     }
 
     /// The resource description, if available.
-    Nullable!string getResourceDescription() const pure nothrow @nogc
+    NullableString getResourceDescription() const pure nothrow @nogc
     {
         return resourceDescription;
     }
@@ -724,8 +725,8 @@ class BeanDefinitionStoreException : FatalBeanException
         return beanName;
     }
 
-    private static Nullable!string optionalText(string text) pure nothrow @nogc
+    private static NullableString optionalText(string text) pure nothrow @nogc
     {
-        return text is null ? Nullable!string.init : Nullable!string(text);
+        return text is null ? NullableString.init : NullableString(text);
     }
 }

@@ -19,19 +19,22 @@
  */
 module flint.beans.factory.bean_definition_defaults;
 
+import flint.beans.factory : NullableString;
 import flint.util : StringUtils;
 import std.typecons : Nullable;
 
 @safe:
 
+private alias NullableBoolean = Nullable!bool;
+
 /// Default values for bean definition properties.
 class BeanDefinitionDefaults
 {
-    private Nullable!bool lazyInit;
+    private NullableBoolean lazyInit;
     private int autowireMode;
     private int dependencyCheck;
-    private Nullable!string initMethodName;
-    private Nullable!string destroyMethodName;
+    private NullableString initMethodName;
+    private NullableString destroyMethodName;
 
     /// Records whether singleton beans should be initialized lazily by default.
     void setLazyInit(bool value) pure nothrow @nogc
@@ -46,7 +49,7 @@ class BeanDefinitionDefaults
     }
 
     /// The lazy initialization flag, if explicitly set.
-    Nullable!bool getLazyInit() const pure nothrow @nogc
+    NullableBoolean getLazyInit() const pure nothrow @nogc
     {
         return lazyInit;
     }
@@ -76,31 +79,31 @@ class BeanDefinitionDefaults
     }
 
     /// Sets the optional default initialization callback name.
-    void setInitMethodName(Nullable!string name) pure nothrow @nogc
+    void setInitMethodName(NullableString name) pure nothrow @nogc
     {
         initMethodName = callbackName(name);
     }
 
     /// The default initialization callback name, if present.
-    Nullable!string getInitMethodName() const pure nothrow @nogc
+    NullableString getInitMethodName() const pure nothrow @nogc
     {
         return initMethodName;
     }
 
     /// Sets the optional default destruction callback name.
-    void setDestroyMethodName(Nullable!string name) pure nothrow @nogc
+    void setDestroyMethodName(NullableString name) pure nothrow @nogc
     {
         destroyMethodName = callbackName(name);
     }
 
     /// The default destruction callback name, if present.
-    Nullable!string getDestroyMethodName() const pure nothrow @nogc
+    NullableString getDestroyMethodName() const pure nothrow @nogc
     {
         return destroyMethodName;
     }
 }
 
-private Nullable!string callbackName(Nullable!string name) pure nothrow @nogc
+private NullableString callbackName(NullableString name) pure nothrow @nogc
 {
-    return !name.isNull && StringUtils.hasText(name.get()) ? name : Nullable!string.init;
+    return !name.isNull && StringUtils.hasText(name.get()) ? name : NullableString.init;
 }

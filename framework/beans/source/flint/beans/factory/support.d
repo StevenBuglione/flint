@@ -46,8 +46,9 @@ import flint.beans.factory : BeanCreationException,
     BeanCurrentlyInCreationException, BeanDefinitionStoreException,
     BeanFactory, BeanFactoryAware, BeanIsNotAFactoryException, BeanNameAware,
     BeanNotOfRequiredTypeException,
-    DisposableBean, FactoryBeanErased, InitializingBean,
-    NoSuchBeanDefinitionException, NoUniqueBeanDefinitionException, SmartInitializingSingleton;
+    DisposableBean, FactoryBeanErased,
+    InitializingBean, NoSuchBeanDefinitionException, NoUniqueBeanDefinitionException,
+    NullableString, SmartInitializingSingleton;
 import flint.beans.factory.config : BeanDefinition, BeanPostProcessor,
     ConfigurableListableBeanFactory, ConfigurationPropertiesBinder, DestructionAwareBeanPostProcessor;
 import flint.engine.aot.descriptor : DescriptorTable;
@@ -62,7 +63,6 @@ import flint.engine.aot.name : canonicalTypeName, typeNameOf;
 import flint.java.lang : IllegalStateException, UnsupportedOperationException, valueOf;
 import flint.java.util : stableSort;
 import flint.util : Assert, StringValueResolver;
-import std.typecons : Nullable;
 
 @safe:
 
@@ -109,10 +109,10 @@ class BeanDefinitionOverrideException : BeanDefinitionStoreException
     private BeanDefinition existingDefinition;
 
     /// The incoming resource description, with absent descriptions rendered as `"null"`.
-    override Nullable!string getResourceDescription() const pure nothrow @nogc
+    override NullableString getResourceDescription() const pure nothrow @nogc
     {
         auto description = super.getResourceDescription();
-        return description.isNull ? Nullable!string("null") : description;
+        return description.isNull ? NullableString("null") : description;
     }
 
     /// The bean name, with absent names rendered as `"null"`.
