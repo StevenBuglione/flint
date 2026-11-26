@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,066 | 278 | 1,871 | 15,206 |
+| framework | openjdk@21.0.13 | 1,065 | 279 | 1,871 | 15,206 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2222,7 +2222,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.util.concurrent.BrokenBarrierException` | `flint.java.util.concurrent.brokenbarrierexception.BrokenBarrierException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
+| `java.util.concurrent.BrokenBarrierException` | `flint.java.util.concurrent.brokenbarrierexception.BrokenBarrierException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | An empty detail is absent in Flint. Java preserves an explicitly empty String. |
+| `java.util.concurrent.BrokenBarrierException#<init>(String)` | `flint.java.util.concurrent.brokenbarrierexception.BrokenBarrierException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.Callable` | `flint.java.util.concurrent.callable.Callable` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.concurrent.Callable#call()` | `flint.java.util.concurrent.callable.Callable.call` | [R8](api-mapping.md#r8-exceptions) |  |
 | `java.util.concurrent.Delayed` | `flint.java.util.concurrent.delayed.Delayed` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import from flint.java.util.concurrent.delayed until the JDK aggregate is available. |

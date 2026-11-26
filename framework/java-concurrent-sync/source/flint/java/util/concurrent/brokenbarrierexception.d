@@ -42,10 +42,10 @@ module flint.java.util.concurrent.brokenbarrierexception;
 /// A barrier was broken when the calling thread tried to wait or while it waited (R1, R8).
 class BrokenBarrierException : Exception
 {
-    /// Constructs an exception with an optional detail message.
+    /// Constructs an exception with an optional detail message. Empty detail is absent (R26).
     this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow @nogc
     {
-        super(message, file, line);
+        super(message.length == 0 ? null : message, file, line);
     }
 
     /// Returns the detail message, which may be null.
