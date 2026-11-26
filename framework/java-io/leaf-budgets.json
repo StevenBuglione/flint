@@ -1,4 +1,8 @@
 {
+  "flint.java.io.interruptedioexception": {
+    "incremental_linked_bytes": 3652,
+    "template_instances": 242
+  },
   "flint.java.io.unsupportedencodingexception": {
     "incremental_linked_bytes": 3551,
     "template_instances": 480

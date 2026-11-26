@@ -1,6 +1,7 @@
 {
  "note": "JDK types that exist only in a leaf module, not at their R1 path (tools/jdk_coverage.py, from dmd -X). The table reads this file, so it regenerates without a compiler.",
  "types": {
+  "java.io.InterruptedIOException": "flint.java.io.interruptedioexception",
   "java.io.UnsupportedEncodingException": "flint.java.io.unsupportedencodingexception",
   "java.nio.BufferOverflowException": "flint.java.nio.bufferoverflowexception",
   "java.nio.BufferUnderflowException": "flint.java.nio.bufferunderflowexception",

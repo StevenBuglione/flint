@@ -30,6 +30,19 @@ LEGACY_RECORD = re.compile(r'link\|(java(?:-[a-z0-9-]+)?)\|(flint\.java\w*(?:\.\
                            r'([a-z][a-z0-9-]*)\|(?:O3|Oz)\|undeclared module records (flint\.java(?:\.\w+)+)')
 # Temporary first-object exception approved in 64f0653bc. Remove when the compile-scope fix lands.
 FIRST_OBJECT_ALLOWANCES = {
+    ('java-io', 'flint.java.io.unsupportedencodingexception', 'throw-catch'): {
+        'profiles': ('O3', 'Oz'),
+        'module': 'flint.java.io.interruptedioexception',
+        'member': 'flint.java.io.interruptedioexception.o',
+        'referrer': 'flint.java.io.unsupportedencodingexception.o',
+        'trigger': '_D6object__T10RTInfoImplVAmA2i96i2728ZQBayG2m',
+        'existing_probe': True,
+        'sections': {
+            '.rodata._D6object__T10RTInfoImplVAmA2i96i2728ZQBayG2m': 16,
+            '.data._D5flint4java2io22interruptedioexception12__ModuleInfoZ': 48,
+            '__minfo': 8,
+        },
+    },
     ('java-concurrent-sync', 'flint.java.util.concurrent.brokenbarrierexception', 'construct'): {
         'profiles': ('O3', 'Oz'),
         'module': 'flint.java.util.concurrent.atomic.atomicreference',

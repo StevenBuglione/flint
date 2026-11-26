@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,098 | 257 | 1,871 | 15,195 |
+| framework | openjdk@21.0.13 | 1,100 | 258 | 1,871 | 15,192 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1929,6 +1929,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `java.io.ByteArrayOutputStream#toByteArray()` | `flint.java.io.ByteArrayOutputStream.toByteArray` | [R26](api-mapping.md#r26-null-arrays) | Returns an independent unsigned byte slice. An empty result uses the plain D array representation. |
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D exception hierarchy for Java's checked I/O exception. |
+| `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
 | `java.io.PrintWriter#append(CharSequence)` | `flint.java.io.PrintWriter.append` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.io.PrintWriter#print(Object)` | `flint.java.io.PrintWriter.print` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.io.PrintWriter#println(Object)` | `flint.java.io.PrintWriter.println` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -10013,7 +10014,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 723 | 0 |
+| java.io | 720 | 0 |
 | java.lang | 2,018 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10899,6 +10900,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `java.io.ByteArrayOutputStream#toString()` | 2 | The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input. |
 | framework | `java.io.IOException#<init>(Throwable)` | 2 | The current constructor accepts a message and an optional cause. Java's cause-only constructor is pending. |
+| framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java distinguishes absent detail from an empty detail message. The current raw string constructor and inherited accessor need the R5 nullable message contract. |
 | framework | `java.io.OutputStream` | 2 | The abstract sink exists. The Java type also implements the Closeable and Flushable interfaces, which are pending. |
 | framework | `java.io.OutputStream#write(byte[])` | 2 | Java forwards a whole-array write to the virtual ranged overload. The existing method calls the single-byte overload directly. |
 | framework | `java.io.OutputStream#write(byte[],int,int)` | 2 | Java validates the range with IndexOutOfBoundsException and calls the single-byte overload. The existing method slices the array and calls the virtual whole-array overload. |
