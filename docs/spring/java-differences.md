@@ -196,7 +196,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | openjdk@21.0.13 | 234 | 135 | 1,871 | 16,181 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 499 | 1 | 88 | 11,825 |
+| security | spring-security@7.2.0 | 501 | 3 | 88 | 11,821 |
 
 ## Known gaps
 
@@ -4294,6 +4294,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.security.authentication.AuthenticationProvider#supports(Class)` | `flint.security.authentication.AuthenticationProvider.supports` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### org.springframework.security.core.authority
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.security.core.authority.SimpleGrantedAuthority` | `flint.security.core.SimpleGrantedAuthority` | [R1](api-mapping.md#r1-packages-and-names) | Import the class from flint.security.core until the authority module is ported. |
+| `org.springframework.security.core.authority.SimpleGrantedAuthority#equals(Object)` | `flint.security.core.SimpleGrantedAuthority.opEquals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 ## Excluded elements
 
@@ -10314,7 +10321,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.converter | 3 | 0 |
 | org.springframework.security.core | 17 | 0 |
 | org.springframework.security.core.annotation | 19 | 0 |
-| org.springframework.security.core.authority | 35 | 0 |
+| org.springframework.security.core.authority | 31 | 0 |
 | org.springframework.security.core.authority.mapping | 38 | 0 |
 | org.springframework.security.core.context | 48 | 11 |
 | org.springframework.security.core.parameters | 10 | 0 |
@@ -10739,6 +10746,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | security | `org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder#userDetailsService(T)` | 2 | The upstream method returns DaoAuthenticationConfigurer. The current Flint method returns the builder. |
 | security | `org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration#authenticationManagerBuilder(ObjectPostProcessor,ApplicationContext)` | 2 | The bean method with parameters requires the deferred ObjectPostProcessor contract. |
 | security | `org.springframework.security.config.annotation.web.builders.HttpSecurity#<init>(ObjectPostProcessor,AuthenticationManagerBuilder,Map)` | 2 | The constructor requires the deferred ObjectPostProcessor contract. |
+| security | `org.springframework.security.core.authority.SimpleGrantedAuthority#<init>(String)` | 2 | The existing constructor rejects empty strings and accepts some whitespace-only values that Spring rejects. |
+| security | `org.springframework.security.core.authority.SimpleGrantedAuthority#hashCode()` | 2 | The existing toHash returns a D string hash. Java's 32-bit UTF-16 hash is pending. |
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(BCryptVersion,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(BCryptVersion,int,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
 | security | `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder#<init>(int,SecureRandom)` | 2 | The overload that accepts java.security.SecureRandom waits on that JDK type. |
