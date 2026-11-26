@@ -9,6 +9,48 @@ import std.exception : assertThrown;
 
 @safe:
 
+@("or modifies only the receiver, preserves live bits and follows Java capacity growth")
+unittest
+{
+    auto bits = BitSet.valueOf([long.min, 1L, 0L]);
+    auto mask = BitSet.valueOf([-1L, 0L, 1L]);
+    assertThrown!NullPointerException(bits.or(null));
+    assert(bits.size() == 128 && bits.cardinality() == 2);
+    bits.or(bits);
+    assert(bits.size() == 128 && bits.cardinality() == 2);
+    bits.or(mask);
+    assert(bits.size() == 256 && bits.length() == 129 && bits.cardinality() == 66);
+    assert(bits.toLongArray() == [-1L, 1L, 1L]);
+    assert(mask.size() == 192 && mask.toLongArray() == [-1L, 0L, 1L]);
+    bits.or(new BitSet());
+    assert(bits.size() == 256 && bits.toLongArray() == [-1L, 1L, 1L]);
+}
+
+@("or agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto left = new BitSet();
+    auto right = new BitSet();
+    uint state = 0x149b_9d2b;
+    uint digest;
+    foreach (step; 0 .. 512)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        if ((step & 15) == 0)
+            left.clear();
+        if ((step & 7) == 0)
+            right.clear();
+        left.flip(cast(int)((state >> 13) & 255));
+        right.flip(cast(int)((state >> 19) & 511));
+        left.or((step & 3) == 0 ? left : right);
+        foreach (value; [left.size(), left.length(), left.cardinality()])
+            digest = 31 * digest + cast(uint) value;
+        foreach (word; left.toLongArray())
+            digest = 31 * digest + cast(uint)(word ^ (word >>> 32));
+    }
+    assert(digest == 1_829_912_657);
+}
+
 @("valueOf copies signed words and trims trailing zero capacity")
 unittest
 {
