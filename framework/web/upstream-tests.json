@@ -2033,8 +2033,18 @@
       "status": "deferred"
     },
     "org/springframework/web/util/WebUtilsTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/web/tests/web_utils_tests.d",
+      "methods": {
+        "ported": ["findParameterValue"],
+        "skipped": {
+          "isSameOrigin": "WebUtils origin checks are deferred.",
+          "isSameOriginWithForwardedHeader": "WebUtils origin checks are deferred.",
+          "isSameOriginWithXForwardedHeaders": "WebUtils origin checks are deferred.",
+          "isValidOrigin": "WebUtils origin checks are deferred.",
+          "parseMatrixVariablesString": "WebUtils matrix variable parsing is deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/web/util/WhatWgUrlParserTests.java": {
       "phase": "2",

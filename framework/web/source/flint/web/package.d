@@ -4,6 +4,7 @@ of its package.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/
 (ErrorResponse.java, ErrorResponseException.java, HttpRequestMethodNotSupportedException.java,
+HttpSessionRequiredException.java,
 HttpMediaTypeException.java, HttpMediaTypeNotSupportedException.java,
 HttpMediaTypeNotAcceptableException.java).
 Copyright 2002-present the original author or authors.
@@ -267,6 +268,32 @@ class ErrorResponseException : NestedRuntimeException, ErrorResponse
         return status.toString() ~ (!headers.isEmpty() ? ", headers=" ~ headers.toString() : "") ~ ", "
                 ~ body.toString();
         // dfmt on
+    }
+}
+
+/// `HttpSessionRequiredException`: a handler requires an existing session or session attribute.
+class HttpSessionRequiredException : ServletException
+{
+    private string expectedAttribute;
+
+    /// With a detail message and no specific attribute.
+    this(string message) pure nothrow
+    {
+        this(message, null);
+    }
+
+    /// With a detail message and the name of the expected attribute.
+    this(string message, string expectedAttribute) pure nothrow
+    {
+        super(message);
+        this.expectedAttribute = expectedAttribute;
+        skipBacktrace(this);
+    }
+
+    /// The expected attribute name, or null when the session itself is required.
+    Nullable!string getExpectedAttribute() const pure nothrow @nogc
+    {
+        return expectedAttribute is null ? Nullable!string.init : nullable(expectedAttribute);
     }
 }
 

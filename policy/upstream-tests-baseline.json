@@ -9278,7 +9278,6 @@
       "org/springframework/web/util/TagUtilsTests.java",
       "org/springframework/web/util/UriTemplateTests.java",
       "org/springframework/web/util/UrlPathHelperTests.java",
-      "org/springframework/web/util/WebUtilsTests.java",
       "org/springframework/web/util/WhatWgUrlParserTests.java",
       "org/springframework/web/util/pattern/PathPatternRouteMatcherTests.java"
     ],

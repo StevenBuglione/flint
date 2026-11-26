@@ -1,8 +1,8 @@
 /++
-`org.springframework.web.util`: building, encoding and expanding URIs.
+`org.springframework.web.util`: servlet utilities and URI processing.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/util/
-(UriComponentsBuilder.java, UriComponents.java, HierarchicalUriComponents.java, UriUtils.java).
+(UriComponentsBuilder.java, UriComponents.java, HierarchicalUriComponents.java, UriUtils.java, WebUtils.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: one `UriComponents` class covers Spring's hierarchical components (opaque URIs are
@@ -12,10 +12,108 @@ not ported). `UriComponentsBuilder` is a final class with Java's chained setters
 +/
 module flint.web.util;
 
-import flint.java.lang : IllegalArgumentException, IllegalStateException;
+import flint.engine.aot.any : Any;
+import flint.engine.aot.objects : objectToString;
+import flint.jakarta.servlet : ServletContext, ServletRequest;
+import flint.java.io : File;
+import flint.java.lang : ClassCastException, IllegalArgumentException, IllegalStateException, NullPointerException;
 import flint.java.net : URI;
+import flint.java.util : Map;
+import std.typecons : Nullable, nullable;
 
 @safe:
+
+/// Helpers for servlet context attributes and form input.
+abstract class WebUtils
+{
+    /// The servlet attribute containing the application's temporary directory.
+    enum string TEMP_DIR_CONTEXT_ATTRIBUTE = "jakarta.servlet.context.tempdir";
+
+    /// Returns the directory supplied by the servlet container.
+    static File getTempDir(ServletContext servletContext)
+    {
+        if (servletContext is null)
+            throw new IllegalArgumentException("ServletContext must not be null");
+        auto attribute = servletContext.getAttribute(TEMP_DIR_CONTEXT_ATTRIBUTE);
+        if (attribute.isNull())
+            return null;
+        auto directory = cast(File) attribute.asObject();
+        if (directory is null)
+            throw new ClassCastException("Servlet context temporary directory is not a java.io.File");
+        return directory;
+    }
+
+    /// Whether a normal or image submit control supplied the given parameter.
+    static bool hasSubmitParameter(ServletRequest request, string name)
+    {
+        if (request is null)
+            throw new IllegalArgumentException("Request must not be null");
+        if (request.getParameter(name) !is null)
+            return true;
+        const prefix = name is null ? "null" : name;
+        return request.getParameter(prefix ~ ".x") !is null || request.getParameter(prefix ~ ".y") !is null;
+    }
+
+    /// Reads the first named value, then checks submit button names.
+    static Nullable!string findParameterValue(ServletRequest request, string name)
+    {
+        if (request is null)
+            throw new NullPointerException("request");
+        const values = request.getParameterValues(name);
+        if (values !is null)
+            return parameterValue(values.length ? values[0] : null);
+        const prefix = name is null ? "null" : name;
+        foreach (parameter; request.getParameterNames())
+        {
+            const value = submitValue(parameter, prefix);
+            if (value !is null)
+                return nullable(value);
+        }
+        return Nullable!string.init;
+    }
+
+    /// Reads the named value, or a value encoded in a submit button name.
+    static Nullable!string findParameterValue(Map!(string, Any) parameters, string name)
+    {
+        if (parameters is null)
+            throw new NullPointerException("parameters");
+        auto value = parameters.get(name);
+        if (!value.isNull())
+        {
+            if (value.holds!(string[]))
+            {
+                const values = value.get!(string[]);
+                return parameterValue(values.length ? values[0] : null);
+            }
+            if (auto object = value.asObject())
+                return parameterValue(objectToString(object));
+            return parameterValue(value.toString());
+        }
+        const prefix = name is null ? "null" : name;
+        foreach (parameter; parameters.keySet())
+        {
+            const submit = submitValue(parameter, prefix);
+            if (submit !is null)
+                return nullable(submit);
+        }
+        return Nullable!string.init;
+    }
+
+    private static Nullable!string parameterValue(string value) pure nothrow @nogc
+    {
+        return value is null ? Nullable!string.init : nullable(value);
+    }
+
+    private static string submitValue(string parameter, string name) pure nothrow @nogc
+    {
+        if (parameter.length <= name.length || parameter[0 .. name.length] != name || parameter[name.length] != '_')
+            return null;
+        auto value = parameter[name.length + 1 .. $];
+        if (value.length >= 2 && value[$ - 2] == '.' && (value[$ - 1] == 'x' || value[$ - 1] == 'y'))
+            value = value[0 .. $ - 2];
+        return value;
+    }
+}
 
 /// The component kinds of `HierarchicalUriComponents.Type`, with Spring's allowed characters.
 enum UriComponentType

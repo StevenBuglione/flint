@@ -762,6 +762,15 @@ to Web MVC and 152 to framework-test in each profile. DMD templates rise from
 overages use the base-relative rule in `6c9e5f49`. The pinned file cases and
 the HEAD test cover the callback's effect on conditional responses.
 
+WebUtils reads direct submit values through the servlet's existing accessors.
+It enumerates parameter names only when a button name must supply the value.
+The LDC release probe recorded zero GC bytes over 2,000 direct reads and
+presence checks. Matched venus Web probes at `d92e8a2ab` and `52291b2dd`
+retained 528,913 O3 and 522,473 Oz loadable bytes, with 6,872 to 6,899 DMD
+templates. The stock link still uses the inherited Phobos rule in `6c9e5f49`.
+The matched framework-test probe also retained 1,801,218 O3 and 1,713,594 Oz
+loadable bytes while its template count went from 8,475 to 8,485.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
