@@ -12,7 +12,7 @@ Time zones are fixed offsets: `ZoneId.of` accepts "Z", "UTC", "GMT", "UT", offse
 +/
 module flint.java.time;
 
-import flint.java.lang : RuntimeException;
+import flint.java.lang : ArithmeticException, RuntimeException;
 
 @safe:
 
@@ -1876,9 +1876,20 @@ struct Duration
         return seconds_ * 1000 + nanos_ / 1_000_000;
     }
 
-    /// The total length in nanoseconds.
-    long toNanos() const pure nothrow @nogc
+    /// The total length in nanoseconds. Throws `ArithmeticException` if it exceeds the signed range.
+    long toNanos() const pure
     {
+        enum long minWholeSeconds = long.min / nanosPerSecond;
+        enum long minPartialNanos = nanosPerSecond + long.min % nanosPerSecond;
+        enum long maxWholeSeconds = long.max / nanosPerSecond;
+        enum long maxPartialNanos = long.max % nanosPerSecond;
+
+        // This partial second fits even though multiplying its seconds would overflow.
+        if (seconds_ == minWholeSeconds - 1 && nanos_ >= minPartialNanos)
+            return long.min + (nanos_ - minPartialNanos);
+        const upperFractionOverflows = seconds_ == maxWholeSeconds && nanos_ > maxPartialNanos;
+        if (seconds_ < minWholeSeconds || seconds_ > maxWholeSeconds || upperFractionOverflows)
+            throw new ArithmeticException("long overflow");
         return seconds_ * nanosPerSecond + nanos_;
     }
 

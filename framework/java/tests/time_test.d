@@ -1,6 +1,7 @@
 module flint.java.time_test;
 
-import flint.java.lang : IllegalArgumentException;
+import core.memory : GC;
+import flint.java.lang : ArithmeticException, IllegalArgumentException;
 import flint.java.time : DateTimeException, DayOfWeek, Duration, Instant, LocalDate, LocalDateTime,
     LocalTime, Month, OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime, getValue, isLeap;
 import flint.java.time.format : DateTimeFormatter, DateTimeParseException;
@@ -282,6 +283,32 @@ unittest
     assert(Duration.ofSeconds(-1, 999_999_999).negated() == Duration.ofNanos(1));
     assert(Duration.between(LocalTime.of(10, 0), LocalTime.of(9, 30)) == Duration.ofMinutes(-30));
     assert(Duration.parse(Duration.ofDays(3).plusMillis(7).toString()) == Duration.ofDays(3).plusMillis(7));
+}
+
+@("java.time: Duration nanoseconds respect both signed long endpoints")
+unittest
+{
+    assert(Duration.ofSeconds(-9_223_372_037L, 145_224_192).toNanos() == long.min);
+    assert(Duration.ofSeconds(9_223_372_036L, 854_775_807).toNanos() == long.max);
+    const negativeNano = Duration.ofSeconds(-1, 999_999_999);
+    const before = GC.stats().allocatedInCurrentThread;
+    assert(negativeNano.toNanos() == -1);
+    assert(GC.stats().allocatedInCurrentThread == before);
+    foreach (duration; [
+        Duration.ofSeconds(-9_223_372_037L, 145_224_191),
+        Duration.ofSeconds(9_223_372_036L, 854_775_808), Duration.ofSeconds(long.min),
+        Duration.ofSeconds(long.max)
+    ])
+    {
+        try
+        {
+            duration.toNanos();
+            assert(false, "Duration.toNanos must reject overflow");
+        }
+        catch (ArithmeticException)
+        {
+        }
+    }
 }
 
 @("java.time: now() reads the system clock in UTC")

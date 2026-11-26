@@ -1,6 +1,7 @@
 {"rulebook":2,
 "upstream":["spring-framework@v7.1.0", "jakarta-annotation@3.0.0", "jakarta-validation@3.1.1", "jakarta-persistence@3.2.0", "jakarta-servlet@6.1.0", "jackson-core@3.1.8", "jackson-databind@3.1.8", "jackson-annotations@2.21", "slf4j-api@2.0.20", "micrometer-core@1.18.0", "hibernate-validator@9.1.6.Final", "thymeleaf@3.1.7.RELEASE", "micrometer-observation@1.18.0", "openjdk@21.0.13"],
 "elements":{
+"java.time.Duration#toNanos()":{"status":"ported","d":"flint.java.time.Duration.toNanos"},
 "java.time.Period":{"status":"adapted","rules":["R1","R11"],"d":"flint.java.time.period.Period"},
 "java.time.Period#ZERO":{"status":"ported","d":"flint.java.time.period.Period.ZERO"},
 "java.time.Period#of(int,int,int)":{"status":"ported","d":"flint.java.time.period.Period.of"},
