@@ -58,7 +58,6 @@
         "dscanner.unused_result: Function return value is discarded": 1
       },
       "framework/engine-aot/source/flint/engine/aot/sys/files.d": {
-        "dfmt: formatter difference": 1,
         "dscanner.confusing.argument_parameter_mismatch: Argument # is named 'length', but this is the name of parameter #": 1,
         "dscanner.style.undocumented_declaration: Public declaration 'directory' is undocumented.": 1,
         "dscanner.style.undocumented_declaration: Public declaration 'exists' is undocumented.": 1,

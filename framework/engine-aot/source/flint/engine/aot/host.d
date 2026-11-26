@@ -10,9 +10,10 @@ and std.file's, except where a function's documentation says otherwise.
 module flint.engine.aot.host;
 
 import flint.engine.aot.sys.environment : currentProcessId, readVariable;
-import flint.engine.aot.sys.files : closeDirectory, closeFile, currentDirectoryInto, DirectoryHandle,
-    FileHandle, nextEntryName, openDirectory, openRead, openWrite, readInto, statPath, writeFrom;
-public import flint.engine.aot.sys.files : FileError, FileFacts;
+import flint.engine.aot.sys.files : closeDirectory, closeFile, currentDirectoryInto, directoryEntryFacts,
+    DirectoryEntryFacts, DirectoryHandle, FileHandle, nextEntryName, openDirectory, openRead,
+    openWrite, readInto, statPath, writeFrom;
+public import flint.engine.aot.sys.files : DirectoryEntryKind, FileError, FileFacts, FileIdentity;
 
 @safe:
 
@@ -204,6 +205,8 @@ package(flint) string describe(FileError error) pure nothrow @nogc
         return "Is a directory";
     case FileError.other:
         return "Input/output error";
+    case FileError.resourceExhausted:
+        return "Directory entry limit exceeded";
     }
 }
 
@@ -215,26 +218,8 @@ entry joined by one separator, symbolic links followed, `.` and `..` left out. N
 +/
 package(flint) string[] subdirectoryPaths(string directory, out FileError error) nothrow
 {
-    if (directory.length == 0 || holdsNul(directory))
-    {
-        error = FileError.notFound;
-        return null;
-    }
     DirectoryHandle listing;
-    version (Windows)
-    {
-        import flint.engine.aot.sys.files : widen;
-
-        const pattern = widen(isSeparator(directory[$ - 1]) ? directory ~ "*" : directory ~ "\\*");
-        if (pattern is null)
-        {
-            error = FileError.notFound;
-            return null;
-        }
-    }
-    else
-        const pattern = nulTerminated(directory);
-    if (!openDirectory(pattern, listing, error))
+    if (!openListing(directory, listing, error))
         return null;
     scope (exit)
         closeDirectory(listing);
@@ -248,6 +233,92 @@ package(flint) string[] subdirectoryPaths(string directory, out FileError error)
             paths ~= path;
     }
     return paths;
+}
+
+private bool openListing(string directory, out DirectoryHandle listing, out FileError error) nothrow
+{
+    if (directory.length == 0 || holdsNul(directory))
+    {
+        error = FileError.notFound;
+        return false;
+    }
+    version (Windows)
+    {
+        import flint.engine.aot.sys.files : widen;
+
+        const pattern = widen(isSeparator(directory[$ - 1]) ? directory ~ "*" : directory ~ "\\*");
+        if (pattern is null)
+        {
+            error = FileError.notFound;
+            return false;
+        }
+    }
+    else
+        const pattern = nulTerminated(directory);
+    return openDirectory(pattern, listing, error);
+}
+
+/// An owned direct entry name, with the identity of the entry itself.
+package(flint) struct DirectoryEntry
+{
+    string name;
+    DirectoryEntryKind kind;
+    FileIdentity identity;
+}
+
+private enum directoryEntryLimit = 100_000;
+
+/++
+Lists direct entries in native order and copies their names. Symbolic links describe the link itself. Entries that
+vanish before their metadata can be read are skipped and still count toward the scan limit.
+The caller may lower the cap of 100,000 entries. Exceeding the cap or requesting a greater limit returns null
+with `FileError.resourceExhausted`. An empty listing succeeds with no entries and `FileError.none`.
++/
+package(flint) DirectoryEntry[] directoryEntries(string directory, out FileError error,
+        size_t maxEntries = directoryEntryLimit) nothrow
+{
+    if (maxEntries > directoryEntryLimit)
+    {
+        error = FileError.resourceExhausted;
+        return null;
+    }
+    DirectoryHandle listing;
+    if (!openListing(directory, listing, error))
+        return null;
+    scope (exit)
+        closeDirectory(listing);
+    DirectoryEntry[] entries;
+    size_t visited;
+    for (auto name = nextEntryName(listing, error); name !is null; name = nextEntryName(listing, error))
+    {
+        if (name.length == 0 || name == "." || name == "..")
+            continue;
+        if (visited++ == maxEntries)
+        {
+            error = FileError.resourceExhausted;
+            return null;
+        }
+        const path = joinPath(directory, name);
+        DirectoryEntryFacts facts;
+        FileError status;
+        version (Windows)
+        {
+            import flint.engine.aot.sys.files : widen;
+
+            status = directoryEntryFacts(widen(path), facts);
+        }
+        else
+            status = directoryEntryFacts(nulTerminated(path), facts);
+        if (status == FileError.notFound)
+            continue;
+        if (status != FileError.none)
+        {
+            error = status;
+            return null;
+        }
+        entries ~= DirectoryEntry(name, facts.kind, facts.identity);
+    }
+    return error == FileError.none ? entries : null;
 }
 
 /// The current working directory, as std.file's `getcwd`; null when it cannot be read.

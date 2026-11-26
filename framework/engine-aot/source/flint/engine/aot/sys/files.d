@@ -18,6 +18,7 @@ enum FileError
     accessDenied, /// EACCES, EPERM; ERROR_ACCESS_DENIED, ERROR_SHARING_VIOLATION
     isDirectory, /// EISDIR
     other,
+    resourceExhausted, /// The requested operation exceeds a host resource limit.
 }
 
 /// One `stat` of a path, following symbolic links.
@@ -30,24 +31,46 @@ struct FileFacts
     long modifiedTicks; /// 100 ns ticks since 1970-01-01T00:00Z, as std.datetime's stat conversion
 }
 
+package(flint) enum DirectoryEntryKind : ubyte
+{
+    other,
+    file,
+    directory,
+    symlink,
+}
+
+package(flint) struct FileIdentity
+{
+    ulong device;
+    ulong inode;
+}
+
+package(flint) struct DirectoryEntryFacts
+{
+    DirectoryEntryKind kind;
+    FileIdentity identity;
+}
+
 version (Windows)
 {
     import core.sys.windows.windef : BOOL, DWORD, HANDLE;
-    import core.sys.windows.winbase : FILETIME, WIN32_FILE_ATTRIBUTE_DATA, WIN32_FIND_DATAW;
+    import core.sys.windows.winbase : BY_HANDLE_FILE_INFORMATION, FILETIME,
+        WIN32_FILE_ATTRIBUTE_DATA, WIN32_FIND_DATAW;
 
     private extern (Windows) nothrow @nogc
     {
         BOOL GetFileAttributesExW(scope const(wchar)* name, int level, void* information) @system;
-        HANDLE CreateFileW(scope const(wchar)* name, DWORD access, DWORD share, void* security, DWORD disposition,
-            DWORD flags, HANDLE template_) @system;
+        BOOL GetFileInformationByHandle(HANDLE file, BY_HANDLE_FILE_INFORMATION* information) @system;
+        HANDLE CreateFileW(scope const(wchar)* name, DWORD access, DWORD share, void* security,
+                DWORD disposition, DWORD flags, HANDLE template_) @system;
         BOOL ReadFile(HANDLE file, void* buffer, DWORD length, DWORD* read, void* overlapped) @system;
         BOOL CloseHandle(HANDLE handle) @system;
         DWORD GetCurrentDirectoryW(DWORD length, wchar* buffer) @system;
         DWORD GetLastError() @system;
-        int MultiByteToWideChar(uint codePage, DWORD flags, scope const(char)* text, int length, wchar* wide,
-            int wideLength) @system;
-        int WideCharToMultiByte(uint codePage, DWORD flags, scope const(wchar)* wide, int wideLength, char* text,
-            int length, const(char)* defaultChar, BOOL* usedDefault) @system;
+        int MultiByteToWideChar(uint codePage, DWORD flags, scope const(char)* text, int length,
+                wchar* wide, int wideLength) @system;
+        int WideCharToMultiByte(uint codePage, DWORD flags, scope const(wchar)* wide, int wideLength,
+                char* text, int length, const(char)* defaultChar, BOOL* usedDefault) @system;
     }
 
     /// An open file: a Windows handle, or null.
@@ -121,6 +144,38 @@ version (Windows)
         return facts;
     }
 
+    /// The kind and identity of a directory entry. Reparse points are returned as links.
+    // SAFETY: The checked NUL-terminated path is used synchronously. The call writes one local information record
+    // and scope(exit) closes the owned handle on every path after opening it.
+    @trusted FileError directoryEntryFacts(scope const(wchar)[] pathz, out DirectoryEntryFacts facts) nothrow @nogc
+    {
+        import core.sys.windows.winbase : FILE_FLAG_BACKUP_SEMANTICS, FILE_FLAG_OPEN_REPARSE_POINT,
+            INVALID_HANDLE_VALUE, OPEN_EXISTING;
+        import core.sys.windows.winnt : FILE_ATTRIBUTE_DIRECTORY, FILE_ATTRIBUTE_REPARSE_POINT,
+            FILE_READ_ATTRIBUTES, FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE;
+
+        if (pathz.length == 0 || pathz[$ - 1] != '\0')
+            return FileError.notFound;
+        auto handle = CreateFileW(&pathz[0], FILE_READ_ATTRIBUTES,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                null, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, null);
+        if (handle == INVALID_HANDLE_VALUE)
+            return mapError(GetLastError());
+        scope (exit)
+            CloseHandle(handle);
+        BY_HANDLE_FILE_INFORMATION info;
+        if (!GetFileInformationByHandle(handle, &info))
+            return mapError(GetLastError());
+        if (info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+            facts.kind = DirectoryEntryKind.symlink;
+        else
+            facts.kind = (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                ? DirectoryEntryKind.directory : DirectoryEntryKind.file;
+        facts.identity = FileIdentity(info.dwVolumeSerialNumber,
+                (cast(ulong) info.nFileIndexHigh << 32) | info.nFileIndexLow);
+        return FileError.none;
+    }
+
     /// `pathz` (UTF-16, NUL-terminated) opened for reading; null with `error` set when it cannot be.
     // SAFETY: pathz is NUL-terminated (checked); CreateFileW reads only the name.
     @trusted FileHandle openRead(scope const(wchar)[] pathz, out FileError error) nothrow @nogc
@@ -179,40 +234,44 @@ version (Windows)
         private bool pending;
     }
 
-    /// The listing of `patternz` (UTF-16 `directory\*`, NUL-terminated); false with `error` set when it cannot be
+    /// The listing of `pathz` (UTF-16 `directory\*`, NUL-terminated); false with `error` set when it cannot be
     /// opened.
-    // SAFETY: patternz is NUL-terminated (checked); FindFirstFileW writes only the handle's WIN32_FIND_DATAW.
-    @trusted bool openDirectory(scope const(wchar)[] patternz, out DirectoryHandle directory, out FileError error)
-        nothrow @nogc
+    // SAFETY: pathz is NUL-terminated (checked); FindFirstFileW writes only the handle's WIN32_FIND_DATAW.
+    @trusted bool openDirectory(scope const(wchar)[] pathz, out DirectoryHandle dir, out FileError error) nothrow @nogc
     {
         import core.sys.windows.winbase : FindFirstFileW, INVALID_HANDLE_VALUE;
 
-        if (patternz.length == 0 || patternz[$ - 1] != '\0')
+        if (pathz.length == 0 || pathz[$ - 1] != '\0')
         {
             error = FileError.notFound;
             return false;
         }
-        directory.search = FindFirstFileW(&patternz[0], &directory.found);
-        if (directory.search == INVALID_HANDLE_VALUE)
+        dir.search = FindFirstFileW(&pathz[0], &dir.found);
+        if (dir.search == INVALID_HANDLE_VALUE)
         {
             error = mapError(GetLastError());
             return false;
         }
-        directory.pending = true;
+        dir.pending = true;
         return true;
     }
 
-    /// The next entry's name (UTF-8, `.` and `..` included), or null at the end.
+    /// The next entry's name (UTF-8, `.` and `..` included), or null at the end or on failure.
     // SAFETY: cFileName is a fixed MAX_PATH array; the name is read only up to its NUL, found within the array;
     // FindNextFileW writes only the handle's WIN32_FIND_DATAW.
-    @trusted string nextEntryName(ref DirectoryHandle directory) nothrow
+    @trusted string nextEntryName(ref DirectoryHandle directory, out FileError error) nothrow
     {
         import core.sys.windows.winbase : FindNextFileW;
 
         if (directory.search is null)
             return null;
         if (!directory.pending && !FindNextFileW(directory.search, &directory.found))
+        {
+            const code = GetLastError();
+            if (code != 18) // ERROR_NO_MORE_FILES
+                error = mapError(code);
             return null;
+        }
         directory.pending = false;
         size_t length;
         while (length < directory.found.cFileName.length && directory.found.cFileName[length] != 0)
@@ -243,7 +302,7 @@ version (Windows)
             return null;
         }
         auto file = CreateFileW(&pathz[0], genericWrite, 0, null, createAlways, normal, null);
-        if (file == cast(HANDLE) -1)
+        if (file == cast(HANDLE)-1)
         {
             error = mapError(GetLastError());
             return null;
@@ -292,7 +351,7 @@ else version (Posix)
     else
         import core.sys.posix.fcntl : O_CLOEXEC;
     import core.sys.posix.dirent : closedir, DIR, opendir, readdir;
-    import core.sys.posix.sys.stat : S_IFDIR, S_IFMT, S_IFREG, stat, stat_t;
+    import core.sys.posix.sys.stat : lstat, S_IFDIR, S_IFLNK, S_IFMT, S_IFREG, stat, stat_t;
     import core.sys.posix.unistd : close, getcwd, read;
 
     /// An open file: a descriptor, or -1.
@@ -340,6 +399,33 @@ else version (Posix)
         }
         facts.modifiedTicks = seconds * 10_000_000 + nanoseconds / 100;
         return facts;
+    }
+
+    /// The kind and identity of a directory entry obtained from lstat.
+    // SAFETY: The checked NUL-terminated path is used synchronously and lstat writes only the local stat record.
+    @trusted FileError directoryEntryFacts(scope const(char)[] pathz, out DirectoryEntryFacts facts) nothrow @nogc
+    {
+        if (pathz.length == 0 || pathz[$ - 1] != '\0')
+            return FileError.notFound;
+        stat_t info;
+        if (lstat(&pathz[0], &info) != 0)
+            return mapError(errno);
+        switch (info.st_mode & S_IFMT)
+        {
+        case S_IFREG:
+            facts.kind = DirectoryEntryKind.file;
+            break;
+        case S_IFDIR:
+            facts.kind = DirectoryEntryKind.directory;
+            break;
+        case S_IFLNK:
+            facts.kind = DirectoryEntryKind.symlink;
+            break;
+        default:
+            break;
+        }
+        facts.identity = FileIdentity(cast(ulong) info.st_dev, cast(ulong) info.st_ino);
+        return FileError.none;
     }
 
     /// `pathz` (NUL-terminated) opened for reading; -1 with `error` set when it cannot be.
@@ -407,16 +493,15 @@ else version (Posix)
     /// The listing of `pathz` (NUL-terminated); false with `error` set when it cannot be opened.
     // SAFETY: pathz is NUL-terminated (checked); opendir reads only the name and returns a stream this module owns
     // until closeDirectory.
-    @trusted bool openDirectory(scope const(char)[] pathz, out DirectoryHandle directory, out FileError error)
-        nothrow @nogc
+    @trusted bool openDirectory(scope const(char)[] pathz, out DirectoryHandle dir, out FileError error) nothrow @nogc
     {
         if (pathz.length == 0 || pathz[$ - 1] != '\0')
         {
             error = FileError.notFound;
             return false;
         }
-        directory.stream = opendir(&pathz[0]);
-        if (directory.stream is null)
+        dir.stream = opendir(&pathz[0]);
+        if (dir.stream is null)
         {
             error = mapError(errno);
             return false;
@@ -427,15 +512,20 @@ else version (Posix)
     /// The next entry's name (`.` and `..` included), copied to the GC, or null at the end or on failure.
     // SAFETY: readdir returns an entry valid until the next readdir or closedir on this stream; its d_name is
     // NUL-terminated (POSIX), so strlen stays within it, and the name is copied before returning.
-    @trusted string nextEntryName(ref DirectoryHandle directory) nothrow
+    @trusted string nextEntryName(ref DirectoryHandle directory, out FileError error) nothrow
     {
         import core.stdc.string : strlen;
 
         if (directory.stream is null)
             return null;
+        errno = 0;
         const entry = readdir(directory.stream);
         if (entry is null)
+        {
+            if (errno != 0)
+                error = mapError(errno);
             return null;
+        }
         const name = entry.d_name.ptr;
         return name[0 .. strlen(name)].idup;
     }
@@ -520,6 +610,32 @@ else version (Posix)
 }
 else
     static assert(0, "flint.engine.aot.sys.files: unsupported platform");
+
+/// The next name for callers that treat any read error as the end of the listing.
+string nextEntryName(ref DirectoryHandle directory) nothrow
+{
+    FileError ignored;
+    return nextEntryName(directory, ignored);
+}
+
+@("entry metadata rejects an invalid or missing path")
+unittest
+{
+    import std.conv : to;
+    import std.file : tempDir;
+    import std.path : buildPath;
+    import std.process : thisProcessID;
+
+    const missing = buildPath(tempDir(), "flint-directory-entry-absent-" ~ thisProcessID.to!string);
+    version (Windows)
+        const pathz = widen(missing);
+    else
+        const pathz = missing ~ '\0';
+    DirectoryEntryFacts facts;
+    assert(directoryEntryFacts(pathz[0 .. $ - 1], facts) == FileError.notFound);
+    assert(directoryEntryFacts(pathz, facts) == FileError.notFound);
+    assert(facts.kind == DirectoryEntryKind.other && facts.identity == FileIdentity.init);
+}
 
 version (Posix) unittest
 {
