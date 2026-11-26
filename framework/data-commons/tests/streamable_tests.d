@@ -5,7 +5,7 @@
 module streamable_tests;
 
 import flint.data.util : Streamable;
-import flint.java.lang : UnsupportedOperationException;
+import flint.java.lang : IllegalArgumentException, UnsupportedOperationException;
 import flint.java.util.function_ : Supplier;
 import flint.java.util.stream : Stream;
 import std.exception : collectException;
@@ -64,4 +64,57 @@ unittest
     assert(Streamable!int.of(4, 2, 4).stream().toArray() == values);
     assert(Streamable!int.empty().isEmpty());
     assert(Streamable!int.of().toList().isEmpty());
+}
+
+@("concatenatesVarargs")
+unittest
+{
+    auto left = Streamable!int.of(1, 2);
+    assert(left.and(3, 4).toList().toArray() == [1, 2, 3, 4]);
+
+    int[] values = [3, 4];
+    auto joined = left.and(values);
+    values[0] = 9;
+    assert(joined.toList().toArray() == [1, 2, 3, 4]);
+}
+
+@("concatenatesStreamable")
+unittest
+{
+    auto joined = Streamable!int.of(1, 2).and(Streamable!int.of(3, 4));
+    assert(joined.toList().toArray() == [1, 2, 3, 4]);
+    assert(joined.stream().toArray() == [1, 2, 3, 4]);
+}
+
+@("concatenation obtains fresh streams without reading beyond a limit")
+unittest
+{
+    int opens;
+    int[] reads;
+    auto supplier = Supplier!(Stream!int).of(() {
+        ++opens;
+        return Stream!int.of(3, 4).peek((int value) { reads ~= value; });
+    });
+    auto joined = Streamable!int.of(1, 2).and(supplier);
+    assert(opens == 0 && reads.length == 0);
+    assert(joined.stream().limit(1).toArray() == [1]);
+    assert(opens == 1 && reads.length == 0);
+    assert(joined.toList().toArray() == [1, 2, 3, 4]);
+    assert(opens == 2 && reads == [3, 4]);
+}
+
+@("empty concatenation is distinct from null arguments")
+unittest
+{
+    auto source = Streamable!int.of(1);
+    assert(source.and().toList().toArray() == [1]);
+    int[] owned = [7];
+    assert(source.and(owned[0 .. 0]).toList().toArray() == [1]);
+
+    alias IntStreams = Supplier!(Stream!int);
+    alias IntFactory = Stream!int delegate() @safe;
+    assert(collectException!IllegalArgumentException(source.and(cast(int[]) null)) !is null);
+    assert(collectException!IllegalArgumentException(source.and(cast(IntStreams) null)) !is null);
+    assert(collectException!IllegalArgumentException(source.and(cast(Streamable!int) null)) !is null);
+    assert(collectException!IllegalArgumentException(source.and(cast(IntFactory) null)) !is null);
 }

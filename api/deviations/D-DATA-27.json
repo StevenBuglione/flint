@@ -1,5 +1,5 @@
 {
  "id": "D-DATA-27",
- "deviation": "Streamable is an Iterable and stream Supplier. Supplier-backed sources obtain a fresh stream each time. Implementors provide stream() until the lazy Iterable-to-Stream bridge is available. The D variadic factory retains a snapshot of its input array.",
- "reason": "The current Stream APIs cannot lazily pull from an arbitrary iterator. Copying the D variadic slice gives the streamable an owned sequence, including when the caller supplies a mutable array."
+ "deviation": "Streamable is an Iterable and stream Supplier. Supplier-backed sources obtain a fresh stream each time. Implementors provide stream() until the lazy Iterable-to-Stream bridge is available. The D variadic factory and concatenation retain a snapshot of their input arrays. A no-argument concatenation overload keeps zero arguments distinct from a null slice.",
+ "reason": "The current Stream APIs cannot lazily pull from an arbitrary iterator. Copying variadic slices gives each source an owned sequence. D may represent zero-length arrays as null; the separate zero-argument overload preserves the Java distinction."
 }

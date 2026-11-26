@@ -5,7 +5,7 @@
 // Modified by the Flint authors.
 module flint.data.util;
 
-import flint.java.lang : Iterable, NullPointerException;
+import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
 import flint.java.util : Iterator, List, Objects, Set;
 import flint.java.util.function_ : Supplier;
 import flint.java.util.stream : Collectors, Stream;
@@ -49,9 +49,50 @@ interface Streamable(T) : Iterable!T, Supplier!(Stream!T)
     /// An unmodifiable set without duplicates.
     Set!T toSet();
 
-    /// Default traversal and collection operations (R3).
+    /// Concatenates a freshly supplied suffix to each traversal.
+    Streamable!T and(Supplier!(Stream!T) supplier);
+    /// Concatenates the supplied values.
+    Streamable!T and(T[] others...);
+    /// Concatenates another repeatable source.
+    Streamable!T and(Streamable!T other);
+
+    /// Concatenates zero values (D-DATA-27).
+    final Streamable!T and()
+    {
+        return and(() => Stream!T.empty());
+    }
+
+    /// Delegate overload for a stream factory (R9).
+    final Streamable!T and(Stream!T delegate() @safe supplier)
+    {
+        if (supplier is null)
+            throw new IllegalArgumentException("Stream must not be null");
+        auto source = this;
+        return of(() => Stream!T.concat(source.stream(), Objects.requireNonNull(supplier(),
+                "Stream must not be null")));
+    }
+
+    /// Default traversal, concatenation and collection operations (R3).
     mixin template Defaults(Item = T)
     {
+        override Streamable!Item and(Supplier!(Stream!Item) supplier)
+        {
+            return (cast(Streamable!Item) this).and(supplier is null ? null : supplier.asDelegate());
+        }
+
+        override Streamable!Item and(Item[] others...)
+        {
+            if (others is null)
+                throw new IllegalArgumentException("Other values must not be null");
+            auto snapshot = others.dup;
+            return (cast(Streamable!Item) this).and(() => Stream!Item.ofArray(snapshot));
+        }
+
+        override Streamable!Item and(Streamable!Item other)
+        {
+            return (cast(Streamable!Item) this).and(cast(Supplier!(Stream!Item)) other);
+        }
+
         override Stream!Item get()
         {
             return stream();
