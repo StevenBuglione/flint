@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/document/{ContentFormatter,Document,DocumentMetadata,DocumentReader,DocumentTransformer,DocumentWriter,MetadataMode}.java
+// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/document/{ContentFormatter,DefaultContentFormatter,Document,DocumentMetadata,DocumentReader,DocumentTransformer,DocumentWriter,MetadataMode}.java
 // Modified by the Flint authors.
 module flint.ai.document;
 
@@ -115,6 +115,284 @@ interface ContentFormatter
     string format(Document document, MetadataMode mode);
 }
 
+private alias MetadataKeys = List!string;
+
+/// Formats document text and metadata using configurable templates and exclusions.
+final class DefaultContentFormatter : ContentFormatter
+{
+    private enum defaultMetadataTemplate = "{key}: {value}";
+    private enum defaultTextTemplate = "{metadata_string}\n\n{content}";
+    version (Windows)
+        private enum defaultMetadataSeparator = "\r\n";
+    else
+        private enum defaultMetadataSeparator = "\n";
+
+    private string metadataTemplate_;
+    private string metadataSeparator_;
+    private string textTemplate_;
+    private MetadataKeys excludedInferenceMetadataKeys_;
+    private MetadataKeys excludedEmbedMetadataKeys_;
+
+    private this(ref Builder configuration)
+    {
+        // Copy the template values and keep the configured lists by reference.
+        metadataTemplate_ = configuration.metadataTemplate;
+        metadataSeparator_ = configuration.metadataSeparator;
+        textTemplate_ = configuration.textTemplate;
+        excludedInferenceMetadataKeys_ = configuration.excludedInferenceMetadataKeys;
+        excludedEmbedMetadataKeys_ = configuration.excludedEmbedMetadataKeys;
+    }
+
+    /// Starts a new formatter configuration.
+    static Builder builder()
+    {
+        import flint.java.util : ArrayList;
+
+        return Builder(new ArrayList!string(), new ArrayList!string());
+    }
+
+    /// Creates a formatter with the default template and no excluded keys.
+    static DefaultContentFormatter defaultConfig()
+    {
+        return builder().build();
+    }
+
+    /// Formats metadata in map traversal order, then inserts metadata and text.
+    override string format(Document document, MetadataMode mode)
+    {
+        import flint.java.lang : NullPointerException;
+
+        if (document is null)
+            throw new NullPointerException();
+
+        MetadataKeys excluded;
+        if (mode == MetadataMode.EMBED)
+            excluded = excludedEmbedMetadataKeys_;
+        else if (mode == MetadataMode.INFERENCE)
+            excluded = excludedInferenceMetadataKeys_;
+
+        string metadata;
+        bool hasEntry;
+        if (mode != MetadataMode.NONE)
+            document.getMetadata().forEach((string key, Any value) {
+                if (excluded !is null && excluded.contains(key))
+                    return;
+                if (key is null)
+                    throw new NullPointerException();
+                if (hasEntry)
+                    metadata ~= metadataSeparator_;
+                hasEntry = true;
+                const template_ = replacePlaceholder(metadataTemplate_, "{key}", key);
+                const text = metadataValueText(value);
+                metadata ~= replacePlaceholder(template_, "{value}", text);
+            });
+
+        const template_ = replacePlaceholder(textTemplate_, "{metadata_string}", metadata);
+        const text = document.getText();
+        const formatted = replacePlaceholder(template_, "{content}", text.isNull ? "" : text.get());
+        return formatted.length == 0 ? "" : formatted;
+    }
+
+    /// Returns the metadata entry template.
+    string getMetadataTemplate() const pure nothrow @nogc
+    {
+        return metadataTemplate_;
+    }
+
+    /// Returns the separator between metadata entries.
+    string getMetadataSeparator() const pure nothrow @nogc
+    {
+        return metadataSeparator_;
+    }
+
+    /// Returns the formatted content template.
+    string getTextTemplate() const pure nothrow @nogc
+    {
+        return textTemplate_;
+    }
+
+    /// Returns an unmodifiable view of the inference exclusions.
+    MetadataKeys getExcludedInferenceMetadataKeys()
+    {
+        import flint.java.util : Collections;
+
+        return Collections.unmodifiableList!string(excludedInferenceMetadataKeys_);
+    }
+
+    /// Returns an unmodifiable view of the embedding exclusions.
+    MetadataKeys getExcludedEmbedMetadataKeys()
+    {
+        import flint.java.util : Collections;
+
+        return Collections.unmodifiableList!string(excludedEmbedMetadataKeys_);
+    }
+
+    /// Configures a document formatter.
+    static struct Builder
+    {
+        private string metadataTemplate = defaultMetadataTemplate;
+        private string metadataSeparator = defaultMetadataSeparator;
+        private string textTemplate = defaultTextTemplate;
+        private MetadataKeys excludedInferenceMetadataKeys;
+        private MetadataKeys excludedEmbedMetadataKeys;
+
+        @disable this();
+
+        private this(MetadataKeys inferenceKeys, MetadataKeys embedKeys)
+        {
+            excludedInferenceMetadataKeys = inferenceKeys;
+            excludedEmbedMetadataKeys = embedKeys;
+        }
+
+        /// Uses the supplied formatter's settings.
+        ref Builder from(DefaultContentFormatter formatter) return
+        {
+            import flint.java.lang : NullPointerException;
+
+            if (formatter is null)
+                throw new NullPointerException();
+            return withExcludedEmbedMetadataKeys(formatter.getExcludedEmbedMetadataKeys())
+                .withExcludedInferenceMetadataKeys(formatter.getExcludedInferenceMetadataKeys())
+                .withMetadataSeparator(DocumentText(formatter.getMetadataSeparator()))
+                .withMetadataTemplate(formatter.getMetadataTemplate()).withTextTemplate(formatter.getTextTemplate());
+        }
+
+        /// Sets a non-blank metadata entry template.
+        ref Builder withMetadataTemplate(string template_) return
+        {
+            validateDocumentText(template_, "Metadata Template must not be empty");
+            metadataTemplate = template_;
+            return this;
+        }
+
+        /// Sets the entry separator. An empty separator is valid.
+        ref Builder withMetadataSeparator(DocumentText separator) return
+        {
+            if (separator.isNull)
+                throw new IllegalArgumentException("Metadata separator must not be empty");
+            metadataSeparator = separator.get();
+            return this;
+        }
+
+        /// Sets a non-blank content template.
+        ref Builder withTextTemplate(string template_) return
+        {
+            validateDocumentText(template_, "Document's text template must not be empty");
+            textTemplate = template_;
+            return this;
+        }
+
+        /// Uses the supplied list of inference exclusions.
+        ref Builder withExcludedInferenceMetadataKeys(MetadataKeys keys) return
+        {
+            if (keys is null)
+                throw new IllegalArgumentException("Excluded inference metadata keys must not be null");
+            excludedInferenceMetadataKeys = keys;
+            return this;
+        }
+
+        /// Adds inference exclusions.
+        ref Builder withExcludedInferenceMetadataKeys(string[] keys...) return
+        {
+            import flint.java.util : Arrays;
+
+            if (keys is null)
+                throw new IllegalArgumentException("Excluded inference metadata keys must not be null");
+            excludedInferenceMetadataKeys.addAll(Arrays.asList(keys));
+            return this;
+        }
+
+        /// Adds an empty batch of inference exclusions.
+        ref Builder withExcludedInferenceMetadataKeys() return
+        {
+            import flint.java.util : Arrays;
+
+            excludedInferenceMetadataKeys.addAll(Arrays.asList!string());
+            return this;
+        }
+
+        /// Uses the supplied list of embedding exclusions.
+        ref Builder withExcludedEmbedMetadataKeys(MetadataKeys keys) return
+        {
+            if (keys is null)
+                throw new IllegalArgumentException("Excluded Embed metadata keys must not be null");
+            excludedEmbedMetadataKeys = keys;
+            return this;
+        }
+
+        /// Adds embedding exclusions.
+        ref Builder withExcludedEmbedMetadataKeys(string[] keys...) return
+        {
+            import flint.java.util : Arrays;
+
+            if (keys is null)
+                throw new IllegalArgumentException("Excluded Embed metadata keys must not be null");
+            excludedEmbedMetadataKeys.addAll(Arrays.asList(keys));
+            return this;
+        }
+
+        /// Adds an empty batch of embedding exclusions.
+        ref Builder withExcludedEmbedMetadataKeys() return
+        {
+            import flint.java.util : Arrays;
+
+            excludedEmbedMetadataKeys.addAll(Arrays.asList!string());
+            return this;
+        }
+
+        /// Builds a formatter using the current configuration.
+        DefaultContentFormatter build()
+        {
+            return new DefaultContentFormatter(this);
+        }
+    }
+}
+
+// The placeholders are nonempty ASCII literals starting with a brace.
+private string replacePlaceholder(string template_, string placeholder, string replacement) pure nothrow
+{
+    string result;
+    size_t consumed;
+    for (size_t offset; offset + placeholder.length <= template_.length;)
+    {
+        if (template_[offset] == '{' && template_[offset .. offset + placeholder.length] == placeholder)
+        {
+            result ~= template_[consumed .. offset];
+            result ~= replacement;
+            offset += placeholder.length;
+            consumed = offset;
+        }
+        else
+            ++offset;
+    }
+    return consumed == 0 ? template_ : result ~ template_[consumed .. $];
+}
+
+private string metadataValueText(Any value)
+{
+    import flint.engine.aot.objects : objectToString;
+    import flint.java.lang : doubleToString, floatToString, NullPointerException;
+
+    if (value.isNull)
+        throw new NullPointerException();
+    if (auto object = value.asObject())
+    {
+        const text = objectToString(object);
+        if (text is null)
+            throw new NullPointerException();
+        return text;
+    }
+    switch (value.typeName)
+    {
+    case "double":
+        return doubleToString(value.get!double);
+    case "float":
+        return floatToString(cast(float) value.get!double);
+    default:
+        return value.toString();
+    }
+}
+
 /// A text document with an explicit identifier and metadata.
 class Document
 {
@@ -124,7 +402,7 @@ class Document
     /// Creates a text document with an explicit ID and a copy of its metadata.
     this(string id, DocumentText text, DocumentMetadataMap metadata)
     {
-        validateId(id);
+        validateDocumentText(id, "id cannot be null or empty");
         if (metadata is null)
             throw new IllegalArgumentException("metadata cannot be null");
         metadata.forEach((string key, Any) {
@@ -182,29 +460,28 @@ class Document
             throw new IllegalArgumentException("Metadata mode must not be null");
         return formatter.format(this, mode.get());
     }
+}
 
-    private static void validateId(string id)
+private void validateDocumentText(string text, string message)
+{
+    import flint.engine.aot.text : decodeUtf8;
+
+    // Match Java Character.isWhitespace without loading the wider flint.util module.
+    size_t offset;
+    while (offset < text.length)
     {
-        import flint.engine.aot.text : decodeUtf8;
-
-        // Match Java Character.isWhitespace without retaining flint.util's archive.
-        size_t offset;
-        while (offset < id.length)
+        const point = decodeUtf8(text, offset);
+        switch (point)
         {
-            const point = decodeUtf8(id, offset);
-            switch (point)
-            {
-            case '\t', '\n', '\v', '\f', '\r', 0x1c, 0x1d, 0x1e, 0x1f, ' ', 0x1680, 0x2028, 0x2029,
-                    0x205f, 0x3000:
-                    break;
-            default:
-                if (point < 0x2000 || point > 0x200a || point == 0x2007)
-                    return;
-                break;
-            }
+        case '\t', '\n', '\v', '\f', '\r', 0x1c, 0x1d, 0x1e, 0x1f, ' ', 0x1680, 0x2028, 0x2029, 0x205f, 0x3000:
+            break;
+        default:
+            if (point < 0x2000 || point > 0x200a || point == 0x2007)
+                return;
+            break;
         }
-        throw new IllegalArgumentException("id cannot be null or empty");
     }
+    throw new IllegalArgumentException(message);
 }
 
 private alias DocumentList = List!Document;

@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 181 | 300 | 0 | 15,315 |
+| ai | spring-ai@v2.1.0 | 187 | 313 | 0 | 15,296 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,473 | 1,387 | 4,848 | 30,126 |
@@ -324,6 +324,19 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.ai.document.DefaultContentFormatter#builder()` | `flint.ai.document.DefaultContentFormatter.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter#getExcludedEmbedMetadataKeys()` | `flint.ai.document.DefaultContentFormatter.getExcludedEmbedMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.document.DefaultContentFormatter#getExcludedInferenceMetadataKeys()` | `flint.ai.document.DefaultContentFormatter.getExcludedInferenceMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder` | `flint.ai.document.DefaultContentFormatter.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#build()` | `flint.ai.document.DefaultContentFormatter.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#from(DefaultContentFormatter)` | `flint.ai.document.DefaultContentFormatter.Builder.from` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedEmbedMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedEmbedMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedEmbedMetadataKeys(String...)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedEmbedMetadataKeys` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedInferenceMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedInferenceMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedInferenceMetadataKeys(String...)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedInferenceMetadataKeys` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withMetadataSeparator(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withMetadataSeparator` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withMetadataTemplate(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withMetadataTemplate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withTextTemplate(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withTextTemplate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.Document#<init>(String,String,Map)` | `flint.ai.document.Document.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.document.Document#getFormattedContent(ContentFormatter,MetadataMode)` | `flint.ai.document.Document.getFormattedContent` | [R5](api-mapping.md#r5-optional-and-nullable-values) | The Nullable mode overload preserves Java null-mode validation. |
 | `org.springframework.ai.document.Document#getMetadata()` | `flint.ai.document.Document.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -8349,7 +8362,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.deepseek.api | 0 | 210 |
 | org.springframework.ai.deepseek.api.common | 0 | 5 |
 | org.springframework.ai.docker.compose.service.connection.typesense | 0 | 3 |
-| org.springframework.ai.document | 45 | 0 |
+| org.springframework.ai.document | 26 | 0 |
 | org.springframework.ai.document.id | 4 | 0 |
 | org.springframework.ai.elevenlabs | 0 | 61 |
 | org.springframework.ai.elevenlabs.aot | 0 | 3 |

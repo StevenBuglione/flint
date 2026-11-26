@@ -17,7 +17,7 @@
           "builderShouldThrowWhenMetadataValueIsNull": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
           "builderWithCustomIdGenerator": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
           "builderWithMetadataMap": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
-          "defaultConfigTextFormatter": "Requires the shared default formatter, its configuration, or the default formatter overload.",
+          "defaultConfigTextFormatter": "The explicit formatter assertions run locally. The comparison with the default getFormattedContent overload requires the process-wide Document default formatter.",
           "differentIds": "Document equality and hash parity remain deferred with full content construction.",
           "differentText": "Document equality and hash parity remain deferred with full content construction.",
           "equalDocuments": "Document equality and hash parity remain deferred with full content construction.",

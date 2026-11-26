@@ -18,10 +18,10 @@
 // Modified by the Flint authors.
 module document_explicit_formatter_tests;
 
-import flint.ai.document : ContentFormatter, Document, MetadataMode;
+import flint.ai.document : ContentFormatter, DefaultContentFormatter, Document, MetadataMode;
 import flint.engine.aot.any : Any;
-import flint.java.lang : IllegalArgumentException;
-import flint.java.util : HashMap;
+import flint.java.lang : IllegalArgumentException, UnsupportedOperationException;
+import flint.java.util : ArrayList, HashMap, List;
 import std.exception : collectException;
 import std.typecons : Nullable;
 
@@ -118,4 +118,92 @@ unittest
     checkInvalid(new Document(blank, Text("text"), entries), "id cannot be null or empty");
     foreach (string id; ["\u00a0", "\u0085", "\u2007", "\u202f", "文"])
         assert(new Document(id, Text("text"), entries).getId() == id);
+}
+
+@("standalone default configuration formats the pinned document")
+unittest
+{
+    auto metadata = new HashMap!(string, Any)();
+    metadata.put("llmKey2", Any.of("value4"));
+    metadata.put("embedKey1", Any.of("value1"));
+    metadata.put("embedKey2", Any.of("value2"));
+    metadata.put("embedKey3", Any.of("value3"));
+    auto document = new Document("fixture", Text("The World is Big and Salvation Lurks Around the Corner"), metadata);
+    auto formatter = DefaultContentFormatter.defaultConfig();
+    version (Windows)
+        enum separator = "\r\n";
+    else
+        enum separator = "\n";
+    enum expected = "llmKey2: value4" ~ separator ~ "embedKey1: value1" ~ separator ~ "embedKey2: value2"
+        ~ separator ~ "embedKey3: value3\n\n" ~ "The World is Big and Salvation Lurks Around the Corner";
+    assert(document.getFormattedContent(formatter, MetadataMode.ALL) == expected);
+    assert(formatter.format(document, MetadataMode.ALL) == expected);
+    assert(document.getFormattedContent(formatter, MetadataMode.EMBED) == expected);
+    assert(document.getFormattedContent(formatter, MetadataMode.INFERENCE) == expected);
+    assert(document.getFormattedContent(formatter,
+            MetadataMode.NONE) == "\n\nThe World is Big and Salvation Lurks Around the Corner");
+    assert(formatter !is DefaultContentFormatter.defaultConfig());
+}
+
+@("custom configuration applies exclusions only to their corresponding modes")
+unittest
+{
+    auto metadata = new HashMap!(string, Any)();
+    metadata.put("inference", Any.of("shown for inference"));
+    metadata.put("embed", Any.of(4.0));
+    auto document = new Document("fixture", Text("{metadata_string}"), metadata);
+    auto formatter = DefaultContentFormatter.builder().withMetadataTemplate("{key}={value}")
+        .withMetadataSeparator(Text(""))
+        .withTextTemplate("[{metadata_string}]{content}/{content}")
+        .withExcludedEmbedMetadataKeys("inference").withExcludedInferenceMetadataKeys("embed").build();
+    assert(formatter.getMetadataTemplate() == "{key}={value}");
+    assert(formatter.getMetadataSeparator() == "");
+    assert(formatter.getTextTemplate() == "[{metadata_string}]{content}/{content}");
+    assert(formatter.getExcludedEmbedMetadataKeys().get(0) == "inference");
+    assert(formatter.getExcludedInferenceMetadataKeys().get(0) == "embed");
+    assert(formatter.format(document,
+            MetadataMode.ALL) == "[inference=shown for inferenceembed=4.0]{metadata_string}/{metadata_string}");
+    assert(formatter.format(document,
+            MetadataMode.INFERENCE) == "[inference=shown for inference]{metadata_string}/{metadata_string}");
+    assert(formatter.format(document, MetadataMode.EMBED) == "[embed=4.0]{metadata_string}/{metadata_string}");
+    assert(formatter.format(document, MetadataMode.NONE) == "[]{metadata_string}/{metadata_string}");
+}
+
+@("exclusion lists are live unmodifiable views and builder from preserves them")
+unittest
+{
+    auto keys = new ArrayList!string();
+    keys.add("first");
+    auto formatter = DefaultContentFormatter.builder().withExcludedEmbedMetadataKeys(keys).build();
+    auto copied = DefaultContentFormatter.builder().from(formatter).build();
+    auto view = formatter.getExcludedEmbedMetadataKeys();
+    keys.add("second");
+    assert(view.size() == 2 && view.get(1) == "second");
+    assert(copied.getExcludedEmbedMetadataKeys().get(1) == "second");
+    assert(collectException!UnsupportedOperationException(view.add("third")) !is null);
+}
+
+@("formatter builder distinguishes missing and empty configuration")
+unittest
+{
+    auto builder = DefaultContentFormatter.builder();
+    assert(collectException!IllegalArgumentException(builder.withMetadataTemplate("\u3000")) !is null);
+    assert(collectException!IllegalArgumentException(builder.withTextTemplate("")) !is null);
+    assert(collectException!IllegalArgumentException(builder.withMetadataSeparator(Text.init)) !is null);
+    assert(collectException!IllegalArgumentException(
+            builder.withExcludedEmbedMetadataKeys(cast(List!string) null)) !is null);
+    assert(collectException!IllegalArgumentException(
+            builder.withExcludedInferenceMetadataKeys(cast(string[]) null)) !is null);
+    auto formatter = builder.withExcludedEmbedMetadataKeys().withExcludedInferenceMetadataKeys().build();
+    assert(formatter.getExcludedEmbedMetadataKeys().isEmpty());
+    assert(formatter.getExcludedInferenceMetadataKeys().isEmpty());
+}
+
+@("a placeholder with absent output yields a present empty string")
+unittest
+{
+    auto document = new Document("fixture", Text(""), new HashMap!(string, Any)());
+    auto formatter = DefaultContentFormatter.builder().withTextTemplate("{metadata_string}{content}").build();
+    const formatted = formatter.format(document, MetadataMode.NONE);
+    assert(formatted !is null && formatted.length == 0);
 }
