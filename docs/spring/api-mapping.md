@@ -229,6 +229,7 @@ A Java identifier that is a D keyword or a name D reserves takes a trailing unde
 - **Members:** `UUID.version()` → `version_()`, `Logger.debug(...)` → `debug_(...)` (D-SLF4J-2, docs/spring/phase1/third-party.md).
 - **Package path segments:** `java.util.function` → `flint.java.util.function_` (D-15 in docs/spring/phase1/framework-core.md).
 - **The `template` module** is the exception AGENTS.md already names: `flint:engine-template` is `flint.engine.templates`.
+- **Characters D can't spell:** a `$` in a Java identifier becomes `_`, and the name otherwise keeps Java's spelling. Spring Security's `BCryptVersion.$2A`, `$2B` and `$2Y` are `_2A`, `_2B` and `_2Y`. Coordinator, 2026-11-26, from api-coverage and sol-security.
 
 Mapping: the element is `adapted` with rule `R19`. Lanes cite R19 instead of a new deviation.
 
@@ -304,6 +305,15 @@ protected final Collection!T includes() nothrow @nogc => includes_;
 ```
 
 Mapping: the element is `adapted` with rule `R24`.
+
+### R25: Interfaces only the library implements
+
+A Java interface may become a `final` class with the same name and methods when its only implementations are inside the upstream library and users only obtain instances from its factories. Spring's `MergedAnnotations` (from `MergedAnnotations.from(...)`) and Hibernate Validator's `HibernateValidatorConfiguration` (from `Validation.byProvider(...)`) are examples. Every call reads the same as in Java. Coordinator, 2026-11-26, from api-coverage's kind audit:
+- **The test:** the pinned upstream source has no public implementation outside the library, its documentation doesn't invite users to implement it, and the ported upstream tests don't implement it. If any of these fails, the type stays an interface.
+- **Mocks and stubs:** tests that need a fake build one through the library's own factories, not through a subclass.
+- **Classes and records** don't fall under R25. A Java class ported as a struct follows R11, R15 or R16, or a deviation.
+
+Mapping: the type is `adapted` with rule `R25`, and its members keep their own classifications.
 
 ## Namespaces
 
