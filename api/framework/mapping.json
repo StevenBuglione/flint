@@ -5695,6 +5695,7 @@
 "java.lang.Iterable":{"d":"flint.java.lang.Iterable","status":"ported"},
 "java.lang.Iterable#forEach(Consumer)":{"category":"deferred","note":"Requires default traversal with a Consumer for iterator-only implementations.","phase":"2","status":"excluded"},
 "java.lang.Iterable#iterator()":{"d":"flint.java.lang.Iterable.iterator","status":"ported"},
+"java.lang.Iterable#spliterator()":{"category":"deferred","note":"Requires the canonical java.util.Spliterator and an iterator-backed default (R3). Java opens the iterator without advancing it and initially reports unknown size and no characteristics.","phase":"2","status":"excluded"},
 "java.lang.Long#MAX_VALUE":{"d":"flint.java.lang.Long.MAX_VALUE","status":"ported"},
 "java.lang.Long#MIN_VALUE":{"d":"flint.java.lang.Long.MIN_VALUE","status":"ported"},
 "java.lang.Long#compare(long,long)":{"d":"flint.java.lang.Long.compare","status":"ported"},
