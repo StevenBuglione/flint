@@ -875,8 +875,26 @@
       "status": "deferred"
     },
     "org/springframework/boot/context/properties/source/ConfigurationPropertySourcesTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/core/flint-boot/tests/boot_tests/configuration_property_sources_attach_tests.d",
+      "status": "partial",
+      "methods": {
+        "ported": [
+          "attachShouldAddAdapterAtBeginning",
+          "attachShouldReattachInMergedSetup",
+          "environmentPropertyExpansionShouldWorkWhenAttached"
+        ],
+        "skipped": {
+          "attachWhenAlreadyAttachedWithSameSourcesShouldReturnExistingInstance": "The adapter identity has a Flint regression test. ConfigurationPropertySources.get is deferred",
+          "getWhenNotAttachedShouldReturnAdapted": "ConfigurationPropertySources.get is deferred",
+          "getWhenAttachedShouldReturnAttached": "ConfigurationPropertySources.get is deferred",
+          "fromPropertySourceShouldReturnSpringConfigurationPropertySource": "ConfigurationPropertySources.from is deferred",
+          "fromPropertySourceShouldFlattenPropertySources": "ConfigurationPropertySources.from is deferred",
+          "environmentPropertyAccessWhenImmutableShouldBePerformant": "Upstream performance workload",
+          "environmentPropertyAccessWhenMutableWithCacheShouldBePerformant": "Upstream performance workload",
+          "environmentPropertyAccessWhenMutableShouldBeTolerable": "Disabled manual performance workload upstream",
+          "descendantOfPropertyAccessWhenMutableWithCacheShouldBePerformant": "Upstream performance workload"
+        }
+      }
     },
     "org/springframework/boot/context/properties/source/ConfigurationPropertyStateTests.java": {
       "phase": "2",

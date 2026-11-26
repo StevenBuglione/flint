@@ -8,6 +8,8 @@
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java's CharSequence offsets become D strings, each element keeps its own
 // resolved text, and `Object` property values are strings (Flint AOT binds typed values from text).
+// The live attachment also ports ConfigurationPropertySources.java,
+// ConfigurationPropertySourcesPropertySource.java and SpringConfigurationPropertySources.java.
 
 /// `org.springframework.boot.context.properties.source`: configuration property names with relaxed binding, and
 /// the sources that supply their values.
@@ -1066,6 +1068,33 @@ final class SystemEnvironmentPropertySource : MapConfigurationPropertySource
 /// `flint` is also found under `spring` (ADR-030 section 1), and the `flint` spelling wins inside one source.
 struct ConfigurationPropertySources
 {
+    /// Attaches a live, relaxed view of the environment's property sources at the highest precedence.
+    static void attach(Environment environment)
+    {
+        auto configurable = cast(ConfigurableEnvironment) environment;
+        if (configurable is null)
+            throw new IllegalArgumentException("Environment must be a ConfigurableEnvironment");
+
+        auto sources = configurable.getPropertySources();
+        auto attached = cast(ConfigurationPropertySourcesPropertySource) sources.get(attachedSourceName);
+        if (attached is null || attached.sources !is sources)
+            attached = new ConfigurationPropertySourcesPropertySource(sources);
+        sources.addFirst(attached);
+
+        if (auto aware = cast(ConfigurationPropertyAttachmentAware) environment)
+            aware.useAttachedConfigurationProperties();
+    }
+
+    /// Whether the source has Boot's reserved attachment name.
+    static bool isAttachedConfigurationPropertySource(PropertySource source)
+    {
+        import flint.java.lang : NullPointerException;
+
+        if (source is null)
+            throw new NullPointerException;
+        return source.getName() == attachedSourceName;
+    }
+
     /// The `spring.*` alias of a `flint.*` name, or `null`.
     static ConfigurationPropertyName aliasOf(ConfigurationPropertyName name) pure
     {
@@ -1130,6 +1159,115 @@ struct ConfigurationPropertySources
             }
         }
         return result;
+    }
+}
+
+import flint.core.env : ConfigurableEnvironment, EnumerablePropertySource, Environment,
+    MutablePropertySources, PropertySource, StubPropertySource;
+import flint.core.env : CoreSystemEnvironmentPropertySource = SystemEnvironmentPropertySource;
+
+private enum attachedSourceName = "configurationProperties";
+
+// ApplicationEnvironment normally resolves directly from its config-data sources. Switch it to the
+// shared environment resolver only when a caller explicitly asks to attach the live view.
+package(flint.boot) interface ConfigurationPropertyAttachmentAware
+{
+    void useAttachedConfigurationProperties() pure nothrow @nogc;
+}
+
+private final class ConfigurationPropertySourcesPropertySource : PropertySource
+{
+    import flint.engine.aot.any : Any;
+
+    private MutablePropertySources sources;
+
+    this(MutablePropertySources sources)
+    {
+        super(attachedSourceName, sources);
+        this.sources = sources;
+    }
+
+    override Any getProperty(string key)
+    {
+        auto parsed = ConfigurationPropertyName.ofIfValid(key);
+        if (parsed is null)
+            return Any.init;
+
+        auto name = ConfigurationPropertySources.canonical(parsed);
+        return find(sources, name, ConfigurationPropertySources.aliasOf(name));
+    }
+
+    private static Any find(MutablePropertySources sources, ConfigurationPropertyName name,
+            ConfigurationPropertyName aliasName)
+    {
+        foreach (source; sources.toArray())
+        {
+            if (cast(ConfigurationPropertySourcesPropertySource) source || cast(StubPropertySource) source)
+                continue;
+
+            Any value;
+            if (auto nested = cast(ConfigurableEnvironment) source.getSource())
+                value = find(nested.getPropertySources(), name, aliasName);
+            else
+            {
+                value = read(source, name);
+                if (value.isNull() && aliasName !is null)
+                    value = read(source, aliasName);
+            }
+            if (!value.isNull())
+                return value;
+        }
+        return Any.init;
+    }
+
+    private static Any read(PropertySource source, ConfigurationPropertyName name)
+    {
+        if (auto boot = cast(ConfigurationPropertySource) source.getSource())
+        {
+            auto property = boot.getConfigurationProperty(name);
+            return property is null ? Any.init : Any.of(property.getValue());
+        }
+
+        if (auto system = cast(CoreSystemEnvironmentPropertySource) source)
+            return readSystemEnvironment(system, name);
+
+        auto value = source.getProperty(name.toString());
+        return value.isNull() ? readMapped(cast(EnumerablePropertySource) source, name,
+                &DefaultPropertyMapper.map) : value;
+    }
+
+    private static Any readSystemEnvironment(CoreSystemEnvironmentPropertySource source, ConfigurationPropertyName name)
+    {
+        auto value = source.getProperty(name.toSystemEnvironmentString());
+        if (!value.isNull())
+            return value;
+
+        auto legacy = SystemEnvironmentPropertyMapper.legacyName(name);
+        if (legacy !is null)
+        {
+            value = source.getProperty(legacy.toSystemEnvironmentString());
+            if (!value.isNull())
+                return value;
+        }
+        return readMapped(source, name, &SystemEnvironmentPropertyMapper.map, legacy);
+    }
+
+    private static Any readMapped(EnumerablePropertySource source, ConfigurationPropertyName name,
+            ConfigurationPropertyName function(string) pure @safe mapper, ConfigurationPropertyName legacy = null)
+    {
+        if (source is null)
+            return Any.init;
+
+        foreach (key; source.getPropertyNames())
+        {
+            auto mapped = mapper(key);
+            if (mapped is null || (!name.equals(mapped) && (legacy is null || !legacy.equals(mapped))))
+                continue;
+            auto value = source.getProperty(key);
+            if (!value.isNull())
+                return value;
+        }
+        return Any.init;
     }
 }
 

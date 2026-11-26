@@ -619,7 +619,6 @@
       "org/springframework/boot/context/properties/source/ConfigurationPropertySourcesCachingTests.java",
       "org/springframework/boot/context/properties/source/ConfigurationPropertySourcesPropertyResolverTests.java",
       "org/springframework/boot/context/properties/source/ConfigurationPropertySourcesPropertySourceTests.java",
-      "org/springframework/boot/context/properties/source/ConfigurationPropertySourcesTests.java",
       "org/springframework/boot/context/properties/source/ConfigurationPropertyStateTests.java",
       "org/springframework/boot/context/properties/source/ConfigurationPropertyTests.java",
       "org/springframework/boot/context/properties/source/DefaultPropertyMapperTests.java",

@@ -29,7 +29,7 @@ module flint.boot;
 
 import flint.boot.context.config : ConfigDataEnvironment, ConfigDataEnvironmentOptions,
     ConfigDataResourceReader, ConfigDataResult, Profiles;
-import flint.boot.context.properties.source : ConfigurationPropertyName,
+import flint.boot.context.properties.source : ConfigurationPropertyAttachmentAware, ConfigurationPropertyName,
     ConfigurationPropertySource, ConfigurationPropertySources, MapConfigurationPropertySource;
 import flint.boot.diagnostics : FailureAnalysisReporter, FailureAnalyzer, FailureAnalyzers,
     LoggingFailureAnalysisReporter;
@@ -197,9 +197,10 @@ struct FlintBootConfiguration
 /// default properties), in precedence order. Boot's relaxed lookup answers `getProperty`, including the `spring.*`
 /// alias of `flint.*` keys, as Boot's `ConfigurationPropertySourcesPropertyResolver` does. The profiles are the ones
 /// config data decided. Boot's own code reads the same sources through `getConfigurationPropertySources`.
-final class ApplicationEnvironment : StandardEnvironment
+final class ApplicationEnvironment : StandardEnvironment, ConfigurationPropertyAttachmentAware
 {
     private ConfigurationPropertySource[] bootSources;
+    private bool useAttachedProperties;
 
     /// The environment of loaded config data.
     this(ConfigDataResult data)
@@ -217,9 +218,16 @@ final class ApplicationEnvironment : StandardEnvironment
     {
     }
 
+    protected override void useAttachedConfigurationProperties() pure nothrow @nogc
+    {
+        useAttachedProperties = true;
+    }
+
     /// The value of `key` with Boot's relaxed names and placeholders, converted to `targetType`.
     override Any getPropertyErased(string key, const TypeDescriptor targetType)
     {
+        if (useAttachedProperties)
+            return super.getPropertyErased(key, targetType);
         const text = relaxed(key);
         if (text is null)
             return Any.init;
@@ -232,6 +240,8 @@ final class ApplicationEnvironment : StandardEnvironment
     /// Whether `key` has a value, by Boot's relaxed names.
     override bool containsProperty(string key)
     {
+        if (useAttachedProperties)
+            return super.containsProperty(key);
         return relaxed(key) !is null;
     }
 
@@ -240,6 +250,8 @@ final class ApplicationEnvironment : StandardEnvironment
     {
         import flint.boot.context.properties.bind : PropertySourcesPlaceholdersResolver;
 
+        if (useAttachedProperties)
+            return super.resolvePlaceholders(text);
         return new PropertySourcesPlaceholdersResolver(bootSources).resolvePlaceholders(text);
     }
 

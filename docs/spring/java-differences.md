@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
-| boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
+| boot | spring-boot@v4.2.0 | 47 | 103 | 2,133 | 13,320 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -9857,7 +9857,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.context.properties.bind | 108 | 0 |
 | org.springframework.boot.context.properties.bind.handler | 15 | 0 |
 | org.springframework.boot.context.properties.bind.validation | 15 | 0 |
-| org.springframework.boot.context.properties.source | 109 | 0 |
+| org.springframework.boot.context.properties.source | 106 | 0 |
 | org.springframework.boot.convert | 59 | 0 |
 | org.springframework.boot.couchbase.autoconfigure | 75 | 0 |
 | org.springframework.boot.couchbase.autoconfigure.health | 2 | 0 |
