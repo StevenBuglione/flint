@@ -409,10 +409,11 @@ class InvocableHandlerMethod : HandlerMethod
 
     private static string formatArgumentError(MethodParameter param, string message)
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
-        return "Could not resolve parameter [" ~ param.getParameterIndex()
-            .to!string ~ "] in " ~ param.getExecutable() ~ (message.length != 0 ? ": " ~ message : "");
+        const index = decimal(param.getParameterIndex());
+        const detail = message.length != 0 ? ": " ~ message : "";
+        return "Could not resolve parameter [" ~ index ~ "] in " ~ param.getExecutable() ~ detail;
     }
 }
 

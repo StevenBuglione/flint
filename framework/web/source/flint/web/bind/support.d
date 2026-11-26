@@ -15,6 +15,7 @@ import flint.core : MethodParameter;
 import flint.core.convert : ConversionFailedException, TypeDescriptor;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable;
+import flint.java.lang : NumberFormatException;
 import flint.java.util.descriptors : buildElements, isListLike;
 import flint.web.context.request : NativeWebRequest;
 
@@ -181,7 +182,6 @@ package(flint) struct SimpleConversion
     {
         import flint.engine.aot.text : stripWhite;
         import flint.java.time : DateTimeException;
-        import std.conv : ConvException;
 
         if (targetType != "string" && !isArray(targetType) && (targetType == "char"
                 ? value.length == 0 : stripWhite(value).length == 0))
@@ -218,7 +218,7 @@ package(flint) struct SimpleConversion
                 return Any.of(doubleOf(value));
             case "char":
                 if (value.length != 1)
-                    throw new ConvException("not a single character");
+                    throw new NumberFormatException("not a single character");
                 return Any.of(value[0]);
             case "string[]":
                 return Any.of(splitComma(value));
@@ -240,23 +240,21 @@ package(flint) struct SimpleConversion
                 throw conversionFailed(targetType, value, null);
             }
         }
-        catch (ConvException e)
-            throw conversionFailed(targetType, value,
-                    new imported!"flint.java.lang".NumberFormatException(forInput(value)));
+        catch (NumberFormatException e)
+            throw conversionFailed(targetType, value, new NumberFormatException(forInput(value)));
         catch (DateTimeException e)
             throw conversionFailed(targetType, value, e);
     }
 
     // The number in `text` without surrounding white space, as `text.strip.to!T` reads it (flint.engine.aot.text gives
-    // std.conv's results without its templates); a ConvException where `to!T` throws one.
+    // std.conv's results without its templates); a NumberFormatException where `to!T` throws a ConvException.
     private static long signedIn(string text, long low, long high)
     {
         import flint.engine.aot.text : stripWhite, tryParseLong;
-        import std.conv : ConvException;
 
         const parsed = tryParseLong(stripWhite(text));
         if (!parsed.ok || parsed.value < low || parsed.value > high)
-            throw new ConvException("not a number in range");
+            throw new NumberFormatException("not a number in range");
         return parsed.value;
     }
 
@@ -264,11 +262,10 @@ package(flint) struct SimpleConversion
     private static ulong unsignedUpTo(string text, ulong high)
     {
         import flint.engine.aot.text : stripWhite, tryParseULong;
-        import std.conv : ConvException;
 
         const parsed = tryParseULong(stripWhite(text));
         if (!parsed.ok || parsed.value > high)
-            throw new ConvException("not a number in range");
+            throw new NumberFormatException("not a number in range");
         return parsed.value;
     }
 
@@ -276,11 +273,10 @@ package(flint) struct SimpleConversion
     private static float floatOf(string text)
     {
         import flint.engine.aot.text : stripWhite, tryParseFloat;
-        import std.conv : ConvException;
 
         const parsed = tryParseFloat(stripWhite(text));
         if (!parsed.ok)
-            throw new ConvException("not a float");
+            throw new NumberFormatException("not a float");
         return parsed.value;
     }
 
@@ -288,11 +284,10 @@ package(flint) struct SimpleConversion
     private static double doubleOf(string text)
     {
         import flint.engine.aot.text : stripWhite, tryParseDouble;
-        import std.conv : ConvException;
 
         const parsed = tryParseDouble(stripWhite(text));
         if (!parsed.ok)
-            throw new ConvException("not a double");
+            throw new NumberFormatException("not a double");
         return parsed.value;
     }
 
@@ -331,20 +326,25 @@ package(flint) struct SimpleConversion
         return "For input string: \"" ~ value ~ "\"";
     }
 
+    // Spring's `value.toLowerCase()` against ASCII words: only ASCII letters can lower to one of them.
     private static bool parseBoolean(string value)
     {
-        import std.conv : ConvException;
-        import std.uni : toLower;
-
-        switch (value.toLower)
+        char[5] lower;
+        if (value.length <= lower.length)
         {
-        case "true", "on", "yes", "1":
-            return true;
-        case "false", "off", "no", "0":
-            return false;
-        default:
-            throw new ConvException("Invalid boolean value '" ~ value ~ "'");
+            foreach (i, c; value)
+                lower[i] = c >= 'A' && c <= 'Z' ? cast(char)(c + ('a' - 'A')) : c;
+            switch (lower[0 .. value.length])
+            {
+            case "true", "on", "yes", "1":
+                return true;
+            case "false", "off", "no", "0":
+                return false;
+            default:
+                break;
+            }
         }
+        throw new NumberFormatException("Invalid boolean value '" ~ value ~ "'");
     }
 
     private static string[] splitComma(string value) pure nothrow

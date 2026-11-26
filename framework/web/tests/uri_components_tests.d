@@ -191,7 +191,7 @@ version (FlintUriExpandCollections)
 }
 
 // Spring reports a malformed URL with InvalidUrlException and validates the port when it is read; flint.web
-// throws IllegalArgumentException from the parser and std.conv's exception from getPort.
+// throws IllegalArgumentException from the parser, and only getPort (not toUri) validates the port.
 version (FlintUriPortValidation)
 {
     @("UriComponentsTests.invalidPortParsed")

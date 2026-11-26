@@ -111,3 +111,30 @@ unittest
     auto list = factory.convertIfNecessary(Any.of(["7", "8"]), typeNameOf!(List!long), null).get!(List!long);
     assert(list.toArray() == [7L, 8L]);
 }
+
+@("DefaultDataBinderFactory reads boolean words in any case; unreadable text fails with a NumberFormatException cause")
+unittest
+{
+    import flint.java.lang : NumberFormatException;
+
+    foreach (word; ["true", "On", "YES", "1"])
+        assert(convert(word, "bool").get!bool, word);
+    foreach (word; ["false", "oFF", "No", "0"])
+        assert(!convert(word, "bool").get!bool, word);
+    foreach (bad; ["maybe", "truee", "tru", "y"])
+        assert(conversionFails(bad, "bool"), bad);
+    foreach (bad; ["12a", "2147483648", "x"])
+        assert(conversionFails(bad, "int"), bad);
+    assert(conversionFails("ab", "char"));
+    try
+    {
+        convert("abc", "double");
+        assert(false);
+    }
+    catch (ConversionFailedException ex)
+    {
+        auto cause = cast(NumberFormatException) ex.getCause();
+        assert(cause !is null);
+        assert(cause.getMessage() == "For input string: \"abc\"", cause.getMessage());
+    }
+}

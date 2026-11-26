@@ -715,7 +715,7 @@ struct CorsUtils
     /// Whether the request carries an `Origin` other than its own.
     static bool isCorsRequest(HttpServletRequest request)
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
         const origin = request.getHeader(HttpHeaders.ORIGIN);
         if (origin is null)
@@ -723,7 +723,7 @@ struct CorsUtils
         const scheme = request.getScheme();
         const port = request.getServerPort();
         const defaultPort = (scheme == "http" && port == 80) || (scheme == "https" && port == 443);
-        const own = scheme ~ "://" ~ request.getServerName() ~ (defaultPort ? "" : ":" ~ port.to!string);
+        const own = scheme ~ "://" ~ request.getServerName() ~ (defaultPort ? "" : ":" ~ decimal(port));
         return !equalsIgnoreCase(trimTrailingSlash(origin), own);
     }
 

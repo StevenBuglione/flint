@@ -227,13 +227,16 @@ final class UriComponents
     /// The port, or `-1` when absent.
     int getPort() const pure
     {
-        import std.conv : to;
+        import flint.engine.aot.text : parseLong;
 
         if (port.length == 0)
             return -1;
         if (port[0] == '{')
             throw new IllegalStateException("The port contains a URI variable but has not been expanded yet: " ~ port);
-        return port.to!int;
+        long value;
+        if (!parseLong(port, value) || value < int.min || value > int.max)
+            throw new IllegalStateException("The port must be an integer: " ~ port);
+        return cast(int) value;
     }
 
     /// The path, or `null`.
@@ -633,9 +636,9 @@ final class UriComponentsBuilder
     /// Sets the port; `-1` clears it.
     UriComponentsBuilder port(int port) pure nothrow
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
-        portValue = port < 0 ? null : port.to!string;
+        portValue = port < 0 ? null : decimal(port);
         return this;
     }
 
