@@ -46,8 +46,16 @@ import flint.java.text.internal.binarydecimal : BinaryDecimal, tryFiniteBinaryDe
 
 package(flint.java.text):
 
+enum FixedRoundingMode : ubyte
+{
+    halfEven,
+    halfUp,
+    halfDown,
+}
+
 /// Converts finite binary64 values to the fixed-point DigitList representation.
-pure nothrow @nogc bool tryFixedBinaryDecimal(ulong bits, uint maximumFractionDigits, ref BinaryDecimal result)
+pure nothrow @nogc bool tryFixedBinaryDecimal(ulong bits, uint maximumFractionDigits,
+        ref BinaryDecimal result, FixedRoundingMode mode = FixedRoundingMode.halfEven)
 {
     BinaryDecimal converted;
     if (!tryFiniteBinaryDecimal(bits, converted))
@@ -55,8 +63,8 @@ pure nothrow @nogc bool tryFixedBinaryDecimal(ulong bits, uint maximumFractionDi
     // FloatingDecimal emits one zero digit. DigitList keeps only its separate sign.
     if (converted.count == 1 && converted.digits[0] == '0')
         converted.count = 0;
-    converted.count = roundFixedHalfEven(converted.digits[0 .. converted.count], converted.decimalAt,
-            maximumFractionDigits, converted.roundedUp, converted.exact);
+    converted.count = roundFixed(converted.digits[0 .. converted.count], converted.decimalAt,
+            maximumFractionDigits, converted.roundedUp, converted.exact, mode);
     result = converted;
     return true;
 }
@@ -64,8 +72,8 @@ pure nothrow @nogc bool tryFixedBinaryDecimal(ulong bits, uint maximumFractionDi
 /// Rounds normalized binary64 decimal digits in place and returns the retained digit count.
 /// `decimalAt` is the count of positions before the decimal point, possibly negative.
 /// `roundedUp` and `exact` describe the binary-to-decimal conversion, before formatting.
-pure nothrow @nogc size_t roundFixedHalfEven(scope char[] digits, ref int decimalAt,
-        uint maximumFractionDigits, bool roundedUp, bool exact)
+pure nothrow @nogc size_t roundFixed(scope char[] digits, ref int decimalAt, uint maximumFractionDigits,
+        bool roundedUp, bool exact, FixedRoundingMode mode = FixedRoundingMode.halfEven)
 {
     const retained = cast(long) decimalAt + maximumFractionDigits;
     if (retained < 0)
@@ -77,7 +85,7 @@ pure nothrow @nogc size_t roundFixedHalfEven(scope char[] digits, ref int decima
         return digits.length;
 
     const keep = cast(size_t) retained;
-    if (!roundsUp(digits, keep, roundedUp, exact))
+    if (!roundsUp(digits, keep, roundedUp, exact, mode))
         return withoutTrailingZeros(digits[0 .. keep]);
 
     foreach_reverse (index; 0 .. keep)
@@ -101,17 +109,23 @@ private size_t withoutTrailingZeros(scope const(char)[] digits) pure nothrow @no
     return length;
 }
 
-private bool roundsUp(scope const(char)[] digits, size_t keep, bool roundedUp, bool exact) pure nothrow @nogc
+private pure nothrow @nogc bool roundsUp(scope const(char)[] digits, size_t keep, bool roundedUp,
+        bool exact, FixedRoundingMode mode)
 {
     const firstDiscarded = digits[keep];
     if (firstDiscarded != '5')
         return firstDiscarded > '5';
     if (keep + 1 == digits.length)
     {
+        if (mode != FixedRoundingMode.halfEven)
+            return exact ? mode == FixedRoundingMode.halfUp : !roundedUp;
         if (roundedUp)
             return false;
         return !exact || (keep != 0 && (digits[keep - 1] & 1) != 0);
     }
+    // At zero retained digits Java consults the untrimmed producer sequence.
+    if (mode != FixedRoundingMode.halfEven)
+        return true;
     foreach (digit; digits[keep + 1 .. $])
         if (digit != '0')
             return true;
