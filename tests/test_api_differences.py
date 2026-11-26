@@ -177,6 +177,13 @@ class ApiDifferencesTest(unittest.TestCase):
         self.assertIn('resolved; shrink it', api_differences.dependency_problems(self.root)[0])
         self.assertEqual(api_differences.dependency_problems(self.root, write=True), [])
         self.assertEqual(json.loads(baseline.read_text())['gaps'], {})
+        # An adapted entry that names the Java type it substitutes is not a gap; a ported one may not substitute.
+        self.mapping({'**': {'status': 'excluded', 'category': 'deferred', 'phase': '2'},
+                      'p.A': {'status': 'ported', 'd': 'flint.p.A'},
+                      'p.A#m(Bee)': {'status': 'adapted', 'rules': ['R2'], 'd': 'flint.p.A.m',
+                                     'substitutes': {'Bee': 'flint.p.MergedBee'}},
+                      'p.A#o()': {'status': 'ported', 'd': 'flint.p.A.o', 'substitutes': {'Bee': 'flint.p.MergedBee'}}})
+        self.assertEqual(sorted(api_differences.dependency_gaps(self.root)), ['p.A#o() -> Bee'])
 
 
 if __name__ == '__main__':

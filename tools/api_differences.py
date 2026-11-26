@@ -230,12 +230,16 @@ def dependency_gaps(root, found=None):
                     match = classifier.classify(element)
                     if match is None or match[1]['status'] not in ('ported', 'adapted'):
                         continue
+                    # An adapted entry may name the Java types it deliberately replaces ('substitutes': {Java type:
+                    # D type}), as when a deviation swaps java.lang.annotation.Annotation for AOT MergedAnnotation
+                    # records; those names are not gaps.
+                    substituted = set(match[1].get('substitutes', {})) if match[1]['status'] == 'adapted' else set()
                     signature = member['signature']
                     written = [p for p in signature[signature.index('(') + 1:-1].split(',') if p]
                     written += [member['type']] if member.get('type') else []
                     for raw in written:
                         name = erase_type(raw)
-                        if (not name or name in RULE_MAPPED or name in type_parameters
+                        if (not name or name in RULE_MAPPED or name in type_parameters or name in substituted
                                 or re.fullmatch(r'[A-Z][0-9A-Z]?', name)):
                             continue
                         candidates = index.get(name, [])
