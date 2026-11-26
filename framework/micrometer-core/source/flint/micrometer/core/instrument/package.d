@@ -31,6 +31,7 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopMeter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Gauge.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/TimeGauge.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/FunctionCounter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/FunctionTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/AbstractMeter.java
@@ -54,7 +55,7 @@ import flint.java.util.function_.intsupplier : IntSupplier;
 import flint.java.util.function_.longsupplier : LongSupplier;
 import flint.java.util.stream : Stream;
 import flint.micrometer.core.instrument.config : validateDistributionBufferLength;
-import flint.micrometer.core.instrument.distribution.snapshots : HistogramSnapshot;
+import flint.micrometer.core.instrument.distribution.snapshots : HistogramSnapshot, convertTime;
 import std.typecons : Nullable;
 
 @safe:
@@ -1114,6 +1115,30 @@ interface Gauge : Meter
         override Measurements measure()
         {
             return sample(this);
+        }
+    }
+}
+
+/// A gauge that samples a time value in its base unit.
+interface TimeGauge : Gauge
+{
+    alias value = Gauge.value;
+
+    /// The unit of the sampled value and published measurement.
+    TimeUnit baseTimeUnit();
+
+    /// Sample the gauge and express its value in the requested unit.
+    double value(TimeUnit unit);
+
+    /// Micrometer's unit conversion default (R3). Live gauges also use Gauge.Defaults.
+    /// Name the mixin and alias its value method to expose both overloads on a concrete gauge.
+    mixin template Defaults(alias Unit = TimeUnit, alias convert = convertTime)
+    {
+        override double value(Unit unit)
+        {
+            TimeGauge gauge = this;
+            const reading = gauge.value();
+            return convert(reading, gauge.baseTimeUnit(), unit);
         }
     }
 }

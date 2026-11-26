@@ -189,7 +189,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-databind@3.1.8 | 546 | 56 | 5 | 9,860 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 176 | 154 | 0 | 2,060 |
+| framework | micrometer-core@1.18.0 | 182 | 155 | 0 | 2,053 |
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 65 | 83 | 0 | 4,304 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
@@ -1040,6 +1040,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.Tags#of(String...)` | `flint.micrometer.core.instrument.Tags.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `io.micrometer.core.instrument.Tags#of(Tag...)` | `flint.micrometer.core.instrument.Tags.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `io.micrometer.core.instrument.Tags#stream()` | `flint.micrometer.core.instrument.Tags.stream` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.core.instrument.TimeGauge#value(TimeUnit)` | `flint.micrometer.core.instrument.TimeGauge.value` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.core.instrument.Timer#builder(String)` | `flint.micrometer.core.instrument.Timer.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `io.micrometer.core.instrument.Timer#mean(TimeUnit)` | `flint.micrometer.core.instrument.Timer.mean` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.core.instrument.Timer#measure()` | `flint.micrometer.core.instrument.Timer.measure` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -9735,7 +9736,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.common.util | 7 | 0 |
 | io.micrometer.core.annotation | 17 | 0 |
 | io.micrometer.core.aop | 35 | 0 |
-| io.micrometer.core.instrument | 291 | 0 |
+| io.micrometer.core.instrument | 288 | 0 |
 | io.micrometer.core.instrument.binder | 27 | 0 |
 | io.micrometer.core.instrument.binder.cache | 79 | 0 |
 | io.micrometer.core.instrument.binder.commonspool2 | 6 | 0 |
@@ -9768,7 +9769,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.docs | 10 | 0 |
 | io.micrometer.core.instrument.dropwizard | 45 | 0 |
 | io.micrometer.core.instrument.logging | 20 | 0 |
-| io.micrometer.core.instrument.noop | 12 | 0 |
+| io.micrometer.core.instrument.noop | 8 | 0 |
 | io.micrometer.core.instrument.observation | 19 | 0 |
 | io.micrometer.core.instrument.push | 20 | 0 |
 | io.micrometer.core.instrument.search | 56 | 0 |

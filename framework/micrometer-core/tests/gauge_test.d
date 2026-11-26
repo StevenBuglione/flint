@@ -1,7 +1,8 @@
 module micrometer_gauge_test;
 
 import core.memory : GC;
-import flint.micrometer.core.instrument : Gauge, Measurement, Meter, Statistic, Tags;
+import flint.java.util.concurrent : TimeUnit;
+import flint.micrometer.core.instrument : Gauge, Measurement, Meter, Statistic, Tags, TimeGauge;
 import std.typecons : Nullable;
 
 @safe:
@@ -54,4 +55,58 @@ unittest
     uint visits;
     measurements.forEach((Measurement entry) { assert(entry is reading); visits++; });
     assert(visits == 1 && sample.reads == 2);
+}
+
+private final class SampleTimeGauge : TimeGauge
+{
+    alias value = timeGaugeDefaults.value;
+
+    private Meter.Id id;
+    private TimeUnit unit = TimeUnit.SECONDS;
+    double amount = 0.0;
+    uint reads;
+
+    this()
+    {
+        id = new Meter.Id("latency", Tags.empty(), Nullable!string.init, Nullable!string.init, Meter.Type.GAUGE);
+    }
+
+    override Meter.Id getId()
+    {
+        return id;
+    }
+
+    override double value()
+    {
+        ++reads;
+        unit = TimeUnit.MILLISECONDS;
+        return amount;
+    }
+
+    override TimeUnit baseTimeUnit()
+    {
+        return unit;
+    }
+
+    mixin Gauge.Defaults;
+    mixin TimeGauge.Defaults timeGaugeDefaults;
+}
+
+@("a time gauge samples before conversion and measures in its base unit")
+unittest
+{
+    auto sample = new SampleTimeGauge;
+    TimeGauge gauge = sample;
+    auto reading = gauge.measure().iterator().next();
+    assert(sample.reads == 0 && reading.getStatistic() == Statistic.VALUE);
+    assert(gauge.baseTimeUnit() == TimeUnit.SECONDS);
+
+    sample.amount = 1.5;
+    const before = GC.stats().allocatedInCurrentThread;
+    assert(gauge.value(TimeUnit.NANOSECONDS) == 1_500_000.0);
+    assert(sample.reads == 1 && gauge.baseTimeUnit() == TimeUnit.MILLISECONDS);
+    sample.amount = -250.0;
+    assert(sample.value(TimeUnit.SECONDS) == -0.25);
+    assert(reading.getValue() == -250.0);
+    assert(sample.reads == 3 && GC.stats().allocatedInCurrentThread == before);
 }

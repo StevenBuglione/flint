@@ -26,6 +26,19 @@ import flint.java.util.concurrent : TimeUnit, toNanos;
 
 @safe:
 
+// Keep the shared conversion below the instrument and util modules.
+package(flint.micrometer.core.instrument) double convertTime(double amount, TimeUnit sourceUnit,
+        TimeUnit destinationUnit) pure nothrow @nogc
+{
+    if (sourceUnit == destinationUnit)
+        return amount;
+
+    const sourceNanos = sourceUnit.toNanos(1);
+    const destinationNanos = destinationUnit.toNanos(1);
+    return sourceNanos < destinationNanos ? amount / (destinationNanos / sourceNanos) : amount * (
+            sourceNanos / destinationNanos);
+}
+
 // Snapshot readers and the public TimeUtils method share this conversion without a package import cycle.
 package(flint.micrometer.core.instrument) double nanosToUnit(double amount, TimeUnit destinationUnit) pure nothrow @nogc
 {

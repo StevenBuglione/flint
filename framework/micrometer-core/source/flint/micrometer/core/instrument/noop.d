@@ -20,13 +20,14 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopFunctionCounter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopFunctionTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimeGauge.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.noop;
 
 import flint.java.util : Collections, List;
 import flint.java.util.concurrent : TimeUnit;
 import flint.micrometer.core.instrument : AbstractMeter, Counter, DistributionSummary,
-    FunctionCounter, FunctionTimer, Gauge, Measurement, Meter, Timer;
+    FunctionCounter, FunctionTimer, Gauge, Measurement, Meter, TimeGauge, Timer;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot;
 
 @safe:
@@ -232,4 +233,28 @@ class NoopGauge : NoopMeter, Gauge
     {
         return 0.0;
     }
+}
+
+/// A disabled time gauge that reads as zero nanoseconds.
+class NoopTimeGauge : NoopMeter, TimeGauge
+{
+    alias value = timeGaugeDefaults.value;
+
+    /// Retain the ID of the disabled time gauge.
+    this(Meter.Id id)
+    {
+        super(id);
+    }
+
+    override TimeUnit baseTimeUnit()
+    {
+        return TimeUnit.NANOSECONDS;
+    }
+
+    override double value()
+    {
+        return 0.0;
+    }
+
+    mixin TimeGauge.Defaults timeGaugeDefaults;
 }

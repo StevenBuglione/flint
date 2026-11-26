@@ -19,9 +19,9 @@
 module flint.micrometer.core.instrument.util;
 
 import flint.engine.aot.any : Any;
-import flint.java.util.concurrent : TimeUnit, toNanos;
+import flint.java.util.concurrent : TimeUnit;
 import flint.micrometer.core.instrument : Meter, meterHashCode, metersEqual;
-import flint.micrometer.core.instrument.distribution.snapshots : convertNanos = nanosToUnit;
+import flint.micrometer.core.instrument.distribution.snapshots : convertNanos = nanosToUnit, convertTime;
 
 @safe:
 
@@ -55,13 +55,7 @@ final class TimeUtils
     /// Convert between units using a single multiplication or division.
     static double convert(double amount, TimeUnit sourceUnit, TimeUnit destinationUnit) pure nothrow @nogc
     {
-        if (sourceUnit == destinationUnit)
-            return amount;
-
-        const sourceNanos = sourceUnit.toNanos(1);
-        const destinationNanos = destinationUnit.toNanos(1);
-        return sourceNanos < destinationNanos ? amount / (destinationNanos / sourceNanos) : amount * (
-                sourceNanos / destinationNanos);
+        return convertTime(amount, sourceUnit, destinationUnit);
     }
 
     /// Convert a measurement in nanoseconds.
