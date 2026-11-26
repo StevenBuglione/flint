@@ -16,6 +16,7 @@ $(UL
 module flint.java.lang;
 
 public import flint.java.lang.boolean : Boolean;
+public import flint.java.lang.javaobject : JavaObject;
 public import flint.java.lang.runnable : Runnable;
 public import flint.java.lang.system : System;
 
@@ -310,65 +311,6 @@ interface Comparable(T)
 
 // ---------------------------------------------------------------------------------------------------------------
 // Object methods (R11)
-
-/++
-Maps Java's `equals`, `hashCode` and `compareTo` onto D's `opEquals`, `toHash` and `opCmp`, so `==`, associative
-arrays and sorting use the Java methods. Mix it into a class that declares `bool equals(Object)` and
-`int hashCode()` (and optionally `int compareTo(T)`); `toString` keeps its name in both languages.
-+/
-mixin template JavaObject()
-{
-    static if (is(typeof(this) == class))
-    {
-        /// `==` through an `Object` reference calls `equals`.
-        override bool opEquals(Object other)
-        {
-            return this.equals(other);
-        }
-
-        /// `==` between two instances calls `equals`, and stays `@safe`.
-        bool opEquals(typeof(this) other)
-        {
-            return this is other || (other !is null && this.equals(other));
-        }
-
-        /// Associative arrays call `hashCode`. An exception from `hashCode` hashes to 0.
-        override size_t toHash() @safe nothrow
-        {
-            try
-                return cast(size_t) cast(uint) this.hashCode();
-            catch (Exception)
-                return 0;
-        }
-
-        static if (__traits(hasMember, typeof(this), "compareTo"))
-        {
-            /// `<` calls `compareTo`; another class compares as unordered (0), as Java would throw.
-            override int opCmp(Object other)
-            {
-                auto that = cast(typeof(this)) other;
-                return that is null ? 0 : this.compareTo(that);
-            }
-        }
-    }
-    else
-    {
-        /// `==` calls `equals`.
-        bool opEquals(const typeof(this) other) const
-        {
-            return this.equals(other);
-        }
-
-        /// Associative arrays call `hashCode`.
-        size_t toHash() const @safe nothrow
-        {
-            try
-                return cast(size_t) cast(uint) this.hashCode();
-            catch (Exception)
-                return 0;
-        }
-    }
-}
 
 /// Java's `a.equals(b)` for any class or interface reference through UFCS: the class's `opEquals` (identity
 /// unless overridden). Interfaces do not convert to `Object` implicitly in D, hence the template.

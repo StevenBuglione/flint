@@ -17,6 +17,13 @@ import flint.java.util.stream : Collectors, Stream;
 
 @safe:
 
+unittest
+{
+    import flint.java.lang.javaobject : SelectiveJavaObject = JavaObject;
+
+    static assert(__traits(isSame, JavaObject, SelectiveJavaObject));
+}
+
 private final class Owner
 {
     mixin JavaObject;
