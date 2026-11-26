@@ -532,3 +532,21 @@ unittest
         assert(error !is null && error.getErrorIndex() == 8);
     }
 }
+
+@("DateTimeFormatter applies the zone override to offset and zoned values")
+unittest
+{
+    const zone = ZoneId.of("-04:00");
+    const iso = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(zone);
+    const pattern = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss XXX VV").withZone(zone);
+    const offset = OffsetDateTime.parse("2024-03-01T01:30:10.125+05:30");
+    const zoned = offset.toInstant().atZone(ZoneId.of("+05:30"));
+    assert(iso.format(offset) == "2024-02-29T16:00:10.125-04:00");
+    assert(iso.format(zoned) == "2024-02-29T16:00:10.125-04:00");
+    assert(iso.format(offset.toInstant()) == "2024-02-29T16:00:10.125-04:00");
+    assert(pattern.format(offset) == "2024-02-29 16:00:10 -04:00 -04:00");
+    assert(pattern.format(zoned) == "2024-02-29 16:00:10 -04:00 -04:00");
+    assert(DateTimeFormatter.ISO_INSTANT.withZone(zone).format(offset) == "2024-02-29T20:00:10.125Z");
+    const local = LocalDateTime.parse("2024-03-01T01:30:10.125");
+    assert(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(zone).format(local) == "2024-03-01T01:30:10.125");
+}

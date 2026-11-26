@@ -577,7 +577,7 @@ struct DateTimeFormatter
         return DateTimeFormatter(elements.idup, describeElements(elements));
     }
 
-    /// A copy of this formatter that converts an instant to a date-time in `zone` before formatting.
+    /// A copy of this formatter that converts instant-backed values to `zone` before formatting.
     DateTimeFormatter withZone(ZoneId zone) const pure nothrow @nogc
     {
         DateTimeFormatter copy = DateTimeFormatter(elements_, description_);
@@ -589,7 +589,7 @@ struct DateTimeFormatter
     /// Formats the fields of a temporal value.
     string format(Fields fields) const
     {
-        if (hasZone_ && fields.has(Field.instantSeconds) && !fields.has(Field.year))
+        if (hasZone_ && fields.has(Field.instantSeconds))
             fields = zoned(fields);
         auto printer = Printer(fields);
         printer.run(elements_);
