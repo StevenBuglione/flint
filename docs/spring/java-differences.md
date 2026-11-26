@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 142 | 256 | 0 | 15,398 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,385 | 1,332 | 4,848 | 30,269 |
+| framework | spring-framework@v7.1.0 | 3,391 | 1,335 | 4,848 | 30,260 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2126,6 +2126,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.expression.EvaluationContext#getPropertyAccessors()` | `flint.expression.EvaluationContext.getPropertyAccessors` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.expression.TargetedAccessor#getSpecificTargetClasses()` | `flint.expression.TargetedAccessor.getSpecificTargetClasses` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.expression.TypeConverter#convertValue(Object,TypeDescriptor,TypeDescriptor)` | `flint.expression.TypeConverter.convertValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.expression.TypedValue` | `flint.expression.TypedValue` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | D-SPEL-1 |
 | `org.springframework.expression.TypedValue#<init>(Object)` | `flint.expression.TypedValue` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | D-SPEL-1 |
 | `org.springframework.expression.TypedValue#<init>(Object,TypeDescriptor)` | `flint.expression.TypedValue` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | D-SPEL-1 |
@@ -2147,6 +2148,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.expression.spel.support.StandardEvaluationContext#getPropertyAccessors()` | `flint.expression.spel.support.StandardEvaluationContext.getPropertyAccessors` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.expression.spel.support.StandardEvaluationContext#setPropertyAccessors(List)` | `flint.expression.spel.support.StandardEvaluationContext.setPropertyAccessors` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.expression.spel.support.StandardTypeConverter#<init>(Supplier)` | `flint.expression.spel.support.StandardTypeConverter` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.expression.spel.support.StandardTypeConverter#convertValue(Object,TypeDescriptor,TypeDescriptor)` | `flint.expression.spel.support.StandardTypeConverter.convertValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.http
 
@@ -9021,12 +9024,12 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.core.type.filter | 36 | 0 |
 | org.springframework.dao.annotation | 8 | 0 |
 | org.springframework.dao.support | 16 | 0 |
-| org.springframework.expression | 83 | 0 |
+| org.springframework.expression | 80 | 0 |
 | org.springframework.expression.common | 73 | 0 |
 | org.springframework.expression.spel | 167 | 0 |
 | org.springframework.expression.spel.ast | 267 | 0 |
 | org.springframework.expression.spel.standard | 26 | 0 |
-| org.springframework.expression.spel.support | 151 | 0 |
+| org.springframework.expression.spel.support | 145 | 0 |
 | org.springframework.format | 18 | 0 |
 | org.springframework.format.annotation | 40 | 0 |
 | org.springframework.format.datetime | 25 | 0 |

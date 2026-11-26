@@ -15,21 +15,87 @@
  *
  * Ported from spring-framework v7.1.0:
  * spring-expression/src/main/java/org/springframework/expression/spel/support/StandardEvaluationContext.java
+ * Also from StandardTypeConverter.java in the same package.
  * Modified by the Flint authors.
  */
 module flint.expression.spel.support;
 
 import core.atomic : atomicLoad, atomicStore, MemoryOrder;
-import flint.core.convert : TypeDescriptor;
+import flint.core.convert : ConversionException, ConversionService, TypeDescriptor;
+import flint.core.convert.support : DefaultConversionService;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, PropertyDescriptor;
-import flint.expression : AccessException, EvaluationContext, PropertyAccessor, TypedValue;
+import flint.expression : AccessException, EvaluationContext, PropertyAccessor, TypeConverter, TypedValue;
+import flint.expression.spel : SpelEvaluationException, SpelMessage;
 import flint.expression.spel.context : EvaluationContextAccess, descriptorProperty, propertyTargetType;
-import flint.java.lang : NullPointerException;
+import flint.java.lang : IllegalArgumentException, NullPointerException;
 import flint.java.util : ArrayList, List;
+import flint.java.util.function_ : Supplier;
 import std.typecons : Rebindable;
 
 @safe:
+
+/// Delegates expression conversion to a core ConversionService.
+class StandardTypeConverter : TypeConverter
+{
+    private ConversionService service;
+    private ConversionService delegate() @safe supplier;
+
+    /// Use one default conversion registry for this converter.
+    this()
+    {
+        this(DefaultConversionService.getSharedInstance());
+    }
+
+    /// Use the supplied conversion service.
+    this(ConversionService conversionService)
+    {
+        if (conversionService is null)
+            throw new IllegalArgumentException("ConversionService must not be null");
+        service = conversionService;
+    }
+
+    /// Obtain the conversion service from a supplier for each operation.
+    this(Supplier!ConversionService conversionService)
+    {
+        this(conversionService is null ? null : conversionService.asDelegate());
+    }
+
+    /// The D delegate overload of the Supplier constructor (R9).
+    this(ConversionService delegate() @safe conversionService)
+    {
+        if (conversionService is null)
+            throw new IllegalArgumentException("Supplier must not be null");
+        supplier = conversionService;
+    }
+
+    override bool canConvert(const TypeDescriptor sourceType, const TypeDescriptor targetType)
+    {
+        return currentService().canConvert(sourceType, targetType);
+    }
+
+    override Any convertValue(Any value, const TypeDescriptor sourceType, const TypeDescriptor targetType)
+    {
+        try
+            return currentService().convert(value, sourceType, targetType);
+        catch (ConversionException cause)
+        {
+            if (targetType is null)
+                throw new NullPointerException();
+            const type = sourceType !is null ? sourceType.toString() : value.isNull() ? "null" : value.typeName();
+            throw new SpelEvaluationException(0, SpelMessage.TYPE_CONVERSION_ERROR, type,
+                    targetType.toString(), cause);
+        }
+    }
+
+    private ConversionService currentService()
+    {
+        auto selected = supplier is null ? service : supplier();
+        if (selected is null)
+            throw new NullPointerException();
+        return selected;
+    }
+}
 
 /// The reusable SpEL context for a root object and named variables.
 class StandardEvaluationContext : EvaluationContextAccess

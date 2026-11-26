@@ -15,7 +15,8 @@
  *
  * Ported from spring-framework v7.1.0: spring-expression/src/main/java/org/springframework/expression/Expression.java
  * Also from ExpressionParser.java, ExpressionException.java, ParseException.java, EvaluationException.java,
- * EvaluationContext.java, TypedValue.java, TargetedAccessor.java, PropertyAccessor.java and AccessException.java.
+ * EvaluationContext.java, TypedValue.java, TargetedAccessor.java, PropertyAccessor.java, AccessException.java
+ * and TypeConverter.java.
  * Modified by the Flint authors.
  */
 module flint.expression;
@@ -77,6 +78,16 @@ interface EvaluationContext
             return Collections.emptyList!PropertyAccessor();
         }
     }
+}
+
+/// The conversion strategy used by an expression evaluation context.
+interface TypeConverter
+{
+    /// Whether the source type can be converted to the requested target type.
+    bool canConvert(const TypeDescriptor sourceType, const TypeDescriptor targetType);
+
+    /// Convert the supplied value, preserving the provided type descriptors.
+    Any convertValue(Any value, const TypeDescriptor sourceType, const TypeDescriptor targetType);
 }
 
 /// An accessor that may be restricted to named AOT types (R4).
