@@ -664,5 +664,38 @@ class NativeExtractorProbe(unittest.TestCase):
             self.assertIsNone(measure_queue.native_extractor(Path(temporary) / 'absent'))
 
 
+class PruneAfterRun(unittest.TestCase):
+    """Build intermediates go after every run; checkouts pending entries need, receipts and samples stay."""
+
+    def setUp(self):
+        import tempfile
+        self.temp = Path(tempfile.mkdtemp())
+        self.saved = measure_queue.WORK
+        measure_queue.WORK = self.temp
+        self.addCleanup(setattr, measure_queue, 'WORK', self.saved)
+        for name in ('aaaaaaaaaaaa', 'bbbbbbbbbbbb', 'cccccccccccc'):
+            (self.temp / 'worktrees' / name / 'src').mkdir(parents=True)
+        self.results = self.temp / 'results' / 'entry' / 'stamp'
+        (self.results / 'raw').mkdir(parents=True)
+        (self.results / 'raw' / 'server.log').write_bytes(b'x' * 4096)
+        (self.results / 'raw' / 'small.log').write_bytes(b'y' * 10)
+        (self.results / 'receipt.json').write_text('{}')
+
+    def test_only_checkouts_no_pending_entry_needs_are_removed(self):
+        queue = [{'status': 'pending', 'builds': {'tree': {'commit': 'bbbbbbbbbbbbffff'}}},
+                 {'status': 'done', 'builds': {'tree': {'commit': 'aaaaaaaaaaaa1111'}}},
+                 {'status': 'blocked', 'builds': {'tree': {'commit': 'cccccccccccc2222'}}}]
+        pruned = measure_queue.prune_after_run(self.results, queue, log_limit=1024)
+        self.assertEqual(pruned['removed_checkouts'], ['aaaaaaaaaaaa', 'cccccccccccc'])
+        self.assertEqual(sorted(p.name for p in (self.temp / 'worktrees').iterdir()), ['bbbbbbbbbbbb'])
+
+    def test_large_logs_are_compressed_and_receipts_kept(self):
+        pruned = measure_queue.prune_after_run(self.results, [], log_limit=1024)
+        self.assertEqual(pruned['compressed_logs'], ['server.log'])
+        self.assertTrue((self.results / 'raw' / 'server.log.xz').is_file())
+        self.assertTrue((self.results / 'raw' / 'small.log').is_file())
+        self.assertTrue((self.results / 'receipt.json').is_file())
+
+
 if __name__ == '__main__':
     unittest.main()

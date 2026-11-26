@@ -765,6 +765,51 @@ def worktree(commit):
     return directory, full
 
 
+def pinned_commits(queue=None):
+    """The 12-character commits that pending entries' builds are pinned to (their checkouts are still needed)."""
+    needed = set()
+
+    def walk(node):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == 'commit' and isinstance(value, str) and len(value) >= 7:
+                    done = subprocess.run(['git', 'rev-parse', '--verify', '-q', value + '^{commit}'], cwd=ROOT,
+                                          capture_output=True, text=True)
+                    needed.add((done.stdout.strip() or value)[:12])
+                else:
+                    walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+    for entry in (queue if queue is not None else entries()):
+        if entry.get('status') == 'pending':
+            walk(entry.get('builds', {}))
+    return needed
+
+
+def prune_after_run(outdir=None, queue=None, log_limit=20 << 20):
+    """Delete the build intermediates a run leaves (coordinator, 2026-11-26: .flint/measure had grown to 94 GB): every
+    measurement checkout no pending entry is pinned to, and, in the run's results, logs over `log_limit` compressed
+    with xz (a Java server log reached 830 MB). Receipts, samples and evidence stay."""
+    needed = pinned_commits(queue)
+    removed = []
+    for directory in sorted((WORK / 'worktrees').glob('*')) if (WORK / 'worktrees').is_dir() else []:
+        if directory.name in needed or not directory.is_dir():
+            continue
+        done = subprocess.run(['git', 'worktree', 'remove', '--force', str(directory)], cwd=ROOT, capture_output=True)
+        if done.returncode != 0:
+            shutil.rmtree(directory, ignore_errors=True)
+        removed.append(directory.name)
+    if removed:
+        subprocess.run(['git', 'worktree', 'prune'], cwd=ROOT, capture_output=True)
+    compressed = []
+    for log in (sorted(Path(outdir).rglob('*.log')) if outdir else []):
+        if log.is_file() and log.stat().st_size > log_limit:
+            if subprocess.run(['xz', '-T2', '-6', str(log)], capture_output=True).returncode == 0:
+                compressed.append(str(log.name))
+    return {'removed_checkouts': removed, 'compressed_logs': compressed}
+
+
 def checkout_roots():
     roots = [ROOT]
     common = subprocess.run(['git', 'rev-parse', '--path-format=absolute', '--git-common-dir'], cwd=ROOT,
@@ -1590,6 +1635,11 @@ def _run_window(entry, outdir, built, smoke, force_busy, claim_seconds, locking,
         entry.setdefault('attempts', []).append(receipt)
         entry['status'] = 'done'
         save_entry(entry)
+    try:
+        receipt['pruned'] = prune_after_run(outdir)
+        (outdir / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+    except Exception as exc:  # cleanup must never cost a receipt
+        print(now(), 'pruning after the run failed:', exc, flush=True)
     return receipt
 
 
