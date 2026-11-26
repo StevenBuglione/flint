@@ -9,7 +9,8 @@ import flint.core.annotation.types : AnnotationConfigurationException;
 import flint.data.annotation : CreatedBy, CreatedDate, Immutable, LastModifiedBy, Transient, TypeAlias;
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
-import flint.data.mapping : Alias, Association, MappingException, PersistentEntity, PersistentProperty;
+import flint.data.mapping : Alias, Association, AssociationHandler, MappingException,
+    PersistentEntity, PersistentProperty;
 import flint.data.mapping.model : BasicPersistentEntity;
 import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
@@ -158,6 +159,16 @@ private final class Property : PersistentProperty!Property
     override bool isTransient()
     {
         return transient_;
+    }
+}
+
+private final class RecordingAssociationHandler : AssociationHandler!Property
+{
+    private Association!Property[] seen;
+
+    override void doWithAssociation(Association!Property association)
+    {
+        seen ~= association;
     }
 }
 
@@ -479,6 +490,43 @@ unittest
     model.addPersistentProperty(revision);
     assert(entity.hasVersionProperty());
     assert(entity.getRequiredVersionProperty() is revision);
+}
+
+@("association handlers and delegates receive registered associations in order")
+unittest
+{
+    Comparator!Property[] comparators = [
+        null, Comparator!Property.comparing!string((Property property) => property.getName())
+    ];
+    foreach (comparator; comparators)
+    {
+        auto model = mapped!AuditedProperties(comparator);
+        auto first = new Association!Property(new Property("secondField"), null);
+        auto second = new Association!Property(new Property("field"), null);
+        model.addAssociation(first);
+        model.addAssociation(second);
+        const expected = comparator is null ? [first, second] : [second, first];
+
+        PersistentEntity!(AuditedProperties, Property) entity = model;
+        auto visitor = new RecordingAssociationHandler;
+        entity.doWithAssociations(visitor);
+        assert(visitor.seen == expected);
+        Association!Property[] visited;
+        entity.doWithAssociations((association) { visited ~= association; });
+        assert(visited == expected);
+    }
+}
+
+@("association traversal validates handlers on an empty entity")
+unittest
+{
+    auto entity = mapped!AuditedProperties();
+    auto visitor = new RecordingAssociationHandler;
+    entity.doWithAssociations(visitor);
+    assert(visitor.seen.length == 0);
+    assertThrown!IllegalArgumentException(entity.doWithAssociations(cast(AssociationHandler!Property) null));
+    alias AssociationAction = void delegate(Association!Property) @safe;
+    assertThrown!IllegalArgumentException(entity.doWithAssociations(cast(AssociationAction) null));
 }
 
 @("rejectsNonMatchingBeanForPropertyAccessor")

@@ -1,6 +1,6 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,TargetAwareIdentifierAccessor}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,AssociationHandler,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,TargetAwareIdentifierAccessor}.java
 // Alias: Copyright 2016-present the original author or authors.
-// Association: Copyright 2011-present the original author or authors.
+// Association and AssociationHandler: Copyright 2011-present the original author or authors.
 // IdentifierAccessor: Copyright 2014-present the original author or authors.
 // MappingException, PersistentEntity and PersistentProperty: Copyright 2011-present the original author or authors.
 // PersistentPropertyAccessor: Copyright 2014-present the original author or authors.
@@ -159,6 +159,13 @@ class Association(P) if (is(P : PersistentProperty!P))
     }
 }
 
+/// Processes an association of persistent properties.
+interface AssociationHandler(P) if (is(P : PersistentProperty!P))
+{
+    /// Invokes the handler for the supplied association.
+    void doWithAssociation(Association!P association);
+}
+
 /// Access to the persistent properties of a mapped bean.
 interface PersistentPropertyAccessor(T, P) if (is(P : PersistentProperty!P))
 {
@@ -213,6 +220,12 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
 
     /// The persistent properties with the given annotation, in property order.
     Iterable!P getPersistentProperties(ClassRef annotationType);
+
+    /// Invokes the handler for every registered association.
+    void doWithAssociations(AssociationHandler!P handler);
+
+    /// Delegate overload of association traversal (R9).
+    void doWithAssociations(scope void delegate(Association!P) @safe handler);
 
     /// The named persistent property, or an IllegalStateException when absent.
     P getRequiredPersistentProperty(string name);

@@ -8,8 +8,8 @@ import flint.core.annotation.types : AnnotationConfigurationException;
 import flint.data.annotation : Immutable, TypeAlias;
 import flint.data.core.type_information : TypeInformation, registeredDescriptor;
 import flint.data.domain.persistable : PersistableState;
-import flint.data.mapping : Alias, Association, IdentifierAccessor, MappingException,
-    PersistentEntity, PersistentProperty,
+import flint.data.mapping : Alias, Association, AssociationHandler, IdentifierAccessor,
+    MappingException, PersistentEntity, PersistentProperty,
     PersistentPropertyAccessor, PrimitivePropertyKind, TargetAwareIdentifierAccessor, primitivePropertyKind;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MergedAnnotation, PropertyDescriptor,
@@ -190,6 +190,22 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
             ++index;
         }
         associations.add(index, association);
+    }
+
+    override void doWithAssociations(AssociationHandler!P handler)
+    {
+        if (handler is null)
+            throw new IllegalArgumentException("Handler must not be null");
+        doWithAssociations(&handler.doWithAssociation);
+    }
+
+    override void doWithAssociations(scope void delegate(Association!P) @safe handler)
+    {
+        if (handler is null)
+            throw new IllegalArgumentException("Handler must not be null");
+        if (associations !is null)
+            foreach (association; associations)
+                handler(association);
     }
 
     override Iterable!P getPersistentProperties(ClassRef annotationType)
