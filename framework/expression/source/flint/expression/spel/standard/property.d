@@ -107,9 +107,7 @@ private Any readIndex(string source, const ref PropertyStep step, ref Any target
     const isString = type == "string";
     const descriptor = isString ? null : arrayIndexDescriptor(source, step.position, type, table);
 
-    if (value.typeName() != "int")
-        throw evaluationErrorAt(source, step.position, SpelMessage.TYPE_CONVERSION_ERROR, value.typeName(), "int");
-    const index = value.get!int;
+    const index = convertIndexToInt(source, step.position, value);
     const length = isString ? 0 : descriptor.length(target);
     if (index < 0)
         throw new IndexOutOfBoundsException(index);
@@ -119,6 +117,27 @@ private Any readIndex(string source, const ref PropertyStep step, ref Any target
         throw evaluationErrorAt(source, step.position, SpelMessage.ARRAY_INDEX_OUT_OF_BOUNDS,
                 decimal(length), decimal(index));
     return descriptor.element(target, index);
+}
+
+private int convertIndexToInt(string source, size_t position, const ref Any value)
+{
+    // Any reads an integral value as int only when it fits.
+    if (value.holds!int)
+        return value.get!int;
+
+    const type = value.typeName();
+    if (type == "double" || type == "float")
+    {
+        const number = value.get!double;
+        // Spring checks the range after truncation. Ordered comparisons also reject NaN.
+        if (number > cast(double) int.min - 1 && number < cast(double) int.max + 1)
+            return cast(int) number;
+    }
+    // Spring's CharacterToNumberFactory widens the UTF-16 value through a signed short.
+    if (type == "wchar" || type == "char")
+        return cast(short) value.get!wchar;
+
+    throw evaluationErrorAt(source, position, SpelMessage.TYPE_CONVERSION_ERROR, type, "int");
 }
 
 private const(Descriptor) arrayIndexDescriptor(string source, size_t position, string type, const DescriptorTable table)

@@ -313,6 +313,11 @@
     "expected": {"type": "string", "value": "B"}
   },
   {
+    "id": "string-index-fraction",
+    "expression": "'ABC'[1.7]",
+    "expected": {"type": "string", "value": "B"}
+  },
+  {
     "id": "string-index-utf16",
     "expression": "'A😀Z'[3]",
     "runtimeOnly": "Compiled string indexing still uses UTF-8 byte offsets. Interpreted indexing counts UTF-16 code units.",

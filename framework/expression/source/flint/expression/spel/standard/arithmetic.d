@@ -331,13 +331,13 @@ private struct ArithmeticParser
     void ternary(uint nesting, size_t left, size_t position)
     {
         const whenFalse = instructions.length;
-        instructions ~= Instruction(Op.testCondition, left);
+        emitOperator(Op.testCondition, left);
         conditional(nesting);
         if (reader.peek != ':')
             throw reader.errorAt(reader.position, SpelMessage.OOD);
         ++reader.position;
         const end = instructions.length;
-        instructions ~= Instruction(Op.jump, position);
+        emitOperator(Op.jump, position);
         instructions[whenFalse].jump = instructions.length;
         conditional(nesting);
         instructions[end].jump = instructions.length;
@@ -347,7 +347,7 @@ private struct ArithmeticParser
     {
         ++reader.position;
         const end = instructions.length;
-        instructions ~= Instruction(Op.elvis, position);
+        emitOperator(Op.elvis, position);
         reader.skipWhitespace();
         if (reader.position == reader.text.length || reader.peek == ')' || reader.peek == ':')
             operand(reader.position, Any.init);
@@ -374,7 +374,7 @@ private struct ArithmeticParser
             else
             {
                 parse(rhsPrecedence, nesting);
-                instructions ~= Instruction(token.op, position);
+                emitOperator(token.op, position);
             }
             // A comparison may be followed by a lower-precedence boolean operator.
             maximumPrecedence = token.precedence == comparisonPrecedence
@@ -391,7 +391,7 @@ private struct ArithmeticParser
             return left;
         const position = reader.position++;
         primary(nesting);
-        instructions ~= Instruction(Op.power, position);
+        emitOperator(Op.power, position);
         return position;
     }
 
@@ -399,9 +399,9 @@ private struct ArithmeticParser
     {
         emitFirstOperand();
         const branch = instructions.length;
-        instructions ~= Instruction(op, left);
+        emitOperator(op, left);
         const right = parse(rhsPrecedence, nesting);
-        instructions ~= Instruction(Op.requireBoolean, right);
+        emitOperator(Op.requireBoolean, right);
         instructions[branch].jump = instructions.length;
     }
 
@@ -416,7 +416,7 @@ private struct ArithmeticParser
             reader.position += negation;
             const operand = primary(nesting + 1);
             emitFirstOperand();
-            instructions ~= Instruction(Op.not_, operand);
+            emitOperator(Op.not_, operand);
             return position;
         }
         if (readSign(nesting))
@@ -492,7 +492,7 @@ private struct ArithmeticParser
         reader.position = operand.position;
         primary(nesting + 1);
         emitFirstOperand();
-        instructions ~= Instruction(sign == '+' ? Op.positive : Op.negative, position);
+        emitOperator(sign == '+' ? Op.positive : Op.negative, position);
         return true;
     }
 
@@ -529,6 +529,12 @@ private struct ArithmeticParser
     {
         if (instructions.length == 0 && firstPosition != size_t.max)
             emitOperand(firstPosition, firstLiteral, firstVariable);
+    }
+
+    // Operators carry only their kind and source position.
+    pragma(inline, false) void emitOperator(Op op, size_t position)
+    {
+        instructions ~= Instruction(op, position);
     }
 
     void emitOperand(size_t position, const ref Any value, string variable)

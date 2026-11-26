@@ -146,6 +146,75 @@ unittest
     assert(root.reads == 2 && explicitRoot.reads == 2);
 }
 
+@("array and String indexes convert numeric operands to Integer")
+unittest
+{
+    auto root = new ArrayRoot;
+    root.values = Any.of([10, 20, 30]);
+    auto context = contextFor(root);
+    auto parser = new SpelExpressionParser;
+    assert(parser.parseExpression("property[1L]").getValue(context).get!int == 20);
+    assert(parser.parseExpression("property[2.9]").getValue(context).get!int == 30);
+    assert(parser.parseExpression("property[-0.9f]").getValue(context).get!int == 10);
+    assert(parser.parseExpression("'abcd'[1 + 1L]").getValue().get!string == "c");
+
+    auto expression = parser.parseExpression("property[#index]");
+    context.setVariable("index", Any.of(cast(short) 2));
+    assert(expression.getValue(context).get!int == 30);
+    context.setVariable("index", Any.of(cast(wchar) 1));
+    assert(expression.getValue(context).get!int == 20);
+    context.setVariable("index", Any.of(2.9f));
+    assert(expression.getValue(context).get!int == 30);
+}
+
+@("invalid index conversions are distinguished from bounds")
+unittest
+{
+    auto root = new ArrayRoot;
+    root.values = Any.of([10]);
+    auto context = contextFor(root);
+    auto parser = new SpelExpressionParser;
+    auto expression = parser.parseExpression("property[#index]");
+
+    foreach (index; [
+        Any.of(2_147_483_648L), Any.of(-2_147_483_649L), Any.of(double.nan), Any.of(double.infinity)
+    ])
+    {
+        context.setVariable("index", index);
+        try
+        {
+            expression.getValue(context);
+            assert(false);
+        }
+        catch (SpelEvaluationException error)
+        {
+            assert(error.getPosition() == 8 && error.getMessageCode() == SpelMessage.TYPE_CONVERSION_ERROR);
+        }
+    }
+
+    context.setVariable("index", Any.of(2_147_483_647.9));
+    try
+    {
+        expression.getValue(context);
+        assert(false);
+    }
+    catch (SpelEvaluationException error)
+    {
+        assert(error.getMessageCode() == SpelMessage.ARRAY_INDEX_OUT_OF_BOUNDS);
+    }
+
+    context.setVariable("index", Any.of(-2_147_483_648.9));
+    try
+    {
+        expression.getValue(context);
+        assert(false);
+    }
+    catch (IndexOutOfBoundsException)
+    {
+        // The truncated Integer is valid for conversion and invalid for indexing.
+    }
+}
+
 @("null-safe and untaken array hops skip computed indexes")
 unittest
 {
