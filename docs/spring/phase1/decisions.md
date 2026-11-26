@@ -1107,3 +1107,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 01:25Z, coordinator, under the owner's standing approval: **D-JPA-2 (sol-jpa) is approved.** `LockModeType` is a D enum with Java's values and NONE as the `@NamedQuery` default, so the annotation remains compile-time metadata.
   - **Why it deviates:** Java's enum also implements `FindOption` and `RefreshOption`, which a D enum cannot.
   - **How calls stay Java-shaped:** `EntityManager`'s option overloads accept the built-in enum values at that boundary.
+- 2026-11-26 01:35Z, owner: **port the Java SE standard library parts that Spring and its applications use,** as a one-time tax, optimised so that an application links only what it uses ([../phase2/jdk-port.md](../phase2/jdk-port.md)).
+  - **Lanes:** four gpt-6.2-sol lanes: sol-jdk-core, sol-jdk-time-text, sol-jdk-math-regex and sol-jdk-concurrent-io.
+  - **Licence:** OpenJDK is GPL-2.0 with the Classpath Exception, so the implementation is clean-room from the specification, and only API signatures are extracted. Apache Harmony (Apache-2.0) may be ported.
+  - **Excluded:** UI libraries and JVM-only facilities (reflection, class loading, serialization, RMI, JMX and the like).
+  - **Enforcement:** a link-closure gate, built first, checks every JDK leaf's linker map against its declared closure and the banned Phobos families.
