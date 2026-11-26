@@ -1,5 +1,6 @@
 // Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/JoinPoint.java
 // Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/Signature.java
+// Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/NoAspectBoundException.java
 /* *******************************************************************
  * Copyright (c) 1999-2001 Xerox Corporation,
  *               2002 Palo Alto Research Center, Incorporated (PARC).
@@ -26,11 +27,28 @@
  * initial implementation              Alexandre Vasseur
  *******************************************************************************/
 
+// Ported from eclipse-aspectj/aspectj 1.9.27: org/aspectj/lang/SoftException.java
+/* *******************************************************************
+ * Copyright (c) 1999-2001 Xerox Corporation,
+ *               2002 Palo Alto Research Center, Incorporated (PARC),
+ *               2004 Contributors.
+ * All rights reserved.
+ * This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v 2.0
+ * which accompanies this distribution and is available at
+ * https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt
+ *
+ * Contributors:
+ *     Xerox/PARC     initial implementation
+ * ******************************************************************/
+
 // Modified by the Flint authors. SPDX-License-Identifier: EPL-2.0
 module flint.aspectj.lang;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor;
+import flint.java.lang : RuntimeException, javaToString;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -127,4 +145,63 @@ interface ProceedingJoinPoint : JoinPoint
 
     /// Continues with replacement arguments in AspectJ binding order.
     Any proceed(Any[] arguments);
+}
+
+/// Thrown when an aspect is unavailable or could not be initialized.
+class NoAspectBoundException : RuntimeException
+{
+    private Throwable inner;
+
+    /// Records an unbound aspect without a name.
+    this()
+    {
+        super();
+    }
+
+    /// Records the aspect name and the failure, if initialization threw one.
+    this(Nullable!string aspectName, Throwable inner)
+    {
+        super(detailMessage(aspectName, inner));
+        this.inner = inner;
+    }
+
+    override inout(Throwable) getCause() inout pure nothrow @nogc
+    {
+        return inner;
+    }
+
+    private static string detailMessage(Nullable!string aspectName, Throwable failure)
+    {
+        if (failure is null)
+            return aspectName.isNull ? null : aspectName.get;
+
+        const name = aspectName.isNull ? "null" : aspectName.get;
+        auto runtime = cast(RuntimeException) failure;
+        const detail = runtime is null ? javaToString(failure) : runtime.toString();
+        return "Exception while initializing " ~ name ~ ": " ~ detail;
+    }
+}
+
+/// Wraps a failure softened at a join point.
+class SoftException : RuntimeException
+{
+    private Throwable inner;
+
+    /// Wraps the supplied failure and leaves the detail message empty.
+    this(Throwable inner)
+    {
+        super();
+        this.inner = inner;
+    }
+
+    /// Returns the original failure.
+    inout(Throwable) getWrappedThrowable() inout pure nothrow @nogc
+    {
+        return inner;
+    }
+
+    override inout(Throwable) getCause() inout pure nothrow @nogc
+    {
+        return inner;
+    }
 }

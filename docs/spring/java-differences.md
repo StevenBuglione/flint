@@ -194,7 +194,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | thymeleaf@3.1.7.RELEASE | 3 | 7 | 0 | 4,442 |
 | framework | micrometer-observation@1.18.0 | 42 | 34 | 0 | 236 |
 | framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 16,240 |
-| framework | aspectj@1.9.27 | 18 | 55 | 191 | 46 |
+| framework | aspectj@1.9.27 | 19 | 62 | 191 | 38 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
 
@@ -1820,10 +1820,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.aspectj.lang.JoinPoint.EnclosingStaticPart` | `flint.aspectj.lang.JoinPoint.EnclosingStaticPart` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `org.aspectj.lang.JoinPoint.StaticPart` | `flint.aspectj.lang.JoinPoint.StaticPart` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `org.aspectj.lang.JoinPoint.StaticPart#toString()` | `flint.aspectj.lang.JoinPoint.StaticPart.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.aspectj.lang.NoAspectBoundException` | `flint.aspectj.lang.NoAspectBoundException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.aspectj.lang.NoAspectBoundException#<init>(String,Throwable)` | `flint.aspectj.lang.NoAspectBoundException` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions) |  |
+| `org.aspectj.lang.NoAspectBoundException#getCause()` | `flint.aspectj.lang.NoAspectBoundException.getCause` | [R8](api-mapping.md#r8-exceptions) |  |
 | `org.aspectj.lang.ProceedingJoinPoint#proceed()` | `flint.aspectj.lang.ProceedingJoinPoint.proceed` | [R8](api-mapping.md#r8-exceptions), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.aspectj.lang.ProceedingJoinPoint#proceed(Object[])` | `flint.aspectj.lang.ProceedingJoinPoint.proceed` | [R8](api-mapping.md#r8-exceptions), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.aspectj.lang.Signature#getDeclaringType()` | `flint.aspectj.lang.Signature.getDeclaringType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.aspectj.lang.Signature#toString()` | `flint.aspectj.lang.Signature.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.aspectj.lang.SoftException` | `flint.aspectj.lang.SoftException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.aspectj.lang.SoftException#<init>(Throwable)` | `flint.aspectj.lang.SoftException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.aspectj.lang.SoftException#getCause()` | `flint.aspectj.lang.SoftException.getCause` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.aspectj.lang.SoftException#getWrappedThrowable()` | `flint.aspectj.lang.SoftException.getWrappedThrowable` | [R8](api-mapping.md#r8-exceptions) |  |
 
 #### org.aspectj.lang.annotation
 
@@ -9187,7 +9194,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | javax.security.auth.x500 | 0 | 23 |
 | javax.security.cert | 0 | 39 |
 | javax.sql | 217 | 0 |
-| org.aspectj.lang | 31 | 0 |
+| org.aspectj.lang | 23 | 0 |
 | org.aspectj.lang.annotation | 13 | 0 |
 | org.aspectj.lang.annotation.control | 2 | 0 |
 | org.hibernate.validator | 82 | 0 |
