@@ -410,6 +410,8 @@ Jackson checks the current token for `isExpectedNumberIntToken` and reports `Num
 
 Jackson's native object and type ID methods report the format's capabilities and use `Any` (R23) for ID values. Plain JSON returns false for the capability queries and uses a shared exception path for native ID writes. On venus at `c60c8f6b` and `98a7f2f5`, the matched jackson-core probe moved from 43,229 to 43,917 loadable bytes and from 657 to 658 DMD templates. With pinned LDC and `flint build --profile size`, gs-rest-service moved from 3,682,383 to 3,683,335 allocated ELF bytes and petclinic-rest moved from 10,403,421 to 10,404,357.
 
+Jackson's default `writeOmittedProperty` returns its generator without touching the write context. On venus at `e8097ec65` and `dba1e28b4`, the matched jackson-core probe moved from 43,917 to 44,037 loadable bytes and stayed at 658 DMD template instances. With pinned LDC and `flint build --profile size`, gs-rest-service moved from 3,683,367 to 3,683,503 allocated ELF bytes and petclinic-rest moved from 10,404,357 to 10,404,509.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

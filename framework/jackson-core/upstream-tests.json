@@ -337,8 +337,24 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/json/StreamWriteFeaturesTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/property_omission_test.d",
+      "methods": {
+        "ported": [
+          "configDefaults"
+        ],
+        "skipped": {
+          "bigDecimalAsPlain": "Requires the generator BigDecimal overload.",
+          "bigDecimalAsPlainString": "Requires the generator BigDecimal overload.",
+          "fieldNameQuoting": "The alternate name-quoting configuration assertions await their feature test slice.",
+          "fieldNameQuotingEnabled": "The generator-level name-quoting toggle assertions await their feature test slice.",
+          "hexLowercase": "The hex-escape configuration assertions await their feature test slice.",
+          "hexUppercase": "The hex-escape configuration assertions await their feature test slice.",
+          "nonNumericQuoting": "The NaN quoting configuration assertions await their feature test slice.",
+          "numbersAsJSONStrings": "The fixture includes the deferred BigDecimal and BigInteger overloads.",
+          "tooBigBigDecimal": "Requires the generator BigDecimal overload."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/json/StringGenerationFromReaderTest.java": {
       "phase": "2",

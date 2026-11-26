@@ -2427,7 +2427,6 @@
       "tools/jackson/core/unittest/json/OutputStreamInitTest.java",
       "tools/jackson/core/unittest/json/ParserOverridesTest.java",
       "tools/jackson/core/unittest/json/RawValueWithSurrogatesTest.java",
-      "tools/jackson/core/unittest/json/StreamWriteFeaturesTest.java",
       "tools/jackson/core/unittest/json/StringGenerationFromReaderTest.java",
       "tools/jackson/core/unittest/json/StringGenerationTest.java",
       "tools/jackson/core/unittest/json/SupplementaryCharDesc1728Test.java",

@@ -1210,6 +1210,12 @@ abstract class JsonGenerator
     /// Method for writing an Object Property name (JSON String surrounded by double quotes).
     abstract JsonGenerator writeName(string name);
 
+    /// Notify the output format that a property was omitted. JSON needs no placeholder.
+    JsonGenerator writeOmittedProperty(string propertyName)
+    {
+        return this;
+    }
+
     /// Method for outputting a String value.
     abstract JsonGenerator writeString(string value);
 
@@ -1390,6 +1396,12 @@ abstract class JsonGenerator
 
     /// Whether the given feature is enabled.
     abstract bool isEnabled(StreamWriteFeature f);
+
+    /// Whether properties may be omitted from the output format.
+    bool canOmitProperties()
+    {
+        return true;
+    }
 
     /// Whether the output format can write native object ids.
     bool canWriteObjectId()
