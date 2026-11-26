@@ -15,6 +15,7 @@ import flint.engine.aot.text : decodeUtf8;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.time : DateTimeException, Duration, Instant, LocalDate, LocalDateTime, LocalTime,
     OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime, checkRange;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -582,6 +583,12 @@ struct DateTimeFormatter
         return DateTimeFormatter(elements.idup, describeElements(elements));
     }
 
+    /// The override zone, or an absent value when the formatter has no override.
+    Nullable!ZoneId getZone() const pure nothrow @nogc
+    {
+        return hasZone_ ? Nullable!ZoneId(zone_) : Nullable!ZoneId.init;
+    }
+
     /// A copy of this formatter that uses `zone` when printing. Local values keep their date and time fields.
     DateTimeFormatter withZone(ZoneId zone) const pure nothrow @nogc
     {
@@ -589,6 +596,12 @@ struct DateTimeFormatter
         copy.hasZone_ = true;
         copy.zone_ = zone;
         return copy;
+    }
+
+    /// A copy with the supplied override. An absent zone clears the override.
+    DateTimeFormatter withZone(Nullable!ZoneId zone) const pure nothrow @nogc
+    {
+        return zone.isNull ? DateTimeFormatter(elements_, description_) : withZone(zone.get());
     }
 
     /// Formats the fields of a temporal value.
