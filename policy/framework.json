@@ -587,6 +587,7 @@
     "java.util.concurrent.PriorityBlockingQueue",
     "java.util.concurrent.Semaphore",
     "java.util.concurrent.SynchronousQueue",
+    "java.util.concurrent.atomic.AtomicReference",
     "java.util.concurrent.locks.AbstractOwnableSynchronizer",
     "java.util.concurrent.locks.AbstractQueuedLongSynchronizer",
     "java.util.concurrent.locks.AbstractQueuedSynchronizer",
@@ -602,6 +603,7 @@
     "java/util/concurrent/ConcurrentQueues"
    ],
    "also": [
+    "flint.java.util.concurrent.atomic.atomicreference",
     "flint.java.util.concurrent.brokenbarrierexception",
     "flint.java.util.concurrent.delayed",
     "flint.java.util.concurrent.locks.contracts"
@@ -610,6 +612,7 @@
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
    "upstream": "openjdk@21.0.13",
    "dependencies": [
+    "conc",
     "java"
    ],
    "bench": {

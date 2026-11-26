@@ -1,4 +1,8 @@
 {
+  "flint.java.util.concurrent.atomic.atomicreference": {
+    "incremental_linked_bytes": 1071,
+    "template_instances": 51
+  },
   "flint.java.util.concurrent.brokenbarrierexception": {
     "incremental_linked_bytes": 924,
     "template_instances": 35
