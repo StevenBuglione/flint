@@ -23,12 +23,11 @@ module flint.micrometer.core.instrument.distribution;
 import core.atomic : atomicLoad, atomicStore, cas;
 import core.sync.mutex : Mutex;
 import flint.engine.aot.objects : statelessInstance;
-import flint.java.lang : ArithmeticException, AutoCloseable, Double, IllegalArgumentException,
-    Integer, NullPointerException;
+import flint.java.lang : ArithmeticException, AutoCloseable, Double, IllegalArgumentException, NullPointerException;
 import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.micrometer.core.instrument : Clock;
-import flint.micrometer.core.instrument.config : InvalidConfigurationException;
+import flint.micrometer.core.instrument.config : InvalidConfigurationException, validateDistributionBufferLength;
 import flint.micrometer.core.instrument.internal : Mergeable;
 import flint.micrometer.core.instrument.distribution.snapshots : Sample;
 public import flint.micrometer.core.instrument : HistogramSupport;
@@ -452,8 +451,8 @@ class DistributionStatisticConfig : Mergeable!DistributionStatisticConfig
 
     private static void validate(const DistributionStatisticConfig config)
     {
-        if (!config.buffers.isNull() && config.buffers.get() <= 0)
-            reject("bufferLength (" ~ Integer.toString(config.buffers.get()) ~ ") must be greater than zero");
+        if (!config.buffers.isNull())
+            validateDistributionBufferLength(config.buffers.get());
 
         if (!config.percentileValues.isNull())
             foreach (value; config.percentileValues.get())
@@ -535,10 +534,15 @@ class TimeWindowMax
         const expiry = config.getExpiry();
         if (expiry.isNull())
             throw missingSetting("expiry");
+        return expiryMillis(expiry.get());
+    }
 
-        // Keep Java's checked millisecond conversion until the shared Duration port gains it.
-        long seconds = expiry.get().getSeconds();
-        long nanos = expiry.get().getNano();
+    // Keep Java's checked millisecond conversion until the shared Duration port gains it.
+    // Share one checked conversion between configured maxima and simple summaries.
+    pragma(inline, false) package(flint.micrometer.core.instrument) static long expiryMillis(Duration expiry)
+    {
+        long seconds = expiry.getSeconds();
+        long nanos = expiry.getNano();
         if (seconds < 0)
         {
             ++seconds;

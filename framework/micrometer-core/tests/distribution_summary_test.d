@@ -20,7 +20,9 @@ module micrometer_distribution_summary_test;
 import core.memory : GC;
 import core.thread : Thread;
 import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
+import flint.java.time : Duration;
 import flint.micrometer.core.instrument : Counter, DistributionSummary, Measurement, Meter, Statistic, Tag, Tags;
+import flint.micrometer.core.instrument.config : InvalidConfigurationException;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 import std.exception : assertThrown;
@@ -224,4 +226,31 @@ unittest
     const nanTotal = nan.totalAmount();
     const nanMax = nan.max();
     assert(nan.count() == 2 && nanTotal != nanTotal && nanMax != nanMax);
+}
+
+@("summary builder validates configured expiration and buffer length on the registry path")
+unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    auto builder = DistributionSummary.builder("response.size").distributionStatisticBufferLength(0);
+    assertThrown!InvalidConfigurationException(builder.register(registry));
+    builder.distributionStatisticBufferLength(2).distributionStatisticExpiry(Duration.ofNanos(1));
+    assertThrown!IllegalArgumentException(builder.register(registry));
+
+    auto summary = builder.distributionStatisticExpiry(Duration.ofHours(1)).register(registry);
+    summary.record(2);
+    assert(summary.max() == 2 && summary.totalAmount() == 2 && summary.count() == 1);
+    assert(builder.distributionStatisticExpiry(Duration.ofNanos(1)).register(registry) is summary);
+    assertThrown!InvalidConfigurationException(builder.distributionStatisticBufferLength(0).register(registry));
+
+    auto reset = DistributionSummary.builder("response.reset").distributionStatisticExpiry(Duration.ofNanos(1))
+        .distributionStatisticExpiry(Nullable!Duration.init)
+        .distributionStatisticBufferLength(0).distributionStatisticBufferLength(Nullable!int.init).register(registry);
+    reset.record(3);
+    assert(reset.max() == 3);
+
+    registry.close();
+    auto closed = DistributionSummary.builder("closed").distributionStatisticExpiry(Duration.ofNanos(1));
+    assert(closed.register(registry).count() == 0);
+    assertThrown!InvalidConfigurationException(closed.distributionStatisticBufferLength(0).register(registry));
 }

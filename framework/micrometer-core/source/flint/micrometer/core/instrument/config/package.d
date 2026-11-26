@@ -17,7 +17,7 @@
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.config;
 
-import flint.java.lang : IllegalStateException;
+import flint.java.lang : IllegalStateException, Integer;
 
 @safe:
 
@@ -35,4 +35,12 @@ class InvalidConfigurationException : IllegalStateException
     {
         super(message, cause);
     }
+}
+
+/// Check the configured number of distribution buckets before registration.
+package(flint.micrometer.core.instrument) void validateDistributionBufferLength(int length)
+{
+    if (length <= 0)
+        throw new InvalidConfigurationException("Invalid distribution configuration: bufferLength (" ~ Integer.toString(
+                length) ~ ") must be greater than zero");
 }

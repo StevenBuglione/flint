@@ -25,8 +25,8 @@ module flint.micrometer.core.instrument.simple;
 import core.atomic : atomicLoad, atomicOp, cas;
 import flint.java.lang : Iterable, NullPointerException;
 import flint.java.util.concurrent : TimeUnit, toNanos;
-import flint.micrometer.core.instrument : Clock, Counter, DistributionSummary, Measurement,
-    Meter, MeterRegistry, Timer;
+import flint.micrometer.core.instrument : Clock, Counter, DistributionSummary, Measurement, Meter,
+    MeterRegistry, SummaryWindow, Timer;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot, TimeWindowMax;
 import std.typecons : Nullable;
 
@@ -51,16 +51,25 @@ class SimpleMeterRegistry : MeterRegistry
         return new CumulativeTimer(id.withBaseUnit(Nullable!string("seconds")), Clock.SYSTEM);
     }
 
-    private static DistributionSummary createSummary(Meter.Id id, double scale)
+    private static DistributionSummary createSummary(Meter.Id id, double scale, scope const SummaryWindow* settings)
     {
-        return new CumulativeDistributionSummary(id, Clock.SYSTEM, scale);
+        return new CumulativeDistributionSummary(id, Clock.SYSTEM, scale, settings);
     }
 }
 
-private TimeWindowMax defaultWindow(Clock clock)
+private TimeWindowMax createWindow(Clock clock, scope const SummaryWindow* settings = null)
 {
     // SimpleConfig's one-minute step overrides the default expiry. The default ring has three buckets.
-    return new TimeWindowMax(clock, 60_000, 3);
+    long millis = 60_000;
+    int buckets = 3;
+    if (settings !is null)
+    {
+        if (!settings.expiry.isNull())
+            millis = TimeWindowMax.expiryMillis(settings.expiry.get());
+        if (settings.bufferLength != 0)
+            buckets = settings.bufferLength;
+    }
+    return new TimeWindowMax(clock, millis, buckets);
 }
 
 private final class CumulativeTimer : Timer
@@ -75,7 +84,7 @@ private final class CumulativeTimer : Timer
     {
         this.id = id;
         this.clock = clock;
-        window = defaultWindow(clock);
+        window = createWindow(clock);
     }
 
     override Meter.Id getId() nothrow @nogc
@@ -139,11 +148,11 @@ private final class CumulativeDistributionSummary : DistributionSummary
     private shared long events;
     private shared double total = 0.0;
 
-    this(Meter.Id id, Clock clock, double scale)
+    this(Meter.Id id, Clock clock, double scale, scope const SummaryWindow* settings)
     {
         this.id = id;
         this.scale = scale;
-        window = defaultWindow(clock);
+        window = createWindow(clock, settings);
     }
 
     override Meter.Id getId() nothrow @nogc
@@ -636,4 +645,22 @@ private final class CumulativeCounter : Counter
     }
 
     mixin Counter.Defaults;
+}
+
+@("the configured summary maximum decays while scaled cumulative values remain")
+unittest
+{
+    import flint.java.time : Duration;
+    import flint.micrometer.core.instrument : MockClock, Tags;
+
+    auto clock = new MockClock;
+    auto id = new Meter.Id("summary.window", Tags.empty(), Nullable!string.init,
+            Nullable!string.init, Meter.Type.DISTRIBUTION_SUMMARY);
+    const settings = SummaryWindow(Nullable!Duration(Duration.ofMillis(20)), 2);
+    auto summary = new CumulativeDistributionSummary(id, clock, 2, &settings);
+    summary.record(3.5);
+    clock.add(39, TimeUnit.MILLISECONDS);
+    assert(summary.max() == 7);
+    clock.add(1, TimeUnit.MILLISECONDS);
+    assert(summary.max() == 0 && summary.count() == 1 && summary.totalAmount() == 7);
 }

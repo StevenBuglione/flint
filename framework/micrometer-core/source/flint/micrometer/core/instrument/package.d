@@ -46,6 +46,7 @@ import flint.java.util.concurrent.callable : Callable;
 import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
 import flint.java.util.function_ : BooleanSupplier, Consumer, DoubleSupplier, Supplier;
 import flint.java.util.stream : Stream;
+import flint.micrometer.core.instrument.config : validateDistributionBufferLength;
 import flint.micrometer.core.instrument.distribution.snapshots : HistogramSnapshot;
 import std.typecons : Nullable;
 
@@ -881,6 +882,13 @@ interface HistogramSupport : Meter
     }
 }
 
+// The registry uses these values only when creating the summary's maximum window.
+package(flint.micrometer.core.instrument) struct SummaryWindow
+{
+    Nullable!Duration expiry;
+    int bufferLength; // Zero selects the registry default.
+}
+
 /// Count nonnegative samples and report their total and recent maximum.
 interface DistributionSummary : HistogramSupport
 {
@@ -898,6 +906,8 @@ interface DistributionSummary : HistogramSupport
         private NullableString description_;
         private NullableString baseUnit_;
         private double scale_ = 1.0;
+        private Nullable!Duration expiry_;
+        private Nullable!int bufferLength_;
 
         private this(string name)
         {
@@ -940,6 +950,32 @@ interface DistributionSummary : HistogramSupport
             return this;
         }
 
+        /// Set or clear the duration of each maximum bucket.
+        ref Builder distributionStatisticExpiry(Nullable!Duration expiry) return
+        {
+            expiry_ = expiry;
+            return this;
+        }
+
+        /// Set the duration of each maximum bucket.
+        ref Builder distributionStatisticExpiry(Duration expiry) return
+        {
+            return distributionStatisticExpiry(Nullable!Duration(expiry));
+        }
+
+        /// Set or clear the number of buckets in the maximum window.
+        ref Builder distributionStatisticBufferLength(Nullable!int bufferLength) return
+        {
+            bufferLength_ = bufferLength;
+            return this;
+        }
+
+        /// Set the number of buckets in the maximum window.
+        ref Builder distributionStatisticBufferLength(int bufferLength) return
+        {
+            return distributionStatisticBufferLength(Nullable!int(bufferLength));
+        }
+
         /// Multiply each accepted amount by the given scale.
         ref Builder scale(double scale) return
         {
@@ -950,10 +986,16 @@ interface DistributionSummary : HistogramSupport
         /// Register the summary and return its retained handle.
         DistributionSummary register(MeterRegistry registry)
         {
+            auto window = SummaryWindow(expiry_);
+            if (!bufferLength_.isNull())
+            {
+                window.bufferLength = bufferLength_.get();
+                validateDistributionBufferLength(window.bufferLength);
+            }
             if (registry is null)
                 throw new NullPointerException("registry");
             auto id = new Meter.Id(name, dimensions, baseUnit_, description_, Type.DISTRIBUTION_SUMMARY);
-            return registry.summary(id, scale_);
+            return registry.summary(id, scale_, &window);
         }
     }
 
@@ -1399,7 +1441,7 @@ abstract class MeterRegistry
     private Clock registryClock;
     private Config configuration;
     private alias TimerFactory = Timer function(Meter.Id) @safe;
-    private alias SummaryFactory = DistributionSummary function(Meter.Id, double) @safe;
+    private alias SummaryFactory = DistributionSummary function(Meter.Id, double, scope const SummaryWindow*) @safe;
     private TimerFactory timerFactory;
     private SummaryFactory summaryFactory;
     private bool closed;
@@ -1519,15 +1561,15 @@ abstract class MeterRegistry
     {
         auto id = new Meter.Id(name, Tags.of(tags), NullableString.init, NullableString.init,
                 Meter.Type.DISTRIBUTION_SUMMARY);
-        return summary(id, 1.0);
+        return summary(id, 1.0, null);
     }
 
-    private DistributionSummary summary(Meter.Id id, double scale)
+    private DistributionSummary summary(Meter.Id id, double scale, scope const SummaryWindow* window)
     {
-        return cast(DistributionSummary) registerMeter(id, scale);
+        return cast(DistributionSummary) registerMeter(id, scale, window);
     }
 
-    private Meter registerMeter(Meter.Id id, double summaryScale = 1.0)
+    private Meter registerMeter(Meter.Id id, double summaryScale = 1.0, scope const SummaryWindow* summaryWindow = null)
     {
         gate.lock_nothrow();
         scope (exit)
@@ -1542,7 +1584,7 @@ abstract class MeterRegistry
         }
 
         const wasClosed = closed;
-        auto created = createMeter(id, wasClosed, summaryScale);
+        auto created = createMeter(id, wasClosed, summaryScale, summaryWindow);
         if (!wasClosed)
             meters ~= created;
         return created;
@@ -1577,7 +1619,7 @@ abstract class MeterRegistry
                 ~ registered ~ " vs. " ~ requested ~ ") with the same name: " ~ id.getName());
     }
 
-    private Meter createMeter(Meter.Id id, bool noop, double summaryScale)
+    private Meter createMeter(Meter.Id id, bool noop, double summaryScale, scope const SummaryWindow* summaryWindow)
     {
         string unavailable;
         switch (id.getType())
@@ -1595,7 +1637,7 @@ abstract class MeterRegistry
             if (noop)
                 return new NoopDistributionSummary(id);
             if (summaryFactory !is null)
-                return summaryFactory(id, summaryScale);
+                return summaryFactory(id, summaryScale, summaryWindow);
             unavailable = "This registry does not provide distribution summaries";
             break;
         default:
