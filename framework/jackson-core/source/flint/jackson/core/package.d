@@ -1,7 +1,7 @@
 /*
  * Ported from Jackson (jackson-core) 3.1.8, https://github.com/FasterXML/jackson-core,
  * tag jackson-core-3.1.8: src/main/java/tools/jackson/core/{JsonToken,JsonTokenId,
- * JacksonException,TokenStreamLocation,TokenStreamContext,JsonGenerator,JsonParser,
+ * JacksonException,TokenStreamLocation,TokenStreamContext,JsonPointer,JsonGenerator,JsonParser,
  * PrettyPrinter,ObjectWriteContext,ObjectReadContext,StreamReadFeature,
  * StreamWriteFeature,StreamReadConstraints,StreamWriteConstraints}.java
  *
@@ -399,6 +399,226 @@ abstract class TokenStreamContext
     protected TokenStreamContext _parent;
 }
 
+// D-JACKSON-8: construct the canonical Java exception when its leaf is available.
+private Exception invalidArgument(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+{
+    return new Exception(message, file, line);
+}
+
+/// A compiled JSON Pointer. Each segment shares the original expression.
+class JsonPointer
+{
+    /// Separates pointer segments.
+    enum char SEPARATOR = '/';
+    /// Starts an escape sequence.
+    enum char ESC = '~';
+    /// Encoded slash.
+    enum string ESC_SLASH = "~1";
+    /// Encoded tilde.
+    enum string ESC_TILDE = "~0";
+
+    protected this() pure nothrow @nogc
+    {
+    }
+
+    /// Compile a pointer expression. An empty expression selects the current node.
+    static JsonPointer compile(string expression)
+    {
+        if (expression.length == 0)
+            return empty();
+        if (expression[0] != SEPARATOR)
+            throw invalidArgument("Invalid input: JSON Pointer expression must start with '/': \"" ~ expression ~ "\"");
+
+        auto result = empty();
+        size_t end = expression.length;
+        foreach_reverse (offset, marker; expression)
+        {
+            if (marker != SEPARATOR)
+                continue;
+            const propertyName = decodePointerProperty(expression[offset + 1 .. end]);
+            result = new ParsedJsonPointer(expression[offset .. $], propertyName,
+                    readPointerIndex(propertyName), result);
+            end = offset;
+        }
+        return result;
+    }
+
+    /// Compile a pointer from its textual representation.
+    static JsonPointer valueOf(string expression)
+    {
+        return compile(expression);
+    }
+
+    /// The shared empty pointer.
+    static JsonPointer empty() nothrow @nogc
+    {
+        import flint.engine.aot.objects : statelessInstance;
+
+        return statelessInstance!EmptyJsonPointer();
+    }
+
+    /// Whether this pointer selects the current node.
+    bool matches() pure nothrow @nogc
+    {
+        return tail() is null;
+    }
+
+    /// The current segment's decoded property name, or null for the empty pointer.
+    string getMatchingProperty() const pure nothrow @nogc
+    {
+        return null;
+    }
+
+    /// The current segment's array index, or -1 when the segment denotes no array element.
+    int getMatchingIndex() const pure nothrow @nogc
+    {
+        return -1;
+    }
+
+    /// Whether the current segment can select an object property.
+    bool mayMatchProperty() const pure nothrow @nogc
+    {
+        return getMatchingProperty() !is null;
+    }
+
+    /// Whether the current segment can select an array element.
+    bool mayMatchElement() const pure nothrow @nogc
+    {
+        return getMatchingIndex() >= 0;
+    }
+
+    /// Whether the current segment selects this property.
+    bool matchesProperty(string name) const pure nothrow @nogc
+    {
+        const propertyName = getMatchingProperty();
+        return propertyName !is null && name !is null && propertyName == name;
+    }
+
+    /// Whether the current segment selects this index.
+    bool matchesElement(int index) const pure nothrow @nogc
+    {
+        return index >= 0 && getMatchingIndex() == index;
+    }
+
+    /// The remaining pointer after a matching property, or null when the property differs.
+    JsonPointer matchProperty(string name) pure nothrow @nogc
+    {
+        return matchesProperty(name) ? tail() : null;
+    }
+
+    /// The remaining pointer after a matching array index, or null when the index differs.
+    JsonPointer matchElement(int index) pure nothrow @nogc
+    {
+        return matchesElement(index) ? tail() : null;
+    }
+
+    /// The remaining pointer after removing the current segment, or null for the empty pointer.
+    JsonPointer tail() pure nothrow @nogc
+    {
+        return null;
+    }
+
+    /// The original spelling of the pointer expression.
+    override string toString() pure nothrow @nogc
+    {
+        return "";
+    }
+}
+
+private final class EmptyJsonPointer : JsonPointer
+{
+}
+
+private final class ParsedJsonPointer : JsonPointer
+{
+    private string expression;
+    private string propertyName;
+    private int index;
+    private JsonPointer remainder;
+
+    this(string expression, string propertyName, int index, JsonPointer remainder) pure nothrow @nogc
+    {
+        this.expression = expression;
+        this.propertyName = propertyName;
+        this.index = index;
+        this.remainder = remainder;
+    }
+
+    override string getMatchingProperty() const pure nothrow @nogc
+    {
+        return propertyName;
+    }
+
+    override int getMatchingIndex() const pure nothrow @nogc
+    {
+        return index;
+    }
+
+    override JsonPointer tail() pure nothrow @nogc
+    {
+        return remainder;
+    }
+
+    override string toString() pure nothrow @nogc
+    {
+        return expression;
+    }
+}
+
+private int readPointerIndex(string propertyName) pure nothrow @nogc
+{
+    if (propertyName.length == 0 || propertyName.length > 10)
+        return -1;
+    if (propertyName.length > 1 && propertyName[0] == '0')
+        return -1;
+
+    long index;
+    foreach (digit; propertyName)
+    {
+        if (digit < '0' || digit > '9')
+            return -1;
+        index = index * 10 + digit - '0';
+    }
+    return index <= int.max ? cast(int) index : -1;
+}
+
+private string decodePointerProperty(string propertyName) pure nothrow
+{
+    size_t first;
+    for (; first + 1 < propertyName.length; ++first)
+    {
+        const next = propertyName[first + 1];
+        if (propertyName[first] == JsonPointer.ESC && (next == '0' || next == '1'))
+            break;
+    }
+    if (first + 1 >= propertyName.length)
+        return propertyName;
+    return decodeEscapedPointerProperty(propertyName, first);
+}
+
+// A strongly pure function returns a fresh buffer that can become an immutable string.
+private char[] decodeEscapedPointerProperty(string propertyName, size_t first) pure nothrow
+{
+    auto decoded = new char[propertyName.length];
+    decoded[0 .. first] = propertyName[0 .. first];
+    size_t written = first;
+    for (size_t i = first; i < propertyName.length; ++i)
+    {
+        char value = propertyName[i];
+        if (value == JsonPointer.ESC && i + 1 < propertyName.length)
+        {
+            const escaped = propertyName[i + 1];
+            if (escaped == '0' || escaped == '1')
+            {
+                value = escaped == '0' ? JsonPointer.ESC : JsonPointer.SEPARATOR;
+                ++i;
+            }
+        }
+        decoded[written++] = value;
+    }
+    return decoded[0 .. written];
+}
+
 /**
  * Interface for objects that implement pretty printer functionality, such as
  * indentation. Pretty printers are used to add white space in output JSON
@@ -560,7 +780,7 @@ struct StreamWriteConstraints
         Builder maxNestingDepth(int maxNestingDepth) pure
         {
             if (maxNestingDepth < 0)
-                throw new Exception("Cannot set maxNestingDepth to a negative value");
+                throw invalidArgument("Cannot set maxNestingDepth to a negative value");
             _maxNestingDepth = maxNestingDepth;
             return this;
         }
