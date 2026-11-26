@@ -1329,3 +1329,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **The cause:** instruction counts are deterministic, so some input to the measured binary changed. Candidates are the native install, the toolchain, or posidon's system libraries or kernel. proof-harness is identifying which.
   - **Interim:** the train judges gs-rest only relative to main's measured median on every endpoint. A candidate fails gs-rest only by being worse than main. Petclinic stays absolute. This is a temporary list, removed when the cause is reverted or the owner re-baselines.
   - **Budgets unchanged:** a gs-rest re-baseline is the owner's decision.
+- 2026-11-26 12:25Z, coordinator: **merge-train budget order is stack-first** (proof-harness; amends 08:30Z (c)). posidon, the only `flint budget` runner, measures the whole stacked candidate in parallel with the acceptance verifiers.
+  - **Green stack:** everything lands on one posidon run, about 10 minutes instead of about 95 for screening every submission first.
+  - **Red stack:** the closure-touching submissions are then screened one by one, so the regressing lane is named directly. Budget-only bisect steps (a) and the tight-spread rule (b) stay.
