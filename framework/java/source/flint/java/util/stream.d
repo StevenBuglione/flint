@@ -139,7 +139,8 @@ final class Stream(T)
                 T element;
                 if (!source(element))
                     return false;
-                inner = mapper(element).take();
+                auto mapped = mapper(element);
+                inner = mapped is null ? null : mapped.take();
             }
         });
     }
