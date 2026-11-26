@@ -6840,7 +6840,7 @@
 "java.util.Objects#toString(Object,String)":{"d":"flint.java.util.Objects.toString","rules":["R23"],"status":"adapted"},
 "java.util.Optional":{"d":"flint.java.util.Optional","rules":["R5"],"status":"adapted"},
 "java.util.Optional#empty()":{"d":"flint.java.util.Optional.empty","status":"ported"},
-"java.util.Optional#equals(Object)":{"d":"flint.java.util.Optional.equals","status":"ported"},
+"java.util.Optional#equals(Object)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java compares Optional values across generic arguments and accepts other objects and null. The current R5 value facade accepts only the same instantiation, so separately typed empty values cannot compare equal."},
 "java.util.Optional#filter(Predicate)":{"d":"flint.java.util.Optional.filter","status":"ported"},
 "java.util.Optional#flatMap(Function)":{"d":"flint.java.util.Optional.flatMap","status":"ported"},
 "java.util.Optional#get()":{"d":"flint.java.util.Optional.get","status":"ported"},

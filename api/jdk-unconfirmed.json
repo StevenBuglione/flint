@@ -588,7 +588,6 @@
   "java.util.Objects#toString(Object)",
   "java.util.Objects#toString(Object,String)",
   "java.util.Optional",
-  "java.util.Optional#equals(Object)",
   "java.util.Optional#filter(Predicate)",
   "java.util.Optional#flatMap(Function)",
   "java.util.Optional#ifPresent(Consumer)",
