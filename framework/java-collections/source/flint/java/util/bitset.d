@@ -126,29 +126,25 @@ class BitSet
     /// Finds the first set bit at or after the index, or returns -1.
     int nextSetBit(int fromIndex) const pure
     {
-        checkIndex(fromIndex, 0, "fromIndex < 0: ");
-        return scanBit(fromIndex, true, true);
+        return findBit(fromIndex, true, true);
     }
 
     /// Finds the first clear bit at or after the index.
     int nextClearBit(int fromIndex) const pure
     {
-        checkIndex(fromIndex, 0, "fromIndex < 0: ");
-        return scanBit(fromIndex, false, true);
+        return findBit(fromIndex, false, true);
     }
 
     /// Finds the last set bit at or before the index, or returns -1.
     int previousSetBit(int fromIndex) const pure
     {
-        checkIndex(fromIndex, -1, "fromIndex < -1: ");
-        return scanBit(fromIndex, true, false);
+        return findBit(fromIndex, true, false);
     }
 
     /// Finds the last clear bit at or before the index, or returns -1.
     int previousClearBit(int fromIndex) const pure
     {
-        checkIndex(fromIndex, -1, "fromIndex < -1: ");
-        return scanBit(fromIndex, false, false);
+        return findBit(fromIndex, false, false);
     }
 
     /// Returns one more than the highest set bit, or zero for an empty set.
@@ -365,7 +361,15 @@ class BitSet
             --wordsInUse;
     }
 
-    pragma(inline, false) private int scanBit(int fromIndex, bool set, bool forward) const pure nothrow @nogc
+    pragma(inline, false) private int findBit(int fromIndex, bool set, bool forward) const pure
+    {
+        const minimum = forward ? 0 : -1;
+        if (fromIndex < minimum)
+            rejectIndex(fromIndex, forward ? "fromIndex < 0: " : "fromIndex < -1: ");
+        return scanBit(fromIndex, set, forward);
+    }
+
+    private int scanBit(int fromIndex, bool set, bool forward) const pure nothrow @nogc
     {
         const liveWords = wordsInUse;
         auto word = fromIndex >> wordShift;

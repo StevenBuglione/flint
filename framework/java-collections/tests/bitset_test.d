@@ -371,10 +371,10 @@ unittest
     assertThrown!IndexOutOfBoundsException(bits.set(-1));
     assertThrown!IndexOutOfBoundsException(bits.clear(-1));
     assertThrown!IndexOutOfBoundsException(bits.flip(-1));
-    assertThrown!IndexOutOfBoundsException(bits.nextSetBit(-1));
-    assertThrown!IndexOutOfBoundsException(bits.nextClearBit(-1));
-    assertThrown!IndexOutOfBoundsException(bits.previousSetBit(int.min));
-    assertThrown!IndexOutOfBoundsException(bits.previousClearBit(-2));
+    expectBoundsFailure(() => cast(void) bits.nextSetBit(-1), "fromIndex < 0: -1");
+    expectBoundsFailure(() => cast(void) bits.nextClearBit(-1), "fromIndex < 0: -1");
+    expectBoundsFailure(() => cast(void) bits.previousSetBit(int.min), "fromIndex < -1: -2147483648");
+    expectBoundsFailure(() => cast(void) bits.previousClearBit(-2), "fromIndex < -1: -2");
 
     bits.set(130);
     const before = GC.stats().allocatedInCurrentThread;
@@ -456,12 +456,12 @@ unittest
     assert(bits.length() == 63 && bits.cardinality() == 63);
 }
 
-private void expectRangeFailure(scope void delegate() @safe operation, string message)
+private void expectBoundsFailure(scope void delegate() @safe operation, string message)
 {
     try
     {
         operation();
-        assert(false, "invalid range succeeded");
+        assert(false, "invalid index or range succeeded");
     }
     catch (IndexOutOfBoundsException failure)
     {
@@ -474,10 +474,10 @@ unittest
 {
     auto bits = new BitSet();
     bits.set(5);
-    expectRangeFailure(() => bits.set(-2, -3), "fromIndex < 0: -2");
-    expectRangeFailure(() => bits.clear(3, -2), "toIndex < 0: -2");
-    expectRangeFailure(() => bits.flip(9, 3), "fromIndex: 9 > toIndex: 3");
-    expectRangeFailure(() => bits.set(-1, -1, false), "fromIndex < 0: -1");
+    expectBoundsFailure(() => bits.set(-2, -3), "fromIndex < 0: -2");
+    expectBoundsFailure(() => bits.clear(3, -2), "toIndex < 0: -2");
+    expectBoundsFailure(() => bits.flip(9, 3), "fromIndex: 9 > toIndex: 3");
+    expectBoundsFailure(() => bits.set(-1, -1, false), "fromIndex < 0: -1");
     assert(bits.length() == 6 && bits.cardinality() == 1 && bits.get(5));
 }
 
