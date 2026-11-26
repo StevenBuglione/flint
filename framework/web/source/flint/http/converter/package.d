@@ -499,11 +499,11 @@ class ResourceRegionHttpMessageConverter : AbstractGenericHttpMessageConverter
 
     private static void writeCollection(scope Any[] parts, HttpOutputMessage output)
     {
-        import std.uuid : randomUUID;
+        import flint.util : MimeTypeUtils;
 
         auto headers = output.getHeaders();
         auto contentType = headers.getContentType();
-        const boundary = randomUUID().toString();
+        const boundary = MimeTypeUtils.generateMultipartBoundaryString();
         headers.set(HttpHeaders.CONTENT_TYPE, "multipart/byteranges; boundary=" ~ boundary);
 
         Resource resource;

@@ -18,6 +18,7 @@ import flint.http.testfixture.mock_http_messages : MockHttpOutputMessage;
 import flint.java.io : ByteArrayInputStream, ByteArrayOutputStream;
 import flint.java.util : List;
 import std.algorithm.searching : startsWith;
+import std.ascii : isAlphaNum;
 
 @safe:
 
@@ -97,7 +98,11 @@ private void checkMultipart(string ranges, scope const(string[2])[] expected)
     enum prefix = "multipart/byteranges;boundary=";
     auto contentType = message.getHeaders().getContentType().toString();
     assert(contentType.startsWith(prefix));
-    string boundary = "--" ~ contentType[prefix.length .. $];
+    const token = contentType[prefix.length .. $];
+    assert(token.length >= 30 && token.length <= 40);
+    foreach (c; token)
+        assert(isAlphaNum(c) || c == '-' || c == '_');
+    string boundary = "--" ~ token;
     string wire;
     foreach (ref part; expected)
         wire ~= "\r\n" ~ boundary ~ "\r\nContent-Type: text/plain\r\nContent-Range: bytes "

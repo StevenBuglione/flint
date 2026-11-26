@@ -870,6 +870,16 @@ framework-test added 32 bytes in each profile. Templates moved from
 7,055 to 7,062, 6,142 to 6,144, and 8,557 to 8,559 respectively. The
 inherited Phobos overage uses decision `6c9e5f49`.
 
+The multipart byte-range converter uses Core's Spring boundary generator
+and keeps the response framing covered by the existing wire tests. A
+matched native probe at `766ee4b05` and `b9f6ff95c` dropped the
+`randomUUID` symbol and saved 3,339 O3 and 3,335 Oz loadable bytes. The
+existing `std.process` dependency still brings in `uuid.o`. The stock
+Web probe held O3 and saved 8 Oz bytes. DMD templates fell from 7,062 to
+6,363. Web MVC held O3 and saved 16 Oz bytes. Framework-test saved 16
+bytes in each profile. Both downstream template counts held. Decision
+`6c9e5f49` covers the inherited Phobos overage.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
