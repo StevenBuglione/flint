@@ -11345,9 +11345,17 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.function.Predicate#or(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |
 | framework | `java.util.function.UnaryOperator#identity()` | 2 | The inherited Function.identity factory returns Function. Java's UnaryOperator factory returns the nominal UnaryOperator. |
 | framework | `java.util.regex.Matcher` | 2 | Assignment to Java MatchResult and access to recorded match positions and groups await the Matcher state port. |
+| framework | `java.util.regex.Pattern#asMatchPredicate()` | 2 | Requires a Predicate adapter for whole-input matching. |
+| framework | `java.util.regex.Pattern#asPredicate()` | 2 | Requires the Matcher search API and a Predicate adapter. |
 | framework | `java.util.regex.Pattern#compile(String)` | 2 | Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
 | framework | `java.util.regex.Pattern#compile(String,int)` | 2 | CANON_EQ, LITERAL and UNICODE_CHARACTER_CLASS still throw RegexUnsupportedException. Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
 | framework | `java.util.regex.Pattern#matches(String,CharSequence)` | 2 | Java supports extended grapheme clusters (\X) and grapheme boundaries (\b{g}). Flint throws RegexUnsupportedException for both. |
+| framework | `java.util.regex.Pattern#namedGroups()` | 2 | Requires exposing capture names and Java group indices as an unmodifiable map. |
+| framework | `java.util.regex.Pattern#quote(String)` | 2 | Literal text quoting needs an adapter that preserves embedded \E terminators. |
+| framework | `java.util.regex.Pattern#split(CharSequence)` | 2 | Requires Matcher search and Java's default removal of trailing empty results. |
+| framework | `java.util.regex.Pattern#split(CharSequence,int)` | 2 | Requires Matcher search and Java's positive, zero and negative limit behavior. |
+| framework | `java.util.regex.Pattern#splitAsStream(CharSequence)` | 2 | Requires lazy split traversal through the Java Stream adapter. |
+| framework | `java.util.regex.Pattern#splitWithDelimiters(CharSequence,int)` | 2 | Requires Matcher search, Java limit behavior and inclusion of the matched delimiters. |
 | framework | `java.util.regex.PatternSyntaxException#<init>(String,String,int)` | 2 | The constructor still takes plain D strings. Java preserves null separately from empty text for both fields (R5). |
 | framework | `java.util.regex.PatternSyntaxException#getDescription()` | 2 | Java preserves a null description separately from empty text. The D return value still uses a plain string (R5). |
 | framework | `java.util.regex.PatternSyntaxException#getMessage()` | 2 | Java renders absent fields as null, preserves tabs in the caret indentation and uses the platform line separator. Flint still uses empty text, spaces and LF. |

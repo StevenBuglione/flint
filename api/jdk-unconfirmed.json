@@ -624,7 +624,6 @@
   "java.util.TimeZone#setRawOffset(int)",
   "java.util.TimeZone#useDaylightTime()",
   "java.util.function.Supplier",
-  "java.util.function.Supplier#get()",
-  "java.util.regex.Pattern"
+  "java.util.function.Supplier#get()"
  ]
 }
