@@ -622,6 +622,69 @@ interface Meter
 /// A counter preallocated during meter registration.
 interface Counter : Meter
 {
+    /// Configure a counter before registering it.
+    static Builder builder(string name)
+    {
+        return Builder(name);
+    }
+
+    /// Register a counter with a name, dimensions and optional metadata.
+    static struct Builder
+    {
+        private string name;
+        private Tags dimensions;
+        private Nullable!string description_;
+        private Nullable!string baseUnit_;
+
+        private this(string name)
+        {
+            this.name = name;
+            dimensions = Tags.empty();
+        }
+
+        /// Add alternating tag keys and values.
+        ref Builder tags(scope const(string)[] keyValues...) return
+        {
+            dimensions = dimensions.and(keyValues);
+            return this;
+        }
+
+        /// Add dimensions. Later entries override the same key.
+        ref Builder tags(Iterable!Tag tags) return
+        {
+            dimensions = dimensions.and(tags);
+            return this;
+        }
+
+        /// Add or replace one dimension.
+        ref Builder tag(string key, string value) return
+        {
+            dimensions = dimensions.and(key, value);
+            return this;
+        }
+
+        /// Set the description of the registered meter.
+        ref Builder description(Nullable!string description) return
+        {
+            description_ = description;
+            return this;
+        }
+
+        /// Set the base unit of the registered meter.
+        ref Builder baseUnit(Nullable!string baseUnit) return
+        {
+            baseUnit_ = baseUnit;
+            return this;
+        }
+
+        /// Register the counter and return its retained handle.
+        Counter register(MeterRegistry registry)
+        {
+            auto id = new Meter.Id(name, dimensions, baseUnit_, description_, Type.COUNTER);
+            return registry.counter(id);
+        }
+    }
+
     /// Add one to this counter.
     void increment() nothrow @nogc;
 
@@ -672,7 +735,11 @@ abstract class MeterRegistry
     {
         if (tags is null)
             tags = Tags.empty();
-        auto id = new Meter.Id(name, tags, Nullable!string.init, Nullable!string.init, Meter.Type.COUNTER);
+        return counter(new Meter.Id(name, tags, Nullable!string.init, Nullable!string.init, Meter.Type.COUNTER));
+    }
+
+    private Counter counter(Meter.Id id)
+    {
         gate.lock_nothrow();
         scope (exit)
             gate.unlock_nothrow();
