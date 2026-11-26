@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,123 | 322 | 1,871 | 15,105 |
+| framework | openjdk@21.0.13 | 1,120 | 322 | 1,871 | 15,108 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1937,7 +1937,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `java.io.ByteArrayInputStream#<init>(byte[])` | `flint.java.io.ByteArrayInputStream.this` | [R26](api-mapping.md#r26-null-arrays) | Uses the caller's backing array as an unsigned byte slice. A null slice counts as an empty array under R26. |
-| `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D exception hierarchy for Java's checked I/O exception. |
+| `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D checked-exception hierarchy. The merged constructor represents omitted and explicit null causes identically under R8. The checked family currently lacks initCause. |
 | `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
 | `java.io.UnsupportedEncodingException` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
 
@@ -10087,7 +10087,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 770 | 0 |
+| java.io | 773 | 0 |
 | java.lang | 1,993 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -11012,7 +11012,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.File#toString()` | 2 | Java calls the virtual getPath method. The existing implementation returns the stored pathname directly. |
 | framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
 | framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
-| framework | `java.io.IOException#<init>(Throwable)` | 2 | The current constructor accepts a message and an optional cause. Java's cause-only constructor is pending. |
+| framework | `java.io.IOException#<init>()` | 2 | Java leaves the cause open to one later initCause call. Flint reports no cause and lacks that initialization API. |
+| framework | `java.io.IOException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. Flint lacks that API and its R26 detail accessor normalization is pending. |
+| framework | `java.io.IOException#<init>(String,Throwable)` | 2 | The current constructor retains a supplied non-null cause. The checked cause lifecycle and R26 detail accessor normalization are pending. R8 covers the merged constructor's explicit null projection. |
+| framework | `java.io.IOException#<init>(Throwable)` | 2 | Missing cause-only constructor. Java initializes the cause even if it is null and derives the detail from a non-null cause's virtual toString. |
 | framework | `java.io.InputStream` | 2 | The abstract source exists. The nominal Closeable interface required by Java is missing from the class. |
 | framework | `java.io.InputStream#available()` | 2 | Missing virtual base method that returns zero by default. |
 | framework | `java.io.InputStream#mark(int)` | 2 | Missing virtual mark operation with a no-op base implementation. |
