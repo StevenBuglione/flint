@@ -791,6 +791,7 @@
    "upstream": "spring-framework@v7.1.0",
    "dependencies": [
     "arena",
+    "core",
     "engine-aot",
     "java"
    ],
