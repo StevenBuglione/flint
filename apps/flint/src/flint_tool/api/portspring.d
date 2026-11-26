@@ -108,10 +108,12 @@ private bool portPinned(string root, const ref SpringPortRequest request, const 
     JSONValue candidate;
     if (!runHelper(root, request.helper, source, candidate, error))
         return false;
-    const fragment = mappingFragment(root, pin, manifest, *type, request, candidate, error);
+    string body;
+    const fragment = mappingFragment(root, pin, manifest, *type, request, candidate, body, error);
     if (!fragment.length)
         return false;
-    const text = checkedSource(pin, pins, matrix, *licence, type.file, source, request.module_, candidate, error);
+    const text = checkedSource(pin, pins, matrix, *licence, type.file, source, request.module_,
+            candidate, body, error);
     if (!text.length)
         return false;
     output = SpringPort(text, fragment, candidate["inherited"].boolean);
@@ -234,9 +236,11 @@ private bool runHelper(string root, string helper, string source, out JSONValue 
 }
 
 private string mappingFragment(string root, const ref Upstream pin, const ref Manifest manifest,
-        const ref ApiType type, const ref SpringPortRequest request, const ref JSONValue candidate, out string error)
+        const ref ApiType type, const ref SpringPortRequest request, const ref JSONValue candidate,
+        out string body, out string error)
 {
     import flint_tool.api.coverage : parseMapping;
+    import flint_tool.api.enum_defaults : enumAnnotationBody;
     import std.file : readText;
     import std.path : buildPath;
 
@@ -246,7 +250,11 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
         error = "translator declaration does not match " ~ type.decl.id ~ " in the manifest";
         return null;
     }
-    const shadow = shadowedAttributeType(manifest, type);
+    string[] enumFields;
+    foreach (ref field; candidate["members"].arrayNoRef)
+        if ("enum" in field)
+            enumFields ~= field["name"].str;
+    const shadow = shadowedAttributeType(manifest, type, enumFields);
     if (shadow.length)
     {
         error = type.decl.id ~ ": unsupported annotation type: ambiguous same-package " ~ shadow;
@@ -261,6 +269,15 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
         error = path ~ " has no matching rulebook v2 mapping for " ~ pin.key;
         return null;
     }
+    if (enumFields.length)
+    {
+        const classifier = Classifier(mapping);
+        body = enumAnnotationBody(manifest, type, classifier, request.module_, candidate, error);
+    }
+    else
+        body = candidate["body"].str;
+    if (error.length)
+        return null;
     return classifiedFragment(pin, type, request.module_, candidate, mapping, error, request.replacePorted);
 }
 
@@ -275,13 +292,16 @@ private string attributeBaseType(string type)
     return type.endsWith("[]") ? type[0 .. $ - 2] : type;
 }
 
-private string shadowedAttributeType(const ref Manifest manifest, const ref ApiType annotation)
+private string shadowedAttributeType(const ref Manifest manifest, const ref ApiType annotation,
+        const(string)[] resolvedFields = null)
 {
+    import std.algorithm.searching : canFind;
+
     bool[string] names;
     foreach (ref field; annotation.decl.members)
     {
         const name = attributeBaseType(field.type);
-        if (identifier(name))
+        if (identifier(name) && !resolvedFields.canFind(field.name))
             names[name] = true;
     }
     foreach (ref type; manifest.types)
@@ -397,7 +417,7 @@ private string renderEntry(const ref MappingEntry entry)
 private string checkedSource(const ref Upstream pin, const(Upstream)[] pins,
         const(imported!"flint_tool.api.headers".LicenceEntry)[] matrix,
         const ref imported!"flint_tool.api.headers".LicenceEntry licence,
-        string file, string source, string module_, const ref JSONValue candidate, out string error)
+        string file, string source, string module_, const ref JSONValue candidate, string body, out string error)
 {
     import flint_tool.api.headers : checkHeader, licenceLine, modifiedNotice, portedMarker;
     import std.file : readText;
@@ -406,7 +426,7 @@ private string checkedSource(const ref Upstream pin, const(Upstream)[] pins,
     const imports = candidate["classRef"].boolean ? "import flint.java.classref : ClassRef;\n\n" : "";
     const text = header ~ "\n// " ~ portedMarker ~ pin.project ~ " " ~ pin.version_ ~ ": " ~ file
         ~ "\n// " ~ licenceLine(licence) ~ "\n// " ~ modifiedNotice ~ ".\n\nmodule " ~ module_ ~ ";\n\n"
-        ~ imports ~ "@safe:\n\n" ~ candidate["body"].str;
+        ~ imports ~ "@safe:\n\n" ~ body;
     const problems = checkHeader(file, text, pins, matrix, "");
     if (problems.length)
     {

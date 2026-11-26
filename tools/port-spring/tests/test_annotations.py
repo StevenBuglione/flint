@@ -77,6 +77,39 @@ static assert(__traits(getAttributes, Example)[0].value == "custom");
         self.assertEqual(result.stdout, b"")
         self.assertIn(b"unsupported annotation default", result.stderr)
 
+    def test_enum_fields_report_java_type_and_constants(self):
+        result = self.run_helper("""package example;
+import example.options.Mode;
+import static example.options.Mode.FAST;
+public @interface Settings {
+    Mode[] value() default { FAST, example.options.Mode.SLOW };
+    LocalMode local() default LocalMode.A;
+    LocalMode required();
+}""")
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        candidate = json.loads(result.stdout)
+        self.assertIn("enumBody", candidate)
+        self.assertNotIn("body", candidate)
+        members = {field["name"]: field for field in candidate["members"]}
+        self.assertIn({"path": "example.options.Mode", "static": False, "wildcard": False},
+                      candidate["enumImports"])
+        self.assertIn({"path": "example.options.Mode.FAST", "static": True, "wildcard": False},
+                      candidate["enumImports"])
+        self.assertEqual(members["value"]["enum"]["type"], "Mode")
+        self.assertEqual(members["value"]["enum"]["defaults"], ["FAST", "example.options.Mode.SLOW"])
+        self.assertTrue(members["value"]["enum"]["array"])
+        self.assertEqual(members["local"]["enum"]["type"], "LocalMode")
+        self.assertEqual(members["local"]["enum"]["defaults"], ["LocalMode.A"])
+        self.assertIsNone(members["required"]["enum"]["defaults"])
+
+    def test_enum_reference_cannot_use_a_method_call(self):
+        result = self.run_helper(
+            "package example; public @interface Settings { Mode value() default Mode.pick(); }"
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"unsupported enum annotation default", result.stderr)
+
     def test_integral_defaults_preserve_java_width_and_negation(self):
         result = self.run_helper("""package example;
 public @interface Settings {

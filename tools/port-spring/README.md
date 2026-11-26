@@ -17,6 +17,8 @@ The output directory must be new. It receives one D module and `mapping.json` wi
 
 This slice supports public top-level annotations with primitive, string and class-token fields, scalar and array defaults in the supported literal forms, and explicit JDK meta-annotation imports. It moves `value` first, uses `ClassRef` for Java class tokens under R4, and applies R19 to D keyword names. The CLI reports Java `@Inherited` for AOT review. Unsupported types, default expressions and custom meta-annotations produce a diagnostic before any candidate is written. The slice accepts Apache, MIT and BSD source ports covered by the licence matrix. EPL source translation requires destination-package support.
 
+An annotation can use an enum that already maps to its destination D module. The CLI checks the field type and each default against the pinned manifest and uses the exact mapped D symbols for the enum and constants. It resolves fully qualified names, explicit Java type and static imports, and unambiguous on-demand imports from known manifest scopes. R15 enums require a separate translation.
+
 Public top-level enums with constants alone become D enums in Java declaration order. Constants with arguments or class bodies, enums with methods or fields, and enums that implement interfaces require their own rulebook translations.
 
 ## Verification

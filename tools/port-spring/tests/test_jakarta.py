@@ -51,6 +51,14 @@ def rejects(flint, args, diagnostic):
 
 
 def check_cli(flint, helper, cache, scratch):
+    basic = run(flint, *command(PROJECT, TAG, PACKAGE + ".Basic", helper, cache))
+    assert basic.returncode == 0, (basic.stdout, basic.stderr)
+    basic_output = json.loads(basic.stdout)
+    assert "    FetchType fetch = FetchType.EAGER;" in basic_output["source"], basic_output
+    assert not json.loads(basic_output["mapping"])["elements"], basic_output
+    rejects(flint, command(PROJECT, TAG, PACKAGE + ".Basic", helper, cache, "flint.example"),
+            "unsupported enum type outside destination module")
+
     args = command(PROJECT, TAG, PACKAGE + ".Entity", helper, cache)
     output_dir = scratch / "entity"
     first = run(flint, *args, "--output", output_dir)
@@ -83,7 +91,9 @@ def main():
     cache = opts.cache.resolve()
     manifest = json.loads((ROOT / f"api/upstream/{PROJECT}-{TAG}.json").read_text())
     mapping = json.loads((ROOT / "api/framework/mapping.json").read_text())["elements"]
-    hand = declarations(PORT.read_text())
+    hand_source = PORT.read_text()
+    hand = declarations(hand_source)
+    option_types = "\n".join(re.findall(r"^enum \w+\s*\{[^}]*\}", hand_source, flags=re.MULTILINE))
     annotations = [t for t in manifest["types"] if t["package"] == PACKAGE and t["kind"] == "annotation"]
     generated = []
     matched = 0
@@ -124,7 +134,8 @@ def main():
         scratch = Path(scratch)
         check_cli(flint, helper, cache, scratch)
         for name, source, _ in generated:
-            (scratch / f"{name}.d").write_text(source, encoding="utf-8")
+            # Same-module enum references are linked with the existing leaf's declarations.
+            (scratch / f"{name}.d").write_text(source + "\n" + option_types, encoding="utf-8")
         result = run(flint, "api", "headers", scratch)
         assert result.returncode == 0, (result.stdout, result.stderr)
         for compiler in ("dmd", "ldc2"):
