@@ -731,4 +731,7 @@ private enum CodeInfo[] generalCodes = [
     CodeInfo("FLINT-E1143", ExitCode.user, "a Jakarta PostLoad callback cannot be generated",
             "Use an accessible void instance method with no parameters on the entity, or one entity parameter "
             ~ "on a fieldless listener with an implicit constructor.", "@PostLoad void loaded() {}"),
+    CodeInfo("FLINT-E1160", ExitCode.user, "unsupported Thymeleaf text resource",
+            "Use a single div, p, or span with one th:text attribute, a bare model variable in its value, "
+            ~ "and a plain text body.", `<div th:text="${applicationName}">Old text</div>`),
 ];
