@@ -21,6 +21,7 @@
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationFilter.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationHandler.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationPredicate.java
+// Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationRegistry.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/ObservationView.java
 // Ported from micrometer-observation 1.18.0: io/micrometer/observation/SimpleEvent.java
 // Modified by the Flint authors.
@@ -581,5 +582,140 @@ interface ObservationHandler(T) if (isObservationContext!T)
         override void onStop(Context context)
         {
         }
+    }
+}
+
+private alias PredicateCallback = bool delegate(string, Observation.Context) @safe;
+private alias FilterCallback = Observation.Context delegate(Observation.Context) @safe;
+
+/// Configures registries that supply and manage observations.
+interface ObservationRegistry
+{
+    /// The ordered callbacks associated with an observation registry.
+    static class ObservationConfig
+    {
+        private Mutex gate;
+        private ObservationPredicate[] predicates;
+        private ObservationFilter[] filters;
+
+        /// Construct an empty registry configuration.
+        this()
+        {
+            gate = new Mutex;
+        }
+
+        /// Register a predicate after the predicates already configured.
+        ObservationConfig observationPredicate(ObservationPredicate predicate)
+        {
+            synchronized (gate)
+                predicates = predicates ~ predicate;
+            return this;
+        }
+
+        /// Retain a D delegate as a registry predicate (R9).
+        ObservationConfig observationPredicate(PredicateCallback predicate)
+        {
+            return observationPredicate(predicate is null ? null : new DelegateObservationPredicate(predicate));
+        }
+
+        /// Preserve Java's literal-null registration when selecting the predicate overload.
+        final ObservationConfig observationPredicate(typeof(null))
+        {
+            return observationPredicate(cast(ObservationPredicate) null);
+        }
+
+        /// Register a filter after the filters already configured.
+        ObservationConfig observationFilter(ObservationFilter filter)
+        {
+            synchronized (gate)
+                filters = filters ~ filter;
+            return this;
+        }
+
+        /// Retain a D delegate as a registry filter (R9).
+        ObservationConfig observationFilter(FilterCallback filter)
+        {
+            return observationFilter(filter is null ? null : new DelegateObservationFilter(filter));
+        }
+
+        /// Preserve Java's literal-null registration when selecting the filter overload.
+        final ObservationConfig observationFilter(typeof(null))
+        {
+            return observationFilter(cast(ObservationFilter) null);
+        }
+
+        package(flint.micrometer) bool isObservationEnabled(Nullable!string name, Observation.Context context)
+        {
+            ObservationPredicate[] snapshot;
+            synchronized (gate)
+                snapshot = predicates;
+
+            string callbackName;
+            if (!name.isNull)
+            {
+                const supplied = name.get();
+                callbackName = supplied is null ? "" : supplied;
+            }
+            foreach (predicate; snapshot)
+            {
+                if (predicate is null)
+                    throw new NullPointerException("observationPredicate");
+                if (!predicate.test(callbackName, context))
+                    return false;
+            }
+            return true;
+        }
+
+        package(flint.micrometer) ObservationFilterSnapshot getObservationFilters()
+        {
+            synchronized (gate)
+                return ObservationFilterSnapshot(filters);
+        }
+    }
+}
+
+// A reader can invoke a retained callback without changing the snapshot's membership.
+private struct ObservationFilterSnapshot
+{
+    private ObservationFilter[] filters;
+
+    @property size_t length() const nothrow @nogc
+    {
+        return filters.length;
+    }
+
+    inout(ObservationFilter) opIndex(size_t index) inout nothrow @nogc
+    {
+        return filters[index];
+    }
+}
+
+private final class DelegateObservationPredicate : ObservationPredicate
+{
+    private PredicateCallback callback;
+
+    this(PredicateCallback callback)
+    {
+        this.callback = callback;
+    }
+
+    override bool test(string name, Observation.Context context)
+    {
+        return callback(name, context);
+    }
+}
+
+private final class DelegateObservationFilter : ObservationFilter
+{
+    private FilterCallback callback;
+
+    this(FilterCallback callback)
+    {
+        this.callback = callback;
+    }
+
+    override Observation.Context map(Observation.Context context)
+    {
+        return callback(context);
     }
 }
