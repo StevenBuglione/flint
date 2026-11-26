@@ -78,7 +78,8 @@ unittest
     pairCopy.setProperty("errors", 30);
     pairCopy.setProperty("third", 3);
     assert(pair.getProperty("errors").get!int == 2 && pair.getPropertyNames().length == 2);
-    assert(pairCopy.getPropertyNames() == ["timestamp", "errors", "third"] && pairCopy.getProperty("errors").get!int == 30);
+    assert(pairCopy.getPropertyNames() == ["timestamp", "errors", "third"]);
+    assert(pairCopy.getProperty("errors").get!int == 30);
     assert(pair.toString().length != 0 && pairCopy.toString().length != 0);
 
     auto detail = ProblemDetail.forStatus(400);

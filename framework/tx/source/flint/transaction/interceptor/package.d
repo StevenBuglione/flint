@@ -584,8 +584,8 @@ final class DescriptorTransactionAttributeSource : TransactionAttributeSource
                 labels.add(label);
             rbta.setLabels(labels);
         }
-        if (attributes.rollbackFor.length || attributes.rollbackForClassName.length || attributes.noRollbackFor.length
-                || attributes.noRollbackForClassName.length)
+        if (attributes.rollbackFor.length || attributes.rollbackForClassName.length
+                || attributes.noRollbackFor.length || attributes.noRollbackForClassName.length)
         {
             auto rollbackRules = new ArrayList!RollbackRuleAttribute;
             foreach (rbRule; attributes.rollbackFor)

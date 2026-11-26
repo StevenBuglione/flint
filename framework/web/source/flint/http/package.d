@@ -2839,11 +2839,11 @@ class ProblemDetail
     /// Spring's protected `initToStringContent()`, for subclasses.
     protected string initToStringContent() const
     {
+        const propertiesPart = getPropertyNames().length == 0 ? "null" : propertiesText();
         return "type='" ~ (type is null
                 ? "null" : type.toString()) ~ "'" ~ ", title='" ~ nullText(getTitle()) ~ "'" ~ ", status=" ~ decimal(
                 getStatus()) ~ ", detail='" ~ nullText(getDetail()) ~ "'" ~ ", instance='" ~ (instance is null
-                ? "null" : instance.toString()) ~ "'" ~ ", properties='" ~ (getPropertyNames().length == 0
-                ? "null" : propertiesText()) ~ "'";
+                ? "null" : instance.toString()) ~ "'" ~ ", properties='" ~ propertiesPart ~ "'";
     }
 
     private string propertiesText() const

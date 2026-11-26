@@ -380,7 +380,8 @@ class MethodArgumentNotValidException : BindException, ErrorResponse
     mixin ErrorResponse.Defaults;
 
     private MethodParameter parameter;
-    private ProblemDetail body;
+    // Not `body`: dfmt reads `return body;` as D's contract keyword.
+    private ProblemDetail problemBody;
     /// The message, built by the first `getMessage()` (Spring builds it on demand: a handler that answers with
     /// the binding result never pays for the text).
     private string message_;
@@ -410,9 +411,9 @@ class MethodArgumentNotValidException : BindException, ErrorResponse
     /// instance after, so a handler that answers with its own problem (petclinic's advice) never pays for it.
     ProblemDetail getBody()
     {
-        if (body is null)
-            body = ProblemDetail.forStatusAndDetail(getStatusCode(), "Invalid request content.");
-        return body;
+        if (problemBody is null)
+            problemBody = ProblemDetail.forStatusAndDetail(getStatusCode(), "Invalid request content.");
+        return problemBody;
     }
 
     /// The method parameter that failed validation.
