@@ -1,7 +1,7 @@
-// Writes the golden file that framework/hibernate-validator/tests/regex_test.d compares line for line: each case's
+// Writes the golden file that framework/java-regex/tests/regex_test.d compares line for line: each case's
 // java.util.regex result on JDK 21, Pattern.compile(regex, flags).matcher(input).matches(), or "error" when the
 // pattern does not compile. Fields are tab-separated and escaped (backslash t, n, r and backslash, and backslash-u with four hex digits for other controls).
-//   javac GoldenRegex.java && java GoldenRegex regex.tsv
+//   java GoldenRegex.java regex.tsv matcher.tsv
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -242,5 +242,34 @@ public class GoldenRegex {
         c("(x+x+)+y", "xxxxxxxxxxy", "xxxxxxxxxx");
         Files.write(Path.of(args[0]), out, StandardCharsets.UTF_8);
         System.out.println(out.size() + " cases");
+        if (args.length > 1)
+            writeMatcherCases(Path.of(args[1]));
+    }
+
+    private static void writeMatcherCases(Path output) throws Exception {
+        // Each expression has a matching input and a non-matching input.
+        String[][] examples = {
+            {"[A-Z]{2}[0-9]+", "ZY17", "ZY"},
+            {"(m|mn)*end", "mnmmnend", "mnn"},
+            {"((red)|(blue))*done", "redbluereddone", "bluered"},
+            {"((ab|a)+)(bc|c)", "aabc", "baa"},
+            {"(((uv)|(w))*)(r(s))", "wuvwrs", "uvwr"},
+            {"(?:pre)(?<first>[a-z]+)([0-9]+)", "prelabel17", "pre17"},
+            {"(?=(q))(?:q)(z)?", "qz", "zz"},
+            {"\\((x)\\)", "(x)", "x"},
+            {"((((((k))))))", "k", "kk"},
+            {"(sun|moon|)(rise)", "rise", "sets"}
+        };
+        var cases = new ArrayList<String>();
+        for (String[] example : examples) {
+            Pattern pattern = Pattern.compile(example[0]);
+            for (int input = 1; input < example.length; ++input) {
+                var matcher = pattern.matcher(example[input]);
+                boolean matches = matcher.matches();
+                cases.add(matcher.pattern().pattern() + "\t" + example[input] + "\t"
+                    + matcher.groupCount() + "\t" + matches);
+            }
+        }
+        Files.write(output, cases, StandardCharsets.UTF_8);
     }
 }
