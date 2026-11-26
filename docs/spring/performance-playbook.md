@@ -635,6 +635,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Expose the formatter zone override through R5.** The nullable getter and clearing overload retain the direct ZoneId call path. On venus against `b968c7a11`, the Java module probe remained byte-identical in both stock LDC release profiles at 129,496 O3 and 122,144 Oz incremental loadable bytes. The DMD module probe measured 4,450 to 4,492 template instances against the existing 7,350 cap.
 
+- **Scan Locale variant components in order.** The tag renderer uses the same ASCII validation as the parser and starts an `x-lvariant` suffix at the first eligible legacy component. On venus against `a864057e6`, the Java module probe measured 129,496 O3 and 122,144 Oz incremental loadable bytes before and after the change with LDC 1.43.0. DMD template instances rose from 4,440 to 4,445 against the 7,350 cap.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:
