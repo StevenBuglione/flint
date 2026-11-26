@@ -383,6 +383,8 @@ The Spring Beans factory exception types reuse the existing `BeanCreationExcepti
 
 **Compare character windows through one code-unit scan.** CharBuffer compares unsigned remaining units across native and byte-backed storage, and hashes the same window backwards. Equality, ordering and mismatch share an allocation-free scan. The unchanged CharBuffer package probe on venus moved from 21,988 O3 and 20,020 Oz loadable bytes with 526 DMD instances to 23,932 and 21,964 bytes with 531. The enforced leaf moved from 22,068 O3 and 20,100 Oz bytes with 510 instances to 24,012 and 22,044 with 515. A scan indexing both validated byte windows gave identical O3 size and cost 8 more bytes at Oz, so the port reuses the scalar code-unit load. The ByteBuffer probes retained their linked sizes. Their two added DMD instances take the package to 561 and the enforced leaf to 558, within the existing 630 caps.
 
+**Keep the original character-buffer window when forming a subsequence.** Relative reads use the existing scalar load and bare bounds check. A subsequence allocates one user-visible view with the same capacity and storage, an independent cursor, and a fresh mark. Invalid endpoints use the shared stack formatter and Java's start/end diagnostic. The unchanged CharBuffer package probe on venus moved from 23,932 O3 and 21,964 Oz loadable bytes with 531 DMD instances to 24,612 and 22,652 with 534. The enforced leaf moved from 24,012 O3 and 22,044 Oz bytes with 515 instances to 24,692 and 22,732 with 516. Both ByteBuffer probes retain their linked sizes and template counts.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

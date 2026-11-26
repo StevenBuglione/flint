@@ -175,3 +175,19 @@ unittest
         }
     }
 }
+
+@("BasicChar.test character sequence windows")
+unittest
+{
+    wchar[] words = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    auto buffer = CharBuffer.wrap(words).position(2).limit(7);
+    assert(buffer.charAt(1) == 'd');
+    auto view = buffer.subSequence(1, 4);
+    assert(view.capacity() == buffer.capacity());
+    assert(view.position() == buffer.position() + 1 && view.limit() == buffer.position() + 4);
+    assert(view.charAt(0) == 'd' && view.charAt(1) == 'e' && view.charAt(2) == 'f');
+    buffer.position(4);
+    assert(buffer.charAt(1) == 'f');
+    auto end = buffer.subSequence(1, 3);
+    assert(end.charAt(0) == 'f' && end.charAt(1) == 'g');
+}

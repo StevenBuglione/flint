@@ -21,7 +21,8 @@
           "BasicChar.bulkPutArray",
           "BasicChar.absBulkPutArray",
           "BasicChar.bulkPutBuffer",
-          "BasicChar.test comparison"
+          "BasicChar.test comparison",
+          "BasicChar.test character sequence windows"
         ],
         "skipped": {
           "main": "Remaining families and cases require direct memory or the character sequence API. R26 also treats null arrays as empty."
@@ -41,7 +42,7 @@
     "java/nio/Buffer/CharAt.java": {
       "status": "deferred",
       "phase": "2",
-      "reason": "Requires typed buffers or typed binary access beyond this heap byte slice."
+      "reason": "The GPL-only test uses CharBuffer.wrap(CharSequence) with string backing. Original Flint tests cover array and heap byte-backed character access."
     },
     "java/nio/Buffer/Chars.java": {
       "status": "deferred",

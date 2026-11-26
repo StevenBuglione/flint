@@ -34,7 +34,7 @@ module flint.java.nio.charbuffer;
 import flint.engine.aot.any : Any;
 import flint.java.lang : Comparable, IllegalArgumentException, IndexOutOfBoundsException,
     JavaObject, NullPointerException, UnsupportedOperationException;
-import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkIndex, checkRange;
+import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkFromToIndex, checkIndex, checkRange;
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
 import flint.java.nio.byteorder : ByteOrder;
@@ -200,6 +200,29 @@ class CharBuffer : Buffer, Comparable!CharBuffer
     CharBuffer asReadOnlyBuffer() pure
     {
         return new CharBuffer(backing, origin, cursor, cast(ubyte)(storageFlags | readOnlyFlag));
+    }
+
+    final int length() const pure nothrow @nogc
+    {
+        return remaining();
+    }
+
+    final bool isEmpty() const pure nothrow @nogc
+    {
+        return !hasRemaining();
+    }
+
+    final wchar charAt(int index) const pure
+    {
+        checkIndex(index, 1, remaining());
+        return load(position() + index);
+    }
+
+    CharBuffer subSequence(int start, int end) pure
+    {
+        checkFromToIndex(start, end, remaining());
+        const int offset = position();
+        return new CharBuffer(backing, origin, BufferCursor(capacity(), offset + start, offset + end), storageFlags);
     }
 
     wchar get() pure

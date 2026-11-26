@@ -186,6 +186,22 @@ pragma(inline, false) private noreturn throwRangeError(int index, int count, int
     throw new IndexOutOfBoundsException(text[0 .. used].idup);
 }
 
+package(flint.java.nio) void checkFromToIndex(int start, int end, int limit) pure
+{
+    if (start < 0 || end < start || end > limit)
+        throwFromToIndexError(start, end, limit);
+}
+
+pragma(inline, false) private noreturn throwFromToIndexError(int start, int end, int limit) pure
+{
+    char[96] text;
+    size_t used;
+    appendField(text[], used, "Range [", start);
+    appendField(text[], used, ", ", end);
+    appendField(text[], used, ") out of bounds for length ", limit);
+    throw new IndexOutOfBoundsException(text[0 .. used].idup);
+}
+
 package(flint.java.nio) void checkIndex(int index, int width, int limit) pure
 {
     if (index < 0 || index > limit - width)
