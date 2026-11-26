@@ -3303,6 +3303,24 @@ struct Locale
         addCompatibilityExtensions();
     }
 
+    /// The locale with the specified language.
+    static Locale of(string language) pure nothrow
+    {
+        return Locale(language);
+    }
+
+    /// The locale with the specified language and country.
+    static Locale of(string language, string country) pure nothrow
+    {
+        return Locale(language, country);
+    }
+
+    /// The locale with the specified language, country and variant.
+    static Locale of(string language, string country, string variant) pure nothrow
+    {
+        return Locale(language, country, variant);
+    }
+
     static immutable Locale ROOT = Locale(""); ///
     static immutable Locale ENGLISH = Locale("en"); ///
     static immutable Locale FRENCH = Locale("fr"); ///
