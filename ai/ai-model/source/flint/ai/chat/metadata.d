@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/metadata/{ChatGenerationMetadata,EmptyRateLimit,FinishReasonCategory,RateLimit}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/metadata/{ChatGenerationMetadata,EmptyRateLimit,FinishReasonCategory,RateLimit,Usage}.java
 // Modified by the Flint authors.
 module flint.ai.chat.metadata;
 
 import flint.ai.model : ResultMetadata;
+import flint.engine.aot.any : Any;
 import flint.java.time : Duration;
 import std.typecons : Nullable;
 
 @safe:
 
-private alias LimitCount = Nullable!long;
+private alias LongCount = Nullable!long;
+private alias TokenCount = Nullable!int;
 private alias ResetTime = Nullable!Duration;
 
 /// A provider's request and token rate limits, balance, and time until reset.
@@ -32,19 +34,19 @@ private alias ResetTime = Nullable!Duration;
 interface RateLimit
 {
     /// Maximum number of requests allowed by the current limit.
-    LimitCount getRequestsLimit();
+    LongCount getRequestsLimit();
 
     /// Requests remaining before the limit is exhausted.
-    LimitCount getRequestsRemaining();
+    LongCount getRequestsRemaining();
 
     /// Time until the request limit resets.
     ResetTime getRequestsReset();
 
     /// Maximum number of tokens allowed by the current limit.
-    LimitCount getTokensLimit();
+    LongCount getTokensLimit();
 
     /// Tokens remaining before the limit is exhausted.
-    LimitCount getTokensRemaining();
+    LongCount getTokensRemaining();
 
     /// Time until the token limit resets.
     ResetTime getTokensReset();
@@ -58,14 +60,14 @@ class EmptyRateLimit : RateLimit
     {
     }
 
-    override LimitCount getRequestsLimit() pure nothrow @nogc
+    override LongCount getRequestsLimit() pure nothrow @nogc
     {
-        return LimitCount(0);
+        return LongCount(0);
     }
 
-    override LimitCount getRequestsRemaining() pure nothrow @nogc
+    override LongCount getRequestsRemaining() pure nothrow @nogc
     {
-        return LimitCount(0);
+        return LongCount(0);
     }
 
     override ResetTime getRequestsReset() pure nothrow @nogc
@@ -73,14 +75,14 @@ class EmptyRateLimit : RateLimit
         return ResetTime(Duration.ZERO);
     }
 
-    override LimitCount getTokensLimit() pure nothrow @nogc
+    override LongCount getTokensLimit() pure nothrow @nogc
     {
-        return LimitCount(0);
+        return LongCount(0);
     }
 
-    override LimitCount getTokensRemaining() pure nothrow @nogc
+    override LongCount getTokensRemaining() pure nothrow @nogc
     {
-        return LimitCount(0);
+        return LongCount(0);
     }
 
     override ResetTime getTokensReset() pure nothrow @nogc
@@ -183,6 +185,52 @@ interface ChatGenerationMetadata : ResultMetadata
             import flint.ai.chat.metadata : categorize;
 
             return categorize(getFinishReason());
+        }
+    }
+}
+
+/// The token counts and native provider usage for a model request.
+interface Usage
+{
+    /// Returns the prompt token count, when available (R5).
+    TokenCount getPromptTokens();
+
+    /// Returns the completion token count, when available (R5).
+    TokenCount getCompletionTokens();
+
+    /// Returns the total number of tokens used for the request.
+    int getTotalTokens();
+
+    /// Returns the provider's usage data. An empty Any represents absent data.
+    Any getNativeUsage();
+
+    /// Returns the number of tokens read from the prompt cache, when available (R5).
+    LongCount getCacheReadInputTokens();
+
+    /// Returns the number of tokens written to the prompt cache, when available (R5).
+    LongCount getCacheWriteInputTokens();
+
+    /// Computes the default total and leaves cache counts absent (R3).
+    mixin template Defaults()
+    {
+        import std.typecons : Nullable;
+
+        override int getTotalTokens()
+        {
+            const int prompt = getPromptTokens().get(0);
+            const int completion = getCompletionTokens().get(0);
+            // Adding as uint preserves Java's two's-complement overflow.
+            return cast(int)(cast(uint) prompt + cast(uint) completion);
+        }
+
+        override Nullable!long getCacheReadInputTokens() pure nothrow @nogc
+        {
+            return Nullable!long.init;
+        }
+
+        override Nullable!long getCacheWriteInputTokens() pure nothrow @nogc
+        {
+            return Nullable!long.init;
         }
     }
 }
