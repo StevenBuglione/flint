@@ -1,13 +1,101 @@
 {
   "schema": "flint.train-budget-relative/1",
-  "decision": "coordinator, 2026-11-26 08:45Z: not a re-baseline (raising a flint budget is the owner's). Main itself misses these gs-rest-service endpoints; until the fix-forward lands, the merge train fails a candidate on them only if it regresses past main's measured value by more than the tolerance. Main's own miss stays an open blocker. The fix commit deletes this file.",
-  "main": "a1e841e8fc02ae6dd793f4afd53795c4ce778cc4",
-  "blocker": "bisect: coordination/notes/gs-rest-bisect/bisect.log",
-  "measured": "flint budget --app gs-rest-service on posidon at main a1e841e8, 2026-11-26 08:3xZ: 'name with spaces and plus' median of 5; 'unknown parameter is ignored' a single run (its median of 5 was within budget)",
+  "decision": "coordinator, 2026-11-26 10:40Z (extends 08:45Z): not a re-baseline (raising a flint budget is the owner's). On posidon every gs-rest-service endpoint now measures about +0.4% over its 1b23b27a budget at every commit, the seed commit included (coordination/notes/gs-rest-bisect/summary.md). Until the cause is fixed or the owner re-baselines, the merge train fails a candidate on a gs-rest-service endpoint only if it regresses past main's measured median by more than that endpoint's tolerance. petclinic-rest keeps its absolute budgets. Remove this file with the fix or the re-baseline.",
+  "main": "4f581e3adf44b2bb58b627d06244fde53ebf9c0b",
+  "blocker": "gs-rest-service budget drift on posidon: coordination/notes/gs-rest-bisect/summary.md",
+  "measured": "flint budget --app gs-rest-service --repeat 5 (median) on posidon at main 4f581e3ad, 2026-11-26 10:35-10:43Z",
   "endpoints": {
     "gs-rest-service": {
-      "name with spaces and plus": {"main": 24097, "budget": 23968, "tolerance": 0.005},
-      "unknown parameter is ignored": {"main": 23304, "budget": 23142, "tolerance": 0.0063}
+      "default name": {
+        "main": 22778,
+        "budget": 22645,
+        "tolerance": 0.0084
+      },
+      "name parameter": {
+        "main": 23610,
+        "budget": 23477,
+        "tolerance": 0.0083
+      },
+      "percent-encoded UTF-8 name": {
+        "main": 23935,
+        "budget": 23851,
+        "tolerance": 0.0065
+      },
+      "name with spaces and plus": {
+        "main": 24121,
+        "budget": 23968,
+        "tolerance": 0.005
+      },
+      "empty name takes the default": {
+        "main": 23157,
+        "budget": 23073,
+        "tolerance": 0.0089
+      },
+      "repeated name parameter joins with a comma": {
+        "main": 24009,
+        "budget": 23856,
+        "tolerance": 0.0116
+      },
+      "JSON escaping": {
+        "main": 24741,
+        "budget": 24657,
+        "tolerance": 0.0083
+      },
+      "unknown parameter is ignored": {
+        "main": 23304,
+        "budget": 23142,
+        "tolerance": 0.0063
+      },
+      "Accept application/json": {
+        "main": 22917,
+        "budget": 22804,
+        "tolerance": 0.0064
+      },
+      "Accept application/xml is not acceptable": {
+        "main": 152403,
+        "budget": 151719,
+        "tolerance": 0.005
+      },
+      "HEAD reaches the handler": {
+        "main": 22669,
+        "budget": 22585,
+        "tolerance": 0.0065
+      },
+      "OPTIONS lists the allowed methods": {
+        "main": 45290,
+        "budget": 45184,
+        "tolerance": 0.005
+      },
+      "POST is not allowed": {
+        "main": 115731,
+        "budget": 115561,
+        "tolerance": 0.005
+      },
+      "DELETE is not allowed": {
+        "main": 111346,
+        "budget": 111188,
+        "tolerance": 0.005
+      },
+      "unknown path is a JSON 404": {
+        "main": 21814,
+        "budget": 21674,
+        "tolerance": 0.0088
+      },
+      "trailing slash does not match": {
+        "main": 48381,
+        "budget": 48197,
+        "tolerance": 0.005
+      },
+      "unknown path for a browser is the Whitelabel page": {
+        "main": 92627,
+        "budget": 92492,
+        "tolerance": 0.005
+      },
+      "counter after the errors": {
+        "main": 23665,
+        "budget": 23532,
+        "tolerance": 0.0062
+      }
     }
   }
 }
