@@ -14,6 +14,7 @@ module flint.engine.jpa.update;
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa.delete_row : DeletePlan, executeManagedDelete;
 import flint.engine.jpa.identity : EntityIdentity;
+import flint.engine.jpa.loaded_state : ManagedSnapshotSlot;
 import flint.engine.jpa.managed_entities : ManagedTarget, ManagedEntities;
 import flint.engine.jpa.mapping : AttributeKind, AttributeValue, EntityMapping, checkIdentifier;
 import flint.engine.jpa.parameter_binding : InsertPlan, ParameterBinding, ParameterBindingPlan,
@@ -467,7 +468,7 @@ private VersionResult executeWithRefresh(const ref UpdatePlan plan, Connection c
     scope (exit)
         slot.discard();
 
-    const result = executeStatement(plan, connection, target, key.identifier, nextRevision, captured);
+    const result = executeStatement(plan, connection, target, key.identifier, nextRevision, captured, slot);
     if (!result.ok)
         return result;
     if (entities.snapshotFor(target) is null || !slot.hasStaged())
@@ -491,8 +492,9 @@ private VersionResult refreshConflict() pure nothrow @nogc
     return VersionResult(VersionedUpdate.init, Error(Status.conflict, "managed entity retired during update"));
 }
 
-private VersionResult executeStatement(const ref UpdatePlan plan, Connection connection,
-        ManagedTarget target, long id, long nextRevision, const(AttributeValue)[] captured = null)
+private VersionResult executeStatement(const ref UpdatePlan plan, Connection connection, ManagedTarget target,
+        long id, long nextRevision, const(AttributeValue)[] captured = null,
+        scope const ManagedSnapshotSlot* staged = null)
 {
     auto statement = connection.prepareStatement(plan.sql);
     scope (exit)
@@ -507,6 +509,8 @@ private VersionResult executeStatement(const ref UpdatePlan plan, Connection con
         statement.setLong(plan.versions.next, nextRevision);
         statement.setLong(plan.versions.expected, target.loadedVersion);
     }
+    if (staged !is null && !staged.hasStaged())
+        return refreshConflict();
     const affected = statement.executeUpdate();
     if (affected == 0)
         return VersionResult(VersionedUpdate.init, Error(Status.conflict, "managed update predicate matched no row"));

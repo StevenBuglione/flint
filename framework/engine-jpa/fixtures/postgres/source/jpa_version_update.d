@@ -259,6 +259,8 @@ void verifyVersionedUpdate(DataSource dataSource, JdbcTemplate jdbc)
     connection.rollback();
     assertStored(connection, "Winner", 8);
     verifyUpdateCaptureRebind(connection, plan.value, rows.value);
+    verifyUpdateStatementRebind(connection, plan.value, rows.value, StatementRebind.binding);
+    verifyUpdateStatementRebind(connection, plan.value, rows.value, StatementRebind.close);
 }
 
 /// Runs real managed updates under Spring's bound JDBC transaction and completion callbacks.
@@ -830,9 +832,9 @@ void verifyManagedDeletes(DataSource dataSource, JdbcTemplate jdbc)
         assert(executeManagedDelete(planned.value, independent, managed, ownerKey).code == Status.invalidArgument);
     }
     assertStored(connection, "Outer", 11);
-    verifyDeleteRebind(connection, planned.value, read.value, DeleteRebind.identifier);
-    verifyDeleteRebind(connection, planned.value, read.value, DeleteRebind.binding);
-    verifyDeleteRebind(connection, planned.value, read.value, DeleteRebind.close);
+    verifyDeleteRebind(connection, planned.value, read.value, StatementRebind.identifier);
+    verifyDeleteRebind(connection, planned.value, read.value, StatementRebind.binding);
+    verifyDeleteRebind(connection, planned.value, read.value, StatementRebind.close);
 
     assert(executeManagedDelete(multiple.value, connection, managed, ownerKey).code == Status.ioError);
     assert(managed.find(ownerKey).value is owner);
@@ -940,20 +942,62 @@ private void verifyUpdateCaptureRebind(Connection connection, const ref UpdatePl
     assertStored(connection, "Winner", 8);
 }
 
-private enum DeleteRebind
+private void verifyUpdateStatementRebind(Connection connection, const ref UpdatePlan update,
+        const ref ManagedRowMaterializationPlan readPlan, StatementRebind phase)
+{
+    const plan = planLoadedSnapshot(&mapping);
+    assert(plan.ok);
+    auto context = new RebindContext(plan.value, true);
+    scope (exit)
+        context.managed.clear();
+    loadRows(readPlan, connection, context.managed);
+    auto owner = cast(VersionedOwner) context.managed.find(ownerKey).value;
+    assert(owner !is null);
+    const prior = context.managed.lazyHandle(ownerKey);
+    assert(prior.ok);
+
+    owner.name = "Attempted";
+    auto wrapping = new RebindingConnection(connection, context, phase);
+    uint[1] ordinals;
+    auto values = new AttributeValue[3];
+    const outcome = flushManagedUpdate(update, wrapping, context.managed, ownerKey, ordinals[], values);
+    assert(outcome.error.code == Status.conflict);
+    assert(context.managed.find(ownerKey).value is owner && owner.revision == 8);
+    assert(context.managed.resolveLazyOwner(prior.value).error.code == Status.notFound);
+    const dirty = context.managed.dirty(ownerKey, ordinals[]);
+    assert(dirty.ok && dirty.value == 0);
+    foreach (ref value; values)
+        assert(value.kind == AttributeKind.nullValue);
+
+    if (phase == StatementRebind.close)
+    {
+        assertStored(connection, "Attempted", 9);
+        connection.rollback();
+    }
+    assertStored(connection, "Winner", 8);
+
+    owner.name = "Retry";
+    const retried = flushManagedUpdate(update, connection, context.managed, ownerKey, ordinals[], values);
+    assert(retried.ok && retried.value.updated && owner.revision == 9);
+    assertStored(connection, "Retry", 9);
+    connection.rollback();
+    assertStored(connection, "Winner", 8);
+}
+
+private enum StatementRebind
 {
     identifier,
     binding,
     close,
 }
 
-private final class RebindingDeleteStatement : BlackHole!PreparedStatement
+private final class RebindingStatement : BlackHole!PreparedStatement
 {
     private PreparedStatement statement;
     private RebindContext attached;
-    private DeleteRebind phase;
+    private StatementRebind phase;
 
-    this(PreparedStatement statement, RebindContext attached, DeleteRebind phase)
+    this(PreparedStatement statement, RebindContext attached, StatementRebind phase)
     {
         this.statement = statement;
         this.attached = attached;
@@ -963,7 +1007,12 @@ private final class RebindingDeleteStatement : BlackHole!PreparedStatement
     override void setLong(int position, long value)
     {
         statement.setLong(position, value);
-        reattach(DeleteRebind.binding);
+        reattach(StatementRebind.binding);
+    }
+
+    override void setString(int position, string value)
+    {
+        statement.setString(position, value);
     }
 
     override int executeUpdate()
@@ -974,10 +1023,10 @@ private final class RebindingDeleteStatement : BlackHole!PreparedStatement
     override void close()
     {
         statement.close();
-        reattach(DeleteRebind.close);
+        reattach(StatementRebind.close);
     }
 
-    private void reattach(DeleteRebind current)
+    private void reattach(StatementRebind current)
     {
         if (phase == current && attached !is null)
         {
@@ -987,13 +1036,13 @@ private final class RebindingDeleteStatement : BlackHole!PreparedStatement
     }
 }
 
-private final class RebindingDeleteConnection : BlackHole!Connection
+private final class RebindingConnection : BlackHole!Connection
 {
     private Connection connection;
     private RebindContext attached;
-    private DeleteRebind phase;
+    private StatementRebind phase;
 
-    this(Connection connection, RebindContext attached, DeleteRebind phase)
+    this(Connection connection, RebindContext attached, StatementRebind phase)
     {
         this.connection = connection;
         this.attached = attached;
@@ -1007,12 +1056,12 @@ private final class RebindingDeleteConnection : BlackHole!Connection
 
     override PreparedStatement prepareStatement(string sql)
     {
-        return new RebindingDeleteStatement(connection.prepareStatement(sql), attached, phase);
+        return new RebindingStatement(connection.prepareStatement(sql), attached, phase);
     }
 }
 
 private void verifyDeleteRebind(Connection connection, const ref DeletePlan deletePlan,
-        const ref ManagedRowMaterializationPlan readPlan, DeleteRebind phase)
+        const ref ManagedRowMaterializationPlan readPlan, StatementRebind phase)
 {
     const loaded = planLoadedSnapshot(&mapping);
     assert(loaded.ok);
@@ -1026,14 +1075,14 @@ private void verifyDeleteRebind(Connection connection, const ref DeletePlan dele
     assert(prior.ok);
 
     auto deleting = connection;
-    if (phase == DeleteRebind.identifier)
+    if (phase == StatementRebind.identifier)
         owner.deleteRebind = context;
     else
-        deleting = new RebindingDeleteConnection(connection, context, phase);
+        deleting = new RebindingConnection(connection, context, phase);
     const before = GC.stats().allocatedInCurrentThread;
     const result = executeManagedDelete(deletePlan, deleting, context.managed, ownerKey);
     assert(result.code == Status.conflict, "rebound owner was deleted through an earlier attachment");
-    if (phase == DeleteRebind.identifier)
+    if (phase == StatementRebind.identifier)
         assert(GC.stats().allocatedInCurrentThread == before);
     assert(owner.deleteRebind is null);
     assert(context.managed.find(ownerKey).value is owner);
@@ -1041,7 +1090,7 @@ private void verifyDeleteRebind(Connection connection, const ref DeletePlan dele
     uint[1] dirtyOrdinals;
     const dirty = context.managed.dirty(ownerKey, dirtyOrdinals[]);
     assert(dirty.ok && dirty.value == 0);
-    if (phase == DeleteRebind.close)
+    if (phase == StatementRebind.close)
     {
         assertDeleteAbsent(connection);
         connection.rollback();
