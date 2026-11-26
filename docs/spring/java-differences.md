@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
-| boot | spring-boot@v4.2.0 | 44 | 83 | 2,133 | 13,343 |
+| boot | spring-boot@v4.2.0 | 44 | 97 | 2,133 | 13,329 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
 | framework | spring-framework@v7.1.0 | 3,555 | 1,447 | 4,870 | 29,962 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -747,6 +747,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage.Style#NORMAL` | `flint.boot.autoconfigure.condition_runtime.ConditionMessage.Style.NORMAL` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage.Style#QUOTE` | `flint.boot.autoconfigure.condition_runtime.ConditionMessage.Style.QUOTE` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage.Style#applyTo(Collection)` | `flint.boot.autoconfigure.condition_runtime.applyTo` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R10](api-mapping.md#r10-streams-and-collections), [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#<init>(boolean,ConditionMessage)` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.this` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#<init>(boolean,String)` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.this` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#equals(Object)` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.equals` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#getConditionMessage()` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.getConditionMessage` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#getMessage()` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.getMessage` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#hashCode()` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.hashCode` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#isMatch()` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.isMatch` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#match()` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.match` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#match(ConditionMessage)` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.match` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#match(String)` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.match` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#noMatch(ConditionMessage)` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.noMatch` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#noMatch(String)` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.noMatch` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionOutcome#toString()` | `flint.boot.autoconfigure.condition_runtime.ConditionOutcome.toString` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty#havingValue` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty.havingValue` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty#matchIfMissing` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty.matchIfMissing` | [R2](api-mapping.md#r2-annotations) |  |
@@ -9157,7 +9171,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.autoconfigure.aop | 2 | 0 |
 | org.springframework.boot.autoconfigure.availability | 2 | 0 |
 | org.springframework.boot.autoconfigure.cache | 11 | 0 |
-| org.springframework.boot.autoconfigure.condition | 121 | 0 |
+| org.springframework.boot.autoconfigure.condition | 107 | 0 |
 | org.springframework.boot.autoconfigure.container | 6 | 0 |
 | org.springframework.boot.autoconfigure.context | 34 | 0 |
 | org.springframework.boot.autoconfigure.data | 20 | 0 |

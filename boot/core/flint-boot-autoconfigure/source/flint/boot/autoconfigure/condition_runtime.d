@@ -1,4 +1,5 @@
 // Ported from spring-boot v4.2.0: core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/condition/ConditionMessage.java
+// with ConditionOutcome.java from the same directory.
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: split runtime APIs from the condition UDA leaf, and apply rulebook R4, R5, R7,
@@ -7,7 +8,7 @@ module flint.boot.autoconfigure.condition_runtime;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : simpleTypeName, typeNameOf;
-import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException, String, stringHashCode;
+import flint.java.lang : Boolean, IllegalArgumentException, JavaObject, NullPointerException, String, stringHashCode;
 import flint.java.util : ArrayList, Collection, RawCollection;
 import flint.java.util.formatter : formatJava;
 import std.typecons : Nullable;
@@ -316,4 +317,97 @@ private Any asArgument(T)(T value)
         return Any.init;
     else
         return Any.of(value);
+}
+
+/// The result of evaluating a Boot condition, with its diagnostic message.
+class ConditionOutcome
+{
+    private bool matched;
+    private ConditionMessage message;
+
+    /// Construct an outcome with literal message text.
+    this(bool matched, string message)
+    {
+        this(matched, ConditionMessage.of(message));
+    }
+
+    /// Construct an outcome with a message built for the condition.
+    this(bool matched, ConditionMessage message)
+    {
+        if (message is null)
+            throw new IllegalArgumentException("'message' must not be null");
+        this.matched = matched;
+        this.message = message;
+    }
+
+    /// A match without a message.
+    static ConditionOutcome match()
+    {
+        return match(ConditionMessage.empty());
+    }
+
+    /// A match with literal message text.
+    static ConditionOutcome match(string message)
+    {
+        return new ConditionOutcome(true, message);
+    }
+
+    /// A match with the supplied condition message.
+    static ConditionOutcome match(ConditionMessage message)
+    {
+        return new ConditionOutcome(true, message);
+    }
+
+    /// A non-match with literal message text.
+    static ConditionOutcome noMatch(string message)
+    {
+        return new ConditionOutcome(false, message);
+    }
+
+    /// A non-match with the supplied condition message.
+    static ConditionOutcome noMatch(ConditionMessage message)
+    {
+        return new ConditionOutcome(false, message);
+    }
+
+    /// Whether the condition matched.
+    bool isMatch()
+    {
+        return matched;
+    }
+
+    /// The message text, when present.
+    Nullable!string getMessage()
+    {
+        return message.isEmpty() ? Nullable!string.init : Nullable!string(message.toString());
+    }
+
+    /// The original condition message.
+    ConditionMessage getConditionMessage()
+    {
+        return message;
+    }
+
+    /// Compare the match flag and message with another outcome of the same class.
+    bool equals(Object other)
+    {
+        if (other is this)
+            return true;
+        auto that = cast(ConditionOutcome) other;
+        return that !is null && typeid(this) is typeid(that) && matched == that.matched && message.equals(that.message);
+    }
+
+    /// Combine the Java Boolean hash with the message hash.
+    int hashCode()
+    {
+        return 31 * Boolean.hashCode(matched) + message.hashCode();
+    }
+
+    /// The rendered condition message.
+    override string toString()
+    {
+        return message.toString();
+    }
+
+    mixin JavaObject;
 }
