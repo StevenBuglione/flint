@@ -15,10 +15,13 @@ import flint.engine.jpa.parameter_binding : ParameterBinding;
 import flint.engine.jpa.result_binding : ManagedRowMaterializationPlan, materializeManagedRow, planManagedResult;
 import flint.engine.jpa.snapshot : AttributeSnapshot;
 import flint.engine.jpa.update : VersionBindings, executeManagedUpdate, executeVersionedUpdate,
-    flushManagedUpdate, planUpdate;
+    UpdatePlan, flushManagedUpdate, planUpdate;
 import flint.java.sql : Connection, Types;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
+import flint.jdbc.datasource : ConnectionHolder, DataSourceTransactionManager, DataSourceUtils;
+import flint.transaction : TransactionDefinition, TransactionStatus, UnexpectedRollbackException;
+import flint.transaction.support : TransactionSynchronization, TransactionSynchronizationManager, TransactionTemplate;
 
 @safe:
 
@@ -71,10 +74,15 @@ private immutable EntityMapping mapping = EntityMapping(entityName: "VersionedOw
 ], construct: () => new VersionedOwner, isExactType: (scope const TypeInfo_Class candidate) => candidate is typeid(
             VersionedOwner), idOrdinals: [0], versionOrdinal: 2);
 
+private enum backendPid = "select pg_backend_pid()::bigint";
 private enum selectRows = "select version, name, id from jpa_version_probe order by id";
 private enum ownerKey = EntityIdentity(0, 1);
 private enum limitKey = EntityIdentity(0, 2);
 private enum updateRow = "update jpa_version_probe set version = ?, name = ? where version = ? and id = ?";
+private immutable ResultBinding[] projection = [
+    ResultBinding(2, 1), ResultBinding(1, 2), ResultBinding(0, 3)
+];
+private immutable ParameterBinding[] parameters = [ParameterBinding(1, 2)];
 
 private void assertStored(Connection connection, string name, long revision)
 {
@@ -113,10 +121,6 @@ void verifyVersionedUpdate(DataSource dataSource, JdbcTemplate jdbc)
 {
     jdbc.execute("create table jpa_version_probe (id bigint primary key, name text not null, version bigint not null)");
     jdbc.execute("insert into jpa_version_probe values (1, 'Original', 7), (2, 'Limit', 9223372036854775807)");
-    static immutable ResultBinding[] projection = [
-        ResultBinding(2, 1), ResultBinding(1, 2), ResultBinding(0, 3)
-    ];
-    static immutable ParameterBinding[] parameters = [ParameterBinding(1, 2)];
     const rows = planManagedResult(&mapping, projection, 0);
     const plan = planUpdate(&mapping, updateRow, parameters, 4, VersionBindings(1, 3));
     assert(rows.ok && plan.ok);
@@ -234,4 +238,315 @@ void verifyVersionedUpdate(DataSource dataSource, JdbcTemplate jdbc)
     assert(managed.find(ownerKey).error.code == Status.notFound);
     connection.rollback();
     assertStored(connection, "Winner", 8);
+}
+
+/// Runs real managed updates under Spring's bound JDBC transaction and completion callbacks.
+void verifyTransactionalUpdates(DataSource dataSource, JdbcTemplate jdbc, DataSourceTransactionManager manager)
+{
+    auto transaction = new TransactionTemplate(manager);
+    auto key = new Object;
+    verifyManagedCommit(dataSource, jdbc, transaction, key);
+    verifyManagedRollback(dataSource, transaction, key, true);
+    verifyManagedRollback(dataSource, transaction, key, false);
+    verifyManagedRequiresNew(dataSource, jdbc, manager, key);
+    verifyManagedSuppression(dataSource, jdbc, manager, key);
+}
+
+private void verifyManagedCommit(DataSource dataSource, JdbcTemplate jdbc, TransactionTemplate transaction, Object key)
+{
+    ManagedUpdateContext context;
+    transaction.executeWithoutResult((TransactionStatus status) {
+        assert(status.isNewTransaction());
+        context = new ManagedUpdateContext(dataSource, key);
+        assert(context.pid == jdbc.queryForObject!long(backendPid));
+        auto owner = context.owner();
+        owner.name = "AUTO";
+        context.flush();
+        assertStored(dataSource, "AUTO", 9);
+        assert(owner.revision == 9 && context.writes == 1);
+        context.flush();
+        assert(context.writes == 1);
+        owner.name = "Commit hook";
+    });
+    assert(context.writes == 2 && context.completion == TransactionSynchronization.STATUS_COMMITTED);
+    assertReleased(context, dataSource, key);
+    assertStored(dataSource, "Commit hook", 10);
+}
+
+private void verifyManagedRollback(DataSource dataSource, TransactionTemplate transaction, Object key, bool explicit)
+{
+    ManagedUpdateContext context;
+    bool failed;
+    try
+    {
+        transaction.executeWithoutResult((TransactionStatus status) {
+            context = new ManagedUpdateContext(dataSource, key);
+            auto owner = context.owner();
+            owner.name = "Before error";
+            context.flush();
+            assertStored(dataSource, "Before error", 11);
+            if (explicit)
+            {
+                owner.name = "Longer than the reserved snapshot bank";
+                try
+                {
+                    context.flush();
+                    assert(false, "snapshot staging must fail");
+                }
+                catch (ManagedFlushFailure failure)
+                {
+                    assert(failure.status == Status.outOfMemory);
+                }
+                assert(status.isRollbackOnly());
+            }
+            else
+            {
+                owner.name = "Commit error";
+                owner.rejectRevision = true;
+            }
+        });
+    }
+    catch (UnexpectedRollbackException failure)
+    {
+        assert(explicit);
+        failed = true;
+    }
+    catch (Exception failure)
+    {
+        assert(!explicit && failure.msg == "fixture rejects version write");
+        failed = true;
+    }
+    assert(failed && context.writes == 1);
+    assert(context.completion == TransactionSynchronization.STATUS_ROLLED_BACK);
+    assertReleased(context, dataSource, key);
+    assertStored(dataSource, "Commit hook", 10);
+}
+
+private void verifyManagedRequiresNew(DataSource dataSource, JdbcTemplate jdbc,
+        DataSourceTransactionManager manager, Object key)
+{
+    auto outer = new TransactionTemplate(manager);
+    auto inner = new TransactionTemplate(manager);
+    inner.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    ManagedUpdateContext outerContext;
+    ManagedUpdateContext innerContext;
+    outer.executeWithoutResult((TransactionStatus status) {
+        assert(status.isNewTransaction());
+        outerContext = new ManagedUpdateContext(dataSource, key);
+        auto owner = outerContext.owner();
+        owner.name = "Outer";
+        inner.executeWithoutResult((TransactionStatus nested) {
+            assert(!TransactionSynchronizationManager.hasResource(key));
+            innerContext = new ManagedUpdateContext(dataSource, key);
+            assert(innerContext.pid != outerContext.pid && innerContext.pid == jdbc.queryForObject!long(backendPid));
+            innerContext.owner().name = "Inner";
+            innerContext.flush();
+            assertStored(dataSource, "Inner", 11);
+            nested.setRollbackOnly();
+        });
+
+        assert(innerContext.completion == TransactionSynchronization.STATUS_ROLLED_BACK && innerContext.detached());
+        assert(TransactionSynchronizationManager.getResource(key) is outerContext);
+        assert(jdbc.queryForObject!long(backendPid) == outerContext.pid);
+        assert(owner.revision == 10 && owner.name == "Outer");
+        assertStored(dataSource, "Commit hook", 10);
+    });
+    assert(outerContext.writes == 1 && outerContext.completion == TransactionSynchronization.STATUS_COMMITTED);
+    assertReleased(outerContext, dataSource, key);
+    assertStored(dataSource, "Outer", 11);
+}
+
+private void verifyManagedSuppression(DataSource dataSource, JdbcTemplate jdbc,
+        DataSourceTransactionManager manager, Object key)
+{
+    auto readOnly = new TransactionTemplate(manager);
+    readOnly.setReadOnly(true);
+    auto supports = new TransactionTemplate(manager);
+    supports.setPropagationBehavior(TransactionDefinition.PROPAGATION_SUPPORTS);
+
+    foreach (transaction; [readOnly, supports])
+    {
+        ManagedUpdateContext context;
+        transaction.executeWithoutResult((TransactionStatus status) {
+            const physical = transaction is readOnly;
+            assert(status.isNewTransaction() == physical);
+            assert(TransactionSynchronizationManager.isActualTransactionActive() == physical);
+            context = new ManagedUpdateContext(dataSource, key);
+            assert(context.pid == jdbc.queryForObject!long(backendPid));
+            context.owner().name = "Suppressed";
+        });
+        assert(context.writes == 0 && context.completion == TransactionSynchronization.STATUS_COMMITTED);
+        if (transaction is supports)
+            assert(context.retiredBeforeConnectionRelease);
+        assertReleased(context, dataSource, key);
+        assertStored(dataSource, "Outer", 11);
+    }
+}
+
+private final class ManagedFlushFailure : Exception
+{
+    Status status;
+
+    this(Error error)
+    {
+        super(error.message);
+        status = error.code;
+    }
+}
+
+private final class ManagedUpdateContext : TransactionSynchronization
+{
+    private DataSource dataSource;
+    private Object key;
+    private ManagedEntities managed;
+    private UpdatePlan plan;
+    private AttributeValue[] values;
+    private bool retired;
+    long pid;
+    int writes;
+    int completion = -1;
+    bool retiredBeforeConnectionRelease;
+
+    this(DataSource dataSource, Object key)
+    {
+        this.dataSource = dataSource;
+        this.key = key;
+        const read = planManagedResult(&mapping, projection, 0);
+        const write = planUpdate(&mapping, updateRow, parameters, 4, VersionBindings(1, 3));
+        assert(read.ok && write.ok);
+        plan = write.value;
+        values = new AttributeValue[3];
+        auto fields = new AttributeSnapshot[6];
+        auto bytes = new ubyte[32];
+        ManagedSnapshotSlot[] slots = [
+            ManagedSnapshotSlot(fields[0 .. 3], bytes[0 .. 16], fields[3 .. 6], bytes[16 .. 32])
+        ];
+        Error error;
+        managed = ManagedEntities(new IdentitySlot[1], new Object[1], error, slots);
+        assert(error.code == Status.ok);
+
+        auto connection = DataSourceUtils.getConnection(dataSource);
+        scope (exit)
+            DataSourceUtils.releaseConnection(connection, dataSource);
+        pid = readBackendPid(connection);
+        loadRows(read.value, connection, managed);
+        TransactionSynchronizationManager.bindResource(key, this);
+        scope (failure)
+            TransactionSynchronizationManager.unbindResource(key);
+        TransactionSynchronizationManager.registerSynchronization(this);
+    }
+
+    VersionedOwner owner()
+    {
+        auto found = managed.find(ownerKey);
+        assert(found.ok);
+        return cast(VersionedOwner) found.value;
+    }
+
+    bool detached()
+    {
+        return managed.find(ownerKey).error.code == Status.notFound;
+    }
+
+    override int getOrder()
+    {
+        return DataSourceUtils.CONNECTION_SYNCHRONIZATION_ORDER - 100;
+    }
+
+    override void suspend()
+    {
+        assert(TransactionSynchronizationManager.unbindResource(key) is this);
+    }
+
+    override void resume()
+    {
+        TransactionSynchronizationManager.bindResource(key, this);
+    }
+
+    override void flush()
+    {
+        assert(TransactionSynchronizationManager.isActualTransactionActive());
+        try
+        {
+            flushPending();
+        }
+        catch (Exception failure)
+        {
+            auto holder = cast(ConnectionHolder) TransactionSynchronizationManager.getResource(cast(Object) dataSource);
+            assert(holder !is null);
+            holder.setRollbackOnly();
+            throw failure;
+        }
+    }
+
+    override void beforeCommit(bool readOnly)
+    {
+        if (!readOnly && TransactionSynchronizationManager.isActualTransactionActive())
+            flushPending();
+    }
+
+    override void beforeCompletion()
+    {
+        if (!TransactionSynchronizationManager.isActualTransactionActive())
+        {
+            retiredBeforeConnectionRelease = TransactionSynchronizationManager.hasResource(cast(Object) dataSource);
+            retire();
+        }
+    }
+
+    override void afterCompletion(int status)
+    {
+        completion = status;
+        if (!retired)
+            retire();
+    }
+
+    private void flushPending()
+    {
+        assert(TransactionSynchronizationManager.getResource(key) is this);
+        auto connection = DataSourceUtils.getConnection(dataSource);
+        scope (exit)
+            DataSourceUtils.releaseConnection(connection, dataSource);
+        auto holder = cast(ConnectionHolder) TransactionSynchronizationManager.getResource(cast(Object) dataSource);
+        assert(holder !is null && holder.getConnection() is connection);
+        uint[1] ordinals;
+        const outcome = flushManagedUpdate(plan, connection, managed, ownerKey, ordinals[], values);
+        if (!outcome.ok)
+            throw new ManagedFlushFailure(outcome.error);
+        writes += outcome.value.updated;
+    }
+
+    private void retire()
+    {
+        assert(TransactionSynchronizationManager.unbindResource(key) is this);
+        managed.clear();
+        retired = true;
+    }
+}
+
+private long readBackendPid(Connection connection)
+{
+    auto statement = connection.prepareStatement(backendPid);
+    scope (exit)
+        statement.close();
+    auto result = statement.executeQuery();
+    scope (exit)
+        result.close();
+    assert(result.next());
+    return result.getLong(1);
+}
+
+private void assertStored(DataSource dataSource, string name, long revision)
+{
+    auto connection = DataSourceUtils.getConnection(dataSource);
+    scope (exit)
+        DataSourceUtils.releaseConnection(connection, dataSource);
+    assertStored(connection, name, revision);
+}
+
+private void assertReleased(ManagedUpdateContext context, DataSource dataSource, Object key)
+{
+    assert(context.detached());
+    assert(!TransactionSynchronizationManager.hasResource(key));
+    assert(!TransactionSynchronizationManager.hasResource(cast(Object) dataSource));
 }
