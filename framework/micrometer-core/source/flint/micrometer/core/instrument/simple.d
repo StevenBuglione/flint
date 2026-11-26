@@ -137,21 +137,6 @@ unittest
     import flint.micrometer.core.instrument : MockClock, Tags;
     import std.exception : assertThrown;
 
-    static final class AdvanceClock : Runnable
-    {
-        private MockClock clock;
-
-        this(MockClock clock)
-        {
-            this.clock = clock;
-        }
-
-        override void run()
-        {
-            clock.add(10, TimeUnit.NANOSECONDS);
-        }
-    }
-
     // The successful 10 ns recording follows recordWithRunnable in the pinned Micrometer registry TCK.
     auto clock = new MockClock;
     auto id = new Meter.Id("myTimer", Tags.empty(), Nullable!string.init, Nullable!string.init, Meter.Type.TIMER);
@@ -183,6 +168,75 @@ unittest
 
     assertThrown!NullPointerException(timer.record(cast(Runnable) null));
     assert(timer.count() == 4 && timer.totalTime(TimeUnit.NANOSECONDS) == 30);
+}
+
+version (unittest)
+{
+    import flint.java.lang : Runnable;
+    import flint.micrometer.core.instrument : MockClock;
+
+    private final class AdvanceClock : Runnable
+    {
+        private MockClock clock;
+
+        this(MockClock clock)
+        {
+            this.clock = clock;
+        }
+
+        override void run()
+        {
+            clock.add(10, TimeUnit.NANOSECONDS);
+        }
+    }
+}
+
+@("a wrapped task records each invocation and propagates the original exception")
+unittest
+{
+    import core.memory : GC;
+    import flint.java.lang : IllegalStateException;
+    import flint.micrometer.core.instrument : Tags;
+
+    static void delegate() @safe wrapAdvance(Timer timer, MockClock clock)
+    {
+        long nextAmount = 3;
+        return timer.wrap(() { clock.add(nextAmount++, TimeUnit.NANOSECONDS); });
+    }
+
+    auto clock = new MockClock;
+    auto id = new Meter.Id("wrapped", Tags.empty(), Nullable!string.init, Nullable!string.init, Meter.Type.TIMER);
+    Timer timer = new CumulativeTimer(id, clock);
+    auto original = new AdvanceClock(clock);
+    auto wrapped = timer.wrap(original);
+    auto wrappedDelegate = wrapAdvance(timer, clock);
+    auto failure = new IllegalStateException("task failed");
+    void failAfterAdvancingClock()
+    {
+        clock.add(5, TimeUnit.NANOSECONDS);
+        throw failure;
+    }
+
+    auto wrappedFailure = timer.wrap(&failAfterAdvancingClock);
+    assert(timer.count() == 0 && clock.monotonicTime() == 1_000_000);
+
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    clock.add(100, TimeUnit.NANOSECONDS);
+    wrapped.run();
+    clock.add(100, TimeUnit.NANOSECONDS);
+    wrapped.run();
+    wrappedDelegate();
+    wrappedDelegate();
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 4 && timer.totalTime(TimeUnit.NANOSECONDS) == 27);
+
+    bool caught;
+    try
+        wrappedFailure();
+    catch (IllegalStateException error)
+        caught = error is failure;
+    assert(caught);
+    assert(timer.count() == 5 && timer.totalTime(TimeUnit.NANOSECONDS) == 32);
 }
 
 private final class CumulativeCounter : Counter

@@ -760,7 +760,7 @@
 "io.micrometer.core.instrument.Timer#start(MeterRegistry)":{"status":"ported","d":"flint.micrometer.core.instrument.Timer.start"},
 "io.micrometer.core.instrument.Timer#totalTime(TimeUnit)":{"status":"ported","d":"flint.micrometer.core.instrument.Timer.totalTime"},
 "io.micrometer.core.instrument.Timer#wrap(Callable)":{"status":"excluded","category":"deferred","phase":"2"},
-"io.micrometer.core.instrument.Timer#wrap(Runnable)":{"status":"excluded","category":"deferred","phase":"2"},
+"io.micrometer.core.instrument.Timer#wrap(Runnable)":{"status":"adapted","rules":["R3","R7","R9"],"d":"flint.micrometer.core.instrument.Timer.wrap"},
 "io.micrometer.core.instrument.Timer#wrap(Supplier)":{"status":"excluded","category":"deferred","phase":"2"},
 "io.micrometer.core.instrument.Timer.Builder":{"status":"adapted","rules":["R12","R13"],"d":"flint.micrometer.core.instrument.Timer.Builder"},
 "io.micrometer.core.instrument.Timer.Builder#description(String)":{"status":"adapted","rules":["R5","R12"],"d":"flint.micrometer.core.instrument.Timer.Builder.description"},

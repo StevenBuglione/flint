@@ -45,3 +45,16 @@ unittest
     assertThrown!NullPointerException(timer.record(cast(Runnable) null));
     assertThrown!NullPointerException(timer.record(cast(void delegate() @safe) null));
 }
+
+@("wrapping null defers the error until invocation")
+unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    registry.close();
+    auto timer = registry.timer("test");
+    auto wrapped = timer.wrap(cast(Runnable) null);
+    auto wrappedDelegate = timer.wrap(cast(void delegate() @safe) null);
+    assertThrown!NullPointerException(wrapped.run());
+    assertThrown!NullPointerException(wrappedDelegate());
+    assert(timer.count() == 0);
+}

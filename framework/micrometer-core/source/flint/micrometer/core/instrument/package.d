@@ -967,6 +967,12 @@ interface Timer : Meter
     /// Run and time a D delegate without retaining it (R9).
     void record(scope void delegate() @safe action);
 
+    /// Wrap a task to time each invocation.
+    Runnable wrap(Runnable action);
+
+    /// Return a reusable timed delegate that retains the action (R9).
+    void delegate() @safe wrap(void delegate() @safe action);
+
     /// The number of recorded events.
     long count() nothrow @nogc;
 
@@ -987,9 +993,15 @@ interface Timer : Meter
         return new TimerMeasurements(timer);
     }
 
-    /// Micrometer's default duration conversion, mean and live measurements (R3).
+    private static Runnable timedRunnable(Timer timer, Runnable action)
+    {
+        return new TimedRunnable(timer, action);
+    }
+
+    /// Micrometer's default duration conversion, wrappers, mean and live measurements (R3).
     mixin template Defaults(alias Measurements = MeasurementIterable, alias samples = timerMeasurements,
-            alias DurationType = Duration, alias Unit = TimeUnit, alias RunnableType = Runnable)
+            alias DurationType = Duration,
+            alias Unit = TimeUnit, alias RunnableType = Runnable, alias makeTimedRunnable = timedRunnable)
     {
         override void record(DurationType duration)
         {
@@ -1003,6 +1015,17 @@ interface Timer : Meter
             timer.record(action is null ? null : &action.run);
         }
 
+        override RunnableType wrap(RunnableType action)
+        {
+            return makeTimedRunnable(this, action);
+        }
+
+        override void delegate() @safe wrap(void delegate() @safe action)
+        {
+            Timer timer = this;
+            return () { timer.record(action); };
+        }
+
         override double mean(Unit unit) nothrow @nogc
         {
             Timer timer = this;
@@ -1014,6 +1037,23 @@ interface Timer : Meter
         {
             return samples(this);
         }
+    }
+}
+
+private final class TimedRunnable : Runnable
+{
+    private Timer timer;
+    private Runnable action;
+
+    this(Timer timer, Runnable action) nothrow @nogc
+    {
+        this.timer = timer;
+        this.action = action;
+    }
+
+    override void run()
+    {
+        timer.record(action);
     }
 }
 
