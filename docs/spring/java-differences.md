@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 202 | 348 | 0 | 15,246 |
 | boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,512 | 1,402 | 4,870 | 30,050 |
+| framework | spring-framework@v7.1.0 | 3,557 | 1,412 | 4,870 | 29,995 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2493,6 +2493,21 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.cache.concurrent.ConcurrentMapCacheManager#<init>(String...)` | `flint.cache.concurrent.ConcurrentMapCacheManager.this` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.cache.concurrent.ConcurrentMapCacheManager#getCacheNames()` | `flint.cache.concurrent.ConcurrentMapCacheManager.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.concurrent.ConcurrentMapCacheManager#setCacheNames(Collection)` | `flint.cache.concurrent.ConcurrentMapCacheManager.setCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+
+#### org.springframework.cache.interceptor
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.cache.interceptor.BasicOperation#getCacheNames()` | `flint.cache.interceptor.BasicOperation.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.interceptor.CacheOperation#equals(Object)` | `flint.cache.interceptor.CacheOperation.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.interceptor.CacheOperation#getCacheNames()` | `flint.cache.interceptor.CacheOperation.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.interceptor.CacheOperation#hashCode()` | `flint.cache.interceptor.CacheOperation.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.interceptor.CacheOperation.Builder#getCacheNames()` | `flint.cache.interceptor.CacheOperation.Builder.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.cache.interceptor.CacheOperation.Builder#setCacheNames(String...)` | `flint.cache.interceptor.CacheOperation.Builder.setCacheNames` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.cache.interceptor.CachePutOperation#getUnless()` | `flint.cache.interceptor.CachePutOperation.getUnless` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.cache.interceptor.CachePutOperation.Builder#setUnless(String)` | `flint.cache.interceptor.CachePutOperation.Builder.setUnless` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.cache.interceptor.CacheableOperation#getUnless()` | `flint.cache.interceptor.CacheableOperation.getUnless` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.cache.interceptor.CacheableOperation.Builder#setUnless(String)` | `flint.cache.interceptor.CacheableOperation.Builder.setUnless` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.cache.support
 
@@ -9683,7 +9698,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.cache.caffeine | 40 | 0 |
 | org.springframework.cache.concurrent | 22 | 0 |
 | org.springframework.cache.config | 9 | 0 |
-| org.springframework.cache.interceptor | 220 | 0 |
+| org.springframework.cache.interceptor | 165 | 0 |
 | org.springframework.cache.jcache | 34 | 0 |
 | org.springframework.cache.jcache.config | 14 | 0 |
 | org.springframework.cache.jcache.interceptor | 71 | 0 |
@@ -10531,6 +10546,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
 | framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,boolean,ExpressionFactory)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
 | framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(Set,Locale,LocaleResolver,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.springframework.cache.interceptor.CacheEvictOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |
+| framework | `org.springframework.cache.interceptor.CacheOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |
+| framework | `org.springframework.cache.interceptor.CachePutOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |
+| framework | `org.springframework.cache.interceptor.CacheableOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |
 | framework | `org.springframework.core.io.FileSystemResource#<init>(FileSystem,String)` | 2 | Requires the Java NIO FileSystem resource constructor. |
 | framework | `org.springframework.core.io.FileSystemResource#<init>(Path)` | 2 | Requires the Java NIO Path resource constructor. |
 | framework | `org.springframework.expression.EvaluationContext#getTypeConverter()` | 2 | Deferred until indexed assignment uses the context conversion strategy. See D-SPEL-5. |
