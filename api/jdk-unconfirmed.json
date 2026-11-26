@@ -472,8 +472,6 @@
   "java.util.Collections#sort(List)",
   "java.util.Collections#sort(List,Comparator)",
   "java.util.Collections#unmodifiableList(List)",
-  "java.util.Collections#unmodifiableMap(Map)",
-  "java.util.Collections#unmodifiableSet(Set)",
   "java.util.Comparator",
   "java.util.Comparator#compare(T,T)",
   "java.util.Comparator#comparing(Function)",
