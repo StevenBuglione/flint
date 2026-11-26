@@ -161,3 +161,49 @@ unittest
     assert(guard[] == [9, 9]);
     assert(view.get(null) is view && view.position() == 2);
 }
+
+@("Heap ByteBuffer bulk writes copy aliased storage and preserve cursor semantics")
+unittest
+{
+    byte[] storage = [0, 1, 2, 3, 4, 5, 6];
+    auto slice = ByteBuffer.wrap(storage, 1, 5).slice().position(2).mark();
+    assert(slice.put(storage, 2, 3) is slice);
+    assert(storage == [0, 1, 2, 2, 3, 4, 6]);
+    assert(slice.position() == 5 && slice.reset().position() == 2);
+
+    assert(slice.put(0, storage, 2, 3) is slice);
+    assert(storage == [0, 2, 2, 3, 3, 4, 6]);
+    assert(slice.position() == 2);
+    const byte[1] absolute = [8];
+    const byte[1] relative = [9];
+    assert(slice.put(3, absolute[]) is slice && storage[4] == 8);
+    assert(slice.position() == 2);
+    assert(slice.put(relative[]) is slice && storage[3] == 9);
+    assert(slice.position() == 3);
+    assert(slice.put(5, null) is slice && slice.position() == 3);
+    assert(slice.put(cast(const(byte)[]) null) is slice && slice.position() == 3);
+}
+
+@("Heap ByteBuffer bulk write failures preserve both views and backing bytes")
+unittest
+{
+    byte[] storage = [0, 1, 2, 3, 4];
+    auto slice = ByteBuffer.wrap(storage).limit(4).position(3).mark();
+    const byte[2] input = [7, 7];
+    rejectsMessage!IndexOutOfBoundsException(() { slice.put(input[], 1, 2); },
+            "Range [1, 1 + 2) out of bounds for length 2");
+    assertThrown!BufferOverflowException(slice.put(input[]));
+    rejectsMessage!IndexOutOfBoundsException(() { slice.put(3, input[], 1, 2); },
+            "Range [3, 3 + 2) out of bounds for length 4");
+    rejectsMessage!IndexOutOfBoundsException(() { slice.put(0, input[], 1, 2); },
+            "Range [1, 1 + 2) out of bounds for length 2");
+
+    auto readOnly = slice.asReadOnlyBuffer();
+    assertThrown!ReadOnlyBufferException(readOnly.put(input[], 1, 2));
+    assertThrown!ReadOnlyBufferException(readOnly.put(99, input[], 1, 2));
+    assertThrown!ReadOnlyBufferException(readOnly.put(cast(const(byte)[]) null));
+    assertThrown!ReadOnlyBufferException(readOnly.put(4, null));
+    assert(slice.position() == 3 && slice.reset().position() == 3);
+    assert(readOnly.position() == 3 && readOnly.reset().position() == 3);
+    assert(storage == [0, 1, 2, 3, 4]);
+}

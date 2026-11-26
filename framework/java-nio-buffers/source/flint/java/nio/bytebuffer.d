@@ -199,7 +199,7 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     byte get() pure
     {
         if (!hasRemaining())
-            throw new BufferUnderflowException;
+            throwUnderflow();
         const result = backing[origin + position()];
         advance(1);
         return result;
@@ -215,8 +215,8 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     {
         checkRange(offset, length, arraySize(target.length));
         if (length > remaining())
-            throw new BufferUnderflowException;
-        copyTo(position(), target[offset .. offset + length]);
+            throwUnderflow();
+        copyBytes(target, offset, backing, origin + position(), length);
         advance(length);
         return this;
     }
@@ -230,7 +230,7 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     {
         checkRange(index, length, limit());
         checkRange(offset, length, arraySize(target.length));
-        copyTo(index, target[offset .. offset + length]);
+        copyBytes(target, offset, backing, origin + index, length);
         return this;
     }
 
@@ -243,7 +243,7 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     {
         checkWritable();
         if (!hasRemaining())
-            throw new BufferOverflowException;
+            throwOverflow();
         backing[origin + position()] = value;
         advance(1);
         return this;
@@ -255,6 +255,36 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
         checkIndex(index, limit());
         backing[origin + index] = value;
         return this;
+    }
+
+    ByteBuffer put(scope const(byte)[] source, int offset, int length) pure
+    {
+        checkWritable();
+        checkRange(offset, length, arraySize(source.length));
+        if (length > remaining())
+            throwOverflow();
+        copyBytes(backing, origin + position(), source, offset, length);
+        advance(length);
+        return this;
+    }
+
+    final ByteBuffer put(scope const(byte)[] source) pure
+    {
+        return put(source, 0, arraySize(source.length));
+    }
+
+    ByteBuffer put(int index, scope const(byte)[] source, int offset, int length) pure
+    {
+        checkWritable();
+        checkRange(index, length, limit());
+        checkRange(offset, length, arraySize(source.length));
+        copyBytes(backing, origin + index, source, offset, length);
+        return this;
+    }
+
+    ByteBuffer put(int index, scope const(byte)[] source) pure
+    {
+        return put(index, source, 0, arraySize(source.length));
     }
 
     bool equals(Object other) pure nothrow @nogc
@@ -295,29 +325,6 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
         return summary(readOnly ? "java.nio.HeapByteBufferR" : "java.nio.HeapByteBuffer");
     }
 
-    pragma(inline, false) private void copyTo(int index, scope byte[] target) const pure nothrow @nogc
-    {
-        const start = origin + index;
-        const source = backing[start .. start + target.length];
-        if (target.length == 0 || target.ptr == source.ptr)
-            return;
-
-        if (target.ptr > source.ptr && target.ptr <= &source[$ - 1])
-        {
-            foreach_reverse (i, ref value; target)
-                value = source[i];
-        }
-        else if (source.ptr > target.ptr && source.ptr <= &target[$ - 1])
-        {
-            foreach (i, ref value; target)
-                value = source[i];
-        }
-        else
-        {
-            target[] = source[];
-        }
-    }
-
     private const(byte)[] remainingBytes() const pure nothrow @nogc
     {
         return backing[origin + position() .. origin + limit()];
@@ -326,9 +333,24 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     private void checkWritable() const pure
     {
         if (readOnly)
-            throw new ReadOnlyBufferException;
+            throwReadOnly();
     }
 
+}
+
+pragma(inline, false) private noreturn throwReadOnly() pure
+{
+    throw new ReadOnlyBufferException;
+}
+
+pragma(inline, false) private noreturn throwOverflow() pure
+{
+    throw new BufferOverflowException;
+}
+
+pragma(inline, false) private noreturn throwUnderflow() pure
+{
+    throw new BufferUnderflowException;
 }
 
 private byte[] allocateStorage(int capacity) pure nothrow
@@ -336,6 +358,30 @@ private byte[] allocateStorage(int capacity) pure nothrow
     // The erased Java array value distinguishes an empty backing array from null.
     auto bytes = new byte[capacity == 0 ? 1 : capacity];
     return bytes[0 .. capacity];
+}
+
+pragma(inline, false) private void copyBytes(scope byte[] target, int targetOffset,
+        scope const(byte)[] source, int sourceOffset, int length) pure nothrow @nogc
+{
+    target = target[targetOffset .. targetOffset + length];
+    source = source[sourceOffset .. sourceOffset + length];
+    if (target.length == 0 || target.ptr == source.ptr)
+        return;
+
+    if (target.ptr > source.ptr && target.ptr <= &source[$ - 1])
+    {
+        foreach_reverse (i, ref value; target)
+            value = source[i];
+    }
+    else if (source.ptr > target.ptr && source.ptr <= &target[$ - 1])
+    {
+        foreach (i, ref value; target)
+            value = source[i];
+    }
+    else
+    {
+        target[] = source[];
+    }
 }
 
 private int firstMismatch(scope const(byte)[] left, scope const(byte)[] right) pure nothrow @nogc
