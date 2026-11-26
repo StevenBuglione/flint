@@ -86,7 +86,8 @@
       "uri": {
         "data": [],
         "leaves": [
-          "flint.java.lang"
+          "flint.java.lang",
+          "flint.java.net.internal.ipv6literal"
         ],
         "source": "closure/uri.d"
       }
