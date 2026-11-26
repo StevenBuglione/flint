@@ -607,7 +607,22 @@ unittest
     assert(Locale("", "US").toString() == "_US" && Locale.ROOT.toLanguageTag() == "und");
     assert(Locale("de", "DE", "POSIX").toString() == "de_DE_POSIX");
     assert(Locale.forLanguageTag("en-US") == Locale.US && Locale.forLanguageTag("de") == Locale.GERMAN);
-    assert(Locale.forLanguageTag("und") == Locale.ROOT && Locale.forLanguageTag("zh-Hant-TW") == Locale("zh", "TW"));
+    assert(Locale.forLanguageTag("und") == Locale.ROOT);
+    const chineseScript = Locale.forLanguageTag("zh-hANT-TW");
+    assert(chineseScript.getScript() == "Hant" && chineseScript.toString() == "zh_TW_#Hant");
+    assert(chineseScript.toLanguageTag() == "zh-Hant-TW" && chineseScript != Locale("zh", "TW"));
+    assert(chineseScript == Locale.forLanguageTag("ZH-HANT-tw"));
+    assert(chineseScript.hashCode() == Locale.forLanguageTag("zh-Hant-TW").hashCode());
+    foreach (locale; [Locale.ROOT, Locale.ENGLISH, Locale.US, Locale.UK, Locale.CANADA])
+        assert(locale.getScript().length == 0);
+
+    assert(Locale.forLanguageTag("en-Latn").toString() == "en__#Latn");
+    assert(Locale.forLanguageTag("en-Latn-POSIX").toString() == "en__POSIX_#Latn");
+    assert(Locale.forLanguageTag("und-Latn-POSIX").toString() == "");
+    assert(Locale.forLanguageTag("und-Latn-US").toString() == "_US_#Latn");
+    assert(Locale.forLanguageTag("und-Latn-x-lvariant-ABC").toLanguageTag() == "und-Latn-x-lvariant-ABC");
+    assert(Locale.forLanguageTag("no-Latn-NO-x-lvariant-NY").toLanguageTag() == "nn-Latn-NO");
+    assert(Locale.forLanguageTag("en-L111-US").getScript().length == 0);
     assert(Locale.forLanguageTag("es-419").getCountry() == "419" && Locale.forLanguageTag("en_US") == Locale.ROOT);
     assert(Locale.forLanguageTag("de-DE-1996").getVariant() == "1996");
     assert(Locale.forLanguageTag("zh-CMN-yue-TW") == Locale("cmn", "TW"));

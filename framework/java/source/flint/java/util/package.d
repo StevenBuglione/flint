@@ -3259,9 +3259,9 @@ class Properties : LinkedHashMap!(string, string)
 // Locale
 
 /++
-Java's `Locale` (clean room, from the Java SE specification): a language, a country (region) and a variant,
-normalized as Java does (the language lower case, the country upper case). Like flint.java's `Charset`, it is a
-value type, so its constants are `static immutable`. `forLanguageTag` skips scripts and extensions and restores
+Java's `Locale` (clean room, from the Java SE specification): a language, a country (region), a variant and a script,
+normalized as Java does (the language lowercase, the country uppercase, and the script title case). Like flint.java's `Charset`, it is a
+value type, so its constants are `static immutable`. `forLanguageTag` reads scripts, skips extensions and restores
 legacy variants from `x-lvariant` private use. `getDefault` reads the POSIX locale
 (`LC_ALL`, then `LANG`) once per call; `setDefault` is not provided, because framework modules keep no mutable
 module state.
@@ -3278,6 +3278,7 @@ struct Locale
     private string language;
     private string country;
     private string variant;
+    private string script;
 
     /// A locale for `language`, `country` and `variant`.
     this(string language, string country = "", string variant = "") pure nothrow
@@ -3334,22 +3335,30 @@ struct Locale
         return variant;
     }
 
-    /// Equal language, country and variant.
+    /// The four-letter script in title case, or empty when absent.
+    string getScript() const pure nothrow @nogc
+    {
+        return script;
+    }
+
+    /// Equal language, country, variant and script.
     bool equals(const Locale other) const pure nothrow @nogc
     {
         return opEquals(other);
     }
 
-    /// Equal language, country and variant.
+    /// Equal language, country, variant and script.
     bool opEquals(const Locale other) const pure nothrow @nogc
     {
-        return language == other.language && country == other.country && variant == other.variant;
+        return language == other.language && country == other.country && variant == other.variant
+            && script == other.script;
     }
 
-    /// The hash of the language, country and variant.
+    /// The hash of the language, country, variant and script.
     size_t toHash() const pure nothrow
     {
-        return hashOf(variant, hashOf(country, hashOf(language)));
+        const base = hashOf(variant, hashOf(country, hashOf(language)));
+        return script.length ? hashOf(script, base) : base;
     }
 
     /// Java's `hashCode`.
@@ -3361,19 +3370,25 @@ struct Locale
     /// `language_COUNTRY_variant`, with an empty result when both language and country are absent.
     string toString() const pure nothrow
     {
-        if (!country.length && (!language.length || !variant.length))
+        if (!country.length && (!language.length || (!variant.length && !script.length)))
             return language;
         string result = language ~ "_" ~ country;
-        return variant.length ? result ~ "_" ~ variant : result;
+        if (variant.length)
+            result ~= "_" ~ variant;
+        if (script.length)
+            result ~= "_#" ~ script;
+        return result;
     }
 
     /// The BCP 47 tag for the language, region and variant.
     string toLanguageTag() const pure nothrow
     {
         if (language == "no" && country == "NO" && variant == "NY")
-            return "nn-NO";
+            return script.length ? "nn-" ~ script ~ "-NO" : "nn-NO";
 
         string tag = isAlpha(language, 2, 8) ? language : null;
+        if (script.length)
+            tag = tag.length ? tag ~ "-" ~ script : "und-" ~ script;
         if (isAlpha(country, 2, 2) || isDigits(country, 3))
             tag = tag.length ? tag ~ "-" ~ country : "und-" ~ country;
 
@@ -3420,7 +3435,7 @@ struct Locale
                 subtags ~= languageTag[start .. i];
                 start = i + 1;
             }
-        string lang, region;
+        string lang, region, parsedScript;
         size_t next;
         if (subtags.length && isAlpha(subtags[0], 2, 8))
         {
@@ -3436,10 +3451,21 @@ struct Locale
         else if (!subtags.length || !isPrivateUseSingleton(subtags[0]))
             return Locale.init;
         if (next < subtags.length && isAlpha(subtags[next], 4, 4))
-            next++; // script: not modeled
+            parsedScript = canonicalScript(subtags[next++]);
         if (next < subtags.length && (isAlpha(subtags[next], 2, 2) || isDigits(subtags[next], 3)))
             region = subtags[next++];
-        return Locale(lang, region, parseTagVariants(subtags[next .. $]));
+        Locale locale = Locale(lang, region, parseTagVariants(subtags[next .. $]));
+        locale.script = parsedScript;
+        return locale;
+    }
+
+    private static string canonicalScript(string subtag) pure nothrow
+    {
+        char[4] normalized;
+        normalized[0] = cast(char)(subtag[0] & 0xDF);
+        foreach (i; 1 .. normalized.length)
+            normalized[i] = cast(char)(subtag[i] | 0x20);
+        return subtag == normalized[] ? subtag : normalized[].idup;
     }
 
     private static string replaceGrandfatheredTag(string tag) pure nothrow @nogc
