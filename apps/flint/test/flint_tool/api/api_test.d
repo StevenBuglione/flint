@@ -758,6 +758,49 @@ unittest
     expect(statesLicence(spdx, jdk)).toEqual(true);
 }
 
+@("an OpenJDK JSR-166 port needs no Copyright line when it carries the exact JSR-166 public-domain notice")
+unittest
+{
+    import std.array : replicate, replace;
+    import flint_tool.api.headers : LicenceEntry, carriesJsr166Notice, checkHeader;
+
+    Upstream[] upstreams;
+    string error;
+    expect(parseUpstreams(`{"schema":"flint.api-upstreams/1","upstreams":[{"project":"openjdk","version":"21.0.13",`
+            ~ `"url":"u","sha256":"` ~ "a".replicate(64) ~ `","format":"tar.gz"}]}`, upstreams, error)).toEqual(true);
+    const jdk = LicenceEntry("openjdk", "GPL-2.0-only WITH Classpath-exception-2.0", "gpl-ce-module", "21.0.13");
+    enum oracle = "/*\n * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.\n *\n"
+        ~ " * This code is free software; you can redistribute it and/or modify it\n"
+        ~ " * under the terms of the GNU General Public License version 2 only, as\n"
+        ~ " * published by the Free Software Foundation.  Oracle designates this\n"
+        ~ " * particular file as subject to the \"Classpath\" exception as provided\n"
+        ~ " * by Oracle in the LICENSE file that accompanied this code.\n */\n\n";
+    enum jsr166 = "/*\n * This file is available under and governed by the GNU General Public\n"
+        ~ " * License version 2 only, as published by the Free Software Foundation.\n"
+        ~ " * However, the following notice accompanied the original version of this\n * file:\n *\n"
+        ~ " * Written by Doug Lea with assistance from members of JCP JSR-166\n"
+        ~ " * Expert Group and released to the public domain, as explained at\n"
+        ~ " * http://creativecommons.org/publicdomain/zero/1.0/\n */\n\n";
+    enum tail = "// Ported from openjdk 21.0.13: src/java.base/share/classes/java/util/concurrent/locks/Lock.java\n"
+        ~ "// Modified by the Flint authors.\nmodule flint.java.util.concurrent.locks.contracts;\n";
+    enum ce = "GPL-2.0-only WITH Classpath-exception-2.0";
+    expect(carriesJsr166Notice(oracle ~ jsr166 ~ tail)).toEqual(true);
+    expect(checkHeader("f.d", oracle ~ jsr166 ~ tail, upstreams, [jdk], ce).length).toEqual(0);
+    // Several authors are fine; the notice's words are not negotiable.
+    enum authors = jsr166.replace("Doug Lea with", "Doug Lea, Bill Scherer, and Michael Scott with");
+    expect(carriesJsr166Notice(oracle ~ authors ~ tail)).toEqual(true);
+    enum altered = jsr166.replace("released to the public domain", "released under a permissive licence");
+    expect(carriesJsr166Notice(oracle ~ altered ~ tail)).toEqual(false);
+    expect(checkHeader("f.d", oracle ~ altered ~ tail, upstreams, [jdk], ce).length).toEqual(1);
+    enum noPreamble = jsr166.replace("This file is available under", "This file is offered under");
+    expect(carriesJsr166Notice(oracle ~ noPreamble ~ tail)).toEqual(false);
+    // Without the JSR-166 notice the Copyright line is still required.
+    expect(checkHeader("f.d", oracle ~ tail, upstreams, [jdk], ce).length).toEqual(1);
+    // Only OpenJDK ports get the exception.
+    const other = LicenceEntry("openjdk", "Apache-2.0", "port-source", "21.0.13");
+    expect(checkHeader("f.d", oracle ~ jsr166 ~ tail, upstreams, [other], "Apache-2.0").length > 0).toEqual(true);
+}
+
 @("upstream header forms: a project named in a URL, the Apache licence by name, an upstream's own header line")
 unittest
 {

@@ -40,6 +40,11 @@ class JdkCoverageTest(unittest.TestCase):
                                                     {'name': 'b', 'deco': 'i'}]}
         self.assertTrue(jdk_coverage.accepts(utf16, member('parseHex(char[],int,int)', ['char[] c', 'int a', 'int b'])))
         self.assertFalse(jdk_coverage.accepts(get, member('get(int[])', ['int[] index'])))
+        # A Throwable is not the string message parameter (sol-test, IOException).
+        io = {'kind': 'constructor', 'parameters': [{'name': 'message', 'deco': 'Aya', 'default': 'null'},
+                                                    {'name': 'cause', 'deco': 'C6object9Throwable', 'default': 'null'}]}
+        self.assertFalse(jdk_coverage.accepts(io, member('<init>(Throwable)', ['Throwable cause'], kind='constructor')))
+        self.assertTrue(jdk_coverage.accepts(io, member('<init>(String)', ['String message'], kind='constructor')))
         templated = {'kind': 'function', 'parameters': [{'name': 'value', 'type': 'T'}]}
         self.assertTrue(jdk_coverage.accepts(templated, member('of(E)', ['E value'])))
 

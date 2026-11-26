@@ -325,7 +325,8 @@ private string[] contentProblems(string header, const ref LicenceEntry entry, st
     if (entry.tag != version_)
         problems ~= "policy/upstream-licences.json pins " ~ entry.name ~ " at `" ~ entry.tag ~ "`, not " ~ version_;
     const copyright = entry.header.length ? entry.header : "Copyright";
-    if (header.indexOf(copyright) < 0)
+    const jsr166 = entry.use == "gpl-ce-module" && !entry.header.length && carriesJsr166Notice(header);
+    if (header.indexOf(copyright) < 0 && !jsr166)
         problems ~= "the header lacks the upstream copyright line" ~ (entry.header.length ? ": " ~ entry.header : "");
     if (!statesLicence(header, entry))
         problems ~= "the header lacks the licence line (" ~ line
@@ -399,6 +400,54 @@ private bool statesGplClasspath(string text)
     const classpath = text.indexOf("\"Classpath\" exception") >= 0
         || text.indexOf("Classpath Exception") >= 0 || text.indexOf("Classpath-exception-2.0") >= 0;
     return gpl2 && classpath;
+}
+
+/// Whether an OpenJDK port's header carries the standard JSR-166 public-domain notice, word for word: OpenJDK's
+/// "available under and governed by" preamble, then "Written by <authors> with assistance from members of JCP JSR-166
+/// Expert Group and released to the public domain" and the CC0 URL. java.util.concurrent's JSR-166 files have no
+/// Copyright line, so this notice stands in for one (coordinator licence ruling, 2026-11-26 16:36Z). Nothing looser
+/// matches: comment markers and line breaks are the only differences allowed.
+bool carriesJsr166Notice(string header)
+{
+    import std.string : indexOf;
+
+    enum preamble = "This file is available under and governed by the GNU General Public License version 2 only, as "
+        ~ "published by the Free Software Foundation. However, the following notice accompanied the original version "
+        ~ "of this file:";
+    enum notice = " with assistance from members of JCP JSR-166 Expert Group and released to the public domain, as "
+        ~ "explained at http://creativecommons.org/publicdomain/zero/1.0/";
+    const text = commentText(header);
+    const opening = text.indexOf(preamble);
+    const written = opening < 0 ? -1 : text.indexOf("Written by ", opening + preamble.length);
+    const released = written < 0 ? -1 : text.indexOf(notice, written);
+    return released > written && written >= 0 && text[opening + preamble.length .. written] == " ";
+}
+
+/// A comment block's words on one line: each line's comment markers (`/*`, `*/`, `*`, `//`) removed, the lines
+/// joined with single spaces.
+private string commentText(string header)
+{
+    import std.algorithm.searching : startsWith, endsWith;
+    import std.string : lineSplitter, strip;
+
+    string joined;
+    foreach (raw; header.lineSplitter)
+    {
+        auto line = raw.strip;
+        foreach (marker; ["/*", "//", "*"])
+        {
+            if (line.startsWith(marker))
+            {
+                line = line[marker.length .. $].strip;
+                break;
+            }
+        }
+        if (line.endsWith("*/"))
+            line = line[0 .. $ - 2].strip;
+        if (line.length)
+            joined ~= (joined.length ? " " : "") ~ line;
+    }
+    return collapseSpaces(joined);
 }
 
 private string collapseSpaces(string text)

@@ -66,6 +66,14 @@ OWNERS = {
     'java.net': 'sol-web', 'java.util.zip': 'sol-jpa',
     'java.security': 'sol-security', 'java.security.spec': 'sol-security', 'java.security.interfaces': 'sol-security',
     'javax.crypto': 'sol-security', 'javax.crypto.spec': 'sol-security',
+    # Packages added after the reconciliation (coordinator, 2026-11-26 16:40Z, c9b6e8ac6).
+    'java.lang.annotation': 'sol-framework', 'java.lang.ref': 'sol-boot', 'javax.sql': 'sol-data',
+    'java.nio.channels': 'sol-jackson', 'java.util.jar': 'sol-jpa',
+    'java.security.cert': 'sol-security', 'javax.security.auth.x500': 'sol-security', 'javax.net': 'sol-security',
+    'javax.net.ssl': 'sol-security', 'javax.security.auth': 'sol-security',
+    'javax.security.auth.callback': 'sol-security', 'javax.security.auth.login': 'sol-security',
+    'javax.security.auth.spi': 'sol-security', 'javax.security.cert': 'sol-security',
+    'javax.crypto.interfaces': 'sol-security',
 }
 OWNER_PREFIXES = {'java.time': 'sol-jdk-time-text'}
 # Java types a rule maps (rulebook docs/spring/api-mapping.md), for an adapted member's rules. Collections, streams
@@ -211,9 +219,12 @@ def compatible(java, d_param):
         return compatible(element, {'deco': array.group(1)})
     if java in JAVA_PRIMITIVES:
         return bool(primitive) and primitive.group(1) in JAVA_PRIMITIVES[java]
+    text = bool(re.fullmatch(r'[xyO]*A[xyO]*[auw]', deco))
     if java == 'String':
-        return bool(re.fullmatch(r'[xyO]*A[xyO]*a', deco)) or deco.startswith('S')
-    return not primitive
+        return text or deco.startswith('S')
+    # A D string parameter is the String/CharSequence overload: IOException(string message = null, ...) is not
+    # IOException(Throwable) (sol-test's find).
+    return not primitive and (not text or java == 'CharSequence')
 
 
 def accepts(function, member):
@@ -426,6 +437,9 @@ def coverage(root, manifest, leaf):
 def owner_of(package):
     if package in OWNERS:
         return OWNERS[package]
+    if package.endswith('.spi'):
+        # Every *.spi package goes to the owner of its parent package (c9b6e8ac6).
+        return owner_of(package[:-len('.spi')])
     return next((o for p, o in OWNER_PREFIXES.items() if package == p or package.startswith(p + '.')), '')
 
 

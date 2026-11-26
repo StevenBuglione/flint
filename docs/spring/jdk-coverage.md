@@ -8,17 +8,26 @@ Overall: types 142/1307 (11%), members 1156/15237 (8%).
 |---|---|---|---|---|---|---|
 | `java.io` | sol-test | 14 / 69 | 82 / 734 | 11% | 86 | 1 |
 | `java.lang` | sol-framework, sol-boot, sol-jdk-math-regex (Character) | 15 / 118 | 24 / 1937 | 1% | 37 |  |
+| `java.lang.annotation` | sol-framework | 0 / 12 | 0 / 31 | 0% |  |  |
+| `java.lang.ref` | sol-boot | 0 / 7 | 0 / 22 | 0% |  |  |
 | `java.math` | sol-jdk-math-regex | 2 / 4 | 38 / 173 | 22% | 1 |  |
 | `java.net` | sol-web | 0 / 66 | 0 / 755 | 0% |  |  |
+| `java.net.spi` | sol-web | 0 / 5 | 0 / 14 | 0% |  |  |
 | `java.nio` | sol-jackson | 0 / 14 | 0 / 363 | 0% |  |  |
+| `java.nio.channels` | sol-jackson | 0 / 56 | 0 / 276 | 0% |  |  |
+| `java.nio.channels.spi` | sol-jackson | 0 / 6 | 0 / 47 | 0% |  |  |
 | `java.nio.charset` | sol-jackson | 3 / 12 | 9 / 103 | 9% | 12 |  |
+| `java.nio.charset.spi` | sol-jackson | 0 / 1 | 0 / 3 | 0% |  |  |
 | `java.nio.file` | sol-data | 0 / 47 | 0 / 238 | 0% |  |  |
 | `java.nio.file.attribute` | sol-data | 0 / 25 | 0 / 112 | 0% |  |  |
+| `java.nio.file.spi` | sol-data | 0 / 2 | 0 / 33 | 0% |  |  |
 | `java.security` | sol-security | 0 / 83 | 0 / 580 | 0% |  |  |
+| `java.security.cert` | sol-security | 0 / 52 | 0 / 408 | 0% |  |  |
 | `java.security.interfaces` | sol-security | 0 / 19 | 0 / 42 | 0% |  |  |
 | `java.security.spec` | sol-security | 0 / 35 | 0 / 166 | 0% |  |  |
 | `java.sql` | sol-data | 27 / 55 | 259 / 1236 | 21% | 286 |  |
 | `java.text` | sol-template | 5 / 32 | 30 / 518 | 6% | 29 |  |
+| `java.text.spi` | sol-template | 0 / 6 | 0 / 21 | 0% |  |  |
 | `java.time` | sol-jdk-time-text | 7 / 19 | 114 / 786 | 15% | 24 | 4 |
 | `java.time.chrono` | sol-jdk-time-text | 0 / 21 | 0 / 384 | 0% |  |  |
 | `java.time.format` | sol-jdk-time-text | 2 / 8 | 9 / 133 | 7% | 11 |  |
@@ -29,33 +38,24 @@ Overall: types 142/1307 (11%), members 1156/15237 (8%).
 | `java.util.concurrent.atomic` | sol-observability | 3 / 16 | 41 / 319 | 13% |  |  |
 | `java.util.concurrent.locks` | sol-observability | 0 / 14 | 0 / 201 | 0% |  |  |
 | `java.util.function` | sol-context | 16 / 43 | 22 / 79 | 28% | 34 |  |
+| `java.util.jar` | sol-jpa | 0 / 8 | 0 / 93 | 0% |  |  |
 | `java.util.random` | sol-jdk-math-regex | 0 / 7 | 0 / 89 | 0% |  |  |
 | `java.util.regex` | sol-jdk-math-regex | 3 / 4 | 24 / 82 | 29% | 3 |  |
+| `java.util.spi` | sol-jdk-core, sol-ai, sol-aop, sol-jdk-math-regex, sol-jdk-time-text (Locale) | 0 / 10 | 0 / 33 | 0% |  |  |
 | `java.util.stream` | sol-context | 1 / 16 | 0 / 272 | 0% | 1 |  |
 | `java.util.zip` | sol-jpa | 0 / 21 | 0 / 237 | 0% |  |  |
 | `javax.crypto` | sol-security | 0 / 32 | 0 / 247 | 0% |  |  |
+| `javax.crypto.interfaces` | sol-security | 0 / 4 | 0 / 9 | 0% |  |  |
 | `javax.crypto.spec` | sol-security | 0 / 17 | 0 / 84 | 0% |  |  |
-| `java.lang.annotation` | (none yet) | 0 / 12 | 0 / 31 | 0% |  |  |
-| `java.lang.ref` | (none yet) | 0 / 7 | 0 / 22 | 0% |  |  |
-| `java.net.spi` | (none yet) | 0 / 5 | 0 / 14 | 0% |  |  |
-| `java.nio.channels` | (none yet) | 0 / 56 | 0 / 276 | 0% |  |  |
-| `java.nio.channels.spi` | (none yet) | 0 / 6 | 0 / 47 | 0% |  |  |
-| `java.nio.charset.spi` | (none yet) | 0 / 1 | 0 / 3 | 0% |  |  |
-| `java.nio.file.spi` | (none yet) | 0 / 2 | 0 / 33 | 0% |  |  |
-| `java.security.cert` | (none yet) | 0 / 52 | 0 / 408 | 0% |  |  |
-| `java.text.spi` | (none yet) | 0 / 6 | 0 / 21 | 0% |  |  |
-| `java.util.jar` | (none yet) | 0 / 8 | 0 / 93 | 0% |  |  |
-| `java.util.spi` | (none yet) | 0 / 10 | 0 / 33 | 0% |  |  |
-| `javax.crypto.interfaces` | (none yet) | 0 / 4 | 0 / 9 | 0% |  |  |
-| `javax.net` | (none yet) | 0 / 2 | 0 / 13 | 0% |  |  |
-| `javax.net.ssl` | (none yet) | 0 / 43 | 0 / 319 | 0% |  |  |
-| `javax.security.auth` | (none yet) | 0 / 8 | 0 / 41 | 0% |  |  |
-| `javax.security.auth.callback` | (none yet) | 0 / 10 | 0 / 61 | 0% |  |  |
-| `javax.security.auth.login` | (none yet) | 0 / 15 | 0 / 49 | 0% |  |  |
-| `javax.security.auth.spi` | (none yet) | 0 / 1 | 0 / 5 | 0% |  |  |
-| `javax.security.auth.x500` | (none yet) | 0 / 2 | 0 / 21 | 0% |  |  |
-| `javax.security.cert` | (none yet) | 0 / 7 | 0 / 32 | 0% |  |  |
-| `javax.sql` | (none yet) | 2 / 19 | 4 / 198 | 2% | 6 |  |
+| `javax.net` | sol-security | 0 / 2 | 0 / 13 | 0% |  |  |
+| `javax.net.ssl` | sol-security | 0 / 43 | 0 / 319 | 0% |  |  |
+| `javax.security.auth` | sol-security | 0 / 8 | 0 / 41 | 0% |  |  |
+| `javax.security.auth.callback` | sol-security | 0 / 10 | 0 / 61 | 0% |  |  |
+| `javax.security.auth.login` | sol-security | 0 / 15 | 0 / 49 | 0% |  |  |
+| `javax.security.auth.spi` | sol-security | 0 / 1 | 0 / 5 | 0% |  |  |
+| `javax.security.auth.x500` | sol-security | 0 / 2 | 0 / 21 | 0% |  |  |
+| `javax.security.cert` | sol-security | 0 / 7 | 0 / 32 | 0% |  |  |
+| `javax.sql` | sol-data | 2 / 19 | 4 / 198 | 2% | 6 |  |
 
 ## Types that exist only in a leaf module
 
