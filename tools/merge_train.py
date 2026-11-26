@@ -71,6 +71,11 @@ UNION_FILES = ('docs/spring/performance-playbook.md', 'docs/spring/phase1/decisi
 GENERATED_FILES = ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md',
                    # tools/api_differences.py --write regenerates the JDK table too (api-coverage, 8cad51c23).
                    'docs/spring/jdk-coverage.md')
+# Shrink-only ID lists and ratchets that every lane edits (a JDK lane removes the ids it confirms from
+# api/jdk-unconfirmed.json). Adjacent removals conflict line by line, so the train merges them three-way as sets
+# (merge_sets; coordinator, 2026-11-26).
+SET_FILES = ('api/jdk-unconfirmed.json', 'api/kind-baseline.json', 'api/dependency-baseline.json',
+             'api/jdk-leaf-types.json')
 # Files the regeneration may also rewrite; staged with the pages so `rebase --continue` does not stop on them (sol-web).
 # Both ratchets shrink on --write.
 REGENERATED_ALSO = ('api/dependency-baseline.json', 'api/kind-baseline.json')
@@ -78,6 +83,50 @@ REGENERATED_ALSO = ('api/dependency-baseline.json', 'api/kind-baseline.json')
 # (S-32 five times, coordinator 2026-11-26 15:00Z); the train merges such a row three-way by its ID instead.
 ROW_FILES = ('docs/spring/performance-playbook.md',)
 ROW_ID = re.compile(r'^\| ([RBSD]-[0-9A-Z-]+) \|', re.M)
+
+
+class SetConflict(ValueError):
+    """Both sides of a JSON set file changed one entry incompatibly."""
+
+
+_ABSENT = object()
+
+
+def merge_sets(base, ours, theirs, where='$'):
+    """Three-way merge of a JSON value whose lists are sets and whose objects are keyed entries: an id or key survives
+    unless either side removed it, and anything either side added is kept. A scalar changed on one side takes that
+    side; changed differently on both sides, or changed on one side and removed on the other, raises SetConflict.
+    Lists come back sorted and nested objects with sorted keys, so the result doesn't depend on which side was first."""
+    if all(isinstance(v, dict) or v is _ABSENT for v in (base, ours, theirs)):
+        b, o, t = (v if isinstance(v, dict) else {} for v in (base, ours, theirs))
+        keys = [k for k in o if k in t or k not in b] + [k for k in t if k not in o and k not in b]
+        merged = {}
+        for k in keys:
+            merged[k] = merge_sets(b.get(k, _ABSENT), o.get(k, _ABSENT), t.get(k, _ABSENT), f'{where}.{k}')
+        for k in b:
+            if (k in o) != (k in t):
+                kept, side = (o, 'ours') if k in o else (t, 'theirs')
+                if kept[k] != b[k]:
+                    raise SetConflict(f'{where}.{k}: removed on one side, changed on the other ({side})')
+        return merged if where == '$' else dict(sorted(merged.items()))
+    if all(isinstance(v, list) or v is _ABSENT for v in (base, ours, theirs)):
+        b, o, t = (set(map(_frozen, v)) if isinstance(v, list) else set() for v in (base, ours, theirs))
+        return sorted(map(_thawed, (o & t) | (o - b) | (t - b)), key=lambda v: json.dumps(v, sort_keys=True))
+    if ours == theirs:
+        return ours
+    if ours == base:
+        return theirs
+    if theirs == base:
+        return ours
+    raise SetConflict(f'{where}: changed differently on both sides')
+
+
+def _frozen(value):
+    return json.dumps(value, sort_keys=True) if isinstance(value, (dict, list)) else value
+
+
+def _thawed(value):
+    return json.loads(value) if isinstance(value, str) and value[:1] in '{[' else value
 
 
 def id_rows(text):
@@ -682,8 +731,11 @@ class Train:
         continue. Returns the last git result (returncode 0 when the rebase completed)."""
         for _ in range(50):
             conflicted = git(['diff', '--name-only', '--diff-filter=U'], self.worktree, check=False).stdout.split()
-            if not conflicted or any(path not in GENERATED_FILES for path in conflicted):
+            if not conflicted or any(path not in GENERATED_FILES + SET_FILES for path in conflicted):
                 return done
+            for path in (p for p in conflicted if p in SET_FILES):
+                if not self.merge_set_file(path):
+                    return done  # both sides changed one entry incompatibly: a real conflict
             regenerated = subprocess.run(REGENERATE, cwd=self.worktree, capture_output=True, text=True)
             if regenerated.returncode != 0:
                 return regenerated
@@ -691,7 +743,7 @@ class Train:
                    if (self.worktree / path).is_file()):
                 return done  # a conflict in a hand-written part of the page: a real one
             # Only paths that exist: one missing pathspec makes `git add` stage nothing.
-            staged = [path for path in GENERATED_FILES + REGENERATED_ALSO if (self.worktree / path).is_file()]
+            staged = [path for path in GENERATED_FILES + REGENERATED_ALSO + SET_FILES if (self.worktree / path).is_file()]
             git(['add', '--', *staged], self.worktree, check=False)
             self.store.event('train-regenerated', files=conflicted)
             done = git(['-c', 'core.editor=true', '-c', f'core.attributesFile={self.attributes()}', 'rebase',
@@ -699,6 +751,23 @@ class Train:
             if done.returncode == 0:
                 return done
         return done
+
+    def merge_set_file(self, path):
+        """Resolve a conflicted SET_FILES path from its index stages (1 base, 2 the train, 3 the submission) with
+        merge_sets, write it back and stage it. False on a real conflict."""
+        stages = []
+        for stage in (1, 2, 3):
+            shown = git(['show', f':{stage}:{path}'], self.worktree, check=False)
+            stages.append(json.loads(shown.stdout) if shown.returncode == 0 and shown.stdout.strip() else _ABSENT)
+        try:
+            merged = merge_sets(*stages)
+        except SetConflict as conflict:
+            self.store.event('train-set-conflict', file=path, reason=str(conflict))
+            return False
+        (self.worktree / path).write_text(json.dumps(merged, indent=1) + '\n')
+        git(['add', '--', path], self.worktree, check=False)
+        self.store.event('train-set-merged', file=path)
+        return True
 
     def attributes(self):
         path = self.log_dir / 'merge.attributes'

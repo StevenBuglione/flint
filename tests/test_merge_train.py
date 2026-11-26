@@ -156,6 +156,40 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         page = git(self.work, 'show', 'origin/main:docs/spring/java-differences.md')
         self.assertEqual(page, '# generated\n- D-A-1\n- D-B-1')
 
+    def test_adjacent_removals_from_a_shrink_only_id_list_both_land(self):
+        (self.work / 'tools').mkdir()
+        (self.work / 'tools' / 'api_differences.py').write_text('pass\n')
+        (self.work / 'api').mkdir()
+        ids = [f'java.util.X#m{i}()' for i in range(8)]
+        unconfirmed = 'api/jdk-unconfirmed.json'
+        dump = lambda keep: json.dumps({'note': 'n', 'ids': keep}, indent=1) + '\n'  # noqa: E731
+        (self.work / unconfirmed).write_text(dump(ids))
+        git(self.work, 'checkout', '-q', '--detach', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'unconfirmed ids')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        # Adjacent lines: sol-a confirms m2 and m3, sol-b confirms m4 and adds nothing else.
+        self.lane('sol-a', {unconfirmed: dump([i for i in ids if not i.endswith(('m2()', 'm3()'))])})
+        self.lane('sol-b', {unconfirmed: dump([i for i in ids if not i.endswith('m4()')])})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b'], []))
+        landed = json.loads(git(self.work, 'show', f'origin/main:{unconfirmed}'))
+        self.assertEqual(landed['ids'], sorted(i for i in ids if not i.endswith(('m2()', 'm3()', 'm4()'))))
+        self.assertEqual(landed['note'], 'n')
+
+    def test_merge_sets_keeps_both_sides_and_refuses_a_removed_entry_the_other_side_changed(self):
+        base = {'note': 'n', 'ids': ['a', 'b', 'c', 'd']}
+        self.assertEqual(merge_train.merge_sets(base, {'note': 'n', 'ids': ['a', 'c', 'd', 'e']},
+                                                {'note': 'n', 'ids': ['a', 'b', 'd']}),
+                         {'note': 'n', 'ids': ['a', 'd', 'e']})
+        self.assertEqual(merge_train.merge_sets({'gaps': {'x': 1, 'y': 2}}, {'gaps': {'y': 2}},
+                                                {'gaps': {'x': 1, 'y': 2, 'z': 3}}), {'gaps': {'y': 2, 'z': 3}})
+        with self.assertRaises(merge_train.SetConflict):
+            merge_train.merge_sets({'gaps': {'x': 1}}, {'gaps': {}}, {'gaps': {'x': 9}})
+        with self.assertRaises(merge_train.SetConflict):
+            merge_train.merge_sets({'note': 'a'}, {'note': 'b'}, {'note': 'c'})
+
     def test_a_conflict_beyond_the_generated_pages_still_fails(self):
         self.lane('sol-a', {'src/app.txt': 'a\n'})
         self.lane('sol-b', {'src/app.txt': 'b\n'})
