@@ -465,9 +465,14 @@ class Train:
             if first is not None and first > 0 and results[first][0] is False and self.budget_lanes(len(ends))[first] \
                     and not all(self.budget_lanes(len(ends))[:first]):
                 # Red on the budget verifier, but the green candidates before it were checked without flint budget:
-                # that green is no budget baseline, so the whole prefix is bisected on the budget verifier.
-                self.store.event('train-budget-prefix', candidates=first)
-                ends, results, first = ends[first:], results[first:], 0
+                # that green is no budget baseline. Budget-check the green prefix once; if it holds, only the red
+                # group is bisected, otherwise the culprit is in the prefix, which is bisected instead.
+                prefix_ok, prefix_log = self.verify(applied[ends[first - 1] - 1][1])
+                self.store.event('train-budget-prefix', candidates=first, prefix_green=prefix_ok)
+                if not prefix_ok:
+                    # Red (bisect the prefix, from nothing landed) or unavailable (land nothing): either way the
+                    # candidate to resolve is the prefix itself.
+                    ends, results, first = [ends[first - 1]], [(prefix_ok, prefix_log)], 0
             if first is None:
                 landed, verified_tip = applied, applied[-1][1]
             else:

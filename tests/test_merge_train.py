@@ -416,6 +416,15 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual((result['landed'], result['failed']), (['sol-a'], ['sol-b']))
         self.assertEqual(result['pending'], ['sol-c', 'sol-d', 'sol-e', 'sol-f'])
 
+    def test_a_budget_red_after_a_budget_green_prefix_bisects_only_the_red_group(self):
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e', 'sol-f')):
+            self.lane(role, {'src/SLOW' if role == 'sol-f' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        posidon = self.SlowAwareVerifier(self, 'posidon', budget=True)
+        result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e'], ['sol-f']))
+        self.assertEqual(len(posidon.seen), 3)  # the deepest candidate, the prefix once, one step inside the red group
+
     def test_returned_lanes_do_not_block_the_scheduler(self):
         self.store.queue('apps-landing', 'front', 'sol-x')  # returned by a train, not resubmitted yet
         self.lane('sol-a', {'src/a.txt': 'a'})
