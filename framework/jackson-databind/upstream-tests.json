@@ -1213,8 +1213,23 @@
       "status": "deferred"
     },
     "tools/jackson/databind/ext/javatime/ser/LocalDateSerTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/local_date_ser_test.d",
+      "methods": {
+        "ported": [
+          "testCustomFormatToEpochDay"
+        ],
+        "skipped": {
+          "testConfigOverrides": "The class-level format override fixture is version-gated.",
+          "testConfigOverridesToEpochDay": "The class-level epoch-day override fixture is version-gated.",
+          "testSerializationAsString01": "The per-writer configuration fixture is version-gated.",
+          "testSerializationAsString02": "The per-writer configuration fixture is version-gated.",
+          "testSerializationAsTimestamp01": "The per-writer configuration fixture is version-gated.",
+          "testSerializationAsTimestamp02": "The per-writer configuration fixture is version-gated.",
+          "testSerializationWithTypeInfo01": "The LocalDate type-info mix-in fixture is version-gated.",
+          "testSerializationWithTypeInfo02": "The generic LocalDate type-info fixture is version-gated."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/databind/ext/javatime/ser/LocalDateTimeSerTest.java": {
       "phase": "2",
@@ -2551,8 +2566,47 @@
       "status": "deferred"
     },
     "tools/jackson/databind/ser/jdk/MapSerializationTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/map_serialization_test.d",
+      "methods": {
+        "ported": [
+          "testClassAsValue",
+          "testClassAsValueWithGetter",
+          "testMapKeyRecursion1679",
+          "testNoKeyOuter",
+          "testNotKarl",
+          "testValueOnlyGetter"
+        ],
+        "skipped": {
+          "testBoth": "The custom serializer fixture is version-gated.",
+          "testClassAsKey": "The JsonKey map-key fixture is version-gated.",
+          "testClassAsKeyWithGetter": "The JsonKey map-key fixture is version-gated.",
+          "testClassKey": "The runtime Class map-key fixture is version-gated.",
+          "testConcurrentMaps": "The concurrent-map and per-writer fixture is version-gated.",
+          "testCustomEnumInnerMapKey": "The custom serializer fixture is version-gated.",
+          "testCustomForEnum": "The custom serializer fixture is version-gated.",
+          "testCustomNullSerializers": "The custom serializer fixture is version-gated.",
+          "testDynamicMapKeys": "The JsonValue map-key fixture is version-gated.",
+          "testKarl": "The custom serializer fixture is version-gated.",
+          "testKeyOnlyGetter": "The JsonKey map-key fixture is version-gated.",
+          "testMapJsonValueKey47": "The JsonValue map-key fixture is version-gated.",
+          "testMapKeySetValuesSerialization": "The HashMap assertions run but the TreeMap and concurrent-map assertions are version-gated.",
+          "testMapKeyWithJsonValue": "The JsonValue map-key fixture is version-gated.",
+          "testMapSerializer": "The custom serializer fixture is version-gated.",
+          "testMapsWithBinaryKeys": "The binary map-key fixture is version-gated.",
+          "testNullJsonInTypedMap691": "The generic map or type metadata fixture is version-gated.",
+          "testNullJsonMapping691": "The generic map or type metadata fixture is version-gated.",
+          "testOrderByKey": "The default order assertion runs but the explicit per-writer sort assertion is version-gated.",
+          "testOrderByKeyViaProperty": "The property-level map ordering fixture is version-gated.",
+          "testOrderByWithNulls": "The per-writer configuration fixture is version-gated.",
+          "testSerWithNullType": "The per-writer configuration fixture is version-gated.",
+          "testSerializationFailureWhenEnabledWithIncomparableKeys": "The per-writer configuration fixture is version-gated.",
+          "testSerializationWithGenericObjectKeys": "The mixed-key ordering fixture is version-gated.",
+          "testUnWrappedMapWithDefaultType": "The custom serializer fixture is version-gated.",
+          "testUnWrappedMapWithKeySerializer": "The custom serializer fixture is version-gated.",
+          "testUsingObjectWriter": "The per-writer configuration fixture is version-gated."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/databind/ser/jdk/NumberSerTest.java": {
       "phase": "2",
