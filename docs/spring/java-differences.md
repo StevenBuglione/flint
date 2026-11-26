@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 142 | 256 | 0 | 15,398 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,379 | 1,322 | 4,848 | 30,285 |
+| framework | spring-framework@v7.1.0 | 3,385 | 1,330 | 4,848 | 30,271 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1625,6 +1625,19 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.aopalliance.aop.AspectException#<init>(String,Throwable)` | `flint.aopalliance.aop.AspectException` | [R8](api-mapping.md#r8-exceptions) |  |
+
+#### org.aopalliance.intercept
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.aopalliance.intercept.ConstructorInterceptor#construct(ConstructorInvocation)` | `flint.aopalliance.intercept.ConstructorInterceptor.construct` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aopalliance.intercept.ConstructorInvocation#getConstructor()` | `flint.aopalliance.intercept.ConstructorInvocation.getConstructor` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.aopalliance.intercept.Invocation#getArguments()` | `flint.aopalliance.intercept.Invocation.getArguments` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aopalliance.intercept.Joinpoint#getStaticPart()` | `flint.aopalliance.intercept.Joinpoint.getStaticPart` | [D-AOT-MEMBER](api-mapping.md#deviations) |  |
+| `org.aopalliance.intercept.Joinpoint#getThis()` | `flint.aopalliance.intercept.Joinpoint.getThis` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aopalliance.intercept.Joinpoint#proceed()` | `flint.aopalliance.intercept.Joinpoint.proceed` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aopalliance.intercept.MethodInterceptor#invoke(MethodInvocation)` | `flint.aopalliance.intercept.MethodInterceptor.invoke` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.aopalliance.intercept.MethodInvocation#getMethod()` | `flint.aopalliance.intercept.MethodInvocation.getMethod` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.aspectj.lang.annotation
 
@@ -8894,7 +8907,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | javax.security.auth.x500 | 0 | 23 |
 | javax.security.cert | 0 | 39 |
 | javax.sql | 217 | 0 |
-| org.aopalliance.intercept | 14 | 0 |
 | org.aspectj.lang | 73 | 0 |
 | org.aspectj.lang.annotation | 13 | 0 |
 | org.aspectj.lang.annotation.control | 2 | 0 |
