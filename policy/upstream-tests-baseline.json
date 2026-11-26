@@ -3350,6 +3350,10 @@
       "org/springframework/jdbc/support/incrementer/H2SequenceMaxValueIncrementerTests.java",
       "org/springframework/jdbc/support/rowset/ResultSetWrappingRowSetTests.java"
     ],
+    "micrometer-commons": [
+      "io/micrometer/common/annotation/NoOpValueResolverTests.java",
+      "io/micrometer/common/util/StringUtilsTest.java"
+    ],
     "micrometer-core": [
       "io/micrometer/core/aop/CountedAspectTest.java",
       "io/micrometer/core/aop/MeterTagSupportTests.java",

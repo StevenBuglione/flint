@@ -55,6 +55,14 @@
         }
       },
       "status": "partial"
+    },
+    "io/micrometer/common/annotation/NoOpValueResolverTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/common/util/StringUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
     }
   },
   "schema": "flint.upstream-tests/1",
