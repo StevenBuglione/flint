@@ -430,6 +430,14 @@ BeanDefinitionDefaults stores optional defaults with rule R5's `Nullable`. The B
 | B-62 | **Keep unsupported charset failures in a standalone Java I/O leaf.** A caller can throw and catch the checked exception using the existing IOException contract. | Stock LDC O3 and Oz probes on venus add 3,260 and 2,084 loadable bytes. The provider-equivalent module probe adds 3,228 loadable bytes and the DMD library and probe use 436 template instances. The first leaf and package ceilings are 3,586 bytes and 480 instances. | The standalone throw/catch probe, link closure and the typed exception tests. |
 | B-92 | **Keep bit sets in a packed non-template word vector.** Track the logical words separately from the allocated capacity and scan only those words with bit intrinsics. Growth preserves Java’s word-rounded capacity, while mutation within the capacity and indexed reads allocate nothing. | Venus, initial independent `BitSet` module at `55a3e9e6c`. The canonical package probe measures 13,500 O3 and 10,564 Oz loadable bytes with 278 DMD templates. The closure probe uses its app-shaped control and measures 13,532 O3 and 10,596 Oz bytes. Both profiles retain only legacy aggregate module records outside the declared leaf. DMD and LDC allocate zero GC bytes in the warmed read and mutation fixture. Range mutation shares word masks and sends index formatting and the range body out of line. Matched venus probes `64f0653bc`, `4fbd8dd21` and `7cc0fcef9` measure 13,500, 15,100 and 14,004 O3 bytes and 10,564, 11,884 and 10,564 Oz bytes. DMD counts 278, 303 and 303 templates. Both compilers allocate zero GC bytes in the warmed range loop. The `andNot` probe measures 14,884 O3 and 11,428 Oz bytes with the trailing-word scan inlined. Sharing the scan across point, range and mask operations brings the result to 14,788 O3 and 11,364 Oz bytes, with 305 DMD templates in both candidates. The warmed mask loop allocates zero GC bytes on both compilers. Adding `intersects` with a shared cold null throw first measures 15,012 O3 and 11,572 Oz bytes. Sharing cold growth and the backwards search used by both previous-bit methods yields 14,772 O3 and 11,700 Oz bytes. DMD records 305 templates throughout and both warmed intersection tests allocate zero GC bytes. | `java-collections` package and BitSet leaf budgets, O3/Oz JDK link-closure audit and linked allocation test. |
 
+SpEL and servlet integral parsing share the pinned Java 21 BMP decimal digit
+table through a dependency-free leaf. The matched venus probes at
+`58847dd84` and `ff14ede48` measured 86,946 to 87,018 incremental O3 bytes and
+82,758 to 82,830 at Oz for Expression, with 1,680 DMD templates in both builds.
+The Java probe measured 129,496 O3 bytes, 122,144 Oz bytes and 4,440 templates
+in both builds. The isolated digit-leaf probe adds 704 O3 and 312 Oz loadable
+bytes. Both profiles pass the JDK link-closure audit.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

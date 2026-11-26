@@ -75,6 +75,13 @@
         "source": "closure/valueof-array.d"
       }
     },
+    "flint.java.lang.character.decimaldigits": {
+      "decimal-digits": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/decimal-digits.d"
+      }
+    },
     "flint.java.net": {
       "uri": {
         "data": [],
