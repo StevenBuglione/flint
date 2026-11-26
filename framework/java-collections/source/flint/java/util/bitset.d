@@ -186,8 +186,8 @@ class BitSet
     int cardinality() const pure nothrow @nogc
     {
         uint count;
-        foreach (word; words[0 .. wordsInUse])
-            count += popcnt(word);
+        for (int remaining = wordsInUse; remaining > 0; --remaining)
+            count += popcnt(words[remaining - 1]);
         return cast(int) count;
     }
 
@@ -364,7 +364,7 @@ class BitSet
 
         auto word = fromIndex >> wordShift;
         const invert = set ? 0UL : ulong.max;
-        ulong matches;
+        ulong mask = ulong.max;
         if (word >= wordsInUse)
         {
             if (!set)
@@ -372,13 +372,10 @@ class BitSet
             if (wordsInUse == 0)
                 return -1;
             word = wordsInUse - 1;
-            matches = words[word];
         }
         else
-        {
-            const mask = ulong.max >> (bitMask - (fromIndex & bitMask));
-            matches = (words[word] ^ invert) & mask;
-        }
+            mask >>= bitMask - (fromIndex & bitMask);
+        auto matches = (words[word] ^ invert) & mask;
         while (matches == 0)
         {
             if (--word < 0)
