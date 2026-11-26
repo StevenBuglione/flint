@@ -44,11 +44,12 @@
  *   LockModeType.java, NamedQuery.java, NamedQueries.java
  *
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
- *   CascadeType.java, ElementCollection.java, FlushModeType.java, IdClass.java, ManyToMany.java, ManyToOne.java,
+ *   CascadeType.java, ElementCollection.java, EntityListeners.java, FlushModeType.java, IdClass.java, ManyToMany.java,
+ *   ManyToOne.java,
  *   MapKeyClass.java, OneToMany.java, OneToOne.java
  *
  * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
- *   Converter.java
+ *   Convert.java, Converter.java, Converts.java
  */
 
 /// Jakarta Persistence mapping annotations and their option enums.
@@ -743,6 +744,13 @@ struct MapKeyJoinColumns
 
 // Lifecycle
 
+/// Specifies the callback listener classes for an entity or mapped superclass.
+struct EntityListeners
+{
+    /// Listener classes in callback invocation order.
+    ClassRef[] value;
+}
+
 /// Specifies a callback method for the corresponding lifecycle event.
 struct PrePersist
 {
@@ -915,6 +923,24 @@ struct Converter
 {
     /// Automatically applies the converter to eligible attributes of the target type.
     bool autoApply = false;
+}
+
+/// Selects, overrides or disables conversion of an attribute value.
+struct Convert
+{
+    /// Explicit converter type. An unset value lets the provider select an applicable converter.
+    ClassRef converter = ClassRef.init;
+    /// Attribute name or dotted path, relative to the annotated type or attribute.
+    string attributeName = "";
+    /// Disables automatic or inherited conversion.
+    bool disableConversion = false;
+}
+
+/// Groups conversion overrides on the same declaration.
+struct Converts
+{
+    /// The conversion overrides.
+    Convert[] value;
 }
 
 // Query options and JPQL declarations
