@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 153 | 265 | 0 | 15,378 |
+| ai | spring-ai@v2.1.0 | 156 | 268 | 0 | 15,372 |
 | boot | spring-boot@v4.2.0 | 40 | 22 | 2,133 | 13,408 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,449 | 1,365 | 4,848 | 30,172 |
@@ -307,6 +307,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.content.Media.Format#VIDEO_THREE_GP` | `flint.ai.content.Media.Format.VIDEO_THREE_GP` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.content.Media.Format#VIDEO_WEBM` | `flint.ai.content.Media.Format.VIDEO_WEBM` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.content.Media.Format#VIDEO_WMV` | `flint.ai.content.Media.Format.VIDEO_WMV` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.content.MediaContent#getMedia()` | `flint.ai.content.MediaContent.getMedia` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.ai.converter
 
@@ -523,6 +524,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.template.TemplateRenderer` | `flint.ai.template_.TemplateRenderer` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.TemplateRenderer#apply(String,Map)` | `flint.ai.template_.TemplateRenderer.apply` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.ValidationMode` | `flint.ai.template_.ValidationMode` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+
+#### org.springframework.ai.tokenizer
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.tokenizer.TokenCountEstimator#estimate(Iterable)` | `flint.ai.tokenizer.TokenCountEstimator.estimate` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.tokenizer.TokenCountEstimator#estimate(String)` | `flint.ai.tokenizer.TokenCountEstimator.estimate` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 ### boot
 
@@ -8083,7 +8091,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.chat.prompt | 165 | 0 |
 | org.springframework.ai.chroma.vectorstore | 0 | 128 |
 | org.springframework.ai.chroma.vectorstore.common | 0 | 5 |
-| org.springframework.ai.content | 23 | 0 |
+| org.springframework.ai.content | 21 | 0 |
 | org.springframework.ai.converter | 40 | 0 |
 | org.springframework.ai.decision | 92 | 0 |
 | org.springframework.ai.decision.answer | 53 | 0 |
@@ -8269,7 +8277,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.test.options | 6 | 0 |
 | org.springframework.ai.test.session | 23 | 0 |
 | org.springframework.ai.test.vectorstore | 49 | 0 |
-| org.springframework.ai.tokenizer | 10 | 0 |
+| org.springframework.ai.tokenizer | 6 | 0 |
 | org.springframework.ai.tool | 14 | 0 |
 | org.springframework.ai.tool.annotation | 9 | 0 |
 | org.springframework.ai.tool.augment | 34 | 0 |

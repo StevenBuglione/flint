@@ -1260,7 +1260,8 @@
    "also": [
     "flint.ai.observation",
     "flint.ai.observation.conventions",
-    "flint.ai.template_"
+    "flint.ai.template_",
+    "flint.ai.tokenizer"
    ],
    "repo": "ai",
    "licence": "Apache-2.0",

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/content/{Content,Media}.java
+// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/content/{Content,Media,MediaContent}.java
 // Modified by the Flint authors.
 module flint.ai.content;
 
 import flint.engine.aot.any : Any;
-import flint.java.util : Map;
+import flint.java.util : List, Map;
 import flint.util : MimeType;
 import std.typecons : Nullable;
 
@@ -33,6 +33,13 @@ interface Content
 
     /// Returns the metadata associated with the content.
     Map!(string, Any) getMetadata();
+}
+
+/// Content with an associated list of media.
+interface MediaContent : Content
+{
+    /// Returns the media associated with this content.
+    List!Media getMedia();
 }
 
 /// The namespace for Spring AI media types.
