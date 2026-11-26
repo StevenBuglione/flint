@@ -15,16 +15,16 @@ $(UL
     $(LI `Streamable` is `Iterable` here (R10); `map` takes a delegate (R9). `Sort` has `Iterable`'s methods but does
         not declare the interface: `Iterable!(Sort.Order)` inside `Sort`'s own base list is a recursive template
         expansion in D.)
-    $(LI Pending ports include the `TypedPropertyPath` overloads, `TypedSort`, `Pageable.toScrollPosition` and
-        `SliceImpl`.)
+    $(LI Pending ports include the `TypedPropertyPath` overloads, `TypedSort` and `SliceImpl`.)
 )
 +/
 module flint.data.domain;
 
-import flint.java.lang : IllegalArgumentException, Iterable;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, Iterable;
 import flint.java.util : ArrayList, Collections, Iterator, List, Objects, Optional;
 
 public import flint.data.domain.limit : Limit;
+public import flint.data.domain.scroll_position : KeysetScrollPosition, OffsetScrollPosition, ScrollPosition;
 
 @safe:
 
@@ -526,6 +526,8 @@ interface Pageable
     Optional!Pageable toOptional();
     /// A limit of the current page size, or unlimited when unpaged.
     Limit toLimit();
+    /// Start scrolling just before the page. Throws IllegalStateException when unpaged.
+    OffsetScrollPosition toScrollPosition();
 
     /// Java's default methods (R3).
     mixin template Defaults()
@@ -557,6 +559,15 @@ interface Pageable
         {
             Pageable pageable = this;
             return pageable.isUnpaged() ? Limit.unlimited() : Limit.of(pageable.getPageSize());
+        }
+
+        OffsetScrollPosition toScrollPosition()
+        {
+            Pageable pageable = this;
+            if (pageable.isUnpaged())
+                throw new IllegalStateException("Cannot create OffsetScrollPosition from an unpaged instance");
+            const offset = pageable.getOffset();
+            return offset > 0 ? ScrollPosition.offset(offset - 1) : ScrollPosition.offset();
         }
     }
 }

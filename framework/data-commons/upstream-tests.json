@@ -173,12 +173,32 @@
       "status": "deferred"
     },
     "org/springframework/data/domain/AbstractPageRequestUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": [
+        "framework/data-commons/tests/domain.d",
+        "framework/data-commons/tests/scroll_position_tests.d"
+      ],
+      "methods": {
+        "ported": [
+          "preventsNegativePage",
+          "preventsNegativeSize",
+          "navigatesPageablesCorrectly",
+          "equalsHonoursPageAndSize",
+          "preventsPageSizeLessThanOne",
+          "getOffsetShouldNotCauseOverflow",
+          "createsOffsetScrollPosition"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/DirectionUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/domain.d",
+      "methods": {
+        "ported": [
+          "jpaValueMapping",
+          "rejectsInvalidString"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/DoubleVectorUnitTests.java": {
       "phase": "2",
@@ -223,16 +243,38 @@
       "status": "deferred"
     },
     "org/springframework/data/domain/PageRequestUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/domain.d",
+      "methods": {
+        "ported": [
+          "equalsRegardsSortCorrectly",
+          "rejectsNullSort"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/RangeUnitTests.java": {
       "phase": "2",
       "status": "deferred"
     },
     "org/springframework/data/domain/ScrollPositionUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/scroll_position_tests.d",
+      "methods": {
+        "ported": [
+          "equalsAndHashCodeForKeysets",
+          "equalsAndHashCodeForOffsets",
+          "shouldCreateCorrectIndexPosition",
+          "rejectsNegativeOffset",
+          "advanceOffsetBelowZeroCapsAtZero",
+          "advanceOffsetForward",
+          "advanceInitialOffsetForward",
+          "setsUpForwardScrolling",
+          "setsUpBackwardScrolling",
+          "initialOffsetPosition",
+          "initialOffsetPositionIsNotEqualToPositionOfFirstElement",
+          "initialKeysetPosition"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/SearchResultUnitTests.java": {
       "phase": "2",

@@ -1,8 +1,8 @@
 // Ported from spring-data-commons 4.2.0: src/test/java/org/springframework/data/domain/{SortUnitTests,PageImplUnitTests,PageRequestUnitTests,AbstractPageRequestUnitTests,DirectionUnitTests}.java
 // Copyright 2008-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
-// Modified by the Flint authors: the `TypedPropertyPath`, `TypedSort` and `ScrollPosition` cases wait on those
-// types; `preventsNullDirection` and `preventsNullProperties` have no D counterpart (a struct and a D array).
+// Modified by the Flint authors: the `TypedPropertyPath` and `TypedSort` cases wait on those types.
+// `preventsNullDirection` and `preventsNullProperties` have no D counterpart (a struct and a D array).
 module flint.data.domain_test;
 
 import flint.data.domain;
@@ -146,27 +146,42 @@ unittest
 
 // DirectionUnitTests
 
-@("Direction: jpaValueMapping, rejectsInvalidString")
+@("DirectionUnitTests.jpaValueMapping")
 unittest
 {
     assert(Direction.fromString("asc") == Direction.ASC);
     assert(Direction.fromString("DESC") == Direction.DESC);
-    assertThrown!IllegalArgumentException(Direction.fromString("foo"));
     assert(Direction.fromOptionalString("Desc").get() == Direction.DESC);
     assert(!Direction.fromOptionalString("").isPresent());
 }
 
+@("DirectionUnitTests.rejectsInvalidString")
+unittest
+{
+    assertThrown!IllegalArgumentException(Direction.fromString("foo"));
+}
+
 // AbstractPageRequestUnitTests and PageRequestUnitTests
 
-@("PageRequest: preventsNegativePage, preventsNegativeSize, preventsPageSizeLessThanOne")
+@("AbstractPageRequestUnitTests.preventsNegativePage")
 unittest
 {
     assertThrown!IllegalArgumentException(PageRequest.of(-1, 10));
+}
+
+@("AbstractPageRequestUnitTests.preventsNegativeSize")
+unittest
+{
     assertThrown!IllegalArgumentException(PageRequest.of(0, -1));
+}
+
+@("AbstractPageRequestUnitTests.preventsPageSizeLessThanOne")
+unittest
+{
     assertThrown!IllegalArgumentException(PageRequest.of(0, 0));
 }
 
-@("PageRequest: navigatesPageablesCorrectly")
+@("AbstractPageRequestUnitTests.navigatesPageablesCorrectly")
 unittest
 {
     Pageable request = PageRequest.of(1, 10);
@@ -179,7 +194,7 @@ unittest
     assert(same(first.previousOrFirst(), first));
 }
 
-@("PageRequest: equalsHonoursPageAndSize")
+@("AbstractPageRequestUnitTests.equalsHonoursPageAndSize")
 unittest
 {
     auto request = PageRequest.of(0, 10);
@@ -189,13 +204,13 @@ unittest
     assertNotEqualsAndHashcode(request, PageRequest.of(0, 11));
 }
 
-@("PageRequest: getOffsetShouldNotCauseOverflow")
+@("AbstractPageRequestUnitTests.getOffsetShouldNotCauseOverflow")
 unittest
 {
     assert(PageRequest.of(int.max, int.max).getOffset() > int.max);
 }
 
-@("PageRequest: equalsRegardsSortCorrectly")
+@("PageRequestUnitTests.equalsRegardsSortCorrectly")
 unittest
 {
     auto sort = Sort.by(Direction.DESC, "foo");
@@ -206,11 +221,11 @@ unittest
     assertEqualsAndHashcode(PageRequest.of(0, 10), PageRequest.of(0, 10));
     assertNotEqualsAndHashcode(request, PageRequest.of(1, 10));
     assertNotEqualsAndHashcode(request, PageRequest.of(1, 10, Direction.ASC, "foo"));
-    assert(same(Pageable.unpaged(), Pageable.unpaged(Sort.unsorted())));
-    assert(!same(Pageable.unpaged(), Pageable.unpaged(Sort.by("foo"))));
+    assertEqualsAndHashcode(cast(Unpaged) Pageable.unpaged(), cast(Unpaged) Pageable.unpaged(Sort.unsorted()));
+    assertNotEqualsAndHashcode(cast(Unpaged) Pageable.unpaged(), cast(Unpaged) Pageable.unpaged(Sort.by("foo")));
 }
 
-@("PageRequest: rejectsNullSort")
+@("PageRequestUnitTests.rejectsNullSort")
 unittest
 {
     assertThrown!IllegalArgumentException(PageRequest.of(0, 10, cast(Sort) null));
