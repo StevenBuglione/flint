@@ -14,8 +14,8 @@ import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding;
 import flint.engine.jpa.result_binding : ManagedRowMaterializationPlan, materializeManagedRow, planManagedResult;
 import flint.engine.jpa.snapshot : AttributeSnapshot;
-import flint.engine.jpa.update : VersionBindings, executeManagedUpdate, executeVersionedUpdate,
-    UpdatePlan, flushManagedUpdate, planUpdate;
+import flint.engine.jpa.update : UpdateAction, VersionBindings, executeManagedUpdate,
+    executeVersionedUpdate, UpdatePlan, flushManagedUpdate, flushManagedUpdates, planUpdate;
 import flint.java.sql : Connection, Types;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
@@ -78,17 +78,19 @@ private enum backendPid = "select pg_backend_pid()::bigint";
 private enum selectRows = "select version, name, id from jpa_version_probe order by id";
 private enum ownerKey = EntityIdentity(0, 1);
 private enum limitKey = EntityIdentity(0, 2);
+private enum thirdKey = EntityIdentity(0, 3);
 private enum updateRow = "update jpa_version_probe set version = ?, name = ? where version = ? and id = ?";
 private immutable ResultBinding[] projection = [
     ResultBinding(2, 1), ResultBinding(1, 2), ResultBinding(0, 3)
 ];
 private immutable ParameterBinding[] parameters = [ParameterBinding(1, 2)];
 
-private void assertStored(Connection connection, string name, long revision)
+private void assertStored(Connection connection, string name, long revision, long identifier = 1)
 {
-    auto statement = connection.prepareStatement("select name, version from jpa_version_probe where id = 1");
+    auto statement = connection.prepareStatement("select name, version from jpa_version_probe where id = ?");
     scope (exit)
         statement.close();
+    statement.setLong(1, identifier);
     auto rows = statement.executeQuery();
     scope (exit)
         rows.close();
@@ -97,7 +99,7 @@ private void assertStored(Connection connection, string name, long revision)
 }
 
 private void loadRows(const ref ManagedRowMaterializationPlan plan, Connection connection,
-        scope ref ManagedEntities managed, bool both = false)
+        scope ref ManagedEntities managed, size_t count = 1)
 {
     auto statement = connection.prepareStatement(selectRows);
     scope (exit)
@@ -105,14 +107,11 @@ private void loadRows(const ref ManagedRowMaterializationPlan plan, Connection c
     auto result = statement.executeQuery();
     scope (exit)
         result.close();
-    assert(result.next());
-    const first = materializeManagedRow(plan, result, managed);
-    assert(first.ok);
-    if (both)
+    foreach (_; 0 .. count)
     {
         assert(result.next());
-        const second = materializeManagedRow(plan, result, managed);
-        assert(second.ok);
+        const row = materializeManagedRow(plan, result, managed);
+        assert(row.ok);
     }
 }
 
@@ -147,7 +146,7 @@ void verifyVersionedUpdate(DataSource dataSource, JdbcTemplate jdbc)
     scope (exit)
         connection.rollback();
 
-    loadRows(rows.value, connection, managed, true);
+    loadRows(rows.value, connection, managed, 2);
 
     auto owner = cast(VersionedOwner) managed.find(ownerKey).value;
     auto limit = cast(VersionedOwner) managed.find(limitKey).value;
@@ -250,6 +249,9 @@ void verifyTransactionalUpdates(DataSource dataSource, JdbcTemplate jdbc, DataSo
     verifyManagedRollback(dataSource, transaction, key, false);
     verifyManagedRequiresNew(dataSource, jdbc, manager, key);
     verifyManagedSuppression(dataSource, jdbc, manager, key);
+    jdbc.execute("insert into jpa_version_probe values (3, 'Third row', 1)");
+    verifyManagedBatch(dataSource, transaction, key, true);
+    verifyManagedBatch(dataSource, transaction, key, false);
 }
 
 private void verifyManagedCommit(DataSource dataSource, JdbcTemplate jdbc, TransactionTemplate transaction, Object key)
@@ -257,7 +259,7 @@ private void verifyManagedCommit(DataSource dataSource, JdbcTemplate jdbc, Trans
     ManagedUpdateContext context;
     transaction.executeWithoutResult((TransactionStatus status) {
         assert(status.isNewTransaction());
-        context = new ManagedUpdateContext(dataSource, key);
+        context = new ManagedUpdateContext(dataSource, key, [UpdateAction(0, ownerKey)]);
         assert(context.pid == jdbc.queryForObject!long(backendPid));
         auto owner = context.owner();
         owner.name = "AUTO";
@@ -383,14 +385,62 @@ private void verifyManagedSuppression(DataSource dataSource, JdbcTemplate jdbc,
     }
 }
 
+private void verifyManagedBatch(DataSource dataSource, TransactionTemplate transaction, Object key, bool malformed)
+{
+    ManagedUpdateContext context;
+    bool rejected;
+    try
+    {
+        transaction.executeWithoutResult((TransactionStatus status) {
+            auto actions = [
+                UpdateAction(0, thirdKey), UpdateAction(malformed ? 1 : 0, limitKey),
+                UpdateAction(0, ownerKey)
+            ];
+            context = new ManagedUpdateContext(dataSource, key, actions);
+            context.owner(thirdKey).name = "Earlier write";
+            context.owner(limitKey).name = "At limit";
+            context.owner().name = "Pending";
+            try
+            {
+                context.flush();
+                assert(false, "the second batch action must fail");
+            }
+            catch (ManagedFlushFailure failure)
+            {
+                assert(failure.action == 1);
+                assert(failure.status == (malformed ? Status.invalidArgument : Status.resourceExhausted));
+                if (!malformed)
+                    assert(failure.attribute == 2);
+            }
+            assert(status.isRollbackOnly());
+            assert(context.writes == (malformed ? 0 : 1));
+            assertStored(dataSource, malformed ? "Third row" : "Earlier write", malformed ? 1 : 2, 3);
+            assertStored(dataSource, "Limit", long.max, 2);
+            assertStored(dataSource, "Outer", 11);
+            assert(context.owner().revision == 11 && context.owner().name == "Pending");
+        });
+    }
+    catch (UnexpectedRollbackException)
+        rejected = true;
+    assert(rejected && context.completion == TransactionSynchronization.STATUS_ROLLED_BACK);
+    assertReleased(context, dataSource, key);
+    assert(context.detached(limitKey) && context.detached(thirdKey));
+    assertStored(dataSource, "Third row", 1, 3);
+    assertStored(dataSource, "Outer", 11);
+}
+
 private final class ManagedFlushFailure : Exception
 {
     Status status;
+    size_t action;
+    size_t attribute;
 
-    this(Error error)
+    this(Error error, size_t action = size_t.max)
     {
         super(error.message);
         status = error.code;
+        this.action = action;
+        attribute = error.offset;
     }
 }
 
@@ -399,53 +449,58 @@ private final class ManagedUpdateContext : TransactionSynchronization
     private DataSource dataSource;
     private Object key;
     private ManagedEntities managed;
-    private UpdatePlan plan;
+    private UpdatePlan[] plans;
+    private UpdateAction[] actions;
     private AttributeValue[] values;
     private bool retired;
     long pid;
-    int writes;
+    size_t writes;
     int completion = -1;
     bool retiredBeforeConnectionRelease;
 
-    this(DataSource dataSource, Object key)
+    this(DataSource dataSource, Object key, UpdateAction[] actions = null)
     {
         this.dataSource = dataSource;
         this.key = key;
+        this.actions = actions;
         const read = planManagedResult(&mapping, projection, 0);
         const write = planUpdate(&mapping, updateRow, parameters, 4, VersionBindings(1, 3));
         assert(read.ok && write.ok);
-        plan = write.value;
+        plans = [write.value];
         values = new AttributeValue[3];
-        auto fields = new AttributeSnapshot[6];
-        auto bytes = new ubyte[32];
+        const count = actions.length == 0 ? 1 : actions.length;
+        auto fields = new AttributeSnapshot[18];
+        auto bytes = new ubyte[96];
         ManagedSnapshotSlot[] slots = [
-            ManagedSnapshotSlot(fields[0 .. 3], bytes[0 .. 16], fields[3 .. 6], bytes[16 .. 32])
+            ManagedSnapshotSlot(fields[0 .. 3], bytes[0 .. 16], fields[3 .. 6], bytes[16 .. 32]),
+            ManagedSnapshotSlot(fields[6 .. 9], bytes[32 .. 48], fields[9 .. 12], bytes[48 .. 64]),
+            ManagedSnapshotSlot(fields[12 .. 15], bytes[64 .. 80], fields[15 .. 18], bytes[80 .. 96])
         ];
         Error error;
-        managed = ManagedEntities(new IdentitySlot[1], new Object[1], error, slots);
+        managed = ManagedEntities(new IdentitySlot[count], new Object[count], error, slots[0 .. count]);
         assert(error.code == Status.ok);
 
         auto connection = DataSourceUtils.getConnection(dataSource);
         scope (exit)
             DataSourceUtils.releaseConnection(connection, dataSource);
         pid = readBackendPid(connection);
-        loadRows(read.value, connection, managed);
+        loadRows(read.value, connection, managed, count);
         TransactionSynchronizationManager.bindResource(key, this);
         scope (failure)
             TransactionSynchronizationManager.unbindResource(key);
         TransactionSynchronizationManager.registerSynchronization(this);
     }
 
-    VersionedOwner owner()
+    VersionedOwner owner(EntityIdentity identity = ownerKey)
     {
-        auto found = managed.find(ownerKey);
+        auto found = managed.find(identity);
         assert(found.ok);
         return cast(VersionedOwner) found.value;
     }
 
-    bool detached()
+    bool detached(EntityIdentity identity = ownerKey)
     {
-        return managed.find(ownerKey).error.code == Status.notFound;
+        return managed.find(identity).error.code == Status.notFound;
     }
 
     override int getOrder()
@@ -510,7 +565,15 @@ private final class ManagedUpdateContext : TransactionSynchronization
         auto holder = cast(ConnectionHolder) TransactionSynchronizationManager.getResource(cast(Object) dataSource);
         assert(holder !is null && holder.getConnection() is connection);
         uint[1] ordinals;
-        const outcome = flushManagedUpdate(plan, connection, managed, ownerKey, ordinals[], values);
+        if (actions.length != 0)
+        {
+            const batch = flushManagedUpdates(connection, managed, plans, actions, ordinals[], values);
+            writes += batch.value.updated;
+            if (!batch.ok)
+                throw new ManagedFlushFailure(batch.error, batch.value.failedAction);
+            return;
+        }
+        const outcome = flushManagedUpdate(plans[0], connection, managed, ownerKey, ordinals[], values);
         if (!outcome.ok)
             throw new ManagedFlushFailure(outcome.error);
         writes += outcome.value.updated;
@@ -536,12 +599,12 @@ private long readBackendPid(Connection connection)
     return result.getLong(1);
 }
 
-private void assertStored(DataSource dataSource, string name, long revision)
+private void assertStored(DataSource dataSource, string name, long revision, long identifier = 1)
 {
     auto connection = DataSourceUtils.getConnection(dataSource);
     scope (exit)
         DataSourceUtils.releaseConnection(connection, dataSource);
-    assertStored(connection, name, revision);
+    assertStored(connection, name, revision, identifier);
 }
 
 private void assertReleased(ManagedUpdateContext context, DataSource dataSource, Object key)

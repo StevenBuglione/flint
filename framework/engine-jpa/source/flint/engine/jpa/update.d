@@ -1,7 +1,8 @@
 /*
  * Ported from hibernate-orm 7.1.0: hibernate-core/src/main/java/org/hibernate/persister/entity/mutation/UpdateCoordinatorStandard.java,
  * hibernate-core/src/main/java/org/hibernate/event/internal/DefaultFlushEntityEventListener.java
- * and hibernate-core/src/main/java/org/hibernate/engine/jdbc/mutation/internal/ModelMutationHelper.java.
+ * hibernate-core/src/main/java/org/hibernate/engine/jdbc/mutation/internal/ModelMutationHelper.java,
+ * and hibernate-core/src/main/java/org/hibernate/engine/spi/ActionQueue.java.
  * SPDX-License-Identifier: Apache-2.0
  * Copyright Red Hat Inc. and Hibernate Authors
  * Modified by the Flint authors: precompiled static SQL and resource-local JDBC with engine status results.
@@ -37,6 +38,7 @@ struct UpdatePlan
     private ParameterBindingPlan parameters;
     private int keySlot;
     private VersionBindings versions;
+    private size_t dirtySlots;
 
     private this(immutable(EntityMapping)* mapping, string sql, ParameterBindingPlan plan,
             int keySlot, VersionBindings versions) nothrow @nogc
@@ -84,7 +86,9 @@ PlanResult planUpdate(immutable(EntityMapping)* mapping, string sql, immutable(P
     const layout = validateUpdateLayout(*mapping, changes, keySlot, versions);
     if (layout.code != Status.ok)
         return PlanResult(UpdatePlan.init, layout);
-    return PlanResult(UpdatePlan(mapping, sql, parameters.value, keySlot, versions));
+    auto plan = UpdatePlan(mapping, sql, parameters.value, keySlot, versions);
+    plan.dirtySlots = changes.length + mapping.attributes[mapping.idOrdinals[0]].updatable;
+    return PlanResult(plan);
 }
 
 private Error validateUpdateLayout(scope const ref EntityMapping mapping,
@@ -172,6 +176,62 @@ VersionResult flushManagedUpdate(const ref UpdatePlan plan, Connection connectio
         scope ref ManagedEntities entities, EntityIdentity key, scope uint[] dirtyOrdinals, AttributeValue[] values)
 {
     return executeStaticUpdate(plan, connection, entities, key, dirtyOrdinals, values, true);
+}
+
+/// A scalar work item naming one checked plan and one managed entity.
+struct UpdateAction
+{
+    /// Ordinal in the provider's update plan table.
+    uint planOrdinal;
+    /// Canonical identity in the current persistence context.
+    EntityIdentity key;
+}
+
+/// Progress through an ordered group of updates.
+struct UpdateBatchProgress
+{
+    /// Number of statements that updated exactly one row and published their baseline.
+    size_t updated;
+    /// Position of the first failed action, or size_t.max on success or a batch-wide error.
+    size_t failedAction = size_t.max;
+}
+
+private alias BatchResult = Result!UpdateBatchProgress;
+
+/// Checks all plan references and scratch requirements before flushing in the supplied order.
+/// One caller-owned connection and one set of scratch buffers serve every action.
+/// On a reported error, progress counts earlier published writes and identifies the stopped action.
+/// The caller owns rollback and must retire affected state, including earlier successes.
+BatchResult flushManagedUpdates(Connection connection, scope ref ManagedEntities entities,
+        const(UpdatePlan)[] plans, scope const(UpdateAction)[] actions, scope uint[] ordinals, AttributeValue[] values)
+{
+    if (actions.length != 0 && connection is null)
+        return BatchResult(UpdateBatchProgress.init, Error(Status.invalidArgument, "missing update connection"));
+
+    foreach (index, ref action; actions)
+    {
+        if (action.planOrdinal >= plans.length || plans[action.planOrdinal].mapping is null)
+            return BatchResult(UpdateBatchProgress(0, index), Error(Status.invalidArgument,
+                    "invalid update plan ordinal"));
+        const plan = &plans[action.planOrdinal];
+        if (ordinals.length < plan.dirtySlots || values.length < plan.mapping.attributes.length)
+            return BatchResult(UpdateBatchProgress(0, index), Error(Status.resourceExhausted,
+                    "insufficient batch scratch"));
+    }
+
+    UpdateBatchProgress progress;
+    foreach (index, ref action; actions)
+    {
+        const result = flushManagedUpdate(plans[action.planOrdinal], connection, entities,
+                action.key, ordinals, values);
+        if (!result.ok)
+        {
+            progress.failedAction = index;
+            return BatchResult(progress, result.error);
+        }
+        progress.updated += result.value.updated;
+    }
+    return BatchResult(progress);
 }
 
 private VersionResult executeStaticUpdate(const ref UpdatePlan plan, Connection connection,
