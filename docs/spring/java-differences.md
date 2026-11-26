@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 498 | 22 | 1 | 2,774 |
-| framework | jackson-databind@3.1.8 | 596 | 61 | 5 | 9,805 |
+| framework | jackson-databind@3.1.8 | 589 | 61 | 5 | 9,812 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 168 | 147 | 0 | 2,075 |
@@ -10228,7 +10228,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.databind.jsontype | 138 | 0 |
 | tools.jackson.databind.jsontype.impl | 277 | 0 |
 | tools.jackson.databind.module | 103 | 0 |
-| tools.jackson.databind.node | 810 | 0 |
+| tools.jackson.databind.node | 817 | 0 |
 | tools.jackson.databind.ser | 339 | 0 |
 | tools.jackson.databind.ser.bean | 115 | 0 |
 | tools.jackson.databind.ser.impl | 86 | 0 |
@@ -10735,16 +10735,22 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.JsonNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
+| framework | `tools.jackson.databind.node.ArrayNode#add(BigDecimal)` | 2 | Flint adds an existing JsonNode or a primitive number. |
 | framework | `tools.jackson.databind.node.ArrayNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ArrayNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ArrayNode#isEmpty(SerializationContext)` | 2 | Flint exposes the parameterless content check. The Java overload accepts a SerializationContext. |
 | framework | `tools.jackson.databind.node.ArrayNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
+| framework | `tools.jackson.databind.node.ArrayNode#set(int,BigDecimal)` | 2 | Flint's indexed setter takes a JsonNode. |
 | framework | `tools.jackson.databind.node.BigIntegerNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
 | framework | `tools.jackson.databind.node.BooleanNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
+| framework | `tools.jackson.databind.node.ContainerNode#numberNode(BigDecimal)` | 2 | Flint's container exposes array and object factories. |
+| framework | `tools.jackson.databind.node.DecimalNode#<init>(BigDecimal)` | 2 | Flint's DecimalNode constructor keeps decimal text as a string. The Java constructor takes a BigDecimal. |
 | framework | `tools.jackson.databind.node.DecimalNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
+| framework | `tools.jackson.databind.node.DecimalNode#valueOf(BigDecimal)` | 2 | Flint creates DecimalNode with its decimal-text constructor. |
 | framework | `tools.jackson.databind.node.DoubleNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
 | framework | `tools.jackson.databind.node.FloatNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
 | framework | `tools.jackson.databind.node.IntNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
+| framework | `tools.jackson.databind.node.JsonNodeFactory#numberNode(BigDecimal)` | 2 | Flint's numeric factory overloads take primitive numbers. |
 | framework | `tools.jackson.databind.node.LongNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
 | framework | `tools.jackson.databind.node.MissingNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.MissingNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
@@ -10753,6 +10759,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.node.ObjectNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ObjectNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ObjectNode#isEmpty(SerializationContext)` | 2 | Flint exposes the parameterless content check. The Java overload accepts a SerializationContext. |
+| framework | `tools.jackson.databind.node.ObjectNode#put(String,BigDecimal)` | 2 | Flint exposes primitive numeric property overloads. |
 | framework | `tools.jackson.databind.node.ObjectNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
 | framework | `tools.jackson.databind.node.ShortNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |
 | framework | `tools.jackson.databind.node.StringNode#serialize(JsonGenerator,SerializationContext)` | 2 | Flint exposes serialize(JsonGenerator). The Java overload accepts a SerializationContext. |

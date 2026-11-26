@@ -190,14 +190,7 @@
   "tools.jackson.databind.exc.ValueInstantiationException#getType() -> JavaType": "framework: tools.jackson.databind.JavaType is deferred",
   "tools.jackson.databind.introspect.POJOPropertiesCollector#<init>(MapperConfig,boolean,JavaType,AnnotatedClass,AccessorNamingStrategy) -> AccessorNamingStrategy": "framework: tools.jackson.databind.introspect.AccessorNamingStrategy is deferred",
   "tools.jackson.databind.introspect.POJOPropertiesCollector#<init>(MapperConfig,boolean,JavaType,AnnotatedClass,AccessorNamingStrategy) -> AnnotatedClass": "framework: tools.jackson.databind.introspect.AnnotatedClass is deferred",
-  "tools.jackson.databind.introspect.POJOPropertiesCollector#<init>(MapperConfig,boolean,JavaType,AnnotatedClass,AccessorNamingStrategy) -> JavaType": "framework: tools.jackson.databind.JavaType is deferred",
-  "tools.jackson.databind.node.ArrayNode#add(BigDecimal) -> BigDecimal": "framework: java.math.BigDecimal is deferred",
-  "tools.jackson.databind.node.ArrayNode#set(int,BigDecimal) -> BigDecimal": "framework: java.math.BigDecimal is deferred",
-  "tools.jackson.databind.node.ContainerNode#numberNode(BigDecimal) -> BigDecimal": "framework: java.math.BigDecimal is deferred",
-  "tools.jackson.databind.node.DecimalNode#<init>(BigDecimal) -> BigDecimal": "framework: java.math.BigDecimal is deferred",
-  "tools.jackson.databind.node.DecimalNode#valueOf(BigDecimal) -> BigDecimal": "framework: java.math.BigDecimal is deferred",
-  "tools.jackson.databind.node.JsonNodeFactory#numberNode(BigDecimal) -> BigDecimal": "framework: java.math.BigDecimal is deferred",
-  "tools.jackson.databind.node.ObjectNode#put(String,BigDecimal) -> BigDecimal": "framework: java.math.BigDecimal is deferred"
+  "tools.jackson.databind.introspect.POJOPropertiesCollector#<init>(MapperConfig,boolean,JavaType,AnnotatedClass,AccessorNamingStrategy) -> JavaType": "framework: tools.jackson.databind.JavaType is deferred"
  },
  "note": "Ported or adapted methods and constructors whose Java parameter or return type has no D counterpart, recorded when tools/api_differences.py's dependency check landed (coordinator, 2026-11-26). A ratchet: a new gap fails the api gate; a resolved gap must leave this list (python3 tools/api_differences.py --write removes it); nothing is ever added. Fix each by marking the element deferred, or by porting the type it depends on.",
  "schema": "flint.api-dependency-baseline/1"
