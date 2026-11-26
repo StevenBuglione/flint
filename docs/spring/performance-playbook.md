@@ -311,6 +311,7 @@ BindingResultUtils looks up the prefixed model key through the Java map's existi
 DefaultResourceLoader decodes file URL paths through `StringUtils.uriDecode`. The isolated Core probe on venus against `7bfedc4c7` kept 8,844 loadable bytes and 5,491 DMD template instances. The Context probe on the combined lane batch against `de5f66684` moved from 631,548 to 633,672 loadable bytes and kept 5,037 DMD template instances against the 9,350 cap.
 
 MimeTypeUtils calls the entropy leaf directly. On venus, paired against leaf-only `7e26ef1bd`, the unchanged AOP probe moves from 21,809 to 11,480 incremental O3 loadable bytes and from 18,513 to 8,632 at Oz. Core moves from 19,317 to 9,004 O3 loadable bytes and from 5,613 to 5,557 DMD templates.
+RouteMatcher reuses PathMatcher's concrete variable-map and comparator types. Its null guard keeps the existing exception diagnostic. The paired AOP probe on venus against train tip `a2c47a789` records 1,538 to 1,530 DMD template instances against the 1,537 cap.
 
 ### Jackson tree search
 

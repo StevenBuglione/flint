@@ -4408,6 +4408,9 @@ private final class RegexRun
 // ---------------------------------------------------------------------------------------------------------------
 // PathMatcher, AntPathMatcher
 
+private alias PathVariables = Map!(string, string);
+private alias PatternComparator = Comparator!string;
+
 /// Strategy interface for string-based path matching, implemented by `AntPathMatcher`.
 interface PathMatcher
 {
@@ -4424,10 +4427,10 @@ interface PathMatcher
     string extractPathWithinPattern(string pattern, string path);
 
     /// The URI template variables of `pattern` (`{name}`) and their values in `path`.
-    Map!(string, string) extractUriTemplateVariables(string pattern, string path);
+    PathVariables extractUriTemplateVariables(string pattern, string path);
 
     /// A comparator that sorts patterns by specificity for `path`: more specific first.
-    Comparator!string getPatternComparator(string path);
+    PatternComparator getPatternComparator(string path);
 
     /// `pattern1` and `pattern2` combined into a new pattern.
     string combine(string pattern1, string pattern2);
@@ -4446,8 +4449,8 @@ interface RouteMatcher
     bool isPattern(string route);
     string combine(string pattern1, string pattern2);
     bool match(string pattern, Route route);
-    Map!(string, string) matchAndExtract(string pattern, Route route);
-    Comparator!string getPatternComparator(Route route);
+    PathVariables matchAndExtract(string pattern, Route route);
+    PatternComparator getPatternComparator(Route route);
 }
 
 /// A route matcher backed by a string-based PathMatcher.
@@ -4457,7 +4460,8 @@ class SimpleRouteMatcher : RouteMatcher
 
     this(PathMatcher pathMatcher)
     {
-        Assert.notNull(pathMatcher, "PathMatcher is required");
+        if (pathMatcher is null)
+            throw new IllegalArgumentException("PathMatcher is required");
         this.pathMatcher = pathMatcher;
     }
 
@@ -4486,14 +4490,14 @@ class SimpleRouteMatcher : RouteMatcher
         return pathMatcher.match(pattern, route.value());
     }
 
-    Map!(string, string) matchAndExtract(string pattern, Route route)
+    PathVariables matchAndExtract(string pattern, Route route)
     {
         if (!match(pattern, route))
             return null;
         return pathMatcher.extractUriTemplateVariables(pattern, route.value());
     }
 
-    Comparator!string getPatternComparator(Route route)
+    PatternComparator getPatternComparator(Route route)
     {
         return pathMatcher.getPatternComparator(route.value());
     }
