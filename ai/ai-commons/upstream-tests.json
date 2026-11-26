@@ -1,11 +1,29 @@
 {
-  "schema": "flint.upstream-tests/1",
-  "upstream": "spring-ai@v2.1.0",
-  "module": "ai-commons",
-  "upstream_modules": [
-    "spring-ai-commons"
-  ],
   "classes": {
+    "org/springframework/ai/observation/AiOperationMetadataTests.java": {
+      "d": "ai/ai-commons/tests/ai_operation_metadata_tests.d",
+      "methods": {
+        "ported": [
+          "whenBuiltWithValidValuesThenFieldsAreAccessible",
+          "whenMandatoryMetadataThenReturn",
+          "whenOperationTypeIsBlankThenThrow",
+          "whenOperationTypeIsEmptyThenThrow",
+          "whenOperationTypeIsNullThenThrow",
+          "whenProviderIsBlankThenThrow",
+          "whenProviderIsEmptyThenThrow",
+          "whenProviderIsNullThenThrow"
+        ]
+      },
+      "status": "ported"
+    },
+    "org/springframework/ai/observation/ObservabilityHelperTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/observation/TracingAwareLoggingObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/ai/observation/conventions/AiOperationTypeTests.java": {
       "d": "ai/ai-commons/tests/ai_operation_type_tests.d",
       "methods": {
@@ -57,5 +75,11 @@
       },
       "status": "ported"
     }
-  }
+  },
+  "module": "ai-commons",
+  "schema": "flint.upstream-tests/1",
+  "upstream": "spring-ai@v2.1.0",
+  "upstream_modules": [
+    "spring-ai-commons"
+  ]
 }

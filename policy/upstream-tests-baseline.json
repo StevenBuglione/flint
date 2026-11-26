@@ -2,6 +2,10 @@
   "schema": "flint.upstream-tests-baseline/1",
   "note": "Upstream test classes each module may record as \"deferred\", a ratchet like policy/quality-baseline.json (coordinator decision, 2026-11-26): the definition of done fails on a deferred class not listed here and on a listed class no longer deferred, until --shrink-upstream-tests removes it. Only the seed (--seed-upstream-tests, the integration owner's) adds entries.",
   "modules": {
+    "ai-commons": [
+      "org/springframework/ai/observation/ObservabilityHelperTests.java",
+      "org/springframework/ai/observation/TracingAwareLoggingObservationHandlerTests.java"
+    ],
     "ai-model": [
       "org/springframework/ai/aot/AiRuntimeHintsTests.java",
       "org/springframework/ai/aot/KnuddelsRuntimeHintsTest.java",

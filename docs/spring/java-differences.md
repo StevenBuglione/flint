@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 148 | 258 | 0 | 15,390 |
+| ai | spring-ai@v2.1.0 | 151 | 264 | 0 | 15,381 |
 | boot | spring-boot@v4.2.0 | 36 | 19 | 2,133 | 13,415 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,436 | 1,352 | 4,848 | 30,198 |
@@ -390,6 +390,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.model.SpringAIModelProperties#MULTI_MODAL_EMBEDDING_MODEL` | `flint.ai.model.FlintAIModelProperties.MULTI_MODAL_EMBEDDING_MODEL` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `org.springframework.ai.model.SpringAIModelProperties#TEXT_EMBEDDING_MODEL` | `flint.ai.model.FlintAIModelProperties.TEXT_EMBEDDING_MODEL` | [R1](api-mapping.md#r1-packages-and-names) |  |
 | `org.springframework.ai.model.SpringAIModels` | `flint.ai.model.FlintAIModels` | [R1](api-mapping.md#r1-packages-and-names) |  |
+
+#### org.springframework.ai.observation
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.ai.observation.AiOperationMetadata` | `flint.ai.observation.AiOperationMetadata` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.observation.AiOperationMetadata#builder()` | `flint.ai.observation.AiOperationMetadata.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.observation.AiOperationMetadata.Builder` | `flint.ai.observation.AiOperationMetadata.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.observation.AiOperationMetadata.Builder#build()` | `flint.ai.observation.AiOperationMetadata.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.observation.AiOperationMetadata.Builder#operationType(String)` | `flint.ai.observation.AiOperationMetadata.Builder.operationType` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.observation.AiOperationMetadata.Builder#provider(String)` | `flint.ai.observation.AiOperationMetadata.Builder.provider` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 
 #### org.springframework.ai.observation.conventions
 
@@ -8149,7 +8160,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.model.transformers.autoconfigure | 0 | 31 |
 | org.springframework.ai.model.vertexai.autoconfigure.embedding | 0 | 60 |
 | org.springframework.ai.moderation | 167 | 0 |
-| org.springframework.ai.observation | 22 | 0 |
+| org.springframework.ai.observation | 13 | 0 |
 | org.springframework.ai.ollama | 0 | 41 |
 | org.springframework.ai.ollama.aot | 0 | 3 |
 | org.springframework.ai.ollama.api | 0 | 407 |

@@ -1191,6 +1191,7 @@
    "directory": "ai/ai-commons",
    "module": "flint.ai.content",
    "also": [
+    "flint.ai.observation",
     "flint.ai.observation.conventions",
     "flint.ai.template_"
    ],
