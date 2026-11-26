@@ -38,7 +38,7 @@
  *   AttributeOverrides.java
  *
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
- *   ExcludeSuperclassListeners.java
+ *   ExcludeSuperclassListeners.java, PersistenceUnits.java
  *
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  *   LockModeType.java, NamedQuery.java, NamedQueries.java
@@ -46,7 +46,7 @@
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  *   CascadeType.java, ElementCollection.java, EntityListeners.java, FlushModeType.java, IdClass.java, ManyToMany.java,
  *   ManyToOne.java,
- *   MapKeyClass.java, OneToMany.java, OneToOne.java
+ *   MapKeyClass.java, OneToMany.java, OneToOne.java, PersistenceUnit.java
  *
  * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
  *   Convert.java, Converter.java, Converts.java
@@ -941,6 +941,22 @@ struct Converts
 {
     /// The conversion overrides.
     Convert[] value;
+}
+
+/// Declares a dependency on an entity manager factory for a persistence unit.
+struct PersistenceUnit
+{
+    /// Name of the reference in the environment naming context.
+    string name = "";
+    /// Name of the persistence unit to use.
+    string unitName = "";
+}
+
+/// Groups multiple persistence unit dependencies on one declaration.
+struct PersistenceUnits
+{
+    /// The declared dependencies.
+    PersistenceUnit[] value;
 }
 
 // Query options and JPQL declarations
