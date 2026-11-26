@@ -429,7 +429,6 @@
       "org/springframework/boot/autoconfigure/ImportAutoConfigurationImportSelectorTests.java",
       "org/springframework/boot/autoconfigure/ImportAutoConfigurationTests.java",
       "org/springframework/boot/autoconfigure/SharedMetadataReaderFactoryContextInitializerTests.java",
-      "org/springframework/boot/autoconfigure/SpringBootApplicationTests.java",
       "org/springframework/boot/autoconfigure/admin/SpringApplicationAdminJmxAutoConfigurationTests.java",
       "org/springframework/boot/autoconfigure/aop/AopAutoConfigurationTests.java",
       "org/springframework/boot/autoconfigure/aop/NonAspectJAopAutoConfigurationTests.java",

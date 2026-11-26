@@ -49,8 +49,18 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/SpringBootApplicationTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "tests/aot/property-relaxed/test/property_relaxed/boot_application_test.d",
+      "methods": {
+        "ported": [
+          "proxyBeanMethodsIsEnabledByDefault"
+        ],
+        "skipped": {
+          "nameGeneratorCanBeSpecified": "Merged ComponentScan name-generator metadata is deferred.",
+          "nameGeneratorDefaultToBeanNameGenerator": "Merged ComponentScan name-generator metadata is deferred.",
+          "proxyBeanMethodsCanBeDisabled": "Known defect. The missing @AliasFor(annotation = Configuration.class) causes proxyBeanMethods = false to merge to true."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/boot/autoconfigure/admin/SpringApplicationAdminJmxAutoConfigurationTests.java": {
       "phase": "2",

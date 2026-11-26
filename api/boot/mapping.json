@@ -1488,7 +1488,7 @@
 "org.springframework.boot.autoconfigure.SpringBootApplication#exclude":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.SpringBootApplication#excludeName":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.SpringBootApplication#nameGenerator":{"status":"excluded","category":"deferred","phase":"2"},
-"org.springframework.boot.autoconfigure.SpringBootApplication#proxyBeanMethods":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.boot.autoconfigure.SpringBootApplication#proxyBeanMethods":{"status":"excluded","category":"deferred","phase":"2","note":"Known defect. The missing @AliasFor(annotation = Configuration.class) causes proxyBeanMethods = false to merge to true."},
 "org.springframework.boot.autoconfigure.SpringBootApplication#scanBasePackageClasses":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.SpringBootApplication#scanBasePackages":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration":{"status":"excluded","category":"jvm-platform"},
