@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 518 | 23 | 1 | 2,753 |
-| framework | jackson-databind@3.1.8 | 609 | 61 | 5 | 9,792 |
+| framework | jackson-databind@3.1.8 | 611 | 61 | 5 | 9,790 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 168 | 145 | 0 | 2,077 |
@@ -208,6 +208,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
 | framework | `org.springframework.expression.spel.support.StandardTypeConverter#<init>()` | `flint.expression.spel.support.StandardTypeConverter` | Creates and retains one default conversion service per converter. Flint's core getSharedInstance factory creates a fresh service. |
 | framework | `tools.jackson.core.JsonPointer#length()` | `flint.jackson.core.JsonPointer.length` | Returns UTF-16 code units. |
+| framework | `tools.jackson.databind.json.JsonMapper.Builder` | `flint.jackson.databind.JsonMapper.Builder` | Flint's JSON builder defines its methods directly while the Java MapperBuilder superclass is deferred. |
 | security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.InMemoryUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
 | security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.JdbcUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.JdbcUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
 | security | `org.springframework.security.crypto.factory.PasswordEncoderFactories#createDelegatingPasswordEncoder()` | `flint.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder` | Known gap: the factory registers bcrypt and noop, covering 2 of Spring's 14 default ids. The other ids are deferred with their encoders. BCrypt is the encoding default. An encoded password with an unmapped {id} throws IllegalArgumentException through the unmapped-id handler. |
@@ -10208,7 +10209,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.databind.ext.jdk8 | 60 | 0 |
 | tools.jackson.databind.ext.sql | 40 | 0 |
 | tools.jackson.databind.introspect | 924 | 0 |
-| tools.jackson.databind.json | 27 | 0 |
+| tools.jackson.databind.json | 25 | 0 |
 | tools.jackson.databind.jsonFormatVisitors | 119 | 0 |
 | tools.jackson.databind.jsontype | 138 | 0 |
 | tools.jackson.databind.jsontype.impl | 277 | 0 |
