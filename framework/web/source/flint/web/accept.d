@@ -1,16 +1,19 @@
 /++
-`org.springframework.web.accept`: content negotiation from the `Accept` header.
+`org.springframework.web.accept`: content negotiation from the `Accept` header and configured defaults.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/accept/
-(ContentNegotiationStrategy.java, ContentNegotiationManager.java, HeaderContentNegotiationStrategy.java).
+(ContentNegotiationStrategy.java, ContentNegotiationManager.java, FixedContentNegotiationStrategy.java,
+HeaderContentNegotiationStrategy.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook. Spring Boot's default manager has only the
-header strategy, which is what is ported.
+header strategy.
 +/
 module flint.web.accept;
 
 import flint.http : HttpHeaders, InvalidMediaTypeException, MediaType;
+import flint.java.lang : IllegalArgumentException;
+import flint.java.util : Collections, List;
 import flint.util : InvalidMimeTypeException, MimeTypeUtils;
 import flint.web : HttpMediaTypeNotAcceptableException;
 import flint.web.context.request : NativeWebRequest;
@@ -28,6 +31,38 @@ interface ContentNegotiationStrategy
 
     /// The requested media types, most preferred first.
     MediaType[] resolveMediaTypes(NativeWebRequest webRequest);
+}
+
+/// `FixedContentNegotiationStrategy`: supplies configured media types in preference order.
+class FixedContentNegotiationStrategy : ContentNegotiationStrategy
+{
+    private List!MediaType contentTypes;
+
+    /// One default media type.
+    this(MediaType contentType)
+    {
+        contentTypes = List!MediaType.of(contentType);
+    }
+
+    /// An unmodifiable view of the ordered defaults (R10).
+    this(List!MediaType contentTypes)
+    {
+        if (contentTypes is null)
+            throw new IllegalArgumentException("'contentTypes' must not be null");
+        this.contentTypes = Collections.unmodifiableList(contentTypes);
+    }
+
+    /// The configured defaults.
+    List!MediaType getContentTypes() pure nothrow @nogc
+    {
+        return contentTypes;
+    }
+
+    /// Returns a copy for the existing array-based negotiation interface (R10).
+    MediaType[] resolveMediaTypes(NativeWebRequest request)
+    {
+        return contentTypes.toArray();
+    }
 }
 
 /// `HeaderContentNegotiationStrategy`: the `Accept` header.
