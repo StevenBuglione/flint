@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 281 | 270 | 0 | 3,431 |
+| data-commons | spring-data-commons@4.2.0 | 281 | 271 | 0 | 3,430 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1085,6 +1085,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.model.MappingInstantiationException#<init>(List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#<init>(PersistentEntity,List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#getConstructorArguments()` | `flint.data.mapping.model.MappingInstantiationException.getConstructorArguments` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.model.MappingInstantiationException#getEntityCreator()` | `flint.data.mapping.model.MappingInstantiationException.getEntityCreator` | [D-DATA-21](api-mapping.md#deviations), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#getEntityType()` | `flint.data.mapping.model.MappingInstantiationException.getEntityType` | [R4](api-mapping.md#r4-classt-parameters), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MutablePersistentEntity#setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory)` | `flint.data.mapping.model.MutablePersistentEntity.setPersistentPropertyAccessorFactory` | [D-DATA-17](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.ParameterValueProvider` | `flint.data.mapping.model.ParameterValueProvider` | [D-DATA-24](api-mapping.md#deviations) |  |
@@ -10206,7 +10207,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.mapping | 104 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
-| org.springframework.data.mapping.model | 152 | 0 |
+| org.springframework.data.mapping.model | 151 | 0 |
 | org.springframework.data.projection | 70 | 0 |
 | org.springframework.data.querydsl | 66 | 0 |
 | org.springframework.data.querydsl.binding | 45 | 0 |

@@ -363,23 +363,27 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     }
 }
 
-/// Describes the parameters used to create instances of a persistent entity.
-interface InstanceCreatorMetadata(T, P) if (is(P : PersistentProperty!P))
+/// Creator queries that do not require the concrete entity and property types.
+interface InstanceCreatorMetadata()
 {
     /// Whether the creator receives this persistent property.
     bool isCreatorParameter(PersistentProperty!() property);
 
-    /// Whether the parameter represents a parent or receiver.
-    bool isParentParameter(Parameter!(T, P) parameter);
-
     /// The number of parameters the creator accepts.
     int getParameterCount();
 
-    /// The creator's parameters in declaration order.
-    List!(Parameter!(T, P)) getParameters();
-
     /// Whether this creator accepts any parameters.
     bool hasParameters();
+}
+
+/// Describes the parameters used to create instances of a persistent entity.
+interface InstanceCreatorMetadata(T, P) : InstanceCreatorMetadata!() if (is(P : PersistentProperty!P))
+{
+    /// Whether the parameter represents a parent or receiver.
+    bool isParentParameter(Parameter!(T, P) parameter);
+
+    /// The creator's parameters in declaration order.
+    List!(Parameter!(T, P)) getParameters();
 
     /// Supplies the default parameter queries (R3).
     mixin template Defaults(ParameterType = Parameter!(T, P))

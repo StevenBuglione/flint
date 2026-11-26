@@ -6,7 +6,7 @@ module entity_instantiator_tests;
 
 import flint.data.annotation : Transient;
 import flint.data.core : TypeInformation;
-import flint.data.mapping : PersistentEntity, PersistentProperty;
+import flint.data.mapping : InstanceCreatorMetadata, PersistentEntity, PersistentProperty;
 import flint.data.mapping.model : BasicPersistentEntity, EntityInstantiators,
     MappingInstantiationException, PersistentEntityParameterValueProvider;
 import flint.engine.aot.any : Any;
@@ -14,6 +14,7 @@ import flint.engine.aot.descriptor : ConstructorDescriptor, DescriptorTable, Par
     PropertyDescriptor, descriptorOf, findAnnotation;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalStateException;
+import flint.java.util : List;
 import std.exception : collectException;
 
 @safe:
@@ -152,9 +153,13 @@ private Any failInvocation(scope Any[])
 unittest
 {
     auto entity = registeredEntity!WithTransientProperty(&failInvocation);
+    auto selected = entity.getInstanceCreatorMetadata();
     auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
     auto error = collectException!MappingInstantiationException(instantiator.createInstance(entity, valuesFor(entity)));
     assert(error !is null && error.getEntityType() == classOf!WithTransientProperty);
+    InstanceCreatorMetadata!() creator = error.getEntityCreator();
+    assert(creator is selected);
+    assert(creator.hasParameters() && creator.getParameterCount() == selected.getParameters().size());
     const cause = cast(IllegalStateException) error.getCause();
     assert(cause !is null && cause.msg == "constructor rejected its arguments");
     auto arguments = error.getConstructorArguments();
@@ -168,5 +173,20 @@ unittest
     auto instantiator = new EntityInstantiators().getInstantiatorFor(entity);
     auto error = collectException!MappingInstantiationException(instantiator.createInstance(entity, valuesFor(entity)));
     assert(error !is null && error.getEntityType() == classOf!WithTransientProperty);
+    assert(error.getEntityCreator() is entity.getInstanceCreatorMetadata());
     assert(error.getConstructorArguments().isEmpty());
+}
+
+@("explicit diagnostics retain available creator metadata")
+unittest
+{
+    auto arguments = List!Any.of(Any.of(1));
+    auto cause = new IllegalStateException("bad arguments");
+    auto entity = registeredEntity!WithTransientProperty(null);
+    auto withEntity = new MappingInstantiationException(entity, arguments, cause);
+    assert(withEntity.getEntityCreator() is entity.getInstanceCreatorMetadata());
+    assert(withEntity.getConstructorArguments() is arguments && withEntity.getCause() is cause);
+
+    auto withoutEntity = new MappingInstantiationException(arguments, cause);
+    assert(withoutEntity.getEntityType().name is null && withoutEntity.getEntityCreator() is null);
 }
