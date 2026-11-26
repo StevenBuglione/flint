@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 0 | 0 | 0 | 4,452 |
 | framework | micrometer-observation@1.18.0 | 34 | 24 | 0 | 254 |
-| framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 15,798 |
+| framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 16,240 |
 | framework | aspectj@1.9.27 | 0 | 31 | 191 | 88 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
@@ -9052,10 +9052,10 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 138 | 0 |
 | java.net | 821 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 42 | 0 |
-| java.nio.channels | 0 | 282 |
+| java.nio | 377 | 0 |
+| java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
-| java.nio.charset | 58 | 0 |
+| java.nio.charset | 115 | 0 |
 | java.nio.charset.spi | 0 | 4 |
 | java.nio.file | 285 | 0 |
 | java.nio.file.attribute | 137 | 0 |
