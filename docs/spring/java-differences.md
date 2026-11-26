@@ -95,6 +95,18 @@ Nullable!long id = owner.getId();
 if (!id.isNull) use(id.get);
 ```
 
+**R23: `Object` values** are `Any`, Flint AOT's erased value: a type name plus the value, stored inline for scalars and small structs. A `null` reference is `Any.init`, and a class reference keeps its identity.
+
+```java
+Object id = accessor.getIdentifier();
+if (id instanceof Long l) use(l);
+```
+```d
+Any id = accessor.getIdentifier();
+long l;
+if (id.tryGet!long(l)) use(l);
+```
+
 **D-7: typed `null`.** D resolves a bare `null` differently when two overloads take unrelated types, so those overload pairs offer typed `null` constants.
 
 ```java

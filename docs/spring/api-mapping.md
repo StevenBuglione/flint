@@ -238,6 +238,27 @@ R2 keeps annotation modules leaves, and Flint AOT matches UDAs by their canonica
 
 Mapping: each runtime type and its members are `adapted` with rule `R22` (plus any other rule that shapes them), with `d` under the `_runtime` module. The annotations map under R2 as usual.
 
+### R23: `Object`-typed values
+
+A Java value typed `Object`, whether a parameter, return, field, generic `Object` target or ID, becomes `flint.engine.aot.Any`. Coordinator, 2026-11-26, from sol-data's `IdentifierAccessor`:
+- **What `Any` holds:** a type name and the value. Scalars (integers, floating point, booleans, characters, strings, integral enums) sit inline with no allocation. A small struct sits inline too, and anything larger is boxed.
+- **`null`:** a Java `null` reference is `Any.init`, and `isNull()` tests it.
+- **Class references keep their identity:** `Any.of(obj)` stores the reference itself, so two `Any`s holding the same object compare equal by identity, as Java's references do.
+- **Reading back:** `holds!T()`, `get!T()` (throws on a mismatch) and `tryGet!T(out value)`.
+- Existing deviations that only restate this (D-VALIDATION-2's "beans and values are `Any`") keep their rows. New entries cite R23.
+
+```java
+Object id = accessor.getIdentifier();
+if (id instanceof Long l) use(l);
+```
+```d
+Any id = accessor.getIdentifier();
+long l;
+if (id.tryGet!long(l)) use(l);
+```
+
+Mapping: the element is `adapted` with rule `R23`.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:

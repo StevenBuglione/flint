@@ -237,7 +237,7 @@ private bool checkPorted(const ref MappingEntry entry, out string error)
 
 private bool checkAdapted(const ref MappingEntry entry, out string error)
 {
-    enum known = "R1 to R22, or a deviation such as D-7";
+    enum known = "R1 to R23, or a deviation such as D-7";
     if (entry.rules.length == 0)
         error = entry.match ~ ": an adapted element needs the rulebook `rules` it follows, " ~ known;
     foreach (rule; entry.rules)
@@ -316,7 +316,7 @@ bool validSymbol(string symbol)
     return !start;
 }
 
-/// Whether `rule` is a rulebook rule id, `R1` to `R22`, or a deviation id (`D-7`, `D-JPA-2`). Whether a deviation is
+/// Whether `rule` is a rulebook rule id, `R1` to `R23`, or a deviation id (`D-7`, `D-JPA-2`). Whether a deviation is
 /// defined in docs/spring/api-mapping.md is checked by tools/api_differences.py.
 bool validRule(string rule)
 {
@@ -329,7 +329,7 @@ bool validRule(string rule)
     try
     {
         const number = rule[1 .. $].to!uint;
-        return number >= 1 && number <= 22;
+        return number >= 1 && number <= 23;
     }
     catch (ConvException)
         return false;
