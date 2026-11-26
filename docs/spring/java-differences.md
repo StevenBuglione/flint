@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,140 | 348 | 1,871 | 15,062 |
+| framework | openjdk@21.0.13 | 1,140 | 350 | 1,871 | 15,060 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2193,6 +2193,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `java.io.ByteArrayInputStream#<init>(byte[])` | `flint.java.io.ByteArrayInputStream.this` | [R26](api-mapping.md#r26-null-arrays) | Uses the caller's backing array as an unsigned byte slice. A null slice counts as an empty array under R26. |
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D checked-exception hierarchy. The merged constructor represents omitted and explicit null causes identically under R8. The checked family currently lacks initCause. |
+| `java.io.InputStream#read(byte[],int,int)` | `flint.java.io.InputStream.read` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | Java byte arrays use D ubyte slices. A null slice counts as an empty array under R26. |
+| `java.io.InputStream#skip(long)` | `flint.java.io.InputStream.skip` | [R8](api-mapping.md#r8-exceptions) |  |
 | `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
 | `java.io.OutputStream#write(byte[])` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) | Unsigned D slices preserve the byte payload. A null slice counts as an empty array. |
 | `java.io.OutputStream#write(byte[],int,int)` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -10531,7 +10533,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 772 | 0 |
+| java.io | 770 | 0 |
 | java.lang | 1,985 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -11425,9 +11427,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.ByteArrayInputStream#markSupported()` | 2 | Missing query that always returns true for a byte-array source. |
 | framework | `java.io.ByteArrayInputStream#pos` | 2 | Subclasses do not have the protected current read index. |
 | framework | `java.io.ByteArrayInputStream#read()` | 2 | Sequential unsigned reads and EOF match Java. Synchronization on the stream monitor is pending. |
+| framework | `java.io.ByteArrayInputStream#read(byte[],int,int)` | 2 | Sequential bounds, EOF and aliased buffers are covered. Java acquires the stream monitor. Flint's current implementation lacks that synchronization. Same R26 array semantics as the constructor. |
 | framework | `java.io.ByteArrayInputStream#readAllBytes()` | 2 | Java copies the remaining bytes under the stream monitor and advances to EOF without calling a subclass read override. The inherited Flint implementation calls the virtual bulk read without holding that monitor. |
 | framework | `java.io.ByteArrayInputStream#readNBytes(byte[],int,int)` | 2 | Missing byte-array override that converts EOF from the ranged read into a zero byte count. |
 | framework | `java.io.ByteArrayInputStream#reset()` | 2 | Missing synchronized restoration to the last mark. The initial mark is zero or the ranged constructor offset. |
+| framework | `java.io.ByteArrayInputStream#skip(long)` | 2 | Sequential skips advance the correct number of bytes. Java acquires the stream monitor. Flint's current implementation lacks that synchronization. |
 | framework | `java.io.ByteArrayInputStream#transferTo(OutputStream)` | 2 | Missing transfer of remaining bytes in bounded ranged writes. Java 21 holds the monitor, advances after each successful write, and returns zero at EOF before using the sink. Flint will call the sink outside the monitor so reactor fibers can suspend safely. |
 | framework | `java.io.ByteArrayOutputStream#<init>()` | 2 | Java initializes a protected 32-byte buffer and zero count. The existing facade starts with an empty private slice. |
 | framework | `java.io.ByteArrayOutputStream#<init>(int)` | 2 | The explicit initial capacity constructor is missing, including rejection of negative capacity. |

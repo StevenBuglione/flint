@@ -75,18 +75,60 @@ abstract class InputStream
     /// Read up to `buffer.length` bytes; the count read, or -1 at the end.
     int read(scope ubyte[] buffer)
     {
-        if (buffer.length == 0)
+        const length = buffer.length > int.max ? int.max : cast(int) buffer.length;
+        return read(buffer, 0, length);
+    }
+
+    /// Read into the requested region. A checked I/O failure after progress leaves a partial read.
+    int read(scope ubyte[] buffer, int offset, int length)
+    {
+        checkReadRange(buffer.length, offset, length);
+        if (length == 0)
             return 0;
-        int count;
-        foreach (ref b; buffer)
+
+        const first = read();
+        if (first < 0)
+            return -1;
+        buffer[offset] = cast(ubyte) first;
+        int count = 1;
+        try
         {
-            const next = read();
-            if (next < 0)
-                break;
-            b = cast(ubyte) next;
-            count++;
+            while (count < length)
+            {
+                const next = read();
+                if (next < 0)
+                    break;
+                buffer[cast(size_t) offset + count] = cast(ubyte) next;
+                ++count;
+            }
         }
-        return count == 0 ? -1 : count;
+        catch (IOException)
+        {
+            // Java's default ranged read suppresses a checked failure after the first byte.
+        }
+        return count;
+    }
+
+    /// Consume at most the requested bytes, returning the actual count.
+    /// A ranged reader that makes no progress ends the skip.
+    long skip(long count)
+    {
+        if (count <= 0)
+            return 0;
+        enum maxSkipBufferSize = 2048;
+        const capacity = count < maxSkipBufferSize ? cast(int) count : maxSkipBufferSize;
+        auto scratch = new ubyte[capacity];
+        long skipped;
+        while (skipped < count)
+        {
+            const remaining = count - skipped;
+            const wanted = remaining < capacity ? cast(int) remaining : capacity;
+            const consumed = read(scratch, 0, wanted);
+            if (consumed <= 0)
+                break;
+            skipped += consumed;
+        }
+        return skipped;
     }
 
     /// Every remaining byte.
@@ -107,6 +149,14 @@ abstract class InputStream
     void close()
     {
     }
+}
+
+private void checkReadRange(size_t capacity, int offset, int length)
+{
+    import flint.java.lang : IndexOutOfBoundsException;
+
+    if (offset < 0 || length < 0 || cast(size_t) offset > capacity || cast(size_t) length > capacity - offset)
+        throw new IndexOutOfBoundsException("Read range exceeds the byte array");
 }
 
 /// Java's `OutputStream`: a sink of bytes.
@@ -368,9 +418,42 @@ class ByteArrayInputStream : InputStream
         if (position >= bytes.length)
             return -1;
         const n = buffer.length < bytes.length - position ? buffer.length : bytes.length - position;
-        buffer[0 .. n] = bytes[position .. position + n];
+        auto destination = buffer[0 .. n];
+        auto source = bytes[position .. position + n];
+        if (destination.ptr > source.ptr && destination.ptr <= &source[$ - 1])
+        {
+            foreach_reverse (index, ref value; destination)
+                value = source[index];
+        }
+        else if (source.ptr > destination.ptr && source.ptr <= &destination[$ - 1])
+        {
+            foreach (index, ref value; destination)
+                value = source[index];
+        }
+        else if (destination.ptr != source.ptr)
+        {
+            destination[] = source[];
+        }
         position += n;
         return cast(int) n;
+    }
+
+    override int read(scope ubyte[] buffer, int offset, int length)
+    {
+        checkReadRange(buffer.length, offset, length);
+        if (position >= bytes.length)
+            return -1;
+        return read(buffer[offset .. cast(size_t) offset + length]);
+    }
+
+    override long skip(long count) pure nothrow @nogc
+    {
+        if (count <= 0)
+            return 0;
+        const available = bytes.length - position;
+        const skipped = cast(ulong) count < available ? cast(size_t) count : available;
+        position += skipped;
+        return cast(long) skipped;
     }
 
     /// How many bytes remain.
