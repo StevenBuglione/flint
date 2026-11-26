@@ -396,6 +396,38 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "micrometer-core": {
+   "directory": "framework/micrometer-core",
+   "module": "flint.micrometer.core.instrument",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "micrometer-core@1.18.0",
+   "dependencies": [
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/micrometer-core/bench",
+    "baseline": "framework/micrometer-core/bench/baseline",
+    "edit_source": "framework/micrometer-core/source/flint/micrometer/core/instrument/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 131072,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 2750
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "slf4j-api": {
    "directory": "framework/slf4j-api",
    "module": "flint.slf4j",

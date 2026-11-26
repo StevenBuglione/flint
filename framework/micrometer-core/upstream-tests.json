@@ -1,0 +1,711 @@
+{
+  "classes": {
+    "io/micrometer/core/aop/CountedAspectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/aop/MeterTagSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/aop/NullMeterTagSupportTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/aop/TimedAspectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/AbstractTimerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/DistributionSummaryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/DynamicTagsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/FunctionCounterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/HighCardinalityTagsDetectorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MeterFilterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MeterIdTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MeterRegistryAllocationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MeterRegistryInjectionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MeterRegistryLoggingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MeterRegistryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MeterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MissingHdrHistogramTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MissingLatencyUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/MultiGaugeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/TagsTest.java": {
+      "d": "framework/micrometer-core/tests/tags_test.d",
+      "methods": {
+        "ported": [
+          "andEmptyDoesNotAllocate",
+          "andIterableShouldReturnNewInstanceWithTags",
+          "andIterableWhenIterableIsNullShouldReturnCurrentInstance",
+          "andKeyValueShouldReturnNewInstanceWithAddedTags",
+          "andKeyValuesShouldReturnNewInstanceWithAddedTags",
+          "andKeyValuesWhenKeyValuesAreEmptyShouldReturnCurrentInstance",
+          "andKeyValuesWhenKeyValuesAreNullShouldReturnCurrentInstance",
+          "andKeyValuesWhenKeyValuesAreOddShouldThrowException",
+          "andKeyValuesWhenKeyValuesArrayIsNullShouldReturnCurrentInstance",
+          "andTagsMultipleTimesShouldWork",
+          "andTagsShouldReturnANewInstanceWithTags",
+          "andTagsWhenTagIsNullShouldReturnCurrentInstance",
+          "andTagsWhenTagsAreEmptyShouldReturnCurrentInstance",
+          "andTagsWhenTagsAreNullShouldReturnCurrentInstance",
+          "andWhenAlreadyContainsKeyShouldReplaceValue",
+          "concatIterableShouldReturnNewInstanceWithAddedTags",
+          "concatOnTwoTagsWithSameKeyAreMergedIntoOneTag",
+          "concatStringsShouldReturnNewInstanceWithAddedTags",
+          "concatWhenKeyValuesAreNullShouldReturnCurrentInstance",
+          "createsListWithSingleTag",
+          "dedup",
+          "emptyKeyValueArrayShouldProduceEmptyTags",
+          "emptyShouldNotContainTags",
+          "emptyTagArrayShouldProduceEmptyTags",
+          "emptyTagIterableShouldProduceEmptyTags",
+          "iteratorShouldIterateTags",
+          "nullKeyValueArrayShouldProduceEmptyTags",
+          "nullKeyValuesShouldProduceEmptyTags",
+          "nullTagArrayShouldProduceEmptyTags",
+          "nullTagIterableShouldProduceEmptyTags",
+          "nullTagShouldProduceEmptyTags",
+          "ofEmptyDoesNotAllocate",
+          "ofIterableShouldReturnNewInstanceWithTags",
+          "ofIterableWhenIterableIsTagsShouldReturnSameInstance",
+          "ofKeyValueShouldReturnNewInstance",
+          "ofKeyValuesShouldReturnNewInstance",
+          "stream",
+          "streamShouldStreamTags",
+          "tagsEquality",
+          "tagsHashCode",
+          "tagsToString",
+          "zipOnTwoTagsWithSameKeyAreMergedIntoOneTag",
+          "zipShouldReturnNewInstanceWithTags"
+        ],
+        "skipped": {
+          "spliterator": "Deferred with Tags.spliterator; flint.java.util has no Spliterator API."
+        }
+      },
+      "status": "partial"
+    },
+    "io/micrometer/core/instrument/TimeGaugeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/SimpleMeterConventionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/cache/AbstractCacheMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/cache/CaffeineCacheMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/cache/CaffeineStatsCounterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/cache/EhCache2MetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/cache/GuavaCacheMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/cache/HazelcastCacheMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/cache/JCacheMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/commonspool2/CommonsObjectPool2MetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/db/AbstractPostgreSQLDatabaseMetricsIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/db/DatabaseTableMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/db/LatestPostgreSQLDatabaseMetricsIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/db/MetricsDSLContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/db/OldestPostgreSQLDatabaseMetricsIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/db/PostgreSQLDatabaseMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/grpc/GrpcAsyncTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/grpc/GrpcObservationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/http/HttpJakartaServletRequestTagsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/httpcomponents/MicrometerHttpClientInterceptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/httpcomponents/MicrometerHttpRequestExecutorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/httpcomponents/PoolingHttpClientConnectionManagerMetricsBinderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/httpcomponents/hc5/DefaultApacheHttpClientObservationConventionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/httpcomponents/hc5/MicrometerHttpClientInterceptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/httpcomponents/hc5/MicrometerHttpRequestExecutorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/httpcomponents/hc5/ObservationExecChainHandlerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/httpcomponents/hc5/PoolingHttpClientConnectionManagerMetricsBinderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/hystrix/MicrometerMetricsPublisherCommandTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/hystrix/MicrometerMetricsPublisherThreadPoolTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jersey/server/DefaultJerseyTagsProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jersey/server/JerseyKeyValuesTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jersey/server/JerseyTagsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jersey/server/MetricsRequestEventListenerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jersey/server/MetricsRequestEventListenerTimedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jetty/InstrumentedQueuedThreadPoolTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jetty/JettyClientMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jetty/JettyClientMetricsWithObservationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jetty/JettyConnectionMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jetty/JettyServerThreadPoolMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jetty/JettySslHandshakeMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jetty/TimedHandlerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jpa/HibernateMetricsNoSecondLevelCacheTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jpa/HibernateMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jpa/HibernateQueryMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/ClassLoaderMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/ExecutorServiceMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/GcTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/JvmCompilationMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/JvmGcMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/JvmInfoMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/JvmMemoryMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/JvmMemoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/JvmThreadDeadlockMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/jvm/JvmThreadMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/kafka/KafkaClientMetricsAdminTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/kafka/KafkaClientMetricsConsumerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/kafka/KafkaClientMetricsIntegrationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/kafka/KafkaClientMetricsProducerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/kafka/KafkaConsumerMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/kafka/KafkaMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/kafka/KafkaStreamsMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/logging/Log4j2MetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/logging/LogbackMetricsGh2868Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/logging/LogbackMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/mongodb/AbstractMongoDbTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/mongodb/DefaultMongoCommandTagsProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/mongodb/MongoMetricsCommandListenerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/mongodb/MongoMetricsConnectionPoolListenerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/netty4/NettyAllocatorMetricsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/netty4/NettyEventExecutorMetricsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/okhttp3/OkHttpConnectionPoolMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/okhttp3/OkHttpMetricsEventListenerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/okhttp3/OkHttpObservationInterceptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/okhttp3/RetrofitOkHttpObservationInterceptorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/system/DiskSpaceMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/system/FileDescriptorMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/system/ProcessorMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/system/UptimeMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/binder/tomcat/TomcatMetricsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/composite/CompositeCounterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/composite/CompositeLongTaskTimerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/composite/CompositeMeterRegistryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/config/DurationValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/config/NamingConventionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/config/ValidatedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/config/validate/PropertyValidatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/cumulative/CumulativeFunctionTimerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/distribution/DistributionStatisticConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/distribution/FixedBoundaryHistogramTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/distribution/FixedBoundaryVictoriaMetricsHistogramTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/distribution/HistogramGaugesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/distribution/StepBucketHistogramTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/distribution/TimeWindowFixedBoundaryHistogramTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/distribution/TimeWindowMaxTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/distribution/TimeWindowPercentileHistogramTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/distribution/TimeWindowRotationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/dropwizard/DropwizardClockTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/dropwizard/DropwizardCounterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/dropwizard/DropwizardFunctionTimerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/dropwizard/DropwizardGaugeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/dropwizard/DropwizardMeterRegistryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/internal/DefaultLongTaskTimerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/internal/DefaultMeterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/logging/LoggingMeterRegistryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/noop/NoopCounterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/noop/NoopDistributionSummaryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/noop/NoopFunctionCounterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/noop/NoopFunctionTimerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/noop/NoopGaugeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/noop/NoopLongTaskTimerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/noop/NoopMeterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/noop/NoopTimeGaugeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/noop/NoopTimerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/observation/DefaultMeterObservationHandlerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/observation/ObservationOrTimerCompatibleInstrumentationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/push/PushMeterRegistryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/push/PushRegistryConfigTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/search/RequiredSearchTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/search/SearchTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/simple/SimpleMeterRegistryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/step/StepCounterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/step/StepDistributionSummaryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/step/StepFunctionCounterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/step/StepFunctionTimerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/step/StepMeterRegistryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/step/StepTimerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/step/StepValueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/util/AbstractPartitionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/util/DoubleFormatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/util/HierarchicalNameMapperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/util/IOUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/util/NamedThreadFactoryTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/util/StringEscapeUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/util/StringUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/instrument/util/TimeUtilsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/ipc/http/HttpSenderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/ipc/http/HttpStatusClassTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/ipc/http/HttpUrlConnectionSenderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/ipc/http/OkHttpSenderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "io/micrometer/core/ipc/http/RequestTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "micrometer-core",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":micrometer-core"
+  ],
+  "upstream": "micrometer-core@1.18.0",
+  "upstream_modules": [
+    "micrometer-core"
+  ]
+}
