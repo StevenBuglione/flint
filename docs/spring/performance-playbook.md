@@ -629,6 +629,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 - **Use the empty-name path for null TimeDefinition slices under R26.** Dropping the dedicated null overload and branch reduced the enum link probe by 920 incremental loadable bytes in each of the stock LDC 1.43.0 O3 and Oz profiles against `6db8c28c6` on venus. The other 48 closure results and the java-time module's 22,252 incremental bytes stayed unchanged. The module's DMD template count fell from 689 to 687.
 - **Check epoch milliseconds with both seconds and the fractional part.** `Date.from` accepts the first partial second within the signed millisecond range and rejects overflow with the Java cause chain. The Java 21 witness and both D compiler tests cover the endpoints and the fractional boundaries. The stock O3/Oz conversion probe against `18199b85` adds 444/460 loadable bytes and retains the same Java module records. The extra exception allocation occurs only when conversion overflows.
 
+- **Expose the formatter zone override through R5.** The nullable getter and clearing overload retain the direct ZoneId call path. On venus against `b968c7a11`, the Java module probe remained byte-identical in both stock LDC release profiles at 129,496 O3 and 122,144 Oz incremental loadable bytes. The DMD module probe measured 4,450 to 4,492 template instances against the existing 7,350 cap.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

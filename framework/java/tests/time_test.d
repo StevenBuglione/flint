@@ -617,3 +617,33 @@ unittest
     assert(collectException!DateTimeException(requiredOffset.format(local)) !is null);
     assert(DateTimeFormatter.ISO_DATE_TIME.withZone(named).format(local) == "2024-03-31T02:15:30");
 }
+
+@("DateTimeFormatter clears an absent zone override without losing its pattern")
+unittest
+{
+    import std.exception : collectException;
+    import std.typecons : Nullable;
+
+    const text = "2024-03-31T02:15:30";
+    const original = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss[' 'VV]");
+    const local = LocalDateTime.parse(text);
+    const overridden = original.withZone(ZoneId.of("+05:45"));
+    const cleared = overridden.withZone(Nullable!ZoneId.init);
+
+    assert(original.getZone().isNull);
+    assert(overridden.getZone().get().getId() == "+05:45");
+    assert(cleared.getZone().isNull);
+    assert(cleared.toString() == original.toString());
+    assert(cleared.format(local) == original.format(local));
+    assert(LocalDateTime.parse(text, cleared) == local);
+    assert(overridden.format(local) == text ~ " +05:45");
+    const instant = Instant.parse("2024-03-31T00:15:30Z");
+    assert(overridden.format(instant) == "2024-03-31T06:00:30 +05:45");
+    assert(collectException!DateTimeException(cleared.format(instant)) !is null);
+
+    const zulu = original.withZone(Nullable!ZoneId(ZoneId.init));
+    assert(!zulu.getZone().isNull && zulu.getZone().get().getId() == "Z");
+    assert(zulu.format(local) == text ~ " Z");
+    assert(zulu.withZone(Nullable!ZoneId.init).getZone().isNull);
+    assert(original.withZone(Nullable!ZoneId.init).toString() == original.toString());
+}
