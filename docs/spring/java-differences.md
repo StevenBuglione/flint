@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 120 | 244 | 0 | 15,432 |
+| ai | spring-ai@v2.1.0 | 121 | 247 | 0 | 15,428 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,306 | 1,259 | 4,848 | 30,421 |
@@ -328,6 +328,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.embedding.EmbeddingOptions#getDimensions()` | `flint.ai.embedding.EmbeddingOptions.getDimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions#getModel()` | `flint.ai.embedding.EmbeddingOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions.Builder#dimensions(Integer)` | `flint.ai.embedding.EmbeddingOptions.Builder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.EmbeddingRequest` | `flint.ai.embedding.EmbeddingRequest` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.embedding.EmbeddingRequest#<init>(List,EmbeddingOptions)` | `flint.ai.embedding.EmbeddingRequest.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.embedding.EmbeddingRequest#getInstructions()` | `flint.ai.embedding.EmbeddingRequest.getInstructions` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.ai.image
 
@@ -7882,7 +7885,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.elevenlabs | 0 | 61 |
 | org.springframework.ai.elevenlabs.aot | 0 | 3 |
 | org.springframework.ai.elevenlabs.api | 0 | 290 |
-| org.springframework.ai.embedding | 77 | 0 |
+| org.springframework.ai.embedding | 73 | 0 |
 | org.springframework.ai.embedding.observation | 37 | 0 |
 | org.springframework.ai.evaluation | 23 | 0 |
 | org.springframework.ai.google.genai | 0 | 150 |

@@ -1,10 +1,29 @@
 module embedding_options_contract_tests;
 
-import flint.ai.embedding : DefaultEmbeddingOptions, EmbeddingOptions;
-import flint.ai.model : ModelOptions;
+import flint.ai.embedding : DefaultEmbeddingOptions, EmbeddingOptions, EmbeddingRequest;
+import flint.ai.model : ModelOptions, ModelRequest;
+import flint.java.util : ArrayList, List;
 import std.typecons : Nullable;
 
 @safe:
+
+@("embedding requests retain the caller's instructions and optional options")
+unittest
+{
+    List!string inputs = new ArrayList!string(["first"]);
+    auto options = EmbeddingOptions.builder().model("test-embedding").build();
+    auto configured = new EmbeddingRequest(inputs, options);
+    ModelRequest!(List!string) request = configured;
+
+    const EmbeddingOptions selected = configured.getOptions();
+    assert(selected is options && request.getOptions() is options);
+    assert(request.getInstructions() is inputs);
+    inputs.add("second");
+    assert(request.getInstructions().get(1) == "second");
+
+    ModelRequest!(List!string) defaults = new EmbeddingRequest(inputs, null);
+    assert(defaults.getOptions() is null && defaults.getInstructions() is inputs);
+}
 
 @("embedding options build independent snapshots and preserve absent settings")
 unittest

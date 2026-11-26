@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/embedding/{DefaultEmbeddingOptions,DefaultEmbeddingOptionsBuilder,EmbeddingOptions}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/embedding/{DefaultEmbeddingOptions,DefaultEmbeddingOptionsBuilder,EmbeddingOptions,EmbeddingRequest}.java
 // Modified by the Flint authors.
 module flint.ai.embedding;
 
-import flint.ai.model : ModelOptions;
+import flint.ai.model : ModelOptions, ModelRequest;
+import flint.java.util : List;
 import std.typecons : Nullable;
 
 @safe:
@@ -171,5 +172,31 @@ class DefaultEmbeddingOptionsBuilder : EmbeddingOptions.Builder
     override EmbeddingOptions build()
     {
         return builder_.build();
+    }
+}
+
+/// A request to embed a list of input texts.
+class EmbeddingRequest : ModelRequest!(List!string)
+{
+    private List!string inputs_;
+    private EmbeddingOptions options_;
+
+    /// Keeps the supplied inputs and options. Null options select model defaults.
+    this(List!string inputs, EmbeddingOptions options) pure nothrow @nogc
+    {
+        inputs_ = inputs;
+        options_ = options;
+    }
+
+    /// Returns the original list of inputs.
+    override List!string getInstructions()
+    {
+        return inputs_;
+    }
+
+    /// Returns the supplied options, if present.
+    override EmbeddingOptions getOptions()
+    {
+        return options_;
     }
 }
