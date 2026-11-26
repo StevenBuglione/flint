@@ -1,7 +1,8 @@
 /// A process-wide slot holding one object reference, published safely to every thread.
 module flint.conc.slot;
 
-import flint.conc.sys.slot : exchangeSlot, loadSlot, storeSlot;
+import flint.conc.sys.slot : casWitness, exchangeSlot, loadSlot, loadVolatileSlot, replaceSlot,
+    storeSlot, storeVolatileSlot;
 
 @safe:
 
@@ -33,6 +34,36 @@ struct ProcessSlot(T) if (is(T == class) || is(T == interface))
         if (exchangeSlot(value, null, cast(Object) reference))
             return reference;
         return get();
+    }
+
+    /// Load the published reference in the sequentially consistent order.
+    T getVolatile() shared nothrow @nogc
+    {
+        return cast(T) loadVolatileSlot(value);
+    }
+
+    /// Publish a reference in the sequentially consistent order.
+    void setVolatile(T reference) shared nothrow @nogc
+    {
+        storeVolatileSlot(value, cast(Object) reference);
+    }
+
+    /// Replace the reference if it has the expected identity.
+    bool compareAndSet(T expected, T desired) shared nothrow @nogc
+    {
+        return exchangeSlot(value, cast(Object) expected, cast(Object) desired);
+    }
+
+    /// Attempt replacement and return the reference observed at the comparison.
+    T compareAndExchange(T expected, T desired) shared nothrow @nogc
+    {
+        return cast(T) casWitness(value, cast(Object) expected, cast(Object) desired);
+    }
+
+    /// Publish a reference and return the previous reference.
+    T getAndSet(T reference) shared nothrow @nogc
+    {
+        return cast(T) replaceSlot(value, cast(Object) reference);
     }
 }
 
