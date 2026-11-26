@@ -1332,3 +1332,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 12:25Z, coordinator: **merge-train budget order is stack-first** (proof-harness; amends 08:30Z (c)). posidon, the only `flint budget` runner, measures the whole stacked candidate in parallel with the acceptance verifiers.
   - **Green stack:** everything lands on one posidon run, about 10 minutes instead of about 95 for screening every submission first.
   - **Red stack:** the closure-touching submissions are then screened one by one, so the regressing lane is named directly. Budget-only bisect steps (a) and the tight-spread rule (b) stay.
+- 2026-11-26 14:35Z, coordinator: **region time zones drop `pure nothrow @nogc`** (sol-jdk-time-text's region-provider seam c1ceab147, reviewed by sol-jdk-core). `ZoneId.offset`, `ZoneId.normalized` and `ZonedDateTime.of(LocalDateTime, ZoneId)` lose those effects, because Java's region path consults a rules provider and can throw `ZoneRulesException`.
+  - Every fixed-`ZoneOffset` overload and construction keeps `pure nothrow @nogc`; `@nogc` callers use those.
+  - No engine or hot-path caller loses `@nogc`. On main, the only outside caller is `LocalDateTime.atZone`, which is already unattributed.
+  - The effect change goes into the mapping and the generated java-differences page, with a migration note.
+  - The prototype stays private until the apps' closure passes the train's budgets.
