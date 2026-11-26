@@ -6,7 +6,8 @@ import flint.java.util.concurrent : TimeUnit;
 import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.function_ : Supplier;
 import flint.micrometer.core.instrument : Clock, MockClock, Tags, Timer;
-import flint.micrometer.core.instrument.distribution : DistributionStatisticConfig, TimeWindowMax;
+import flint.micrometer.core.instrument.distribution : CountAtBucket, DistributionStatisticConfig,
+    TimeWindowMax, ValueAtPercentile;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 
 @safe:
@@ -43,6 +44,14 @@ private bool verifyWrappers(Timer timer, RegionCallable callable, RegionSupplier
         && wrappedDelegate() == region && timer.count() == 6;
 }
 
+private bool verifyHistogramValues()
+{
+    auto bucket = new CountAtBucket(2_500_000.0, 3.0);
+    auto percentile = new ValueAtPercentile(0.95, 2_500_000.0);
+    return bucket.bucket(TimeUnit.MILLISECONDS) == 2.5 && percentile.value(TimeUnit.MILLISECONDS) == 2.5
+        && bucket.toString() == "(3.0 at 2500000.0)" && percentile.toString() == "(2500000.0 at 95.0%)";
+}
+
 private bool verifyDistribution(MockClock clock)
 {
     auto config = DistributionStatisticConfig.builder().percentiles(0.95)
@@ -57,7 +66,7 @@ private bool verifyDistribution(MockClock clock)
     if (maximum.poll() != 3.0)
         return false;
     clock.add(1, TimeUnit.MILLISECONDS);
-    return maximum.poll() == 0.0;
+    return maximum.poll() == 0.0 && verifyHistogramValues();
 }
 
 void main(string[] args)
