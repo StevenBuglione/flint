@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,070 | 311 | 1,871 | 15,169 |
+| framework | openjdk@21.0.13 | 1,069 | 312 | 1,871 | 15,169 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2309,6 +2309,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.util.function.Function#identity()` | `flint.java.util.function_.Function.identity` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Call Function!(T, T).identity(). Flint binds Java's method type parameter on the interface specialization. |
 | `java.util.function.IntSupplier` | `flint.java.util.function_.intsupplier.IntSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.LongSupplier` | `flint.java.util.function_.longsupplier.LongSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 
@@ -11213,6 +11214,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.function.Function#andThen(Function)` | 2 | The current D method template is non-virtual, so an interface call bypasses the implementor's method (R3). It also accepts a null function at composition time, where Java throws NullPointerException (R8). |
 | framework | `java.util.function.Function#compose(Function)` | 2 | The current D method template is non-virtual, so an interface call bypasses the implementor's method (R3). It also accepts a null function at composition time, where Java throws NullPointerException (R8). |
 | framework | `java.util.function.Predicate#and(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |
+| framework | `java.util.function.Predicate#isEqual(Object)` | 2 | The equality predicate factory is absent. Java tests against the target's value equality and accepts a null target. |
 | framework | `java.util.function.Predicate#negate()` | 2 | The existing final D method prevents implementor overrides of Java's default method (R3). |
 | framework | `java.util.function.Predicate#not(Predicate)` | 2 | The existing D method accepts a null predicate at composition time (R8). Its call to the final negate method also prevents dispatch to an implementor's negate override (R3). |
 | framework | `java.util.function.Predicate#or(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |

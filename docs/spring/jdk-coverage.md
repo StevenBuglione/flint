@@ -37,7 +37,7 @@ Overall: types 153/1307 (12%), members 1228/15237 (8%).
 | `java.util.concurrent` | sol-jdk-concurrent-io, sol-observability | 7 / 79 | 26 / 1190 | 2% |  | 6 |
 | `java.util.concurrent.atomic` | sol-observability | 4 / 16 | 46 / 319 | 14% |  | 1 |
 | `java.util.concurrent.locks` | sol-observability | 3 / 14 | 15 / 201 | 7% |  |  |
-| `java.util.function` | sol-context | 16 / 43 | 15 / 79 | 19% | 3 |  |
+| `java.util.function` | sol-context | 16 / 43 | 15 / 79 | 19% | 2 |  |
 | `java.util.jar` | sol-jpa | 0 / 8 | 0 / 93 | 0% |  |  |
 | `java.util.random` | sol-jdk-math-regex | 0 / 7 | 0 / 89 | 0% |  |  |
 | `java.util.regex` | sol-jdk-math-regex | 2 / 4 | 19 / 82 | 23% | 1 |  |

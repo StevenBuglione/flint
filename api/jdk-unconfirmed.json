@@ -629,7 +629,6 @@
   "java.util.TimeZone#setRawOffset(int)",
   "java.util.TimeZone#useDaylightTime()",
   "java.util.UUID",
-  "java.util.function.Function#identity()",
   "java.util.function.Supplier",
   "java.util.function.Supplier#get()",
   "java.util.regex.Pattern",
