@@ -12,9 +12,19 @@
       "reason": "Requires direct buffer allocation or native-memory lifetime behavior, deferred from the heap cursor slice."
     },
     "java/nio/Buffer/Basic.java": {
-      "status": "deferred",
-      "phase": "2",
-      "reason": "Includes bulk, typed and direct buffer cases beyond this heap byte slice."
+      "status": "partial",
+      "d": "framework/java-nio-char-buffer/tests/char_bulk_array_test.d",
+      "methods": {
+        "ported": [
+          "BasicChar.bulkGet",
+          "BasicChar.absBulkGet",
+          "BasicChar.bulkPutArray",
+          "BasicChar.absBulkPutArray"
+        ],
+        "skipped": {
+          "main": "Remaining families and cases require direct memory, buffer-to-buffer copies, compaction, or the character sequence API. R26 also treats null arrays as empty."
+        }
+      }
     },
     "java/nio/Buffer/BulkPutBuffer.java": {
       "status": "deferred",

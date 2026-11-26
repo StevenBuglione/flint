@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,111 | 314 | 1,871 | 15,125 |
+| framework | openjdk@21.0.13 | 1,111 | 322 | 1,871 | 15,117 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2018,8 +2018,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.ByteOrder` | `flint.java.nio.byteorder.ByteOrder` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) | The standalone leaf uses distinct private byte-order flags for the two named values, so R15 value equality preserves their distinction. The default value is BIG_ENDIAN. |
 | `java.nio.ByteOrder#BIG_ENDIAN` | `flint.java.nio.byteorder.ByteOrder.BIG_ENDIAN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.ByteOrder#LITTLE_ENDIAN` | `flint.java.nio.byteorder.ByteOrder.LITTLE_ENDIAN` | [R15](api-mapping.md#r15-enums-with-fields) |  |
-| `java.nio.CharBuffer` | `flint.java.nio.charbuffer.CharBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import CharBuffer from flint.java.nio.charbuffer. Heap arrays and byte-backed views. A null backing slice is empty under R26. |
+| `java.nio.CharBuffer` | `flint.java.nio.charbuffer.CharBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import CharBuffer from flint.java.nio.charbuffer. Heap arrays and byte-backed views. A null array slice is empty under R26. |
+| `java.nio.CharBuffer#get(char[])` | `flint.java.nio.charbuffer.CharBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.CharBuffer#get(char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.CharBuffer#get(int,char[])` | `flint.java.nio.charbuffer.CharBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.CharBuffer#get(int,char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#order()` | `flint.java.nio.charbuffer.CharBuffer.order` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.CharBuffer#put(char[])` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.CharBuffer#put(char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.CharBuffer#put(int,char[])` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.CharBuffer#put(int,char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#wrap(char[])` | `flint.java.nio.charbuffer.CharBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#wrap(char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.InvalidMarkException` | `flint.java.nio.invalidmarkexception.InvalidMarkException` | [R1](api-mapping.md#r1-packages-and-names) | Import the exception from flint.java.nio.invalidmarkexception. It extends the canonical Java IllegalStateException. |
@@ -10084,7 +10092,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 137 | 0 |
 | java.net | 817 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 253 | 0 |
+| java.nio | 245 | 0 |
 | java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 103 | 0 |
@@ -11113,10 +11121,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.CharBuffer#compact()` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#compareTo(CharBuffer)` | 2 | Value comparison, equality and hashing follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#equals(Object)` | 2 | Value comparison, equality and hashing follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#get(char[])` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#get(char[],int,int)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#get(int,char[])` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#get(int,char[],int,int)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#hashCode()` | 2 | Value comparison, equality and hashing follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#isEmpty()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#length()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
@@ -11124,11 +11128,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.CharBuffer#put(CharBuffer)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#put(String)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#put(String,int,int)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#put(char[])` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#put(char[],int,int)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#put(int,CharBuffer,int,int)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#put(int,char[])` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#put(int,char[],int,int)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#read(CharBuffer)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#subSequence(int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#toString()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |

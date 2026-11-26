@@ -202,10 +202,38 @@ class CharBuffer : Buffer
     wchar get() pure
     {
         if (!hasRemaining())
-            throw new BufferUnderflowException;
+            throwUnderflow();
         const value = load(position());
         advance(1);
         return value;
+    }
+
+    CharBuffer get(scope wchar[] target, int offset, int length) pure
+    {
+        checkRange(offset, length, arraySize(target.length));
+        if (length > remaining())
+            throwUnderflow();
+        copyWords(cast(byte[]) target[offset .. offset + length], memory(position(), length), needsSwap());
+        advance(length);
+        return this;
+    }
+
+    CharBuffer get(scope wchar[] target) pure
+    {
+        return get(target, 0, arraySize(target.length));
+    }
+
+    CharBuffer get(int index, scope wchar[] target, int offset, int length) pure
+    {
+        checkRange(index, length, limit());
+        checkRange(offset, length, arraySize(target.length));
+        copyWords(cast(byte[]) target[offset .. offset + length], memory(index, length), needsSwap());
+        return this;
+    }
+
+    CharBuffer get(int index, scope wchar[] target) pure
+    {
+        return get(index, target, 0, arraySize(target.length));
     }
 
     wchar get(int index) const pure
@@ -218,7 +246,7 @@ class CharBuffer : Buffer
     {
         checkWritable();
         if (!hasRemaining())
-            throw new BufferOverflowException;
+            throwOverflow();
         store(position(), value);
         advance(1);
         return this;
@@ -230,6 +258,50 @@ class CharBuffer : Buffer
         checkIndex(index, 1, limit());
         store(index, value);
         return this;
+    }
+
+    CharBuffer put(scope const(wchar)[] source, int offset, int length) pure
+    {
+        checkWritable();
+        checkRange(offset, length, arraySize(source.length));
+        if (length > remaining())
+            throwOverflow();
+        copyWords(memory(position(), length), cast(const(byte)[]) source[offset .. offset + length], needsSwap());
+        advance(length);
+        return this;
+    }
+
+    final CharBuffer put(scope const(wchar)[] source) pure
+    {
+        return put(source, 0, arraySize(source.length));
+    }
+
+    CharBuffer put(int index, scope const(wchar)[] source, int offset, int length) pure
+    {
+        checkWritable();
+        checkRange(index, length, limit());
+        checkRange(offset, length, arraySize(source.length));
+        copyWords(memory(index, length), cast(const(byte)[]) source[offset .. offset + length], needsSwap());
+        return this;
+    }
+
+    CharBuffer put(int index, scope const(wchar)[] source) pure
+    {
+        return put(index, source, 0, arraySize(source.length));
+    }
+
+    private byte[] memory(int index, int length) pure nothrow @nogc
+    {
+        const start = cast(size_t)(origin + index) * wchar.sizeof;
+        return backing[start .. start + cast(size_t) length * wchar.sizeof];
+    }
+
+    private bool needsSwap() const pure nothrow @nogc
+    {
+        version (LittleEndian)
+            return storageKind() == Storage.bigEndian;
+        else
+            return storageKind() == Storage.littleEndian;
     }
 
     private Storage storageKind() const pure nothrow @nogc
@@ -277,10 +349,47 @@ class CharBuffer : Buffer
         checkWritable();
     }
 
-    private void checkWritable() const pure
+    pragma(inline, false) private void checkWritable() const pure
     {
         if ((storageFlags & readOnlyFlag) != 0)
             throw new ReadOnlyBufferException;
+    }
+}
+
+pragma(inline, false) private noreturn throwUnderflow() pure
+{
+    throw new BufferUnderflowException;
+}
+
+pragma(inline, false) private noreturn throwOverflow() pure
+{
+    throw new BufferOverflowException;
+}
+
+// A byte view can share a D word array even at an odd origin. Follow the
+// overlap direction and capture both source bytes before storing either.
+private void copyWords(scope byte[] target, scope const(byte)[] source, bool swap) pure nothrow @nogc
+{
+    pragma(inline, false);
+    if (target.length == 0 || (!swap && target.ptr == source.ptr))
+        return;
+
+    if (!swap && (target.ptr > &source[$ - 1] || source.ptr > &target[$ - 1]))
+    {
+        target[] = source[];
+        return;
+    }
+
+    const reverse = target.ptr > source.ptr;
+    const count = target.length / wchar.sizeof;
+    const size_t orderBit = swap;
+    foreach (word; 0 .. count)
+    {
+        const offset = (reverse ? count - 1 - word : word) * wchar.sizeof;
+        const first = source[offset ^ orderBit];
+        const second = source[(offset + 1) ^ orderBit];
+        target[offset] = first;
+        target[offset + 1] = second;
     }
 }
 

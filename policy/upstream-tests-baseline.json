@@ -3971,7 +3971,6 @@
     ],
     "java-nio-char-buffer": [
       "java/nio/Buffer/AllocateDirectInit.java",
-      "java/nio/Buffer/Basic.java",
       "java/nio/Buffer/BulkPutBuffer.java",
       "java/nio/Buffer/ByteBufferViews.java",
       "java/nio/Buffer/CharAt.java",
