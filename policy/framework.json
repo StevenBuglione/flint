@@ -438,7 +438,7 @@
     "flint.javax"
    ],
    "repo": "framework",
-   "licence": "Apache-2.0",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
    "upstream": "openjdk-api (clean-room from the Java SE specification)",
    "dependencies": [
     "engine-aot",

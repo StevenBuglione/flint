@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2026 the Flint authors.
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
  */
 
 /// The rulebook's erased value for Java Object signatures.

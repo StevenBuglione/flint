@@ -2,7 +2,6 @@
   "schema": 1,
   "note": "Existing packages awaiting GPL-2.0 with Classpath Exception migration under owner decision c32da028. Remove each name when its licence and source headers conform. The list only shrinks.",
   "pending": [
-    "java",
     "java-concurrent"
   ]
 }
