@@ -359,13 +359,13 @@ final class Stream(T)
     /// The least element under `comparator`, or empty.
     Optional!T min(Comparator!T comparator)
     {
-        return reduce((T a, T b) => comparator.compare(b, a) < 0 ? b : a);
+        return reduce((T a, T b) => comparator.compare(a, b) <= 0 ? a : b);
     }
 
     /// The greatest element under `comparator`, or empty.
     Optional!T max(Comparator!T comparator)
     {
-        return reduce((T a, T b) => comparator.compare(b, a) > 0 ? b : a);
+        return reduce((T a, T b) => comparator.compare(a, b) >= 0 ? a : b);
     }
 
     /// Fold the elements with `accumulator`, starting from `identity`.
