@@ -999,6 +999,41 @@ private const(char)[] trimmedAscii(return scope const(char)[] text) pure nothrow
     return text[start .. end];
 }
 
+/// Standard Base64 with padding (RFC 4648 section 4), as `java.util.Base64.getEncoder()` writes it. A strongly pure
+/// result, so it converts to `string`; written here rather than with std.base64, which links its templates into
+/// every application.
+package(flint) char[] base64(scope const(ubyte)[] bytes) pure nothrow
+{
+    static immutable char[64] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    auto text = new char[(bytes.length + 2) / 3 * 4];
+    size_t at;
+    for (size_t i = 0; i < bytes.length; i += 3)
+    {
+        const rest = bytes.length - i;
+        const uint group = bytes[i] << 16 | (rest > 1 ? bytes[i + 1] << 8 : 0) | (rest > 2 ? bytes[i + 2] : 0);
+        text[at++] = alphabet[group >> 18 & 63];
+        text[at++] = alphabet[group >> 12 & 63];
+        text[at++] = rest > 1 ? alphabet[group >> 6 & 63] : '=';
+        text[at++] = rest > 2 ? alphabet[group & 63] : '=';
+    }
+    return text;
+}
+
+@("base64 writes RFC 4648's test vectors and Spring's Basic credentials")
+unittest
+{
+    static immutable string[2][7] vectors = [
+        ["", ""], ["f", "Zg=="], ["fo", "Zm8="], ["foo", "Zm9v"], ["foob", "Zm9vYg=="],
+        ["fooba", "Zm9vYmE="], ["foobar", "Zm9vYmFy"]
+    ];
+    foreach (vector; vectors)
+        assert(base64(cast(const(ubyte)[]) vector[0]) == vector[1], vector[0]);
+    const ubyte[3] high = [0xFB, 0xFF, 0xBF];
+    assert(base64(high[]) == "+/+/");
+    assert(HttpHeaders.encodeBasicAuth("Aladdin", "open sesame") == "QWxhZGRpbjpvcGVuIHNlc2FtZQ==");
+    assert(HttpHeaders.encodeBasicAuth("user", "p\u00e4ss") == "dXNlcjpw5HNz"); // ISO-8859-1, as Spring encodes it
+}
+
 /// Java's `Double.toString` for quality values: shortest round-trip digits, at least one fraction digit.
 package(flint) string javaDoubleToString(double value) pure
 {
@@ -1723,8 +1758,6 @@ struct HttpHeaders
     /// Base64 of `username:password`, as Spring's `encodeBasicAuth` with the default ISO-8859-1 charset.
     static string encodeBasicAuth(string username, string password) pure
     {
-        import std.base64 : Base64;
-
         foreach (c; username)
             if (c == ':')
                 throw new IllegalArgumentException("Username must not contain a colon");
@@ -1736,7 +1769,7 @@ struct HttpHeaders
                         "Username or password contains characters that cannot be encoded to ISO-8859-1");
             bytes ~= cast(ubyte) c;
         }
-        return Base64.encode(bytes).idup;
+        return base64(bytes);
     }
 
     /// Sets `Access-Control-Allow-Credentials`.
