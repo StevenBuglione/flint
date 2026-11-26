@@ -23,14 +23,15 @@ import core.atomic : atomicLoad, atomicStore, MemoryOrder;
 import flint.core.convert : TypeDescriptor;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable;
-import flint.expression : EvaluationContext, TypedValue;
+import flint.expression : TypedValue;
+import flint.expression.spel.context : EvaluationContextAccess;
 import flint.java.lang : NullPointerException;
 import std.typecons : Rebindable;
 
 @safe:
 
 /// The reusable SpEL context for a root object and named variables.
-class StandardEvaluationContext : EvaluationContext
+class StandardEvaluationContext : EvaluationContextAccess
 {
     // Readers take a single snapshot. Published entries and root wrappers are never modified.
     private TypedValue* root;
@@ -78,7 +79,12 @@ class StandardEvaluationContext : EvaluationContext
         descriptors = table;
     }
 
-    package(flint.expression) final const(DescriptorTable) descriptorTable() const nothrow @nogc
+    protected override final bool isStandardContext() nothrow @nogc
+    {
+        return typeid(cast(Object) this) is typeid(StandardEvaluationContext);
+    }
+
+    protected override final const(DescriptorTable) descriptorTable() const nothrow @nogc
     {
         return descriptors.get();
     }
@@ -121,13 +127,13 @@ class StandardEvaluationContext : EvaluationContext
         return readVariable(name);
     }
 
-    package(flint.expression) final TypedValue readRootObject() nothrow @nogc
+    protected override final TypedValue readRootObject() nothrow @nogc
     {
         auto snapshot = atomicLoad!(MemoryOrder.acq)(root);
         return snapshot is null ? TypedValue.NULL : *snapshot;
     }
 
-    package(flint.expression) final Any readVariable(string name) nothrow @nogc
+    protected override final Any readVariable(string name) nothrow @nogc
     {
         auto entries = readBindings();
         const index = insertionIndex(entries, name);

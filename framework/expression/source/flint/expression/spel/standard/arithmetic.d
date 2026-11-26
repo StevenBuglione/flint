@@ -338,6 +338,11 @@ private struct ArithmeticParser
             else
                 operand(position, Any.init, name);
         }
+        else if (reader.peek == '[')
+        {
+            readsRoot = true;
+            property(position, null, readPropertyStep(reader, false));
+        }
         else
         {
             const name = reader.readIdentifierName();

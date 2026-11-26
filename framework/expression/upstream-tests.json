@@ -69,8 +69,21 @@
       "status": "deferred"
     },
     "org/springframework/expression/spel/IndexingTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/expression/tests/indexing_tests.d",
+      "methods": {
+        "ported": [
+          "indexIntoArrays",
+          "nullSafeIndexIntoArray"
+        ],
+        "skipped": {
+          "indexIntoGenericPropertyContainingArray": "Requires property type descriptors and annotation propagation.",
+          "nullSafeIndexIntoString": "String indexing is deferred.",
+          "indexIntoGenericPropertyContainingList": "List indexing is deferred.",
+          "indexIntoGenericPropertyContainingMap": "Map indexing is deferred.",
+          "setPropertyContainingList": "Indexed assignment is deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/expression/spel/ListTests.java": {
       "phase": "2",

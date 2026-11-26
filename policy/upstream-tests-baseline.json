@@ -1850,7 +1850,6 @@
       "org/springframework/expression/spel/ExpressionLanguageScenarioTests.java",
       "org/springframework/expression/spel/ExpressionStateTests.java",
       "org/springframework/expression/spel/ExpressionWithConversionTests.java",
-      "org/springframework/expression/spel/IndexingTests.java",
       "org/springframework/expression/spel/ListTests.java",
       "org/springframework/expression/spel/LiteralExpressionTests.java",
       "org/springframework/expression/spel/MapAccessTests.java",

@@ -24,10 +24,10 @@ import flint.arena : Error, Result, Status;
 import flint.engine.aot.any : Any;
 import flint.expression : EvaluationContext, EvaluationException, Expression, ExpressionParser;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
+import flint.expression.spel.context : EvaluationContextAccess;
 import flint.expression.spel.standard.arithmetic : ArithmeticExpression, isRootReference, parseArithmetic;
 import flint.expression.spel.standard.literal : utf16Length;
 import flint.expression.spel.standard.property : PropertyStep, readPropertyPath;
-import flint.expression.spel.support : StandardEvaluationContext;
 import flint.java.lang : ArithmeticException, IllegalArgumentException;
 
 @safe:
@@ -95,17 +95,17 @@ class SpelExpression : Expression
         requireContext(context);
         if (expression.hasProperties())
             return false;
-        if (typeid(cast(Object) context) !is typeid(StandardEvaluationContext))
+        auto standard = cast(EvaluationContextAccess) context;
+        if (standard is null || !standard.isStandardContext())
             context.getRootObject();
         return expression.variable !is null && !isRootReference(expression.variable);
     }
 
     private Any evaluateWithContext(EvaluationContext context, Any rootObject, bool useContextRoot)
     {
-        auto standard = cast(StandardEvaluationContext) context;
+        auto standard = cast(EvaluationContextAccess) context;
         // Guard virtual behavior: a subclass may override either lookup.
-        if (!expression.hasProperties() && (context is null
-                || typeid(cast(Object) context) is typeid(StandardEvaluationContext)))
+        if (!expression.hasProperties() && (context is null || (standard !is null && standard.isStandardContext())))
             return unwrap(evaluate(standard, rootObject, useContextRoot));
         if (useContextRoot && context !is null)
             rootObject = context.getRootObject().getValue();
@@ -132,7 +132,7 @@ class SpelExpression : Expression
     }
 
     // Call with the exact StandardEvaluationContext, or null for the empty default context.
-    package(flint.expression) Result!Any evaluate(StandardEvaluationContext context = null,
+    package(flint.expression) Result!Any evaluate(EvaluationContextAccess context = null,
             Any rootObject = Any.init, bool useContextRoot = true) nothrow @nogc
     {
         if (expression.hasProperties())
