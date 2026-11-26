@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 202 | 348 | 0 | 15,246 |
 | boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,520 | 1,403 | 4,870 | 30,041 |
+| framework | spring-framework@v7.1.0 | 3,516 | 1,403 | 4,870 | 30,045 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -9697,7 +9697,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.core.convert.converter | 14 | 0 |
 | org.springframework.core.convert.support | 15 | 0 |
 | org.springframework.core.env | 29 | 0 |
-| org.springframework.core.io | 73 | 0 |
+| org.springframework.core.io | 75 | 0 |
 | org.springframework.core.io.buffer | 0 | 277 |
 | org.springframework.core.io.support | 133 | 0 |
 | org.springframework.core.log | 56 | 0 |
@@ -9899,7 +9899,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.transaction.support | 17 | 0 |
 | org.springframework.ui | 42 | 0 |
 | org.springframework.ui.freemarker | 38 | 0 |
-| org.springframework.util | 351 | 0 |
+| org.springframework.util | 353 | 0 |
 | org.springframework.util.backoff | 40 | 0 |
 | org.springframework.util.comparator | 30 | 0 |
 | org.springframework.util.concurrent | 13 | 0 |
@@ -10505,6 +10505,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ChronoUnit#isSupportedBy(Temporal)` | 2 | Requires the Temporal contract. |
 | framework | `java.time.temporal.ValueRange#checkValidIntValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
+| framework | `org.springframework.core.io.FileSystemResource#<init>(FileSystem,String)` | 2 | Requires the Java NIO FileSystem resource constructor. |
+| framework | `org.springframework.core.io.FileSystemResource#<init>(Path)` | 2 | Requires the Java NIO Path resource constructor. |
 | framework | `org.springframework.expression.EvaluationContext#getTypeConverter()` | 2 | Deferred until indexed assignment uses the context conversion strategy. See D-SPEL-5. |
 | framework | `org.springframework.test.util.JsonPathExpectationsHelper#<init>(String,Configuration)` | 2 | Requires Jayway JsonPath provider configuration |
 | framework | `org.springframework.test.util.JsonPathExpectationsHelper#assertValue(String,Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
@@ -10535,6 +10537,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.test.web.servlet.result.MockMvcResultMatchers#jsonPath(String,Matcher,Class)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#is(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#reason(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
+| framework | `org.springframework.util.CollectionUtils#contains(Enumeration,Object)` | 2 | Requires java.util.Enumeration support. |
+| framework | `org.springframework.util.StringUtils#toStringArray(Enumeration)` | 2 | Requires java.util.Enumeration support. |
 | framework | `org.thymeleaf.context.AbstractContext` | 2 | Requires a backed insertion-ordered LinkedHashMap.keySet view and verified Locale default handling. |
 | framework | `org.thymeleaf.context.Context` | 2 | Requires a backed insertion-ordered LinkedHashMap.keySet view and verified Locale default handling. |
 | framework | `org.thymeleaf.exceptions.TemplateAssertionException` | 2 | The positioned constructor uses locale-sensitive decimal formatting from Java String.format. |
