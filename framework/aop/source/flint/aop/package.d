@@ -19,6 +19,7 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/MethodMatcher.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/Pointcut.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/TargetClassAware.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/TargetSource.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
  * Modified by the Flint authors.
@@ -198,6 +199,37 @@ interface TargetClassAware
 {
     /// Returns the AOT descriptor of the target, or null when the type is unknown.
     const(Descriptor) getTargetClass();
+}
+
+/// Supplies the target before an advised invocation and accepts it back afterward.
+interface TargetSource : TargetClassAware
+{
+    /// Returns the known target type, or null if it cannot be determined in advance.
+    override const(Descriptor) getTargetClass();
+
+    /// Whether callers can retain the same target across invocations.
+    bool isStatic();
+
+    /// Obtains the current target, or Any.init when the invocation has no target.
+    Any getTarget();
+
+    /// Releases a target obtained from getTarget.
+    void releaseTarget(Any target);
+
+    /// R3 implementations of the Java interface defaults.
+    mixin template Defaults()
+    {
+        /// A target source is dynamic by default.
+        bool isStatic()
+        {
+            return false;
+        }
+
+        /// The default release hook has no work to do.
+        void releaseTarget(Any)
+        {
+        }
+    }
 }
 
 /// Marker for advice that runs before a joinpoint.

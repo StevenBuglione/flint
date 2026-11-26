@@ -5,6 +5,10 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/Pointcuts.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/StaticMethodMatcherPointcut.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/NameMatchMethodPointcut.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/AbstractPointcutAdvisor.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/AbstractGenericPointcutAdvisor.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DefaultPointcutAdvisor.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/StaticMethodMatcherPointcutAdvisor.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
  * Modified by the Flint authors.
@@ -14,11 +18,13 @@ module flint.aop.support;
 public import flint.aop.support.class_filters : ClassFilters, RootClassFilter;
 public import flint.aop.support.method_matchers : ComposablePointcut, MethodMatchers;
 
-import flint.aop : ClassFilter, MethodMatcher, Pointcut;
+import flint.aop : Advisor, ClassFilter, MethodMatcher, Pointcut, PointcutAdvisor;
 import flint.aop.support.class_filters : ClassPredicate, asClassFilter;
+import flint.aopalliance.aop : Advice;
+import flint.core : Ordered;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MethodDescriptor;
-import flint.engine.aot.objects : statelessInstance;
+import flint.engine.aot.objects : objectEquals, objectToString, statelessInstance;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException,
     UnsupportedOperationException, stringHashCode;
 import flint.util : PatternMatchUtils;
@@ -267,5 +273,176 @@ private final class SetterPointcut : BeanAccessorPointcut
     override string toString() const nothrow @nogc
     {
         return "Pointcuts.SETTERS";
+    }
+}
+
+/// Base class for pointcut advisors with an optional explicit order.
+abstract class AbstractPointcutAdvisor : PointcutAdvisor, Ordered
+{
+    mixin JavaObject;
+    mixin Advisor.Defaults;
+
+    private int order;
+    private bool orderSet;
+
+    /// Overrides any order supplied by the advice.
+    void setOrder(int order)
+    {
+        this.order = order;
+        orderSet = true;
+    }
+
+    /// Uses the explicit order, the advice's order, or LOWEST_PRECEDENCE.
+    int getOrder()
+    {
+        if (orderSet)
+            return order;
+        auto ordered = cast(Ordered) getAdvice();
+        return ordered is null ? Ordered.LOWEST_PRECEDENCE : ordered.getOrder();
+    }
+
+    /// Compares advice and pointcut values.
+    bool equals(Object other)
+    {
+        if (this is other)
+            return true;
+        auto advisor = cast(PointcutAdvisor) other;
+        return advisor !is null && objectEquals(cast(Object) getAdvice(),
+                cast(Object) advisor.getAdvice()) && objectEquals(cast(Object) getPointcut(),
+                cast(Object) advisor.getPointcut());
+    }
+
+    /// The common pointcut-advisor hash.
+    int hashCode() const
+    {
+        enum advisorHash = stringHashCode("flint.aop.PointcutAdvisor");
+        return advisorHash;
+    }
+}
+
+/// Base advisor whose advice can be configured independently of its pointcut.
+abstract class AbstractGenericPointcutAdvisor : AbstractPointcutAdvisor
+{
+    private Advice advice;
+
+    /// Starts without configured advice.
+    this()
+    {
+        advice = Advisor.EMPTY_ADVICE;
+    }
+
+    /// Replaces the configured advice.
+    void setAdvice(Advice advice)
+    {
+        this.advice = advice;
+    }
+
+    /// Returns the configured advice.
+    Advice getAdvice()
+    {
+        return advice;
+    }
+
+    /// Describes this advisor and its advice.
+    override string toString()
+    {
+        return typeid(this).name ~ ": advice [" ~ objectToString(cast(Object) getAdvice()) ~ "]";
+    }
+}
+
+/// An advisor with a configurable pointcut and advice.
+class DefaultPointcutAdvisor : AbstractGenericPointcutAdvisor
+{
+    private Pointcut pointcut;
+
+    /// Starts with the pointcut that selects every method.
+    this()
+    {
+        pointcut = Pointcut.TRUE;
+    }
+
+    /// Uses the given advice for every method.
+    this(Advice advice)
+    {
+        this(Pointcut.TRUE, advice);
+    }
+
+    /// Pairs the supplied pointcut with the advice.
+    this(Pointcut pointcut, Advice advice)
+    {
+        this.pointcut = pointcut;
+        setAdvice(advice);
+    }
+
+    /// Sets the pointcut. Null restores the default pointcut.
+    void setPointcut(Pointcut pointcut)
+    {
+        this.pointcut = pointcut is null ? Pointcut.TRUE : pointcut;
+    }
+
+    /// Returns the configured pointcut.
+    Pointcut getPointcut()
+    {
+        return pointcut;
+    }
+
+    /// Describes the pointcut and advice.
+    override string toString()
+    {
+        return typeid(this).name ~ ": pointcut [" ~ objectToString(
+                cast(Object) getPointcut()) ~ "]; advice [" ~ objectToString(cast(Object) getAdvice()) ~ "]";
+    }
+}
+
+/// An advisor whose static method matcher is also its pointcut.
+abstract class StaticMethodMatcherPointcutAdvisor : StaticMethodMatcherPointcut, PointcutAdvisor, Ordered
+{
+    mixin Advisor.Defaults;
+
+    private Advice advice;
+    private int order = Ordered.LOWEST_PRECEDENCE;
+
+    /// Starts without configured advice.
+    this()
+    {
+        advice = Advisor.EMPTY_ADVICE;
+    }
+
+    /// Starts with the supplied advice.
+    this(Advice advice)
+    {
+        if (advice is null)
+            throw new IllegalArgumentException("Advice must not be null");
+        this.advice = advice;
+    }
+
+    /// Sets the order used by this advisor.
+    void setOrder(int order)
+    {
+        this.order = order;
+    }
+
+    /// Returns this advisor's order.
+    int getOrder()
+    {
+        return order;
+    }
+
+    /// Replaces the configured advice.
+    void setAdvice(Advice advice)
+    {
+        this.advice = advice;
+    }
+
+    /// Returns the configured advice.
+    Advice getAdvice()
+    {
+        return advice;
+    }
+
+    /// Uses this advisor as the pointcut.
+    Pointcut getPointcut()
+    {
+        return this;
     }
 }

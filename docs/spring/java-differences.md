@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 121 | 247 | 0 | 15,428 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,306 | 1,274 | 4,848 | 30,406 |
+| framework | spring-framework@v7.1.0 | 3,329 | 1,282 | 4,848 | 30,375 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1799,11 +1799,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.Pointcut#TRUE` | `flint.aop.Pointcut.TRUE` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.aop.Pointcut#getClassFilter()` | `flint.aop.Pointcut.getClassFilter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.TargetClassAware#getTargetClass()` | `flint.aop.TargetClassAware.getTargetClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.TargetSource#getTarget()` | `flint.aop.TargetSource.getTarget` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.aop.TargetSource#getTargetClass()` | `flint.aop.TargetSource.getTargetClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.TargetSource#isStatic()` | `flint.aop.TargetSource.isStatic` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.aop.TargetSource#releaseTarget(Object)` | `flint.aop.TargetSource.releaseTarget` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.aop.support
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.aop.support.AbstractGenericPointcutAdvisor#toString()` | `flint.aop.support.AbstractGenericPointcutAdvisor.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.AbstractPointcutAdvisor#equals(Object)` | `flint.aop.support.AbstractPointcutAdvisor.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.AbstractPointcutAdvisor#hashCode()` | `flint.aop.support.AbstractPointcutAdvisor.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.ClassFilters#intersection(ClassFilter,ClassFilter)` | `flint.aop.support.ClassFilters.intersection` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.aop.support.ClassFilters#negate(ClassFilter)` | `flint.aop.support.ClassFilters.negate` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.aop.support.ClassFilters#union(ClassFilter,ClassFilter)` | `flint.aop.support.ClassFilters.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords), [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) |  |
@@ -1817,6 +1824,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.support.ComposablePointcut#union(ClassFilter)` | `flint.aop.support.ComposablePointcut.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords), [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.aop.support.ComposablePointcut#union(MethodMatcher)` | `flint.aop.support.ComposablePointcut.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.aop.support.ComposablePointcut#union(Pointcut)` | `flint.aop.support.ComposablePointcut.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.aop.support.DefaultPointcutAdvisor#toString()` | `flint.aop.support.DefaultPointcutAdvisor.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.aop.support.DynamicMethodMatcher#matches(Method,Class)` | `flint.aop.support.DynamicMethodMatcher.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.support.MethodMatchers#matches(MethodMatcher,Method,Class,boolean)` | `flint.aop.support.MethodMatchers.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.support.MethodMatchers#union(MethodMatcher,MethodMatcher)` | `flint.aop.support.MethodMatchers.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
@@ -8847,7 +8855,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.slf4j.event | 36 | 0 |
 | org.slf4j.helpers | 208 | 0 |
 | org.slf4j.spi | 7 | 0 |
-| org.springframework.aop | 16 | 0 |
+| org.springframework.aop | 11 | 0 |
 | org.springframework.aop.aspectj | 184 | 0 |
 | org.springframework.aop.aspectj.annotation | 102 | 0 |
 | org.springframework.aop.aspectj.autoproxy | 7 | 0 |
@@ -8858,7 +8866,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
 | org.springframework.aop.interceptor | 97 | 0 |
 | org.springframework.aop.scope | 20 | 0 |
-| org.springframework.aop.support | 159 | 0 |
+| org.springframework.aop.support | 133 | 0 |
 | org.springframework.aop.support.annotation | 26 | 0 |
 | org.springframework.aop.target | 116 | 0 |
 | org.springframework.aop.target.dynamic | 20 | 0 |
