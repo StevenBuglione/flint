@@ -193,3 +193,43 @@ unittest
     assertThrown!IndexOutOfBoundsException(matcher.end(-1));
     assertThrown!IndexOutOfBoundsException(matcher.group(1));
 }
+
+@("Matcher lookingAt records a prefix match and a later failure invalidates its captures")
+unittest
+{
+    import flint.java.lang : IllegalStateException;
+    import std.exception : assertThrown;
+
+    auto matcher = Pattern.compile("(😀)(a)?").matcher("😀tail");
+    assert(matcher.lookingAt() && matcher.hasMatch());
+    assert(matcher.start() == 0 && matcher.end() == 2 && matcher.group(1).get == "😀");
+    assert(matcher.group(2).isNull);
+    assert(!matcher.matches() && !matcher.hasMatch());
+    assertThrown!IllegalStateException(matcher.start());
+    assert(matcher.lookingAt());
+    assert(!matcher.reset("x😀").lookingAt());
+    assert(!matcher.hasMatch());
+    auto zero = Pattern.compile("()").matcher("word");
+    assert(zero.lookingAt() && zero.end() == 0 && !zero.group(1).isNull && zero.group(1).get == "");
+}
+
+@("Matcher reset retains the pattern and clears captures before the next match")
+unittest
+{
+    import core.memory : GC;
+    import flint.java.lang : IllegalStateException;
+    import std.exception : assertThrown;
+
+    auto compiled = Pattern.compile("(😀)(a)?");
+    auto matcher = compiled.matcher("😀tail");
+    assert(matcher.lookingAt());
+    assert(matcher.reset() is matcher && !matcher.hasMatch() && matcher.pattern() is compiled);
+    assertThrown!IllegalStateException(matcher.group());
+    assert(matcher.lookingAt());
+    const before = GC.stats().allocatedInCurrentThread;
+    assert(matcher.reset("😀a") is matcher && !matcher.hasMatch());
+    assert(matcher.matches() && matcher.group(2).get == "a" && matcher.end(2) == 3);
+    assert(GC.stats().allocatedInCurrentThread == before);
+    auto empty = Pattern.compile("()").matcher("x");
+    assert(empty.reset(null).matches() && empty.end() == 0);
+}

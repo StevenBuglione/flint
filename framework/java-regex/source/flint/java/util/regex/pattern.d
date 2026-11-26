@@ -110,11 +110,36 @@ final class Matcher : MatchResult
     /// Test the entire input and record its captures.
     bool matches()
     {
+        return match(true);
+    }
+
+    /// Match from the beginning of the input and record the first matching prefix.
+    bool lookingAt()
+    {
+        return match(false);
+    }
+
+    /// Clear the match state while keeping the current input and compiled expression.
+    Matcher reset() pure nothrow @nogc
+    {
+        matched = false;
+        return this;
+    }
+
+    /// Replace the input and clear the match state. A null slice represents empty text (R26).
+    Matcher reset(string input) pure nothrow @nogc
+    {
+        this.input = input;
+        return reset();
+    }
+
+    private bool match(bool wholeInput)
+    {
         matched = false;
         if (groupCount() && !capturePoints.length)
             capturePoints = new int[2 * (groupCount() + 1)];
         scope int[] result = capturePoints.length ? capturePoints : wholeMatch[];
-        matched = compiled.program.captureMatch(input, result);
+        matched = compiled.program.captureMatch(input, result, wholeInput);
         return matched;
     }
 
