@@ -537,6 +537,36 @@ struct Reactor
         return runtime.workers[currentWorkerIndex].armRemote();
     }
 
+    /// Suspend the active fiber on its armed remote wake with no additional deadline. Task cancellation,
+    /// including its own deadline, and reactor shutdown still end the wait.
+    Error yieldForRemoteWake() nothrow @nogc
+    {
+        if (runtime is null || currentRuntime !is runtime)
+            return Error(Status.notFound, "no active fiber");
+        auto worker = &runtime.workers[currentWorkerIndex];
+        if (worker.activeFiber == noSlot)
+            return Error(Status.notFound, "no active fiber");
+        if (!worker.fibers[worker.activeFiber].remoteArmed)
+            return Error(Status.invalidArgument, "fiber has no armed remote wake");
+        return worker.parkTask(Deadline.none);
+    }
+
+    /// Retire this active fiber's exact armed wait without yielding. A handle for another fiber or an older
+    /// registration returns `notFound` and leaves the armed wait intact.
+    Error retireRemoteWake(scope const ref RemoteWaker waker) nothrow @nogc
+    {
+        if (runtime is null || currentRuntime !is runtime || waker.wakes !is runtime.wakes
+                || waker.ownerCore != currentWorkerIndex)
+            return Error(Status.notFound, "no matching remote wait on this owner");
+        auto worker = &runtime.workers[currentWorkerIndex];
+        const slot = worker.activeFiber;
+        if (slot == noSlot || slot != waker.slot || worker.fibers[slot].generation != waker.generation
+                || !worker.lane().disarmMatching(slot, waker.wait))
+            return Error(Status.notFound, "no matching remote wait on this fiber");
+        worker.fibers[slot].remoteArmed = false;
+        return Error.init;
+    }
+
     /// Mark a suspended fiber due, so the owner's next pass resumes it before blocking. Waking a running
     /// or already due fiber is a no-op, so waiters re-check their condition before they yield. A handle
     /// whose task ended is rejected with `notFound`. Callable only on the owner loop.
@@ -1258,12 +1288,20 @@ private struct Worker
     {
         if (activeFiber == noSlot)
             return Error(Status.notFound, "no active fiber");
+        if (deadline.monotonicNanoseconds == Deadline.none.monotonicNanoseconds)
+        {
+            endRemoteWait(activeFiber);
+            return Error(Status.invalidArgument, "fiber yield requires a finite deadline");
+        }
+        return parkTask(deadline);
+    }
+
+    private Error parkTask(Deadline deadline) nothrow @nogc
+    {
         const slot = activeFiber;
         // Any return from this yield ends an armed remote wait, so a late signal cannot end a later yield.
         scope (exit)
             endRemoteWait(slot);
-        if (deadline.monotonicNanoseconds == Deadline.none.monotonicNanoseconds)
-            return Error(Status.invalidArgument, "fiber yield requires a finite deadline");
         if (atomicLoad(runtime.state) != State.running)
             return Error(Status.cancelled, "reactor is stopping");
         auto task = &fibers[slot];
