@@ -1315,3 +1315,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **(c) Per-submission budget pre-screen:** posidon measures main plus each submission alone, in parallel with the stacked candidates. A submission that regresses alone bounces at once, with its per-endpoint numbers.
 
   Budgets and tolerances are unchanged. The 07:40Z calibration stays for genuinely noisy endpoints only.
+- 2026-11-26 08:50Z, coordinator: **main is over its gs-rest-service `flint budget` on two endpoints** (proof-harness, posidon, median of 5 on a1e841e8).
+  - **The misses:** 'name with spaces and plus' +0.58% against a 0.50% tolerance, and 'unknown parameter is ignored' +0.70% against 0.63%.
+  - **When it landed:** between d8f4e413 (which passed) and a1e841e8.
+  - **No re-baseline:** raising a per-endpoint budget is an owner decision (087f28a3).
+  - **The plan:**
+    1. proof-harness bisects main's gs-rest budget over d8f4e413..a1e841e8 with budget-only steps, and the culprit's lane fixes it forward;
+    2. until then, the train judges only those two endpoints against main's measured median, so a candidate fails them only by regressing further. This is a temporary list that the fix commit deletes. All other endpoints stay on their absolute budgets.
+
+    Main's miss stays an open release blocker.
