@@ -40,8 +40,21 @@
       "status": "deferred"
     },
     "org/springframework/expression/spel/EvaluationTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/expression/tests/conditional_tests.d",
+      "methods": {
+        "ported": [
+          "ternaryExpressionWithNullConditionType",
+          "ternaryExpressionWithInvalidConditionType",
+          "ternaryExpressionIsNotWritable",
+          "ternaryExpressionsWithImplicitGrouping",
+          "ternaryExpressionsWithExplicitGrouping"
+        ],
+        "skipped": {
+          "ternaryExpressions": "Scalar branches are covered. Assignment expressions in a branch remain.",
+          "elvisOperator": "Scalar fallback is covered. Assignment in the fallback branch remains."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/expression/spel/ExpressionLanguageScenarioTests.java": {
       "phase": "2",
@@ -240,8 +253,16 @@
       "status": "deferred"
     },
     "org/springframework/expression/spel/SpelReproTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/expression/tests/conditional_tests.d",
+      "methods": {
+        "ported": [
+          "elvis_SPR7209_2"
+        ],
+        "skipped": {
+          "elvis_SPR7209_1": "Implicit null operands are supported. The invalid assignment case remains."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/expression/spel/StandardTypeComparatorTests.java": {
       "phase": "2",

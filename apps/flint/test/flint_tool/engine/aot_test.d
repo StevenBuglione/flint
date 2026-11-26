@@ -581,6 +581,8 @@ unittest
             continue;
         }
         auto context = new TestScope;
+        string parameters, arguments;
+        size_t bindings;
         if (auto fixture = "context" in row)
         {
             foreach (name, ref literal; (*fixture)["variables"].objectNoRef)
@@ -588,7 +590,16 @@ unittest
                 Compiled value;
                 SpelError bindingError;
                 assert(compileSpel(literal.str, context, value, bindingError), id ~ ": " ~ bindingError.message);
-                context.variables[name] = value;
+                if (bindings)
+                {
+                    parameters ~= ", ";
+                    arguments ~= ", ";
+                }
+                const parameter = "binding_" ~ (bindings++).to!string;
+                const type = value.type == "null" ? "Object" : value.type;
+                parameters ~= type ~ " " ~ parameter;
+                arguments ~= value.code;
+                context.variables[name] = Compiled(parameter, type);
             }
         }
         Compiled result;
@@ -602,8 +613,9 @@ unittest
         assert(ok, id ~ ": " ~ error.message);
         const name = "case_" ~ index.to!string;
         const value = result.type == "null" ? "cast(Object)(" ~ result.code ~ ")" : result.code;
-        definitions ~= "Any " ~ name ~ "() { return Any.of(" ~ value ~ "); }\n";
-        calls ~= "reportValue(" ~ name ~ "());\n";
+        const boxed = result.type == "Any" ? value : "Any.of(" ~ value ~ ")";
+        definitions ~= "Any " ~ name ~ "(" ~ parameters ~ ") { return " ~ boxed ~ "; }\n";
+        calls ~= "reportValue(" ~ name ~ "(" ~ arguments ~ "));\n";
         expectedOutput ~= expected["type"].str ~ "\t" ~ expected["value"].str ~ "\n";
     }
     assert(calls.length > 0);

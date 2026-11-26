@@ -272,6 +272,12 @@
     "expected": {"type": "int", "value": "21"}
   },
   {
+    "id": "context-unary-minus",
+    "expression": "-#answer",
+    "context": {"variables": {"answer": "42"}},
+    "expected": {"type": "int", "value": "-42"}
+  },
+  {
     "id": "context-mixed-numeric-types",
     "expression": "#answer * #factor",
     "context": {"variables": {"answer": "42", "factor": "3L"}},
@@ -282,5 +288,33 @@
     "expression": "#enabled && (1 / #divisor > 0)",
     "context": {"variables": {"enabled": "false", "divisor": "0"}},
     "expected": {"type": "bool", "value": "false"}
+  },
+  {
+    "id": "ternary-short-circuit",
+    "expression": "false ? 1 / 0 : 42",
+    "expected": {"type": "int", "value": "42"}
+  },
+  {
+    "id": "ternary-branch-type",
+    "expression": "true ? 1 : 2L",
+    "runtimeOnly": "The AOT ternary promotes differing numeric branches to double. Spring retains the selected type.",
+    "expected": {"type": "int", "value": "1"}
+  },
+  {
+    "id": "elvis-empty-text",
+    "expression": "'' ?: 'fallback'",
+    "expected": {"type": "string", "value": "fallback"}
+  },
+  {
+    "id": "elvis-null",
+    "expression": "null ?: 'fallback'",
+    "runtimeOnly": "The AOT Elvis path cannot yet type a fallback on a null-typed left operand.",
+    "expected": {"type": "string", "value": "fallback"}
+  },
+  {
+    "id": "elvis-zero",
+    "expression": "0 ?: 1",
+    "runtimeOnly": "The AOT Elvis path emits a null test for numeric literals.",
+    "expected": {"type": "int", "value": "0"}
   }
 ]

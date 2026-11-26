@@ -221,6 +221,22 @@ unittest
     assert(quotient.getValue(context) == Any.of(21));
 }
 
+@("computed unary signs read the current context operand") unittest
+{
+    auto parser = new SpelExpressionParser;
+    auto context = new StandardEvaluationContext(Any.of(3L));
+    auto negate = parser.parseRaw("-#bound");
+    auto positive = parser.parseRaw("+#root");
+
+    context.setVariable("bound", Any.of(cast(short) 42));
+    assert(negate.getValue(context) == Any.of(-42));
+    context.setVariable("bound", Any.of(5.0f));
+    auto read = () nothrow @nogc => negate.evaluate(context);
+    assert(read().value == Any.of(-5.0f));
+    assert(positive.getValue(context) == Any.of(3L));
+    assert(positive.getValue(context, Any.of(cast(byte) 2)) == Any.of(cast(byte) 2));
+}
+
 @("numeric references use explicit roots and late-bound context lookups") unittest
 {
     static final class CustomContext : EvaluationContext

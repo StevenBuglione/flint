@@ -16,7 +16,7 @@
  * Ported from spring-framework v7.1.0: spring-expression/src/main/java/org/springframework/expression/spel/ast/OpPlus.java
  * Also from OpMinus.java, OpMultiply.java, OpDivide.java, OpModulus.java, OperatorPower.java,
  * Operator.java, OpEQ.java, OpNE.java, OpLT.java, OpLE.java, OpGT.java, OpGE.java,
- * OpAnd.java, OpOr.java and OperatorNot.java.
+ * OpAnd.java, OpOr.java, OperatorNot.java, Ternary.java and Elvis.java.
  * Modified by the Flint authors.
  */
 module flint.expression.spel.standard.arithmetic;
@@ -92,6 +92,11 @@ struct ArithmeticExpression
                 stack[depth++] = Scalar.from(root);
                 continue;
             }
+            if (instruction.op == Op.elvis || instruction.op == Op.jump)
+            {
+                stepJump(*instruction, stack[depth - 1], depth, next);
+                continue;
+            }
             if (instruction.op >= Op.positive)
             {
                 const error = instruction.op < Op.and_ ? stepSign(*instruction,
@@ -112,7 +117,10 @@ struct ArithmeticExpression
             }
             stack[depth - 1] = applied.value;
         }
-        result.value = stack[0].pack();
+        if (stack[0].kind == ValueKind.other)
+            result.error = Error(Status.unsupported, "SpEL conditional result requires a scalar value");
+        else
+            result.value = stack[0].pack();
         return null;
     }
 }
@@ -123,7 +131,7 @@ ArithmeticExpression parseArithmetic(string source)
     parser.reader.skipWhitespace();
     if (parser.reader.position == source.length)
         throw new IllegalArgumentException("'expressionString' must not be null or blank");
-    parser.parse(orPrecedence, 0);
+    parser.conditional(0);
     const end = parser.reader.position;
     if (end < source.length)
         throw parser.reader.errorAt(end, SpelMessage.MORE_INPUT, source[end .. $]);
@@ -148,12 +156,15 @@ private enum Op : ubyte
     lessEqual,
     greater,
     greaterEqual,
+    elvis,
+    jump,
     positive,
     negative,
     and_,
     or_,
     not_,
     requireBoolean,
+    testCondition,
 }
 
 private struct Instruction
@@ -173,6 +184,64 @@ private struct ArithmeticParser
     size_t firstPosition = size_t.max;
     string firstVariable;
     bool readsRoot;
+
+    size_t conditional(uint nesting)
+    {
+        reader.skipWhitespace();
+        const atStart = reader.position;
+        size_t left = atStart;
+        if (atConditional())
+            operand(atStart, Any.init);
+        else
+            left = parse(orPrecedence, nesting);
+        if (!atConditional())
+            return left;
+
+        checkNesting(nesting);
+        const position = reader.position++;
+        emitFirstOperand();
+        if (reader.peek == ':')
+            fallback(nesting + 1, position);
+        else
+            ternary(nesting + 1, left, position);
+        return position;
+    }
+
+    bool atConditional() const pure nothrow @nogc
+    {
+        if (reader.peek != '?')
+            return false;
+        const after = reader.position + 1;
+        return after == reader.text.length || reader.text[after] != '.';
+    }
+
+    void ternary(uint nesting, size_t left, size_t position)
+    {
+        const whenFalse = instructions.length;
+        instructions ~= Instruction(Op.testCondition, left);
+        conditional(nesting);
+        if (reader.peek != ':')
+            throw reader.errorAt(reader.position, SpelMessage.OOD);
+        ++reader.position;
+        const end = instructions.length;
+        instructions ~= Instruction(Op.jump, position);
+        instructions[whenFalse].jump = instructions.length;
+        conditional(nesting);
+        instructions[end].jump = instructions.length;
+    }
+
+    void fallback(uint nesting, size_t position)
+    {
+        ++reader.position;
+        const end = instructions.length;
+        instructions ~= Instruction(Op.elvis, position);
+        reader.skipWhitespace();
+        if (reader.position == reader.text.length || reader.peek == ')' || reader.peek == ':')
+            operand(reader.position, Any.init);
+        else
+            conditional(nesting);
+        instructions[end].jump = instructions.length;
+    }
 
     size_t parse(ubyte minimumPrecedence, uint nesting)
     {
@@ -243,7 +312,7 @@ private struct ArithmeticParser
         {
             checkNesting(nesting);
             ++reader.position;
-            const inner = parse(orPrecedence, nesting + 1);
+            const inner = conditional(nesting + 1);
             if (reader.peek != ')')
                 throw reader.errorAt(reader.position, SpelMessage.OOD);
             ++reader.position;
@@ -567,6 +636,14 @@ private Error stepSign(const ref Instruction step, ref Scalar value) nothrow @no
     return Error.init;
 }
 
+private void stepJump(const ref Instruction step, const ref Scalar top, ref size_t sp, ref size_t pc) pure nothrow @nogc
+{
+    if (step.op == Op.elvis && (top.kind == ValueKind.null_ || (top.kind == ValueKind.string_ && top.text.length == 0)))
+        --sp;
+    else
+        pc = step.jump;
+}
+
 private enum BooleanValue : ubyte
 {
     invalid,
@@ -591,6 +668,11 @@ private Error stepBoolean(const ref Instruction step, ref Scalar top, ref size_t
         break;
     case Op.requireBoolean:
         top = Scalar(ValueKind.bool_, truth);
+        break;
+    case Op.testCondition:
+        --used;
+        if (!truth)
+            pc = step.jump;
         break;
     default:
         if (truth == (step.op == Op.or_))
