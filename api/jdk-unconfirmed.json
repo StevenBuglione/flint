@@ -333,7 +333,6 @@
   "java.sql.Wrapper#unwrap(java.lang.Class)",
   "java.text.DateFormat",
   "java.text.DateFormat#<init>()",
-  "java.text.DateFormat#format(Date)",
   "java.text.DateFormat#parse(String,ParsePosition)",
   "java.text.MessageFormat",
   "java.text.SimpleDateFormat",
