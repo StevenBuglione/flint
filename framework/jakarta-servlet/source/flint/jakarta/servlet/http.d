@@ -83,21 +83,29 @@ class Cookie
         setAttribute("Path", uri);
     }
 
-    /// `Max-Age` in seconds, or `-1`.
+    /// `Max-Age` in seconds, or `-1`. Throws `NumberFormatException` when the attribute is not a decimal `int`, as
+    /// Java's `Integer.parseInt` does. Reads through engine-aot's text helpers, not std.conv, whose `ConvException`
+    /// links Phobos std.exception, curl and socket into every application (playbook S-9).
     int getMaxAge() const pure
     {
-        import std.conv : to;
+        import flint.engine.aot.text : parseLong;
+        import flint.java.lang : NumberFormatException;
 
         const maxAge = getAttribute("Max-Age");
-        return maxAge is null ? -1 : maxAge.to!int;
+        if (maxAge is null)
+            return -1;
+        long seconds;
+        if (!parseLong(maxAge, seconds) || seconds < int.min || seconds > int.max)
+            throw NumberFormatException.forInputString(maxAge);
+        return cast(int) seconds;
     }
 
-    /// Sets `Max-Age`.
+    /// Sets `Max-Age`; a negative `expiry` removes it.
     void setMaxAge(int expiry) pure
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
-        setAttribute("Max-Age", expiry < 0 ? null : expiry.to!string);
+        setAttribute("Max-Age", expiry < 0 ? null : decimal(expiry));
     }
 
     /// Whether `Secure` is set.
