@@ -1807,7 +1807,6 @@
       "org/springframework/expression/spel/OptionalNullSafetyTests.java",
       "org/springframework/expression/spel/ParserErrorMessagesTests.java",
       "org/springframework/expression/spel/ParsingTests.java",
-      "org/springframework/expression/spel/PropertyAccessTests.java",
       "org/springframework/expression/spel/ScenariosForSpringSecurityExpressionTests.java",
       "org/springframework/expression/spel/SelectionAndProjectionTests.java",
       "org/springframework/expression/spel/SetValueTests.java",

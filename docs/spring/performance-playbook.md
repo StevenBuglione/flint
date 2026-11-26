@@ -142,6 +142,8 @@ The largest costs are per-request allocation and the collector pauses it causes.
 
 | R-123 | **Infer a SpEL value descriptor only when it is inspected.** `TypedValue` keeps a supplied descriptor and computes an inferred one on its first `getTypeDescriptor` call. Updating a context root publishes the complete wrapper, including an explicit type for a null value. | The expression probe on venus measured 73,234 incremental loadable bytes and 1,436 template instances. The feature and baseline use the same direct dependencies, including `flint:core`. | `framework/expression/tests/typed_value_tests.d` and the expression module's size and template gate |
 
+| R-124 | **Compile root-relative property paths once.** Each step holds its name, byte position and safe-navigation flag. Evaluation reads the configured descriptor table and calls the existing erased getter. A null-safe hop skips lookup on a null target. Computation of UTF-16 offsets happens only when reporting an error. | On venus, optimized DMD and LDC builds each read a two-step path 40,000 times after setup with zero GC bytes allocated. The expression probe measured 76,062 incremental loadable bytes and 1,484 template instances. | `framework/expression/tests/property_tests.d` and the expression definition-of-done budget probe |
+
 ## 2. Binary size
 
 | ID | Rule | Evidence | Enforced by |

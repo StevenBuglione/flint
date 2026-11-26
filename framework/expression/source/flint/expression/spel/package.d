@@ -28,6 +28,9 @@ import flint.expression : EvaluationException, ParseException;
 enum SpelMessage
 {
     TYPE_CONVERSION_ERROR = 1001,
+    PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL = 1007,
+    PROPERTY_OR_FIELD_NOT_READABLE,
+    EXCEPTION_DURING_PROPERTY_READ = 1021,
     NOT_AN_INTEGER = 1035,
     NOT_A_LONG,
     NOT_A_REAL = 1040,
@@ -71,7 +74,12 @@ class SpelEvaluationException : EvaluationException
 
     package(flint.expression) this(int position, SpelMessage code, string detail)
     {
-        super(position, formatMessage(code, detail));
+        this(position, code, detail, null, null);
+    }
+
+    package(flint.expression) this(int position, SpelMessage code, string detail, string context, Throwable cause)
+    {
+        super(position, formatMessage(code, detail, context), cause);
         messageCode = code;
     }
 
@@ -81,11 +89,12 @@ class SpelEvaluationException : EvaluationException
     }
 }
 
-private string formatMessage(SpelMessage code, string detail)
+private string formatMessage(SpelMessage code, string detail, string context = null)
 {
     foreach (entry; diagnosticTexts)
         if (entry.code == code)
-            return "EL" ~ decimal(cast(int) code) ~ "E: " ~ entry.prefix ~ detail ~ entry.suffix;
+            return "EL" ~ decimal(cast(int) code) ~ "E: " ~ entry.prefix ~ detail ~ entry.between
+                ~ context ~ entry.suffix;
     assert(0, "Missing SpEL diagnostic");
 }
 
@@ -94,11 +103,20 @@ private struct DiagnosticText
     SpelMessage code;
     string prefix;
     string suffix;
+    string between;
 }
 
 private immutable DiagnosticText[] diagnosticTexts = [
-    DiagnosticText(SpelMessage.TYPE_CONVERSION_ERROR, "Type conversion problem, cannot convert from ",
+    DiagnosticText(SpelMessage.TYPE_CONVERSION_ERROR,
+            "Type conversion problem, cannot convert from ",
             " to boolean"),
+    DiagnosticText(SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL,
+            "Property or field '", "' cannot be found on null"),
+    DiagnosticText(SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, "Property or field '",
+            "' - maybe not public or not valid?",
+            "' cannot be found on object of type '"),
+    DiagnosticText(SpelMessage.EXCEPTION_DURING_PROPERTY_READ,
+            "A problem occurred whilst attempting to access the property '", "'", "': '"),
     DiagnosticText(SpelMessage.NOT_AN_INTEGER, "The value '", "' cannot be parsed as an int"),
     DiagnosticText(SpelMessage.NOT_A_LONG, "The value '", "' cannot be parsed as a long"),
     DiagnosticText(SpelMessage.NOT_A_REAL, "The value '", "' cannot be parsed as a double"),

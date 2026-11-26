@@ -226,4 +226,9 @@ class EvaluationException : ExpressionException
     {
         super(position, message);
     }
+
+    package(flint.expression) this(int position, string message, Throwable cause)
+    {
+        super(position, message, cause);
+    }
 }

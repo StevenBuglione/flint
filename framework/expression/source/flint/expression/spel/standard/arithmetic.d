@@ -26,8 +26,7 @@ import flint.arena : Error, Result, Status;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decodeUtf8;
 import flint.expression.spel : SpelMessage;
-import flint.expression.spel.standard.literal : LiteralParser;
-import flint.java.character : isLetter;
+import flint.expression.spel.standard.literal : LiteralParser, startsIdentifier;
 import flint.java.lang : IllegalArgumentException;
 import std.ascii : isAlpha, isDigit, toLower;
 
@@ -260,19 +259,10 @@ private struct ArithmeticParser
     {
         ++reader.position;
         reader.skipWhitespace();
-        const start = reader.position;
-        size_t end = start;
-        if (start == reader.text.length || !startsIdentifier(decodeUtf8(reader.text, end)))
-            throw reader.errorAt(start, SpelMessage.OOD);
-        reader.position = end;
-        while (end < reader.text.length)
-        {
-            const next = decodeUtf8(reader.text, end);
-            if (!startsIdentifier(next) && (next < '0' || next > '9'))
-                break;
-            reader.position = end;
-        }
-        return reader.text[start .. reader.position];
+        const name = reader.readIdentifierName();
+        if (name is null)
+            throw reader.errorAt(reader.position, SpelMessage.OOD);
+        return name;
     }
 
     void literal(size_t position)
@@ -296,12 +286,6 @@ private struct ArithmeticParser
             throw reader.errorAt(firstPosition, SpelMessage.OOD);
         instructions ~= Instruction(Op.literal, firstPosition, Scalar.from(firstLiteral));
     }
-}
-
-// Spring's tokenizer applies Character.isLetter to one UTF-16 code unit at a time.
-private bool startsIdentifier(dchar c) pure nothrow @nogc
-{
-    return c == '_' || c == '$' || (c <= 0xFFFF && isLetter(c));
 }
 
 private enum ubyte orPrecedence = 1;

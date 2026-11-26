@@ -23,6 +23,7 @@ module flint.expression.spel.standard.literal;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : ParsedLong, decodeUtf8, tryParseDouble, tryParseFloat, tryParseLong;
 import flint.expression.spel : SpelMessage, SpelParseException;
+import flint.java.character : isLetter;
 import std.ascii : isAlpha, isDigit, isHexDigit, toLower;
 
 @safe:
@@ -33,6 +34,12 @@ package(flint.expression) size_t utf16Length(scope const(char)[] text, size_t st
     while (index < text.length && length <= stopAfter)
         length += decodeUtf8(text, index) > 0xFFFF ? 2 : 1;
     return length;
+}
+
+// Spring's tokenizer applies Character.isLetter to one UTF-16 code unit at a time.
+package(flint.expression.spel.standard) bool startsIdentifier(dchar c) pure nothrow @nogc
+{
+    return c == '_' || c == '$' || (c <= 0xFFFF && isLetter(c));
 }
 
 package(flint.expression.spel.standard) struct LiteralParser
@@ -54,6 +61,23 @@ package(flint.expression.spel.standard) struct LiteralParser
     SpelParseException errorAt(size_t start, SpelMessage code, string detail = null)
     {
         return new SpelParseException(text, cast(int) utf16Length(text[0 .. start]), code, detail);
+    }
+
+    string readIdentifierName() pure nothrow @nogc
+    {
+        const start = position;
+        size_t end = start;
+        if (start == text.length || !startsIdentifier(decodeUtf8(text, end)))
+            return null;
+        position = end;
+        while (end < text.length)
+        {
+            const next = decodeUtf8(text, end);
+            if (!startsIdentifier(next) && (next < '0' || next > '9'))
+                break;
+            position = end;
+        }
+        return text[start .. position];
     }
 
     Any readLiteral()

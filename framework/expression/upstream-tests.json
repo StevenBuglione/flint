@@ -172,8 +172,40 @@
       "status": "deferred"
     },
     "org/springframework/expression/spel/PropertyAccessTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/expression/tests/property_tests.d",
+      "methods": {
+        "ported": [
+          "simpleAccess01",
+          "simpleAccess02",
+          "nonExistentPropertiesAndMethods"
+        ],
+        "skipped": {
+          "accessingOnNullObject": "Read diagnostics covered; property writes are deferred.",
+          "accessingPropertyOfJavaLangClass": "Java class targets and static property access are deferred.",
+          "accessingPropertyOfJavaTimeZoneIdDeclaredInNonPublicSubclass": "Inherited JDK type descriptors are deferred.",
+          "addingAndRemovingAccessors": "Custom property accessor registration is deferred.",
+          "addingSpecificPropertyAccessor": "Custom property accessor registration is deferred.",
+          "noGetClassAccess": "SimpleEvaluationContext is deferred.",
+          "propertyAccessWithArrayIndexOutOfBounds": "Indexing is deferred.",
+          "propertyAccessWithInstanceMethodResolver": "Method resolvers are deferred.",
+          "propertyAccessWithInstanceMethodResolverAndTypedRootObject": "Method resolvers are deferred.",
+          "propertyAccessWithoutMethodResolver": "Method resolvers are deferred.",
+          "propertyReadOnly": "SimpleEvaluationContext and assignment diagnostics are deferred.",
+          "propertyReadOnlyWithGenuineRecordAccessorEmbeddingPrefix": "Record-style property accessors are deferred.",
+          "propertyReadOnlyWithNonRecordDataClassAccessorEmbeddingPrefix": "Record-style property accessors are deferred.",
+          "propertyReadOnlyWithRecordStyle": "Record-style property accessors are deferred.",
+          "propertyReadResolvesCorrectFieldForAcronymPropertyDespiteSimilarlyNamedField": "Annotation-sensitive accessor selection is deferred.",
+          "propertyReadWrite": "Property writes are deferred.",
+          "propertyReadWriteWithBooleanJavaBeanGetter": "Property writes are deferred.",
+          "propertyReadWriteWithRootObject": "Property writes are deferred.",
+          "propertyWriteAppliesAnnotationDrivenConversionOnlyForCorrectlyResolvedAcronymField": "Property writes and conversion are deferred.",
+          "readCallSiteWithoutPriorCanReadResolvesCorrectAnnotation": "Public property accessors and annotations are deferred.",
+          "shouldAlwaysUsePropertyAccessorFromEvaluationContext": "Custom property accessor dispatch is deferred.",
+          "simpleAccess03": "Array length and requested-type conversion are deferred.",
+          "standardGetClassAccess": "Java class targets and static property access are deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/expression/spel/ScenariosForSpringSecurityExpressionTests.java": {
       "phase": "2",

@@ -22,8 +22,10 @@ module flint.expression.spel.support;
 import core.atomic : atomicLoad, atomicStore, MemoryOrder;
 import flint.core.convert : TypeDescriptor;
 import flint.engine.aot.any : Any;
+import flint.engine.aot.descriptor : DescriptorTable;
 import flint.expression : EvaluationContext, TypedValue;
 import flint.java.lang : NullPointerException;
+import std.typecons : Rebindable;
 
 @safe:
 
@@ -33,6 +35,7 @@ class StandardEvaluationContext : EvaluationContext
     // Readers take a single snapshot. Published entries and root wrappers are never modified.
     private TypedValue* root;
     private Bindings* variables;
+    private Rebindable!(const DescriptorTable) descriptors;
 
     /// Start with a null root and no variables.
     this()
@@ -67,6 +70,17 @@ class StandardEvaluationContext : EvaluationContext
     override TypedValue getRootObject()
     {
         return readRootObject();
+    }
+
+    /// Supply the frozen AOT property descriptors during context setup, before publishing this context.
+    final void setDescriptorTable(const DescriptorTable table) nothrow @nogc
+    {
+        descriptors = table;
+    }
+
+    package(flint.expression) final const(DescriptorTable) descriptorTable() const nothrow @nogc
+    {
+        return descriptors.get();
     }
 
     /// Store or replace a variable. A null value removes its binding.
