@@ -14,11 +14,12 @@
  * limitations under the License.
  *
  * Ported from spring-framework v7.1.0: spring-expression/src/main/java/org/springframework/expression/spel/ast/OpPlus.java
- * Also from OpMinus.java, OpMultiply.java, OpDivide.java and OpModulus.java.
+ * Also from OpMinus.java, OpMultiply.java, OpDivide.java, OpModulus.java and OperatorPower.java.
  * Modified by the Flint authors.
  */
 module flint.expression.spel.standard.arithmetic;
 
+import core.stdc.math : pow;
 import flint.arena : Error, Result, Status;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decodeUtf8;
@@ -42,7 +43,7 @@ struct ArithmeticExpression
     private immutable(Instruction)[] instructions;
     string variable;
 
-    Result!Any evaluate() pure nothrow @nogc
+    Result!Any evaluate() nothrow @nogc
     {
         if (instructions.length == 0)
             return Result!Any(constant);
@@ -88,6 +89,7 @@ private enum Op : ubyte
     multiply,
     divide,
     modulus,
+    power,
 }
 
 private struct Instruction
@@ -108,6 +110,13 @@ private struct ArithmeticParser
     void parse(ubyte minimumPrecedence, uint nesting)
     {
         primary(nesting);
+        reader.skipWhitespace();
+        if (reader.peek == '^' && variable is null)
+        {
+            const position = reader.position++;
+            primary(nesting);
+            instructions ~= Instruction(Op.power, position);
+        }
         while (true)
         {
             reader.skipWhitespace();
@@ -290,16 +299,39 @@ private struct Numeric
     }
 }
 
-private Result!Numeric applyOperator(Op op, Numeric left, Numeric right) pure nothrow @nogc
+private Result!Numeric applyOperator(Op op, Numeric left, Numeric right) nothrow @nogc
 {
     if (left.kind == NumberKind.other || right.kind == NumberKind.other)
         return Result!Numeric(Numeric.init, Error(Status.unsupported, "SpEL arithmetic requires numeric operands"));
     const kind = left.kind >= right.kind ? left.kind : right.kind;
+    if (op == Op.power)
+        return Result!Numeric(power(kind, left, right));
     if (kind == NumberKind.double_)
         return Result!Numeric(Numeric(kind, 0, arithmetic(op, left.asDouble(), right.asDouble())));
     if (kind == NumberKind.float_)
         return Result!Numeric(Numeric(kind, 0, arithmetic(op, left.asFloat(), right.asFloat())));
     return integerArithmetic(op, kind, left.integer, right.integer);
+}
+
+private Numeric power(NumberKind kind, Numeric left, Numeric right) nothrow @nogc
+{
+    const double base = kind == NumberKind.float_ ? left.asFloat() : left.asDouble();
+    const double exponent = kind == NumberKind.float_ ? right.asFloat() : right.asDouble();
+    // Math.pow returns NaN here, while C pow treats an absolute base of one as a special case.
+    const unitBase = base == 1 || base == -1;
+    const nonfiniteExponent = exponent != exponent || exponent == double.infinity || exponent == -double.infinity;
+    const result = unitBase && nonfiniteExponent ? double.nan : pow(base, exponent);
+    if (kind >= NumberKind.float_)
+        return Numeric(NumberKind.double_, 0, result);
+    if (kind == NumberKind.long_ || result > int.max)
+    {
+        if (result >= 0x1p63)
+            return Numeric(NumberKind.long_, long.max);
+        if (result <= -0x1p63)
+            return Numeric(NumberKind.long_, long.min);
+        return Numeric(NumberKind.long_, cast(long) result);
+    }
+    return Numeric(NumberKind.int_, result <= int.min ? int.min : cast(int) result);
 }
 
 private Result!Numeric integerArithmetic(Op op, NumberKind kind, long left, long right) pure nothrow @nogc
@@ -329,7 +361,7 @@ private T arithmetic(T)(Op op, T left, T right) pure nothrow @nogc
         return left / right;
     case Op.modulus:
         return left % right;
-    case Op.literal:
-        assert(0, "A literal has no arithmetic operator");
+    case Op.literal, Op.power:
+        assert(0, "An operand or power is handled by the evaluator");
     }
 }

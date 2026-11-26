@@ -72,7 +72,35 @@
   {
     "id": "power",
     "expression": "2L ^ 10L",
-    "compiledOnly": "Power is still deferred in the runtime interpreter.",
     "expected": {"type": "long", "value": "1024"}
+  },
+  {
+    "id": "int-power",
+    "expression": "2 ^ 10",
+    "runtimeOnly": "Compiled integer power returns long even when Spring returns int.",
+    "expected": {"type": "int", "value": "1024"}
+  },
+  {
+    "id": "double-power",
+    "expression": "3.0d ^ 2.0d",
+    "expected": {"type": "double", "value": "9.0"}
+  },
+  {
+    "id": "negative-exponent",
+    "expression": "2L ^ -1L",
+    "runtimeOnly": "The AOT integer power path defers Spring's truncation for negative exponents.",
+    "expected": {"type": "long", "value": "0"}
+  },
+  {
+    "id": "unit-negative-exponent",
+    "expression": "1L ^ -5L",
+    "runtimeOnly": "The AOT integer power path defers Spring's truncation for negative exponents.",
+    "expected": {"type": "long", "value": "1"}
+  },
+  {
+    "id": "power-overflow",
+    "expression": "10L ^ 30L",
+    "runtimeOnly": "The AOT integer power path defers Spring's saturation on overflow.",
+    "expected": {"type": "long", "value": "9223372036854775807"}
   }
 ]

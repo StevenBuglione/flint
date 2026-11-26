@@ -131,7 +131,7 @@
           "operatorNames": "operator metadata and overloaders",
           "operatorOverloading": "operator metadata and overloaders",
           "plus": "string and arbitrary Number operands, public AST accessors, or operator diagnostics",
-          "power": "power",
+          "power": "Scalar assertions are ported. BigDecimal power requires construction and arbitrary-precision arithmetic.",
           "realLiteral": "scalar literal behavior is exercised by LiteralTests",
           "stringConcatenation": "string arithmetic",
           "stringRepeat": "string arithmetic",

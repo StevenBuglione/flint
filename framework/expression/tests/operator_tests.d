@@ -77,6 +77,39 @@ unittest
     assert(result.value.get!long == 5);
 }
 
+@("power rounds and narrows like Spring for scalar numbers")
+unittest
+{
+    evaluate("3^2", 9);
+    evaluate("3.0d^2.0d", 9.0);
+    evaluate("3.0f^2.0f", 9.0);
+    evaluate("3L^2L", 9L);
+    evaluate("(2^32)^2", long.max);
+    evaluate("2^-1", 0);
+    evaluate("-2^33", int.min);
+    evaluate("2 + 3 * 2^3", 26);
+
+    auto parsed = (new SpelExpressionParser).parseRaw("1.0 ^ (1.0 / 0.0)");
+    auto read = () nothrow @nogc => parsed.evaluate();
+    const value = read().value.get!double;
+    assert(value != value);
+}
+
+@("power binds once at each level")
+unittest
+{
+    auto parser = new SpelExpressionParser;
+    try
+    {
+        parser.parseRaw("2^3^4");
+        assert(false, "An ungrouped second power is invalid");
+    }
+    catch (SpelParseException error)
+    {
+        assert(error.getMessageCode() == SpelMessage.MORE_INPUT && error.getPosition() == 3);
+    }
+}
+
 @("division by zero fails during evaluation")
 unittest
 {
