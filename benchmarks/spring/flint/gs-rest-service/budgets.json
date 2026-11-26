@@ -1,0 +1,81 @@
+{
+ "schema": "flint.budget/1",
+ "app": "gs-rest-service",
+ "runner": "11th Gen Intel(R) Core(TM) i7-11700K @ 3.60GHz / Ubuntu GLIBC 2.39-0ubuntu8.12 / valgrind-3.22.0",
+ "profile": "release",
+ "measure": {
+  "warmup_rounds": 2,
+  "requests": 8,
+  "windows": 3
+ },
+ "tolerance": {
+  "instructions": 0.005
+ },
+ "endpoints": {
+  "default name": {
+   "instructions": 22645,
+   "tolerance": 0.0084
+  },
+  "name parameter": {
+   "instructions": 23477,
+   "tolerance": 0.0083
+  },
+  "percent-encoded UTF-8 name": {
+   "instructions": 23851,
+   "tolerance": 0.0065
+  },
+  "name with spaces and plus": {
+   "instructions": 23968
+  },
+  "empty name takes the default": {
+   "instructions": 23073,
+   "tolerance": 0.0089
+  },
+  "repeated name parameter joins with a comma": {
+   "instructions": 23856,
+   "tolerance": 0.0116
+  },
+  "JSON escaping": {
+   "instructions": 24657,
+   "tolerance": 0.0083
+  },
+  "unknown parameter is ignored": {
+   "instructions": 23142,
+   "tolerance": 0.0063
+  },
+  "Accept application/json": {
+   "instructions": 22804,
+   "tolerance": 0.0064
+  },
+  "Accept application/xml is not acceptable": {
+   "instructions": 151719
+  },
+  "HEAD reaches the handler": {
+   "instructions": 22585,
+   "tolerance": 0.0065
+  },
+  "OPTIONS lists the allowed methods": {
+   "instructions": 45184
+  },
+  "POST is not allowed": {
+   "instructions": 115561
+  },
+  "DELETE is not allowed": {
+   "instructions": 111188
+  },
+  "unknown path is a JSON 404": {
+   "instructions": 21674,
+   "tolerance": 0.0088
+  },
+  "trailing slash does not match": {
+   "instructions": 48197
+  },
+  "unknown path for a browser is the Whitelabel page": {
+   "instructions": 92492
+  },
+  "counter after the errors": {
+   "instructions": 23532,
+   "tolerance": 0.0062
+  }
+ }
+}

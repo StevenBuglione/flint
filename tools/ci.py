@@ -417,6 +417,14 @@ def request_allocation_tests(runner):
         with spring_bench.postgres_cluster() as database:
             runner.run(command,env=dict(trimmed,**database()))
 
+def budget(runner):
+    """flint budget (owner decision 087f28a3): each endpoint's per-request cost against its committed budget, on the
+    runner class the budgets name (posidon), and no raise without an owner decision's trailer."""
+    runner.run([PYTHON,'tools/budget_raise_check.py'])
+    runner.run([PYTHON,'tools/install_toolchains.py','--compiler','flint'])
+    runner.run([PYTHON,'tools/install_peers.py','--peer','postgres'])
+    runner.run([ROOT/'.flint/bin/flint','budget','--report',ROOT/'artifacts'/'budget.json'])
+
 def platform_run(runner,target):
     if not runner.plan:implementation_required()
     if target=='wasm32':
@@ -552,6 +560,7 @@ def main(argv=None):
     command=sub.add_parser('check');command.add_argument('--gate',choices=(*STATIC,'sanitizers'),required=True)
     sub.add_parser('static')
     sub.add_parser('sanitizers')
+    sub.add_parser('budget')
     for action in ('platform','platform-run','container'):
         command=sub.add_parser(action);command.add_argument('--target',choices=PLATFORMS,required=True)
     for action in ('performance','baseline'):
@@ -577,6 +586,7 @@ def main(argv=None):
         perf(runner,args)
         runner.run([PYTHON,'tools/gates.py','--gate','baseline','--evidence',args.output.resolve()])
     elif args.action=='pair':pair(runner,args)
+    elif args.action=='budget':budget(runner)
     return 0
 
 if __name__=='__main__':

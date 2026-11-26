@@ -375,6 +375,31 @@ struct ToolchainArgs
     ToolchainCommon info;
 }
 
+/// `flint budget`.
+@Command("flint budget", "Measure each endpoint's per-request cost against the committed budgets")
+struct BudgetArgs
+{
+    /// Apps to measure.
+    @Option("app", 0, "Measure this app (repeatable; default: gs-rest-service and petclinic-rest)")
+    string[] apps;
+    /// Rewrite the budgets.
+    @Option("update", 0, "Rewrite the instruction budgets from this run (lowering is always allowed)")
+    bool update;
+    /// The decision that approves a raise.
+    @Option("allow-raise", 0,
+            "A docs/spring/phase1/decisions.md entry approving a raise (humans and the coordinator)")
+    string allowRaise;
+    /// Repeated runs, for the noise floor.
+    @Option("repeat", 0, "Measure N times and report the spread (sets the tolerance with --update)")
+    int repeat = 1;
+    /// Prebuilt binaries.
+    @Option("binaries", 0, "A directory of prebuilt release binaries named after the apps")
+    string binaries;
+    /// Report file.
+    @Option("report", 0, "Write the flint.budget/1-report JSON here")
+    string report;
+}
+
 /// `flint doctor`.
 @Command("flint doctor", "Explain environment problems that would make a build non-canonical")
 struct DoctorArgs
@@ -760,6 +785,9 @@ struct FlintArgs
     /// toolchain.
     @Subcommand("toolchain", "Install, verify or describe the pinned toolchain")
     ToolchainArgs toolchain;
+    /// budget.
+    @Subcommand("budget", "Check each endpoint's per-request cost against its budget")
+    BudgetArgs budget;
     /// doctor.
     @Subcommand("doctor", "Explain environment problems")
     DoctorArgs doctor;

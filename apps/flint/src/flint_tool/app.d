@@ -242,7 +242,7 @@ private int knowledgeCommand(ref Session session, string name, ref FlintArgs opt
 /// Run a toolchain or knowledge command; -1 when `name` is not one.
 private int toolingCommand(ref Session session, string name, ref FlintArgs options)
 {
-    import flint_tool.commands.tooling : commandDoctor, commandExplain, commandReceipt, commandVersion;
+    import flint_tool.commands.tooling : commandDoctor, commandExplain, commandVersion;
 
     const knowledge = knowledgeCommand(session, name, options);
     if (knowledge >= 0)
@@ -250,6 +250,9 @@ private int toolingCommand(ref Session session, string name, ref FlintArgs optio
     const api = apiCommand(session, name, options.api);
     if (api >= 0)
         return api;
+    const evidence = evidenceCommand(session, name, options);
+    if (evidence >= 0)
+        return evidence;
     switch (name)
     {
     case "flint deps tree":
@@ -264,10 +267,25 @@ private int toolingCommand(ref Session session, string name, ref FlintArgs optio
         return commandVersion(session, options.version_);
     case "flint explain":
         return commandExplain(session, options.explain);
-    case "flint receipt":
-        return commandReceipt(session, options.receipt);
     default:
         return toolchainCommand(session, name, options);
+    }
+}
+
+/// Run a command that reports evidence about a build (`flint receipt`, `flint budget`); -1 when `name` is not one.
+private int evidenceCommand(ref Session session, string name, ref FlintArgs options)
+{
+    import flint_tool.commands.budget : commandBudget;
+    import flint_tool.commands.tooling : commandReceipt;
+
+    switch (name)
+    {
+    case "flint receipt":
+        return commandReceipt(session, options.receipt);
+    case "flint budget":
+        return commandBudget(session, options.budget);
+    default:
+        return -1;
     }
 }
 
@@ -475,7 +493,7 @@ private bool printApiHelp(string commandName, scope void delegate(scope const(ch
 
 private void printToolingHelp(string commandName, scope void delegate(scope const(char)[]) @safe sink)
 {
-    if (printKnowledgeHelp(commandName, sink))
+    if (printKnowledgeHelp(commandName, sink) || printEvidenceHelp(commandName, sink))
         return;
     switch (commandName)
     {
@@ -493,9 +511,22 @@ private void printToolingHelp(string commandName, scope void delegate(scope cons
         return writeHelp!VersionArgs(sink);
     case "flint explain":
         return writeHelp!ExplainArgs(sink);
-    case "flint receipt":
-        return writeHelp!ReceiptArgs(sink);
     default:
         return writeHelp!FlintArgs(sink);
+    }
+}
+
+private bool printEvidenceHelp(string commandName, scope void delegate(scope const(char)[]) @safe sink)
+{
+    switch (commandName)
+    {
+    case "flint receipt":
+        writeHelp!ReceiptArgs(sink);
+        return true;
+    case "flint budget":
+        writeHelp!BudgetArgs(sink);
+        return true;
+    default:
+        return false;
     }
 }

@@ -274,10 +274,38 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  budget:
+    name: Per-endpoint budgets (flint budget)
+    needs: refs
+    # The runner class the budgets record (tools/flint_budget.py): instruction counts depend on the CPU and glibc.
+    runs-on: [self-hosted, Linux, X64, flint-budget-i7-11700k]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.refs.outputs.candidate }}
+          persist-credentials: false
+          # budget_raise_check.py walks the commits since the merge base for Budget-Raise-Approved trailers.
+          fetch-depth: 0
+      - name: Install verified compiler archives
+        run: |
+          python3 tools/install_toolchains.py --compiler ldc
+          python3 tools/install_toolchains.py --compiler dmd
+      - name: Check budgets and raises
+        run: python3 tools/ci.py budget
+      - name: Retain the budget report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: budget-report
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 30
+
   required:
     name: ${{ needs.refs.outputs.mode == 'baseline' && 'Flint / baseline evidence' || 'Flint / all six gates' }}
     if: always()
-    needs: [refs, checks, sanitizers, platforms, wasm, measured]
+    needs: [refs, checks, sanitizers, platforms, wasm, measured, budget]
     runs-on: ubuntu-24.04
     steps:
       - name: Fail for failed skipped cancelled or missing prerequisites

@@ -225,6 +225,14 @@ unittest
 
         writeln("FLINT_REQUEST_ALLOCATIONS ", app, " (fence ", fenceCost.count, " allocations, ",
                 fenceCost.bytes, " bytes)\n", measured, "\n}");
+        // flint budget (tools/flint_budget.py) reads the costs from a file.
+        const outPath = environment.get("FLINT_REQUEST_ALLOCATIONS_OUT");
+        if (outPath.length)
+        {
+            import std.file : write;
+
+            write(outPath, measured ~ "\n}\n");
+        }
     }
 
     // The counter's bytes are druntime's own: on this thread both counted the same allocations.

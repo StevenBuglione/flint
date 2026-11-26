@@ -121,7 +121,8 @@ def queue_lock():
     return None
 
 
-def rerun_under_hold():
+def rerun_under_hold(script=None):
+    """Re-run `script` (default: this file) under the measurement queue's hold, once."""
     if os.environ.get('FLINT_SPRING_INSTR_HELD') == '1':
         return
     env = dict(os.environ, FLINT_SPRING_INSTR_HELD='1')
@@ -129,7 +130,7 @@ def rerun_under_hold():
     if lock:
         env['FLINT_MEASURE_LOCK'] = lock
     command = [sys.executable, str(ROOT / 'tools' / 'measure_queue.py'), 'hold', '--', sys.executable,
-               str(Path(__file__).resolve()), *sys.argv[1:]]
+               str(script or Path(__file__).resolve()), *sys.argv[1:]]
     sys.exit(subprocess.call(command, env=env))
 
 

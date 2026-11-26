@@ -1,0 +1,386 @@
+{
+ "schema": "flint.budget/1",
+ "app": "petclinic-rest",
+ "runner": "11th Gen Intel(R) Core(TM) i7-11700K @ 3.60GHz / Ubuntu GLIBC 2.39-0ubuntu8.12 / valgrind-3.22.0",
+ "profile": "release",
+ "measure": {
+  "warmup_rounds": 2,
+  "requests": 8,
+  "windows": 3
+ },
+ "tolerance": {
+  "instructions": 0.01
+ },
+ "endpoints": {
+  "root redirects to the Swagger UI": {
+   "instructions": 40091
+  },
+  "actuator links": {
+   "instructions": 73332
+  },
+  "actuator health": {
+   "instructions": 97353
+  },
+  "actuator liveness group": {
+   "instructions": 98013
+  },
+  "actuator readiness group": {
+   "instructions": 97975
+  },
+  "actuator endpoint that is not exposed": {
+   "instructions": 98255
+  },
+  "actuator health with an explicit Accept": {
+   "instructions": 97421,
+   "tolerance": 0.0169
+  },
+  "list owners": {
+   "instructions": 1658924
+  },
+  "owners by last name": {
+   "instructions": 290767
+  },
+  "owners by last name prefix": {
+   "instructions": 290988,
+   "tolerance": 0.0125
+  },
+  "owners by an unknown last name": {
+   "instructions": 78066,
+   "tolerance": 0.04,
+   "note": "Bimodal across builds with no change of its own: 78.1k to 80.8k over eight builds on 2026-11-26 (one run of each reads steady), so it gets 4% until the cause is found (m7)."
+  },
+  "owner with pets and visits": {
+   "instructions": 286801,
+   "tolerance": 0.0261
+  },
+  "unknown owner": {
+   "instructions": 200438
+  },
+  "owner id that is not a number": {
+   "instructions": 302221
+  },
+  "owner pet": {
+   "instructions": 250027,
+   "tolerance": 0.0153
+  },
+  "pet of another owner": {
+   "instructions": 181052,
+   "tolerance": 0.0215
+  },
+  "list pets": {
+   "instructions": 541916,
+   "tolerance": 0.0122
+  },
+  "pet": {
+   "instructions": 329972
+  },
+  "unknown pet": {
+   "instructions": 262179,
+   "tolerance": 0.0105
+  },
+  "list visits": {
+   "instructions": 673884
+  },
+  "visit": {
+   "instructions": 247010,
+   "tolerance": 0.0198
+  },
+  "unknown visit": {
+   "instructions": 265171
+  },
+  "list pet types": {
+   "instructions": 152293,
+   "tolerance": 0.0193
+  },
+  "pet type": {
+   "instructions": 143105
+  },
+  "unknown pet type": {
+   "instructions": 268668
+  },
+  "list specialties": {
+   "instructions": 143416,
+   "tolerance": 0.0195
+  },
+  "specialty": {
+   "instructions": 143722
+  },
+  "unknown specialty": {
+   "instructions": 266570
+  },
+  "list vets": {
+   "instructions": 407377
+  },
+  "vet with specialties": {
+   "instructions": 223606,
+   "tolerance": 0.0131
+  },
+  "unknown vet": {
+   "instructions": 269792,
+   "tolerance": 0.0102
+  },
+  "v2 owners default page": {
+   "instructions": 1750235
+  },
+  "v2 owners page and size": {
+   "instructions": 606206
+  },
+  "v2 owners past the end": {
+   "instructions": 159957
+  },
+  "v2 owners by last name": {
+   "instructions": 257449,
+   "tolerance": 0.0112
+  },
+  "v2 pets page": {
+   "instructions": 410766
+  },
+  "v2 size below the minimum": {
+   "instructions": 203479
+  },
+  "create owner": {
+   "instructions": 224994
+  },
+  "created owner reads back": {
+   "instructions": 197467,
+   "tolerance": 0.0188
+  },
+  "create owner with UTF-8 names": {
+   "instructions": 230932,
+   "tolerance": 0.0143
+  },
+  "create owner: telephone with letters": {
+   "instructions": 103010
+  },
+  "create owner: blank city": {
+   "instructions": 103908
+  },
+  "create owner: missing first name": {
+   "instructions": 98681
+  },
+  "create owner: first name with digits": {
+   "instructions": 105256
+  },
+  "create owner: malformed JSON": {
+   "instructions": 378646
+  },
+  "create owner: wrong content type": {
+   "instructions": 194190
+  },
+  "update owner": {
+   "instructions": 370528
+  },
+  "updated owner reads back": {
+   "instructions": 197421,
+   "tolerance": 0.0193
+  },
+  "update unknown owner": {
+   "instructions": 327614
+  },
+  "update owner: last name with four parts": {
+   "instructions": 170595
+  },
+  "add pet to owner": {
+   "instructions": 440349,
+   "tolerance": 0.0108,
+   "note": "db2dfac7 (R-108, the three-word request facade) raised this about 0.85% (bisect on 2026-11-26: 441.1k-441.5k before, 444.8k-445.6k after, measured with the earlier back-to-back windows), trading instructions for fewer bytes per request on purpose (coordinator, 2026-11-26; bytes decide tails). web-http is asked to recover them without giving back the bytes; the budget ratchets down to what it recovers. Remove this note once it does."
+  },
+  "added pet reads back through the owner": {
+   "instructions": 260402,
+   "tolerance": 0.0151
+  },
+  "add pet to unknown owner": {
+   "instructions": 249718,
+   "tolerance": 0.0161
+  },
+  "add pet: birth date in the future": {
+   "instructions": 113358
+  },
+  "add pet: birth date older than 50 years": {
+   "instructions": 113570,
+   "tolerance": 0.012
+  },
+  "add pet: blank name": {
+   "instructions": 110374
+  },
+  "add pet: unknown pet type": {
+   "instructions": 683209
+  },
+  "update owner pet": {
+   "instructions": 562146
+  },
+  "update pet of unknown owner": {
+   "instructions": 336867
+  },
+  "add visit through the owner": {
+   "instructions": 468300
+  },
+  "owner with the new pet and visit": {
+   "instructions": 384070,
+   "tolerance": 0.0109
+  },
+  "update pet": {
+   "instructions": 336437
+  },
+  "updated pet reads back": {
+   "instructions": 261811,
+   "tolerance": 0.011
+  },
+  "update unknown pet": {
+   "instructions": 336062
+  },
+  "create visit": {
+   "instructions": 226244,
+   "tolerance": 0.0128
+  },
+  "create visit: whitespace description": {
+   "instructions": 144024
+  },
+  "create visit for an unknown pet": {
+   "instructions": 526110
+  },
+  "update visit": {
+   "instructions": 304120
+  },
+  "updated visit reads back": {
+   "instructions": 263840,
+   "tolerance": 0.0107
+  },
+  "update unknown visit": {
+   "instructions": 303173,
+   "tolerance": 0.0132
+  },
+  "delete visit": {
+   "instructions": 275582
+  },
+  "delete unknown visit": {
+   "instructions": 275085
+  },
+  "create pet type": {
+   "instructions": 187022,
+   "tolerance": 0.019
+  },
+  "create pet type: name starting with a digit": {
+   "instructions": 129694
+  },
+  "update pet type without an id": {
+   "instructions": 152624
+  },
+  "update pet type": {
+   "instructions": 309298
+  },
+  "updated pet type reads back": {
+   "instructions": 268227,
+   "tolerance": 0.0109
+  },
+  "update unknown pet type": {
+   "instructions": 308464,
+   "tolerance": 0.0119
+  },
+  "delete pet type": {
+   "instructions": 278962
+  },
+  "delete pet type in use deletes its pets": {
+   "instructions": 278793
+  },
+  "delete unknown pet type": {
+   "instructions": 278915
+  },
+  "create specialty": {
+   "instructions": 198292,
+   "tolerance": 0.014
+  },
+  "create specialty: name with digits": {
+   "instructions": 138442,
+   "tolerance": 0.0407
+  },
+  "update specialty": {
+   "instructions": 312590
+  },
+  "updated specialty reads back": {
+   "instructions": 266117,
+   "tolerance": 0.0104
+  },
+  "update unknown specialty": {
+   "instructions": 312040
+  },
+  "create vet with a specialty": {
+   "instructions": 327023,
+   "tolerance": 0.0197
+  },
+  "create vet: last name too long": {
+   "instructions": 149098,
+   "tolerance": 0.0151
+  },
+  "update vet": {
+   "instructions": 347634
+  },
+  "updated vet reads back": {
+   "instructions": 267670,
+   "tolerance": 0.0108
+  },
+  "update unknown vet": {
+   "instructions": 324466
+  },
+  "delete vet": {
+   "instructions": 277977
+  },
+  "delete unknown vet": {
+   "instructions": 277882
+  },
+  "delete specialty": {
+   "instructions": 275168,
+   "tolerance": 0.0143
+  },
+  "delete unknown specialty": {
+   "instructions": 275278,
+   "tolerance": 0.0103
+  },
+  "create user": {
+   "instructions": 270066,
+   "tolerance": 0.0139
+  },
+  "create user: role without the ROLE_ prefix": {
+   "instructions": 184002
+  },
+  "create user: missing roles": {
+   "instructions": 296835
+  },
+  "delete pet": {
+   "instructions": 261013,
+   "tolerance": 0.0151
+  },
+  "delete unknown pet": {
+   "instructions": 260289,
+   "tolerance": 0.0147
+  },
+  "delete owner": {
+   "instructions": 280021
+  },
+  "delete unknown owner": {
+   "instructions": 280178,
+   "tolerance": 0.0101
+  },
+  "owners after the changes": {
+   "instructions": 4210930
+  },
+  "unknown API path": {
+   "instructions": 104340
+  },
+  "wrong method": {
+   "instructions": 169195
+  },
+  "path outside the context path": {
+   "instructions": 27442
+  },
+  "CORS simple request": {
+   "instructions": 162590
+  },
+  "CORS preflight": {
+   "instructions": 92089
+  },
+  "CORS preflight for a method that is not mapped": {
+   "instructions": 164788
+  }
+ }
+}
