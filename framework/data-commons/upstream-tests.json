@@ -676,6 +676,7 @@
         "ported": [
           "addingAndIdPropertySetsIdPropertyInternally",
           "considersComparatorForPropertyOrder",
+          "detectsPropertyWithAnnotation",
           "getRequiredAnnotationReturnsAnnotation",
           "getRequiredAnnotationThrowsException",
           "invalidBeanAccessCreatesDescriptiveErrorMessage",
@@ -694,7 +695,6 @@
         "skipped": {
           "assertInvariants": "The MutablePersistentEntity interface and environment contract remain deferred.",
           "detectsImmutableEntity": "Entity immutability metadata remains deferred.",
-          "detectsPropertyWithAnnotation": "Lookup of persistent properties by annotation remains deferred.",
           "doWithAllInvokesPropertyHandlerForBothAPropertiesAndAssociations": "Association registration and combined property traversal remain deferred.",
           "exposesPropertyPopulationNotRequired": "Creator and property-population metadata remain deferred.",
           "exposesPropertyPopulationRequired": "Creator and property-population metadata remain deferred.",

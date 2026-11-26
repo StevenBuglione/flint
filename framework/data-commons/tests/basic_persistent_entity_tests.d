@@ -6,7 +6,7 @@ module basic_persistent_entity_tests;
 
 import flint.core.annotation : AliasFor;
 import flint.core.annotation.types : AnnotationConfigurationException;
-import flint.data.annotation : Transient, TypeAlias;
+import flint.data.annotation : CreatedBy, CreatedDate, LastModifiedBy, Transient, TypeAlias;
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
 import flint.data.mapping : Alias, MappingException, PersistentEntity, PersistentProperty;
@@ -41,6 +41,21 @@ private struct Snapshot
 {
     long revision;
     private long[5] padding;
+}
+
+private final class AuditedProperties
+{
+    @LastModifiedBy
+    long field;
+
+    @LastModifiedBy
+    long secondField;
+
+    @CreatedBy
+    long getProperty() const
+    {
+        return field;
+    }
 }
 
 @TypeAlias("foo")
@@ -340,6 +355,41 @@ unittest
     assert(missing.msg.canFind(classOf!Person.name));
     assert(entity.getPersistentProperty(null) is null);
     assertThrown!IllegalStateException(entity.getRequiredPersistentProperty(null));
+}
+
+@("detectsPropertyWithAnnotation")
+unittest
+{
+    auto model = mapped!AuditedProperties();
+    model.addPersistentProperty(new Property("field"));
+    model.addPersistentProperty(new Property("property"));
+    PersistentEntity!(AuditedProperties, Property) entity = model;
+    assert(entity.getPersistentProperty(classOf!LastModifiedBy).getName() == "field");
+    assert(entity.getPersistentProperty(classOf!CreatedBy).getName() == "property");
+    assert(model.getPersistentProperty(classOf!CreatedBy) is entity.getPersistentProperty("property"));
+    assert(entity.getPersistentProperty(classOf!CreatedDate) is null);
+}
+
+@("annotation lookup returns a snapshot in current property order")
+unittest
+{
+    auto comparator = Comparator!Property.comparing!string((Property property) => property.getName());
+    auto model = mapped!AuditedProperties(comparator);
+    auto second = new Property("secondField");
+    model.addPersistentProperty(second);
+    PersistentEntity!(AuditedProperties, Property) entity = model;
+    auto prior = entity.getPersistentProperties(classOf!LastModifiedBy);
+    auto first = new Property("field");
+    model.addPersistentProperty(first);
+    model.verify();
+
+    auto before = prior.iterator();
+    assert(before.next() is second && !before.hasNext());
+    auto current = entity.getPersistentProperties(classOf!LastModifiedBy).iterator();
+    assert(current.next() is first && current.next() is second && !current.hasNext());
+    assert(entity.getPersistentProperty("field") is first);
+    assert(!entity.getPersistentProperties(classOf!CreatedDate).iterator().hasNext());
+    assertThrown!IllegalArgumentException(entity.getPersistentProperties(ClassRef.init));
 }
 
 @("required version property follows registration")

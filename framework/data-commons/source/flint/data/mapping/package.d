@@ -181,6 +181,12 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// The first persistent property with the given name, or null.
     P getPersistentProperty(string name);
 
+    /// The first persistent property with the given annotation, or null.
+    P getPersistentProperty(ClassRef annotationType);
+
+    /// The persistent properties with the given annotation, in property order.
+    Iterable!P getPersistentProperties(ClassRef annotationType);
+
     /// The named persistent property, or an IllegalStateException when absent.
     P getRequiredPersistentProperty(string name);
 
@@ -202,7 +208,7 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// Creates an accessor for a compatible bean.
     PersistentPropertyAccessor!(T, P) getPropertyAccessor(Any bean);
 
-    /// Supplies the required metadata defaults (R3).
+    /// Supplies the metadata lookup defaults (R3).
     mixin template Defaults(PropertyType = P)
     {
         PropertyType getRequiredIdProperty()
@@ -225,11 +231,17 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
 
         PropertyType getRequiredPersistentProperty(string name)
         {
-            auto property = getPersistentProperty(name);
+            auto property = this.getPersistentProperty(name);
             if (property is null)
                 throw new imported!"flint.java.lang".IllegalStateException("Required property " ~ (name is null
                         ? "null" : name) ~ " not found for " ~ getType().name);
             return property;
+        }
+
+        PropertyType getPersistentProperty(ClassRef annotationType)
+        {
+            auto matches = getPersistentProperties(annotationType).iterator();
+            return matches.hasNext() ? matches.next() : null;
         }
 
         const(Any) getRequiredAnnotation(ClassRef annotationType)

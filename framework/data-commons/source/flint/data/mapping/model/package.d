@@ -11,9 +11,10 @@ import flint.data.domain.persistable : PersistableState;
 import flint.data.mapping : Alias, IdentifierAccessor, MappingException, PersistentEntity, PersistentProperty,
     PersistentPropertyAccessor, PrimitivePropertyKind, TargetAwareIdentifierAccessor, primitivePropertyKind;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : Descriptor, PropertyDescriptor, findMergedAnnotation = findAnnotation;
+import flint.engine.aot.descriptor : Descriptor, MergedAnnotation, PropertyDescriptor,
+    findMergedAnnotation = findAnnotation;
 import flint.java.classref : ClassRef, classOf;
-import flint.java.lang : IllegalArgumentException, NullPointerException;
+import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
 import flint.java.util : ArrayList, Collections, Comparator, HashMap, Iterator, List, Map, Objects;
 import flint.util : StringUtils;
 import std.typecons : Nullable;
@@ -56,7 +57,8 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
         typeAlias = getAliasFromAnnotation(descriptor);
     }
 
-    mixin PersistentEntity!(T, P).Defaults;
+    mixin PersistentEntity!(T, P).Defaults entityDefaults;
+    alias getPersistentProperty = entityDefaults.getPersistentProperty;
 
     override string getName()
     {
@@ -154,6 +156,26 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     override P getPersistentProperty(string name)
     {
         return propertiesByName.get(name);
+    }
+
+    override Iterable!P getPersistentProperties(ClassRef annotationType)
+    {
+        if (annotationType.name.length == 0)
+            throw new IllegalArgumentException("Annotation type must not be null");
+        if (descriptor is null)
+            return Collections.emptyList!P();
+
+        List!P matches;
+        foreach (property; properties)
+        {
+            const field = descriptor.property(property.getName());
+            if (field is null || findCheckedAnnotation(field.annotations, annotationType.name) is null)
+                continue;
+            if (matches is null)
+                matches = new ArrayList!P();
+            matches.add(property);
+        }
+        return matches is null ? Collections.emptyList!P() : Collections.unmodifiableList(matches);
     }
 
     /// The last transient property registered under the name.
@@ -265,11 +287,17 @@ private const(Any) readEntityAnnotation(const Descriptor descriptor, ClassRef an
         throw new NullPointerException("Annotation type must not be null");
     if (descriptor is null)
         return const(Any).init;
-    foreach (ref annotation; descriptor.annotations)
+    const match = findCheckedAnnotation(descriptor.annotations, annotationType.name);
+    return match is null ? const(Any).init : match.value;
+}
+
+private const(MergedAnnotation)* findCheckedAnnotation(return scope const(MergedAnnotation)[] annotations,
+        string annotationType)
+{
+    foreach (ref annotation; annotations)
         if (annotation.error.length)
             throw new AnnotationConfigurationException(annotation.error);
-    const match = findMergedAnnotation(descriptor.annotations, annotationType.name);
-    return match is null ? const(Any).init : match.value;
+    return findMergedAnnotation(annotations, annotationType);
 }
 
 private final class DescriptorPropertyAccessor(T, P) : PersistentPropertyAccessor!(T, P)
