@@ -1207,3 +1207,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 04:20Z, owner: **GitHub Actions are never run remotely,** and no self-hosted runner is registered. Workflows are run locally with `act` when wanted. Required checks are enforced on Flint's own machines: the module definition of done on venus, and the merge train, with the apps verification and `flint budget`, on posidon, the desktop and neptune.
 - 2026-11-26 04:22Z, owner: **EPL-2.0 code may be ported from source,** because it costs nothing and anyone may use and modify the result. It goes into its own EPL-2.0 module (licence matrix use `epl-module`, as for Jakarta Servlet), with each file's EPL header kept and the module's own LICENSE and NOTICE.
   - **First use:** AspectJ 1.9.27's `org.aspectj.lang.annotation` (sol-aop). This replaces the clean-room instruction of 04:18Z.
+- 2026-11-26 04:25Z, owner: **the licensing rule for everything.** A licence is acceptable if the code is free of cost, legally modifiable, usable by anyone, and creates no legal issues for Flint or its users. Applied:
+  - **Port from source, freely:** permissive licences (Apache-2.0, MIT, BSD, ISC, zlib, Boost, Unicode).
+  - **Port from source, in a module of its own** that keeps the upstream licence, headers, LICENSE and NOTICE:
+    - file-level copyleft (EPL-2.0, MPL-2.0);
+    - **GPL-2.0 with the Classpath Exception (OpenJDK), approved by the owner.** The exception is kept, so applications that link the module are not GPL.
+    - **No mixing:** GPL-2.0+CE files never share a package with Apache-2.0-derived files (Apache-2.0 and GPL-2.0-only cannot be combined into one work). Packages depend on each other freely, which is what the exception allows.
+  - **Not without a coordinator review** (default clean-room): LGPL, because D links statically and the relinking obligations could burden users.
+  - **Never:** strong copyleft without a linking exception (GPL or AGPL, which would force users' applications to be GPL), and source-available, non-commercial or paid licences (FSL, BSL, SSPL, commercial).
