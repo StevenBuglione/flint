@@ -315,8 +315,36 @@
       "status": "deferred"
     },
     "org/springframework/ai/converter/ListOutputConverterTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-model/tests/list_output_converter_test.d",
+      "methods": {
+        "ported": [
+          "csv",
+          "csvWithAlternativeDelimiters",
+          "csvWithBooleanLikeValues",
+          "csvWithCommasInQuotedValues",
+          "csvWithDifferentDataTypes",
+          "csvWithEmptyString",
+          "csvWithEmptyValues",
+          "csvWithEscapedQuotes",
+          "csvWithExtraSpaces",
+          "csvWithLeadingComma",
+          "csvWithMalformedQuoting",
+          "csvWithMixedQuotingStyles",
+          "csvWithNewlinesInQuotedValues",
+          "csvWithOnlyCommas",
+          "csvWithOnlyCommasAndSpaces",
+          "csvWithOnlySpacesAndCommas",
+          "csvWithOnlyWhitespace",
+          "csvWithQuotedValues",
+          "csvWithSingleItem",
+          "csvWithSpecialCharacters",
+          "csvWithTabsAndSpecialWhitespace",
+          "csvWithTrailingComma",
+          "csvWithVariousInputs",
+          "csvWithoutSpaces"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/ai/converter/MarkdownCodeBlockCleanerTest.java": {
       "d": "ai/ai-model/tests/markdown_code_block_cleaner_test.d",

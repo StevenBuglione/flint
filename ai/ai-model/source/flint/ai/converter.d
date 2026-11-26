@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/converter/{FormatProvider,MarkdownCodeBlockCleaner,ResponseTextCleaner,StructuredOutputConverter,WhitespaceCleaner}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/converter/{AbstractConversionServiceOutputConverter,FormatProvider,ListOutputConverter,MarkdownCodeBlockCleaner,ResponseTextCleaner,StructuredOutputConverter,WhitespaceCleaner}.java
 // Modified by the Flint authors.
 module flint.ai.converter;
 
 import flint.core.convert.converter : Converter;
+import flint.core.convert.support : DefaultConversionService;
+import flint.java.util : List;
 import std.typecons : Nullable;
 
 @safe:
@@ -48,6 +50,64 @@ interface StructuredOutputConverter(T) : Converter!(string, T), FormatProvider
         {
             return "";
         }
+    }
+}
+
+/// A structured output converter backed by the supplied conversion service.
+abstract class AbstractConversionServiceOutputConverter(T) : StructuredOutputConverter!T
+{
+    private DefaultConversionService conversionService_;
+
+    /// Keeps the conversion service used by implementations.
+    this(DefaultConversionService conversionService) pure nothrow @nogc
+    {
+        conversionService_ = conversionService;
+    }
+
+    /// Returns the supplied conversion service.
+    DefaultConversionService getConversionService()
+    {
+        return conversionService_;
+    }
+
+    mixin StructuredOutputConverter!T.Defaults;
+}
+
+/// Converts comma-delimited model output to a list of strings.
+class ListOutputConverter : AbstractConversionServiceOutputConverter!(List!string)
+{
+    /// Creates a converter using the default conversion service.
+    this()
+    {
+        this(new DefaultConversionService());
+    }
+
+    /// Creates a converter using the supplied conversion service.
+    this(DefaultConversionService conversionService)
+    {
+        super(conversionService);
+    }
+
+    /// Describes the comma-delimited format to request from a model.
+    override string getFormat()
+    {
+        return "Respond with only a list of comma-separated values, without any leading or trailing text.\n"
+            ~ "Example format: foo, bar, baz\n";
+    }
+
+    /// Converts the text using the service, with a shared empty list for a null result.
+    override List!string convert(string text)
+    {
+        import flint.engine.aot.any : Any;
+        import flint.engine.aot.name : typeNameOf;
+        import flint.java.lang : NullPointerException;
+        import flint.java.util : Collections;
+
+        auto service = getConversionService();
+        if (service is null)
+            throw new NullPointerException();
+        auto result = service.convert(text is null ? Any.init : Any.of(text), typeNameOf!(List!string));
+        return result.isNull ? Collections.emptyList!string() : result.get!(List!string);
     }
 }
 
