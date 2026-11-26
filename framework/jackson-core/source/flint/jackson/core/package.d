@@ -1425,6 +1425,21 @@ abstract class JsonParser
         BIG_DECIMAL,
     }
 
+    /// Native floating-point representation when the format exposes one.
+    enum NumberTypeFP
+    {
+        /// IEEE-754 binary16.
+        FLOAT16,
+        /// IEEE-754 binary32.
+        FLOAT32,
+        /// IEEE-754 binary64.
+        DOUBLE64,
+        /// Arbitrary-precision decimal.
+        BIG_DECIMAL,
+        /// The format exposes no single native floating-point representation.
+        UNKNOWN,
+    }
+
     /// Main iteration method, which will advance stream enough to determine type of the next token, if any.
     abstract JsonToken nextToken();
 
@@ -1513,6 +1528,12 @@ abstract class JsonParser
         return currentToken() == JsonToken.START_OBJECT;
     }
 
+    /// Whether the current token represents an integer.
+    bool isExpectedNumberIntToken()
+    {
+        return currentToken() == JsonToken.VALUE_NUMBER_INT;
+    }
+
     /// Whether the current token is a JSON null.
     bool isNaN()
     {
@@ -1579,6 +1600,12 @@ abstract class JsonParser
 
     /// The natural number type of the current numeric token.
     abstract NumberType getNumberType();
+
+    /// Native floating-point representation. Textual JSON has no single native representation.
+    NumberTypeFP getNumberTypeFP()
+    {
+        return NumberTypeFP.UNKNOWN;
+    }
 
     /// Boolean value of the current token.
     bool getBooleanValue()

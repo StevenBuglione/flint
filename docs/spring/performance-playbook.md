@@ -406,6 +406,8 @@ Jackson's `nextIntValue` and `nextLongValue` advance one token through `nextToke
 
 Jackson's `nextBooleanValue` advances one token and returns `Nullable!bool` (R5) to distinguish a Boolean false from any other token. The matched jackson-core probe on venus at `cf8b0071` and `28a0ab30` measured 43,229 loadable bytes on both sides and 596 to 657 DMD template instances. The API-growth rule raises the cap from 600 to 670 to cover the 61 new instances plus headroom. Pinned LDC with `flint build --profile size` moved gs-rest-service from 3,681,983 to 3,682,063 allocated ELF bytes and petclinic-rest from 10,401,925 to 10,401,957.
 
+Jackson checks the current token for `isExpectedNumberIntToken` and reports `NumberTypeFP.UNKNOWN` for textual JSON. The accessors read the metadata without advancing the parser or decoding the value. The matched jackson-core probe on venus at `3eccea53` and `477af524` measured 43,229 loadable bytes and 657 DMD template instances on both sides. Pinned LDC with `flint build --profile size` moved gs-rest-service from 3,682,079 to 3,682,223 allocated ELF bytes and petclinic-rest from 10,401,989 to 10,402,157.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

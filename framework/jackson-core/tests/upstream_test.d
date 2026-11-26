@@ -121,14 +121,28 @@ unittest
     {
         import std.conv : to;
 
-        auto p = createParser("[ " ~ expected.to!string ~ " ]");
+        const digits = expected.to!string;
+        auto p = createParser("[ " ~ digits ~ " ]");
         assert(p.nextToken() == JsonToken.START_ARRAY);
+        assert(!p.isExpectedNumberIntToken());
         assert(p.nextToken() == JsonToken.VALUE_NUMBER_INT);
         assert(p.getNumberType() == JsonParser.NumberType.INT);
+        assert(p.isExpectedNumberIntToken());
+        assert(p.getNumberTypeFP() == JsonParser.NumberTypeFP.UNKNOWN);
         assert(p.getIntValue() == expected && p.getLongValue() == expected);
-        assert(p.getDoubleValue() == expected && p.getString() == expected.to!string);
+        assert(p.getDoubleValue() == expected && p.getString() == digits);
         assert(p.nextToken() == JsonToken.END_ARRAY);
         assert(p.nextToken() == JsonToken.NOT_AVAILABLE);
+
+        p = createParser(digits ~ " ");
+        assert(p.nextToken() == JsonToken.VALUE_NUMBER_INT);
+        assert(p.isExpectedNumberIntToken());
+
+        p = createParser(digits ~ ".0 ");
+        assert(p.nextToken() == JsonToken.VALUE_NUMBER_FLOAT);
+        assert(!p.isExpectedNumberIntToken());
+        assert(p.getNumberTypeFP() == JsonParser.NumberTypeFP.UNKNOWN);
+        assert(p.getValueAsInt() == expected);
     }
 }
 
