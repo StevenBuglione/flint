@@ -211,6 +211,34 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
         return backing[origin + index];
     }
 
+    ByteBuffer get(scope byte[] target, int offset, int length) pure
+    {
+        checkRange(offset, length, arraySize(target.length));
+        if (length > remaining())
+            throw new BufferUnderflowException;
+        copyTo(position(), target[offset .. offset + length]);
+        advance(length);
+        return this;
+    }
+
+    ByteBuffer get(scope byte[] target) pure
+    {
+        return get(target, 0, arraySize(target.length));
+    }
+
+    ByteBuffer get(int index, scope byte[] target, int offset, int length) pure
+    {
+        checkRange(index, length, limit());
+        checkRange(offset, length, arraySize(target.length));
+        copyTo(index, target[offset .. offset + length]);
+        return this;
+    }
+
+    ByteBuffer get(int index, scope byte[] target) pure
+    {
+        return get(index, target, 0, arraySize(target.length));
+    }
+
     ByteBuffer put(byte value) pure
     {
         checkWritable();
@@ -265,6 +293,29 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     override string toString() pure nothrow
     {
         return summary(readOnly ? "java.nio.HeapByteBufferR" : "java.nio.HeapByteBuffer");
+    }
+
+    pragma(inline, false) private void copyTo(int index, scope byte[] target) const pure nothrow @nogc
+    {
+        const start = origin + index;
+        const source = backing[start .. start + target.length];
+        if (target.length == 0 || target.ptr == source.ptr)
+            return;
+
+        if (target.ptr > source.ptr && target.ptr <= &source[$ - 1])
+        {
+            foreach_reverse (i, ref value; target)
+                value = source[i];
+        }
+        else if (source.ptr > target.ptr && source.ptr <= &target[$ - 1])
+        {
+            foreach (i, ref value; target)
+                value = source[i];
+        }
+        else
+        {
+            target[] = source[];
+        }
     }
 
     private const(byte)[] remainingBytes() const pure nothrow @nogc

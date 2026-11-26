@@ -161,14 +161,23 @@ abstract class Buffer
 package(flint.java.nio) int arraySize(size_t length) pure
 {
     if (length > int.max)
-        throw new IllegalArgumentException("Array exceeds Java buffer capacity");
+        throwArrayTooLarge();
     return cast(int) length;
+}
+
+pragma(inline, false) private noreturn throwArrayTooLarge() pure
+{
+    throw new IllegalArgumentException("Array exceeds Java buffer capacity");
 }
 
 package(flint.java.nio) void checkRange(int index, int count, int limit) pure
 {
-    if (index >= 0 && count >= 0 && index <= limit && count <= limit - index)
-        return;
+    if (index < 0 || count < 0 || index > limit || count > limit - index)
+        throwRangeError(index, count, limit);
+}
+
+pragma(inline, false) private noreturn throwRangeError(int index, int count, int limit) pure
+{
     char[96] text;
     size_t used;
     appendField(text[], used, "Range [", index);

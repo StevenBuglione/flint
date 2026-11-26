@@ -124,3 +124,40 @@ unittest
     assertThrown!NullPointerException(left.compareTo(null));
     assertThrown!NullPointerException(left.mismatch(null));
 }
+
+@("Heap ByteBuffer bulk reads copy aliased storage through a read-only slice")
+unittest
+{
+    byte[] storage = [0, 1, 2, 3, 4, 5];
+    auto view = ByteBuffer.wrap(storage, 1, 4).slice().asReadOnlyBuffer();
+    view.position(1).mark();
+    assert(view.get(storage, 3, 3) is view);
+    assert(storage == [0, 1, 2, 2, 3, 4]);
+    assert(view.position() == 4 && view.reset().position() == 1);
+
+    assert(view.get(1, storage, 0, 3) is view);
+    assert(storage == [2, 2, 3, 2, 3, 4]);
+    assert(view.position() == 1);
+    byte[1] one = [-1];
+    assert(view.get(0, one[]) is view && one[0] == 2);
+    assert(view.position() == 1);
+    assert(view.get(one[]) is view && one[0] == 3 && view.position() == 2);
+    assert(view.get(4, null) is view && view.position() == 2);
+}
+
+@("Heap ByteBuffer bulk read failures preserve the target, position, and mark")
+unittest
+{
+    auto view = ByteBuffer.allocate(4).limit(3).position(2).mark();
+    byte[2] guard = [9, 9];
+    rejectsMessage!IndexOutOfBoundsException(() { view.get(guard[], 1, 2); },
+            "Range [1, 1 + 2) out of bounds for length 2");
+    assertThrown!BufferUnderflowException(view.get(guard[]));
+    rejectsMessage!IndexOutOfBoundsException(() { view.get(2, guard[], 1, 2); },
+            "Range [2, 2 + 2) out of bounds for length 3");
+    rejectsMessage!IndexOutOfBoundsException(() { view.get(0, guard[], 1, 2); },
+            "Range [1, 1 + 2) out of bounds for length 2");
+    assert(view.position() == 2 && view.reset().position() == 2);
+    assert(guard[] == [9, 9]);
+    assert(view.get(null) is view && view.position() == 2);
+}

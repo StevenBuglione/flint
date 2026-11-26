@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,076 | 302 | 1,871 | 15,172 |
+| framework | openjdk@21.0.13 | 1,076 | 306 | 1,871 | 15,168 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2000,6 +2000,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.BufferUnderflowException` | `flint.java.nio.bufferunderflowexception.BufferUnderflowException` | [R1](api-mapping.md#r1-packages-and-names) | Import the exception from flint.java.nio.bufferunderflowexception. It extends the canonical Java RuntimeException. |
 | `java.nio.ByteBuffer` | `flint.java.nio.bytebuffer.ByteBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import ByteBuffer from flint.java.nio.bytebuffer. Heap-backed leaf. A null backing slice is empty under R26. |
 | `java.nio.ByteBuffer#equals(Object)` | `flint.java.nio.bytebuffer.ByteBuffer.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.nio.ByteBuffer#get(byte[])` | `flint.java.nio.bytebuffer.ByteBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ByteBuffer#get(byte[],int,int)` | `flint.java.nio.bytebuffer.ByteBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ByteBuffer#get(int,byte[])` | `flint.java.nio.bytebuffer.ByteBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ByteBuffer#get(int,byte[],int,int)` | `flint.java.nio.bytebuffer.ByteBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.ByteBuffer#order()` | `flint.java.nio.bytebuffer.ByteBuffer.order` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.ByteBuffer#order(ByteOrder)` | `flint.java.nio.bytebuffer.ByteBuffer.order` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R15](api-mapping.md#r15-enums-with-fields) | A nullable ByteOrder selects little endian when absent. |
 | `java.nio.ByteBuffer#wrap(byte[])` | `flint.java.nio.bytebuffer.ByteBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -10069,7 +10073,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 137 | 0 |
 | java.net | 817 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 313 | 0 |
+| java.nio | 309 | 0 |
 | java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 103 | 0 |
@@ -11027,10 +11031,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.ByteBuffer#asLongBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#asShortBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#compact()` | 2 | Bulk transfer and compaction follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#get(byte[])` | 2 | Bulk transfer and compaction follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#get(byte[],int,int)` | 2 | Bulk transfer and compaction follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#get(int,byte[])` | 2 | Bulk transfer and compaction follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#get(int,byte[],int,int)` | 2 | Bulk transfer and compaction follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#getChar()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#getChar(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#getDouble()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
