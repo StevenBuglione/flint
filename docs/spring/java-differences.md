@@ -11070,7 +11070,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat#format(Date)` | 2 | With SimpleDateFormat, a null Date or an absent Calendar can terminate the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#getTimeZone()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#isLenient()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
-| framework | `java.text.DateFormat#parse(String)` | 2 | SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14). |
+| framework | `java.text.DateFormat#parse(String)` | 2 | SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14). The convenience overload accepts a returned date even when the parser consumes no input. Java rejects a parse that leaves the start position unchanged. |
 | framework | `java.text.DateFormat#setLenient(boolean)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#setTimeZone(TimeZone)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.MessageFormat` | 2 | Flint declares the class final. Java lets callers subclass MessageFormat and override methods such as toPattern(). |

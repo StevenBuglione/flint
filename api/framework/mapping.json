@@ -6250,7 +6250,7 @@
 "java.text.DateFormat#getCalendar()":{"d":"flint.java.text.DateFormat.getCalendar","status":"ported"},
 "java.text.DateFormat#getTimeZone()":{"status":"excluded","category":"deferred","phase":"2","reason":"After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8)."},
 "java.text.DateFormat#isLenient()":{"status":"excluded","category":"deferred","phase":"2","reason":"After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8)."},
-"java.text.DateFormat#parse(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14)."},
+"java.text.DateFormat#parse(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14). The convenience overload accepts a returned date even when the parser consumes no input. Java rejects a parse that leaves the start position unchanged."},
 "java.text.DateFormat#parse(String,ParsePosition)":{"d":"flint.java.text.DateFormat.parse","status":"ported"},
 "java.text.DateFormat#setCalendar(Calendar)":{"d":"flint.java.text.DateFormat.setCalendar","status":"ported"},
 "java.text.DateFormat#setLenient(boolean)":{"status":"excluded","category":"deferred","phase":"2","reason":"After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8)."},
