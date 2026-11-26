@@ -4,14 +4,13 @@ one non-template engine over erased arguments (`Any[]`), so a call site instanti
 boxing (rulebook R7) and never `std.format`.
 
 Specifiers are `%[argument_index$][flags][width][.precision]conversion`, with `<` for the previous argument.
-Conversions: `b B s S c d o x X f n %`; flags `- # + space 0 , (`. Arguments format as Java's would: `%s` as
+Conversions: `b B s S c d o x X f e E n %`; flags `- # + space 0 , (`. Arguments format as Java's would: `%s` as
 `String.valueOf` (null, `true`, `Double.toString`, an object's `toString`), `%d`/`%o`/`%x` for integral types (`%x`
 of a negative `int` is its 32-bit two's complement, of a `long` its 64-bit one), `%c` for a character or code
-point, `%f` for floating point (precision 6 by default, rounded half up).
+point, and `%f` and `%e`/`%E` for floating point (precision 6 by default, rounded half up).
 
-Deviations: no `Locale` (the root locale's `.` and `,`); `%e`, `%g`, `%a`, `%h` and the date/time conversions throw
-`UnknownFormatConversionException`; `%f` rounds through `double` arithmetic, so it can differ from Java's exact
-decimal rounding beyond 15 significant digits.
+The renderer uses the root locale's `.` and `,`. `%g`, `%a`, `%h` and the date/time conversions throw
+`UnknownFormatConversionException`.
 +/
 module flint.java.util.formatter;
 
@@ -694,8 +693,8 @@ private string convert(const ref Spec spec, Any argument)
         return integralText(spec, argument);
     case 'o', 'x', 'X':
         return radixText(spec, argument);
-    case 'f':
-        return fixedText(spec, argument);
+    case 'f', 'e', 'E':
+        return floatingText(spec, argument);
     default:
         throw new UnknownFormatConversionException([spec.conversion]);
     }
@@ -822,6 +821,12 @@ private string javaTypeName(Any argument) pure nothrow
         return "java.lang.Double";
     case "float":
         return "java.lang.Float";
+    case "byte":
+        return "java.lang.Byte";
+    case "short":
+        return "java.lang.Short";
+    case "int":
+        return "java.lang.Integer";
     case "long":
         return "java.lang.Long";
     case "char", "wchar", "dchar":
@@ -921,39 +926,102 @@ private string radixText(const ref Spec spec, Any argument)
     return cased(spec, paddedNumber(spec, prefix, magnitude, ""));
 }
 
-private string fixedText(const ref Spec spec, Any argument)
+private string floatingText(const ref Spec spec, Any argument)
 {
+    const uppercase = spec.conversion == 'E';
     if (argument.isNull)
-        return "null";
+        return uppercase ? "NULL" : "null";
     if (argument.typeName != "double" && argument.typeName != "float")
-        throw new IllegalFormatConversionException('f', javaTypeName(argument));
+        throw new IllegalFormatConversionException(asciiLower(spec.conversion), javaTypeName(argument));
     const value = argument.get!double;
     const negative = value < 0 || (value == 0 && 1 / value < 0);
     if (value != value || value == double.infinity || value == -double.infinity)
-        return pad(spec, nonFinite(spec, value, negative));
+        return nonFinite(spec, value, negative, uppercase);
     const precision = spec.precision < 0 ? 6 : spec.precision;
+    const magnitude = negative ? -value : value;
+    const text = spec.conversion == 'f' ? fixedMagnitude(spec, magnitude,
+            precision) : scientificMagnitude(spec, magnitude, precision);
+    return signed(spec, text, negative);
+}
+
+private string fixedMagnitude(const ref Spec spec, double magnitude, int precision)
+{
     string whole, fraction;
-    decimalDigits(negative ? -value : value, whole, fraction);
+    decimalDigits(magnitude, whole, fraction);
     roundHalfUp(whole, fraction, precision);
     auto body = spec.has(Flag.group) ? grouped(whole) : whole;
     if (precision > 0 || spec.has(Flag.alternate))
         body ~= "." ~ fraction;
-    return signed(spec, body, negative);
+    return
+    body;
 }
 
 /// `NaN` and the infinities, with Java's sign flags.
-private string nonFinite(const ref Spec spec, double value, bool negative) pure nothrow @nogc
+private string nonFinite(const ref Spec spec, double value, bool negative, bool uppercase) pure nothrow @nogc
 {
     if (value != value)
-        return "NaN";
+        return uppercase ? "NAN" : "NaN";
     if (negative)
-        return spec.has(Flag.parentheses) ? "(Infinity)" : "-Infinity";
-    return spec.has(Flag.plus) ? "+Infinity" : "Infinity";
+    {
+        if (spec.has(Flag.parentheses))
+            return uppercase ? "(INFINITY)" : "(Infinity)";
+        return uppercase ? "-INFINITY" : "-Infinity";
+    }
+    if (spec.has(Flag.plus))
+        return uppercase ? "+INFINITY" : "+Infinity";
+    if (spec.has(Flag.space))
+        return uppercase ? " INFINITY" : " Infinity";
+    return uppercase ? "INFINITY" : "Infinity";
+}
+
+/// Round a single leading digit and the requested number of following digits.
+private string scientificMagnitude(const ref Spec spec, double magnitude, int precision)
+{
+    ptrdiff_t point;
+    auto significand = decimalSignificand(magnitude, point);
+    while (significand.length > 1 && significand[0] == '0')
+    {
+        significand = significand[1 .. $];
+        --point;
+    }
+    int exponent = magnitude == 0 ? 0 : cast(int) point - 1;
+    string whole = significand[0 .. 1];
+    string fraction = significand[1 .. $];
+    roundHalfUp(whole, fraction, precision);
+    if (whole.length > 1)
+    {
+        ++exponent;
+        whole = whole[0 .. 1]; // A mantissa of 10 becomes 1 with the next exponent.
+    }
+    const separator = precision > 0 || spec.has(Flag.alternate) ? "." : "";
+    const marker = spec.conversion == 'E' ? "E" : "e";
+    const sign = exponent < 0 ? "-" : "+";
+    const exponentDigits = decimal(exponent < 0 ? -exponent : exponent);
+    const leadingZero = exponentDigits.length == 1 ? "0" : "";
+    return whole ~ separator ~ fraction ~ marker ~ sign ~ leadingZero ~ exponentDigits;
 }
 
 /// The whole and fraction digits of `magnitude` from Java's shortest representation (`Double.toString`), which
 /// Java's `Formatter` rounds from (a `float` is widened to `double` first, as Java does).
 private void decimalDigits(double magnitude, out string whole, out string fraction)
+{
+    ptrdiff_t position;
+    auto digitText = decimalSignificand(magnitude, position);
+    while (position <= 0)
+    {
+        digitText = "0" ~ digitText;
+        position++;
+    }
+    while (position > digitText.length)
+        digitText ~= '0';
+    whole = digitText[0 .. position];
+    fraction = digitText[position .. $];
+    while (whole.length > 1 && whole[0] == '0')
+        whole = whole[1 .. $];
+}
+
+/// The shortest decimal digits and the point position after applying any exponent.
+private string decimalSignificand(double magnitude, out ptrdiff_t position)
 {
     import flint.java.lang : doubleToString;
 
@@ -971,25 +1039,15 @@ private void decimalDigits(double magnitude, out string whole, out string fracti
     }
     string digitText;
     ptrdiff_t point = -1;
-    foreach (i, c; text[0 .. e])
+    foreach (c; text[0 .. e])
     {
         if (c == '.')
             point = cast(ptrdiff_t) digitText.length;
         else
             digitText ~= c;
     }
-    ptrdiff_t position = (point < 0 ? cast(ptrdiff_t) digitText.length : point) + exponent;
-    while (position <= 0)
-    {
-        digitText = "0" ~ digitText;
-        position++;
-    }
-    while (position > digitText.length)
-        digitText ~= '0';
-    whole = digitText[0 .. position];
-    fraction = digitText[position .. $];
-    while (whole.length > 1 && whole[0] == '0')
-        whole = whole[1 .. $];
+    position = (point < 0 ? cast(ptrdiff_t) digitText.length : point) + exponent;
+    return digitText;
 }
 
 /// Round `whole.fraction` to `precision` fraction digits, half up, as Java's `RoundingMode.HALF_UP`.
