@@ -102,11 +102,12 @@ BARE="@BARE@"; REPO="@REPO@"; WT="@WORKTREE@"
 export FLINT_HOME="$WT" FLINT_CACHE="@CACHE_ROOT@/train-cache-@STAMP@"
 @PRELUDE@
 cleanup() {
+  [ -z "${LOAD_PID:-}" ] || kill "$LOAD_PID" 2>/dev/null
   # Only this run's servers: DMD fork servers whose environment names this run's FLINT_CACHE.
   for pid in $(pgrep -u "$USER" -f 'dmd' || true); do
     if tr '\0' '\n' < /proc/$pid/environ 2>/dev/null | grep -qx "FLINT_CACHE=$FLINT_CACHE"; then kill "$pid" 2>/dev/null; fi
   done
-  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$FLINT_CACHE.budget.json" "$FLINT_CACHE.tight.json" "$FLINT_CACHE.median.json" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
+  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$FLINT_CACHE.budget.json" "$FLINT_CACHE.tight.json" "$FLINT_CACHE.median.json" "$FLINT_CACHE.load" "$FLINT_CACHE.noisy" "$FLINT_CACHE.notight.json" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
   # Each app's whole .flint (its dub cache grew to 5 GB on posidon) and the CLI's build tree; the natives stay.
   rm -rf "$WT"/benchmarks/spring/flint/*/.flint "$WT"/benchmarks/spring/flint/*/.dub "$WT/apps/flint/.flint/build"
   find "$WT" -xdev -name .dub -type d -prune -exec rm -rf {} + 2>/dev/null
@@ -152,6 +153,27 @@ if [ ! -d .native/install ]; then
 fi
 export PATH="$WT/.flint/bin:$WT/.tools/dmd2/linux/bin64:$PATH"
 H="python3 tools/measure_queue.py hold --"
+# Load guard (coordinator, 2026-11-26 14:06Z): foreign CPU load inflates instruction counts (11:0xZ test on posidon:
+# 13 busy CPUs added 650-1,800 instructions per request). Around each flint budget command, log loadavg and the run
+# queue, and sample every 2 s the runnable threads of other sessions (this verifier's own builds share its session;
+# kernel threads have none). Quiet: mean <= LOAD_MEAN and max <= LOAD_MAX. A run that was not quiet never takes the
+# tight-spread skip (b): its borderline misses get the median re-measure.
+LOAD_MEAN=0.5; LOAD_MAX=4; SID=$(ps -o sid= -p $$ | tr -d ' ')
+load_now() { printf 'loadavg %s, procs_running %s' "$(cut -d' ' -f1-3 /proc/loadavg)" "$(awk '/^procs_running/ {print $2}' /proc/stat)"; }
+load_start() {
+  echo "== load before: $(load_now)"
+  ( while :; do ps -eLo stat=,sid= | awk -v me="$SID" '$1 ~ /^R/ && $2 != me && $2 != 0 {n++} END {print n + 0}'; sleep 2; done ) > "$FLINT_CACHE.load" 2>/dev/null &
+  LOAD_PID=$!
+}
+load_stop() {
+  kill "$LOAD_PID" 2>/dev/null; wait "$LOAD_PID" 2>/dev/null
+  local verdict
+  verdict=$(awk -v mean="$LOAD_MEAN" -v max="$LOAD_MAX" '{s += $1; if ($1 > m) m = $1; n++} END {
+    q = (n == 0 || (s / n <= mean && m <= max)) ? "quiet" : "NOT quiet";
+    printf "foreign runnable threads mean %.2f, max %d over %d samples: %s", (n ? s / n : 0), m, n, q}' "$FLINT_CACHE.load")
+  echo "== load after: $(load_now); $verdict (quiet: mean <= $LOAD_MEAN, max <= $LOAD_MAX)"
+  case "$verdict" in *"NOT quiet") : > "$FLINT_CACHE.noisy" ;; esac
+}
 # A full native build only when what defines the libraries changed since the last one here; otherwise just the Flint
 # C shims over the installed libraries, plus the dub blocks (a full build recompiles OpenSSL every time).
 INPUTS=$(git ls-tree -r HEAD -- policy/native-lock.json policy/native-c.toml tools/native_build.py native/conan-index | sha256sum | cut -c1-64)
@@ -165,24 +187,29 @@ if [ "@MODE@" = budget ]; then
   # A budget-only step (bisecting a failure that was flint budget's alone): acceptance is already proven.
   echo "== budget only: @BUDGET_APPS@"
   set -- ; for app in @BUDGET_APPS@; do set -- "$@" --app "$app"; done
-  $H flint budget "$@" --report "$FLINT_CACHE.budget.json" > "$FLINT_CACHE.dod.json" 2>&1; rc=$?
+  load_start; $H flint budget "$@" --report "$FLINT_CACHE.budget.json" > "$FLINT_CACHE.dod.json" 2>&1; rc=$?; load_stop
   cat "$FLINT_CACHE.budget.json" >> "$FLINT_CACHE.dod.json" 2>/dev/null
   cat "$FLINT_CACHE.dod.json"
   [ $rc -eq 2 ] && { echo "flint budget could not measure (exit 2): the verifier, not the candidate"; exit 3; }
 else
   echo "== api gate"; $H python3 tools/gates.py --gate api > "$FLINT_CACHE.api.json" 2>&1 || { tail -40 "$FLINT_CACHE.api.json"; rm -f "$FLINT_CACHE.api.json"; exit 1; }
   rm -f "$FLINT_CACHE.api.json"
-  echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ @DOD_FLAGS@ --json > "$FLINT_CACHE.dod.json"; rc=$?
+  echo "== apps"; load_start; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ @DOD_FLAGS@ --json > "$FLINT_CACHE.dod.json"; rc=$?; load_stop
   cat "$FLINT_CACHE.dod.json"
 fi
 if [ $rc -ne 0 ]; then
   # Decision 6478897a: a borderline flint budget miss (every failure an instruction miss under twice its tolerance)
   # is re-measured and the median of 5 runs judged; a miss on an endpoint whose measured spread is under 0.2% is real
   # at once (coordinator, 2026-11-26); anything else stays red.
+  TIGHTFILE="$FLINT_CACHE.tight.json"
+  if [ -e "$FLINT_CACHE.noisy" ]; then  # the load guard: a run that was not quiet takes no tight-spread skip
+    TIGHTFILE="$FLINT_CACHE.notight.json"; echo '{}' > "$TIGHTFILE"
+    echo "== the run was not quiet: no tight-spread skip; borderline misses are re-measured"
+  fi
   cat > "$FLINT_CACHE.tight.json" <<'TIGHT'
 @TIGHT@
 TIGHT
-  apps=$(python3 - "$FLINT_CACHE.dod.json" "$FLINT_CACHE.tight.json" <<'PY'
+  apps=$(python3 - "$FLINT_CACHE.dod.json" "$TIGHTFILE" <<'PY'
 import json, os, re, sys
 text, tight = open(sys.argv[1]).read(), json.load(open(sys.argv[2]))
 final = len(sys.argv) > 3 and sys.argv[3] == 'final'
@@ -243,9 +270,10 @@ PY
   if [ "$apps" = RELATIVE-GREEN ]; then echo "only main's open budget misses, within tolerance of main"; exit 0; fi
   echo "== borderline flint budget miss: re-measuring $apps (median of 5, decision 6478897a)"
   set -- ; for app in $apps; do set -- "$@" --app "$app"; done
-  $H flint budget "$@" --repeat 5 --report "$FLINT_CACHE.median.json" && { echo "the median of 5 is within budget"; exit 0; }
+  load_start; $H flint budget "$@" --repeat 5 --report "$FLINT_CACHE.median.json"; rc=$?; load_stop
+  [ $rc -eq 0 ] && { echo "the median of 5 is within budget"; exit 0; }
   cat "$FLINT_CACHE.median.json" 2>/dev/null
-  verdict=$(python3 - "$FLINT_CACHE.median.json" "$FLINT_CACHE.tight.json" final <<'PY'
+  verdict=$(python3 - "$FLINT_CACHE.median.json" "$TIGHTFILE" final <<'PY'
 @CLASSIFIER@
 PY
 ) && [ "$verdict" = RELATIVE-GREEN ] && { echo "the median of 5 misses only main's open endpoints, within tolerance of main"; exit 0; }

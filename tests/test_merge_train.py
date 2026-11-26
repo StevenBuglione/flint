@@ -494,6 +494,22 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(posidon.modes[0][0], 'full')
         self.assertTrue(all(mode == ('budget', ('petclinic-rest',)) for mode in posidon.modes[1:]), posidon.modes)
 
+    def test_the_load_guard_marks_a_busy_run_not_quiet(self):
+        s = merge_train.VERIFY_SCRIPT
+        functions = s[s.index('LOAD_MEAN=0.5'):s.index('\n}\n', s.index('load_stop() {')) + 3]
+        with tempfile.TemporaryDirectory() as work:
+            for samples, quiet in (('0\n0\n1\n0\n', True), ('13\n12\n13\n', False), ('0\n0\n6\n0\n0\n0\n', False)):
+                cache = Path(work) / 'cache'
+                (Path(work) / 'cache.load').write_text(samples)
+                (Path(work) / 'cache.noisy').unlink(missing_ok=True)
+                done = subprocess.run(['bash', '-c', f'FLINT_CACHE={cache}; LOAD_PID=; {functions}\nload_stop'],
+                                      capture_output=True, text=True)
+                self.assertIn('NOT quiet' if not quiet else ': quiet', done.stdout, samples)
+                self.assertEqual((Path(work) / 'cache.noisy').exists(), not quiet, samples)
+        # A run that was not quiet writes no tight endpoints, so its borderline misses get the median re-measure.
+        self.assertIn('TIGHTFILE="$FLINT_CACHE.notight.json"', s)
+        self.assertLess(s.index('load_start; $H flint budget "$@" --report'), s.index('cat > "$FLINT_CACHE.tight.json"'))
+
     def test_main_s_open_misses_are_judged_relative_to_main(self):
         s = merge_train.VERIFY_SCRIPT
         start = s.index("<<'PY'\n", s.index('TIGHT\n  apps=')) + len("<<'PY'\n")
