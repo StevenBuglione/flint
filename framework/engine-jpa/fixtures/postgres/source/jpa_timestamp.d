@@ -7,16 +7,14 @@ import core.memory : GC;
 import flint.arena : Result, Status;
 import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping,
-    ResultBinding, TypedColumnCodec, materializeRow, planResult;
-import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
+    ResultBinding, RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult;
+import flint.engine.jpa.parameter_binding : ParameterBinding, ParameterBindingPlan, bindParameters, planParameters;
+import flint.engine.jpa.timestamp : decodeTimestampMicros, encodeTimestampMicros;
 import flint.java.sql : PreparedStatement, ResultSet, Types;
-import flint.java.time : LocalDateTime, ZoneOffset;
+import flint.java.time : LocalDate, LocalDateTime, LocalTime;
 import flint.javax.sql : DataSource;
 
 @safe:
-
-private enum microsPerSecond = 1_000_000;
-private enum microsPerDay = 86_400L * microsPerSecond;
 
 private final class AuditRecord
 {
@@ -24,21 +22,18 @@ private final class AuditRecord
     LocalDateTime recordedAt;
 }
 
-private long epochMicros(LocalDateTime value) pure nothrow @nogc
+private Result!long epochMicros(LocalDateTime value) pure nothrow @nogc
 {
-    return value.toLocalDate().toEpochDay() * microsPerDay + value.toLocalTime().toNanoOfDay() / 1_000;
+    return encodeTimestampMicros(value.toLocalDate().toEpochDay(), value.toLocalTime().toNanoOfDay());
 }
 
 private LocalDateTime fromEpochMicros(long value)
 {
-    auto seconds = value / microsPerSecond;
-    auto micros = value % microsPerSecond;
-    if (micros < 0)
-    {
-        --seconds;
-        micros += microsPerSecond;
-    }
-    return LocalDateTime.ofEpochSecond(seconds, cast(int) micros * 1_000, ZoneOffset.UTC);
+    const decoded = decodeTimestampMicros(value);
+    if (!decoded.ok)
+        throw new Exception(decoded.error.message);
+    return LocalDateTime.of(LocalDate.ofEpochDay(decoded.value.epochDay),
+            LocalTime.ofNanoOfDay(decoded.value.nanoOfDay));
 }
 
 private enum auditType = "jpa_timestamp.AuditRecord";
@@ -64,7 +59,8 @@ private void writeId(Object entity, const ref AttributeValue value)
 private Result!AttributeValue readTimestamp(Object entity) nothrow @nogc
 {
     const recordedAt = (cast(AuditRecord) entity).recordedAt;
-    return Result!AttributeValue(AttributeValue(AttributeKind.timestamp, epochMicros(recordedAt)));
+    const encoded = epochMicros(recordedAt);
+    return Result!AttributeValue(AttributeValue(AttributeKind.timestamp, encoded.value), encoded.error);
 }
 
 private void writeTimestamp(Object entity, const ref AttributeValue value)
@@ -75,7 +71,10 @@ private void writeTimestamp(Object entity, const ref AttributeValue value)
 private AttributeValue readColumn(ResultSet row, int column, AttributeKind kind)
 {
     assert(kind == AttributeKind.timestamp);
-    return AttributeValue(kind, epochMicros(row.getObject!LocalDateTime(column)));
+    const encoded = epochMicros(row.getObject!LocalDateTime(column));
+    if (!encoded.ok)
+        throw new Exception(encoded.error.message);
+    return AttributeValue(kind, encoded.value);
 }
 
 private void bindColumn(PreparedStatement statement, int index, scope const ref AttributeValue value)
@@ -99,29 +98,49 @@ void verifyTimestampMapping(DataSource dataSource)
             "select cast(? as timestamp), 7::bigint union all select null::timestamp, 8::bigint order by 2");
     scope (exit)
         statement.close();
-    const expected = LocalDateTime.of(1969, 12, 31, 23, 59, 59, 123_456_000);
-    const encoded = AttributeValue(AttributeKind.timestamp, -876_544);
     static immutable ParameterBinding[] parameters = [ParameterBinding(1, 1)];
     const writePlan = planParameters(&mapping, parameters, codec);
     assert(writePlan.ok);
+    const fractional = LocalDateTime.of(1969, 12, 31, 23, 59, 59, 123_455_500);
+    const rounded = LocalDateTime.of(1969, 12, 31, 23, 59, 59, 123_456_000);
+    verifyTimestampRow(statement, plan.value, writePlan.value, fractional, rounded, -876_544);
+    const belowHalf = LocalDateTime.of(1969, 12, 31, 23, 59, 59, 999_999_499);
+    const beforeEpoch = LocalDateTime.of(1969, 12, 31, 23, 59, 59, 999_999_000);
+    verifyTimestampRow(statement, plan.value, writePlan.value, belowHalf, beforeEpoch, -1);
+    const atHalf = LocalDateTime.of(1969, 12, 31, 23, 59, 59, 999_999_500);
+    verifyTimestampRow(statement, plan.value, writePlan.value, atHalf, LocalDateTime.of(1970, 1, 1, 0, 0), 0);
+    const first = LocalDateTime.of(1, 1, 1, 0, 0);
+    verifyTimestampRow(statement, plan.value, writePlan.value, first, first, -62_135_596_800_000_000);
+    const last = LocalDateTime.of(9999, 12, 31, 23, 59, 59, 999_999_000);
+    verifyTimestampRow(statement, plan.value, writePlan.value, last, last, 253_402_300_799_999_999);
+
     auto writeRecord = new AuditRecord;
-    writeRecord.recordedAt = expected;
-    assert(bindParameters(writePlan.value, statement, writeRecord).code == Status.ok);
+    writeRecord.recordedAt = LocalDateTime.of(9999, 12, 31, 23, 59, 59, 999_999_500);
+    const overflow = bindParameters(writePlan.value, statement, writeRecord);
+    assert(overflow.code == Status.invalidArgument && overflow.offset == 1);
+}
+
+private void verifyTimestampRow(PreparedStatement statement, scope const ref RowMaterializationPlan readPlan,
+        scope const ref ParameterBindingPlan writePlan, LocalDateTime input, LocalDateTime expected, long micros)
+{
+    auto writeRecord = new AuditRecord;
+    writeRecord.recordedAt = input;
+    assert(bindParameters(writePlan, statement, writeRecord).code == Status.ok);
     auto rows = statement.executeQuery();
     scope (exit)
         rows.close();
     assert(rows.next());
 
     const before = GC.stats().allocatedInCurrentThread;
-    const read = codec.read(rows, 1, AttributeKind.timestamp);
+    const read = readColumn(rows, 1, AttributeKind.timestamp);
     assert(GC.stats().allocatedInCurrentThread == before);
-    assert(read.integer == encoded.integer);
-    const row = materializeRow(plan.value, rows);
+    assert(read.integer == micros);
+    const row = materializeRow(readPlan, rows);
     assert(row.ok);
     const audit = cast(const AuditRecord) row.value;
     assert(audit.id == 7 && audit.recordedAt == expected);
 
     assert(rows.next());
-    const missing = materializeRow(plan.value, rows);
+    const missing = materializeRow(readPlan, rows);
     assert(!missing.ok && missing.error.code == Status.invalidArgument && missing.error.offset == 1);
 }
