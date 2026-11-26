@@ -203,8 +203,17 @@
       "status": "deferred"
     },
     "org/springframework/aop/support/ComposablePointcutTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/aop/tests/pointcut_composition_tests.d",
+      "methods": {
+        "ported": [
+          "equalsAndHashCode",
+          "filterByClass",
+          "intersectionMethodMatcher",
+          "matchAll",
+          "unionMethodMatcher"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/aop/support/ControlFlowPointcutTests.java": {
       "phase": "2",
@@ -219,25 +228,28 @@
       "status": "deferred"
     },
     "org/springframework/aop/support/MethodMatchersTests.java": {
-      "d": "framework/aop/tests/pointcut_tests.d",
+      "d": [
+        "framework/aop/tests/pointcut_tests.d",
+        "framework/aop/tests/pointcut_composition_tests.d"
+      ],
       "methods": {
         "ported": [
-          "defaultMatchesAll"
+          "defaultMatchesAll",
+          "dynamicAndStaticMethodMatcherIntersection",
+          "negateHasNotSameHashCodeAsOriginalMatcher",
+          "negateIsNotEqualsToOriginalMatcher",
+          "negateMethodMatcher",
+          "negateOnSameMatcherHasSameHashCode",
+          "negateOnSameMatcherIsEquals",
+          "negateTrueMethodMatcher",
+          "negateTrueMethodMatcherAppliedTwice",
+          "single",
+          "staticMethodMatcherUnion",
+          "toStringIncludesRepresentationOfOriginalMatcher",
+          "unionEquals"
         ],
         "skipped": {
-          "dynamicAndStaticMethodMatcherIntersection": "Phase 2: method matcher composition and negation are deferred.",
-          "methodMatcherTrueSerializable": "Rulebook jvm-platform: Java serialization is excluded.",
-          "negateHasNotSameHashCodeAsOriginalMatcher": "Phase 2: method matcher composition and negation are deferred.",
-          "negateIsNotEqualsToOriginalMatcher": "Phase 2: method matcher composition and negation are deferred.",
-          "negateMethodMatcher": "Phase 2: method matcher composition and negation are deferred.",
-          "negateOnSameMatcherHasSameHashCode": "Phase 2: method matcher composition and negation are deferred.",
-          "negateOnSameMatcherIsEquals": "Phase 2: method matcher composition and negation are deferred.",
-          "negateTrueMethodMatcher": "Phase 2: method matcher composition and negation are deferred.",
-          "negateTrueMethodMatcherAppliedTwice": "Phase 2: method matcher composition and negation are deferred.",
-          "single": "Phase 2: method matcher composition and negation are deferred.",
-          "staticMethodMatcherUnion": "Phase 2: method matcher composition and negation are deferred.",
-          "toStringIncludesRepresentationOfOriginalMatcher": "Phase 2: method matcher composition and negation are deferred.",
-          "unionEquals": "Phase 2: method matcher composition and negation are deferred."
+          "methodMatcherTrueSerializable": "Rulebook jvm-platform: Java serialization is excluded."
         }
       },
       "status": "partial"

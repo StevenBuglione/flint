@@ -147,7 +147,6 @@
       "org/springframework/aop/scope/ScopedProxyUtilsTests.java",
       "org/springframework/aop/support/AopUtilsTests.java",
       "org/springframework/aop/support/ClassUtilsTests.java",
-      "org/springframework/aop/support/ComposablePointcutTests.java",
       "org/springframework/aop/support/ControlFlowPointcutTests.java",
       "org/springframework/aop/support/DelegatingIntroductionInterceptorTests.java",
       "org/springframework/aop/support/JdkRegexpMethodPointcutTests.java",

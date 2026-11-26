@@ -12,6 +12,7 @@
 module flint.aop.support;
 
 public import flint.aop.support.class_filters : ClassFilters, RootClassFilter;
+public import flint.aop.support.method_matchers : ComposablePointcut, MethodMatchers;
 
 import flint.aop : ClassFilter, MethodMatcher, Pointcut;
 import flint.aop.support.class_filters : ClassPredicate, asClassFilter;
@@ -185,6 +186,18 @@ abstract class DynamicMethodMatcherPointcut : DynamicMethodMatcher, Pointcut
 /// Utility operations over pointcuts.
 abstract class Pointcuts
 {
+    /// Matches either of the supplied pointcuts.
+    static Pointcut union_(Pointcut first, Pointcut second)
+    {
+        return new ComposablePointcut(first).union_(second);
+    }
+
+    /// Matches both of the supplied pointcuts.
+    static Pointcut intersection(Pointcut first, Pointcut second)
+    {
+        return new ComposablePointcut(first).intersection(second);
+    }
+
     /// Test a pointcut against one invocation, checking the class and static method first.
     static bool matches(Pointcut pointcut, const(MethodDescriptor)* method, const Descriptor targetClass, Any[] args...)
     {
