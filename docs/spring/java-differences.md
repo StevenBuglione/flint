@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 204 | 383 | 0 | 15,209 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,618 | 1,462 | 4,870 | 29,884 |
+| framework | spring-framework@v7.1.0 | 3,617 | 1,461 | 4,870 | 29,886 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2792,7 +2792,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.core.io.ClassPathResource#<init>(String,Class)` | `flint.core.io.ClassPathResource.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.io.DefaultResourceLoader#getResource(String)` | `flint.core.io.DefaultResourceLoader.getResource` | [D-CORE-1](api-mapping.md#deviations) |  |
 | `org.springframework.core.io.InputStreamResource#<init>(InputStreamSource)` | `flint.core.io.InputStreamResource.this` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.core.io.InputStreamResource#<init>(InputStreamSource,String)` | `flint.core.io.InputStreamResource.this` | [R9](api-mapping.md#r9-functional-interfaces) |  |
@@ -9982,7 +9981,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.core.convert.converter | 14 | 0 |
 | org.springframework.core.convert.support | 15 | 0 |
 | org.springframework.core.env | 29 | 0 |
-| org.springframework.core.io | 75 | 0 |
+| org.springframework.core.io | 77 | 0 |
 | org.springframework.core.io.buffer | 0 | 277 |
 | org.springframework.core.io.support | 133 | 0 |
 | org.springframework.core.log | 56 | 0 |
@@ -10833,6 +10832,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.context.support.GenericApplicationContext#registerBean(String,Class,Object...)` | 2 | Requires explicit constructor argument values. |
 | framework | `org.springframework.context.support.ResourceBundleMessageSource#loadBundle(InputStream)` | 2 | Requires an input stream hook returning ResourceBundle. |
 | framework | `org.springframework.context.support.ResourceBundleMessageSource#loadBundle(Reader)` | 2 | Requires a reader hook returning ResourceBundle. |
+| framework | `org.springframework.core.io.ClassPathResource#<init>(String,Class)` | 2 | Class-relative resolution needs the class package. Flint resolves absolute class path names. |
+| framework | `org.springframework.core.io.ClassPathResource#<init>(String,ClassLoader)` | 2 | Selecting a class loader requires java.lang.ClassLoader. Flint has one class path. |
 | framework | `org.springframework.core.io.FileSystemResource#<init>(FileSystem,String)` | 2 | Requires the Java NIO FileSystem resource constructor. |
 | framework | `org.springframework.core.io.FileSystemResource#<init>(Path)` | 2 | Requires the Java NIO Path resource constructor. |
 | framework | `org.springframework.expression.EvaluationContext#getTypeConverter()` | 2 | Deferred until indexed assignment uses the context conversion strategy. See D-SPEL-5. |

@@ -50,7 +50,6 @@
   "org.springframework.core.convert.support.GenericConversionService#convertNullSource(TypeDescriptor,TypeDescriptor) -> TypeDescriptor": "framework: org.springframework.core.convert.TypeDescriptor is deferred",
   "org.springframework.core.convert.support.GenericConversionService#getConverter(TypeDescriptor,TypeDescriptor) -> TypeDescriptor": "framework: org.springframework.core.convert.TypeDescriptor is deferred",
   "org.springframework.core.convert.support.GenericConversionService#getDefaultConverter(TypeDescriptor,TypeDescriptor) -> TypeDescriptor": "framework: org.springframework.core.convert.TypeDescriptor is deferred",
-  "org.springframework.core.io.ClassPathResource#<init>(String,ClassLoader) -> ClassLoader": "framework: java.lang.ClassLoader is excluded",
   "org.springframework.expression.TypeConverter#canConvert(TypeDescriptor,TypeDescriptor) -> TypeDescriptor": "framework: org.springframework.core.convert.TypeDescriptor is deferred",
   "org.springframework.expression.TypeConverter#convertValue(Object,TypeDescriptor,TypeDescriptor) -> TypeDescriptor": "framework: org.springframework.core.convert.TypeDescriptor is deferred",
   "org.springframework.expression.TypedValue#<init>(Object,TypeDescriptor) -> TypeDescriptor": "framework: org.springframework.core.convert.TypeDescriptor is deferred",
