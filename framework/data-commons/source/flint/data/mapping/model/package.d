@@ -8,7 +8,8 @@ import flint.core.annotation.types : AnnotationConfigurationException;
 import flint.data.annotation : Immutable, TypeAlias;
 import flint.data.core.type_information : TypeInformation, registeredDescriptor;
 import flint.data.domain.persistable : PersistableState;
-import flint.data.mapping : Alias, IdentifierAccessor, MappingException, PersistentEntity, PersistentProperty,
+import flint.data.mapping : Alias, Association, IdentifierAccessor, MappingException,
+    PersistentEntity, PersistentProperty,
     PersistentPropertyAccessor, PrimitivePropertyKind, TargetAwareIdentifierAccessor, primitivePropertyKind;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MergedAnnotation, PropertyDescriptor,
@@ -29,6 +30,7 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     private Comparator!P comparator;
     private List!P properties;
     private List!P propertyView;
+    private List!(Association!P) associations;
     private Map!(string, P) propertiesByName;
     private P[] transientProperties;
     private Alias typeAlias;
@@ -163,6 +165,33 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
         return propertiesByName.get(name);
     }
 
+    /// Registers an association, respecting the inverse-property comparator when configured.
+    void addAssociation(Association!P association)
+    {
+        if (association is null)
+            throw new IllegalArgumentException("Association must not be null");
+        if (associations is null)
+            associations = new ArrayList!(Association!P)();
+        if (comparator is null)
+        {
+            if (!associations.contains(association))
+                associations.add(association);
+            return;
+        }
+
+        int index;
+        foreach (registered; associations)
+        {
+            const order = comparator.compare(association.getInverse(), registered.getInverse());
+            if (order == 0)
+                return;
+            if (order < 0)
+                break;
+            ++index;
+        }
+        associations.add(index, association);
+    }
+
     override Iterable!P getPersistentProperties(ClassRef annotationType)
     {
         if (annotationType.name.length == 0)
@@ -172,15 +201,23 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
 
         List!P matches;
         foreach (property; properties)
-        {
-            const field = descriptor.property(property.getName());
-            if (field is null || findCheckedAnnotation(field.annotations, annotationType.name) is null)
-                continue;
-            if (matches is null)
-                matches = new ArrayList!P();
-            matches.add(property);
-        }
+            addAnnotatedProperty(matches, property, annotationType.name);
+        if (matches is null && associations !is null)
+            foreach (association; associations)
+                addAnnotatedProperty(matches, association.getInverse(), annotationType.name);
         return matches is null ? Collections.emptyList!P() : Collections.unmodifiableList(matches);
+    }
+
+    private void addAnnotatedProperty(ref List!P matches, P property, string annotationType)
+    {
+        if (property is null)
+            return;
+        const field = descriptor.property(property.getName());
+        if (field is null || findCheckedAnnotation(field.annotations, annotationType) is null)
+            return;
+        if (matches is null)
+            matches = new ArrayList!P();
+        matches.add(property);
     }
 
     /// The last transient property registered under the name.

@@ -1,5 +1,6 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,TargetAwareIdentifierAccessor}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,TargetAwareIdentifierAccessor}.java
 // Alias: Copyright 2016-present the original author or authors.
+// Association: Copyright 2011-present the original author or authors.
 // IdentifierAccessor: Copyright 2014-present the original author or authors.
 // MappingException, PersistentEntity and PersistentProperty: Copyright 2011-present the original author or authors.
 // PersistentPropertyAccessor: Copyright 2014-present the original author or authors.
@@ -130,6 +131,32 @@ interface PersistentProperty(P) : PersistentPropertyType
 
     /// Whether this property is excluded from ordinary persistence mapping.
     bool isTransient();
+}
+
+/// The two persistent properties connected by an association.
+class Association(P) if (is(P : PersistentProperty!P))
+{
+    private P inverse;
+    private P obverse;
+
+    /// Creates an association whose obverse may be null.
+    this(P inverse, P obverse)
+    {
+        this.inverse = inverse;
+        this.obverse = obverse;
+    }
+
+    /// The inverse property.
+    P getInverse()
+    {
+        return inverse;
+    }
+
+    /// The obverse property, or null when absent.
+    P getObverse()
+    {
+        return obverse;
+    }
 }
 
 /// Access to the persistent properties of a mapped bean.

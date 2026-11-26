@@ -9,7 +9,7 @@ import flint.core.annotation.types : AnnotationConfigurationException;
 import flint.data.annotation : CreatedBy, CreatedDate, Immutable, LastModifiedBy, Transient, TypeAlias;
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
-import flint.data.mapping : Alias, MappingException, PersistentEntity, PersistentProperty;
+import flint.data.mapping : Alias, Association, MappingException, PersistentEntity, PersistentProperty;
 import flint.data.mapping.model : BasicPersistentEntity;
 import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
@@ -414,6 +414,57 @@ unittest
     assert(entity.getPersistentProperty("field") is first);
     assert(!entity.getPersistentProperties(classOf!CreatedDate).iterator().hasNext());
     assertThrown!IllegalArgumentException(entity.getPersistentProperties(ClassRef.init));
+}
+
+@("rejectsNullAssociation")
+unittest
+{
+    auto model = mapped!AuditedProperties();
+    assertThrown!IllegalArgumentException(model.addAssociation(null));
+}
+
+@("annotation lookup falls back to ordered inverse association properties")
+unittest
+{
+    auto comparator = Comparator!Property.comparing!string((Property property) => property.getName());
+    auto model = mapped!AuditedProperties(comparator);
+    auto first = new Property("field");
+    auto second = new Property("secondField");
+    auto obverse = new Property("property");
+    auto association = new Association!Property(second, obverse);
+    assert(association.getInverse() is second && association.getObverse() is obverse);
+    auto inverseOnly = new Association!Property(first, null);
+    assert(inverseOnly.getObverse() is null);
+
+    model.addAssociation(association);
+    model.addAssociation(inverseOnly);
+    model.addAssociation(new Association!Property(new Property("field"), obverse));
+    PersistentEntity!(AuditedProperties, Property) entity = model;
+    auto matches = entity.getPersistentProperties(classOf!LastModifiedBy).iterator();
+    assert(matches.next() is first && matches.next() is second && !matches.hasNext());
+    assert(entity.getPersistentProperty(classOf!CreatedBy) is null);
+
+    model.addPersistentProperty(second);
+    matches = entity.getPersistentProperties(classOf!LastModifiedBy).iterator();
+    assert(matches.next() is second && !matches.hasNext());
+}
+
+@("association registration without a comparator keeps distinct objects")
+unittest
+{
+    auto model = mapped!AuditedProperties();
+    auto first = new Property("secondField");
+    auto second = new Property("field");
+    auto association = new Association!Property(first, null);
+    model.addAssociation(association);
+    model.addAssociation(association);
+    model.addAssociation(new Association!Property(second, null));
+    model.addAssociation(new Association!Property(first, null));
+
+    auto matches = model.getPersistentProperties(classOf!LastModifiedBy).iterator();
+    foreach (expected; [first, second, first])
+        assert(matches.next() is expected);
+    assert(!matches.hasNext());
 }
 
 @("required version property follows registration")

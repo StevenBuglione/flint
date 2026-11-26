@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-16",
+ "deviation": "BasicPersistentEntity stores explicitly registered associations in a list. Without a comparator it preserves registration order and ignores equal associations. With a comparator it orders by the inverse property and retains the first association when keys compare equal.",
+ "reason": "Associations are registered during metadata construction. A lazily allocated list preserves iterator order and uniqueness without requiring a separate tree collection."
+}

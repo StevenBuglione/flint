@@ -1,5 +1,5 @@
 {
  "id": "D-DATA-15",
- "deviation": "BasicPersistentEntity returns a read-only snapshot of registered properties matching the annotation in current property order. Association lookup remains deferred.",
+ "deviation": "BasicPersistentEntity returns a read-only snapshot of matching properties in current property order, using inverse association properties when no ordinary property matches.",
  "reason": "A snapshot reflects explicit property registration and sorting and protects entity metadata from iterator mutation without a mutable annotation cache."
 }

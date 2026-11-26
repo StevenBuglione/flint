@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 253 | 209 | 0 | 3,520 |
+| data-commons | spring-data-commons@4.2.0 | 257 | 210 | 0 | 3,515 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1028,6 +1028,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.model.BasicPersistentEntity` | `flint.data.mapping.model.BasicPersistentEntity` | [D-DATA-12](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.BasicPersistentEntity#<init>(TypeInformation)` | `flint.data.mapping.model.BasicPersistentEntity.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.mapping.model.BasicPersistentEntity#<init>(TypeInformation,Comparator)` | `flint.data.mapping.model.BasicPersistentEntity.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.data.mapping.model.BasicPersistentEntity#addAssociation(Association)` | `flint.data.mapping.model.BasicPersistentEntity.addAssociation` | [D-DATA-16](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.BasicPersistentEntity#addPersistentProperty(P)` | `flint.data.mapping.model.BasicPersistentEntity.addPersistentProperty` | [D-DATA-12](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.BasicPersistentEntity#findAnnotation(Class)` | `flint.data.mapping.model.BasicPersistentEntity.findAnnotation` | [R4](api-mapping.md#r4-classt-parameters), [R23](api-mapping.md#r23-object-typed-values), [D-DATA-14](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.BasicPersistentEntity#getIdentifierAccessor(Object)` | `flint.data.mapping.model.BasicPersistentEntity.getIdentifierAccessor` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-12](api-mapping.md#deviations) |  |
@@ -10142,10 +10143,10 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.geo.format | 11 | 0 |
 | org.springframework.data.history | 42 | 0 |
 | org.springframework.data.javapoet | 69 | 0 |
-| org.springframework.data.mapping | 149 | 0 |
+| org.springframework.data.mapping | 145 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
-| org.springframework.data.mapping.model | 196 | 0 |
+| org.springframework.data.mapping.model | 195 | 0 |
 | org.springframework.data.projection | 70 | 0 |
 | org.springframework.data.querydsl | 66 | 0 |
 | org.springframework.data.querydsl.binding | 45 | 0 |
