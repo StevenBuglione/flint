@@ -1084,3 +1084,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - nothing recorded as ported or partial is downgraded.
 
   **Still needs the coordinator's approval:** a downgrade, or an exclusion without a concrete reason. **First use:** micrometer-core (sol-observability).
+- 2026-11-26 01:15Z, coordinator, under the owner's standing approval:
+  - **D-DATA-2 (sol-data): approved.** Data Commons' initial scroll positions compare by value and are created by factories, where Java caches the instances.
+  - **D-DATA-3 (sol-data): approved.** Typed property paths and the typed sort use D getter aliases where Java uses method references, with no runtime proxies.
+  - **sol-ai: approved.** A narrow `-flint.ai.chat.messages.part` entry in `dscanner.ini`'s `object_const_check`, consistent with the existing Spring-namespace exemptions. Engines stay checked.
