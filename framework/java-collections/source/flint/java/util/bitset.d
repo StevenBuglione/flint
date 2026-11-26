@@ -57,9 +57,9 @@ class BitSet
     bool get(int bitIndex) const pure
     {
         checkIndex(bitIndex, 0, "bitIndex < 0: ");
-        const word = bitIndex >> wordShift;
+        const word = cast(uint) bitIndex >> wordShift;
         // Unused capacity holds zero words, so the capacity check also guards the load.
-        return cast(size_t) word < words.length && (words[word] & maskAt(bitIndex)) != 0;
+        return word < words.length && (words[word] & maskAt(bitIndex)) != 0;
     }
 
     /// Sets one bit, growing the capacity if necessary.
@@ -307,16 +307,16 @@ class BitSet
 
     pragma(inline, false) private void changeIncludedBits(int fromIndex, int lastBit, RangeChange change) pure
     {
-        const firstWord = fromIndex >> wordShift;
-        int lastWord = lastBit >> wordShift;
+        const firstWord = cast(uint) fromIndex >> wordShift;
+        auto lastWord = cast(uint) lastBit >> wordShift;
         ulong lastMask = ulong.max >> (bitMask - (lastBit & bitMask));
-        if (lastWord >= wordsInUse)
+        if (lastWord >= cast(uint) wordsInUse)
         {
             if (change == RangeChange.clear)
             {
-                if (firstWord >= wordsInUse)
+                if (firstWord >= cast(uint) wordsInUse)
                     return;
-                lastWord = wordsInUse - 1;
+                lastWord = cast(uint) wordsInUse - 1;
                 lastMask = ulong.max;
             }
             else
@@ -340,7 +340,7 @@ class BitSet
             recalculateWordsInUse();
     }
 
-    pragma(inline, false) private void expandTo(int word) pure nothrow
+    pragma(inline, false) private void expandTo(uint word) pure nothrow
     {
         const required = cast(size_t) word + 1;
         if (required > words.length)
