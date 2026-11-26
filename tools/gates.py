@@ -9,6 +9,7 @@ import module_budgets
 import framework_budgets
 import check_exchange_retention
 import check_class_monitor
+import jdk_link_closure
 import request_allocation_ratchet
 import template_budget_ratchet
 ROOT=Path(__file__).resolve().parents[1]
@@ -161,6 +162,9 @@ def framework_layers():
     if not path.is_file():return 0
     modules=json.loads(path.read_text(encoding='utf-8'))['modules']
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
+    jdk_baseline=jdk_link_closure.baseline_at(ROOT)
+    jdk_history=jdk_link_closure.baseline_growth(ROOT,jdk_baseline)
+    require(not jdk_history,'; '.join(jdk_history))
     def layer_owner(module):
         # A module may own further package roots ("also"): spring-tx is both flint.dao and flint.transaction. The
         # longest root wins, so webmvc owns flint.web.servlet under web's flint.web whatever framework.json's order.
@@ -193,6 +197,7 @@ def framework_layers():
         for dep in meta['dependencies']+meta.get('test_dependencies',[]):
             require(dep in P or dep in modules,name+': unknown dependency '+dep)
         epl=meta['licence']=='EPL-2.0'
+        jdk_imports=set()
         require(epl==(base/'LICENSE').is_file(),name+': an EPL-2.0 module carries its own LICENSE, and only it')
         for f in sorted((base/'source').rglob('*.d')):
             text=f.read_text(encoding='utf-8');ts=list(tokens(text));where=str(f.relative_to(ROOT) if f.is_relative_to(ROOT) else f)
@@ -204,6 +209,8 @@ def framework_layers():
             require(module_default(ts)=='safe',where+': require module-scope @safe: before declarations')
             require(not has_string_mixin(ts) or meta.get('generator',False),where+': string mixin outside an approved API-layer internal')
             require(epl==('SPDX-License-Identifier: EPL-2.0' in text),where+': EPL-2.0 sources belong only to EPL-2.0 modules')
+            if jdk_link_closure.is_jdk_package(name):
+                jdk_imports.update(jdk_link_closure.import_violations(name,module,text))
             values=[t.value for t in ts]
             if prefix_match(module,meta.get('unsafe',[])):
                 # An AOT-runtime module's audited sys directory (framework.json "unsafe") keeps the package rules for
@@ -223,6 +230,10 @@ def framework_layers():
                     private=[P[dep]['module']+'.'+part for part in ['internal','sys','ffi']]
                     require(not prefix_match(imported,private),where+': cross-package private boundary import '+imported)
             check_thread_locals(module,ts,where)
+        if jdk_link_closure.is_jdk_package(name):
+            recorded={row for row in jdk_baseline if row.startswith(f'import|{name}|')}
+            problems=jdk_link_closure.check_violations(jdk_imports,recorded)
+            require(not problems,meta['directory']+': JDK import ratchet: '+'; '.join(problems))
     return len(modules)
 
 def in_home(repo):

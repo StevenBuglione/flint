@@ -108,6 +108,25 @@ Rules 1, 4 and 5 are enforced by a check, not by review. `sol-jdk-core` builds i
 - **Size measurement:** loadable section bytes, not file size (decisions.md, 2026-11-26 01:20Z).
 - **Budgets** (`jdk-leaf-rule`, decisions.md 2026-11-26 01:45Z): each leaf has its own budget, set at the measured value plus 10% and only shrinking afterwards. A package budget is the sum of its leaves; adding a leaf raises it by exactly that leaf's budget, with the trailer `Budget-Raise-Approved: jdk-leaf-rule`.
 
+Run `python3 tools/gates.py --module framework/java --definition-of-done --step link-closure` on the Linux ELF
+runner. The audit uses `dub`, `ldc2`, `readelf` and `nm`. For investigation, run
+`python3 tools/jdk_link_closure.py --package java --evidence <directory>` to retain linker maps and build logs.
+GNU ld's archive records identify the referring object and symbol for retained Phobos families when available.
+On venus, run both commands under the measurement queue's hold wrapper.
+
+`closure.json` uses schema `flint.jdk-closure/1`. The `probes` object maps a leaf's D module name to named
+probe records. Each record has a package-relative `source` under `closure/` or `bench/`, a `leaves` list of
+other modules the probe may retain, and a `data` list. The probe's own leaf is implicit. Put new table-only
+modules under a `.data` component so the gate can identify their symbols. Write separate probes for common
+operations and operations that intentionally need optional data. Use runtime input to exercise the operation.
+
+The initial JDK packages' existing violations are recorded in
+[`framework/java/closure-baseline.json`](../../../framework/java/closure-baseline.json). The structural and
+link-closure checks reject new violations and require stale entries to be removed. A new probe whose declared
+closure needs the legacy `flint.java.lang` aggregate may seed the initial baseline's known module records in the
+same commit as the probe (decision `523bd5bd`). Retained code, tables and banned Phobos have separate diagnostics.
+The release check fails with any violation still present.
+
 ## Lanes
 
 | Role | Owns | Order |

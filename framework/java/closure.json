@@ -1,0 +1,263 @@
+{
+  "probes": {
+    "flint.java.character": {
+      "character-ascii-lower": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/character-ascii-lower.d"
+      },
+      "character-category": {
+        "data": [
+          "flint.java.character.letterRanges"
+        ],
+        "leaves": [],
+        "source": "closure/character-category.d"
+      },
+      "character-lower": {
+        "data": [
+          "flint.java.character.lowerRuns"
+        ],
+        "leaves": [],
+        "source": "closure/character-lower.d"
+      }
+    },
+    "flint.java.classref": {
+      "classref": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/classref.d"
+      }
+    },
+    "flint.java.io": {
+      "bytearray-input": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/bytearray-input.d"
+      }
+    },
+    "flint.java.lang": {
+      "boolean": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/boolean.d"
+      },
+      "double": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/double.d"
+      },
+      "integer": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/integer.d"
+      },
+      "long": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/long.d"
+      },
+      "string-format": {
+        "data": [],
+        "leaves": [
+          "flint.java.util.formatter"
+        ],
+        "source": "closure/string-format.d"
+      },
+      "string-hash": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/string-hash.d"
+      },
+      "valueof-array": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/valueof-array.d"
+      }
+    },
+    "flint.java.net": {
+      "uri": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/uri.d"
+      }
+    },
+    "flint.java.nio.charset": {
+      "charset": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/charset.d"
+      }
+    },
+    "flint.java.sql": {
+      "sql-exception": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/sql-exception.d"
+      }
+    },
+    "flint.java.text": {
+      "message-format": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.text.simpledateformat"
+        ],
+        "source": "closure/message-format.d"
+      }
+    },
+    "flint.java.text.simpledateformat": {
+      "date-format": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.util.calendar",
+          "flint.java.util.date",
+          "flint.java.util.timezone"
+        ],
+        "source": "closure/date-format.d"
+      }
+    },
+    "flint.java.time": {
+      "localdate": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.time.format"
+        ],
+        "source": "closure/localdate.d"
+      }
+    },
+    "flint.java.time.format": {
+      "time-format": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.time"
+        ],
+        "source": "closure/time-format.d"
+      }
+    },
+    "flint.java.util": {
+      "arraylist": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/arraylist.d"
+      },
+      "hashmap": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/hashmap.d"
+      },
+      "optional": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/optional.d"
+      }
+    },
+    "flint.java.util.calendar": {
+      "calendar": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.time",
+          "flint.java.util.date",
+          "flint.java.util.timezone"
+        ],
+        "source": "closure/calendar.d"
+      }
+    },
+    "flint.java.util.concurrent": {
+      "time-unit": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/time-unit.d"
+      }
+    },
+    "flint.java.util.concurrent.atomic": {
+      "atomic": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/atomic.d"
+      }
+    },
+    "flint.java.util.date": {
+      "date": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.time"
+        ],
+        "source": "closure/date.d"
+      }
+    },
+    "flint.java.util.descriptors": {
+      "descriptors": {
+        "data": [],
+        "leaves": [
+          "flint.java.util"
+        ],
+        "source": "closure/descriptors.d"
+      }
+    },
+    "flint.java.util.formatter": {
+      "formatter": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/formatter.d"
+      }
+    },
+    "flint.java.util.function_": {
+      "function": {
+        "data": [],
+        "leaves": [],
+        "source": "closure/function.d"
+      }
+    },
+    "flint.java.util.stream": {
+      "stream": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.util"
+        ],
+        "source": "closure/stream.d"
+      }
+    },
+    "flint.java.util.timezone": {
+      "timezone": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.time"
+        ],
+        "source": "closure/timezone.d"
+      }
+    },
+    "flint.javax.sql": {
+      "datasource": {
+        "data": [],
+        "leaves": [
+          "flint.java.sql"
+        ],
+        "source": "closure/datasource.d"
+      }
+    }
+  },
+  "schema": "flint.jdk-closure/1"
+}

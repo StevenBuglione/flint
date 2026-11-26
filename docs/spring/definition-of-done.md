@@ -27,6 +27,7 @@ Each failure names what is wrong, where, the rule it breaks, and the command tha
 | `tests` | `dub test :<name> --build=unittest --temp-build` on DMD and LDC (the host's LDC, never the alpine one), plus the record's `test_packages`; the test binaries build under `.flint/definition-of-done/<name>/`, never in the module directory | both compilers pass |
 | `upstream-tests` | `<dir>/upstream-tests.json`, checked against the D files and the fetched upstream | see below |
 | `budgets` | `measure_builds.py --framework-sizes --framework <name>` | `incremental_linked_bytes` and `template_instances` are within `policy/framework.json`. Provisional keys are reported, not gated |
+| `link-closure` | `jdk_link_closure.py --package <name>` for `flint:java` and `flint:java-*` | public JDK leaf probes keep their declared link closure under O3 and Oz. Existing violations are ratcheted, and `--release` requires a clean closure |
 | `apps` | for each Spring app whose dependency closure has the module: `flint test --compiler both --verify` as built and with the static trim (`FLINT_GC_STATIC_VERIFY=0`), as `ci.py` runs it, with a disposable cluster of the pinned PostgreSQL peer for petclinic-rest; then `spring_bench.py accept --impl flint`, and `flint budget` once m7 lands it | allocation budgets hold, the golden suite passes in `exact` mode, and no budget regresses |
 
 ### Ownership of Java packages

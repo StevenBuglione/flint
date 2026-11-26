@@ -15,6 +15,7 @@ for the autonomous Phase 2 porter). The steps, in order:
   upstream-tests  <module dir>/upstream-tests.json (flint.upstream-tests/1): each ported class's D file and unittest
                   names exist, each exclusion or skip has a reason, and the upstream inventory is covered
   budgets         measure_builds --framework-sizes against the policy/framework.json budget (framework modules)
+  link-closure    canonical O3 and Oz linker-map audit for JDK leaves
   apps            for each Spring app that uses the module: its allocation tests (flint test --verify), its golden
                   suite (spring_bench accept), and m7's `flint budget` once it exists
 
@@ -42,8 +43,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / 'tools') not in sys.path:
     sys.path.insert(0, str(ROOT / 'tools'))
 import workspace  # noqa: E402
+from jdk_link_closure import is_jdk_package  # noqa: E402
 
-STEPS = ('resolve', 'structural', 'api', 'quality', 'tests', 'upstream-tests', 'budgets', 'apps')
+STEPS = ('resolve', 'structural', 'api', 'quality', 'tests', 'upstream-tests', 'budgets', 'link-closure', 'apps')
 UPSTREAM_TESTS = 'upstream-tests.json'
 SCHEMA = 'flint.upstream-tests/1'
 REPORT_DIR = ROOT / 'artifacts' / 'definition-of-done'
@@ -881,6 +883,23 @@ def applications(module, run, which='auto', flint=None, root=ROOT):
 # ---------------------------------------------------------------------------------------------------------------
 
 
+def link_closure(module, run, release):
+    if not is_jdk_package(module.name):
+        return Result('link-closure', 'skip', ['this step applies to flint:java packages'])
+    command = [sys.executable, 'tools/jdk_link_closure.py', '--package', module.name]
+    if release:
+        command.append('--release')
+    code, out, err = run(command)
+    if code not in (0, 1):
+        return Result('link-closure', 'error', [f'JDK link-closure probe could not run (exit {code}):',
+                                                *tail(out + err)])
+    try:
+        details = json.loads(out)
+    except ValueError:
+        return Result('link-closure', 'fail' if code else 'error', tail(out + err))
+    return Result('link-closure', 'fail' if code else 'pass', details['problems'], details=details)
+
+
 def run_all(directory, steps=STEPS, apps='auto', release=False, hold=True, flint=None, write_upstream_tests=False,
             runner=None, root=ROOT, seed_phase=None, shrink_baseline=False):
     run = runner or Runner(hold=hold, root=root)
@@ -901,6 +920,7 @@ def run_all(directory, steps=STEPS, apps='auto', release=False, hold=True, flint
              'upstream-tests': lambda: upstream_tests(module, write_upstream_tests, root, release=release,
                                                       seed_phase=seed_phase, shrink_baseline=shrink_baseline),
              'budgets': lambda: budgets(module, run),
+             'link-closure': lambda: link_closure(module, run, release),
              'apps': lambda: applications(module, run, apps, flint, root)}
     for step in steps:
         if step == 'resolve':
