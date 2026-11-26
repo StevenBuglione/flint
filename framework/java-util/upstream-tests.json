@@ -1,0 +1,41 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "module": "java-util",
+  "upstream": "harmony@6.0M3",
+  "upstream_modules": [
+    "luni"
+  ],
+  "test_packages": [
+    ":java-util"
+  ],
+  "classes": {
+    "org/apache/harmony/luni/tests/java/util/UUIDTest.java": {
+      "d": "framework/java-util/tests/uuid_test.d",
+      "status": "partial",
+      "methods": {
+        "ported": [
+          "test_getLeastSignificantBits",
+          "test_getMostSignificantBits",
+          "test_randomUUID",
+          "test_toString",
+          "test_variant",
+          "test_version"
+        ],
+        "skipped": {
+          "testSerializationCompatibility": "Java object serialization is outside the JDK port.",
+          "testSerializationSelf": "Java object serialization is outside the JDK port.",
+          "test_ConstructorJJ": "The constructor's time-based field checks await the version 1 accessors.",
+          "test_clockSequence": "Version 1 accessors are deferred.",
+          "test_compareTo": "Value comparison is deferred.",
+          "test_equalsObject": "Value equality is deferred.",
+          "test_fromString": "String parsing is deferred.",
+          "test_fromString_LString_Exception": "String parsing is deferred.",
+          "test_hashCode": "Value hashing is deferred.",
+          "test_nameUUIDFromBytes": "Name-based UUIDs await a pinned digest provider.",
+          "test_node": "Version 1 accessors are deferred.",
+          "test_timestamp": "Version 1 accessors are deferred."
+        }
+      }
+    }
+  }
+}

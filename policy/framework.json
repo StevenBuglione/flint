@@ -486,6 +486,38 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-util": {
+   "directory": "framework/java-util",
+   "module": "flint.java.util.uuid",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "conc",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-util/bench",
+    "baseline": "framework/java-util/bench/baseline",
+    "edit_source": "framework/java-util/source/flint/java/util/uuid.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 238,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 634
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "jdbc": {
    "directory": "framework/jdbc",
    "module": "flint.jdbc",

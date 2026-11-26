@@ -335,6 +335,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-util": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:jdbc": {
       "repo": "framework",
       "version": "monorepo"

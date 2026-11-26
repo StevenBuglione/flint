@@ -1,0 +1,12 @@
+{
+  "schema": "flint.jdk-closure/1",
+  "probes": {
+    "flint.java.util.uuid": {
+      "random": {
+        "source": "bench/source/app.d",
+        "leaves": ["flint.java.lang"],
+        "data": []
+      }
+    }
+  }
+}

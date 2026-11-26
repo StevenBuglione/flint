@@ -73,6 +73,7 @@ Every JDK module must satisfy all eight rules.
 2. **Separate DUB packages per area:** `flint:java` (lang and the core util interfaces), `flint:java-collections`, `flint:java-util` (UUID, Base64, HexFormat and other small java.util value types that are not collections), `flint:java-concurrent`, `flint:java-time`, `flint:java-text`, `flint:java-math`, `flint:java-regex`, `flint:java-io`, `flint:java-net`, `flint:java-security`.
    - A module depends only on the packages it uses.
    - Dependencies run one way: `flint:java` sits at the bottom, and nothing in it imports another `flint:java-*` package.
+   - `flint:java-util` owns the `flint:conc` dependency for UUID entropy. Import its utility leaves directly so `flint:java` can remain below them.
 3. **Erased engine, thin typed facade** [B-1]:
    - generic collections are one non-template engine per shape, driven by a small descriptor (size, hash, equals, copy);
    - `HashMap!(K, V)` is a facade of a few lines;
