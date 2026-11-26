@@ -5,6 +5,7 @@ import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsExcept
     NullPointerException, NumberFormatException;
 import flint.java.math.internal.limbs : addLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
     signedLength, significantBytes, significantLimbs, storeSignedBytes, subtractLimbs;
+import flint.java.math.internal.products : multiplyLimbs;
 
 @safe:
 
@@ -98,6 +99,23 @@ class BigInteger : Comparable!BigInteger
         if (other is null)
             throw new NullPointerException();
         return combine(other.magnitude, -other.sign);
+    }
+
+    /// Return the exact product.
+    BigInteger multiply(BigInteger other)
+    {
+        if (other is null)
+            throw new NullPointerException();
+        if (!sign)
+            return this;
+        if (!other.sign)
+            return other;
+        const size_t length = magnitude.length + other.magnitude.length;
+        if (length > maxLimbs + 1)
+            throw new ArithmeticException("BigInteger exceeds supported range");
+        auto product = new uint[length];
+        multiplyLimbs(product, magnitude, other.magnitude);
+        return new BigInteger(product, sign * other.sign);
     }
 
     private BigInteger combine(const(uint)[] other, int otherSign)

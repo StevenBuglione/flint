@@ -80,8 +80,32 @@
       "status": "deferred"
     },
     "org/apache/harmony/tests/java/math/BigIntegerMultiplyTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/java-math/tests/biginteger_multiply_tests.d",
+      "methods": {
+        "ported": [
+          "testCase1",
+          "testCase10",
+          "testCase2",
+          "testCase3",
+          "testCase4",
+          "testCase5",
+          "testCase6",
+          "testCase7",
+          "testCase8",
+          "testCase9",
+          "testIntbyInt1",
+          "testIntbyInt2"
+        ],
+        "skipped": {
+          "testPowException": "This slice implements multiplication. These cases exercise exponentiation (pow).",
+          "testPowNegativeNumToEvenExp": "This slice implements multiplication. These cases exercise exponentiation (pow).",
+          "testPowNegativeNumToOddExp": "This slice implements multiplication. These cases exercise exponentiation (pow).",
+          "testPowNegativeNumToZeroExp": "This slice implements multiplication. These cases exercise exponentiation (pow).",
+          "testPowPositiveNum": "This slice implements multiplication. These cases exercise exponentiation (pow).",
+          "testPowPositiveNumToZeroExp": "This slice implements multiplication. These cases exercise exponentiation (pow)."
+        }
+      },
+      "status": "partial"
     },
     "org/apache/harmony/tests/java/math/BigIntegerNotTest.java": {
       "phase": "2",
