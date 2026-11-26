@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,109 | 314 | 1,871 | 15,127 |
+| framework | openjdk@21.0.13 | 1,111 | 314 | 1,871 | 15,125 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -205,6 +205,8 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | Repo | Java | Flint | Note |
 | --- | --- | --- | --- |
 | framework | `io.micrometer.observation.ObservationPredicate` | `flint.micrometer.observation.ObservationPredicate` | Inherits the test method from Flint's Java BiPredicate. Its combinators are deferred with the Java provider. |
+| framework | `java.io.ByteArrayInputStream#close()` | `flint.java.io.ByteArrayInputStream.close` | Inherits the no-op close. Repeated calls leave the read position unchanged and subsequent reads still work. |
+| framework | `java.io.ByteArrayOutputStream#close()` | `flint.java.io.ByteArrayOutputStream.close` | Inherits the no-op close. Repeated calls preserve the buffered bytes and writes remain valid. |
 | framework | `java.lang.IllegalArgumentException#<init>(Throwable)` | `flint.java.lang.IllegalArgumentException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
 | framework | `java.lang.IllegalStateException#<init>(Throwable)` | `flint.java.lang.IllegalStateException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
 | framework | `java.lang.RuntimeException#<init>(Throwable)` | `flint.java.lang.RuntimeException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
@@ -10075,7 +10077,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 772 | 0 |
+| java.io | 770 | 0 |
 | java.lang | 1,993 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10965,10 +10967,13 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.ByteArrayInputStream#buf` | 2 | Subclasses do not have the protected caller-owned backing array. |
 | framework | `java.io.ByteArrayInputStream#count` | 2 | Subclasses do not have the protected end index. |
 | framework | `java.io.ByteArrayInputStream#mark` | 2 | Subclasses do not have the protected mark index. |
+| framework | `java.io.ByteArrayInputStream#mark(int)` | 2 | Missing operation that records the current position without taking the stream monitor. Java ignores the read-ahead limit. |
+| framework | `java.io.ByteArrayInputStream#markSupported()` | 2 | Missing query that always returns true for a byte-array source. |
 | framework | `java.io.ByteArrayInputStream#pos` | 2 | Subclasses do not have the protected current read index. |
 | framework | `java.io.ByteArrayInputStream#read()` | 2 | Sequential unsigned reads and EOF match Java. Synchronization on the stream monitor is pending. |
 | framework | `java.io.ByteArrayInputStream#readAllBytes()` | 2 | Java copies the remaining bytes under the stream monitor and advances to EOF without calling a subclass read override. The inherited Flint implementation calls the virtual bulk read without holding that monitor. |
 | framework | `java.io.ByteArrayInputStream#readNBytes(byte[],int,int)` | 2 | Missing byte-array override that converts EOF from the ranged read into a zero byte count. |
+| framework | `java.io.ByteArrayInputStream#reset()` | 2 | Missing synchronized restoration to the last mark. The initial mark is zero or the ranged constructor offset. |
 | framework | `java.io.ByteArrayInputStream#transferTo(OutputStream)` | 2 | Missing transfer of remaining bytes in bounded ranged writes. Java 21 holds the monitor, advances after each successful write, and returns zero at EOF before using the sink. Flint will call the sink outside the monitor so reactor fibers can suspend safely. |
 | framework | `java.io.ByteArrayOutputStream#<init>()` | 2 | Java initializes a protected 32-byte buffer and zero count. The existing facade starts with an empty private slice. |
 | framework | `java.io.ByteArrayOutputStream#<init>(int)` | 2 | The explicit initial capacity constructor is missing, including rejection of negative capacity. |
