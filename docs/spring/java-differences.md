@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,068 | 306 | 1,871 | 15,176 |
+| framework | openjdk@21.0.13 | 1,066 | 306 | 1,871 | 15,178 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10093,7 +10093,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,911 | 0 |
+| java.util | 1,913 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 285 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -11153,6 +11153,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ChronoUnit#isSupportedBy(Temporal)` | 2 | Requires the Temporal contract. |
 | framework | `java.time.temporal.ValueRange#checkValidIntValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
+| framework | `java.util.AbstractList#subList(int,int)` | 2 | Java returns a backed range and invalidates it after structural modification of the parent. The current implementation returns a copy and throws IndexOutOfBoundsException for a reversed range. |
 | framework | `java.util.Arrays#asList(T...)` | 2 | Java returns a fixed-size view backed by the supplied array. The current fixed-size copy loses writes in both directions. A null D array counts as empty under R26. |
 | framework | `java.util.Collections#emptyList()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptyMap()` | 2 | Java permits no-op clear and removal of a missing key on this empty factory result. The existing result throws UnsupportedOperationException. |
@@ -11162,6 +11163,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Collections#unmodifiableMap(Map)` | 2 | Java returns a live read-only view. The current snapshot misses changes to existing values and new entries in the backing map. |
 | framework | `java.util.Collections#unmodifiableSet(Set)` | 2 | Java returns a live read-only view. The current snapshot misses additions and removals in the backing set. |
 | framework | `java.util.IllegalFormatConversionException#<init>(char,Class)` | 2 | Flint currently accepts a string name. Java retains the argument Class and exposes it through getArgumentClass(). |
+| framework | `java.util.List#subList(int,int)` | 2 | Java returns a backed range and invalidates it after structural modification of the parent. The current implementation returns a copy and throws IndexOutOfBoundsException for a reversed range. |
 | framework | `java.util.Locale#forLanguageTag(String)` | 2 | The existing parser drops scripts, extensions and private-use subtags. Grandfathered tags such as en-GB-oed lose their Java canonical private-use data. |
 | framework | `java.util.Locale#getDefault()` | 2 | Flint reads LC_ALL and LANG per call. Java initializes its default from startup properties and exposes a setDefault path. |
 | framework | `java.util.Locale#toLanguageTag()` | 2 | The existing renderer cannot emit script or extension data. A legacy variant such as BAD is appended directly where Java moves it into x-lvariant. |
