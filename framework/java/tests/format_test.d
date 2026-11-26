@@ -233,3 +233,26 @@ unittest
     assert(String.format("[%3c]", 0x1f600) == "[ 😀]");
     assert(String.format("%c", 65u) == "A");
 }
+
+@("String.format rounds scientific mantissas using Java's shortest decimal digits")
+unittest
+{
+    assert(String.format("%e|%e|%.0e", 125.0, -0.0, 2.5) == "1.250000e+02|-0.000000e+00|3e+00");
+    assert(String.format("%.2e|%.2e|%.0e", 2.675, 9.999, 95.0) == "2.68e+00|1.00e+01|1e+02");
+    assert(String.format("%.2e|%#.0e", 0.00009995, 1.25) == "1.00e-04|1.e+00");
+    assert(String.format("%.2E|%.15e", 1.25e-125,
+            double.min_normal * double.epsilon) == "1.25E-125|4.900000000000000e-324");
+    assert(String.format("%.10e", 1.2345f) == "1.2345000505e+00");
+}
+
+@("String.format applies scientific width, signs and case")
+unittest
+{
+    import std.exception : collectException;
+
+    assert(String.format("[%+012.3e][%(012.2E]", 1.5, -1.25) == "[+001.500e+00][(001.25E+00)]");
+    assert(String.format("[% 012E][%+010E][%010E]", double.infinity, double.nan,
+            cast(Object) null) == "[    INFINITY][       NAN][      NULL]");
+    const wrongType = collectException!IllegalFormatConversionException(String.format("%E", 7));
+    assert(wrongType.getMessage() == "e != java.lang.Integer");
+}
