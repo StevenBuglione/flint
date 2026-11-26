@@ -2,7 +2,8 @@
 // (ConfigurationPropertyName.java, ConfigurationPropertySource.java, ConfigurationProperty.java,
 // ConfigurationPropertyState.java, InvalidConfigurationPropertyNameException.java,
 // MapConfigurationPropertySource.java, IterableConfigurationPropertySource.java,
-// DefaultPropertyMapper.java, SystemEnvironmentPropertyMapper.java).
+// DefaultPropertyMapper.java, SystemEnvironmentPropertyMapper.java,
+// MutuallyExclusiveConfigurationPropertiesException.java).
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: Java's CharSequence offsets become D strings, each element keeps its own
@@ -19,9 +20,107 @@
 module flint.boot.context.properties.source;
 
 import flint.core : NameMap;
-import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, RuntimeException;
+import flint.engine.aot.any : Any;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, NullPointerException, RuntimeException;
+import flint.java.util : Collection, LinkedHashMap, LinkedHashSet, Map, Set;
+import flint.java.util.function_ : Consumer;
 
 @safe:
+
+private alias PropertyNames = Set!string;
+private alias PropertyEntries = Map!(string, Any);
+
+/// More than one property in a mutually exclusive group has a configured value.
+class MutuallyExclusiveConfigurationPropertiesException : RuntimeException
+{
+    private PropertyNames configuredNames;
+    private PropertyNames mutuallyExclusiveNames;
+
+    /// Snapshot the distinct names in their encounter order.
+    this(Collection!string configuredNames, Collection!string mutuallyExclusiveNames)
+    {
+        this(asSet(configuredNames), asSet(mutuallyExclusiveNames));
+    }
+
+    private this(PropertyNames configuredNames, PropertyNames mutuallyExclusiveNames)
+    {
+        super(buildMessage(configuredNames, mutuallyExclusiveNames));
+        this.configuredNames = configuredNames;
+        this.mutuallyExclusiveNames = mutuallyExclusiveNames;
+    }
+
+    /// Names with configured values.
+    PropertyNames getConfiguredNames()
+    {
+        return configuredNames;
+    }
+
+    /// All names in the mutually exclusive group. The entry helper captures them when it raises the conflict.
+    PropertyNames getMutuallyExclusiveNames()
+    {
+        return mutuallyExclusiveNames;
+    }
+
+    /// Populate the entries and reject more than one non-null value.
+    static void throwIfMultipleNonNullValuesIn(Consumer!PropertyEntries entries)
+    {
+        if (entries is null)
+            throw new NullPointerException("entries");
+        throwIfMultipleNonNullValuesIn(&entries.accept);
+    }
+
+    /// Accept a D delegate for the entry consumer (R9).
+    static void throwIfMultipleNonNullValuesIn(scope void delegate(PropertyEntries) @safe entries)
+    {
+        if (entries is null)
+            throw new NullPointerException("entries");
+        auto properties = new LinkedHashMap!(string, Any);
+        entries(properties);
+
+        auto configured = new LinkedHashSet!string;
+        properties.forEach((string name, Any value) {
+            if (!value.isNull)
+                configured.add(name);
+        });
+        if (configured.size() > 1)
+            throw new MutuallyExclusiveConfigurationPropertiesException(configured, properties.keySet());
+    }
+
+    /// Reject a null literal without an overload ambiguity (R7).
+    static void throwIfMultipleNonNullValuesIn(typeof(null))
+    {
+        throw new NullPointerException("entries");
+    }
+
+    private static PropertyNames asSet(Collection!string names)
+    {
+        return names is null ? null : new LinkedHashSet!string(names);
+    }
+
+    private static string buildMessage(PropertyNames configured, PropertyNames exclusive)
+    {
+        if (configured is null || configured.size() < 2)
+            throw new IllegalArgumentException("'configuredNames' must contain 2 or more names");
+        if (exclusive is null || exclusive.size() < 2)
+            throw new IllegalArgumentException("'mutuallyExclusiveNames' must contain 2 or more names");
+        const configuredText = joinNames(configured);
+        const exclusiveText = joinNames(exclusive);
+        return "The configuration properties '" ~ exclusiveText ~ "' are mutually exclusive and '"
+            ~ configuredText ~ "' have been configured together";
+    }
+
+    private static string joinNames(PropertyNames names)
+    {
+        string result;
+        foreach (index, name; names.toArray())
+        {
+            if (index > 0)
+                result ~= ", ";
+            result ~= name is null ? "null" : name;
+        }
+        return result;
+    }
+}
 
 /// A configuration property name made of dot-separated elements, where `[...]` marks an indexed element
 /// (`server.ports[0]`, `my.map[key.with.dots]`).

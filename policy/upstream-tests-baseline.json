@@ -627,7 +627,6 @@
       "org/springframework/boot/context/properties/source/FilteredConfigurationPropertiesSourceTests.java",
       "org/springframework/boot/context/properties/source/FilteredIterableConfigurationPropertiesSourceTests.java",
       "org/springframework/boot/context/properties/source/MapConfigurationPropertySourceTests.java",
-      "org/springframework/boot/context/properties/source/MutuallyExclusiveConfigurationPropertiesExceptionTests.java",
       "org/springframework/boot/context/properties/source/PrefixedConfigurationPropertySourceTests.java",
       "org/springframework/boot/context/properties/source/PrefixedIterableConfigurationPropertySourceTests.java",
       "org/springframework/boot/context/properties/source/SoftReferenceConfigurationPropertyCacheTests.java",

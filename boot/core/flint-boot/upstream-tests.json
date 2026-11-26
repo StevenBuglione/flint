@@ -903,8 +903,22 @@
       "status": "deferred"
     },
     "org/springframework/boot/context/properties/source/MutuallyExclusiveConfigurationPropertiesExceptionTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/core/flint-boot/tests/mutually_exclusive_configuration_properties_test.d",
+      "methods": {
+        "ported": [
+          "createBuildsSensibleMessage",
+          "createWhenConfiguredNamesContainsOneElementThrowsException",
+          "createWhenConfiguredNamesIsNullThrowsException",
+          "createWhenMutuallyExclusiveNamesContainsOneElementThrowsException",
+          "createWhenMutuallyExclusiveNamesIsNullThrowsException",
+          "getConfiguredNamesReturnsConfiguredNames",
+          "getMutuallyExclusiveNamesReturnsMutuallyExclusiveNames",
+          "throwIfMultipleNonNullValuesInWhenEntriesHasAllNullsDoesNotThrowException",
+          "throwIfMultipleNonNullValuesInWhenEntriesHasSingleNonNullDoesNotThrowException",
+          "throwIfMultipleNonNullValuesInWhenEntriesHasTwoNonNullsThrowsException"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/boot/context/properties/source/PrefixedConfigurationPropertySourceTests.java": {
       "phase": "2",
