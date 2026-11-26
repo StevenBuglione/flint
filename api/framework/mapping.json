@@ -6129,7 +6129,7 @@
 "java.text.MessageFormat#<init>(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"Accepts a null pattern and unknown format types. The default locale also needs Locale.Category.FORMAT."},
 "java.text.MessageFormat#<init>(String,Locale)":{"status":"excluded","category":"deferred","phase":"2","reason":"Accepts unknown format types when applying the pattern."},
 "java.text.MessageFormat#format(String,Object...)":{"status":"excluded","category":"deferred","phase":"2","reason":"Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type."},
-"java.text.MessageFormat#getLocale()":{"d":"flint.java.text.MessageFormat.getLocale","status":"ported"},
+"java.text.MessageFormat#getLocale()":{"status":"excluded","category":"deferred","phase":"2","reason":"Java preserves an explicitly absent locale and returns null. Flint returns a plain Locale value and cannot represent absence (R5)."},
 "java.text.MessageFormat#toPattern()":{"status":"excluded","category":"deferred","phase":"2","reason":"Returns the input pattern text instead of serializing the parsed pattern in Java canonical form."},
 "java.text.ParseException":{"d":"flint.java.text.ParseException","status":"ported"},
 "java.text.ParseException#<init>(String,int)":{"d":"flint.java.text.ParseException.this","status":"ported"},

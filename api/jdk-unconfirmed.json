@@ -357,7 +357,6 @@
   "java.text.DateFormat#format(Date)",
   "java.text.DateFormat#parse(String,ParsePosition)",
   "java.text.MessageFormat",
-  "java.text.MessageFormat#getLocale()",
   "java.text.SimpleDateFormat",
   "java.text.SimpleDateFormat#<init>(String)",
   "java.text.SimpleDateFormat#<init>(String,Locale)",

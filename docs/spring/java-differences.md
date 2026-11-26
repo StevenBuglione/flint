@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,095 | 258 | 1,871 | 15,197 |
+| framework | openjdk@21.0.13 | 1,094 | 258 | 1,871 | 15,198 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10034,7 +10034,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
 | java.sql | 1,005 | 0 |
-| java.text | 527 | 0 |
+| java.text | 528 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
@@ -10937,6 +10937,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.MessageFormat#<init>(String)` | 2 | Accepts a null pattern and unknown format types. The default locale also needs Locale.Category.FORMAT. |
 | framework | `java.text.MessageFormat#<init>(String,Locale)` | 2 | Accepts unknown format types when applying the pattern. |
 | framework | `java.text.MessageFormat#format(String,Object...)` | 2 | Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type. |
+| framework | `java.text.MessageFormat#getLocale()` | 2 | Java preserves an explicitly absent locale and returns null. Flint returns a plain Locale value and cannot represent absence (R5). |
 | framework | `java.text.MessageFormat#toPattern()` | 2 | Returns the input pattern text instead of serializing the parsed pattern in Java canonical form. |
 | framework | `java.text.SimpleDateFormat#applyPattern(String)` | 2 | Reports only the last digit of an invalid ISO 8601 X repeat count of ten or more. Java reports the full count. |
 | framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Interprets the initial ParsePosition index and reports consumed and error indices in UTF-8 bytes. Java uses UTF-16 code units (R14). |
