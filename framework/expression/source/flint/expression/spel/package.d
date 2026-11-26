@@ -37,6 +37,7 @@ enum SpelMessage
     MISSING_LEADING_ZERO_FOR_NUMBER,
     REAL_CANNOT_BE_LONG,
     MAX_EXPRESSION_LENGTH_EXCEEDED = 1079,
+    MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED = 1087,
 }
 
 /// A parse exception with a SpEL diagnostic code.
@@ -101,7 +102,10 @@ private immutable DiagnosticText[] diagnosticTexts = [
     DiagnosticText(SpelMessage.NON_TERMINATING_QUOTED_STRING, "Cannot find terminating ' for string"),
     DiagnosticText(SpelMessage.MISSING_LEADING_ZERO_FOR_NUMBER,
             "A real number must be prefixed by zero, it cannot start with just '.'"),
-    DiagnosticText(SpelMessage.REAL_CANNOT_BE_LONG, "Real number cannot be suffixed with a long (L or l) suffix"),
+    DiagnosticText(SpelMessage.REAL_CANNOT_BE_LONG,
+            "Real number cannot be suffixed with a long (L or l) suffix"),
     DiagnosticText(SpelMessage.MAX_EXPRESSION_LENGTH_EXCEEDED,
             "SpEL expression is too long, exceeding the threshold of '", "' characters"),
+    DiagnosticText(SpelMessage.MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED,
+            "SpEL expression nesting depth exceeds the threshold of "),
 ];

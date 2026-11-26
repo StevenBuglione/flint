@@ -20,10 +20,13 @@
  */
 module flint.expression.spel.standard;
 
+import flint.arena : Result, Status;
 import flint.engine.aot.any : Any;
-import flint.expression : Expression, ExpressionParser;
+import flint.expression : EvaluationException, Expression, ExpressionParser;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
-import flint.expression.spel.standard.literal : parseLiteral, utf16Length;
+import flint.expression.spel.standard.arithmetic : ArithmeticExpression, parseArithmetic;
+import flint.expression.spel.standard.literal : utf16Length;
+import flint.java.lang : ArithmeticException;
 
 @safe:
 
@@ -41,20 +44,20 @@ class SpelExpressionParser : ExpressionParser
         enum maxLength = 10_000;
         if (expressionString.length > maxLength && utf16Length(expressionString, maxLength) > maxLength)
             throw new SpelEvaluationException(SpelMessage.MAX_EXPRESSION_LENGTH_EXCEEDED, "10000");
-        return new SpelExpression(expressionString, parseLiteral(expressionString));
+        return new SpelExpression(expressionString, parseArithmetic(expressionString));
     }
 }
 
-/// The source and value of a parsed SpEL expression.
+/// A parsed SpEL expression that can be evaluated repeatedly.
 class SpelExpression : Expression
 {
     private string expressionString;
-    private Any value;
+    private ArithmeticExpression expression;
 
-    package(flint.expression) this(string expressionString, Any value)
+    package(flint.expression.spel.standard) this(string expressionString, ArithmeticExpression expression)
     {
         this.expressionString = expressionString;
-        this.value = value;
+        this.expression = expression;
     }
 
     override string getExpressionString() const pure nothrow @nogc
@@ -62,8 +65,19 @@ class SpelExpression : Expression
         return expressionString;
     }
 
-    override Any getValue() pure nothrow @nogc
+    /// Evaluate the parsed expression. Throws `ArithmeticException` on integral division or remainder by zero.
+    override Any getValue()
     {
-        return value;
+        auto result = evaluate();
+        if (result.ok())
+            return result.value;
+        if (result.error.code == Status.invalidArgument)
+            throw new ArithmeticException(result.error.message);
+        throw new EvaluationException(result.error.message);
+    }
+
+    package(flint.expression) Result!Any evaluate() pure nothrow @nogc
+    {
+        return expression.evaluate();
     }
 }

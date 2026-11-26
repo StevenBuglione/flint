@@ -23,23 +23,9 @@ module flint.expression.spel.standard.literal;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : ParsedLong, decodeUtf8, tryParseDouble, tryParseFloat, tryParseLong;
 import flint.expression.spel : SpelMessage, SpelParseException;
-import flint.java.lang : IllegalArgumentException;
 import std.ascii : isAlpha, isDigit, isHexDigit, toLower;
 
 @safe:
-
-package(flint.expression.spel.standard) Any parseLiteral(string expression)
-{
-    LiteralParser parser = LiteralParser(expression);
-    parser.skipWhitespace();
-    if (parser.position == expression.length)
-        throw new IllegalArgumentException("'expressionString' must not be null or blank");
-    auto value = parser.readLiteral();
-    parser.skipWhitespace();
-    if (parser.position != expression.length)
-        throw parser.errorAt(parser.position, SpelMessage.MORE_INPUT, expression[parser.position .. $]);
-    return value;
-}
 
 package(flint.expression) size_t utf16Length(scope const(char)[] text, size_t stopAfter = size_t.max) pure nothrow @nogc
 {
@@ -49,7 +35,7 @@ package(flint.expression) size_t utf16Length(scope const(char)[] text, size_t st
     return length;
 }
 
-private struct LiteralParser
+package(flint.expression.spel.standard) struct LiteralParser
 {
     string text;
     size_t position;

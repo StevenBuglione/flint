@@ -16,7 +16,7 @@
  * Ported from spring-framework v7.1.0, spring-expression/src/test/java/org/springframework/expression/spel/LiteralTests.java
  * Modified by the Flint authors.
  */
-module literal_tests;
+module flint.expression.literal_tests;
 
 import flint.expression.spel : SpelMessage, SpelParseException;
 import flint.expression.spel.standard : SpelExpressionParser;
@@ -135,8 +135,9 @@ private void evaluate(T)(string expression, T expected)
 unittest
 {
     auto parsed = (new SpelExpressionParser).parseRaw("  'ひ'  ");
-    auto read = () nothrow @nogc => parsed.getValue();
-    assert(read().get!string == "ひ");
+    auto read = () nothrow @nogc => parsed.evaluate();
+    auto value = read();
+    assert(value.ok() && value.value.get!string == "ひ");
     assert(!(new SpelExpressionParser).parseRaw("''").getValue().isNull());
 }
 

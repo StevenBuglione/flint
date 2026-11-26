@@ -1807,7 +1807,6 @@
       "org/springframework/expression/spel/MapTests.java",
       "org/springframework/expression/spel/MethodInvocationTests.java",
       "org/springframework/expression/spel/OperatorOverloaderTests.java",
-      "org/springframework/expression/spel/OperatorTests.java",
       "org/springframework/expression/spel/OptionalNullSafetyTests.java",
       "org/springframework/expression/spel/ParserErrorMessagesTests.java",
       "org/springframework/expression/spel/ParsingTests.java",

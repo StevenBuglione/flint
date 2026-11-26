@@ -12907,7 +12907,7 @@
 "org.springframework.expression.spel.SpelMessage#MAX_BIG_POWER_RESULT_EXCEEDED":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.expression.spel.SpelMessage#MAX_CONCATENATED_STRING_LENGTH_EXCEEDED":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.expression.spel.SpelMessage#MAX_EXPRESSION_LENGTH_EXCEEDED":{"status":"ported","d":"flint.expression.spel.SpelMessage.MAX_EXPRESSION_LENGTH_EXCEEDED"},
-"org.springframework.expression.spel.SpelMessage#MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.expression.spel.SpelMessage#MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED":{"status":"ported","d":"flint.expression.spel.SpelMessage.MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED"},
 "org.springframework.expression.spel.SpelMessage#MAX_OPERATIONS_EXCEEDED":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.expression.spel.SpelMessage#MAX_REGEX_LENGTH_EXCEEDED":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.expression.spel.SpelMessage#MAX_REPEATED_TEXT_SIZE_EXCEEDED":{"status":"excluded","category":"deferred","phase":"2"},
