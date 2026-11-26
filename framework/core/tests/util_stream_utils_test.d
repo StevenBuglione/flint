@@ -18,7 +18,7 @@
  */
 module flint.util.stream_utils_test;
 
-import flint.java.io : ByteArrayInputStream, ByteArrayOutputStream, IOException, InputStream;
+import flint.java.io : ByteArrayInputStream, ByteArrayOutputStream, IOException, InputStream, OutputStream;
 import flint.util : StreamUtils;
 import flint.util.test_support : expectThrows;
 
@@ -67,11 +67,31 @@ private class TestOutput : ByteArrayOutputStream
     int closes;
     int flushes;
     int bulkWrites;
+    private bool inBulk;
 
+    // One logical bulk write counts once, whichever form the caller used and whichever way OutputStream's defaults
+    // delegate between the whole-array and ranged forms (Java's go whole -> ranged).
     override void write(scope const(ubyte)[] bytes)
     {
+        if (inBulk)
+            return super.write(bytes);
         ++bulkWrites;
+        inBulk = true;
+        scope (exit)
+            inBulk = false;
         super.write(bytes);
+    }
+
+    override void write(scope const(ubyte)[] bytes, int offset, int length)
+    {
+        // OutputStream's ranged form by name: an override of one write overload hides the others in subclasses.
+        if (inBulk)
+            return OutputStream.write(bytes, offset, length);
+        ++bulkWrites;
+        inBulk = true;
+        scope (exit)
+            inBulk = false;
+        OutputStream.write(bytes, offset, length);
     }
 
     override void close()
