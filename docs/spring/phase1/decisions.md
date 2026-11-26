@@ -1342,7 +1342,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - Spring's full-match semantics (`matcher.matches()`) are kept, with pinned full-match versus `find()` cases.
   - The pattern is compiled once during configuration, and the matching path is allocation-asserted.
   - Any cap change follows the normal rules with measured numbers.
-- 2026-11-26 14:50Z, coordinator: **the opt-in java-time zone module pins IANA tzdata 2026f** (sol-jdk-time-text; recommended by api-coverage). It replaces 2026e, the pin used for the private seam, because the Java 21.0.13.1 oracle ships 2026f. Against 2026f, all 350,826 wall-clock and local-resolution reference rows match. The 312 mismatches against 2026e were genuine data changes in 23 Cuba and Brazil zone files.
-  - The archive is checked against IANA's `.asc` signature and its SHA-256 (`01b4a91cec5167ed48c11e8ab78f2048cead78ce94b0cafcad0ae8c5a3044d3d`).
+- 2026-11-26 14:50Z, coordinator (corrected 14:58Z): **the opt-in java-time zone module keeps IANA tzdata 2026e** (sol-jdk-time-text). At 14:50Z I approved 2026f to match the Ubuntu Java 21.0.13.1 on venus. The project's pinned oracle, Temurin 21.0.13+9 in `api/upstreams.json`, bundles 2026e and has the same 604 IDs. It matches IANA 2026e on all 350,826 wall-clock and local-resolution rows, so the data pin, the OpenJDK source tag and the oracle agree. Moving to 2026f goes with the upstream Java pin, as its own reviewed change.
+  - The archive is checked against IANA's `.asc` signature and its SHA-256.
   - The licence-matrix row (public domain) and the `api:false` upstream entry land with the package.
   - The 13 Java SystemV IDs and the alias differences are listed explicitly.
