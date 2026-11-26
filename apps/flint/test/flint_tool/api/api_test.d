@@ -710,6 +710,40 @@ unittest
     expect(statesLicence("Licensed under the Apache License, Version 2.0 (the \"License\")\n", apache)).toEqual(true);
 }
 
+@("an OpenJDK port (gpl-ce-module) needs the Classpath Exception and a GPL-2.0-with-CE package")
+unittest
+{
+    import std.array : replicate;
+    import flint_tool.api.headers : LicenceEntry, checkHeader, statesLicence;
+
+    Upstream[] upstreams;
+    string error;
+    expect(parseUpstreams(`{"schema":"flint.api-upstreams/1","upstreams":[{"project":"openjdk","version":"21.0.13",`
+            ~ `"url":"u","sha256":"` ~ "a".replicate(64) ~ `","format":"tar.gz"}]}`, upstreams, error)).toEqual(true);
+    const jdk = LicenceEntry("openjdk", "GPL-2.0-only WITH Classpath-exception-2.0", "gpl-ce-module", "21.0.13");
+    enum notice = " * Copyright (c) 1994, 2023, Oracle and/or its affiliates. All rights reserved.\n"
+        ~ " * This code is free software; you can redistribute it and/or modify it\n"
+        ~ " * under the terms of the GNU General Public License version 2 only, as\n"
+        ~ " * published by the Free Software Foundation.";
+    enum designates = "  Oracle designates this\n * particular file as subject to the \"Classpath\" exception";
+    enum classpath = designates ~ " as provided\n * by Oracle in the LICENSE file that accompanied this code.\n";
+    enum tail = " *\n * Ported from openjdk 21.0.13: src/java.base/share/classes/java/util/HashMap.java\n"
+        ~ " * Modified by the Flint authors.\n */\nmodule flint.java.util.hashmap;\n";
+    enum ported = "/*\n" ~ notice ~ classpath ~ tail;
+    enum plainGpl = "/*\n" ~ notice ~ "\n" ~ tail;
+    enum ce = "GPL-2.0-only WITH Classpath-exception-2.0";
+    expect(checkHeader("f.d", ported, upstreams, [jdk], ce).length).toEqual(0);
+    expect(statesLicence(plainGpl, jdk)).toEqual(false);
+    expect(checkHeader("f.d", plainGpl, upstreams, [jdk], ce).length).toEqual(1);
+    const mixed = checkHeader("f.d", ported, upstreams, [jdk], "Apache-2.0");
+    expect(mixed.length).toEqual(1);
+    expect(mixed[0].message).toEqual(
+            "openjdk is ported only into `" ~ ce
+            ~ "` packages (the -openjdk ones), but the package declares `Apache-2.0`");
+    enum spdx = " * SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0\n";
+    expect(statesLicence(spdx, jdk)).toEqual(true);
+}
+
 @("upstream header forms: a project named in a URL, the Apache licence by name, an upstream's own header line")
 unittest
 {

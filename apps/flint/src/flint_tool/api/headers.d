@@ -14,14 +14,18 @@
 /// The checks:
 /// - The marker line must name a pin of `api/upstreams.json`, by its project (or `owner/repo`, or Maven artifact
 ///   id), and the pinned version.
-/// - The pin's licence entry (`matrix`) must allow porting (`port-source`, `port-source-bsd-option` or
-///   `epl-module`), at the same tag.
+/// - The pin's licence entry (`matrix`) must allow porting (`port-source`, `port-source-bsd-option`, `epl-module`
+///   or `gpl-ce-module`), at the same tag.
 /// - The header must carry the entry's copyright line, or a `Copyright` line when the entry names none.
 /// - It must carry the licence line for the licence and use (Apache License 2.0, MIT, the BSD 3-Clause option, or
 ///   the Eclipse Public License 2.0), the licence's own standard wording (the MIT grant; the Eclipse Public License
 ///   by name or `EPL-2.0`; the BSD 3-Clause option), or an `SPDX-License-Identifier:` line naming that licence.
 /// - It must say "Modified by the Flint authors", as Apache-2.0 §4(b) requires.
 /// - An `epl-module` port must live in a package whose `dub.sdl` declares `license "EPL-2.0"`.
+/// - A `gpl-ce-module` port (OpenJDK) must state both GPL-2.0 and the Classpath Exception, so a file under plain GPL
+///   (many jtreg tests) is refused. It must live in a package whose `dub.sdl` declares
+///   `license "GPL-2.0-only WITH Classpath-exception-2.0"` (the `-openjdk` packages), never mixed with Apache-derived
+///   files.
 module flint_tool.api.headers;
 
 import flint_tool.api.upstreams : Upstream;
@@ -153,6 +157,8 @@ string licenceLine(const ref LicenceEntry entry)
         return "Licensed under the BSD 3-Clause License";
     case "epl-module":
         return "Licensed under the Eclipse Public License 2.0";
+    case "gpl-ce-module":
+        return "Licensed under the GNU General Public License, version 2, with the Classpath Exception";
     default:
         return null;
     }
@@ -329,6 +335,9 @@ private string[] contentProblems(string header, const ref LicenceEntry entry, st
     if (entry.use == "epl-module" && packageLicence != "EPL-2.0")
         problems ~= entry.name ~ " is ported only into EPL-2.0 packages, but the package declares `" ~ (
                 packageLicence.length ? packageLicence : "no licence") ~ "`";
+    if (entry.use == "gpl-ce-module" && packageLicence != gplClasspath)
+        problems ~= entry.name ~ " is ported only into `" ~ gplClasspath ~ "` packages (the -openjdk ones), but the "
+            ~ "package declares `" ~ (packageLicence.length ? packageLicence : "no licence") ~ "`";
     return problems;
 }
 
@@ -340,6 +349,8 @@ bool statesLicence(string header, const ref LicenceEntry entry)
     import std.string : indexOf;
 
     const text = collapseSpaces(header);
+    if (entry.use == "gpl-ce-module")
+        return statesGplClasspath(text);
     string[] evidence = [licenceLine(entry)];
     switch (spdxOf(entry))
     {
@@ -371,6 +382,25 @@ bool statesLicence(string header, const ref LicenceEntry entry)
     return spdxNames(header, spdxOf(entry));
 }
 
+/// The SPDX expression of OpenJDK's licence, which a `gpl-ce-module` package's `dub.sdl` declares.
+enum gplClasspath = "GPL-2.0-only WITH Classpath-exception-2.0";
+
+/// Whether the (space-collapsed) header states GPL-2.0 with the Classpath Exception: OpenJDK's own notice ("GNU General
+/// Public License version 2 only" and the "Classpath" exception), the licence line, or the SPDX expression. Plain GPL
+/// without the exception is not enough.
+private bool statesGplClasspath(string text)
+{
+    import std.string : indexOf;
+
+    enum line = "Licensed under the GNU General Public License, version 2, with the Classpath Exception";
+    if (text.indexOf(gplClasspath) >= 0 || text.indexOf(line) >= 0)
+        return true;
+    const gpl2 = text.indexOf("GNU General Public License version 2") >= 0 || text.indexOf("GPL-2.0") >= 0;
+    const classpath = text.indexOf("\"Classpath\" exception") >= 0
+        || text.indexOf("Classpath Exception") >= 0 || text.indexOf("Classpath-exception-2.0") >= 0;
+    return gpl2 && classpath;
+}
+
 private string collapseSpaces(string text)
 {
     string collapsed;
@@ -397,6 +427,8 @@ string spdxOf(const ref LicenceEntry entry)
         return "BSD-3-Clause";
     if (entry.use == "epl-module")
         return "EPL-2.0";
+    if (entry.use == "gpl-ce-module")
+        return gplClasspath;
     return entry.licence;
 }
 
