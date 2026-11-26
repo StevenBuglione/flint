@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,072 | 310 | 1,871 | 15,168 |
+| framework | openjdk@21.0.13 | 1,070 | 309 | 1,871 | 15,171 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1932,7 +1932,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `java.io.ByteArrayInputStream#<init>(byte[])` | `flint.java.io.ByteArrayInputStream.this` | [R26](api-mapping.md#r26-null-arrays) | Uses the caller's backing array as an unsigned byte slice. A null slice counts as an empty array under R26. |
-| `java.io.ByteArrayOutputStream#toByteArray()` | `flint.java.io.ByteArrayOutputStream.toByteArray` | [R26](api-mapping.md#r26-null-arrays) | Returns an independent unsigned byte slice. An empty result uses the plain D array representation. |
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D exception hierarchy for Java's checked I/O exception. |
 | `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
 | `java.io.UnsupportedEncodingException` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
@@ -10070,7 +10069,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 766 | 0 |
+| java.io | 769 | 0 |
 | java.lang | 1,993 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10956,6 +10955,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `java.io.ByteArrayInputStream#available()` | 2 | Sequential byte counts match Java. Synchronization on the stream monitor is pending. |
 | framework | `java.io.ByteArrayInputStream#read()` | 2 | Sequential unsigned reads and EOF match Java. Synchronization on the stream monitor is pending. |
+| framework | `java.io.ByteArrayOutputStream#reset()` | 2 | Java resets the buffer under the stream monitor. The existing method clears the slice without taking that monitor. |
+| framework | `java.io.ByteArrayOutputStream#size()` | 2 | Java reads the count under the stream monitor. The existing method reads the slice length without taking that monitor. |
+| framework | `java.io.ByteArrayOutputStream#toByteArray()` | 2 | Java copies the buffer under the stream monitor. The existing detached unsigned byte slice is copied without taking that monitor. An empty result uses a plain D array under R26. |
 | framework | `java.io.ByteArrayOutputStream#toString()` | 2 | The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input. |
 | framework | `java.io.File` | 2 | The existing pathname facade lacks Java pathname value equality, hashing and the Comparable contract. |
 | framework | `java.io.File#<init>(File,String)` | 2 | The overload taking a File parent is pending. |
