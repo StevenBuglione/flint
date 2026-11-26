@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,322 | 391 | 0 | 1,871 | 14,837 |
+| framework | openjdk@21.0.13 | 1,326 | 391 | 0 | 1,871 | 14,833 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -10723,7 +10723,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
 | java.sql | 1,005 | 0 |
-| java.text | 535 | 0 |
+| java.text | 531 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
@@ -11831,11 +11831,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat#format(Date)` | 2 | With SimpleDateFormat, a null Date or an absent Calendar can terminate the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | The date append overload needs canonical java.lang.StringBuffer and a FieldPosition for UTF-16 offsets. |
 | framework | `java.text.DateFormat#format(Object,StringBuffer,FieldPosition)` | 2 | Generic date formatting needs canonical java.lang.StringBuffer and Format dispatch to the date append overload. |
-| framework | `java.text.DateFormat#getTimeZone()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
-| framework | `java.text.DateFormat#isLenient()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#parse(String)` | 2 | SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14). The convenience overload accepts a returned date even when the parser consumes no input. Java rejects a parse that leaves the start position unchanged. |
-| framework | `java.text.DateFormat#setLenient(boolean)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
-| framework | `java.text.DateFormat#setTimeZone(TimeZone)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DecimalFormat` | 2 | The Java public formatter class and mutable pattern configuration are pending. |
 | framework | `java.text.DecimalFormat#<init>(String,DecimalFormatSymbols)` | 2 | Requires the public formatter and symbols classes. Java copies the supplied symbol settings on construction. |
 | framework | `java.text.DecimalFormat#applyPattern(String)` | 2 | Applying a pattern requires the public DecimalFormat. Java changes fractional precision and the multiplier on the same formatter instance. |

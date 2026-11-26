@@ -217,3 +217,27 @@ unittest
         assert(e.getMessage() == `Unparseable date: "2010/01/01"` && e.getErrorOffset() == 4, e.msg);
     assert(format.toPattern() == "yyyy-MM-dd" && format.format(format.parse("2010-01-01x")) == "2010-01-01");
 }
+
+@("DateFormat: Calendar delegates throw on a missing calendar and accept a null zone")
+unittest
+{
+    import flint.java.lang : NullPointerException;
+    import std.exception : assertThrown;
+
+    auto format = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
+    auto calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+    calendar.setLenient(false);
+    format.setCalendar(calendar);
+    assert(!format.isLenient() && format.getTimeZone() is calendar.getTimeZone());
+    format.setLenient(true);
+    assert(calendar.isLenient());
+    format.setTimeZone(null);
+    assert(calendar.getTimeZone() is null && format.getTimeZone() is null);
+
+    format.setCalendar(null);
+    assertThrown!NullPointerException(format.getTimeZone());
+    assertThrown!NullPointerException(format.setTimeZone(null));
+    assertThrown!NullPointerException(format.isLenient());
+    assertThrown!NullPointerException(format.setLenient(true));
+    assert(format.getCalendar() is null);
+}
