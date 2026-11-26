@@ -1,9 +1,6 @@
 {
  "note": "Rows tools/jdk_coverage.py --classify added from the D code that exists (name, arity, parameter kinds). The owning lane confirms each (signature and behaviour) and removes its id, or reclassifies it.",
  "ids": [
-  "java.io.File",
-  "java.io.FileInputStream",
-  "java.io.FileInputStream#<init>(File)",
   "java.io.InputStream",
   "java.io.InputStream#<init>()",
   "java.io.InputStream#close()",

@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,076 | 306 | 1,871 | 15,168 |
+| framework | openjdk@21.0.13 | 1,073 | 306 | 1,871 | 15,171 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10066,7 +10066,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 763 | 0 |
+| java.io | 766 | 0 |
 | java.lang | 2,002 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10953,6 +10953,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.ByteArrayInputStream#available()` | 2 | Sequential byte counts match Java. Synchronization on the stream monitor is pending. |
 | framework | `java.io.ByteArrayInputStream#read()` | 2 | Sequential unsigned reads and EOF match Java. Synchronization on the stream monitor is pending. |
 | framework | `java.io.ByteArrayOutputStream#toString()` | 2 | The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input. |
+| framework | `java.io.File` | 2 | The existing pathname facade lacks Java pathname value equality, hashing and the Comparable contract. |
 | framework | `java.io.File#<init>(File,String)` | 2 | The overload taking a File parent is pending. |
 | framework | `java.io.File#<init>(String)` | 2 | Java normalizes the platform pathname. The existing constructor stores the supplied spelling. R26 covers null pathname strings. |
 | framework | `java.io.File#<init>(String,String)` | 2 | Java distinguishes a missing parent from an empty parent, which uses the platform default. Parent and child normalization and resolution are also pending. |
@@ -10968,6 +10969,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.File#lastModified()` | 2 | Java reports the modification time in milliseconds. The current method truncates to whole seconds before converting to milliseconds. |
 | framework | `java.io.File#length()` | 2 | The current method returns zero for all non-regular paths. The pinned Linux Java implementation returns the native size for a directory. |
 | framework | `java.io.File#toString()` | 2 | Java calls the virtual getPath method. The existing implementation returns the stored pathname directly. |
+| framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
+| framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
 | framework | `java.io.IOException#<init>(Throwable)` | 2 | The current constructor accepts a message and an optional cause. Java's cause-only constructor is pending. |
 | framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java distinguishes absent detail from an empty detail message. The current raw string constructor and inherited accessor need the R5 nullable message contract. |
 | framework | `java.io.OutputStream` | 2 | The abstract sink exists. The Java type also implements the Closeable and Flushable interfaces, which are pending. |
