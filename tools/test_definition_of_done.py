@@ -511,6 +511,25 @@ class UpstreamTests(unittest.TestCase):
         record['classes']['java/sql/Timestamp/TimestampTests.java']['covered_by'] = 'framework/jdbc/tests/timestamp_test.d'
         self.assertEqual(dod.check_upstream_tests(jdk, record, self.root), [])
 
+    def test_an_openjdk_port_owns_the_java_packages_its_d_modules_name(self):
+        policy = self.root / 'policy' / 'framework.json'
+        policy.parent.mkdir(parents=True, exist_ok=True)
+        saved = policy.read_text() if policy.is_file() else None
+        self.addCleanup(lambda: policy.write_text(saved) if saved is not None else policy.unlink())
+        policy.write_text(json.dumps({'modules': {
+            'java': {'directory': 'framework/java', 'module': 'flint.java', 'also': ['flint.javax'],
+                     'upstream': 'openjdk@21.0.13'},
+            'java-util': {'directory': 'framework/java-util', 'module': 'flint.java.util.uuid',
+                          'also': ['flint.java.util'], 'upstream': 'openjdk@21.0.13'},
+            'web': {'directory': 'framework/web', 'module': 'flint.web', 'upstream': 'spring-framework@v7.1.0'}}}))
+        dod._OWNERSHIP.pop(self.root, None)
+        self.addCleanup(dod._OWNERSHIP.pop, self.root, None)
+        table = dod.ownership(self.root)
+        self.assertEqual(dod.owner('java/lang/String/Chars', table), 'java')         # no mapped element needed
+        self.assertEqual(dod.owner('java/util/HashMap/KeySetRemove', table), 'java-util')  # longest prefix wins
+        self.assertEqual(dod.owner('javax/net/ssl/X', table), 'java')
+        self.assertEqual(dod.owner('org/springframework/web/X', table), 'web')
+
     def test_an_upstream_without_pinned_tests_and_no_record_skips(self):
         result = dod.upstream_tests(module(upstream='jackson-core@3.1.8'), root=self.root, caches=[self.cache])
         self.assertEqual(result.status, 'skip')

@@ -220,6 +220,14 @@ def ownership(root=ROOT):
                 package = '.'.join(part[:-1] if part.endswith('_') and part[:-1] in D_KEYWORDS else part
                                    for part in segments)
                 table.setdefault('org.springframework.' + package, name)
+            elif (d == 'flint.java' or d.startswith(('flint.java.', 'flint.javax'))) and \
+                    str(upstream).startswith('openjdk@'):
+                # An OpenJDK port owns the Java packages its D modules name (R1 inverted: flint.java.util ->
+                # java.util), so a package with no mapped element yet (java.lang, java.io) still has an owner and
+                # its jtreg tests are inventoried. The longest prefix wins, so sibling leaves keep their packages.
+                segments = d.removeprefix('flint.').split('.')
+                table.setdefault('.'.join(part[:-1] if part.endswith('_') and part[:-1] in D_KEYWORDS else part
+                                          for part in segments), name)
     for mapping in sorted((root / 'api').glob('*/mapping.json')):
         for element, entry in json.loads(mapping.read_text()).get('elements', {}).items():
             d = entry.get('d')
