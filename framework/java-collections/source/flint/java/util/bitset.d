@@ -193,7 +193,7 @@ class BitSet
     /// Returns the live bits as an owned little-endian byte array without trailing zero bytes.
     byte[] toByteArray() const pure nothrow
     {
-        auto copy = copyWords(words[0 .. wordsInUse]);
+        auto copy = copyLiveWords();
         if (copy.length == 0)
             return null;
 
@@ -211,7 +211,12 @@ class BitSet
     /// Returns the set bits as an owned array of signed words, lowest indices first.
     long[] toLongArray() const pure nothrow
     {
-        return cast(long[]) copyWords(words[0 .. wordsInUse]);
+        return cast(long[]) copyLiveWords();
+    }
+
+    pragma(inline, false) private ulong[] copyLiveWords() const pure nothrow
+    {
+        return copyWords(words[0 .. wordsInUse]);
     }
 
     pragma(inline, false) private static ulong[] copyWords(scope const(ulong)[] source) pure nothrow
