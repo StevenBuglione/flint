@@ -1,0 +1,12 @@
+{
+  "schema": "flint.jdk-closure/1",
+  "probes": {
+    "flint.java.time.period": {
+      "parse-render": {
+        "source": "closure/period.d",
+        "leaves": ["flint.java.lang", "flint.java.time", "flint.java.time.format"],
+        "data": []
+      }
+    }
+  }
+}
