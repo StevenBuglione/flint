@@ -86,6 +86,18 @@ private bool verifyDistribution(MockClock clock)
     return maximum.poll() == 0.0 && verifyHistogramValues();
 }
 
+private bool verifySample(Timer timer, MockClock clock)
+{
+    auto sample = Timer.start(clock);
+    clock.add(250, TimeUnit.MILLISECONDS);
+    const elapsed = sample.stop(timer);
+    if (elapsed != 250_000_000 || timer.count() != 1 || timer.totalTime(TimeUnit.SECONDS) != 0.25
+            || timer.max(TimeUnit.SECONDS) != 0.25)
+        return false;
+    auto snapshot = timer.takeSnapshot();
+    return snapshot.count() == 1 && snapshot.total() == elapsed && snapshot.max() == elapsed;
+}
+
 void main(string[] args)
 {
     string region = args.length > 1 ? args[1] : "west";
@@ -95,10 +107,7 @@ void main(string[] args)
         return;
     auto timer = Timer.builder("request.duration").tags(tags).register(registry);
     auto clock = new MockClock;
-    auto sample = Timer.start(clock);
-    clock.add(250, TimeUnit.MILLISECONDS);
-    if (sample.stop(timer) != 250_000_000 || timer.count() != 1
-            || timer.totalTime(TimeUnit.SECONDS) != 0.25 || timer.max(TimeUnit.SECONDS) != 0.25)
+    if (!verifySample(timer, clock))
         return;
     auto action = new Region(region);
     RegionCallable callable = action;

@@ -156,6 +156,8 @@ The largest costs are per-request allocation and the collector pauses it causes.
 
 | R-129 | **Share one no-op histogram when bucket and percentile collection is disabled.** Its recording methods do no work. A requested snapshot uses the count, total and maximum supplied by the meter. | On venus, DMD and LDC verified zero GC bytes for singleton lookup and recording. The parent probe at `448e195e` measured 122,976 incremental loadable bytes and 3,016 DMD template instances. Exercising the no-op histogram measured 124,376 bytes and 3,021 instances against caps of 131,072 and 3,251. | `framework/micrometer-core/tests/noop_histogram_test.d` and the Micrometer module probe. |
 
+| R-132 | **Capture timer snapshots on demand.** Read the cumulative count, total nanoseconds and current maximum into one snapshot. Recording continues to update the existing counters and window without allocating a snapshot. | On venus, the parent probe at `3e77b5e1` measured 124,376 incremental loadable bytes and 3,021 DMD template instances. The probe exercising a timer snapshot measured 125,184 bytes and 3,021 instances within caps of 131,072 and 3,251. DMD and LDC verified that an earlier snapshot retains its maximum after that maximum expires. | `framework/micrometer-core/source/flint/micrometer/core/instrument/simple.d`, `framework/micrometer-core/tests/timer_runnable_test.d` and the Micrometer module probe. |
+
 ## 2. Binary size
 
 | ID | Rule | Evidence | Enforced by |

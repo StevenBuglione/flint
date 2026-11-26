@@ -655,12 +655,12 @@
         "ported": [
           "recordCallable",
           "recordRunnable",
-          "recordSupplier"
+          "recordSupplier",
+          "returnsEmptySnapshot"
         ],
         "skipped": {
           "returnsBaseTimeUnit": "Deferred as a direct test of the public NoopTimer type.",
           "returnsCountAsZero": "Deferred as a direct test of the public NoopTimer type.",
-          "returnsEmptySnapshot": "Deferred with histogram snapshots.",
           "returnsId": "Deferred as a direct test of the public NoopTimer type.",
           "returnsMaxAsZero": "Deferred as a direct test of the public NoopTimer type.",
           "returnsTotalTimeAsZero": "Deferred as a direct test of the public NoopTimer type."

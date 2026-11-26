@@ -25,6 +25,7 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Clock.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/MockClock.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Timer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/HistogramSupport.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument;
@@ -42,6 +43,7 @@ import flint.java.util.concurrent.callable : Callable;
 import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
 import flint.java.util.function_ : BooleanSupplier, Consumer, DoubleSupplier, Supplier;
 import flint.java.util.stream : Stream;
+import flint.micrometer.core.instrument.distribution.snapshots : HistogramSnapshot;
 import std.typecons : Nullable;
 
 @safe:
@@ -856,8 +858,28 @@ interface Counter : Meter
     }
 }
 
+/// A meter that captures distribution statistics in a snapshot.
+interface HistogramSupport : Meter
+{
+    /// Capture the meter's distribution statistics for publication together.
+    HistogramSnapshot takeSnapshot();
+
+    /// The flag is ignored. Histogram settings are chosen when the meter is registered.
+    deprecated("Use takeSnapshot()") HistogramSnapshot takeSnapshot(bool supportsAggregablePercentiles);
+
+    /// Micrometer's default legacy overload (R3).
+    mixin template Defaults(alias Snapshot = HistogramSnapshot, alias Support = HistogramSupport)
+    {
+        deprecated("Use takeSnapshot()") override Snapshot takeSnapshot(bool supportsAggregablePercentiles)
+        {
+            Support histogram = this;
+            return histogram.takeSnapshot();
+        }
+    }
+}
+
 /// Count recorded durations and report their total and recent maximum.
-interface Timer : Meter
+interface Timer : HistogramSupport
 {
     /// Start a sample using the system clock.
     static Sample start()
@@ -1111,8 +1133,11 @@ interface Timer : Meter
             alias Unit = TimeUnit, alias RunnableType = Runnable,
             alias makeTimedRunnable = timedRunnable, alias DoubleSupplierType = DoubleSupplier,
             alias BooleanSupplierType = BooleanSupplier,
-            alias NullAction = NullPointerException, alias makeNullAction = nullCallback)
+            alias NullAction = NullPointerException, alias makeNullAction = nullCallback,
+            alias SnapshotDefaults = HistogramSupport.Defaults)
     {
+        mixin SnapshotDefaults;
+
         static if (is(NullAction == typeof(makeNullAction())))
             private alias nullAction = makeNullAction;
         else
@@ -1547,6 +1572,11 @@ private final class NoopTimer : Timer, MeasurementIterable
     override TimeUnit baseTimeUnit() nothrow @nogc
     {
         return TimeUnit.SECONDS;
+    }
+
+    override HistogramSnapshot takeSnapshot()
+    {
+        return HistogramSnapshot.empty(0, 0, 0);
     }
 
     override MeasurementIterable measure()

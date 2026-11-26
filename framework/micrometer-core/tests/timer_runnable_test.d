@@ -22,6 +22,8 @@ import flint.java.lang : NullPointerException, Runnable;
 import flint.java.util.concurrent.callable : Callable;
 import flint.java.util.function_ : Supplier;
 import flint.micrometer.core.instrument : Timer;
+import flint.micrometer.core.instrument.distribution : CountAtBucket, HistogramSnapshot,
+    HistogramSupport, ValueAtPercentile;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 import std.exception : assertThrown;
 import std.typecons : Nullable;
@@ -134,6 +136,36 @@ unittest
     assertThrown!NullPointerException(wrapped.run());
     assertThrown!NullPointerException(wrappedDelegate());
     assert(timer.count() == 0);
+}
+
+@("returnsEmptySnapshot")
+unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    registry.close();
+    Timer timer = registry.timer("test");
+    HistogramSupport histogram = timer;
+    HistogramSnapshot snapshot = histogram.takeSnapshot();
+    auto expected = HistogramSnapshot.empty(0, 0, 0);
+    assert(snapshot.count() == expected.count());
+    assert(snapshot.total() == expected.total());
+    assert(snapshot.max() == expected.max());
+    const CountAtBucket[] buckets = snapshot.histogramCounts();
+    const ValueAtPercentile[] percentiles = snapshot.percentileValues();
+    assert(buckets.length == 0 && percentiles.length == 0);
+}
+
+@("snapshot descriptors agree with type names from the public import")
+unittest
+{
+    import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
+    import flint.engine.aot.name : typeNameOf;
+
+    auto descriptor = descriptorOf!HistogramSnapshot;
+    assert(descriptor.name == typeNameOf!HistogramSnapshot);
+    auto table = new DescriptorTable;
+    table.add(descriptor);
+    assert(table.find(typeNameOf!HistogramSnapshot) is descriptor);
 }
 
 @("generic wrapping defers null errors even after registry close")

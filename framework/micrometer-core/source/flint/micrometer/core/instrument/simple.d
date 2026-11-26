@@ -24,7 +24,7 @@ import core.atomic : atomicLoad, atomicOp, cas;
 import flint.java.lang : NullPointerException;
 import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.micrometer.core.instrument : Clock, Counter, Meter, MeterRegistry, Timer;
-import flint.micrometer.core.instrument.distribution : TimeWindowMax;
+import flint.micrometer.core.instrument.distribution : HistogramSnapshot, TimeWindowMax;
 import std.typecons : Nullable;
 
 @safe:
@@ -110,6 +110,11 @@ private final class CumulativeTimer : Timer
         return TimeUnit.SECONDS;
     }
 
+    override HistogramSnapshot takeSnapshot()
+    {
+        return HistogramSnapshot.empty(count(), totalTime(TimeUnit.NANOSECONDS), max(TimeUnit.NANOSECONDS));
+    }
+
     mixin Timer.Defaults;
 }
 
@@ -127,6 +132,25 @@ unittest
     clock.addSeconds(1);
     assert(timer.max(TimeUnit.SECONDS) == 0);
     assert(timer.count() == 1 && timer.totalTime(TimeUnit.SECONDS) == 2);
+}
+
+@("snapshots capture cumulative totals and the maximum at the time of the read")
+unittest
+{
+    import flint.micrometer.core.instrument : MockClock, Tags;
+
+    auto clock = new MockClock;
+    auto id = new Meter.Id("latency", Tags.empty(), Nullable!string.init, Nullable!string.init, Meter.Type.TIMER);
+    Timer timer = new CumulativeTimer(id, clock);
+    timer.record(2, TimeUnit.MILLISECONDS);
+    timer.record(300, TimeUnit.MICROSECONDS);
+    auto first = timer.takeSnapshot(true);
+    assert(first.count() == 2 && first.total() == 2_300_000 && first.max() == 2_000_000);
+    assert(first.histogramCounts().length == 0 && first.percentileValues().length == 0);
+    clock.addSeconds(180);
+    auto later = timer.takeSnapshot();
+    assert(later.count() == 2 && later.total() == 2_300_000 && later.max() == 0);
+    assert(first.count() == 2 && first.total() == 2_300_000 && first.max() == 2_000_000);
 }
 
 @("runnable timing records success and exceptions from the timer's monotonic clock")
