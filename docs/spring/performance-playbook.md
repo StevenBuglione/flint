@@ -786,6 +786,12 @@ initialization. Matched venus probes at `733371beb` and `a6c28a3e7` retained
 The framework-test count stayed at 8,486. Both probes retain the inherited
 Phobos overage under `6c9e5f49`.
 
+Request-handled events build their descriptions when asked. Matched venus
+probes at `fb430ef74` and `5c8f08ae6` retained 528,953 O3 and 522,513 Oz
+loadable bytes for Web and 1,796,226 O3 and 1,712,258 Oz for framework-test.
+Web templates went from 6,924 to 6,978. Framework-test stayed at 8,486.
+The stock maps show the inherited Phobos objects covered by `6c9e5f49`.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
