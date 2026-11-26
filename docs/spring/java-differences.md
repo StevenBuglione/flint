@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,081 | 264 | 1,871 | 15,205 |
+| framework | openjdk@21.0.13 | 1,077 | 268 | 1,871 | 15,205 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -208,8 +208,6 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.lang.RuntimeException#<init>(Throwable)` | `flint.java.lang.RuntimeException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
 | framework | `java.math.BigInteger` | `flint.java.math.BigInteger` | A null byte-array argument counts as empty under R26. Java throws NullPointerException. |
 | framework | `java.math.RoundingMode` | `flint.java.math.roundingmode.RoundingMode` | A null name counts as empty text under R26. Java throws NullPointerException. |
-| framework | `java.time.DateTimeException#<init>(String,Throwable)` | `flint.java.time.DateTimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
-| framework | `java.time.format.DateTimeParseException` | `flint.java.time.format.DateTimeParseException` | A null parsed text counts as empty (R26). Java throws NullPointerException. |
 | framework | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.TimeDefinition` | A null name counts as empty (R26). Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
@@ -1998,6 +1996,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.time.DateTimeException` | `flint.java.time.DateTimeException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.time.DateTimeException#<init>(String)` | `flint.java.time.DateTimeException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.time.DateTimeException#<init>(String,Throwable)` | `flint.java.time.DateTimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | `java.time.MonthDay` | `flint.java.time.monthday.MonthDay` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import MonthDay from flint.java.time.monthday until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.MonthDay#equals(Object)` | `flint.java.time.monthday.MonthDay.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.MonthDay#parse(CharSequence)` | `flint.java.time.monthday.MonthDay.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2017,8 +2018,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.time.format.DateTimeParseException` | `flint.java.time.format.DateTimeParseException` | [R26](api-mapping.md#r26-null-arrays) | A null parsed text counts as empty (R26). Java throws NullPointerException. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
-| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 
 #### java.time.temporal
 
