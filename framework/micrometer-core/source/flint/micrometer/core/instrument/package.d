@@ -34,7 +34,8 @@ import core.time : MonoTime, ticksToNSecs;
 import flint.engine.aot.clock : currentTimeMillis;
 import flint.engine.aot.objects : objectToString, statelessInstance;
 import flint.engine.aot.text : decodeUtf8;
-import flint.java.lang : ArithmeticException, Comparable, IllegalArgumentException, Iterable, JavaObject,
+import flint.java.lang : ArithmeticException, ClassCastException, Comparable,
+    IllegalArgumentException, Iterable, JavaObject,
     NullPointerException, UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode, valueOf;
 import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit, toMillis, toNanos;
@@ -110,6 +111,18 @@ class MockClock : Clock
     long addSeconds(long amount) nothrow @nogc
     {
         return add(amount, TimeUnit.SECONDS);
+    }
+
+    /// Return the registry clock as a mock clock.
+    static MockClock clock(MeterRegistry registry)
+    {
+        if (auto clock = MeterRegistry.clockOf(registry))
+        {
+            if (auto mock = cast(MockClock) clock)
+                return mock;
+            throw new ClassCastException("the registry clock is not a MockClock");
+        }
+        return null;
     }
 }
 
@@ -859,6 +872,12 @@ interface Timer : Meter
         return start(Clock.SYSTEM);
     }
 
+    /// Start a sample using the registry's clock.
+    static Sample start(MeterRegistry registry)
+    {
+        return start(MeterRegistry.clockOf(registry));
+    }
+
     /// Start a sample using the given clock.
     static Sample start(Clock clock)
     {
@@ -999,19 +1018,62 @@ abstract class MeterRegistry
 {
     private Meter[] meters;
     private Mutex gate;
+    private Clock registryClock;
+    private Config configuration;
     private Timer function(Meter.Id) @safe timerFactory;
     private bool closed;
 
     /// Prepare empty registry storage.
     protected this()
     {
-        this(null);
+        this(Clock.SYSTEM);
+    }
+
+    /// Prepare empty registry storage using the supplied clock.
+    protected this(Clock clock)
+    {
+        this(clock, null);
     }
 
     package this(Timer function(Meter.Id) @safe timerFactory)
     {
+        this(Clock.SYSTEM, timerFactory);
+    }
+
+    private this(Clock clock, Timer function(Meter.Id) @safe timerFactory)
+    {
+        if (clock is null)
+            throw new NullPointerException("clock");
         gate = new Mutex;
+        registryClock = clock;
+        configuration = new Config;
         this.timerFactory = timerFactory;
+    }
+
+    /// Return the configuration owned by this registry.
+    Config config()
+    {
+        return configuration;
+    }
+
+    private static Clock clockOf(MeterRegistry registry)
+    {
+        if (registry is null)
+            throw new NullPointerException("registry");
+        auto configuration = registry.config();
+        if (configuration is null)
+            throw new NullPointerException("registry configuration");
+        return configuration.clock();
+    }
+
+    /// Configuration of the enclosing registry.
+    class Config
+    {
+        /// The clock used for measuring durations in this registry.
+        Clock clock()
+        {
+            return registryClock;
+        }
     }
 
     /// Find or register a counter with the given name and tag pairs.
