@@ -3210,7 +3210,6 @@
       "io/micrometer/core/instrument/distribution/HistogramGaugesTest.java",
       "io/micrometer/core/instrument/distribution/StepBucketHistogramTest.java",
       "io/micrometer/core/instrument/distribution/TimeWindowFixedBoundaryHistogramTest.java",
-      "io/micrometer/core/instrument/distribution/TimeWindowMaxTest.java",
       "io/micrometer/core/instrument/distribution/TimeWindowPercentileHistogramTest.java",
       "io/micrometer/core/instrument/distribution/TimeWindowRotationTest.java",
       "io/micrometer/core/instrument/dropwizard/DropwizardClockTest.java",

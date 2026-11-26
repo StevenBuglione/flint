@@ -550,8 +550,15 @@
       "status": "deferred"
     },
     "io/micrometer/core/instrument/distribution/TimeWindowMaxTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/time_window_max_test.d",
+      "methods": {
+        "ported": [
+          "decaysToZero",
+          "testLongPeriodOfInactivity",
+          "throwsExceptionWhenRotateFrequency0"
+        ]
+      },
+      "status": "ported"
     },
     "io/micrometer/core/instrument/distribution/TimeWindowPercentileHistogramTest.java": {
       "phase": "2",
