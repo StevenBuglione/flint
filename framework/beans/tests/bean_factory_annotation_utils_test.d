@@ -4,7 +4,7 @@
 // Modified by the Flint authors.
 module flint.beans.bean_factory_annotation_utils_test;
 
-import flint.beans.factory : NoSuchBeanDefinitionException, NoUniqueBeanDefinitionException;
+import flint.beans.factory : BeanFactory, NoSuchBeanDefinitionException, NoUniqueBeanDefinitionException;
 import flint.beans.factory.annotation : Qualifier;
 import flint.beans.factory.annotation_runtime : BeanFactoryAnnotationUtils;
 import flint.beans.factory.support : DefaultListableBeanFactory, RootBeanDefinition;
@@ -65,7 +65,7 @@ unittest
     assert(bean.name == "metadataBean");
 }
 
-@("a generated factory qualifier takes precedence over the class metadata")
+@("an unmatched definition qualifier falls through to the class metadata")
 unittest
 {
     auto factory = new DefaultListableBeanFactory();
@@ -74,9 +74,7 @@ unittest
     definition.setAttribute("flint.annotations", Any.of(annotations));
     auto selected = BeanFactoryAnnotationUtils.qualifiedBeanOfType!TestBean(factory, "factoryRoute");
     assert(selected.name == "metadataBean");
-    auto missing = collectException!NoSuchBeanDefinitionException(
-            BeanFactoryAnnotationUtils.qualifiedBeanOfType!TestBean(factory, "classRoute"));
-    assert(missing !is null && missing.getNumberOfBeansFound() == 0);
+    assert(BeanFactoryAnnotationUtils.qualifiedBeanOfType!TestBean(factory, "classRoute") is selected);
 }
 
 @("bean names and aliases qualify typed candidates and a wrong type is absent")
@@ -93,6 +91,74 @@ unittest
     auto missing = collectException!NoSuchBeanDefinitionException(
             BeanFactoryAnnotationUtils.qualifiedBeanOfType!TestBean(factory, "wrong"));
     assert(missing !is null && missing.getBeanName() == "wrong" && missing.getNumberOfBeansFound() == 0);
+    enum expected = "No bean named 'wrong' available: No matching TestBean bean found for qualifier 'wrong' "
+        ~ "- neither qualifier match nor bean name match!";
+    assert(missing.getMessage() == expected);
+}
+
+private final class NameOnlyBeanFactory : BeanFactory
+{
+    private BeanFactory factory;
+
+    this(BeanFactory factory)
+    {
+        this.factory = factory;
+    }
+
+    override Object getBeanErased(string name, string requiredType, Any[] args)
+    {
+        return factory.getBeanErased(name, requiredType, args);
+    }
+
+    override bool containsBean(string name)
+    {
+        return factory.containsBean(name);
+    }
+
+    override bool isSingleton(string name)
+    {
+        return factory.isSingleton(name);
+    }
+
+    override bool isPrototype(string name)
+    {
+        return factory.isPrototype(name);
+    }
+
+    override bool isTypeMatchErased(string name, string typeName)
+    {
+        return factory.isTypeMatchErased(name, typeName);
+    }
+
+    override string getTypeName(string name)
+    {
+        return factory.getTypeName(name);
+    }
+
+    override string[] getAliases(string name)
+    {
+        return factory.getAliases(name);
+    }
+}
+
+@("non-listable factories use the typed name fallback and its own error text")
+unittest
+{
+    auto backing = new DefaultListableBeanFactory();
+    auto existing = new TestBean("direct");
+    backing.registerSingleton("direct", existing);
+    backing.registerAlias("direct", "alias");
+    backing.registerSingleton("wrong", new Object());
+    auto factory = new NameOnlyBeanFactory(backing);
+
+    assert(BeanFactoryAnnotationUtils.qualifiedBeanOfType!TestBean(factory, "alias") is existing);
+    auto missing = collectException!NoSuchBeanDefinitionException(
+            BeanFactoryAnnotationUtils.qualifiedBeanOfType!TestBean(factory, "wrong"));
+    assert(missing !is null && missing.getBeanName() == "wrong");
+    enum expected = "No bean named 'wrong' available: No matching TestBean bean found for bean name 'wrong'! "
+        ~ "(Note: Qualifier matching not supported because given BeanFactory does not implement "
+        ~ "ConfigurableListableBeanFactory.)";
+    assert(missing.getMessage() == expected);
 }
 
 @("qualified lookup requires a unique bean even if the first match is primary")

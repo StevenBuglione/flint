@@ -8,7 +8,7 @@ import flint.beans.factory : BeanFactory, HierarchicalBeanFactory, ListableBeanF
     NoSuchBeanDefinitionException, NoUniqueBeanDefinitionException;
 import flint.beans.factory.annotation : Qualifier;
 import flint.beans.factory.support : DefaultListableBeanFactory;
-import flint.engine.aot.name : typeNameOf;
+import flint.engine.aot.name : simpleTypeName, typeNameOf;
 import flint.util : Assert;
 
 @safe:
@@ -42,8 +42,13 @@ abstract class BeanFactoryAnnotationUtils
             return beanFactory.getBeanErased(match, type, null);
         if (beanFactory.containsBean(qualifier) && beanFactory.isTypeMatchErased(qualifier, type))
             return beanFactory.getBeanErased(qualifier, type, null);
+        const prefix = "No matching " ~ simpleTypeName(type) ~ " bean found for ";
+        if (root is null)
+            throw new NoSuchBeanDefinitionException(qualifier, prefix ~ "bean name '" ~ qualifier
+                    ~ "'! (Note: Qualifier matching not supported because given BeanFactory does not implement "
+                    ~ "ConfigurableListableBeanFactory.)");
         throw new NoSuchBeanDefinitionException(qualifier,
-                "No matching '" ~ type ~ "' bean found for qualifier '" ~ qualifier ~ "'");
+                prefix ~ "qualifier '" ~ qualifier ~ "' - neither qualifier match nor bean name match!");
     }
 
     private static ListableBeanFactory listableParent(ListableBeanFactory factory)
@@ -71,14 +76,9 @@ abstract class BeanFactoryAnnotationUtils
         auto listable = cast(DefaultListableBeanFactory) factory;
         if (listable is null || !listable.containsBeanDefinition(name))
             return false;
-        auto qualifiers = listable.getBeanDefinition(name).getQualifiers();
-        if (qualifiers.length)
-        {
-            foreach (value; qualifiers)
-                if (value == qualifier)
-                    return true;
-            return false;
-        }
+        foreach (value; listable.getBeanDefinition(name).getQualifiers())
+            if (value == qualifier)
+                return true;
         auto annotation = listable.findAnnotationOnBean(name, typeNameOf!Qualifier);
         return annotation !is null && annotation.value.get!Qualifier().value == qualifier;
     }

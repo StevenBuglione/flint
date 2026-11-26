@@ -11050,7 +11050,7 @@
 "org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#<init>()":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#getQualifierValue(AnnotatedElement)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#isQualifierMatch(Predicate,String,BeanFactory)":{"category":"deferred","phase":"2","status":"excluded"},
-"org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#qualifiedBeanOfType(BeanFactory,Class,String)":{"d":"flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils.qualifiedBeanOfType","rules":["R22","R4"],"status":"adapted"},
+"org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#qualifiedBeanOfType(BeanFactory,Class,String)":{"d":"flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils.qualifiedBeanOfType","rules":["R22","R4"],"status":"adapted","note":"Uses the generated qualifier values on the bean definition and the described class's merged annotations. The generated values combine definition and factory-method qualifier metadata."},
 "org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#qualifiedBeansOfType(ListableBeanFactory,Class,String)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.beans.factory.annotation.Configurable":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.beans.factory.annotation.Configurable#autowire":{"category":"deferred","phase":"2","status":"excluded"},

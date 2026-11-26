@@ -2805,7 +2805,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils` | `flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
-| `org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#qualifiedBeanOfType(BeanFactory,Class,String)` | `flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils.qualifiedBeanOfType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#qualifiedBeanOfType(BeanFactory,Class,String)` | `flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils.qualifiedBeanOfType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R4](api-mapping.md#r4-classt-parameters) | Uses the generated qualifier values on the bean definition and the described class's merged annotations. The generated values combine definition and factory-method qualifier metadata. |
 
 #### org.springframework.beans.factory.config
 
