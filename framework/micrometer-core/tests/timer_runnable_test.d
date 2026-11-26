@@ -20,12 +20,45 @@ module micrometer_timer_runnable_test;
 import core.memory : GC;
 import flint.java.lang : NullPointerException, Runnable;
 import flint.java.util.concurrent.callable : Callable;
+import flint.java.util.function_ : Supplier;
 import flint.micrometer.core.instrument : Timer;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 import std.exception : assertThrown;
 import std.typecons : Nullable;
 
 @safe:
+
+@("recordSupplier")
+unittest
+{
+    static final class Value : Supplier!(Nullable!string)
+    {
+        this() scope
+        {
+        }
+
+        override Nullable!string get()
+        {
+            return Nullable!string("value");
+        }
+    }
+
+    static assert(!__traits(compiles, (Timer timer) @safe {
+            scope stackValue = new Value;
+            timer.record(stackValue);
+        }));
+
+    auto registry = new SimpleMeterRegistry;
+    registry.close();
+    auto timer = registry.timer("test");
+    auto supplier = new Value;
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    assert(timer.record(supplier).get() == "value");
+    assert(timer.record(() => Nullable!string.init).isNull());
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 0);
+    assertThrown!NullPointerException(timer.record(cast(Supplier!(Nullable!string)) null));
+}
 
 @("recordCallable")
 unittest

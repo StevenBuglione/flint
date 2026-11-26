@@ -729,7 +729,7 @@
 "io.micrometer.core.instrument.Timer#record(IntSupplier)":{"status":"excluded","category":"deferred","phase":"2"},
 "io.micrometer.core.instrument.Timer#record(LongSupplier)":{"status":"excluded","category":"deferred","phase":"2"},
 "io.micrometer.core.instrument.Timer#record(Runnable)":{"status":"adapted","rules":["R9"],"d":"flint.micrometer.core.instrument.Timer.record"},
-"io.micrometer.core.instrument.Timer#record(Supplier)":{"status":"excluded","category":"deferred","phase":"2"},
+"io.micrometer.core.instrument.Timer#record(Supplier)":{"status":"adapted","rules":["R9"],"d":"flint.micrometer.core.instrument.Timer.record"},
 "io.micrometer.core.instrument.Timer#record(long,TimeUnit)":{"status":"ported","d":"flint.micrometer.core.instrument.Timer.record"},
 "io.micrometer.core.instrument.Timer#recordCallable(Callable)":{"status":"adapted","rules":["R8","R9"],"d":"flint.micrometer.core.instrument.Timer.recordCallable"},
 "io.micrometer.core.instrument.Timer#resource(MeterRegistry,String)":{"status":"excluded","category":"deferred","phase":"2"},

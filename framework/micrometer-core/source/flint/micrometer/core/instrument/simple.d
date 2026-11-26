@@ -336,6 +336,51 @@ unittest
     assert(timer.count() == 3 && timer.totalTime(TimeUnit.NANOSECONDS) == 17);
 }
 
+@("generic supplier timing preserves nullable results and exception identity")
+unittest
+{
+    import core.memory : GC;
+    import flint.java.lang : IllegalStateException;
+    import flint.java.util.function_ : Supplier;
+    import flint.micrometer.core.instrument : Tags;
+    import std.exception : assertThrown;
+
+    auto clock = new MockClock;
+    auto id = new Meter.Id("generic supplier", Tags.empty(), Nullable!string.init,
+            Nullable!string.init, Meter.Type.TIMER);
+    Timer timer = new CumulativeTimer(id, clock);
+    auto failure = new IllegalStateException("supplier failed");
+
+    Nullable!string supply()
+    {
+        clock.add(6, TimeUnit.NANOSECONDS);
+        return Nullable!string("");
+    }
+
+    Nullable!string fail()
+    {
+        clock.add(11, TimeUnit.NANOSECONDS);
+        throw failure;
+    }
+
+    auto supplier = Supplier!(Nullable!string).of(&supply);
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    const result = timer.record(supplier);
+    assert(!result.isNull() && result.get() == "");
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 1 && timer.totalTime(TimeUnit.NANOSECONDS) == 6);
+
+    bool caught;
+    try
+        timer.record(&fail);
+    catch (IllegalStateException error)
+        caught = error is failure;
+    assert(caught);
+    assert(timer.count() == 2 && timer.totalTime(TimeUnit.NANOSECONDS) == 17);
+    assertThrown!NullPointerException(timer.record(cast(Supplier!(Nullable!string)) null));
+    assert(timer.count() == 3 && timer.totalTime(TimeUnit.NANOSECONDS) == 17);
+}
+
 @("a wrapped task records each invocation and propagates the original exception")
 unittest
 {

@@ -980,6 +980,31 @@ interface Timer : Meter
     /// Return a primitive result from a D delegate without retaining it (R9).
     double record(scope double delegate() @safe action);
 
+    /// Time the supplier and return its value (R9).
+    /// Value results must support default initialization and assignment.
+    T record(T)(Supplier!T action)
+    {
+        static if (!is(T == void))
+            T result;
+        record(() @safe {
+            if (action is null)
+                throw nullCallback();
+            static if (is(T == void))
+                action.get();
+            else
+                result = action.get();
+        });
+        static if (!is(T == void))
+            return result;
+    }
+
+    /// Time a D supplier without retaining it (R9).
+    /// Value results must support default initialization and assignment.
+    T record(T)(scope T delegate() @safe action) if (!is(T == void))
+    {
+        return recordCallable!T(action);
+    }
+
     /// Time the callable and propagate any exception it raises (R8, R9).
     /// Value results must support default initialization and assignment.
     T recordCallable(T)(Callable!T action)

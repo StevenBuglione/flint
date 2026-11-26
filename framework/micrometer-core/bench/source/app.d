@@ -3,12 +3,16 @@ module app;
 import core.stdc.stdio : fputc, stdout;
 import flint.java.util.concurrent : TimeUnit;
 import flint.java.util.concurrent.callable : Callable;
+import flint.java.util.function_ : Supplier;
 import flint.micrometer.core.instrument : Clock, MockClock, Tags, Timer;
 import flint.micrometer.core.instrument.simple : SimpleMeterRegistry;
 
 @safe:
 
-private final class Region : Callable!string
+private alias RegionCallable = Callable!string;
+private alias RegionSupplier = Supplier!string;
+
+private final class Region : RegionCallable, RegionSupplier
 {
     private const string value;
 
@@ -18,6 +22,11 @@ private final class Region : Callable!string
     }
 
     override string call()
+    {
+        return value;
+    }
+
+    override string get()
     {
         return value;
     }
@@ -37,8 +46,12 @@ void main(string[] args)
     if (sample.stop(timer) != 250_000_000 || timer.count() != 1
             || timer.totalTime(TimeUnit.SECONDS) != 0.25 || timer.max(TimeUnit.SECONDS) != 0.25)
         return;
-    Callable!string action = new Region(region);
-    if (timer.recordCallable(action) != region || timer.count() != 2)
+    auto action = new Region(region);
+    RegionCallable callable = action;
+    if (timer.recordCallable(callable) != region || timer.count() != 2)
+        return;
+    RegionSupplier supplier = action;
+    if (timer.record(supplier) != region || timer.count() != 3)
         return;
     foreach (character; tags.toString())
         fputc(character, stdout);

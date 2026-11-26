@@ -645,10 +645,10 @@
       "methods": {
         "ported": [
           "recordCallable",
-          "recordRunnable"
+          "recordRunnable",
+          "recordSupplier"
         ],
         "skipped": {
-          "recordSupplier": "Deferred with the Supplier overload.",
           "returnsBaseTimeUnit": "Deferred as a direct test of the public NoopTimer type.",
           "returnsCountAsZero": "Deferred as a direct test of the public NoopTimer type.",
           "returnsEmptySnapshot": "Deferred with histogram snapshots.",
