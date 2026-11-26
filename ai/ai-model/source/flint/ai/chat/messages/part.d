@@ -95,6 +95,12 @@ private string payloadText(ref const NullablePayload value)
     return value.isNull ? "null" : value.get().toString();
 }
 
+// Java has one null string value. A present empty string stays distinct (R5).
+private NullableText normalizeText(NullableText value) pure nothrow @nogc
+{
+    return value.isNull || value.get() is null ? NullableText.init : value;
+}
+
 private bool sameText(ref const NullableText left, ref const NullableText right)
 {
     if (left.isNull)
@@ -337,8 +343,8 @@ final class ReasoningPart : MessagePart
     /// Creates a reasoning part with a snapshot of its attributes.
     this(NullableText text, NullableText summary, NullablePayload payload, PartAttributes attributes)
     {
-        this(text);
-        summary_ = summary;
+        this(normalizeText(text));
+        summary_ = normalizeText(summary);
         payload_ = payload;
         attributes_ = copyAttributes(attributes);
     }

@@ -151,6 +151,24 @@ unittest
     assert(!TextPart.of("a").equals(ReasoningPart.of("a")));
 }
 
+@("reasoning part preserves the difference between null and empty text")
+unittest
+{
+    auto attributes = Map!(string, string).of();
+    Nullable!OpaquePayload payload;
+    Nullable!string missing;
+    auto wrappedNull = Nullable!string(cast(string) null);
+    auto part = new ReasoningPart(wrappedNull, wrappedNull, payload, attributes);
+    auto absent = new ReasoningPart(missing, missing, payload, attributes);
+    auto empty = new ReasoningPart(nullable(""), nullable(""), payload, attributes);
+
+    assert(part.text().isNull && part.summary().isNull);
+    assert(part == absent && part.hashCode() == absent.hashCode());
+    assert(part != empty);
+    assert(!empty.text().isNull && !empty.summary().isNull);
+    assert(part.toString() == "ReasoningPart[text=null, summary=null, payload=null, attributes={}]");
+}
+
 @("whenOpaquePayloadHasNullComponentThenThrow")
 unittest
 {
