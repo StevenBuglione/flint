@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,106 | 245 | 1,871 | 15,199 |
+| framework | openjdk@21.0.13 | 1,104 | 245 | 1,871 | 15,201 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1937,7 +1937,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.lang.AssertionError#<init>(Object)` | `flint.java.lang.AssertionError.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.lang.AssertionError` | `flint.java.lang.AssertionError` | [R8](api-mapping.md#r8-exceptions) | Flint uses the catchable D Exception base. The inherited Java initCause method is unavailable. |
 
 #### java.math
 
@@ -9995,7 +9995,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 714 | 0 |
-| java.lang | 2,016 | 0 |
+| java.lang | 2,018 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 137 | 0 |
@@ -10887,6 +10887,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. |
 | framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. |
 | framework | `java.io.UncheckedIOException#getCause()` | 2 | The inherited accessor returns Throwable. Java overrides it to return IOException. |
+| framework | `java.lang.AssertionError#<init>(Object)` | 2 | Requires converting an Object detail to its Java string and retaining a Throwable detail as the cause. |
+| framework | `java.lang.Iterable#forEach(Consumer)` | 2 | Requires default traversal with a Consumer for iterator-only implementations. |
 | framework | `java.text.MessageFormat#<init>(String)` | 2 | Accepts a null pattern and unknown format types. The default locale also needs Locale.Category.FORMAT. |
 | framework | `java.text.MessageFormat#<init>(String,Locale)` | 2 | Accepts unknown format types when applying the pattern. |
 | framework | `java.text.MessageFormat#format(String,Object...)` | 2 | Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type. |
