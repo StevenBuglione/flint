@@ -49,6 +49,7 @@ import flint.http : ResponseEntity;
 An annotation becomes a UDA struct with the same name. Its attributes become fields with the same names and Java's defaults. The `value` element is the first field, so `@GetMapping("/x")` reads the same.
 - **Meta-annotations** are UDAs on the struct declaration. Flint AOT composes them at build time, together with `@AliasFor`, the way Spring's `MergedAnnotations` does at runtime. `@RestController` is `@Controller` plus `@ResponseBody`.
 - **Annotation modules are leaves:** they import only other UDA structs.
+- **`@Deprecated`** becomes D's `deprecated("…")` on the same declaration, carrying `since` (and the upstream's replacement hint) in the message, as the ported methods already do (`deprecated("as of 6.0, in favor of strip")`). This applies to annotation types and attributes too, so users get Java's warning at the use site. The other JDK meta-annotations (`@Retention`, `@Target`, `@Documented`, `@Inherited`, `@Repeatable`) have no D counterpart and are dropped.
 
 ```java
 @GetMapping(value = "/owners/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -79,6 +80,8 @@ Owner[] owners = jdbcTemplate.query(sql, new BeanPropertyRowMapper!Owner());
 ```
 
 A template wrapper stays a one-liner over an erased engine that takes `T`'s Flint AOT descriptor (ADR-030 section 5).
+
+**"No class" sentinels in annotation attributes.** Java marks "unset" with a placeholder class: `void.class`, or the attribute's own bound, as in `Class<? extends AttributeConverter> converter() default AttributeConverter.class`. Either becomes `ClassRef.init`, as the Jakarta `@Convert` port does. The entry records the sentinel in its `note`.
 
 ### R5: `Optional` and nullable values
 
