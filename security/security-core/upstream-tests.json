@@ -132,8 +132,16 @@
       "status": "deferred"
     },
     "org/springframework/security/authentication/event/AuthenticationEventTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-core/tests/authentication_event_test.d",
+      "methods": {
+        "ported": [
+          "testAbstractAuthenticationEvent",
+          "testAbstractAuthenticationFailureEvent",
+          "testRejectsNullAuthentication",
+          "testRejectsNullAuthenticationException"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/security/authentication/event/LoggerListenerTests.java": {
       "phase": "2",
