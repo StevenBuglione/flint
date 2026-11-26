@@ -733,6 +733,17 @@ measured 1,624,310 to 1,626,958 loadable bytes at O3, 1,548,006 to 1,550,270 at 
 and 5,960 to 5,976 DMD templates. The regression tests cover distinct headers and
 consumes conditions and reject reordered equivalent mappings.
 
+ServletRequestUtils parses an ASCII integral value through the existing bounded
+parser. A failed parse consults the UTF-16 digit table only for non-ASCII input.
+The scalar path reuses the request's values and allocates exceptions only when
+the caller needs a binding error. The LDC release probe recorded zero GC bytes
+over 6,000 calls covering ASCII and Unicode numbers, defaults, booleans and
+strings. Matched venus probes at `58847dd84` and `ff14ede48` kept Web at 528,913
+O3 and 522,473 Oz incremental loadable bytes. DMD templates went from 6,753 to
+6,872, below the 16,700 cap. The framework-test probe added 40 bytes in each
+profile and 30 templates. Its inherited Phobos overage and Web's use the
+base-relative rule in `6c9e5f49`.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

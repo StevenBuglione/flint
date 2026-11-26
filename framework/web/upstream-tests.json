@@ -1020,8 +1020,25 @@
       "status": "deferred"
     },
     "org/springframework/web/bind/ServletRequestUtilsTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/servlet_request_utils_tests.d",
+      "methods": {
+        "ported": [
+          "booleanParameter",
+          "booleanParameters",
+          "intParameter",
+          "intParameters",
+          "longParameter",
+          "longParameters",
+          "stringParameter"
+        ],
+        "skipped": {
+          "doubleParameter": "Requires Java floating-point parameter grammar and rounding parity.",
+          "doubleParameters": "Requires Java floating-point parameter grammar and rounding parity.",
+          "floatParameter": "Requires Java floating-point parameter grammar and rounding parity.",
+          "floatParameters": "Requires Java floating-point parameter grammar and rounding parity."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/web/bind/annotation/ComponentScannedControllerAdviceTests.java": {
       "phase": "2",

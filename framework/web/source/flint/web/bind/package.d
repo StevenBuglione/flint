@@ -1,10 +1,10 @@
 /++
-`org.springframework.web.bind`: the binding exceptions of request parameters, headers and path variables.
+`org.springframework.web.bind`: servlet request parameters and binding exceptions.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/bind/
 (ServletRequestBindingException.java, MissingRequestValueException.java,
 MissingServletRequestParameterException.java, MissingPathVariableException.java, MissingRequestHeaderException.java,
-MissingRequestCookieException.java).
+MissingRequestCookieException.java, ServletRequestUtils.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook. They skip backtrace capture (ADR-030 section 4).
@@ -15,12 +15,253 @@ module flint.web.bind;
 import flint.core : MethodParameter;
 import flint.web.bind.support : javaTypeName;
 import flint.engine.aot.any : Any;
+import flint.engine.aot.text : ParsedLong, decodeUtf8, tryParseLong;
 import flint.http : HttpStatus, HttpStatusCode, ProblemDetail;
-import flint.jakarta.servlet : ServletException;
+import flint.jakarta.servlet : ServletException, ServletRequest;
+import flint.java.lang : NumberFormatException, javaDecimalDigit;
+import flint.util : PatternMatchUtils;
 import flint.validation : BindException, BindingResult, FieldError, ObjectError;
 import flint.web : ErrorResponse, skipBacktrace;
+import std.typecons : Nullable, nullable;
 
 @safe:
+
+/// Accesses first and repeated servlet request parameters with Java's binding errors and defaults.
+abstract class ServletRequestUtils
+{
+    /// Reads an integer, or returns an absent value when the parameter is missing.
+    static Nullable!int getIntParameter(ServletRequest request, string name)
+    {
+        return optionalParameter!int(request.getParameter(name), name);
+    }
+
+    /// Returns the supplied default when the parameter is missing or invalid.
+    static int getIntParameter(ServletRequest request, string name, int defaultValue)
+    {
+        return defaultParameter!int(request.getParameter(name), defaultValue);
+    }
+
+    /// Returns every value, or an empty array when the parameter is missing or invalid.
+    static int[] getIntParameters(ServletRequest request, string name)
+    {
+        return parameterValues!int(request.getParameterValues(name), name, false);
+    }
+
+    /// Reads a required parameter and reports a binding error for missing or invalid input.
+    static int getRequiredIntParameter(ServletRequest request, string name)
+    {
+        return requiredParameter!int(request.getParameter(name), name);
+    }
+
+    /// Reads all required values in order.
+    static int[] getRequiredIntParameters(ServletRequest request, string name)
+    {
+        return parameterValues!int(request.getParameterValues(name), name, true);
+    }
+
+    /// Reads a long integer, or returns an absent value when the parameter is missing.
+    static Nullable!long getLongParameter(ServletRequest request, string name)
+    {
+        return optionalParameter!long(request.getParameter(name), name);
+    }
+
+    /// Returns the supplied default when the parameter is missing or invalid.
+    static long getLongParameter(ServletRequest request, string name, long defaultValue)
+    {
+        return defaultParameter!long(request.getParameter(name), defaultValue);
+    }
+
+    /// Returns every value, or an empty array when the parameter is missing or invalid.
+    static long[] getLongParameters(ServletRequest request, string name)
+    {
+        return parameterValues!long(request.getParameterValues(name), name, false);
+    }
+
+    /// Reads a required parameter and reports a binding error for missing or invalid input.
+    static long getRequiredLongParameter(ServletRequest request, string name)
+    {
+        return requiredParameter!long(request.getParameter(name), name);
+    }
+
+    /// Reads all required values in order.
+    static long[] getRequiredLongParameters(ServletRequest request, string name)
+    {
+        return parameterValues!long(request.getParameterValues(name), name, true);
+    }
+
+    /// Reads a boolean, or returns an absent value when the parameter is missing.
+    static Nullable!bool getBooleanParameter(ServletRequest request, string name)
+    {
+        return optionalParameter!bool(request.getParameter(name), name);
+    }
+
+    /// Returns the supplied default when the parameter is missing or invalid.
+    static bool getBooleanParameter(ServletRequest request, string name, bool defaultValue)
+    {
+        return defaultParameter!bool(request.getParameter(name), defaultValue);
+    }
+
+    /// Returns every value, or an empty array when the parameter is missing or invalid.
+    static bool[] getBooleanParameters(ServletRequest request, string name)
+    {
+        return parameterValues!bool(request.getParameterValues(name), name, false);
+    }
+
+    /// Reads a required parameter and reports a binding error for missing or invalid input.
+    static bool getRequiredBooleanParameter(ServletRequest request, string name)
+    {
+        return requiredParameter!bool(request.getParameter(name), name);
+    }
+
+    /// Reads all required values in order.
+    static bool[] getRequiredBooleanParameters(ServletRequest request, string name)
+    {
+        return parameterValues!bool(request.getParameterValues(name), name, true);
+    }
+
+    /// Reads text while distinguishing a missing value from an empty string.
+    static Nullable!string getStringParameter(ServletRequest request, string name)
+    {
+        const text = request.getParameter(name);
+        return text is null ? Nullable!string.init : nullable(text);
+    }
+
+    /// Returns the default when the parameter is missing.
+    static string getStringParameter(ServletRequest request, string name, string defaultValue)
+    {
+        const text = request.getParameter(name);
+        return text is null ? defaultValue : text;
+    }
+
+    /// Returns every text value, or an empty array when any value is missing.
+    static string[] getStringParameters(ServletRequest request, string name)
+    {
+        return parameterValues!string(request.getParameterValues(name), name, false);
+    }
+
+    /// Reads required text, accepting an empty string.
+    static string getRequiredStringParameter(ServletRequest request, string name)
+    {
+        return requiredParameter!string(request.getParameter(name), name);
+    }
+
+    /// Reads all required text values in order.
+    static string[] getRequiredStringParameters(ServletRequest request, string name)
+    {
+        return parameterValues!string(request.getParameterValues(name), name, true);
+    }
+
+    private enum parameterType(T) = is(T == bool) ? "boolean" :  is(T == string) ? "string" : T.stringof;
+
+    private static Nullable!T optionalParameter(T)(string text, string name)
+    {
+        return text is null ? Nullable!T.init : nullable(requiredParameter!T(text, name));
+    }
+
+    private static T requiredParameter(T)(string text, string name)
+    {
+        T value;
+        if (!parseParameter!T(text, value))
+            throw parameterFailure(name, parameterType!T, text);
+        return value;
+    }
+
+    private static T defaultParameter(T)(string text, T defaultValue)
+    {
+        T value;
+        return parseParameter!T(text, value) ? value : defaultValue;
+    }
+
+    private static T[] parameterValues(T)(string[] values, string name, bool required)
+    {
+        if (values is null)
+        {
+            if (required)
+                throw parameterFailure(name, parameterType!T, null);
+            return null;
+        }
+
+        static if (is(T == string))
+            auto result = values;
+        else
+            auto result = new T[values.length];
+
+        foreach (i, text; values)
+        {
+            T value;
+            if (!parseParameter!T(text, value))
+            {
+                if (required)
+                    throw parameterFailure(name, parameterType!T, text);
+                return null;
+            }
+            static if (!is(T == string))
+                result[i] = value;
+        }
+        return result;
+    }
+
+    private static bool parseParameter(T)(string text, out T value)
+    {
+        if (text is null)
+            return false;
+
+        static if (is(T == string))
+        {
+            value = text;
+            return true;
+        }
+        else static if (is(T == bool))
+        {
+            value = text == "1" || PatternMatchUtils.simpleMatchIgnoreCase("true", text)
+                || PatternMatchUtils.simpleMatchIgnoreCase("on",
+                        text) || PatternMatchUtils.simpleMatchIgnoreCase("yes", text);
+            return true;
+        }
+        else
+        {
+            const result = parseIntegralParameter(text);
+            value = cast(T) result.value;
+            return result.ok && result.value >= T.min && result.value <= T.max;
+        }
+    }
+
+    private static ParsedLong parseIntegralParameter(scope const(char)[] text) pure nothrow @nogc
+    {
+        const ascii = tryParseLong(text);
+        if (ascii.ok)
+            return ascii;
+        foreach (c; text)
+            if (c >= 0x80)
+                return parseUnicodeIntegralParameter(text);
+        return ascii;
+    }
+
+    private static ParsedLong parseUnicodeIntegralParameter(scope const(char)[] text) pure nothrow @nogc
+    {
+        const negative = text[0] == '-';
+        size_t index = negative || text[0] == '+' ? 1 : 0;
+        const limit = cast(ulong) long.max + negative;
+        ulong magnitude;
+        while (index < text.length)
+        {
+            const digit = javaDecimalDigit(decodeUtf8(text, index));
+            if (digit > 9 || magnitude > (limit - digit) / 10)
+                return ParsedLong.init;
+            magnitude = magnitude * 10 + digit;
+        }
+        return ParsedLong(true, negative ? -cast(long) magnitude : cast(long) magnitude);
+    }
+
+    private static ServletRequestBindingException parameterFailure(string name, string type, string text)
+    {
+        if (text is null)
+            return new MissingServletRequestParameterException(name, type);
+        return new ServletRequestBindingException(
+                "Required " ~ type ~ " parameter '" ~ name ~ "' with value of '" ~ text ~ "' is not a valid number",
+                NumberFormatException.forInputString(text));
+    }
+}
 
 /// `ServletRequestBindingException`: a fatal binding problem (400).
 class ServletRequestBindingException : ServletException, ErrorResponse

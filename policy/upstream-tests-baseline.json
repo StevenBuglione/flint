@@ -9131,7 +9131,6 @@
       "org/springframework/web/bind/EscapedErrorsTests.java",
       "org/springframework/web/bind/MethodArgumentNotValidExceptionTests.java",
       "org/springframework/web/bind/ServletRequestDataBinderTests.java",
-      "org/springframework/web/bind/ServletRequestUtilsTests.java",
       "org/springframework/web/bind/annotation/ComponentScannedControllerAdviceTests.java",
       "org/springframework/web/bind/annotation/ControllerMappingReflectiveProcessorTests.java",
       "org/springframework/web/bind/support/DefaultDataBinderFactoryTests.java",
