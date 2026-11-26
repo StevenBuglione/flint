@@ -4179,6 +4179,13 @@ private long daysFromCivil(long y, int m, int d) pure nothrow @nogc
     return era * 146_097 + doe - 719_468;
 }
 
+/// A servlet date header in milliseconds, or `-1` if it cannot be parsed.
+package(flint) long parseServletDate(string value) pure nothrow
+{
+    long millis;
+    return value.length >= 3 && value[0] != '@' && parseHttpDate(value, millis) ? millis : -1;
+}
+
 // RFC 1123 (`Sun, 06 Nov 1994 08:49:37 GMT`) and RFC 9651 (`@784111777`); the other legacy forms Spring
 // accepts (RFC 850, asctime) are parsed too.
 private bool parseHttpDate(string value, out long millis) pure nothrow

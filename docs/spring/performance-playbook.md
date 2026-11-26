@@ -706,6 +706,14 @@ link map retains Phobos curl, socket and zip. The base-relative size rule in `6c
 applies while that cascade remains. The resolver runs through the standalone API before
 it is integrated with servlet dispatch.
 
+`ServletWebRequest` checks for an absent date header before calling the servlet's date
+accessor and parses entity tags only when a conditional field is present. The existing
+web fixture at `2b28d1bb` and `bc22cde3` measures 536,737 loadable bytes at O3 and
+529,249 at Oz on venus. The DMD template count moves from 11,284 to 11,287 under the
+16,700 cap. The per-instance result adds one byte to the class, from 48 to 49, and the
+LDC allocation probe shows the GC block growing from 48 to 64 bytes where a servlet
+request wrapper is constructed. Both apps' request-allocation gates cover this cost.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

@@ -9166,7 +9166,6 @@
       "org/springframework/web/context/request/RequestScopeTests.java",
       "org/springframework/web/context/request/RequestScopedProxyTests.java",
       "org/springframework/web/context/request/ServletRequestAttributesTests.java",
-      "org/springframework/web/context/request/ServletWebRequestHttpMethodsTests.java",
       "org/springframework/web/context/request/ServletWebRequestTests.java",
       "org/springframework/web/context/request/SessionScopeTests.java",
       "org/springframework/web/context/request/WebApplicationContextScopeTests.java",

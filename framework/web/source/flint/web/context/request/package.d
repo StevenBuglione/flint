@@ -12,7 +12,10 @@ Modified by the Flint authors: translated to D under the rulebook. Session scope
 module flint.web.context.request;
 
 import flint.engine.aot.any : Any;
+import flint.http : ETag, HttpHeaders, parseServletDate;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
+import flint.java.lang : IllegalArgumentException;
+import std.typecons : Nullable, nullable;
 
 @safe:
 
@@ -124,6 +127,8 @@ class ServletRequestAttributes : RequestAttributes
 /// `ServletWebRequest`.
 class ServletWebRequest : ServletRequestAttributes, NativeWebRequest
 {
+    private bool notModified;
+
     ///
     this(HttpServletRequest request, HttpServletResponse response = null) pure nothrow @nogc
     {
@@ -164,6 +169,117 @@ class ServletWebRequest : ServletRequestAttributes, NativeWebRequest
     string getContextPath()
     {
         return getRequest().getContextPath();
+    }
+
+    /// Checks the current representation's last-modified time in milliseconds since the epoch.
+    bool checkNotModified(long lastModifiedTimestamp)
+    {
+        return checkNotModified(Nullable!string.init, lastModifiedTimestamp);
+    }
+
+    /// Checks the current representation's entity tag.
+    bool checkNotModified(string etag)
+    {
+        return checkNotModified(nullable(etag), -1);
+    }
+
+    /// Checks conditional headers in order and updates the response when a precondition stops processing.
+    bool checkNotModified(Nullable!string etag, long lastModifiedTimestamp)
+    {
+        if (notModified)
+            return true;
+        auto response = getResponse();
+        if (response !is null && response.getStatus() != HttpServletResponse.SC_OK)
+            return false;
+
+        auto request = getRequest();
+        const method = request.getMethod();
+        const safeMethod = method == "GET" || method == "HEAD";
+        const tag = etag.isNull ? null : etag.get();
+        if (!safeMethod)
+        {
+            const headers = request.getHeaders(HttpHeaders.IF_MATCH);
+            if (headers.length != 0)
+            {
+                notModified = !matchesTag(headers, tag, true, true);
+                return finishCondition(response, safeMethod,
+                        HttpServletResponse.SC_PRECONDITION_FAILED, tag, lastModifiedTimestamp);
+            }
+        }
+
+        const modified = lastModifiedTimestamp / 1000 * 1000;
+        if (lastModifiedTimestamp >= 0)
+        {
+            const since = readDateHeader(HttpHeaders.IF_UNMODIFIED_SINCE);
+            if (since != -1)
+            {
+                notModified = since < modified;
+                return finishCondition(response, safeMethod,
+                        HttpServletResponse.SC_PRECONDITION_FAILED, tag, lastModifiedTimestamp);
+            }
+        }
+
+        const headers = request.getHeaders(HttpHeaders.IF_NONE_MATCH);
+        if (headers.length != 0)
+            notModified = matchesTag(headers, tag, false, !safeMethod);
+        else if (lastModifiedTimestamp >= 0)
+        {
+            const since = readDateHeader(HttpHeaders.IF_MODIFIED_SINCE);
+            notModified = since != -1 && since >= modified;
+        }
+        return finishCondition(response, safeMethod, safeMethod ? HttpServletResponse.SC_NOT_MODIFIED
+                : HttpServletResponse.SC_PRECONDITION_FAILED, tag, lastModifiedTimestamp);
+    }
+
+    /// Whether a check already stopped normal request processing.
+    bool isNotModified() const pure nothrow @nogc
+    {
+        return notModified;
+    }
+
+    private static bool matchesTag(const(string)[] fields, string tag, bool strong, bool matchWildcard)
+    {
+        if (tag.length == 0)
+            return false;
+        const current = ETag.create(tag);
+        foreach (field; fields)
+            foreach (candidate; ETag.parse(field))
+                if ((matchWildcard && candidate.isWildcard()) || candidate.compare(current, strong))
+                    return true;
+        return false;
+    }
+
+    private long readDateHeader(string name)
+    {
+        const value = getHeader(name);
+        if (value is null)
+            return -1;
+        try
+            return getRequest().getDateHeader(name);
+        catch (IllegalArgumentException)
+        {
+            foreach (i, c; value)
+                if (c == ';')
+                    return parseServletDate(value[0 .. i]);
+            return parseServletDate(value);
+        }
+    }
+
+    private bool finishCondition(HttpServletResponse response, bool safeMethod, int stopStatus,
+            string tag, long lastModified)
+    {
+        if (response is null)
+            return notModified;
+        if (notModified)
+            response.setStatus(stopStatus);
+        if (safeMethod && !(notModified && stopStatus == HttpServletResponse.SC_PRECONDITION_FAILED))
+        {
+            if (lastModified > 0 && parseServletDate(response.getHeader(HttpHeaders.LAST_MODIFIED)) == -1)
+                response.setDateHeader(HttpHeaders.LAST_MODIFIED, lastModified);
+            if (tag.length != 0 && response.getHeader(HttpHeaders.ETAG) is null)
+                response.setHeader(HttpHeaders.ETAG, ETag.quoteETagIfNecessary(tag));
+        }
+        return notModified;
     }
 
     string getDescription(bool includeClientInfo)
