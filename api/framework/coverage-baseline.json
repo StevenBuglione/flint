@@ -1,6 +1,9 @@
 {"schema":"flint.api-coverage-baseline/1",
 "unclassified":0,
 "upstreams":{
+"aspectj@1.9.27":{"unclassified":0,"modules":{
+"aspectj":0
+}},
 "hibernate-validator@9.1.6.Final":{"unclassified":0,"modules":{
 "hibernate-validator":0
 }},
