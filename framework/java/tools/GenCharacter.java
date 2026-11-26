@@ -56,11 +56,15 @@ public class GenCharacter {
         return t == Character.DECIMAL_DIGIT_NUMBER || t == Character.LETTER_NUMBER || t == Character.OTHER_NUMBER;
     }
 
+    // One ulong per run: start in bits 0-20, end - start in bits 21-27, step 2 in bit 28, the signed delta in 32-63.
     static void runTable(StringBuilder b, String name, List<int[]> runs) {
-        b.append("private static immutable CaseRun[").append(runs.size()).append("] ").append(name).append(" = [\n");
-        for (int[] r : runs)
-            b.append(String.format("    CaseRun(0x%X, 0x%X, %s, %d),%n", r[0], r[1],
-                    String.format("%,d", r[2]).replace(',', '_'), r[3]));
+        b.append("private static immutable ulong[").append(runs.size()).append("] ").append(name).append(" = [\n");
+        for (int[] r : runs) {
+            int length = r[1] - r[0];
+            if (r[0] > 0x1FFFFF || length > 0x7F || (r[3] != 1 && r[3] != 2)) throw new AssertionError("run " + r[0]);
+            long packed = (r[0] & 0x1FFFFFL) | ((long) length << 21) | ((r[3] == 2 ? 1L : 0L) << 28) | ((long) r[2] << 32);
+            b.append(String.format("    0x%016XUL,%n", packed));
+        }
         b.append("];\n\n");
     }
 
@@ -158,26 +162,22 @@ public class GenCharacter {
                 return within(numberRanges, c);
             }
 
-            private struct CaseRun
-            {
-                uint start, end;
-                int delta;
-                uint step;
-            }
-
-            private dchar mapped(scope const(CaseRun)[] runs, dchar c) pure nothrow @nogc
+            // A case run packed in one ulong (8 bytes, not a 16-byte struct): start in bits 0-20, end - start in bits
+            // 21-27, every second code point when bit 28 is set, and the signed delta in bits 32-63.
+            private dchar mapped(scope const(ulong)[] runs, dchar c) pure nothrow @nogc
             {
                 size_t low, high = runs.length;
                 while (low < high)
                 {
                     const middle = (low + high) / 2;
                     const run = runs[middle];
-                    if (c < run.start)
+                    const start = cast(uint)(run & 0x1F_FFFF);
+                    if (c < start)
                         high = middle;
-                    else if (c > run.end)
+                    else if (c > start + ((run >> 21) & 0x7F))
                         low = middle + 1;
                     else
-                        return (c - run.start) % run.step == 0 ? cast(dchar)(c + run.delta) : c;
+                        return ((run >> 28) & 1) && (c - start) % 2 ? c : cast(dchar)(c + cast(int)(run >> 32));
                 }
                 return c;
             }
