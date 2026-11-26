@@ -1,8 +1,37 @@
 {
   "classes": {
     "org/springframework/ai/document/ContentFormatterTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-commons/tests/document_explicit_formatter_tests.d",
+      "methods": {
+        "ported": [
+          "shouldThrowWhenFormatterIsNull",
+          "shouldThrowWhenIdIsEmpty",
+          "shouldThrowWhenIdIsNull",
+          "shouldThrowWhenMetadataHasNullKey",
+          "shouldThrowWhenMetadataHasNullValue",
+          "shouldThrowWhenMetadataIsNull"
+        ],
+        "skipped": {
+          "builderShouldThrowWhenIdGeneratorIsNull": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
+          "builderShouldThrowWhenMetadataKeyIsNull": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
+          "builderShouldThrowWhenMetadataValueIsNull": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
+          "builderWithCustomIdGenerator": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
+          "builderWithMetadataMap": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
+          "defaultConfigTextFormatter": "Requires the shared default formatter, its configuration, or the default formatter overload.",
+          "differentIds": "Document equality and hash parity remain deferred with full content construction.",
+          "differentText": "Document equality and hash parity remain deferred with full content construction.",
+          "equalDocuments": "Document equality and hash parity remain deferred with full content construction.",
+          "isTextReturnsTrueForTextDocument": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
+          "metadataImmutability": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
+          "mutateTextDocument": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
+          "noExplicitlySetFormatter": "Requires the shared default formatter, its configuration, or the default formatter overload.",
+          "scoreHandling": "This additional text, score, or metadata case remains to be transcribed for the partial class.",
+          "setCustomContentFormatter": "Requires the shared default formatter, its configuration, or the default formatter overload.",
+          "shouldThrowWhenMetadataModeIsNull": "Requires the shared default formatter, its configuration, or the default formatter overload.",
+          "shouldThrowWhenNeitherTextNorMediaAreSet": "Requires Document.Builder and its default ID path."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/ai/document/DocumentBuilderTests.java": {
       "phase": "2",

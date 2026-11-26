@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 176 | 290 | 0 | 15,330 |
+| ai | spring-ai@v2.1.0 | 181 | 294 | 0 | 15,321 |
 | boot | spring-boot@v4.2.0 | 43 | 28 | 2,133 | 13,399 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,469 | 1,387 | 4,848 | 30,130 |
@@ -324,6 +324,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.ai.document.Document#<init>(String,String,Map)` | `flint.ai.document.Document.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.document.Document#getFormattedContent(ContentFormatter,MetadataMode)` | `flint.ai.document.Document.getFormattedContent` | [R5](api-mapping.md#r5-optional-and-nullable-values) | The Nullable mode overload preserves Java null-mode validation. |
+| `org.springframework.ai.document.Document#getMetadata()` | `flint.ai.document.Document.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.document.Document#getText()` | `flint.ai.document.Document.getText` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.document.DocumentMetadata` | `flint.ai.document.DocumentMetadata` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#CONTENT_REF` | `flint.ai.document.DocumentMetadata.CONTENT_REF` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#DISTANCE` | `flint.ai.document.DocumentMetadata.DISTANCE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
@@ -8278,7 +8282,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.deepseek.api | 0 | 210 |
 | org.springframework.ai.deepseek.api.common | 0 | 5 |
 | org.springframework.ai.docker.compose.service.connection.typesense | 0 | 3 |
-| org.springframework.ai.document | 60 | 0 |
+| org.springframework.ai.document | 51 | 0 |
 | org.springframework.ai.document.id | 4 | 0 |
 | org.springframework.ai.elevenlabs | 0 | 61 |
 | org.springframework.ai.elevenlabs.aot | 0 | 3 |
