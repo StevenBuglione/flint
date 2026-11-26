@@ -31,6 +31,7 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopMeter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Gauge.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/FunctionCounter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/AbstractMeter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/util/MeterEquivalence.java
 // Modified by the Flint authors.
@@ -1026,6 +1027,27 @@ interface Counter : Meter
         override Measurements measure()
         {
             return countSample(this);
+        }
+    }
+}
+
+/// A meter that samples a monotonically increasing count.
+interface FunctionCounter : Meter
+{
+    /// Sample the cumulative count.
+    double count();
+
+    private static MeasurementIterable countMeasurement(FunctionCounter counter)
+    {
+        return new SingleMeasurement(&counter.count, Statistic.COUNT);
+    }
+
+    /// Micrometer's default lazy count measurement (R3).
+    mixin template Defaults(alias Measurements = MeasurementIterable, alias sample = countMeasurement)
+    {
+        override Measurements measure()
+        {
+            return sample(this);
         }
     }
 }

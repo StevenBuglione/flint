@@ -17,11 +17,13 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopGauge.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopCounter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopDistributionSummary.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopFunctionCounter.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.noop;
 
 import flint.java.util : Collections, List;
-import flint.micrometer.core.instrument : AbstractMeter, Counter, DistributionSummary, Gauge, Measurement, Meter;
+import flint.micrometer.core.instrument : AbstractMeter, Counter, DistributionSummary,
+    FunctionCounter, Gauge, Measurement, Meter;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot;
 
 @safe:
@@ -99,6 +101,21 @@ class NoopDistributionSummary : NoopMeter, DistributionSummary
     }
 
     mixin DistributionSummary.StatisticsDefaults;
+}
+
+/// A disabled function counter whose count is zero.
+class NoopFunctionCounter : NoopMeter, FunctionCounter
+{
+    /// Retain the ID of the disabled function counter.
+    this(Meter.Id id)
+    {
+        super(id);
+    }
+
+    override double count()
+    {
+        return 0.0;
+    }
 }
 
 /// A disabled gauge whose value is zero.
