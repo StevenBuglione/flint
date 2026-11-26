@@ -655,6 +655,14 @@ probes use 445 and 462 templates respectively.
 | B-104 | **Import the JavaObject mixin from its selective module.** The compatibility export from flint.java.lang uses the same mixin body. | On venus the matched BitSet consumer drops from 218 to 29 DMD templates, and its package measurement drops from 483 to 294. Both imports link 15,220 O3 and 12,420 Oz bytes. The standalone JavaObject probe measures 1,061 O3 and 1,053 Oz bytes with 38 DMD templates. Generated AOT is byte-identical in all three benchmark apps. | JavaObject leaf budget and exact Java link closure. |
 | B-97 | **Link only the target’s lexical Path provider.** The default factory links the Unix parser on POSIX and the Windows parser on Windows. Name operations use slices of the normalized spelling. The R7 facade passes strings in a stack array, and R26 treats null strings and arrays as empty. | Venus pinned probes after the string R26 clarification at `5a3c200a4` and `9e6426cb7`. Standalone Path adds 10,852 O3 and 9,316 Oz loadable bytes with 481 templates. The combined Path and exception fixture adds 13,436 O3 and 10,652 Oz bytes with 483 templates. The earlier probes with string-null exception paths measured 13,828 O3 bytes standalone and 14,108 combined. | Standalone and combined receipts, the two target objects, lexical contract tests and linker closure. |
 
+SpEL and servlet integral parsing share the pinned Java 21 BMP decimal digit
+table through a dependency-free leaf. The matched venus probes at
+`58847dd84` and `ff14ede48` measured 86,946 to 87,018 incremental O3 bytes and
+82,758 to 82,830 at Oz for Expression, with 1,680 DMD templates in both builds.
+The Java probe measured 129,496 O3 bytes, 122,144 Oz bytes and 4,440 templates
+in both builds. The isolated digit-leaf probe adds 704 O3 and 312 Oz loadable
+bytes. Both profiles pass the JDK link-closure audit.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
