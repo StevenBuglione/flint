@@ -1943,7 +1943,6 @@
       "org/springframework/test/web/servlet/result/MockMvcResultMatchersTests.java",
       "org/springframework/test/web/servlet/result/ModelResultMatchersTests.java",
       "org/springframework/test/web/servlet/result/PrintingResultHandlerTests.java",
-      "org/springframework/test/web/servlet/result/StatusResultMatchersTests.java",
       "org/springframework/test/web/servlet/result/XpathResultMatchersTests.java",
       "org/springframework/test/web/servlet/samples/client/context/AsyncControllerJavaConfigTests.java",
       "org/springframework/test/web/servlet/samples/client/context/JavaConfigTests.java",

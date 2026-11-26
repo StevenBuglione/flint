@@ -465,8 +465,14 @@
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/result/StatusResultMatchersTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/status_result_matchers_tests.d",
+      "methods": {
+        "ported": [
+          "httpStatusCodeResultMatchers",
+          "statusRanges"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/test/web/servlet/result/XpathResultMatchersTests.java": {
       "phase": "2",

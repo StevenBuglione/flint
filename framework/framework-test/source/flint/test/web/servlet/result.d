@@ -14,7 +14,7 @@ Hamcrest-matcher overloads are not ported (Hamcrest is a separate library).
 module flint.test.web.servlet.result;
 
 import flint.http : HttpStatus, MediaType;
-import flint.java.lang : AssertionError;
+import flint.java.lang : AssertionError, IllegalStateException, Integer;
 import flint.test.util : AssertionErrors, JsonPathExpectationsHelper;
 import flint.test.web.servlet : MvcResult, ResultHandler, ResultMatcher;
 
@@ -70,8 +70,13 @@ struct MockMvcResultMatchers
 }
 
 /// `StatusResultMatchers`.
-final class StatusResultMatchers
+class StatusResultMatchers
 {
+    /// Obtain the standard instance through `MockMvcResultMatchers.status()`.
+    protected this() pure nothrow @nogc
+    {
+    }
+
     /// Asserts the status code is `status`.
     ResultMatcher is_(int status)
     {
@@ -88,153 +93,441 @@ final class StatusResultMatchers
         });
     }
 
-    private ResultMatcher series(int hundreds, string name)
+    private ResultMatcher series(HttpStatus.Series expected)
     {
         return ResultMatcher.of((MvcResult result) {
             const actual = result.getResponse().getStatus();
-            AssertionErrors.assertEquals("Range for response status value " ~ intText(actual), name,
-                seriesName(actual / 100));
+            auto actualSeries = HttpStatus.Series.resolve(actual);
+            if (actualSeries is null)
+                throw new IllegalStateException("HTTP status series must not be null");
+            if (*actualSeries != expected)
+                AssertionErrors.fail("Range for response status value " ~ Integer.toString(actual),
+                    expected.name(), actualSeries.name());
         });
     }
 
-    private static string seriesName(int hundreds)
-    {
-        static immutable string[6] names = [
-            "null", "INFORMATIONAL", "SUCCESSFUL", "REDIRECTION", "CLIENT_ERROR", "SERVER_ERROR"
-        ];
-        return hundreds >= 1 && hundreds <= 5 ? names[hundreds] : "null";
-    }
-
-    private static string intText(int value)
-    {
-        import std.conv : to;
-
-        return value.to!string;
-    }
-
+    /// Asserts that the response status is in the 1xx range.
     ResultMatcher is1xxInformational()
     {
-        return series(1, "INFORMATIONAL");
-    } ///
+        return series(HttpStatus.Series.INFORMATIONAL);
+    }
+
+    /// Asserts that the response status is in the 2xx range.
     ResultMatcher is2xxSuccessful()
     {
-        return series(2, "SUCCESSFUL");
-    } ///
+        return series(HttpStatus.Series.SUCCESSFUL);
+    }
+
+    /// Asserts that the response status is in the 3xx range.
     ResultMatcher is3xxRedirection()
     {
-        return series(3, "REDIRECTION");
-    } ///
+        return series(HttpStatus.Series.REDIRECTION);
+    }
+
+    /// Asserts that the response status is in the 4xx range.
     ResultMatcher is4xxClientError()
     {
-        return series(4, "CLIENT_ERROR");
-    } ///
+        return series(HttpStatus.Series.CLIENT_ERROR);
+    }
+
+    /// Asserts that the response status is in the 5xx range.
     ResultMatcher is5xxServerError()
     {
-        return series(5, "SERVER_ERROR");
-    } ///
+        return series(HttpStatus.Series.SERVER_ERROR);
+    }
 
+    /// Asserts the status is 100 (CONTINUE).
+    ResultMatcher isContinue()
+    {
+        return matcher(HttpStatus.CONTINUE);
+    }
+
+    /// Asserts the status is 101 (SWITCHING_PROTOCOLS).
+    ResultMatcher isSwitchingProtocols()
+    {
+        return matcher(HttpStatus.SWITCHING_PROTOCOLS);
+    }
+
+    /// Asserts the status is 102 (PROCESSING).
+    deprecated("since 7.0") ResultMatcher isProcessing()
+    {
+        return matcher(HttpStatus.PROCESSING);
+    }
+
+    /// Asserts the status is 103 (EARLY_HINTS).
+    ResultMatcher isEarlyHints()
+    {
+        return matcher(HttpStatus.EARLY_HINTS);
+    }
+
+    /// Asserts the status is 200 (OK).
     ResultMatcher isOk()
     {
         return matcher(HttpStatus.OK);
-    } ///
+    }
+
+    /// Asserts the status is 201 (CREATED).
     ResultMatcher isCreated()
     {
         return matcher(HttpStatus.CREATED);
-    } ///
+    }
+
+    /// Asserts the status is 202 (ACCEPTED).
     ResultMatcher isAccepted()
     {
         return matcher(HttpStatus.ACCEPTED);
-    } ///
+    }
+
+    /// Asserts the status is 203 (NON_AUTHORITATIVE_INFORMATION).
+    ResultMatcher isNonAuthoritativeInformation()
+    {
+        return matcher(HttpStatus.NON_AUTHORITATIVE_INFORMATION);
+    }
+
+    /// Asserts the status is 204 (NO_CONTENT).
     ResultMatcher isNoContent()
     {
         return matcher(HttpStatus.NO_CONTENT);
-    } ///
+    }
+
+    /// Asserts the status is 205 (RESET_CONTENT).
+    ResultMatcher isResetContent()
+    {
+        return matcher(HttpStatus.RESET_CONTENT);
+    }
+
+    /// Asserts the status is 206 (PARTIAL_CONTENT).
+    ResultMatcher isPartialContent()
+    {
+        return matcher(HttpStatus.PARTIAL_CONTENT);
+    }
+
+    /// Asserts the status is 207 (MULTI_STATUS).
+    ResultMatcher isMultiStatus()
+    {
+        return matcher(HttpStatus.MULTI_STATUS);
+    }
+
+    /// Asserts the status is 208 (ALREADY_REPORTED).
+    ResultMatcher isAlreadyReported()
+    {
+        return matcher(HttpStatus.ALREADY_REPORTED);
+    }
+
+    /// Asserts the status is 226 (IM_USED).
+    ResultMatcher isImUsed()
+    {
+        return matcher(HttpStatus.IM_USED);
+    }
+
+    /// Asserts the status is 300 (MULTIPLE_CHOICES).
+    ResultMatcher isMultipleChoices()
+    {
+        return matcher(HttpStatus.MULTIPLE_CHOICES);
+    }
+
+    /// Asserts the status is 301 (MOVED_PERMANENTLY).
     ResultMatcher isMovedPermanently()
     {
         return matcher(HttpStatus.MOVED_PERMANENTLY);
-    } ///
+    }
+
+    /// Asserts the status is 302 (FOUND).
     ResultMatcher isFound()
     {
         return matcher(HttpStatus.FOUND);
-    } ///
+    }
+
+    /// Asserts the status is 303 (SEE_OTHER).
     ResultMatcher isSeeOther()
     {
         return matcher(HttpStatus.SEE_OTHER);
-    } ///
+    }
+
+    /// Asserts the status is 304 (NOT_MODIFIED).
     ResultMatcher isNotModified()
     {
         return matcher(HttpStatus.NOT_MODIFIED);
-    } ///
+    }
+
+    /// Asserts the status is 307 (TEMPORARY_REDIRECT).
     ResultMatcher isTemporaryRedirect()
     {
         return matcher(HttpStatus.TEMPORARY_REDIRECT);
-    } ///
+    }
+
+    /// Asserts the status is 308 (PERMANENT_REDIRECT).
     ResultMatcher isPermanentRedirect()
     {
         return matcher(HttpStatus.PERMANENT_REDIRECT);
-    } ///
+    }
+
+    /// Asserts the status is 400 (BAD_REQUEST).
     ResultMatcher isBadRequest()
     {
         return matcher(HttpStatus.BAD_REQUEST);
-    } ///
+    }
+
+    /// Asserts the status is 401 (UNAUTHORIZED).
     ResultMatcher isUnauthorized()
     {
         return matcher(HttpStatus.UNAUTHORIZED);
-    } ///
+    }
+
+    /// Asserts the status is 402 (PAYMENT_REQUIRED).
+    ResultMatcher isPaymentRequired()
+    {
+        return matcher(HttpStatus.PAYMENT_REQUIRED);
+    }
+
+    /// Asserts the status is 403 (FORBIDDEN).
     ResultMatcher isForbidden()
     {
         return matcher(HttpStatus.FORBIDDEN);
-    } ///
+    }
+
+    /// Asserts the status is 404 (NOT_FOUND).
     ResultMatcher isNotFound()
     {
         return matcher(HttpStatus.NOT_FOUND);
-    } ///
+    }
+
+    /// Asserts the status is 405 (METHOD_NOT_ALLOWED).
     ResultMatcher isMethodNotAllowed()
     {
         return matcher(HttpStatus.METHOD_NOT_ALLOWED);
-    } ///
+    }
+
+    /// Asserts the status is 406 (NOT_ACCEPTABLE).
     ResultMatcher isNotAcceptable()
     {
         return matcher(HttpStatus.NOT_ACCEPTABLE);
-    } ///
+    }
+
+    /// Asserts the status is 407 (PROXY_AUTHENTICATION_REQUIRED).
+    ResultMatcher isProxyAuthenticationRequired()
+    {
+        return matcher(HttpStatus.PROXY_AUTHENTICATION_REQUIRED);
+    }
+
+    /// Asserts the status is 408 (REQUEST_TIMEOUT).
+    ResultMatcher isRequestTimeout()
+    {
+        return matcher(HttpStatus.REQUEST_TIMEOUT);
+    }
+
+    /// Asserts the status is 409 (CONFLICT).
     ResultMatcher isConflict()
     {
         return matcher(HttpStatus.CONFLICT);
-    } ///
+    }
+
+    /// Asserts the status is 410 (GONE).
     ResultMatcher isGone()
     {
         return matcher(HttpStatus.GONE);
-    } ///
+    }
+
+    /// Asserts the status is 411 (LENGTH_REQUIRED).
+    ResultMatcher isLengthRequired()
+    {
+        return matcher(HttpStatus.LENGTH_REQUIRED);
+    }
+
+    /// Asserts the status is 412 (PRECONDITION_FAILED).
+    ResultMatcher isPreconditionFailed()
+    {
+        return matcher(HttpStatus.PRECONDITION_FAILED);
+    }
+
+    /// Asserts the status is 413 (CONTENT_TOO_LARGE).
+    ResultMatcher isContentTooLarge()
+    {
+        return matcher(HttpStatus.CONTENT_TOO_LARGE);
+    }
+
+    /// Asserts the status is 413 (PAYLOAD_TOO_LARGE).
+    deprecated("since 7.0") ResultMatcher isPayloadTooLarge()
+    {
+        return matcher(HttpStatus.PAYLOAD_TOO_LARGE);
+    }
+
+    /// Asserts the status is 414 (URI_TOO_LONG).
+    ResultMatcher isUriTooLong()
+    {
+        return matcher(HttpStatus.URI_TOO_LONG);
+    }
+
+    /// Asserts the status is 415 (UNSUPPORTED_MEDIA_TYPE).
     ResultMatcher isUnsupportedMediaType()
     {
         return matcher(HttpStatus.UNSUPPORTED_MEDIA_TYPE);
-    } ///
+    }
+
+    /// Asserts the status is 416 (REQUESTED_RANGE_NOT_SATISFIABLE).
+    ResultMatcher isRequestedRangeNotSatisfiable()
+    {
+        return matcher(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
+    }
+
+    /// Asserts the status is 417 (EXPECTATION_FAILED).
+    ResultMatcher isExpectationFailed()
+    {
+        return matcher(HttpStatus.EXPECTATION_FAILED);
+    }
+
+    /// Asserts the status is 418 (I_AM_A_TEAPOT).
+    deprecated("since 7.0") ResultMatcher isIAmATeapot()
+    {
+        return matcher(HttpStatus.I_AM_A_TEAPOT);
+    }
+
+    /// Asserts the status is 421 (MISDIRECTED_REQUEST).
+    ResultMatcher isMisdirectedRequest()
+    {
+        return matcher(HttpStatus.MISDIRECTED_REQUEST);
+    }
+
+    /// Asserts the status is 422 (UNPROCESSABLE_CONTENT).
     ResultMatcher isUnprocessableContent()
     {
         return matcher(HttpStatus.UNPROCESSABLE_CONTENT);
-    } ///
+    }
+
+    /// Asserts the status is 422 (UNPROCESSABLE_ENTITY).
+    deprecated("since 7.0") ResultMatcher isUnprocessableEntity()
+    {
+        return matcher(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    /// Asserts the status is 423 (LOCKED).
+    ResultMatcher isLocked()
+    {
+        return matcher(HttpStatus.LOCKED);
+    }
+
+    /// Asserts the status is 424 (FAILED_DEPENDENCY).
+    ResultMatcher isFailedDependency()
+    {
+        return matcher(HttpStatus.FAILED_DEPENDENCY);
+    }
+
+    /// Asserts the status is 425 (TOO_EARLY).
+    ResultMatcher isTooEarly()
+    {
+        return matcher(HttpStatus.TOO_EARLY);
+    }
+
+    /// Asserts the status is 426 (UPGRADE_REQUIRED).
+    ResultMatcher isUpgradeRequired()
+    {
+        return matcher(HttpStatus.UPGRADE_REQUIRED);
+    }
+
+    /// Asserts the status is 428 (PRECONDITION_REQUIRED).
+    ResultMatcher isPreconditionRequired()
+    {
+        return matcher(HttpStatus.PRECONDITION_REQUIRED);
+    }
+
+    /// Asserts the status is 429 (TOO_MANY_REQUESTS).
     ResultMatcher isTooManyRequests()
     {
         return matcher(HttpStatus.TOO_MANY_REQUESTS);
-    } ///
+    }
+
+    /// Asserts the status is 431 (REQUEST_HEADER_FIELDS_TOO_LARGE).
+    ResultMatcher isRequestHeaderFieldsTooLarge()
+    {
+        return matcher(HttpStatus.REQUEST_HEADER_FIELDS_TOO_LARGE);
+    }
+
+    /// Asserts the status is 451 (UNAVAILABLE_FOR_LEGAL_REASONS).
+    ResultMatcher isUnavailableForLegalReasons()
+    {
+        return matcher(HttpStatus.UNAVAILABLE_FOR_LEGAL_REASONS);
+    }
+
+    /// Asserts the status is 500 (INTERNAL_SERVER_ERROR).
     ResultMatcher isInternalServerError()
     {
         return matcher(HttpStatus.INTERNAL_SERVER_ERROR);
-    } ///
+    }
+
+    /// Asserts the status is 501 (NOT_IMPLEMENTED).
     ResultMatcher isNotImplemented()
     {
         return matcher(HttpStatus.NOT_IMPLEMENTED);
-    } ///
+    }
+
+    /// Asserts the status is 502 (BAD_GATEWAY).
+    ResultMatcher isBadGateway()
+    {
+        return matcher(HttpStatus.BAD_GATEWAY);
+    }
+
+    /// Asserts the status is 503 (SERVICE_UNAVAILABLE).
     ResultMatcher isServiceUnavailable()
     {
         return matcher(HttpStatus.SERVICE_UNAVAILABLE);
-    } ///
+    }
+
+    /// Asserts the status is 504 (GATEWAY_TIMEOUT).
+    ResultMatcher isGatewayTimeout()
+    {
+        return matcher(HttpStatus.GATEWAY_TIMEOUT);
+    }
+
+    /// Asserts the status is 505 (HTTP_VERSION_NOT_SUPPORTED).
+    ResultMatcher isHttpVersionNotSupported()
+    {
+        return matcher(HttpStatus.HTTP_VERSION_NOT_SUPPORTED);
+    }
+
+    /// Asserts the status is 506 (VARIANT_ALSO_NEGOTIATES).
+    ResultMatcher isVariantAlsoNegotiates()
+    {
+        return matcher(HttpStatus.VARIANT_ALSO_NEGOTIATES);
+    }
+
+    /// Asserts the status is 507 (INSUFFICIENT_STORAGE).
+    ResultMatcher isInsufficientStorage()
+    {
+        return matcher(HttpStatus.INSUFFICIENT_STORAGE);
+    }
+
+    /// Asserts the status is 508 (LOOP_DETECTED).
+    ResultMatcher isLoopDetected()
+    {
+        return matcher(HttpStatus.LOOP_DETECTED);
+    }
+
+    /// Asserts the status is 509 (BANDWIDTH_LIMIT_EXCEEDED).
+    deprecated("since 7.0") ResultMatcher isBandwidthLimitExceeded()
+    {
+        return matcher(HttpStatus.BANDWIDTH_LIMIT_EXCEEDED);
+    }
+
+    /// Asserts the status is 510 (NOT_EXTENDED).
+    deprecated("since 7.0") ResultMatcher isNotExtended()
+    {
+        return matcher(HttpStatus.NOT_EXTENDED);
+    }
+
+    /// Asserts the status is 511 (NETWORK_AUTHENTICATION_REQUIRED).
+    ResultMatcher isNetworkAuthenticationRequired()
+    {
+        return matcher(HttpStatus.NETWORK_AUTHENTICATION_REQUIRED);
+    }
 
     /// Asserts the `sendError` message.
     ResultMatcher reason(string reason)
     {
         return ResultMatcher.of((MvcResult result) {
-            AssertionErrors.assertEquals("Response status reason", reason, result.getResponse().getErrorMessage());
+            const actual = result.getResponse().getErrorMessage();
+            if (reason != actual || (reason is null) != (actual is null))
+                AssertionErrors.fail("Response status reason", reason is null ? "null" : reason,
+                    actual is null ? "null" : actual);
         });
     }
 }
