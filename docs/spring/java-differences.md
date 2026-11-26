@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,096 | 259 | 1,871 | 15,195 |
+| framework | openjdk@21.0.13 | 1,089 | 266 | 1,871 | 15,195 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -205,8 +205,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | Repo | Java | Flint | Note |
 | --- | --- | --- | --- |
 | framework | `io.micrometer.observation.ObservationPredicate` | `flint.micrometer.observation.ObservationPredicate` | Inherits the test method from Flint's Java BiPredicate. Its combinators are deferred with the Java provider. |
-| framework | `java.lang.RuntimeException#<init>(String,Throwable)` | `flint.java.lang.RuntimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
-| framework | `java.lang.RuntimeException#<init>(String,Throwable,boolean,boolean)` | `flint.java.lang.RuntimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| framework | `java.lang.RuntimeException#<init>(Throwable)` | `flint.java.lang.RuntimeException.this` | A cause-specific toString override is not invoked. Flint derives the detail from the cause class name and message while retaining the original cause. |
 | framework | `java.math.BigInteger` | `flint.java.math.BigInteger` | A null byte-array argument counts as empty under R26. Java throws NullPointerException. |
 | framework | `java.math.RoundingMode` | `flint.java.math.roundingmode.RoundingMode` | A null name counts as empty text under R26. Java throws NullPointerException. |
 | framework | `java.time.DateTimeException#<init>(String,Throwable)` | `flint.java.time.DateTimeException.this` | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
@@ -1942,7 +1941,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.lang.AssertionError` | `flint.java.lang.AssertionError` | [R8](api-mapping.md#r8-exceptions) | Flint uses the catchable D Exception base. The inherited Java initCause method is unavailable. |
+| `java.lang.AssertionError` | `flint.java.lang.AssertionError` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Flint uses the catchable D Exception base. The inherited Java initCause method is unavailable. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.AssertionError#<init>(String,Throwable)` | `flint.java.lang.AssertionError.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.IndexOutOfBoundsException` | `flint.java.lang.IndexOutOfBoundsException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.IndexOutOfBoundsException#<init>(String)` | `flint.java.lang.IndexOutOfBoundsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.RuntimeException` | `flint.java.lang.RuntimeException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
+| `java.lang.RuntimeException#<init>(String)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.RuntimeException#<init>(String,Throwable)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| `java.lang.RuntimeException#<init>(String,Throwable,boolean,boolean)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 
 #### java.math
 
