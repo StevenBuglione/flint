@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 514 | 17 | 1 | 2,763 |
-| framework | jackson-databind@3.1.8 | 608 | 55 | 5 | 9,799 |
+| framework | jackson-databind@3.1.8 | 608 | 61 | 5 | 9,793 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 159 | 143 | 0 | 2,088 |
@@ -4183,6 +4183,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `tools.jackson.databind.JsonNode#findValuesAsString(String)` | `flint.jackson.databind.node.JsonNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `tools.jackson.databind.JsonNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.JsonNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.JsonNode#require()` | `flint.jackson.databind.node.JsonNode.require` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requireNonNull()` | `flint.jackson.databind.node.JsonNode.requireNonNull` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requiredAt(String)` | `flint.jackson.databind.node.JsonNode.requiredAt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [D-JACKSON-11](api-mapping.md#deviations) |  |
@@ -4236,6 +4238,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `tools.jackson.databind.node.ArrayNode#equals(Object)` | `flint.jackson.databind.node.ArrayNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.databind.node.ArrayNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.ArrayNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.node.BigIntegerNode#equals(Object)` | `flint.jackson.databind.node.BigIntegerNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.BooleanNode#equals(Object)` | `flint.jackson.databind.node.BooleanNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.DecimalNode#equals(Object)` | `flint.jackson.databind.node.DecimalNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
@@ -4244,10 +4247,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.databind.node.IntNode#equals(Object)` | `flint.jackson.databind.node.IntNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.LongNode#equals(Object)` | `flint.jackson.databind.node.LongNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.MissingNode#equals(Object)` | `flint.jackson.databind.node.MissingNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.databind.node.MissingNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.MissingNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.node.NullNode#equals(Object)` | `flint.jackson.databind.node.NullNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.ObjectNode#equals(Object)` | `flint.jackson.databind.node.ObjectNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.databind.node.ObjectNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.ObjectNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.node.ShortNode#equals(Object)` | `flint.jackson.databind.node.ShortNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.StringNode#equals(Object)` | `flint.jackson.databind.node.StringNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.databind.node.ValueNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.ValueNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 ### security
 
@@ -10155,7 +10161,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.tree | 2 | 0 |
 | tools.jackson.core.type | 48 | 0 |
 | tools.jackson.core.util | 458 | 0 |
-| tools.jackson.databind | 1,499 | 0 |
+| tools.jackson.databind | 1,497 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
 | tools.jackson.databind.cfg | 763 | 0 |
 | tools.jackson.databind.deser | 587 | 0 |
@@ -10181,7 +10187,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.databind.jsontype | 138 | 0 |
 | tools.jackson.databind.jsontype.impl | 277 | 0 |
 | tools.jackson.databind.module | 103 | 0 |
-| tools.jackson.databind.node | 799 | 0 |
+| tools.jackson.databind.node | 795 | 0 |
 | tools.jackson.databind.ser | 339 | 0 |
 | tools.jackson.databind.ser.bean | 115 | 0 |
 | tools.jackson.databind.ser.impl | 86 | 0 |
@@ -10657,17 +10663,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.JsonNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
-| framework | `tools.jackson.databind.JsonNode#findValuesAsString(String)` | 2 | Standalone application link verification is pending. On top of the node-valued searches the string overloads add 984 loadable bytes to gs-rest-service and 976 to petclinic-rest in matched Oz builds. |
-| framework | `tools.jackson.databind.JsonNode#findValuesAsString(String,List)` | 2 | Standalone application link verification is pending. On top of the node-valued searches the string overloads add 984 loadable bytes to gs-rest-service and 976 to petclinic-rest in matched Oz builds. |
 | framework | `tools.jackson.databind.node.ArrayNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ArrayNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
-| framework | `tools.jackson.databind.node.ArrayNode#findValuesAsString(String,List)` | 2 | Standalone application link verification is pending. On top of the node-valued searches the string overloads add 984 loadable bytes to gs-rest-service and 976 to petclinic-rest in matched Oz builds. |
 | framework | `tools.jackson.databind.node.MissingNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.MissingNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
-| framework | `tools.jackson.databind.node.MissingNode#findValuesAsString(String,List)` | 2 | Standalone application link verification is pending. On top of the node-valued searches the string overloads add 984 loadable bytes to gs-rest-service and 976 to petclinic-rest in matched Oz builds. |
 | framework | `tools.jackson.databind.node.ObjectNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ObjectNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
-| framework | `tools.jackson.databind.node.ObjectNode#findValuesAsString(String,List)` | 2 | Standalone application link verification is pending. On top of the node-valued searches the string overloads add 984 loadable bytes to gs-rest-service and 976 to petclinic-rest in matched Oz builds. |
 | framework | `tools.jackson.databind.node.ValueNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ValueNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
-| framework | `tools.jackson.databind.node.ValueNode#findValuesAsString(String,List)` | 2 | Standalone application link verification is pending. On top of the node-valued searches the string overloads add 984 loadable bytes to gs-rest-service and 976 to petclinic-rest in matched Oz builds. |

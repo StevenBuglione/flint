@@ -11,7 +11,10 @@
 module json_node_find_methods_test;
 
 import flint.jackson.databind : JsonMapper;
-import flint.jackson.databind.node : JsonNodeFactory;
+import flint.jackson.databind.node : JsonNodeFactory, MissingNode;
+import flint.java.lang : NullPointerException;
+import flint.java.util : ArrayList;
+import std.exception : assertThrown;
 
 @safe:
 
@@ -57,4 +60,38 @@ unittest
     auto nested = root.get("last").asArray();
     assert(nested.findPath("target").intValue() == 2);
     assert(nested.findParent("target") is nested.get(0).get(0));
+}
+
+@("string-valued assertions from testMatchingMultiple")
+unittest
+{
+    auto root = JsonMapper.builder().build().readTree(sample);
+    auto values = root.findValuesAsString("value");
+    assert(values.size() == 2);
+    assert(values.get(0) == "3");
+    assert(values.get(1) == "42");
+}
+
+@("string searches preserve traversal order and reuse the result list")
+unittest
+{
+    auto root = JsonMapper.builder().build()
+        .readTree(`{"first":{"target":1},"target":"value","last":[[{"target":2}]]}`).asObject();
+    auto values = new ArrayList!string();
+    values.add("seed");
+    assert(root.findValuesAsString("target", values) is values);
+    assert(values.toArray() == ["seed", "1", "value", "2"]);
+    assert(root.findValuesAsString("absent").isEmpty());
+    assert(root.findValuesAsString("absent", null) is null);
+    assert(MissingNode.getInstance().findValuesAsString("target", values) is values);
+}
+
+@("string searches distinguish a null name from an empty property name")
+unittest
+{
+    auto root = JsonMapper.builder().build().readTree(`{"":42}`);
+    assert(root.findValuesAsString("").get(0) == "42");
+    assertThrown!NullPointerException(root.findValuesAsString(cast(string) null));
+    auto empty = JsonNodeFactory.instance.objectNode();
+    assert(empty.findValuesAsString(cast(string) null).isEmpty());
 }

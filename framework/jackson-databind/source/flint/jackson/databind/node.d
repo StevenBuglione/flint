@@ -21,6 +21,7 @@ import flint.jackson.core : JsonGenerator, JsonParser, JsonPointer, JsonToken, O
 import flint.jackson.core.json : JsonFactory;
 import flint.jackson.core.util : ByteArrayBuilder, DefaultPrettyPrinter;
 import flint.jackson.databind.exc : DatabindException;
+import flint.java.util : ArrayList, Collections, List;
 import flint.serde.java_number : javaDoubleString, javaFloatString;
 
 @safe:
@@ -467,6 +468,19 @@ abstract class JsonNode
         return null;
     }
 
+    /// The matching property values coerced with `asString`, in traversal order.
+    final List!string findValuesAsString(string propertyName)
+    {
+        auto values = findValuesAsString(propertyName, null);
+        return values is null ? Collections.emptyList!string() : values;
+    }
+
+    /// Append matching values as strings, creating the list at the first match if needed.
+    List!string findValuesAsString(string, List!string foundSoFar)
+    {
+        return foundSoFar;
+    }
+
     /// The String value of a String node; throws for other nodes.
     string stringValue()
     {
@@ -746,6 +760,7 @@ final class ObjectNode : ContainerNode
     alias asLong = JsonNode.asLong;
     alias asDouble = JsonNode.asDouble;
     alias asBoolean = JsonNode.asBoolean;
+    alias findValuesAsString = JsonNode.findValuesAsString;
 
     private string[] keys;
     private JsonNode[string] children;
@@ -828,6 +843,32 @@ final class ObjectNode : ContainerNode
             if (auto parent = children[k].findParent(propertyName))
                 return cast(ObjectNode) parent;
         return null;
+    }
+
+    override List!string findValuesAsString(string propertyName, List!string foundSoFar)
+    {
+        checkFindProperty(propertyName);
+        foreach (key; keys)
+        {
+            auto child = children[key];
+            if (key == propertyName)
+            {
+                if (foundSoFar is null)
+                    foundSoFar = new ArrayList!string();
+                foundSoFar.add(child.asString());
+            }
+            else
+                foundSoFar = child.findValuesAsString(propertyName, foundSoFar);
+        }
+        return foundSoFar;
+    }
+
+    private void checkFindProperty(string propertyName)
+    {
+        import flint.java.lang : NullPointerException;
+
+        if (propertyName is null && keys.length != 0)
+            throw new NullPointerException("Property name is null");
     }
 
     override ObjectNode asObject()
@@ -1002,6 +1043,7 @@ final class ArrayNode : ContainerNode
     alias asLong = JsonNode.asLong;
     alias asDouble = JsonNode.asDouble;
     alias asBoolean = JsonNode.asBoolean;
+    alias findValuesAsString = JsonNode.findValuesAsString;
 
     private JsonNode[] elements;
 
@@ -1061,6 +1103,13 @@ final class ArrayNode : ContainerNode
             if (auto parent = child.findParent(propertyName))
                 return cast(ObjectNode) parent;
         return null;
+    }
+
+    override List!string findValuesAsString(string propertyName, List!string foundSoFar)
+    {
+        foreach (child; elements)
+            foundSoFar = child.findValuesAsString(propertyName, foundSoFar);
+        return foundSoFar;
     }
 
     override ArrayNode asArray()
@@ -1226,9 +1275,16 @@ abstract class ValueNode : JsonNode
         return false;
     }
 
+    alias findValuesAsString = JsonNode.findValuesAsString;
+
     final override ObjectNode findParent(string)
     {
         return null;
+    }
+
+    final override List!string findValuesAsString(string, List!string foundSoFar)
+    {
+        return foundSoFar;
     }
 
     override JsonNode deepCopy()

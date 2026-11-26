@@ -2392,7 +2392,7 @@
         "skipped": {
           "testFindParents4229": "List-valued findParents is deferred pending the Java List fa\u00e7ade budget.",
           "testFindValues4229": "List-valued findValues is deferred pending the Java List fa\u00e7ade budget.",
-          "testMatchingMultiple": "This test needs all three plural List-valued find methods.",
+          "testMatchingMultiple": "Its string-valued assertions run in the named D test. The remainder needs the deferred node-valued searches.",
           "testNonMatching": "The singular assertions run separately; this test also requires the plural empty lists."
         }
       },
