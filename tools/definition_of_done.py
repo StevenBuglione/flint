@@ -517,9 +517,9 @@ def upstream_inventory(module, root=ROOT, caches=None):
             if (base / 'test' / 'jdk').is_dir():
                 return jtreg_inventory(module, base / 'test' / 'jdk', table, manifest_packages(module, root))
             keys = set()
-            for path in [*base.rglob('*Tests.java'), *base.rglob('*Test.java')]:
+            for path in base.rglob('*.java'):
                 text = str(path.relative_to(base))
-                if '/src/test/java/' not in '/' + text:
+                if '/src/test/java/' not in '/' + text or not is_test_class(path):
                     continue
                 built = ('/' + text).split('/src/test/java/', 1)[0].rsplit('/', 1)[-1]
                 if module.upstream_modules and built not in module.upstream_modules:
@@ -540,6 +540,20 @@ def manifest_packages(module, root=ROOT):
     if not path.is_file():
         return None
     return {t['package'] for t in json.loads(path.read_text()).get('types', [])}
+
+
+# JUnit 5 test annotations; '@Test' also matches @TestFactory and @TestTemplate.
+TEST_ANNOTATIONS = ('@Test', '@ParameterizedTest', '@RepeatedTest')
+
+
+def is_test_class(path):
+    """Whether a file under src/test/java is an upstream test class: it declares a JUnit test method (whatever its name,
+    e.g. jackson-databind's TestNamingStrategyStd.java), and its own top-level class is not abstract (an abstract base
+    runs only through its subclasses, which are listed). Helper-only files have no test annotation."""
+    text = path.read_text(errors='replace')
+    if not any(a in text for a in TEST_ANNOTATIONS):
+        return False
+    return not re.search(r'\babstract\s+(?:[a-z]+\s+)*class\s+' + re.escape(path.stem) + r'\b', text)
 
 
 def jtreg_inventory(module, jdk, table, packages=None):

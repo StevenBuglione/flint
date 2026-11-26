@@ -772,6 +772,10 @@
       "phase": "2",
       "status": "deferred"
     },
+    "org/hibernate/validator/test/internal/engine/groups/sequence/SequenceOnObjectsWithCycles.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/hibernate/validator/test/internal/engine/groups/sequence/SequenceTest.java": {
       "phase": "2",
       "status": "deferred"

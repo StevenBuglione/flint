@@ -480,6 +480,10 @@
       "phase": "2",
       "status": "deferred"
     },
+    "org/springframework/ai/model/tool/DefaultToolCallingManagerIT.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/ai/model/tool/DefaultToolCallingManagerTest.java": {
       "phase": "2",
       "status": "deferred"

@@ -281,7 +281,7 @@ class UpstreamTests(unittest.TestCase):
         for cls in classes:
             path = self.cache / 'spring-framework-v7.1.0' / 'spring-jdbc' / 'src' / 'test' / 'java' / cls
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text('class X {}')
+            path.write_text('class X { @Test void t() {} }')
 
     def test_drafting_reads_headers_and_names(self):
         record = dod.draft(module(), self.root)
@@ -323,6 +323,16 @@ class UpstreamTests(unittest.TestCase):
         self.assertIn('  org/springframework/jdbc/core/JdbcTemplateTests.java', result.messages)
         self.assertFalse(any('OtherModuleTests' in m for m in result.messages))
 
+    def test_tests_are_found_by_annotation_not_name(self):
+        base = self.cache / 'spring-framework-v7.1.0' / 'spring-jdbc' / 'src' / 'test' / 'java' / 'org' / 'springframework' / 'jdbc'
+        base.mkdir(parents=True, exist_ok=True)
+        (base / 'TestNamingStrategyStd.java').write_text('class TestNamingStrategyStd { @ParameterizedTest void p() {} }')
+        (base / 'AbstractJdbcTests.java').write_text('public abstract class AbstractJdbcTests { @Test void t() {} }')
+        (base / 'FixtureSupport.java').write_text('class FixtureSupport { }')
+        (base / 'RowTests.java').write_text('class RowTests { @Test void t() {} }')
+        self.assertEqual(dod.upstream_inventory(module(), self.root, [self.cache]), [
+            'org/springframework/jdbc/RowTests.java', 'org/springframework/jdbc/TestNamingStrategyStd.java'])
+
     def test_the_inventory_keeps_to_the_module_s_build_modules(self):
         dod.draft(module(), self.root)
         self.inventory('org/springframework/jdbc/support/JdbcUtilsTests.java',
@@ -330,7 +340,7 @@ class UpstreamTests(unittest.TestCase):
         stray = self.cache / 'spring-framework-v7.1.0' / 'spring-other' / 'src' / 'test' / 'java' / 'org' / \
             'springframework' / 'jdbc' / 'core' / 'StrayTests.java'
         stray.parent.mkdir(parents=True)
-        stray.write_text('class X {}')
+        stray.write_text('class X { @Test void t() {} }')
         self.assertIn('org/springframework/jdbc/core/StrayTests.java',
                       dod.upstream_inventory(module(), self.root, [self.cache]))
         narrowed = dod.upstream_inventory(module(upstream_modules=['spring-jdbc']), self.root, [self.cache])
@@ -464,7 +474,7 @@ class UpstreamTests(unittest.TestCase):
         # A fetched copy with test classes, which must never be demanded of a clean-room module.
         jtreg = self.cache / 'openjdk-21.0.13' / 'jdk' / 'src' / 'test' / 'java' / 'org' / 'springframework' / 'jdbc'
         jtreg.mkdir(parents=True)
-        (jtreg / 'ConcurrentTests.java').write_text('class X {}')
+        (jtreg / 'ConcurrentTests.java').write_text('class X { @Test void t() {} }')
         return module(name='jdbc', upstream='openjdk@21.0.13')
 
     def test_a_signatures_only_upstream_demands_no_upstream_tests(self):

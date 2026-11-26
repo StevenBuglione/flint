@@ -184,6 +184,22 @@
       "phase": "2",
       "status": "deferred"
     },
+    "org/springframework/boot/test/context/filter/JupiterRepeatedTestExample.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/filter/JupiterTestExample.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/filter/JupiterTestFactoryExample.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/boot/test/context/filter/SampleTestConfig.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "org/springframework/boot/test/context/filter/TestTypeExcludeFilterTests.java": {
       "phase": "2",
       "status": "deferred"
@@ -306,7 +322,6 @@
     },
     "org/springframework/boot/test/util/TestPropertyValuesTests.java": {
       "d": "boot/core/flint-boot-test/tests/boot_test_tests/test_property_values_tests.d",
-      "status": "partial",
       "methods": {
         "ported": [
           "pairOfCreatesPair",
@@ -315,25 +330,26 @@
           "pairFromMapEntryWithEmptyKeyCreatesPair"
         ],
         "skipped": {
-          "ofStringArrayCreatesValues": "TestPropertyValues environment application is deferred",
-          "ofIterableCreatesValues": "TestPropertyValues environment application is deferred",
-          "ofStreamCreatesValues": "TestPropertyValues environment application is deferred",
-          "ofMapCreatesValues": "TestPropertyValues environment application is deferred",
-          "ofMappedStreamCreatesValues": "TestPropertyValues environment application is deferred",
-          "applyToEnvironmentShouldAttachConfigurationPropertySource": "ConfigurationPropertySources.attach is deferred",
+          "andShouldChainAndAddSingleKeyValue": "TestPropertyValues environment application is deferred",
           "applyToDefaultPropertySource": "TestPropertyValues environment application is deferred",
-          "applyToSystemPropertySource": "TestPropertyValues environment application is deferred",
-          "applyToWithSpecificName": "TestPropertyValues environment application is deferred",
+          "applyToEnvironmentShouldAttachConfigurationPropertySource": "ConfigurationPropertySources.attach is deferred",
           "applyToExistingNameAndDifferentTypeShouldOverrideExistingOne": "TestPropertyValues environment application is deferred",
           "applyToExistingNameAndSameTypeShouldMerge": "TestPropertyValues environment application is deferred",
-          "andShouldChainAndAddSingleKeyValue": "TestPropertyValues environment application is deferred",
+          "applyToSystemPropertiesShouldRestoreEmptySystemProperty": "Scoped JVM system properties are deferred",
+          "applyToSystemPropertiesShouldRestoreSystemProperties": "Scoped JVM system properties are deferred",
+          "applyToSystemPropertiesWhenValueIsNullShouldRemoveProperty": "Scoped JVM system properties are deferred",
           "applyToSystemPropertiesWithCallableShouldSetSystemProperties": "Scoped JVM system properties are deferred",
           "applyToSystemPropertiesWithRunnableShouldSetSystemProperties": "Scoped JVM system properties are deferred",
-          "applyToSystemPropertiesShouldRestoreSystemProperties": "Scoped JVM system properties are deferred",
-          "applyToSystemPropertiesShouldRestoreEmptySystemProperty": "Scoped JVM system properties are deferred",
-          "applyToSystemPropertiesWhenValueIsNullShouldRemoveProperty": "Scoped JVM system properties are deferred"
+          "applyToSystemPropertySource": "TestPropertyValues environment application is deferred",
+          "applyToWithSpecificName": "TestPropertyValues environment application is deferred",
+          "ofIterableCreatesValues": "TestPropertyValues environment application is deferred",
+          "ofMapCreatesValues": "TestPropertyValues environment application is deferred",
+          "ofMappedStreamCreatesValues": "TestPropertyValues environment application is deferred",
+          "ofStreamCreatesValues": "TestPropertyValues environment application is deferred",
+          "ofStringArrayCreatesValues": "TestPropertyValues environment application is deferred"
         }
-      }
+      },
+      "status": "partial"
     },
     "org/springframework/boot/test/web/htmlunit/UriBuilderFactoryWebClientTests.java": {
       "phase": "2",

@@ -8,6 +8,14 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/core/it/FastDoubleParserShadingIT.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/it/ModuleInfoIT.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/core/unittest/Base64VariantTest.java": {
       "phase": "2",
       "status": "deferred"
@@ -220,6 +228,18 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/core/unittest/io/TestCharTypes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/TestIOContext.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/io/TestJsonStringEncoder.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/core/unittest/io/UTF32ReaderSurrogate1713Test.java": {
       "phase": "2",
       "status": "deferred"
@@ -329,6 +349,34 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/json/SupplementaryCharDesc1728Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/TestCharEscaping.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/TestCustomEscaping.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/TestDecorators.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/TestMaxErrorSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/TestRootValues.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/TestUnicode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/json/TestWithTonsaSymbols.java": {
       "phase": "2",
       "status": "deferred"
     },
@@ -779,6 +827,10 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/core/unittest/read/TestReadHumongousString.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/core/unittest/read/TrailingCommas616Test.java": {
       "phase": "2",
       "status": "deferred"
@@ -876,6 +928,22 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/sym/SymbolsViaParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/TestByteBasedSymbols.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/TestHashCollisionChars.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/TestSymbolTables.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/core/unittest/sym/TestSymbolsWithMediaItem.java": {
       "phase": "2",
       "status": "deferred"
     },

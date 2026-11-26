@@ -364,6 +364,10 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/deser/builder/BuilderDeserializationTest2486.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/deser/builder/BuilderErrorHandlingTest.java": {
       "phase": "2",
       "status": "deferred"
@@ -517,6 +521,22 @@
       "status": "deferred"
     },
     "tools/jackson/databind/deser/creators/SingleImmutableFieldCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/TestCreators.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/TestCreators2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/TestCreators3.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/deser/creators/TestCustomValueInstDefaults.java": {
       "phase": "2",
       "status": "deferred"
     },
@@ -824,6 +844,10 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/deser/inject/TestInjectables.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/deser/jdk/ArrayBlockingQueueDeserTest.java": {
       "phase": "2",
       "status": "deferred"
@@ -1124,6 +1148,10 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/exc/TestExceptionsDuringWriting.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/exc/ThrowableDeserializerTest.java": {
       "phase": "2",
       "status": "deferred"
@@ -1153,6 +1181,14 @@
       "status": "deferred"
     },
     "tools/jackson/databind/ext/desktop/TransientTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/TestDecimalUtils.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/TestFeatures.java": {
       "phase": "2",
       "status": "deferred"
     },
@@ -1421,6 +1457,30 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/ext/javatime/ser/TestLocalDateSerializationWithCustomFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/TestLocalDateTimeSerializationWithCustomFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/TestLocalTimeSerializationWithCustomFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/TestYearMonthSerializationWithCustomFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/TestYearSerializationWithCustomFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ext/javatime/ser/TestZonedDateTimeSerializationWithCustomFormatter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/ext/javatime/ser/WriteDatesAsTimestamps5142JavaTimeTests.java": {
       "phase": "2",
       "status": "deferred"
@@ -1641,6 +1701,10 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/interop/TestExternalizable.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/interop/UntypedObjectWithDupsTest.java": {
       "phase": "2",
       "status": "deferred"
@@ -1730,6 +1794,42 @@
       "status": "deferred"
     },
     "tools/jackson/databind/introspect/SetterConflictTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TestAnnotationMerging.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TestAutoDetect.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TestInferredMutators.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TestNameConflicts.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TestNamingStrategyCustom.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TestNamingStrategyStd.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TestPropertyConflicts.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TestPropertyRename.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/introspect/TestScalaLikeImplicitProperties.java": {
       "phase": "2",
       "status": "deferred"
     },
@@ -1837,6 +1937,54 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/jsontype/TestDoubleJsonCreator.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestMultipleTypeNames.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestOverlappingTypeIdNames.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestPolymorphicDeserialization676.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestPropertyTypeInfo.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestSubtypes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestTypeNames.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestTypedDeserialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestTypedSerialization.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestVisibleTypeId.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/TestWithGenerics.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/jsontype/TypeDeserializerUtilMethodsTest.java": {
       "phase": "2",
       "status": "deferred"
@@ -1869,11 +2017,47 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/jsontype/deduct/TestPolymorphicDeduction.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/jsontype/deftyping/DefaultTypeResolver3505Test.java": {
       "phase": "2",
       "status": "deferred"
     },
     "tools/jackson/databind/jsontype/deftyping/DefaultTypeResolverForLong2753Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/TestDefaultForArrays.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/TestDefaultForEnums.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/TestDefaultForLists.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/TestDefaultForMaps.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/TestDefaultForObject.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/TestDefaultForRecords.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/TestDefaultForScalars.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/deftyping/TestDefaultWithCreators.java": {
       "phase": "2",
       "status": "deferred"
     },
@@ -1894,6 +2078,14 @@
       "status": "deferred"
     },
     "tools/jackson/databind/jsontype/ext/ExternalTypeIdWithCreatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/ext/TestPropertyCreatorSubtypesExternalPropertyMissingProperty.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/jsontype/ext/TestSubtypesExternalPropertyMissingProperty.java": {
       "phase": "2",
       "status": "deferred"
     },
@@ -2009,6 +2201,10 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/misc/TestBlocking.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/misc/ThreadSafety1759Test.java": {
       "phase": "2",
       "status": "deferred"
@@ -2033,6 +2229,42 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/mixins/TestMixinDeserForClass.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/TestMixinDeserForCreators.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/TestMixinDeserForMethods.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/TestMixinInheritance.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/TestMixinMerging.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/TestMixinSerForClass.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/TestMixinSerForFields.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/TestMixinSerForMethods.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/mixins/TestMixinSerWithViews.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/module/BuilderModuleReuse5481Test.java": {
       "phase": "2",
       "status": "deferred"
@@ -2042,6 +2274,30 @@
       "status": "deferred"
     },
     "tools/jackson/databind/module/SimpleModuleTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/module/TestAbstractTypes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/module/TestCustomEnumKeyDeserializer.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/module/TestDuplicateRegistration.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/module/TestKeyDeserializers.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/module/TestTypeModifierNameResolution.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/module/TestTypeModifiers.java": {
       "phase": "2",
       "status": "deferred"
     },
@@ -2530,6 +2786,10 @@
       "phase": "2",
       "status": "deferred"
     },
+    "tools/jackson/databind/seq/TestInnerClassReaderFor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
     "tools/jackson/databind/ser/AnyGetterTest.java": {
       "phase": "2",
       "status": "deferred"
@@ -2780,6 +3040,14 @@
       "status": "deferred"
     },
     "tools/jackson/databind/ser/filter/SerializationIgnoreTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/TestAnyGetterFiltering.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/ser/filter/TestMapFiltering.java": {
       "phase": "2",
       "status": "deferred"
     },
@@ -3114,6 +3382,10 @@
       "status": "deferred"
     },
     "tools/jackson/databind/util/StdDateFormatTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "tools/jackson/databind/util/TestJSONP.java": {
       "phase": "2",
       "status": "deferred"
     },
