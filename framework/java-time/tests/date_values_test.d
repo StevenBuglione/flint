@@ -64,6 +64,18 @@ import std.typecons : Nullable;
     }
 }
 
+@("year keeps its calendar value private and changes a const value by copy") unittest
+{
+    static assert(is(Year == struct));
+    static assert(!is(typeof(Year(2024))));
+    static assert(!is(typeof(Year.init.year_)));
+
+    const original = Year.of(2024);
+    const updated = original.minusYears(25);
+    assert(original.getValue() == 2024);
+    assert(updated.getValue() == 1999);
+}
+
 @("year arithmetic and leap-day factories reject invalid dates") unittest
 {
     void rejects(scope void delegate() @safe use)

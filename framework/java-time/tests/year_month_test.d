@@ -49,6 +49,19 @@ import flint.java.time.yearmonth : YearMonth;
     rejects(() { YearMonth.of(0, 1).minusMonths(long.min); });
 }
 
+@("YearMonth keeps its calendar fields private and updates a const value by copy") unittest
+{
+    static assert(is(YearMonth == struct));
+    static assert(!is(typeof(YearMonth(2020, 2))));
+    static assert(!is(typeof(YearMonth.init.year_)));
+    static assert(!is(typeof(YearMonth.init.month_)));
+
+    const original = YearMonth.of(2020, 2);
+    const updated = original.withYear(2021).plusMonths(3);
+    assert(original.equals(YearMonth.of(2020, 2)) && original.lengthOfMonth() == 29);
+    assert(updated.equals(YearMonth.of(2021, 5)) && updated.lengthOfMonth() == 31);
+}
+
 @("YearMonth parses signed ISO years and keeps rejected input") unittest
 {
     char[7] input = ['2', '0', '2', '4', '-', '0', '2'];

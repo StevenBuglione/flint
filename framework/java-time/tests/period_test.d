@@ -143,6 +143,37 @@ import flint.java.time.period : Period;
     assert(rendered == input[] && bytes > 0 && bytes <= 16);
 }
 
+@("period keeps calendar components private and updates a const value by copy") unittest
+{
+    static assert(is(Period == struct));
+    static assert(!is(typeof(Period(4, 5, 6))));
+    static assert(!is(typeof(Period.init.years_)));
+    static assert(!is(typeof(Period.init.months_)));
+    static assert(!is(typeof(Period.init.days_)));
+
+    const period = Period.of(4, -8, 13);
+    const adjusted = period.withMonths(2).plusDays(1);
+    assert(period.equals(Period.of(4, -8, 13)));
+    assert(adjusted.equals(Period.of(4, 2, 14)));
+}
+
+@("period factories use the zero value and hashes retain the Java calendar components") unittest
+{
+    const zeroPeriods = [
+        Period.of(0, 0, 0), Period.ofYears(0), Period.ofMonths(0), Period.ofDays(0), Period.ofWeeks(0)
+    ];
+    foreach (value; zeroPeriods)
+    {
+        assert(value.equals(Period.ZERO) && value.isZero() && value.hashCode() == 0);
+    }
+    assert(Period.ofYears(31).hashCode() == 31);
+    assert(Period.ofMonths(31).hashCode() == 7_936);
+    assert(Period.ofDays(31).hashCode() == 2_031_616);
+    assert(Period.ofDays(32).hashCode() == 2_097_152);
+    assert(Period.of(-17, 67_108_864, -268_435_456).hashCode() == 61_427);
+    assert(Period.of(int.min, int.max, 1_024).hashCode() == -2_080_374_913);
+}
+
 @("period between preserves directed month-end and leap-day differences") unittest
 {
     Period between(LocalDate start, LocalDate end) pure nothrow @nogc

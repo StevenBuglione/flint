@@ -469,16 +469,25 @@
       "status": "deferred"
     },
     "java/time/test/java/time/TestPeriod.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": [
+        "framework/java-time/tests/period_test.d"
+      ],
+      "reason": "plain-gpl. R11 value immutability and zero factory equality, with Java 21 hash parity.",
+      "status": "excluded"
     },
     "java/time/test/java/time/TestYear.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": [
+        "framework/java-time/tests/date_values_test.d"
+      ],
+      "reason": "plain-gpl. R11 value immutability with private construction and copy updates.",
+      "status": "excluded"
     },
     "java/time/test/java/time/TestYearMonth.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": [
+        "framework/java-time/tests/year_month_test.d"
+      ],
+      "reason": "plain-gpl. R11 value immutability with private fields, private construction and copy updates.",
+      "status": "excluded"
     },
     "java/time/test/java/time/TestZoneId.java": {
       "phase": "2",
