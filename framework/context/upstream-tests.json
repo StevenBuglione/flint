@@ -26,12 +26,31 @@
       "status": "deferred"
     },
     "org/springframework/cache/concurrent/ConcurrentMapCacheManagerTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/context/tests/cache/concurrent_map_cache_manager_tests.d",
+      "methods": {
+        "ported": [
+          "dynamicMode",
+          "staticMode"
+        ],
+        "skipped": {
+          "changeStoreByValue": "Requires upstream store-by-value serialization."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/cache/concurrent/ConcurrentMapCacheTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/context/tests/cache/concurrent_map_cache_tests.d",
+      "methods": {
+        "ported": [
+          "isStoreByReferenceByDefault"
+        ],
+        "skipped": {
+          "invalidSerializedContent": "Requires upstream store-by-value serialization and a mutable native map.",
+          "nonSerializableContent": "Requires upstream store-by-value serialization.",
+          "serializer": "Requires upstream store-by-value serialization and native map injection."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/cache/config/AnnotationDrivenCacheConfigTests.java": {
       "phase": "2",

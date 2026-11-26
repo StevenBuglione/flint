@@ -2,13 +2,15 @@
 // Copyright 2002-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
-// Also ported from NoOpCacheManager.java.
+// Also ported from NoOpCacheManager.java and SimpleValueWrapper.java.
 module flint.cache.support;
 
 import core.atomic : atomicLoad, atomicStore, cas;
 import flint.cache : Cache, CacheManager;
 import flint.engine.aot.any : Any;
-import flint.java.lang : IllegalArgumentException, javaHashCode, NullPointerException, UnsupportedOperationException;
+import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
+import flint.java.lang : IllegalArgumentException, JavaObject, javaHashCode, NullPointerException,
+    UnsupportedOperationException;
 import flint.java.util : AbstractCollection, Collection, Iterator, NoSuchElementException, Set;
 
 @safe:
@@ -94,12 +96,12 @@ class NoOpCacheManager : CacheManager
 {
     // Read-only after atomic publication. Cache objects and the name view can outlive a reset.
     private Snapshot regions;
-    private NameView names;
+    private CacheNames names;
 
     /// Construct an empty manager with a live view of its registered names.
     this()
     {
-        names = new NameView(this);
+        names = new CacheNames(&registeredCaches);
     }
 
     override Cache getCache(string name)
@@ -131,12 +133,17 @@ class NoOpCacheManager : CacheManager
         atomicStore(regions, cast(Snapshot) null);
     }
 
-    private static NoOpCache[] entries(Snapshot snapshot) nothrow @nogc
+    private Cache[] registeredCaches() nothrow @nogc
+    {
+        return entries(atomicLoad(regions));
+    }
+
+    private static Cache[] entries(Snapshot snapshot) nothrow @nogc
     {
         return snapshot is null ? null : snapshot.caches;
     }
 
-    private static NoOpCache find(Snapshot snapshot, string name) nothrow @nogc
+    private static Cache find(Snapshot snapshot, string name)
     {
         if (name is null)
             return null;
@@ -148,121 +155,200 @@ class NoOpCacheManager : CacheManager
 
     private static final class Snapshot
     {
-        private NoOpCache[] caches;
+        private Cache[] caches;
 
-        this(NoOpCache[] caches) nothrow @nogc
+        this(Cache[] caches) nothrow @nogc
         {
             this.caches = caches;
         }
     }
 
-    private static final class NameView : AbstractCollection!string, Set!string
+}
+
+/// Read-only names backed by the manager's latest list of registered caches.
+package(flint.cache) final class CacheNames : AbstractCollection!string, Set!string
+{
+    private Cache[]delegate() @safe nothrow @nogc registered;
+    private bool rejectsNullName;
+
+    this(Cache[]delegate() @safe nothrow @nogc registered, bool rejectsNullName = false) nothrow @nogc
     {
-        private NoOpCacheManager manager;
+        this.registered = registered;
+        this.rejectsNullName = rejectsNullName;
+    }
 
-        this(NoOpCacheManager manager) nothrow @nogc
+    override int size() nothrow @nogc
+    {
+        return cast(int) registered().length;
+    }
+
+    override bool contains(string name)
+    {
+        if (name is null)
         {
-            this.manager = manager;
+            if (rejectsNullName)
+                throw new NullPointerException();
+            return false;
         }
-
-        override int size() nothrow @nogc
-        {
-            return cast(int) entries(atomicLoad(manager.regions)).length;
-        }
-
-        override bool contains(string name) nothrow @nogc
-        {
-            return find(atomicLoad(manager.regions), name) !is null;
-        }
-
-        override Iterator!string iterator()
-        {
-            return new NameIterator(entries(atomicLoad(manager.regions)));
-        }
-
-        override bool isSet() nothrow @nogc
-        {
-            return true;
-        }
-
-        override bool equals(Object other)
-        {
-            if (other is this)
+        foreach (cache; registered())
+            if (cache.getName() == name)
                 return true;
-            auto that = cast(Set!string) other;
-            auto caches = entries(atomicLoad(manager.regions));
-            if (that is null || that.size() != caches.length)
-                return false;
-            foreach (cache; caches)
-                if (!that.contains(cache.getName()))
-                    return false;
-            return true;
-        }
-
-        override int hashCode()
-        {
-            int result;
-            foreach (cache; entries(atomicLoad(manager.regions)))
-                result += javaHashCode(cache.getName());
-            return result;
-        }
-
-        override bool remove(string name)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        override bool addAll(Collection!string other)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        override bool removeAll(Collection!string other)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        override bool retainAll(Collection!string other)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        override bool removeIf(bool delegate(string) @safe filter)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        override void clear()
-        {
-            throw new UnsupportedOperationException();
-        }
+        return false;
     }
 
-    private static final class NameIterator : Iterator!string
+    override Iterator!string iterator()
     {
-        private NoOpCache[] caches;
-        private size_t index;
-
-        this(NoOpCache[] caches) nothrow @nogc
-        {
-            this.caches = caches;
-        }
-
-        override bool hasNext() nothrow @nogc
-        {
-            return index < caches.length;
-        }
-
-        override string next()
-        {
-            if (!hasNext())
-                throw new NoSuchElementException();
-            return caches[index++].getName();
-        }
-
-        override void remove()
-        {
-            throw new UnsupportedOperationException();
-        }
+        return new NameIterator(registered());
     }
+
+    override bool isSet() nothrow @nogc
+    {
+        return true;
+    }
+
+    override bool equals(Object other)
+    {
+        if (other is this)
+            return true;
+        auto that = cast(Set!string) other;
+        auto caches = registered();
+        if (that is null || that.size() != caches.length)
+            return false;
+        foreach (cache; caches)
+            if (!that.contains(cache.getName()))
+                return false;
+        return true;
+    }
+
+    override int hashCode()
+    {
+        int result;
+        foreach (cache; registered())
+            result += javaHashCode(cache.getName());
+        return result;
+    }
+
+    override bool remove(string name)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    override bool addAll(Collection!string other)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    override bool removeAll(Collection!string other)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    override bool retainAll(Collection!string other)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    override bool removeIf(bool delegate(string) @safe filter)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    override void clear()
+    {
+        throw new UnsupportedOperationException();
+    }
+}
+
+private final class NameIterator : Iterator!string
+{
+    private Cache[] caches;
+    private size_t index;
+
+    this(Cache[] caches) nothrow @nogc
+    {
+        this.caches = caches;
+    }
+
+    override bool hasNext() nothrow @nogc
+    {
+        return index < caches.length;
+    }
+
+    override string next()
+    {
+        if (!hasNext())
+            throw new NoSuchElementException();
+        return caches[index++].getName();
+    }
+
+    override void remove()
+    {
+        throw new UnsupportedOperationException();
+    }
+}
+
+/// An immutable wrapper around a cache value, which may be null.
+class SimpleValueWrapper : Cache.ValueWrapper
+{
+    private Any value;
+
+    /// Wrap the value to expose through `get`.
+    this(Any value) nothrow @nogc
+    {
+        this.value = value;
+    }
+
+    override Any get() nothrow @nogc
+    {
+        return value;
+    }
+
+    /// Compare with another wrapper by its contained value.
+    bool equals(Object other)
+    {
+        if (other is this)
+            return true;
+        auto wrapper = cast(Cache.ValueWrapper) other;
+        return wrapper !is null && cacheValueEquals(get(), wrapper.get());
+    }
+
+    /// The wrapped value's hash, or zero for null.
+    int hashCode()
+    {
+        return cacheValueHash(value);
+    }
+
+    override string toString()
+    {
+        return "ValueWrapper for [" ~ cacheValueText(value) ~ "]";
+    }
+
+    mixin JavaObject;
+}
+
+package(flint.cache) bool cacheValueEquals(Any value, Any other)
+{
+    if (value.isNull())
+        return other.isNull();
+    auto object = value.asObject();
+    return object is null ? value == other : objectEquals(object, other.asObject());
+}
+
+package(flint.cache) int cacheValueHash(Any value)
+{
+    if (value.isNull())
+        return 0;
+    if (auto object = value.asObject())
+        return cast(int) objectToHash(object);
+    if (value.typeName() == "string")
+        return javaHashCode(value.get!string());
+    if (value.typeName() == "int")
+        return value.get!int();
+    return cast(int) value.toHash();
+}
+
+package(flint.cache) string cacheValueText(Any value)
+{
+    auto object = value.asObject();
+    return object is null ? value.toString() : objectToString(object);
 }

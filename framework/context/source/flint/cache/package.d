@@ -13,6 +13,9 @@ import flint.java.util : Collection;
 @safe:
 
 /// A named cache region. Object-typed keys and values use Flint's erased Any.
+/// With reference-storing providers, supply GC-owned or static references safe to share with readers.
+/// ConcurrentMapCache copies string keys and values. Other references, including slices in boxed values,
+/// remain the caller's responsibility.
 interface Cache
 {
     /// The name of this cache region.

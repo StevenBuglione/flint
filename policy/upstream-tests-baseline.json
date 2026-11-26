@@ -1117,8 +1117,6 @@
       "org/springframework/cache/CacheReproTests.java",
       "org/springframework/cache/annotation/AnnotationCacheOperationSourceTests.java",
       "org/springframework/cache/annotation/ReactiveCachingTests.java",
-      "org/springframework/cache/concurrent/ConcurrentMapCacheManagerTests.java",
-      "org/springframework/cache/concurrent/ConcurrentMapCacheTests.java",
       "org/springframework/cache/config/AnnotationDrivenCacheConfigTests.java",
       "org/springframework/cache/config/AnnotationNamespaceDrivenTests.java",
       "org/springframework/cache/config/CacheAdviceNamespaceTests.java",
