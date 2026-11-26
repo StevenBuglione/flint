@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 202 | 348 | 0 | 15,246 |
 | boot | spring-boot@v4.2.0 | 44 | 48 | 2,133 | 13,378 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,517 | 1,402 | 4,870 | 30,045 |
+| framework | spring-framework@v7.1.0 | 3,520 | 1,403 | 4,870 | 30,041 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3460,6 +3460,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.test.util.JsonPathExpectationsHelper#<init>(String,Object...)` | `flint.test.util.JsonPathExpectationsHelper` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.test.util.JsonPathExpectationsHelper#assertValue(String,Object)` | `flint.test.util.JsonPathExpectationsHelper.assertValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.test.util.JsonPathExpectationsHelper#evaluateJsonPath(String)` | `flint.test.util.JsonPathExpectationsHelper.evaluateJsonPath` | [R1](api-mapping.md#r1-packages-and-names) | Jackson-backed path selection under D-TEST-2 |
+
+#### org.springframework.test.web.servlet
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.test.web.servlet.ResultMatcher#match(MvcResult)` | `flint.test.web.servlet.ResultMatcher.match` | [R8](api-mapping.md#r8-exceptions) | D signatures omit Java's checked throws clause. |
 
 #### org.springframework.test.web.servlet.request
 
@@ -9806,7 +9812,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.mock.http.client | 23 | 0 |
 | org.springframework.mock.http.client.reactive | 0 | 28 |
 | org.springframework.mock.http.server.reactive | 0 | 53 |
-| org.springframework.mock.web | 528 | 0 |
+| org.springframework.mock.web | 527 | 0 |
 | org.springframework.mock.web.reactive.function.server | 0 | 51 |
 | org.springframework.mock.web.server | 30 | 0 |
 | org.springframework.objenesis | 9 | 0 |
@@ -9873,7 +9879,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.test.web.client.response | 40 | 0 |
 | org.springframework.test.web.reactive.server | 0 | 187 |
 | org.springframework.test.web.reactive.server.assertj | 0 | 40 |
-| org.springframework.test.web.servlet | 32 | 0 |
+| org.springframework.test.web.servlet | 29 | 0 |
 | org.springframework.test.web.servlet.assertj | 114 | 0 |
 | org.springframework.test.web.servlet.client | 170 | 0 |
 | org.springframework.test.web.servlet.client.assertj | 27 | 0 |
