@@ -2270,6 +2270,33 @@ unittest
     expect(checked.ok).toBeTrue();
 }
 
+@("Jakarta entities expose typed JPA mapping tables from their generated module")
+unittest
+{
+    import std.file : readText;
+    import std.path : buildPath;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const project = copyFixture("jpa");
+    scope (exit)
+        remove(project);
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.importPaths = closureImports(["boot/core/flint-boot-autoconfigure", "framework/engine-jpa"]);
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test";
+    auto outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    foreach (ref item; outcome.diagnostics)
+        expect(item.code ~ " " ~ item.message).toEqual("");
+    expect(outcome.ok).toBeTrue();
+
+    const generated = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
+            "jpa_probe", "entity.d"));
+    expect(generated.canFind("jpaMappings()")).toBeTrue();
+}
+
 @("no java.util.Date described: no customizer")
 unittest
 {
