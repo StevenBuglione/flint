@@ -159,6 +159,18 @@ unittest
     assert(collectException!NullPointerException(new SnapshotOptions(stops)) !is null);
 }
 
+@("default options treat a wrapped null model name as absent")
+unittest
+{
+    auto wrappedNull = new SnapshotOptions(null, Ratio.init, Ratio.init, ModelName(cast(string) null));
+    auto absent = new SnapshotOptions(null, Ratio.init, Ratio.init, ModelName.init);
+    auto empty = new SnapshotOptions(null, Ratio.init, Ratio.init, ModelName(""));
+
+    assert(wrappedNull.getModel().isNull);
+    assert(wrappedNull.equals(absent) && wrappedNull.hashCode() == absent.hashCode());
+    assert(!empty.getModel().isNull && !wrappedNull.equals(empty));
+}
+
 @("default options use Java equality for all stored fields")
 unittest
 {

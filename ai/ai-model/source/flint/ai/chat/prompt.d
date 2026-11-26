@@ -74,9 +74,10 @@ class DefaultChatOptions : ChatOptions
     protected this(ModelName model, Ratio frequencyPenalty, Count maxTokens, Ratio presencePenalty,
             StopSequences stopSequences, Ratio temperature, Count topK, Ratio topP)
     {
+        import flint.ai.chat.messages.part : normalizeText;
         import flint.java.lang : NullPointerException;
 
-        model_ = model;
+        model_ = normalizeText(model);
         frequencyPenalty_ = frequencyPenalty;
         maxTokens_ = maxTokens;
         presencePenalty_ = presencePenalty;
