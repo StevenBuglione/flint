@@ -207,14 +207,25 @@ def ported_modules(root=ROOT):
 
 
 def ownership(root=ROOT):
-    """{Java package prefix: module}. Reverse R1/R19 for registered Spring modules and determine other
-    ports' packages from their mapped elements. The longest prefix owns an element."""
+    """{Java package or explicitly scoped OpenJDK type: module}.
+
+    The longest prefix owns the element. Explicit type scopes do not claim their containing packages.
+    """
     if root in _OWNERSHIP:
         return _OWNERSHIP[root]
     d_owner, table = {}, {}
-    for name, (_, modules, upstream, _) in ported_modules(root).items():
+    explicitly_scoped = set()
+    for name, (_, modules, upstream, meta) in ported_modules(root).items():
+        if str(upstream).startswith('openjdk@') and meta.get('java_types'):
+            explicitly_scoped.add(name)
+            for type_name in meta['java_types']:
+                if type_name in table:
+                    raise ValueError(f'{type_name} is already owned by {table[type_name]}')
+                table[type_name] = name
         for d in modules:
             d_owner[d] = name
+            if name in explicitly_scoped:
+                continue
             if d.startswith('flint.') and str(upstream).startswith('spring-'):
                 segments = d.removeprefix('flint.').split('.')
                 package = '.'.join(part[:-1] if part.endswith('_') and part[:-1] in D_KEYWORDS else part
@@ -235,7 +246,8 @@ def ownership(root=ROOT):
                 continue
             best = max((m for m in d_owner if d == m or d.startswith(m + '.')), key=len, default=None)
             package = java_package(element)
-            if best and package and not package.startswith('org.springframework.'):
+            if (best and d_owner[best] not in explicitly_scoped and package
+                    and not package.startswith('org.springframework.')):
                 table.setdefault(package, d_owner[best])
     _OWNERSHIP[root] = table
     return table
@@ -243,7 +255,10 @@ def ownership(root=ROOT):
 
 def owner(element, table):
     package = java_package(element) or element
-    best = max((p for p in table if package == p or package.startswith(p + '.')), key=len, default=None)
+    dotted = element.split('#', 1)[0].replace('/', '.')
+    candidates = (p for p in table if package == p or package.startswith(p + '.')
+                  or (p != p.lower() and (dotted == p or dotted.startswith(p + '.'))))
+    best = max(candidates, key=len, default=None)
     return table.get(best)
 
 

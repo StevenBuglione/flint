@@ -98,6 +98,26 @@ class Resolve(unittest.TestCase):
         })
         self.assertEqual(dod.owner('org/springframework/ai/template/NoOpTemplateRendererTests', table), 'ai-commons')
 
+    def test_openjdk_type_scope_keeps_unrelated_package_ownership(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'policy').mkdir()
+            (root / 'api' / 'framework').mkdir(parents=True)
+            (root / 'policy' / 'framework.json').write_text(json.dumps({'modules': {
+                'java-util': {'module': 'flint.java.util.hexformat', 'upstream': 'openjdk@21.0.13'},
+                'java-collections': {'module': 'flint.java.util.bitset', 'upstream': 'openjdk@21.0.13',
+                                     'java_types': ['java.util.BitSet']},
+            }}))
+            (root / 'api' / 'framework' / 'mapping.json').write_text(json.dumps({'elements': {
+                'java.util.BitSet': {'d': 'flint.java.util.bitset.BitSet'},
+                'java.util.HexFormat': {'d': 'flint.java.util.hexformat.HexFormat'},
+            }}))
+            table = dod.ownership(root)
+        self.assertEqual(dod.owner('java.util.BitSet#get(int)', table), 'java-collections')
+        self.assertEqual(dod.owner('java/util/BitSet/stream/BitSetStreamTest', table), 'java-collections')
+        self.assertEqual(dod.owner('java.util.HexFormat', table), 'java-util')
+        self.assertEqual(dod.owner('java/util/ArrayList/ArrayListBash', table), 'java-util')
+
     def test_apps_are_chosen_by_dependency_closure(self):
         self.assertEqual(dod.using_apps(dod.resolve('framework/jdbc')), ['gs-relational-data-access', 'petclinic-rest'])
         self.assertNotIn('gs-relational-data-access', dod.using_apps(dod.resolve('framework/webmvc')))
