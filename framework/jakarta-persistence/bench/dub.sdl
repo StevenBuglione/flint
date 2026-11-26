@@ -1,0 +1,8 @@
+name "probe-jakarta-persistence"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-jakarta-persistence"
+dflags "-preview=dip1000"
+dependency "flint:jakarta-persistence" path="../../.."

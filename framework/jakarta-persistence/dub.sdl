@@ -1,0 +1,16 @@
+name "jakarta-persistence"
+description "Jakarta Persistence 3.2 API for Flint"
+license "BSD-3-Clause"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}

@@ -291,6 +291,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:jakarta-persistence": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:jakarta-servlet": {
       "repo": "framework",
       "version": "monorepo"

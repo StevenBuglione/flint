@@ -295,6 +295,35 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "jakarta-persistence": {
+   "directory": "framework/jakarta-persistence",
+   "module": "flint.jakarta.persistence",
+   "repo": "framework",
+   "licence": "BSD-3-Clause",
+   "upstream": "jakarta-persistence@3.2.0",
+   "dependencies": [],
+   "bench": {
+    "fixture": "framework/jakarta-persistence/bench",
+    "baseline": "framework/jakarta-persistence/bench/baseline",
+    "edit_source": "framework/jakarta-persistence/source/flint/jakarta/persistence/package.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 50,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 300
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java": {
    "directory": "framework/java",
    "module": "flint.java",

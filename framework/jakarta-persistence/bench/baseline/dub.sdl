@@ -1,0 +1,7 @@
+name "probe-jakarta-persistence-baseline"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-jakarta-persistence-baseline"
+dflags "-preview=dip1000"

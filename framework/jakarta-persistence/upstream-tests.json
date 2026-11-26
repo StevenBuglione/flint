@@ -1,0 +1,8 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "jakarta-persistence@3.2.0",
+  "module": "jakarta-persistence",
+  "test_packages": [":jakarta-persistence"],
+  "classes": {},
+  "note": "The pinned API release contains no src/test/java suite. Flint's API tests are original checks against the Jakarta Persistence 3.2 contract."
+}
