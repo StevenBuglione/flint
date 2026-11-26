@@ -55,7 +55,7 @@ Overall: types 152/1307 (12%), members 1284/15237 (8%).
 | `javax.security.auth.spi` | sol-security | 0 / 1 | 0 / 5 | 0% |  |  |
 | `javax.security.auth.x500` | sol-security | 0 / 2 | 0 / 21 | 0% |  |  |
 | `javax.security.cert` | sol-security | 0 / 7 | 0 / 32 | 0% |  |  |
-| `javax.sql` | sol-data | 2 / 19 | 4 / 198 | 2% | 6 |  |
+| `javax.sql` | sol-data | 2 / 19 | 4 / 198 | 2% |  |  |
 
 ## Types that exist only in a leaf module
 

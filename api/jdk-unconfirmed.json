@@ -626,12 +626,6 @@
   "java.util.UUID",
   "java.util.function.Supplier",
   "java.util.function.Supplier#get()",
-  "java.util.regex.Pattern",
-  "javax.sql.CommonDataSource",
-  "javax.sql.CommonDataSource#getLoginTimeout()",
-  "javax.sql.CommonDataSource#setLoginTimeout(int)",
-  "javax.sql.DataSource",
-  "javax.sql.DataSource#getConnection()",
-  "javax.sql.DataSource#getConnection(String,String)"
+  "java.util.regex.Pattern"
  ]
 }
