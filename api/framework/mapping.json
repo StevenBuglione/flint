@@ -5668,6 +5668,7 @@
 "java.lang.Comparable#compareTo(T)":{"d":"flint.java.lang.Comparable.compareTo","status":"ported"},
 "java.lang.Double#parseDouble(String)":{"category":"deferred","note":"The current parser throws NumberFormatException for null input, gives a different message for whitespace-only input, accepts lowercase nan, NaNd, hexadecimal syntax without a binary exponent, and a mantissa underscore, and rejects Infinity, +Infinity, and -Infinity. Decimal overflow (positive, negative, a very long exponent, and rounding past the largest finite value) and hexadecimal overflow currently throw instead of returning signed infinity.","phase":"2","status":"excluded"},
 "java.lang.Double#toString(double)":{"d":"flint.java.lang.Double.toString","status":"ported"},
+"java.lang.Float#toString(float)":{"category":"deferred","note":"The existing flint.java.lang.floatToString formatter matches pinned Java output. The canonical Float.toString(float) facade is missing.","phase":"2","status":"excluded"},
 "java.lang.IllegalArgumentException":{"d":"flint.java.lang.IllegalArgumentException","rules":["R26"],"status":"adapted","note":"A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String."},
 "java.lang.IllegalArgumentException#<init>()":{"d":"flint.java.lang.IllegalArgumentException.this","status":"ported"},
 "java.lang.IllegalArgumentException#<init>(String)":{"d":"flint.java.lang.IllegalArgumentException.this","rules":["R26"],"status":"adapted"},

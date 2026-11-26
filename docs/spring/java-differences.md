@@ -11030,6 +11030,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.AssertionError#<init>(int)` | 2 | Missing primitive overload. Java stores the signed decimal detail of the int. |
 | framework | `java.lang.AssertionError#<init>(long)` | 2 | Missing primitive overload. Java stores the signed decimal detail of the long. |
 | framework | `java.lang.Double#parseDouble(String)` | 2 | The current parser throws NumberFormatException for null input, gives a different message for whitespace-only input, accepts lowercase nan, NaNd, hexadecimal syntax without a binary exponent, and a mantissa underscore, and rejects Infinity, +Infinity, and -Infinity. Decimal overflow (positive, negative, a very long exponent, and rounding past the largest finite value) and hexadecimal overflow currently throw instead of returning signed infinity. |
+| framework | `java.lang.Float#toString(float)` | 2 | The existing flint.java.lang.floatToString formatter matches pinned Java output. The canonical Float.toString(float) facade is missing. |
 | framework | `java.lang.InstantiationException` | 2 | Flint extends RuntimeException. Java extends checked ReflectiveOperationException and bypasses RuntimeException catches (R8). |
 | framework | `java.lang.InstantiationException#<init>()` | 2 | The no-argument constructor must produce the checked InstantiationException type (R8). |
 | framework | `java.lang.InstantiationException#<init>(String)` | 2 | The String constructor must produce the checked InstantiationException type (R8). |
