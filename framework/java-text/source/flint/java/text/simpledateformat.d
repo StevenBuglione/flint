@@ -106,12 +106,12 @@ abstract class DateFormat
     /// `pos`'s error index is set.
     abstract Date parse(string source, ParsePosition pos);
 
-    /// Parse a date from the beginning of `source`; text after it is ignored. Throws `ParseException`.
+    /// Parse from the beginning of `source`, ignoring trailing text. Throws `ParseException` if no text was consumed.
     Date parse(string source)
     {
         auto pos = new ParsePosition(0);
         auto result = parse(source, pos);
-        if (result is null)
+        if (pos.getIndex() == 0)
             throw new ParseException("Unparseable date: \"" ~ source ~ "\"", pos.getErrorIndex());
         return result;
     }
