@@ -34,6 +34,7 @@ CHARACTER_TABLES = {f'flint.java.character.{name}' for name in (
     'uppercaseLetterRanges', 'lowercaseLetterRanges', 'numberRanges',
 )}
 SYMBOL = re.compile(r'(?<![\w])_D[0-9][\w$]*(?:\.[\w$]+)*')
+IDENTIFIER = re.compile(r'[0-9]+|Q([A-Z]*[a-z])')
 
 
 class BuildError(RuntimeError):
@@ -125,14 +126,41 @@ def mangle_prefix(name):
     return '_D' + ''.join(f'{len(part)}{part}' for part in name.split('.'))
 
 
-def is_module_record(symbol, prefix):
-    return symbol.partition('.')[0] in (prefix + '11__moduleRefZ', prefix + '12__ModuleInfoZ')
+def symbol_owner(symbol, modules):
+    """Find the longest module in the leading D ABI name, without parsing the signature."""
+    parts, emitted = [], {}
+    cursor, owner = 2, None  # Skip the _D linkage prefix.
+    while token := IDENTIFIER.match(symbol, cursor):
+        end = token.end()
+        if backreference := token[1]:
+            distance = 0
+            for digit in backreference:
+                distance = 26 * distance + ord(digit.lower()) - ord('a')
+            identifier = emitted.get(cursor - distance)
+            if identifier is None:
+                break  # Type backreferences do not name a module component.
+        else:
+            start = end
+            end += int(token[0])
+            if start == end or end > len(symbol):
+                break
+            identifier = symbol[start:end]
+            emitted[cursor] = identifier
+        cursor = end
+        parts.append(identifier)
+        name = '.'.join(parts)
+        if name in modules:
+            owner = name, cursor
+    return owner
+
+
+def is_module_record(symbol, end):
+    return symbol[end:].partition('.')[0] in ('11__moduleRefZ', '12__ModuleInfoZ')
 
 
 def violations(symbols, modules, leaves, data):
     """Attribute to the longest known module. A type name in a signature is only a reference."""
     families = {mangle_prefix(name): name for name in BANNED_PHOBOS}
-    owners = sorted(((mangle_prefix(name), name) for name in modules), key=lambda item: -len(item[0]))
     roots = tuple(mangle_prefix(name) for name in JDK_ROOTS)
     problems = {}
     for symbol in sorted(symbols):
@@ -142,16 +170,16 @@ def violations(symbols, modules, leaves, data):
                 problems.setdefault(f'banned Phobos {family}', symbol)
         if not symbol.startswith(roots):
             continue
-        owner = next(((prefix, name) for prefix, name in owners if symbol.startswith(prefix)), None)
+        owner = symbol_owner(symbol, modules)
         if owner is None:
             problems.setdefault('unrecognized JDK symbol owner', symbol)
             continue
-        prefix, module = owner
+        module, end = owner
         if is_data(module):
             if module not in data:
                 problems.setdefault(f'undeclared data {module}', symbol)
         elif module not in leaves:
-            kind = 'module records' if is_module_record(symbol, prefix) else 'leaf'
+            kind = 'module records' if is_module_record(symbol, end) else 'leaf'
             problems.setdefault(f'undeclared {kind} {module}', symbol)
     return dict(sorted(problems.items()))
 

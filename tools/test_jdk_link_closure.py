@@ -117,6 +117,21 @@ Discarded input sections
         self.assertEqual(closure.check_violations(set(leaking), set(existing)),
                          ['new violation: undeclared leaf flint.java.time'])
 
+    def test_repeated_module_segments_resolve_identifier_backreferences(self):
+        root = 'flint.java.util.regex'
+        internal = root + '.internal.regex'
+        function = '_D5flint4java4util5regex8internalQp10FrameStack4pushMFZv'
+        record = '_D5flint4java4util5regex8internalQp11__moduleRefZ.llvm.0'
+        modules = {root, internal}
+        self.assertEqual(closure.violations({function, record}, modules, {root}, set()),
+                         {f'undeclared leaf {internal}': function, f'undeclared module records {internal}': record})
+        self.assertEqual(closure.violations({function, record}, modules, {internal}, set()), {})
+
+        nested = root + '.abcdefghijklmnopqrstuvwxy.regex'
+        long_backref = '_D5flint4java4util5regex25abcdefghijklmnopqrstuvwxyQBh4testFZv'
+        self.assertEqual(closure.violations({long_backref}, {root, nested}, {root}, set()),
+                         {f'undeclared leaf {nested}': long_backref})
+
     def test_loadable_sections_exclude_padding_and_thread_local_bss(self):
         sections = """
   [ 1] .text            PROGBITS 00004000 004000 000020 00 AX  0   0  8
