@@ -217,3 +217,49 @@ unittest
     auto bytes = new ByteArrayResource(cast(immutable(ubyte)[]) "12345");
     assert(bytes.contentLength() == 5);
 }
+
+unittest
+{
+    // DefaultResourceLoader classpath*: (Spring 7.1 ClassPathAllResource): every class path match, concatenated in
+    // class path order; FLINT_CLASSPATH roots stand in for the class loader's URLs.
+    import flint.core.io : DefaultResourceLoader;
+    import flint.java.io : FileNotFoundException;
+    import std.exception : assertThrown;
+    import std.file : mkdirRecurse, rmdirRecurse, tempDir, write;
+    import std.path : buildPath;
+    import std.process : environment;
+
+    const base = buildPath(tempDir, "flint-core-io-classpath-all");
+    const first = buildPath(base, "first"), second = buildPath(base, "second");
+    mkdirRecurse(buildPath(first, "config"));
+    mkdirRecurse(buildPath(second, "config"));
+    scope (exit)
+        rmdirRecurse(base);
+    write(buildPath(first, "config", "part.txt"), "one;");
+    write(buildPath(second, "config", "part.txt"), "two;");
+    write(buildPath(second, "config", "other.txt"), "other");
+    const previous = environment.get("FLINT_CLASSPATH", null);
+    environment["FLINT_CLASSPATH"] = first ~ ":" ~ second;
+    scope (exit)
+    {
+        if (previous is null)
+            environment.remove("FLINT_CLASSPATH");
+        else
+            environment["FLINT_CLASSPATH"] = previous;
+    }
+
+    auto loader = new DefaultResourceLoader;
+    auto all = loader.getResource("classpath*:config/part.txt");
+    assert(all.getDescription() == "'classpath*:' resource [config/part.txt]");
+    assert(all.exists() && !all.isFile() && all.contentLength() == 8);
+    assert(all.getContentAsString() == "one;two;");
+    assertThrown!FileNotFoundException(all.getFile());
+    assert(loader.getResource("classpath:config/part.txt").getContentAsString() == "one;");
+
+    auto relative = all.createRelative("other.txt");
+    assert(relative.getDescription() == "'classpath*:' resource [config/other.txt]");
+    assert(relative.getContentAsString() == "other");
+
+    auto missing = loader.getResource("classpath*:config/missing.txt");
+    assert(!missing.exists() && missing.contentLength() == 0 && missing.getContentAsString() == "");
+}

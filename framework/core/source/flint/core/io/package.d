@@ -603,6 +603,8 @@ interface ResourceLoader
 {
     /// The pseudo-URL prefix for class path locations: `classpath:`.
     enum CLASSPATH_URL_PREFIX = "classpath:";
+    /// The pseudo-URL prefix for all class path matches of a location: `classpath*:`.
+    enum CLASSPATH_ALL_URL_PREFIX = "classpath*:";
 
     /// The resource at `location`: `classpath:x`, a file path, or a relative path. The resource may not exist.
     Resource getResource(string location);
@@ -616,8 +618,9 @@ interface ProtocolResolver
 }
 
 /++
-The default `ResourceLoader`: `classpath:` locations are class path resources, other locations go through the
-protocol resolvers, then absolute paths through `getResourceByPath`, and everything else is a class path resource.
+The default `ResourceLoader`: `classpath:` locations are class path resources and `classpath*:` locations combine
+every class path match, other locations go through the protocol resolvers, then absolute paths through
+`getResourceByPath`, and everything else is a class path resource.
 +/
 class DefaultResourceLoader : ResourceLoader
 {
@@ -647,6 +650,9 @@ class DefaultResourceLoader : ResourceLoader
             return getResourceByPath(location);
         if (StringUtils.startsWithIgnoreCase(location, CLASSPATH_URL_PREFIX))
             return new ClassPathResource(location[CLASSPATH_URL_PREFIX.length .. $]);
+        if (location.length >= CLASSPATH_ALL_URL_PREFIX.length
+                && location[0 .. CLASSPATH_ALL_URL_PREFIX.length] == CLASSPATH_ALL_URL_PREFIX)
+            return new ClassPathAllResource(location[CLASSPATH_ALL_URL_PREFIX.length .. $]);
         enum filePrefix = "file:";
         if (location.length > filePrefix.length && location[0 .. filePrefix.length] == filePrefix)
             return new FileSystemResource(fileUrlPath(location[filePrefix.length .. $]));
@@ -657,6 +663,82 @@ class DefaultResourceLoader : ResourceLoader
     protected Resource getResourceByPath(string path)
     {
         return new ClassPathResource(path);
+    }
+
+    /++
+    A `classpath*:` resource: the content of every class path match, concatenated in class path order (Spring 7.1).
+    Flint's class path order is the embedded resource, then each class path root holding the file. With no match
+    the content is empty.
+    +/
+    protected static class ClassPathAllResource : ClassPathResource
+    {
+        /// All matches of `path`.
+        this(string path)
+        {
+            super(path);
+        }
+
+        /// Never a single file.
+        override bool isFile()
+        {
+            return false;
+        }
+
+        /// Throws `FileNotFoundException`: the matches have no single file.
+        override File getFile()
+        {
+            throw new FileNotFoundException(
+                    getDescription() ~ " cannot be resolved to single URL or File - use 'classpath:' instead");
+        }
+
+        /// The combined length of every match.
+        override long contentLength()
+        {
+            long total;
+            if (auto bytes = embeddedBytes())
+                total += bytes.length;
+            foreach (file; matchingFiles())
+                total += file.length();
+            return total;
+        }
+
+        /// A stream over every match in turn; empty when there is none.
+        override InputStream getInputStream()
+        {
+            immutable(ubyte)[] content = embeddedBytes();
+            foreach (file; matchingFiles())
+            {
+                auto stream = new FileInputStream(file);
+                scope (exit)
+                    stream.close();
+                content ~= stream.readAllBytes();
+            }
+            return new ByteArrayInputStream(content);
+        }
+
+        /// All matches of `relativePath` from this one.
+        override Resource createRelative(string relativePath)
+        {
+            return new ClassPathAllResource(StringUtils.applyRelativePath(getPath(), relativePath));
+        }
+
+        /// `'classpath*:' resource [path]`.
+        override string getDescription()
+        {
+            return "'classpath*:' resource [" ~ getPath() ~ "]";
+        }
+
+        private File[] matchingFiles()
+        {
+            File[] files;
+            foreach (root; classPathRoots())
+            {
+                auto file = new File(root, getPath());
+                if (file.isFile())
+                    files ~= file;
+            }
+            return files;
+        }
     }
 }
 
