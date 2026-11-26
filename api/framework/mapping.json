@@ -7491,7 +7491,7 @@
 "java.text.SimpleDateFormat#format(Date,StringBuffer,FieldPosition)":{"status":"excluded","category":"deferred","phase":"2","reason":"Appending the date to the caller buffer and updating UTF-16 field offsets needs canonical java.lang.StringBuffer and FieldPosition."},
 "java.text.SimpleDateFormat#get2DigitYearStart()":{"d":"flint.java.text.SimpleDateFormat.get2DigitYearStart","status":"ported"},
 "java.text.SimpleDateFormat#parse(String,ParsePosition)":{"status":"excluded","category":"deferred","phase":"2","reason":"Interprets the initial ParsePosition index and reports consumed and error indices in UTF-8 bytes. Java uses UTF-16 code units (R14). Passing a null ParsePosition terminates the process. Java throws NullPointerException (R8)."},
-"java.text.SimpleDateFormat#set2DigitYearStart(Date)":{"status":"excluded","category":"deferred","phase":"2","reason":"Computes the year window in a separate calendar. Java sets the time of the formatter's caller-visible calendar when applying the requested start."},
+"java.text.SimpleDateFormat#set2DigitYearStart(Date)":{"status":"ported","d":"flint.java.text.SimpleDateFormat.set2DigitYearStart"},
 "java.text.SimpleDateFormat#toPattern()":{"d":"flint.java.text.SimpleDateFormat.toPattern","status":"ported"},
 "java.text.spi.**":{"status":"excluded","category":"deferred","phase":"3"},
 "java.time.**":{"status":"excluded","category":"deferred","phase":"2"},
