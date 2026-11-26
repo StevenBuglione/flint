@@ -1169,3 +1169,11 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 02:47Z, coordinator: **the loadable-section metric is live** (520f8f11).
   - **Expired:** the interim page-crossing rule (94badfcf).
   - **JDK leaves:** byte caps are re-baselined in loadable bytes at measured plus 10%, one commit per package, under `jdk-leaf-rule`.
+- 2026-11-26 02:55Z, owner: **use every machine, and add lanes.**
+  - **posidon** (olfa@10.10.10.12, i7-11700K): it becomes the landing machine. Its m7-GC reservation is lifted. proof-harness's merge train runs the combined apps verification and `flint budget` there, and pushes to GitHub from venus.
+  - **venus** stays the development machine.
+  - **Four new gpt-6.2-sol lanes, for 15 in all:**
+    - sol-framework: spring-core, spring-beans and spring-context remainders; framework-core reviews;
+    - sol-boot: Boot core and auto-configuration; boot reviews;
+    - sol-jackson: Jackson's tree model and features; third-party-apis reviews;
+    - sol-web: spring-web and webmvc remainders; web-http reviews.
