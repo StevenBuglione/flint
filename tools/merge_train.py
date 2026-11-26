@@ -430,33 +430,45 @@ class Train:
         return None
 
     def settle(self, batch, landed, failed, pushed):
-        landed_roles = {s['role'] for s, _ in landed} if landed and pushed else set()
-        failed_roles = {s['role']: log for s, log in failed}
+        """Remove exactly the submissions that rode this train (by role AND commit): a role that resubmitted while the
+        train ran keeps its newer submission and its place in the queue (framework-core, 2026-11-26)."""
+        landed_keys = {(s['role'], s['commit']) for s, _ in landed} if landed and pushed else set()
+        failed_logs = {(s['role'], s['commit']): log for s, log in failed}
+        landed_roles = {role for role, _ in landed_keys}
         self.log_dir.mkdir(parents=True, exist_ok=True)
         stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
         logs = {}
-        for role, log in failed_roles.items():
+        for (role, _), log in failed_logs.items():
             path = self.log_dir / f'{role}-{stamp}.log'
             path.write_text(log)
             logs[role] = str(path)
         with self.store.locked():
-            submissions = [s for s in self.submissions() if s['role'] not in landed_roles | set(failed_roles)]
+            submissions = [s for s in self.submissions()
+                           if (s['role'], s['commit']) not in landed_keys | set(failed_logs)]
             self._write(submissions)
+        newer = {s['role'] for s in submissions}
         for submission in batch:
-            if submission['role'] in landed_roles:
-                self._leave_queue(submission['agent'])
-                self.store.event('train-land', role=submission['role'], commit=pushed)
-            elif submission['role'] in failed_roles:
+            key = (submission['role'], submission['commit'])
+            if key in landed_keys:
+                if submission['role'] not in newer:
+                    self._leave_queue(submission['agent'])
+                self.store.event('train-land', role=submission['role'], commit=pushed, submitted=submission['commit'])
+            elif key in failed_logs:
                 self._front_of_queue(submission['agent'])
-                self.store.event('train-fail', role=submission['role'], log=logs[submission['role']])
+                self.store.event('train-fail', role=submission['role'], log=logs[submission['role']],
+                                 submitted=submission['commit'])
         if self.mail:
             for role in landed_roles:
-                self._send(role, f'merge train: your submission landed on {self.branch} (train tip {pushed[:12]}).')
+                rode = next(c for r, c in landed_keys if r == role)[:12]
+                later = (' Your newer submission stays queued for the next train.' if role in newer else '')
+                self._send(role, f'merge train: your submission {rode} landed on {self.branch} (train tip '
+                                 f'{pushed[:12]}).{later}')
             for role, path in logs.items():
+                later = (' Your newer submission is queued and goes next.' if role in newer else ' Fix it and resubmit.')
                 self._send(role, f'merge train: your submission did not land; you are back at the head of the {SLOT} '
-                                 f'queue. Log: {path}')
-        return {'landed': sorted(landed_roles), 'failed': sorted(failed_roles), 'pushed': pushed, 'logs': logs,
-                'pending': [s['role'] for s in self.ordered()], 'verifications': self.verifications}
+                                 f'queue.{later} Log: {path}')
+        return {'landed': sorted(landed_roles), 'failed': sorted(r for r, _ in failed_logs), 'pushed': pushed,
+                'logs': logs, 'pending': [s['role'] for s in self.ordered()], 'verifications': self.verifications}
 
     def _leave_queue(self, agent):
         try:

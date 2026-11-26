@@ -194,6 +194,33 @@ class TrainTests(unittest.TestCase):
         result = self.train.run('runner')
         self.assertEqual((result['landed'], result['pending']), (['sol-a', 'sol-b', 'sol-c', 'sol-d'], ['sol-e']))
 
+    def test_a_resubmission_during_a_run_stays_queued_for_the_next_train(self):
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.hold_slot()
+        train = self.train
+        original = train.verify
+
+        def verify(commit):  # sol-a resubmits a longer branch while the train is verifying the old one
+            if train.verifications == 0:
+                git(self.work, 'checkout', '-q', '-B', 'sol-a-more', 'sol-a')
+                (self.work / 'src' / 'a2.txt').write_text('more')
+                git(self.work, 'add', '.')
+                git(self.work, 'commit', '-q', '-m', 'sol-a: more')
+                git(self.work, 'checkout', '-q', '--detach')
+                train.submit('sol-a', 'sol-a', 'sol-a-more')
+            return original(commit)
+        train.verify = verify
+        result = train.run('runner')
+        self.assertEqual(result['landed'], ['sol-a'])
+        self.assertEqual(result['pending'], ['sol-a'])
+        self.assertEqual(train.submissions()[0]['ref'], 'sol-a-more')
+        queue, _, _ = self.store.queue_view('apps-landing')
+        self.assertIn('sol-a', [m['agent'] for m in queue['members']])
+        self.assertIn('newer submission stays queued', self.store.inbox('sol-a', True, False))
+        train.verify = original
+        self.assertEqual(train.run('runner')['landed'], ['sol-a'])  # the next train lands only the new commit
+        self.assertEqual(self.main_log(), ['sol-a: more', 'sol-a: change', 'base'])
+
     def test_a_resubmission_replaces_the_role_s_earlier_one(self):
         self.lane('sol-a', {'src/a.txt': 'a'})
         first = self.train.submissions()[0]['commit']
