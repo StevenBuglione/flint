@@ -26,5 +26,9 @@
   "flint.java.time.year": {
     "incremental_linked_bytes": 13249,
     "template_instances": 489
+  },
+  "flint.java.time.zone.zoneoffsettransition": {
+    "incremental_linked_bytes": 17174,
+    "template_instances": 560
   }
 }
