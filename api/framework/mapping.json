@@ -31391,7 +31391,7 @@
 "org.springframework.util.MethodInvoker#setTargetMethod(String)":{"category":"runtime-reflection","status":"excluded"},
 "org.springframework.util.MethodInvoker#setTargetObject(Object)":{"category":"runtime-reflection","status":"excluded"},
 "org.springframework.util.MethodInvoker#targetClass":{"category":"runtime-reflection","status":"excluded"},
-"org.springframework.util.MimeType":{"category":"deferred","phase":"2","status":"excluded"},
+"org.springframework.util.MimeType":{"d":"flint.util.MimeType","rules":["R11"],"note":"Flint represents this MIME value as a struct with value equality.","status":"adapted"},
 "org.springframework.util.MimeType#<init>(MimeType)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.util.MimeType#<init>(MimeType,Charset)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.util.MimeType#<init>(MimeType,Map)":{"category":"deferred","phase":"2","status":"excluded"},

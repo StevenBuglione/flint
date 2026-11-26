@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 357 | 0 | 15,236 |
 | boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,557 | 1,451 | 4,870 | 29,956 |
+| framework | spring-framework@v7.1.0 | 3,557 | 1,452 | 4,870 | 29,955 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3709,6 +3709,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.util.Assert#isInstanceOf(Class,Object,Supplier)` | `flint.util.Assert.isInstanceOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.CollectionUtils#findValueOfType(Collection,Class)` | `flint.util.CollectionUtils.findValueOfType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.CollectionUtils#findValueOfType(Collection,Class[])` | `flint.util.CollectionUtils.findValueOfType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.util.MimeType` | `flint.util.MimeType` | [R11](api-mapping.md#r11-object-identity-and-equality) | Flint represents this MIME value as a struct with value equality. |
 | `org.springframework.util.NumberUtils#convertNumberToTargetClass(Number,Class)` | `flint.util.NumberUtils.convertNumberToTargetClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.NumberUtils#parseNumber(String,Class)` | `flint.util.NumberUtils.parseNumber` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.NumberUtils#parseNumber(String,Class,NumberFormat)` | `flint.util.NumberUtils.parseNumber` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -9989,7 +9990,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.transaction.support | 17 | 0 |
 | org.springframework.ui | 42 | 0 |
 | org.springframework.ui.freemarker | 38 | 0 |
-| org.springframework.util | 353 | 0 |
+| org.springframework.util | 352 | 0 |
 | org.springframework.util.backoff | 40 | 0 |
 | org.springframework.util.comparator | 30 | 0 |
 | org.springframework.util.concurrent | 13 | 0 |
