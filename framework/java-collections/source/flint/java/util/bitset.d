@@ -379,8 +379,10 @@ class BitSet
 
     pragma(inline, false) private void recalculateWordsInUse() pure nothrow @nogc
     {
-        while (wordsInUse != 0 && words[wordsInUse - 1] == 0)
-            --wordsInUse;
+        auto remaining = wordsInUse;
+        while (remaining != 0 && words[remaining - 1] == 0)
+            --remaining;
+        wordsInUse = remaining;
     }
 
     pragma(inline, false) private int findBit(int fromIndex, bool set, bool forward) const pure
