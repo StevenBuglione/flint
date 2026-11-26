@@ -1,7 +1,8 @@
 module flint.java.text.internal.decimal_binary_render_test;
 
 import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData;
-import flint.java.text.internal.decimalfixed : DecimalFixedPattern, tryRenderDecimalDouble;
+import flint.java.text.internal.decimalfixed : DecimalFixedPattern;
+import flint.java.text.internal.decimalfixedbinary : tryRenderDecimalDouble;
 import flint.java.text.internal.decimalpattern : DecimalCompileStatus, compileFixedDecimalPattern;
 
 @safe:
