@@ -222,6 +222,16 @@ Java infers `<T extends B> T m()` from the assignment context, which D does not 
 
 Mapping: the method is `adapted` with rule `R21`; its `d` names the method (`flint.jackson.databind.JsonNode.require`), never the template instance.
 
+### R22: Packages that mix annotations and runtime types
+
+R2 keeps annotation modules leaves, and Flint AOT matches UDAs by their canonical module path. A Java package that holds both annotations and runtime types therefore splits in two. Coordinator, 2026-11-26, under the owner's standing approval, from sol-boot:
+- **The annotations** keep the package's own module, unchanged: `org.springframework.boot.autoconfigure.condition` → `flint.boot.autoconfigure.condition`.
+- **The package's runtime types** all go in ONE sibling module with the fixed suffix `_runtime`: `ConditionMessage`, `ConditionOutcome` and `ConditionEvaluationReport` are in `flint.boot.autoconfigure.condition_runtime`.
+- **The leaf never imports the runtime module.** The runtime module may import the leaf.
+- **Where it recurs:** `context.annotation`'s runtime classes and the `web.bind.annotation` helpers.
+
+Mapping: each runtime type and its members are `adapted` with rule `R22` (plus any other rule that shapes them), with `d` under the `_runtime` module. The annotations map under R2 as usual.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:
