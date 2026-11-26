@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
 | boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,558 | 1,455 | 4,870 | 29,951 |
+| framework | spring-framework@v7.1.0 | 3,557 | 1,453 | 4,870 | 29,954 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2474,11 +2474,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#registerResolvableDependency(Class,Object)` | `flint.beans.factory.support.DefaultListableBeanFactory.registerResolvableDependency` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.DefaultListableBeanFactory#resolveNamedBean(Class)` | `flint.beans.factory.support.DefaultListableBeanFactory.resolveNamedBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class)` | `flint.beans.factory.support.RootBeanDefinition.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,ConstructorArgumentValues,MutablePropertyValues)` | `flint.beans.factory.support.RootBeanDefinition.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,String,Supplier)` | `flint.beans.factory.support.RootBeanDefinition.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,Supplier)` | `flint.beans.factory.support.RootBeanDefinition.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,int,boolean)` | `flint.beans.factory.support.RootBeanDefinition.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.support.RootBeanDefinition#<init>(ResolvableType)` | `flint.beans.factory.support.RootBeanDefinition.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.cache
 
@@ -9768,7 +9766,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.beans.factory.config | 486 | 0 |
 | org.springframework.beans.factory.parsing | 133 | 0 |
 | org.springframework.beans.factory.serviceloader | 19 | 0 |
-| org.springframework.beans.factory.support | 748 | 0 |
+| org.springframework.beans.factory.support | 751 | 0 |
 | org.springframework.beans.factory.wiring | 26 | 0 |
 | org.springframework.beans.factory.xml | 0 | 320 |
 | org.springframework.beans.propertyeditors | 155 | 0 |
@@ -10627,6 +10625,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
 | framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,boolean,ExpressionFactory)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
 | framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(Set,Locale,LocaleResolver,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(Class,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
+| framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(ResolvableType)` | 2 | Requires ResolvableType, which is classified as runtime reflection. |
+| framework | `org.springframework.beans.factory.support.RootBeanDefinition#<init>(String,ConstructorArgumentValues,MutablePropertyValues)` | 2 | Flint registers AOT bean definitions. ConstructorArgumentValues and MutablePropertyValues are deferred. |
 | framework | `org.springframework.cache.interceptor.CacheEvictOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |
 | framework | `org.springframework.cache.interceptor.CacheOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |
 | framework | `org.springframework.cache.interceptor.CachePutOperation.Builder#getOperationDescription()` | 2 | Needs java.lang.StringBuilder. |
