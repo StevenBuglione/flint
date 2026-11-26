@@ -511,7 +511,7 @@ def upstream_inventory(module, root=ROOT, caches=None):
             # mapped element names (org.hibernate.validator.test...).
             sole = sum(up == module.upstream for _, _, up, _ in ported_modules(root).values()) == 1
             if (base / 'test' / 'jdk').is_dir():
-                return jtreg_inventory(module, base / 'test' / 'jdk', table)
+                return jtreg_inventory(module, base / 'test' / 'jdk', table, manifest_packages(module, root))
             keys = set()
             for path in [*base.rglob('*Tests.java'), *base.rglob('*Test.java')]:
                 text = str(path.relative_to(base))
@@ -528,11 +528,26 @@ def upstream_inventory(module, root=ROOT, caches=None):
     return None
 
 
-def jtreg_inventory(module, jdk, table):
+def manifest_packages(module, root=ROOT):
+    """The Java packages of the module's pinned API manifest (for openjdk: java.base and java.sql's exported
+    packages), or None when it has no manifest."""
+    project, _, version = str(module.upstream).partition('@')
+    path = root / 'api' / 'upstream' / f'{project}-{version}.json'
+    if not path.is_file():
+        return None
+    return {t['package'] for t in json.loads(path.read_text()).get('types', [])}
+
+
+def jtreg_inventory(module, jdk, table, packages=None):
     """OpenJDK's tests: files under test/jdk/java/ and test/jdk/javax/ that are tests, either a jtreg `@test` tag or a
     TestNG/JUnit `@Test` method (java.time's and java.util.stream's TestNG trees), keyed by their path below test/jdk
     (java/util/HashMap/KeySetRemove.java) and owned by the module that owns the Java package their directory names
-    (java.util), whatever package the file itself declares."""
+    (java.util), whatever package the file itself declares.
+
+    Only tests of the JDK modules the API manifest pins are in scope: a test counts when the package its directory
+    names is a manifest package or lies below one (java.util.concurrent.tck under java.util.concurrent). Every other
+    JDK module's tests (java.desktop's AWT, Swing, Sound and ImageIO, jdk.*) are out of the JDK port's product scope
+    (owner, docs/spring/phase2/jdk-port.md) and are excluded at module level here, not row by row."""
     keys = set()
     for top in ('java', 'javax'):
         for path in (jdk / top).rglob('*.java') if (jdk / top).is_dir() else ():
@@ -540,6 +555,9 @@ def jtreg_inventory(module, jdk, table):
             if '@test' not in text and '@Test' not in text:
                 continue
             key = str(path.relative_to(jdk))
+            package = java_package(key[:-len('.java')])
+            if packages is not None and not any(package == p or package.startswith(p + '.') for p in packages):
+                continue
             if owner(key[:-len('.java')], table) == module.name:
                 keys.add(key)
     return sorted(keys)

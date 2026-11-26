@@ -51,6 +51,10 @@ The coordinator decided this on 2026-11-25: `framework/`, `boot/` and `security/
 
 ## The upstream-tests record
 
+**OpenJDK (`openjdk@21.0.13`).** The inventory reads OpenJDK's jtreg and TestNG tests under `test/jdk` (a file with a jtreg `@test` tag or a `@Test` method), keyed by their path below `test/jdk`, and owned by the module that owns the package their directory names.
+- **Scope:** only tests of the JDK modules the API manifest pins (`java.base` and `java.sql`) count: the test's package must be a manifest package, or lie below one. Every other JDK module (`java.desktop`'s AWT, Swing, Sound and ImageIO, `java.management`, `jdk.*`) is excluded at module level, because it is outside the JDK port's product scope (owner, `docs/spring/phase2/jdk-port.md`). These tests are not listed row by row.
+- **Plain-GPL tests:** many jtreg files are plain GPL-2.0, without the Classpath Exception, so they can never be ported into a `flint:java*` package. Such a class is `excluded` with a `reason` starting `plain-gpl` and `covered_by` naming the original Flint test file(s) covering the same behaviour; until one exists it stays `deferred`.
+
 AGENTS.md requires every ported module to port its upstream tests. `upstream-tests.json` in the module directory records how:
 
 ```json

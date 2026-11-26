@@ -496,6 +496,14 @@ class UpstreamTests(unittest.TestCase):
         (jtreg / 'java' / 'sql' / 'testng' / 'DateTests.java').write_text('class D { @Test public void t() {} }')
         (jtreg / 'java' / 'net' / 'URL').mkdir(parents=True)
         (jtreg / 'java' / 'net' / 'URL' / 'Equals.java').write_text('/* @test */ class E {}')  # owned elsewhere
+        (jtreg / 'java' / 'awt' / 'Frame').mkdir(parents=True)
+        (jtreg / 'java' / 'awt' / 'Frame' / 'Show.java').write_text('/* @test */ class S {}')  # java.desktop: no scope
+        (self.root / 'api' / 'upstream').mkdir(parents=True, exist_ok=True)
+        (self.root / 'api' / 'upstream' / 'openjdk-21.0.13.json').write_text(json.dumps({'types': [
+            {'id': 'java.sql.Timestamp', 'package': 'java.sql'}, {'id': 'java.net.URL', 'package': 'java.net'}]}))
+        dod._OWNERSHIP[self.root] = {'java.sql': 'jdbc', 'java.awt': 'jdbc'}
+        self.assertEqual(dod.upstream_inventory(jdk, self.root, [self.cache]),
+                         ['java/sql/Timestamp/TimestampTests.java', 'java/sql/testng/DateTests.java'])
         dod._OWNERSHIP[self.root] = {'java.sql': 'jdbc'}
         self.addCleanup(dod._OWNERSHIP.pop, self.root, None)
         self.assertEqual(dod.upstream_inventory(jdk, self.root, [self.cache]),
