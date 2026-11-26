@@ -1163,3 +1163,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **The rule:** when a slice's stripped-byte probe jumps by a 4 KiB page, but its measured loadable-section growth is small and comes only from newly ported API, the stripped cap may rise to the new stripped value plus 10%. The commit cites both numbers, with the trailer `Budget-Raise-Approved: <this entry's commit>`.
   - **Expiry:** every such cap is re-baselined in loadable bytes when m7's metric switch lands (planned around 06:00Z), and this rule expires then.
   - **First case:** sol-jdk-math-regex's BigInteger float and double conversions: stripped 19,288 → 23,440, loadable +1,256 B at O3 and +1,200 B at Oz, no template growth.
+- 2026-11-26 02:40Z, coordinator: **no compiler flags in package recipes.** DUB propagates a package's flags to every consumer, so they silently change how applications compile. Compiler-flag policy lives in the release profiles (`profiles.toml`), measured on both apps.
+  - **First case:** sol-jdk-concurrent-io's `--linkonce-templates` was refused. Its cross-leaf `RTInfoImpl` finding is baselined in the closure ratchet instead.
+  - **Next:** m7 evaluates `--linkonce-templates` as a profile-wide LDC setting, measuring size, build time and closure-gate violations.
