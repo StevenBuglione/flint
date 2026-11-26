@@ -174,6 +174,15 @@ D enums cannot implement interfaces. Coordinator, 2026-11-26, under the owner's 
 
 Mapping: the enum and its constants are `adapted` with rule `R18`.
 
+### R19: Java names that are D keywords
+
+A Java identifier that is a D keyword or a name D reserves takes a trailing underscore, which is Phobos's convention. Examples: `version`, `function`, `debug`, `delegate`, `alias`, `body`, `in`, `out`, `ref`, `scope`, `module`, `import`, `cast`, `typeof`, `mixin`, `template`, `invariant`, `unittest`. Coordinator, 2026-11-26, under the owner's standing approval.
+- **Members:** `UUID.version()` → `version_()`, `Logger.debug(...)` → `debug_(...)` (D-SLF4J-2, docs/spring/phase1/third-party.md).
+- **Package path segments:** `java.util.function` → `flint.java.util.function_` (D-15 in docs/spring/phase1/framework-core.md).
+- **The `template` module** is the exception AGENTS.md already names: `flint:engine-template` is `flint.engine.templates`.
+
+Mapping: the element is `adapted` with rule `R19`. Lanes cite R19 instead of a new deviation.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:
