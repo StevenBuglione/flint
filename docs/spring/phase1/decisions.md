@@ -1231,3 +1231,13 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **A front section** explains R1–R22 and the common deviations in plain language, with examples.
   - **A gate** keeps it in sync on every landing, and every adapted entry must cite a rule or deviation that exists in `api-mapping.md`.
   - **Owner of the work:** api-coverage.
+- 2026-11-26 04:55Z, coordinator, under the owner's standing approval: **an ABI-preserving pilot for the per-element-type cost of `List!T`** (sol-jdk-core).
+  - **Kept:** `List!T` stays nominal, along with `Collection`/`Iterable`, `ArrayList` subclassing, null and `Object` casts, and the AOT descriptor path.
+  - **Erased:** equals, hash, toAnyArray, element type, storage modes, bounds and cursor state move into one non-template list and cursor, driven by a per-element descriptor. Each `T` gets one thin typed adapter.
+  - **Acceptance:**
+    - marginal loadable bytes per new element type, on O3 and Oz, DMD and LDC, against matched controls (1→2 class, interface and string types, plus Jackson `JsonNode` and Micrometer `Meter`);
+    - zero-allocation reads and foreach;
+    - unchanged parity for factories, subList and views, CME, descriptors and Binder subclasses.
+  - **If the per-T interface table keeps the floor above about 2 KiB,** an erased marker interface with non-virtual typed methods comes back for review before coding, with an R10 note.
+  - **Deferred:** the DUB namespace move.
+- 2026-11-26 04:55Z, coordinator, under the owner's standing approval: **Boot autoconfigure gains direct dependencies on `flint:beans` and `flint:core`** (sol-boot). They follow the tier direction and are already in the link closure. Each edge lands with the first import that needs it, followed by `tools/check_locks.py` over every project. Deferred contracts (`AnnotatedTypeMetadata`, `Condition`, `ConditionContext`) are not imported until they land.
