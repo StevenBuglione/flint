@@ -106,6 +106,18 @@ final class HexFormat
         return value;
     }
 
+    /// Decode up to eight hexadecimal digits into the bits of a Java int.
+    static int fromHexDigits(scope const(char)[] text) pure
+    {
+        return cast(int) parseDigits(text, 8);
+    }
+
+    /// Decode up to sixteen hexadecimal digits into the bits of a Java long.
+    static long fromHexDigitsToLong(scope const(char)[] text) pure
+    {
+        return cast(long) parseDigits(text, 16);
+    }
+
     private string alphabet() const pure nothrow @nogc
     {
         return upper ? "0123456789ABCDEF" : "0123456789abcdef";
@@ -115,6 +127,33 @@ final class HexFormat
     {
         return renderDigits(value, digits, upper);
     }
+}
+
+private ulong parseDigits(scope const(char)[] text, uint limit) pure
+{
+    import flint.java.lang : IllegalArgumentException;
+
+    if (text.length > limit)
+    {
+        // Legal UTF-8 uses at most three bytes per UTF-16 code unit.
+        uint units = limit + 1;
+        if (text.length <= 3 * limit)
+        {
+            units = 0;
+            for (size_t index; index < text.length && units <= limit; ++index)
+            {
+                const ubyte octet = text[index];
+                units += ((octet & 0xc0) != 0x80) + (octet >= 0xf0);
+            }
+        }
+        if (units > limit)
+            throw new IllegalArgumentException("Too many hexadecimal digits");
+    }
+
+    ulong result;
+    foreach (char digit; text)
+        result = (result << 4) | cast(uint) HexFormat.fromHexDigit(digit);
+    return result;
 }
 
 private char[] renderDigits(ulong value, uint digits, bool upper) pure nothrow

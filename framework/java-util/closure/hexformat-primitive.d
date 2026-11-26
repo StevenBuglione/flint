@@ -20,11 +20,13 @@ int main(string[] args) @system
     const suffix = format.toHexDigits(value, count);
     const int codePoint = '0' + count;
     const int decoded = HexFormat.fromHexDigit(codePoint);
-    printf("%.*s %.*s %.*s %.*s %.*s %.*s %c%c %d %d\n", cast(int) small.length, small.ptr,
+    const uint parsedInt = cast(uint) HexFormat.fromHexDigits(intText);
+    const ulong parsedLong = cast(ulong) HexFormat.fromHexDigitsToLong(full);
+    printf("%.*s %.*s %.*s %.*s %.*s %.*s %c%c %d %d %X %llX\n", cast(int) small.length, small.ptr,
             cast(int) unit.length, unit.ptr, cast(int) medium.length, medium.ptr,
             cast(int) intText.length, intText.ptr, cast(int) full.length, full.ptr,
             cast(int) suffix.length, suffix.ptr, format.toHighHexDigit(cast(int) value),
             format.toLowHexDigit(cast(int) value), decoded, cast(int)(format.isUpperCase()
-                && HexFormat.isHexDigit(codePoint)));
+                && HexFormat.isHexDigit(codePoint)), parsedInt, parsedLong);
     return 0;
 }

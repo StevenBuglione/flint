@@ -5830,6 +5830,8 @@
 "java.util.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.util.HexFormat":{"status":"ported","d":"flint.java.util.hexformat.HexFormat"},
 "java.util.HexFormat#fromHexDigit(int)":{"status":"ported","d":"flint.java.util.hexformat.HexFormat.fromHexDigit"},
+"java.util.HexFormat#fromHexDigits(CharSequence)":{"status":"adapted","d":"flint.java.util.hexformat.HexFormat.fromHexDigits","rules":["R5","R8","R14"]},
+"java.util.HexFormat#fromHexDigitsToLong(CharSequence)":{"status":"adapted","d":"flint.java.util.hexformat.HexFormat.fromHexDigitsToLong","rules":["R5","R8","R14"]},
 "java.util.HexFormat#isHexDigit(int)":{"status":"ported","d":"flint.java.util.hexformat.HexFormat.isHexDigit"},
 "java.util.HexFormat#isUpperCase()":{"status":"ported","d":"flint.java.util.hexformat.HexFormat.isUpperCase"},
 "java.util.HexFormat#of()":{"status":"ported","d":"flint.java.util.hexformat.HexFormat.of"},

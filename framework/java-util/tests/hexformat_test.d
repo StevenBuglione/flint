@@ -78,3 +78,33 @@ unittest
     }
     assert(rows == 306);
 }
+
+@("HexFormat decodes unsigned hexadecimal bit patterns at Java widths")
+unittest
+{
+    assert(HexFormat.fromHexDigits("") == 0);
+    assert(HexFormat.fromHexDigits("0fA") == 250);
+    assert(HexFormat.fromHexDigits("80000000") == int.min);
+    assert(HexFormat.fromHexDigits("ffffffff") == -1);
+    assert(HexFormat.fromHexDigitsToLong("") == 0);
+    assert(HexFormat.fromHexDigitsToLong("ffffffff") == 4_294_967_295L);
+    assert(HexFormat.fromHexDigitsToLong("8000000000000000") == long.min);
+    assert(HexFormat.fromHexDigitsToLong("ffffffffFFFFFFFF") == -1);
+    assertThrown!IllegalArgumentException(HexFormat.fromHexDigits("000000000"));
+    assertThrown!IllegalArgumentException(HexFormat.fromHexDigitsToLong("00000000000000000"));
+    foreach (text; ["+1", "0x01", "１", "ééééé"])
+    {
+        assertThrown!NumberFormatException(HexFormat.fromHexDigits(text));
+        assertThrown!NumberFormatException(HexFormat.fromHexDigitsToLong(text));
+    }
+    assertThrown!NumberFormatException(HexFormat.fromHexDigitsToLong("ééééééééé"));
+    try
+    {
+        HexFormat.fromHexDigits("ééééééééé");
+        assert(0, "Expected a Java width error");
+    }
+    catch (IllegalArgumentException failure)
+    {
+        assert(typeid(failure) is typeid(IllegalArgumentException));
+    }
+}
