@@ -225,7 +225,7 @@ struct Period
         prependComponent(buffer, start, months_, 'M');
         prependComponent(buffer, start, years_, 'Y');
         buffer[--start] = 'P';
-        return buffer[start .. $].idup;
+        return copyText(buffer[start .. $]);
     }
 }
 
@@ -273,7 +273,15 @@ private void prependComponent(ref scope char[37] buffer, ref size_t start, int v
 
 private DateTimeParseException periodParseException(scope const(char)[] text, Throwable cause) pure nothrow
 {
-    return new DateTimeParseException("Text cannot be parsed to a Period", text.idup, 0, cause);
+    return new DateTimeParseException("Text cannot be parsed to a Period", copyText(text), 0, cause);
+}
+
+// Keep Period's text allocation in this archive member.
+private char[] copyText(scope const(char)[] source) pure nothrow
+{
+    auto text = new char[source.length];
+    text[] = source;
+    return text;
 }
 
 private enum ParseStatus
