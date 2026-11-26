@@ -203,9 +203,11 @@ LocalizedResourceHelper keeps locale fallback behind the Core resource support m
 
 ### Jackson tree search
 
-The first-match operations check an object's own property and then walk its stored children. A failed path lookup returns a missing node through the existing factory. The plural operations require Java List façades, which pull in Stream, Comparator, collection methods and their runtime templates. Keep the plural API deferred while the façade is over budget (B-1).
+The first-match operations check an object's own property and then walk its stored children. A failed path lookup returns a missing node through the existing factory. The plural operations require Java List façades. Both their template counts (B-1) and the application cost of collection methods retained by virtual accumulator overloads (S-1) determine when the plural API can land.
 
 On venus, the pinned `measure_builds.py --framework-sizes --framework jackson-databind` probe measured 4,086 DMD template instances and 418,773 loadable bytes at `26bd3a8c`. First-match search at `755c8bd9` measured 4,088 and 419,469. The experiment with node-valued lists at `13b527ef` measured 5,347 and 446,649. Adding string-valued lists at `f2b34aec` measured 5,702 and 476,197. The module cap is 4,850 template instances.
+
+After `20c53a22` moved `Collection.stream()` out of the vtable, the matched databind probe on venus from `3aae1c61` to `51704b75` and `afa3e76c` measured 3,664 templates at baseline, 3,970 with node-valued searches, and 4,218 with all three plural searches. All fit the existing 4,850 cap. In matched pinned-LDC `flint build --profile size` builds, node-valued searches added 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. String-valued searches added a further 984 and 976 bytes. The largest new symbols include `ArrayList!JsonNode` dispatch thunks and the class and interface vtables. The node-valued searches stay deferred while the Java class-valued List façade retains that cost in apps that never call tree search. The string-valued search is measured separately against the baseline before landing.
 
 The first-match experiment added 672 bytes of allocated ELF sections at Oz to both applications, from 3,727,853 to 3,728,525 for gs-rest-service and from 10,481,639 to 10,482,311 for petclinic-rest. Both builds used `flint build --profile size` and the pinned LDC on the same matched source trees.
 
