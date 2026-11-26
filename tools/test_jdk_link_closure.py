@@ -253,6 +253,90 @@ Discarded input sections
 
     @unittest.skipUnless(sys.platform.startswith('linux') and all(shutil.which(tool)
                          for tool in ('dub', 'ldc2', 'readelf', 'nm')), 'requires the ELF probe toolchain')
+    def test_abstract_leaf_can_use_a_concrete_probe_only_with_real_coverage(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package = root / 'framework/java'
+            modules = package / 'source/flint/java'
+            for directory in (root / 'policy', modules, package / 'closure'):
+                directory.mkdir(parents=True)
+            (root / 'dub.sdl').write_text('name "flint"\ntargetType "none"\nsubPackage "framework/java"\n')
+            (package / 'dub.sdl').write_text('name "java"\ntargetType "library"\n')
+            (root / 'policy/framework.json').write_text('{"modules":{"java":{"directory":"framework/java"}}}')
+            base, child = 'flint.java.buffer', 'flint.java.bytebuffer'
+            base_source = modules / 'buffer.d'
+            abstract_base = (
+                f'module {base};\n@safe:\nabstract class Buffer {{\n'
+                '    protected this() {}\n'
+                '    int position(int n) { return n + stride(); }\n'
+                '    int snapshot()() { return stride(); }\n'
+                '    abstract int stride();\n'
+                '}\n'
+            )
+            base_source.write_text(abstract_base)
+            child_source = modules / 'bytebuffer.d'
+            concrete_child = (
+                f'module {child};\nimport {base} : Buffer;\n@safe:\n'
+                'final class ByteBuffer : Buffer {\n'
+                '    override int stride() { return 1; }\n'
+                '    static ByteBuffer allocate() { return new ByteBuffer; }\n'
+                '}\n'
+            )
+            child_source.write_text(concrete_child)
+            fixture = package / 'closure/cursor.d'
+            use_buffer = (f'module cursor;\nimport {child} : ByteBuffer;\n@safe:\n'
+                          'int main(string[] args) { return ByteBuffer.allocate().position(cast(int) args.length); }\n')
+            fixture.write_text(use_buffer)
+            covering = {'leaf': child, 'probe': 'cursor', 'abstract_type': 'Buffer', 'concrete_type': 'ByteBuffer'}
+            fragments = {
+                base: {'covered_by': covering},
+                child: {'source': 'closure/cursor.d', 'leaves': [base], 'data': []},
+            }
+            for leaf, entry in fragments.items():
+                path = package / closure.PROBE_DIRECTORY / leaf / 'cursor.json'
+                path.parent.mkdir(parents=True)
+                path.write_text(json.dumps(entry))
+            with patch.object(closure, 'ROOT', root), patch.object(closure, 'copy_workspace',
+                                                                  lambda dest: shutil.copytree(root, dest)):
+                report = closure.audit('java', None)
+                concrete = report[child]['cursor']
+                self.assertEqual(set(concrete), {'O3', 'Oz'})
+                self.assertTrue(all(not result['violations'] for result in concrete.values()))
+                for result in concrete.values():
+                    self.assertTrue(result['covers'][base + '/cursor'].startswith(closure.mangle_prefix(base)))
+
+                base_source.write_text(abstract_base.replace('protected this()', 'public this()'))
+                with self.assertRaisesRegex(closure.BuildError, 'public constructor'):
+                    closure.audit('java', None)
+
+                base_source.write_text(abstract_base.replace('    abstract int stride();',
+                    '    abstract int stride();\n    static Buffer factory() { return null; }'))
+                with self.assertRaisesRegex(closure.BuildError, 'public factory'):
+                    closure.audit('java', None)
+
+                base_source.write_text(abstract_base.replace('    abstract int stride();',
+                    '    abstract int stride();\n    static Buffer factory()() { return null; }'))
+                with self.assertRaisesRegex(closure.BuildError, 'public factory'):
+                    closure.audit('java', None)
+
+                base_source.write_text(abstract_base)
+                child_source.write_text(concrete_child.replace('class ByteBuffer : Buffer', 'class ByteBuffer')
+                                                     .replace('override int stride', 'int stride'))
+                with self.assertRaisesRegex(closure.BuildError, 'needs a concrete subclass'):
+                    closure.audit('java', None)
+
+                child_source.write_text(concrete_child)
+                fixture.write_text(use_buffer.replace('@safe:', f'import {base} : Buffer;\n@safe:'))
+                with self.assertRaisesRegex(ValueError, 'probe must import only the JDK leaf'):
+                    closure.audit('java', None)
+
+                fixture.write_text(use_buffer.replace('ByteBuffer.allocate().position(cast(int) args.length)',
+                                                      'cast(int) args.length'))
+                with self.assertRaisesRegex(closure.BuildError, 'no retained Buffer'):
+                    closure.audit('java', None)
+
+    @unittest.skipUnless(sys.platform.startswith('linux') and all(shutil.which(tool)
+                         for tool in ('dub', 'ldc2', 'readelf', 'nm')), 'requires the ELF probe toolchain')
     def test_real_thinlto_links_report_undeclared_data_in_both_profiles(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / 'workspace'

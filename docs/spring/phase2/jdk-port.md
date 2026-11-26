@@ -123,6 +123,14 @@ A fixture may declare its own module in the JDK namespace to exercise package ac
 that declaration's two compiler-generated module metadata records. Fixture helper code and other metadata
 still go through ordinary symbol attribution. A fixture module name must differ from all registered JDK modules.
 
+An abstract class with no public constructor or factory can share a concrete subclass's existing probe in the
+same DUB package. Its record has one field, `covered_by`, with `leaf`, `probe`, `abstract_type` and
+`concrete_type`. The class names are unqualified names from the two leaves. The concrete fixture imports
+only its own leaf and lists the abstract leaf in `leaves`. A separate compiler witness verifies the class
+declarations, constructor and factory restrictions, and inheritance. The concrete ELF must retain symbols
+for both classes in O3 and Oz. Its report records the covered operation and the retained symbol.
+Keep package-only behavior cases in the package's tests.
+
 Put new table-only modules under a `.data` component so the gate can identify their symbols. Write separate
 probes for common operations and operations that intentionally need optional data. Use runtime input to exercise
 the operation.

@@ -394,8 +394,12 @@ def read_manifest(package, own_modules, all_modules=None):
         if not isinstance(probes, dict) or not probes:
             raise ValueError(f'{package}: {module} needs at least one probe')
         for name, entry in probes.items():
-            if (not re.fullmatch(r'[a-z][a-z0-9-]*', name) or not isinstance(entry, dict)
-                    or set(entry) != {'source', 'leaves', 'data'} or not isinstance(entry['source'], str)):
+            if not re.fullmatch(r'[a-z][a-z0-9-]*', name) or not isinstance(entry, dict):
+                raise ValueError(f'{package}: invalid probe record {module}/{name}')
+            if set(entry) == {'covered_by'}:
+                check_covering_probe(package, entries, module, name, entry['covered_by'])
+                continue
+            if set(entry) != {'source', 'leaves', 'data'} or not isinstance(entry['source'], str):
                 raise ValueError(f'{package}: invalid probe record {module}/{name}')
             check_names(entry['leaves'], modules, want_data=False)
             check_names(entry['data'], modules, want_data=True)
@@ -412,6 +416,86 @@ def read_manifest(package, own_modules, all_modules=None):
             if jdk_imports != {module} or banned_imports(text):
                 raise ValueError(f'{source}: probe must import only the JDK leaf {module} and no banned Phobos')
     return entries
+
+
+def check_covering_probe(package, entries, leaf, name, covering):
+    label = f'{package}: {leaf}/{name}'
+    if (not isinstance(covering, dict) or set(covering) != {'leaf', 'probe', 'abstract_type', 'concrete_type'}
+            or any(not isinstance(value, str) for value in covering.values())
+            or any(not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', covering[key])
+                   for key in ('abstract_type', 'concrete_type'))):
+        raise ValueError(f'{label}: invalid covered_by record')
+    probes = entries.get(covering['leaf'])
+    target = probes.get(covering['probe']) if isinstance(probes, dict) else None
+    if covering['leaf'] == leaf or not isinstance(target, dict) or 'source' not in target:
+        raise ValueError(f'{label}: covered_by must name an existing concrete leaf probe')
+    if not isinstance(target.get('leaves'), list) or leaf not in target['leaves']:
+        raise ValueError(f'{label}: covering probe must declare {leaf} in its leaves')
+
+
+def coverage_witness(leaf, covering):
+    base, subclass = covering['abstract_type'], covering['concrete_type']
+    # Keep these semantic checks out of the measured fixture. A witness import
+    # must never introduce symbols into the concrete probe's closure.
+    return f'''module app;
+import std.traits : Unqual;
+static import {leaf};
+static import {covering['leaf']};
+alias Base = {leaf}.{base};
+alias Subclass = {covering['leaf']}.{subclass};
+
+static assert(__traits(isAbstractClass, Base) && __traits(isSame, __traits(parent, Base), {leaf}),
+              "covered_by needs an abstract class declared in its leaf");
+static assert(is(Subclass : Base) && !is(Subclass == Base) && !__traits(isAbstractClass, Subclass)
+              && __traits(isSame, __traits(parent, Subclass), {covering['leaf']}),
+              "covered_by needs a concrete subclass declared in the covering leaf");
+
+template IsFactory(alias candidate)
+{{
+    static if (is(typeof(candidate) Result == return))
+        enum IsFactory = is(Unqual!Result : Base);
+    else
+        enum IsFactory = true; // An unconstrained return type cannot prove absence of a factory.
+}}
+
+static foreach (member; __traits(derivedMembers, Base))
+    static foreach (method; __traits(getOverloads, Base, member, true))
+        static if (__traits(getProtection, method) == "public" || __traits(getProtection, method) == "export")
+        {{
+            static assert(member != "__ctor", "covered_by abstract leaf has a public constructor");
+            static if (__traits(isTemplate, method))
+            {{
+                static if (__traits(compiles, method!()))
+                    static assert(!__traits(isStaticFunction, method!()),
+                                  "covered_by abstract leaf has a possible public factory");
+                else
+                    static assert(false, "covered_by cannot rule out a public factory template");
+            }}
+            else static if (__traits(isStaticFunction, method))
+                static assert(!IsFactory!method, "covered_by abstract leaf has a public factory");
+        }}
+
+static foreach (member; __traits(allMembers, {leaf}))
+    static foreach (factory; __traits(getOverloads, {leaf}, member, true))
+        static if (__traits(getProtection, factory) == "public" || __traits(getProtection, factory) == "export")
+            static assert(!IsFactory!factory, "covered_by abstract leaf has a public factory");
+
+@safe int main() {{ return 0; }}
+'''
+
+
+def covered_symbols(symbols, leaf, covering):
+    base_type = f"{leaf}.{covering['abstract_type']}"
+    concrete_type = f"{covering['leaf']}.{covering['concrete_type']}"
+    seen = {}
+    for symbol in sorted(symbols):
+        owner = symbol_owner(symbol, {base_type, concrete_type})
+        if owner:
+            seen.setdefault(owner[0], symbol)
+    for qualified_type in (base_type, concrete_type):
+        if qualified_type not in seen:
+            raise BuildError(f'covered_by has no retained {qualified_type.rsplit(".", 1)[1]} symbols')
+    return seen[base_type]
 
 
 def run(command, cwd, env=None):
@@ -467,12 +551,23 @@ def audit(package, evidence):
     if evidence:
         evidence.mkdir(parents=True, exist_ok=True)
     report = {}
+    coverage = {}
+    for leaf, probes in entries.items():
+        for name, entry in probes.items():
+            if covering := entry.get('covered_by'):
+                coverage.setdefault((covering['leaf'], covering['probe']), []).append((leaf, name, covering))
     with tempfile.TemporaryDirectory(prefix='flint-jdk-closure-') as temporary:
         workspace = Path(temporary) / 'workspace'
         copy_workspace(workspace)
         control = Path(temporary) / 'control.d'
         control.write_text('module app;\n@safe:\nint main(string[] args) { return cast(int) args.length & 127; }\n')
         profiles = native_profiles()
+        for covered in coverage.values():
+            for leaf, name, covering in covered:
+                witness = Path(temporary) / 'coverage.d'
+                witness.write_text(coverage_witness(leaf, covering))
+                build_probe(workspace, workspace / f'.jdk-{leaf}-{name}-coverage', package, witness,
+                            profiles['O3'], evidence)
         for profile in ('O3', 'Oz'):
             control_bytes, control_symbols, _ = build_probe(
                 workspace, workspace / f'.jdk-control-{profile}', None, control, profiles[profile], evidence)
@@ -481,6 +576,8 @@ def audit(package, evidence):
                 raise BuildError(f'{profile} control retained {", ".join(control_problems)}')
             for leaf, probes in entries.items():
                 for name, entry in probes.items():
+                    if 'covered_by' in entry:
+                        continue
                     directory = workspace / f'.jdk-{leaf}-{name}-{profile}'
                     source = packages[package] / entry['source']
                     fixture_module = declared_module(tokens(source.read_text()))
@@ -490,11 +587,17 @@ def audit(package, evidence):
                                           probe_module=fixture_module)
                     families = {issue.removeprefix('banned Phobos ') for issue in problems
                                 if issue.startswith('banned Phobos ')}
-                    report.setdefault(leaf, {}).setdefault(name, {})[profile] = {
+                    result = {
                         'loadable_bytes': loadable, 'control_bytes': control_bytes,
                         'signed_delta_bytes': loadable - control_bytes, 'violations': problems,
                         'phobos_archive_triggers': phobos_triggers(map_text, families),
                     }
+                    if covered := coverage.get((leaf, name)):
+                        result['covers'] = {
+                            f'{base}/{case}': covered_symbols(symbols, base, covering)
+                            for base, case, covering in covered
+                        }
+                    report.setdefault(leaf, {}).setdefault(name, {})[profile] = result
     return report
 
 
