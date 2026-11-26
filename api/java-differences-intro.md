@@ -107,7 +107,7 @@ filter.and(ClassFilter.NULL);
 
 **R17: shared constants of generic classes**, such as `Range.unbounded()`, are value-equal per type instead of one shared object. `equals` and `isUnbounded()` behave as in Java; reference identity is not preserved.
 
-**`java.net.URL` equality never uses DNS** (decisions.md, 2026-11-26 01:55Z). `equals` and `hashCode` compare the normalised URL. Java resolves host names inside `equals`, which blocks and is nondeterministic. `URI` behaves exactly as in Java.
+**D-NET-1: `java.net.URL` equality never uses DNS.** `equals` and `hashCode` compare the normalised URL. Java resolves host names inside `equals`, which blocks and is nondeterministic. `URI` behaves exactly as in Java.
 
 ### Enums
 
