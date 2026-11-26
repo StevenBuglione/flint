@@ -1372,6 +1372,122 @@ private int rankOf(string text, string name)
     return text[rank .. rank + text[rank .. $].indexOf(';')].to!int;
 }
 
+@("AutoConfigurationSorterTests.byOrderAnnotation")
+unittest
+{
+    expectAutoConfigurationRanks(["OrderLowest", "OrderHighest", "OrderUnspecified"],
+            ["OrderHighest", "OrderUnspecified", "OrderLowest"]);
+}
+
+@("AutoConfigurationSorterTests.byAutoConfigureAfter")
+unittest
+{
+    expectAutoConfigurationRanks(["AutoConfigureA", "AutoConfigureB", "AutoConfigureC"],
+            ["AutoConfigureC", "AutoConfigureB", "AutoConfigureA"]);
+}
+
+@("AutoConfigurationSorterTests.byAutoConfigureBefore")
+unittest
+{
+    expectAutoConfigurationRanks(["AutoConfigureX", "AutoConfigureY", "AutoConfigureZ"],
+            ["AutoConfigureZ", "AutoConfigureY", "AutoConfigureX"]);
+}
+
+@("AutoConfigurationSorterTests.byAutoConfigureAfterDoubles")
+unittest
+{
+    expectAutoConfigurationRanks([
+        "AutoConfigureA", "AutoConfigureB", "AutoConfigureC", "AutoConfigureE"
+    ], ["AutoConfigureC", "AutoConfigureE", "AutoConfigureB", "AutoConfigureA"]);
+}
+
+@("AutoConfigurationSorterTests.byAutoConfigureMixedBeforeAndAfter")
+unittest
+{
+    expectAutoConfigurationRanks([
+        "AutoConfigureA", "AutoConfigureB", "AutoConfigureC", "AutoConfigureW", "AutoConfigureX"
+    ], ["AutoConfigureC", "AutoConfigureW", "AutoConfigureB", "AutoConfigureA", "AutoConfigureX"]);
+}
+
+@("AutoConfigurationSorterTests.byAutoConfigureMixedBeforeAndAfterWithClassNames")
+unittest
+{
+    expectAutoConfigurationRanks([
+        "AutoConfigureA2", "AutoConfigureB", "AutoConfigureC", "AutoConfigureW2", "AutoConfigureX"
+    ], ["AutoConfigureC", "AutoConfigureW2", "AutoConfigureB", "AutoConfigureA2", "AutoConfigureX"]);
+}
+
+@("AutoConfigurationSorterTests.byAutoConfigureMixedBeforeAndAfterWithDifferentInputOrder")
+unittest
+{
+    expectAutoConfigurationRanks([
+        "AutoConfigureW", "AutoConfigureX", "AutoConfigureA", "AutoConfigureB", "AutoConfigureC"
+    ], ["AutoConfigureC", "AutoConfigureW", "AutoConfigureB", "AutoConfigureA", "AutoConfigureX"]);
+}
+
+@("AutoConfigurationSorterTests.byAutoConfigureAfterWithMissing")
+unittest
+{
+    expectAutoConfigurationRanks(["AutoConfigureA", "AutoConfigureB"], [
+        "AutoConfigureB", "AutoConfigureA"
+    ]);
+}
+
+@("AutoConfigurationSorterTests.duplicateInputDoesNotChangeResult")
+unittest
+{
+    expectAutoConfigurationRanks([
+        "AutoConfigureA", "AutoConfigureB", "AutoConfigureC", "AutoConfigureB", "AutoConfigureA",
+        "AutoConfigureC"
+    ], ["AutoConfigureC", "AutoConfigureB", "AutoConfigureA"]);
+}
+
+private void expectAutoConfigurationRanks(const string[] imports, const string[] expected)
+{
+    import std.algorithm.searching : count;
+    import std.file : mkdirRecurse, readText, write;
+    import std.path : buildPath, dirName;
+    import flint_tool.engine.aot.driver : AotRequest, runAot;
+
+    const project = copyFixture("auto-order");
+    scope (exit)
+        remove(project);
+    const candidates = buildPath(project, "candidates");
+    const manifest = buildPath(candidates, "META-INF", "flint", "flint.boot.autoconfigure.AutoConfiguration.imports");
+    mkdirRecurse(dirName(manifest));
+    enum moduleName = "auto_order_candidates.configs";
+    string names;
+    foreach (name; imports)
+        names ~= moduleName ~ "." ~ name ~ "\n";
+    write(manifest, names);
+
+    AotRequest request;
+    request.root = project;
+    request.compiler = compiler();
+    request.flags = ["-preview=dip1000"];
+    request.importPaths = closureImports(["boot-autoconfigure"]) ~ [
+        "-I" ~ buildPath(candidates, "source")
+    ];
+    request.packageDirectories = [candidates];
+    request.environmentKey = "test";
+    const outcome = runAot(request);
+    assert(outcome.extractionErrors.length == 0, outcome.extractionErrors);
+    foreach (ref diagnostic; outcome.diagnostics)
+        assert(false, diagnostic.code ~ " " ~ diagnostic.message);
+    assert(outcome.ok && outcome.active);
+
+    const generated = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
+            "auto_order_candidates", "configs.d"));
+    assert(generated.count("definition.name = ") == expected.length);
+    int previous = -1;
+    foreach (name; expected)
+    {
+        const rank = rankOf(generated, moduleName ~ "." ~ name);
+        assert(rank > previous, "auto-configuration out of order: " ~ name);
+        previous = rank;
+    }
+}
+
 @("class-level mappings come from interfaces and handler methods from base classes (TYPE_HIERARCHY)")
 unittest
 {

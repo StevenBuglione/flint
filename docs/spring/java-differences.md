@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 199 | 330 | 0 | 15,267 |
-| boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
+| boot | spring-boot@v4.2.0 | 43 | 40 | 2,133 | 13,387 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,507 | 1,401 | 4,850 | 30,076 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -637,6 +637,19 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.boot.actuate.info.InfoEndpoint` | `flint.boot.actuate.info.InfoEndpoint` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.actuate.info.InfoEndpoint#<init>(List)` | `flint.boot.actuate.info.InfoEndpoint.this` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.boot.actuate.info.InfoEndpoint#info()` | `flint.boot.actuate.info.InfoEndpoint.info` | [R2](api-mapping.md#r2-annotations), [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+
+#### org.springframework.boot.autoconfigure
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.boot.autoconfigure.AutoConfigureAfter` | `flint.boot.autoconfigure.AutoConfigureAfter` | [R2](api-mapping.md#r2-annotations) | Ordering through omitted configurations' metadata is deferred. |
+| `org.springframework.boot.autoconfigure.AutoConfigureAfter#name` | `flint.boot.autoconfigure.AutoConfigureAfter.name` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.AutoConfigureAfter#value` | `flint.boot.autoconfigure.AutoConfigureAfter.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.boot.autoconfigure.AutoConfigureBefore` | `flint.boot.autoconfigure.AutoConfigureBefore` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.AutoConfigureBefore#name` | `flint.boot.autoconfigure.AutoConfigureBefore.name` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.AutoConfigureBefore#value` | `flint.boot.autoconfigure.AutoConfigureBefore.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.boot.autoconfigure.AutoConfigureOrder` | `flint.boot.autoconfigure.AutoConfigureOrder` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.AutoConfigureOrder#value` | `flint.boot.autoconfigure.AutoConfigureOrder.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.boot.autoconfigure.condition
 
@@ -8862,7 +8875,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.amqp.rabbitmq.health | 0 | 3 |
 | org.springframework.boot.ansi | 68 | 0 |
 | org.springframework.boot.artemis.autoconfigure | 48 | 0 |
-| org.springframework.boot.autoconfigure | 97 | 0 |
+| org.springframework.boot.autoconfigure | 89 | 0 |
 | org.springframework.boot.autoconfigure.aop | 2 | 0 |
 | org.springframework.boot.autoconfigure.availability | 2 | 0 |
 | org.springframework.boot.autoconfigure.cache | 11 | 0 |
@@ -10285,6 +10298,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | --- | --- | --- | --- |
 | ai | `org.springframework.ai.embedding.Embedding#<init>(float[],Integer)` | 2 | Requires the shared EmbeddingResultMetadata.EMPTY instance. |
 | ai | `org.springframework.ai.embedding.EmbeddingResultMetadata#EMPTY` | 2 | Requires a reviewed engine-aot helper to preserve shared metadata identity safely. |
+| boot | `org.springframework.boot.autoconfigure.AutoConfiguration#after` | 2 | Ordering through this class-valued alias needs separate verification. |
+| boot | `org.springframework.boot.autoconfigure.AutoConfiguration#afterName` | 2 | Ordering through this name-valued alias needs separate verification. |
+| boot | `org.springframework.boot.autoconfigure.AutoConfiguration#before` | 2 | Ordering through this class-valued alias needs separate verification. |
+| boot | `org.springframework.boot.autoconfigure.AutoConfiguration#beforeName` | 2 | Ordering through this name-valued alias needs separate verification. |
+| boot | `org.springframework.boot.autoconfigure.AutoConfigureOrder#DEFAULT_ORDER` | 2 | The constant's exact value needs direct verification. |
 | boot | `org.springframework.boot.autoconfigure.SpringBootApplication#proxyBeanMethods` | 2 | Known defect. The missing @AliasFor(annotation = Configuration.class) causes proxyBeanMethods = false to merge to true. |
 | boot | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperties` | 2 | Repeated conditions and explicit containers require AOT occurrence support. |
 | boot | `org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#search` | 2 | Known defect. A named missing-bean condition still searches the parent with SearchStrategy.CURRENT. |

@@ -29,8 +29,37 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/AutoConfigurationSorterTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "apps/flint/test/flint_tool/engine/aot_test.d",
+      "methods": {
+        "ported": [
+          "byAutoConfigureAfter",
+          "byAutoConfigureAfterDoubles",
+          "byAutoConfigureAfterWithMissing",
+          "byAutoConfigureBefore",
+          "byAutoConfigureMixedBeforeAndAfter",
+          "byAutoConfigureMixedBeforeAndAfterWithClassNames",
+          "byAutoConfigureMixedBeforeAndAfterWithDifferentInputOrder",
+          "byOrderAnnotation",
+          "duplicateInputDoesNotChangeResult"
+        ],
+        "skipped": {
+          "byAutoConfigureAfterAliasFor": "Ordering through the aliases on @AutoConfiguration needs separate verification.",
+          "byAutoConfigureAfterAliasForWithProperties": "The annotation metadata properties path is deferred.",
+          "byAutoConfigureAfterWithCycle": "Auto-configuration cycle diagnostics are deferred.",
+          "byAutoConfigureAfterWithDeprecated": "Auto-configuration replacements are deferred.",
+          "byAutoConfigureBeforeAliasFor": "Ordering through the aliases on @AutoConfiguration needs separate verification.",
+          "byAutoConfigureBeforeAliasForWithProperties": "The annotation metadata properties path is deferred.",
+          "byBeforeAnnotationThenOrderAnnotation": "The before and explicit priority interaction needs separate verification.",
+          "cycleReportsSameClasses": "Auto-configuration cycle diagnostics are deferred.",
+          "orderIsStableForLargerMixedGraph": "The larger mixed ordering graph needs separate verification.",
+          "orderIsStableForLargerMixedGraphWithReversedInput": "The larger mixed ordering graph needs separate verification.",
+          "transitivelyDiscoveredClassesAreNotIncludedInResult": "Known defect. AOT currently drops ordering edges through omitted configurations instead of using their metadata.",
+          "useAnnotationWithNoDirectLink": "The annotation metadata properties path is deferred.",
+          "useAnnotationWithNoDirectLinkAndCycle": "Auto-configuration cycle diagnostics are deferred.",
+          "usesAnnotationPropertiesWhenPossible": "The annotation metadata properties path is deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/boot/autoconfigure/AutoConfigurationsTests.java": {
       "phase": "2",

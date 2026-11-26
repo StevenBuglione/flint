@@ -1,0 +1,6 @@
+[project]
+name = "auto-order"
+version = "0.1.0"
+flint = "1.0"
+type = "executable"
+description = "Flint AOT fixture for Boot auto-configuration ordering."

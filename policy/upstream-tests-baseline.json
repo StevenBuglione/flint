@@ -428,7 +428,6 @@
       "org/springframework/boot/autoconfigure/AutoConfigurationMetadataLoaderTests.java",
       "org/springframework/boot/autoconfigure/AutoConfigurationPackagesTests.java",
       "org/springframework/boot/autoconfigure/AutoConfigurationReplacementsTests.java",
-      "org/springframework/boot/autoconfigure/AutoConfigurationSorterTests.java",
       "org/springframework/boot/autoconfigure/AutoConfigurationsTests.java",
       "org/springframework/boot/autoconfigure/ImportAutoConfigurationImportSelectorTests.java",
       "org/springframework/boot/autoconfigure/ImportAutoConfigurationTests.java",
