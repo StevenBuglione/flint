@@ -99,7 +99,11 @@ The coordinator decided this on 2026-11-26:
 
 **Seeding** is the integration owner's job: `--seed-upstream-tests [2|3]` drafts the record and adds every class it still lacks. A class ported in another module of the same upstream is recorded as ported, pointing at that module's file; framework-test ports some web and webmvc tests. Every other class is recorded as deferred and added to the baseline. Seeding never changes a recorded entry.
 
-The 31 Phase 1 modules with pinned test sources were seeded on 2026-11-26, with 4,172 deferred classes. Modules whose upstream pins no test sources (Jackson core and annotations, Jakarta, SLF4J) are checked on their record alone. Flint's own modules have no upstream tests to record.
+The 31 Phase 1 modules with pinned test sources were seeded on 2026-11-26, with 4,172 deferred classes. Two kinds of upstream are checked on the module's own record alone, and skip, with the reason, while it has none:
+- **No test sources pinned:** Maven `-sources.jar` pins such as Jackson core and annotations, Jakarta and SLF4J.
+- **Clean-room upstreams:** a `signatures_only` pin, or `"use": "clean-room"` in `policy/upstream-licences.json`, such as OpenJDK. None of their tests may ever be ported, so the record lists the module's original tests and any Apache Harmony tests it ports.
+
+An explicit test archive in `api/upstream-tests.json` still adds an inventory. Flint's own modules have no upstream tests to record.
 
 ## Output
 

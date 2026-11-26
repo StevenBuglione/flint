@@ -485,7 +485,7 @@ def cache_dirs():
 def upstream_inventory(module, root=ROOT, caches=None):
     """The record keys of every upstream test class the module owns, from the fetched upstream sources; None when no
     fetched copy of the upstream exists."""
-    if not module.upstream or '@' not in module.upstream:
+    if not module.upstream or '@' not in module.upstream or not test_sources_pinned(module, root):
         return None
     project, _, version = module.upstream.partition('@')
     table = ownership(root)
@@ -673,16 +673,31 @@ def shrink(module, root=ROOT):
     return removed
 
 
-def test_sources_pinned(module, root=ROOT):
-    """Whether the module's upstream pins sources that include its tests: a full-source archive in api/upstreams.json
-    (the GitHub tags), or a test archive in api/upstream-tests.json. Maven -sources.jar pins hold main sources only."""
+def clean_room(module, root=ROOT):
+    """Whether the module's upstream may never be ported from source: a signatures_only pin in api/upstreams.json, or
+    `"use": "clean-room"` in policy/upstream-licences.json (OpenJDK, docs/spring/phase2/jdk-port.md)."""
     project, _, version = str(module.upstream).partition('@')
     pins = json.loads((root / 'api' / 'upstreams.json').read_text())['upstreams']
-    if any(u['project'] == project and u['version'] == version and u.get('format') == 'tar.gz' for u in pins):
+    if any(u['project'] == project and u['version'] == version and u.get('signatures_only') for u in pins):
         return True
+    licences = root / 'policy' / 'upstream-licences.json'
+    projects = json.loads(licences.read_text()).get('projects', []) if licences.is_file() else []
+    return any(p.get('name') == project and p.get('use') == 'clean-room' for p in projects)
+
+
+def test_sources_pinned(module, root=ROOT):
+    """Whether the module's upstream pins port-eligible test sources: an explicit test archive in
+    api/upstream-tests.json, or else a full-source archive in api/upstreams.json (the GitHub tags) of an upstream that
+    is not clean-room. Maven -sources.jar pins hold main sources only; a clean-room upstream's tests are never ported."""
+    project, _, version = str(module.upstream).partition('@')
     tests = root / 'api' / 'upstream-tests.json'
     archives = json.loads(tests.read_text()).get('archives', []) if tests.is_file() else []
-    return any(a['project'] == project and a['version'] == version for a in archives)
+    if any(a['project'] == project and a['version'] == version for a in archives):
+        return True
+    if clean_room(module, root):
+        return False
+    pins = json.loads((root / 'api' / 'upstreams.json').read_text())['upstreams']
+    return any(u['project'] == project and u['version'] == version and u.get('format') == 'tar.gz' for u in pins)
 
 
 def upstream_tests(module, write=False, root=ROOT, caches=None, release=False, seed_phase=None, shrink_baseline=False):
@@ -702,6 +717,13 @@ def upstream_tests(module, write=False, root=ROOT, caches=None, release=False, s
         seed(module, inventory, seed_phase, root)
     if shrink_baseline:
         shrink(module, root)
+    if not path.is_file() and not sources:
+        why = (f'{module.upstream} is clean-room: none of its tests can be ported' if clean_room(module, root) else
+               f'no test sources are pinned for {module.upstream} (pin a test archive in api/upstream-tests.json to '
+               'port them)')
+        return Result('upstream-tests', 'skip', [f'{why}. Record the module\'s original tests (and any Apache Harmony '
+                                                 f'tests it ports) in {module.directory}/{UPSTREAM_TESTS} to have them '
+                                                 'checked'])
     if not path.is_file():
         return Result('upstream-tests', 'fail', [f'{module.directory}/{UPSTREAM_TESTS} is missing; every ported module '
                                                  'ports its upstream tests (AGENTS.md "Proof obligations")',
@@ -712,8 +734,9 @@ def upstream_tests(module, write=False, root=ROOT, caches=None, release=False, s
     allowed = deferred_baseline(root).get(module.name, set())
     messages = check_upstream_tests(module, record, root, inventory, release, allowed)
     details = counts(record)
-    details['inventory'] = (len(inventory) if inventory is not None
-                            else 'unavailable: fetch it' if sources else 'none: no test sources are pinned')
+    details['inventory'] = (len(inventory) if inventory is not None else 'unavailable: fetch it' if sources
+                            else 'none: clean-room upstream' if clean_room(module, root)
+                            else 'none: no test sources are pinned')
     if messages:
         return Result('upstream-tests', 'fail', messages, details=details)
     if inventory is None and sources:

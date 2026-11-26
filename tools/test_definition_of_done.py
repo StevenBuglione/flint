@@ -429,6 +429,51 @@ class UpstreamTests(unittest.TestCase):
         self.assertEqual(result.status, 'pass', result.messages)
         self.assertEqual(result.details['inventory'], 'none: no test sources are pinned')
 
+    def pin_openjdk(self, signatures_only=True, licence_use=None, test_archive=False):
+        pins = json.loads((self.root / 'api' / 'upstreams.json').read_text())
+        pins['upstreams'].append({'project': 'openjdk', 'version': '21.0.13', 'repo': 'framework', 'format': 'tar.gz',
+                                  **({'signatures_only': True} if signatures_only else {})})
+        (self.root / 'api' / 'upstreams.json').write_text(json.dumps(pins))
+        if licence_use:
+            (self.root / 'policy' / 'upstream-licences.json').write_text(json.dumps(
+                {'projects': [{'name': 'openjdk', 'use': licence_use}]}))
+        if test_archive:
+            (self.root / 'api' / 'upstream-tests.json').write_text(json.dumps(
+                {'archives': [{'project': 'openjdk', 'version': '21.0.13', 'tests': 'src/test/java'}]}))
+        # A fetched copy with test classes, which must never be demanded of a clean-room module.
+        jtreg = self.cache / 'openjdk-21.0.13' / 'jdk' / 'src' / 'test' / 'java' / 'org' / 'springframework' / 'jdbc'
+        jtreg.mkdir(parents=True)
+        (jtreg / 'ConcurrentTests.java').write_text('class X {}')
+        return module(name='jdbc', upstream='openjdk@21.0.13')
+
+    def test_a_signatures_only_upstream_demands_no_upstream_tests(self):
+        jdk = self.pin_openjdk()
+        result = dod.upstream_tests(jdk, root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'skip')
+        self.assertIn('clean-room', result.messages[0])
+        self.assertIsNone(dod.upstream_inventory(jdk, self.root, [self.cache]))
+
+    def test_a_clean_room_module_s_own_record_is_still_checked(self):
+        jdk = self.pin_openjdk(signatures_only=False, licence_use='clean-room')
+        dod.draft(jdk, self.root)  # its original tests
+        result = dod.upstream_tests(jdk, root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'pass', result.messages)
+        self.assertEqual(result.details['inventory'], 'none: clean-room upstream')
+        path = self.root / 'framework' / 'jdbc' / 'upstream-tests.json'
+        record = json.loads(path.read_text())
+        record['classes']['org/apache/harmony/tests/java/util/ArrayListTest.java'] = {'status': 'excluded'}
+        path.write_text(json.dumps(record))
+        self.assertEqual(dod.upstream_tests(jdk, root=self.root, caches=[self.cache]).status, 'fail')
+
+    def test_an_upstream_without_pinned_tests_and_no_record_skips(self):
+        result = dod.upstream_tests(module(upstream='jackson-core@3.1.8'), root=self.root, caches=[self.cache])
+        self.assertEqual(result.status, 'skip')
+        self.assertIn('no test sources are pinned for jackson-core@3.1.8', result.messages[0])
+
+    def test_an_explicit_test_archive_still_counts_for_a_clean_room_project(self):
+        jdk = self.pin_openjdk(test_archive=True)
+        self.assertTrue(dod.test_sources_pinned(jdk, self.root))
+
     def test_a_missing_record_fails_with_the_drafting_command(self):
         result = dod.upstream_tests(module(), root=self.root, caches=[self.cache])
         self.assertEqual(result.status, 'fail')
