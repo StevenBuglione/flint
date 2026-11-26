@@ -542,16 +542,22 @@ def manifest_packages(module, root=ROOT):
     return {t['package'] for t in json.loads(path.read_text()).get('types', [])}
 
 
-# JUnit 5 test annotations; '@Test' also matches @TestFactory and @TestTemplate.
+# JUnit 4/5 test annotations; '@Test' also matches @TestFactory and @TestTemplate.
 TEST_ANNOTATIONS = ('@Test', '@ParameterizedTest', '@RepeatedTest')
+# JUnit 3: a TestCase subclass with test* methods, or a static suite() (sol-jackson: CLHMTestlibTests).
+JUNIT3 = re.compile(r'extends\s+(?:junit\.framework\.)?TestCase\b[\s\S]*?\bvoid\s+test\w*\s*\(|'
+                    r'\bpublic\s+static\s+(?:junit\.framework\.)?Test\s+suite\s*\(\s*\)')
 
 
 def is_test_class(path):
-    """Whether a file under src/test/java is an upstream test class: it declares a JUnit test method (whatever its name,
-    e.g. jackson-databind's TestNamingStrategyStd.java), and its own top-level class is not abstract (an abstract base
-    runs only through its subclasses, which are listed). Helper-only files have no test annotation."""
+    """Whether a file under src/test/java is an upstream test class. A *Test.java/*Tests.java file always counts, as it
+    did before, so a concrete subclass that runs only inherited tests, or one using a custom meta-annotation, is never
+    dropped. Any other file counts when it declares a JUnit test method (jackson-databind's TestNamingStrategyStd.java)
+    or is a JUnit 3 TestCase or suite, and its own top-level class is not abstract. Helper-only files are neither."""
+    if path.name.endswith(('Test.java', 'Tests.java')):
+        return True
     text = path.read_text(errors='replace')
-    if not any(a in text for a in TEST_ANNOTATIONS):
+    if not any(a in text for a in TEST_ANNOTATIONS) and not JUNIT3.search(text):
         return False
     return not re.search(r'\babstract\s+(?:[a-z]+\s+)*class\s+' + re.escape(path.stem) + r'\b', text)
 

@@ -327,11 +327,16 @@ class UpstreamTests(unittest.TestCase):
         base = self.cache / 'spring-framework-v7.1.0' / 'spring-jdbc' / 'src' / 'test' / 'java' / 'org' / 'springframework' / 'jdbc'
         base.mkdir(parents=True, exist_ok=True)
         (base / 'TestNamingStrategyStd.java').write_text('class TestNamingStrategyStd { @ParameterizedTest void p() {} }')
-        (base / 'AbstractJdbcTests.java').write_text('public abstract class AbstractJdbcTests { @Test void t() {} }')
+        (base / 'AbstractJdbcHelper.java').write_text('public abstract class AbstractJdbcHelper { @Test void t() {} }')
+        (base / 'InheritingTests.java').write_text('class InheritingTests extends AbstractJdbcHelper { }')  # by name
         (base / 'FixtureSupport.java').write_text('class FixtureSupport { }')
         (base / 'RowTests.java').write_text('class RowTests { @Test void t() {} }')
+        (base / 'LegacyTests.java').write_text('public class LegacyTests extends TestCase { public void testOld() {} }')
+        (base / 'SuiteTests.java').write_text('public class SuiteTests { public static Test suite() { return null; } }')
         self.assertEqual(dod.upstream_inventory(module(), self.root, [self.cache]), [
-            'org/springframework/jdbc/RowTests.java', 'org/springframework/jdbc/TestNamingStrategyStd.java'])
+            'org/springframework/jdbc/InheritingTests.java', 'org/springframework/jdbc/LegacyTests.java',
+            'org/springframework/jdbc/RowTests.java',
+            'org/springframework/jdbc/SuiteTests.java', 'org/springframework/jdbc/TestNamingStrategyStd.java'])
 
     def test_the_inventory_keeps_to_the_module_s_build_modules(self):
         dod.draft(module(), self.root)
