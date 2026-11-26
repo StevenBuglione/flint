@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,108 | 234 | 1,871 | 15,208 |
+| framework | openjdk@21.0.13 | 1,105 | 233 | 1,871 | 15,212 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1965,12 +1965,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.sql.ResultSet#getObject(int)` | `flint.java.sql.ResultSet.getObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.sql.Wrapper#isWrapperFor(java.lang.Class)` | `flint.java.sql.Wrapper.isWrapperFor` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `java.sql.Wrapper#unwrap(java.lang.Class)` | `flint.java.sql.Wrapper.unwrap` | [R4](api-mapping.md#r4-classt-parameters) |  |
-
-#### java.text
-
-| Java | Flint | Rules | Note |
-| --- | --- | --- | --- |
-| `java.text.MessageFormat#format(String,Object...)` | `flint.java.text.MessageFormat.format` | [R7](api-mapping.md#r7-overloads) |  |
 
 #### java.time
 
@@ -10003,7 +9997,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
 | java.sql | 1,005 | 0 |
-| java.text | 515 | 0 |
+| java.text | 519 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
@@ -10869,6 +10863,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `java.io.ByteArrayOutputStream#toString()` | 2 | The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input. |
 | framework | `java.io.IOException#<init>(Throwable)` | 2 | The current constructor accepts a message and an optional cause. Java's cause-only constructor is pending. |
+| framework | `java.text.MessageFormat#<init>(String)` | 2 | Accepts a null pattern and unknown format types. The default locale also needs Locale.Category.FORMAT. |
+| framework | `java.text.MessageFormat#<init>(String,Locale)` | 2 | Accepts unknown format types when applying the pattern. |
+| framework | `java.text.MessageFormat#format(String,Object...)` | 2 | Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type. |
+| framework | `java.text.MessageFormat#toPattern()` | 2 | Returns the input pattern text instead of serializing the parsed pattern in Java canonical form. |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.MonthDay#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
 | framework | `java.time.MonthDay#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |
