@@ -1,0 +1,8 @@
+name "probe-java-time"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-java-time"
+dflags "-preview=dip1000"
+dependency "flint:java-time" path="../../.."

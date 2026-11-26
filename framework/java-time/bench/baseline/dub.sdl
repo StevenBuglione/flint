@@ -1,0 +1,7 @@
+name "baseline-java-time"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "baseline-java-time"
+dflags "-preview=dip1000"

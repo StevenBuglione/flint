@@ -361,6 +361,38 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-time": {
+   "directory": "framework/java-time",
+   "module": "flint.java.time.period",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-time/bench",
+    "baseline": "framework/java-time/bench/baseline",
+    "edit_source": "framework/java-time/source/flint/java/time/period.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 20864,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1000
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "jdbc": {
    "directory": "framework/jdbc",
    "module": "flint.jdbc",
