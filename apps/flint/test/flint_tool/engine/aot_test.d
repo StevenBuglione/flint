@@ -522,6 +522,67 @@ unittest
     expect(combinePaths(null, ["/a", "/b"])).toEqual(["/a", "/b"]);
 }
 
+@("compiled SpEL agrees with the shared parity corpus")
+unittest
+{
+    import flint_tool.engine.aot.spel : Compiled, SpelError, compileSpel;
+    import flint_tool.support.process : Launch, capture;
+    import std.array : replace;
+    import std.conv : to;
+    import std.file : readText, write;
+    import std.json : parseJSON;
+    import std.path : buildPath;
+
+    const project = copyFixture("spel-parity");
+    scope (exit)
+        remove(project);
+    const cases = parseJSON(readText(buildPath(project, "cases.json"))).arrayNoRef;
+    assert(cases.length > 0);
+    auto context = new TestScope;
+    string definitions, calls, expectedOutput;
+    foreach (index, ref row; cases)
+    {
+        const id = row["id"].str;
+        const expected = row["expected"];
+        if (auto mode = "runtimeOnly" in row)
+        {
+            assert(mode.str.length && ("compiledOnly" in row) is null, id);
+            continue;
+        }
+        assert(("context" in row) is null, id ~ ": the compiled driver needs a scope for this case");
+        Compiled result;
+        SpelError error;
+        const ok = compileSpel(row["expression"].str, context, result, error);
+        if (auto rejection = "error" in expected)
+        {
+            assert(rejection.str == "syntax" && !ok && error.message.length, id);
+            continue;
+        }
+        assert(ok, id ~ ": " ~ error.message);
+        const name = "case_" ~ index.to!string;
+        const value = result.type == "null" ? "cast(Object)(" ~ result.code ~ ")" : result.code;
+        definitions ~= "Any " ~ name ~ "() { return Any.of(" ~ value ~ "); }\n";
+        calls ~= "reportValue(" ~ name ~ "());\n";
+        expectedOutput ~= expected["type"].str ~ "\t" ~ expected["value"].str ~ "\n";
+    }
+    assert(calls.length > 0);
+    const source = buildPath(project, "compiled.d");
+    const reporting = readText(buildPath(project, "reporting.d"));
+    write(source, reporting ~ definitions ~ "void main() {\n" ~ calls ~ "}\n");
+    const binary = buildPath(project, "compiled");
+    Launch launch;
+    launch.directory = project;
+    const built = capture([
+        compiler(), "-preview=dip1000", "-I" ~ runtimeSource(),
+        "-I" ~ buildPath(repositoryRoot(), "packages", "serde", "source"), "-i", "-of=" ~ binary,
+        source
+    ], launch);
+    assert(built.ok, built.combined());
+    const ran = capture([binary], launch);
+    assert(ran.ok, ran.combined());
+    expect(ran.output.replace("\r\n", "\n")).toEqual(expectedOutput);
+}
+
 // ---- the sample application, through the compiler ----
 
 private string repositoryRoot()

@@ -1,0 +1,80 @@
+[
+  {
+    "id": "boolean",
+    "expression": "true",
+    "expected": {"type": "bool", "value": "true"}
+  },
+  {
+    "id": "null",
+    "expression": "null",
+    "expected": {"type": "null", "value": "null"}
+  },
+  {
+    "id": "doubled-quote",
+    "expression": "'Tony''s Pizza'",
+    "expected": {"type": "string", "value": "Tony's Pizza"}
+  },
+  {
+    "id": "precedence",
+    "expression": "2L + 3L * 4L",
+    "expected": {"type": "long", "value": "14"}
+  },
+  {
+    "id": "grouping",
+    "expression": "(2L + 3L) * 4L",
+    "expected": {"type": "long", "value": "20"}
+  },
+  {
+    "id": "associativity",
+    "expression": "12L - 1L - 2L",
+    "expected": {"type": "long", "value": "9"}
+  },
+  {
+    "id": "integer-division",
+    "expression": "13L / 5L",
+    "expected": {"type": "long", "value": "2"}
+  },
+  {
+    "id": "remainder",
+    "expression": "13L mod 5L",
+    "expected": {"type": "long", "value": "3"}
+  },
+  {
+    "id": "decimal-promotion",
+    "expression": "3.2 * 5L",
+    "expected": {"type": "double", "value": "16.0"}
+  },
+  {
+    "id": "binary-rounding",
+    "expression": "0.1 + 0.2",
+    "runtimeOnly": "The generated D expression evaluated to 0.3 on DMD. Java rounds the double operands before addition and produces 0.30000000000000004. flint-aot owns the fix.",
+    "expected": {"type": "double", "value": "0.30000000000000004"}
+  },
+  {
+    "id": "scientific-notation",
+    "expression": "1.0e21",
+    "expected": {"type": "double", "value": "1.0E21"}
+  },
+  {
+    "id": "negative-zero",
+    "expression": "-0.0",
+    "expected": {"type": "double", "value": "-0.0"}
+  },
+  {
+    "id": "unterminated-group",
+    "expression": "(1L + 2L",
+    "expected": {"error": "syntax"}
+  },
+  {
+    "id": "signed-integer-overflow",
+    "expression": "2147483647 + 1",
+    "runtimeOnly": "Spring uses Integer for unsuffixed integral literals. The AOT emitter widens them to long. flint-aot owns the fix.",
+    "expected": {"type": "int", "value": "-2147483648"}
+  },
+  {
+    "id": "power",
+    "expression": "2L ^ 10L",
+    "compiledOnly": "Power is still deferred in the runtime interpreter.",
+    "expected": {"type": "long", "value": "1024"}
+  }
+]
