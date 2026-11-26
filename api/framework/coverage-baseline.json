@@ -31,6 +31,10 @@
 "micrometer-observation@1.18.0":{"unclassified":0,"modules":{
 "micrometer-observation":0
 }},
+"openjdk@21.0.13":{"unclassified":0,"modules":{
+"java.base":0,
+"java.sql":0
+}},
 "slf4j-api@2.0.20":{"unclassified":0,"modules":{
 "slf4j-api":0
 }},
