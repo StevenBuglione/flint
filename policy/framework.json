@@ -305,7 +305,7 @@
    "bench": {
     "fixture": "framework/jakarta-persistence/bench",
     "baseline": "framework/jakarta-persistence/bench/baseline",
-    "edit_source": "framework/jakarta-persistence/source/flint/jakarta/persistence/package.d"
+    "edit_source": "framework/jakarta-persistence/source/flint/jakarta/persistence/annotations.d"
    },
    "budget": {
     "dmd_cold_seconds": 0.9,

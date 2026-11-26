@@ -1,0 +1,53 @@
+/*
+ * Ported from jakarta-persistence 3.2.0: jakarta/persistence/AttributeConverter.java
+ * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
+ * jakarta/persistence/EntityTransaction.java:
+ * Copyright (c) 2008, 2024 Oracle and/or its affiliates. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause
+ * Modified by the Flint authors: D interfaces (R3), nullable integer (R5), and DDoc exceptions (R8).
+ */
+
+/// Internal declarations re-exported from the Jakarta Persistence public modules (D-JPA-1).
+module flint.jakarta.persistence.contracts;
+
+import std.typecons : Nullable;
+
+@safe:
+
+/// Converts between a persistent attribute type X and a basic database column type Y.
+interface AttributeConverter(X, Y)
+{
+    /// Converts the value to store in a database column.
+    Y convertToDatabaseColumn(X attribute);
+
+    /// Converts the column value to the entity attribute type. The caller supplies the database type Y.
+    X convertToEntityAttribute(Y dbData);
+}
+
+/// Controls resource-local transactions obtained through an entity manager.
+interface EntityTransaction
+{
+    /// Starts a resource transaction. Throws IllegalStateException if a transaction is already active.
+    void begin();
+
+    /// Flushes changes and commits. Throws IllegalStateException if inactive, or RollbackException if commit fails.
+    void commit();
+
+    /// Rolls back. Throws IllegalStateException if inactive, or PersistenceException for an unexpected error.
+    void rollback();
+
+    /// Marks an active transaction rollback-only. Throws IllegalStateException if inactive.
+    void setRollbackOnly();
+
+    /// Returns the rollback-only marker. Throws IllegalStateException if inactive.
+    bool getRollbackOnly();
+
+    /// Reports whether a resource transaction is in progress. Throws PersistenceException for an unexpected error.
+    bool isActive();
+
+    /// Gives the provider a timeout hint in seconds. An unset value leaves the timeout to the database.
+    void setTimeout(Nullable!int timeout);
+
+    /// Returns the timeout hint, with an unset value distinct from zero seconds.
+    Nullable!int getTimeout();
+}
