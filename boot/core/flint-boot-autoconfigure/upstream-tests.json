@@ -331,8 +331,31 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnSingleCandidateTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "tests/aot/property-relaxed/test/property_relaxed/single_candidate_test.d",
+      "methods": {
+        "ported": [
+          "singleCandidateNoCandidate"
+        ],
+        "skipped": {
+          "invalidAnnotationNoType": "Single-candidate annotation type validation is deferred.",
+          "invalidAnnotationTwoTypes": "Single-candidate annotation type validation is deferred.",
+          "singleCandidateDoesNotMatchWhenMultipleRegisteredAsSingletonCandidates": "Multiple manually registered singletons await the Context candidate-count guard.",
+          "singleCandidateInAncestorsOneCandidateInCurrent": "SearchStrategy and type-based candidate lookup across contexts are deferred.",
+          "singleCandidateInAncestorsOneCandidateInGrandparent": "SearchStrategy and type-based candidate lookup across contexts are deferred.",
+          "singleCandidateInAncestorsOneCandidateInParent": "SearchStrategy and type-based candidate lookup across contexts are deferred.",
+          "singleCandidateMultipleCandidates": "Exact factory-method candidate coverage awaits AOT configuration registration ordering.",
+          "singleCandidateMultipleCandidatesAllFallback": "Fallback candidate selection needs separate verification.",
+          "singleCandidateMultipleCandidatesInContextHierarchy": "SearchStrategy and type-based candidate lookup across contexts are deferred.",
+          "singleCandidateMultipleCandidatesMultiplePrimary": "Exact factory-method candidate coverage awaits AOT configuration registration ordering.",
+          "singleCandidateMultipleCandidatesOneAutowireCandidate": "Autowire and default candidate filtering needs separate verification.",
+          "singleCandidateMultipleCandidatesOneDefaultCandidate": "Autowire and default candidate filtering needs separate verification.",
+          "singleCandidateMultipleCandidatesOnePrimary": "Exact factory-method candidate coverage awaits AOT configuration registration ordering.",
+          "singleCandidateOneCandidate": "Exact factory-method candidate coverage awaits AOT configuration registration ordering.",
+          "singleCandidateOneScopedProxyCandidate": "Scoped proxy candidate lookup and injection need separate verification.",
+          "singleCandidateTwoCandidatesOneNormalOneFallback": "Fallback candidate selection needs separate verification."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnThreadingTests.java": {
       "phase": "2",

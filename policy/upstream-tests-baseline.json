@@ -452,7 +452,6 @@
       "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingFilterBeanTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnNotWarDeploymentTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnResourceTests.java",
-      "org/springframework/boot/autoconfigure/condition/ConditionalOnSingleCandidateTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnThreadingTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnWarDeploymentTests.java",
       "org/springframework/boot/autoconfigure/condition/NoneNestedConditionsTests.java",
