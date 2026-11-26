@@ -1,0 +1,9 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "spring-ai@v2.1.0",
+  "module": "ai-commons",
+  "upstream_modules": [
+    "spring-ai-commons"
+  ],
+  "classes": {}
+}

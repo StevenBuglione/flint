@@ -1036,6 +1036,38 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "ai-commons": {
+   "directory": "ai/ai-commons",
+   "module": "flint.ai.content",
+   "repo": "ai",
+   "licence": "Apache-2.0",
+   "upstream": "spring-ai@v2.1.0",
+   "dependencies": [
+    "engine-aot",
+    "java"
+   ],
+   "bench": {
+    "fixture": "ai/ai-commons/bench",
+    "baseline": "ai/ai-commons/bench/baseline",
+    "edit_source": "ai/ai-commons/source/flint/ai/content.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 1.4,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 8.4,
+    "ldc_incremental_seconds": 4.2,
+    "incremental_linked_bytes": 576,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 6440
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "ai-model": {
    "directory": "ai/ai-model",
    "module": "flint.ai.chat.messages.part",
