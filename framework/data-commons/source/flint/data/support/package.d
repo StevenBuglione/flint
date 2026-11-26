@@ -10,6 +10,7 @@ import flint.java.lang : IllegalArgumentException, NullPointerException, Unsuppo
 import flint.java.util : Iterator, List, NoSuchElementException;
 import flint.java.util.function_ : Function;
 public import flint.data.support.is_new_strategy : IsNewStrategy, PersistableIsNewStrategy;
+public import flint.data.support.pageable_execution_utils : PageableExecutionUtils;
 
 @safe:
 

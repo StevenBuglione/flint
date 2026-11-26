@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 281 | 271 | 0 | 3,430 |
+| data-commons | spring-data-commons@4.2.0 | 282 | 272 | 0 | 3,428 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1159,6 +1159,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.data.support.PageableExecutionUtils#getPage(List,Pageable,LongSupplier)` | `flint.data.support.PageableExecutionUtils.getPage` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.support.PersistableIsNewStrategy` | `flint.data.support.PersistableIsNewStrategy` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `org.springframework.data.support.PersistableIsNewStrategy#INSTANCE` | `flint.data.support.PersistableIsNewStrategy.INSTANCE` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `org.springframework.data.support.WindowIterator` | `flint.data.support.WindowIterator` | [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -10226,7 +10227,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.repository.util | 35 | 0 |
 | org.springframework.data.spel | 43 | 0 |
 | org.springframework.data.spel.spi | 18 | 0 |
-| org.springframework.data.support | 19 | 0 |
+| org.springframework.data.support | 17 | 0 |
 | org.springframework.data.transaction | 5 | 0 |
 | org.springframework.data.util | 298 | 0 |
 | org.springframework.data.web | 171 | 0 |

@@ -583,6 +583,8 @@
 "org.springframework.data.repository.core.support.PersistentEntityInformation#getJavaType()":{"status":"adapted","d":"flint.data.repository.core.support.PersistentEntityInformation.getJavaType","rules":["R4"]},
 "org.springframework.data.repository.core.support.PersistentEntityInformation#isNew(T)":{"status":"ported","d":"flint.data.repository.core.support.PersistentEntityInformation.isNew"},
 "org.springframework.data.support.**":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.data.support.PageableExecutionUtils":{"status":"ported","d":"flint.data.support.PageableExecutionUtils"},
+"org.springframework.data.support.PageableExecutionUtils#getPage(List,Pageable,LongSupplier)":{"status":"adapted","rules":["R9"],"d":"flint.data.support.PageableExecutionUtils.getPage"},
 "org.springframework.data.support.IsNewStrategy":{"status":"ported","d":"flint.data.support.IsNewStrategy"},
 "org.springframework.data.support.IsNewStrategy#isNew(Object)":{"status":"ported","d":"flint.data.support.IsNewStrategy.isNew"},
 "org.springframework.data.support.PersistableIsNewStrategy":{"status":"adapted","rules":["R18"],"d":"flint.data.support.PersistableIsNewStrategy"},

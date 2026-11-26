@@ -1319,8 +1319,18 @@
       "status": "deferred"
     },
     "org/springframework/data/support/PageableExecutionUtilsUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/pageable_execution_utils_tests.d",
+      "methods": {
+        "ported": [
+          "firstPageRequestHitsUpperBoundRequiresTotal",
+          "firstPageRequestIsLessThanOneFullPageDoesNotRequireTotal",
+          "noPageableRequestDoesNotRequireTotal",
+          "subsequentPageRequestHitsUpperBoundRequiresTotal",
+          "subsequentPageRequestIsLessThanOneFullPageDoesNotRequireTotal",
+          "subsequentPageRequestWithoutResultRequiresRequireTotal"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/support/PersistableIsNewStrategyUnitTests.java": {
       "d": "framework/data-commons/tests/persistable_tests.d",
