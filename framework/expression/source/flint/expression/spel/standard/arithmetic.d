@@ -618,16 +618,20 @@ private struct OperatorToken
 
 private struct OperatorSpelling
 {
-    string text;
-    Op op;
-    ubyte precedence;
+    uint key;
+    OperatorToken token;
 
-    OperatorToken token() const pure nothrow @nogc
+    this(string text, Op op, ubyte precedence) pure nothrow @nogc
     {
-        return OperatorToken(op, precedence, cast(ubyte) text.length);
+        assert(text.length <= 3);
+        foreach (offset, c; text)
+            key |= cast(uint) c << (8 * offset);
+        token = OperatorToken(op, precedence, cast(ubyte) text.length);
     }
 }
 
+// Each ASCII spelling fits in one integer. Keep the longer symbol first when
+// it shares a prefix with a one-character operator.
 private immutable OperatorSpelling[] symbolOperators = [
     OperatorSpelling("||", Op.or_, orPrecedence), OperatorSpelling("&&", Op.and_, andPrecedence),
     OperatorSpelling("==", Op.equal, comparisonPrecedence),
@@ -672,26 +676,29 @@ private OperatorToken operatorToken(scope const(char)[] tail) pure nothrow @nogc
         return OperatorToken.init;
     if (isAlpha(tail[0]))
         return wordOperator(tail);
+    const first = tail[0];
+    const second = tail.length > 1 ? tail[1] : '\0';
+    const pair = first | (cast(uint) second << 8);
     foreach (entry; symbolOperators)
-        if (tail.length >= entry.text.length && tail[0 .. entry.text.length] == entry.text)
-            return entry.token();
+        if (entry.key == (entry.token.length == 2 ? pair : first))
+            return entry.token;
     return OperatorToken.init;
 }
 
 private OperatorToken wordOperator(scope const(char)[] tail) pure nothrow @nogc
 {
-    char[3] word;
+    uint key;
     size_t width;
-    while (width < tail.length && width < word.length && isAlpha(tail[width]))
+    while (width < tail.length && width < 3 && isAlpha(tail[width]))
     {
-        word[width] = toLower(tail[width]);
+        key |= cast(uint) toLower(tail[width]) << (8 * width);
         ++width;
     }
     if (width < 2 || continuesIdentifier(tail, width))
         return OperatorToken.init;
     foreach (entry; alternateOperators)
-        if (word[0 .. width] == entry.text)
-            return entry.token();
+        if (key == entry.key)
+            return entry.token;
     return OperatorToken.init;
 }
 

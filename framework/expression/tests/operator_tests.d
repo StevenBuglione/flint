@@ -209,6 +209,24 @@ unittest
     }
 }
 
+@("word operators only match complete identifiers") unittest
+{
+    evaluate("8 DiV 2", 4);
+    auto parser = new SpelExpressionParser;
+    foreach (source; ["8 DIVisor 2", "8 DIV_ 2", "8 DIVβ 2", "8 DIV2"])
+    {
+        try
+        {
+            parser.parseRaw(source);
+            assert(0, "expected an identifier with an operator prefix to remain unconsumed");
+        }
+        catch (SpelParseException failure)
+        {
+            assert(failure.getMessageCode() == SpelMessage.MORE_INPUT && failure.getPosition() == 2);
+        }
+    }
+}
+
 @("nested expressions stay within the evaluator's stack")
 unittest
 {
