@@ -13,7 +13,7 @@ module flint.engine.jpa.update;
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa.identity : EntityIdentity;
 import flint.engine.jpa.managed_entities : DirtyTarget, ManagedEntities;
-import flint.engine.jpa.mapping : AttributeKind, EntityMapping;
+import flint.engine.jpa.mapping : AttributeKind, AttributeValue, EntityMapping;
 import flint.engine.jpa.parameter_binding : ParameterBinding, ParameterBindingPlan, bindMappedValues, planParameters;
 import flint.engine.jpa.result_binding : TypedColumnCodec;
 import flint.java.sql : Connection, Types;
@@ -164,8 +164,19 @@ VersionResult executeVersionedUpdate(const ref UpdatePlan plan, Connection conne
     return executeStaticUpdate(plan, connection, entities, key, dirtyOrdinals);
 }
 
+/// Executes a dirty update and replaces its loaded baseline after one affected row.
+/// Supply exclusive GC-scanned scratch with one slot per mapped attribute. Staged values retain their original
+/// GC-owned strings for JDBC and the scratch is cleared on return.
+/// The caller rolls back failures and detaches affected entries after transaction rollback.
+VersionResult flushManagedUpdate(const ref UpdatePlan plan, Connection connection,
+        scope ref ManagedEntities entities, EntityIdentity key, scope uint[] dirtyOrdinals, AttributeValue[] values)
+{
+    return executeStaticUpdate(plan, connection, entities, key, dirtyOrdinals, values, true);
+}
+
 private VersionResult executeStaticUpdate(const ref UpdatePlan plan, Connection connection,
-        scope ref ManagedEntities entities, EntityIdentity key, scope uint[] dirtyOrdinals)
+        scope ref ManagedEntities entities,
+        EntityIdentity key, scope uint[] dirtyOrdinals, AttributeValue[] values = null, bool refresh = false)
 {
     if (plan.mapping is null || connection is null)
         return VersionResult(VersionedUpdate.init, Error(Status.invalidArgument, "missing update plan or connection"));
@@ -183,27 +194,73 @@ private VersionResult executeStaticUpdate(const ref UpdatePlan plan, Connection 
     if (connection.getAutoCommit())
         return VersionResult(VersionedUpdate.init, Error(Status.invalidArgument,
                 "managed update requires a JDBC transaction"));
-    return executeStatement(plan, connection, target, key.identifier);
-}
-
-private VersionResult executeStatement(const ref UpdatePlan plan, Connection connection, DirtyTarget target, long id)
-{
     const versioned = plan.versions.next != 0;
     if (versioned && target.loadedVersion == long.max)
         return VersionResult(VersionedUpdate.init, Error(Status.resourceExhausted,
                 "managed entity version exhausted", plan.mapping.versionOrdinal));
-    const nextVersion = versioned ? target.loadedVersion + 1 : 0;
+    const nextRevision = versioned ? target.loadedVersion + 1 : 0;
+    if (refresh)
+        return executeWithRefresh(plan, connection, entities, target, key, nextRevision, values);
+    return executeStatement(plan, connection, target, key.identifier, nextRevision);
+}
+
+private VersionResult executeWithRefresh(const ref UpdatePlan plan, Connection connection,
+        scope ref ManagedEntities entities, DirtyTarget target, EntityIdentity key, long nextRevision,
+        AttributeValue[] values)
+{
+    const count = plan.mapping.attributes.length;
+    if (values.length < count)
+        return VersionResult(VersionedUpdate.init, Error(Status.resourceExhausted, "insufficient update value slots"));
+    auto slot = entities.snapshotFor(target);
+    if (slot is null || !slot.usesMapping(plan.mapping))
+        return refreshConflict();
+    auto captured = values[0 .. count];
+    scope (exit)
+        captured[] = AttributeValue.init;
+    const staged = slot.stageChecked(target.entity, captured, nextRevision);
+    if (staged.code != Status.ok)
+        return VersionResult(VersionedUpdate.init, staged);
+    scope (exit)
+        slot.discard();
+
+    const result = executeStatement(plan, connection, target, key.identifier, nextRevision, captured);
+    if (!result.ok)
+        return result;
+    if (entities.snapshotFor(target) is null || !slot.hasStaged())
+        return refreshConflict();
+    if (plan.versions.next != 0)
+    {
+        scope (failure)
+            if (entities.snapshotFor(target) !is null && slot.hasStaged())
+                entities.detach(key);
+        const ordinal = plan.mapping.versionOrdinal;
+        plan.mapping.attributes[ordinal].write(target.entity, captured[ordinal]);
+        if (entities.snapshotFor(target) is null || !slot.hasStaged())
+            return refreshConflict();
+    }
+    slot.publish();
+    return result;
+}
+
+private VersionResult refreshConflict() pure nothrow @nogc
+{
+    return VersionResult(VersionedUpdate.init, Error(Status.conflict, "managed entity retired during update"));
+}
+
+private VersionResult executeStatement(const ref UpdatePlan plan, Connection connection,
+        DirtyTarget target, long id, long nextRevision, const(AttributeValue)[] captured = null)
+{
     auto statement = connection.prepareStatement(plan.sql);
     scope (exit)
         statement.close();
-    const bound = bindMappedValues(plan.parameters, statement, target.entity);
+    const bound = bindMappedValues(plan.parameters, statement, target.entity, captured);
     if (bound.code != Status.ok)
         return VersionResult(VersionedUpdate.init, bound);
 
     statement.setLong(plan.keySlot, id);
-    if (versioned)
+    if (plan.versions.next != 0)
     {
-        statement.setLong(plan.versions.next, nextVersion);
+        statement.setLong(plan.versions.next, nextRevision);
         statement.setLong(plan.versions.expected, target.loadedVersion);
     }
     const affected = statement.executeUpdate();
@@ -212,7 +269,7 @@ private VersionResult executeStatement(const ref UpdatePlan plan, Connection con
     if (affected != 1)
         return VersionResult(VersionedUpdate.init, Error(Status.ioError,
                 "managed update affected an unexpected number of rows"));
-    return VersionResult(VersionedUpdate(true, nextVersion));
+    return VersionResult(VersionedUpdate(true, nextRevision));
 }
 
 private Error checkIdentifier(scope const ref EntityMapping mapping, Object entity, long identifier) nothrow @nogc

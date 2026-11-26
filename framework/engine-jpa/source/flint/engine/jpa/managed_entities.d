@@ -20,6 +20,7 @@ package struct DirtyTarget
 {
     Object entity;
     long loadedVersion;
+    size_t slot = size_t.max;
 }
 
 /// One context's managed entities. The caller reserves both backing slices exclusively and supplies GC-scanned roots.
@@ -113,7 +114,8 @@ struct ManagedEntities
         auto snapshot = &snapshots[found.value];
         if (mapping !is null && !snapshot.usesMapping(mapping))
             return Result!size_t(0, Error(Status.invalidArgument, "update plan does not match the loaded mapping"));
-        target.entity = roots[found.value];
+        target.slot = found.value;
+        target.entity = roots[target.slot];
         const dirty = snapshot.dirty(target.entity, ordinals);
         if (dirty.ok && dirty.value != 0 && versioned)
         {
@@ -122,6 +124,14 @@ struct ManagedEntities
                 return Result!size_t(0, versionError);
         }
         return dirty;
+    }
+
+    /// Borrows the checked target slot while its original entity is still managed.
+    package ManagedSnapshotSlot* snapshotFor(scope const ref DirtyTarget target) return scope nothrow @nogc
+    {
+        if (target.slot >= snapshots.length || roots[target.slot]!is target.entity)
+            return null;
+        return &snapshots[target.slot];
     }
 
     /// Releases the entity's root and baseline, then returns the detached instance.

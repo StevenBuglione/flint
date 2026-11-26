@@ -18,7 +18,7 @@ import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, pl
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jpa.result_binding : materializeManagedRow, planManagedResult;
 import flint.engine.jpa.snapshot : AttributeSnapshot;
-import flint.engine.jpa.update : executeManagedUpdate, planUpdate;
+import flint.engine.jpa.update : executeManagedUpdate, flushManagedUpdate, planUpdate;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
 import flint.engine.reactor : Backend, Reactor, ReactorOptions, TaskContext, TaskDelegate;
 import flint.java.sql : PreparedStatement, ResultSet, SQLException, Types;
@@ -362,9 +362,11 @@ private void verifyManagedUpdate(DataSource dataSource, JdbcTemplate jdbc, Trans
             DataSourceUtils.releaseConnection(connection, dataSource);
         IdentitySlot[1] identities;
         Object[1] roots;
-        auto fields = new AttributeSnapshot[3];
-        auto bytes = new ubyte[8];
-        ManagedSnapshotSlot[1] snapshots = [ManagedSnapshotSlot(fields, bytes)];
+        auto fields = new AttributeSnapshot[6];
+        auto bytes = new ubyte[16];
+        ManagedSnapshotSlot[1] snapshots = [
+            ManagedSnapshotSlot(fields[0 .. 3], bytes[0 .. 8], fields[3 .. 6], bytes[8 .. 16])
+        ];
         Error error;
         scope managed = ManagedEntities(identities[], roots[], error, snapshots[]);
         assert(error.code == Status.ok);
@@ -421,6 +423,11 @@ private void verifyManagedUpdate(DataSource dataSource, JdbcTemplate jdbc, Trans
         assert(executeManagedUpdate(multiple.value, connection, managed, key, ordinals[]).error.code == Status.ioError);
         const afterWrite = managed.dirty(key, ordinals[]);
         assert(afterWrite.ok && afterWrite.value == 2);
+        auto captured = new AttributeValue[3];
+        const flushed = flushManagedUpdate(plan.value, connection, managed, key, ordinals[], captured);
+        assert(flushed.ok && flushed.value.updated && flushed.value.nextVersion == 0);
+        const refreshed = managed.dirty(key, ordinals[]);
+        assert(refreshed.ok && refreshed.value == 0);
         status.setRollbackOnly();
     });
     assert(jdbc.queryForObject!long("select count(*) from jpa_seam_probe where id = 1 and name = 'One'") == 1);

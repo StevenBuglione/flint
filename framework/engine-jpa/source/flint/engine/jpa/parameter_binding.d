@@ -80,15 +80,22 @@ Error bindParameters(scope const ref ParameterBindingPlan plan, PreparedStatemen
 }
 
 /// Binds after the provider has type-checked the entity against this plan's exact mapping.
-package Error bindMappedValues(scope const ref ParameterBindingPlan plan, PreparedStatement statement, Object entity)
+package Error bindMappedValues(scope const ref ParameterBindingPlan plan, PreparedStatement statement,
+        Object entity, const(AttributeValue)[] captured = null)
 {
     foreach (ref binding; plan.bindings)
     {
         const attribute = &plan.mapping.attributes[binding.ordinal];
-        const read = attribute.read(entity);
-        if (!read.ok)
-            return Error(read.error.code, read.error.message, binding.ordinal);
-        const value = read.value;
+        AttributeValue value;
+        if (captured.length == 0)
+        {
+            const read = attribute.read(entity);
+            if (!read.ok)
+                return Error(read.error.code, read.error.message, binding.ordinal);
+            value = read.value;
+        }
+        else
+            value = captured[binding.ordinal];
         if (value.kind == AttributeKind.nullValue)
         {
             if (!attribute.columnNullable || !attribute.acceptsNull)

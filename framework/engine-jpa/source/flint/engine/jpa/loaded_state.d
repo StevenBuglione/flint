@@ -39,27 +39,50 @@ struct LoadedSnapshot
     }
 }
 
-/// Bounded baseline storage for one managed identity slot, with its own byte arena for reuse.
-struct ManagedSnapshotSlot
+private struct SnapshotBank
 {
-    private RequestArena arena;
-    private AttributeSnapshot[] fields;
-    private LoadedSnapshotPlan plan;
+    RequestArena arena;
+    AttributeSnapshot[] fields;
 
-    @disable this(this);
-    @disable void opAssign(ManagedSnapshotSlot replacement);
-
-    /// Borrows the exclusively reserved field and byte storage until this slot is retired.
     this(return scope AttributeSnapshot[] fields, return scope ubyte[] bytes) nothrow @nogc
     {
         arena = RequestArena(bytes);
         this.fields = fields;
     }
+}
+
+/// Bounded snapshot storage for one identity slot. A second bank enables atomic baseline replacement.
+struct ManagedSnapshotSlot
+{
+    private SnapshotBank primary;
+    private SnapshotBank alternate;
+    private LoadedSnapshotPlan plan;
+    private uint active;
+    private bool pending;
+
+    @disable this(this);
+    @disable void opAssign(ManagedSnapshotSlot replacement);
+
+    /// Borrows two disjoint sets of field and byte storage until this slot is retired.
+    this(return scope AttributeSnapshot[] fields, return scope ubyte[] bytes,
+            return scope AttributeSnapshot[] stagedFields = null, return scope ubyte[] stagedBytes = null) nothrow @nogc
+    {
+        primary = SnapshotBank(fields, bytes);
+        if (stagedFields.length != 0)
+            alternate = SnapshotBank(stagedFields, stagedBytes);
+    }
+
+    private ref SnapshotBank bank(uint index) scope return nothrow @nogc
+    {
+        if (index == 0)
+            return primary;
+        return alternate;
+    }
 
     /// Initializes an empty slot before its entity root is published.
     package Error capture(LoadedSnapshotPlan current, Object entity) scope nothrow @nogc
     {
-        const error = writeSnapshots(current, entity, arena, fields);
+        const error = writeSnapshots(current, entity, bank(active).arena, bank(active).fields);
         if (error.code != Status.ok)
         {
             clear();
@@ -76,12 +99,12 @@ struct ManagedSnapshotSlot
     }
 
     /// Reads the loaded scalar version for an optimistic predicate.
-    package Error loadedVersion(out long value) const scope nothrow @nogc
+    package Error loadedVersion(out long value) scope nothrow @nogc
     {
         if (plan.mapping is null || plan.mapping.versionOrdinal == uint.max)
             return Error(Status.invalidArgument, "missing loaded version");
         const ordinal = plan.mapping.versionOrdinal;
-        if (!fields[ordinal].readInteger(value))
+        if (!bank(active).fields[ordinal].readInteger(value))
             return Error(Status.invalidArgument, "loaded version is not an integer", ordinal);
         return Error.init;
     }
@@ -89,14 +112,60 @@ struct ManagedSnapshotSlot
     /// Checks the live baseline against its managed entity.
     package Result!size_t dirty(Object entity, scope uint[] ordinals) scope nothrow @nogc
     {
-        return compareSnapshots(plan, entity, fields, arena, ordinals);
+        return compareSnapshots(plan, entity, bank(active).fields, bank(active).arena, ordinals);
+    }
+
+    /// Captures a replacement for the type-checked target while its active bank remains readable.
+    package Error stageChecked(Object entity, scope AttributeValue[] values, long nextRevision) scope nothrow @nogc
+    {
+        if (pending)
+            return Error(Status.conflict, "a JPA snapshot refresh is already staged");
+        assert(plan.mapping !is null && values.length == plan.mapping.attributes.length);
+        const staging = active ^ 1;
+        const error = storeSnapshots(*plan.mapping, entity, bank(staging).arena, bank(staging)
+                .fields, values, nextRevision);
+        if (error.code != Status.ok)
+        {
+            bank(staging).arena.reset();
+            return error;
+        }
+        pending = true;
+        return Error.init;
+    }
+
+    /// A detached or cleared slot has no pending baseline.
+    package bool hasStaged() const scope nothrow @nogc
+    {
+        return pending;
+    }
+
+    /// Activates the replacement and returns the previous bank to the slot.
+    package void publish() scope nothrow @nogc
+    {
+        assert(pending);
+        bank(active).arena.reset();
+        active ^= 1;
+        pending = false;
+    }
+
+    /// Releases an unpublished replacement after failure.
+    package void discard() scope nothrow @nogc
+    {
+        if (pending)
+        {
+            bank(active ^ 1).arena.reset();
+            pending = false;
+        }
     }
 
     /// Retires the baseline and makes its byte storage available for the next identity.
     package void clear() scope nothrow @nogc
     {
         plan = LoadedSnapshotPlan.init;
-        arena.reset();
+        primary.arena.reset();
+        alternate.arena.reset();
+        active = 0;
+        pending = false;
     }
 }
 
@@ -139,24 +208,34 @@ private Error writeSnapshots(scope const LoadedSnapshotPlan plan, Object entity,
     const error = validateEntity(*plan.mapping, entity);
     if (error.code != Status.ok)
         return error;
-    if (staging.length < plan.mapping.attributes.length)
+    return storeSnapshots(*plan.mapping, entity, arena, staging);
+}
+
+private Error storeSnapshots(scope const ref EntityMapping mapping, Object entity, scope ref RequestArena arena,
+        scope AttributeSnapshot[] staging, scope AttributeValue[] values = null, long nextRevision = 0) nothrow @nogc
+{
+    if (staging.length < mapping.attributes.length)
         return Error(Status.resourceExhausted, "insufficient loaded snapshot slots");
 
-    foreach (ref attribute; plan.mapping.attributes)
+    foreach (ref attribute; mapping.attributes)
     {
-        const current = readMapped(attribute, entity);
+        const replacementVersion = values.length != 0 && attribute.ordinal == mapping.versionOrdinal;
+        const current = replacementVersion ? ReadResult(AttributeValue(AttributeKind.integer, nextRevision))
+            : readMapped(attribute, entity);
         if (!current.ok)
             return current.error;
         const snapshot = captureAttribute(arena, current.value);
         if (!snapshot.ok)
             return Error(snapshot.error.code, snapshot.error.message, attribute.ordinal);
         staging[attribute.ordinal] = snapshot.value;
+        if (values.length != 0)
+            values[attribute.ordinal] = current.value;
     }
     return Error.init;
 }
 
-/// Writes changed updatable ordinals in mapping order, excluding the provider-owned version. Reserve one slot per updatable attribute and use the
-/// returned prefix after success. Byte comparisons use the baseline's original arena.
+/// Writes changed updatable ordinals in mapping order, excluding the provider-owned version. Reserve one slot
+/// per updatable attribute and use the returned prefix after success. Byte comparisons use the original arena.
 DirtyResult dirtyOrdinals(scope const ref LoadedSnapshot loaded, Object entity,
         scope ref RequestArena arena, scope uint[] ordinals) nothrow @nogc
 {
