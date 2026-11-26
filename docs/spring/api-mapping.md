@@ -178,6 +178,7 @@ Three rules cover every Java enum, so no enum needs a case-by-case decision:
 - **Fields** (with or without methods): R15, below.
 - **Methods but no fields and no interface:** R20.
 - **An interface:** R18.
+- **Fields that are private and fixed per constant** (set only by the constant's constructor arguments, and reached only through methods, as in Jackson's `MapperFeature`, `SerializationFeature` and `DeserializationFeature` with `_defaultState` and `_mask`) don't count as fields for this choice. The enum stays a D `enum` with Java's constants in order, and its methods become same-module free functions called by UFCS (R20). Each function computes its result from the constant, through a `final switch` or a `static immutable` table indexed by ordinal, so `feature.enabledByDefault()`, `feature.getMask()` and `feature.enabledIn(flags)` read as in Java. If the enum also implements an interface, R18's API-boundary overloads apply as well. R15's struct form is for enums with public or mutable fields, or per-constant data that callers reach directly. Coordinator, 2026-11-26, from third-party-apis' review of sol-jackson.
 
 Adopted by the coordinator on 2026-11-26 under the owner's standing approval. It was proposed in `docs/spring/phase1/web-mvc.md`; R18 replaces that proposal's interface clause.
 
