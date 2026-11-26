@@ -1448,8 +1448,19 @@
       "status": "deferred"
     },
     "org/springframework/data/util/StreamableUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/streamable_tests.d",
+      "methods": {
+        "ported": [
+          "collectsToCollections"
+        ],
+        "skipped": {
+          "concatenatesIterable": "The lazy Iterable-to-Stream bridge and concatenation overload are deferred.",
+          "concatenatesStreamable": "The Streamable concatenation overload is deferred.",
+          "concatenatesVarargs": "The variadic concatenation overload is deferred.",
+          "usesStreamableCollectors": "The Streamable collectors are deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/util/TypeScannerUnitTests.java": {
       "phase": "2",

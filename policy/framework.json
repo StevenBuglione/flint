@@ -1167,7 +1167,8 @@
     "flint.data.mapping",
     "flint.data.repository",
     "flint.data.repository_runtime",
-    "flint.data.support"
+    "flint.data.support",
+    "flint.data.util"
    ],
    "repo": "data-commons",
    "licence": "Apache-2.0",

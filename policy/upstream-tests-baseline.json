@@ -1791,7 +1791,6 @@
       "org/springframework/data/util/QTypeContributorUnitTests.java",
       "org/springframework/data/util/ReflectionUtilsUnitTests.java",
       "org/springframework/data/util/StreamUtilsTests.java",
-      "org/springframework/data/util/StreamableUnitTests.java",
       "org/springframework/data/util/TypeScannerUnitTests.java",
       "org/springframework/data/util/VersionUnitTests.java",
       "org/springframework/data/web/HateoasPageableHandlerMethodArgumentResolverUnitTests.java",
