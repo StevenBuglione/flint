@@ -1009,6 +1009,7 @@
    "licence": "Apache-2.0",
    "upstream": "thymeleaf@3.1.7.RELEASE",
    "dependencies": [
+    "engine-aot",
     "java"
    ],
    "bench": {

@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 130 | 132 | 0 | 2,128 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 7 | 40 | 0 | 4,405 |
+| framework | thymeleaf@3.1.7.RELEASE | 23 | 42 | 0 | 4,387 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 213 | 113 | 1,871 | 16,224 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -3792,6 +3792,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.util.pattern.PathPatternParser#parse(String)` | `flint.web.util.pattern.PathPatternParser.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PatternParseException` | `flint.web.util.pattern.PatternParseException` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PatternParseException#getPosition()` | `flint.web.util.pattern.PatternParseException.getPosition` | [R14](api-mapping.md#r14-strings-and-text) |  |
+
+#### org.thymeleaf.cache
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.cache.AlwaysValidCacheEntryValidity#INSTANCE` | `flint.thymeleaf.cache.AlwaysValidCacheEntryValidity.INSTANCE` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) |  |
+| `org.thymeleaf.cache.NonCacheableCacheEntryValidity#INSTANCE` | `flint.thymeleaf.cache.NonCacheableCacheEntryValidity.INSTANCE` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) |  |
 
 #### org.thymeleaf.exceptions
 
@@ -9729,7 +9736,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.web.util | 359 | 0 |
 | org.springframework.web.util.pattern | 47 | 0 |
 | org.thymeleaf | 153 | 0 |
-| org.thymeleaf.cache | 135 | 0 |
+| org.thymeleaf.cache | 117 | 0 |
 | org.thymeleaf.context | 168 | 0 |
 | org.thymeleaf.dialect | 23 | 0 |
 | org.thymeleaf.engine | 448 | 0 |
