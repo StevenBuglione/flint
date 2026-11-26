@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 221 | 163 | 0 | 3,598 |
+| data-commons | spring-data-commons@4.2.0 | 229 | 173 | 0 | 3,580 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -989,6 +989,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.IdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.IdentifierAccessor.getRequiredIdentifier` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.MappingException#<init>(String)` | `flint.data.mapping.MappingException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.data.mapping.MappingException#<init>(String,Throwable)` | `flint.data.mapping.MappingException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.data.mapping.PersistentEntity#getIdentifierAccessor(Object)` | `flint.data.mapping.PersistentEntity.getIdentifierAccessor` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.PersistentEntity#getRequiredIdProperty()` | `flint.data.mapping.PersistentEntity.getRequiredIdProperty` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.data.mapping.PersistentEntity#getType()` | `flint.data.mapping.PersistentEntity.getType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.data.mapping.PersistentEntity#getTypeInformation()` | `flint.data.mapping.PersistentEntity.getTypeInformation` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.data.mapping.PersistentEntity#isNew(Object)` | `flint.data.mapping.PersistentEntity.isNew` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.PersistentProperty#getType()` | `flint.data.mapping.PersistentProperty.getType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.mapping.TargetAwareIdentifierAccessor#<init>(Object)` | `flint.data.mapping.TargetAwareIdentifierAccessor.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.TargetAwareIdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.TargetAwareIdentifierAccessor.getRequiredIdentifier` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
@@ -1041,6 +1047,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.repository.core.support.DelegatingEntityInformation#getId(T)` | `flint.data.repository.core.support.DelegatingEntityInformation.getId` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.data.repository.core.support.DelegatingEntityInformation#getIdType()` | `flint.data.repository.core.support.DelegatingEntityInformation.getIdType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.repository.core.support.DelegatingEntityInformation#getJavaType()` | `flint.data.repository.core.support.DelegatingEntityInformation.getJavaType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.data.repository.core.support.PersistentEntityInformation#<init>(PersistentEntity)` | `flint.data.repository.core.support.PersistentEntityInformation.this` | [D-DATA-10](api-mapping.md#deviations) |  |
+| `org.springframework.data.repository.core.support.PersistentEntityInformation#getId(T)` | `flint.data.repository.core.support.PersistentEntityInformation.getId` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.data.repository.core.support.PersistentEntityInformation#getIdType()` | `flint.data.repository.core.support.PersistentEntityInformation.getIdType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.data.repository.core.support.PersistentEntityInformation#getJavaType()` | `flint.data.repository.core.support.PersistentEntityInformation.getJavaType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.data.support
 
@@ -10091,7 +10101,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.geo.format | 11 | 0 |
 | org.springframework.data.history | 42 | 0 |
 | org.springframework.data.javapoet | 69 | 0 |
-| org.springframework.data.mapping | 197 | 0 |
+| org.springframework.data.mapping | 185 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
 | org.springframework.data.mapping.model | 220 | 0 |
@@ -10102,7 +10112,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.repository.cdi | 46 | 0 |
 | org.springframework.data.repository.config | 273 | 0 |
 | org.springframework.data.repository.core | 71 | 0 |
-| org.springframework.data.repository.core.support | 269 | 0 |
+| org.springframework.data.repository.core.support | 263 | 0 |
 | org.springframework.data.repository.history | 5 | 0 |
 | org.springframework.data.repository.history.support | 4 | 0 |
 | org.springframework.data.repository.init | 55 | 0 |

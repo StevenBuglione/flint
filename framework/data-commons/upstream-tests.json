@@ -1034,8 +1034,14 @@
       "status": "deferred"
     },
     "org/springframework/data/repository/core/support/PersistentEntityInformationUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/persistent_entity_information_tests.d",
+      "methods": {
+        "ported": [
+          "obtainsIdAndIdTypeInformationFromPersistentEntity",
+          "returnsNullIfNoIdPropertyPresent"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/repository/core/support/QueryExecutionResultHandlerUnitTests.java": {
       "phase": "2",

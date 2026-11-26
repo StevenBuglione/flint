@@ -1735,7 +1735,6 @@
       "org/springframework/data/repository/core/support/EventPublishingRepositoryProxyPostProcessorUnitTests.java",
       "org/springframework/data/repository/core/support/ExampleSpecificationAccessorUnitTests.java",
       "org/springframework/data/repository/core/support/PersistenceExceptionTranslationRepositoryProxyPostProcessorUnitTests.java",
-      "org/springframework/data/repository/core/support/PersistentEntityInformationUnitTests.java",
       "org/springframework/data/repository/core/support/QueryExecutionResultHandlerUnitTests.java",
       "org/springframework/data/repository/core/support/QueryExecutorMethodInterceptorUnitTests.java",
       "org/springframework/data/repository/core/support/ReactiveRepositoryInformationUnitTests.java",

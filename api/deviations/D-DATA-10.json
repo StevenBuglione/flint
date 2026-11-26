@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-10",
+ "deviation": "`PersistentEntityInformation!(T, ID)` infers the property type `P` from the `PersistentEntity!(T, P)` constructor argument and delegates through the shared metadata interface.",
+ "reason": "D has no wildcard type argument. Constructor inference retains the type check and reuses one repository adapter across property types."
+}
