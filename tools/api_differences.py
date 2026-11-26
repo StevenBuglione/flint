@@ -33,11 +33,12 @@ RULEBOOK = Path('docs/spring/api-mapping.md')
 DEVIATIONS = Path('api/deviations')
 DEPENDENCY_BASELINE = Path('api/dependency-baseline.json')
 # Java types every port maps by rule rather than by a classified element: primitives, String (R14), Object (R23),
-# Class (R4), boxed values (R5), the exception roots (R8, D exceptions) and reflection members (D-AOT-MEMBER).
+# Class (R4), boxed values (R5), the exception roots (R8, D exceptions), reflection members (D-AOT-MEMBER), and
+# java.lang.Enum, Java's 'any enum', which maps to a template parameter constrained to D enums (is(E == enum)).
 RULE_MAPPED = {'void', 'boolean', 'byte', 'char', 'short', 'int', 'long', 'float', 'double', 'String', 'Object', 'Class',
                'Integer', 'Long', 'Double', 'Float', 'Boolean', 'Short', 'Byte', 'Character', 'CharSequence', 'Number',
                'Throwable', 'Exception', 'RuntimeException', 'Error', 'Method', 'Constructor', 'Field', 'Member',
-               'AccessibleObject', 'Executable'}
+               'AccessibleObject', 'Executable', 'Enum'}
 BEGIN = '<!-- BEGIN GENERATED deviations: tools/api_differences.py --write from api/deviations/*.json -->'
 END = '<!-- END GENERATED deviations -->'
 SEPARATORS = '.#(),'

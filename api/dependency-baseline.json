@@ -149,8 +149,6 @@
   "org.springframework.transaction.interceptor.TransactionAspectSupport#invokeWithinTransaction(Method,Class,InvocationCallback) -> InvocationCallback": "framework: org.springframework.transaction.interceptor.TransactionAspectSupport.InvocationCallback is deferred",
   "org.springframework.transaction.support.DefaultTransactionDefinition#getDefinitionDescription() -> StringBuilder": "framework: java.lang.StringBuilder is deferred",
   "org.springframework.util.CollectionUtils#contains(Enumeration,Object) -> Enumeration": "framework: java.util.Enumeration is deferred",
-  "org.springframework.util.ObjectUtils#containsConstant(Enum[],String) -> Enum": "framework: java.lang.Enum is deferred",
-  "org.springframework.util.ObjectUtils#containsConstant(Enum[],String,boolean) -> Enum": "framework: java.lang.Enum is deferred",
   "org.springframework.util.StringUtils#toStringArray(Enumeration) -> Enumeration": "framework: java.util.Enumeration is deferred",
   "org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver#createNamedValueInfo(MethodParameter) -> NamedValueInfo": "framework: org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver.NamedValueInfo is deferred",
   "org.springframework.web.method.support.ModelAndViewContainer#getModel() -> ModelMap": "framework: org.springframework.ui.ModelMap is deferred",
