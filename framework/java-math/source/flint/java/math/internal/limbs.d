@@ -35,6 +35,12 @@ size_t significantLimbs(scope const(uint)[] words) pure nothrow @nogc
     return length;
 }
 
+/// The bit length of a normalized magnitude.
+size_t magnitudeBitLength(scope const(uint)[] words) pure nothrow @nogc
+{
+    return words.length ? words.length * 32 - 31 + bsr(words[$ - 1]) : 0;
+}
+
 /// Compare normalized unsigned magnitudes, with the least significant limb at index zero.
 int compareLimbs(scope const(uint)[] left, scope const(uint)[] right) pure nothrow @nogc
 {

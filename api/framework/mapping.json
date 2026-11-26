@@ -4813,6 +4813,8 @@
 "java.math.BigInteger#add(BigInteger)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.add"},
 "java.math.BigInteger#byteValueExact()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.byteValueExact"},
 "java.math.BigInteger#compareTo(BigInteger)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.compareTo"},
+"java.math.BigInteger#doubleValue()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.doubleValue"},
+"java.math.BigInteger#floatValue()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.floatValue"},
 "java.math.BigInteger#intValue()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.intValue"},
 "java.math.BigInteger#intValueExact()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.intValueExact"},
 "java.math.BigInteger#longValue()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.longValue"},

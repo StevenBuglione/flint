@@ -15,6 +15,8 @@ int main(string[] args) @system
     const bytes = total.toByteArray();
     if (b.longValueExact() != operand)
         return 1;
+    if (b.floatValue() != 0x1p40f || b.doubleValue() != operand)
+        return 1;
     const text = total.toString(16);
     if (text.length != 11 || text[0] != '1')
         return 1;

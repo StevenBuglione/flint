@@ -3,6 +3,7 @@ module flint.java.math.biginteger;
 
 import flint.java.lang : ArithmeticException, Comparable, IndexOutOfBoundsException,
     NullPointerException, NumberFormatException;
+import flint.java.math.internal.floating : roundedFloating;
 import flint.java.math.internal.limbs : addLimbs, compareLimbs, firstNonzeroLimb, loadLimbs,
     signedLength, significantBytes, significantLimbs, storeSignedBytes, subtractLimbs;
 import flint.java.math.internal.products : multiplyLimbs;
@@ -108,6 +109,18 @@ class BigInteger : Comparable!BigInteger
     byte byteValue() const pure nothrow @nogc
     {
         return cast(byte) intValue();
+    }
+
+    /// Convert to binary32, rounding once at the target precision.
+    float floatValue() const pure nothrow @nogc
+    {
+        return cast(float) roundedFloating(magnitude, sign < 0, 24, 128);
+    }
+
+    /// Convert to binary64, rounding halfway values to even.
+    double doubleValue() const pure nothrow @nogc
+    {
+        return roundedFloating(magnitude, sign < 0, 53, 1_024);
     }
 
     /// Convert to a long, throwing on overflow.
