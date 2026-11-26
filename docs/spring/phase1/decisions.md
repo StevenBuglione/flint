@@ -1132,3 +1132,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Anything else:** any other growth needs a raise request with evidence.
 - 2026-11-26 01:50Z, coordinator, under the owner's standing approval: **D-DATA-5 (sol-data) is approved.** `Range.unbounded()` and `Bound.unbounded()` return value-equal instances rather than one shared object.
   - **A general rulebook rule follows:** shared singleton instances of generic classes with fields become value-equal per instantiation, and reference identity is not preserved. api-coverage adds it.
+- 2026-11-26 01:52Z, coordinator, under the owner's standing approval: **empty arrays.** A zero-length D array or slice, null or not, means Java's empty array; for example, `BigInteger` with a zero-length magnitude throws Java's `NumberFormatException`.
+  - **Java's NullPointerException for a null required array** is dropped, as R5 already does for strings.
+  - **Where Java gives null its own meaning,** such as an optional array parameter, `Nullable!(T[])` is used.
+  - api-coverage records this as an R5 clarification.
+- 2026-11-26 01:52Z, coordinator: **until m7 lands the loadable-section metric,** JDK leaf budgets (`jdk-leaf-rule`) are set in the definition of done's current stripped-byte metric, at the measured value plus 10%. Every JDK leaf is re-baselined in loadable bytes in one commit when the switch lands.
