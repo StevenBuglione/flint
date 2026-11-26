@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-29",
+ "deviation": "InvalidPersistentPropertyPath uses the root type for an empty prefix and the resolved leaf's declared TypeInformation otherwise. Nonempty paths require an AbstractPersistentProperty-backed leaf. Suggestions use distinct registered property names in match order.",
+ "reason": "The descriptor merges names from fields and accessors. Its names replace the union of reflective field and writable JavaBeans property candidates; an unregistered type supplies no candidates. A nonempty prefix needs descriptor-backed type metadata without adding required methods to existing handwritten properties."
+}

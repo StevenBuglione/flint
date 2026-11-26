@@ -6,10 +6,11 @@ module flint.data.mapping.context.default_persistent_property_path_tests;
 
 import flint.core.convert.converter : Converter;
 import flint.data.core : TypeInformation;
-import flint.data.mapping : PersistentEntity, PersistentProperty, PersistentPropertyPath;
+import flint.data.mapping : MappingException, PersistentEntity, PersistentProperty, PersistentPropertyPath;
+import flint.data.mapping.context : InvalidPersistentPropertyPath;
 import flint.data.mapping.context.default_persistent_property_path : DefaultPersistentPropertyPath;
 import flint.data.mapping.model : AbstractPersistentProperty, BasicPersistentEntity;
-import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
+import flint.engine.aot.descriptor : DescriptorTable, PropertyDescriptor, descriptorOf;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
 import flint.java.util : List, Map;
@@ -343,4 +344,54 @@ unittest
         assert(!path.containsPropertyOfType(sample.extension.getTypeInformation()));
         assert(!path.containsPropertyOfType(null));
     }
+}
+
+@("invalid property path preserves the root and suggests names on an empty prefix")
+unittest
+{
+    auto table = DescriptorTable.withBuiltins();
+    auto descriptor = descriptorOf!PathRoot();
+    descriptor.properties ~= PropertyDescriptor("child", classOf!PathChild.name);
+    table.add(descriptor);
+    auto rootType = TypeInformation.of!PathRoot(table);
+    auto error = new InvalidPersistentPropertyPath("chlid.name", rootType, "chlid", Path.empty());
+    const MappingException mapping = error;
+    assert(mapping is error);
+    assert(error.getSource() == "chlid.name" && error.getType() is rootType);
+    assert(error.getUnresolvableSegment() == "chlid" && error.getResolvedPath() == "");
+    assert(error.msg == "No property 'chlid' found on " ~ classOf!PathRoot.name ~ "; Did you mean: child");
+}
+
+@("invalid property path uses the resolved leaf declaration for suggestions")
+unittest
+{
+    auto sample = registeredPaths();
+    auto rootType = sample.root.getTypeInformation();
+    auto childPath = MetadataPath.empty().append(new MetadataProperty("child", sample.root));
+    auto error = new InvalidPersistentPropertyPath("child.nmae", rootType, "nmae", childPath);
+    assert(error.getSource() == "child.nmae" && error.getType() is rootType);
+    assert(error.getResolvedPath() == "child" && error.getUnresolvableSegment() == "nmae");
+    assert(error.msg == "No property 'nmae' found on " ~ classOf!PathChild.name ~ "; Did you mean: name");
+
+    auto listPath = MetadataPath.empty().append(new MetadataProperty("children", sample.root));
+    auto listError = new InvalidPersistentPropertyPath("children.nmae", rootType, "nmae", listPath);
+    assert(listError.getResolvedPath() == "children");
+    assert(listError.msg == "No property 'nmae' found on " ~ classOf!(List!PathChild).name ~ "; Did you mean: ");
+}
+
+@("invalid property path requires the original diagnostic inputs")
+unittest
+{
+    auto sample = registeredPaths();
+    auto rootType = sample.root.getTypeInformation();
+    auto empty = MetadataPath.empty();
+
+    assert(collectException!IllegalArgumentException(new InvalidPersistentPropertyPath(null,
+            rootType, "missing", empty)) !is null);
+    assert(collectException!IllegalArgumentException(new InvalidPersistentPropertyPath("missing",
+            null, "missing", empty)) !is null);
+    assert(collectException!IllegalArgumentException(new InvalidPersistentPropertyPath("missing",
+            rootType, null, empty)) !is null);
+    assert(collectException!IllegalArgumentException(new InvalidPersistentPropertyPath("foo.missing",
+            rootType, "missing", paths().one)) !is null);
 }

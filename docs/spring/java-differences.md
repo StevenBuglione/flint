@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 289 | 304 | 0 | 3,389 |
+| data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1052,6 +1052,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.PreferredConstructor#getConstructor()` | `flint.data.mapping.PreferredConstructor.getConstructor` | [D-DATA-23](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.TargetAwareIdentifierAccessor#<init>(Object)` | `flint.data.mapping.TargetAwareIdentifierAccessor.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.TargetAwareIdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.TargetAwareIdentifierAccessor.getRequiredIdentifier` | [R23](api-mapping.md#r23-object-typed-values) |  |
+
+#### org.springframework.data.mapping.context
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.data.mapping.context.InvalidPersistentPropertyPath#<init>(String,TypeInformation,String,PersistentPropertyPath)` | `flint.data.mapping.context.InvalidPersistentPropertyPath.this` | [R4](api-mapping.md#r4-classt-parameters), [D-DATA-29](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.context.InvalidPersistentPropertyPath#getType()` | `flint.data.mapping.context.InvalidPersistentPropertyPath.getType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.data.mapping.model
 
@@ -10244,7 +10251,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.javapoet | 69 | 0 |
 | org.springframework.data.mapping | 92 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
-| org.springframework.data.mapping.context | 63 | 0 |
+| org.springframework.data.mapping.context | 57 | 0 |
 | org.springframework.data.mapping.model | 140 | 0 |
 | org.springframework.data.projection | 70 | 0 |
 | org.springframework.data.querydsl | 66 | 0 |
