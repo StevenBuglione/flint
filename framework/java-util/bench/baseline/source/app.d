@@ -1,7 +1,7 @@
 module app;
 
 import core.stdc.stdio : printf;
-import flint.conc : fillSecureRandom;
+import flint.conc.random : fillSecureRandom;
 import flint.java.lang : IllegalStateException;
 
 @safe:

@@ -7,14 +7,7 @@ import flint.conc.sys.cancellation : cancelSource, closeSource, closedContextId,
 
 @safe:
 
-/// Fill the supplied bytes from the operating system random source.
-Error fillSecureRandom(scope ubyte[] output) nothrow @nogc
-{
-    import flint.conc.sys.random : secureRandom;
-
-    return secureRandom(output);
-}
-
+public import flint.conc.random : fillSecureRandom;
 public import flint.conc.sys.background : Background;
 
 /// Start a daemon worker that has entered `run` by the time this returns. The owner joins it

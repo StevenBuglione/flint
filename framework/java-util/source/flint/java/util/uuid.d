@@ -22,7 +22,7 @@ final class UUID : Comparable!UUID
     /// Generate a version 4 UUID using the operating system's secure random source.
     static UUID randomUUID()
     {
-        import flint.conc : fillSecureRandom;
+        import flint.conc.random : fillSecureRandom;
         import flint.java.lang : IllegalStateException;
 
         ubyte[16] entropy;
