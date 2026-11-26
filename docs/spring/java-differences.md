@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 357 | 0 | 15,236 |
 | boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,557 | 1,452 | 4,870 | 29,955 |
+| framework | spring-framework@v7.1.0 | 3,558 | 1,453 | 4,870 | 29,953 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2290,6 +2290,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.framework.Advised#isInterfaceProxied(Class)` | `flint.aop.framework.Advised.isInterfaceProxied` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.framework.AdvisorChainFactory#getInterceptorsAndDynamicInterceptionAdvice(Advised,Method,Class)` | `flint.aop.framework.AdvisorChainFactory.getInterceptorsAndDynamicInterceptionAdvice` | [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values), [D-AOT-MEMBER](api-mapping.md#deviations) |  |
 | `org.springframework.aop.framework.AopConfigException#<init>(String,Throwable)` | `flint.aop.framework.AopConfigException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.springframework.aop.framework.AopProxy#getProxy()` | `flint.aop.framework.AopProxy.getProxy` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.aop.framework.ProxyConfig#toString()` | `flint.aop.framework.ProxyConfig.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.springframework.aop.framework.adapter
@@ -9742,7 +9743,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.aspectj.annotation | 99 | 0 |
 | org.springframework.aop.aspectj.autoproxy | 7 | 0 |
 | org.springframework.aop.config | 69 | 0 |
-| org.springframework.aop.framework | 157 | 0 |
+| org.springframework.aop.framework | 155 | 0 |
 | org.springframework.aop.framework.adapter | 16 | 0 |
 | org.springframework.aop.framework.autoproxy | 75 | 0 |
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |

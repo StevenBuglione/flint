@@ -4,6 +4,7 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/Advised.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/AdvisorChainFactory.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/AopInfrastructureBean.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/framework/AopProxy.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
  * Modified by the Flint authors.
@@ -32,6 +33,13 @@ interface AdvisorChainFactory
 /// Marks AOP infrastructure beans for exclusion from auto-proxying.
 interface AopInfrastructureBean
 {
+}
+
+/// Creates proxy instances from a configured, ahead-of-time generated proxy.
+interface AopProxy
+{
+    /// Returns a new proxy instance (R23).
+    Any getProxy();
 }
 
 /// Exposes a proxy's target source, proxied interfaces and advisor configuration.

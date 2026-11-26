@@ -1,7 +1,7 @@
 module proxy_contract_tests;
 
 import flint.aop : Advisor, ProxyMethodInvocation, TargetSource;
-import flint.aop.framework : Advised, ProxyConfig;
+import flint.aop.framework : Advised, AopProxy, ProxyConfig;
 import flint.aop.support : DefaultPointcutAdvisor;
 import flint.aopalliance.aop : Advice;
 import flint.aopalliance.intercept : MethodInvocation;
@@ -17,6 +17,33 @@ static assert(is(typeof(ProxyMethodInvocation.init.invocableClone(Any.of(7))) ==
 static assert(is(typeof(ProxyMethodInvocation.init.setArguments(Any.of(7), Any.init)) == void));
 static assert(is(typeof(ProxyMethodInvocation.init.setUserAttribute("key", Any.init)) == void));
 static assert(is(typeof(ProxyMethodInvocation.init.getUserAttribute("key")) == Any));
+
+private final class GeneratedProxy
+{
+}
+
+private final class ProxyDelegate : AopProxy
+{
+    GeneratedProxy lastProxy;
+
+    override Any getProxy()
+    {
+        lastProxy = new GeneratedProxy();
+        return Any.of(lastProxy);
+    }
+}
+
+@("AopProxy delegates proxy construction and preserves identity") unittest
+{
+    auto factory = new ProxyDelegate();
+    AopProxy delegateProxy = factory;
+
+    const first = delegateProxy.getProxy().get!GeneratedProxy();
+    assert(first is factory.lastProxy);
+
+    const second = delegateProxy.getProxy().get!GeneratedProxy();
+    assert(second is factory.lastProxy && second !is first);
+}
 
 private class AdvisedFixture : ProxyConfig, Advised
 {
