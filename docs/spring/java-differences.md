@@ -1988,20 +1988,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.time.MonthDay` | `flint.java.time.monthday.MonthDay` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import MonthDay from flint.java.time.monthday until the JDK aggregate re-exports it. |
+| `java.time.MonthDay` | `flint.java.time.monthday.MonthDay` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import MonthDay from flint.java.time.monthday until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.MonthDay#equals(Object)` | `flint.java.time.monthday.MonthDay.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `java.time.MonthDay#parse(CharSequence)` | `flint.java.time.monthday.MonthDay.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.MonthDay#parse(CharSequence)` | `flint.java.time.monthday.MonthDay.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.MonthDay#with(Month)` | `flint.java.time.monthday.MonthDay.with_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `java.time.Period` | `flint.java.time.period.Period` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Period from flint.java.time.period until the JDK aggregate re-exports it. |
+| `java.time.Period` | `flint.java.time.period.Period` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Period from flint.java.time.period until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.Period#equals(Object)` | `flint.java.time.period.Period.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `java.time.Period#parse(CharSequence)` | `flint.java.time.period.Period.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
-| `java.time.Year` | `flint.java.time.year.Year` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Year from flint.java.time.year until the JDK aggregate re-exports it. |
+| `java.time.Period#parse(CharSequence)` | `flint.java.time.period.Period.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.time.Year` | `flint.java.time.year.Year` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Year from flint.java.time.year until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.Year#equals(Object)` | `flint.java.time.year.Year.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Year#isValidMonthDay(MonthDay)` | `flint.java.time.year.Year.isValidMonthDay` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `java.time.Year#parse(CharSequence)` | `flint.java.time.year.Year.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
-| `java.time.YearMonth` | `flint.java.time.yearmonth.YearMonth` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import YearMonth from flint.java.time.yearmonth until the JDK aggregate re-exports it. |
+| `java.time.Year#parse(CharSequence)` | `flint.java.time.year.Year.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.time.YearMonth` | `flint.java.time.yearmonth.YearMonth` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import YearMonth from flint.java.time.yearmonth until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.YearMonth#equals(Object)` | `flint.java.time.yearmonth.YearMonth.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `java.time.YearMonth#parse(CharSequence)` | `flint.java.time.yearmonth.YearMonth.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.time.YearMonth#parse(CharSequence)` | `flint.java.time.yearmonth.YearMonth.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.time.format
 

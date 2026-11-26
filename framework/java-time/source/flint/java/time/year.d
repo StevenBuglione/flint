@@ -2,7 +2,6 @@
 module flint.java.time.year;
 
 import flint.engine.aot.text : decimal;
-import flint.java.lang : NullPointerException;
 import flint.java.time : LocalDate, Month, checkRange, isIsoLeap = isLeap;
 import flint.java.time.format : DateTimeParseException;
 public import flint.java.time.monthday : MonthDay;
@@ -31,8 +30,6 @@ struct Year
 
     static Year parse(scope const(char)[] text)
     {
-        if (text is null)
-            throw new NullPointerException("text");
         const sign = text.length == 0 ? '\0' : text[0];
         const size_t firstDigit = sign == '-' || sign == '+' ? 1 : 0;
         size_t position = firstDigit;

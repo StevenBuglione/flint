@@ -6,6 +6,7 @@ import flint.java.time.format : DateTimeParseException;
 import flint.java.time.monthday : MonthDay;
 import flint.java.time.year : Year;
 import flint.java.time.yearmonth : YearMonth;
+import std.meta : AliasSeq;
 import std.typecons : Nullable;
 
 @safe:
@@ -61,6 +62,25 @@ import std.typecons : Nullable;
     {
         dayText[5] = '2';
         assert(error.getErrorIndex() == 5 && error.getParsedString() == "--02-?9");
+    }
+}
+
+@("partial date parsing treats a null text slice as empty under R26") unittest
+{
+    static foreach (Date; AliasSeq!(Year, YearMonth, MonthDay))
+    {
+        foreach (text; [null, ""])
+        {
+            try
+            {
+                Date.parse(text);
+                assert(false, "empty partial date text succeeded");
+            }
+            catch (DateTimeParseException error)
+            {
+                assert(error.getParsedString() == "" && error.getErrorIndex() == 0);
+            }
+        }
     }
 }
 

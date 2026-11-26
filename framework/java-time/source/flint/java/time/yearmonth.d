@@ -2,7 +2,6 @@
 module flint.java.time.yearmonth;
 
 import flint.engine.aot.text : decodeUtf8;
-import flint.java.lang : NullPointerException;
 import flint.java.time : DateTimeException, LocalDate, Month, checkRange, getValue, isLeap;
 import flint.java.time.format : DateTimeParseException;
 
@@ -38,9 +37,6 @@ struct YearMonth
     /// Parse a year followed by a two-digit month. Retain a copy of rejected input.
     static YearMonth parse(scope const(char)[] text)
     {
-        if (text is null)
-            throw new NullPointerException("text");
-
         const parsed = readYearMonth(text);
         if (parsed.errorIndex >= 0)
             throw syntaxError(text, parsed.errorIndex, parsed.trailingText);

@@ -31,7 +31,7 @@
 module flint.java.time.period;
 
 import flint.engine.aot.text : parseLong;
-import flint.java.lang : ArithmeticException, NullPointerException, NumberFormatException;
+import flint.java.lang : ArithmeticException, NumberFormatException;
 import flint.java.time : LocalDate, epochDayOf;
 import flint.java.time.format : DateTimeParseException;
 
@@ -107,8 +107,6 @@ struct Period
 
     static Period parse(scope const(char)[] text) pure
     {
-        if (text is null)
-            throw new NullPointerException("text");
         const parsed = parseComponents(text);
         final switch (parsed.status)
         {

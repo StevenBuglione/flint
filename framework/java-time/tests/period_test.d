@@ -1,7 +1,7 @@
 module flint.java.time.period_test;
 
 import core.memory : GC;
-import flint.java.lang : ArithmeticException, NullPointerException, NumberFormatException;
+import flint.java.lang : ArithmeticException, NumberFormatException;
 import flint.java.time : LocalDate;
 import flint.java.time.format : DateTimeParseException;
 import flint.java.time.period : Period;
@@ -28,7 +28,7 @@ import flint.java.time.period : Period;
 
 @("period parse preserves the rejected input and reports Java exception types") unittest
 {
-    foreach (text; ["", "P", "PT1D", "P1D2M", "P1Y2Y", "P+D", "P1.5D", " P1D", "P2147483648D"])
+    foreach (text; [null, "", "P", "PT1D", "P1D2M", "P1Y2Y", "P+D", "P1.5D", " P1D", "P2147483648D"])
     {
         try
         {
@@ -39,14 +39,6 @@ import flint.java.time.period : Period;
         {
             assert(exception.getParsedString() == text && exception.getErrorIndex() == 0);
         }
-    }
-    try
-    {
-        Period.parse(null);
-        assert(false);
-    }
-    catch (NullPointerException)
-    {
     }
 
     char[12] input = ['P', '2', '1', '4', '7', '4', '8', '3', '6', '4', '8', 'D'];

@@ -1,7 +1,6 @@
 /// Clean-room Java SE 21 ISO month and day values.
 module flint.java.time.monthday;
 
-import flint.java.lang : NullPointerException;
 import flint.java.time : DateTimeException, LocalDate, Month, getValue, isLeap;
 import flint.java.time.format : DateTimeParseException;
 
@@ -32,8 +31,6 @@ struct MonthDay
 
     static MonthDay parse(scope const(char)[] text)
     {
-        if (text is null)
-            throw new NullPointerException("text");
         if (text.length < 2 || text[0] != '-' || text[1] != '-')
             throw parseError(text, 0);
         const month = readPair(text[2 .. $]);
