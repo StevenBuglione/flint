@@ -539,11 +539,13 @@
     },
     "java/io/InputStream/ReadAllBytes.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/InputStream/ReadNBytes.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/InputStream/ReadParams.java": {
       "status": "deferred",

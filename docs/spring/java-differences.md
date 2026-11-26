@@ -10965,6 +10965,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.ByteArrayInputStream#mark` | 2 | Subclasses do not have the protected mark index. |
 | framework | `java.io.ByteArrayInputStream#pos` | 2 | Subclasses do not have the protected current read index. |
 | framework | `java.io.ByteArrayInputStream#read()` | 2 | Sequential unsigned reads and EOF match Java. Synchronization on the stream monitor is pending. |
+| framework | `java.io.ByteArrayInputStream#readAllBytes()` | 2 | Java copies the remaining bytes under the stream monitor and advances to EOF without calling a subclass read override. The inherited Flint implementation calls the virtual bulk read without holding that monitor. |
+| framework | `java.io.ByteArrayInputStream#readNBytes(byte[],int,int)` | 2 | Missing byte-array override that converts EOF from the ranged read into a zero byte count. |
 | framework | `java.io.ByteArrayOutputStream#<init>()` | 2 | Java initializes a protected 32-byte buffer and zero count. The existing facade starts with an empty private slice. |
 | framework | `java.io.ByteArrayOutputStream#<init>(int)` | 2 | The explicit initial capacity constructor is missing, including rejection of negative capacity. |
 | framework | `java.io.ByteArrayOutputStream#buf` | 2 | Subclasses do not have the protected capacity buffer. |
@@ -10992,6 +10994,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.FileInputStream` | 2 | The existing class derives from ByteArrayInputStream and retains a byte snapshot. Java derives directly from InputStream and owns a file descriptor until close. |
 | framework | `java.io.FileInputStream#<init>(File)` | 2 | The existing constructor checks the virtual isFile method and reads a byte snapshot. Java opens the pathname and owns the descriptor. The null File check required by R8 is pending. |
 | framework | `java.io.IOException#<init>(Throwable)` | 2 | The current constructor accepts a message and an optional cause. Java's cause-only constructor is pending. |
+| framework | `java.io.InputStream#readNBytes(byte[],int,int)` | 2 | Missing bounded read into a caller-supplied array range. Java returns zero at EOF. |
+| framework | `java.io.InputStream#readNBytes(int)` | 2 | Missing bounded read that returns a new byte array. Java uses this virtual overload to implement readAllBytes(). |
 | framework | `java.io.InterruptedIOException#<init>(String)` | 2 | Java distinguishes absent detail from an empty detail message. The current raw string constructor and inherited accessor need the R5 nullable message contract. |
 | framework | `java.io.OutputStream` | 2 | The abstract sink exists. The Java type also implements the Closeable and Flushable interfaces, which are pending. |
 | framework | `java.io.OutputStream#write(byte[])` | 2 | Java forwards a whole-array write to the virtual ranged overload. The existing method calls the single-byte overload directly. |
