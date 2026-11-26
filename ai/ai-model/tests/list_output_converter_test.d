@@ -19,10 +19,13 @@
 module list_output_converter_test;
 
 import flint.ai.converter : ListOutputConverter;
+import flint.core.convert : TypeDescriptor;
 import flint.core.convert.support : DefaultConversionService;
+import flint.engine.aot.any : Any, AnyTypeException;
+import flint.engine.aot.name : typeNameOf;
 import flint.java.lang : UnsupportedOperationException;
-import flint.java.util : List;
-import std.exception : assertThrown;
+import flint.java.util : ArrayList, List;
+import std.exception : assertThrown, collectException;
 
 @safe:
 
@@ -230,4 +233,45 @@ unittest
     auto converter = new ListOutputConverter(service);
     assert(converter.getConversionService() is service);
     assert(converter.convert("custom") is expected);
+}
+
+private final class FixedResultService : DefaultConversionService
+{
+    private Any result_;
+
+    this(Any result)
+    {
+        result_ = result;
+    }
+
+    override Any convertErased(Any source, const TypeDescriptor sourceType, const TypeDescriptor targetType)
+    {
+        return result_;
+    }
+}
+
+@("list output converter keeps erased subtype and null results")
+unittest
+{
+    auto list = new ArrayList!string();
+    list.add("custom result");
+    auto subtype = new ListOutputConverter(new FixedResultService(Any.of(list)));
+    assert(subtype.convert("prompt") is list);
+
+    auto typedNull = new ListOutputConverter(new FixedResultService(Any.of(cast(List!string) null)));
+    auto untypedNull = new ListOutputConverter(new FixedResultService(Any.init));
+    auto empty = typedNull.convert("prompt");
+    assert(empty !is null && empty.isEmpty() && empty is untypedNull.convert("prompt"));
+}
+
+@("list output converter reports requested and held types on erased mismatches")
+unittest
+{
+    foreach (result; [Any.of(42), Any.of(new Object())])
+    {
+        auto converter = new ListOutputConverter(new FixedResultService(result));
+        const error = collectException!AnyTypeException(converter.convert("prompt"));
+        assert(error !is null && error.requested == typeNameOf!(List!string));
+        assert(error.held == result.typeName());
+    }
 }

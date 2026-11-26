@@ -98,7 +98,7 @@ class ListOutputConverter : AbstractConversionServiceOutputConverter!(List!strin
     /// Converts the text using the service, with a shared empty list for a null result.
     override List!string convert(string text)
     {
-        import flint.engine.aot.any : Any;
+        import flint.engine.aot.any : Any, AnyTypeException;
         import flint.engine.aot.name : typeNameOf;
         import flint.java.lang : NullPointerException;
         import flint.java.util : Collections;
@@ -106,8 +106,14 @@ class ListOutputConverter : AbstractConversionServiceOutputConverter!(List!strin
         auto service = getConversionService();
         if (service is null)
             throw new NullPointerException();
-        auto result = service.convert(text is null ? Any.init : Any.of(text), typeNameOf!(List!string));
-        return result.isNull ? Collections.emptyList!string() : result.get!(List!string);
+
+        enum listType = typeNameOf!(List!string);
+        auto result = service.convert(text is null ? Any.init : Any.of(text), listType);
+        if (result.isNull)
+            return Collections.emptyList!string();
+        if (auto list = cast(List!string) result.asObject())
+            return list;
+        throw new AnyTypeException(listType, result.typeName());
     }
 }
 
