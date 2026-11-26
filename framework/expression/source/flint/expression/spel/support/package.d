@@ -22,10 +22,11 @@ module flint.expression.spel.support;
 import core.atomic : atomicLoad, atomicStore, MemoryOrder;
 import flint.core.convert : TypeDescriptor;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : DescriptorTable;
-import flint.expression : TypedValue;
-import flint.expression.spel.context : EvaluationContextAccess;
+import flint.engine.aot.descriptor : DescriptorTable, PropertyDescriptor;
+import flint.expression : AccessException, EvaluationContext, PropertyAccessor, TypedValue;
+import flint.expression.spel.context : EvaluationContextAccess, descriptorProperty, propertyTargetType;
 import flint.java.lang : NullPointerException;
+import flint.java.util : ArrayList, List;
 import std.typecons : Rebindable;
 
 @safe:
@@ -33,10 +34,16 @@ import std.typecons : Rebindable;
 /// The reusable SpEL context for a root object and named variables.
 class StandardEvaluationContext : EvaluationContextAccess
 {
+    protected override final bool isStandardContext() nothrow @nogc
+    {
+        return typeid(cast(Object) this) is typeid(StandardEvaluationContext);
+    }
+
     // Readers take a single snapshot. Published entries and root wrappers are never modified.
     private TypedValue* root;
     private Bindings* variables;
     private Rebindable!(const DescriptorTable) descriptors;
+    private List!PropertyAccessor propertyAccessors;
 
     /// Start with a null root and no variables.
     this()
@@ -79,14 +86,49 @@ class StandardEvaluationContext : EvaluationContextAccess
         descriptors = table;
     }
 
-    protected override final bool isStandardContext() nothrow @nogc
-    {
-        return typeid(cast(Object) this) is typeid(StandardEvaluationContext);
-    }
-
     protected override final const(DescriptorTable) descriptorTable() const nothrow @nogc
     {
         return descriptors.get();
+    }
+
+    /// The live list of property accessors, with the built-in AOT reader by default.
+    override List!PropertyAccessor getPropertyAccessors()
+    {
+        if (auto current = configuredPropertyAccessors())
+            return current;
+        synchronized (this)
+        {
+            if (auto current = configuredPropertyAccessors())
+                return current;
+            auto initial = new ArrayList!PropertyAccessor;
+            initial.add(new DescriptorPropertyAccessor);
+            setPropertyAccessors(initial);
+            return initial;
+        }
+    }
+
+    /// Replace the live list of accessors. Configure the list before sharing the context.
+    void setPropertyAccessors(List!PropertyAccessor accessors)
+    {
+        atomicStore!(MemoryOrder.rel)(propertyAccessors, accessors);
+    }
+
+    /// Insert before the final accessor, which is normally the built-in AOT reader.
+    void addPropertyAccessor(PropertyAccessor accessor)
+    {
+        auto accessors = getPropertyAccessors();
+        accessors.add(accessors.size() - 1, accessor);
+    }
+
+    /// Remove the supplied accessor, if present.
+    bool removePropertyAccessor(PropertyAccessor accessor)
+    {
+        return getPropertyAccessors().remove(accessor);
+    }
+
+    protected override final List!PropertyAccessor configuredPropertyAccessors() nothrow @nogc
+    {
+        return atomicLoad!(MemoryOrder.acq)(propertyAccessors);
     }
 
     /// Store or replace a variable. A null value removes its binding.
@@ -145,6 +187,46 @@ class StandardEvaluationContext : EvaluationContextAccess
         if (auto snapshot = atomicLoad!(MemoryOrder.acq)(variables))
             return snapshot.entries;
         return null;
+    }
+}
+
+private final class DescriptorPropertyAccessor : PropertyAccessor
+{
+    override string[] getSpecificTargetClasses()
+    {
+        return null;
+    }
+
+    override bool canRead(EvaluationContext context, Any target, string name)
+    {
+        auto member = property(context, target, name);
+        return member !is null && member.get !is null;
+    }
+
+    override TypedValue read(EvaluationContext context, Any target, string name)
+    {
+        auto member = property(context, target, name);
+        if (member is null || member.get is null)
+            throw new AccessException("Cannot read property " ~ name);
+        return TypedValue(member.get(target));
+    }
+
+    override bool canWrite(EvaluationContext, Any, string)
+    {
+        return false;
+    }
+
+    override void write(EvaluationContext, Any, string name, Any)
+    {
+        throw new AccessException("Cannot write property " ~ name);
+    }
+
+    private static const(PropertyDescriptor)* property(EvaluationContext context, const ref Any target, string name)
+    {
+        auto standard = cast(StandardEvaluationContext) context;
+        if (standard is null || target.isNull())
+            return null;
+        return descriptorProperty(standard.descriptorTable(), target, propertyTargetType(target), name);
     }
 }
 

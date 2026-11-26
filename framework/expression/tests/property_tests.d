@@ -20,12 +20,13 @@ module flint.expression.property_tests;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
-import flint.expression : AccessException;
-import flint.expression : TypedValue;
+import flint.engine.aot.name : typeNameOf;
+import flint.expression : AccessException, EvaluationContext, PropertyAccessor, TypedValue;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
 import flint.expression.spel.standard : SpelExpressionParser;
 import flint.expression.spel.support : StandardEvaluationContext;
 import flint.java.lang : IllegalStateException;
+import flint.java.util : ArrayList;
 
 @safe:
 
@@ -96,6 +97,52 @@ private DescriptorTable table()
     descriptors.add(descriptorOf!Inventor);
     descriptors.add(descriptorOf!Place);
     return descriptors;
+}
+
+private final class NamedPropertyAccessor : PropertyAccessor
+{
+    private string key;
+    private string value;
+    private string[] targets;
+    private int reads;
+    private int candidates;
+    private AccessException failure;
+
+    this(string key, string value, string[] targets = null)
+    {
+        this.key = key;
+        this.value = value;
+        this.targets = targets;
+    }
+
+    override string[] getSpecificTargetClasses()
+    {
+        ++candidates;
+        return targets;
+    }
+
+    override bool canRead(EvaluationContext, Any, string name)
+    {
+        return name == key;
+    }
+
+    override TypedValue read(EvaluationContext, Any, string)
+    {
+        ++reads;
+        if (failure !is null)
+            throw failure;
+        return TypedValue(Any.of(value));
+    }
+
+    override bool canWrite(EvaluationContext, Any, string)
+    {
+        return false;
+    }
+
+    override void write(EvaluationContext, Any, string, Any)
+    {
+        throw new AccessException("Cannot write this property");
+    }
 }
 
 private SpelEvaluationException failure(SpelExpressionParser parser, string source,
@@ -268,6 +315,103 @@ unittest
     assert(parser.parseExpression("name ?: broken").getValue(context).get!string == "Nikola Tesla");
     assert(parser.parseExpression("placeOfBirth?.population ?: 21").getValue(context).get!int == 21);
     failure(parser, "false ? 'unused' : broken", context, SpelMessage.EXCEPTION_DURING_PROPERTY_READ, 19);
+}
+
+@("addingAndRemovingAccessors") unittest
+{
+    auto context = new StandardEvaluationContext;
+    assert(context.getPropertyAccessors().size() == 1);
+    auto accessor = new NamedPropertyAccessor("name", "Value");
+    context.addPropertyAccessor(accessor);
+    assert(context.getPropertyAccessors().size() == 2);
+
+    auto copy = new ArrayList!PropertyAccessor(context.getPropertyAccessors());
+    assert(context.removePropertyAccessor(accessor));
+    assert(!context.removePropertyAccessor(accessor));
+    assert(context.getPropertyAccessors().size() == 1);
+    context.setPropertyAccessors(copy);
+    assert(context.getPropertyAccessors().size() == 2);
+}
+
+@("shouldAlwaysUsePropertyAccessorFromEvaluationContext") unittest
+{
+    auto expression = (new SpelExpressionParser).parseExpression("name");
+    auto first = new StandardEvaluationContext;
+    first.addPropertyAccessor(new NamedPropertyAccessor("name", "Ollie"));
+    assert(expression.getValue(first).get!string == "Ollie");
+
+    auto second = new StandardEvaluationContext;
+    second.addPropertyAccessor(new NamedPropertyAccessor("name", "Jens"));
+    assert(expression.getValue(second).get!string == "Jens");
+}
+
+@("targeted accessors precede generic accessors without evaluating skipped operands")
+unittest
+{
+    auto context = new StandardEvaluationContext(Any.of("hello"));
+    auto generic = new NamedPropertyAccessor("alias", "generic");
+    auto specific = new NamedPropertyAccessor("alias", "specific", ["string"]);
+    context.addPropertyAccessor(generic);
+    context.addPropertyAccessor(specific);
+    auto parser = new SpelExpressionParser;
+
+    assert(parser.parseExpression("false ? alias : 'skipped'").getValue(context).get!string == "skipped");
+    assert(generic.candidates == 0 && specific.candidates == 0);
+    assert(parser.parseExpression("alias").getValue(context).get!string == "specific");
+    assert(generic.reads == 0 && specific.reads == 1);
+}
+
+@("exact property accessors precede inherited and generic candidates")
+unittest
+{
+    Inventor root = new Engineer!int;
+    auto descriptors = table();
+    descriptors.add(descriptorOf!(Engineer!int));
+    auto context = new StandardEvaluationContext(Any.of(root));
+    context.setDescriptorTable(descriptors);
+    context.addPropertyAccessor(new NamedPropertyAccessor("alias", "generic"));
+    auto inherited = new NamedPropertyAccessor("alias", "inherited", [typeNameOf!Inventor]);
+    auto exact = new NamedPropertyAccessor("alias", "exact", [typeNameOf!(Engineer!int)]);
+    context.addPropertyAccessor(inherited);
+    context.addPropertyAccessor(exact);
+    auto aliasExpression = (new SpelExpressionParser).parseExpression("alias");
+
+    assert(aliasExpression.getValue(context).get!string == "exact");
+    assert(context.removePropertyAccessor(exact));
+    assert(aliasExpression.getValue(context).get!string == "inherited");
+    assert(context.removePropertyAccessor(inherited));
+    assert(aliasExpression.getValue(context).get!string == "generic");
+}
+
+@("removing the default accessor disables descriptor-backed reads")
+unittest
+{
+    auto context = new StandardEvaluationContext(Any.of(new Inventor));
+    context.setDescriptorTable(table());
+    auto parser = new SpelExpressionParser;
+    auto expression = parser.parseExpression("name");
+    auto accessors = context.getPropertyAccessors();
+    assert(expression.getValue(context).get!string == "Nikola Tesla");
+    context.setPropertyAccessors(new ArrayList!PropertyAccessor);
+    failure(parser, "name", context, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, 0);
+    context.setPropertyAccessors(accessors);
+    assert(expression.getValue(context).get!string == "Nikola Tesla");
+}
+
+@("safe property hops bypass accessors and read failures keep the exception chain")
+unittest
+{
+    auto context = new StandardEvaluationContext;
+    auto accessor = new NamedPropertyAccessor("name", "unused");
+    auto cause = new IllegalStateException("getter failed");
+    accessor.failure = new AccessException("custom accessor failed", cause);
+    context.addPropertyAccessor(accessor);
+    auto parser = new SpelExpressionParser;
+    assert(parser.parseExpression("#root?.name").getValue(context).isNull());
+    assert(accessor.candidates == 0);
+    auto error = failure(parser, "#root.name", context, SpelMessage.EXCEPTION_DURING_PROPERTY_READ, 6);
+    assert(error.getCause() is accessor.failure);
+    assert(accessor.failure.getCause() is cause);
 }
 
 @("a selected property returns the original object after one getter call")

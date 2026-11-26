@@ -203,14 +203,15 @@
         "ported": [
           "simpleAccess01",
           "simpleAccess02",
-          "nonExistentPropertiesAndMethods"
+          "nonExistentPropertiesAndMethods",
+          "addingAndRemovingAccessors",
+          "shouldAlwaysUsePropertyAccessorFromEvaluationContext"
         ],
         "skipped": {
           "accessingOnNullObject": "Read diagnostics covered; property writes are deferred.",
           "accessingPropertyOfJavaLangClass": "Java class targets and static property access are deferred.",
           "accessingPropertyOfJavaTimeZoneIdDeclaredInNonPublicSubclass": "Inherited JDK type descriptors are deferred.",
-          "addingAndRemovingAccessors": "Custom property accessor registration is deferred.",
-          "addingSpecificPropertyAccessor": "Custom property accessor registration is deferred.",
+          "addingSpecificPropertyAccessor": "Constructor expressions, static members, and custom property writes are deferred.",
           "noGetClassAccess": "SimpleEvaluationContext is deferred.",
           "propertyAccessWithArrayIndexOutOfBounds": "Indexing is deferred.",
           "propertyAccessWithInstanceMethodResolver": "Method resolvers are deferred.",
@@ -226,7 +227,6 @@
           "propertyReadWriteWithRootObject": "Property writes are deferred.",
           "propertyWriteAppliesAnnotationDrivenConversionOnlyForCorrectlyResolvedAcronymField": "Property writes and conversion are deferred.",
           "readCallSiteWithoutPriorCanReadResolvesCorrectAnnotation": "Public property accessors and annotations are deferred.",
-          "shouldAlwaysUsePropertyAccessorFromEvaluationContext": "Custom property accessor dispatch is deferred.",
           "simpleAccess03": "Array length and requested-type conversion are deferred.",
           "standardGetClassAccess": "Java class targets and static property access are deferred."
         }

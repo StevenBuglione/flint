@@ -65,6 +65,7 @@ private StandardEvaluationContext contextFor(ArrayRoot root)
 unittest
 {
     auto context = contextFor(new ArrayRoot);
+    context.getPropertyAccessors();
     auto numbers = Any.of([2, 3]);
     context.setRootObject(numbers);
     context.setVariable("numbers", numbers);

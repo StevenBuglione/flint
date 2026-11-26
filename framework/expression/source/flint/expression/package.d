@@ -24,6 +24,7 @@ import flint.core.convert : TypeDescriptor;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decimal;
 import flint.java.lang : RuntimeException;
+import flint.java.util : List;
 
 @safe:
 
@@ -49,7 +50,8 @@ interface Expression
     bool isWritable(EvaluationContext context);
 }
 
-/// Resolves the root and named variables when an expression is evaluated.
+/// Resolves the root, named variables and property accessors for an expression.
+/// Implementations can mix in EvaluationContext.Defaults for the Java default methods (R3).
 interface EvaluationContext
 {
     /// The default root for expressions evaluated with this context.
@@ -60,6 +62,21 @@ interface EvaluationContext
 
     /// The bound value, or null if the name is absent.
     Any lookupVariable(string name);
+
+    /// The configured property accessors.
+    List!PropertyAccessor getPropertyAccessors();
+
+    /// Java default methods for custom evaluation contexts (R3).
+    mixin template Defaults()
+    {
+        private import flint.expression : PropertyAccessor;
+        private import flint.java.util : Collections, List;
+
+        override List!PropertyAccessor getPropertyAccessors()
+        {
+            return Collections.emptyList!PropertyAccessor();
+        }
+    }
 }
 
 /// An accessor that may be restricted to named AOT types (R4).

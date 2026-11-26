@@ -21,13 +21,14 @@
 module flint.expression.spel.standard.property;
 
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : DescriptorTable, PropertyDescriptor, TypeKind;
-import flint.engine.aot.name : canonicalTypeName;
+import flint.engine.aot.descriptor : Descriptor, DescriptorTable, TypeKind;
 import flint.engine.aot.text : decimal;
+import flint.expression : EvaluationContext, PropertyAccessor;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
 import flint.expression.spel.standard.literal : LiteralParser, utf16Length;
+import flint.expression.spel.context : EvaluationContextAccess, descriptorProperty, propertyTargetType;
 import flint.java.lang : IndexOutOfBoundsException;
-import std.ascii : isAlphaNum;
+import flint.java.util : List;
 
 @safe:
 package(flint.expression.spel.standard):
@@ -91,35 +92,35 @@ PropertySeparator readSeparator(ref LiteralParser reader) pure nothrow @nogc
 }
 
 /// Read through erased AOT accessors at the Spring API boundary.
-Any readPropertyPath(string source, scope const(PropertyStep)[] steps, Any root, const DescriptorTable table)
+Any readPropertyPath(string source, scope const(PropertyStep)[] steps, Any root, EvaluationContext context)
 {
+    auto standard = cast(EvaluationContextAccess) context;
+    const table = standard is null ? null : standard.descriptorTable();
     foreach (ref step; steps)
     {
-        if (root.isNull())
-        {
-            if (step.nullSafe)
-                continue;
-            if (step.name is null)
-                throw propertyError(source, step, SpelMessage.CANNOT_INDEX_INTO_NULL_VALUE);
-            throw propertyError(source, step, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL);
-        }
+        if (step.nullSafe && root.isNull())
+            continue;
         if (step.name is null)
         {
+            if (root.isNull())
+                throw propertyError(source, step, SpelMessage.CANNOT_INDEX_INTO_NULL_VALUE);
             root = readArrayIndex(source, step, root, table);
             continue;
         }
-        const type = targetType(root);
-        auto member = findProperty(table, type, step.name);
-        if (member is null && type != root.typeName())
-            member = findProperty(table, root.typeName(), step.name);
-        if (member is null || member.get is null)
-            throw propertyError(source, step, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, type);
+        const type = propertyTargetType(root);
         try
-            root = member.get(root);
+        {
+            auto accessors = configuredAccessors(context, standard);
+            if (readProperty(context, accessors, table, root, type, step.name))
+                continue;
+        }
         catch (SpelEvaluationException error)
             throw error;
         catch (Exception error)
             throw propertyError(source, step, SpelMessage.EXCEPTION_DURING_PROPERTY_READ, error.msg, error);
+        if (root.isNull())
+            throw propertyError(source, step, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL);
+        throw propertyError(source, step, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, type);
     }
     return root;
 }
@@ -142,45 +143,82 @@ private Any readArrayIndex(string source, const ref PropertyStep step, ref Any t
     return descriptor.element(target, step.index);
 }
 
-private string targetType(const ref Any target) pure nothrow
+private List!PropertyAccessor configuredAccessors(EvaluationContext context, EvaluationContextAccess standard)
 {
-    const boxedType = target.typeName();
-    if (auto object = target.asObject())
-    {
-        const runtimeType = typeid(object).name;
-        if (runtimeType != boxedType)
-            return canonicalTargetName(runtimeType);
-    }
-    return boxedType;
+    if (standard !is null && standard.isStandardContext())
+        return standard.configuredPropertyAccessors();
+    return context is null ? null : context.getPropertyAccessors();
 }
 
-// A simple eponymous class instance is named "module.Owner!Arg.Owner" by both compilers.
-// Its canonical name is a slice. Delegate more complex names to the shared canonicalizer.
-private string canonicalTargetName(string name) pure nothrow
+private bool readProperty(EvaluationContext context, List!PropertyAccessor accessors,
+        const DescriptorTable table, ref Any target, string type, string name)
 {
-    size_t ownerStart;
-    foreach (position, character; name)
+    if (accessors !is null)
     {
-        if (character == '.')
-            ownerStart = position + 1;
-        if (character != '!')
-            continue;
-
-        const owner = name[ownerStart .. position];
-        size_t end = position + 1;
-        while (end < name.length && (isAlphaNum(name[end]) || name[end] == '_' || name[end] >= 0x80))
-            ++end;
-        if (end > position + 1 && end < name.length && name[end] == '.' && name[end + 1 .. $] == owner)
-            return name[0 .. end];
-        return canonicalTypeName(name);
+        const descriptor = table is null ? null : table.find(type);
+        return readWithAccessors(context, accessors, descriptor, target, type, name);
     }
-    return name;
+    if (target.isNull())
+        return false;
+    auto member = descriptorProperty(table, target, type, name);
+    if (member is null || member.get is null)
+        return false;
+    target = member.get(target);
+    return true;
 }
 
-private const(PropertyDescriptor)* findProperty(const DescriptorTable table, string type, string name) nothrow
+private enum Match : ubyte
 {
-    const descriptor = table is null ? null : table.find(type);
-    return descriptor is null ? null : descriptor.property(name);
+    exact,
+    inherited,
+    generic,
+    none,
+}
+
+private struct AccessorCandidate
+{
+    PropertyAccessor accessor;
+    Match match;
+}
+
+private bool readWithAccessors(EvaluationContext context, List!PropertyAccessor accessors,
+        const Descriptor descriptor, ref Any target, string type, string name)
+{
+    const count = accessors.size();
+    AccessorCandidate[8] local;
+    auto candidates = count <= cast(int) local.length ? local[0 .. count] : new AccessorCandidate[count];
+    foreach (index; 0 .. count)
+    {
+        auto accessor = accessors.get(index);
+        const match = matchTarget(accessor.getSpecificTargetClasses(), target, type, descriptor);
+        candidates[index] = AccessorCandidate(accessor, match);
+    }
+    static immutable ranks = [Match.exact, Match.inherited, Match.generic];
+    foreach (rank; ranks)
+        foreach (candidate; candidates)
+            if (candidate.match == rank && candidate.accessor.canRead(context, target, name))
+            {
+                target = candidate.accessor.read(context, target, name).getValue();
+                return true;
+            }
+    return false;
+}
+
+private Match matchTarget(scope string[] names, const ref Any target, string type, const Descriptor desc) nothrow @nogc
+{
+    if (names.length == 0)
+        return Match.generic;
+    if (target.isNull())
+        return Match.none;
+    Match best = Match.none;
+    foreach (candidate; names)
+    {
+        if (candidate == type)
+            return Match.exact;
+        if (candidate == target.typeName() || (desc !is null && desc.isAssignableTo(candidate)))
+            best = Match.inherited;
+    }
+    return best;
 }
 
 private SpelEvaluationException propertyError(string source, const ref PropertyStep step,

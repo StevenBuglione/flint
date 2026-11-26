@@ -95,8 +95,8 @@ class SpelExpression : Expression
         requireContext(context);
         if (expression.hasProperties())
             return false;
-        auto standard = cast(EvaluationContextAccess) context;
-        if (standard is null || !standard.isStandardContext())
+        auto bounded = cast(EvaluationContextAccess) context;
+        if (bounded is null || !bounded.isStandardContext())
             context.getRootObject();
         return expression.variable !is null && !isRootReference(expression.variable);
     }
@@ -109,11 +109,10 @@ class SpelExpression : Expression
             return unwrap(evaluate(standard, rootObject, useContextRoot));
         if (useContextRoot && context !is null)
             rootObject = context.getRootObject().getValue();
-        const table = standard is null ? null : standard.descriptorTable();
         return unwrap(expression.evaluate(rootObject, (string name, scope const(PropertyStep)[] path) {
                 const useRoot = name is null || isRootReference(name);
                 auto receiver = useRoot ? rootObject : context is null ? Any.init : context.lookupVariable(name);
-                return path.length ? readPropertyPath(expressionString, path, receiver, table) : receiver;
+                return path.length ? readPropertyPath(expressionString, path, receiver, context) : receiver;
             }));
     }
 

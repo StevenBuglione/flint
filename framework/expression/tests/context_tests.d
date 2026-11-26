@@ -241,6 +241,8 @@ unittest
 {
     static final class CustomContext : EvaluationContext
     {
+        mixin EvaluationContext.Defaults;
+
         int calls;
 
         TypedValue getRootObject()
@@ -265,6 +267,7 @@ unittest
     standard.setVariable("scale", Any.of(2L));
     standard.setVariable("offset", Any.of(5L));
     auto custom = new CustomContext;
+    assert(custom.getPropertyAccessors().isEmpty());
 
     auto expression = (new SpelExpressionParser).parseRaw("#root + (#this + #scale) * #offset");
     assert(expression.getValue(standard, Any.of(3)) == Any.of(28L));
