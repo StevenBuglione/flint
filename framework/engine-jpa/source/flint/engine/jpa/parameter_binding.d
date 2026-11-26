@@ -354,7 +354,7 @@ GeneratedKeyResult executeIdentityInsert(const ref InsertPlan plan, Connection c
     auto captured = values[0 .. mapping.attributes.length];
     scope (exit)
         captured[] = AttributeValue.init;
-    const reserved = entities.reserveIdentityInsert();
+    const reserved = entities.reserveIdentityInsert(entity);
     if (!reserved.ok)
         return GeneratedKeyResult(0, reserved.error);
     scope (exit)
@@ -426,4 +426,30 @@ private GeneratedKeyResult insertGeneratedRow(const ref InsertPlan plan, Connect
         if (keys !is null)
             keys.close();
     return readGeneratedIntegerKey(keys);
+}
+
+/// Checks scratch and plan shape before the batch starts any writes.
+package Error checkInsertScratch(scope const ref InsertPlan plan, size_t valueSlots, size_t keySlots) pure nothrow @nogc
+{
+    const mapping = plan.parameters.mapping;
+    if (mapping is null)
+        return Error(Status.invalidArgument, "unplanned insert action");
+    if (valueSlots < mapping.attributes.length)
+        return Error(Status.resourceExhausted, "insufficient insert value slots");
+    if (mapping.generatesId && keySlots != 1)
+        return Error(Status.invalidArgument, "IDENTITY actions require one key-name slot");
+    return Error.init;
+}
+
+/// Dispatches a checked action, reusing the value and key-name buffers until JDBC finishes.
+package Error executeScheduledInsert(const ref InsertPlan plan, Connection connection,
+        scope ref ManagedEntities managed, EntityIdentity key, Object entity, AttributeValue[] values, string[] columns)
+{
+    const mapping = plan.parameters.mapping;
+    if (!mapping.generatesId)
+        return executeManagedInsert(plan, connection, managed, key, entity, values);
+    columns[0] = mapping.attributes[mapping.idOrdinals[0]].column;
+    scope (exit)
+        columns[0] = null;
+    return executeIdentityInsert(plan, connection, managed, key.root, entity, values, columns).error;
 }

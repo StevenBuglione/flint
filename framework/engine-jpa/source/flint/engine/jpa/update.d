@@ -16,7 +16,8 @@ import flint.engine.jpa.delete_row : DeletePlan, executeManagedDelete;
 import flint.engine.jpa.identity : EntityIdentity;
 import flint.engine.jpa.managed_entities : ManagedTarget, ManagedEntities;
 import flint.engine.jpa.mapping : AttributeKind, AttributeValue, EntityMapping, checkIdentifier;
-import flint.engine.jpa.parameter_binding : ParameterBinding, ParameterBindingPlan, bindMappedValues, planParameters;
+import flint.engine.jpa.parameter_binding : InsertPlan, ParameterBinding, ParameterBindingPlan,
+    bindMappedValues, executeScheduledInsert, planParameters, checkInsertScratch;
 import flint.engine.jpa.result_binding : TypedColumnCodec;
 import flint.java.sql : Connection, Types;
 
@@ -253,13 +254,35 @@ private BatchResult executeUpdateBatch(Connection connection, scope ref ManagedE
 /// A delete action uses the same scalar layout as an update action.
 alias DeleteAction = UpdateAction;
 
-/// Provider-compiled plan tables for the two mutation phases.
+/// A pending insert refers to a rooted entity without storing a GC reference in the action.
+struct InsertAction
+{
+    /// Ordinal in the insert plan table.
+    uint planOrdinal;
+    /// Position of the entity in InsertInputs.roots.
+    size_t entitySlot;
+    /// Canonical root and, for an assigned ID, the identifier.
+    EntityIdentity key;
+}
+
+/// Caller-reserved inputs for pending inserts.
+struct InsertInputs
+{
+    /// GC-scanned roots containing the entities that may be inserted.
+    Object[] roots;
+    /// Exclusive scratch containing one key column name at a time for IDENTITY inserts.
+    string[] keyColumn;
+}
+
+/// Provider-compiled plan tables for the mutation phases.
 struct MutationPlans
 {
     /// Update plans indexed by update actions.
     const(UpdatePlan)[] updates;
     /// Delete plans indexed by delete actions.
     const(DeletePlan)[] deletes;
+    /// Insert plans indexed by pending insert actions.
+    const(InsertPlan)[] inserts;
 }
 
 /// The caller's ordered action list for each phase.
@@ -269,6 +292,8 @@ struct MutationActions
     const(UpdateAction)[] updates;
     /// Actions to run after the update phase.
     const(DeleteAction)[] deletes;
+    /// Actions to run before the update phase.
+    const(InsertAction)[] inserts;
 }
 
 /// Phase of the first action error.
@@ -280,6 +305,8 @@ enum MutationPhase : ubyte
     updates,
     /// A delete plan or action failed.
     deletes,
+    /// An insert plan or action failed.
+    inserts,
 }
 
 /// Counts completed writes and identifies the first reported action error.
@@ -293,37 +320,47 @@ struct MutationBatchProgress
     MutationPhase failedPhase;
     /// Zero-based index in that phase, or size_t.max when inapplicable.
     size_t failedAction = size_t.max;
+    /// Inserts that affected one row and published an identity.
+    size_t inserted;
 }
 
 private alias MutationBatchResult = Result!MutationBatchProgress;
 
-/// Validates both phases before SQL, then flushes updates followed by deletes on one connection.
+/// Validates every phase before SQL, then inserts, updates and deletes on the caller's connection.
 /// On a reported error, progress identifies the stopped action and retains earlier write counts.
-/// The caller owns transaction rollback and retires state that was touched before an error.
+/// The caller owns rollback and retires state that was touched before an error.
 MutationBatchResult flushManagedMutations(Connection connection, scope ref ManagedEntities entities,
-        const ref MutationPlans plans, scope const ref MutationActions actions, scope uint[] ordinals,
-        AttributeValue[] values)
+        const ref MutationPlans plans,
+        scope const ref MutationActions actions, scope uint[] ordinals, AttributeValue[] values,
+        InsertInputs inputs = InsertInputs.init)
 {
-    if (connection is null && (actions.updates.length != 0 || actions.deletes.length != 0))
+    const hasActions = actions.inserts.length != 0 || actions.updates.length != 0 || actions.deletes.length != 0;
+    if (hasActions && connection is null)
         return MutationBatchResult(MutationBatchProgress.init, Error(Status.invalidArgument,
                 "missing mutation connection"));
+    const layout = validateMutationBatch(plans, actions, ordinals.length, values.length, inputs);
+    if (!layout.ok)
+        return layout;
 
-    const updateLayout = validateUpdateBatch(plans.updates, actions.updates, ordinals.length, values.length);
-    if (!updateLayout.ok)
-        return failedUpdatePhase(updateLayout);
-    foreach (index, ref action; actions.deletes)
+    MutationBatchProgress progress;
+    foreach (index, ref action; actions.inserts)
     {
-        if (action.planOrdinal >= plans.deletes.length || !plans.deletes[action.planOrdinal].isPlanned())
-            return MutationBatchResult(MutationBatchProgress(0, 0, MutationPhase.deletes, index),
-                    Error(Status.invalidArgument, "invalid delete plan ordinal"));
+        const inserted = executeScheduledInsert(plans.inserts[action.planOrdinal], connection,
+                entities, action.key, inputs.roots[action.entitySlot], values, inputs.keyColumn);
+        if (inserted.code != Status.ok)
+        {
+            progress.failedPhase = MutationPhase.inserts;
+            progress.failedAction = index;
+            return MutationBatchResult(progress, inserted);
+        }
+        ++progress.inserted;
     }
 
     const updates = executeUpdateBatch(connection, entities, plans.updates, actions.updates, ordinals, values);
     if (!updates.ok)
-        return failedUpdatePhase(updates);
-
-    MutationBatchProgress progress;
+        return failedUpdatePhase(updates, progress.inserted);
     progress.updated = updates.value.updated;
+
     foreach (index, ref action; actions.deletes)
     {
         const removed = executeManagedDelete(plans.deletes[action.planOrdinal], connection, entities, action.key);
@@ -338,10 +375,46 @@ MutationBatchResult flushManagedMutations(Connection connection, scope ref Manag
     return MutationBatchResult(progress);
 }
 
-private MutationBatchResult failedUpdatePhase(const ref BatchResult updates) pure nothrow @nogc
+private MutationBatchResult validateMutationBatch(scope const ref MutationPlans plans,
+        scope const ref MutationActions actions, size_t ordinalCount, size_t valueCount,
+        scope const ref InsertInputs inputs) pure nothrow @nogc
+{
+    const inserts = validateInsertActions(plans.inserts, actions.inserts, valueCount, inputs);
+    if (!inserts.ok)
+        return inserts;
+    const updates = validateUpdateBatch(plans.updates, actions.updates, ordinalCount, valueCount);
+    if (!updates.ok)
+        return failedUpdatePhase(updates);
+    foreach (index, ref action; actions.deletes)
+    {
+        if (action.planOrdinal >= plans.deletes.length || !plans.deletes[action.planOrdinal].isPlanned())
+            return MutationBatchResult(MutationBatchProgress(0, 0, MutationPhase.deletes, index),
+                    Error(Status.invalidArgument, "invalid delete plan ordinal"));
+    }
+    return MutationBatchResult(MutationBatchProgress.init);
+}
+
+private MutationBatchResult validateInsertActions(scope const(InsertPlan)[] plans,
+        scope const(InsertAction)[] actions, size_t valueCount, scope const ref InsertInputs inputs) pure nothrow @nogc
+{
+    foreach (index, ref action; actions)
+    {
+        const progress = MutationBatchProgress(0, 0, MutationPhase.inserts, index);
+        if (action.planOrdinal >= plans.length)
+            return MutationBatchResult(progress, Error(Status.invalidArgument, "invalid insert plan ordinal"));
+        if (action.entitySlot >= inputs.roots.length || inputs.roots[action.entitySlot] is null)
+            return MutationBatchResult(progress, Error(Status.invalidArgument, "invalid insert entity root"));
+        const layout = checkInsertScratch(plans[action.planOrdinal], valueCount, inputs.keyColumn.length);
+        if (layout.code != Status.ok)
+            return MutationBatchResult(progress, layout);
+    }
+    return MutationBatchResult(MutationBatchProgress.init);
+}
+
+private MutationBatchResult failedUpdatePhase(const ref BatchResult updates, size_t inserted = 0) pure nothrow @nogc
 {
     const progress = MutationBatchProgress(updates.value.updated, 0, MutationPhase.updates,
-            updates.value.failedAction);
+            updates.value.failedAction, inserted);
     return MutationBatchResult(progress, updates.error);
 }
 

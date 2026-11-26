@@ -96,7 +96,7 @@ struct ManagedEntities
     package TicketResult stageInsert(EntityIdentity key, LoadedSnapshotPlan plan, Object entity,
             scope AttributeValue[] values) scope nothrow @nogc
     {
-        const available = checkInsertAvailability();
+        const available = checkInsertAvailability(entity);
         if (available.code != Status.ok)
             return TicketResult(0, available);
         const reserved = index.reserve(key);
@@ -119,9 +119,9 @@ struct ManagedEntities
     }
 
     /// Reserves one bounded vacancy before JDBC returns the canonical key.
-    package TicketResult reserveIdentityInsert() scope nothrow @nogc
+    package TicketResult reserveIdentityInsert(Object entity) scope nothrow @nogc
     {
-        const available = checkInsertAvailability();
+        const available = checkInsertAvailability(entity);
         if (available.code != Status.ok)
             return TicketResult(0, available);
         if (!index.hasVacancy())
@@ -147,7 +147,7 @@ struct ManagedEntities
         return snapshots[insertionSlot].captureValues(plan, captured);
     }
 
-    private Error checkInsertAvailability() const scope nothrow @nogc
+    private Error checkInsertAvailability(scope Object entity) const scope nothrow @nogc
     {
         if (snapshots.length == 0)
             return Error(Status.unsupported, "JPA insert requires snapshot storage");
@@ -155,6 +155,10 @@ struct ManagedEntities
             return Error(Status.conflict, "a JPA insert is already pending in this context");
         if (insertionTicket == ulong.max)
             return Error(Status.resourceExhausted, "JPA insert tickets exhausted");
+        if (entity !is null)
+            foreach (root; roots)
+                if (root is entity)
+                    return Error(Status.conflict, "JPA insert entity is already managed");
         return Error.init;
     }
 

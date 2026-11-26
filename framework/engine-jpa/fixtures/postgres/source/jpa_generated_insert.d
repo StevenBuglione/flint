@@ -13,6 +13,8 @@ import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding, executeIdentityInsert,
     planIdentityInsert, readGeneratedIntegerKey;
 import flint.engine.jpa.snapshot : AttributeSnapshot;
+import flint.engine.jpa.update : InsertAction, InsertInputs, MutationActions, MutationPhase,
+    MutationPlans, flushManagedMutations;
 import flint.jakarta.persistence : GenerationType;
 import flint.java.sql : Connection, Types;
 import flint.javax.sql : DataSource;
@@ -175,4 +177,28 @@ void verifyGeneratedInserts(DataSource dataSource, JdbcTemplate jdbc)
     connection.rollback();
     managed.clear();
     assert(managed.find(key).error.code == Status.notFound && countRows(connection) == 0);
+
+    auto scheduled = new GeneratedOwner;
+    scheduled.name = "Scheduled";
+    auto keyColumn = new string[1];
+    const schedule = MutationActions(null, null, [InsertAction(0, 0, EntityIdentity(0, 0))]);
+    const layouts = MutationPlans(null, null, [planned.value]);
+    const missingRoot = flushManagedMutations(connection, managed, layouts, schedule, ordinals[],
+            values, InsertInputs(null, keyColumn));
+    assert(missingRoot.error.code == Status.invalidArgument && missingRoot.value.failedPhase == MutationPhase.inserts);
+    assert(missingRoot.value.failedAction == 0 && countRows(connection) == 0);
+    const missingColumn = flushManagedMutations(connection, managed, layouts, schedule, ordinals[],
+            values, InsertInputs([scheduled]));
+    assert(missingColumn.error.code == Status.invalidArgument && countRows(connection) == 0);
+    const result = flushManagedMutations(connection, managed, layouts, schedule, ordinals[],
+            values, InsertInputs([scheduled], keyColumn));
+    assert(result.ok && result.value.inserted == 1 && keyColumn[0] is null);
+    const scheduledKey = EntityIdentity(0, scheduled.id);
+    assert(managed.find(scheduledKey).value is scheduled && countRows(connection) == 1);
+    const repeated = flushManagedMutations(connection, managed, layouts, schedule, ordinals[],
+            values, InsertInputs([scheduled], keyColumn));
+    assert(repeated.error.code == Status.conflict && repeated.value.inserted == 0 && countRows(connection) == 1);
+    connection.rollback();
+    managed.clear();
+    assert(managed.find(scheduledKey).error.code == Status.notFound);
 }

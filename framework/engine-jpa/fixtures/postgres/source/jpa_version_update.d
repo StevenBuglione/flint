@@ -15,9 +15,10 @@ import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : InsertPlan, ParameterBinding, executeManagedInsert, planInsert;
 import flint.engine.jpa.result_binding : ManagedRowMaterializationPlan, materializeManagedRow, planManagedResult;
 import flint.engine.jpa.snapshot : AttributeSnapshot;
-import flint.engine.jpa.update : DeleteAction, MutationActions, MutationPhase, MutationPlans,
-    UpdateAction, VersionBindings, executeManagedUpdate,
-    executeVersionedUpdate, UpdatePlan, flushManagedMutations, flushManagedUpdate, flushManagedUpdates, planUpdate;
+import flint.engine.jpa.update : DeleteAction, InsertAction, InsertInputs, MutationActions,
+    MutationPhase, MutationPlans, UpdateAction,
+    VersionBindings, executeManagedUpdate, executeVersionedUpdate, UpdatePlan,
+    flushManagedMutations, flushManagedUpdate, flushManagedUpdates, planUpdate;
 import flint.java.sql : Connection, SQLException, Types;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
@@ -257,6 +258,8 @@ void verifyTransactionalUpdates(DataSource dataSource, JdbcTemplate jdbc, DataSo
     verifyMixedRollback(dataSource, transaction, key, true);
     verifyMixedRollback(dataSource, transaction, key, false);
     verifyMixedCommit(dataSource, transaction, key);
+    verifyScheduledInsertRollback(dataSource, transaction, key, true);
+    verifyScheduledInsertRollback(dataSource, transaction, key, false);
 }
 
 private void verifyManagedCommit(DataSource dataSource, JdbcTemplate jdbc, TransactionTemplate transaction, Object key)
@@ -494,6 +497,58 @@ private void verifyMixedCommit(DataSource dataSource, TransactionTemplate transa
     assertAbsent(dataSource, 3);
 }
 
+private void verifyScheduledInsertRollback(DataSource dataSource, TransactionTemplate transaction,
+        Object key, bool malformed)
+{
+    enum insertSql = "insert into jpa_version_probe (name, version, id) values (?, ?, ?)";
+    enum deleteSql = "delete from jpa_version_probe where id = ? and version = ? and false";
+    static immutable ParameterBinding[] insertBindings = [
+        ParameterBinding(1, 1), ParameterBinding(2, 2), ParameterBinding(0, 3)
+    ];
+    const insert = planInsert(&mapping, insertSql, insertBindings);
+    const write = planUpdate(&mapping, updateRow, parameters, 4, VersionBindings(1, 3));
+    const remove = planDelete(&mapping, deleteSql, 1, 2);
+    assert(insert.ok && write.ok && remove.ok);
+    const plans = MutationPlans([write.value], [remove.value], [insert.value]);
+    enum insertedKey = EntityIdentity(0, 4);
+    const queue = MutationActions([UpdateAction(0, ownerKey)], [
+        DeleteAction(malformed ? 1 : 0, ownerKey)
+    ], [InsertAction(0, 0, insertedKey)]);
+    ManagedUpdateContext context;
+    transaction.executeWithoutResult((TransactionStatus status) {
+        context = new ManagedUpdateContext(dataSource, key, null, null, 1);
+        context.owner().name = "After insert";
+        auto owner = new VersionedOwner;
+        owner.id = insertedKey.identifier;
+        owner.name = "Queued insert";
+        owner.revision = 7;
+        uint[1] ordinals;
+        auto values = new AttributeValue[3];
+        auto connection = DataSourceUtils.getConnection(dataSource);
+        scope (exit)
+            DataSourceUtils.releaseConnection(connection, dataSource);
+
+        const result = flushManagedMutations(connection, context.managed, plans, queue, ordinals[],
+            values, InsertInputs([owner]));
+        assert(result.value.failedPhase == MutationPhase.deletes && result.value.failedAction == 0);
+        assert(result.error.code == (malformed ? Status.invalidArgument : Status.conflict));
+        assert(result.value.inserted == (malformed ? 0 : 1) && result.value.updated == (malformed ? 0 : 1));
+        if (malformed)
+            assertDeleteAbsent(connection, 4);
+        else
+        {
+            assertStored(connection, "Queued insert", 7, 4);
+            assert(context.owner(insertedKey) is owner);
+        }
+        assertStored(connection, malformed ? "Outer" : "After insert", malformed ? 11 : 12);
+        status.setRollbackOnly();
+    });
+    assert(context.completion == TransactionSynchronization.STATUS_ROLLED_BACK && context.detached(insertedKey));
+    assertReleased(context, dataSource, key);
+    assertAbsent(dataSource, 4);
+    assertStored(dataSource, "Outer", 11);
+}
+
 private void assertAbsent(DataSource dataSource, long identifier)
 {
     auto connection = DataSourceUtils.getConnection(dataSource);
@@ -536,7 +591,8 @@ private final class ManagedUpdateContext : TransactionSynchronization
     int completion = -1;
     bool retiredBeforeConnectionRelease;
 
-    this(DataSource dataSource, Object key, UpdateAction[] actions = null, DeleteAction[] deletions = null)
+    this(DataSource dataSource, Object key, UpdateAction[] actions = null,
+            DeleteAction[] deletions = null, size_t reserved = 0)
     {
         this.dataSource = dataSource;
         this.key = key;
@@ -564,7 +620,8 @@ private final class ManagedUpdateContext : TransactionSynchronization
             ManagedSnapshotSlot(fields[12 .. 15], bytes[64 .. 80], fields[15 .. 18], bytes[80 .. 96])
         ];
         Error error;
-        managed = ManagedEntities(new IdentitySlot[count], new Object[count], error, slots[0 .. count]);
+        const capacity = count + reserved;
+        managed = ManagedEntities(new IdentitySlot[capacity], new Object[capacity], error, slots[0 .. capacity]);
         assert(error.code == Status.ok);
 
         auto connection = DataSourceUtils.getConnection(dataSource);
