@@ -36,7 +36,9 @@ private final class VersionedOwner
     long revision;
     bool rejectRevision;
     uint nameReads;
-    DeleteRebindContext deleteRebind;
+    RebindContext deleteRebind;
+    RebindContext updateRebind;
+    uint rebindOnNameRead;
 }
 
 private alias AttrResult = Result!AttributeValue;
@@ -56,8 +58,15 @@ private AttrResult readId(Object entity) nothrow @nogc
 private AttrResult readName(Object entity) nothrow @nogc
 {
     auto owner = cast(VersionedOwner) entity;
+    const name = owner.name;
     ++owner.nameReads;
-    return AttrResult(AttributeValue(kind: AttributeKind.text, text: owner.name));
+    if (owner.updateRebind !is null && owner.nameReads == owner.rebindOnNameRead)
+    {
+        auto context = owner.updateRebind;
+        owner.updateRebind = null;
+        context.reattach();
+    }
+    return AttrResult(AttributeValue(kind: AttributeKind.text, text: name));
 }
 
 private AttrResult readVersion(Object entity) nothrow @nogc
@@ -249,6 +258,7 @@ void verifyVersionedUpdate(DataSource dataSource, JdbcTemplate jdbc)
     assert(managed.find(ownerKey).error.code == Status.notFound);
     connection.rollback();
     assertStored(connection, "Winner", 8);
+    verifyUpdateCaptureRebind(connection, plan.value, rows.value);
 }
 
 /// Runs real managed updates under Spring's bound JDBC transaction and completion callbacks.
@@ -855,7 +865,7 @@ void verifyManagedDeletes(DataSource dataSource, JdbcTemplate jdbc)
     assertStored(connection, "Delete winner", 12);
 }
 
-private final class DeleteRebindContext
+private final class RebindContext
 {
     IdentitySlot[1] identities;
     Object[1] roots;
@@ -863,10 +873,13 @@ private final class DeleteRebindContext
     ManagedEntities managed;
     LoadedSnapshotPlan plan;
 
-    this(LoadedSnapshotPlan loadedPlan)
+    this(LoadedSnapshotPlan loadedPlan, bool refresh = false)
     {
         plan = loadedPlan;
-        snapshots = [ManagedSnapshotSlot(new AttributeSnapshot[3], new ubyte[16])];
+        snapshots = [
+            ManagedSnapshotSlot(new AttributeSnapshot[3], new ubyte[refresh ? 32 : 16], refresh
+                    ? new AttributeSnapshot[3] : null, refresh ? new ubyte[16] : null)
+        ];
         Error error;
         managed = ManagedEntities(identities[], roots[], error, snapshots[]);
         assert(error.code == Status.ok);
@@ -882,6 +895,51 @@ private final class DeleteRebindContext
 
 }
 
+private void verifyUpdateCaptureRebind(Connection connection, const ref UpdatePlan update,
+        const ref ManagedRowMaterializationPlan readPlan)
+{
+    const plan = planLoadedSnapshot(&mapping);
+    assert(plan.ok);
+    auto context = new RebindContext(plan.value, true);
+    scope (exit)
+        context.managed.clear();
+    loadRows(readPlan, connection, context.managed);
+    auto owner = cast(VersionedOwner) context.managed.find(ownerKey).value;
+    assert(owner !is null);
+    const prior = context.managed.lazyHandle(ownerKey);
+    assert(prior.ok);
+
+    uint[1] ordinals;
+    auto values = new AttributeValue[3];
+    // Publish the alternate bank so the next stage borrows the primary bank, which the reattachment will use.
+    owner.name = "First edit";
+    const first = flushManagedUpdate(update, connection, context.managed, ownerKey, ordinals[], values);
+    assert(first.ok && first.value.updated && owner.revision == 9);
+
+    owner.name = "Attempted";
+    owner.rebindOnNameRead = owner.nameReads + 2;
+    owner.updateRebind = context;
+    const allocated = GC.stats().allocatedInCurrentThread;
+    const outcome = flushManagedUpdate(update, connection, context.managed, ownerKey, ordinals[], values);
+    assert(outcome.error.code == Status.conflict, "a retired update captured into the replacement attachment");
+    assert(GC.stats().allocatedInCurrentThread == allocated);
+    assert(owner.updateRebind is null && owner.revision == 9);
+    assert(context.managed.find(ownerKey).value is owner);
+    assert(context.managed.resolveLazyOwner(prior.value).error.code == Status.notFound);
+    const dirty = context.managed.dirty(ownerKey, ordinals[]);
+    assert(dirty.ok && dirty.value == 0);
+    assertStored(connection, "First edit", 9);
+    foreach (ref value; values)
+        assert(value.kind == AttributeKind.nullValue);
+
+    owner.name = "Retry";
+    const retried = flushManagedUpdate(update, connection, context.managed, ownerKey, ordinals[], values);
+    assert(retried.ok && retried.value.updated && owner.revision == 10);
+    assertStored(connection, "Retry", 10);
+    connection.rollback();
+    assertStored(connection, "Winner", 8);
+}
+
 private enum DeleteRebind
 {
     identifier,
@@ -892,10 +950,10 @@ private enum DeleteRebind
 private final class RebindingDeleteStatement : BlackHole!PreparedStatement
 {
     private PreparedStatement statement;
-    private DeleteRebindContext attached;
+    private RebindContext attached;
     private DeleteRebind phase;
 
-    this(PreparedStatement statement, DeleteRebindContext attached, DeleteRebind phase)
+    this(PreparedStatement statement, RebindContext attached, DeleteRebind phase)
     {
         this.statement = statement;
         this.attached = attached;
@@ -932,10 +990,10 @@ private final class RebindingDeleteStatement : BlackHole!PreparedStatement
 private final class RebindingDeleteConnection : BlackHole!Connection
 {
     private Connection connection;
-    private DeleteRebindContext attached;
+    private RebindContext attached;
     private DeleteRebind phase;
 
-    this(Connection connection, DeleteRebindContext attached, DeleteRebind phase)
+    this(Connection connection, RebindContext attached, DeleteRebind phase)
     {
         this.connection = connection;
         this.attached = attached;
@@ -958,7 +1016,7 @@ private void verifyDeleteRebind(Connection connection, const ref DeletePlan dele
 {
     const loaded = planLoadedSnapshot(&mapping);
     assert(loaded.ok);
-    auto context = new DeleteRebindContext(loaded.value);
+    auto context = new RebindContext(loaded.value);
     scope (exit)
         context.managed.clear();
     loadRows(readPlan, connection, context.managed);

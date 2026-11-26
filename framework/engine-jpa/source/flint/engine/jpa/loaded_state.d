@@ -136,18 +136,16 @@ struct ManagedSnapshotSlot
             return Error(Status.conflict, "a JPA snapshot refresh is already staged");
         assert(plan.mapping !is null && values.length == plan.mapping.attributes.length);
         const staging = active ^ 1;
-        const error = storeSnapshots(*plan.mapping, entity, bank(staging).arena, bank(staging)
-                .fields, values, nextRevision, true);
-        if (error.code != Status.ok)
-        {
-            bank(staging).arena.reset();
-            return error;
-        }
+        // A mapped reader may retire this slot. Mark it before borrowing its bank.
         pending = true;
-        return Error.init;
+        const error = storeSnapshots(*plan.mapping, entity, bank(staging).arena, bank(staging)
+                .fields, values, nextRevision, &pending);
+        if (error.code != Status.ok)
+            discard();
+        return error;
     }
 
-    /// A detached or cleared slot has no pending baseline.
+    /// A detached or cleared slot has no pending baseline. During capture it is reserved by the caller.
     package bool hasStaged() const scope nothrow @nogc
     {
         return pending;
@@ -227,7 +225,7 @@ private Error writeSnapshots(scope const LoadedSnapshotPlan plan, Object entity,
 
 private Error storeSnapshots(scope const ref EntityMapping mapping, Object entity, scope ref RequestArena arena,
         scope AttributeSnapshot[] staging, scope AttributeValue[] values, long nextRevision = 0,
-        bool replaceVersion = false) nothrow @nogc
+        scope const bool* stagePending = null) nothrow @nogc
 {
     const count = mapping.attributes.length;
     if (staging.length < count || (values.length != 0 && values.length < count))
@@ -235,9 +233,12 @@ private Error storeSnapshots(scope const ref EntityMapping mapping, Object entit
 
     foreach (ref attribute; mapping.attributes)
     {
-        const replacementVersion = replaceVersion && attribute.ordinal == mapping.versionOrdinal;
+        const replacementVersion = stagePending !is null && attribute.ordinal == mapping.versionOrdinal;
         const current = replacementVersion ? ReadResult(AttributeValue(AttributeKind.integer, nextRevision))
             : readMapped(attribute, entity);
+        // Detach and clear reset the marker. A reentrant refresh settles before its reader returns.
+        if (stagePending !is null && !*stagePending)
+            return Error(Status.conflict, "managed entity retired during snapshot capture", attribute.ordinal);
         if (!current.ok)
             return current.error;
         const error = storeField(arena, staging[attribute.ordinal], current.value, attribute.ordinal);
