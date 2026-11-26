@@ -11035,6 +11035,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#<init>(Writer)` | 2 | Java rejects a null writer during construction. The existing constructor accepts one. |
 | framework | `java.io.PrintWriter#<init>(Writer,boolean)` | 2 | Missing constructor with selectable auto-flush for println, printf and format. An ordinary print containing a newline does not trigger it. |
 | framework | `java.io.PrintWriter#append(CharSequence)` | 2 | Java appends literal null for an absent character sequence. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
+| framework | `java.io.PrintWriter#append(CharSequence,int,int)` | 2 | Missing UTF-16 subsequence append through the virtual whole-sequence overload. Java selects from the text null when the sequence is absent. |
+| framework | `java.io.PrintWriter#append(char)` | 2 | Missing fluent append of one UTF-16 code unit through the virtual write(int) overload. |
 | framework | `java.io.PrintWriter#checkError()` | 2 | Missing error query that flushes while open and returns a nested PrintWriter or captured PrintStream error when present, otherwise the local error flag. |
 | framework | `java.io.PrintWriter#clearError()` | 2 | Missing protected hook that resets the local error flag without clearing a nested sink error. |
 | framework | `java.io.PrintWriter#close()` | 2 | Java records checked close failures and retains the sink for retry. A successful close clears the sink and subsequent closes do nothing. The existing method forwards every close and propagates checked failures. |
@@ -11065,6 +11067,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#println(long)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#setError()` | 2 | Missing protected hook that sets the local error flag. A nested sink error query takes precedence over that flag. |
 | framework | `java.io.PrintWriter#write(String)` | 2 | Java forwards to the virtual UTF-16 ranged write and records checked errors. The existing method writes the slice directly and propagates errors. |
+| framework | `java.io.PrintWriter#write(String,int,int)` | 2 | Missing UTF-16 string-range dispatch to the sink. Java restores interruption for InterruptedIOException and records other checked sink failures. Java holds the supplied writer's monitor during callbacks on platform and virtual threads. Flint requires a fiber-aware lock or sink calls outside the lock on reactor fibers. |
+| framework | `java.io.PrintWriter#write(char[])` | 2 | Java invokes the virtual ranged character-array write. Flint forwards the UTF-8 slice directly and propagates checked sink failures. Null arrays follow R26. |
+| framework | `java.io.PrintWriter#write(char[],int,int)` | 2 | Missing ranged character-array dispatch to the sink. Java forwards the supplied indices, records checked sink failures and lets the sink's bounds exception propagate. |
+| framework | `java.io.PrintWriter#write(int)` | 2 | Java forwards the int to the sink's single UTF-16 code-unit write. Flint encodes a Unicode code point and forwards text, propagating checked sink failures. |
 | framework | `java.io.StringWriter#<init>()` | 2 | The writer starts empty, but it has no mutable StringBuffer bound to the inherited lock or exposed through getBuffer. |
 | framework | `java.io.StringWriter#<init>(int)` | 2 | Missing constructor that sets the initial buffer capacity, accepts zero and rejects negative capacity. |
 | framework | `java.io.StringWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns StringWriter. The inherited D method accepts a plain slice and returns Writer. |
