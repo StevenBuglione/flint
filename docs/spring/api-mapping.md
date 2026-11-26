@@ -247,6 +247,7 @@ A Java value typed `Object`, whether a parameter, return, field, generic `Object
 - **Class references keep their identity:** `Any.of(obj)` stores the reference itself, so two `Any`s holding the same object compare equal by identity, as Java's references do.
 - **Reading back:** `holds!T()`, `get!T()` (throws on a mismatch) and `tryGet!T(out value)`.
 - Existing deviations that only restate this (D-VALIDATION-2's "beans and values are `Any`") keep their rows. New entries cite R23.
+- **Not R23:** `equals(Object)` is R11's equality protocol, mapped to `opEquals(Object)` through `mixin JavaObject`, so it cites R11. `Object...` varargs are R7's variadic façade.
 
 ```java
 Object id = accessor.getIdentifier();
