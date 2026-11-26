@@ -219,6 +219,26 @@ class QueueTests(unittest.TestCase):
         members = [m['agent'] for m in json.loads((self.root / 'queues.json').read_text())['apps-landing']['members']]
         self.assertEqual(members, ['z', 'c', 'a', 'b'])
 
+    def test_a_paused_queue_keeps_its_heads_and_resume_restarts_the_clock(self):
+        for agent in ('a', 'b'):
+            self.run_cli('queue', 'apps-landing', 'join', '--agent', agent)
+        self.run_cli('queue', 'apps-landing', 'pause', '--agent', 'proof-harness')
+        self.age(freed=60, head_since=60)  # an hour of a free slot while paused
+        shown = self.run_cli('queue', 'apps-landing', 'show')
+        self.assertIn('PAUSED', shown)
+        self.assertIn('1. a', shown)
+        self.run_cli('queue', 'apps-landing', 'resume', '--agent', 'proof-harness')
+        self.assertIn('1. a (claim by', self.run_cli('queue', 'apps-landing', 'show'))
+        self.claim('a')
+
+    def test_pausing_never_expires_an_overdue_head(self):
+        for agent in ('a', 'b'):
+            self.run_cli('queue', 'apps-landing', 'join', '--agent', agent)
+        self.age(freed=30, head_since=30)  # 'a' is already overdue when the pause comes
+        self.run_cli('queue', 'apps-landing', 'pause', '--agent', 'proof-harness')
+        members = [m['agent'] for m in json.loads((self.root / 'queues.json').read_text())['apps-landing']['members']]
+        self.assertEqual(members, ['a', 'b'])
+
     def test_force_overrides_the_queue_and_is_logged(self):
         self.run_cli('queue', 'apps-landing', 'join', '--agent', 'a')
         self.run_cli('claim', 'apps-landing', '--agent', 'b', '--harness', 'codex', '--force', 'a is offline')

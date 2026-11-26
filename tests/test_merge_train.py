@@ -506,6 +506,13 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
             {'spread': {'petclinic-rest': {'list vets': 0.0003, 'create owner: telephone with letters': 0.012}}}))
         self.assertEqual(merge_train.tight_endpoints(self.store), {'petclinic-rest': ['list vets']})
 
+    def test_a_paused_queue_starts_no_train(self):
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.store.queue('apps-landing', 'pause', 'proof-harness')
+        self.assertFalse(merge_train.next_train(self.store, self.train.submissions()))
+        self.store.queue('apps-landing', 'resume', 'proof-harness')
+        self.assertTrue(merge_train.next_train(self.store, self.train.submissions()))
+
     def test_returned_lanes_do_not_block_the_scheduler(self):
         self.store.queue('apps-landing', 'front', 'sol-x')  # returned by a train, not resubmitted yet
         self.lane('sol-a', {'src/a.txt': 'a'})

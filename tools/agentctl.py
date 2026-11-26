@@ -219,7 +219,7 @@ class Store:
         freed = self.free_since(role, leases, queue)
         skipped = []
         deadline = None
-        if members and freed is not None:
+        if members and freed is not None and not queue.get('paused'):
             start = max(freed, parse_utc(queue['head_since']) if queue.get('head_since') else 0.0)
             while members and now >= start + QUEUE_HEAD_MIN * 60:
                 skipped.append(members.pop(0)['agent'])
@@ -242,7 +242,11 @@ class Store:
             if not self.known(role):
                 raise SystemExit(f'agentctl: unknown role {role!r}; register it first (agentctl.py register)')
             queues, leases = self.queues(), self.leases()
-            queue = self._settle_queue(role, queues, leases)
+            if action in ('pause', 'resume'):  # never settle skips here: a pause must not expire anyone
+                queue = queues.setdefault(role, {})
+                queue.setdefault('members', [])
+            else:
+                queue = self._settle_queue(role, queues, leases)
             members = queue['members']
             names = [m['agent'] for m in members]
             if action == 'join':
@@ -259,6 +263,13 @@ class Store:
                 members.insert(0, {'agent': agent, 'joined': utc_now(), 'retry': True})
                 queue['head_since'] = utc_now()
                 self.event('queue-front', role=role, agent=agent)
+            elif action == 'pause':  # a deliberate hold (the merge train paused): no head expires meanwhile
+                queue['paused'] = {'since': utc_now(), 'by': agent or '-'}
+                self.event('queue-pause', role=role, agent=agent)
+            elif action == 'resume':  # the head gets its full claim window from now
+                queue.pop('paused', None)
+                queue['freed'] = queue['head_since'] = utc_now()
+                self.event('queue-resume', role=role, agent=agent)
             elif action == 'leave':
                 if agent not in names:
                     raise SystemExit(f'agentctl: {agent} is not in the {role} queue')
@@ -461,7 +472,9 @@ def queue_line(store: Store, role: str, now: float | None = None) -> str:
         head = members[0] + (f" (claim by {_dt.datetime.fromtimestamp(deadline, _dt.timezone.utc).strftime('%H:%MZ')})"
                              if deadline else ' (next)')
         waiting = 'queue: ' + ', '.join(f'{i + 1}. {name}' for i, name in enumerate([head] + members[1:]))
-    return f'{role}: {slot}; {waiting}' + (f"; would skip {', '.join(skipped)}" if skipped else '')
+    paused = queue.get('paused')
+    state = f" (PAUSED since {paused['since']} by {paused['by']}: no head expires)" if paused else ''
+    return f'{role}: {slot}{state}; {waiting}' + (f"; would skip {', '.join(skipped)}" if skipped else '')
 
 
 def worktree_for(store: Store, role: str) -> Path:
@@ -557,7 +570,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument('--ttl-min', type=int, default=DEFAULT_TTL_MIN)
     p = sub.add_parser('id'); p.add_argument('action', choices=('next', 'show')); p.add_argument('kind', nargs='?')
     p.add_argument('--agent'); p.add_argument('--note')
-    p = sub.add_parser('queue'); p.add_argument('role'); p.add_argument('action', choices=('join', 'leave', 'show'))
+    p = sub.add_parser('queue'); p.add_argument('role')
+    p.add_argument('action', choices=('join', 'leave', 'show', 'pause', 'resume'))
     p.add_argument('--agent')
     p = sub.add_parser('heartbeat'); p.add_argument('role'); p.add_argument('--agent', required=True)
     p = sub.add_parser('release'); p.add_argument('role'); p.add_argument('--agent', required=True)
@@ -597,7 +611,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"{kind}: last {kind}-{entry['last']}; " +
                       ', '.join(f"{i['id']} {i['agent']}" for i in entry['issued'][-5:]))
     elif args.command == 'queue':
-        if args.action != 'show':
+        if args.action in ('pause', 'resume'):
+            store.queue(check_role(args.role), args.action, args.agent or 'unknown')
+        elif args.action != 'show':
             if not args.agent:
                 parser.error(f'queue {args.action} needs --agent')
             store.queue(check_role(args.role), args.action, args.agent)

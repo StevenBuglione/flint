@@ -841,6 +841,8 @@ def next_train(store, submissions):
     if lease and store.lease_live(lease):
         return False
     queue, _, _ = store.queue_view(SLOT)
+    if queue.get('paused'):  # a deliberate hold: no train starts until the queue is resumed
+        return False
     submitters = {s['agent'] for s in submissions}
     members = [m for m in queue.get('members', [])]
     # Lanes the train returned ('retry') keep their place for when they resubmit, but don't block it meanwhile.
