@@ -195,3 +195,23 @@ unittest
     assert(staticMismatch.getFlags() == ",");
     assert(String.format("%+(8X", cast(Object) null) == "    NULL");
 }
+
+@("String.format reports missing arguments with Java's canonical specifier")
+unittest
+{
+    import std.exception : collectException;
+
+    const explicit = collectException!MissingFormatArgumentException(String.format("%2$-10.004S", "one"));
+    assert(explicit.getFormatSpecifier() == "%-2$10.4S");
+    assert(explicit.getMessage() == "Format specifier '%-2$10.4S'");
+    const radix = collectException!MissingFormatArgumentException(String.format("%003$#08X"));
+    assert(radix.getFormatSpecifier() == "%#03$8X");
+    const relative = collectException!MissingFormatArgumentException(String.format("%02$<-9S"));
+    assert(relative.getFormatSpecifier() == "%-<9S");
+    const date = collectException!MissingFormatArgumentException(String.format("%02$4Tp"));
+    assert(date.getFormatSpecifier() == "%2$4TP");
+    const tail = collectException!MissingFormatArgumentException(String.format("%s/%s/%s/%s/%09$-7.000s",
+            "a", "b", "c", "d"));
+    assert(tail.getFormatSpecifier() == "%-9$7.0s");
+    assert(String.format("%2$s %s %<s %s", "a", "b") == "b a a b");
+}
