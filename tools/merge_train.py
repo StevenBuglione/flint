@@ -314,6 +314,14 @@ class Train:
                                 'submitted': agentctl.utc_now(), **({'dod': dod} if dod else {})})
             self._write(submissions)
             self.store.event('train-submit', role=role, agent=agent, ref=ref, commit=commit)
+        # A submission is served in queue order: one whose agent is not queued (it left when an earlier commit landed)
+        # would wait at the back unseen, so submitting also joins the queue.
+        queue, _, _ = self.store.queue_view(SLOT)
+        if agent not in [m['agent'] for m in queue.get('members', [])]:
+            try:
+                self.store.queue(SLOT, 'join', agent)
+            except SystemExit:
+                pass
         return commit
 
     def withdraw(self, role):
@@ -496,6 +504,12 @@ class Train:
             pushed = self.push([s for s, _ in landed], base, verified_tip, attempts)
             if pushed is None:  # main kept moving or a re-verification failed: they stay submitted for the next train
                 self.store.event('train-push-failed', roles=[s['role'] for s, _ in landed])
+                for submission, _ in reversed(landed):  # back to the head, in train order, and told
+                    self._front_of_queue(submission['agent'])
+                    if self.mail:
+                        self._send(submission['role'], f"merge train: your submission {submission['commit'][:12]} was "
+                                   f'verified but could not land (main kept moving under the push). It stays submitted '
+                                   f'and you are back at the head of the {SLOT} queue for the next train; nothing to do.')
                 landed = []
         return self.settle(batch, landed, failed, pushed)
 

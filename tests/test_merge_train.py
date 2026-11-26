@@ -213,6 +213,25 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         result = self.moving_train('src/other.txt').run('runner')
         self.assertEqual((result['landed'], result['verifications']), (['sol-a'], 2))
 
+    def test_a_failed_push_keeps_every_submission_queued_at_the_head_and_tells_the_lanes(self):
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.lane('sol-b', {'src/b.txt': 'b'})
+        self.hold_slot()
+        self.train.push = lambda *args, **kwargs: None  # main never stops moving
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], result['failed']), ([], []))
+        self.assertEqual([s['role'] for s in self.train.submissions()], ['sol-a', 'sol-b'])
+        queue, _, _ = self.store.queue_view('apps-landing')
+        self.assertEqual([m['agent'] for m in queue['members']][:2], ['sol-a', 'sol-b'])
+        self.assertIn('could not land', self.store.inbox('sol-a', True, False))
+
+    def test_submitting_joins_the_queue(self):
+        git(self.work, 'checkout', '-q', '-B', 'sol-c', 'origin/main')
+        git(self.work, 'checkout', '-q', '--detach')
+        self.train.submit('sol-c', 'sol-c', 'sol-c')
+        queue, _, _ = self.store.queue_view('apps-landing')
+        self.assertIn('sol-c', [m['agent'] for m in queue['members']])
+
     def test_the_train_needs_the_slot(self):
         self.lane('sol-a', {'src/a.txt': 'a'})
         with self.assertRaises(SystemExit) as refused:
