@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 503 | 22 | 1 | 2,769 |
+| framework | jackson-core@3.1.8 | 498 | 22 | 1 | 2,774 |
 | framework | jackson-databind@3.1.8 | 611 | 61 | 5 | 9,790 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -10180,14 +10180,14 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
-| tools.jackson.core | 603 | 0 |
+| tools.jackson.core | 606 | 0 |
 | tools.jackson.core.async | 7 | 0 |
 | tools.jackson.core.base | 363 | 0 |
 | tools.jackson.core.exc | 11 | 0 |
 | tools.jackson.core.filter | 183 | 0 |
 | tools.jackson.core.io | 277 | 0 |
 | tools.jackson.core.io.schubfach | 34 | 0 |
-| tools.jackson.core.json | 466 | 0 |
+| tools.jackson.core.json | 468 | 0 |
 | tools.jackson.core.json.async | 168 | 0 |
 | tools.jackson.core.sym | 147 | 0 |
 | tools.jackson.core.tree | 2 | 0 |
@@ -10688,6 +10688,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.JacksonException#<init>(Closeable,String,TokenStreamLocation)` | 2 | The Java overload takes a Closeable processor. Flint exposes a processor-free exception constructor. |
 | framework | `tools.jackson.core.JacksonException#<init>(Closeable,String,TokenStreamLocation,Throwable)` | 2 | The Java overload takes a Closeable processor. Flint exposes a processor-free exception constructor. |
 | framework | `tools.jackson.core.JacksonException#<init>(Closeable,Throwable)` | 2 | The Java overload takes a Closeable processor. Flint exposes a processor-free exception constructor. |
+| framework | `tools.jackson.core.JsonGenerator#writeNumber(BigDecimal)` | 2 | The Java overload accepts BigDecimal. Flint writes primitive numbers and pre-encoded numeric strings. |
+| framework | `tools.jackson.core.JsonGenerator#writeNumberProperty(String,BigDecimal)` | 2 | The Java overload accepts BigDecimal. Flint's numeric property writers take primitive numbers. |
+| framework | `tools.jackson.core.JsonGenerator#writeString(Reader,int)` | 2 | The Java overload reads from java.io.Reader. Flint writes strings and character-buffer slices. |
 | framework | `tools.jackson.core.JsonParser#nextName(SerializableString)` | 2 | The overload requires the deferred SerializableString API. |
 | framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
 | framework | `tools.jackson.core.TokenStreamLocation#<init>(ContentReference,long,long,int,int)` | 2 | The Java overload accepts a ContentReference. Flint locations store byte and character offsets, line and column. |
@@ -10714,6 +10717,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.json.JsonWriteContext#createRootContext(DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char)` | 2 | Requires SerializableString and the explicit generator context and output configuration. |
 | framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char,byte[],int,boolean)` | 2 | Requires SerializableString and the constructor with a caller-provided byte buffer, offset and recycling flag. |
+| framework | `tools.jackson.core.json.UTF8JsonGenerator#writeNumber(BigDecimal)` | 2 | The Java overload accepts BigDecimal. Flint writes primitive numbers and pre-encoded numeric strings. |
+| framework | `tools.jackson.core.json.UTF8JsonGenerator#writeString(Reader,int)` | 2 | The Java overload reads from java.io.Reader. Flint writes strings and character-buffer slices. |
 | framework | `tools.jackson.core.json.UTF8StreamJsonParser#<init>(ObjectReadContext,IOContext,int,int,InputStream,ByteQuadsCanonicalizer,byte[],int,int,int,boolean)` | 2 | Requires the explicit IOContext, input stream, and caller-provided byte-buffer constructor. |
 | framework | `tools.jackson.core.util.ByteArrayBuilder#<init>(BufferRecycler)` | 2 | The Java overload accepts a BufferRecycler. Flint's builder owns its byte buffer directly. |
 | framework | `tools.jackson.core.util.ByteArrayBuilder#<init>(BufferRecycler,int)` | 2 | The Java overload accepts a BufferRecycler. Flint's builder owns its byte buffer directly. |
