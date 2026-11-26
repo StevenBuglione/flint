@@ -14,25 +14,100 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,TextPart}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,ReasoningPart,TextPart}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages.part;
 
+import core.exception : onOutOfMemoryError;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException, stringHashCode;
 import flint.java.util : Map;
-import flint.util : Assert;
 import std.typecons : Nullable;
 
 @safe:
 
 private alias PartAttributes = Map!(string, string);
 private alias NullablePayload = Nullable!OpaquePayload;
+private alias NullableText = Nullable!string;
 
-// One concatenation per call, using the same implementation for both records.
+// LDC's size profile needs the constructor inlined. DMD avoids importing its body in the caller.
+version (LDC)
+    private enum inlinePayloadConstructor = true;
+else
+    private enum inlinePayloadConstructor = false;
+
+// Collect the fragments on the stack and allocate only the returned string.
 private string renderRecord(string prefix, string first, string secondLabel, string second,
-        string thirdLabel, string third)
+        string thirdLabel, string third, string fourthLabel = "", string fourth = "") pure
 {
-    return prefix ~ first ~ secondLabel ~ second ~ thirdLabel ~ third ~ "]";
+    string[9] parts = [
+        prefix, first, secondLabel, second, thirdLabel, third, fourthLabel, fourth, "]"
+    ];
+    return joinRecord(parts[]);
+}
+
+private char[] joinRecord(scope const(string)[] parts) pure
+{
+    size_t length;
+    foreach (part; parts)
+    {
+        if (part.length > size_t.max - length)
+            onOutOfMemoryError();
+        length += part.length;
+    }
+
+    char[] result = new char[length];
+    size_t offset;
+    foreach (part; parts)
+    {
+        result[offset .. offset + part.length] = part;
+        offset += part.length;
+    }
+    return result;
+}
+
+private PartAttributes copyAttributes(PartAttributes attributes)
+{
+    if (attributes is null)
+        throw new IllegalArgumentException("attributes must not be null");
+    attributes.forEach((string key, string value) {
+        if (key is null || value is null)
+            throw new NullPointerException();
+    });
+    return PartAttributes.copyOf(attributes);
+}
+
+private bool samePayload(ref const NullablePayload left, ref const NullablePayload right)
+{
+    if (left.isNull)
+        return right.isNull;
+    return !right.isNull && left.get() == right.get();
+}
+
+private int payloadHash(ref const NullablePayload value)
+{
+    return value.isNull ? 0 : value.get().hashCode();
+}
+
+private string payloadText(ref const NullablePayload value)
+{
+    return value.isNull ? "null" : value.get().toString();
+}
+
+private bool sameText(ref const NullableText left, ref const NullableText right)
+{
+    if (left.isNull)
+        return right.isNull;
+    return !right.isNull && left.get() == right.get();
+}
+
+private int textHash(ref const NullableText value)
+{
+    return value.isNull ? 0 : stringHashCode(value.get());
+}
+
+private string recordText(ref const NullableText value)
+{
+    return value.isNull ? "null" : value.get();
 }
 
 /// An ordered chat message part. Spring AI permits MediaPart, ReasoningPart,
@@ -62,10 +137,14 @@ struct OpaquePayload
     @disable this();
 
     /// Creates a payload from nonblank provider and kind names and a present data string.
-    pragma(inline, true) this(string provider, string kind, string data)
+    pragma(inline, inlinePayloadConstructor) this(string provider, string kind, string data)
     {
-        Assert.hasText(provider, "provider must not be empty");
-        Assert.hasText(kind, "kind must not be empty");
+        import flint.util : StringUtils;
+
+        if (!StringUtils.hasText(provider))
+            throw new IllegalArgumentException("provider must not be empty");
+        if (!StringUtils.hasText(kind))
+            throw new IllegalArgumentException("kind must not be empty");
         if (data is null)
             throw new IllegalArgumentException("data must not be null");
         this.provider_ = provider;
@@ -123,13 +202,7 @@ final class TextPart : MessagePart
     {
         this(text);
         payload_ = payload;
-        if (attributes is null)
-            throw new IllegalArgumentException("attributes must not be null");
-        attributes.forEach((string key, string value) {
-            if (key is null || value is null)
-                throw new NullPointerException();
-        });
-        attributes_ = PartAttributes.copyOf(attributes);
+        attributes_ = copyAttributes(attributes);
     }
 
     /// Creates a text part with no provider payload or attributes.
@@ -165,26 +238,111 @@ final class TextPart : MessagePart
     bool equals(Object other)
     {
         auto that = cast(TextPart) other;
-        if (that is null || text_ != that.text_ || payload_.isNull != that.payload_.isNull)
-            return false;
-        if (!payload_.isNull && payload_.get() != that.payload_.get())
-            return false;
-        return attributes_.equals(cast(Object) that.attributes_);
+        return that !is null && text_ == that.text_ && samePayload(payload_, that.payload_)
+            && attributes_.equals(cast(Object) that.attributes_);
     }
 
     /// Computes the Java record hash of the three components.
     int hashCode()
     {
-        const payloadHash = payload_.isNull ? 0 : payload_.get().hashCode();
-        return 31 * (31 * stringHashCode(text_) + payloadHash) + attributes_.hashCode();
+        return 31 * (31 * stringHashCode(text_) + payloadHash(payload_)) + attributes_.hashCode();
     }
 
     /// Formats the three record components.
     override string toString()
     {
-        const payloadText = payload_.isNull ? "null" : payload_.get().toString();
-        return renderRecord("TextPart[text=", text_, ", payload=", payloadText, ", attributes=",
-                attributes_.toString());
+        return renderRecord("TextPart[text=", text_, ", payload=", payloadText(payload_),
+                ", attributes=", attributes_.toString());
+    }
+
+    mixin JavaObject;
+}
+
+/// Provider reasoning and its optional replay payload (R16).
+final class ReasoningPart : MessagePart
+{
+    private NullableText text_;
+    private NullableText summary_;
+    private NullablePayload payload_;
+    private PartAttributes attributes_;
+
+    private this(NullableText text)
+    {
+        text_ = text;
+    }
+
+    /// Creates a reasoning part with a snapshot of its attributes.
+    this(NullableText text, NullableText summary, NullablePayload payload, PartAttributes attributes)
+    {
+        this(text);
+        summary_ = summary;
+        payload_ = payload;
+        attributes_ = copyAttributes(attributes);
+    }
+
+    /// Creates a plain text reasoning part without provider data.
+    static ReasoningPart of(string text)
+    {
+        if (text is null)
+            throw new IllegalArgumentException("text must not be null");
+        auto part = new ReasoningPart(NullableText(text));
+        part.attributes_ = PartAttributes.of();
+        return part;
+    }
+
+    /// The human-readable reasoning, when supplied.
+    NullableText text()
+    {
+        return text_;
+    }
+
+    /// The provider's summary, when supplied.
+    NullableText summary()
+    {
+        return summary_;
+    }
+
+    override NullablePayload payload()
+    {
+        return payload_;
+    }
+
+    override PartAttributes attributes()
+    {
+        return attributes_;
+    }
+
+    override ReasoningPart withAttributes(PartAttributes attributes)
+    {
+        return new ReasoningPart(text_, summary_, payload_, attributes);
+    }
+
+    /// A provider payload can be replayed to the provider that owns it.
+    bool replayableTo(string provider) const pure nothrow @nogc
+    {
+        return payload_.isNull || payload_.get().provider() == provider;
+    }
+
+    /// Compares the four record components.
+    bool equals(Object other)
+    {
+        auto that = cast(ReasoningPart) other;
+        return that !is null && sameText(text_, that.text_) && sameText(summary_, that.summary_)
+            && samePayload(payload_, that.payload_) && attributes_.equals(cast(Object) that.attributes_);
+    }
+
+    /// Computes the Java record hash of the four components.
+    int hashCode()
+    {
+        const contentHash = 31 * textHash(text_) + textHash(summary_);
+        return 31 * (31 * contentHash + payloadHash(payload_)) + attributes_.hashCode();
+    }
+
+    /// Formats the four record components.
+    override string toString()
+    {
+        return renderRecord("ReasoningPart[text=", recordText(text_), ", summary=", recordText(summary_),
+                ", payload=", payloadText(payload_), ", attributes=", attributes_.toString());
     }
 
     mixin JavaObject;

@@ -117,6 +117,12 @@
       "methods": {
         "ported": [
           "attributesAreDefensivelyCopiedAndUnmodifiable",
+          "partsWithSameComponentsAreEqual",
+          "reasoningPartIsAMessagePart",
+          "reasoningPartOfIsPlainText",
+          "reasoningPartWithAttributesReturnsACopy",
+          "reasoningPartWithPayloadIsReplayableOnlyToItsProvider",
+          "reasoningPartWithoutPayloadIsReplayableEverywhere",
           "textPartOfHasNoPayloadAndEmptyAttributes",
           "whenAttributesIsNullThenThrow",
           "whenOpaquePayloadHasNullComponentThenThrow",
@@ -124,12 +130,6 @@
         ],
         "skipped": {
           "mediaPartOfWrapsMedia": "MediaPart and Media are pending.",
-          "partsWithSameComponentsAreEqual": "The full comparison requires ReasoningPart.",
-          "reasoningPartIsAMessagePart": "ReasoningPart is pending.",
-          "reasoningPartOfIsPlainText": "ReasoningPart is pending.",
-          "reasoningPartWithAttributesReturnsACopy": "ReasoningPart is pending.",
-          "reasoningPartWithPayloadIsReplayableOnlyToItsProvider": "ReasoningPart is pending.",
-          "reasoningPartWithoutPayloadIsReplayableEverywhere": "ReasoningPart is pending.",
           "toolCallPartOfWrapsToolCall": "ToolCallPart and AssistantMessage.ToolCall are pending.",
           "toolResultPartContentIsDefensivelyCopied": "ToolResultPart is pending.",
           "toolResultPartOfWrapsToolResponseAsSingleTextPart": "ToolResultPart and ToolResponseMessage are pending.",

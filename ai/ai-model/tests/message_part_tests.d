@@ -18,7 +18,7 @@
 // Modified by the Flint authors.
 module message_part_tests;
 
-import flint.ai.chat.messages.part : MessagePart, OpaquePayload, TextPart;
+import flint.ai.chat.messages.part : MessagePart, OpaquePayload, ReasoningPart, TextPart;
 import flint.java.lang : IllegalArgumentException, NullPointerException, UnsupportedOperationException;
 import flint.java.util : HashMap, Map;
 import std.exception : assertThrown;
@@ -88,6 +88,67 @@ unittest
     auto attributes = new HashMap!(string, string);
     attributes.put("missing", null);
     assertThrown!NullPointerException(new TextPart("hello", Nullable!OpaquePayload.init, attributes));
+}
+
+@("reasoningPartIsAMessagePart")
+unittest
+{
+    const MessagePart part = ReasoningPart.of("thinking...");
+    assert(cast(const ReasoningPart) part !is null);
+}
+
+@("reasoningPartOfIsPlainText")
+unittest
+{
+    auto part = ReasoningPart.of("thinking...");
+    assert(part.text().get() == "thinking...");
+    assert(part.summary().isNull);
+    assert(part.payload().isNull);
+}
+
+@("reasoningPartWithoutPayloadIsReplayableEverywhere")
+unittest
+{
+    auto part = ReasoningPart.of("thinking...");
+    assert(part.replayableTo("anthropic"));
+    assert(part.replayableTo("openai"));
+}
+
+@("reasoningPartWithPayloadIsReplayableOnlyToItsProvider")
+unittest
+{
+    auto payload = nullable(OpaquePayload("anthropic", "signature", "sig-1"));
+    auto part = new ReasoningPart(nullable("thinking..."), Nullable!string.init, payload, Map!(string, string).of());
+    assert(part.replayableTo("anthropic"));
+    assert(!part.replayableTo("Anthropic"));
+    assert(!part.replayableTo("openai"));
+}
+
+@("reasoningPartWithAttributesReturnsACopy")
+unittest
+{
+    auto original = ReasoningPart.of("thinking...");
+    auto part = original.withAttributes(Map!(string, string).of("k", "v"));
+    assert(part !is original);
+    assert(part.attributes().get("k") == "v");
+    assert(part.text().get() == original.text().get());
+    assert(original.attributes().isEmpty());
+}
+
+@("partsWithSameComponentsAreEqual")
+unittest
+{
+    assert(TextPart.of("a") == TextPart.of("a"));
+    assert(TextPart.of("a").hashCode() == TextPart.of("a").hashCode());
+    auto payload = nullable(OpaquePayload("anthropic", "signature", "sig-1"));
+    auto first = new ReasoningPart(nullable("t"), Nullable!string.init, payload, Map!(string, string).of());
+    auto same = new ReasoningPart(nullable("t"), Nullable!string.init, payload, Map!(string, string).of());
+    assert(first == same && first.hashCode() == same.hashCode());
+    const payloadText = "OpaquePayload[provider=anthropic, kind=signature, data=sig-1]";
+    assert(first.toString() == "ReasoningPart[text=t, summary=null, payload=" ~ payloadText ~ ", attributes={}]");
+    auto emptySummary = new ReasoningPart(nullable("t"), nullable(""), payload, Map!(string, string).of());
+    assert(first != emptySummary);
+    assert(!TextPart.of("a").equals(ReasoningPart.of("a")));
 }
 
 @("whenOpaquePayloadHasNullComponentThenThrow")
