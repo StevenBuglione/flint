@@ -7,6 +7,9 @@ Modified by the Flint authors: check the request URL directly as a D string.
 +/
 module mock_http_servlet_request_url_tests;
 
+import std.exception : collectException;
+
+import flint.java.lang : IllegalStateException;
 import flint.mock.web : MockHttpServletRequest;
 
 @safe:
@@ -94,4 +97,96 @@ unittest
     request.setScheme("https");
     request.setServerPort(443);
     assert(request.getRequestURL() == "https://localhost");
+}
+
+@("getRequestURLWithHostHeader")
+unittest
+{
+    auto request = new MockHttpServletRequest;
+    request.addHeader("Host", "test.server");
+    assert(request.getRequestURL() == "http://test.server");
+}
+
+@("getRequestURLWithHostHeaderAndPort")
+unittest
+{
+    auto request = new MockHttpServletRequest;
+    request.addHeader("Host", "test.server:9999");
+    assert(request.getRequestURL() == "http://test.server:9999");
+}
+
+@("getRequestURLWithInvalidIpv6AddressViaHostHeader")
+unittest
+{
+    auto request = new MockHttpServletRequest;
+    request.addHeader("Host", "[::ffff:abcd:abcd");
+    const error = collectException!IllegalStateException(request.getRequestURL());
+    assert(error !is null && error.msg == "Invalid Host header: [::ffff:abcd:abcd");
+}
+
+@("getRequestURLWithIpv6AddressViaHostHeaderWithoutPort")
+unittest
+{
+    auto request = new MockHttpServletRequest;
+    request.addHeader("Host", "[::ffff:abcd:abcd]");
+    assert(request.getRequestURL() == "http://[::ffff:abcd:abcd]");
+}
+
+@("getRequestURLWithIpv6AddressViaHostHeaderWithPort")
+unittest
+{
+    auto request = new MockHttpServletRequest;
+    request.addHeader("Host", "[::ffff:abcd:abcd]:9999");
+    assert(request.getRequestURL() == "http://[::ffff:abcd:abcd]:9999");
+}
+
+@("getRequestURLWithNegativePort")
+unittest
+{
+    auto request = new MockHttpServletRequest;
+    request.setServerPort(-99);
+    assert(request.getRequestURL() == "http://localhost");
+}
+
+private class OverriddenRequestOrigin : MockHttpServletRequest
+{
+    override string getScheme()
+    {
+        return "HTTPS";
+    }
+
+    override string getServerName()
+    {
+        return "override.example";
+    }
+
+    override int getServerPort()
+    {
+        return 443;
+    }
+
+    override string getRequestURI()
+    {
+        return "/overridden";
+    }
+}
+
+@("Request URLs use virtual getters and preserve the scheme spelling")
+unittest
+{
+    auto request = new OverriddenRequestOrigin;
+    assert(request.getRequestURL() == "HTTPS://override.example/overridden");
+}
+
+@("Request URLs omit zero ports, non-HTTP scheme ports and whitespace-only paths")
+unittest
+{
+    auto request = new MockHttpServletRequest;
+    request.setServerPort(0);
+    request.setRequestURI(" \t\u3000");
+    assert(request.getRequestURL() == "http://localhost");
+
+    request.setScheme("ftp");
+    request.setServerPort(2121);
+    assert(request.getRequestURL() == "ftp://localhost");
 }

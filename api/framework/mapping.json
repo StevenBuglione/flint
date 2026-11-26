@@ -25089,7 +25089,7 @@
 "org.springframework.mock.web.MockHttpServletRequest#getRequestDispatcher(String)":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.mock.web.MockHttpServletRequest#getRequestId()":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.mock.web.MockHttpServletRequest#getRequestURI()":{"status":"excluded","category":"deferred","phase":"2"},
-"org.springframework.mock.web.MockHttpServletRequest#getRequestURL()":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.mock.web.MockHttpServletRequest#getRequestURL()":{"status":"adapted","d":"flint.mock.web.MockHttpServletRequest.getRequestURL","rules":["R1","R10"],"substitutes":{"StringBuffer":"string"},"note":"Uses the Jakarta servlet API's D string result."},
 "org.springframework.mock.web.MockHttpServletRequest#getRequestedSessionId()":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.mock.web.MockHttpServletRequest#getScheme()":{"status":"ported","d":"flint.mock.web.MockHttpServletRequest.getScheme"},
 "org.springframework.mock.web.MockHttpServletRequest#getServerName()":{"status":"ported","d":"flint.mock.web.MockHttpServletRequest.getServerName"},

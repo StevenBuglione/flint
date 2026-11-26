@@ -25,6 +25,7 @@ import flint.java.lang : IllegalArgumentException, IllegalStateException, NullPo
 import flint.java.nio.charset : Charset;
 import flint.java.util : Locale;
 import flint.test.web.servlet.form : decodeText;
+import flint.util : StringUtils;
 import std.typecons : Nullable;
 
 @safe:
@@ -709,8 +710,14 @@ class MockHttpServletRequest : HttpServletRequest
 
     string getRequestURL()
     {
-        const defaultPort = (scheme == "http" && serverPort == 80) || (scheme == "https" && serverPort == 443);
-        return scheme ~ "://" ~ serverName ~ (defaultPort ? "" : ":" ~ decimal(serverPort)) ~ requestURI;
+        const scheme = getScheme();
+        const server = getServerName();
+        const port = getServerPort();
+        const uri = getRequestURI();
+        const includePort = port > 0 && ((port != 80 && equalsIgnoreCase(scheme, "http"))
+                || (port != 443 && equalsIgnoreCase(scheme, "https")));
+        return scheme ~ "://" ~ server ~ (includePort ? ":" ~ decimal(port) : null) ~ (StringUtils.hasText(uri)
+                ? uri : null);
     }
 
     string getServletPath()
