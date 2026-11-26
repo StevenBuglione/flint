@@ -65,8 +65,21 @@
       "status": "deferred"
     },
     "org/springframework/aop/aspectj/autoproxy/AspectJPrecedenceComparatorTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/aop/tests/aspectj_precedence_comparator_tests.d",
+      "methods": {
+        "ported": [
+          "sameAspectNoAfterAdvice",
+          "sameAspectAfterAdvice",
+          "sameAspectOneOfEach",
+          "sameAdvisorPrecedenceDifferentAspectNoAfterAdvice",
+          "sameAdvisorPrecedenceDifferentAspectAfterAdvice",
+          "higherAdvisorPrecedenceNoAfterAdvice",
+          "higherAdvisorPrecedenceAfterAdvice",
+          "lowerAdvisorPrecedenceNoAfterAdvice",
+          "lowerAdvisorPrecedenceAfterAdvice"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/aop/config/AopNamespaceHandlerEventTests.java": {
       "phase": "2",

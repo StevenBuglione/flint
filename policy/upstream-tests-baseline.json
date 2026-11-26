@@ -124,7 +124,6 @@
       "org/springframework/aop/aspectj/annotation/AspectProxyFactoryTests.java",
       "org/springframework/aop/aspectj/annotation/ReflectiveAspectJAdvisorFactoryTests.java",
       "org/springframework/aop/aspectj/autoproxy/AspectJNamespaceHandlerTests.java",
-      "org/springframework/aop/aspectj/autoproxy/AspectJPrecedenceComparatorTests.java",
       "org/springframework/aop/config/AopNamespaceHandlerEventTests.java",
       "org/springframework/aop/config/AopNamespaceHandlerPointcutErrorTests.java",
       "org/springframework/aop/config/TopLevelAopTagTests.java",
