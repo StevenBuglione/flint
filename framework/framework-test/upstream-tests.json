@@ -23,14 +23,19 @@
     "org/springframework/mock/web/MockHttpServletResponseTests.java": {
       "d": [
         "framework/framework-test/tests/mock_http_servlet_response_encoding_tests.d",
-        "framework/framework-test/tests/mock_http_servlet_response_output_tests.d"
+        "framework/framework-test/tests/mock_http_servlet_response_output_tests.d",
+        "framework/framework-test/tests/mock_http_servlet_response_redirect_tests.d"
       ],
       "methods": {
         "ported": [
           "contentAsStringEncodingWithJson",
           "isoShouldBeDefault",
+          "locationHeaderUpdatesGetRedirectedUrl",
+          "modifyStatusAfterSendError",
+          "modifyStatusMessageAfterSendError",
           "outputStreamShouldFailWhenWriterCalled",
           "resetResponseShouldResetCharset",
+          "sendRedirect",
           "servletOutputStreamCommittedOnFlushBuffer",
           "servletOutputStreamCommittedOnOutputStreamFlush",
           "servletOutputStreamCommittedWhenBufferSizeExceeded",
@@ -70,10 +75,6 @@
           "getInvalidDateHeader": "Deferred response header behavior.",
           "getNonExistentDateHeader": "Deferred response header behavior.",
           "httpHeaderNameCasingIsPreserved": "Deferred response header behavior.",
-          "locationHeaderUpdatesGetRedirectedUrl": "Deferred redirect and sendError behavior.",
-          "modifyStatusAfterSendError": "Deferred redirect and sendError behavior.",
-          "modifyStatusMessageAfterSendError": "Deferred redirect and sendError behavior.",
-          "sendRedirect": "Deferred redirect and sendError behavior.",
           "servletWriterAutoFlushedForChar": "Deferred response writer, output stream and commitment behavior.",
           "servletWriterAutoFlushedForCharArray": "Deferred response writer, output stream and commitment behavior.",
           "servletWriterAutoFlushedForString": "Deferred response writer, output stream and commitment behavior.",

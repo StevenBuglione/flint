@@ -86,3 +86,13 @@ unittest
     fails(Matchers.redirectedUrl(""), stub(), "Redirected URL expected:<> but was:<null>");
     Matchers.redirectedUrlTemplate("/resource/{name}", "deux cafés").match(stub("/resource/deux%20caf%C3%A9s"));
 }
+
+@("Redirect matchers read the Location header written by application code")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    response.setHeader("Location", "/resource/1");
+    auto result = new DefaultMvcResult(null, response);
+    Matchers.redirectedUrl("/resource/1").match(result);
+    Matchers.redirectedUrlPattern("/resource/*").match(result);
+}

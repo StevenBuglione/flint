@@ -1465,7 +1465,8 @@ final class PrintingResultHandler : ResultHandler
         line("Content type", response.getContentType() is null ? "null" : response.getContentType());
         line("Body", response.getContentAsString());
         line("Forwarded URL", "null");
-        line("Redirected URL", response.getRedirectedUrl() is null ? "null" : response.getRedirectedUrl());
+        const redirectedUrl = response.getRedirectedUrl();
+        line("Redirected URL", redirectedUrl is null ? "null" : redirectedUrl);
         line("Cookies", "[]");
         lastText = text;
         writeReport(text);

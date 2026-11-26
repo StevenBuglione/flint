@@ -19,9 +19,9 @@ import flint.jakarta.servlet : DispatcherType, Filter, FilterRegistration, Reque
     Servlet, ServletContext, ServletInputStream, ServletOutputStream, ServletRegistration;
 import flint.jakarta.servlet.http : Cookie, HttpServletRequest, HttpServletResponse;
 import flint.java.io : PrintWriter, Writer;
-import flint.java.lang : IllegalStateException, NumberFormatException, UnsupportedOperationException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, NumberFormatException,
+    UnsupportedOperationException;
 import flint.java.util : Locale;
-import flint.util : Assert;
 import std.typecons : Nullable;
 
 @safe:
@@ -94,12 +94,18 @@ private struct Pair
     string[] values;
 }
 
-pragma(inline, false) private ptrdiff_t findPair(Pair[] pairs, string name, bool ignoreCase) pure nothrow @nogc
+pragma(inline, false) private ptrdiff_t findPair(const(Pair)[] pairs, string name, bool ignoreCase) pure nothrow @nogc
 {
     foreach (i, ref p; pairs)
         if (ignoreCase ? equalsIgnoreCase(p.name, name) : p.name == name)
             return i;
     return -1;
+}
+
+pragma(inline, false) private string firstHeaderValue(const(Pair)[] headers, string name) pure nothrow @nogc
+{
+    const i = findPair(headers, name, true);
+    return i >= 0 && headers[i].values.length != 0 ? headers[i].values[0] : null;
 }
 
 pragma(inline, false) private bool tryParseContentType(string type, out MediaType mediaType)
@@ -566,8 +572,7 @@ class MockHttpServletRequest : HttpServletRequest
 
     string getHeader(string name)
     {
-        const i = findPair(headers, name, true);
-        return i >= 0 && headers[i].values.length != 0 ? headers[i].values[0] : null;
+        return firstHeaderValue(headers, name);
     }
 
     string[] getHeaders(string name)
@@ -726,7 +731,6 @@ class MockHttpServletResponse : HttpServletResponse
     private int bufferSize = 4096;
     private bool committed;
     private Cookie[] cookies;
-    private string redirectedUrl;
     private ServletOutputStream outputStream;
     private PrintWriter writer;
     private Locale locale;
@@ -769,10 +773,10 @@ class MockHttpServletResponse : HttpServletResponse
         return errorMessage;
     }
 
-    /// The `sendRedirect` target, or `null`.
+    /// The first Location header, or `null`.
     string getRedirectedUrl() const pure nothrow @nogc
     {
-        return redirectedUrl;
+        return firstHeaderValue(headers, HttpHeaders.LOCATION);
     }
 
     /// The cookies added.
@@ -800,7 +804,7 @@ class MockHttpServletResponse : HttpServletResponse
     /// Sets the fallback encoding without marking a charset as explicitly set.
     void setDefaultCharacterEncoding(string encoding)
     {
-        Assert.notNull(encoding, "'characterEncoding' must not be null");
+        requireResponseText(encoding, "'characterEncoding' must not be null");
         defaultCharacterEncoding = encoding;
         if (!characterEncodingSet)
             characterEncoding = encoding;
@@ -1007,7 +1011,6 @@ class MockHttpServletResponse : HttpServletResponse
         headers = null;
         status = HttpServletResponse.SC_OK;
         errorMessage = null;
-        redirectedUrl = null;
         writer = null;
         outputStream = null;
     }
@@ -1037,26 +1040,37 @@ class MockHttpServletResponse : HttpServletResponse
 
     void sendError(int sc, string msg)
     {
-        if (committed)
-            rejectResponseState("Cannot set error status - response is already committed");
-        status = sc;
-        errorMessage = msg;
-        committed = true;
+        recordError(sc, msg);
     }
 
     void sendError(int sc)
     {
-        sendError(sc, null);
+        recordError(sc, errorMessage);
+    }
+
+    pragma(inline, false) private void recordError(int sc, string msg)
+    {
+        if (isCommitted())
+            rejectResponseState("Cannot set error status - response is already committed");
+        status = sc;
+        errorMessage = msg;
+        setCommitted(true);
     }
 
     void sendRedirect(string location)
     {
-        if (committed)
+        sendRedirect(location, HttpServletResponse.SC_MOVED_TEMPORARILY, true);
+    }
+
+    /// Records the redirect and supplied status. As in Spring's mock, either clearBuffer value keeps the body.
+    void sendRedirect(string location, int sc, bool clearBuffer)
+    {
+        if (isCommitted())
             rejectResponseState("Cannot send redirect - response is already committed");
+        requireResponseText(location, "Redirect URL must not be null");
         setHeader(HttpHeaders.LOCATION, location);
-        setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
-        redirectedUrl = location;
-        committed = true;
+        setStatus(sc);
+        setCommitted(true);
     }
 
     void setDateHeader(string name, long date)
@@ -1101,7 +1115,7 @@ class MockHttpServletResponse : HttpServletResponse
 
     void setStatus(int sc)
     {
-        if (!committed)
+        if (!isCommitted())
             status = sc;
     }
 
@@ -1112,8 +1126,7 @@ class MockHttpServletResponse : HttpServletResponse
 
     string getHeader(string name)
     {
-        const i = findPair(headers, name, true);
-        return i >= 0 && headers[i].values.length != 0 ? headers[i].values[0] : null;
+        return firstHeaderValue(headers, name);
     }
 
     string[] getHeaders(string name)
@@ -1148,6 +1161,12 @@ class MockHttpServletResponse : HttpServletResponse
 pragma(inline, false) private noreturn rejectResponseState(string message)
 {
     throw new IllegalStateException(message);
+}
+
+pragma(inline, false) private void requireResponseText(string value, string message)
+{
+    if (value is null)
+        throw new IllegalArgumentException(message);
 }
 
 /// A signed Java decimal header value within the caller's integer range.
