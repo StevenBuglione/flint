@@ -3,7 +3,7 @@
   "probes": {
     "flint.java.math.biginteger": {
       "arithmetic": {
-        "source": "bench/source/app.d",
+        "source": "closure/biginteger.d",
         "leaves": [
           "flint.java.lang",
           "flint.java.math.internal.floating",
@@ -11,6 +11,13 @@
           "flint.java.math.internal.products",
           "flint.java.math.internal.radix"
         ],
+        "data": []
+      }
+    },
+    "flint.java.math.roundingmode": {
+      "lookup": {
+        "source": "closure/roundingmode.d",
+        "leaves": ["flint.java.lang"],
         "data": []
       }
     }

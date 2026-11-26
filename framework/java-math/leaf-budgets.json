@@ -2,5 +2,9 @@
   "flint.java.math.biginteger": {
     "incremental_linked_bytes": 22858,
     "template_instances": 1040
+  },
+  "flint.java.math.roundingmode": {
+    "incremental_linked_bytes": 7714,
+    "template_instances": 500
   }
 }
