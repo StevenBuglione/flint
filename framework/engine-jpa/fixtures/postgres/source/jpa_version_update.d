@@ -12,7 +12,7 @@ import flint.engine.jpa.delete_row : DeletePlan, executeManagedDelete, planDelet
 import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
 import flint.engine.jpa.loaded_state : ManagedSnapshotSlot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
-import flint.engine.jpa.parameter_binding : ParameterBinding;
+import flint.engine.jpa.parameter_binding : InsertPlan, ParameterBinding, executeManagedInsert, planInsert;
 import flint.engine.jpa.result_binding : ManagedRowMaterializationPlan, materializeManagedRow, planManagedResult;
 import flint.engine.jpa.snapshot : AttributeSnapshot;
 import flint.engine.jpa.update : UpdateAction, VersionBindings, executeManagedUpdate,
@@ -689,11 +689,12 @@ void verifyManagedDeletes(DataSource dataSource, JdbcTemplate jdbc)
     assertStored(connection, "Delete winner", 12);
 }
 
-private void assertDeleteAbsent(Connection connection)
+private void assertDeleteAbsent(Connection connection, long identifier = 1)
 {
-    auto statement = connection.prepareStatement("select count(*) from jpa_version_probe where id = 1");
+    auto statement = connection.prepareStatement("select count(*) from jpa_version_probe where id = ?");
     scope (exit)
         statement.close();
+    statement.setLong(1, identifier);
     auto rows = statement.executeQuery();
     scope (exit)
         rows.close();
@@ -730,4 +731,93 @@ private void verifyUnversionedDelete(Connection connection, scope ref ManagedEnt
     assert(executeManagedDelete(plan.value, connection, managed, ownerKey).code == Status.ok);
     assert(managed.find(ownerKey).error.code == Status.notFound);
     assertDeleteAbsent(connection);
+}
+
+/// Checks assigned-ID insertion, already-managed identity rejection, and rollback.
+void verifyManagedInserts(DataSource dataSource)
+{
+    enum sql = "insert into jpa_version_probe (name, version, id) values (?, ?, ?)";
+    static immutable ParameterBinding[] bindings = [
+        ParameterBinding(1, 1), ParameterBinding(2, 2), ParameterBinding(0, 3)
+    ];
+    const planned = planInsert(&mapping, sql, bindings);
+    const multiple = planInsert(&mapping, sql ~ ", ('unexpected', 0, 6)", bindings);
+    assert(planned.ok && multiple.ok);
+    assert(planInsert(&mapping, sql, bindings[0 .. 2]).error.code == Status.invalidArgument);
+
+    auto connection = dataSource.getConnection();
+    scope (exit)
+        connection.close();
+    connection.setAutoCommit(false);
+    scope (exit)
+        connection.rollback();
+    auto fields = new AttributeSnapshot[3];
+    auto bytes = new ubyte[16];
+    ManagedSnapshotSlot[1] snapshot = [ManagedSnapshotSlot(fields, bytes)];
+    IdentitySlot[1] identity;
+    Object[1] roots;
+    Error error;
+    scope managed = ManagedEntities(identity[], roots[], error, snapshot[]);
+    assert(error.code == Status.ok);
+
+    auto owner = new VersionedOwner;
+    owner.id = 4;
+    owner.revision = 3;
+    owner.name = "More bytes than the reserved snapshot arena";
+    const key = EntityIdentity(0, 4);
+    auto values = new AttributeValue[3];
+    const exhausted = executeManagedInsert(planned.value, connection, managed, key, owner, values);
+    assert(exhausted.code == Status.outOfMemory && exhausted.offset == 1);
+    assert(managed.find(key).error.code == Status.notFound);
+    assertDeleteAbsent(connection, 4);
+
+    owner.name = "Inserted";
+    const wrongId = EntityIdentity(0, 5);
+    const mismatched = executeManagedInsert(planned.value, connection, managed, wrongId, owner, values);
+    assert(mismatched.code == Status.invalidArgument && mismatched.offset == 0);
+    assert(managed.find(wrongId).error.code == Status.notFound);
+    assertDeleteAbsent(connection, 4);
+
+    assert(executeManagedInsert(multiple.value, connection, managed, key, owner, values).code == Status.ioError);
+    assert(managed.find(key).error.code == Status.notFound);
+    connection.rollback();
+    assertDeleteAbsent(connection, 4);
+    assertDeleteAbsent(connection, 6);
+    verifyInsertDriverFailure(planned.value, connection, managed, values);
+    connection.rollback();
+
+    const reads = owner.nameReads;
+    assert(executeManagedInsert(planned.value, connection, managed, key, owner, values).code == Status.ok);
+    assert(managed.find(key).value is owner && owner.nameReads == reads + 1);
+    assertStored(connection, "Inserted", 3, 4);
+    uint[1] dirtySlots;
+    const dirty = managed.dirty(key, dirtySlots[]);
+    assert(dirty.ok && dirty.value == 0);
+    assert(executeManagedInsert(planned.value, connection, managed, key, owner, values).code == Status.conflict);
+    assert(managed.find(key).value is owner);
+    foreach (ref value; values)
+        assert(value.kind == AttributeKind.nullValue);
+
+    connection.rollback();
+    managed.clear();
+    assert(managed.find(key).error.code == Status.notFound);
+    assertDeleteAbsent(connection, 4);
+}
+
+private void verifyInsertDriverFailure(const ref InsertPlan plan, Connection connection,
+        scope ref ManagedEntities managed, AttributeValue[] values)
+{
+    auto owner = new VersionedOwner;
+    owner.id = ownerKey.identifier;
+    owner.name = "Duplicate";
+    try
+    {
+        executeManagedInsert(plan, connection, managed, ownerKey, owner, values);
+        assert(false, "duplicate identity SQL must throw");
+    }
+    catch (SQLException failure)
+    {
+        assert(failure.getSQLState() == "23505");
+    }
+    assert(managed.find(ownerKey).error.code == Status.notFound);
 }

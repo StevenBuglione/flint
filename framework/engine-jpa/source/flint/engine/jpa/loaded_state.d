@@ -80,15 +80,15 @@ struct ManagedSnapshotSlot
     }
 
     /// Initializes an empty slot before its entity root is published.
-    package Error capture(LoadedSnapshotPlan current, Object entity) scope nothrow @nogc
+    package Error capture(LoadedSnapshotPlan initial, Object entity, scope AttributeValue[] values) scope nothrow @nogc
     {
-        const error = writeSnapshots(current, entity, bank(active).arena, bank(active).fields);
+        const error = writeSnapshots(initial, entity, bank(active).arena, bank(active).fields, values);
         if (error.code != Status.ok)
         {
             clear();
             return error;
         }
-        plan = current;
+        plan = initial;
         return Error.init;
     }
 
@@ -123,7 +123,7 @@ struct ManagedSnapshotSlot
         assert(plan.mapping !is null && values.length == plan.mapping.attributes.length);
         const staging = active ^ 1;
         const error = storeSnapshots(*plan.mapping, entity, bank(staging).arena, bank(staging)
-                .fields, values, nextRevision);
+                .fields, values, nextRevision, true);
         if (error.code != Status.ok)
         {
             bank(staging).arena.reset();
@@ -194,32 +194,34 @@ PlanResult planLoadedSnapshot(immutable(EntityMapping)* mapping) nothrow @nogc
 LoadedResult captureLoadedState(LoadedSnapshotPlan plan, Object entity, scope ref RequestArena arena,
         return scope AttributeSnapshot[] staging) nothrow @nogc
 {
-    const error = writeSnapshots(plan, entity, arena, staging);
+    const error = writeSnapshots(plan, entity, arena, staging, null);
     if (error.code != Status.ok)
         return LoadedResult(LoadedSnapshot.init, error);
     return LoadedResult(LoadedSnapshot(plan, staging[0 .. plan.mapping.attributes.length]));
 }
 
 private Error writeSnapshots(scope const LoadedSnapshotPlan plan, Object entity,
-        scope ref RequestArena arena, scope AttributeSnapshot[] staging) nothrow @nogc
+        scope ref RequestArena arena, scope AttributeSnapshot[] staging, scope AttributeValue[] values) nothrow @nogc
 {
     if (plan.mapping is null)
         return Error(Status.invalidArgument, "missing loaded snapshot plan");
     const error = validateEntity(*plan.mapping, entity);
     if (error.code != Status.ok)
         return error;
-    return storeSnapshots(*plan.mapping, entity, arena, staging);
+    return storeSnapshots(*plan.mapping, entity, arena, staging, values);
 }
 
 private Error storeSnapshots(scope const ref EntityMapping mapping, Object entity, scope ref RequestArena arena,
-        scope AttributeSnapshot[] staging, scope AttributeValue[] values = null, long nextRevision = 0) nothrow @nogc
+        scope AttributeSnapshot[] staging, scope AttributeValue[] values, long nextRevision = 0,
+        bool replaceVersion = false) nothrow @nogc
 {
-    if (staging.length < mapping.attributes.length)
+    const count = mapping.attributes.length;
+    if (staging.length < count || (values.length != 0 && values.length < count))
         return Error(Status.resourceExhausted, "insufficient loaded snapshot slots");
 
     foreach (ref attribute; mapping.attributes)
     {
-        const replacementVersion = values.length != 0 && attribute.ordinal == mapping.versionOrdinal;
+        const replacementVersion = replaceVersion && attribute.ordinal == mapping.versionOrdinal;
         const current = replacementVersion ? ReadResult(AttributeValue(AttributeKind.integer, nextRevision))
             : readMapped(attribute, entity);
         if (!current.ok)

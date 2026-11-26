@@ -9,11 +9,12 @@ module flint.engine.jpa.managed_entities;
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa.identity : EntityIdentity, IdentityIndex, IdentitySlot;
 import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, ManagedSnapshotSlot;
-import flint.engine.jpa.mapping : EntityMapping;
+import flint.engine.jpa.mapping : AttributeValue, EntityMapping;
 
 @safe:
 
 private alias EntityResult = Result!Object;
+private alias TicketResult = Result!ulong;
 
 /// A resolved managed entity, its context slot and an optional loaded version.
 package struct ManagedTarget
@@ -29,6 +30,8 @@ struct ManagedEntities
     private IdentityIndex index;
     private Object[] roots;
     private ManagedSnapshotSlot[] snapshots;
+    private size_t insertionSlot = size_t.max;
+    private ulong insertionTicket;
 
     @disable this(this);
     @disable void opAssign(ManagedEntities replacement);
@@ -75,7 +78,7 @@ struct ManagedEntities
             return roots[slot] is entity ? Error.init : Error(Status.conflict, "another JPA entity has this identity");
         if (snapshots.length != 0)
         {
-            const error = snapshots[slot].capture(plan, entity);
+            const error = snapshots[slot].capture(plan, entity, null);
             if (error.code != Status.ok)
             {
                 index.detach(key);
@@ -84,6 +87,61 @@ struct ManagedEntities
         }
         roots[slot] = entity;
         return Error.init;
+    }
+
+    /// Reserves an invisible identity and records the initial values for one in-flight insert.
+    package TicketResult stageInsert(EntityIdentity key, LoadedSnapshotPlan plan, Object entity,
+            scope AttributeValue[] values) scope nothrow @nogc
+    {
+        if (snapshots.length == 0)
+            return TicketResult(0, Error(Status.unsupported, "JPA insert requires snapshot storage"));
+        if (insertionSlot != size_t.max)
+            return TicketResult(0, Error(Status.conflict, "a JPA insert is already pending in this context"));
+        if (insertionTicket == ulong.max)
+            return TicketResult(0, Error(Status.resourceExhausted, "JPA insert tickets exhausted"));
+        const reserved = index.reserve(key);
+        if (!reserved.ok)
+            return TicketResult(0, reserved.error);
+        if (!reserved.value.inserted)
+            return TicketResult(0, Error(Status.conflict, "JPA insert identity is already managed"));
+
+        insertionSlot = reserved.value.slot;
+        const ticket = ++insertionTicket;
+        const error = snapshots[insertionSlot].capture(plan, entity, values);
+        if (error.code != Status.ok)
+        {
+            cancelInsert(ticket);
+            return TicketResult(0, error);
+        }
+        if (!ownsInsert(ticket))
+            return TicketResult(0, Error(Status.conflict, "JPA insert reservation retired during capture"));
+        return TicketResult(ticket);
+    }
+
+    /// Publishes the reserved entry once SQL and statement close succeed.
+    package Error publishInsert(ulong ticket, Object entity) scope nothrow @nogc
+    {
+        if (!ownsInsert(ticket))
+            return Error(Status.conflict, "JPA insert reservation retired");
+        roots[insertionSlot] = entity;
+        index.finishReservation(insertionSlot, true);
+        insertionSlot = size_t.max;
+        return Error.init;
+    }
+
+    /// Cancels only the insertion that acquired this ticket.
+    package void cancelInsert(ulong ticket) scope nothrow @nogc
+    {
+        if (!ownsInsert(ticket))
+            return;
+        snapshots[insertionSlot].clear();
+        index.finishReservation(insertionSlot, false);
+        insertionSlot = size_t.max;
+    }
+
+    private bool ownsInsert(ulong ticket) const scope nothrow @nogc
+    {
+        return insertionSlot != size_t.max && insertionTicket == ticket;
     }
 
     /// Finds the managed instance for a canonical key.
@@ -162,6 +220,7 @@ struct ManagedEntities
     {
         roots[] = null;
         index.clear();
+        insertionSlot = size_t.max;
         foreach (ref snapshot; snapshots)
             snapshot.clear();
     }

@@ -8,8 +8,10 @@ module flint.engine.jpa.mapping_test;
 import flint.arena : Error, RequestArena, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping,
     ResultBinding, planResult, validateEntity, validateMapping;
+import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
 import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, ManagedSnapshotSlot,
     captureLoadedState, planLoadedSnapshot;
+import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding, ParameterBindingPlan, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jpa.result_binding : planManagedResult;
@@ -349,4 +351,39 @@ unittest
 
     const missingReader = TypedColumnCodec(kinds: 1u << AttributeKind.timestamp);
     assert(planResult(&timestamps, projection, missingReader).error.code == Status.invalidArgument);
+}
+
+@("insert reservations stay invisible, and clear invalidates their publication tickets")
+unittest
+{
+    const plan = planLoadedSnapshot(&recordMapping);
+    assert(plan.ok);
+    auto fields = new AttributeSnapshot[1];
+    auto backing = new ubyte[8];
+    ManagedSnapshotSlot[1] snapshots = [ManagedSnapshotSlot(fields, backing)];
+    IdentitySlot[1] identities;
+    Object[1] roots;
+    Error error;
+    scope managed = ManagedEntities(identities[], roots[], error, snapshots[]);
+    assert(error.code == Status.ok);
+    enum key = EntityIdentity(0, -9);
+    auto record = new Record;
+    record.id = key.identifier;
+
+    AttributeValue[1] values;
+    const retired = managed.stageInsert(key, plan.value, record, values[]);
+    assert(retired.ok);
+    assert(values[0].integer == key.identifier);
+    assert(managed.find(key).error.code == Status.notFound);
+    assert(managed.detach(key).error.code == Status.notFound);
+    assert(managed.manage(key, record, plan.value).code == Status.conflict);
+
+    managed.clear();
+    const current = managed.stageInsert(key, plan.value, record, values[]);
+    assert(current.ok && current.value != retired.value);
+    managed.cancelInsert(retired.value);
+    assert(managed.publishInsert(retired.value, record).code == Status.conflict);
+    assert(managed.find(key).error.code == Status.notFound);
+    assert(managed.publishInsert(current.value, record).code == Status.ok);
+    assert(managed.find(key).value is record);
 }

@@ -26,6 +26,7 @@ private enum SlotState : ubyte
 {
     empty,
     live,
+    reserved,
     deleted,
 }
 
@@ -70,7 +71,7 @@ struct IdentityIndex
     Result!size_t find(EntityIdentity key) const scope nothrow @nogc
     {
         const result = probe(key);
-        if (!result.found)
+        if (!result.found || slots[result.slot].state != SlotState.live)
             return Result!size_t(size_t.max, Error(Status.notFound, "JPA identity is not managed"));
         return Result!size_t(result.slot);
     }
@@ -78,12 +79,30 @@ struct IdentityIndex
     /// Assigns a slot for a new identity or returns the existing claim without changing it.
     Result!IdentityClaim claim(EntityIdentity key) scope nothrow @nogc
     {
+        return claimSlot(key, SlotState.live);
+    }
+
+    /// Reserves a slot that excludes the same key from other claims before it is visible to find.
+    package Result!IdentityClaim reserve(EntityIdentity key) scope nothrow @nogc
+    {
+        return claimSlot(key, SlotState.reserved);
+    }
+
+    /// Resolves the current context's reservation when its statement has completed.
+    package void finishReservation(size_t slot, bool publish) scope nothrow @nogc
+    {
+        assert(slots[slot].state == SlotState.reserved);
+        slots[slot].state = publish ? SlotState.live : SlotState.deleted;
+    }
+
+    private Result!IdentityClaim claimSlot(EntityIdentity key, SlotState state) scope nothrow @nogc
+    {
         const result = probe(key);
         if (result.slot == size_t.max)
             return Result!IdentityClaim(IdentityClaim.init, Error(Status.resourceExhausted,
                     "JPA identity index is full"));
         if (!result.found)
-            slots[result.slot] = IdentitySlot(key, SlotState.live);
+            slots[result.slot] = IdentitySlot(key, state);
         return Result!IdentityClaim(IdentityClaim(result.slot, !result.found));
     }
 
@@ -111,7 +130,7 @@ struct IdentityIndex
         foreach (_; 0 .. slots.length)
         {
             const slot = &slots[position];
-            if (slot.state == SlotState.live)
+            if (slot.state == SlotState.live || slot.state == SlotState.reserved)
             {
                 if (slot.key.root == key.root && slot.key.identifier == key.identifier)
                     return Probe(position, true);
