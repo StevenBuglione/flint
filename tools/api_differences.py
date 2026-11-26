@@ -3,9 +3,12 @@
 
 The page is the hand-written front section (api/java-differences-intro.md) followed by lists generated from every
 api/*/mapping.json:
-- each adapted entry, with its rules or deviations and 'Java -> Flint';
-- each excluded entry, with its category;
-- deferred elements only as counts per Java package.
+- each adapted entry, with its rules or deviations, 'Java -> Flint' and its note;
+- each excluded entry, with its category and note;
+- deferred elements as counts per Java package, plus the deferred entries that record a reason.
+
+An entry's free-text 'note' and 'reason' fields are where a lane records a behaviour difference a rule ID alone does
+not show (for example, that Java's null-argument exceptions are not reproduced); both are rendered.
 
 Elements are classified exactly as `flint api coverage` does: an exact id wins, then the pattern with the longest
 literal prefix, then fewer '**', then the longer pattern; '*' stays within one name and '**' crosses everything.
@@ -131,7 +134,12 @@ def package_of(key, packages):
 
 
 def cell(text):
-    return text.replace('|', '\\|')
+    return text.replace('|', '\\|').replace('\n', ' ')
+
+
+def note_of(entry):
+    """The entry's free-text note and reason, joined."""
+    return ' '.join(cell(str(entry[k])) for k in ('note', 'reason') if entry.get(k))
 
 
 def render(root):
@@ -139,7 +147,7 @@ def render(root):
     rules, deviations, categories = rulebook(text)
     problems = []
     out = [(root / INTRO).read_text().rstrip('\n'), '']
-    summary, adapted, excluded, deferred = [], {}, {}, {}
+    summary, adapted, excluded, deferred, reasons = [], {}, {}, {}, {}
     for repo, (elements, manifests) in repos(root).items():
         classifier = Classifier(elements)
         packages, hits = {}, collections.Counter()
@@ -172,6 +180,8 @@ def render(root):
                 if not cited:
                     problems.append(f'api/{repo}/mapping.json: adapted {match} cites no rule or deviation')
                 adapted.setdefault(repo, []).append((package_of(match, packages), match, entry, hits[match]))
+            elif status == 'excluded' and entry.get('category') == 'deferred' and note_of(entry):
+                reasons.setdefault(repo, []).append((package_of(match, packages), match, entry, hits[match]))
             elif status == 'excluded' and entry.get('category') != 'deferred':
                 category = entry.get('category', '')
                 if category not in categories:
@@ -199,10 +209,11 @@ def render(root):
     for repo in sorted(adapted):
         out += [f'### {repo}', '']
         for package, rows in groupby(adapted[repo]):
-            out += [f'#### {package}', '', '| Java | Flint | Rules |', '| --- | --- | --- |']
+            out += [f'#### {package}', '', '| Java | Flint | Rules | Note |', '| --- | --- | --- | --- |']
             for _, match, entry, hit in rows:
                 rules_cell = ', '.join(link_rule(r) for r in entry.get('rules', []))
-                out.append(f"| `{cell(match)}`{scope(match, hit)} | `{cell(entry.get('d', ''))}` | {rules_cell} |")
+                out.append(f"| `{cell(match)}`{scope(match, hit)} | `{cell(entry.get('d', ''))}` | {rules_cell} "
+                           f"| {note_of(entry)} |")
             out.append('')
     out += ['## Excluded elements', '',
             'These Java elements have no Flint counterpart, for the reason the category gives '
@@ -210,9 +221,9 @@ def render(root):
     for repo in sorted(excluded):
         out += [f'### {repo}', '']
         for package, rows in groupby(excluded[repo]):
-            out += [f'#### {package}', '', '| Java | Reason |', '| --- | --- |']
+            out += [f'#### {package}', '', '| Java | Reason | Note |', '| --- | --- | --- |']
             for _, match, entry, hit in rows:
-                out.append(f"| `{cell(match)}`{scope(match, hit)} | `{entry.get('category', '')}` |")
+                out.append(f"| `{cell(match)}`{scope(match, hit)} | `{entry.get('category', '')}` | {note_of(entry)} |")
             out.append('')
     out += ['## Not yet ported', '',
             'Deferred elements, counted per Java package. Each is planned for the phase shown and is classified '
@@ -224,6 +235,14 @@ def render(root):
         for package in sorted(deferred[repo]):
             c = deferred[repo][package]
             out.append(f"| {package} | {c['phase 2']:,} | {c['phase 3']:,} |")
+        out.append('')
+    if reasons:
+        out += ['### Deferred entries with a recorded reason', '',
+                'Most deferred elements simply wait for their lane. These record why, or what they wait on.', '',
+                '| Repo | Java | Phase | Reason |', '| --- | --- | --- | --- |']
+        for repo in sorted(reasons):
+            for _, match, entry, hit in sorted(reasons[repo], key=lambda r: r[1]):
+                out.append(f"| {repo} | `{cell(match)}`{scope(match, hit)} | {entry.get('phase', '')} | {note_of(entry)} |")
         out.append('')
     header = ('<!-- GENERATED by tools/api_differences.py from api/*/mapping.json and api/java-differences-intro.md. '
               'Do not edit; run: python3 tools/api_differences.py --write -->')

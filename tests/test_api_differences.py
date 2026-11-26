@@ -78,14 +78,18 @@ class ApiDifferencesTest(unittest.TestCase):
     def test_page_lists_adapted_and_excluded_and_counts_deferred(self):
         self.mapping({
             'p.**': {'status': 'excluded', 'category': 'deferred', 'phase': '2'},
-            'p.A#get()': {'status': 'adapted', 'rules': ['R4', 'D-7'], 'd': 'flint.p.A.get'},
+            'p.A#get()': {'status': 'adapted', 'rules': ['R4', 'D-7'], 'd': 'flint.p.A.get',
+                          'note': "Java's null-argument exceptions are not reproduced"},
             'q.Loader': {'status': 'excluded', 'category': 'jvm-runtime'},
+            'p.B#y()': {'status': 'excluded', 'category': 'deferred', 'phase': '2', 'reason': 'waits on NavigableSet'},
         })
         page, problems = api_differences.render(self.root)
         self.assertEqual(problems, [])
+        self.assertIn("| Java's null-argument exceptions are not reproduced |", page)
+        self.assertIn('| r | `p.B#y()` | 2 | waits on NavigableSet |', page)
         self.assertIn('| `p.A#get()` | `flint.p.A.get` | [R4](api-mapping.md#r4-classt-parameters), '
                       '[D-7](api-mapping.md#deviations) |', page)
-        self.assertIn('| `q.Loader` | `jvm-runtime` |', page)
+        self.assertIn('| `q.Loader` | `jvm-runtime` |  |', page)
         self.assertIn('| p | 4 | 0 |', page)                        # p.A, p.B, p.B#x(), p.B#y()
         self.assertIn('| p.sub | 2 | 0 |', page)                    # p.sub.C, p.sub.C#z(), by their own package
         self.assertTrue(page.startswith('<!-- GENERATED'))

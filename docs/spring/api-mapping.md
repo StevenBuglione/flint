@@ -343,6 +343,6 @@ An element key is an element id from the manifest, as `flint api extract` writes
   } }
 ```
 
-`d` names the D symbol, never a template instance (`body`, not `body!T`). An adapted entry's `rules` cite rules (`R4`) or deviations from the table above (`D-7`, `D-JPA-2`).
+`d` names the D symbol, never a template instance (`body`, not `body!T`). An optional free-text `note` (or `reason`) records a behaviour difference the rule ID alone does not show, such as "Java's null-argument exceptions are not reproduced"; the log below renders it. An adapted entry's `rules` cite rules (`R4`) or deviations from the table above (`D-7`, `D-JPA-2`).
 
 **The user-facing log.** [java-differences.md](java-differences.md) lists every adapted and excluded element, and counts the deferred ones, generated from all `api/*/mapping.json` by `python3 tools/api_differences.py --write`. The API gate (`tools/gates.py --gate api`) fails when the page is stale, or when an adapted entry cites a rule or deviation this page does not define. So a slice that adds or changes an adapted or excluded entry regenerates the page in the same commit.
