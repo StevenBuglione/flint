@@ -1204,3 +1204,4 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **The mapping:** `AccessibleObject` and `Member` map to engine-aot's `MemberDescriptorRef`, with the declaring descriptor, the kind, a safe pointer for method, constructor or property, and `.init` when absent.
   - **Scope:** only metadata that Flint AOT generates is exposed. Missing categories throw `UnsupportedOperationException` until the generator adds them; no reflection is used.
   - **Ownership:** framework-core owns the type, and every lane cites this deviation.
+- 2026-11-26 04:20Z, owner: **GitHub Actions are never run remotely,** and no self-hosted runner is registered. Workflows are run locally with `act` when wanted. Required checks are enforced on Flint's own machines: the module definition of done on venus, and the merge train, with the apps verification and `flint budget`, on posidon, the desktop and neptune.
