@@ -479,6 +479,10 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
                  'apps/flint/test/flint_tool/api/api_test.d', 'apps/flint/src/flint_tool/api/coverage.d',
                  'framework/web/README.md']
         self.assertEqual(merge_train.build_relevant(quiet, closure, names, ai_only), [])
+        new_package = lambda path: ('subPackage "framework/web"\n', 'subPackage "framework/web"\nsubPackage "framework/micrometer-commons"\n')
+        self.assertEqual(merge_train.build_relevant(['dub.sdl'], closure, names, new_package), [])
+        app_package = lambda path: ('dflags "-a"\n', 'dflags "-b"\n')
+        self.assertEqual(merge_train.build_relevant(['dub.sdl'], closure, names, app_package), ['dub.sdl'])
         self.assertEqual(merge_train.build_relevant(['policy/framework.json'], closure, names, web),
                          ['policy/framework.json'])
         self.assertEqual(merge_train.build_relevant(['framework/web/source/flint/web/package.d',

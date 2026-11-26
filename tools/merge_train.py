@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import shlex
 import subprocess
@@ -262,6 +263,16 @@ def build_relevant(paths, closure, names=None, show=None):
     relevant = []
     for path in paths:
         if path.endswith(NOT_BUILD) or path.rsplit('/', 1)[-1] in NOT_BUILD_NAMES or path.startswith(NOT_BUILD_PREFIXES):
+            continue
+        if path == 'dub.sdl' and show is not None:
+            # Registering a new package (a subPackage line) outside the apps' closure cannot change their build.
+            old, new = show(path)
+            changed = set(old.splitlines()) ^ set(new.splitlines())
+            outside = all(re.fullmatch(r'\s*subPackage\s+"([^"]+)"\s*', line) and not
+                          touches([re.fullmatch(r'\s*subPackage\s+"([^"]+)"\s*', line).group(1).rstrip('/') + '/'],
+                                  closure) for line in changed if line.strip())
+            if not outside:
+                relevant.append(path)
             continue
         if path in REGISTRIES:
             if names is None or show is None:
