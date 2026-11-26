@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,074 | 302 | 1,871 | 15,174 |
+| framework | openjdk@21.0.13 | 1,073 | 302 | 1,871 | 15,175 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10082,7 +10082,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
 | java.sql | 1,005 | 0 |
-| java.text | 532 | 0 |
+| java.text | 533 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
@@ -11061,6 +11061,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.ByteBuffer#putLong(long)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#putShort(int,short)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#putShort(short)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
+| framework | `java.text.DateFormat#<init>()` | 2 | Subclass initialization is implicit. Flint has no DateFormat constructor for an explicit super() call, which Java subclasses can make. |
 | framework | `java.text.DateFormat#format(Date)` | 2 | With SimpleDateFormat, a null Date or an absent Calendar can terminate the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#getTimeZone()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#isLenient()` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
