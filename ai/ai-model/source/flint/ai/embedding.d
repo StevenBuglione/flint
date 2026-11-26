@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/embedding/{DefaultEmbeddingOptions,DefaultEmbeddingOptionsBuilder,EmbeddingOptions,EmbeddingRequest,EmbeddingResultMetadata}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/embedding/{DefaultEmbeddingOptions,DefaultEmbeddingOptionsBuilder,Embedding,EmbeddingOptions,EmbeddingRequest,EmbeddingResultMetadata}.java
 // Modified by the Flint authors.
 module flint.ai.embedding;
 
-import flint.ai.model : ModelOptions, ModelRequest, ResultMetadata;
+import flint.ai.model : ModelOptions, ModelRequest, ModelResult, ResultMetadata;
 import flint.engine.aot.any : Any;
+import flint.java.lang : JavaObject;
 import flint.java.util : List;
 import flint.util : MimeType;
 import std.typecons : Nullable;
@@ -28,6 +29,115 @@ import std.typecons : Nullable;
 
 private alias ModelName = Nullable!string;
 private alias Dimensions = Nullable!int;
+
+/// The vector generated for one embedding input.
+class Embedding : ModelResult!(float[])
+{
+    private float[] embedding_;
+    private Nullable!int index_;
+    private EmbeddingResultMetadata metadata_;
+
+    /// Keeps the supplied vector, index and metadata.
+    this(float[] embedding, Nullable!int index, EmbeddingResultMetadata metadata) pure nothrow @nogc
+    {
+        embedding_ = embedding;
+        index_ = index;
+        metadata_ = metadata;
+    }
+
+    /// Keeps the supplied vector and metadata with a present index.
+    this(float[] embedding, int index, EmbeddingResultMetadata metadata) pure nothrow @nogc
+    {
+        this(embedding, Nullable!int(index), metadata);
+    }
+
+    /// Returns the supplied embedding vector.
+    override float[] getOutput()
+    {
+        return embedding_;
+    }
+
+    /// Returns the index of the embedding, if present.
+    Nullable!int getIndex()
+    {
+        return index_;
+    }
+
+    /// Returns the supplied metadata.
+    override EmbeddingResultMetadata getMetadata()
+    {
+        return metadata_;
+    }
+
+    /// Compares vectors and indices for objects of the same concrete class.
+    bool equals(Object other) pure nothrow @nogc
+    {
+        auto that = cast(Embedding) other;
+        if (this is that)
+            return true;
+        if (that is null || typeid(this) !is typeid(that) || index_.isNull != that.index_.isNull)
+            return false;
+        return (index_.isNull || index_.get() == that.index_.get()) && sameVector(embedding_, that.embedding_);
+    }
+
+    /// Computes the Java hash of the vector and optional index.
+    int hashCode() const pure nothrow @nogc
+    {
+        uint vectorHash;
+        if (embedding_ !is null)
+        {
+            vectorHash = 1;
+            foreach (value; embedding_)
+                vectorHash = 31 * vectorHash + vectorBits(value);
+        }
+
+        const indexHash = index_.isNull ? 0U : cast(uint) index_.get();
+        return cast(int)(31 * (31 + vectorHash) + indexHash);
+    }
+
+    /// Describes the result without rendering the vector elements.
+    override string toString() const
+    {
+        import flint.ai.chat.messages.part : joinRecord;
+        import flint.java.lang : Integer, NullPointerException;
+
+        if (embedding_ is null)
+            throw new NullPointerException();
+        string[5] parts = [
+            "Embedding{embedding=", embedding_.length == 0 ? "<empty>" : "<has data>", ", index=",
+            index_.isNull ? "null" : Integer.toString(index_.get()), "}"
+        ];
+        return joinRecord(parts[]);
+    }
+
+    mixin JavaObject;
+
+    private static bool sameVector(scope const(float)[] left, scope const(float)[] right) pure nothrow @nogc
+    {
+        if (left is right)
+            return true;
+        if (left is null || right is null || left.length != right.length)
+            return false;
+        foreach (i, value; left)
+            if (vectorBits(value) != vectorBits(right[i]))
+                return false;
+        return true;
+    }
+
+    private static uint vectorBits(float value) pure nothrow @nogc
+    {
+        union Bits
+        {
+            float number;
+            uint pattern;
+        }
+
+        Bits bits = void;
+        bits.number = value;
+        // Float.floatToIntBits preserves signed zero and gives every NaN the same bits.
+        return (bits.pattern & 0x7fff_ffffU) > 0x7f80_0000U ? 0x7fc0_0000U : bits.pattern;
+    }
+}
 
 /// Selects the model and dimensions of an embedding request.
 interface EmbeddingOptions : ModelOptions

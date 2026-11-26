@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 133 | 250 | 0 | 15,413 |
+| ai | spring-ai@v2.1.0 | 137 | 254 | 0 | 15,405 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,340 | 1,293 | 4,848 | 30,353 |
@@ -325,6 +325,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.embedding.DefaultEmbeddingOptions.Builder#dimensions(Integer)` | `flint.ai.embedding.DefaultEmbeddingOptions.Builder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.DefaultEmbeddingOptions.Builder#model(String)` | `flint.ai.embedding.DefaultEmbeddingOptions.Builder.model` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.DefaultEmbeddingOptionsBuilder#dimensions(Integer)` | `flint.ai.embedding.DefaultEmbeddingOptionsBuilder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.Embedding#<init>(float[],Integer,EmbeddingResultMetadata)` | `flint.ai.embedding.Embedding.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.Embedding#equals(Object)` | `flint.ai.embedding.Embedding.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.embedding.Embedding#getIndex()` | `flint.ai.embedding.Embedding.getIndex` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.embedding.Embedding#hashCode()` | `flint.ai.embedding.Embedding.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions#getDimensions()` | `flint.ai.embedding.EmbeddingOptions.getDimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions#getModel()` | `flint.ai.embedding.EmbeddingOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions.Builder#dimensions(Integer)` | `flint.ai.embedding.EmbeddingOptions.Builder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -7931,7 +7935,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.elevenlabs | 0 | 61 |
 | org.springframework.ai.elevenlabs.aot | 0 | 3 |
 | org.springframework.ai.elevenlabs.api | 0 | 290 |
-| org.springframework.ai.embedding | 58 | 0 |
+| org.springframework.ai.embedding | 50 | 0 |
 | org.springframework.ai.embedding.observation | 37 | 0 |
 | org.springframework.ai.evaluation | 23 | 0 |
 | org.springframework.ai.google.genai | 0 | 150 |
@@ -9659,6 +9663,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 
 | Repo | Java | Phase | Reason |
 | --- | --- | --- | --- |
+| ai | `org.springframework.ai.embedding.Embedding#<init>(float[],Integer)` | 2 | Requires the shared EmbeddingResultMetadata.EMPTY instance. |
 | ai | `org.springframework.ai.embedding.EmbeddingResultMetadata#EMPTY` | 2 | Requires a reviewed engine-aot helper to preserve shared metadata identity safely. |
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#getRoles()` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#setRoles(List)` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
