@@ -510,6 +510,9 @@
   "data-commons": {
    "directory": "framework/data-commons",
    "module": "flint.data.domain",
+   "also": [
+    "flint.data.core"
+   ],
    "repo": "data-commons",
    "licence": "Apache-2.0",
    "upstream": "spring-data-commons@4.2.0",
