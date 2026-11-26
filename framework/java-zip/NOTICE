@@ -1,0 +1,9 @@
+Flint Java ZIP
+Copyright 2026 The Flint authors
+
+CRC32 and Checksum are derived from OpenJDK 21.0.13, with their original
+copyright notices and Classpath Exception. Flint links the pinned zlib
+provider for CRC-32. The D tests are original Flint conformance tests.
+
+SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
+See LICENSE for the license and Classpath Exception.
