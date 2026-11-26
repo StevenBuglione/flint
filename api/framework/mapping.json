@@ -5840,6 +5840,7 @@
 "java.util.HexFormat#toLowHexDigit(int)":{"status":"ported","d":"flint.java.util.hexformat.HexFormat.toLowHexDigit"},
 "java.util.HexFormat#withLowerCase()":{"status":"ported","d":"flint.java.util.hexformat.HexFormat.withLowerCase"},
 "java.util.HexFormat#withUpperCase()":{"status":"ported","d":"flint.java.util.hexformat.HexFormat.withUpperCase"},
+"java.util.Map.Entry":{"status":"adapted","rules":["R13"],"d":"flint.java.util.MapEntry","note":"Hoisted to MapEntry and exposed through Map.Entry as an alias."},
 "java.util.ServiceLoader":{"status":"excluded","category":"runtime-reflection"},
 "java.util.ServiceLoader#**":{"status":"excluded","category":"runtime-reflection"},
 "java.util.ServiceLoader.**":{"status":"excluded","category":"runtime-reflection"},

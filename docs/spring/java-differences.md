@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 56 | 69 | 0 | 4,327 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 231 | 132 | 1,871 | 16,187 |
+| framework | openjdk@21.0.13 | 231 | 133 | 1,871 | 16,186 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 509 | 1 | 88 | 11,815 |
@@ -1938,6 +1938,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.HexFormat#toHexDigits(long)` | `flint.java.util.hexformat.HexFormat.toHexDigits` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#toHexDigits(long,int)` | `flint.java.util.hexformat.HexFormat.toHexDigits` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#toHexDigits(short)` | `flint.java.util.hexformat.HexFormat.toHexDigits` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.Map.Entry` | `flint.java.util.MapEntry` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to MapEntry and exposed through Map.Entry as an alias. |
 | `java.util.UUID#equals(Object)` | `flint.java.util.uuid.UUID.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#hashCode()` | `flint.java.util.uuid.UUID.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#toString()` | `flint.java.util.uuid.UUID.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -9583,7 +9584,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 141 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 2,321 | 0 |
+| java.util | 2,320 | 0 |
 | java.util.concurrent | 1,264 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |
 | java.util.concurrent.locks | 215 | 0 |
