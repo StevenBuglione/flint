@@ -76,6 +76,7 @@
       "layer": "core",
       "dependencies": [
         "boot-core",
+        "beans",
         "context",
         "engine-aot",
         "java"

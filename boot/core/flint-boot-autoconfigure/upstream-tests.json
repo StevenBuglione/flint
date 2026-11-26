@@ -131,8 +131,25 @@
       "status": "deferred"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionEvaluationReportTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/core/flint-boot-autoconfigure/tests/autoconfigure_tests/condition_evaluation_report_factory_test.d",
+      "methods": {
+        "ported": [
+          "get",
+          "parent",
+          "parentBottomUp"
+        ],
+        "skipped": {
+          "recordConditionEvaluations": "Deferred with condition recording and evaluation until Context Condition and Core AnnotatedTypeMetadata are ported.",
+          "fullMatch": "Deferred with condition recording and evaluation until Context Condition and Core AnnotatedTypeMetadata are ported.",
+          "notFullMatch": "Deferred with condition recording and evaluation until Context Condition and Core AnnotatedTypeMetadata are ported.",
+          "springBootConditionPopulatesReport": "Deferred with condition recording and evaluation until Context Condition and Core AnnotatedTypeMetadata are ported.",
+          "testDuplicateConditionAndOutcomes": "Deferred with condition recording and evaluation until Context Condition and Core AnnotatedTypeMetadata are ported.",
+          "negativeOuterPositiveInnerBean": "Deferred with condition recording and evaluation until Context Condition and Core AnnotatedTypeMetadata are ported.",
+          "reportWhenSameShortNamePresentMoreThanOnceShouldUseFullyQualifiedName": "Deferred with condition recording and evaluation until Context Condition and Core AnnotatedTypeMetadata are ported.",
+          "reportMessageWhenSameShortNamePresentMoreThanOnceShouldUseFullyQualifiedName": "Deferred with condition recording and evaluation until Context Condition and Core AnnotatedTypeMetadata are ported."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionMessageTests.java": {
       "d": "boot/core/flint-boot-autoconfigure/tests/autoconfigure_tests/condition_message_test.d",

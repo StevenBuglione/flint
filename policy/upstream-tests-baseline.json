@@ -437,7 +437,6 @@
       "org/springframework/boot/autoconfigure/condition/AllNestedConditionsTests.java",
       "org/springframework/boot/autoconfigure/condition/AnyNestedConditionTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionEvaluationReportAutoConfigurationImportListenerTests.java",
-      "org/springframework/boot/autoconfigure/condition/ConditionEvaluationReportTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnBeanTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnCheckpointRestoreTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnCloudPlatformTests.java",

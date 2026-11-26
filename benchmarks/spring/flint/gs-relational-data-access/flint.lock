@@ -33,7 +33,7 @@ name = "flint:boot-autoconfigure"
 kind = "core"
 source = "workspace"
 scope = "build"
-dependencies = ["flint:boot-core", "flint:context", "flint:engine-aot", "flint:java"]
+dependencies = ["flint:beans", "flint:boot-core", "flint:context", "flint:engine-aot", "flint:java"]
 
 [[package]]
 name = "flint:boot-core"

@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
-| boot | spring-boot@v4.2.0 | 47 | 103 | 2,133 | 13,320 |
+| boot | spring-boot@v4.2.0 | 47 | 107 | 2,133 | 13,316 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -765,6 +765,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#find(BeanFactory)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.find` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#get(ConfigurableListableBeanFactory)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.get` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getParent()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getParent` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage` | `flint.boot.autoconfigure.condition_runtime.ConditionMessage` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage#andCondition(Class,Object...)` | `flint.boot.autoconfigure.condition_runtime.ConditionMessage.andCondition` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R4](api-mapping.md#r4-classt-parameters), [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage#andCondition(String,Object...)` | `flint.boot.autoconfigure.condition_runtime.ConditionMessage.andCondition` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R7](api-mapping.md#r7-overloads) |  |
@@ -9903,7 +9907,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.autoconfigure.aop | 2 | 0 |
 | org.springframework.boot.autoconfigure.availability | 2 | 0 |
 | org.springframework.boot.autoconfigure.cache | 11 | 0 |
-| org.springframework.boot.autoconfigure.condition | 107 | 0 |
+| org.springframework.boot.autoconfigure.condition | 103 | 0 |
 | org.springframework.boot.autoconfigure.container | 6 | 0 |
 | org.springframework.boot.autoconfigure.context | 34 | 0 |
 | org.springframework.boot.autoconfigure.data | 20 | 0 |

@@ -1,11 +1,13 @@
 // Ported from spring-boot v4.2.0: core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/condition/ConditionMessage.java
-// with ConditionOutcome.java from the same directory.
+// with ConditionOutcome.java and ConditionEvaluationReport.java from the same directory.
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: split runtime APIs from the condition UDA leaf, and apply rulebook R4, R5, R7,
 // R10, R11, R13 and R20 to the Java API shapes. The sibling module follows R22.
 module flint.boot.autoconfigure.condition_runtime;
 
+import flint.beans.factory : BeanFactory;
+import flint.beans.factory.config : ConfigurableListableBeanFactory;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : simpleTypeName, typeNameOf;
 import flint.java.lang : Boolean, IllegalArgumentException, JavaObject, NullPointerException, String, stringHashCode;
@@ -410,4 +412,53 @@ class ConditionOutcome
     }
 
     mixin JavaObject;
+}
+
+/// The condition evaluation report associated with a bean factory.
+final class ConditionEvaluationReport
+{
+    private enum BEAN_NAME = "autoConfigurationReport";
+    private ConditionEvaluationReport parent;
+
+    private this()
+    {
+    }
+
+    /// The report already registered with the parent bean factory, if present.
+    ConditionEvaluationReport getParent()
+    {
+        return parent;
+    }
+
+    /// Find the report when the bean factory can hold a report singleton.
+    static ConditionEvaluationReport find(BeanFactory beanFactory)
+    {
+        auto configurable = cast(ConfigurableListableBeanFactory) beanFactory;
+        return configurable is null ? null : get(configurable);
+    }
+
+    /// Find or create the report singleton, then discover a newly available parent report.
+    static ConditionEvaluationReport get(ConfigurableListableBeanFactory beanFactory)
+    {
+        if (beanFactory is null)
+            throw new NullPointerException();
+        synchronized (cast(Object) beanFactory)
+        {
+            ConditionEvaluationReport report;
+            if (beanFactory.containsSingleton(BEAN_NAME))
+                report = beanFactory.getBean!ConditionEvaluationReport(BEAN_NAME);
+            else
+            {
+                report = new ConditionEvaluationReport();
+                beanFactory.registerSingleton(BEAN_NAME, report);
+            }
+            if (report.parent is null)
+            {
+                auto parentFactory = beanFactory.getParentBeanFactory();
+                if (parentFactory !is null && parentFactory.containsBean(BEAN_NAME))
+                    report.parent = parentFactory.getBean!ConditionEvaluationReport(BEAN_NAME);
+            }
+            return report;
+        }
+    }
 }
