@@ -3,6 +3,10 @@
     "incremental_linked_bytes": 150,
     "template_instances": 2
   },
+  "flint.java.lang.number": {
+    "incremental_linked_bytes": 1232,
+    "template_instances": 2
+  },
   "flint.java.lang.runnable": {
     "incremental_linked_bytes": 757,
     "template_instances": 33
