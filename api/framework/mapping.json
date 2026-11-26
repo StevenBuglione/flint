@@ -6871,7 +6871,7 @@
 "java.util.Optional#isEmpty()":{"d":"flint.java.util.Optional.isEmpty","status":"ported"},
 "java.util.Optional#isPresent()":{"d":"flint.java.util.Optional.isPresent","status":"ported"},
 "java.util.Optional#map(Function)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java rejects a null mapper even when the Optional is empty. Flint returns the empty value."},
-"java.util.Optional#of(T)":{"d":"flint.java.util.Optional.of","status":"ported"},
+"java.util.Optional#of(T)":{"status":"excluded","category":"deferred","phase":"2","reason":"Optional.of must keep empty string and array values present under R26. The current null check rejects zero-length D slices whose storage compares to null."},
 "java.util.Optional#ofNullable(T)":{"d":"flint.java.util.Optional.ofNullable","status":"ported"},
 "java.util.Optional#or(Supplier)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java rejects a null supplier even when a value is present. Flint returns the present value."},
 "java.util.Optional#orElse(T)":{"d":"flint.java.util.Optional.orElse","status":"ported"},
