@@ -774,8 +774,31 @@
       "status": "deferred"
     },
     "org/springframework/http/server/ServletServerHttpRequestTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/servlet_server_http_request_tests.d",
+      "methods": {
+        "ported": [
+          "getBody",
+          "getHeaders",
+          "getHeadersWithCharacterEncoding",
+          "getHeadersWithEmptyContentTypeAndEncoding",
+          "getHeadersWithWildcardContentType",
+          "getMethod",
+          "getUriForSimplePath",
+          "getUriWithEncoding",
+          "getUriWithQueryString"
+        ],
+        "skipped": {
+          "attributes": "Requires the live request attribute map.",
+          "getEmptyFormBody": "Form body reconstruction is deferred.",
+          "getFormBody": "Form body reconstruction is deferred.",
+          "getFormBodyWhenNotEncodedCharactersPresent": "Form body reconstruction is deferred.",
+          "getFormBodyWhenQueryParamsAlsoPresent": "Form body reconstruction is deferred.",
+          "getFormBodyWithNotUtf8Charset": "Form body reconstruction is deferred.",
+          "getUriWithMalformedPath": "Requires the servlet URI recovery contract.",
+          "getUriWithMalformedQueryParam": "Requires the servlet URI recovery contract."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/http/server/ServletServerHttpResponseTests.java": {
       "d": "framework/framework-test/tests/servlet_server_http_response_tests.d",

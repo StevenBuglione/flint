@@ -1875,9 +1875,7 @@ struct HttpHeaders
         string[4] inlineValues;
         size_t entriesUsed;
         size_t valuesUsed;
-        // The text setContentType wrote and the MediaType it came from: getContentType answers from them while
-        // the header still holds that same string, instead of parsing it again (Spring parses each time but
-        // caches MimeTypeUtils.parseMimeType).
+        // The header text and its parsed MediaType. The cache applies while the header holds the same string.
         string contentTypeText;
         MediaType contentTypeParsed;
 
@@ -2404,6 +2402,12 @@ struct HttpHeaders
             throw new IllegalArgumentException("Content-Type cannot contain wildcard subtype '*'");
         const text = mediaType.toString();
         set(CONTENT_TYPE, text);
+        rememberContentType(text, mediaType);
+    }
+
+    /// Reuses a parsed request media type while its header text is current.
+    package(flint) void rememberContentType(string text, const MediaType mediaType) pure nothrow @nogc
+    {
         store.contentTypeText = text;
         store.contentTypeParsed = mediaType;
     }

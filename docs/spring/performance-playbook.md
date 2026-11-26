@@ -799,6 +799,17 @@ HTTP 413. Matched venus probes at `339da7a55` and `15d9c5f33` retained
 Framework-test stayed at 8,486. The stock maps retain the inherited Phobos
 objects covered by `6c9e5f49`.
 
+Servlet request headers fill in a missing Content-Type charset from the
+servlet encoding and reuse the parsed media type. An unquoted final charset
+that matches the servlet encoding takes the direct path. The matched LDC
+release probe used real ServletEngineRequest instances and recorded identical
+GC bytes over 2,000 reads in each of four cases, with and without a typed read
+for plain and explicit-charset headers. Matched venus size probes at
+`8a062b2b7` and `5c6925677` retained Web's 528,953 O3 and 522,513 Oz loadable
+bytes. Web MVC and framework-test each grew by 1,160 O3 and 1,352 Oz bytes.
+Template counts were 6,991 for Web, 6,060 for Web MVC and 8,486 for framework-test
+in both variants. The coordinator approved the deltas under `6c9e5f49`.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

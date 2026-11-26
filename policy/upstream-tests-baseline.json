@@ -9089,7 +9089,6 @@
       "org/springframework/http/server/DefaultRequestPathTests.java",
       "org/springframework/http/server/ServletRequestHeadersAdapterTests.java",
       "org/springframework/http/server/ServletResponseHeadersAdapterTests.java",
-      "org/springframework/http/server/ServletServerHttpRequestTests.java",
       "org/springframework/http/server/observation/DefaultServerRequestObservationConventionTests.java",
       "org/springframework/http/server/observation/OpenTelemetryServerRequestObservationConventionTests.java",
       "org/springframework/http/server/observation/ServerRequestObservationContextTests.java",

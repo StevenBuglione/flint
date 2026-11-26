@@ -2,8 +2,8 @@
 `org.springframework.http.server`: the server-side `HttpRequest` and response, over the servlet API.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/http/server/
-(ServerHttpRequest.java, ServerHttpResponse.java, ServletServerHttpRequest.java,
-ServletServerHttpResponse.java).
+(ServerHttpRequest.java, ServerHttpResponse.java, ServletRequestHeadersAdapter.java,
+ServletServerHttpRequest.java, ServletServerHttpResponse.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook (docs/spring/api-mapping.md). As in Spring 7,
@@ -15,7 +15,9 @@ module flint.http.server;
 import flint.http : HttpHeaders, HttpInputMessage, HttpMethod, HttpOutputMessage, HttpRequest,
     HttpStatusCode, MediaType;
 import flint.jakarta.servlet.http : HeaderFieldSource, HttpServletRequest, HttpServletResponse;
+import flint.java.lang : IllegalArgumentException;
 import flint.java.net : URI;
+import flint.java.nio.charset : Charset;
 
 @safe:
 
@@ -80,16 +82,39 @@ class ServletServerHttpRequest : ServerHttpRequest
                 foreach (name; servletRequest.getHeaderNames())
                     foreach (value; servletRequest.getHeaders(name))
                         headers.add(name, value);
-            // Spring adds Content-Type with the request's character encoding when the header lacks one.
-            const contentType = servletRequest.getContentType();
-            if (contentType !is null && !headers.containsHeader(HttpHeaders.CONTENT_TYPE))
-                headers.set(HttpHeaders.CONTENT_TYPE, contentType);
+            reconcileContentType();
             const length = servletRequest.getContentLengthLong();
             if (length >= 0 && !headers.containsHeader(HttpHeaders.CONTENT_LENGTH))
                 headers.setContentLength(length);
             headersRead = true;
         }
         return headers;
+    }
+
+    private void reconcileContentType()
+    {
+        auto text = headers.getFirst(HttpHeaders.CONTENT_TYPE);
+        if (text.length == 0)
+            return;
+        const encoding = servletRequest.getCharacterEncoding();
+        if (encoding.length == 0 || hasCharsetSuffix(text, encoding))
+            return;
+
+        try
+        {
+            auto mediaType = MediaType.parseMediaType(text);
+            if (!mediaType.getCharset())
+            {
+                mediaType = MediaType(mediaType, Charset.forName(encoding));
+                text = mediaType.toString();
+                headers.set(HttpHeaders.CONTENT_TYPE, text);
+            }
+            headers.rememberContentType(text, mediaType);
+        }
+        catch (IllegalArgumentException)
+        {
+            // Keep the original header when the media type or servlet encoding cannot be parsed.
+        }
     }
 
     const(ubyte)[] getBody()
@@ -177,6 +202,26 @@ class ServletServerHttpResponse : ServerHttpResponse
         }
         headersWritten = true;
     }
+}
+
+/// An unquoted final charset already matches the servlet's encoding.
+private bool hasCharsetSuffix(string text, string encoding) pure nothrow @nogc
+{
+    enum parameter = "charset=";
+    if (text.length <= encoding.length + parameter.length)
+        return false;
+    const value = text.length - encoding.length;
+    auto name = value - parameter.length;
+    if (text[value .. $] != encoding || !equalsAscii(text[name .. value], parameter))
+        return false;
+    while (name > 0 && (text[name - 1] == ' ' || text[name - 1] == '\t'))
+        --name;
+    if (name == 0 || text[name - 1] != ';')
+        return false;
+    foreach (c; text[0 .. name - 1])
+        if (c == '"' || c == '\'')
+            return false;
+    return true;
 }
 
 private bool equalsAscii(scope const(char)[] a, scope const(char)[] b) pure nothrow @nogc
