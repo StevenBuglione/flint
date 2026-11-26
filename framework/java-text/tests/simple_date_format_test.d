@@ -450,3 +450,22 @@ unittest
     DateFormat custom = new AdvancesWithoutResult;
     assert(custom.parse("abc") is null);
 }
+
+@("ParseException: empty detail is absent and offset is preserved")
+unittest
+{
+    auto empty = new ParseException("", -7);
+    assert(empty.getMessage() is null);
+    assert(empty.getErrorOffset() == -7);
+    assert(empty.toString() == typeid(empty).name);
+
+    auto absent = new ParseException(null, int.min);
+    assert(absent.getMessage() is null);
+    assert(absent.getErrorOffset() == int.min);
+    assert(absent.toString() == typeid(absent).name);
+
+    auto message = new ParseException("é😀 invalid", int.max);
+    assert(message.getMessage() == "é😀 invalid");
+    assert(message.getErrorOffset() == int.max);
+    assert(message.toString() == typeid(message).name ~ ": é😀 invalid");
+}

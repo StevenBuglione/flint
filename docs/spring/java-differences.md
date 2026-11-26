@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,327 | 392 | 0 | 1,871 | 14,831 |
+| framework | openjdk@21.0.13 | 1,325 | 394 | 0 | 1,871 | 14,831 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2442,6 +2442,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.text.ParseException` | `flint.java.text.ParseException` | [R26](api-mapping.md#r26-null-arrays) | An empty detail is absent in Flint. Java preserves an explicitly empty String. |
+| `java.text.ParseException#<init>(String,int)` | `flint.java.text.ParseException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.text.SimpleDateFormat#applyPattern(String)` | `flint.java.text.SimpleDateFormat.applyPattern` | [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.time
