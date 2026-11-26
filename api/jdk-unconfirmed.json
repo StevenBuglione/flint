@@ -349,8 +349,6 @@
   "java.text.DateFormat#parse(String,ParsePosition)",
   "java.text.MessageFormat",
   "java.text.SimpleDateFormat",
-  "java.text.SimpleDateFormat#<init>(String)",
-  "java.text.SimpleDateFormat#<init>(String,Locale)",
   "java.util.AbstractCollection",
   "java.util.AbstractCollection#<init>()",
   "java.util.AbstractCollection#add(E)",
