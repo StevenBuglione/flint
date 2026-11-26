@@ -46,8 +46,10 @@ FIRST_OBJECT_ALLOWANCES = {
         },
     },
 }
+# Keep the reviewed row and its seeding mode as history when the live allowance is retired.
 FIRST_OBJECT_ROWS = {
-    '|'.join(('link', *probe, profile, f"undeclared module records {allowance['module']}"))
+    '|'.join(('link', *probe, profile, f"undeclared module records {allowance['module']}")):
+        allowance.get('existing_probe', False)
     for probe, allowance in FIRST_OBJECT_ALLOWANCES.items() for profile in allowance['profiles']
 }
 # The original Character generator keeps these tables beside the public functions.
@@ -337,17 +339,20 @@ def may_seed_module_record(root, commit, row, existing_modules):
     if module not in existing_modules and not placement:
         return False
     previous = commit + '^' if commit else 'HEAD'
-    if probe_record(root, previous, package, leaf, probe) is not None:
-        return False
+    prior_probe = probe_record(root, previous, package, leaf, probe)
     current = probe_record(root, commit, package, leaf, probe)
     if current is None:
         return False
     leaves = current.get('leaves', [])
+    if placement and FIRST_OBJECT_ROWS[row]:
+        return prior_probe == current and module not in leaves
+    if prior_probe is not None:
+        return False
     return module not in leaves if placement else 'flint.java.lang' in leaves
 
 
 def baseline_growth(root, current):
-    """Reject new debt, except the approved legacy module records of a new probe."""
+    """Reject new debt, except approved module records for exact probes."""
     if not (root / '.git').exists():
         return []
     if git(root, 'rev-parse', '--is-shallow-repository').stdout.strip() == 'true':

@@ -64,6 +64,54 @@ class LinkClosureTests(unittest.TestCase):
                         'commit', '-qm', 'Add probe without exemption')
             self.assertFalse(approved(edge))
 
+    def test_reviewed_existing_probe_admits_only_its_unchanged_exact_edge(self):
+        leaf = 'flint.java.io.unsupportedencodingexception'
+        module = 'flint.java.io.interruptedioexception'
+        row = f'link|java-io|{leaf}|throw-catch|O3|undeclared module records {module}'
+        oz_row = row.replace('|O3|', '|Oz|')
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(closure.FIRST_OBJECT_ROWS, {row: True, oz_row: True}):
+            root = Path(temporary)
+            subprocess.run(['git', 'init', '-q', root], check=True)
+
+            def commit(message):
+                closure.git(root, 'add', '.')
+                closure.git(root, '-c', 'user.name=Test', '-c', 'user.email=test@example.test',
+                            'commit', '-qm', message)
+
+            probe = root / 'framework/java-io/closure-probes' / leaf / 'throw-catch.json'
+            probe.parent.mkdir(parents=True)
+            entry = {'source': 'closure/unsupported.d', 'leaves': ['flint.java.io', 'flint.java.lang'], 'data': []}
+            probe.write_text(json.dumps(entry))
+            self.assertFalse(closure.may_seed_module_record(root, None, row, set()))
+            baseline = root / closure.BASELINE
+            baseline.parent.mkdir(parents=True)
+            header = {'schema': closure.BASELINE_SCHEMA, 'source_commit': 'a' * 40}
+
+            def write_baseline(violations):
+                baseline.write_text(json.dumps(dict(header, violations=violations)))
+
+            write_baseline([])
+            commit('Seed the original probe')
+            self.assertTrue(closure.may_seed_module_record(root, None, row, set()))
+            self.assertTrue(closure.may_seed_module_record(root, None, oz_row, set()))
+            self.assertFalse(closure.may_seed_module_record(root, None, row.replace('|O3|', '|O2|'), set()))
+            self.assertFalse(closure.may_seed_module_record(root, None, row.replace('|throw-catch|', '|other|'), set()))
+            self.assertFalse(closure.may_seed_module_record(root, None, row.replace('module records', 'leaf'), set()))
+            legacy = row.replace(module, 'flint.java.util')
+            self.assertFalse(closure.may_seed_module_record(root, None, legacy, {'flint.java.util'}))
+            probe.write_text(json.dumps(dict(entry, source='closure/changed.d')))
+            self.assertFalse(closure.may_seed_module_record(root, None, row, set()))
+            probe.write_text(json.dumps(entry))
+            write_baseline([row])
+            commit('Approve this exact first-object edge')
+            self.assertEqual(closure.baseline_growth(root, {row}), [])
+            self.assertTrue(closure.check_violations({row}, {row}, release=True))
+            self.assertTrue(closure.check_violations(set(), {row}))
+            write_baseline([])
+            commit('Retire the active debt')
+            self.assertEqual(closure.baseline_growth(root, set()), [])
+            self.assertTrue(closure.baseline_growth(root, {row}))
+
     def test_baseline_compares_each_commit_and_rejects_readded_violations(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
