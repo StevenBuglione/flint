@@ -88,10 +88,11 @@ class TrainTests(unittest.TestCase):
         self.lane('sol-d', {'src/d.txt': 'd'})
         self.hold_slot()
         result = self.train.run('runner')
-        self.assertEqual((result['landed'], result['failed']), (['sol-a'], ['sol-b']))
-        self.assertEqual(self.main_log(), ['sol-a: change', 'base'])
-        self.assertEqual(result['pending'], ['sol-c', 'sol-d'])
-        self.assertEqual(result['verifications'], 3)  # the train, then prefixes of 2 and 1
+        # Restacked behind the culprit and verified once more in this train (coordinator, 19:27Z).
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-c', 'sol-d'], ['sol-b']))
+        self.assertEqual(self.main_log(), ['sol-d: change', 'sol-c: change', 'sol-a: change', 'base'])
+        self.assertEqual(result['pending'], [])
+        self.assertEqual(result['verifications'], 4)  # the train, prefixes of 2 and 1, then the restack
         queue, _, _ = self.store.queue_view('apps-landing')
         self.assertEqual(queue['members'][0]['agent'], 'sol-b')
         log = Path(result['logs']['sol-b']).read_text()
@@ -453,6 +454,17 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(result['landed'], ['sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e'])
         self.assertEqual(result['failed'], ['sol-f'])
 
+    def test_a_restack_that_fails_again_is_bisected_without_a_second_restack(self):
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.lane('sol-b', {'src/BAD': 'b'})
+        self.lane('sol-c', {'src/c.txt': 'c'})
+        self.lane('sol-d', {'src/BAD': 'd'})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], sorted(result['failed'])), (['sol-a', 'sol-c'], ['sol-b', 'sol-d']))
+        events = [json.loads(line) for line in (self.store.root / 'events.jsonl').read_text().splitlines()]
+        self.assertEqual([e['culprit'] for e in events if e['event'] == 'train-restack'], ['sol-b'])
+
     def test_a_red_first_candidate_holds_everything_stacked_on_it_for_re_verification(self):
         self.lane('sol-a', {'src/a.txt': 'a'})
         self.lane('sol-b', {'src/BAD': 'x'})
@@ -460,8 +472,8 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
             self.lane(role, {f'src/{i}.txt': str(i)})
         self.hold_slot()
         result = self.stacked(self.FakeVerifier(self, 'desktop'), self.FakeVerifier(self, 'posidon', True)).run('runner')
-        self.assertEqual((result['landed'], result['failed']), (['sol-a'], ['sol-b']))
-        self.assertEqual(result['pending'], ['sol-c', 'sol-d', 'sol-e', 'sol-f'])
+        # Restacked behind the culprit and verified once more in this train (coordinator, 19:27Z).
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-c', 'sol-d', 'sol-e', 'sol-f'], ['sol-b']))
 
     class SlowAwareVerifier(FakeVerifier):
         """posidon's budget: red when the candidate has src/SLOW (an instruction regression acceptance can't see)."""
@@ -478,8 +490,8 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         desktop = self.FakeVerifier(self, 'desktop')
         posidon = self.SlowAwareVerifier(self, 'posidon', budget=True)
         result = self.stacked(desktop, posidon).run('runner')
-        self.assertEqual((result['landed'], result['failed']), (['sol-a'], ['sol-b']))
-        self.assertEqual(result['pending'], ['sol-c', 'sol-d', 'sol-e', 'sol-f'])
+        # Restacked behind the culprit and verified once more in this train (coordinator, 19:27Z).
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-c', 'sol-d', 'sol-e', 'sol-f'], ['sol-b']))
 
     def test_a_budget_red_after_a_budget_green_prefix_bisects_only_the_red_group(self):
         for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e', 'sol-f')):
@@ -503,16 +515,19 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
                 log += '\n' + json.dumps(report)
             return ok, log
 
-    def test_a_submission_that_regresses_alone_is_screened_out_and_the_rest_land(self):
+    def test_a_red_stack_checks_main_then_bisects_with_flint_budget_alone(self):
         for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e')):
             self.lane(role, {'src/SLOW' if role == 'sol-b' else f'src/{i}.txt': str(i)})
         self.hold_slot()
         posidon = self.ModalVerifier(self, 'posidon', budget=True)
         result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
+        # Restacked behind the culprit and verified once more in this train (coordinator, 19:27Z).
         self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-c', 'sol-d'], ['sol-b']))
         self.assertEqual(result['pending'], ['sol-e'])  # one acceptance verifier: a batch of four
-        # The whole stack first (red), then each closure-touching submission alone.
-        self.assertEqual(posidon.modes[:5], [('budget', tuple(merge_train.APPS))] * 5)
+        both = ('budget', tuple(merge_train.APPS))
+        # The whole stack (red), main (green), then budget-only steps for the app that missed: a,b red, then a green.
+        self.assertEqual(posidon.modes[:4], [both, both, ('budget', ('petclinic-rest',)), ('budget', ('petclinic-rest',))])
+        self.assertNotIn('train-screened', (self.store.root / 'events.jsonl').read_text())
         mail = self.store.inbox('sol-b', True, False)
         self.assertIn("petclinic-rest 'list vets' 407,377 -> 412,348 (+1.22%, tolerance 1.00%)", mail)
 
@@ -544,9 +559,10 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         posidon = self.ModalVerifier(self, 'posidon', budget=True)
         result = self.stacked(desktop, neptune, posidon).run('runner')
         # sol-f fails acceptance on neptune and is bisected there; the acceptance-green prefix (sol-a..sol-e) is
-        # budget-checked, red, screened: sol-a regressed alone and goes back, sol-b..sol-e land.
+        # budget-checked, red, then main is checked and the prefix bisected with flint budget: sol-a goes back, and
+        # the lanes behind it are restacked and land in this train.
         self.assertEqual(sorted(result['failed']), ['sol-a', 'sol-f'])
-        self.assertEqual(result['landed'], ['sol-b', 'sol-c', 'sol-d', 'sol-e'])
+        self.assertEqual((result['landed'], result['pending']), (['sol-b', 'sol-c', 'sol-d', 'sol-e'], []))
         self.assertTrue(all(mode[0] == 'budget' for mode in posidon.modes[:3]), posidon.modes)
 
     def test_a_budget_only_failure_is_bisected_with_flint_budget_alone(self):
@@ -555,9 +571,13 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.hold_slot()
         posidon = self.ModalVerifier(self, 'posidon', budget=True)  # posidon alone: no screening, the stacked path
         result = self.stacked(posidon).run('runner')
-        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b'], ['sol-c']))
+        # Restacked behind the culprit and verified once more in this train (coordinator, 19:27Z).
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b', 'sol-d'], ['sol-c']))
         self.assertEqual(posidon.modes[0][0], 'full')
-        self.assertTrue(all(mode == ('budget', ('petclinic-rest',)) for mode in posidon.modes[1:]), posidon.modes)
+        # The bisect steps run flint budget alone; the restack is a full verification again.
+        steps = posidon.modes[1:-1]
+        self.assertTrue(steps and all(mode == ('budget', ('petclinic-rest',)) for mode in steps), posidon.modes)
+        self.assertEqual(posidon.modes[-1][0], 'full')
 
     def playbook_base(self, rows):
         path = self.work / 'docs' / 'spring' / 'performance-playbook.md'

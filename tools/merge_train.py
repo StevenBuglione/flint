@@ -612,6 +612,8 @@ class Train:
         self.mail = mail
         self.verifications = 0
         self.base = None  # main at the train's start: the module probes judge candidates against it
+        self.restacked = False  # one restack per train after a named culprit (coordinator, 19:27Z)
+        self.max_train = MAX_TRAIN
 
     # State.
     def submissions(self):
@@ -837,6 +839,7 @@ class Train:
         if git(['status', '--porcelain', '--untracked-files=no'], self.worktree).stdout.strip():
             raise SystemExit(f'merge_train: {self.worktree} has uncommitted tracked changes; the train needs it clean')
         base = self.base = self._fetch()
+        self.restacked, self.max_train = False, max_train
         budget_verifier = next((v for v in reversed(self.verifiers) if getattr(v, 'budget', False)), None)
         others = [v for v in self.verifiers if not getattr(v, 'budget', False)]
         if budget_verifier is not None and others and getattr(budget_verifier, 'supports_modes', False):
@@ -914,6 +917,19 @@ class Train:
             else:
                 failed.append((applied[bad - 1][0], 'the apps verification failed with this submission on the '
                                'train:\n' + bad_log))
+                behind = applied[bad:]
+                if behind and not self.restacked:
+                    # Coordinator, 19:27Z: once a culprit is named, the submissions behind it are restacked on the
+                    # green prefix and verified once more in this train (a bisect if that fails, with no second
+                    # restack), so no lane loses its turn to one repeat failure.
+                    self.restacked = True
+                    keep = [s for s, _ in applied[:good] + behind]
+                    self.store.event('train-restack', culprit=applied[bad - 1][0]['role'], roles=[s['role'] for s in keep])
+                    outcome = self._stacked(keep, base, self.max_train)
+                    outcome['failed'] = failed + outcome.get('failed', [])
+                    outcome['batch'] = batch
+                    outcome['restacked'] = True  # verified by _stacked's lanes, its deepest candidate with flint budget
+                    return outcome
         return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied[:good],
                 'tip': applied[good - 1][1] if good else None}
 
@@ -955,7 +971,7 @@ class Train:
             good, bad = (ends[first - 1] if first else 0), ends[first]
             outcome = self._resolve(batch, applied, failed, good, bad, accepted[first], base, others[first])
             landed = outcome['landed']
-            if verdict[0] is True or not landed or 'main_red' in outcome:
+            if verdict[0] is True or not landed or 'main_red' in outcome or outcome.get('restacked'):
                 return outcome
             # The whole stack's budget was not green, so the acceptance-green prefix needs its own budget verdict.
             verdict = self.verify(landed[-1][1], budget_verifier, mode='budget', apps=list(APPS))
@@ -984,33 +1000,23 @@ class Train:
                 'pending': [s['role'] for s in self.ordered()], 'verifications': self.verifications}
 
     def _budget_red(self, batch, applied, failed, base, max_train, budget_verifier, verdict):
-        """The stack `applied` (acceptance-green) failed flint budget. Screen each closure-touching submission alone on
-        main: one that regresses alone is returned at once and the rest are stacked again and verified as usual
-        (acceptance changes with the stack). If none regresses alone it is a combination: bisect the stack with flint
-        budget. A verifier that could not run blames nobody and lands nothing."""
+        """The stack `applied` (acceptance-green) failed flint budget: bisect it with budget-only steps for the apps that
+        missed, on the budget verifier (log2 of the stack: 3 steps for 8). The first submission whose prefix misses is
+        returned with its misses, the green prefix before it lands, and the rest wait for the next train. If the
+        bisect starts only after main itself passes flint budget on the budget verifier.
+        Coordinator, 2026-11-26 21:3xZ: screening every closure-touching submission alone, one after another on
+        posidon at about 30 minutes each, held a red train for up to four hours. A verifier that could not run blames
+        nobody and lands nothing."""
         if verdict[0] is None:
             return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
-        # Main first: if main itself misses its budgets, every submission screened alone on it would miss them too and
-        # be returned for main's miss (16:45Z: main a2c47a78 red). One posidon run, only on a red stack.
+        # Main first (coordinator, 21:27Z): a budget bisect against an unverified base misled us before (gs-rest read
+        # +0.43% with no code change). One posidon run; a red main blames nobody.
         main_ok, main_log = self.verify(base, budget_verifier, mode='budget', apps=list(APPS))
         if main_ok is None:
             return self._resolve(batch, applied, failed, 0, len(applied), (None, main_log), base)
         if main_ok is False:
             return self._main_red(base, main_log, failed)
-        singles = self.singles([submission for submission, _ in applied], base)
-        screened = [(submission, self.verify(tip, budget_verifier, mode='budget', apps=list(APPS)))
-                    for submission, tip in singles]
-        # Only a parsed flint budget regression returns a lane; any other red from a screen is no verdict.
-        regressed = {s['role']: log for s, (ok, log) in screened if ok is False and budget_misses(log)}
-        self.store.event('train-screened', screened=[s['role'] for s, _ in screened], regressed=sorted(regressed))
-        if not regressed:
-            return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
-        failed = failed + [(s, 'flint budget regressed with this submission alone on main:\n' + regressed[s['role']])
-                           for s, _ in applied if s['role'] in regressed]
-        outcome = self._stacked([s for s, _ in applied if s['role'] not in regressed], base, max_train)
-        outcome['failed'] = failed + outcome['failed']
-        outcome['batch'] = batch
-        return outcome
+        return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
 
     def push(self, submissions, base, tip, attempts):
         """Push the verified train; when main moved, rebase again and push, verifying again only if the new commits
