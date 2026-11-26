@@ -11,7 +11,8 @@ import flint.conc : Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding,
     RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult, validateEntity, validateMapping;
-import flint.engine.jpa.identity : EntityIdentity, IdentityIndex, IdentitySlot;
+import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
+import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
@@ -229,21 +230,24 @@ private void requireNullRejection(DataSource dataSource, scope const ref RowMate
 private void verifyManagedIdentity(Owner owner)
 {
     IdentitySlot[4] backing;
-    scope index = IdentityIndex(backing[]);
     Object[4] entities;
+    Error error;
     const key = EntityIdentity(0, owner.id);
     const before = GC.stats().allocatedInCurrentThread;
-    const first = index.claim(key);
-    assert(first.ok && first.value.inserted);
-    entities[first.value.slot] = owner;
-    const found = index.find(key);
-    assert(found.ok && entities[found.value] is owner);
-    const second = index.claim(key);
-    assert(second.ok && !second.value.inserted && entities[second.value.slot] is owner);
-    const detached = index.detach(key);
-    assert(detached.ok && detached.value == first.value.slot);
-    entities[detached.value] = null;
-    assert(index.find(key).error.code == Status.notFound);
+    {
+        scope managed = ManagedEntities(backing[], entities[], error);
+        assert(error.code == Status.ok);
+        assert(managed.manage(key, owner).code == Status.ok);
+        const found = managed.find(key);
+        assert(found.ok && found.value is owner);
+        assert(managed.manage(key, owner).code == Status.ok);
+        const detached = managed.detach(key);
+        assert(detached.ok && detached.value is owner);
+        assert(managed.find(key).error.code == Status.notFound);
+        assert(managed.manage(key, owner).code == Status.ok);
+    }
+    foreach (entity; entities)
+        assert(entity is null);
     assert(GC.stats().allocatedInCurrentThread == before);
 }
 
