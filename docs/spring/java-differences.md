@@ -24,6 +24,8 @@ import flint.boot : FlintApplication;
 FlintApplication.run!App(args);
 ```
 
+When two Java packages refer to each other in a cycle, which D does not allow, the shared declarations live in an internal module and are re-exported under their usual names. You still import them from the Spring path; you never import the internal module (R1).
+
 **R19: Java names that are D keywords** take a trailing underscore, Phobos's convention: `version`, `function`, `debug`, `module`, `scope`, `in`, `out` and the rest.
 
 ```java

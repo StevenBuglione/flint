@@ -29,6 +29,11 @@ Where the word "Spring" appears in an identifier or a configuration key, it beco
 
 A Java package with one public type still gets its own module. Framework modules have no `package.d` aggregators (ADR-030 section 5). Applications import the module that declares what they use, exactly as Java imports a package.
 
+**Package cycles.** Java packages may import each other in a cycle; D rejects circular imports. Where a cycle cannot be broken any other way, the mutually referencing declarations live in one internal leaf module. The canonical module re-exports them with selective public imports of exactly the named symbols (`public import flint.micrometer.core.instrument.contracts : Timer, HistogramSupport;`). Coordinator, 2026-11-26, from sol-observability's Micrometer `HistogramSupport`/`Timer` cycle and D-JPA-1:
+- The canonical import path is unchanged, and `api/mapping.json` records the canonical path as `d`, never the internal module.
+- No wildcard re-exports, and no `package.d` aggregators.
+- The internal module is documented as internal, and applications never import it.
+
 ```java
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.http.ResponseEntity;
