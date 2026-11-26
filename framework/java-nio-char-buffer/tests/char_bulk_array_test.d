@@ -146,3 +146,14 @@ unittest
     assertThrown!IndexOutOfBoundsException(buffer.put(cast(const(wchar)[]) null, 1, 0));
     assert(buffer.position() == 2 && buffer.reset().position() == 2);
 }
+
+@("BasicChar.bulkPutBuffer")
+unittest
+{
+    auto source = bulkSource();
+    auto from = CharBuffer.wrap(source[offset .. $].dup).asReadOnlyBuffer();
+    auto into = CharBuffer.allocate(capacity);
+    assert(into.put(from) is into);
+    assert(into.position() == capacity && from.position() == capacity);
+    assert(into.flip().array() == source[offset .. $]);
+}

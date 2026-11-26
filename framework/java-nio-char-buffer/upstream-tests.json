@@ -19,17 +19,18 @@
           "BasicChar.bulkGet",
           "BasicChar.absBulkGet",
           "BasicChar.bulkPutArray",
-          "BasicChar.absBulkPutArray"
+          "BasicChar.absBulkPutArray",
+          "BasicChar.bulkPutBuffer"
         ],
         "skipped": {
-          "main": "Remaining families and cases require direct memory, buffer-to-buffer copies, compaction, or the character sequence API. R26 also treats null arrays as empty."
+          "main": "Remaining families and cases require direct memory or the character sequence API. R26 also treats null arrays as empty."
         }
       }
     },
     "java/nio/Buffer/BulkPutBuffer.java": {
       "status": "deferred",
       "phase": "2",
-      "reason": "Requires overlapping bulk buffer transfer behavior."
+      "reason": "The GPL-only suite also covers direct, string-backed and other typed buffers. Original Flint tests cover heap byte and character transfers."
     },
     "java/nio/Buffer/ByteBufferViews.java": {
       "status": "deferred",

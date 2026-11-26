@@ -32,7 +32,8 @@
 module flint.java.nio.charbuffer;
 
 import flint.engine.aot.any : Any;
-import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, UnsupportedOperationException;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, NullPointerException,
+    UnsupportedOperationException;
 import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkIndex, checkRange;
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
@@ -290,13 +291,59 @@ class CharBuffer : Buffer
         return put(index, source, 0, arraySize(source.length));
     }
 
-    private byte[] memory(int index, int length) pure nothrow @nogc
+    CharBuffer put(scope CharBuffer source) pure
+    {
+        if (source is this)
+        {
+            checkWritableHeap();
+            throw new IllegalArgumentException("The source buffer is this buffer");
+        }
+        checkWritable();
+        requireBuffer(source);
+        const length = source.cursor.remaining();
+        if (length > remaining())
+            throwOverflow();
+
+        copyFromBuffer(position(), source, source.cursor.position(), length);
+        advance(length);
+        source.advance(length);
+        return this;
+    }
+
+    CharBuffer put(int index, scope CharBuffer source, int offset, int length) pure
+    {
+        checkWritableHeap();
+        checkRange(index, length, limit());
+        requireBuffer(source);
+        checkRange(offset, length, source.cursor.limit());
+        checkWritable();
+        copyFromBuffer(index, source, offset, length);
+        return this;
+    }
+
+    CharBuffer compact() pure
+    {
+        checkWritable();
+        const length = remaining();
+        copyFromBuffer(0, this, position(), length);
+        cursor.clear();
+        advance(length);
+        return this;
+    }
+
+    private void copyFromBuffer(int index, scope CharBuffer source, int offset, int length) scope pure nothrow @nogc
+    {
+        pragma(inline, false);
+        copyWords(memory(index, length), source.memory(offset, length), needsSwap() != source.needsSwap());
+    }
+
+    private byte[] memory(int index, int length) return scope pure nothrow @nogc
     {
         const start = cast(size_t)(origin + index) * wchar.sizeof;
         return backing[start .. start + cast(size_t) length * wchar.sizeof];
     }
 
-    private bool needsSwap() const pure nothrow @nogc
+    private bool needsSwap() const scope pure nothrow @nogc
     {
         version (LittleEndian)
             return storageKind() == Storage.bigEndian;
@@ -304,7 +351,7 @@ class CharBuffer : Buffer
             return storageKind() == Storage.littleEndian;
     }
 
-    private Storage storageKind() const pure nothrow @nogc
+    private Storage storageKind() const scope pure nothrow @nogc
     {
         return cast(Storage)(storageFlags & ~readOnlyFlag);
     }
@@ -349,11 +396,29 @@ class CharBuffer : Buffer
         checkWritable();
     }
 
+    private void checkWritableHeap() const pure
+    {
+        // HeapCharBufferR overrides both buffer puts and rejects before any validation.
+        if (storageFlags == (Storage.words | readOnlyFlag))
+            checkWritable();
+    }
+
     pragma(inline, false) private void checkWritable() const pure
     {
         if ((storageFlags & readOnlyFlag) != 0)
             throw new ReadOnlyBufferException;
     }
+}
+
+private void requireBuffer(scope CharBuffer source) pure
+{
+    if (source is null)
+        throwNullBuffer();
+}
+
+pragma(inline, false) private noreturn throwNullBuffer() pure
+{
+    throw new NullPointerException;
 }
 
 pragma(inline, false) private noreturn throwUnderflow() pure
