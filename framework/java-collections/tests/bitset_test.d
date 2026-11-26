@@ -8,6 +8,47 @@ import std.exception : assertThrown;
 
 @safe:
 
+@("toByteArray copies the minimal little-endian bytes")
+unittest
+{
+    auto bits = new BitSet();
+    assert(bits.toByteArray().length == 0);
+    foreach (index; [0, 7, 8, 63, 64, 87, 4_096])
+        bits.set(index);
+    bits.clear(4_096);
+
+    byte[] copy = bits.toByteArray();
+    assert(copy == [byte.min + 1, 1, 0, 0, 0, 0, 0, byte.min, 1, 0, byte.min]);
+    copy[0] = 0;
+    assert(bits.get(0) && bits.get(7));
+
+    bits.clear(87);
+    assert(copy[$ - 1] == byte.min && bits.toByteArray().length == 9);
+    bits.clear();
+    assert(bits.toByteArray().length == 0);
+}
+
+@("toByteArray agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto bits = new BitSet();
+    uint state = 0x3a56_f9c1;
+    uint digest;
+    foreach (step; 0 .. 512)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        if ((step & 15) == 0)
+            bits.clear();
+        else
+            bits.flip(cast(int)((state >> 13) & 511));
+        const bytes = bits.toByteArray();
+        digest = 31 * digest + cast(uint) bytes.length;
+        foreach (value; bytes)
+            digest = 31 * digest + cast(ubyte) value;
+    }
+    assert(digest == 2_228_433_802);
+}
+
 @("toLongArray copies the live words in increasing index order")
 unittest
 {

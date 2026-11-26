@@ -30,6 +30,7 @@ class BitSetOracle {
         System.out.println(Integer.toUnsignedString(intersectionDigest()));
         System.out.println(Integer.toUnsignedString(andDigest()));
         System.out.println(Integer.toUnsignedString(longArrayDigest()));
+        System.out.println(Integer.toUnsignedString(byteArrayDigest()));
     }
 
     private static int rangeDigest() {
@@ -148,6 +149,26 @@ class BitSetOracle {
             digest = 31 * digest + words.length;
             for (long word : words) {
                 digest = 31 * digest + (int)(word ^ (word >>> 32));
+            }
+        }
+        return digest;
+    }
+
+    private static int byteArrayDigest() {
+        var bits = new BitSet();
+        int state = 0x3a56f9c1;
+        int digest = 0;
+        for (int step = 0; step < 512; ++step) {
+            state = state * 1_664_525 + 1_013_904_223;
+            if ((step & 15) == 0) {
+                bits.clear();
+            } else {
+                bits.flip((state >>> 13) & 511);
+            }
+            byte[] bytes = bits.toByteArray();
+            digest = 31 * digest + bytes.length;
+            for (byte value : bytes) {
+                digest = 31 * digest + (value & 0xff);
             }
         }
         return digest;

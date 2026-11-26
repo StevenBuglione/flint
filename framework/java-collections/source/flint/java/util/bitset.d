@@ -180,12 +180,35 @@ class BitSet
         return cast(int) count;
     }
 
+    /// Returns the live bits as an owned little-endian byte array without trailing zero bytes.
+    byte[] toByteArray() const pure nothrow
+    {
+        auto copy = copyWords();
+        if (copy.length == 0)
+            return null;
+
+        const trailingBytes = (bitMask - bsr(copy[$ - 1])) >> 3;
+        version (BigEndian)
+        {
+            import core.bitop : bswap;
+
+            foreach (ref word; copy)
+                word = bswap(word);
+        }
+        return (cast(byte[]) copy)[0 .. $ - trailingBytes];
+    }
+
     /// Returns the set bits as an owned array of signed words, lowest indices first.
     long[] toLongArray() const pure nothrow
     {
+        return cast(long[]) copyWords();
+    }
+
+    pragma(inline, false) private ulong[] copyWords() const pure nothrow
+    {
         auto copy = new ulong[wordsInUse];
         copy[] = words[0 .. wordsInUse];
-        return cast(long[]) copy;
+        return copy;
     }
 
     /// Reports whether the two bit sets have any set bit in common.
