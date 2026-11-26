@@ -26,6 +26,9 @@ import flint.java.util : ArrayList, Collections, Comparator, HashMap, Iterator, 
 import flint.util : StringUtils;
 import std.typecons : Nullable;
 
+public import flint.data.mapping.model.parameter_value_provider : ParameterValueProvider,
+    PersistentEntityParameterValueProvider, PropertyValueProvider;
+
 @safe:
 
 /// Entity metadata that accepts registrations during startup.

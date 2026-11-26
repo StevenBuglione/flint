@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-24",
+ "deviation": "ParameterValueProvider and PersistentEntityParameterValueProvider are typed to the owning entity and property pair. ParameterValueProvider and PropertyValueProvider return Any from their virtual lookups.",
+ "reason": "D cannot dispatch a generic virtual return type. Parameter metadata keeps the registered owner and declared type, and Any retains exact value types and reference identity across the callback."
+}

@@ -813,8 +813,16 @@
       "status": "deferred"
     },
     "org/springframework/data/mapping/model/PersistentEntityParameterValueProviderUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/parameter_tests.d",
+      "methods": {
+        "ported": [
+          "rejectsPropertyIfNameDoesNotMatch"
+        ],
+        "skipped": {
+          "usesParentObjectAsImplicitFirstConstructorArgument": "JVM enclosing-class parameter discovery remains deferred. An independent linked test verifies parent handling with registered creator metadata."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/mapping/model/PersistentPropertyAccessorTests.java": {
       "phase": "2",

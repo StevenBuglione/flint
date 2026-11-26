@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 279 | 254 | 0 | 3,449 |
+| data-commons | spring-data-commons@4.2.0 | 280 | 261 | 0 | 3,441 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1078,11 +1078,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.model.BeanWrapperPropertyAccessorFactory#getPropertyAccessor(PersistentEntity,T)` | `flint.data.mapping.model.BeanWrapperPropertyAccessorFactory.getPropertyAccessor` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-18](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.BeanWrapperPropertyAccessorFactory#isSupported(PersistentEntity)` | `flint.data.mapping.model.BeanWrapperPropertyAccessorFactory.isSupported` | [D-DATA-18](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MutablePersistentEntity#setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory)` | `flint.data.mapping.model.MutablePersistentEntity.setPersistentPropertyAccessorFactory` | [D-DATA-17](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.ParameterValueProvider` | `flint.data.mapping.model.ParameterValueProvider` | [D-DATA-24](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.ParameterValueProvider#getDefaultValue(Class)` | `flint.data.mapping.model.ParameterValueProvider.getDefaultValue` | [R4](api-mapping.md#r4-classt-parameters), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(Parameter)` | `flint.data.mapping.model.ParameterValueProvider.getParameterValue` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-24](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.PersistentEntityParameterValueProvider` | `flint.data.mapping.model.PersistentEntityParameterValueProvider` | [D-DATA-24](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.PersistentEntityParameterValueProvider#<init>(PersistentEntity,PropertyValueProvider,Object)` | `flint.data.mapping.model.PersistentEntityParameterValueProvider.this` | [R9](api-mapping.md#r9-functional-interfaces), [R23](api-mapping.md#r23-object-typed-values), [D-DATA-24](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.PersistentEntityParameterValueProvider#getParameterValue(Parameter)` | `flint.data.mapping.model.PersistentEntityParameterValueProvider.getParameterValue` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-24](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.PersistentPropertyAccessorFactory` | `flint.data.mapping.model.PersistentPropertyAccessorFactory` | [D-DATA-17](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.PersistentPropertyAccessorFactory#getPropertyAccessor(PersistentEntity,T)` | `flint.data.mapping.model.PersistentPropertyAccessorFactory.getPropertyAccessor` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-17](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.PersistentPropertyAccessorFactory#isSupported(PersistentEntity)` | `flint.data.mapping.model.PersistentPropertyAccessorFactory.isSupported` | [D-DATA-17](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.PreferredConstructorDiscoverer#discover(Class)` | `flint.data.mapping.model.PreferredConstructorDiscoverer.discover` | [R4](api-mapping.md#r4-classt-parameters), [D-DATA-23](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.PreferredConstructorDiscoverer#discover(PersistentEntity)` | `flint.data.mapping.model.PreferredConstructorDiscoverer.discover` | [D-DATA-23](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.PropertyValueProvider#getPropertyValue(P)` | `flint.data.mapping.model.PropertyValueProvider.getPropertyValue` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-24](api-mapping.md#deviations) |  |
 
 #### org.springframework.data.repository
 
@@ -10190,7 +10197,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.mapping | 104 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
-| org.springframework.data.mapping.model | 170 | 0 |
+| org.springframework.data.mapping.model | 162 | 0 |
 | org.springframework.data.projection | 70 | 0 |
 | org.springframework.data.querydsl | 66 | 0 |
 | org.springframework.data.querydsl.binding | 45 | 0 |

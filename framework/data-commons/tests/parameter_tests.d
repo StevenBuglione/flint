@@ -1,6 +1,8 @@
 // Ported from spring-data-commons 4.2.0: src/test/java/org/springframework/data/mapping/{ParameterUnitTests,PreferredConstructorDiscovererUnitTests}.java
 // ParameterUnitTests: Copyright 2012-present the original author or authors.
 // PreferredConstructorDiscovererUnitTests: Copyright 2011-present the original author or authors.
+// Ported from spring-data-commons 4.2.0: src/test/java/org/springframework/data/mapping/model/PersistentEntityParameterValueProviderUnitTests.java
+// PersistentEntityParameterValueProviderUnitTests: Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 module parameter_tests;
@@ -8,13 +10,17 @@ module parameter_tests;
 import flint.beans.factory.annotation : Value;
 import flint.data.annotation : PersistenceCreator, Transient;
 import flint.data.core : TypeInformation;
-import flint.data.mapping : Parameter, PersistentEntity, PersistentProperty, PreferredConstructor;
-import flint.data.mapping.model : BasicPersistentEntity, PreferredConstructorDiscoverer;
+import flint.data.mapping : InstanceCreatorMetadata, MappingException, Parameter, PersistentEntity,
+    PersistentProperty, PreferredConstructor;
+import flint.data.mapping.model : BasicPersistentEntity, ParameterValueProvider,
+    PersistentEntityParameterValueProvider, PreferredConstructorDiscoverer, PropertyValueProvider;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : ConstructorDescriptor, DescriptorTable, MergedAnnotation,
     ParameterDescriptor, descriptorOf;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, UnsupportedOperationException;
+import flint.java.util : List;
+import std.algorithm.searching : canFind;
 import std.exception : assertThrown, collectException;
 import std.typecons : Nullable;
 
@@ -412,4 +418,129 @@ unittest
     assert(constructor.getParameters().get(0) is revision);
     assertThrown!UnsupportedOperationException(constructor.getParameters().clear());
     assertThrown!IllegalArgumentException(Discoverer.discover(cast(DocumentEntity) null));
+}
+
+private alias DocumentParameterProvider = ParameterValueProvider!(Document, RevisionProperty);
+private alias DocumentValueProvider = PersistentEntityParameterValueProvider!(Document, RevisionProperty);
+
+private final class RevisionValues : PropertyValueProvider!RevisionProperty
+{
+    private RevisionProperty received;
+
+    override Any getPropertyValue(RevisionProperty property)
+    {
+        received = property;
+        return Any.of(23L);
+    }
+}
+
+@("rejectsPropertyIfNameDoesNotMatch")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto entity = withConstructors(descriptors, [taggedConstructor()]);
+    auto values = new RevisionValues;
+    DocumentParameterProvider provider = new DocumentValueProvider(entity, values, Any.init);
+    auto argument = entity.getInstanceCreatorMetadata().getParameters().get(0);
+    const error = collectException!MappingException(provider.getParameterValue(argument));
+    assert(error !is null && error.msg.canFind("tag") && error.msg.canFind(classOf!Document.name));
+    assert(values.received is null);
+}
+
+@("parameter provider requests the registered property and reports an absent name")
+unittest
+{
+    auto entity = withConstructors(DescriptorTable.withBuiltins(), [revisionConstructor()]);
+    auto values = new RevisionValues;
+    DocumentParameterProvider provider = new DocumentValueProvider(entity, values, Any.init);
+    auto argument = entity.getInstanceCreatorMetadata().getParameters().get(0);
+    assert(provider.getParameterValue(argument).get!long == 23L);
+    assert(values.received is entity.getRequiredPersistentProperty("revision"));
+
+    const error = collectException!MappingException(provider.getParameterValue(parameter(Nullable!string.init)));
+    assert(error !is null && error.msg.canFind("does not have a name"));
+}
+
+@("transient parameters receive typed primitive defaults or an absent reference")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto entity = withConstructors(descriptors, null);
+    auto provider = new DocumentValueProvider(entity, (RevisionProperty) => Any.of(42L), Any.init);
+    auto annotations = [MergedAnnotation(classOf!Transient.name, Any.of(Transient.init))];
+    auto number = new CreatorParameter(Nullable!string.init,
+            TypeInformation.of!double(descriptors), annotations, entity);
+    auto reference = new CreatorParameter(Nullable!string.init,
+            TypeInformation.of!string(descriptors), annotations, entity);
+    assert(provider.getParameterValue(number).get!double == 0.0);
+    assert(provider.getParameterValue(reference).isNull());
+    assert(DocumentParameterProvider.getDefaultValue(classOf!char).get!char == '\0');
+    assert(!DocumentParameterProvider.getDefaultValue(classOf!bool).get!bool);
+}
+
+private alias DocumentCreator = InstanceCreatorMetadata!(Document, RevisionProperty);
+
+private final class ParentCreator : DocumentCreator
+{
+    private CreatorParameter parentParameter;
+
+    this(CreatorParameter parentParameter)
+    {
+        this.parentParameter = parentParameter;
+    }
+
+    override bool isParentParameter(CreatorParameter parameter)
+    {
+        return parentParameter is parameter;
+    }
+
+    override bool isCreatorParameter(PersistentProperty!())
+    {
+        return false;
+    }
+
+    override List!CreatorParameter getParameters()
+    {
+        return List!CreatorParameter.of(parentParameter);
+    }
+
+    override int getParameterCount()
+    {
+        return 1;
+    }
+
+    override bool hasParameters()
+    {
+        return true;
+    }
+}
+
+private final class ParentDocumentEntity : BasicPersistentEntity!(Document, RevisionProperty)
+{
+    private DocumentCreator creator;
+
+    this(TypeInformation type, CreatorParameter parentParameter)
+    {
+        super(type);
+        creator = new ParentCreator(parentParameter);
+    }
+
+    override DocumentCreator getInstanceCreatorMetadata()
+    {
+        return creator;
+    }
+}
+
+@("parameter provider preserves the parent supplied by the creator metadata")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    descriptors.add(descriptorOf!Document());
+    auto argument = parameter(Nullable!string.init);
+    auto entity = new ParentDocumentEntity(TypeInformation.of!Document(descriptors), argument);
+    auto values = new RevisionValues;
+    auto parent = new Object;
+    auto provider = new DocumentValueProvider(entity, values, Any.of(parent));
+    assert(provider.getParameterValue(argument).get!Object is parent);
+    assert(values.received is null);
 }
