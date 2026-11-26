@@ -6,6 +6,7 @@
     "flint.java.nio.bufferoverflowexception",
     "flint.java.nio.bufferunderflowexception",
     "flint.java.nio.byteorder",
+    "flint.java.nio.charbuffer",
     "flint.java.nio.internal.buffercursor",
     "flint.java.nio.invalidmarkexception",
     "flint.java.nio.readonlybufferexception"

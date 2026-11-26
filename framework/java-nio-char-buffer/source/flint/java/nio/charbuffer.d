@@ -25,14 +25,14 @@
 
 /*
  * Ported from openjdk 21.0.13: src/java.base/share/classes/java/nio/CharBuffer.java
- * Includes the corresponding HeapCharBuffer behavior.
+ * Includes HeapCharBuffer and heap ByteBufferAsCharBuffer view behavior.
  * Modified by the Flint authors.
  */
-/** Java NIO buffers backed by D arrays of UTF-16 code units. */
+/** Java NIO UTF-16 code units in a character array or a view of heap bytes. */
 module flint.java.nio.charbuffer;
 
 import flint.engine.aot.any : Any;
-import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, UnsupportedOperationException;
 import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkIndex, checkRange;
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
@@ -44,23 +44,41 @@ import flint.java.nio.readonlybufferexception : ReadOnlyBufferException;
 
 class CharBuffer : Buffer
 {
-    private wchar[] backing;
-    private int origin;
-    private bool readOnly;
+    private enum Storage : ubyte
+    {
+        words,
+        bigEndian,
+        littleEndian
+    }
 
-    private this(wchar[] backing, int origin, BufferCursor cursor, bool readOnly) pure nothrow @nogc
+    private enum ubyte readOnlyFlag = 4;
+
+    private byte[] backing;
+    private int origin;
+    private ubyte storageFlags;
+
+    private this(byte[] backing, int origin, BufferCursor cursor, ubyte storageFlags) pure nothrow @nogc
     {
         super(cursor);
         this.backing = backing;
         this.origin = origin;
-        this.readOnly = readOnly;
+        this.storageFlags = storageFlags;
+    }
+
+    package(flint.java.nio) static CharBuffer ofBytes(byte[] bytes, bool littleEndian, bool readOnly) pure
+    {
+        const capacity = arraySize(bytes.length / wchar.sizeof);
+        const kind = littleEndian ? Storage.littleEndian : Storage.bigEndian;
+        const flags = cast(ubyte)(kind | (readOnly ? readOnlyFlag : 0));
+        return new CharBuffer(bytes, 0, BufferCursor(capacity, 0, capacity), flags);
     }
 
     static CharBuffer allocate(int capacity) pure
     {
         if (capacity < 0)
             throw new IllegalArgumentException(boundMessage("capacity", capacity, "0", 0));
-        return new CharBuffer(allocateWords(capacity), 0, BufferCursor(capacity, 0, capacity), false);
+        return new CharBuffer(cast(byte[]) allocateWords(capacity), 0, BufferCursor(capacity, 0,
+                capacity), Storage.words);
     }
 
     static CharBuffer wrap(wchar[] words) pure
@@ -75,7 +93,7 @@ class CharBuffer : Buffer
             throw new IndexOutOfBoundsException;
         if (words is null)
             words = allocateWords(0);
-        return new CharBuffer(words, 0, BufferCursor(capacity, offset, offset + length), false);
+        return new CharBuffer(cast(byte[]) words, 0, BufferCursor(capacity, offset, offset + length), Storage.words);
     }
 
     alias position = Buffer.position;
@@ -125,7 +143,7 @@ class CharBuffer : Buffer
 
     override bool isReadOnly() const pure nothrow @nogc
     {
-        return readOnly;
+        return (storageFlags & readOnlyFlag) != 0;
     }
 
     override bool isDirect() const pure nothrow @nogc
@@ -135,13 +153,13 @@ class CharBuffer : Buffer
 
     final override bool hasArray() const pure nothrow @nogc
     {
-        return !readOnly;
+        return storageFlags == Storage.words;
     }
 
     final wchar[] array() pure
     {
-        checkWritable();
-        return backing;
+        checkArray();
+        return cast(wchar[]) backing;
     }
 
     protected override Any erasedArray()
@@ -151,13 +169,13 @@ class CharBuffer : Buffer
 
     final override int arrayOffset() const pure
     {
-        checkWritable();
+        checkArray();
         return origin;
     }
 
     ByteOrder order() const pure nothrow @nogc
     {
-        return ByteOrder.nativeOrder();
+        return littleEndian() ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
     }
 
     override CharBuffer slice() pure
@@ -168,24 +186,24 @@ class CharBuffer : Buffer
     override CharBuffer slice(int index, int length) pure
     {
         checkRange(index, length, limit());
-        return new CharBuffer(backing, origin + index, BufferCursor(length, 0, length), readOnly);
+        return new CharBuffer(backing, origin + index, BufferCursor(length, 0, length), storageFlags);
     }
 
     override CharBuffer duplicate() pure
     {
-        return new CharBuffer(backing, origin, cursor, readOnly);
+        return new CharBuffer(backing, origin, cursor, storageFlags);
     }
 
     CharBuffer asReadOnlyBuffer() pure
     {
-        return new CharBuffer(backing, origin, cursor, true);
+        return new CharBuffer(backing, origin, cursor, cast(ubyte)(storageFlags | readOnlyFlag));
     }
 
     wchar get() pure
     {
         if (!hasRemaining())
             throw new BufferUnderflowException;
-        const value = backing[origin + position()];
+        const value = load(position());
         advance(1);
         return value;
     }
@@ -193,7 +211,7 @@ class CharBuffer : Buffer
     wchar get(int index) const pure
     {
         checkIndex(index, 1, limit());
-        return backing[origin + index];
+        return load(index);
     }
 
     CharBuffer put(wchar value) pure
@@ -201,7 +219,7 @@ class CharBuffer : Buffer
         checkWritable();
         if (!hasRemaining())
             throw new BufferOverflowException;
-        backing[origin + position()] = value;
+        store(position(), value);
         advance(1);
         return this;
     }
@@ -210,13 +228,58 @@ class CharBuffer : Buffer
     {
         checkWritable();
         checkIndex(index, 1, limit());
-        backing[origin + index] = value;
+        store(index, value);
         return this;
+    }
+
+    private Storage storageKind() const pure nothrow @nogc
+    {
+        return cast(Storage)(storageFlags & ~readOnlyFlag);
+    }
+
+    private bool littleEndian() const pure nothrow @nogc
+    {
+        version (LittleEndian)
+            return storageKind() != Storage.bigEndian;
+        else
+            return storageKind() == Storage.littleEndian;
+    }
+
+    private wchar load(int index) const pure nothrow @nogc
+    {
+        const start = cast(size_t)(origin + index) * wchar.sizeof;
+        const first = cast(ubyte) backing[start];
+        const second = cast(ubyte) backing[start + 1];
+        return cast(wchar)(littleEndian() ? first | (second << 8) : (first << 8) | second);
+    }
+
+    private void store(int index, wchar value) pure nothrow @nogc
+    {
+        const start = cast(size_t)(origin + index) * wchar.sizeof;
+        const high = cast(byte)(value >> 8);
+        const low = cast(byte) value;
+        if (littleEndian())
+        {
+            backing[start] = low;
+            backing[start + 1] = high;
+        }
+        else
+        {
+            backing[start] = high;
+            backing[start + 1] = low;
+        }
+    }
+
+    private void checkArray() const pure
+    {
+        if (storageKind() != Storage.words)
+            throw new UnsupportedOperationException;
+        checkWritable();
     }
 
     private void checkWritable() const pure
     {
-        if (readOnly)
+        if ((storageFlags & readOnlyFlag) != 0)
             throw new ReadOnlyBufferException;
     }
 }

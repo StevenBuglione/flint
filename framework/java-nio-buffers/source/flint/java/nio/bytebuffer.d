@@ -38,6 +38,7 @@ import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkIndex, chec
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
 import flint.java.nio.byteorder : ByteOrder;
+import flint.java.nio.charbuffer : CharBuffer;
 import flint.java.nio.internal.buffercursor : BufferCursor;
 import flint.java.nio.readonlybufferexception : ReadOnlyBufferException;
 import std.typecons : Nullable;
@@ -321,6 +322,11 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
         checkRange(offset, length, source.cursor.limit());
         copyFromBuffer(index, source, offset, length);
         return this;
+    }
+
+    final CharBuffer asCharBuffer() pure
+    {
+        return CharBuffer.ofBytes(backing[origin + position() .. origin + limit()], littleEndian, readOnly);
     }
 
     wchar getChar() pure
