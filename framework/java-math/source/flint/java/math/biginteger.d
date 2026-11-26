@@ -87,6 +87,13 @@ class BigInteger : Comparable!BigInteger
         return sign;
     }
 
+    /// Return the bit length of the shortest two's-complement representation without its sign bit.
+    int bitLength() const scope pure nothrow @nogc
+    {
+        const int bits = cast(int) magnitudeBitLength(magnitude);
+        return bits - (sign < 0 && hasSingleMagnitudeBit());
+    }
+
     /// Return the low 64 bits in two's complement.
     long longValue() const pure nothrow @nogc
     {
@@ -284,8 +291,7 @@ class BigInteger : Comparable!BigInteger
         if (topBit == 0)
             return sign == resultSign ? this : valueOf(1);
 
-        const uint topWord = magnitude[$ - 1];
-        if (!(topWord & (topWord - 1)) && firstNonzeroLimb(magnitude) + 1 == magnitude.length)
+        if (hasSingleMagnitudeBit())
         {
             auto words = new uint[cast(size_t)(topBit / 32 + 1)];
             words[$ - 1] = 1U << (topBit % 32);
@@ -293,6 +299,13 @@ class BigInteger : Comparable!BigInteger
         }
 
         return new BigInteger(powerMagnitude(magnitude, cast(uint) exponent), resultSign);
+    }
+
+    // Both callers have a nonzero magnitude. Share the scan in their linked code.
+    pragma(inline, false) private bool hasSingleMagnitudeBit() const scope pure nothrow @nogc
+    {
+        const uint high = magnitude[$ - 1];
+        return (high & (high - 1)) == 0 && firstNonzeroLimb(magnitude) + 1 == magnitude.length;
     }
 
     private BigInteger combine(const(uint)[] other, int otherSign)

@@ -5340,6 +5340,7 @@
 "java.math.BigInteger#<init>(int,byte[],int,int)":{"status":"adapted","rules":["R5","R7","R8"],"d":"flint.java.math.biginteger.BigInteger.this"},
 "java.math.BigInteger#abs()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.abs"},
 "java.math.BigInteger#add(BigInteger)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.add"},
+"java.math.BigInteger#bitLength()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.bitLength"},
 "java.math.BigInteger#byteValueExact()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.byteValueExact"},
 "java.math.BigInteger#compareTo(BigInteger)":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.compareTo"},
 "java.math.BigInteger#doubleValue()":{"status":"ported","d":"flint.java.math.biginteger.BigInteger.doubleValue"},

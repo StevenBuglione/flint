@@ -3030,7 +3030,6 @@
       "org/apache/harmony/tests/java/math/BigIntegerDivideTest.java",
       "org/apache/harmony/tests/java/math/BigIntegerModPowTest.java",
       "org/apache/harmony/tests/java/math/BigIntegerNotTest.java",
-      "org/apache/harmony/tests/java/math/BigIntegerOperateBitsTest.java",
       "org/apache/harmony/tests/java/math/BigIntegerOrTest.java",
       "org/apache/harmony/tests/java/math/BigIntegerXorTest.java",
       "tests/api/java/math/BigDecimalTest.java",
