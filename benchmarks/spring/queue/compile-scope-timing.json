@@ -1,0 +1,25 @@
+{
+  "schema": "flint.measure-queue/1",
+  "id": "compile-scope-timing",
+  "created": "2026-11-26",
+  "status": "pending",
+  "window": "claim",
+  "priority": 8,
+  "estimate_minutes": 240,
+  "not_before": "2026-11-27T06:00:00Z",
+  "requested_by": "the coordinator, 2026-11-26 21:36Z: certified build timing for the compile-scope A/B (plan accepted)",
+  "report_to": "the coordinator and sol-jdk-core; coordination/notes/compile-scope-ab/",
+  "summary": "Paired build timing of FLINT_DUB_SINGLE_FILE_SCOPE batch / jdk / flint on sol-jdk-core's overlay DUB at 48b96dadc: both Spring apps, DMD dev and LDC release, cold (platform priming through DUB), edit and scratch, three rotated interleaved trials",
+  "why": "The closure effect is decisive (coordination/notes/compile-scope-ab/README.md: per-source compilation removes all 454 recorded JDK closure violations; all-Flint scope cuts gs-rest 48 KB O3). The coordinator may adopt per-module compilation; the build-time cost or gain decides the scope.",
+  "harness": "3cb7b83ae912",
+  "builds": {},
+  "measure": {
+    "kind": "command",
+    "steps": [
+      {
+        "argv": ["{python}", "/home/olfa/flint-work/coordination/notes/compile-scope-ab/timing.py", "--output", "{out}/timing.json"],
+        "smoke_args": ["--smoke"]
+      }
+    ]
+  }
+}
