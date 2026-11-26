@@ -1159,3 +1159,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 02:12Z, owner: **keep the three pre-approved budget-raise rules** (`new-module-rule`, `api-growth-rule`, `jdk-leaf-rule`).
   - **This amends owner decision 3** (2026-11-23, "template budgets only go down"). A raise is allowed only in a commit carrying `Budget-Raise-Approved: <id>`, naming one of these rules (`policy/budget-raise-rules.json`) or a recorded decision. `tools/template_budget_ratchet.py` enforces it (30a78ed3).
   - **Every other raise** still needs a reviewed request with evidence.
+- 2026-11-26 02:33Z, coordinator, under the owner's standing approval: **page-boundary crossings before the loadable-section metric lands.**
+  - **The rule:** when a slice's stripped-byte probe jumps by a 4 KiB page, but its measured loadable-section growth is small and comes only from newly ported API, the stripped cap may rise to the new stripped value plus 10%. The commit cites both numbers, with the trailer `Budget-Raise-Approved: <this entry's commit>`.
+  - **Expiry:** every such cap is re-baselined in loadable bytes when m7's metric switch lands (planned around 06:00Z), and this rule expires then.
+  - **First case:** sol-jdk-math-regex's BigInteger float and double conversions: stripped 19,288 → 23,440, loadable +1,256 B at O3 and +1,200 B at Oz, no template growth.
