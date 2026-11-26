@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,089 | 300 | 1,871 | 15,161 |
+| framework | openjdk@21.0.13 | 1,088 | 299 | 1,871 | 15,163 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2302,7 +2302,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `java.util.regex.Pattern#compile(String)` | `flint.java.util.regex.pattern.Pattern.compile` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
-| `java.util.regex.Pattern#compile(String,int)` | `flint.java.util.regex.pattern.Pattern.compile` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Pattern#matcher(CharSequence)` | `flint.java.util.regex.pattern.Pattern.matcher` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Pattern#matches(String,CharSequence)` | `flint.java.util.regex.pattern.Pattern.matches` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Pattern#pattern()` | `flint.java.util.regex.pattern.Pattern.pattern` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -10091,7 +10090,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.function | 84 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 96 | 0 |
-| java.util.regex | 63 | 0 |
+| java.util.regex | 65 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
 | java.util.zip | 258 | 0 |
@@ -11144,6 +11143,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Objects#requireNonNullElse(T,T)` | 2 | Java selects the fallback when the first boxed value is absent and throws NullPointerException when both values are absent. The current method ignores absence in an R5 Nullable payload. |
 | framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
+| framework | `java.util.regex.Matcher` | 2 | Assignment to Java MatchResult and access to recorded match positions and groups await the Matcher state port. |
+| framework | `java.util.regex.Pattern#compile(String,int)` | 2 | CANON_EQ, LITERAL and UNICODE_CHARACTER_CLASS still throw RegexUnsupportedException. |
 | framework | `java.util.regex.PatternSyntaxException#<init>(String,String,int)` | 2 | The constructor still takes plain D strings. Java preserves null separately from empty text for both fields (R5). |
 | framework | `java.util.regex.PatternSyntaxException#getDescription()` | 2 | Java preserves a null description separately from empty text. The D return value still uses a plain string (R5). |
 | framework | `java.util.regex.PatternSyntaxException#getMessage()` | 2 | Java renders absent fields as null, preserves tabs in the caret indentation and uses the platform line separator. Flint still uses empty text, spaces and LF. |

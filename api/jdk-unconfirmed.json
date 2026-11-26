@@ -695,7 +695,6 @@
   "java.util.function.ToLongFunction",
   "java.util.function.ToLongFunction#applyAsLong(T)",
   "java.util.function.UnaryOperator",
-  "java.util.regex.Matcher",
   "java.util.regex.Pattern",
   "javax.sql.CommonDataSource",
   "javax.sql.CommonDataSource#getLoginTimeout()",
