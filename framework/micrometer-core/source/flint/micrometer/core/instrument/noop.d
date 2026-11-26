@@ -15,11 +15,12 @@
  */
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopMeter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopGauge.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopCounter.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.noop;
 
 import flint.java.util : Collections, List;
-import flint.micrometer.core.instrument : AbstractMeter, Gauge, Measurement, Meter;
+import flint.micrometer.core.instrument : AbstractMeter, Counter, Gauge, Measurement, Meter;
 
 @safe:
 
@@ -35,6 +36,30 @@ class NoopMeter : AbstractMeter
     override List!Measurement measure()
     {
         return Collections.emptyList!Measurement();
+    }
+}
+
+/// A disabled counter whose count is zero.
+class NoopCounter : NoopMeter, Counter
+{
+    /// Retain the ID of the disabled counter.
+    this(Meter.Id id)
+    {
+        super(id);
+    }
+
+    override void increment() nothrow @nogc
+    {
+        increment(1.0);
+    }
+
+    override void increment(double) nothrow @nogc
+    {
+    }
+
+    override double count() nothrow @nogc
+    {
+        return 0.0;
     }
 }
 

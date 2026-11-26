@@ -618,8 +618,14 @@
       "status": "deferred"
     },
     "io/micrometer/core/instrument/noop/NoopCounterTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/noop_counter_test.d",
+      "methods": {
+        "ported": [
+          "returnsCountAsZero",
+          "returnsId"
+        ]
+      },
+      "status": "ported"
     },
     "io/micrometer/core/instrument/noop/NoopDistributionSummaryTest.java": {
       "d": "framework/micrometer-core/tests/distribution_summary_test.d",
