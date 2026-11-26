@@ -51,6 +51,8 @@ class NoOpCache : Cache
     {
         try
         {
+            if (valueLoader is null)
+                throw new NullPointerException();
             return valueLoader();
         }
         catch (Exception failure)

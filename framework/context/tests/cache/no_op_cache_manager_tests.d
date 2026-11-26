@@ -85,6 +85,18 @@ private Any throwFailure(Exception failure)
     throw failure;
 }
 
+@("null loader is reported as a value retrieval failure")
+unittest
+{
+    CacheManager manager = new NoOpCacheManager();
+    auto cache = manager.getCache("bucket");
+    auto key = Any.of("key");
+    Any delegate() @safe loader;
+    auto caught = collectException!(Cache.ValueRetrievalException)(cache.get(key, loader));
+    assert(caught !is null && cast(NullPointerException) caught.getCause() !is null);
+    assert(caught.getKey() == key);
+}
+
 @("reset removes cache registrations from the live read-only name view")
 unittest
 {
