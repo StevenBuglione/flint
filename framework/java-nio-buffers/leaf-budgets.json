@@ -1,6 +1,6 @@
 {
   "flint.java.nio.bytebuffer": {
-    "incremental_linked_bytes": 24524,
+    "incremental_linked_bytes": 24628,
     "template_instances": 630,
     "control": "framework/java-nio-buffers/bench/baseline/source/app.d",
     "template_compile": "separate"
