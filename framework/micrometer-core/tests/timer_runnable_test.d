@@ -47,6 +47,10 @@ unittest
             scope stackValue = new Value;
             timer.record(stackValue);
         }));
+    static assert(!__traits(compiles, (Timer timer) @safe {
+            scope stackValue = new Value;
+            timer.wrap(stackValue);
+        }));
 
     auto registry = new SimpleMeterRegistry;
     registry.close();
@@ -78,6 +82,10 @@ unittest
     static assert(!__traits(compiles, (Timer timer) @safe {
             scope stackValue = new Value;
             timer.recordCallable(stackValue);
+        }));
+    static assert(!__traits(compiles, (Timer timer) @safe {
+            scope stackValue = new Value;
+            timer.wrap(stackValue);
         }));
 
     auto registry = new SimpleMeterRegistry;
@@ -125,5 +133,26 @@ unittest
     auto wrappedDelegate = timer.wrap(cast(void delegate() @safe) null);
     assertThrown!NullPointerException(wrapped.run());
     assertThrown!NullPointerException(wrappedDelegate());
+    assert(timer.count() == 0);
+}
+
+@("generic wrapping defers null errors even after registry close")
+unittest
+{
+    alias Result = Nullable!string;
+    static assert(!__traits(compiles, (Timer timer, scope Result delegate() @safe action) @safe {
+            timer.wrap(action);
+        }));
+    auto registry = new SimpleMeterRegistry;
+    registry.close();
+    auto timer = registry.timer("test");
+    auto callable = timer.wrap(cast(Callable!Result) null);
+    auto voidCallable = timer.wrap(cast(Callable!void) null);
+    auto supplier = timer.wrap(cast(Supplier!Result) null);
+    auto dg = timer.wrap(cast(Result delegate() @safe) null);
+    assertThrown!NullPointerException(callable.call());
+    assertThrown!NullPointerException(voidCallable.call());
+    assertThrown!NullPointerException(supplier.get());
+    assertThrown!NullPointerException(dg());
     assert(timer.count() == 0);
 }

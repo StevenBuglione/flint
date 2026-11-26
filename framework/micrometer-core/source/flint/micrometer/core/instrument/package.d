@@ -1047,6 +1047,34 @@ interface Timer : Meter
     /// Return a reusable timed delegate that retains the action (R9).
     void delegate() @safe wrap(void delegate() @safe action);
 
+    /// Wrap a callable to record the elapsed time of each invocation (R3, R9).
+    /// Value results must support default initialization and assignment.
+    Callable!T wrap(T)(Callable!T action)
+    {
+        static if (is(T == void))
+        {
+            // A null callable throws inside the timing callback, including for a void result.
+            if (action is null)
+                return new TimedCallable!T(this, () { throw nullCallback(); });
+        }
+        return new TimedCallable!T(this, action is null ? null : &action.call);
+    }
+
+    /// Wrap a supplier to record the elapsed time of each invocation (R3, R9).
+    /// Value results must support default initialization and assignment.
+    Supplier!T wrap(T)(Supplier!T action)
+    {
+        return new TimedSupplier!T(this, action);
+    }
+
+    /// Return a reusable timed result delegate that retains the action (R9).
+    /// Value results must support default initialization and assignment.
+    T delegate() @safe wrap(T)(T delegate() @safe action) if (!is(T == void))
+    {
+        auto task = new TimedCallable!T(this, action);
+        return &task.call;
+    }
+
     /// The number of recorded events.
     long count() nothrow @nogc;
 
@@ -1182,6 +1210,40 @@ private final class TimedRunnable : Runnable
     override void run()
     {
         timer.record(action);
+    }
+}
+
+private final class TimedCallable(T) : Callable!T
+{
+    private Timer timer;
+    private T delegate() @safe action;
+
+    this(Timer timer, T delegate() @safe action) nothrow @nogc
+    {
+        this.timer = timer;
+        this.action = action;
+    }
+
+    override T call()
+    {
+        return timer.recordCallable!T(action);
+    }
+}
+
+private final class TimedSupplier(T) : Supplier!T
+{
+    private Timer timer;
+    private Supplier!T action;
+
+    this(Timer timer, Supplier!T action) nothrow @nogc
+    {
+        this.timer = timer;
+        this.action = action;
+    }
+
+    override T get()
+    {
+        return timer.record(action);
     }
 }
 

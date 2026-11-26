@@ -429,6 +429,90 @@ unittest
     assert(timer.count() == 5 && timer.totalTime(TimeUnit.NANOSECONDS) == 32);
 }
 
+@("generic timer wrappers retain their actions and time each invocation")
+unittest
+{
+    import core.memory : GC;
+    import flint.java.lang : IllegalStateException;
+    import flint.java.util.concurrent.callable : Callable;
+    import flint.java.util.function_ : Supplier;
+    import flint.micrometer.core.instrument : Tags;
+
+    alias Result = Nullable!string;
+
+    static final class Action : Callable!Result, Supplier!Result
+    {
+        private MockClock clock;
+
+        this(MockClock clock)
+        {
+            this.clock = clock;
+        }
+
+        override Result call()
+        {
+            clock.add(4, TimeUnit.NANOSECONDS);
+            return Result("");
+        }
+
+        override Result get()
+        {
+            clock.add(5, TimeUnit.NANOSECONDS);
+            return Result.init;
+        }
+    }
+
+    static Result delegate() @safe wrapValue(Timer timer, MockClock clock)
+    {
+        long nextAmount = 6;
+        return timer.wrap(() {
+            clock.add(nextAmount++, TimeUnit.NANOSECONDS);
+            return Result("delegate");
+        });
+    }
+
+    auto clock = new MockClock;
+    auto id = new Meter.Id("wrapped values", Tags.empty(), Nullable!string.init,
+            Nullable!string.init, Meter.Type.TIMER);
+    Timer timer = new CumulativeTimer(id, clock);
+    auto action = new Action(clock);
+    Callable!Result callable = action;
+    Supplier!Result supplier = action;
+    auto wrappedCallable = timer.wrap(callable);
+    auto wrappedSupplier = timer.wrap(supplier);
+    auto wrappedDelegate = wrapValue(timer, clock);
+
+    auto failure = new IllegalStateException("wrapped supplier failed");
+    Result fail()
+    {
+        clock.add(11, TimeUnit.NANOSECONDS);
+        throw failure;
+    }
+
+    auto wrappedFailure = timer.wrap(Supplier!Result.of(&fail));
+    assert(timer.count() == 0 && clock.monotonicTime() == 1_000_000);
+
+    const allocatedBefore = GC.stats().allocatedInCurrentThread;
+    clock.add(100, TimeUnit.NANOSECONDS);
+    assert(wrappedCallable.call().get() == "");
+    assert(wrappedSupplier.get().isNull());
+    clock.add(100, TimeUnit.NANOSECONDS);
+    assert(wrappedCallable.call().get() == "");
+    assert(wrappedSupplier.get().isNull());
+    assert(wrappedDelegate().get() == "delegate");
+    assert(wrappedDelegate().get() == "delegate");
+    assert(GC.stats().allocatedInCurrentThread == allocatedBefore);
+    assert(timer.count() == 6 && timer.totalTime(TimeUnit.NANOSECONDS) == 31);
+
+    bool caught;
+    try
+        wrappedFailure.get();
+    catch (IllegalStateException error)
+        caught = error is failure;
+    assert(caught);
+    assert(timer.count() == 7 && timer.totalTime(TimeUnit.NANOSECONDS) == 42);
+}
+
 private final class CumulativeCounter : Counter
 {
     private Meter.Id id;

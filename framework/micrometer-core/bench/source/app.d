@@ -32,6 +32,15 @@ private final class Region : RegionCallable, RegionSupplier
     }
 }
 
+private bool verifyWrappers(Timer timer, RegionCallable callable, RegionSupplier supplier, string region)
+{
+    auto wrappedCallable = timer.wrap(callable);
+    auto wrappedSupplier = timer.wrap(supplier);
+    auto wrappedDelegate = timer.wrap(() => region);
+    return timer.count() == 3 && wrappedCallable.call() == region && wrappedSupplier.get() == region
+        && wrappedDelegate() == region && timer.count() == 6;
+}
+
 void main(string[] args)
 {
     string region = args.length > 1 ? args[1] : "west";
@@ -52,6 +61,8 @@ void main(string[] args)
         return;
     RegionSupplier supplier = action;
     if (timer.record(supplier) != region || timer.count() != 3)
+        return;
+    if (!verifyWrappers(timer, callable, supplier, region))
         return;
     foreach (character; tags.toString())
         fputc(character, stdout);
