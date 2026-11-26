@@ -1,0 +1,8 @@
+name "probe-expression"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-expression"
+dflags "-preview=dip1000"
+dependency "flint:expression" path="../../.."
