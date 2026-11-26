@@ -149,17 +149,40 @@ final class OperationHandler
     // The path segments an ALL_REMAINING selector (`{*path}`) matches.
     private string[] selectors(HttpServletRequest request)
     {
-        import std.algorithm.iteration : filter, splitter;
-        import std.array : array;
-        import std.string : indexOf;
-
-        const capture = path.indexOf("/{*");
-        if (capture < 0)
+        // Flint: plain loops, not std.algorithm/std.array/std.string, whose ModuleInfo and instances pull
+        // std.socket and the rest of Phobos's network objects into every app (playbook S-9).
+        const capture = indexOfCapture(path);
+        if (capture == size_t.max)
             return null;
         const prefix = request.getContextPath() ~ path[0 .. capture + 1];
         const uri = request.getRequestURI();
         if (uri.length <= prefix.length)
             return null;
-        return uri[prefix.length .. $].splitter('/').filter!(segment => segment.length != 0).array;
+        return segmentsOf(uri[prefix.length .. $]);
     }
+}
+
+// The index of the first "/{*" in `text`, or size_t.max.
+private size_t indexOfCapture(scope const(char)[] text) pure nothrow @nogc
+{
+    foreach (i; 0 .. text.length)
+        if (i + 2 < text.length && text[i] == '/' && text[i + 1] == '{' && text[i + 2] == '*')
+            return i;
+    return size_t.max;
+}
+
+// The non-empty '/'-separated segments of `text`.
+private string[] segmentsOf(string text) pure nothrow
+{
+    string[] segments;
+    size_t start;
+    foreach (i; 0 .. text.length + 1)
+    {
+        if (i < text.length && text[i] != '/')
+            continue;
+        if (i > start)
+            segments ~= text[start .. i];
+        start = i + 1;
+    }
+    return segments;
 }
