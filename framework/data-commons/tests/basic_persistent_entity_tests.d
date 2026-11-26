@@ -17,7 +17,7 @@ import flint.data.mapping.model : BasicPersistentEntity, BeanWrapperPropertyAcce
     MutablePersistentEntity, PersistentPropertyAccessorFactory;
 import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
+import flint.engine.aot.descriptor : ConstructorDescriptor, DescriptorTable, ParameterDescriptor, descriptorOf;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, Long, NullPointerException;
 import flint.java.util : Comparator;
@@ -259,12 +259,54 @@ private final class OpaqueAccessorEntity : BasicPersistentEntity!(Person, Proper
     }
 }
 
+private class PopulationCandidate
+{
+    string firstname;
+    string lastname;
+    string email;
+}
+
+@Immutable
+private final class ImmutablePopulationCandidate : PopulationCandidate
+{
+}
+
+private final class CreatorArgumentOverride : BasicPersistentEntity!(Person, Property)
+{
+    this(TypeInformation information)
+    {
+        super(information);
+    }
+
+    override bool isCreatorArgument(PersistentProperty!() property)
+    {
+        return property !is null && property.getName() == "revision";
+    }
+}
+
 private BasicPersistentEntity!(T, Property) mapped(T)(Comparator!Property comparator = null)
 {
     auto descriptors = DescriptorTable.withBuiltins();
     descriptors.add(descriptorOf!T());
     descriptors.add(descriptorOf!(Nullable!long)());
     return new BasicPersistentEntity!(T, Property)(TypeInformation.of!T(descriptors), comparator);
+}
+
+private BasicPersistentEntity!(T, Property) populationCandidate(T = PopulationCandidate)()
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    auto descriptor = descriptorOf!T();
+    descriptor.constructors = [
+        ConstructorDescriptor([
+            ParameterDescriptor("firstname", classOf!string.name),
+            ParameterDescriptor("lastname", classOf!string.name),
+        ])
+    ];
+    descriptors.add(descriptor);
+    auto entity = new BasicPersistentEntity!(T, Property)(TypeInformation.of!T(descriptors));
+    entity.addPersistentProperty(new Property("firstname", classOf!string));
+    entity.addPersistentProperty(new Property("lastname", classOf!string));
+    return entity;
 }
 
 @("rejectsNullTypeInformation")
@@ -394,6 +436,48 @@ unittest
 unittest
 {
     assert(mapped!DerivedImmutableEntity().isImmutable());
+}
+
+@("exposesPropertyPopulationRequired")
+unittest
+{
+    auto model = populationCandidate();
+    PersistentEntity!(PopulationCandidate, Property) entity = model;
+    assert(!entity.requiresPropertyPopulation());
+    model.addPersistentProperty(new Property("email", classOf!string));
+    assert(entity.requiresPropertyPopulation());
+}
+
+@("exposesPropertyPopulationNotRequired")
+unittest
+{
+    auto model = populationCandidate();
+    PersistentEntity!(PopulationCandidate, Property) entity = model;
+    assert(!entity.requiresPropertyPopulation());
+    model.addPersistentProperty(new Property("email", classOf!string, transient_:
+            true));
+    assert(!entity.requiresPropertyPopulation());
+}
+
+@("immutable metadata suppresses property population")
+unittest
+{
+    auto model = populationCandidate!ImmutablePopulationCandidate();
+    model.addPersistentProperty(new Property("email", classOf!string));
+    assert(!model.requiresPropertyPopulation());
+}
+
+@("population honors the entity's virtual creator argument check")
+unittest
+{
+    auto descriptors = DescriptorTable.withBuiltins();
+    descriptors.add(descriptorOf!Person());
+    auto model = new CreatorArgumentOverride(TypeInformation.of!Person(descriptors));
+    model.addPersistentProperty(new Property("revision", classOf!long));
+    assert(!model.requiresPropertyPopulation());
+    model.addPersistentProperty(new Property("id", classOf!Long, identifier:
+            true));
+    assert(model.requiresPropertyPopulation());
 }
 
 @("requires text in a type alias annotation")

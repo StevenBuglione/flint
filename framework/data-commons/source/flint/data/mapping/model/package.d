@@ -227,6 +227,16 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
         return isAnnotationPresent(classOf!Immutable);
     }
 
+    override bool requiresPropertyPopulation()
+    {
+        if (isImmutable())
+            return false;
+        foreach (property; properties)
+            if (!property.isTransient() && !isCreatorArgument(property))
+                return true;
+        return false;
+    }
+
     override P getIdProperty()
     {
         return idProperty;

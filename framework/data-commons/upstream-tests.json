@@ -700,6 +700,8 @@
           "detectsImmutableEntity",
           "detectsPropertyWithAnnotation",
           "doWithAllInvokesPropertyHandlerForBothAPropertiesAndAssociations",
+          "exposesPropertyPopulationNotRequired",
+          "exposesPropertyPopulationRequired",
           "getRequiredAnnotationReturnsAnnotation",
           "getRequiredAnnotationThrowsException",
           "invalidBeanAccessCreatesDescriptiveErrorMessage",
@@ -717,8 +719,6 @@
           "supportsSubtypeInstancesOnPropertyAccessorLookup"
         ],
         "skipped": {
-          "exposesPropertyPopulationNotRequired": "Creator and property-population metadata remain deferred.",
-          "exposesPropertyPopulationRequired": "Creator and property-population metadata remain deferred.",
           "findAnnotationShouldBeThreadSafe": "The concurrent lookup fixture remains deferred.",
           "includesTransientProperty": "Automatic discovery and mapping of transient properties in entity contexts remain deferred.",
           "returnsGeneratedPropertyAccessorForPropertyAccessor": "Mapping context and generated property accessors remain deferred."

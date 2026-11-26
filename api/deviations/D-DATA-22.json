@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-22",
+ "deviation": "BasicPersistentEntity computes property population requirements from its current explicit property registration.",
+ "reason": "Startup callers may register more properties after reading metadata. Rechecking the predicate prevents an earlier lookup from hiding a subsequently added ordinary property."
+}

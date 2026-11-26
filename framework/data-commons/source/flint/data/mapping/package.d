@@ -297,6 +297,9 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// Whether the entity is marked as immutable.
     bool isImmutable();
 
+    /// Whether a registered property needs to be populated after creation.
+    bool requiresPropertyPopulation();
+
     /// Creates an accessor for a compatible bean.
     PersistentPropertyAccessor!(T, P) getPropertyAccessor(Any bean);
 
