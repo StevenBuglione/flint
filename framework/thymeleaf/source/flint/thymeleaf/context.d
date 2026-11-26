@@ -15,6 +15,7 @@
  *
  * Ported from thymeleaf 3.1.7.RELEASE:
  * lib/thymeleaf/src/main/java/org/thymeleaf/context/IContext.java
+ * lib/thymeleaf/src/main/java/org/thymeleaf/context/IdentifierSequences.java
  * lib/thymeleaf/src/main/java/org/thymeleaf/context/ILazyContextVariable.java
  * lib/thymeleaf/src/main/java/org/thymeleaf/context/LazyContextVariable.java
  * Modified by the Flint authors.
@@ -23,7 +24,10 @@ module flint.thymeleaf.context;
 
 import core.atomic : MemoryOrder, atomicLoad, atomicStore;
 import flint.engine.aot.any : Any;
+import flint.java.lang : IllegalArgumentException;
 import flint.java.util : Locale, Set;
+import flint.thymeleaf.exceptions : TemplateProcessingException;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -41,6 +45,64 @@ interface IContext
 
     /// The named value, or Any.init for null or a missing variable (R23).
     Any getVariable(string name);
+}
+
+/// Per-context counts used to generate distinct template identifiers.
+final class IdentifierSequences
+{
+    private alias Identifier = Nullable!string;
+
+    // Reuse the string-to-ulong table already instantiated by Java collections. Each count is a 32-bit value.
+    private ulong[string] nextCounts;
+
+    /// Starts the next count at one for each identifier, with storage allocated on first use.
+    this() pure nothrow @nogc
+    {
+    }
+
+    /// Return and advance this identifier's counter.
+    int getAndIncrementIDSeq(Identifier id)
+    {
+        auto key = requireId(id);
+        if (auto next = lookup(key))
+        {
+            const current = cast(int)*next;
+            *next = cast(uint) current + 1;
+            return current;
+        }
+        nextCounts[key] = 2;
+        return 1;
+    }
+
+    /// Look up this identifier's next count without advancing it.
+    int getNextIDSeq(Identifier id) const
+    {
+        const key = requireId(id);
+        const next = lookup(key);
+        return next is null ? 1 : cast(int)*next;
+    }
+
+    /// Look up the last returned count, or reject an identifier that has yet to advance.
+    int getPreviousIDSeq(Identifier id) const
+    {
+        const key = requireId(id);
+        const next = lookup(key);
+        if (next is null)
+            throw new TemplateProcessingException("Cannot obtain previous ID count for ID \"" ~ key ~ "\"");
+        return cast(int)(cast(uint)*next - 1);
+    }
+
+    private inout(ulong)* lookup(string key) inout pure nothrow @nogc
+    {
+        return key in nextCounts;
+    }
+
+    private static string requireId(Identifier id)
+    {
+        if (id.isNull)
+            throw new IllegalArgumentException("ID cannot be null");
+        return id.get;
+    }
 }
 
 /// A context variable whose value is resolved only when requested (R23).
