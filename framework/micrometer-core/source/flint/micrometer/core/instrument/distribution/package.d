@@ -23,7 +23,7 @@ module flint.micrometer.core.instrument.distribution;
 import core.atomic : atomicLoad, atomicStore, cas;
 import core.sync.mutex : Mutex;
 import flint.engine.aot.objects : statelessInstance;
-import flint.java.lang : ArithmeticException, AutoCloseable, Double, IllegalArgumentException, NullPointerException;
+import flint.java.lang : AutoCloseable, Double, IllegalArgumentException, NullPointerException;
 import flint.java.time : Duration;
 import flint.java.util.concurrent : TimeUnit, toNanos;
 import flint.micrometer.core.instrument : Clock;
@@ -537,24 +537,10 @@ class TimeWindowMax
         return expiryMillis(expiry.get());
     }
 
-    // Keep Java's checked millisecond conversion until the shared Duration port gains it.
-    // Share one checked conversion between configured maxima and simple summaries.
+    // Share the startup conversion between configured maxima and simple summaries.
     pragma(inline, false) package(flint.micrometer.core.instrument) static long expiryMillis(Duration expiry)
     {
-        long seconds = expiry.getSeconds();
-        long nanos = expiry.getNano();
-        if (seconds < 0)
-        {
-            ++seconds;
-            nanos -= 1_000_000_000;
-        }
-        const adjustment = nanos / 1_000_000;
-        if (seconds < long.min / 1000 || seconds > long.max / 1000)
-            throw rotationOverflow();
-        const millis = seconds * 1000;
-        if ((adjustment > 0 && millis > long.max - adjustment) || (adjustment < 0 && millis < long.min - adjustment))
-            throw rotationOverflow();
-        return millis + adjustment;
+        return expiry.toMillis();
     }
 
     private static int configuredBucketCount(const DistributionStatisticConfig config)
@@ -656,9 +642,4 @@ class TimeWindowMax
 private NullPointerException missingSetting(string name)
 {
     return new NullPointerException(name);
-}
-
-private ArithmeticException rotationOverflow()
-{
-    return new ArithmeticException("long overflow");
 }

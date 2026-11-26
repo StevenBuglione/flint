@@ -19,7 +19,7 @@ module micrometer_distribution_summary_test;
 
 import core.memory : GC;
 import core.thread : Thread;
-import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
+import flint.java.lang : ArithmeticException, IllegalArgumentException, Iterable, NullPointerException;
 import flint.java.time : Duration;
 import flint.micrometer.core.instrument : Counter, DistributionSummary, Measurement, Meter, Statistic, Tag, Tags;
 import flint.micrometer.core.instrument.config : InvalidConfigurationException;
@@ -253,4 +253,21 @@ unittest
     auto closed = DistributionSummary.builder("closed").distributionStatisticExpiry(Duration.ofNanos(1));
     assert(closed.register(registry).count() == 0);
     assertThrown!InvalidConfigurationException(closed.distributionStatisticBufferLength(0).register(registry));
+}
+
+@("summary registration distinguishes invalid windows from signed expiry overflow")
+unittest
+{
+    auto registry = new SimpleMeterRegistry;
+    auto builder = DistributionSummary.builder("response.expiry");
+    assertThrown!IllegalArgumentException(builder.distributionStatisticExpiry(
+            Duration.ofSeconds(-9_223_372_036_854_776L, 191_000_001)).register(registry));
+    assertThrown!ArithmeticException(builder.distributionStatisticExpiry(
+            Duration.ofSeconds(-9_223_372_036_854_776L, 191_000_000)).register(registry));
+    assertThrown!ArithmeticException(builder.distributionStatisticExpiry(
+            Duration.ofSeconds(9_223_372_036_854_775L, 808_000_000)).register(registry));
+
+    auto summary = builder.distributionStatisticExpiry(Duration.ofMillis(long.max)).register(registry);
+    summary.record(2.0);
+    assert(summary.count() == 1 && summary.max() == 2.0);
 }
