@@ -212,6 +212,16 @@ A Java enum that declares methods but has no instance fields and implements no i
 
 Mapping: the constants are `ported`, and the methods are `adapted` with rule `R20`.
 
+### R21: Type parameters that appear only in the return type
+
+Java infers `<T extends B> T m()` from the assignment context, which D does not have. Coordinator, 2026-11-26, under the owner's standing approval, from sol-jackson's `JsonNode.require()`:
+- **A non-template `m()`** returns the bound `B`.
+- **An explicit `m!T()`** returns `T` through a checked downcast over the same erased implementation. On a mismatch it throws Java's `ClassCastException`, or the exception the API documents for that case.
+- Both share one implementation, so the template adds only the cast.
+- **Where it recurs:** `getBean`-like lookups and attribute accessors. A method whose type parameter also appears in a parameter is not covered; `Class<T>` tokens stay R4.
+
+Mapping: the method is `adapted` with rule `R21`; its `d` names the method (`flint.jackson.databind.JsonNode.require`), never the template instance.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:
