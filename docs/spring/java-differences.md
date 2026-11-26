@@ -196,7 +196,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | openjdk@21.0.13 | 1,220 | 390 | 1,871 | 14,940 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
+| security | spring-security@7.2.0 | 557 | 27 | 88 | 11,741 |
 
 ## Known gaps
 
@@ -229,6 +229,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.InMemoryUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
 | security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.JdbcUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.JdbcUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
 | security | `org.springframework.security.crypto.factory.PasswordEncoderFactories#createDelegatingPasswordEncoder()` | `flint.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder` | Known gap: the factory registers bcrypt and noop, covering 2 of Spring's 14 default ids. The other ids are deferred with their encoders. BCrypt is the encoding default. An encoded password with an unmapped {id} throws IllegalArgumentException through the unmapped-id handler. |
+| security | `org.springframework.security.web.authentication.www.BasicAuthenticationConverter#convert(HttpServletRequest)` | `flint.security.web.authentication.www.BasicAuthenticationConverter.convert` | The converter decodes UTF-8 and leaves token details unset. Configurable charset and authentication details are deferred. |
 
 ## Adapted elements
 
@@ -11389,7 +11390,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.web.access.channel | 57 | 0 |
 | org.springframework.security.web.access.expression | 35 | 0 |
 | org.springframework.security.web.access.intercept | 61 | 0 |
-| org.springframework.security.web.authentication | 207 | 0 |
+| org.springframework.security.web.authentication | 205 | 0 |
 | org.springframework.security.web.authentication.logout | 50 | 0 |
 | org.springframework.security.web.authentication.ott | 23 | 0 |
 | org.springframework.security.web.authentication.password | 4 | 4 |
@@ -11401,7 +11402,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.web.authentication.session | 47 | 0 |
 | org.springframework.security.web.authentication.switchuser | 41 | 0 |
 | org.springframework.security.web.authentication.ui | 42 | 0 |
-| org.springframework.security.web.authentication.www | 52 | 0 |
+| org.springframework.security.web.authentication.www | 51 | 0 |
 | org.springframework.security.web.bind.annotation | 2 | 0 |
 | org.springframework.security.web.bind.support | 4 | 0 |
 | org.springframework.security.web.context | 71 | 0 |

@@ -13,7 +13,6 @@
 +/
 module flint.security.web.authentication.www;
 
-import flint.engine.aot.any : Any;
 import flint.jakarta.servlet : FilterChain;
 import flint.jakarta.servlet.http : HttpServletRequest, HttpServletResponse;
 import flint.java.lang : IllegalArgumentException;
@@ -22,6 +21,7 @@ import flint.security.authentication : AuthenticationManager, BadCredentialsExce
 import flint.security.core : AuthenticationException;
 import flint.security.core.context : SecurityContextHolder, SecurityContextImpl;
 import flint.security.web : AuthenticationEntryPoint, SecurityFilter;
+import flint.security.web.authentication : AuthenticationConverter, boxAuthenticationText;
 import flint.security.web.context : SecurityContextRepository;
 
 @safe:
@@ -52,28 +52,37 @@ class BasicAuthenticationEntryPoint : AuthenticationEntryPoint
 }
 
 /// Reads `Authorization: Basic <base64(user:password)>` (Spring Security's `BasicAuthenticationConverter`).
-struct BasicAuthenticationConverter
+class BasicAuthenticationConverter : AuthenticationConverter
 {
+    /// The HTTP Basic authentication scheme.
+    enum AUTHENTICATION_SCHEME_BASIC = "Basic";
+
+    /// Create a converter using the default UTF-8 credentials.
+    this()
+    {
+    }
+
     /// The unauthenticated token, or null without a Basic header. Throws `BadCredentialsException` for a malformed
     /// one.
-    static UsernamePasswordAuthenticationToken convert(HttpServletRequest request)
+    override UsernamePasswordAuthenticationToken convert(HttpServletRequest request)
     {
         auto header = request.getHeader("Authorization");
         if (header is null)
             return null;
         header = trim(header);
-        if (header.length < 5 || !equalsIgnoreCase(header[0 .. 5], "basic"))
+        enum schemeLength = AUTHENTICATION_SCHEME_BASIC.length;
+        if (header.length < schemeLength || !equalsIgnoreCase(header[0 .. schemeLength], AUTHENTICATION_SCHEME_BASIC))
             return null;
-        if (header.length == 5)
+        if (header.length == schemeLength)
             throw new BadCredentialsException("Empty basic authentication token");
-        const encoded = trim(header[6 .. $]);
+        const encoded = trim(header[schemeLength + 1 .. $]);
         string token;
         if (!decodeBase64(encoded, token))
             throw new BadCredentialsException("Failed to decode basic authentication token");
         foreach (i, c; token)
             if (c == ':')
-                return UsernamePasswordAuthenticationToken.unauthenticated(Any.of(token[0 .. i]),
-                        Any.of(token[i + 1 .. $]));
+                return UsernamePasswordAuthenticationToken.unauthenticated(boxAuthenticationText(token[0 .. i]),
+                        boxAuthenticationText(token[i + 1 .. $]));
         throw new BadCredentialsException("Invalid basic authentication token");
     }
 
@@ -165,6 +174,7 @@ class BasicAuthenticationFilter : SecurityFilter
 {
     private AuthenticationManager authenticationManager;
     private AuthenticationEntryPoint authenticationEntryPoint;
+    private BasicAuthenticationConverter authenticationConverter;
     private SecurityContextRepository securityContextRepository;
 
     /// A filter authenticating with `authenticationManager` and failing at `authenticationEntryPoint`.
@@ -176,6 +186,7 @@ class BasicAuthenticationFilter : SecurityFilter
             throw new IllegalArgumentException("An AuthenticationEntryPoint is required");
         this.authenticationManager = authenticationManager;
         this.authenticationEntryPoint = authenticationEntryPoint;
+        authenticationConverter = new BasicAuthenticationConverter;
     }
 
     /// Where the authenticated context is saved.
@@ -188,7 +199,7 @@ class BasicAuthenticationFilter : SecurityFilter
     {
         try
         {
-            auto token = BasicAuthenticationConverter.convert(request);
+            auto token = authenticationConverter.convert(request);
             if (token !is null && authenticationIsRequired(token.getName()))
             {
                 auto result = authenticationManager.authenticate(token);

@@ -381,8 +381,21 @@
       "status": "deferred"
     },
     "org/springframework/security/web/authentication/www/BasicAuthenticationConverterTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-web/tests/basic_authentication_converter_test.d",
+      "methods": {
+        "ported": [
+          "requestWhenEmptyBasicAuthorizationHeaderTokenThenError",
+          "testWhenInvalidBase64ThenError",
+          "testWhenInvalidBasicAuthorizationTokenThenError"
+        ],
+        "skipped": {
+          "convertWhenEmptyPassword": "The upstream test also checks details-source injection, which is deferred.",
+          "requestWhenAuthorizationSchemeInMixedCaseThenAuthenticates": "The upstream test also checks details-source injection, which is deferred.",
+          "testNormalOperation": "The upstream test also checks details-source injection, which is deferred.",
+          "testWhenUnsupportedAuthorizationHeaderThenIgnored": "The upstream test also checks interactions with the injected details source, which is deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/security/web/authentication/www/BasicAuthenticationEntryPointTests.java": {
       "phase": "2",

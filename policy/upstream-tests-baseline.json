@@ -8598,7 +8598,6 @@
       "org/springframework/security/web/authentication/ui/DefaultOneTimeTokenSubmitPageGeneratingFilterTests.java",
       "org/springframework/security/web/authentication/ui/DefaultResourcesFilterTests.java",
       "org/springframework/security/web/authentication/ui/HtmlTemplatesTests.java",
-      "org/springframework/security/web/authentication/www/BasicAuthenticationConverterTests.java",
       "org/springframework/security/web/authentication/www/BasicAuthenticationEntryPointTests.java",
       "org/springframework/security/web/authentication/www/BasicAuthenticationFilterTests.java",
       "org/springframework/security/web/authentication/www/DigestAuthUtilsTests.java",

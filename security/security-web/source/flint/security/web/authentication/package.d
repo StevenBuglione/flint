@@ -4,7 +4,7 @@
 // Modified by the Flint authors.
 /*
  * Ported from spring-security 7.2.0, web/src/main/java/org/springframework/security/web/authentication/{
- * AnonymousAuthenticationFilter,Http403ForbiddenEntryPoint}.java.
+ * AnonymousAuthenticationFilter,AuthenticationConverter,Http403ForbiddenEntryPoint}.java.
  */
 
 /++
@@ -22,6 +22,15 @@ import flint.security.web : AuthenticationEntryPoint, SecurityFilter;
 
 @safe:
 
+/// Converts a request into an authentication proposal, or returns null if the request has none.
+interface AuthenticationConverter
+{
+    Authentication convert(HttpServletRequest request);
+}
+
+// Share the concrete string specialization across the authentication filters.
+package(flint.security.web.authentication) alias boxAuthenticationText = Any.of!string;
+
 /// Sets an anonymous authentication when there is none (Spring Security's `AnonymousAuthenticationFilter`).
 class AnonymousAuthenticationFilter : SecurityFilter
 {
@@ -33,7 +42,7 @@ class AnonymousAuthenticationFilter : SecurityFilter
     /// A filter with principal `anonymousUser` and authority `ROLE_ANONYMOUS`.
     this(string key)
     {
-        this(key, Any.of("anonymousUser"), AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
+        this(key, boxAuthenticationText("anonymousUser"), AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
     }
 
     /// A filter with `principal` and `authorities`.
