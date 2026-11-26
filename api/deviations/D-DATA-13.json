@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-13",
+ "deviation": "PersistentPropertyAccessor uses the entity type and its concrete property type. BasicPersistentEntity accepts an erased bean and validates its runtime type before constructing an accessor. Accessors use the registered property value representation and require a descriptor setter for writes.",
+ "reason": "D has no wildcard type parameter or virtual generic method. Explicit descriptor callbacks preserve class identity and allow a value-type bean to be updated in accessor-owned storage. Immutable bean replacement and accessor factories are deferred."
+}

@@ -7,7 +7,7 @@ module basic_persistent_entity_tests;
 import flint.data.annotation : TypeAlias;
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
-import flint.data.mapping : Alias, MappingException, PersistentProperty;
+import flint.data.mapping : Alias, MappingException, PersistentEntity, PersistentProperty;
 import flint.data.mapping.model : BasicPersistentEntity;
 import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
@@ -15,15 +15,30 @@ import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, Long;
 import flint.java.util : Comparator;
-import std.exception : assertThrown;
+import std.exception : assertThrown, collectException;
 import std.typecons : Nullable;
 
 @safe:
 
-private final class Person
+private class Person
 {
     Nullable!long id;
     long revision;
+
+    string getLabel() const
+    {
+        return "person";
+    }
+}
+
+private final class Employee : Person
+{
+}
+
+private struct Snapshot
+{
+    long revision;
+    private long[5] padding;
 }
 
 @TypeAlias("foo")
@@ -218,4 +233,66 @@ unittest
     assert(!entity.hasVersionProperty() && entity.getPersistentProperty("revision") is null);
     auto properties = entity.iterator();
     assert(properties.next() is identifier && !properties.hasNext());
+}
+
+@("rejectsNullBeanForPropertyAccessor")
+unittest
+{
+    PersistentEntity!(Person, Property) entity = mapped!Person();
+    assertThrown!IllegalArgumentException(entity.getPropertyAccessor(Any.init));
+}
+
+@("rejectsNonMatchingBeanForPropertyAccessor")
+unittest
+{
+    PersistentEntity!(Person, Property) entity = mapped!Person();
+    assertThrown!IllegalArgumentException(entity.getPropertyAccessor(Any.of("foo")));
+}
+
+@("supportsSubtypeInstancesOnPropertyAccessorLookup")
+unittest
+{
+    PersistentEntity!(Person, Property) entity = mapped!Person();
+    auto bean = new Employee;
+    auto accessor = entity.getPropertyAccessor(Any.of(bean));
+    assert(accessor.getBean() is bean);
+
+    auto revision = new Property("revision", classOf!long);
+    entity.getPropertyAccessor(Any.of(bean)).setProperty(revision, Any.of(3L));
+    assert(accessor.getProperty(revision).get!long == 3L && bean.revision == 3L);
+}
+
+@("invalidBeanAccessCreatesDescriptiveErrorMessage")
+unittest
+{
+    import std.algorithm.searching : canFind;
+
+    auto failure = collectException!IllegalArgumentException(mapped!Person().getPropertyAccessor(Any.of(new Object)));
+    assert(failure !is null);
+    assert(failure.msg.canFind(classOf!Person.name) && failure.msg.canFind(classOf!Object.name));
+}
+
+@("descriptor access reports unavailable or invalid writes")
+unittest
+{
+    auto accessor = mapped!Person().getPropertyAccessor(Any.of(new Person));
+    auto revision = new Property("revision", classOf!long);
+    auto failure = collectException!MappingException(accessor.setProperty(revision, Any.of("bad")));
+    assert(failure !is null && failure.getCause() !is null);
+    assert(accessor.getProperty(revision).get!long == 0);
+    auto label = new Property("label", classOf!string);
+    assert(accessor.getProperty(label).get!string == "person");
+    assertThrown!MappingException(accessor.setProperty(label, Any.of("updated")));
+    assertThrown!MappingException(accessor.getProperty(new Property("missing")));
+    assertThrown!IllegalArgumentException(accessor.getProperty(null));
+}
+
+@("descriptor access owns a copy of a boxed struct bean")
+unittest
+{
+    auto original = Any.of(Snapshot(1L));
+    auto accessor = mapped!Snapshot().getPropertyAccessor(original);
+    auto revision = new Property("revision", classOf!long);
+    accessor.setProperty(revision, Any.of(2L));
+    assert(accessor.getBean().revision == 2L && original.get!Snapshot.revision == 1L);
 }

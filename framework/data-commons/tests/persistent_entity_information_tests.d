@@ -6,15 +6,13 @@ module persistent_entity_information_tests;
 
 import flint.data.annotation : Id;
 import flint.data.core : TypeInformation;
-import flint.data.mapping : Alias, IdentifierAccessor, PersistentEntity, PersistentProperty,
-    TargetAwareIdentifierAccessor;
+import flint.data.mapping : PersistentEntity, PersistentProperty;
+import flint.data.mapping.model : BasicPersistentEntity;
 import flint.data.repository.core : EntityInformation;
 import flint.data.repository.core.support : PersistentEntityInformation;
-import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : Descriptor, DescriptorTable, PropertyDescriptor, descriptorOf;
+import flint.engine.aot.descriptor : DescriptorTable, PropertyDescriptor, descriptorOf;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalStateException, Long;
-import flint.java.util : ArrayList, Iterator, List;
 import std.exception : assertThrown;
 import std.typecons : Nullable;
 
@@ -34,13 +32,11 @@ private final class EntityWithoutId
 private final class MappedProperty : PersistentProperty!MappedProperty
 {
     const(PropertyDescriptor)* property;
-    const(Descriptor) wrapper;
     ClassRef declaredType;
 
-    this(const(PropertyDescriptor)* property, const(Descriptor) wrapper, ClassRef declaredType)
+    this(const(PropertyDescriptor)* property, ClassRef declaredType)
     {
         this.property = property;
-        this.wrapper = wrapper;
         this.declaredType = declaredType;
     }
 
@@ -71,118 +67,21 @@ private final class MappedProperty : PersistentProperty!MappedProperty
     {
         return false;
     }
-
-    Any read(ref Any bean)
-    {
-        auto value = property.get(bean);
-        return wrapper !is null && wrapper.unwrap !is null ? wrapper.unwrap(value) : value;
-    }
 }
 
-private final class MappedIdentifierAccessor : TargetAwareIdentifierAccessor
+private BasicPersistentEntity!(T, MappedProperty) mappedEntity(T)(const(DescriptorTable) descriptors,
+        ClassRef boxedIdType = ClassRef.init)
 {
-    private Any bean;
-    private MappedProperty property;
-
-    this(Any bean, MappedProperty property)
+    const descriptor = descriptors.find(classOf!T.name);
+    auto entity = new BasicPersistentEntity!(T, MappedProperty)(TypeInformation.of!T(descriptors));
+    foreach (ref property; descriptor.properties)
     {
-        super(bean);
-        this.bean = bean;
-        this.property = property;
+        auto mapped = new MappedProperty(&property, ClassRef(property.type));
+        if (boxedIdType.name.length && mapped.isIdProperty())
+            mapped.declaredType = boxedIdType;
+        entity.addPersistentProperty(mapped);
     }
-
-    override Any getIdentifier()
-    {
-        return property is null ? Any.init : property.read(bean);
-    }
-}
-
-private final class MappedEntity(T) : PersistentEntity!(T, MappedProperty)
-{
-    private MappedProperty identifier;
-    private List!MappedProperty properties;
-    private TypeInformation typeInformation;
-
-    this(const(DescriptorTable) descriptors, ClassRef boxedIdType = ClassRef.init)
-    {
-        const descriptor = descriptors.find(classOf!T.name);
-        typeInformation = TypeInformation.of!T(descriptors);
-        properties = new ArrayList!MappedProperty(cast(int) descriptor.properties.length);
-        foreach (i; 0 .. descriptor.properties.length)
-        {
-            const property = &descriptor.properties[i];
-            bool denotesId;
-            foreach (ref annotation; property.annotations)
-                if (annotation.type == classOf!Id.name)
-                {
-                    denotesId = true;
-                    break;
-                }
-
-            const declaredType = denotesId && boxedIdType.name.length ? boxedIdType : ClassRef(property.type);
-            auto mapped = new MappedProperty(property, descriptors.find(property.type), declaredType);
-            properties.add(mapped);
-            if (denotesId)
-                identifier = mapped;
-        }
-    }
-
-    mixin PersistentEntity!(T, MappedProperty).Defaults;
-
-    override string getName()
-    {
-        return classOf!T.name;
-    }
-
-    override ClassRef getType()
-    {
-        return classOf!T;
-    }
-
-    override TypeInformation getTypeInformation()
-    {
-        return typeInformation;
-    }
-
-    override Alias getTypeAlias()
-    {
-        return Alias.NONE;
-    }
-
-    override MappedProperty getIdProperty()
-    {
-        return identifier;
-    }
-
-    override bool hasIdProperty()
-    {
-        return identifier !is null;
-    }
-
-    override IdentifierAccessor getIdentifierAccessor(Any bean)
-    {
-        return new MappedIdentifierAccessor(bean, identifier);
-    }
-
-    override bool isNew(Any bean)
-    {
-        return identifier is null || identifier.read(bean).isNull();
-    }
-
-    override Iterator!MappedProperty iterator()
-    {
-        return properties.iterator();
-    }
-
-    override void forEach(void delegate(MappedProperty) @safe action)
-    {
-        properties.forEach(action);
-    }
-
-    override int opApply(scope int delegate(MappedProperty) @safe action)
-    {
-        return properties.opApply(action);
-    }
+    return entity;
 }
 
 static assert(!__traits(compiles, PersistentEntity!(Sample, string)));
@@ -194,7 +93,7 @@ unittest
     descriptors.add(descriptorOf!Sample());
     descriptors.add(descriptorOf!(Nullable!long)());
 
-    auto mapped = new MappedEntity!Sample(descriptors, classOf!Long);
+    auto mapped = mappedEntity!Sample(descriptors, classOf!Long);
     PersistentEntity!(Sample, MappedProperty) entity = mapped;
     EntityInformation!(Sample, long) information = new PersistentEntityInformation!(Sample, long)(mapped);
     assert(entity.hasIdProperty() && entity.getRequiredIdProperty().getName() == "id");
@@ -217,7 +116,7 @@ unittest
     auto descriptors = DescriptorTable.withBuiltins();
     descriptors.add(descriptorOf!EntityWithoutId());
 
-    PersistentEntity!(EntityWithoutId, MappedProperty) entity = new MappedEntity!EntityWithoutId(descriptors);
+    PersistentEntity!(EntityWithoutId, MappedProperty) entity = mappedEntity!EntityWithoutId(descriptors);
     EntityInformation!(EntityWithoutId, Object) information = new PersistentEntityInformation!(EntityWithoutId, Object)(
             entity);
     assert(!entity.hasIdProperty() && entity.getIdProperty() is null);
@@ -236,7 +135,7 @@ unittest
 {
     auto descriptors = DescriptorTable.withBuiltins();
     descriptors.add(descriptorOf!EntityWithReferenceId());
-    auto entity = new MappedEntity!EntityWithReferenceId(descriptors);
+    auto entity = mappedEntity!EntityWithReferenceId(descriptors);
     auto information = new PersistentEntityInformation!(EntityWithReferenceId, Object)(entity);
     auto sample = new EntityWithReferenceId;
     assert(information.getId(sample) is null);

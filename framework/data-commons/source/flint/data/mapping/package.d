@@ -1,7 +1,8 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,TargetAwareIdentifierAccessor}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,IdentifierAccessor,MappingException,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,TargetAwareIdentifierAccessor}.java
 // Alias: Copyright 2016-present the original author or authors.
 // IdentifierAccessor: Copyright 2014-present the original author or authors.
 // MappingException, PersistentEntity and PersistentProperty: Copyright 2011-present the original author or authors.
+// PersistentPropertyAccessor: Copyright 2014-present the original author or authors.
 // TargetAwareIdentifierAccessor: Copyright 2017-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
@@ -131,6 +132,19 @@ interface PersistentProperty(P) : PersistentPropertyType
     bool isTransient();
 }
 
+/// Access to the persistent properties of a mapped bean.
+interface PersistentPropertyAccessor(T, P) if (is(P : PersistentProperty!P))
+{
+    /// Writes a property from its descriptor's erased value representation.
+    void setProperty(P property, Any value);
+
+    /// Reads a property into its descriptor's erased value representation.
+    Any getProperty(P property);
+
+    /// The current bean, including any changes made through this accessor.
+    T getBean();
+}
+
 // The repository adapter uses the same metadata without retaining the property type parameter.
 package(flint.data) interface PersistentEntityIdentity
 {
@@ -160,6 +174,9 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
 
     /// The registered type alias, or Alias.NONE when absent.
     Alias getTypeAlias();
+
+    /// Creates an accessor for a compatible bean.
+    PersistentPropertyAccessor!(T, P) getPropertyAccessor(Any bean);
 
     /// Supplies the default required-identifier property check (R3).
     mixin template Defaults(PropertyType = P)

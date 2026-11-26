@@ -7,9 +7,10 @@ module flint.data.mapping.model;
 import flint.data.annotation : TypeAlias;
 import flint.data.core.type_information : TypeInformation, registeredDescriptor;
 import flint.data.domain.persistable : PersistableState;
-import flint.data.mapping : Alias, IdentifierAccessor, MappingException, PersistentEntity,
-    PersistentProperty, PrimitivePropertyKind, TargetAwareIdentifierAccessor, primitivePropertyKind;
+import flint.data.mapping : Alias, IdentifierAccessor, MappingException, PersistentEntity, PersistentProperty,
+    PersistentPropertyAccessor, PrimitivePropertyKind, TargetAwareIdentifierAccessor, primitivePropertyKind;
 import flint.engine.aot.any : Any;
+import flint.engine.aot.descriptor : Descriptor, PropertyDescriptor;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.util : ArrayList, Collections, Comparator, HashMap, Iterator, List, Map, Objects;
@@ -21,6 +22,7 @@ import std.typecons : Nullable;
 class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : PersistentProperty!P))
 {
     private TypeInformation information;
+    private const(Descriptor) descriptor;
     private Comparator!P comparator;
     private List!P properties;
     private List!P propertyView;
@@ -49,7 +51,8 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
         propertyView = Collections.unmodifiableList(properties);
         propertiesByName = new HashMap!(string, P)();
         typeAlias = Alias.NONE;
-        if (const descriptor = registeredDescriptor(information))
+        descriptor = registeredDescriptor(information);
+        if (descriptor !is null)
             if (const annotation = descriptor.annotation(classOf!TypeAlias.name))
                 typeAlias = Alias.of(Any.of(annotation.value.get!TypeAlias.value));
     }
@@ -175,6 +178,16 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
             return new ModelIdentifierAccessor(bean, idRead);
     }
 
+    override PersistentPropertyAccessor!(T, P) getPropertyAccessor(Any bean)
+    {
+        verifyBeanType(bean);
+        if (descriptor is null)
+            throw new MappingException(Nullable!string("No registered descriptor for " ~ getName()));
+        static if (is(T == struct))
+            bean = Any.of(bean.get!T);
+        return new DescriptorPropertyAccessor!(T, P)(descriptor, bean);
+    }
+
     override bool isNew(Any bean)
     {
         verifyBeanType(bean);
@@ -211,7 +224,6 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
 
     private PropertyRead bindRead(string name)
     {
-        auto descriptor = registeredDescriptor(information);
         auto field = descriptor is null ? null : descriptor.property(name);
         if (field is null || field.get is null)
             return PropertyRead(null, null, name);
@@ -224,6 +236,63 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
         const conflict = "Attempt to add " ~ role ~ " property " ~ candidate.getName();
         const registered = " but already have property " ~ existing.getName() ~ " registered as " ~ role;
         throw new MappingException(Nullable!string(conflict ~ registered ~ "; Check your mapping configuration"));
+    }
+}
+
+private final class DescriptorPropertyAccessor(T, P) : PersistentPropertyAccessor!(T, P)
+{
+    private const(Descriptor) descriptor;
+    private Any bean;
+
+    this(const(Descriptor) descriptor, Any bean)
+    {
+        this.descriptor = descriptor;
+        this.bean = bean;
+    }
+
+    override void setProperty(P property, Any value)
+    {
+        auto field = findProperty(property);
+        if (field.set is null)
+        {
+            const message = "Property " ~ field.name ~ " is read-only on " ~ descriptor.name;
+            throw new MappingException(Nullable!string(message));
+        }
+        try
+            field.set(bean, value);
+        catch (Exception failure)
+            throw new MappingException(Nullable!string(
+                    "Could not write property " ~ field.name ~ " on " ~ descriptor.name), failure);
+    }
+
+    override Any getProperty(P property)
+    {
+        auto field = findProperty(property);
+        if (field.get is null)
+        {
+            const message = "Property " ~ field.name ~ " is write-only on " ~ descriptor.name;
+            throw new MappingException(Nullable!string(message));
+        }
+        try
+            return field.get(bean);
+        catch (Exception failure)
+            throw new MappingException(Nullable!string(
+                    "Could not read property " ~ field.name ~ " on " ~ descriptor.name), failure);
+    }
+
+    override T getBean()
+    {
+        return bean.get!T;
+    }
+
+    private const(PropertyDescriptor)* findProperty(P property)
+    {
+        if (property is null)
+            throw new IllegalArgumentException("Property must not be null");
+        const name = property.getName();
+        if (auto field = descriptor.property(name))
+            return field;
+        throw new MappingException(Nullable!string("No mapped property " ~ name ~ " on " ~ descriptor.name));
     }
 }
 

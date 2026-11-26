@@ -676,12 +676,16 @@
         "ported": [
           "addingAndIdPropertySetsIdPropertyInternally",
           "considersComparatorForPropertyOrder",
+          "invalidBeanAccessCreatesDescriptiveErrorMessage",
           "rejectsIdPropertyIfAlreadySet",
+          "rejectsNonMatchingBeanForPropertyAccessor",
+          "rejectsNullBeanForPropertyAccessor",
           "rejectsNullProperty",
           "rejectsNullTypeInformation",
           "returnsNullForTypeAliasIfNoneConfigured",
           "returnsTypeAliasIfAnnotated",
-          "supportsPersistableViaIdentifierAccessor"
+          "supportsPersistableViaIdentifierAccessor",
+          "supportsSubtypeInstancesOnPropertyAccessorLookup"
         ],
         "skipped": {
           "assertInvariants": "The MutablePersistentEntity interface and environment contract remain deferred.",
@@ -694,14 +698,10 @@
           "getRequiredAnnotationReturnsAnnotation": "General entity annotation lookup remains deferred.",
           "getRequiredAnnotationThrowsException": "General entity annotation lookup remains deferred.",
           "includesTransientProperty": "Automatic discovery and mapping of transient properties in entity contexts remain deferred.",
-          "invalidBeanAccessCreatesDescriptiveErrorMessage": "General persistent-property accessor remains deferred.",
-          "rejectsNonMatchingBeanForPropertyAccessor": "General persistent-property accessor remains deferred.",
           "rejectsNullAssociation": "Association registration remains deferred.",
-          "rejectsNullBeanForPropertyAccessor": "General persistent-property accessor remains deferred.",
           "reportsRequiredPropertyName": "Required persistent-property lookup remains deferred.",
           "returnsGeneratedPropertyAccessorForPropertyAccessor": "Mapping context and generated property accessors remain deferred.",
-          "returnsTypeAliasIfAnnotatedUsingComposedAnnotation": "The composed TypeAlias annotation fixture remains deferred.",
-          "supportsSubtypeInstancesOnPropertyAccessorLookup": "General persistent-property accessor remains deferred."
+          "returnsTypeAliasIfAnnotatedUsingComposedAnnotation": "The composed TypeAlias annotation fixture remains deferred."
         }
       },
       "status": "partial"
