@@ -585,6 +585,7 @@ interface ObservationHandler(T) if (isObservationContext!T)
     }
 }
 
+private alias HandlerSupport = bool delegate(Observation.Context) @safe;
 private alias PredicateCallback = bool delegate(string, Observation.Context) @safe;
 private alias FilterCallback = Observation.Context delegate(Observation.Context) @safe;
 
@@ -597,11 +598,52 @@ interface ObservationRegistry
         private Mutex gate;
         private ObservationPredicate[] predicates;
         private ObservationFilter[] filters;
+        private RegisteredObservationHandler firstHandler;
+        private RegisteredObservationHandler lastHandler;
 
         /// Construct an empty registry configuration.
         this()
         {
             gate = new Mutex;
+        }
+
+        /// Register a handler with its declared context type.
+        ObservationConfig observationHandler(T)(ObservationHandler!T handler)
+        {
+            return appendHandler(new RegisteredObservationHandler(cast(Object) handler,
+                    handler is null ? null : &handler.supportsContext));
+        }
+
+        /// Register a support predicate with default no-op handler callbacks (R9).
+        ObservationConfig observationHandler(HandlerSupport supportsContext)
+        {
+            return appendHandler(new RegisteredObservationHandler(null, supportsContext));
+        }
+
+        /// Register a literal null with the same semantics as a null handler.
+        final ObservationConfig observationHandler(typeof(null))
+        {
+            return observationHandler(cast(HandlerSupport) null);
+        }
+
+        // Allocate the adapter at registration, then publish one ordered entry.
+        protected ObservationConfig appendHandler(RegisteredObservationHandler handler)
+        {
+            synchronized (gate)
+            {
+                if (lastHandler is null)
+                    firstHandler = handler;
+                else
+                    lastHandler.next = handler;
+                lastHandler = handler;
+            }
+            return this;
+        }
+
+        package(flint.micrometer) ObservationHandlerSnapshot getObservationHandlers()
+        {
+            synchronized (gate)
+                return ObservationHandlerSnapshot(firstHandler, lastHandler);
         }
 
         /// Register a predicate after the predicates already configured.
@@ -671,6 +713,55 @@ interface ObservationRegistry
             synchronized (gate)
                 return ObservationFilterSnapshot(filters);
         }
+    }
+}
+
+// Readers hold the first and last entries together, and never read the last entry's mutable link.
+private struct ObservationHandlerSnapshot
+{
+    private RegisteredObservationHandler current;
+    private RegisteredObservationHandler last;
+
+    @property bool empty() const nothrow @nogc
+    {
+        return current is null;
+    }
+
+    @property RegisteredObservationHandler front() nothrow @nogc
+    {
+        return current;
+    }
+
+    void popFront() nothrow @nogc
+    {
+        current = current is last ? null : current.next;
+    }
+}
+
+private final class RegisteredObservationHandler
+{
+    private RegisteredObservationHandler next;
+    private Object handler;
+    private HandlerSupport supports;
+
+    this(Object handler, HandlerSupport supports)
+    {
+        this.handler = handler;
+        this.supports = supports;
+    }
+
+    Object source() nothrow @nogc
+    {
+        if (supports is null)
+            return null;
+        return handler is null ? this : handler;
+    }
+
+    bool supportsContext(Observation.Context context)
+    {
+        if (supports is null)
+            throw new NullPointerException("observationHandler");
+        return supports(context);
     }
 }
 

@@ -19,7 +19,8 @@ module flint.micrometer.observation_config_test;
 
 import flint.java.lang : NullPointerException;
 import flint.micrometer.common : KeyValue;
-import flint.micrometer.observation : Observation, ObservationFilter, ObservationPredicate, ObservationRegistry;
+import flint.micrometer.observation : Observation, ObservationFilter, ObservationHandler,
+    ObservationPredicate, ObservationRegistry;
 import std.exception : assertThrown;
 import std.typecons : Nullable;
 
@@ -127,4 +128,83 @@ unittest
             .observationFilter(null) is config);
     const filters = config.getObservationFilters();
     assert(filters.length == 3 && filters[0] is null && filters[1] is null && filters[2] is null);
+}
+
+private final class TimedContext : Observation.Context
+{
+}
+
+private alias TimedHandlerContract = ObservationHandler!TimedContext;
+private alias BaseHandlerContract = ObservationHandler!(Observation.Context);
+
+private final class TimedHandler : TimedHandlerContract
+{
+    override bool supportsContext(Observation.Context context)
+    {
+        return cast(TimedContext) context !is null;
+    }
+
+    mixin TimedHandlerContract.Defaults;
+}
+
+private final class UniversalHandler : BaseHandlerContract
+{
+    override bool supportsContext(Observation.Context context)
+    {
+        return true;
+    }
+
+    mixin BaseHandlerContract.Defaults;
+}
+
+@("registration retains original handler identity and subtype selection")
+unittest
+{
+    auto config = new Config;
+    auto timed = new TimedHandler;
+    auto general = new UniversalHandler;
+    assert(config.observationHandler(timed).observationHandler(general) is config);
+
+    auto handlers = config.getObservationHandlers();
+    assert(!handlers.empty && handlers.front.source() is timed);
+    auto context = new TimedContext;
+    assert(handlers.front.supportsContext(context));
+    assert(!handlers.front.supportsContext(new Observation.Context));
+    handlers.popFront();
+    assert(!handlers.empty && handlers.front.source() is general);
+    handlers.popFront();
+    assert(handlers.empty);
+}
+
+@("handler registrations during callbacks do not alter a reader's snapshot")
+unittest
+{
+    auto config = new Config;
+    auto later = new UniversalHandler;
+    config.observationHandler((context) { config.observationHandler(later); return true; });
+
+    auto before = config.getObservationHandlers();
+    assert(before.front.supportsContext(null));
+    before.popFront();
+    assert(before.empty);
+    auto after = config.getObservationHandlers();
+    after.popFront();
+    assert(!after.empty && after.front.source() is later);
+}
+
+@("handler null registration keeps Java's ordering and fails when invoked")
+unittest
+{
+    auto config = new Config;
+    alias Support = bool delegate(Observation.Context) @safe;
+    assert(config.observationHandler(null).observationHandler(cast(BaseHandlerContract) null)
+            .observationHandler(cast(Support) null) is config);
+    size_t count;
+    foreach (handler; config.getObservationHandlers())
+    {
+        count++;
+        assert(handler.source() is null);
+        assertThrown!NullPointerException(handler.supportsContext(null));
+    }
+    assert(count == 3);
 }
