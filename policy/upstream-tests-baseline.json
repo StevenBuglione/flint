@@ -3097,7 +3097,6 @@
       "io/micrometer/core/instrument/FunctionCounterTest.java",
       "io/micrometer/core/instrument/HighCardinalityTagsDetectorTests.java",
       "io/micrometer/core/instrument/MeterFilterTest.java",
-      "io/micrometer/core/instrument/MeterIdTest.java",
       "io/micrometer/core/instrument/MeterRegistryAllocationTest.java",
       "io/micrometer/core/instrument/MeterRegistryInjectionTest.java",
       "io/micrometer/core/instrument/MeterRegistryLoggingTest.java",

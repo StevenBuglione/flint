@@ -16,6 +16,8 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Tags.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Tag.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/ImmutableTag.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Meter.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Statistic.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument;
 
@@ -23,8 +25,9 @@ import flint.engine.aot.objects : objectToString, statelessInstance;
 import flint.engine.aot.text : decodeUtf8;
 import flint.java.lang : Comparable, IllegalArgumentException, Iterable, JavaObject,
     NullPointerException, UnsupportedOperationException, javaEquals, javaHashCode, stringHashCode;
-import flint.java.util : Iterator, NoSuchElementException, stableSort;
+import flint.java.util : Iterator, List, NoSuchElementException, stableSort;
 import flint.java.util.stream : Stream;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -427,5 +430,187 @@ private final class TagsIterator : Iterator!Tag
     override void remove()
     {
         throw new UnsupportedOperationException("cannot remove items from tags");
+    }
+}
+
+/// The meaning of a meter measurement.
+struct Statistic
+{
+    private ubyte ordinal;
+
+    private this(ubyte ordinal) pure nothrow @nogc
+    {
+        this.ordinal = ordinal;
+    }
+
+    /// Unspecified measurement.
+    enum UNKNOWN = Statistic(0);
+    /// Sum of recorded amounts.
+    enum TOTAL = Statistic(1);
+    /// Sum of recorded durations.
+    enum TOTAL_TIME = Statistic(2);
+    /// Number of recorded samples.
+    enum COUNT = Statistic(3);
+    /// Maximum recorded sample.
+    enum MAX = Statistic(4);
+    /// Instantaneous value.
+    enum VALUE = Statistic(5);
+    /// Number of ongoing tasks.
+    enum ACTIVE_TASKS = Statistic(6);
+    /// Duration of a running task.
+    enum DURATION = Statistic(7);
+
+    /// The associated value of the "statistic" tag.
+    string getTagValueRepresentation() const pure nothrow @nogc
+    {
+        static immutable string[8] names = [
+            "unknown", "total", "total", "count", "max", "value", "active", "duration"
+        ];
+        return names[ordinal];
+    }
+}
+
+/// A named source of measurements.
+interface Meter
+{
+    /// The meter's registered identity.
+    Id getId();
+
+    /// The kind of measurements the meter reports.
+    enum Type : ubyte
+    {
+        COUNTER,
+        GAUGE,
+        LONG_TASK_TIMER,
+        TIMER,
+        DISTRIBUTION_SUMMARY,
+        OTHER,
+    }
+
+    /// An identity consists of the meter name and normalized tags.
+    static class Id
+    {
+        private immutable string name;
+        private Tags tags;
+        private Nullable!string baseUnit;
+        private Nullable!string description;
+        private Type type;
+
+        /// The name and tags identify the meter. Unit, description and type describe it.
+        this(string name, Tags tags, Nullable!string baseUnit, Nullable!string description, Type type)
+        {
+            this.name = name;
+            this.tags = tags;
+            this.baseUnit = baseUnit;
+            this.description = description;
+            this.type = type;
+        }
+
+        /// Copy the description and tags to an ID with a different name.
+        Id withName(string newName)
+        {
+            return new Id(newName, tags, baseUnit, description, type);
+        }
+
+        /// Return an ID with an added or replaced dimension.
+        Id withTag(Tag tag)
+        {
+            return new Id(name, tags.and(tag), baseUnit, description, type);
+        }
+
+        /// Return an ID with the given statistic tag.
+        Id withTag(Statistic statistic)
+        {
+            return new Id(name, tags.and("statistic", statistic.getTagValueRepresentation()),
+                    baseUnit, description, type);
+        }
+
+        /// Return an ID with the supplied dimensions merged into the current ones.
+        Id withTags(Iterable!Tag extraTags)
+        {
+            return new Id(name, tags.and(extraTags), baseUnit, description, type);
+        }
+
+        /// Return an ID whose only dimensions are the supplied tags.
+        Id replaceTags(Iterable!Tag replacement)
+        {
+            return new Id(name, Tags.of(replacement), baseUnit, description, type);
+        }
+
+        /// Return an ID for the same meter with a different base unit.
+        Id withBaseUnit(Nullable!string newBaseUnit)
+        {
+            return new Id(name, tags, newBaseUnit, description, type);
+        }
+
+        /// The meter's name.
+        string getName() const pure nothrow @nogc
+        {
+            return name;
+        }
+
+        /// The meter's dimensions as an unmodifiable list.
+        List!Tag getTags()
+        {
+            return List!Tag.of(tags.entries());
+        }
+
+        /// The meter's dimensions in key order.
+        Iterable!Tag getTagsAsIterable() nothrow @nogc
+        {
+            return tags;
+        }
+
+        /// The value of the named dimension, or null if absent.
+        Nullable!string getTag(string key)
+        {
+            if (key is null)
+                return Nullable!string.init;
+            foreach (tag; tags.entries())
+            {
+                if (tag.getKey() == key)
+                    return Nullable!string(tag.getValue());
+            }
+            return Nullable!string.init;
+        }
+
+        /// The meter's base unit, if set.
+        Nullable!string getBaseUnit() const pure nothrow @nogc
+        {
+            return baseUnit;
+        }
+
+        /// The meter's description, if set.
+        Nullable!string getDescription() const pure nothrow @nogc
+        {
+            return description;
+        }
+
+        /// How the registry exposes this meter.
+        Type getType() const pure nothrow @nogc
+        {
+            return type;
+        }
+
+        /// Compare by meter name and tags.
+        bool equals(Object other)
+        {
+            auto id = cast(Id) other;
+            return this is id || (id !is null && name == id.name && tags.equals(id.tags));
+        }
+
+        /// Hash the meter name and tags.
+        int hashCode()
+        {
+            return 31 * stringHashCode(name) + tags.hashCode();
+        }
+
+        /// Format the meter's identity for diagnostics.
+        override string toString() const
+        {
+            return "MeterId{name='" ~ name ~ "', tags=" ~ tags.toString() ~ "}";
+        }
+
+        mixin JavaObject;
     }
 }
