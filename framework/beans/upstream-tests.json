@@ -578,5 +578,8 @@
   "test_packages": [
     ":beans"
   ],
-  "upstream": "spring-framework@v7.1.0"
+  "upstream": "spring-framework@v7.1.0",
+  "upstream_modules": [
+    "spring-beans"
+  ]
 }
