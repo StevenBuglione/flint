@@ -870,9 +870,14 @@ def applications(module, run, which='auto', flint=None, root=ROOT, budget=True):
             details[f'{app} flint budget'] = ('skip: `flint budget` does not exist yet (m7)' if budget else
                                               'skip: --no-flint-budget (this machine has no seeded budgets)')
             continue
-        code, out, err = run([flint, 'budget', '--app', f'benchmarks/spring/flint/{app}', '--json'])
+        code, out, err = run([flint, 'budget', '--app', app])
         details[f'{app} flint budget'] = {0: 'pass', 1: 'regression', 2: 'run failed'}.get(code, f'exit {code}')
-        if code == 1:
+        problems = [line for line in (out + err).splitlines() if line.strip().startswith(f'{app}:')]
+        if code == 1 and problems and all('budgets recorded on' in line and 'this runner is' in line for line in problems):
+            # Budgets are per runner class (posidon); elsewhere flint budget fails closed. The merge train runs it on
+            # posidon, so here it is a skip, never a pass.
+            details[f'{app} flint budget'] = 'skip: not the budget runner class (' + problems[0].split(': ', 1)[-1] + ')'
+        elif code == 1:
             messages.append(f'{app}: flint budget reports a regression, or a missing or stale budget:')
             messages += tail(out + err, 10)
         elif code != 0:

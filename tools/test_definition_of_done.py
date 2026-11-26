@@ -525,10 +525,18 @@ class Apps(unittest.TestCase):
                       [c[2:] for c in run.calls])
 
     def test_a_flint_budget_regression_fails_the_step(self):
-        run = FakeRunner((['budget', '--app'], (1, '', 'GET /owners: 74 allocations against a budget of 70')))
+        run = FakeRunner((['budget', '--app'], (1, '', 'petclinic-rest: GET /owners: 74 allocations against a budget of 70')))
         result = dod.applications(module(), run, 'petclinic-rest', self.flint)
         self.assertEqual(result.status, 'fail')
-        self.assertIn('  GET /owners: 74 allocations against a budget of 70', result.messages)
+        self.assertIn('  petclinic-rest: GET /owners: 74 allocations against a budget of 70', result.messages)
+
+    def test_flint_budget_off_its_runner_class_is_a_skip(self):
+        message = "petclinic-rest: budgets recorded on 'posidon-i7-11700K'; this runner is 'venus-x'"
+        run = FakeRunner((['budget', '--app'], (1, message + '\n', '')))
+        result = dod.applications(module(), run, 'petclinic-rest', self.flint)
+        self.assertEqual(result.status, 'pass', result.messages)
+        self.assertTrue(result.details['petclinic-rest flint budget'].startswith('skip: not the budget runner class'))
+        self.assertIn(['budget', '--app', 'petclinic-rest'], [c[1:] for c in run.calls])
 
     def test_a_failing_golden_suite_fails_the_step(self):
         run = FakeRunner((['accept'], (1, 'GET /owners/1: status 500, expected 200', '')))
