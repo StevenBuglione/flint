@@ -777,8 +777,17 @@
       "status": "deferred"
     },
     "org/springframework/data/mapping/model/EntityInstantiatorIntegrationTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/entity_instantiator_tests.d",
+      "methods": {
+        "ported": [
+          "shouldDefaultTransientProperties",
+          "shouldDefaultTransientRecordProperties"
+        ],
+        "skipped": {
+          "shouldDefaultTransientKotlinProperty": "Kotlin primary constructor and default argument discovery remain deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/mapping/model/EntityInstantiatorsUnitTests.java": {
       "phase": "2",

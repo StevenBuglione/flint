@@ -26,6 +26,8 @@ import flint.java.util : ArrayList, Collections, Comparator, HashMap, Iterator, 
 import flint.util : StringUtils;
 import std.typecons : Nullable;
 
+public import flint.data.mapping.model.entity_instantiator : EntityInstantiator,
+    EntityInstantiators, MappingInstantiationException;
 public import flint.data.mapping.model.parameter_value_provider : ParameterValueProvider,
     PersistentEntityParameterValueProvider, PropertyValueProvider;
 
