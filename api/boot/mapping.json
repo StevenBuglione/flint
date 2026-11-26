@@ -1477,7 +1477,7 @@
 "org.springframework.boot.autoconfigure.AutoConfigureOrder#DEFAULT_ORDER":{"d":"flint.boot.autoconfigure.AutoConfigureOrder.DEFAULT_ORDER","status":"ported"},
 "org.springframework.boot.autoconfigure.AutoConfigureOrder#value":{"d":"flint.boot.autoconfigure.AutoConfigureOrder.value","rules":["R2"],"status":"adapted"},
 "org.springframework.boot.autoconfigure.EnableAutoConfiguration":{"d":"flint.boot.autoconfigure.EnableAutoConfiguration","rules":["R2"],"status":"adapted","note":"Verified when declared on the application selected by Flint AOT."},
-"org.springframework.boot.autoconfigure.EnableAutoConfiguration#ENABLED_OVERRIDE_PROPERTY":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.boot.autoconfigure.EnableAutoConfiguration#ENABLED_OVERRIDE_PROPERTY":{"d":"flint.boot.autoconfigure.EnableAutoConfiguration.ENABLED_OVERRIDE_PROPERTY","rules":["R1"],"status":"adapted","note":"Flint uses flint.boot.enableautoconfiguration and accepts the spring.boot.enableautoconfiguration alias."},
 "org.springframework.boot.autoconfigure.EnableAutoConfiguration#exclude":{"d":"flint.boot.autoconfigure.EnableAutoConfiguration.exclude","rules":["R2","R4"],"status":"adapted"},
 "org.springframework.boot.autoconfigure.EnableAutoConfiguration#excludeName":{"d":"flint.boot.autoconfigure.EnableAutoConfiguration.excludeName","rules":["R2"],"status":"adapted"},
 "org.springframework.boot.autoconfigure.ImportAutoConfiguration":{"status":"excluded","category":"deferred","phase":"2"},

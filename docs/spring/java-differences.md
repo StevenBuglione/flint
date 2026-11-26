@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 202 | 348 | 0 | 15,246 |
-| boot | spring-boot@v4.2.0 | 44 | 48 | 2,133 | 13,378 |
+| boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,520 | 1,403 | 4,870 | 30,041 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -687,6 +687,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.boot.autoconfigure.AutoConfigureOrder` | `flint.boot.autoconfigure.AutoConfigureOrder` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.AutoConfigureOrder#value` | `flint.boot.autoconfigure.AutoConfigureOrder.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.EnableAutoConfiguration` | `flint.boot.autoconfigure.EnableAutoConfiguration` | [R2](api-mapping.md#r2-annotations) | Verified when declared on the application selected by Flint AOT. |
+| `org.springframework.boot.autoconfigure.EnableAutoConfiguration#ENABLED_OVERRIDE_PROPERTY` | `flint.boot.autoconfigure.EnableAutoConfiguration.ENABLED_OVERRIDE_PROPERTY` | [R1](api-mapping.md#r1-packages-and-names) | Flint uses flint.boot.enableautoconfiguration and accepts the spring.boot.enableautoconfiguration alias. |
 | `org.springframework.boot.autoconfigure.EnableAutoConfiguration#exclude` | `flint.boot.autoconfigure.EnableAutoConfiguration.exclude` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.boot.autoconfigure.EnableAutoConfiguration#excludeName` | `flint.boot.autoconfigure.EnableAutoConfiguration.excludeName` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.SpringBootApplication#exclude` | `flint.boot.autoconfigure.FlintBootApplication.exclude` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -9000,7 +9001,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.amqp.rabbitmq.health | 0 | 3 |
 | org.springframework.boot.ansi | 68 | 0 |
 | org.springframework.boot.artemis.autoconfigure | 48 | 0 |
-| org.springframework.boot.autoconfigure | 80 | 0 |
+| org.springframework.boot.autoconfigure | 79 | 0 |
 | org.springframework.boot.autoconfigure.aop | 2 | 0 |
 | org.springframework.boot.autoconfigure.availability | 2 | 0 |
 | org.springframework.boot.autoconfigure.cache | 11 | 0 |
