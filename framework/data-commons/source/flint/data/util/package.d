@@ -7,7 +7,7 @@ module flint.data.util;
 
 import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
 import flint.java.util : Iterator, List, Objects, Set;
-import flint.java.util.function_ : Supplier;
+import flint.java.util.function_ : Function, Predicate, Supplier;
 import flint.java.util.stream : Collectors, Stream;
 
 @safe:
@@ -72,7 +72,52 @@ interface Streamable(T) : Iterable!T, Supplier!(Stream!T)
                 "Stream must not be null")));
     }
 
-    /// Default traversal, concatenation and collection operations (R3).
+    /// Transforms the values of each traversal.
+    Streamable!R map(R)(Function!(T, R) mapper)
+    {
+        return map!R(mapper is null ? null : mapper.asDelegate());
+    }
+
+    /// Delegate overload for a value transform (R9).
+    Streamable!R map(R)(R delegate(T) @safe mapper)
+    {
+        if (mapper is null)
+            throw new IllegalArgumentException("Mapping function must not be null");
+        auto source = this;
+        return Streamable!R.of(() => source.stream().map!R(mapper));
+    }
+
+    /// Transforms each value to a stream and traverses the results in encounter order.
+    Streamable!R flatMap(R)(Function!(T, Stream!R) mapper)
+    {
+        return flatMap!R(mapper is null ? null : mapper.asDelegate());
+    }
+
+    /// Delegate overload for a stream-producing transform (R9).
+    Streamable!R flatMap(R)(Stream!R delegate(T) @safe mapper)
+    {
+        if (mapper is null)
+            throw new IllegalArgumentException("Mapping function must not be null");
+        auto source = this;
+        return Streamable!R.of(() => source.stream().flatMap!R((T value) {
+                auto mapped = mapper(value);
+                return mapped is null ? Stream!R.empty() : mapped;
+            }));
+    }
+
+    /// Retains the values matching the predicate in each traversal.
+    Streamable!T filter(Predicate!T predicate);
+
+    /// Delegate overload for a predicate (R9).
+    final Streamable!T filter(bool delegate(T) @safe predicate)
+    {
+        if (predicate is null)
+            throw new IllegalArgumentException("Filter predicate must not be null");
+        auto source = this;
+        return of(() => source.stream().filter(predicate));
+    }
+
+    /// Default operations for a repeatable stream source (R3).
     mixin template Defaults(Item = T)
     {
         override Streamable!Item and(Supplier!(Stream!Item) supplier)
@@ -91,6 +136,11 @@ interface Streamable(T) : Iterable!T, Supplier!(Stream!T)
         override Streamable!Item and(Streamable!Item other)
         {
             return (cast(Streamable!Item) this).and(cast(Supplier!(Stream!Item)) other);
+        }
+
+        override Streamable!Item filter(Predicate!Item predicate)
+        {
+            return (cast(Streamable!Item) this).filter(predicate is null ? null : predicate.asDelegate());
         }
 
         override Stream!Item get()

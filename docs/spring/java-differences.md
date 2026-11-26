@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 289 | 292 | 0 | 3,401 |
+| data-commons | spring-data-commons@4.2.0 | 289 | 295 | 0 | 3,398 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1183,8 +1183,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.util.Streamable#and(Supplier)` | `flint.data.util.Streamable.and` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.util.Streamable#and(T...)` | `flint.data.util.Streamable.and` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R7](api-mapping.md#r7-overloads), [D-DATA-27](api-mapping.md#deviations) |  |
 | `org.springframework.data.util.Streamable#empty()` | `flint.data.util.Streamable.empty` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.data.util.Streamable#filter(Predicate)` | `flint.data.util.Streamable.filter` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces), [D-DATA-27](api-mapping.md#deviations) |  |
+| `org.springframework.data.util.Streamable#flatMap(Function)` | `flint.data.util.Streamable.flatMap` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces), [D-DATA-27](api-mapping.md#deviations) |  |
 | `org.springframework.data.util.Streamable#get()` | `flint.data.util.Streamable.get` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.data.util.Streamable#isEmpty()` | `flint.data.util.Streamable.isEmpty` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.data.util.Streamable#map(Function)` | `flint.data.util.Streamable.map` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces), [D-DATA-27](api-mapping.md#deviations) |  |
 | `org.springframework.data.util.Streamable#of(Supplier)` | `flint.data.util.Streamable.of` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.util.Streamable#of(T...)` | `flint.data.util.Streamable.of` | [R7](api-mapping.md#r7-overloads), [D-DATA-27](api-mapping.md#deviations) |  |
 | `org.springframework.data.util.Streamable#stream()` | `flint.data.util.Streamable.stream` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections), [D-DATA-27](api-mapping.md#deviations) |  |
@@ -10254,7 +10257,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.spel.spi | 18 | 0 |
 | org.springframework.data.support | 17 | 0 |
 | org.springframework.data.transaction | 5 | 0 |
-| org.springframework.data.util | 286 | 0 |
+| org.springframework.data.util | 283 | 0 |
 | org.springframework.data.web | 171 | 0 |
 | org.springframework.data.web.config | 71 | 0 |
 | org.springframework.data.web.querydsl | 13 | 0 |

@@ -6,7 +6,7 @@ module streamable_tests;
 
 import flint.data.util : Streamable;
 import flint.java.lang : IllegalArgumentException, UnsupportedOperationException;
-import flint.java.util.function_ : Supplier;
+import flint.java.util.function_ : Function, Predicate, Supplier;
 import flint.java.util.stream : Stream;
 import std.exception : collectException;
 
@@ -117,4 +117,76 @@ unittest
     assert(collectException!IllegalArgumentException(source.and(cast(IntStreams) null)) !is null);
     assert(collectException!IllegalArgumentException(source.and(cast(Streamable!int) null)) !is null);
     assert(collectException!IllegalArgumentException(source.and(cast(IntFactory) null)) !is null);
+}
+
+@("map applies either callable afresh and only to requested values")
+unittest
+{
+    int opens;
+    int[] visited;
+    auto source = Streamable!int.of(() { ++opens; return Stream!int.of(1, 2); });
+    auto mapper = Function!(int, string).of((int value) {
+        visited ~= value;
+        return value == 1 ? "one" : "two";
+    });
+    auto mapped = source.map(mapper);
+    assert(opens == 0 && visited.length == 0);
+
+    auto limited = mapped.stream().limit(1);
+    assert(opens == 1 && visited.length == 0);
+    assert(limited.toArray() == ["one"]);
+    assert(visited == [1]);
+    assert(mapped.toList().toArray() == ["one", "two"]);
+    assert(opens == 2 && visited == [1, 1, 2]);
+    assert(source.map((int value) => value * 2).toList().toArray() == [2, 4]);
+}
+
+@("flatMap drops null streams and starts fresh on repeat traversal")
+unittest
+{
+    int[] visited;
+    auto mapper = Function!(int, Stream!int).of((int value) {
+        visited ~= value;
+        return value == 2 ? null : Stream!int.of(value, -value);
+    });
+    auto source = Streamable!int.of(1, 2, 3);
+    auto mapped = source.flatMap(mapper);
+    assert(visited.length == 0);
+    assert(mapped.stream().limit(1).toArray() == [1]);
+    assert(visited == [1]);
+    assert(mapped.toList().toArray() == [1, -1, 3, -3]);
+    assert(visited == [1, 1, 2, 3]);
+    assert(source.flatMap((int value) => Stream!int.of(value)).toList().toArray() == [1, 2, 3]);
+}
+
+@("filter short-circuits and repeats the predicate for each traversal")
+unittest
+{
+    int[] visited;
+    auto predicate = Predicate!int.of((int value) { visited ~= value; return value % 2 == 0; });
+    auto source = Streamable!int.of(1, 2, 3, 4);
+    auto filtered = source.filter(predicate);
+    assert(visited.length == 0);
+    assert(filtered.stream().limit(1).toArray() == [2]);
+    assert(visited == [1, 2]);
+    assert(filtered.toList().toArray() == [2, 4]);
+    assert(visited == [1, 2, 1, 2, 3, 4]);
+    assert(source.filter((int value) => value > 2).toList().toArray() == [3, 4]);
+}
+
+@("transform factories reject null callables before opening a stream")
+unittest
+{
+    alias Mapper = int delegate(int) @safe;
+    alias FlatMapper = Stream!int delegate(int) @safe;
+    alias Filter = bool delegate(int) @safe;
+    int opens;
+    auto source = Streamable!int.of(() { ++opens; return Stream!int.empty(); });
+    assert(collectException!IllegalArgumentException(source.map(cast(Function!(int, int)) null)) !is null);
+    assert(collectException!IllegalArgumentException(source.map(cast(Mapper) null)) !is null);
+    assert(collectException!IllegalArgumentException(source.flatMap(cast(Function!(int, Stream!int)) null)) !is null);
+    assert(collectException!IllegalArgumentException(source.flatMap(cast(FlatMapper) null)) !is null);
+    assert(collectException!IllegalArgumentException(source.filter(cast(Predicate!int) null)) !is null);
+    assert(collectException!IllegalArgumentException(source.filter(cast(Filter) null)) !is null);
+    assert(opens == 0);
 }
