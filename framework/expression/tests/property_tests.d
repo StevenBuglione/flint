@@ -269,3 +269,24 @@ unittest
     assert(parser.parseExpression("placeOfBirth?.population ?: 21").getValue(context).get!int == 21);
     failure(parser, "false ? 'unused' : broken", context, SpelMessage.EXCEPTION_DURING_PROPERTY_READ, 19);
 }
+
+@("a selected property returns the original object after one getter call")
+unittest
+{
+    auto inventor = new Inventor;
+    inventor.birthplace = new Place;
+    auto alternate = new Place;
+    auto context = new StandardEvaluationContext(Any.of(inventor));
+    context.setDescriptorTable(table());
+    context.setVariable("alternate", Any.of(alternate));
+    auto parser = new SpelExpressionParser;
+    auto selected = parser.parseExpression("true ? placeOfBirth : broken");
+    auto fallback = parser.parseExpression("placeOfBirth ?: #alternate");
+
+    assert(selected.getValue(context).asObject() is inventor.birthplace);
+    assert(fallback.getValue(context).asObject() is inventor.birthplace);
+    assert(inventor.placesRead == 2);
+    inventor.birthplace = null;
+    assert(fallback.getValue(context).asObject() is alternate);
+    assert(inventor.placesRead == 3);
+}

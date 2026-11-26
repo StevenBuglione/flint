@@ -72,16 +72,20 @@ struct ArithmeticExpression
 
 private:
     // The evaluator advances to a lookup or the final result. Only the lookup may dispatch to user code.
-    Result!Any evaluateStack(Read)(scope Scalar[] stack, const ref Any root, scope Read read)
+    Result!Any evaluateStack(Read)(scope Scalar[] stack, ref Any root, scope Read read)
     {
         size_t depth, next;
         Result!Any result;
         while (auto instruction = advance(stack, depth, next, result))
         {
             const path = instruction.op == Op.property ? propertyPaths[instruction.jump] : null;
-            const value = path.length == 0 && isRootReference(instruction.variable) ? root
+            auto value = path.length == 0 && isRootReference(instruction.variable) ? root
                 : read(instruction.variable, path);
-            stack[depth++] = Scalar.from(value);
+            const scalar = Scalar.from(value);
+            // Only the bottom operand can become the result. Keep its original box when it is opaque.
+            if (scalar.kind == ValueKind.other && depth == 0)
+                result.value = value;
+            stack[depth++] = scalar;
         }
         return result;
     }
@@ -123,9 +127,7 @@ private:
             }
             stack[sp - 1] = applied.value;
         }
-        if (stack[0].kind == ValueKind.other)
-            result.error = Error(Status.unsupported, "SpEL conditional result requires a scalar value");
-        else
+        if (stack[0].kind != ValueKind.other)
             result.value = stack[0].pack();
         return null;
     }

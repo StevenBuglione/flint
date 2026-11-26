@@ -111,3 +111,28 @@ unittest
     evaluate("\"\"?:'default'", Any.of("default"));
     evaluate("''?:'default'", Any.of("default"));
 }
+
+@("conditional object results retain their identity")
+unittest
+{
+    static final class Candidate
+    {
+    }
+
+    auto root = new Candidate;
+    auto alternate = new Candidate;
+    auto context = new StandardEvaluationContext(Any.of(root));
+    context.setVariable("alternate", Any.of(alternate));
+    auto parser = new SpelExpressionParser;
+
+    assert(parser.parseExpression("true ? #root : 1 / 0").getValue(context).asObject() is root);
+    assert(parser.parseExpression("false ? 1 / 0 : #alternate").getValue(context).asObject() is alternate);
+    assert(parser.parseExpression("(false ? #root : null) ?: #alternate").getValue(context).asObject() is alternate);
+    assert(parser.parseExpression("#root ?: 1 / 0").getValue(context).asObject() is root);
+    assert(parser.parseExpression("5 + (false ? #root : 2)").getValue(context).get!int == 7);
+
+    auto parsed = parser.parseRaw("#alternate ?: #root");
+    auto read = () nothrow @nogc => parsed.evaluate(context);
+    auto result = read();
+    assert(result.ok() && result.value.asObject() is alternate);
+}
