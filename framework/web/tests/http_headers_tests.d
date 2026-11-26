@@ -4,18 +4,20 @@ spring-web/src/test/java/org/springframework/http/HttpHeadersTests.java.
 Copyright 2002-present the original author or authors. Licensed under the Apache License, Version 2.0.
 Modified by the Flint authors: JUnit and AssertJ assertions become D unittests and asserts.
 
-Excluded until their types are ported (deferred, Phase 1 web slice 2): acceptCharsets, acceptCharsetWildcard
-(Charset lists), host, hostNoPort, ipv6Host, hostDeletion (InetSocketAddress), ifMatch*, ifNoneMatch*
-(ETag), pragma, cacheControlBuilder, cacheControlEmpty (CacheControl), contentDisposition, acceptLanguage*,
+Excluded until their types are ported: host, hostNoPort, ipv6Host, hostDeletion (InetSocketAddress),
+cacheControlBuilder, cacheControlEmpty (CacheControl), contentDisposition, acceptLanguage*,
 contentLanguage* (Locale), expiresZonedDateTime, firstZonedDateTime (java.time), the keySet/entrySet live-view
 tests (Java collection views; HttpHeaders.headerNames returns a snapshot, R10).
 +/
 module flint.http.http_headers_tests;
 
-import flint.http : HttpHeaders, HttpMethod, MediaType;
-import flint.java.lang : IllegalArgumentException, UnsupportedOperationException;
+import flint.http : ETag, HttpHeaders, HttpMethod, MediaType;
+import flint.java.lang : IllegalArgumentException, NullPointerException, UnsupportedOperationException;
 import flint.java.net : URI;
-import flint.java.nio.charset : StandardCharsets;
+import flint.java.nio.charset : Charset, StandardCharsets;
+import flint.java.time : Instant, ZoneId;
+import flint.java.util : List;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -133,6 +135,156 @@ unittest
     headers.setAllow(methods);
     assert(headers.getAllow() == methods, "Invalid Allow header");
     assert(headers.getFirst("Allow") == "GET,POST", "Invalid Allow header");
+}
+
+@("HttpHeadersTests.acceptCharsets")
+unittest
+{
+    HttpHeaders headers;
+    auto charsets = List!Charset.of(StandardCharsets.UTF_8, StandardCharsets.ISO_8859_1);
+    headers.setAcceptCharset(charsets);
+    assert(headers.getAcceptCharset().toArray() == charsets.toArray());
+    assert(headers.getFirst("Accept-Charset") == "utf-8, iso-8859-1");
+}
+
+@("HttpHeadersTests.acceptCharsetWildcard")
+unittest
+{
+    HttpHeaders headers;
+    headers.set("Accept-Charset", "ISO-8859-1,utf-8;q=0.7,*;q=0.7");
+    assert(headers.getAcceptCharset().toArray() == [
+        StandardCharsets.ISO_8859_1, StandardCharsets.UTF_8
+    ]);
+}
+
+@("HttpHeadersTests.ifMatch")
+unittest
+{
+    HttpHeaders headers;
+    headers.setIfMatch("\"v2.6\"");
+    assert(headers.getIfMatch().toArray() == ["\"v2.6\""]);
+    assert(headers.getFirst("If-Match") == "\"v2.6\"");
+}
+
+@("HttpHeadersTests.ifMatchIllegalHeader")
+unittest
+{
+    HttpHeaders headers;
+    headers.setIfMatch("Illegal");
+    assertThrows!IllegalArgumentException(() { headers.getIfMatch(); });
+}
+
+@("HttpHeadersTests.ifMatchMultipleHeaders")
+unittest
+{
+    HttpHeaders headers;
+    headers.add(HttpHeaders.IF_MATCH, "\"v2,0\"");
+    headers.add(HttpHeaders.IF_MATCH, "W/\"v2,1\", \"v2,2\"");
+    assert(headers.get(HttpHeaders.IF_MATCH) == ["\"v2,0\"", "W/\"v2,1\", \"v2,2\""]);
+    assert(headers.getIfMatch().toArray() == ["\"v2,0\"", "W/\"v2,1\"", "\"v2,2\""]);
+}
+
+@("HttpHeadersTests.ifNoneMatch")
+unittest
+{
+    HttpHeaders headers;
+    headers.setIfNoneMatch("\"v2.6\"");
+    assert(headers.getIfNoneMatch().toArray() == ["\"v2.6\""]);
+    assert(headers.getFirst("If-None-Match") == "\"v2.6\"");
+}
+
+@("HttpHeadersTests.ifNoneMatchWildCard")
+unittest
+{
+    HttpHeaders headers;
+    headers.setIfNoneMatch("*");
+    assert(headers.getIfNoneMatch().toArray() == ["*"]);
+    assert(headers.getFirst("If-None-Match") == "*");
+}
+
+@("HttpHeadersTests.ifNoneMatchList")
+unittest
+{
+    HttpHeaders headers;
+    headers.setIfNoneMatch(List!string.of("\"v2.6\"", "\"v2.7\", \"v2.8\""));
+    assert(headers.getIfNoneMatch().toArray() == ["\"v2.6\"", "\"v2.7\"", "\"v2.8\""]);
+    assert(headers.getFirst("If-None-Match") == "\"v2.6\", \"v2.7\", \"v2.8\"");
+}
+
+@("HttpHeadersTests.pragma")
+unittest
+{
+    HttpHeaders headers;
+    headers.setPragma(Nullable!string("no-cache"));
+    assert(headers.getPragma().get() == "no-cache");
+    assert(headers.getFirst("pragma") == "no-cache");
+}
+
+@("Flint.HttpHeaders.phase2ConditionalDateAndNegotiation")
+unittest
+{
+    HttpHeaders headers;
+    assert(headers.getIfUnmodifiedSince() == -1);
+    auto instant = Instant.ofEpochMilli(dec18);
+    headers.setIfUnmodifiedSince(instant);
+    assert(headers.getIfUnmodifiedSince() == dec18);
+    headers.setIfUnmodifiedSince(instant.atZone(ZoneId.of("+01:00")));
+    assert(headers.getFirst(HttpHeaders.IF_UNMODIFIED_SINCE) == "Thu, 18 Dec 2008 10:20:00 GMT");
+    headers.setIfUnmodifiedSince(dec18);
+    assert(headers.getIfUnmodifiedSince() == dec18);
+    headers.set(HttpHeaders.IF_UNMODIFIED_SINCE, "unknown");
+    assert(headers.getIfUnmodifiedSince() == -1);
+
+    auto types = List!MediaType.of(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN);
+    headers.setAcceptQuery(types);
+    assert(headers.getAcceptQuery().toArray() == types.toArray());
+    headers.add(HttpHeaders.ACCEPT_QUERY, "text/html");
+    assert(headers.getAcceptQuery().getLast() == MediaType.TEXT_HTML);
+
+    headers.setUpgrade(Nullable!string(""));
+    assert(headers.containsHeader(HttpHeaders.UPGRADE) && headers.getUpgrade().get() == "");
+    headers.setUpgrade(Nullable!string.init);
+    assert(!headers.containsHeader(HttpHeaders.UPGRADE) && headers.getUpgrade().isNull);
+}
+
+@("Flint.HttpHeaders.conditionalListAndStringNulls")
+unittest
+{
+    HttpHeaders headers;
+    headers.setIfMatch(cast(string) null);
+    headers.setIfNoneMatch(cast(string) null);
+    assert(headers.getIfMatch().isEmpty() && headers.getIfNoneMatch().isEmpty());
+    assertThrows!NullPointerException(() { headers.setIfMatch(cast(List!string) null); });
+    assertThrows!NullPointerException(() { headers.setIfNoneMatch(cast(List!string) null); });
+
+    headers.setIfMatch(List!string.of());
+    headers.setIfNoneMatch(List!string.of());
+    assert(headers.getFirst(HttpHeaders.IF_MATCH) !is null);
+    assert(headers.getFirst(HttpHeaders.IF_NONE_MATCH) !is null);
+    assertThrows!IllegalArgumentException(() { headers.getIfMatch(); });
+    assertThrows!IllegalArgumentException(() { headers.getIfNoneMatch(); });
+}
+
+@("Flint.ETag.strongAndWeakComparison")
+unittest
+{
+    auto strong = ETag.create("\"v1\"");
+    auto weak = ETag.create("W/\"v1\"");
+    assert(strong.tag() == "v1" && !strong.weak());
+    assert(weak.tag() == "v1" && weak.weak());
+    assert(strong.compare(strong, true) && !strong.compare(weak, true));
+    assert(strong.compare(weak, false) && !strong.equals(weak));
+    assert(weak == ETag("v1", true) && weak.hashCode() == ETag("v1", true).hashCode());
+    assert(weak.toString() == "W/\"v1\"");
+
+    auto parsed = ETag.parse("W/\"a,b\", *, \"*\", \"unfinished");
+    assert(parsed.size() == 3);
+    assert(parsed.get(0).formattedTag() == "W/\"a,b\"");
+    auto wildcard = parsed.get(1);
+    auto quotedStar = parsed.get(2);
+    assert(wildcard.isWildcard() && wildcard.formattedTag() == "*");
+    assert(!quotedStar.isWildcard() && quotedStar.formattedTag() == "\"*\"");
+    assert(wildcard == quotedStar && wildcard.hashCode() == quotedStar.hashCode());
 }
 
 @("HttpHeadersTests.contentLength")

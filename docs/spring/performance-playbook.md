@@ -672,6 +672,12 @@ configured directives into a bounded stack buffer and returns the header string.
 probe on venus measured 536,673 to 536,729 linked bytes and 11,890 to 11,906 DMD template instances
 at `0aa68434` and `f5ae5163`. Tests pin directive order, signed bounds and the header writers.
 
+The typed conditional header getters parse tags only when called. They reuse the ETag parser for
+each field and preserve a bare wildcard separately from a quoted asterisk. On venus, the matched
+web probe measured 536,729 to 537,009 linked bytes and 11,906 to 13,092 DMD template instances from
+`f441226c` to `8841ac5e`. The new header declarations instantiate typed ETag and charset lists.
+The tests cover repeated fields, commas inside quoted tags, weak comparison and malformed values.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

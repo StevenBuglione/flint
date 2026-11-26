@@ -2,7 +2,7 @@
 `org.springframework.http`: HTTP status codes, methods, headers, media types and entities.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/http/
-(CacheControl.java, HttpStatusCode.java, DefaultHttpStatusCode.java, HttpStatus.java, HttpMethod.java, HttpHeaders.java,
+(CacheControl.java, ETag.java, HttpStatusCode.java, DefaultHttpStatusCode.java, HttpStatus.java, HttpMethod.java, HttpHeaders.java,
 MediaType.java, MediaTypeFactory.java, HttpEntity.java, ResponseEntity.java, RequestEntity.java, ProblemDetail.java) and
 spring-core/src/main/java/org/springframework/util/MimeType.java.
 
@@ -21,10 +21,11 @@ import flint.java.net : URI;
 import flint.engine.aot.any : Any;
 import flint.http.mime_registry : mimeRegistrations, registeredMimeTypeIndices, registeredMimeTypeNames;
 import flint.java.nio.charset : Charset;
-import flint.java.time : Duration;
+import flint.java.time : Duration, Instant, ZonedDateTime;
 import flint.java.util : ArrayList, Collections, List, Optional;
 import flint.java.util.concurrent : TimeUnit, toSeconds;
-import flint.util : InvalidMimeTypeException, MimeType, MimeTypeParameter, MimeTypeUtils, StringUtils;
+import flint.util : InvalidMimeTypeException, MimeType, MimeTypeParameter, MimeTypeUtils, StringUtils, toLowerAscii;
+import std.typecons : Nullable, nullable;
 
 @safe:
 
@@ -616,6 +617,171 @@ struct HttpMethod
     string toString() const pure nothrow @nogc
     {
         return methodName;
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// ETag
+
+/// Entity tag for HTTP conditional requests. Java's record is a struct (R11).
+struct ETag
+{
+    private string tagValue;
+    private bool weakValue;
+    private bool wildcard;
+
+    /// Constructs a tag from its unquoted value.
+    this(string tag, bool weak) pure nothrow @nogc
+    {
+        tagValue = tag;
+        weakValue = weak;
+    }
+
+    /// The unquoted tag.
+    string tag() const pure nothrow @nogc
+    {
+        return tagValue;
+    }
+
+    /// Whether the tag is weak.
+    bool weak() const pure nothrow @nogc
+    {
+        return weakValue;
+    }
+
+    /// Whether this tag was parsed as a bare wildcard. A quoted asterisk is an ordinary tag.
+    bool isWildcard() const pure nothrow @nogc
+    {
+        return wildcard;
+    }
+
+    /// Strong comparison requires two strong tags. Weak comparison ignores the weakness flag.
+    bool compare(ETag other, bool strong) const pure nothrow @nogc
+    {
+        return tagValue.length != 0 && other.tagValue.length != 0 && !(strong && (weakValue
+                || other.weakValue)) && tagValue == other.tagValue;
+    }
+
+    /// The tag and weakness determine equality, including for the parsed wildcard.
+    bool equals(ETag other) const pure nothrow @nogc
+    {
+        return tagValue == other.tagValue && weakValue == other.weakValue;
+    }
+
+    /// D equality for the tag value and weakness.
+    bool opEquals(ETag other) const pure nothrow @nogc
+    {
+        return equals(other);
+    }
+
+    /// The Java record hash.
+    int hashCode() const pure nothrow @nogc
+    {
+        return 31 * javaStringHash(tagValue) + (weakValue ? 1231 : 1237);
+    }
+
+    /// D hash consistent with equality.
+    size_t toHash() const pure nothrow @nogc
+    {
+        return cast(size_t) cast(uint) hashCode();
+    }
+
+    /// The wire form of the tag, including quotes and the weak prefix as needed.
+    string formattedTag() const pure nothrow
+    {
+        return wildcard ? "*" : (weakValue ? "W/\"" : "\"") ~ tagValue ~ "\"";
+    }
+
+    /// The wire form of the tag.
+    string toString() const pure nothrow
+    {
+        return formattedTag();
+    }
+
+    /// Creates a tag from its wire representation.
+    static ETag create(string rawValue) pure
+    {
+        if (rawValue is null)
+            throw new NullPointerException("rawValue");
+        const bool weak = rawValue.length >= 2 && rawValue[0 .. 2] == "W/";
+        if (weak)
+            rawValue = rawValue[2 .. $];
+        if (rawValue.length > 2 && rawValue[0] == '"' && rawValue[$ - 1] == '"')
+            rawValue = rawValue[1 .. $ - 1];
+        return ETag(rawValue, weak);
+    }
+
+    /// Parses one field value of an `If-Match` or `If-None-Match` header.
+    static List!ETag parse(string source)
+    {
+        if (source is null)
+            throw new NullPointerException("source");
+
+        enum State : ubyte
+        {
+            beforeQuotes,
+            inQuotes,
+            afterQuotes
+        }
+
+        State state;
+        size_t start;
+        bool weak;
+        auto result = new ArrayList!ETag();
+        for (size_t i = 0; i < source.length; i++)
+        {
+            const c = source[i];
+            if (state == State.inQuotes)
+            {
+                if (c == '"')
+                {
+                    const tag = source[start .. i];
+                    if (StringUtils.hasText(tag))
+                        result.add(ETag(tag, weak));
+                    state = State.afterQuotes;
+                    weak = false;
+                }
+            }
+            else if (c == ',')
+                state = State.beforeQuotes;
+            else if (state == State.beforeQuotes)
+            {
+                if (c == '*')
+                {
+                    ETag tag = ETag("*", false);
+                    tag.wildcard = true;
+                    result.add(tag);
+                    state = State.afterQuotes;
+                }
+                else if (c == '"' || (c == 'W' && source.length - i >= 3 && source[i .. i + 3] == "W/\""))
+                {
+                    weak = c == 'W';
+                    if (weak)
+                        i += 2;
+                    start = i + 1;
+                    state = State.inQuotes;
+                }
+            }
+        }
+        return result;
+    }
+
+    /// Adds double quotes when the tag is unquoted.
+    static string quoteETagIfNecessary(string tag) pure
+    {
+        if (tag is null)
+            throw new NullPointerException("tag");
+        if (tag.length >= 3 && tag[0 .. 3] == "W/\"")
+        {
+            if (tag.length > 3 && tag[$ - 1] == '"')
+                return tag;
+        }
+        else if (tag.length >= 1 && tag[0] == '"')
+        {
+            if (tag.length > 1 && tag[$ - 1] == '"')
+                return tag;
+        }
+        return "\"" ~ tag ~ "\"";
     }
 }
 
@@ -1852,6 +2018,62 @@ struct HttpHeaders
         return MediaType.parseMediaTypes(get(ACCEPT_PATCH));
     }
 
+    /// Sets `Accept-Query`, the media types a QUERY request may carry.
+    void setAcceptQuery(List!MediaType mediaTypes)
+    {
+        if (mediaTypes is null)
+            throw new NullPointerException("mediaTypes");
+        set(ACCEPT_QUERY, MediaType.toString(mediaTypes.toArray()));
+    }
+
+    /// The `Accept-Query` media types.
+    List!MediaType getAcceptQuery() const
+    {
+        auto values = get(ACCEPT_QUERY);
+        if (values.length == 0 || (values.length == 1 && values[0].length == 0))
+            return Collections.emptyList!MediaType();
+        return new ArrayList!MediaType(MediaType.parseMediaTypes(values));
+    }
+
+    /// Sets the canonical names of the acceptable charsets.
+    void setAcceptCharset(List!Charset charsets)
+    {
+        if (charsets is null)
+            throw new NullPointerException("charsets");
+        string[] names = new string[charsets.size()];
+        foreach (i, ref name; names)
+        {
+            auto canonicalName = charsets.get(cast(int) i).name();
+            if (canonicalName is null)
+                throw new NullPointerException("charset");
+            name = toLowerAscii(canonicalName);
+        }
+        set(ACCEPT_CHARSET, names.length == 0 ? "" : toCommaDelimitedString(names));
+    }
+
+    /// The charsets from the first `Accept-Charset` field value with the wildcard removed.
+    List!Charset getAcceptCharset() const
+    {
+        const value = getFirst(ACCEPT_CHARSET);
+        if (value is null)
+            return Collections.emptyList!Charset();
+
+        auto tokens = tokenizeToStringArray(value, ",");
+        auto result = new ArrayList!Charset(cast(int) tokens.length);
+        foreach (token; tokens)
+        {
+            foreach (i, c; token)
+                if (c == ';')
+                {
+                    token = token[0 .. i];
+                    break;
+                }
+            if (token != "*")
+                result.add(Charset.forName(token));
+        }
+        return result;
+    }
+
     /// Sets `Allow`.
     void setAllow(scope const(HttpMethod)[] allowedMethods) pure
     {
@@ -1999,29 +2221,101 @@ struct HttpHeaders
             remove(ETAG);
             return;
         }
-        set(ETAG, quoteETagIfNecessary(tag));
-    }
-
-    // ETag.quoteETagIfNecessary
-    private static string quoteETagIfNecessary(string tag) pure nothrow
-    {
-        if (tag.length >= 3 && tag[0 .. 3] == "W/\"")
-        {
-            if (tag.length > 3 && tag[$ - 1] == '"')
-                return tag;
-        }
-        else if (tag.length >= 1 && tag[0] == '"')
-        {
-            if (tag.length > 1 && tag[$ - 1] == '"')
-                return tag;
-        }
-        return "\"" ~ tag ~ "\"";
+        set(ETAG, ETag.quoteETagIfNecessary(tag));
     }
 
     /// The `ETag`, or `null`.
     string getETag() const pure nothrow @nogc
     {
         return getFirst(ETAG);
+    }
+
+    /// Sets the raw `If-Match` field value.
+    void setIfMatch(string ifMatch) pure
+    {
+        set(IF_MATCH, ifMatch);
+    }
+
+    /// Sets the `If-Match` tags as one field value.
+    void setIfMatch(List!string ifMatch)
+    {
+        if (ifMatch is null)
+            throw new NullPointerException("ifMatch");
+        auto value = toCommaDelimitedString(ifMatch.toArray());
+        setIfMatch(value is null ? "" : value);
+    }
+
+    /// All `If-Match` tags in field order.
+    List!string getIfMatch() const
+    {
+        return getETagValuesAsList(IF_MATCH);
+    }
+
+    /// Sets the raw `If-None-Match` field value.
+    void setIfNoneMatch(string ifNoneMatch) pure
+    {
+        set(IF_NONE_MATCH, ifNoneMatch);
+    }
+
+    /// Sets the `If-None-Match` tags as one field value.
+    void setIfNoneMatch(List!string ifNoneMatch)
+    {
+        if (ifNoneMatch is null)
+            throw new NullPointerException("ifNoneMatch");
+        auto value = toCommaDelimitedString(ifNoneMatch.toArray());
+        setIfNoneMatch(value is null ? "" : value);
+    }
+
+    /// All `If-None-Match` tags in field order.
+    List!string getIfNoneMatch() const
+    {
+        return getETagValuesAsList(IF_NONE_MATCH);
+    }
+
+    /// Parses all field values of an entity-tag header.
+    /// Throws: `IllegalArgumentException` if a non-null value contains no tags.
+    package(flint) List!string getETagValuesAsList(string name) const
+    {
+        if (!containsHeader(name))
+            return Collections.emptyList!string();
+        auto result = new ArrayList!string();
+        foreach (value; get(name))
+        {
+            if (value is null)
+                continue;
+            auto tags = ETag.parse(value);
+            if (tags.isEmpty())
+                throw new IllegalArgumentException("Could not parse header '" ~ name ~ "' with value '" ~ value ~ "'");
+            foreach (i; 0 .. tags.size())
+                result.add(tags.get(i).formattedTag());
+        }
+        return result;
+    }
+
+    /// Sets `Pragma`, or removes it for a null value.
+    void setPragma(Nullable!string pragmaValue) pure
+    {
+        setOrRemove(PRAGMA, pragmaValue.isNull ? null : pragmaValue.get());
+    }
+
+    /// The first `Pragma` value.
+    Nullable!string getPragma() const pure nothrow @nogc
+    {
+        const value = getFirst(PRAGMA);
+        return value is null ? Nullable!string.init : nullable(value);
+    }
+
+    /// Sets `Upgrade`, or removes it for a null value.
+    void setUpgrade(Nullable!string upgrade) pure
+    {
+        setOrRemove(UPGRADE, upgrade.isNull ? null : upgrade.get());
+    }
+
+    /// The first `Upgrade` value.
+    Nullable!string getUpgrade() const pure nothrow @nogc
+    {
+        const value = getFirst(UPGRADE);
+        return value is null ? Nullable!string.init : nullable(value);
     }
 
     /// Sets `Cache-Control`, or removes it.
@@ -2263,6 +2557,30 @@ struct HttpHeaders
     long getIfModifiedSince() const pure
     {
         return getFirstDate(IF_MODIFIED_SINCE, false);
+    }
+
+    /// Sets `If-Unmodified-Since` from a zoned date-time normalized to GMT.
+    void setIfUnmodifiedSince(ZonedDateTime date) pure
+    {
+        setIfUnmodifiedSince(date.toInstant());
+    }
+
+    /// Sets `If-Unmodified-Since` from an instant.
+    void setIfUnmodifiedSince(Instant date) pure
+    {
+        setIfUnmodifiedSince(date.toEpochMilli());
+    }
+
+    /// Sets `If-Unmodified-Since` from milliseconds since the epoch.
+    void setIfUnmodifiedSince(long date) pure
+    {
+        setDate(IF_UNMODIFIED_SINCE, date);
+    }
+
+    /// The `If-Unmodified-Since` date in milliseconds since the epoch, or `-1`.
+    long getIfUnmodifiedSince() const pure
+    {
+        return getFirstDate(IF_UNMODIFIED_SINCE, false);
     }
 
     /// Sets `headerName` to a date given in milliseconds since the epoch.
