@@ -1,0 +1,11 @@
+{
+  "source": "closure/character-combined.d",
+  "leaves": [
+    "flint.java.lang.character.decimaldigits",
+    "flint.java.lang.internal.asciidigits",
+    "flint.java.lang.internal.bmpdigits",
+    "flint.java.lang.internal.characterwhitespace",
+    "flint.java.lang.internal.unicodedigits"
+  ],
+  "data": ["flint.java.lang.internal.data.supplementarydigits"]
+}
