@@ -9,6 +9,7 @@
 /// Scalar identity bookkeeping for one provider persistence context.
 module flint.engine.jpa.identity;
 
+import core.atomic : MemoryOrder, atomicLoad, cas;
 import flint.arena : Error, Result, Status;
 
 @safe:
@@ -35,6 +36,29 @@ struct IdentitySlot
 {
     private EntityIdentity key;
     private SlotState state;
+    private uint generation;
+}
+
+/// Opaque scalar reference to an entity attachment for a deferred association.
+struct LazyHandle
+{
+    private ulong context;
+    private uint slot;
+    private uint generation;
+}
+
+private shared ulong issuedContexts;
+
+private ulong issueContext() nothrow @nogc
+{
+    for (;;)
+    {
+        const issued = atomicLoad!(MemoryOrder.raw)(issuedContexts);
+        if (issued == ulong.max)
+            return 0;
+        if (cas!(MemoryOrder.raw, MemoryOrder.raw)(&issuedContexts, issued, issued + 1))
+            return issued + 1;
+    }
 }
 
 /// The result of claiming an identity. An existing claim must keep its original entity reference.
@@ -56,6 +80,8 @@ private struct Probe
 struct IdentityIndex
 {
     private IdentitySlot[] slots;
+    private ulong lazyContext;
+    private uint lazyGeneration;
 
     @disable this(this);
     @disable void opAssign(IdentityIndex replacement);
@@ -74,6 +100,38 @@ struct IdentityIndex
         if (!result.found || slots[result.slot].state != SlotState.live)
             return Result!size_t(size_t.max, Error(Status.notFound, "JPA identity is not managed"));
         return Result!size_t(result.slot);
+    }
+
+    /// Issues a handle once per live attachment, after its entity has been published.
+    package Result!LazyHandle mintLazyHandle(size_t position) scope nothrow @nogc
+    {
+        if (position > uint.max)
+            return Result!LazyHandle(LazyHandle.init, Error(Status.resourceExhausted,
+                    "JPA lazy slot exceeds capacity"));
+        auto slot = &slots[position];
+        assert(slot.state == SlotState.live);
+        if (slot.generation == 0)
+        {
+            if (lazyContext == 0)
+                lazyContext = issueContext();
+            if (lazyContext == 0 || lazyGeneration == uint.max)
+                return Result!LazyHandle(LazyHandle.init, Error(Status.resourceExhausted,
+                        "JPA lazy attachment identifiers exhausted"));
+            slot.generation = ++lazyGeneration;
+        }
+        return Result!LazyHandle(LazyHandle(lazyContext, cast(uint) position, slot.generation));
+    }
+
+    /// Checks the originating context and current attachment without resolving or loading an association.
+    package Result!size_t resolveLazySlot(LazyHandle handle) const scope nothrow @nogc
+    {
+        if (handle.context == lazyContext && handle.slot < slots.length && handle.generation != 0)
+        {
+            const slot = &slots[handle.slot];
+            if (slot.state == SlotState.live && slot.generation == handle.generation)
+                return Result!size_t(handle.slot);
+        }
+        return Result!size_t(size_t.max, Error(Status.notFound, "JPA lazy owner is no longer managed"));
     }
 
     /// Assigns a slot for a new identity or returns the existing claim without changing it.
@@ -98,10 +156,12 @@ struct IdentityIndex
     }
 
     /// Resolves the current context's reservation when its statement has completed.
-    package void finishReservation(size_t slot, bool publish) scope nothrow @nogc
+    package bool finishReservation(size_t slot, bool publish) scope nothrow @nogc
     {
-        assert(slots[slot].state == SlotState.reserved);
+        if (slots[slot].state != SlotState.reserved)
+            return false;
         slots[slot].state = publish ? SlotState.live : SlotState.deleted;
+        return true;
     }
 
     private Result!IdentityClaim claimSlot(EntityIdentity key, SlotState state) scope nothrow @nogc

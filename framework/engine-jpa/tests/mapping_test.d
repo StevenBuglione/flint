@@ -8,7 +8,7 @@ module flint.engine.jpa.mapping_test;
 import flint.arena : Error, RequestArena, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping,
     ResultBinding, planResult, validateEntity, validateMapping;
-import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
+import flint.engine.jpa.identity : EntityIdentity, IdentitySlot, LazyHandle;
 import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, ManagedSnapshotSlot,
     captureLoadedState, planLoadedSnapshot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
@@ -375,6 +375,7 @@ unittest
     assert(retired.ok);
     assert(values[0].integer == key.identifier);
     assert(managed.find(key).error.code == Status.notFound);
+    assert(managed.lazyHandle(key).error.code == Status.notFound);
     assert(managed.detach(key).error.code == Status.notFound);
     assert(managed.manage(key, record, plan.value).code == Status.conflict);
 
@@ -386,4 +387,93 @@ unittest
     assert(managed.find(key).error.code == Status.notFound);
     assert(managed.publishInsert(current.value, record).code == Status.ok);
     assert(managed.find(key).value is record);
+}
+
+private class ReentrantContext
+{
+    IdentitySlot[1] identities;
+    Object[1] roots;
+    ManagedSnapshotSlot[1] snapshots;
+    ManagedEntities managed;
+    LoadedSnapshotPlan plan;
+    Record replacement;
+    Status visibleDuringCapture;
+    Status attachedDuringCapture;
+    LazyHandle attemptedHandle;
+
+    this(LoadedSnapshotPlan plan)
+    {
+        this.plan = plan;
+        snapshots = [ManagedSnapshotSlot(new AttributeSnapshot[1], new ubyte[8])];
+        Error error;
+        managed = ManagedEntities(identities[], roots[], error, snapshots[]);
+        assert(error.code == Status.ok);
+    }
+}
+
+private final class ReentrantRecord : Record
+{
+    ReentrantContext context;
+}
+
+private Result!AttributeValue readReentrantId(Object entity) nothrow @nogc
+{
+    auto record = cast(ReentrantRecord) entity;
+    if (record.context !is null)
+    {
+        auto context = record.context;
+        const key = EntityIdentity(0, record.id);
+        context.visibleDuringCapture = context.managed.lazyHandle(key).error.code;
+        context.managed.clear();
+        context.attachedDuringCapture = context.managed.manage(key, context.replacement, context.plan).code;
+        const attempted = context.managed.lazyHandle(key);
+        context.attemptedHandle = attempted.value;
+    }
+    return readId(entity);
+}
+
+@("clearing during baseline capture retires the unpublished owner without reusing its snapshot")
+unittest
+{
+    static Object construct()
+    {
+        return new ReentrantRecord;
+    }
+
+    static bool exactType(scope const TypeInfo_Class candidate) nothrow @nogc
+    {
+        return candidate is typeid(ReentrantRecord);
+    }
+
+    static immutable EntityMapping reentrant = EntityMapping("ReentrantRecord", "app.ReentrantRecord", "records",
+            [AttributeMapping(0, "id", "id", AttributeKind.integer, &readReentrantId, &writeId)],
+            &construct, [], &exactType, [0]);
+    const plan = planLoadedSnapshot(&reentrant);
+    assert(plan.ok);
+    auto context = new ReentrantContext(plan.value);
+
+    enum key = EntityIdentity(0, 1);
+    auto previous = new ReentrantRecord;
+    previous.id = key.identifier;
+    assert(context.managed.manage(key, previous, plan.value).code == Status.ok);
+    const retired = context.managed.lazyHandle(key);
+    assert(retired.ok);
+    assert(context.managed.detach(key).ok);
+
+    auto replacement = new ReentrantRecord;
+    replacement.id = key.identifier;
+    context.replacement = replacement;
+    auto original = new ReentrantRecord;
+    original.id = key.identifier;
+    original.context = context;
+    const captured = context.managed.manage(key, original, plan.value);
+    assert(context.managed.resolveLazyOwner(context.attemptedHandle).error.code == Status.notFound);
+    assert(captured.code == Status.conflict);
+    assert(context.visibleDuringCapture == Status.notFound);
+    assert(context.attachedDuringCapture == Status.conflict);
+    assert(context.managed.find(key).error.code == Status.notFound);
+    assert(context.managed.manage(key, replacement, plan.value).code == Status.ok);
+    const current = context.managed.lazyHandle(key);
+    assert(current.ok && context.managed.resolveLazyOwner(current.value).value is replacement);
+    assert(context.managed.resolveLazyOwner(retired.value).error.code == Status.notFound);
 }

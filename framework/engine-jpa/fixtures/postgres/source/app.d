@@ -302,6 +302,8 @@ private void verifyManagedIdentity(DataSource dataSource)
 
         uint[2] ordinals;
         const before = GC.stats().allocatedInCurrentThread;
+        const firstHandle = managed.lazyHandle(key);
+        assert(firstHandle.ok && managed.resolveLazyOwner(firstHandle.value).value is first.value);
         const original = managed.dirty(key, ordinals[]);
         assert(original.ok && original.value == 0);
         (cast(Owner) first.value).name = "Edited";
@@ -319,6 +321,11 @@ private void verifyManagedIdentity(DataSource dataSource)
         const loadedAgain = materializeManagedRow(plan.value, rows, managed);
         assert(loadedAgain.ok && loadedAgain.value !is first.value);
         assert((cast(const Owner) loadedAgain.value).loadOrder == 3);
+        const beforeResolve = GC.stats().allocatedInCurrentThread;
+        assert(managed.resolveLazyOwner(firstHandle.value).error.code == Status.notFound);
+        const reloadedHandle = managed.lazyHandle(key);
+        assert(reloadedHandle.ok && managed.resolveLazyOwner(reloadedHandle.value).value is loadedAgain.value);
+        assert(GC.stats().allocatedInCurrentThread == beforeResolve);
         const clean = managed.dirty(key, ordinals[]);
         assert(clean.ok && clean.value == 0);
 
@@ -328,6 +335,7 @@ private void verifyManagedIdentity(DataSource dataSource)
         assert(managed.find(key).value is loadedAgain.value);
         managed.clear();
         assert(managed.dirty(key, ordinals[]).error.code == Status.notFound);
+        assert(managed.resolveLazyOwner(reloadedHandle.value).error.code == Status.notFound);
     }
     foreach (entity; entities)
         assert(entity is null);

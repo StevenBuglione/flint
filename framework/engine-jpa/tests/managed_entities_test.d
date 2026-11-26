@@ -6,9 +6,10 @@
 module flint.engine.jpa.managed_entities_test;
 
 import flint.arena : Error, Status;
-import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
+import flint.engine.jpa.identity : EntityIdentity, IdentitySlot, LazyHandle;
 import flint.engine.jpa.loaded_state : ManagedSnapshotSlot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
+import std.traits : hasIndirections;
 
 @safe:
 
@@ -106,4 +107,70 @@ unittest
             Error error;
             return ManagedEntities(identities, roots[], error);
         }));
+}
+
+@("lazy handles identify a live attachment in their originating context")
+unittest
+{
+    static assert(!hasIndirections!LazyHandle);
+    static assert(LazyHandle.sizeof == 16);
+    IdentitySlot[1] firstIndex;
+    Object[1] firstRoots;
+    IdentitySlot[1] secondIndex;
+    Object[1] secondRoots;
+    Error error;
+    scope first = ManagedEntities(firstIndex[], firstRoots[], error);
+    assert(error.code == Status.ok);
+    scope second = ManagedEntities(secondIndex[], secondRoots[], error);
+    assert(error.code == Status.ok);
+
+    enum key = EntityIdentity(0, -7);
+    auto owner = new Object;
+    assert(first.lazyHandle(key).error.code == Status.notFound);
+    assert(first.resolveLazyOwner(LazyHandle.init).error.code == Status.notFound);
+    assert(first.manage(key, owner).code == Status.ok);
+    assert(second.manage(key, owner).code == Status.ok);
+    const original = first.lazyHandle(key);
+    const foreign = second.lazyHandle(key);
+    assert(original.ok && foreign.ok);
+    assert(first.resolveLazyOwner(original.value).value is owner);
+    assert(first.resolveLazyOwner(foreign.value).error.code == Status.notFound);
+    assert(second.resolveLazyOwner(original.value).error.code == Status.notFound);
+
+    assert(first.detach(key).ok);
+    assert(first.resolveLazyOwner(original.value).error.code == Status.notFound);
+    assert(first.manage(key, owner).code == Status.ok);
+    const reused = first.lazyHandle(key);
+    assert(reused.ok && first.resolveLazyOwner(reused.value).value is owner);
+    assert(first.resolveLazyOwner(original.value).error.code == Status.notFound);
+    first.clear();
+    assert(first.manage(key, owner).code == Status.ok);
+    const reloaded = first.lazyHandle(key);
+    assert(reloaded.ok && first.resolveLazyOwner(reloaded.value).value is owner);
+    assert(first.resolveLazyOwner(reused.value).error.code == Status.notFound);
+}
+
+@("reconstructing a context on the same storage does not revive its handles")
+unittest
+{
+    IdentitySlot[1] identities;
+    Object[1] roots;
+    Error error;
+    enum key = EntityIdentity(0, 1);
+    auto entity = new Object;
+    LazyHandle retired;
+    {
+        scope context = ManagedEntities(identities[], roots[], error);
+        assert(error.code == Status.ok);
+        assert(context.manage(key, entity).code == Status.ok);
+        const issued = context.lazyHandle(key);
+        assert(issued.ok);
+        retired = issued.value;
+    }
+    scope replacement = ManagedEntities(identities[], roots[], error);
+    assert(error.code == Status.ok);
+    assert(replacement.manage(key, entity).code == Status.ok);
+    const issued = replacement.lazyHandle(key);
+    assert(issued.ok && replacement.resolveLazyOwner(issued.value).value is entity);
+    assert(replacement.resolveLazyOwner(retired).error.code == Status.notFound);
 }

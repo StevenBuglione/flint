@@ -7,7 +7,7 @@
 module flint.engine.jpa.managed_entities;
 
 import flint.arena : Error, Result, Status;
-import flint.engine.jpa.identity : EntityIdentity, IdentityIndex, IdentitySlot;
+import flint.engine.jpa.identity : EntityIdentity, IdentityIndex, IdentitySlot, LazyHandle;
 import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, ManagedSnapshotSlot;
 import flint.engine.jpa.mapping : AttributeValue, EntityMapping;
 
@@ -33,6 +33,7 @@ struct ManagedEntities
     private size_t insertionSlot = size_t.max;
     private ulong insertionTicket;
     private bool awaitingKey;
+    private bool capturingAttachment;
 
     @disable this(this);
     @disable void opAssign(ManagedEntities replacement);
@@ -71,9 +72,11 @@ struct ManagedEntities
     {
         if (entity is null)
             return Error(Status.invalidArgument, "cannot manage a null JPA entity");
+        if (capturingAttachment)
+            return Error(Status.conflict, "a JPA attachment baseline is being captured");
         if (awaitingKey)
             return Error(Status.conflict, "context capacity is reserved for an IDENTITY insert");
-        const claim = index.claim(key);
+        const claim = snapshots.length == 0 ? index.claim(key) : index.reserve(key);
         if (!claim.ok)
             return claim.error;
         const slot = claim.value.slot;
@@ -81,15 +84,27 @@ struct ManagedEntities
             return roots[slot] is entity ? Error.init : Error(Status.conflict, "another JPA entity has this identity");
         if (snapshots.length != 0)
         {
-            const error = snapshots[slot].capture(plan, entity, null);
-            if (error.code != Status.ok)
+            const error = captureAttachment(slot, plan, entity, null);
+            if (!index.finishReservation(slot, error.code == Status.ok))
             {
-                index.detach(key);
-                return error;
+                snapshots[slot].clear();
+                return Error(Status.conflict, "JPA attachment retired during capture");
             }
+            if (error.code != Status.ok)
+                return error;
         }
         roots[slot] = entity;
         return Error.init;
+    }
+
+    // Mapped readers can re-enter this context. Keep the slot exclusive until the reader has returned.
+    private Error captureAttachment(size_t slot, LoadedSnapshotPlan snapshotPlan, Object entity,
+            scope AttributeValue[] values) scope nothrow @nogc
+    {
+        capturingAttachment = true;
+        scope (exit)
+            capturingAttachment = false;
+        return snapshots[slot].capture(snapshotPlan, entity, values);
     }
 
     /// Reserves an invisible identity and records the initial values for one in-flight insert.
@@ -107,14 +122,17 @@ struct ManagedEntities
 
         insertionSlot = reserved.value.slot;
         const ticket = ++insertionTicket;
-        const error = snapshots[insertionSlot].capture(plan, entity, values);
+        const error = captureAttachment(reserved.value.slot, plan, entity, values);
+        if (!ownsInsert(ticket))
+        {
+            snapshots[reserved.value.slot].clear();
+            return TicketResult(0, Error(Status.conflict, "JPA insert reservation retired during capture"));
+        }
         if (error.code != Status.ok)
         {
             cancelInsert(ticket);
             return TicketResult(0, error);
         }
-        if (!ownsInsert(ticket))
-            return TicketResult(0, Error(Status.conflict, "JPA insert reservation retired during capture"));
         return TicketResult(ticket);
     }
 
@@ -151,6 +169,8 @@ struct ManagedEntities
     {
         if (snapshots.length == 0)
             return Error(Status.unsupported, "JPA insert requires snapshot storage");
+        if (capturingAttachment)
+            return Error(Status.conflict, "a JPA attachment baseline is being captured");
         if (awaitingKey || insertionSlot != size_t.max)
             return Error(Status.conflict, "a JPA insert is already pending in this context");
         if (insertionTicket == ulong.max)
@@ -197,6 +217,26 @@ struct ManagedEntities
     EntityResult find(EntityIdentity key) scope nothrow @nogc
     {
         const found = index.find(key);
+        if (!found.ok)
+            return EntityResult(null, found.error);
+        return EntityResult(roots[found.value]);
+    }
+
+    /// Returns a handle for an owner whose attachment has been published.
+    Result!LazyHandle lazyHandle(EntityIdentity key) scope nothrow @nogc
+    {
+        const found = index.find(key);
+        if (!found.ok)
+            return Result!LazyHandle(LazyHandle.init, found.error);
+        if (roots[found.value] is null)
+            return Result!LazyHandle(LazyHandle.init, Error(Status.notFound, "JPA identity is not managed"));
+        return index.mintLazyHandle(found.value);
+    }
+
+    /// Resolves the owner of an unloaded association before a loader acquires JDBC.
+    EntityResult resolveLazyOwner(LazyHandle handle) scope nothrow @nogc
+    {
+        const found = index.resolveLazySlot(handle);
         if (!found.ok)
             return EntityResult(null, found.error);
         return EntityResult(roots[found.value]);
