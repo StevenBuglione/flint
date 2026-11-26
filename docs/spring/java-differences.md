@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 181 | 300 | 0 | 15,315 |
-| boot | spring-boot@v4.2.0 | 43 | 28 | 2,133 | 13,399 |
+| boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,473 | 1,387 | 4,848 | 30,126 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -612,7 +612,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty#havingValue` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty.havingValue` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty#matchIfMissing` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty.matchIfMissing` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty#name` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty.name` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty#prefix` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty.prefix` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty#value` | `flint.boot.autoconfigure.condition.ConditionalOnBooleanProperty.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnClass` | `flint.boot.autoconfigure.condition.ConditionalOnClass` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnClass#name` | `flint.boot.autoconfigure.condition.ConditionalOnClass.name` | [R2](api-mapping.md#r2-annotations) |  |
@@ -8658,7 +8662,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.autoconfigure.aop | 2 | 0 |
 | org.springframework.boot.autoconfigure.availability | 2 | 0 |
 | org.springframework.boot.autoconfigure.cache | 11 | 0 |
-| org.springframework.boot.autoconfigure.condition | 158 | 0 |
+| org.springframework.boot.autoconfigure.condition | 154 | 0 |
 | org.springframework.boot.autoconfigure.container | 6 | 0 |
 | org.springframework.boot.autoconfigure.context | 34 | 0 |
 | org.springframework.boot.autoconfigure.data | 20 | 0 |
@@ -10077,6 +10081,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | --- | --- | --- | --- |
 | ai | `org.springframework.ai.embedding.Embedding#<init>(float[],Integer)` | 2 | Requires the shared EmbeddingResultMetadata.EMPTY instance. |
 | ai | `org.springframework.ai.embedding.EmbeddingResultMetadata#EMPTY` | 2 | Requires a reviewed engine-aot helper to preserve shared metadata identity safely. |
+| boot | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperties` | 2 | Repeated conditions and explicit containers require AOT occurrence support. |
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#getRoles()` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#setRoles(List)` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#getDispatcherTypes()` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |

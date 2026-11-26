@@ -1,4 +1,5 @@
 // Ported from spring-boot v4.2.0: core/spring-boot-autoconfigure/src/test/java/org/springframework/boot/autoconfigure/condition/ConditionalOnPropertyTests.java
+// with ConditionalOnBooleanPropertyTests.java from the same directory.
 // Copyright 2012-present the original author or authors.
 // Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
 // Modified by the Flint authors: supply each test's properties before refreshing a Flint context with the generated registry.
@@ -123,4 +124,103 @@ unittest
 unittest
 {
     expectBean("withDefaultValue", true, ["simple.myProperty": "BaR"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.defaultsWhenTrue")
+unittest
+{
+    expectBean("booleanDefaults", true, ["test": "true"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.defaultsWhenFalse")
+unittest
+{
+    expectBean("booleanDefaults", false, ["test": "false"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.defaultsWhenMissing")
+unittest
+{
+    expectBean("booleanDefaults", false);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueTrueMatchIfMissingFalseWhenTrue")
+unittest
+{
+    expectBean("booleanTrueRequired", true, ["test": "true"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueTrueMatchIfMissingFalseWhenFalse")
+unittest
+{
+    expectBean("booleanTrueRequired", false, ["test": "false"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueTrueMatchIfMissingFalseWhenMissing")
+unittest
+{
+    expectBean("booleanTrueRequired", false);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueTrueMatchIfMissingTrueWhenTrue")
+unittest
+{
+    expectBean("booleanTrueOptional", true, ["test": "true"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueTrueMatchIfMissingTrueWhenFalse")
+unittest
+{
+    expectBean("booleanTrueOptional", false, ["test": "false"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueTrueMatchIfMissingTrueWhenMissing")
+unittest
+{
+    expectBean("booleanTrueOptional", true);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueFalseMatchIfMissingFalseWhenTrue")
+unittest
+{
+    expectBean("booleanFalseRequired", false, ["test": "true"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueFalseMatchIfMissingFalseWhenFalse")
+unittest
+{
+    expectBean("booleanFalseRequired", true, ["test": "false"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueFalseMatchIfMissingFalseWhenMissing")
+unittest
+{
+    expectBean("booleanFalseRequired", false);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueFalseMatchIfMissingTrueWhenTrue")
+unittest
+{
+    expectBean("booleanFalseOptional", false, ["test": "true"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueFalseMatchIfMissingTrueWhenFalse")
+unittest
+{
+    expectBean("booleanFalseOptional", true, ["test": "false"]);
+}
+
+@("ConditionalOnBooleanPropertyTests.havingValueFalseMatchIfMissingTrueWhenMissing")
+unittest
+{
+    expectBean("booleanFalseOptional", true);
+}
+
+@("ConditionalOnBooleanPropertyTests.withPrefix")
+unittest
+{
+    // The pinned method supplies foo.test to the false-optional configuration.
+    expectBean("booleanFalseOptional", true, ["foo.test": "true"]);
+    expectBean("booleanPrefixed", true, ["foo.test": "true"]);
+    expectBean("booleanPrefixed", false, ["test": "true"]);
 }
