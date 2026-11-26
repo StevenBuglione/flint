@@ -320,3 +320,103 @@ unittest
     assert(String.format("[%3.1S][%3.2S]", "𐐨x", "𐐨x") == "[  \uFFFD][ 𐐀]");
     assert(String.format("[%.0S]", "ß") == "[]");
 }
+
+@("String.format renders Java hash codes in hex with the requested case, precision and width")
+unittest
+{
+    assert(String.format("%h %H", cast(Object) null, cast(Object) null) == "null NULL");
+    assert(String.format("[%6.2H][%8.3h][%-8.3H][%.0H]", cast(Object) null, -17, -17,
+            -17) == "[    NU][     fff][FFF     ][]");
+    assert(String.format("%2$h %<H %1$h", "hello", "hi") == "d01 D01 5e918d2");
+    assert(String.format("%h %h %H", "", "é", "ß") == "0 e9 DF");
+    assert(String.format("%h %H", "😀", "a😀z") == "1b0d63 372B776");
+}
+
+@("String.format hashes the Java box type and dispatches R11 Object hashes")
+unittest
+{
+    import flint.java.lang : JavaObject;
+
+    static final class HashValue
+    {
+        bool equals(Object other)
+        {
+            return this is other;
+        }
+
+        int hashCode()
+        {
+            return -17;
+        }
+
+        mixin JavaObject;
+    }
+
+    Object value = new HashValue;
+    assert(String.format("%h %H", value, value) == "ffffffef FFFFFFEF");
+    assert(String.format("%h %h %h", cast(byte)-2, cast(short)-300, int.min) == "fffffffe fffffed4 80000000");
+    assert(String.format("%h %h %h", 0x12345678ABCDEF01L, long.min, -1L) == "b9f9b979 80000000 0");
+    assert(String.format("%h %H %h", true, false, cast(wchar) 0xd800) == "4cf 4D5 d800");
+    assert(String.format("%h %h %h %h", 1.0f, -0.0f, 1.0, -0.0) == "3f800000 80000000 3ff00000 80000000");
+    assert(String.format("%h %h", -float.nan, -double.nan) == "7fc00000 7ff80000");
+}
+
+@("String.format invokes the R11 hash only after validation and uses its zero fallback")
+unittest
+{
+    import flint.java.lang : JavaObject;
+    import std.exception : collectException;
+
+    static final class ThrowingHash
+    {
+        int calls;
+
+        bool equals(Object other)
+        {
+            return this is other;
+        }
+
+        int hashCode()
+        {
+            calls++;
+            throw new Exception("hash failure");
+        }
+
+        mixin JavaObject;
+    }
+
+    auto value = new ThrowingHash;
+    assert(collectException!UnknownFormatConversionException(String.format("%h %q", value)) !is null);
+    assert(value.calls == 0);
+    assert(String.format("%h", value) == "0");
+    assert(value.calls == 1);
+}
+
+@("String.format projects D-only scalars and keeps the R11 toHash fallback")
+unittest
+{
+    import std.exception : collectException;
+
+    static final class NativeObject
+    {
+        int hashCode()
+        {
+            return -17;
+        }
+
+        override bool opEquals(Object other)
+        {
+            return this is other;
+        }
+
+        override size_t toHash() const nothrow
+        {
+            return 42;
+        }
+    }
+
+    assert(String.format("%h", new NativeObject) == "2a");
+    assert(String.format("%h %h %h", uint.max, ulong.max, cast(dchar) 0x1f600) == "ffffffff 0 1f600");
+    auto aggregate = collectException!IllegalFormatConversionException(String.format("%H", [1, 2]));
+    assert(aggregate !is null && aggregate.getMessage() == "h != int[]");
+}

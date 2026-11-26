@@ -138,7 +138,9 @@ unittest
     assert(stringHashCode("hello") == 99_162_322);
     assert(stringHashCode("") == 0 && stringHashCode("é") == 233);
     assert(stringHashCode("😀") == 1_772_899); // a surrogate pair, as Java hashes it
-    assert(javaHashCode(true) == 1231 && javaHashCode(5L) == 5 && javaHashCode(-1L) == 0);
+    static assert(javaHashCode(true) == Boolean.hashCode(true));
+    static assert(javaHashCode(false) == Boolean.hashCode(false));
+    assert(javaHashCode(5L) == 5 && javaHashCode(-1L) == 0);
 }
 
 unittest
