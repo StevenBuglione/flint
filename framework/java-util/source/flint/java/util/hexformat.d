@@ -121,6 +121,48 @@ final class HexFormat
         return upper;
     }
 
+    /// Compare all four formatter settings by value.
+    bool equals(scope const Object other) const pure nothrow @nogc
+    {
+        const value = cast(const HexFormat) other;
+        return value !is null && sameSettings(value);
+    }
+
+    override bool opEquals(Object other) pure nothrow @nogc
+    {
+        return equals(other);
+    }
+
+    bool opEquals(scope const HexFormat other) const pure nothrow @nogc
+    {
+        return other !is null && sameSettings(other);
+    }
+
+    private bool sameSettings(scope const HexFormat other) const pure nothrow @nogc
+    {
+        return upper == other.upper && separator == other.separator && beforeByte == other.beforeByte
+            && afterByte == other.afterByte;
+    }
+
+    /// Combine the Java hashes of the delimiter, prefix, suffix and case flag.
+    int hashCode() const pure nothrow @nogc
+    {
+        import flint.java.lang : stringHashCode;
+        import flint.java.lang.boolean : Boolean;
+
+        enum upperHash = Boolean.hashCode(true);
+        enum lowerHash = Boolean.hashCode(false);
+        uint hash = 31 + cast(uint) stringHashCode(separator);
+        hash = 31 * hash + cast(uint) stringHashCode(beforeByte);
+        hash = 31 * hash + cast(uint) stringHashCode(afterByte);
+        return cast(int)(31 * hash + (upper ? upperHash : lowerHash));
+    }
+
+    override size_t toHash() pure nothrow @nogc
+    {
+        return cast(uint) hashCode();
+    }
+
     /// Render the low nibble.
     wchar toLowHexDigit(int value) const pure nothrow @nogc
     {

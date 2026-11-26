@@ -171,3 +171,35 @@ unittest
     assertThrown!IndexOutOfBoundsException(HexFormat.fromHexDigits("éé", 0, 3));
     assertThrown!IndexOutOfBoundsException(HexFormat.fromHexDigitsToLong("0", 1, 0));
 }
+
+@("HexFormat equality and hashing use the case and all three decorations")
+unittest
+{
+    auto first = HexFormat.ofDelimiter("-").withPrefix("x").withSuffix("😀").withUpperCase();
+    auto second = HexFormat.of().withSuffix("😀").withUpperCase().withDelimiter("-").withPrefix("x");
+    assert(first.equals(second));
+    assert(first == second);
+    const HexFormat readOnlyFirst = first;
+    const HexFormat readOnlySecond = second;
+    assert(readOnlyFirst == readOnlySecond);
+    Object other = second;
+    assert(first.opEquals(other));
+    assert(!first.equals(null));
+    assert(!first.equals(new Object));
+    assert(!first.equals(second.withLowerCase()));
+    assert(!first.equals(second.withDelimiter("+")));
+    assert(!first.equals(second.withPrefix("X")));
+    assert(!first.equals(second.withSuffix("")));
+    assert(HexFormat.of().equals(HexFormat.ofDelimiter("")));
+
+    assert(HexFormat.of().hashCode() == 924_758);
+    assert(HexFormat.of().withUpperCase().hashCode() == 924_752);
+    assert(HexFormat.ofDelimiter("-").hashCode() == 2_265_353);
+    assert(HexFormat.of().withPrefix("x").hashCode() == 1_040_078);
+    assert(HexFormat.of().withSuffix("x").hashCode() == 928_478);
+    assert(first.hashCode() == 57_340_536 && second.hashCode() == first.hashCode());
+
+    int[HexFormat] values;
+    values[first] = 42;
+    assert(values[second] == 42);
+}
