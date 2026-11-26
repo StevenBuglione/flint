@@ -183,7 +183,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | spring-framework@v7.1.0 | 3,507 | 1,401 | 4,850 | 30,076 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
-| framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
+| framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 527 | 17 | 1 | 2,750 |
 | framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
@@ -1398,11 +1398,47 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `jakarta.persistence.metamodel.Attribute` | `flint.jakarta.persistence.metamodel_runtime.Attribute` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute#getDeclaringType()` | `flint.jakarta.persistence.metamodel_runtime.Attribute.getDeclaringType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute#getJavaType()` | `flint.jakarta.persistence.metamodel_runtime.Attribute.getJavaType` | [R4](api-mapping.md#r4-classt-parameters), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute#getName()` | `flint.jakarta.persistence.metamodel_runtime.Attribute.getName` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute#getPersistentAttributeType()` | `flint.jakarta.persistence.metamodel_runtime.Attribute.getPersistentAttributeType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute#isAssociation()` | `flint.jakarta.persistence.metamodel_runtime.Attribute.isAssociation` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute#isCollection()` | `flint.jakarta.persistence.metamodel_runtime.Attribute.isCollection` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute.PersistentAttributeType` | `flint.jakarta.persistence.metamodel_runtime.Attribute.PersistentAttributeType` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute.PersistentAttributeType#BASIC` | `flint.jakarta.persistence.metamodel_runtime.Attribute.PersistentAttributeType.BASIC` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute.PersistentAttributeType#ELEMENT_COLLECTION` | `flint.jakarta.persistence.metamodel_runtime.Attribute.PersistentAttributeType.ELEMENT_COLLECTION` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute.PersistentAttributeType#EMBEDDED` | `flint.jakarta.persistence.metamodel_runtime.Attribute.PersistentAttributeType.EMBEDDED` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute.PersistentAttributeType#MANY_TO_MANY` | `flint.jakarta.persistence.metamodel_runtime.Attribute.PersistentAttributeType.MANY_TO_MANY` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute.PersistentAttributeType#MANY_TO_ONE` | `flint.jakarta.persistence.metamodel_runtime.Attribute.PersistentAttributeType.MANY_TO_ONE` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute.PersistentAttributeType#ONE_TO_MANY` | `flint.jakarta.persistence.metamodel_runtime.Attribute.PersistentAttributeType.ONE_TO_MANY` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.Attribute.PersistentAttributeType#ONE_TO_ONE` | `flint.jakarta.persistence.metamodel_runtime.Attribute.PersistentAttributeType.ONE_TO_ONE` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `jakarta.persistence.metamodel.Bindable#getBindableJavaType()` | `flint.jakarta.persistence.metamodel.Bindable.getBindableJavaType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.metamodel.Bindable.BindableType` | `flint.jakarta.persistence.metamodel.Bindable.BindableType` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `jakarta.persistence.metamodel.Bindable.BindableType#ENTITY_TYPE` | `flint.jakarta.persistence.metamodel.Bindable.BindableType.ENTITY_TYPE` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `jakarta.persistence.metamodel.Bindable.BindableType#PLURAL_ATTRIBUTE` | `flint.jakarta.persistence.metamodel.Bindable.BindableType.PLURAL_ATTRIBUTE` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `jakarta.persistence.metamodel.Bindable.BindableType#SINGULAR_ATTRIBUTE` | `flint.jakarta.persistence.metamodel.Bindable.BindableType.SINGULAR_ATTRIBUTE` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `jakarta.persistence.metamodel.CollectionAttribute` | `flint.jakarta.persistence.metamodel_runtime.CollectionAttribute` | [R10](api-mapping.md#r10-streams-and-collections), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.EmbeddableType` | `flint.jakarta.persistence.metamodel_runtime.EmbeddableType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.ListAttribute` | `flint.jakarta.persistence.metamodel_runtime.ListAttribute` | [R10](api-mapping.md#r10-streams-and-collections), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.ManagedType` | `flint.jakarta.persistence.metamodel_runtime.ManagedType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.MapAttribute` | `flint.jakarta.persistence.metamodel_runtime.MapAttribute` | [R10](api-mapping.md#r10-streams-and-collections), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.MapAttribute#getKeyJavaType()` | `flint.jakarta.persistence.metamodel_runtime.MapAttribute.getKeyJavaType` | [R4](api-mapping.md#r4-classt-parameters), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.MapAttribute#getKeyType()` | `flint.jakarta.persistence.metamodel_runtime.MapAttribute.getKeyType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.PluralAttribute` | `flint.jakarta.persistence.metamodel_runtime.PluralAttribute` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.PluralAttribute#getCollectionType()` | `flint.jakarta.persistence.metamodel_runtime.PluralAttribute.getCollectionType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.PluralAttribute#getElementType()` | `flint.jakarta.persistence.metamodel_runtime.PluralAttribute.getElementType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.PluralAttribute.CollectionType` | `flint.jakarta.persistence.metamodel_runtime.PluralAttribute.CollectionType` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.PluralAttribute.CollectionType#COLLECTION` | `flint.jakarta.persistence.metamodel_runtime.PluralAttribute.CollectionType.COLLECTION` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.PluralAttribute.CollectionType#LIST` | `flint.jakarta.persistence.metamodel_runtime.PluralAttribute.CollectionType.LIST` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.PluralAttribute.CollectionType#MAP` | `flint.jakarta.persistence.metamodel_runtime.PluralAttribute.CollectionType.MAP` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.PluralAttribute.CollectionType#SET` | `flint.jakarta.persistence.metamodel_runtime.PluralAttribute.CollectionType.SET` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.SetAttribute` | `flint.jakarta.persistence.metamodel_runtime.SetAttribute` | [R10](api-mapping.md#r10-streams-and-collections), [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.SingularAttribute` | `flint.jakarta.persistence.metamodel_runtime.SingularAttribute` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.SingularAttribute#getType()` | `flint.jakarta.persistence.metamodel_runtime.SingularAttribute.getType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.SingularAttribute#isId()` | `flint.jakarta.persistence.metamodel_runtime.SingularAttribute.isId` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.SingularAttribute#isOptional()` | `flint.jakarta.persistence.metamodel_runtime.SingularAttribute.isOptional` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `jakarta.persistence.metamodel.SingularAttribute#isVersion()` | `flint.jakarta.persistence.metamodel_runtime.SingularAttribute.isVersion` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `jakarta.persistence.metamodel.StaticMetamodel` | `flint.jakarta.persistence.metamodel.StaticMetamodel` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.metamodel.StaticMetamodel#value` | `flint.jakarta.persistence.metamodel.StaticMetamodel.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.metamodel.Type#getJavaType()` | `flint.jakarta.persistence.metamodel.Type.getJavaType` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -5873,6 +5909,12 @@ These Java elements have no Flint counterpart, for the reason the category gives
 | --- | --- | --- |
 | `jakarta.annotation.sql.**` (21 elements) | `jvm-platform` |  |
 
+#### jakarta.persistence.metamodel
+
+| Java | Reason | Note |
+| --- | --- | --- |
+| `jakarta.persistence.metamodel.Attribute#getJavaMember()` | `runtime-reflection` | Returns java.lang.reflect.Member, excluded by ADR-034. |
+
 #### jakarta.servlet.http
 
 | Java | Reason | Note |
@@ -9359,7 +9401,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.annotation.security | 8 | 0 |
 | jakarta.persistence | 381 | 0 |
 | jakarta.persistence.criteria | 419 | 0 |
-| jakarta.persistence.metamodel | 86 | 0 |
+| jakarta.persistence.metamodel | 49 | 0 |
 | jakarta.persistence.spi | 48 | 0 |
 | jakarta.servlet | 300 | 0 |
 | jakarta.servlet.annotation | 54 | 0 |
