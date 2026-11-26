@@ -580,7 +580,6 @@
   "java.util.Properties#getProperty(String)",
   "java.util.Properties#getProperty(String,String)",
   "java.util.Properties#setProperty(String,String)",
-  "java.util.Properties#stringPropertyNames()",
   "java.util.Set",
   "java.util.Set#copyOf(Collection)",
   "java.util.Set#of(E)",
