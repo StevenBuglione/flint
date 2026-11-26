@@ -6864,7 +6864,7 @@
 "java.util.Locale#of(String,String,String)":{"status":"excluded","category":"deferred","phase":"2","reason":"Flint uses the normalized Locale constructor, including the compatibility extensions. The java.locale.useOldISOCodes startup property is deferred. A null String is the empty slice under R26."},
 "java.util.Locale#clone()":{"status":"adapted","rules":["R11","R23"],"d":"flint.java.util.Locale.clone","note":"Returns a concrete Locale value copy. Java exposes a distinct Locale reference through Object. Stored fields are copied verbatim, including a stripped extension state."},
 "java.util.Locale#equals(Object)":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.equals","note":"Compares normalized Locale values, including scripts and extensions. D requires a Locale argument at compile time. Java returns false for null and foreign objects."},
-"java.util.Locale#hashCode()":{"status":"excluded","category":"deferred","phase":"2","reason":"Flint narrows its D associative-array hash to int and produces different numeric hashes from Java. Both implementations give equal Locale values equal hashes."},
+"java.util.Locale#hashCode()":{"status":"ported","d":"flint.java.util.Locale.hashCode"},
 "java.util.Locale#ROOT":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.ROOT"},
 "java.util.Locale#ENGLISH":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.ENGLISH"},
 "java.util.Locale#US":{"status":"adapted","rules":["R11"],"d":"flint.java.util.Locale.US"},
