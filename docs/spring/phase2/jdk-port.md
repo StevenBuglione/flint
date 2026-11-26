@@ -5,15 +5,11 @@ The owner decided on 2026-11-26 to port the parts of the Java SE standard librar
 ## Target and licence
 
 - **API:** Java SE 21, the release `flint:java` already uses for its Unicode tables. Later additions (Java 25) are added only when Spring v7.1.0 or Boot v4.2.0 code calls them. Names follow rulebook R1: `java.util.HashMap` becomes `flint.java.util.HashMap`.
-- **flint.java is ported from OpenJDK (owner, 2026-11-26 04:30Z).** Every `flint:java*` package is GPL-2.0-only WITH Classpath-exception-2.0, like OpenJDK. Port OpenJDK implementations and jtreg tests from source, keeping each file's header and adding "Modified by the Flint authors". Spring and Apache-2.0 code use these packages freely, because the Classpath Exception covers linking. Apache Harmony is no longer used; its few derived files are replaced. The previous rule was (ADR-030 section 6, `policy/upstream-licences.json`):
-  - Implement from the Java SE API specification's behaviour, never from OpenJDK source.
-  - Never copy OpenJDK code, Javadoc prose, or jtreg tests.
-  - Public API names and signatures may be extracted for the API manifest. That is interface information, not implementation (*Google v. Oracle*).
-  - Write DDoc in your own words.
-- **Apache Harmony (Apache-2.0) may be ported from source,** with its header kept and "Modified by the Flint authors" added. It covers roughly Java 6. Port its tests where they still match Java 21 behaviour, and record them in `upstream-tests.json`.
+- **flint.java is ported from OpenJDK (owner, 2026-11-26 04:30Z).** Every `flint:java*` package is GPL-2.0-only WITH Classpath-exception-2.0, like OpenJDK, and declares that licence in its `dub.sdl`, with its own LICENSE and NOTICE (checked by the structural gate, 5650649a). Port OpenJDK implementations and jtreg tests from source, keeping each file's header and adding "Modified by the Flint authors". Spring and Apache-2.0 code use these packages freely, because the Classpath Exception covers linking. Never mix Apache-2.0-derived files into a `flint:java*` package.
+- **Apache Harmony is not used.** Its few derived files have been replaced by OpenJDK ports or original code. Don't port new Harmony code or tests.
 - **Unicode and IANA tz data** are data under their own licences. Generate them into tables with a checked-in generator, as `framework/java/tools/GenCharacter.java` already does.
 - **Tests:**
-  - Harmony's tests where they apply;
+  - OpenJDK's jtreg tests where they apply;
   - original tests written against the specification;
   - Spring's own tests that exercise these classes.
 
@@ -133,7 +129,7 @@ The release check fails with any violation still present.
 |---|---|---|
 | `sol-jdk-core` | the link-closure gate; `flint:java` (lang) and `flint:java-collections` | 1. The gate. 2. Split today's `flint:java` into leaves without changing public names (framework-core reviews; it owns `flint:java`). 3. Collections faithful to Java (live views, orders, CME), plus `Arrays`, `Collections`, `Objects`, `Optional*`, streams and functions |
 | `sol-jdk-time-text` | `flint:java-time`, `flint:java-text`, `Locale` | `java.time` with a tzdb data leaf, then `java.time.format`, then `java.text` |
-| `sol-jdk-math-regex` | `flint:java-math`, `flint:java-regex`, `UUID`, `Base64`, `HexFormat` | `BigInteger` and `BigDecimal` (Harmony-derived where it helps), then a Java-semantics regex engine |
+| `sol-jdk-math-regex` | `flint:java-math`, `flint:java-regex`, `UUID`, `Base64`, `HexFormat` | `BigInteger` and `BigDecimal` (ported from OpenJDK), then a Java-semantics regex engine |
 | `sol-jdk-concurrent-io` | `flint:java-concurrent`, `flint:java-io`, `flint:java-net`, `flint:java-security` (OpenSSL wrappers only) | concurrency on fibers and the offload pool, then io, nio and charset, then net, then the security facades |
 
 **Reviewers:**
