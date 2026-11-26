@@ -1818,8 +1818,34 @@
       "status": "deferred"
     },
     "tools/jackson/databind/introspect/TestNamingStrategyStd.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/naming_strategy_std_test.d",
+      "methods": {
+        "ported": [
+          "testExplicitNoNaming",
+          "testIssue428PascalWithOverrides",
+          "testKebabCaseStrategyStandAlone",
+          "testLowerCaseOtherNonStandardNamesTranslations",
+          "testLowerCaseStrategyStandAlone",
+          "testLowerCaseTranslations",
+          "testLowerCaseUnchangedNames",
+          "testLowerCaseWithDotsStrategyStandAlone",
+          "testNamingWithObjectNode",
+          "testSimpleKebabCase",
+          "testSimpleLowerCase",
+          "testSimpleLowerCaseWithDots",
+          "testUpperSnakeCaseStrategyStandAlone",
+          "testUpperSnakeCaseTranslations"
+        ],
+        "skipped": {
+          "testExplicitRename": "The mapper does not yet apply ALLOW_EXPLICIT_PROPERTY_RENAMING to explicitly named fields.",
+          "testLowerCaseAcronymsTranslations": "The writer's per-call slash escaping override is version-gated.",
+          "testNamingViaConstructorParams": "The custom annotation introspector's parameter naming is version-gated.",
+          "testPascalCaseStandAlone": "The active fixture calls nameForProperty twice for the acronym case and omits the distinct Java getter hook.",
+          "testSnakeCase3368": "Binding through an annotated non-setter method and the configured ObjectReader are version-gated."
+        }
+      },
+      "note": "The standalone field-name translations exercise Flint's nameForProperty hook. Explicit AOT descriptors preserve Java member spellings without D identifiers containing dollar signs.",
+      "status": "partial"
     },
     "tools/jackson/databind/introspect/TestPropertyConflicts.java": {
       "phase": "2",

@@ -3016,7 +3016,6 @@
       "tools/jackson/databind/introspect/TestInferredMutators.java",
       "tools/jackson/databind/introspect/TestNameConflicts.java",
       "tools/jackson/databind/introspect/TestNamingStrategyCustom.java",
-      "tools/jackson/databind/introspect/TestNamingStrategyStd.java",
       "tools/jackson/databind/introspect/TestPropertyConflicts.java",
       "tools/jackson/databind/introspect/TestPropertyRename.java",
       "tools/jackson/databind/introspect/TestScalaLikeImplicitProperties.java",
