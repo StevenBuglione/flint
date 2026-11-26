@@ -36,6 +36,8 @@
 "org.springframework.data.domain.AbstractPageRequest#previous()":{"status":"ported","d":"flint.data.domain.AbstractPageRequest.previous"},
 "org.springframework.data.domain.AbstractPageRequest#previousOrFirst()":{"status":"ported","d":"flint.data.domain.AbstractPageRequest.previousOrFirst"},
 "org.springframework.data.domain.AfterDomainEventPublication":{"status":"adapted","rules":["R2"],"d":"flint.data.domain.AfterDomainEventPublication"},
+"org.springframework.data.domain.AuditorAware":{"status":"ported","d":"flint.data.domain.AuditorAware"},
+"org.springframework.data.domain.AuditorAware#getCurrentAuditor()":{"status":"adapted","rules":["R5"],"d":"flint.data.domain.AuditorAware.getCurrentAuditor"},
 "org.springframework.data.domain.DomainEvents":{"status":"adapted","rules":["R2"],"d":"flint.data.domain.DomainEvents"},
 "org.springframework.data.domain.KeysetScrollPosition":{"status":"ported","d":"flint.data.domain.KeysetScrollPosition"},
 "org.springframework.data.domain.KeysetScrollPosition#backward()":{"status":"ported","d":"flint.data.domain.KeysetScrollPosition.backward"},

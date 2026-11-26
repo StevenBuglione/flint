@@ -1527,7 +1527,6 @@
       "org/springframework/data/aot/TypeCollectorUnitTests.java",
       "org/springframework/data/auditing/AnnotationAuditingMetadataUnitTests.java",
       "org/springframework/data/auditing/AuditingHandlerUnitTests.java",
-      "org/springframework/data/auditing/AuditorUnitTests.java",
       "org/springframework/data/auditing/DefaultAuditableBeanWrapperFactoryUnitTests.java",
       "org/springframework/data/auditing/IsNewAwareAuditingHandlerUnitTests.java",
       "org/springframework/data/auditing/MappingAuditableBeanWrapperFactoryUnitTests.java",

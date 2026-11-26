@@ -45,8 +45,16 @@
       "status": "deferred"
     },
     "org/springframework/data/auditing/AuditorUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/auditor_tests.d",
+      "methods": {
+        "ported": [
+          "auditorOfEmptyOptionalIsNone",
+          "auditorOfMustNotWrapOtherAuditor",
+          "auditorOfNullIsNone",
+          "auditorOfOptionalIsValue"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/auditing/DefaultAuditableBeanWrapperFactoryUnitTests.java": {
       "phase": "2",
