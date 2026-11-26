@@ -1,6 +1,6 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/model/{BasicPersistentEntity,MutablePersistentEntity,PersistentPropertyAccessorFactory}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/model/{BasicPersistentEntity,BeanWrapper,BeanWrapperPropertyAccessorFactory,MutablePersistentEntity,PersistentPropertyAccessorFactory}.java
 // Copyright 2011-present the original author or authors.
-// PersistentPropertyAccessorFactory: Copyright 2016-present the original author or authors.
+// Accessor factories: Copyright 2016-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 module flint.data.mapping.model;
@@ -18,6 +18,7 @@ import flint.data.mapping : Alias, Association, AssociationHandler, IdentifierAc
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MergedAnnotation, PropertyDescriptor,
     findMergedAnnotation = findAnnotation;
+import flint.engine.aot.objects : statelessInstance;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
 import flint.java.util : ArrayList, Collections, Comparator, HashMap, Iterator, List, Map, Objects;
@@ -51,6 +52,74 @@ interface PersistentPropertyAccessorFactory(T, P) if (is(P : PersistentProperty!
 
     /// Whether the factory can create accessors for this entity metadata.
     bool isSupported(PersistentEntity!(T, P) entity);
+}
+
+/// The standard property accessor factory for registered descriptors.
+final class BeanWrapperPropertyAccessorFactory(T, P) : PersistentPropertyAccessorFactory!(T,
+        P) if (is(P : PersistentProperty!P))
+{
+    package(flint) this() pure nothrow @nogc
+    {
+    }
+
+    /// The shared factory for this entity and property pair (R18).
+    static BeanWrapperPropertyAccessorFactory INSTANCE() nothrow @nogc
+    {
+        return statelessInstance!BeanWrapperPropertyAccessorFactory();
+    }
+
+    /// The name of the enum constant.
+    string name() pure nothrow @nogc
+    {
+        return "INSTANCE";
+    }
+
+    /// The zero-based ordinal of the enum constant.
+    int ordinal() pure nothrow @nogc
+    {
+        return 0;
+    }
+
+    override string toString() pure nothrow @nogc
+    {
+        return name();
+    }
+
+    /// The constants, in declaration order.
+    static BeanWrapperPropertyAccessorFactory[] values()
+    {
+        return [INSTANCE];
+    }
+
+    /// The constant by its exact name.
+    static BeanWrapperPropertyAccessorFactory valueOf(string constant)
+    {
+        if (constant is null)
+            throw new NullPointerException("Name is null");
+        if (constant != "INSTANCE")
+        {
+            enum prefix = "No enum constant org.springframework.data.mapping.model.BeanWrapperPropertyAccessorFactory.";
+            throw new IllegalArgumentException(prefix ~ constant);
+        }
+        return INSTANCE;
+    }
+
+    override PersistentPropertyAccessor!(T, P) getPropertyAccessor(PersistentEntity!(T, P) entity, Any bean)
+    {
+        if (entity is null)
+            throw new IllegalArgumentException("Entity must not be null");
+        verifyEntityBean!(T, P)(entity, bean);
+        const descriptor = registeredDescriptor(entity.getTypeInformation());
+        if (descriptor is null)
+            throw new MappingException(Nullable!string("No registered descriptor for " ~ entity.getName()));
+        return new BeanWrapper!(T, P)(descriptor, copyAccessorBean!T(bean));
+    }
+
+    override bool isSupported(PersistentEntity!(T, P) entity)
+    {
+        return entity !is null && registeredDescriptor(entity.getTypeInformation()) !is null;
+    }
+
 }
 
 /// Mutable persistent metadata built from explicit property registration before serving requests.
@@ -326,7 +395,7 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
 
     override IdentifierAccessor getIdentifierAccessor(Any bean)
     {
-        verifyBeanType(bean);
+        verifyEntityBean!(T, P)(this, bean);
         static if (is(T : PersistableState))
             return new ModelIdentifierAccessor(bean, PropertyRead(&readPersistableId!T));
         else
@@ -335,27 +404,23 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
 
     override PersistentPropertyAccessor!(T, P) getPropertyAccessor(Any bean)
     {
-        verifyBeanType(bean);
         auto factory = propertyAccessorFactory;
-        if (factory is null && descriptor is null)
-            throw new MappingException(Nullable!string("No registered descriptor for " ~ getName()));
-        static if (is(T == struct))
-            bean = Any.of(bean.get!T);
-        if (factory !is null)
-            return factory.getPropertyAccessor(this, bean);
-        return new DescriptorPropertyAccessor!(T, P)(descriptor, bean);
+        if (factory is null)
+            return BeanWrapperPropertyAccessorFactory!(T, P).INSTANCE.getPropertyAccessor(this, bean);
+        verifyEntityBean!(T, P)(this, bean);
+        return factory.getPropertyAccessor(this, copyAccessorBean!T(bean));
     }
 
     override void setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory!(T, P) factory)
     {
         if (factory is null)
             throw new IllegalArgumentException("PropertyAccessorFactory must not be null");
-        propertyAccessorFactory = factory;
+        propertyAccessorFactory = factory is BeanWrapperPropertyAccessorFactory!(T, P).INSTANCE ? null : factory;
     }
 
     override bool isNew(Any bean)
     {
-        verifyBeanType(bean);
+        verifyEntityBean!(T, P)(this, bean);
         static if (is(T : PersistableState))
             return bean.get!T.isNew();
         else
@@ -379,12 +444,6 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
     override int opApply(scope int delegate(P) @safe action)
     {
         return propertyView.opApply(action);
-    }
-
-    private void verifyBeanType(Any bean)
-    {
-        if (bean.isNull() || !bean.holds!T())
-            throw new IllegalArgumentException("Bean must be an instance of " ~ getName() ~ "; got " ~ bean.typeName());
     }
 
     private PropertyRead bindRead(string name)
@@ -434,7 +493,25 @@ private const(MergedAnnotation)* findCheckedAnnotation(return scope const(Merged
     return findMergedAnnotation(annotations, annotationType);
 }
 
-private final class DescriptorPropertyAccessor(T, P) : PersistentPropertyAccessor!(T, P)
+private void verifyEntityBean(T, P)(PersistentEntity!(T, P) entity, Any bean)
+{
+    if (bean.isNull() || !bean.holds!T())
+    {
+        const actual = bean.typeName();
+        const message = "Bean must be an instance of " ~ entity.getName() ~ "; got " ~ actual;
+        throw new IllegalArgumentException(message);
+    }
+}
+
+private Any copyAccessorBean(T)(Any bean)
+{
+    static if (is(T == struct))
+        return Any.of(bean.get!T);
+    else
+        return bean;
+}
+
+private final class BeanWrapper(T, P) : PersistentPropertyAccessor!(T, P)
 {
     private const(Descriptor) descriptor;
     private Any bean;

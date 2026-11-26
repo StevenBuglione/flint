@@ -13,7 +13,8 @@ import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
 import flint.data.mapping : Alias, Association, AssociationHandler, MappingException,
     PersistentEntity, PersistentProperty, PersistentPropertyAccessor, PropertyHandler;
-import flint.data.mapping.model : BasicPersistentEntity, MutablePersistentEntity, PersistentPropertyAccessorFactory;
+import flint.data.mapping.model : BasicPersistentEntity, BeanWrapperPropertyAccessorFactory,
+    MutablePersistentEntity, PersistentPropertyAccessorFactory;
 import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
@@ -223,6 +224,19 @@ private final class RecordingAccessorFactory : PersistentPropertyAccessorFactory
     override bool isSupported(PersistentEntity!(Person, Property) entity)
     {
         return entity.getType() == classOf!Person;
+    }
+}
+
+private final class OpaqueAccessorEntity : BasicPersistentEntity!(Person, Property)
+{
+    this(TypeInformation information)
+    {
+        super(information);
+    }
+
+    override TypeInformation getTypeInformation()
+    {
+        return null;
     }
 }
 
@@ -756,4 +770,56 @@ unittest
     auto revision = new Property("revision", classOf!long);
     accessor.setProperty(revision, Any.of(2L));
     assert(accessor.getBean().revision == 2L && original.get!Snapshot.revision == 1L);
+}
+
+@("bean wrapper factory is a singleton over registered metadata")
+unittest
+{
+    alias Factory = BeanWrapperPropertyAccessorFactory!(Person, Property);
+    auto factory = Factory.INSTANCE;
+    assert(factory is Factory.INSTANCE && Factory.values() == [factory]);
+    assert(Factory.valueOf("INSTANCE") is factory);
+    assertThrown!IllegalArgumentException(Factory.valueOf("DEFAULT"));
+    assert(factory.name() == "INSTANCE" && factory.ordinal() == 0 && factory.toString() == "INSTANCE");
+
+    auto entity = mapped!Person();
+    auto opaque = new OpaqueAccessorEntity(entity.getTypeInformation());
+    assert(factory.isSupported(entity) && !factory.isSupported(opaque) && !factory.isSupported(null));
+    auto bean = new Employee;
+    assertThrown!MappingException(factory.getPropertyAccessor(opaque, Any.of(bean)));
+    assertThrown!IllegalArgumentException(factory.getPropertyAccessor(null, Any.of(bean)));
+    assertThrown!IllegalArgumentException(factory.getPropertyAccessor(entity, Any.init));
+    assertThrown!IllegalArgumentException(factory.getPropertyAccessor(entity, Any.of(new Object)));
+}
+
+@("bean wrapper factory reads and writes registered properties")
+unittest
+{
+    alias Factory = BeanWrapperPropertyAccessorFactory!(Person, Property);
+    auto entity = mapped!Person();
+    auto bean = new Employee;
+    auto accessor = Factory.INSTANCE.getPropertyAccessor(entity, Any.of(bean));
+    auto revision = new Property("revision", classOf!long);
+    accessor.setProperty(revision, Any.of(7L));
+    assert(accessor.getProperty(revision).get!long == 7 && accessor.getBean() is bean);
+    auto label = new Property("label", classOf!string);
+    assert(accessor.getProperty(label).get!string == "person");
+    assertThrown!MappingException(accessor.setProperty(label, Any.of("replacement")));
+}
+
+@("bean wrapper factory owns its value-type bean")
+unittest
+{
+    alias Factory = BeanWrapperPropertyAccessorFactory!(Snapshot, Property);
+    auto entity = mapped!Snapshot();
+    auto original = Any.of(Snapshot(1L));
+    auto accessor = Factory.INSTANCE.getPropertyAccessor(entity, original);
+    auto revision = new Property("revision");
+    accessor.setProperty(revision, Any.of(8L));
+    assert(accessor.getBean().revision == 8L && original.get!Snapshot.revision == 1L);
+
+    entity.setPersistentPropertyAccessorFactory(Factory.INSTANCE);
+    auto installed = entity.getPropertyAccessor(original);
+    installed.setProperty(revision, Any.of(9L));
+    assert(installed.getBean().revision == 9L && original.get!Snapshot.revision == 1L);
 }

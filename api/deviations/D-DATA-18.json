@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-18",
+ "deviation": "BeanWrapperPropertyAccessorFactory is typed to each entity and property pair and supports entities with registered descriptors. Its wrapper uses registered getter and setter callbacks and retains an owned copy of a value-type bean.",
+ "reason": "The typed factory follows D-DATA-17. Registered descriptors provide the supported property operations and preserve bean ownership across the accessor boundary. Immutable replacement remains deferred."
+}

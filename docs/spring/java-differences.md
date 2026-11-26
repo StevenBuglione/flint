@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 270 | 220 | 0 | 3,492 |
+| data-commons | spring-data-commons@4.2.0 | 270 | 224 | 0 | 3,488 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1045,6 +1045,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.model.BasicPersistentEntity#isNew(Object)` | `flint.data.mapping.model.BasicPersistentEntity.isNew` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-12](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.BasicPersistentEntity#iterator()` | `flint.data.mapping.model.BasicPersistentEntity.iterator` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.data.mapping.model.BasicPersistentEntity#setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory)` | `flint.data.mapping.model.BasicPersistentEntity.setPersistentPropertyAccessorFactory` | [D-DATA-17](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.BeanWrapperPropertyAccessorFactory` | `flint.data.mapping.model.BeanWrapperPropertyAccessorFactory` | [R18](api-mapping.md#r18-enums-that-implement-an-interface), [D-DATA-18](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.BeanWrapperPropertyAccessorFactory#INSTANCE` | `flint.data.mapping.model.BeanWrapperPropertyAccessorFactory.INSTANCE` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
+| `org.springframework.data.mapping.model.BeanWrapperPropertyAccessorFactory#getPropertyAccessor(PersistentEntity,T)` | `flint.data.mapping.model.BeanWrapperPropertyAccessorFactory.getPropertyAccessor` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-18](api-mapping.md#deviations) |  |
+| `org.springframework.data.mapping.model.BeanWrapperPropertyAccessorFactory#isSupported(PersistentEntity)` | `flint.data.mapping.model.BeanWrapperPropertyAccessorFactory.isSupported` | [D-DATA-18](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MutablePersistentEntity#setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory)` | `flint.data.mapping.model.MutablePersistentEntity.setPersistentPropertyAccessorFactory` | [D-DATA-17](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.PersistentPropertyAccessorFactory` | `flint.data.mapping.model.PersistentPropertyAccessorFactory` | [D-DATA-17](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.PersistentPropertyAccessorFactory#getPropertyAccessor(PersistentEntity,T)` | `flint.data.mapping.model.PersistentPropertyAccessorFactory.getPropertyAccessor` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-17](api-mapping.md#deviations) |  |
@@ -10156,7 +10160,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.mapping | 135 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
-| org.springframework.data.mapping.model | 182 | 0 |
+| org.springframework.data.mapping.model | 178 | 0 |
 | org.springframework.data.projection | 70 | 0 |
 | org.springframework.data.querydsl | 66 | 0 |
 | org.springframework.data.querydsl.binding | 45 | 0 |
