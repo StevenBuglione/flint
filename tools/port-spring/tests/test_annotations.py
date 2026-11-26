@@ -13,11 +13,45 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class AnnotationTests(unittest.TestCase):
-    def run_helper(self, source):
+    def run_helper(self, source, *options):
         with tempfile.TemporaryDirectory() as scratch:
             path = Path(scratch) / "Settings.java"
             path.write_text(source, encoding="utf-8")
-            return subprocess.run([HELPER, path], capture_output=True, check=False)
+            return subprocess.run([HELPER, *options, path], capture_output=True, check=False)
+
+    def test_nested_enum_arguments_keep_annotation_name_and_constant(self):
+        source = """package demo;
+public @interface Settings {
+    Nested[] value() default {@Nested(FAST), @other.Nested(value = other.Mode.SLOW), @Nested};
+}
+"""
+        result = self.run_helper(source)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        field = json.loads(result.stdout)["members"][0]["reference"]
+        self.assertEqual(field["defaults"], [
+            {"source": "@Nested(FAST)", "annotation": "Nested", "constant": "FAST", "named": False},
+            {"source": "@other.Nested(value = other.Mode.SLOW)", "annotation": "other.Nested",
+             "constant": "other.Mode.SLOW", "named": True},
+            "@Nested",
+        ])
+        for expression in ("@Nested(name = FAST)", "@Nested(value = FAST, name = FAST)", "@Nested(Mode.fast())"):
+            with self.subTest(expression=expression):
+                result = self.run_helper(f"package demo; public @interface Settings {{ Nested value() default {expression}; }}")
+                self.assertEqual(result.returncode, 2, result.stdout.decode())
+                self.assertFalse(result.stdout)
+                self.assertIn(b"unsupported referenced annotation default", result.stderr)
+
+    def test_annotation_scope_reads_imports_for_unsupported_declaration(self):
+        result = self.run_helper("""package demo;
+import other.Mode;
+import static other.Mode.FAST;
+@Custom public @interface Settings { Mode value() default FAST; }
+""", "--annotation-scope")
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        self.assertEqual(json.loads(result.stdout), {"package": "demo", "name": "Settings", "referenceImports": [
+            {"path": "other.Mode", "static": False, "wildcard": False},
+            {"path": "other.Mode.FAST", "static": True, "wildcard": False},
+        ]})
 
     def test_nested_annotation_defaults_are_reported_as_references(self):
         source = """package demo;

@@ -212,7 +212,8 @@ private string sourcePath(string root, const ref SpringPortRequest request, cons
     return buildPath(tree, file);
 }
 
-private bool runHelper(string root, string helper, string source, out JSONValue candidate, out string error)
+private bool runHelper(string root, string helper, string source, out JSONValue candidate,
+        out string error, bool scopeOnly = false)
 {
     import flint_tool.support.process : capture;
     import std.path : absolutePath, buildPath;
@@ -225,7 +226,10 @@ private bool runHelper(string root, string helper, string source, out JSONValue 
         enum executable = "flint-port-spring";
     if (!helper.length)
         helper = buildPath(root, ".flint", "port-spring", executable);
-    const result = capture([absolutePath(helper), source]);
+    string[] arguments = [absolutePath(helper)];
+    if (scopeOnly)
+        arguments ~= "--annotation-scope";
+    const result = capture(arguments ~ source);
     if (!result.ok)
     {
         error = result.errors.length ? result.errors.strip : "cannot run " ~ helper ~ ": " ~ result.failure;
@@ -240,7 +244,7 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
         out string body, out string error)
 {
     import flint_tool.api.coverage : parseMapping;
-    import flint_tool.api.annotation_references : annotationReferenceBody;
+    import flint_tool.api.annotation_references : resolveReferenceBody;
     import std.file : readText;
     import std.path : buildPath;
 
@@ -272,7 +276,23 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
     if (referenceFields.length)
     {
         const classifier = Classifier(mapping);
-        body = annotationReferenceBody(manifest, type, classifier, request.module_, candidate, error);
+        JSONValue[string] scopes;
+        bool loadScope(const ref ApiType nested, out JSONValue result, out string failure) @safe
+        {
+            const id = nested.decl.id;
+            if (const saved = id in scopes)
+            {
+                result = *saved;
+                return true;
+            }
+            const source = sourcePath(root, request, pin, nested.file, failure);
+            if (!source.length || !runHelper(root, request.helper, source, result, failure, true))
+                return false;
+            scopes[id] = result;
+            return true;
+        }
+
+        body = resolveReferenceBody(manifest, type, classifier, request.module_, candidate, error, &loadScope);
     }
     else
         body = candidate["body"].str;

@@ -51,6 +51,15 @@ def rejects(flint, args, diagnostic):
 
 
 def check_cli(flint, helper, cache, scratch):
+    for type_name in ("AssociationOverride", "MapKeyJoinColumn"):
+        result = run(flint, *command(PROJECT, TAG, PACKAGE + "." + type_name, helper, cache))
+        assert result.returncode == 0, (result.stdout, result.stderr)
+        output = json.loads(result.stdout)
+        assert "    ForeignKey foreignKey = ForeignKey(ConstraintMode.PROVIDER_DEFAULT);" in output["source"], output
+        if type_name == "AssociationOverride":
+            assert "    JoinTable joinTable = JoinTable.init;" in output["source"], output
+        assert not json.loads(output["mapping"])["elements"], output
+
     basic = run(flint, *command(PROJECT, TAG, PACKAGE + ".Basic", helper, cache))
     assert basic.returncode == 0, (basic.stdout, basic.stderr)
     basic_output = json.loads(basic.stdout)

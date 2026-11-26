@@ -479,15 +479,44 @@ static bool array_default(const JavaFile *annotation, Text *output, TSNode value
     return !output->failed;
 }
 
+static bool enum_constant(const JavaFile *java, TSNode node)
+{
+    return (kind(node, "identifier") || kind(node, "field_access")) && qualified_identifier(node_text(java, node));
+}
+
+static bool nested_argument(const JavaFile *java, TSNode node, TSNode *constant, bool *named)
+{
+    *constant = (TSNode){0};
+    *named = false;
+    if (!qualified_identifier(node_text(java, member(node, "name"))))
+        return false;
+    TSNode arguments = member(node, "arguments");
+    if (ts_node_is_null(arguments))
+        return true;
+    for (uint32_t index = 0; index < ts_node_named_child_count(arguments); ++index) {
+        TSNode argument = ts_node_named_child(arguments, index);
+        if (ts_node_is_extra(argument))
+            continue;
+        if (!ts_node_is_null(*constant))
+            return false;
+        *named = kind(argument, "element_value_pair");
+        if (*named && !is(node_text(java, member(argument, "key")), "value"))
+            return false;
+        *constant = *named ? member(argument, "value") : argument;
+        if (!enum_constant(java, *constant))
+            return false;
+    }
+    return true;
+}
+
 static bool reference_default(const JavaFile *java, TSNode node)
 {
     if (kind(node, "marker_annotation") || kind(node, "annotation")) {
-        TSNode arguments = member(node, "arguments");
-        if (!ts_node_is_null(arguments) && ts_node_named_child_count(arguments))
-            return false;
-        return qualified_identifier(node_text(java, member(node, "name")));
+        TSNode constant;
+        bool named;
+        return nested_argument(java, node, &constant, &named);
     }
-    return (kind(node, "identifier") || kind(node, "field_access")) && qualified_identifier(node_text(java, node));
+    return enum_constant(java, node);
 }
 
 static int emit_reference_field(const JavaFile *java, Field *field, TSNode type, size_t offset)
@@ -616,6 +645,23 @@ static void json_string(Slice text)
     putchar('"');
 }
 
+static void emit_reference_value(const JavaFile *java, TSNode node)
+{
+    TSNode constant;
+    bool named;
+    if (kind(node, "annotation") && nested_argument(java, node, &constant, &named) && !ts_node_is_null(constant)) {
+        fputs("{\"source\":", stdout);
+        json_string(node_text(java, node));
+        fputs(",\"annotation\":", stdout);
+        json_string(node_text(java, member(node, "name")));
+        fputs(",\"constant\":", stdout);
+        json_string(node_text(java, constant));
+        printf(",\"named\":%s}", named ? "true" : "false");
+    } else {
+        json_string(node_text(java, node));
+    }
+}
+
 static void emit_field_reference(const JavaFile *java, const Field *field)
 {
     fputs(",\"reference\":{\"type\":", stdout);
@@ -635,11 +681,11 @@ static void emit_field_reference(const JavaFile *java, const Field *field)
                 continue;
             if (!first)
                 putchar(',');
-            json_string(node_text(java, element));
+            emit_reference_value(java, element);
             first = false;
         }
     } else {
-        json_string(node_text(java, value));
+        emit_reference_value(java, value);
     }
     fputs("]}", stdout);
 }
@@ -693,12 +739,23 @@ static void emit_candidate(const JavaFile *annotation, Slice name, const Text *s
     puts("}");
 }
 
-static int translate(JavaFile *annotation)
+static int translate(JavaFile *annotation, bool scope_only)
 {
     if (ts_node_has_error(annotation->root))
         return diagnostic(annotation, annotation->root, "Java syntax error");
     if (!package_and_declaration(annotation))
         return diagnostic(annotation, annotation->root, "expected a package and one public annotation or enum");
+    if (scope_only) {
+        if (annotation->is_enum)
+            return diagnostic(annotation, annotation->declaration, "expected annotation declaration");
+        fputs("{\"package\":", stdout);
+        json_string(annotation->package);
+        fputs(",\"name\":", stdout);
+        json_string(node_text(annotation, member(annotation->declaration, "name")));
+        emit_imports(annotation);
+        puts("}");
+        return fflush(stdout) == EOF ? diagnostic(annotation, annotation->root, "cannot write output") : 0;
+    }
     if (annotation->is_enum && !ts_node_is_null(member(annotation->declaration, "interfaces")))
         return diagnostic(annotation, annotation->declaration, "unsupported enum implementing an interface");
     int status = check_meta(annotation, child_of_kind(annotation->declaration, "modifiers"));
@@ -775,14 +832,16 @@ static char *read_source(const char *path, uint32_t *size)
 
 int main(int argc, char **argv)
 {
-    if (argc != 2) {
-        fputs("usage: flint-port-spring <Java file>\n", stderr);
+    bool scope_only = argc == 3 && !strcmp(argv[1], "--annotation-scope");
+    if (argc != 2 && !scope_only) {
+        fputs("usage: flint-port-spring [--annotation-scope] <Java file>\n", stderr);
         return 1;
     }
+    const char *path = argv[argc - 1];
     uint32_t size;
-    char *source = read_source(argv[1], &size);
+    char *source = read_source(path, &size);
     if (!source) {
-        fprintf(stderr, "%s: cannot read Java source\n", argv[1]);
+        fprintf(stderr, "%s: cannot read Java source\n", path);
         return 1;
     }
     TSParser *parser = ts_parser_new();
@@ -791,8 +850,8 @@ int main(int argc, char **argv)
         tree = ts_parser_parse_string(parser, NULL, source, size);
     int status = 1;
     if (tree) {
-        JavaFile annotation = {.source = source, .path = argv[1], .root = ts_tree_root_node(tree)};
-        status = translate(&annotation);
+        JavaFile annotation = {.source = source, .path = path, .root = ts_tree_root_node(tree)};
+        status = translate(&annotation, scope_only);
         ts_tree_delete(tree);
     } else {
         fputs("cannot parse with the pinned Java grammar\n", stderr);

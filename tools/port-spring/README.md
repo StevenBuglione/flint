@@ -19,7 +19,7 @@ This slice supports public top-level annotations with primitive, string and clas
 
 An annotation can use an enum that already maps to its destination D module. The CLI checks the field type and each default against the pinned manifest and uses the exact mapped D symbols for the enum and constants. It resolves fully qualified names, explicit Java type and static imports, and unambiguous on-demand imports from known manifest scopes. R15 enums require a separate translation.
 
-Nested annotation fields and arrays use the same reference lookup and require an exact R2 mapping to the destination module. A zero-argument default uses the nested struct's `.init` when every Java attribute has a default. Nested annotation calls with arguments require separate translation. A required array field uses D's default initialization, and an explicit Java empty array uses `[]`.
+Nested annotation fields and arrays use the same reference lookup and require an exact R2 mapping to the destination module. A zero-argument default uses the nested struct's `.init` when every Java attribute has a default. A single enum constant supplied as `@Nested(CONSTANT)` or `@Nested(value = CONSTANT)` initializes the mapped first field when every other attribute has a default. The CLI resolves the field type using the nested declaration's imports and the constant using the imports at the use site. A required array field uses D's default initialization, and an explicit Java empty array uses `[]`.
 
 Public top-level enums with constants alone become D enums in Java declaration order. Constants with arguments or class bodies, enums with methods or fields, and enums that implement interfaces require their own rulebook translations.
 
