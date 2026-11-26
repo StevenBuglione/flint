@@ -918,11 +918,13 @@
     },
     "java/io/Reader/NullLock.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/Reader/NullReader.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/Reader/OpsAfterClose.java": {
       "status": "deferred",
@@ -930,11 +932,13 @@
     },
     "java/io/Reader/ReadCharBuffer.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/Reader/ReadIntoReadOnlyBuffer.java": {
       "status": "deferred",
-      "phase": "2"
+      "phase": "2",
+      "reason": "GPL-2.0-only without the Classpath exception."
     },
     "java/io/Reader/ReadIntoZeroLengthArray.java": {
       "status": "deferred",

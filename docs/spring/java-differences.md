@@ -11071,6 +11071,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#write(char[])` | 2 | Java invokes the virtual ranged character-array write. Flint forwards the UTF-8 slice directly and propagates checked sink failures. Null arrays follow R26. |
 | framework | `java.io.PrintWriter#write(char[],int,int)` | 2 | Missing ranged character-array dispatch to the sink. Java forwards the supplied indices, records checked sink failures and lets the sink's bounds exception propagate. |
 | framework | `java.io.PrintWriter#write(int)` | 2 | Java forwards the int to the sink's single UTF-16 code-unit write. Flint encodes a Unicode code point and forwards text, propagating checked sink failures. |
+| framework | `java.io.Reader` | 2 | Missing UTF-16 reader abstraction with Java Closeable and Readable contracts. |
+| framework | `java.io.Reader#<init>(Object)` | 2 | Missing protected constructor that uses the supplied monitor and rejects null eagerly. |
+| framework | `java.io.Reader#lock` | 2 | Missing protected monitor reference that defaults to the reader and may name a shared lock. |
+| framework | `java.io.Reader#nullReader()` | 2 | Missing empty reader with explicit closed state. CharBuffer reads return zero for an open empty target and EOF for an open nonempty target, even when read-only. Null is rejected before the closed-state check. |
+| framework | `java.io.Reader#read(CharBuffer)` | 2 | Missing UTF-16 transfer into the buffer's remaining window. Java rejects read-only targets before reading, reads directly into accessible arrays, and copies into other targets after a successful read. The position advances only by the returned count. |
 | framework | `java.io.StringWriter#<init>()` | 2 | The writer starts empty, but it has no mutable StringBuffer bound to the inherited lock or exposed through getBuffer. |
 | framework | `java.io.StringWriter#<init>(int)` | 2 | Missing constructor that sets the initial buffer capacity, accepts zero and rejects negative capacity. |
 | framework | `java.io.StringWriter#append(CharSequence)` | 2 | Java appends the text null for an absent sequence and returns StringWriter. The inherited D method accepts a plain slice and returns Writer. |
