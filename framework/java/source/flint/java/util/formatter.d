@@ -302,7 +302,7 @@ private enum flagOrder = "-^#+ 0,(<";
 
 private struct Spec
 {
-    string text; // the specifier as written, for messages
+    string text; // the original specifier, including the conversion suffix
     size_t start;
     ptrdiff_t index = -1; // explicit 1-based index, 0 for `<`, -1 for ordinary
     uint flags;
@@ -385,29 +385,29 @@ private void validateSpec(const ref Spec spec, string conversion)
     switch (lower)
     {
     case 'b', 'h', 's':
-        validateGeneral(spec, lower, conversion);
+        validateGeneral(spec, lower);
         break;
     case 'c':
         requireNoPrecision(spec);
         rejectFlags(spec, characterFlags, lower);
-        requireWidth(spec, Flag.left, conversion);
+        requireWidth(spec, Flag.left);
         break;
     case 'n', '%':
-        validateText(spec, conversion);
+        validateText(spec);
         break;
     default:
-        validateNumeric(spec, lower, conversion);
+        validateNumeric(spec, lower);
     }
 }
 
 private enum generalFlags = Flag.plus | Flag.space | Flag.zero | Flag.group | Flag.parentheses;
 private enum characterFlags = generalFlags | Flag.alternate;
 
-private void validateGeneral(const ref Spec spec, char lower, string conversion)
+private void validateGeneral(const ref Spec spec, char lower)
 {
     if (lower != 's')
         rejectFlags(spec, Flag.alternate, lower);
-    requireWidth(spec, Flag.left, conversion);
+    requireWidth(spec, Flag.left);
     rejectFlags(spec, generalFlags, lower);
 }
 
@@ -417,10 +417,10 @@ private void validateDate(const ref Spec spec, string conversion)
     if (!includes("HIklMSLNpzZsQBbhAaCYyjmdeRTrDFc", conversion[1]))
         throw new UnknownFormatConversionException("t" ~ conversion[1 .. $]);
     rejectFlags(spec, characterFlags, conversion[1]);
-    requireWidth(spec, Flag.left, conversion);
+    requireWidth(spec, Flag.left);
 }
 
-private void validateText(const ref Spec spec, string conversion)
+private void validateText(const ref Spec spec)
 {
     requireNoPrecision(spec);
     if (spec.conversion == 'n')
@@ -433,12 +433,12 @@ private void validateText(const ref Spec spec, string conversion)
     }
     if ((spec.flags & ~Flag.left) != 0)
         throw new IllegalFormatFlagsException(flagsText(spec.flags));
-    requireWidth(spec, Flag.left, conversion);
+    requireWidth(spec, Flag.left);
 }
 
-private void validateNumeric(const ref Spec spec, char lower, string conversion)
+private void validateNumeric(const ref Spec spec, char lower)
 {
-    requireWidth(spec, Flag.left | Flag.zero, conversion);
+    requireWidth(spec, Flag.left | Flag.zero);
     if (containsFlags(spec.flags, Flag.plus | Flag.space) || containsFlags(spec.flags, Flag.left | Flag.zero))
     {
         const diagnostic = spec.flags | (lower == spec.conversion ? 0u : Flag.uppercase);
@@ -480,16 +480,26 @@ private void rejectFlags(const ref Spec spec, uint rejected, char conversion)
         throw new FormatFlagsConversionMismatchException(flagsText(invalid), conversion);
 }
 
-private void requireWidth(const ref Spec spec, uint flags, string conversion)
+private void requireWidth(const ref Spec spec, uint flags)
 {
-    if (spec.width >= 0 || (spec.flags & flags) == 0)
-        return;
+    if (spec.width < 0 && (spec.flags & flags) != 0)
+        throw new MissingFormatWidthException(diagnosticSpecifier(spec));
+}
+
+/// Reconstruct a specifier in Java's diagnostic order, only on the error path.
+private string diagnosticSpecifier(const ref Spec spec) pure nothrow
+{
+    if (spec.text.length == 2)
+        return spec.text;
     const prefix = "%" ~ flagsText(spec.flags);
     const index = spec.index > 0 ? decimal(cast(int) spec.index) ~ "$" : "";
+    const width = spec.width >= 0 ? decimal(spec.width) : "";
     const precision = spec.precision >= 0 ? "." ~ decimal(spec.precision) : "";
-    if (conversion.length == 2 && conversion[0] == 'T')
+    const suffixLength = spec.conversion == 't' || spec.conversion == 'T' ? 2 : 1;
+    string conversion = spec.text[$ - suffixLength .. $];
+    if (spec.conversion == 'T')
         conversion = "T" ~ [asciiUpper(conversion[1])];
-    throw new MissingFormatWidthException(prefix ~ index ~ precision ~ conversion);
+    return prefix ~ index ~ width ~ precision ~ conversion;
 }
 
 private char asciiLower(char c) pure nothrow @nogc
@@ -640,13 +650,13 @@ private string render(const ref Spec spec, scope Any[] arguments, ref size_t nex
     else if (spec.index == 0)
     {
         if (previous < 0)
-            throw new MissingFormatArgumentException(spec.text);
+            throw new MissingFormatArgumentException(diagnosticSpecifier(spec));
         index = previous;
     }
     else
         index = next++;
     if (index >= arguments.length)
-        throw new MissingFormatArgumentException(spec.text);
+        throw new MissingFormatArgumentException(diagnosticSpecifier(spec));
     previous = index;
     return pad(spec, convert(spec, arguments[index]));
 }
