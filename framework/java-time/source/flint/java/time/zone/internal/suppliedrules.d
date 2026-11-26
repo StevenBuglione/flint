@@ -243,17 +243,9 @@ private LocalMatch suppliedLocal()(scope const RuleData* data, LocalDateTime dat
         const annual = recurringIn(data, dateTime.getYear(), scratch[]);
         foreach (ref const transition; annual)
         {
-            const preferred = transition.getOffsetBefore();
-            if (preferred == transition.getOffsetAfter())
-                return LocalMatch(preferred);
-            const before = transition.getDateTimeBefore();
-            const after = transition.getDateTimeAfter();
-            const start = transition.isGap() ? before : after;
-            const end = transition.isGap() ? after : before;
-            if (dateTime.isBefore(start))
-                return LocalMatch(preferred);
-            if (dateTime.isBefore(end))
-                return LocalMatch(preferred, transition.getOffsetAfter(), before, true);
+            const match = matchRecurringTransition(dateTime, transition);
+            if (match.transitioning || match.offset == transition.getOffsetBefore())
+                return match;
         }
         return LocalMatch(annual[$ - 1].getOffsetAfter());
     }
@@ -266,6 +258,25 @@ private LocalMatch suppliedLocal()(scope const RuleData* data, LocalDateTime dat
     const after = data.wallOffsets[index + 1];
     const beforeTime = data.wallBounds[count - (after.getTotalSeconds() > offset.getTotalSeconds())];
     return LocalMatch(offset, after, beforeTime, true);
+}
+
+private LocalMatch matchRecurringTransition()(LocalDateTime dateTime, ZoneOffsetTransition transition)
+{
+    const before = transition.getOffsetBefore();
+    const after = transition.getOffsetAfter();
+    const cutover = transition.getDateTimeBefore();
+    const earlier = dateTime.isBefore(cutover);
+    const gap = transition.isGap();
+    if (gap && earlier)
+        return LocalMatch(before);
+    if (!gap && !earlier)
+        return LocalMatch(after);
+
+    // A boundary outside the date range matters only when this lookup needs it.
+    const beforeAfter = dateTime.isBefore(transition.getDateTimeAfter());
+    if (gap == beforeAfter)
+        return LocalMatch(before, after, cutover, true);
+    return LocalMatch(gap ? after : before);
 }
 
 private Nullable!ZoneOffsetTransition suppliedNext()(scope const RuleData* data, Instant instant)

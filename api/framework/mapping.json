@@ -1,7 +1,7 @@
 {"rulebook":2,
 "upstream":["spring-framework@v7.1.0", "jakarta-annotation@3.0.0", "jakarta-validation@3.1.1", "jakarta-persistence@3.2.0", "jakarta-servlet@6.1.0", "jackson-core@3.1.8", "jackson-databind@3.1.8", "jackson-annotations@2.21", "slf4j-api@2.0.20", "micrometer-core@1.18.0", "hibernate-validator@9.1.6.Final", "thymeleaf@3.1.7.RELEASE", "micrometer-observation@1.18.0", "openjdk@21.0.13", "aspectj@1.9.27", "micrometer-commons@1.18.0"],
 "elements":{
-"java.time.zone.ZoneRules":{"status":"adapted","rules":["R11"],"d":"flint.java.time.zone.zonerules.ZoneRules","note":"Rules accept a fixed offset or explicit transition lists. Zone database lookup lives in a future leaf."},
+"java.time.zone.ZoneRules":{"status":"adapted","rules":["R11"],"d":"flint.java.time.zone.zonerules.ZoneRules","note":"Rules accept a fixed offset or explicit transition lists. Typed wall-offset, transition, validity and daylight-savings queries drop pure, nothrow and @nogc so malformed recurring rules can raise DateTimeException. Zone database lookup lives in a future leaf."},
 "java.time.zone.ZoneRules#of(ZoneOffset,ZoneOffset,List,List,List)":{"status":"adapted","rules":["R5","R10"],"d":"flint.java.time.zone.zonerules.ZoneRules.of"},
 "java.time.zone.ZoneRules#of(ZoneOffset)":{"status":"adapted","rules":["R5"],"d":"flint.java.time.zone.zonerules.ZoneRules.of"},
 "java.time.zone.ZoneRules#isFixedOffset()":{"status":"ported","d":"flint.java.time.zone.zonerules.ZoneRules.isFixedOffset"},
@@ -12,7 +12,7 @@
 "java.time.zone.ZoneRules#getStandardOffset(Instant)":{"status":"adapted","rules":["R5"],"d":"flint.java.time.zone.zonerules.ZoneRules.getStandardOffset"},
 "java.time.zone.ZoneRules#getDaylightSavings(Instant)":{"status":"adapted","rules":["R5"],"d":"flint.java.time.zone.zonerules.ZoneRules.getDaylightSavings"},
 "java.time.zone.ZoneRules#isDaylightSavings(Instant)":{"status":"adapted","rules":["R5"],"d":"flint.java.time.zone.zonerules.ZoneRules.isDaylightSavings"},
-"java.time.zone.ZoneRules#isValidOffset(LocalDateTime,ZoneOffset)":{"status":"adapted","rules":["R5"],"d":"flint.java.time.zone.zonerules.ZoneRules.isValidOffset"},
+"java.time.zone.ZoneRules#isValidOffset(LocalDateTime,ZoneOffset)":{"status":"adapted","rules":["R5"],"d":"flint.java.time.zone.zonerules.ZoneRules.isValidOffset","note":"A missing candidate offset returns false under the documented Java contract."},
 "java.time.zone.ZoneRules#nextTransition(Instant)":{"status":"adapted","rules":["R5"],"d":"flint.java.time.zone.zonerules.ZoneRules.nextTransition"},
 "java.time.zone.ZoneRules#previousTransition(Instant)":{"status":"adapted","rules":["R5"],"d":"flint.java.time.zone.zonerules.ZoneRules.previousTransition"},
 "java.time.zone.ZoneRules#getTransitions()":{"status":"adapted","rules":["R10"],"d":"flint.java.time.zone.zonerules.ZoneRules.getTransitions","note":"The shared empty List permits addAll of an empty collection and returns a mutable subList snapshot."},

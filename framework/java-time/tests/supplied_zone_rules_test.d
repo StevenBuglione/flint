@@ -68,6 +68,8 @@ private ZoneRules sampleRules()
     assert(rules.getDaylightSavings(Instant.EPOCH) == Duration.ofSeconds(3_600));
     assert(rules.isValidOffset(overlapStart, winter) && rules.isValidOffset(overlapStart, summer));
     assert(!rules.isValidOffset(gapStart, winter) && !rules.isValidOffset(gapStart, summer));
+    assert(!rules.isValidOffset(gapStart, Nullable!ZoneOffset.init));
+    assert(!rules.isValidOffset(overlapStart, Nullable!ZoneOffset.init));
     assert(rules.hashCode() == 1_076_119_729);
     assert(GC.stats().allocatedInCurrentThread == allocated);
     assert(rules.getValidOffsets(gapStart).isEmpty());
@@ -107,11 +109,26 @@ private ZoneRules sampleRules()
     assert(rules.getValidOffsets(boundary).toArray() == [summer, winter]);
 }
 
+@("a local lookup before the final-year gap needs only its starting boundary") unittest
+{
+    const history = ZoneOffsetTransition.of(LocalDateTime.of(2024, 6, 1, 0, 0), summer, ZoneOffset.UTC);
+    const beyondDateRange = ZoneOffsetTransitionRule.of(Month.DECEMBER, 31,
+            Nullable!DayOfWeek.init, LocalTime.of(23, 0), false, TimeDefinition.WALL,
+            ZoneOffset.UTC, ZoneOffset.UTC, summer);
+    const rules = ZoneRules.of(ZoneOffset.UTC, summer, List!ZoneOffsetTransition.of(),
+            List!ZoneOffsetTransition.of(history), List!ZoneOffsetTransitionRule.of(beyondDateRange));
+    const before = LocalDateTime.of(999_999_999, 12, 31, 22, 0);
+    assert(rules.getOffset(before) == ZoneOffset.UTC);
+    assert(rules.getTransition(before).isNull);
+}
+
 @("factory snapshots lists and ignores null dates only when the relevant history is empty") unittest
 {
     auto history = new ArrayList!ZoneOffsetTransition([gap(), overlap()]);
-    const rules = ZoneRules.of(winter, winter, List!ZoneOffsetTransition.of(), history, recurring());
+    auto annual = new ArrayList!ZoneOffsetTransitionRule(recurring().toArray());
+    const rules = ZoneRules.of(winter, winter, List!ZoneOffsetTransition.of(), history, annual);
     history.clear();
+    annual.clear();
     assert(rules.getTransitions().size() == 2 && rules.getTransitionRules().size() == 2);
     assert(rules.getStandardOffset(Nullable!Instant.init) == winter);
     try
@@ -128,6 +145,12 @@ private ZoneRules sampleRules()
     assert(!orphan.isFixedOffset() && orphan.getOffset(Nullable!Instant.init) == summer);
     assert(orphan.nextTransition(Nullable!Instant.init).isNull);
     assert(orphan.getDaylightSavings(Nullable!Instant.init) == Duration.ofSeconds(3_600));
+
+    auto standard = new ArrayList!ZoneOffsetTransition([gap()]);
+    const standardRules = ZoneRules.of(winter, winter, standard, List!ZoneOffsetTransition.of(),
+            List!ZoneOffsetTransitionRule.of());
+    standard.clear();
+    assert(standardRules.getStandardOffset(gap().getInstant()) == summer);
 }
 
 @("future rule errors occur at the Java query boundary") unittest
