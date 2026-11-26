@@ -1060,7 +1060,6 @@
       "org/springframework/boot/test/system/OutputCaptureTests.java",
       "org/springframework/boot/test/system/OutputExtensionExtendWithTests.java",
       "org/springframework/boot/test/util/ApplicationContextTestUtilsTests.java",
-      "org/springframework/boot/test/util/TestPropertyValuesTests.java",
       "org/springframework/boot/test/web/htmlunit/UriBuilderFactoryWebClientTests.java",
       "org/springframework/boot/test/web/htmlunit/UriBuilderFactoryWebConnectionHtmlUnitDriverTests.java",
       "org/springframework/boot/test/web/server/LocalManagementPortTests.java",

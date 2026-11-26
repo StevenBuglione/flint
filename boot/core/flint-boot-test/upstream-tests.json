@@ -305,8 +305,35 @@
       "status": "deferred"
     },
     "org/springframework/boot/test/util/TestPropertyValuesTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "boot/core/flint-boot-test/tests/boot_test_tests/test_property_values_tests.d",
+      "status": "partial",
+      "methods": {
+        "ported": [
+          "pairOfCreatesPair",
+          "pairOfWhenNameAndValueAreEmptyReturnsPair",
+          "pairFromMapEntryCreatesPair",
+          "pairFromMapEntryWithEmptyKeyCreatesPair"
+        ],
+        "skipped": {
+          "ofStringArrayCreatesValues": "TestPropertyValues environment application is deferred",
+          "ofIterableCreatesValues": "TestPropertyValues environment application is deferred",
+          "ofStreamCreatesValues": "TestPropertyValues environment application is deferred",
+          "ofMapCreatesValues": "TestPropertyValues environment application is deferred",
+          "ofMappedStreamCreatesValues": "TestPropertyValues environment application is deferred",
+          "applyToEnvironmentShouldAttachConfigurationPropertySource": "ConfigurationPropertySources.attach is deferred",
+          "applyToDefaultPropertySource": "TestPropertyValues environment application is deferred",
+          "applyToSystemPropertySource": "TestPropertyValues environment application is deferred",
+          "applyToWithSpecificName": "TestPropertyValues environment application is deferred",
+          "applyToExistingNameAndDifferentTypeShouldOverrideExistingOne": "TestPropertyValues environment application is deferred",
+          "applyToExistingNameAndSameTypeShouldMerge": "TestPropertyValues environment application is deferred",
+          "andShouldChainAndAddSingleKeyValue": "TestPropertyValues environment application is deferred",
+          "applyToSystemPropertiesWithCallableShouldSetSystemProperties": "Scoped JVM system properties are deferred",
+          "applyToSystemPropertiesWithRunnableShouldSetSystemProperties": "Scoped JVM system properties are deferred",
+          "applyToSystemPropertiesShouldRestoreSystemProperties": "Scoped JVM system properties are deferred",
+          "applyToSystemPropertiesShouldRestoreEmptySystemProperty": "Scoped JVM system properties are deferred",
+          "applyToSystemPropertiesWhenValueIsNullShouldRemoveProperty": "Scoped JVM system properties are deferred"
+        }
+      }
     },
     "org/springframework/boot/test/web/htmlunit/UriBuilderFactoryWebClientTests.java": {
       "phase": "2",

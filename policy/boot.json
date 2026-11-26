@@ -90,7 +90,8 @@
         "boot-core",
         "boot-autoconfigure",
         "engine-aot",
-        "context"
+        "context",
+        "java"
       ],
       "repo": "boot"
     },

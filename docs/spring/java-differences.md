@@ -178,7 +178,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 164 | 272 | 0 | 15,360 |
-| boot | spring-boot@v4.2.0 | 40 | 25 | 2,133 | 13,405 |
+| boot | spring-boot@v4.2.0 | 43 | 28 | 2,133 | 13,399 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,461 | 1,378 | 4,848 | 30,147 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
@@ -587,6 +587,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnProperty#prefix` | `flint.boot.autoconfigure.condition.ConditionalOnProperty.prefix` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication` | `flint.boot.autoconfigure.condition.ConditionalOnWebApplication` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication#type` | `flint.boot.autoconfigure.condition.ConditionalOnWebApplication.type` | [R2](api-mapping.md#r2-annotations) |  |
+
+#### org.springframework.boot.test.util
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.boot.test.util.TestPropertyValues.Pair#addTo(Map)` | `flint.boot.test.util.TestPropertyValues.Pair.addTo` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.test.util.TestPropertyValues.Pair#fromMapEntry(Map.Entry)` | `flint.boot.test.util.TestPropertyValues.Pair.fromMapEntry` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `org.springframework.boot.test.util.TestPropertyValues.Pair#of(String,String)` | `flint.boot.test.util.TestPropertyValues.Pair.of` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 ### data-commons
 
@@ -8830,7 +8838,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.boot.test.mock.web | 6 | 0 |
 | org.springframework.boot.test.rsocket.server | 0 | 1 |
 | org.springframework.boot.test.system | 22 | 0 |
-| org.springframework.boot.test.util | 30 | 0 |
+| org.springframework.boot.test.util | 24 | 0 |
 | org.springframework.boot.test.web.htmlunit | 9 | 0 |
 | org.springframework.boot.test.web.server | 2 | 0 |
 | org.springframework.boot.testcontainers.beans | 3 | 0 |

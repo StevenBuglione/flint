@@ -9,6 +9,7 @@ dependency "flint:boot-core" version="*"
 dependency "flint:boot-autoconfigure" version="*"
 dependency "flint:engine-aot" version="*"
 dependency "flint:context" version="*"
+dependency "flint:java" version="*"
 
 configuration "library" {
     targetType "library"
