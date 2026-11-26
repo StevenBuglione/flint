@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 220 | 161 | 0 | 3,601 |
+| data-commons | spring-data-commons@4.2.0 | 221 | 163 | 0 | 3,598 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -987,6 +987,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.data.mapping.IdentifierAccessor#getIdentifier()` | `flint.data.mapping.IdentifierAccessor.getIdentifier` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.IdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.IdentifierAccessor.getRequiredIdentifier` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.MappingException#<init>(String)` | `flint.data.mapping.MappingException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.data.mapping.MappingException#<init>(String,Throwable)` | `flint.data.mapping.MappingException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.data.mapping.TargetAwareIdentifierAccessor#<init>(Object)` | `flint.data.mapping.TargetAwareIdentifierAccessor.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.TargetAwareIdentifierAccessor#getRequiredIdentifier()` | `flint.data.mapping.TargetAwareIdentifierAccessor.getRequiredIdentifier` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
@@ -10089,7 +10091,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.geo.format | 11 | 0 |
 | org.springframework.data.history | 42 | 0 |
 | org.springframework.data.javapoet | 69 | 0 |
-| org.springframework.data.mapping | 200 | 0 |
+| org.springframework.data.mapping | 197 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
 | org.springframework.data.mapping.model | 220 | 0 |
