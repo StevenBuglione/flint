@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 204 | 383 | 0 | 15,209 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,617 | 1,461 | 4,870 | 29,886 |
+| framework | spring-framework@v7.1.0 | 3,612 | 1,466 | 4,870 | 29,886 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2579,6 +2579,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.UnsatisfiedDependencyException#<init>(String,String,String,BeansException)` | `flint.beans.factory.UnsatisfiedDependencyException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads) | A typed null BeansException throws NullPointerException. |
 | `org.springframework.beans.factory.UnsatisfiedDependencyException#<init>(String,String,String,String)` | `flint.beans.factory.UnsatisfiedDependencyException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads) | Nullable!string.init selects the absent detail message. |
 
+#### org.springframework.beans.factory.config
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.beans.factory.config.BeanPostProcessor` | `flint.beans.factory.config.BeanPostProcessor` | [D-3](api-mapping.md#deviations) | An abstract class: Java's interface has only default methods. |
+| `org.springframework.beans.factory.config.DestructionAwareBeanPostProcessor` | `flint.beans.factory.config.DestructionAwareBeanPostProcessor` | [D-3](api-mapping.md#deviations) | An abstract class: Java's interface has only default methods. |
+
 #### org.springframework.beans.factory.support
 
 | Java | Flint | Rules | Note |
@@ -2713,6 +2720,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.context.ApplicationListener` | `flint.context.ApplicationListener` | [D-3](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters) | An abstract class template ApplicationListener(E): Java's functional interface with default methods; the event type parameter is a D template parameter. |
 | `org.springframework.context.PayloadApplicationEvent#<init>(Object,T,ResolvableType)` | `flint.context.PayloadApplicationEvent.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.context.annotation
@@ -2757,6 +2765,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.core.annotation.AnnotationUtils#getAnnotation(Annotation,Class)` | `flint.core.annotation.types.AnnotationUtils.getAnnotation` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.annotation.AnnotationUtils#getAnnotation(Method,Class)` | `flint.core.annotation.types.AnnotationUtils.getAnnotation` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.annotation.AnnotationUtils#isAnnotationDeclaredLocally(Class,Class)` | `flint.core.annotation.types.AnnotationUtils.isAnnotationDeclaredLocally` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.core.annotation.MergedAnnotation` | `flint.core.annotation.types.MergedAnnotation` | [R4](api-mapping.md#r4-classt-parameters) | A struct template MergedAnnotation(A) over the AOT annotation tables, not an interface: the annotation type is a template parameter. |
+| `org.springframework.core.annotation.MergedAnnotations` | `flint.core.annotation.types.MergedAnnotations` | [R4](api-mapping.md#r4-classt-parameters) | A final class over the AOT annotation tables, not an interface: user code reads it but cannot implement it. |
 | `org.springframework.core.annotation.MergedAnnotations#from(AnnotatedElement)` | `flint.core.annotation.types.MergedAnnotations.from` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.annotation.MergedAnnotations#from(AnnotatedElement,SearchStrategy)` | `flint.core.annotation.types.MergedAnnotations.from` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.annotation.MergedAnnotations#from(AnnotatedElement,SearchStrategy,RepeatableContainers)` | `flint.core.annotation.types.MergedAnnotations.from` | [R4](api-mapping.md#r4-classt-parameters) |  |
