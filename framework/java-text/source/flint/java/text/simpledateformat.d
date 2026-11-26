@@ -21,6 +21,7 @@ import flint.java.util : Locale;
 import flint.java.util.calendar : Calendar, GregorianCalendar;
 import flint.java.util.date : Date;
 import flint.java.util.timezone : TimeZone;
+import std.ascii : isAlpha;
 
 @safe:
 
@@ -387,6 +388,12 @@ private size_t letterIndex(char c) pure nothrow @nogc
     return size_t.max;
 }
 
+private void checkPatternLetter(char letter)
+{
+    if (letterIndex(letter) == size_t.max)
+        throw new IllegalArgumentException("Illegal pattern character '" ~ letter ~ "'");
+}
+
 // Java's compile: letters repeat into one element, quotes hold literal text ('' is a quote mark), other characters
 // are literal; an unknown letter, an open quote or 'X' four times or more throws Java's IllegalArgumentException.
 private Element[] compilePattern(string pattern)
@@ -404,14 +411,13 @@ private Element[] compilePattern(string pattern)
             i = quoted.end;
             continue;
         }
-        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')))
+        if (!isAlpha(c))
         {
             appendLiteral(elements, pattern[i .. i + 1]);
             ++i;
             continue;
         }
-        if (letterIndex(c) == size_t.max)
-            throw new IllegalArgumentException("Illegal pattern character '" ~ c ~ "'");
+        checkPatternLetter(c);
         size_t j = i;
         while (j < pattern.length && pattern[j] == c)
             ++j;
@@ -420,6 +426,9 @@ private Element[] compilePattern(string pattern)
         {
             import flint.engine.aot.text : decimal;
 
+            // An adjacent letter is validated before Java finishes the pending run.
+            if (j < pattern.length && isAlpha(pattern[j]))
+                checkPatternLetter(pattern[j]);
             throw new IllegalArgumentException("invalid ISO 8601 format: length=" ~ decimal(count));
         }
         elements ~= Element(c, count, null);

@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,327 | 391 | 0 | 1,871 | 14,832 |
+| framework | openjdk@21.0.13 | 1,327 | 392 | 0 | 1,871 | 14,831 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2437,6 +2437,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.sql.ResultSet#getObject(int)` | `flint.java.sql.ResultSet.getObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.sql.Wrapper#isWrapperFor(java.lang.Class)` | `flint.java.sql.Wrapper.isWrapperFor` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `java.sql.Wrapper#unwrap(java.lang.Class)` | `flint.java.sql.Wrapper.unwrap` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### java.text
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.text.SimpleDateFormat#applyPattern(String)` | `flint.java.text.SimpleDateFormat.applyPattern` | [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.time
 
@@ -10723,7 +10729,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
 | java.sql | 1,005 | 0 |
-| java.text | 530 | 0 |
+| java.text | 529 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
@@ -11871,10 +11877,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.NumberFormat#getInstance(Locale)` | 2 | The pinned US factory returns a mutable DecimalFormat subclass with fraction digit setters. Flint returns a NumberFormat value without those setters or the DecimalFormat subtype. |
 | framework | `java.text.NumberFormat#getIntegerInstance()` | 2 | Uses the general environment-derived locale. Java uses the independent Locale.Category.FORMAT default for integer formatting. |
 | framework | `java.text.NumberFormat#getIntegerInstance(Locale)` | 2 | The pinned US factory returns a mutable DecimalFormat subclass with fraction digit setters. Flint returns a NumberFormat value without those setters or the DecimalFormat subtype. |
-| framework | `java.text.SimpleDateFormat` | 2 | The Java class inherits the Format hierarchy and generic formatting contract through DateFormat. Flint has no Format supertype. |
+| framework | `java.text.SimpleDateFormat` | 2 | applyPattern treats a null text slice as an empty pattern (R26). The Java class inherits the Format hierarchy and generic formatting contract through DateFormat. Flint has no Format supertype. |
 | framework | `java.text.SimpleDateFormat#<init>(String)` | 2 | Uses Locale.US for named fields instead of Java's default Locale.Category.FORMAT. |
 | framework | `java.text.SimpleDateFormat#<init>(String,Locale)` | 2 | Rejects named fields with a non-English locale. Java uses that locale's date and time names. |
-| framework | `java.text.SimpleDateFormat#applyPattern(String)` | 2 | For an invalid X repeat followed immediately by an unsupported pattern letter, Flint reports the ISO repeat failure first. Java reports the unsupported letter first. |
 | framework | `java.text.SimpleDateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | Appending the date to the caller buffer and updating UTF-16 field offsets needs canonical java.lang.StringBuffer and FieldPosition. |
 | framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Interprets the initial ParsePosition index and reports consumed and error indices in UTF-8 bytes. Java uses UTF-16 code units (R14). Passing a null ParsePosition terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
