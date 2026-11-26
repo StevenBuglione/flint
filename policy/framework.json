@@ -511,7 +511,23 @@
     "fixture": "framework/java-io/bench",
     "baseline": "framework/java-io/bench/baseline",
     "edit_source": "framework/java-io/source/flint/java/io/unsupportedencodingexception.d"
-   }
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 3551,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 480
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },
   "java-math": {
    "directory": "framework/java-math",
