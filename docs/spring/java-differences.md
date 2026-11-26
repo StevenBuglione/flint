@@ -2585,7 +2585,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Locale#TRADITIONAL_CHINESE` | `flint.java.util.Locale.TRADITIONAL_CHINESE` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#UK` | `flint.java.util.Locale.UK` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#US` | `flint.java.util.Locale.US` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `java.util.Locale#getExtension(char)` | `flint.java.util.Locale.getExtension` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.Locale#getExtension(char)` | `flint.java.util.Locale.getExtension` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text) | Invalid keys are included in the exception message. A lone UTF-16 surrogate is rendered as U+FFFD. |
 | `java.util.Locale#getUnicodeLocaleType(String)` | `flint.java.util.Locale.getUnicodeLocaleType` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | An absent key is distinct from a typeless key. A null key follows the empty String slice path and is rejected as an ill-formed key. |
 | `java.util.Locale#stripExtensions()` | `flint.java.util.Locale.stripExtensions` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Map#containsKey(Object)` | `flint.java.util.Map.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |

@@ -649,6 +649,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Store Locale extensions in one canonical suffix.** The parser normalizes singleton and Unicode ordering once. Lookups read slices from the suffix and R5 preserves an absent type separately from an empty type. Empty-extension values retain their existing hashes. On venus against `c861fca85`, the Java module probe stayed at 129,496 O3 and 122,144 Oz incremental loadable bytes with LDC 1.43.0. DMD templates rose from 4,460 to 4,540 against 7,350. The x86_64 Locale value grew from 64 to 80 bytes. Canonical DMD dev builds regenerated identical AOT sources for gs-rest-service and petclinic-rest.
 
+- **Build Locale key diagnostics only for invalid input.** The extension key and Unicode locale key appear in their Java diagnostic strings. The Java module probe on venus against `7833ec684` stayed at 129,496 O3 and 122,144 Oz incremental loadable bytes with LDC 1.43.0. DMD instances rose from 4,540 to 4,542 against 7,350.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

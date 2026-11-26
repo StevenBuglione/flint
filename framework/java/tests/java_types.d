@@ -903,3 +903,38 @@ unittest
     assert(stripped.toLanguageTag() == "en-Latn-US-1996-x-lvariant-Xy");
     assert(locale != stripped);
 }
+
+@("Locale malformed extension keys report the input")
+unittest
+{
+    import flint.java.lang : IllegalArgumentException;
+    import flint.java.util : Locale;
+
+    const locale = Locale.forLanguageTag("en-u-ca-nu-thai-x-test");
+    foreach (wchar key; "01-é")
+    {
+        try
+        {
+            locale.getExtension(key);
+            assert(false);
+        }
+        catch (IllegalArgumentException failure)
+        {
+            import flint.engine.aot.text : utf8;
+
+            assert(failure.msg == "Ill-formed extension key: " ~ utf8(key));
+        }
+    }
+    foreach (key; ["!a", "éa", "foo", "", null])
+    {
+        try
+        {
+            locale.getUnicodeLocaleType(key);
+            assert(false);
+        }
+        catch (IllegalArgumentException failure)
+        {
+            assert(failure.msg == "Ill-formed Unicode locale key: " ~ key);
+        }
+    }
+}
