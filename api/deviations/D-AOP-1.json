@@ -1,0 +1,5 @@
+{
+ "id": "D-AOP-1",
+ "deviation": "On `@EnableCaching`, `@EnableAsync`, `@EnableTransactionManagement` and `@EnableAspectJAutoProxy`, `proxyTargetClass` is accepted but has no effect: Flint AOT always generates a subclass proxy, so both settings behave like Java's `proxyTargetClass = true`. The observable difference: in Java, `proxyTargetClass = false` gives an interface-only JDK proxy, so casting the bean to its concrete class fails; in Flint the proxy is always an instance of the concrete class. `mode` supports `AdviceMode.PROXY` only (a missing `mode` reads as `PROXY`); `AdviceMode.ASPECTJ` is a build error, FLINT-E1120, located at the annotated class.",
+ "reason": "Flint has no runtime JDK dynamic proxies or load-time weaving; Flint AOT generates proxy subclasses at build time (coordinator approval and flint-aot's generator check, 2026-11-26)."
+}
