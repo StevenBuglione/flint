@@ -11830,6 +11830,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.format.DateTimeFormatter#ISO_DATE` | 2 | The existing optional offset accepts hour-only values such as +01. Java requires a colon and minutes and rejects the incomplete offset at its beginning. |
 | framework | `java.time.format.DateTimeFormatter#ISO_DATE_TIME` | 2 | The existing optional offset accepts hour-only values such as +01. Java requires a colon and minutes and rejects the incomplete offset at its beginning. |
 | framework | `java.time.format.DateTimeFormatter#ISO_TIME` | 2 | The existing optional offset accepts hour-only values such as +01. Java requires a colon and minutes and rejects the incomplete offset at its beginning. |
+| framework | `java.time.format.DateTimeFormatter#withZone(ZoneId)` | 2 | Formatting instant-backed values applies the override. The Java contract also clears the override with null and makes it available during parsing and local-only formatting. |
 | framework | `java.time.temporal.ChronoField#adjustInto(R,long)` | 2 | Requires the TemporalAccessor family and compatible temporal value types. |
 | framework | `java.time.temporal.ChronoField#checkValidIntValue(long)` | 2 | Requires field-aware ValueRange checks. |
 | framework | `java.time.temporal.ChronoField#checkValidValue(long)` | 2 | Requires field-aware ValueRange checks. |
