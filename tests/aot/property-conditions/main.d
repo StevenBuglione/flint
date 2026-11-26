@@ -238,3 +238,36 @@ unittest
     expectBean("exampleBean", false);
     expectBean("exampleBean2", true);
 }
+
+private void expectHierarchicalFallback(bool hasFoo)
+{
+    auto parent = new GenericApplicationContext();
+    scope (exit)
+        parent.close();
+    if (hasFoo)
+        parent.registerBean!Object("foo", () => new Object());
+    parent.refresh();
+
+    auto child = new GenericApplicationContext();
+    scope (exit)
+        child.close();
+    child.setParent(parent);
+    child.deferAotRegistry();
+    child.refresh();
+
+    assert(child.containsBean("foo") == hasFoo);
+    assert(!child.containsLocalBean("foo"));
+    assert(child.containsLocalBean("bar") == !hasFoo, "named fallback in child");
+}
+
+@("ConditionalOnMissingBeanTests.hierarchyConsidered")
+unittest
+{
+    expectHierarchicalFallback(true);
+}
+
+@("A named missing-bean condition matches when the parent has no candidate")
+unittest
+{
+    expectHierarchicalFallback(false);
+}

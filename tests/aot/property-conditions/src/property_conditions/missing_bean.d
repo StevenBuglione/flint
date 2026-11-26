@@ -39,3 +39,16 @@ class ImpliedOnBeanMethodConfiguration
         return new ExampleBean();
     }
 }
+
+/// A named fallback uses the default search through the context hierarchy.
+@Configuration(proxyBeanMethods: false)
+@ConditionalOnMissingBean(name: ["foo"])
+class HierarchyConsideredConfiguration
+{
+    /// Registered if no context in the hierarchy defines foo.
+    @Bean
+    Object bar()
+    {
+        return new Object();
+    }
+}

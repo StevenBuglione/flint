@@ -186,6 +186,7 @@
       "d": "tests/aot/property-conditions/main.d",
       "methods": {
         "ported": [
+          "hierarchyConsidered",
           "impliedOnBeanMethod"
         ],
         "skipped": {
@@ -199,8 +200,7 @@
           "genericWhenTypeArgumentWithValueMatches": "Matching generic candidates with these type arguments is deferred.",
           "genericWithValueWhenSubclassTypeArgumentMatches": "Matching generic candidates with these type arguments is deferred.",
           "grandparentIsConsideredWhenUsingAncestorsStrategy": "SearchStrategy behavior across context hierarchies is deferred.",
-          "hierarchyConsidered": "SearchStrategy behavior across context hierarchies is deferred.",
-          "hierarchyNotConsidered": "SearchStrategy behavior across context hierarchies is deferred.",
+          "hierarchyNotConsidered": "Known defect. A named missing-bean condition still searches the parent with SearchStrategy.CURRENT.",
           "nameBasedMatchingConsidersBeanThatIsNotAutowireCandidate": "Autowire and default candidate filtering needs separate condition verification.",
           "nameBasedMatchingConsidersBeanThatIsNotDefaultCandidate": "Autowire and default candidate filtering needs separate condition verification.",
           "parameterizedContainerGenericWhenSubclassTypeArgumentMatches": "Matching candidates through parameterized containers is deferred.",

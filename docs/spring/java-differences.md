@@ -10182,6 +10182,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | ai | `org.springframework.ai.embedding.EmbeddingResultMetadata#EMPTY` | 2 | Requires a reviewed engine-aot helper to preserve shared metadata identity safely. |
 | boot | `org.springframework.boot.autoconfigure.SpringBootApplication#proxyBeanMethods` | 2 | Known defect. The missing @AliasFor(annotation = Configuration.class) causes proxyBeanMethods = false to merge to true. |
 | boot | `org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperties` | 2 | Repeated conditions and explicit containers require AOT occurrence support. |
+| boot | `org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#search` | 2 | Known defect. A named missing-bean condition still searches the parent with SearchStrategy.CURRENT. |
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#getRoles()` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#setRoles(List)` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#getDispatcherTypes()` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |

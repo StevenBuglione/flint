@@ -1631,7 +1631,7 @@
 "org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#ignoredType":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#name":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#parameterizedContainer":{"status":"excluded","category":"deferred","phase":"2"},
-"org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#search":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#search":{"status":"excluded","category":"deferred","phase":"2","note":"Known defect. A named missing-bean condition still searches the parent with SearchStrategy.CURRENT."},
 "org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#type":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean#value":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass":{"d":"flint.boot.autoconfigure.condition.ConditionalOnMissingClass","rules":["R2"],"status":"adapted"},
