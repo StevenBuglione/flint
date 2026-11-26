@@ -779,6 +779,11 @@ class UTF8JsonGenerator : JsonGenerator
         return _factory.isEnabled(f);
     }
 
+    final override int streamWriteFeatures()
+    {
+        return cast(int) _factory._streamWriteFeatures;
+    }
+
     override ObjectWriteContext objectWriteContext()
     {
         return _objectWriteContext;
@@ -1447,6 +1452,11 @@ class UTF8StreamJsonParser : JsonParser
     override bool isEnabled(StreamReadFeature f)
     {
         return _factory.isEnabled(f);
+    }
+
+    override int streamReadFeatures()
+    {
+        return cast(int) _factory._streamReadFeatures;
     }
 
     override ObjectReadContext objectReadContext()

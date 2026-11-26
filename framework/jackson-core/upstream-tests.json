@@ -305,10 +305,14 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/json/JsonFactoryTest.java": {
-      "d": "framework/jackson-core/tests/json_factory_copy_test.d",
+      "d": [
+        "framework/jackson-core/tests/json_factory_copy_test.d",
+        "framework/jackson-core/tests/stream_features_test.d"
+      ],
       "methods": {
         "ported": [
-          "testCopy"
+          "testCopy",
+          "testStreamWriteFeatures"
         ],
         "skipped": {
           "testBuilderWithJackson2Defaults": "The Jackson 2 defaults builder is deferred.",
@@ -319,7 +323,6 @@
           "testJsonWithFiles": "The fixture uses file overloads and UTF-16 transport.",
           "testJsonWriteFeatures": "The factory configuration assertions await their feature test slice.",
           "testRootValues": "The SerializedString builder getter is deferred.",
-          "testStreamWriteFeatures": "The factory configuration assertions await their feature test slice.",
           "test_createGenerator_DataOutput": "The input and output overload cases await their factory test slice.",
           "test_createGenerator_File": "The input and output overload cases await their factory test slice.",
           "test_createGenerator_OutputStream": "The input and output overload cases await their factory test slice.",

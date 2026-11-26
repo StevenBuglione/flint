@@ -414,6 +414,8 @@ Jackson's default `writeOmittedProperty` returns its generator without touching 
 
 Jackson's `JsonFactory.copy` creates a factory from the original's configuration. The copy starts with its own lazy name table and becomes independent on first use. The matched jackson-core probe on venus at `dba1e28b4` and `4a2a41311` stayed at 44,037 loadable bytes and moved from 658 to 659 DMD template instances. With pinned LDC and `flint build --profile size`, gs-rest-service moved from 3,683,503 to 3,683,487 allocated ELF bytes and petclinic-rest moved from 10,404,509 to 10,404,541.
 
+Jackson's UTF-8 parser and generator expose stream feature masks directly from their factory. Custom stream implementations can derive the same mask from their existing `isEnabled` method. The matched jackson-core probe on venus at `4a2a41311` and `e56d436ce` moved from 44,037 to 44,109 loadable bytes and stayed at 659 DMD template instances. Pinned LDC with `flint build --profile size` moved gs-rest-service from 3,683,487 to 3,683,607 allocated ELF bytes and petclinic-rest from 10,404,541 to 10,404,597.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

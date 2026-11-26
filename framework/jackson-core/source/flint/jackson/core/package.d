@@ -1397,6 +1397,16 @@ abstract class JsonGenerator
     /// Whether the given feature is enabled.
     abstract bool isEnabled(StreamWriteFeature f);
 
+    /// The enabled stream features as a bit mask with one bit per feature ordinal.
+    int streamWriteFeatures()
+    {
+        int flags;
+        foreach (bit; 0 .. cast(int) StreamWriteFeature.max + 1)
+            if (isEnabled(cast(StreamWriteFeature) bit))
+                flags |= 1 << bit;
+        return flags;
+    }
+
     /// Whether properties may be omitted from the output format.
     bool canOmitProperties()
     {
@@ -1774,6 +1784,16 @@ abstract class JsonParser
 
     /// Whether the given feature is enabled.
     abstract bool isEnabled(StreamReadFeature f);
+
+    /// The enabled stream features as a bit mask with one bit per feature ordinal.
+    int streamReadFeatures()
+    {
+        int flags;
+        foreach (bit; 0 .. cast(int) StreamReadFeature.max + 1)
+            if (isEnabled(cast(StreamReadFeature) bit))
+                flags |= 1 << bit;
+        return flags;
+    }
 
     /// The read context this parser was created with.
     abstract ObjectReadContext objectReadContext();
