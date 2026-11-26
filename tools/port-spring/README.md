@@ -29,6 +29,8 @@ Nested annotation fields and arrays use the same reference lookup and require an
 
 Public top-level enums keep Java constant order. The R20 method slice recognizes one public instance method that checks an enum argument with Spring's `Assert.notNull` and returns the lesser ordinal through a conditional expression. It emits a same-module UFCS function. D rejects a null argument at compile time under R5 and R20. Constants with arguments or class bodies, other method bodies, fields and implemented interfaces require separate translations.
 
+The R8 exception slice accepts a public subclass of Spring's `TransactionUsageException` with one public `String` constructor whose body is exactly `super(message)`. The CLI checks the base class and its constructors against the pinned manifest and existing mapping. It emits a D constructor in `flint.transaction` that preserves the message and caller location. A checked `@SuppressWarnings("serial")` has no effect on the D declaration. Other exception hierarchies and constructor shapes require separate translations.
+
 ## Verification
 
 `test_annotations.py` exercises the C helper and compiles the emitted UDA with DMD and LDC. `test_jakarta.py` walks every Jakarta Persistence annotation in the pinned manifest, compares generated fields and mappings to the existing hand port where available, checks the emitted headers, and compiles every generated D file on both compilers.
@@ -37,9 +39,12 @@ Public top-level enums keep Java constant order. The R20 method slice recognizes
 
 `test_boot_enum_method.py` translates Actuator's `Access.cap` and compares every pair of enum values with the hand port. It checks the R20 mapping and pins rejection of `cap(null)` at compile time on DMD and LDC.
 
+`test_exceptions.py` exercises the native constructor checks. `test_spring_exception.py` compares Spring's `InvalidIsolationLevelException` with the hand port and exercises the generated class hierarchy, cause, message, and caller location on DMD and LDC.
+
 ```sh
 python3 tools/port-spring/tests/test_annotations.py
 python3 tools/port-spring/tests/test_enum.py
+python3 tools/port-spring/tests/test_exceptions.py
 python3 tools/port-spring/tests/test_jakarta.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 python3 tools/port-spring/tests/test_jakarta_enums.py --flint /path/to/flint \
@@ -47,6 +52,8 @@ python3 tools/port-spring/tests/test_jakarta_enums.py --flint /path/to/flint \
 python3 tools/port-spring/tests/test_spring_markers.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 python3 tools/port-spring/tests/test_boot_enum_method.py --flint /path/to/flint \
+  --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
+python3 tools/port-spring/tests/test_spring_exception.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 ```
 

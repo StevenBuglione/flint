@@ -234,7 +234,8 @@ static bool package_and_declaration(JavaFile *java)
                 return false;
             java->package = node_text(java, ts_node_named_child(child, 0));
         } else if (ts_node_is_null(java->declaration) &&
-                   (kind(child, "annotation_type_declaration") || kind(child, "enum_declaration"))) {
+                   (kind(child, "annotation_type_declaration") || kind(child, "enum_declaration") ||
+                    kind(child, "class_declaration"))) {
             java->declaration = child;
             java->is_enum = kind(child, "enum_declaration");
         } else {
@@ -1027,6 +1028,111 @@ static void emit_imports(const JavaFile *java)
     putchar(']');
 }
 
+static bool exception_modifiers(const JavaFile *java, bool *implicit_warning)
+{
+    TSNode modifiers = child_of_kind(java->declaration, "modifiers");
+    bool warning = false;
+    bool public_ = false;
+    for (uint32_t index = 0; index < ts_node_child_count(modifiers); ++index) {
+        TSNode node = ts_node_child(modifiers, index);
+        if (ts_node_is_extra(node))
+            continue;
+        if (!public_ && kind(node, "public")) {
+            public_ = true;
+            continue;
+        }
+        if (warning || !kind(node, "annotation") ||
+            !resolves(java, node_text(java, member(node, "name")), "java.lang.SuppressWarnings",
+                      true, implicit_warning))
+            return false;
+        TSNode arguments = member(node, "arguments");
+        TSNode value = code_child(arguments, 0);
+        if (!kind(value, "string_literal") || !is(node_text(java, value), "\"serial\"") ||
+            !ts_node_is_null(code_child(arguments, 1)))
+            return false;
+        warning = true;
+    }
+    return public_;
+}
+
+static bool forwards_message(const JavaFile *java, TSNode body, Slice parameter)
+{
+    TSNode invocation = code_child(body, 0);
+    if (!kind(invocation, "explicit_constructor_invocation") || !ts_node_is_null(code_child(body, 1)) ||
+        !kind(member(invocation, "constructor"), "super") ||
+        !ts_node_is_null(member(invocation, "object")) || !ts_node_is_null(member(invocation, "type_arguments")))
+        return false;
+    TSNode arguments = member(invocation, "arguments");
+    TSNode value = code_child(arguments, 0);
+    return kind(value, "identifier") && equal(node_text(java, value), parameter) &&
+        ts_node_is_null(code_child(arguments, 1));
+}
+
+static bool exception_parameter(const JavaFile *java, TSNode constructor, Slice *name, Slice *type,
+                                bool *implicit_string)
+{
+    TSNode parameters = member(constructor, "parameters");
+    TSNode parameter = code_child(parameters, 0);
+    if (!kind(parameter, "formal_parameter") || !ts_node_is_null(code_child(parameters, 1)) ||
+        !ts_node_is_null(child_of_kind(parameter, "modifiers")) ||
+        !ts_node_is_null(member(parameter, "dimensions")))
+        return false;
+    *name = node_text(java, member(parameter, "name"));
+    *type = node_text(java, member(parameter, "type"));
+    return identifier(*name) && !d_keyword(*name) && !is(*name, "file") && !is(*name, "line") &&
+        resolves(java, *type, "java.lang.String", true, implicit_string);
+}
+
+static int translate_exception(const JavaFile *java)
+{
+    TSNode declaration = java->declaration;
+    Slice name = node_text(java, member(declaration, "name"));
+    Slice base = node_text(java, code_child(member(declaration, "superclass"), 0));
+    bool implicit_warning = false;
+    if (!qualified_identifier(base) || !ts_node_is_null(member(declaration, "interfaces")) ||
+        !ts_node_is_null(member(declaration, "type_parameters")) || !ts_node_is_null(member(declaration, "permits")) ||
+        !exception_modifiers(java, &implicit_warning))
+        return diagnostic(java, declaration, "unsupported exception declaration");
+    TSNode body = member(declaration, "body");
+    TSNode constructor = code_child(body, 0);
+    if (!kind(constructor, "constructor_declaration") || !ts_node_is_null(code_child(body, 1)) ||
+        !is(node_text(java, child_of_kind(constructor, "modifiers")), "public") ||
+        !equal(node_text(java, member(constructor, "name")), name) ||
+        !ts_node_is_null(member(constructor, "type_parameters")) || !ts_node_is_null(child_of_kind(constructor, "throws")))
+        return diagnostic(java, body, "unsupported exception members");
+    Slice parameter;
+    Slice parameter_type;
+    bool implicit_string;
+    if (!exception_parameter(java, constructor, &parameter, &parameter_type, &implicit_string) ||
+        !forwards_message(java, member(constructor, "body"), parameter))
+        return diagnostic(java, constructor, "unsupported exception constructor; expected super(message)");
+
+    Text symbol = {0};
+    if (!lower_name(name, &symbol)) {
+        free(symbol.bytes);
+        return diagnostic(java, declaration, "unsupported exception name");
+    }
+    fputs("{\"package\":", stdout);
+    json_string(java->package);
+    fputs(",\"name\":", stdout);
+    json_string(name);
+    fputs(",\"symbol\":", stdout);
+    json_string(contents(&symbol));
+    free(symbol.bytes);
+    fputs(",\"kind\":\"class\",\"inherited\":false,\"classRef\":false,\"exception\":{\"base\":", stdout);
+    json_string(base);
+    fputs(",\"parameter\":", stdout);
+    json_string(parameter);
+    fputs(",\"parameterType\":", stdout);
+    json_string(parameter_type);
+    printf(",\"implicitString\":%s,\"implicitSuppressWarnings\":%s},",
+           implicit_string ? "true" : "false", implicit_warning ? "true" : "false");
+    fputs("\"members\":[{\"name\":\"<init>\",\"symbol\":\"this\"}]", stdout);
+    emit_imports(java);
+    puts("}");
+    return fflush(stdout) == EOF ? diagnostic(java, java->root, "cannot write output") : 0;
+}
+
 static void emit_candidate(const JavaFile *annotation, Slice name, const Text *symbol,
                            const Field *fields, size_t count, const Text *body)
 {
@@ -1083,9 +1189,9 @@ static int translate(JavaFile *annotation, bool scope_only)
     if (ts_node_has_error(annotation->root))
         return diagnostic(annotation, annotation->root, "Java syntax error");
     if (!package_and_declaration(annotation))
-        return diagnostic(annotation, annotation->root, "expected a package and one public annotation or enum");
+        return diagnostic(annotation, annotation->root, "expected a package and one public annotation, enum or class");
     if (scope_only) {
-        if (annotation->is_enum)
+        if (!kind(annotation->declaration, "annotation_type_declaration"))
             return diagnostic(annotation, annotation->declaration, "expected annotation declaration");
         fputs("{\"package\":", stdout);
         json_string(annotation->package);
@@ -1095,6 +1201,8 @@ static int translate(JavaFile *annotation, bool scope_only)
         puts("}");
         return fflush(stdout) == EOF ? diagnostic(annotation, annotation->root, "cannot write output") : 0;
     }
+    if (kind(annotation->declaration, "class_declaration"))
+        return translate_exception(annotation);
     if (annotation->is_enum && !ts_node_is_null(member(annotation->declaration, "interfaces")))
         return diagnostic(annotation, annotation->declaration, "unsupported enum implementing an interface");
     TSNode modifiers = child_of_kind(annotation->declaration, "modifiers");

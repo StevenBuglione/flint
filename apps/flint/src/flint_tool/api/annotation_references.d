@@ -361,7 +361,22 @@ private string simpleName(string spelling)
     return spelling[spelling.lastIndexOf('.') + 1 .. $];
 }
 
-private struct JavaReferences
+package bool identifier(string name)
+{
+    if (!name.length || !letter(name[0]))
+        return false;
+    foreach (byte_; name[1 .. $])
+        if (!letter(byte_) && !(byte_ >= '0' && byte_ <= '9'))
+            return false;
+    return true;
+}
+
+private bool letter(char byte_)
+{
+    return (byte_ >= 'a' && byte_ <= 'z') || (byte_ >= 'A' && byte_ <= 'Z') || byte_ == '_';
+}
+
+package struct JavaReferences
 {
     private struct ImportMatch
     {
@@ -480,7 +495,7 @@ private const(Member)* memberNamed(const(Member)[] members, string name, MemberK
     return null;
 }
 
-private string mappedSymbol(const ref Classifier classifier, string id)
+package string mappedSymbol(const ref Classifier classifier, string id)
 {
     const entry = classifier.classify(id);
     if (entry is null || entry.match != id || (entry.status != Status.ported

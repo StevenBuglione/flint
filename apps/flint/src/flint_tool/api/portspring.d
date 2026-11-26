@@ -1,6 +1,7 @@
 /// Validate an optional native translator's candidate against Flint's pinned API and licence policy.
 module flint_tool.api.portspring;
 
+import flint_tool.api.annotation_references : identifier;
 import flint_tool.api.coverage : Classifier, Mapping, MappingEntry, Status;
 import flint_tool.api.headers : LicenceEntry;
 import flint_tool.api.java : Member, MemberKind, TypeDecl, TypeKind;
@@ -40,7 +41,7 @@ struct SpringPort
     bool inherited;
 }
 
-/// Translate a single public annotation or a supported enum.
+/// Translate a single supported public Java declaration.
 bool portSpring(string root, const ref SpringPortRequest request, out SpringPort output, out string error)
 {
     import flint_tool.api.upstreams : findUpstream, loadUpstreams;
@@ -143,6 +144,8 @@ private const(LicenceEntry)* destinationLicence(const ref Upstream pin, const(Li
 
 private const(ApiType)* supportedType(ref const Manifest manifest, const ref Upstream pin, string id, out string error)
 {
+    import flint_tool.api.exception_references : supportedException;
+
     if (manifest.project != pin.project || manifest.version_ != pin.version_)
     {
         error = "manifest project or version does not match " ~ pin.key;
@@ -155,6 +158,8 @@ private const(ApiType)* supportedType(ref const Manifest manifest, const ref Ups
         if (type.decl.visibility != "public")
             break;
         if (type.decl.kind == TypeKind.annotation)
+            return &type;
+        if (type.decl.kind == TypeKind.class_ && supportedException(type.decl))
             return &type;
         if (type.decl.kind == TypeKind.enum_)
         {
@@ -263,7 +268,6 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
         out string body, out string error)
 {
     import flint_tool.api.coverage : parseMapping;
-    import flint_tool.api.annotation_references : resolveReferenceBody;
     import std.file : readText;
     import std.path : buildPath;
 
@@ -272,6 +276,33 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
     {
         error = "translator declaration does not match " ~ type.decl.id ~ " in the manifest";
         return null;
+    }
+    Mapping mapping;
+    const path = buildPath(root, "api", pin.repo, "mapping.json");
+    if (!parseMapping(readText(path), mapping, error))
+        return null;
+    if (mapping.rulebook != 2 || !mapping.covers(pin.project, pin.version_))
+    {
+        error = path ~ " has no matching rulebook v2 mapping for " ~ pin.key;
+        return null;
+    }
+    body = translatedBody(root, pin, manifest, type, request, candidate, mapping, error);
+    if (error.length)
+        return null;
+    return classifiedFragment(pin, type, request.module_, candidate, mapping, error, request.replacePorted);
+}
+
+private string translatedBody(string root, const ref Upstream pin, const ref Manifest manifest,
+        const ref ApiType type, const ref SpringPortRequest request, const ref JSONValue candidate,
+        const ref Mapping mapping, out string error)
+{
+    import flint_tool.api.annotation_references : resolveReferenceBody;
+    import flint_tool.api.exception_references : renderException;
+
+    if (type.decl.kind == TypeKind.class_)
+    {
+        const classifier = Classifier(mapping);
+        return renderException(manifest, type.decl, classifier, request.module_, candidate, error);
     }
     string[] referenceFields;
     foreach (ref field; candidate["members"].arrayNoRef)
@@ -285,41 +316,27 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
         error = type.decl.id ~ ": unsupported annotation type: ambiguous same-package " ~ shadow;
         return null;
     }
-    Mapping mapping;
-    const path = buildPath(root, "api", pin.repo, "mapping.json");
-    if (!parseMapping(readText(path), mapping, error))
-        return null;
-    if (mapping.rulebook != 2 || !mapping.covers(pin.project, pin.version_))
+    if (!referenceFields.length && !("metaMarkers" in candidate))
+        return candidate["body"].str;
+
+    JSONValue[string] scopes;
+    bool loadScope(const ref ApiType nested, out JSONValue result, out string failure) @safe
     {
-        error = path ~ " has no matching rulebook v2 mapping for " ~ pin.key;
-        return null;
-    }
-    if (referenceFields.length || "metaMarkers" in candidate)
-    {
-        const classifier = Classifier(mapping);
-        JSONValue[string] scopes;
-        bool loadScope(const ref ApiType nested, out JSONValue result, out string failure) @safe
+        const id = nested.decl.id;
+        if (const saved = id in scopes)
         {
-            const id = nested.decl.id;
-            if (const saved = id in scopes)
-            {
-                result = *saved;
-                return true;
-            }
-            const source = sourcePath(root, request, pin, nested.file, failure);
-            if (!source.length || !runHelper(root, request.helper, source, result, failure, true))
-                return false;
-            scopes[id] = result;
+            result = *saved;
             return true;
         }
-
-        body = resolveReferenceBody(manifest, type, classifier, request.module_, candidate, error, &loadScope);
+        const source = sourcePath(root, request, pin, nested.file, failure);
+        if (!source.length || !runHelper(root, request.helper, source, result, failure, true))
+            return false;
+        scopes[id] = result;
+        return true;
     }
-    else
-        body = candidate["body"].str;
-    if (error.length)
-        return null;
-    return classifiedFragment(pin, type, request.module_, candidate, mapping, error, request.replacePorted);
+
+    const classifier = Classifier(mapping);
+    return resolveReferenceBody(manifest, type, classifier, request.module_, candidate, error, &loadScope);
 }
 
 private string attributeBaseType(string type)
@@ -437,6 +454,13 @@ private MappingEntry proposedMember(const ref TypeDecl decl, const ref Member me
         auto entry = mappingEntry(module_ ~ "." ~ field.symbol, member.name, field.symbol, false);
         entry.rules ~= "R20";
         entry.status = Status.adapted;
+        return entry;
+    }
+    if (decl.kind == TypeKind.class_ && member.kind == MemberKind.constructor && field.symbol == "this")
+    {
+        MappingEntry entry;
+        entry.symbol = dType ~ ".this";
+        entry.status = Status.ported;
         return entry;
     }
     const annotation = decl.kind == TypeKind.annotation;
@@ -592,21 +616,6 @@ private bool validModule(string name)
         if (!identifier(part))
             return false;
     return true;
-}
-
-private bool identifier(string name)
-{
-    if (!name.length || !letter(name[0]))
-        return false;
-    foreach (byte_; name[1 .. $])
-        if (!letter(byte_) && !(byte_ >= '0' && byte_ <= '9'))
-            return false;
-    return true;
-}
-
-private bool letter(char byte_)
-{
-    return (byte_ >= 'a' && byte_ <= 'z') || (byte_ >= 'A' && byte_ <= 'Z') || byte_ == '_';
 }
 
 version (unittest)
