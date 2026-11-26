@@ -274,6 +274,8 @@ Character-to-number conversion normalizes the UTF-16 code unit to a signed short
 
 SimpleRouteMatcher retains the original route string and delegates matching, extraction and ordering to its configured PathMatcher. The Core probe on venus against `b63261658` kept 8,844 loadable bytes and moved from 5,491 to 5,510 DMD template instances against the 8,550 cap.
 
+StreamUtils copies and drains through one heap buffer per transfer, and its wrappers forward bulk reads and writes. The Core probe on venus against the rebased batch parent `837240684` moved from 19,197 to 19,237 loadable bytes and from 5,583 to 5,613 DMD template instances against caps of 81,920 bytes and 8,550 instances.
+
 ### Jackson tree search
 
 The first-match operations check an object's own property and then walk its stored children. A failed path lookup returns a missing node through the existing factory. The plural operations require Java List façades. Both their template counts (B-1) and the application cost of collection methods retained by virtual accumulator overloads (S-1) determine when the plural API can land.

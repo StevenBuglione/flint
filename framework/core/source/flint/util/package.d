@@ -54,6 +54,7 @@ import flint.java.util : ArrayList, Arrays, Collection, Collections, Comparator,
     Iterator, LinkedHashMap, LinkedHashSet, List, Map, MapEntry, NoSuchElementException, Optional,
     RawCollection, RawMap, Set, stableSort;
 import flint.java.util.function_ : Supplier;
+public import flint.util.stream_utils : StreamUtils;
 
 @safe:
 

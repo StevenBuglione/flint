@@ -1527,7 +1527,6 @@
       "org/springframework/util/SerializationUtilsTests.java",
       "org/springframework/util/SingleToMultiValueMapAdapterTests.java",
       "org/springframework/util/StopWatchTests.java",
-      "org/springframework/util/StreamUtilsTests.java",
       "org/springframework/util/StringUtilsTests.java",
       "org/springframework/util/SystemPropertyUtilsTests.java",
       "org/springframework/util/TypeUtilsTests.java",

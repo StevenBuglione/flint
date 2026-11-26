@@ -826,8 +826,25 @@
       "status": "deferred"
     },
     "org/springframework/util/StreamUtilsTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/core/tests/util_stream_utils_test.d",
+      "methods": {
+        "ported": [
+          "copyBytes",
+          "copyStream",
+          "copyToByteArray",
+          "nonClosingInputStream",
+          "nonClosingOutputStream",
+          "nonFlushingOutputStream"
+        ],
+        "skipped": {
+          "copyRangeBeyondAvailable": "The range copy awaits the Java InputStream skip contract.",
+          "copyRangeBeyondBuffer": "The range copy awaits the Java InputStream skip contract.",
+          "copyRangeWithinBuffer": "The range copy awaits the Java InputStream skip contract.",
+          "copyString": "Java Charset encoding is not yet available.",
+          "copyToString": "Java Charset decoding is not yet available."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/util/StringUtilsTests.java": {
       "phase": "2",
