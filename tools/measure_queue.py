@@ -186,11 +186,26 @@ COMPILER_COMMANDS = BUSY_COMMANDS | {'ld', 'ld.gold', 'ld.bfd', 'ld.lld', 'mold'
 NON_BENCHMARK_CPUS = None  # set lazily: every CPU outside the server, load and database sets
 
 
+# Coordination processes are never frozen (coordinator, 2026-11-26 14:53Z): `agentctl.py launch` waits on a lane's run
+# and is idle between runs, yet two launchers sat SIGSTOPped for nine hours; the merge train's scheduler
+# (`merge_train.py serve`) must keep landing; the queue's own `measure_queue.py` runs the windows.
+COORDINATION_TOOLS = ('measure_queue.py', 'agentctl.py', 'merge_train.py')
+
+
+def coordination_process(pid):
+    """Whether `pid` runs a coordination tool (COORDINATION_TOOLS), whatever its interpreter."""
+    try:
+        argv = Path(f'/proc/{pid}/cmdline').read_bytes().split(b'\0')
+    except OSError:
+        return False
+    return any(part.decode('utf-8', 'replace').endswith(COORDINATION_TOOLS) for part in argv[1:4])
+
+
 def tool_script(pid, command=None):
     """The script a `python3` process runs (a project tool such as tools/gates.py, a test or a probe), or None.
     error-404-p99 at B6 (2026-11-25 19:36Z): an unheld `gates.py --gate structural` spent its CPU in python3 itself,
     while its `dmd -o-` audits were served compiles of a few milliseconds; neither check named python3. The queue's
-    own `measure_queue.py` (watch, hold, timed) is never a tool."""
+    own `measure_queue.py` (watch, hold, timed) is never a tool, nor is any coordination process (COORDINATION_TOOLS)."""
     try:
         command = command or Path(f'/proc/{pid}/comm').read_text().strip()
         if not command.startswith('python'):
@@ -201,7 +216,7 @@ def tool_script(pid, command=None):
     for part in argv[1:]:
         if part.endswith(b'.py'):
             name = part.decode('utf-8', 'replace')
-            return None if name.endswith('measure_queue.py') else name
+            return None if name.endswith(COORDINATION_TOOLS) else name
         if part == b'-m':  # python3 -m unittest ...
             return ' '.join(x.decode('utf-8', 'replace') for x in argv[1:4])
     return None
@@ -412,6 +427,8 @@ class Freezer:
             return "the watcher's measured child or its child"
         if descends_from(pid, {me}):
             return 'a descendant of the watcher'
+        if coordination_process(pid):
+            return 'a coordination process (agentctl, the merge train, the measure queue)'
         return None
 
     def candidates(self):

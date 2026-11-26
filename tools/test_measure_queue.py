@@ -1,6 +1,8 @@
 """Unit tests of the measurement queue's quiet-window rules: `python3 tools/test_measure_queue.py`."""
 import json
+import contextlib
 import os
+import signal
 from pathlib import Path
 import socket
 import subprocess
@@ -149,7 +151,7 @@ class QuietWindow(unittest.TestCase):
             self.assertGreater(time.monotonic() - started, 3.5)
             self.assertEqual(len(out.read_text()), 20)
 
-    def detached_build(self, directory, seconds=6):
+    def detached_build(self, directory, seconds=60):
         """The B5 case: a `dub` outside the run (reparented, not a descendant) whose compiles are short-lived `dmd`
         children burning CPU, as served compiles are. Returns the `dub` pid."""
         import shlex
@@ -173,7 +175,8 @@ class QuietWindow(unittest.TestCase):
                 busy = measure_queue.busy_processes()
                 self.assertTrue(any(row['command'] in ('dub', 'dmd') for row in busy), busy)
             finally:
-                os.kill(dub, 9)
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(dub, 9)
 
     def test_the_freezer_names_an_unheld_compiler_but_not_held_work_or_a_server_pool(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -187,7 +190,8 @@ class QuietWindow(unittest.TestCase):
                 with mock.patch.object(measure_queue, 'is_compile_server', return_value=True):
                     self.assertNotIn(dub, {row['pid'] for row in measure_queue.Freezer().candidates()})
             finally:
-                os.kill(dub, 9)
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(dub, 9)
 
     def test_the_runs_own_new_process_is_never_frozen_or_foreign(self):
         """B6, 15:42Z: the run's own Go `compile`, born after the freezer's process-table snapshot, was frozen."""
@@ -221,6 +225,26 @@ class QuietWindow(unittest.TestCase):
                 mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
             f.sweep()
         return f
+
+    def confined_sweep(self, freezer, pids, directory):
+        """A real sweep whose candidates are only `pids`: a test must never stop another session's processes (on
+        2026-11-26 a whole-host sweep here froze two Sol launchers for nine hours, unrecorded because FROZEN pointed
+        at the test's directory). Anything it froze is thawed before returning to the test's assertions."""
+        real = measure_queue.Freezer.candidates
+
+        def only(this):
+            return (row for row in real(this) if row['pid'] in pids)
+        try:
+            with mock.patch.object(measure_queue.Freezer, 'candidates', only), \
+                    mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
+                freezer.sweep()
+            self.assertTrue({row['pid'] for row in freezer.frozen} <= set(pids), freezer.frozen)
+        finally:
+            stray = [row for row in freezer.frozen if row['pid'] not in pids]
+            for row in stray:
+                with contextlib.suppress(OSError):
+                    os.kill(row['pid'], signal.SIGCONT)
+        return freezer
 
     def stopped(self, pid):
         return Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()[0] in ('T', 't')
@@ -260,7 +284,7 @@ class QuietWindow(unittest.TestCase):
 
     def test_a_foreign_compiler_is_frozen_with_its_chain_and_reason_and_log_only_only_reports(self):
         with tempfile.TemporaryDirectory() as directory:
-            dub = self.detached_build(directory, seconds=5)
+            dub = self.detached_build(directory)
             try:
                 time.sleep(0.2)
                 watched = self.sweep_on(dub, log_only_compilers=True)
@@ -274,10 +298,12 @@ class QuietWindow(unittest.TestCase):
                 time.sleep(0.1)  # SIGSTOP is delivered asynchronously
                 self.assertTrue(self.stopped(dub))
             finally:
-                os.kill(dub, 18)
-                os.kill(dub, 9)
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(dub, 18)
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(dub, 9)
 
-    def detached_tool(self, directory, busy=True, seconds=6):
+    def detached_tool(self, directory, busy=True, seconds=60, script='gates_like.py'):
         """The B6 case: an unheld `python3 tools/gates.py`-like tool that burns CPU itself while its `dmd` children
         (served compiles) are near-instant; or, with busy=False, an idle Python daemon. Returns its pid."""
         import shlex
@@ -286,10 +312,10 @@ class QuietWindow(unittest.TestCase):
         (d / 'dmd').symlink_to('/bin/true')
         work = ('    t = time.process_time()\n    while time.process_time() - t < 0.09:\n        pass\n'
                 f'    subprocess.run([{str(d / "dmd")!r}, "-o-"])\n') if busy else '    time.sleep(0.1)\n'
-        (d / 'tools' / 'gates_like.py').write_text(
+        (d / 'tools' / script).write_text(
             f'import subprocess, time\nend = time.time() + {seconds}\nwhile time.time() < end:\n{work}')
         pidfile = d / 'pid'
-        subprocess.run(['sh', '-c', f'cd {shlex.quote(str(d))} && setsid {shlex.quote(sys.executable)} tools/gates_like.py '
+        subprocess.run(['sh', '-c', f'cd {shlex.quote(str(d))} && setsid {shlex.quote(sys.executable)} tools/{script} '
                                     f'> /dev/null 2>&1 < /dev/null & echo $! > {shlex.quote(str(pidfile))}'], check=True)
         return int(pidfile.read_text())
 
@@ -302,14 +328,10 @@ class QuietWindow(unittest.TestCase):
                 time.sleep(0.3)
                 busy = measure_queue.busy_processes()
                 self.assertIn(tool, [row['pid'] for row in busy if row['kind'] == 'tool'], busy)
-                watched = measure_queue.Freezer(log_only_compilers=True)
-                with mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
-                    watched.sweep()
+                watched = self.confined_sweep(measure_queue.Freezer(log_only_compilers=True), {tool}, directory)
                 self.assertIn(tool, [row['pid'] for row in watched.logged])
                 self.assertFalse(self.stopped(tool))
-                f = measure_queue.Freezer(log_only_compilers=False)
-                with mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
-                    f.sweep()
+                f = self.confined_sweep(measure_queue.Freezer(log_only_compilers=False), {tool}, directory)
                 row = next(row for row in f.frozen if row['pid'] == tool)
                 self.assertEqual(row['kind'], 'tool')
                 self.assertIn('CPU ticks', row['reason'])
@@ -318,21 +340,37 @@ class QuietWindow(unittest.TestCase):
                 self.assertTrue(self.stopped(tool))
                 f.thaw()
             finally:
-                os.kill(tool, 18)
-                os.kill(tool, 9)
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(tool, 18)
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(tool, 9)
+
+    def test_a_busy_agentctl_launcher_is_never_frozen(self):
+        """2026-11-26: sol-jdk-math-regex's and sol-translator's `agentctl.py launch` sat SIGSTOPped for nine hours."""
+        with tempfile.TemporaryDirectory() as directory:
+            launcher = self.detached_tool(directory, script='agentctl.py')
+            try:
+                time.sleep(0.3)
+                self.assertIsNone(measure_queue.tool_script(launcher))
+                self.assertIn('coordination', measure_queue.Freezer.protected(launcher))
+                f = self.confined_sweep(measure_queue.Freezer(log_only_compilers=False), {launcher}, directory)
+                self.assertEqual(f.frozen, [])
+                self.assertFalse(self.stopped(launcher))
+            finally:
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(launcher, 9)
 
     def test_an_idle_python_daemon_is_never_frozen(self):
         with tempfile.TemporaryDirectory() as directory:
             idle = self.detached_tool(directory, busy=False)
             try:
                 time.sleep(0.3)
-                f = measure_queue.Freezer(log_only_compilers=False)
-                with mock.patch.object(measure_queue, 'FROZEN', Path(directory) / 'FROZEN'):
-                    f.sweep()
+                f = self.confined_sweep(measure_queue.Freezer(log_only_compilers=False), {idle}, directory)
                 self.assertNotIn(idle, [row['pid'] for row in f.frozen])
                 self.assertFalse(self.stopped(idle))
             finally:
-                os.kill(idle, 9)
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(idle, 9)
 
     def test_the_queues_own_commands_are_never_tools(self):
         with mock.patch.object(Path, 'read_bytes', return_value=b'python3\0-u\0tools/measure_queue.py\0watch\0'):
@@ -601,8 +639,11 @@ class Freezing(unittest.TestCase):
                 real_kind = measure_queue.stray_kind
                 # Only the test's own child may be frozen: other sessions' real strays must never be touched by a test.
                 only_child = lambda pid, command: real_kind(pid, command) if int(pid) == child.pid else None
+                real_candidates = measure_queue.Freezer.candidates  # nor another session's compiler or tool
+                only_candidates = lambda this: (row for row in real_candidates(this) if row['pid'] == child.pid)
                 with mock.patch.object(measure_queue, 'FROZEN', frozen_file), \
                         mock.patch.object(measure_queue, 'stray_kind', side_effect=only_child), \
+                        mock.patch.object(measure_queue.Freezer, 'candidates', only_candidates), \
                         mock.patch.object(measure_queue, 'own_tree', return_value=set()):
                     freezer = measure_queue.Freezer()
                     freezer.sweep()
