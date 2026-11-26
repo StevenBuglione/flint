@@ -140,10 +140,53 @@ void wakeOne(ref shared uint word) @trusted nothrow @nogc
 /// Where no address wait exists, sleep for the timeout, at most 2 ms, before the caller re-checks its word.
 private void sleepBriefly(long nanos) nothrow @nogc
 {
-    import core.thread.osthread : Thread;
-    import core.time : dur;
+    sleepNanoseconds(nanos > 0 && nanos < 2_000_000 ? nanos : 2_000_000);
+}
 
-    Thread.sleep(dur!"nsecs"(nanos > 0 && nanos < 2_000_000 ? nanos : 2_000_000));
+/// Sleep the calling thread for `nanos` nanoseconds, resuming after a signal as `Thread.sleep` does; zero or less
+/// returns at once. No core.time `Duration` is built: a run-time `dur` call would make the link take that instance
+/// from Phobos socket.o, and with it std.string, std.uni and curl.o (playbook S-9).
+// SAFETY: nanosleep reads and rewrites one stack timespec during the call; Sleep takes a count. Neither keeps a pointer.
+package(flint.conc) void sleepNanoseconds(long nanos) @trusted nothrow @nogc
+{
+    if (nanos <= 0)
+        return;
+    version (Windows)
+    {
+        import core.sys.windows.winbase : Sleep;
+
+        const millis = (nanos + 999_999) / 1_000_000;
+        Sleep(millis >= uint.max ? uint.max - 1 : cast(uint) millis);
+    }
+    else
+    {
+        import core.stdc.errno : EINTR, errno;
+        import core.sys.posix.time : nanosleep, timespec;
+
+        timespec delay;
+        delay.tv_sec = cast(typeof(delay.tv_sec))(nanos / 1_000_000_000);
+        delay.tv_nsec = cast(typeof(delay.tv_nsec))(nanos % 1_000_000_000);
+        // nanosleep writes the time left into delay when a signal interrupts it.
+        while (nanosleep(&delay, &delay) != 0 && errno == EINTR)
+        {
+        }
+    }
+}
+
+@("sleepNanoseconds sleeps about the time it is given and returns at once for zero or a negative time")
+@system unittest
+{
+    import core.time : MonoTime, msecs;
+
+    auto started = MonoTime.currTime;
+    sleepNanoseconds(0);
+    sleepNanoseconds(-5);
+    sleepNanoseconds(long.min);
+    assert(MonoTime.currTime - started < 1_000.msecs);
+    started = MonoTime.currTime;
+    sleepNanoseconds(3_000_000);
+    const slept = MonoTime.currTime - started;
+    assert(slept >= 2.msecs && slept < 2_000.msecs);
 }
 
 @("a parked thread wakes when another thread changes its word, and a stale expectation returns at once")

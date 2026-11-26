@@ -4,7 +4,6 @@ import core.atomic : MemoryOrder, atomicLoad, casWeak;
 import core.stdc.stdlib : abort;
 import core.thread.osthread : Thread;
 import core.thread.threadbase : ThreadError;
-import core.time : dur;
 
 @safe:
 
@@ -25,9 +24,16 @@ package(flint.conc) ulong issueTicket(uint slot) nothrow @nogc
     }
 }
 
+/// How long an idle worker sleeps before it looks for work again. A compile-time constant: a run-time core.time
+/// `dur` call would make the link take that instance from the first Phobos object defining it, socket.o, and with
+/// it std.string, std.uni and curl.o (playbook S-9).
+private enum idlePause = imported!"core.time".usecs(50);
+
+static assert(idlePause == imported!"core.time".usecs(50), "an idle worker pauses 50 us");
+
 package(flint.conc) void idleWorker() nothrow @nogc
 {
-    Thread.sleep(dur!"usecs"(50));
+    Thread.sleep(idlePause);
 }
 
 package(flint.conc) struct WorkerThreads

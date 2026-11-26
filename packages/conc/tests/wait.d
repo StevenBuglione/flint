@@ -27,3 +27,11 @@ unittest
     assert(waitUntil(Deadline.afterMillis(100)).code == Status.cancelled && called == 1);
     assert(waitUntil(Deadline.afterMillis(0)).code == Status.ok && called == 1);
 }
+
+@("without a hook, waitUntil sleeps the calling thread until the deadline has passed")
+unittest
+{
+    const deadline = Deadline.afterMillis(5);
+    assert(waitUntil(deadline).code == Status.ok);
+    assert(Deadline.afterMillis(0).monotonicNanoseconds >= deadline.monotonicNanoseconds);
+}

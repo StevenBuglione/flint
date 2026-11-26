@@ -4,7 +4,7 @@ module flint.engine.web.runtime;
 import core.atomic : atomicLoad, atomicOp, atomicStore, cas;
 import core.lifetime : emplace, move;
 import core.thread.osthread : Thread;
-import core.time : MonoTime, dur, ticksToNSecs;
+import core.time : MonoTime, ticksToNSecs;
 import flint.arena : Buffer, Error, RequestArena, Result, Status;
 import flint.conc : CancelSource, Context, Deadline;
 import flint.engine.reactor : AcceptDelegate, Completion, CompletionDelegate, ConnectionId, IoId,
@@ -23,7 +23,7 @@ import flint.engine.web.transport : TlsTransport, awaitStream, closePlain, readP
     wakeStream, writePlain;
 import flint.engine.web.types : ErrorAdvice, Handler, Method, Request, RequestContext, Response,
     RouteRegistration, ServerOptions, sameName;
-import flint.engine.web.worker : WorkerLifecycle;
+import flint.engine.web.worker : WorkerLifecycle, onePollPause;
 import flint.engine.web.wire : FiberFraming, FiberPersistence, responseCode, validMediaType,
     writeChunk, writeFiberHeader, writeHeader, writeStreamHeader;
 
@@ -302,7 +302,7 @@ struct Server
         cas(&driver.phase, DriverPhase.prepared, DriverPhase.active);
         if (atomicLoad(driver.phase) == DriverPhase.finished)
             return driver.result.code == Status.ok ? Error(Status.cancelled, "HTTP server stopped") : driver.result;
-        Thread.sleep(dur!"msecs"(1));
+        Thread.sleep(onePollPause);
         return Error.init;
     }
 
@@ -342,7 +342,7 @@ struct Server
             driver.progressStop(exhausted);
             if (exhausted)
                 return Error(Status.timedOut, "HTTP shutdown is still draining");
-            Thread.sleep(dur!"msecs"(1));
+            Thread.sleep(onePollPause);
         }
         driver.release();
         return driver.result;
@@ -371,7 +371,7 @@ struct Server
                 return interrupted ? Error(Status.cancelled, "graceful shutdown forced") : Error(Status.timedOut,
                         "graceful shutdown grace period expired");
             }
-            Thread.sleep(dur!"msecs"(1));
+            Thread.sleep(onePollPause);
         }
     }
 
@@ -656,7 +656,7 @@ private final class RuntimeDriver() : StreamEndpoint, FiberEndpoint
             atomicStore(phase, DriverPhase.finished);
         }
         while (atomicLoad(phase) == DriverPhase.prepared)
-            Thread.sleep(dur!"msecs"(1));
+            Thread.sleep(onePollPause);
 
         if (atomicLoad(phase) != DriverPhase.active)
             return;

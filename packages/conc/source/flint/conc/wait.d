@@ -1,10 +1,9 @@
 /// Thread-local cooperative waiting for native owner loops and blocking callers.
 module flint.conc.wait;
 
-import core.thread.osthread : Thread;
-import core.time : nsecs;
 import flint.arena : Error, Status;
 import flint.conc : Deadline;
+import flint.conc.sys.park : sleepNanoseconds;
 
 @safe:
 
@@ -32,6 +31,6 @@ Error waitUntil(Deadline deadline) nothrow @nogc
         return Error.init;
     if (current !is null)
         return current(deadline);
-    Thread.sleep((target - now).nsecs);
+    sleepNanoseconds(target - now);
     return Error.init;
 }

@@ -10,6 +10,13 @@ import flint.engine.reactor.types : OffloadWork, TaskWaker;
 
 @safe:
 
+/// How often `waitFinished` re-checks a job during shutdown. A compile-time constant: a run-time core.time `dur` call would make
+/// the link take that instance from the first Phobos object defining it, socket.o, and with it std.string, std.uni
+/// and curl.o (playbook S-9).
+private enum shutdownPoll = imported!"core.time".usecs(200);
+
+static assert(shutdownPoll == imported!"core.time".usecs(200), "shutdown polls every 200 us");
+
 version (Posix)
 {
     import core.sys.posix.fcntl : F_GETFL, F_SETFD, F_SETFL, FD_CLOEXEC, O_NONBLOCK, fcntl;
@@ -160,10 +167,8 @@ package(flint.engine.reactor) final class OffloadPool
     /// Block the calling thread until `ticket` finishes. Only for shutdown, when no fiber may run.
     void waitFinished(uint ticket) const nothrow @nogc
     {
-        import core.time : usecs;
-
         while (!finished(ticket))
-            Thread.sleep(usecs(200));
+            Thread.sleep(shutdownPoll);
     }
 
     /// Release a finished job. Returns false when its work ended with a throwable.

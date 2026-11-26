@@ -4,7 +4,6 @@ module flint.engine.web.worker;
 import core.atomic : atomicLoad, atomicStore, cas;
 import core.lifetime : move;
 import core.thread.osthread : Thread;
-import core.time : dur;
 import flint.arena : Buffer, Error, RequestArena, Result, Status;
 import flint.conc : Channel, Context, Deadline, QueueKind;
 import flint.engine.reactor : Reactor;
@@ -14,6 +13,13 @@ import flint.engine.web.types : Capture, HeaderRecord, Method, Request, RequestC
 import flint.engine.web.worker_packet : WorkerMedia, WorkerReply, WorkerRequest, workerMediaTypes, workerPacketBytes;
 
 @safe:
+
+/// The pause between polls of a stopping driver or an empty worker queue. A compile-time constant: a run-time core.time `dur` call would make
+/// the link take that instance from the first Phobos object defining it, socket.o, and with it std.string, std.uni
+/// and curl.o (playbook S-9).
+package(flint.engine.web) enum onePollPause = imported!"core.time".msecs(1);
+
+static assert(onePollPause == imported!"core.time".msecs(1), "a poll pause is 1 ms");
 package(flint.engine.web):
 
 private enum queuedPackets = 16;
@@ -179,7 +185,7 @@ final class ControllerWorker(C)
             }
             if (atomicLoad(stopping))
                 return;
-            Thread.sleep(dur!"msecs"(1));
+            Thread.sleep(onePollPause);
         }
     }
 
