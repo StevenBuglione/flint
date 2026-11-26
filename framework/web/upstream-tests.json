@@ -778,6 +778,10 @@
       "methods": {
         "ported": [
           "getBody",
+          "getEmptyFormBody",
+          "getFormBody",
+          "getFormBodyWhenNotEncodedCharactersPresent",
+          "getFormBodyWhenQueryParamsAlsoPresent",
           "getHeaders",
           "getHeadersWithCharacterEncoding",
           "getHeadersWithEmptyContentTypeAndEncoding",
@@ -789,11 +793,7 @@
         ],
         "skipped": {
           "attributes": "Requires the live request attribute map.",
-          "getEmptyFormBody": "Form body reconstruction is deferred.",
-          "getFormBody": "Form body reconstruction is deferred.",
-          "getFormBodyWhenNotEncodedCharactersPresent": "Form body reconstruction is deferred.",
-          "getFormBodyWhenQueryParamsAlsoPresent": "Form body reconstruction is deferred.",
-          "getFormBodyWithNotUtf8Charset": "Form body reconstruction is deferred.",
+          "getFormBodyWithNotUtf8Charset": "Reconstruction supports UTF-8; the Windows-1251 encoder is deferred.",
           "getUriWithMalformedPath": "Requires the servlet URI recovery contract.",
           "getUriWithMalformedQueryParam": "Requires the servlet URI recovery contract."
         }

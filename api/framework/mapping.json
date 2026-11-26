@@ -22726,7 +22726,7 @@
 "org.springframework.http.server.ServletServerHttpRequest#FORM_CHARSET":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.http.server.ServletServerHttpRequest#getAsyncRequestControl(ServerHttpResponse)":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.http.server.ServletServerHttpRequest#getAttributes()":{"status":"excluded","category":"deferred","phase":"2"},
-"org.springframework.http.server.ServletServerHttpRequest#getBody()":{"status":"ported","d":"flint.http.server.ServletServerHttpRequest.getBody"},
+"org.springframework.http.server.ServletServerHttpRequest#getBody()":{"status":"adapted","d":"flint.http.server.ServletServerHttpRequest.getBody","rules":["R10"],"note":"The byte-array adapter reconstructs UTF-8 forms. Other form encodings use the servlet input stream."},
 "org.springframework.http.server.ServletServerHttpRequest#getHeaders()":{"status":"ported","d":"flint.http.server.ServletServerHttpRequest.getHeaders"},
 "org.springframework.http.server.ServletServerHttpRequest#getLocalAddress()":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.http.server.ServletServerHttpRequest#getMethod()":{"status":"ported","d":"flint.http.server.ServletServerHttpRequest.getMethod"},

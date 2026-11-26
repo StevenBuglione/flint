@@ -828,6 +828,17 @@ retained 528,953 O3 and 522,513 Oz loadable bytes for Web, 1,627,646 O3 and
 Template counts were 6,991, 6,060 and 8,479 respectively in both variants.
 The stock linker maps identify the inherited Phobos objects under `6c9e5f49`.
 
+The servlet request bridge reconstructs UTF-8 form POST bodies when a query
+is absent. Matched native LDC release probes at `b2a6511c4` and `11aad6619`
+recorded 384,000 GC bytes over 2,000 raw reads per case for JSON POST,
+query-present form POST, form PUT and a form with an explicit unsupported
+charset. The out-of-line writer and encoder saved 1,096 loadable O3 bytes
+relative to the first candidate `7d3def137`. Web retained 528,953 O3 and
+522,513 Oz bytes and moved from 6,991 to 6,997 templates. Web MVC and
+framework-test each grew by 3,444 O3 bytes and 2,524 Oz bytes. Their
+template counts held at 6,060 and 8,475. The coordinator approved the
+measured parity growth under `6c9e5f49`.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

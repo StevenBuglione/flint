@@ -171,3 +171,97 @@ unittest
     auto headers = (new ServletServerHttpRequest(mock)).getHeaders();
     assert(headers.getFirst(HttpHeaders.CONTENT_TYPE) == "invalid/type/extra");
 }
+
+@("ServletServerHttpRequestTests.getFormBody")
+unittest
+{
+    auto mock = formRequest();
+    mock.addParameter("name 1", "value 1");
+    mock.addParameter("name 2", "value 2+1", "value 2+2");
+    mock.addParameter("name 3", cast(string) null);
+    mock.addParameter("empty", "");
+
+    auto request = new ServletServerHttpRequest(mock);
+    enum expected = "name+1=value+1&name+2=value+2%2B1&name+2=value+2%2B2&name+3&empty=";
+    assert(request.getBody() == cast(const(ubyte)[]) expected);
+    assert(!request.getHeaders().containsHeader(HttpHeaders.CONTENT_LENGTH));
+}
+
+@("ServletServerHttpRequestTests.getEmptyFormBody")
+unittest
+{
+    auto request = new ServletServerHttpRequest(formRequest());
+
+    assert(request.getBody().length == 0);
+    assert(!request.getHeaders().containsHeader(HttpHeaders.CONTENT_LENGTH));
+}
+
+@("ServletServerHttpRequestTests.getFormBodyWhenQueryParamsAlsoPresent")
+unittest
+{
+    auto mock = formRequest();
+    mock.setQueryString("q=1");
+    mock.addParameter("q", "1");
+    mock.setContent(cast(const(ubyte)[]) "foo=bar");
+    mock.addHeader(HttpHeaders.CONTENT_LENGTH, "7");
+
+    auto request = new ServletServerHttpRequest(mock);
+    assert(request.getBody() == cast(const(ubyte)[]) "foo=bar");
+    assert(request.getHeaders().getContentLength() == 7);
+
+    mock.setQueryString("?"[0 .. 0]);
+    assert((new ServletServerHttpRequest(mock)).getBody() == cast(const(ubyte)[]) "foo=bar");
+}
+
+@("ServletServerHttpRequestTests.getFormBodyWhenNotEncodedCharactersPresent")
+unittest
+{
+    auto mock = formRequest();
+    mock.addParameter("name", "Test");
+    mock.addParameter("lastName", "Test@er");
+    mock.addHeader(HttpHeaders.CONTENT_LENGTH, "26");
+
+    auto request = new ServletServerHttpRequest(mock);
+    auto headers = request.getHeaders();
+    auto body = request.getBody();
+    assert(body == cast(const(ubyte)[]) "name=Test&lastName=Test%40er");
+    assert(headers.getContentLength() == body.length);
+}
+
+@("ServletServerHttpRequest encodes default UTF-8 form values")
+unittest
+{
+    auto mock = formRequest("application/x-www-form-urlencoded");
+    mock.addParameter("café", "é*~+");
+
+    assert((new ServletServerHttpRequest(mock)).getBody() == cast(const(ubyte)[]) "caf%C3%A9=%C3%A9*%7E%2B");
+}
+
+@("ServletServerHttpRequest preserves the raw body for an unsupported form encoding")
+unittest
+{
+    auto mock = formRequest("application/x-www-form-urlencoded; charset=windows-1251");
+    mock.addParameter("x", "а");
+    mock.setContent(cast(const(ubyte)[]) "x=%e0");
+
+    assert((new ServletServerHttpRequest(mock)).getBody() == cast(const(ubyte)[]) "x=%e0");
+}
+
+@("ServletServerHttpRequest uses a staged form charset")
+unittest
+{
+    auto mock = formRequest("application/x-www-form-urlencoded; charset=ISO-8859-1");
+    mock.addParameter("x", "é");
+    auto request = new ServletServerHttpRequest(mock);
+    request.getHeaders().setContentType(MediaType(MediaType.APPLICATION_FORM_URLENCODED, StandardCharsets.UTF_8));
+
+    assert(request.getBody() == cast(const(ubyte)[]) "x=%C3%A9");
+}
+
+private MockHttpServletRequest formRequest(string contentType = "application/x-www-form-urlencoded; charset=UTF-8")
+{
+    auto mock = new MockHttpServletRequest;
+    mock.setMethod("POST");
+    mock.setContentType(contentType);
+    return mock;
+}

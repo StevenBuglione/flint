@@ -17,7 +17,7 @@ import flint.http : HttpHeaders, HttpInputMessage, HttpMethod, HttpOutputMessage
 import flint.jakarta.servlet.http : HeaderFieldSource, HttpServletRequest, HttpServletResponse;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.net : URI;
-import flint.java.nio.charset : Charset;
+import flint.java.nio.charset : Charset, StandardCharsets;
 
 @safe:
 
@@ -119,7 +119,97 @@ class ServletServerHttpRequest : ServerHttpRequest
 
     const(ubyte)[] getBody()
     {
+        const type = servletRequest.getContentType();
+        if (isFormPost(type) && servletRequest.getQueryString() is null && !hasUnhandledFormCharset(type))
+        {
+            auto requestHeaders = getHeaders();
+            if (usesUtf8(requestHeaders))
+                return reconstructFormBody(requestHeaders);
+        }
         return servletRequest.getInputStream().readAllBytes();
+    }
+
+    private bool isFormPost(string type)
+    {
+        enum formType = MediaType.APPLICATION_FORM_URLENCODED_VALUE;
+        if (type.length < formType.length)
+            return false;
+        foreach (start; 0 .. type.length - formType.length + 1)
+            if (type[start .. start + formType.length] == formType)
+                return servletRequest.getMethod() == "POST";
+        return false;
+    }
+
+    private bool hasUnhandledFormCharset(string type)
+    {
+        if (headersRead)
+            return false;
+        const encoding = servletRequest.getCharacterEncoding();
+        if (encoding.length == 0 || !hasCharsetSuffix(type, encoding))
+            return false;
+        return !Charset.isSupported(encoding) || Charset.forName(encoding) != StandardCharsets.UTF_8;
+    }
+
+    pragma(inline, false) private const(ubyte)[] reconstructFormBody(HttpHeaders requestHeaders)
+    {
+        char[] encoded;
+        auto names = servletRequest.getParameterNames();
+        foreach (nameIndex, name; names)
+        {
+            auto values = servletRequest.getParameterValues(name);
+            foreach (valueIndex, value; values)
+            {
+                appendFormComponent(encoded, name);
+                if (value !is null)
+                {
+                    encoded ~= '=';
+                    appendFormComponent(encoded, value);
+                    if (valueIndex + 1 < values.length)
+                        encoded ~= '&';
+                }
+            }
+            if (nameIndex + 1 < names.length)
+                encoded ~= '&';
+        }
+        if (encoded.length != 0 && requestHeaders.containsHeader(HttpHeaders.CONTENT_LENGTH))
+            requestHeaders.setContentLength(cast(long) encoded.length);
+        return cast(const(ubyte)[]) encoded;
+    }
+}
+
+/// Form reconstruction currently encodes UTF-8. Unhandled encodings use the servlet's bytes.
+private bool usesUtf8(HttpHeaders headers) pure
+{
+    try
+    {
+        MediaType type;
+        if (!headers.readContentType(type))
+            return true;
+        const charset = type.getCharset();
+        return charset is null || *charset == StandardCharsets.UTF_8;
+    }
+    catch (IllegalArgumentException)
+    {
+        return false;
+    }
+}
+
+/// Java URLEncoder rules for one UTF-8 form name or value.
+pragma(inline, false) private void appendFormComponent(ref char[] output, string value) pure nothrow
+{
+    static immutable hex = "0123456789ABCDEF";
+    foreach (char c; value)
+    {
+        if (c == ' ')
+            output ~= '+';
+        else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-'
+                || c == '_' || c == '.' || c == '*')
+            output ~= c;
+        else
+        {
+            char[3] escaped = ['%', hex[c >> 4], hex[c & 15]];
+            output ~= escaped[];
+        }
     }
 }
 
