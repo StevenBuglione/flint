@@ -190,7 +190,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 159 | 143 | 0 | 2,088 |
-| framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
+| framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 56 | 69 | 0 | 4,327 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 231 | 133 | 1,871 | 16,186 |
@@ -9547,14 +9547,14 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.servlet.annotation | 54 | 0 |
 | jakarta.servlet.descriptor | 20 | 0 |
 | jakarta.servlet.http | 177 | 0 |
-| jakarta.validation | 152 | 0 |
+| jakarta.validation | 151 | 0 |
 | jakarta.validation.bootstrap | 6 | 0 |
 | jakarta.validation.constraints | 45 | 0 |
 | jakarta.validation.constraintvalidation | 5 | 0 |
 | jakarta.validation.executable | 14 | 0 |
 | jakarta.validation.groups | 5 | 0 |
 | jakarta.validation.metadata | 67 | 0 |
-| jakarta.validation.spi | 15 | 0 |
+| jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 803 | 0 |
 | java.lang | 2,055 | 0 |
@@ -9607,7 +9607,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | javax.security.cert | 0 | 39 |
 | javax.sql | 217 | 0 |
 | org.aspectj.lang | 23 | 0 |
-| org.hibernate.validator | 82 | 0 |
+| org.hibernate.validator | 85 | 0 |
 | org.hibernate.validator.cfg | 18 | 0 |
 | org.hibernate.validator.cfg.context | 49 | 0 |
 | org.hibernate.validator.cfg.defs | 159 | 0 |
@@ -9626,7 +9626,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.hibernate.validator.constraintvalidators | 4 | 0 |
 | org.hibernate.validator.engine | 7 | 0 |
 | org.hibernate.validator.group | 2 | 0 |
-| org.hibernate.validator.messageinterpolation | 35 | 0 |
+| org.hibernate.validator.messageinterpolation | 48 | 0 |
 | org.hibernate.validator.metadata | 2 | 0 |
 | org.hibernate.validator.parameternameprovider | 5 | 0 |
 | org.hibernate.validator.path | 10 | 0 |
@@ -10438,6 +10438,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#setRoles(List)` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#getDispatcherTypes()` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#setDispatcherTypes(Set)` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |
+| framework | `jakarta.validation.Validation#byDefaultProvider()` | 2 | Flint's byDefaultProvider() returns the Configuration itself; GenericBootstrap is deferred. |
+| framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.MonthDay#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
 | framework | `java.time.MonthDay#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |
@@ -10506,6 +10508,22 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ChronoUnit#isSupportedBy(Temporal)` | 2 | Requires the Temporal contract. |
 | framework | `java.time.temporal.ValueRange#checkValidIntValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
+| framework | `org.hibernate.validator.HibernateValidator#buildValidatorFactory(ConfigurationState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
+| framework | `org.hibernate.validator.HibernateValidator#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
+| framework | `org.hibernate.validator.HibernateValidator#createSpecializedConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
+| framework | `org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator#<init>(Set,Locale,LocaleResolver,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator#<init>(Set,Locale,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,ResourceBundleLocator)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,ResourceBundleLocator,Set,Locale,LocaleResolver,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,ResourceBundleLocator,Set,Locale,LocaleResolver,boolean,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,ResourceBundleLocator,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,Set,Locale,LocaleResolver,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,Set,Locale,LocaleResolver,boolean,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,Set,Locale,LocaleResolver,boolean,boolean,ExpressionFactory)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(ResourceBundleLocator,boolean,ExpressionFactory)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
+| framework | `org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator#<init>(Set,Locale,LocaleResolver,boolean)` | 2 | Flint's interpolators take no locale, LocaleResolver or ResourceBundleLocator configuration yet; only the no-argument constructor exists. |
 | framework | `org.springframework.core.io.FileSystemResource#<init>(FileSystem,String)` | 2 | Requires the Java NIO FileSystem resource constructor. |
 | framework | `org.springframework.core.io.FileSystemResource#<init>(Path)` | 2 | Requires the Java NIO Path resource constructor. |
 | framework | `org.springframework.expression.EvaluationContext#getTypeConverter()` | 2 | Deferred until indexed assignment uses the context conversion strategy. See D-SPEL-5. |
