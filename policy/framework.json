@@ -361,6 +361,37 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-math": {
+   "directory": "framework/java-math",
+   "module": "flint.java.math",
+   "repo": "framework",
+   "licence": "Apache-2.0",
+   "upstream": "harmony@6.0M3",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-math/bench",
+    "baseline": "framework/java-math/bench/baseline",
+    "edit_source": "framework/java-math/source/flint/java/math/biginteger.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 21120,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1040
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-time": {
    "directory": "framework/java-time",
    "module": "flint.java.time.period",

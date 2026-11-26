@@ -1,0 +1,8 @@
+name "probe-java-math"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-java-math"
+dflags "-preview=dip1000"
+dependency "flint:java-math" path="../../.."

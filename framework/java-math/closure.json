@@ -1,0 +1,15 @@
+{
+  "schema": "flint.jdk-closure/1",
+  "probes": {
+    "flint.java.math.biginteger": {
+      "arithmetic": {
+        "source": "bench/source/app.d",
+        "leaves": [
+          "flint.java.lang",
+          "flint.java.math.internal.limbs"
+        ],
+        "data": []
+      }
+    }
+  }
+}
