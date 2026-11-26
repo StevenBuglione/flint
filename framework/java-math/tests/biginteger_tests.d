@@ -596,3 +596,19 @@ unittest
     assert(negative.compareTo(new BigInteger([-1, -128, 0, 0, 0])) == 0);
     assertThrown!NullPointerException(negative.add(null));
 }
+
+@("Extrema reuse their operands and reject null") unittest
+{
+    import std.exception : assertThrown;
+
+    auto negative = BigInteger.valueOf(long.min);
+    auto positive = negative.negate();
+    assert(positive.toByteArray() == [0, -128, 0, 0, 0, 0, 0, 0, 0]);
+    assert(negative.longValueExact() == long.min);
+    assert(negative.abs() == positive);
+    assert(positive.abs() is positive);
+    assert(negative.min(positive) is negative);
+    assert(negative.max(positive) is positive);
+    assertThrown!NullPointerException(negative.min(null));
+    assertThrown!NullPointerException(negative.max(null));
+}

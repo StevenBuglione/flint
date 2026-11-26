@@ -213,6 +213,30 @@ class BigInteger : Comparable!BigInteger
         return cast(int)(sign < 0 ? 0U - hash : hash);
     }
 
+    /// Return the absolute value.
+    BigInteger abs()
+    {
+        return sign < 0 ? negate() : this;
+    }
+
+    /// Reverse the sign and share the owned magnitude.
+    BigInteger negate()
+    {
+        return sign == 0 ? this : new BigInteger(magnitude, -sign);
+    }
+
+    /// Return the lesser operand by signed comparison.
+    BigInteger min(BigInteger other)
+    {
+        return compareTo(other) <= 0 ? this : other;
+    }
+
+    /// Return the greater operand by signed comparison.
+    BigInteger max(BigInteger other)
+    {
+        return compareTo(other) >= 0 ? this : other;
+    }
+
     /// Return the exact sum.
     BigInteger add(BigInteger other)
     {
