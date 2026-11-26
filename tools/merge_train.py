@@ -258,6 +258,11 @@ class Train:
                         good = middle
                     else:
                         bad, bad_log = middle, middle_log
+                if bad == 1 and not self.verify(base)[0]:
+                    # Main itself is red: blame nobody; every submission waits for main to be fixed.
+                    self.store.event('train-main-red', base=base)
+                    return {'landed': [], 'failed': [], 'pushed': None, 'logs': {}, 'main_red': base,
+                            'pending': [s['role'] for s in self.ordered()], 'verifications': self.verifications}
                 failed.append((applied[bad - 1][0], 'the apps verification failed with this submission on the train:\n'
                                + bad_log))
                 landed = applied[:good]

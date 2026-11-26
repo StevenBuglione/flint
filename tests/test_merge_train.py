@@ -98,6 +98,19 @@ class TrainTests(unittest.TestCase):
         self.assertIn('test ! -e src/BAD', log)
         self.assertIn('back at the head', self.store.inbox('sol-b', True, False))
 
+    def test_a_red_main_blames_nobody(self):
+        (self.work / 'src' / 'BAD').write_text('main broke')
+        git(self.work, 'checkout', '-q', '--detach', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'main breaks')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.lane('sol-b', {'src/b.txt': 'b'})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], result['failed'], result['pending']), ([], [], ['sol-a', 'sol-b']))
+        self.assertIn('main_red', result)
+
     def test_a_conflicting_submission_fails_alone(self):
         self.lane('sol-a', {'src/app.txt': 'a\n'})
         self.lane('sol-b', {'src/app.txt': 'b\n'})
@@ -209,10 +222,10 @@ class TrainTests(unittest.TestCase):
         self.hold_slot()
         train = merge_train.Train(self.store, repo=self.work, worktree=self.tree, remote='origin', closure=('src/',),
                                   verifier=verifier)
-        result = train.run('runner')
-        self.assertEqual((result['landed'], result['failed']), ([], ['sol-a']))
+        result = train.run('runner')  # always red, so main is red too: nothing lands and nobody is blamed
+        self.assertEqual((result['landed'], result['failed'], result['pending']), ([], [], ['sol-a']))
         self.assertEqual(self.main_log(), ['base'])
-        self.assertIn('posidon', Path(result['logs']['sol-a']).read_text())
+        self.assertEqual(result['verifications'], 2)
 
     def test_the_closure_covers_the_apps_packages_and_shared_paths(self):
         paths = merge_train.closure_paths(merge_train.ROOT)
