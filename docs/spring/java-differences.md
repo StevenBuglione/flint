@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 498 | 22 | 1 | 2,774 |
-| framework | jackson-databind@3.1.8 | 572 | 61 | 5 | 9,829 |
+| framework | jackson-databind@3.1.8 | 554 | 56 | 5 | 9,852 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 176 | 154 | 0 | 2,060 |
@@ -4318,20 +4318,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,Class)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,JavaType)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectMapper#convertValue(Object,TypeReference)` | `flint.jackson.databind.ObjectMapper.convertValue` | [R7](api-mapping.md#r7-overloads) |  |
-| `tools.jackson.databind.ObjectMapper#readValue(DataInput,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(File,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(InputStream,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(JsonParser,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(Path,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `tools.jackson.databind.ObjectMapper#readValue(Reader,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(String,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(byte[],Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#readValue(byte[],int,int,Class)` | `flint.jackson.databind.ObjectMapper.readValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#treeToValue(JsonNode,Class)` | `flint.jackson.databind.ObjectMapper.treeToValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#treeToValue(TreeNode,Class)` | `flint.jackson.databind.ObjectMapper.treeToValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `tools.jackson.databind.ObjectMapper#valueToTree(Object)` | `flint.jackson.databind.ObjectMapper.valueToTree` | [R7](api-mapping.md#r7-overloads) |  |
-| `tools.jackson.databind.ObjectMapper#writeValue(DataOutput,Object)` | `flint.jackson.databind.ObjectMapper.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectMapper#writeValue(File,Object)` | `flint.jackson.databind.ObjectMapper.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectMapper#writeValue(JsonGenerator,Object)` | `flint.jackson.databind.ObjectMapper.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectMapper#writeValue(OutputStream,Object)` | `flint.jackson.databind.ObjectMapper.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
@@ -4340,7 +4336,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.databind.ObjectMapper#writeValueAsBytes(Object)` | `flint.jackson.databind.ObjectMapper.writeValueAsBytes` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectMapper#writeValueAsString(Object)` | `flint.jackson.databind.ObjectMapper.writeValueAsString` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectWriter#valueToTree(Object)` | `flint.jackson.databind.ObjectWriter.valueToTree` | [R7](api-mapping.md#r7-overloads) |  |
-| `tools.jackson.databind.ObjectWriter#writeValue(DataOutput,Object)` | `flint.jackson.databind.ObjectWriter.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectWriter#writeValue(File,Object)` | `flint.jackson.databind.ObjectWriter.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectWriter#writeValue(JsonGenerator,Object)` | `flint.jackson.databind.ObjectWriter.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.ObjectWriter#writeValue(OutputStream,Object)` | `flint.jackson.databind.ObjectWriter.writeValue` | [R7](api-mapping.md#r7-overloads) |  |
@@ -10334,7 +10329,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.tree | 2 | 0 |
 | tools.jackson.core.type | 48 | 0 |
 | tools.jackson.core.util | 460 | 0 |
-| tools.jackson.databind | 1,496 | 0 |
+| tools.jackson.databind | 1,519 | 0 |
 | tools.jackson.databind.annotation | 63 | 0 |
 | tools.jackson.databind.cfg | 763 | 0 |
 | tools.jackson.databind.deser | 587 | 0 |
@@ -10873,6 +10868,29 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.JsonNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
+| framework | `tools.jackson.databind.ObjectMapper#createGenerator(DataOutput)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
+| framework | `tools.jackson.databind.ObjectMapper#createGenerator(File,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
+| framework | `tools.jackson.databind.ObjectMapper#createGenerator(OutputStream,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
+| framework | `tools.jackson.databind.ObjectMapper#createGenerator(Path,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
+| framework | `tools.jackson.databind.ObjectMapper#createParser(DataInput)` | 2 | The Java overload uses DataInput. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#createParser(Reader)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readTree(Reader)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readTree(TokenBuffer)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(DataInput,Class)` | 2 | The Java overload uses DataInput. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(DataInput,JavaType)` | 2 | The Java overload uses DataInput. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(DataInput,TypeReference)` | 2 | The Java overload uses DataInput. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(Reader,Class)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(Reader,JavaType)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(Reader,TypeReference)` | 2 | The Java overload reads from java.io.Reader. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,Class)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,JavaType)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#readValue(TokenBuffer,TypeReference)` | 2 | The Java overload reads a TokenBuffer. Flint's mapper reads strings, UTF-8 bytes or an existing JsonParser. |
+| framework | `tools.jackson.databind.ObjectMapper#writeValue(DataOutput,Object)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
+| framework | `tools.jackson.databind.ObjectWriter#createGenerator(DataOutput)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
+| framework | `tools.jackson.databind.ObjectWriter#createGenerator(File,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
+| framework | `tools.jackson.databind.ObjectWriter#createGenerator(OutputStream,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
+| framework | `tools.jackson.databind.ObjectWriter#createGenerator(Path,JsonEncoding)` | 2 | The Java overload selects a JsonEncoding for the output. Flint's JSON output uses UTF-8. |
+| framework | `tools.jackson.databind.ObjectWriter#writeValue(DataOutput,Object)` | 2 | The Java overload uses DataOutput. Flint's mapper writes through its generator, OutputSink or ByteArrayBuilder. |
 | framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonGenerator,String,BeanDescription,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
 | framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonGenerator,String,JavaType)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
 | framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonParser,String,BeanDescription,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
