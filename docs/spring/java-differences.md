@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 44 | 103 | 2,133 | 13,323 |
-| data-commons | spring-data-commons@4.2.0 | 248 | 199 | 0 | 3,535 |
+| data-commons | spring-data-commons@4.2.0 | 251 | 201 | 0 | 3,530 |
 | framework | spring-framework@v7.1.0 | 3,620 | 1,487 | 4,870 | 29,857 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -1003,6 +1003,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.PersistentEntity#getIdentifierAccessor(Object)` | `flint.data.mapping.PersistentEntity.getIdentifierAccessor` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.PersistentEntity#getPropertyAccessor(B)` | `flint.data.mapping.PersistentEntity.getPropertyAccessor` | [R23](api-mapping.md#r23-object-typed-values), [D-DATA-13](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.PersistentEntity#getRequiredIdProperty()` | `flint.data.mapping.PersistentEntity.getRequiredIdProperty` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.data.mapping.PersistentEntity#getRequiredPersistentProperty(String)` | `flint.data.mapping.PersistentEntity.getRequiredPersistentProperty` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.data.mapping.PersistentEntity#getRequiredVersionProperty()` | `flint.data.mapping.PersistentEntity.getRequiredVersionProperty` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.mapping.PersistentEntity#getType()` | `flint.data.mapping.PersistentEntity.getType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.mapping.PersistentEntity#getTypeInformation()` | `flint.data.mapping.PersistentEntity.getTypeInformation` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.mapping.PersistentEntity#isNew(Object)` | `flint.data.mapping.PersistentEntity.isNew` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -10132,7 +10134,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.geo.format | 11 | 0 |
 | org.springframework.data.history | 42 | 0 |
 | org.springframework.data.javapoet | 69 | 0 |
-| org.springframework.data.mapping | 160 | 0 |
+| org.springframework.data.mapping | 155 | 0 |
 | org.springframework.data.mapping.callback | 13 | 0 |
 | org.springframework.data.mapping.context | 63 | 0 |
 | org.springframework.data.mapping.model | 200 | 0 |

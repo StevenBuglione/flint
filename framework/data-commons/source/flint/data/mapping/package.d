@@ -169,6 +169,21 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// Whether the entity has an identifier property.
     bool hasIdProperty();
 
+    /// The version property, or null when no version is mapped.
+    P getVersionProperty();
+
+    /// The version property, or an IllegalStateException when absent.
+    P getRequiredVersionProperty();
+
+    /// Whether a version property is mapped.
+    bool hasVersionProperty();
+
+    /// The first persistent property with the given name, or null.
+    P getPersistentProperty(string name);
+
+    /// The named persistent property, or an IllegalStateException when absent.
+    P getRequiredPersistentProperty(string name);
+
     /// The metadata for the entity's domain type.
     TypeInformation getTypeInformation();
 
@@ -178,7 +193,7 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// Creates an accessor for a compatible bean.
     PersistentPropertyAccessor!(T, P) getPropertyAccessor(Any bean);
 
-    /// Supplies the default required-identifier property check (R3).
+    /// Supplies the required-property defaults (R3).
     mixin template Defaults(PropertyType = P)
     {
         PropertyType getRequiredIdProperty()
@@ -188,6 +203,24 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
                 throw new imported!"flint.java.lang".IllegalStateException(
                         "Required identifier property not found for " ~ getType().name);
             return identifier;
+        }
+
+        PropertyType getRequiredVersionProperty()
+        {
+            auto versionProperty = getVersionProperty();
+            if (versionProperty is null)
+                throw new imported!"flint.java.lang".IllegalStateException(
+                        "Required version property not found for " ~ getType().name);
+            return versionProperty;
+        }
+
+        PropertyType getRequiredPersistentProperty(string name)
+        {
+            auto property = getPersistentProperty(name);
+            if (property is null)
+                throw new imported!"flint.java.lang".IllegalStateException("Required property " ~ (name is null
+                        ? "null" : name) ~ " not found for " ~ getType().name);
+            return property;
         }
     }
 }

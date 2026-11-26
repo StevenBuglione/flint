@@ -13,7 +13,7 @@ import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
 import flint.java.classref : ClassRef, classOf;
-import flint.java.lang : IllegalArgumentException, Long;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, Long;
 import flint.java.util : Comparator;
 import std.exception : assertThrown, collectException;
 import std.typecons : Nullable;
@@ -240,6 +240,38 @@ unittest
 {
     PersistentEntity!(Person, Property) entity = mapped!Person();
     assertThrown!IllegalArgumentException(entity.getPropertyAccessor(Any.init));
+}
+
+@("reportsRequiredPropertyName")
+unittest
+{
+    import std.algorithm.searching : canFind;
+
+    auto model = mapped!Person();
+    auto revision = new Property("revision", classOf!long);
+    model.addPersistentProperty(revision);
+    PersistentEntity!(Person, Property) entity = model;
+    assert(entity.getRequiredPersistentProperty("revision") is revision);
+    assert(entity.getPersistentProperty("foo") is null);
+    auto missing = collectException!IllegalStateException(entity.getRequiredPersistentProperty("foo"));
+    assert(missing !is null && missing.msg.canFind("Required property foo not found"));
+    assert(missing.msg.canFind(classOf!Person.name));
+    assert(entity.getPersistentProperty(null) is null);
+    assertThrown!IllegalStateException(entity.getRequiredPersistentProperty(null));
+}
+
+@("required version property follows registration")
+unittest
+{
+    auto model = mapped!Person();
+    PersistentEntity!(Person, Property) entity = model;
+    assert(!entity.hasVersionProperty() && entity.getVersionProperty() is null);
+    assertThrown!IllegalStateException(entity.getRequiredVersionProperty());
+
+    auto revision = new Property("revision", classOf!long, false, true);
+    model.addPersistentProperty(revision);
+    assert(entity.hasVersionProperty());
+    assert(entity.getRequiredVersionProperty() is revision);
 }
 
 @("rejectsNonMatchingBeanForPropertyAccessor")

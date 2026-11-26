@@ -91,13 +91,13 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     }
 
     /// The version property, or null when no version is mapped.
-    P getVersionProperty()
+    override P getVersionProperty()
     {
         return versionProperty;
     }
 
     /// Whether a version property is mapped.
-    bool hasVersionProperty()
+    override bool hasVersionProperty()
     {
         return versionProperty !is null;
     }
@@ -142,7 +142,7 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     }
 
     /// The first persistent property registered under the name.
-    P getPersistentProperty(string name)
+    override P getPersistentProperty(string name)
     {
         return propertiesByName.get(name);
     }
