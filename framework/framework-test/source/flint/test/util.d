@@ -142,8 +142,8 @@ struct JsonPathExpectationsHelper
     {
         Assert.hasText(expression, "expression must not be null or empty");
         this.expression = expression;
-        compile();
         mapper = new JsonMapper;
+        compile();
     }
 
     /// Formats the expression using Java's format specifiers (R7).
@@ -189,7 +189,7 @@ struct JsonPathExpectationsHelper
     {
         auto value = evaluateJsonPath(content);
         if (value.isNull() || (!pathDefinite && value.isEmpty()))
-            AssertionErrors.fail("No value at JSON path \"" ~ expression ~ "\"");
+            AssertionErrors.fail(missingValueMessage());
     }
 
     /// Asserts that no non-null value exists.
@@ -279,7 +279,7 @@ struct JsonPathExpectationsHelper
     {
         auto value = evaluateJsonPath(content);
         if (value.isNull() || (!pathDefinite && value.isEmpty()))
-            AssertionErrors.fail("No value at JSON path \"" ~ expression ~ "\"");
+            AssertionErrors.fail(missingValueMessage());
         if (value.getNodeType() != type)
             failExpectation(description, value);
     }
@@ -288,6 +288,11 @@ struct JsonPathExpectationsHelper
     {
         const text = value.isString() ? "'" ~ value.asString() ~ "'" : value.toString();
         AssertionErrors.fail("Expected " ~ description ~ " at JSON path \"" ~ expression ~ "\" but found: " ~ text);
+    }
+
+    private string missingValueMessage() const pure nothrow
+    {
+        return "No value at JSON path \"" ~ expression ~ "\"";
     }
 
     private static bool isEmpty(JsonNode value)
@@ -310,7 +315,7 @@ struct JsonPathExpectationsHelper
             return array;
         }
         if (values.length == 0)
-            AssertionErrors.fail("No value at JSON path \"" ~ expression ~ "\"");
+            AssertionErrors.fail(missingValueMessage());
         return values[0];
     }
 
@@ -323,9 +328,9 @@ struct JsonPathExpectationsHelper
         try
             root = mapper.readTree(content);
         catch (Exception malformed)
-            throw new AssertionError("No value at JSON path \"" ~ expression ~ "\"", malformed);
+            throw new AssertionError(missingValueMessage(), malformed);
         if (root.isMissingNode())
-            AssertionErrors.fail("No value at JSON path \"" ~ expression ~ "\"");
+            AssertionErrors.fail(missingValueMessage());
 
         definite = pathDefinite;
         JsonNode[] current = [root];
@@ -387,6 +392,9 @@ struct JsonPathExpectationsHelper
 
     private Step compileBracket(ref size_t cursor)
     {
+        if (cursor < expression.length && (expression[cursor] == '\'' || expression[cursor] == '"'))
+            return compileQuotedMember(cursor);
+
         const start = cursor;
         while (cursor < expression.length && expression[cursor] != ']')
             ++cursor;
@@ -395,17 +403,62 @@ struct JsonPathExpectationsHelper
         const token = expression[start .. cursor++];
         if (token == "*")
             return Step(Selection.wildcard);
-        if (token.length >= 2 && (token[0] == '\'' || token[0] == '"') && token[$ - 1] == token[0])
-            return Step(Selection.member, token[1 .. $ - 1]);
         const index = tryParseLong(token);
         if (!index.ok)
             throw new IllegalArgumentException("Unsupported JSON path element [" ~ token ~ "] in " ~ expression);
         return Step(Selection.element, null, index.value);
     }
 
-    private void invalidPath()
+    private Step compileQuotedMember(ref size_t cursor)
     {
-        throw new IllegalArgumentException("Invalid JSON path: " ~ expression);
+        const quote = expression[cursor++];
+        const start = cursor;
+        bool escaped;
+        while (cursor < expression.length && expression[cursor] != quote)
+        {
+            if (expression[cursor++] == '\\')
+            {
+                escaped = true;
+                if (cursor == expression.length)
+                    invalidPath();
+                ++cursor;
+            }
+        }
+        if (cursor + 1 >= expression.length || expression[cursor + 1] != ']')
+            invalidPath();
+
+        const member = expression[start .. cursor];
+        cursor += 2;
+        return Step(Selection.member, escaped ? decodeQuotedMember(member, quote) : member);
+    }
+
+    private string decodeQuotedMember(string member, char quote)
+    {
+        // Normalize path quotes so Jackson can decode the escapes as a JSON string.
+        string encoded = "\"";
+        for (size_t cursor; cursor < member.length;)
+        {
+            char current = member[cursor++];
+            bool needsBackslash = current == '"';
+            if (current == '\\')
+            {
+                current = member[cursor++];
+                needsBackslash = current != '\'' || quote != '\'';
+            }
+            if (needsBackslash)
+                encoded ~= '\\';
+            encoded ~= current;
+        }
+        encoded ~= '"';
+        try
+            return mapper.readTree(encoded).asString();
+        catch (Exception cause)
+            invalidPath(cause);
+    }
+
+    private noreturn invalidPath(Throwable cause = null)
+    {
+        throw new IllegalArgumentException("Invalid JSON path: " ~ expression, cause);
     }
 
     private static void select(JsonNode value, ref const Step step, ref JsonNode[] selected)

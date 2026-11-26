@@ -7,7 +7,7 @@ Modified by the Flint authors. The fixture uses standard JSON quoting.
 +/
 module json_path_expectations_helper_tests;
 
-import flint.java.lang : AssertionError;
+import flint.java.lang : AssertionError, IllegalArgumentException;
 import flint.test.util : JsonPathExpectationsHelper;
 
 @safe:
@@ -118,6 +118,30 @@ unittest
     path.doesNotHaveJsonPath(content);
     fails(() => path.exists(content), `No value at JSON path "$.emptyArray[*]"`);
     fails(() => path.hasJsonPath(content), `No values for JSON path "$.emptyArray[*]"`);
+}
+
+@("Quoted JsonPath members treat brackets as part of the name and decode escapes")
+unittest
+{
+    enum document = `{"a]b":{"value":7},"a'b":8,"a\"b":9,"a\\b":10,"a\nb":11,"🐈":12,"":13}`;
+    Path(`$['a]b'].value`).assertValue(document, 7);
+    Path(`$["a]b"]['value']`).assertValue(document, 7);
+    Path(`$['a\'b']`).assertValue(document, 8);
+    Path(`$["a\"b"]`).assertValue(document, 9);
+    Path(`$['a"b\'c']`).assertValue(`{"a\"b'c":14}`, 14);
+    Path(`$['a\\b']`).assertValue(document, 10);
+    Path(`$['a\nb']`).assertValue(document, 11);
+    Path(`$['\uD83D\uDC08']`).assertValue(document, 12);
+    Path(`$['']`).assertValue(document, 13);
+}
+
+@("JsonPath rejects an unfinished quoted member or an invalid escape at construction")
+unittest
+{
+    import std.exception : assertThrown;
+
+    foreach (invalid; [`$['a]`, `$['a'`, `$['a'junk]`, `$['a\q']`])
+        assertThrown!IllegalArgumentException(Path(invalid));
 }
 
 @("assertValueIsString")
