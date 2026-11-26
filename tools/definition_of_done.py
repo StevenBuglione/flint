@@ -28,6 +28,7 @@ window on venus pauses it; --no-hold is for other machines.
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import os
 import re
@@ -239,6 +240,21 @@ def ownership(root=ROOT):
                 segments = d.removeprefix('flint.').split('.')
                 table.setdefault('.'.join(part[:-1] if part.endswith('_') and part[:-1] in D_KEYWORDS else part
                                           for part in segments), name)
+    # A package no D module names is owned through its mapped elements. Several modules can map elements into one
+    # package (java.util: the collections in java, UUID in java-util), and the owner must not depend on which row
+    # comes first in a mapping file: reordering the mapping once moved a whole package's jtreg tests between java and
+    # java-util (sol-observability, sol-jdk-core, coordinator 2026-11-26). Prefer a candidate with a D module directly
+    # in the package (java-util's flint.java.util.uuid is in java.util; java's flint.java only encloses it), then one
+    # whose D modules name the package or an enclosing one, then the lowest module name.
+    claims = {package: name for package, name in table.items()}
+    direct = collections.defaultdict(set)
+    for name, (_, modules, upstream, _) in ported_modules(root).items():
+        for d in modules:
+            if str(upstream).startswith('openjdk@') and d.startswith(('flint.java.', 'flint.javax.')):
+                segments = d.removeprefix('flint.').split('.')[:-1]
+                direct['.'.join(part[:-1] if part.endswith('_') and part[:-1] in D_KEYWORDS else part
+                                for part in segments)].add(name)
+    candidates = collections.defaultdict(set)
     for mapping in sorted((root / 'api').glob('*/mapping.json')):
         for element, entry in json.loads(mapping.read_text()).get('elements', {}).items():
             d = entry.get('d')
@@ -248,7 +264,14 @@ def ownership(root=ROOT):
             package = java_package(element)
             if (best and d_owner[best] not in explicitly_scoped and package
                     and not package.startswith('org.springframework.')):
-                table.setdefault(package, d_owner[best])
+                candidates[package].add(d_owner[best])
+    for package, names in sorted(candidates.items()):
+        if package in table:
+            continue
+        inside = names & direct.get(package, set())
+        covering = {n for n in names if any(claims[p] == n and (package == p or package.startswith(p + '.'))
+                                            for p in claims)}
+        table[package] = min(inside or covering or names)
     _OWNERSHIP[root] = table
     return table
 

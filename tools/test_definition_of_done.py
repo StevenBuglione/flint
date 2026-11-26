@@ -132,6 +132,34 @@ class Resolve(unittest.TestCase):
         # Whole directories only: tckx/ is not tck/.
         self.assertEqual(owner('java/util/concurrent/tckx/A.java'), 'java')
 
+    def test_package_ownership_does_not_depend_on_mapping_row_order(self):
+        modules = {
+            'java': {'module': 'flint.java', 'upstream': 'openjdk@21.0.13'},
+            'java-util': {'module': 'flint.java.util.uuid', 'upstream': 'openjdk@21.0.13'},
+            'java-concurrent': {'module': 'flint.java.util.concurrent.callable', 'upstream': 'openjdk@21.0.13'},
+            'java-concurrent-sync': {'module': 'flint.java.util.concurrent.locks', 'upstream': 'openjdk@21.0.13',
+                                     'also': ['flint.java.util.concurrent.brokenbarrierexception']},
+        }
+        rows = [('java.util.ArrayList', 'flint.java.util.ArrayList'), ('java.util.UUID', 'flint.java.util.uuid.UUID'),
+                ('java.util.concurrent.TimeUnit', 'flint.java.util.concurrent.TimeUnit'),
+                ('java.util.concurrent.BrokenBarrierException',
+                 'flint.java.util.concurrent.brokenbarrierexception.BrokenBarrierException'),
+                ('java.util.concurrent.Callable', 'flint.java.util.concurrent.callable.Callable'),
+                ('java.util.stream.Stream', 'flint.java.util.stream.Stream')]
+        tables = []
+        for order in (rows, rows[::-1], rows[2:] + rows[:2]):
+            root = self.jtreg_root(modules)
+            (root / 'api' / 'framework' / 'mapping.json').write_text(json.dumps(
+                {'elements': {element: {'d': d, 'status': 'ported'} for element, d in order}}))
+            tables.append(dod.ownership(root))
+        self.assertEqual(tables[0], tables[1])
+        self.assertEqual(tables[0], tables[2])
+        # A module with a D module directly in the package beats an aggregate that only encloses it; among those,
+        # the lowest name; a package only the aggregate maps stays the aggregate's.
+        self.assertEqual(tables[0]['java.util'], 'java-util')
+        self.assertEqual(tables[0]['java.util.concurrent'], 'java-concurrent')
+        self.assertEqual(tables[0]['java.util.stream'], 'java')
+
     def test_a_jtreg_path_listed_twice_or_inside_another_module_s_type_raises(self):
         root = self.jtreg_root({
             'a': {'module': 'flint.java.util.concurrent.a', 'upstream': 'openjdk@21.0.13',
