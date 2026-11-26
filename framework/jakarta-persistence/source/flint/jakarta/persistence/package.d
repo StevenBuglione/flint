@@ -19,6 +19,7 @@ public import flint.jakarta.persistence.annotations : Access, AccessType, Associ
     PrimaryKeyJoinColumn, PrimaryKeyJoinColumns, QueryHint, SecondaryTable, SecondaryTables,
     SequenceGenerator, SequenceGenerators,
     Table, TableGenerator, TableGenerators, Temporal, TemporalType, Transient, UniqueConstraint, Version;
-public import flint.jakarta.persistence.contracts : AttributeConverter, EntityTransaction;
+public import flint.jakarta.persistence.contracts : AttributeConverter, CacheRetrieveMode,
+    CacheStoreMode, EntityTransaction, FindOption, LockOption, PessimisticLockScope, RefreshOption;
 
 @safe:

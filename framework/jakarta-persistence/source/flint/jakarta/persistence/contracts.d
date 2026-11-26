@@ -3,8 +3,13 @@
  * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
  * jakarta/persistence/EntityTransaction.java:
  * Copyright (c) 2008, 2024 Oracle and/or its affiliates. All rights reserved.
+ * jakarta/persistence/CacheRetrieveMode.java, CacheStoreMode.java, PessimisticLockScope.java:
+ * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
+ * jakarta/persistence/FindOption.java, LockOption.java, RefreshOption.java:
+ * Copyright (c) 2023 Oracle and/or its affiliates. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
- * Modified by the Flint authors: D interfaces (R3), nullable integer (R5), and DDoc exceptions (R8).
+ * Modified by the Flint authors: D interfaces (R3), nullable integer (R5), DDoc exceptions (R8),
+ * and built-in options as enums (D-JPA-2).
  */
 
 /// Internal declarations re-exported from the Jakarta Persistence public modules (D-JPA-1).
@@ -50,4 +55,52 @@ interface EntityTransaction
 
     /// Returns the timeout hint, with an unset value distinct from zero seconds.
     Nullable!int getTimeout();
+}
+
+/// A provider-defined option for an entity lookup.
+interface FindOption
+{
+}
+
+/// A provider-defined option for refreshing an entity.
+interface RefreshOption
+{
+}
+
+/// A provider-defined option for locking an entity.
+interface LockOption
+{
+}
+
+/// Controls reading entities from the second-level cache (D-JPA-2).
+enum CacheRetrieveMode
+{
+    /// Allow cache reads.
+    USE,
+
+    /// Read entities from the database.
+    BYPASS,
+}
+
+/// Controls writing entities to the second-level cache (D-JPA-2).
+enum CacheStoreMode
+{
+    /// Store results and updates in the cache, without replacing entries on a database read.
+    USE,
+
+    /// Skip cache writes.
+    BYPASS,
+
+    /// Store results and updates in the cache, replacing entries on a database read.
+    REFRESH,
+}
+
+/// Controls which rows a pessimistic lock covers (D-JPA-2).
+enum PessimisticLockScope
+{
+    /// Lock rows storing the entity's non-collection state, including its foreign keys.
+    NORMAL,
+
+    /// Also lock join-table and collection-table rows for relationships and collections owned by the entity.
+    EXTENDED,
 }
