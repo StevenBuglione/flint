@@ -1,4 +1,4 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/core/TypedPropertyPath.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/core/{TypedPropertyPath,PropertyPathUtil}.java
 // Copyright 2025-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
@@ -7,6 +7,16 @@ module flint.data.core;
 import flint.java.lang : IllegalArgumentException, NullPointerException;
 
 @safe:
+
+/// Resolves a property path from a named getter (D-DATA-3).
+class PropertyPathUtil
+{
+    /// The typed path for the getter.
+    static TypedPropertyPath!(PropertyOwner!getter, PropertyValue!getter) resolve(alias getter)()
+    {
+        return TypedPropertyPath!(PropertyOwner!getter, PropertyValue!getter).path!getter();
+    }
+}
 
 /// A property path resolved from named member references at compile time.
 interface TypedPropertyPath(T, P)

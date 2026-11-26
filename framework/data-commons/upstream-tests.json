@@ -153,8 +153,14 @@
       "status": "deferred"
     },
     "org/springframework/data/core/PropertyPathUtilUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/property_path_util_tests.d",
+      "methods": {
+        "ported": [
+          "resolvedPathShouldDelegatePropertyAccess",
+          "shouldResolvePropertyPath"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/core/PropertyReferenceExceptionUnitTests.java": {
       "phase": "2",

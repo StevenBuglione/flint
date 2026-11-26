@@ -1551,7 +1551,6 @@
       "org/springframework/data/core/DataCmns511Tests.java",
       "org/springframework/data/core/NullableWrapperConvertersUnitTests.java",
       "org/springframework/data/core/PropertyPathUnitTests.java",
-      "org/springframework/data/core/PropertyPathUtilUnitTests.java",
       "org/springframework/data/core/PropertyReferenceExceptionUnitTests.java",
       "org/springframework/data/core/PropertyReferenceUnitTests.java",
       "org/springframework/data/core/ReactiveWrappersUnitTests.java",
