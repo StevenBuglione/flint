@@ -15,7 +15,9 @@ flint port-spring --project jakarta-persistence --tag 3.2.0 \
 
 The output directory must be new. It receives one D module and `mapping.json` with exact entries for deferred declarations. Identical existing ports are left alone. Changes to existing ports require `--replace-ported`, and the owning lane reviews the proposed replacements. Use `--json` to read both without creating files. Use `--helper` for a helper built at a different path and `--cache` for the same cache override used with `flint api fetch`.
 
-This slice supports public top-level annotations with primitive, string and class-token fields, scalar and array defaults in the supported literal forms, and explicit JDK meta-annotation imports. It moves `value` first, uses `ClassRef` for Java class tokens under R4, and applies R19 to D keyword names. The CLI reports Java `@Inherited` for AOT review. Unsupported types, default expressions and custom meta-annotations produce a diagnostic before any candidate is written. The slice accepts Apache, MIT and BSD source ports covered by the licence matrix. EPL source translation requires destination-package support.
+This slice supports public top-level annotations with primitive, string and class-token fields, scalar and array defaults in the supported literal forms, and explicit JDK meta-annotation imports. It moves `value` first, uses `ClassRef` for Java class tokens under R4, and applies R19 to D keyword names. The CLI reports Java `@Inherited` for AOT review. Unsupported types, default expressions and annotation metadata produce a diagnostic before any candidate is written. The slice accepts Apache, MIT and BSD source ports covered by the licence matrix. EPL source translation requires destination-package support.
+
+A custom meta-annotation with no attributes can become a D UDA on the struct. Its exact mapped symbol must already be in the destination D module. The CLI checks the Java import scope and declaration order against the pinned manifest before emitting the markers. Custom metadata with arguments or on annotation members requires a separate translation.
 
 Java `@Deprecated` on an annotation or attribute becomes D `deprecated` on the corresponding struct or field. The warning includes a literal `since` version, a `forRemoval = true` notice, and the replacement hint from the adjacent Javadoc `@deprecated` tag when supplied.
 
@@ -31,12 +33,16 @@ Public top-level enums with constants alone become D enums in Java declaration o
 
 `test_annotations.py` exercises the C helper and compiles the emitted UDA with DMD and LDC. `test_jakarta.py` walks every Jakarta Persistence annotation in the pinned manifest, compares generated fields and mappings to the existing hand port where available, checks the emitted headers, and compiles every generated D file on both compilers.
 
+`test_spring_markers.py` translates Spring Framework's `Component` and compares the marker and field with the hand port. It checks the extracted AOT models and runs a direct and transitive lookup with both compilers.
+
 ```sh
 python3 tools/port-spring/tests/test_annotations.py
 python3 tools/port-spring/tests/test_enum.py
 python3 tools/port-spring/tests/test_jakarta.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 python3 tools/port-spring/tests/test_jakarta_enums.py --flint /path/to/flint \
+  --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
+python3 tools/port-spring/tests/test_spring_markers.py --flint /path/to/flint \
   --helper .flint/port-spring/flint-port-spring --cache .flint/cache/api
 ```
 

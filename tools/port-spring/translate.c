@@ -39,6 +39,8 @@ typedef struct {
     TSNode root;
     Slice package;
     TSNode declaration;
+    Slice *markers;
+    size_t marker_count;
     bool is_enum;
     bool inherited;
     bool class_ref;
@@ -292,6 +294,8 @@ static bool resolves(const JavaFile *annotation, Slice spelling, const char *qua
     return from_java_lang;
 }
 
+static bool has_named_children(TSNode node);
+
 static int check_meta(JavaFile *annotation, TSNode modifiers, bool attribute, TSNode *deprecated)
 {
     static const char *const metadata[] = {
@@ -323,8 +327,14 @@ static int check_meta(JavaFile *annotation, TSNode modifiers, bool attribute, TS
         while (match < sizeof metadata / sizeof *metadata &&
                !resolves(annotation, name, metadata[match], false, NULL))
             ++match;
-        if (match == sizeof metadata / sizeof *metadata)
-            return diagnostic(annotation, node, "unsupported meta-annotation");
+        if (match == sizeof metadata / sizeof *metadata) {
+            TSNode arguments = member(node, "arguments");
+            if (annotation->is_enum || !qualified_identifier(name) ||
+                (!ts_node_is_null(arguments) && has_named_children(arguments)))
+                return diagnostic(annotation, node, "unsupported meta-annotation");
+            annotation->markers[annotation->marker_count++] = name;
+            continue;
+        }
         if (!strcmp(metadata[match], "java.lang.annotation.Inherited"))
             annotation->inherited = true;
     }
@@ -787,7 +797,7 @@ static int emit_field(JavaFile *annotation, Field *field, Text *output)
     return 0;
 }
 
-static bool has_declarations(TSNode node)
+static bool has_named_children(TSNode node)
 {
     for (uint32_t index = 0; index < ts_node_named_child_count(node); ++index)
         if (!ts_node_is_extra(ts_node_named_child(node, index)))
@@ -808,7 +818,7 @@ static int collect_fields(const JavaFile *annotation, TSNode body, Field *fields
         TSNode node = ts_node_named_child(body, index);
         if (ts_node_is_extra(node))
             continue;
-        if (annotation->is_enum && kind(node, "enum_body_declarations") && !has_declarations(node))
+        if (annotation->is_enum && kind(node, "enum_body_declarations") && !has_named_children(node))
             continue;
         if (annotation->is_enum && !plain_constant(node))
             return diagnostic(annotation, node, "unsupported enum member");
@@ -940,12 +950,22 @@ static void emit_candidate(const JavaFile *annotation, Slice name, const Text *s
         }
         putchar('}');
     }
+    const char *body_key = annotation->marker_count ? "metaBody" : has_references ? "referenceBody" : "body";
     printf("],\"inherited\":%s,\"classRef\":%s,\"%s\":", annotation->inherited ? "true" : "false",
-           annotation->class_ref ? "true" : "false", has_references ? "referenceBody" : "body");
+           annotation->class_ref ? "true" : "false", body_key);
     json_string(contents(body));
     if (annotation->implicit_deprecated)
         fputs(",\"implicitDeprecated\":true", stdout);
-    if (has_references)
+    if (annotation->marker_count) {
+        fputs(",\"metaMarkers\":[", stdout);
+        for (size_t index = 0; index < annotation->marker_count; ++index) {
+            if (index)
+                putchar(',');
+            json_string(annotation->markers[index]);
+        }
+        putchar(']');
+    }
+    if (has_references || annotation->marker_count)
         emit_imports(annotation);
     puts("}");
 }
@@ -969,19 +989,25 @@ static int translate(JavaFile *annotation, bool scope_only)
     }
     if (annotation->is_enum && !ts_node_is_null(member(annotation->declaration, "interfaces")))
         return diagnostic(annotation, annotation->declaration, "unsupported enum implementing an interface");
-    TSNode deprecated;
-    int status = check_meta(annotation, child_of_kind(annotation->declaration, "modifiers"), false, &deprecated);
-    if (status)
-        return status;
-
+    TSNode modifiers = child_of_kind(annotation->declaration, "modifiers");
+    size_t marker_slots = ts_node_is_null(modifiers) ? 0 : ts_node_child_count(modifiers);
+    annotation->markers = calloc(marker_slots ? marker_slots : 1, sizeof *annotation->markers);
+    if (!annotation->markers)
+        return diagnostic(annotation, annotation->declaration, "cannot allocate annotation metadata");
     TSNode body = member(annotation->declaration, "body");
     size_t slots = ts_node_named_child_count(body);
     Field *fields = calloc(slots ? slots : 1, sizeof *fields);
-    if (!fields)
+    if (!fields) {
+        free(annotation->markers);
         return diagnostic(annotation, body, "cannot allocate members");
+    }
     size_t count = 0;
     Text output = {0};
     Text symbol = {0};
+    TSNode deprecated;
+    int status = check_meta(annotation, modifiers, false, &deprecated);
+    if (status)
+        goto cleanup;
     Slice name = node_text(annotation, member(annotation->declaration, "name"));
     if (!lower_name(name, &symbol)) {
         status = diagnostic(annotation, annotation->declaration, "unsupported declaration name");
@@ -1019,6 +1045,7 @@ cleanup:
     for (size_t index = 0; index < count; ++index)
         free(fields[index].symbol.bytes);
     free(fields);
+    free(annotation->markers);
     free(output.bytes);
     free(symbol.bytes);
     return status;

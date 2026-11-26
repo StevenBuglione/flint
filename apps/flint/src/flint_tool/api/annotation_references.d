@@ -14,10 +14,17 @@ private alias AnnotationScope = bool delegate(const ref ApiType, out JSONValue, 
 string resolveReferenceBody(const ref Manifest manifest, const ref ApiType annotation, const ref Classifier classifier,
         string module_, const ref JSONValue candidate, out string error, scope AnnotationScope loadScope = null)
 {
-    const draft = candidate["referenceBody"].str;
+    const markers = "metaMarkers" in candidate;
+    const draft = candidate[markers is null ? "referenceBody" : "metaBody"].str;
     const references = JavaReferences(manifest.types, candidate["package"].str,
             candidate["referenceImports"].arrayNoRef);
     string rendered;
+    if (markers !is null)
+    {
+        rendered = resolveMarkers(references, annotation, classifier, module_, markers.arrayNoRef, error);
+        if (error.length)
+            return null;
+    }
     size_t cursor;
     foreach (ref field; candidate["members"].arrayNoRef)
     {
@@ -43,6 +50,59 @@ string resolveReferenceBody(const ref Manifest manifest, const ref ApiType annot
         cursor = cast(size_t) offset;
     }
     return rendered ~ draft[cursor .. $];
+}
+
+private string resolveMarkers(const ref JavaReferences references, const ref ApiType annotation,
+        const ref Classifier classifier, string module_, const(JSONValue)[] markers, out string error)
+{
+    import std.algorithm.searching : canFind;
+
+    string result;
+    size_t pinned;
+    foreach (ref marker; markers)
+    {
+        const spelling = marker.str;
+        if (!pinnedMarker(annotation.decl.annotations, spelling, pinned))
+        {
+            error = "unsupported meta-annotation does not match the pinned declaration or order: " ~ spelling;
+            return null;
+        }
+        const id = references.typeId(spelling);
+        const nested = references.findType(id);
+        if (nested is null || id == annotation.decl.id || nested.decl.kind != TypeKind.annotation
+                || nested.decl.members.length)
+        {
+            error = "unsupported meta-annotation without an unambiguous marker declaration: " ~ spelling;
+            return null;
+        }
+        const symbol = localSymbol(mappedSymbol(classifier, id), module_ ~ ".");
+        if (!symbol.length)
+        {
+            error = "unsupported meta-annotation outside destination module or without an exact mapping: " ~ id;
+            return null;
+        }
+        const entry = classifier.classify(id);
+        if (entry.status == Status.adapted && !entry.rules.canFind("R2"))
+        {
+            error = "unsupported adapted meta-annotation without R2: " ~ id;
+            return null;
+        }
+        result ~= "@" ~ symbol ~ "\n";
+    }
+    return result;
+}
+
+private bool pinnedMarker(const(string)[] annotations, string spelling, ref size_t next)
+{
+    const expression = "@" ~ spelling;
+    const withParens = expression ~ "()";
+    while (next < annotations.length)
+    {
+        const value = annotations[next++];
+        if (value == expression || value == withParens)
+            return true;
+    }
+    return false;
 }
 
 private string referenceField(const ref JavaReferences references, const ref Classifier classifier, string module_,
@@ -427,6 +487,61 @@ private string mappedSymbol(const ref Classifier classifier, string id)
             && entry.status != Status.adapted) || !validSymbol(entry.symbol))
         return null;
     return entry.symbol;
+}
+
+@("marker meta-annotations use exact same-module mapping and pinned order")
+unittest
+{
+    import flint_tool.api.coverage : Mapping, parseMapping;
+    import std.json : parseJSON;
+    import std.string : indexOf;
+
+    Manifest manifest;
+    manifest.types.length = 3;
+    foreach (ref marker; manifest.types)
+        marker.decl.kind = TypeKind.annotation;
+    manifest.types[0].decl.package_ = "one";
+    manifest.types[0].decl.name = "Index";
+    manifest.types[1].decl.package_ = "two";
+    manifest.types[1].decl.name = "Root";
+    manifest.types[2].decl.package_ = "two";
+    manifest.types[2].decl.name = "Index";
+    ApiType annotation;
+    annotation.decl.package_ = "example";
+    annotation.decl.name = "Setting";
+    annotation.decl.annotations = ["@Root()", "@Index"];
+    Mapping mapping;
+    string error;
+    assert(parseMapping(`{"elements":{
+        "one.Index":{"status":"ported","d":"flint.example.Indexed"},
+        "two.Root":{"status":"adapted","rules":["R2"],"d":"flint.example.Rooted"},
+        "two.Index":{"status":"excluded","category":"deferred","phase":"2"}
+    }}`, mapping, error), error);
+    const classifier = Classifier(mapping);
+    auto candidate = parseJSON(`{"package":"example","metaMarkers":["Root","Index"],
+        "referenceImports":[{"path":"one.Index","static":false,"wildcard":false},
+        {"path":"two","static":false,"wildcard":true}],
+        "members":[],"metaBody":"struct Setting {}\n"}`);
+    assert(resolveReferenceBody(manifest, annotation, classifier, "flint.example", candidate,
+            error) == "@Rooted\n@Indexed\nstruct Setting {}\n", error);
+    assert(!resolveReferenceBody(manifest, annotation, classifier, "flint.other", candidate, error).length);
+    assert(error.indexOf("outside destination module") >= 0, error);
+
+    annotation.decl.annotations = ["@Index", "@Root()"];
+    assert(!resolveReferenceBody(manifest, annotation, classifier, "flint.example", candidate, error).length);
+    assert(error.indexOf("pinned declaration or order") >= 0, error);
+    annotation.decl.annotations = ["@Root(42)", "@Index"];
+    assert(!resolveReferenceBody(manifest, annotation, classifier, "flint.example", candidate, error).length);
+    assert(error.indexOf("pinned declaration or order") >= 0, error);
+
+    annotation.decl.annotations = ["@Root", "@Index"];
+    candidate["referenceImports"][0]["path"] = JSONValue("two.Index");
+    assert(!resolveReferenceBody(manifest, annotation, classifier, "flint.example", candidate, error).length);
+    assert(error.indexOf("without an exact mapping") >= 0, error);
+    candidate["referenceImports"][0]["path"] = JSONValue("one");
+    candidate["referenceImports"][0]["wildcard"] = JSONValue(true);
+    assert(!resolveReferenceBody(manifest, annotation, classifier, "flint.example", candidate, error).length);
+    assert(error.indexOf("unambiguous marker declaration") >= 0, error);
 }
 
 @("enum defaults use exact manifest constants and canonical mapped symbols")

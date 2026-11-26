@@ -275,7 +275,7 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
         error = path ~ " has no matching rulebook v2 mapping for " ~ pin.key;
         return null;
     }
-    if (referenceFields.length)
+    if (referenceFields.length || "metaMarkers" in candidate)
     {
         const classifier = Classifier(mapping);
         JSONValue[string] scopes;

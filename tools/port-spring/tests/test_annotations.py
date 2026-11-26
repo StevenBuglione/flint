@@ -260,12 +260,31 @@ static assert(__traits(getAttributes, Example)[0].value.name == "flint.Foo");
                 self.assertIn(b"unsupported annotation default", result.stderr)
 
     def test_custom_meta_annotation_is_never_dropped(self):
-        result = self.run_helper(
-            "package example; import example.metadata.Target; @Target public @interface Settings {}"
-        )
-        self.assertEqual(result.returncode, 2)
-        self.assertEqual(result.stdout, b"")
-        self.assertIn(b"unsupported meta-annotation", result.stderr)
+        result = self.run_helper("""package example;
+import java.lang.annotation.Retention;
+import example.metadata.Target;
+@Target @Retention(java.lang.annotation.RetentionPolicy.RUNTIME) @example.Indexed()
+public @interface Settings { String value() default ""; }
+""")
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        candidate = json.loads(result.stdout)
+        self.assertEqual(candidate["metaMarkers"], ["Target", "example.Indexed"])
+        self.assertEqual(candidate["metaBody"], 'struct Settings\n{\n    string value = "";\n}\n')
+        self.assertNotIn("body", candidate)
+        self.assertIn({"path": "example.metadata.Target", "static": False, "wildcard": False},
+                      candidate["referenceImports"])
+
+    def test_meta_annotation_arguments_and_member_annotations_are_rejected(self):
+        for declaration in (
+            '@Indexed("argument") public @interface Settings {}',
+            'public @interface Settings { @Indexed String value(); }',
+            '@Indexed public enum Settings { DEFAULT }',
+        ):
+            with self.subTest(declaration=declaration):
+                result = self.run_helper("package example; " + declaration)
+                self.assertEqual(result.returncode, 2)
+                self.assertFalse(result.stdout)
+                self.assertIn(b"unsupported", result.stderr)
 
     def test_deprecated_annotation_and_attribute_preserve_warnings(self):
         annotation = self.run_helper('''package example;
@@ -307,9 +326,11 @@ public @interface Options {
 import example.metadata.Deprecated;
 @Deprecated public @interface Settings { }
 ''')
-        self.assertEqual(result.returncode, 2)
-        self.assertFalse(result.stdout)
-        self.assertIn(b"unsupported meta-annotation", result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        candidate = json.loads(result.stdout)
+        self.assertEqual(candidate["metaMarkers"], ["Deprecated"])
+        self.assertNotIn("implicitDeprecated", candidate)
+        self.assertNotIn("deprecated", candidate["metaBody"])
 
     def test_jdk_annotation_enum_imports_do_not_shadow_java_lang_types(self):
         result = self.run_helper("""package example;
