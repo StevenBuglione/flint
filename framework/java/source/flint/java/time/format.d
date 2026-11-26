@@ -148,6 +148,12 @@ struct Fields
         set(Field.instantSeconds, dateTime.toEpochSecond(offset));
     }
 
+    private void addZone(ZoneId zone) pure nothrow @nogc
+    {
+        zoneId_ = zone.getId();
+        zoneIsRegion_ = !zone.isOffset();
+    }
+
     /// The fields of a date.
     static Fields of(LocalDate value) pure nothrow @nogc
     {
@@ -191,8 +197,7 @@ struct Fields
         auto f = of(value.toLocalDateTime());
         f.kind_ = Kind.zonedDateTime;
         f.addOffset(value.toLocalDateTime(), value.getOffset());
-        f.zoneId_ = value.getZone().getId();
-        f.zoneIsRegion_ = !value.getZone().isOffset();
+        f.addZone(value.getZone());
         return f;
     }
 
@@ -577,7 +582,7 @@ struct DateTimeFormatter
         return DateTimeFormatter(elements.idup, describeElements(elements));
     }
 
-    /// A copy of this formatter that converts instant-backed values to `zone` before formatting.
+    /// A copy of this formatter that uses `zone` when printing. Local values keep their date and time fields.
     DateTimeFormatter withZone(ZoneId zone) const pure nothrow @nogc
     {
         DateTimeFormatter copy = DateTimeFormatter(elements_, description_);
@@ -589,8 +594,13 @@ struct DateTimeFormatter
     /// Formats the fields of a temporal value.
     string format(Fields fields) const
     {
-        if (hasZone_ && fields.has(Field.instantSeconds))
-            fields = zoned(fields);
+        if (hasZone_)
+        {
+            if (fields.has(Field.instantSeconds))
+                fields = zoned(fields);
+            else if (!fields.hasOffset_)
+                fields.addZone(zone_);
+        }
         auto printer = Printer(fields);
         printer.run(elements_);
         return printer.output;
