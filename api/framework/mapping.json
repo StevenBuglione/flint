@@ -14044,7 +14044,7 @@
 "org.springframework.core.convert.support.DefaultConversionService#<init>()":{"d":"flint.core.convert.support.DefaultConversionService.this","status":"ported"},
 "org.springframework.core.convert.support.DefaultConversionService#addCollectionConverters(ConverterRegistry)":{"d":"flint.core.convert.support.DefaultConversionService.addCollectionConverters","status":"ported"},
 "org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)":{"d":"flint.core.convert.support.DefaultConversionService.addDefaultConverters","status":"ported"},
-"org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()":{"d":"flint.core.convert.support.DefaultConversionService.getSharedInstance","status":"ported"},
+"org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()":{"d":"flint.core.convert.support.DefaultConversionService.getSharedInstance","status":"ported","note":"Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4)."},
 "org.springframework.core.convert.support.GenericConversionService":{"d":"flint.core.convert.support.GenericConversionService","status":"ported"},
 "org.springframework.core.convert.support.GenericConversionService#<init>()":{"d":"flint.core.convert.support.GenericConversionService.this","status":"ported"},
 "org.springframework.core.convert.support.GenericConversionService#addConverter(Class,Class,Converter)":{"category":"deferred","phase":"2","status":"excluded"},
