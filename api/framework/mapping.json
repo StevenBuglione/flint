@@ -7,7 +7,7 @@
 "java.util.concurrent.ExecutionException#<init>()":{"status":"ported","d":"flint.java.util.concurrent.executionexception.ExecutionException.this"},
 "java.util.concurrent.ExecutionException#<init>(String)":{"status":"adapted","d":"flint.java.util.concurrent.executionexception.ExecutionException.this","rules":["R26"]},
 "java.util.concurrent.ExecutionException#<init>(String,Throwable)":{"status":"adapted","d":"flint.java.util.concurrent.executionexception.ExecutionException.this","rules":["R26"]},
-"java.util.concurrent.ExecutionException#<init>(Throwable)":{"status":"ported","d":"flint.java.util.concurrent.executionexception.ExecutionException.this"},
+"java.util.concurrent.ExecutionException#<init>(Throwable)":{"status":"excluded","category":"deferred","phase":"2","reason":"The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override."},
 "java.io.InterruptedIOException":{"status":"adapted","rules":["R1"],"d":"flint.java.io.interruptedioexception.InterruptedIOException","note":"Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it."},
 "java.io.InterruptedIOException#<init>()":{"status":"ported","d":"flint.java.io.interruptedioexception.InterruptedIOException.this"},
 "java.io.InterruptedIOException#<init>(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java distinguishes absent detail from an empty detail message. The current raw string constructor and inherited accessor need the R5 nullable message contract."},
