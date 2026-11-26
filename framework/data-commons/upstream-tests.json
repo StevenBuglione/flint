@@ -169,8 +169,19 @@
       "status": "deferred"
     },
     "org/springframework/data/domain/AbstractAggregateRootUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/aggregate_root_tests.d",
+      "methods": {
+        "ported": [
+          "registersEvent",
+          "clearsEvents",
+          "copiesEventsFromExistingAggregate",
+          "addsEventAndReturnsAggregate",
+          "rejectsNullEvent",
+          "rejectsNullEventForRegistration",
+          "rejectsNullAggregate"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/AbstractPageRequestUnitTests.java": {
       "d": [
@@ -239,11 +250,6 @@
       "status": "deferred"
     },
     "org/springframework/data/domain/PageImplUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "org/springframework/data/domain/PageImplUnitTests.java": {
-      "status": "ported",
       "d": "framework/data-commons/tests/domain.d",
       "methods": {
         "ported": [
@@ -265,7 +271,8 @@
           "usesContentLengthForSizeIfNoPageableGiven",
           "toStringShouldNotInspectNullInstances"
         ]
-      }
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/PageRequestUnitTests.java": {
       "d": "framework/data-commons/tests/domain.d",

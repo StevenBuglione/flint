@@ -1562,7 +1562,6 @@
       "org/springframework/data/core/ReactiveWrappersUnitTests.java",
       "org/springframework/data/core/TypeDiscovererUnitTests.java",
       "org/springframework/data/core/TypedPropertyPathUnitTests.java",
-      "org/springframework/data/domain/AbstractAggregateRootUnitTests.java",
       "org/springframework/data/domain/DoubleVectorUnitTests.java",
       "org/springframework/data/domain/ExampleMatcherUnitTests.java",
       "org/springframework/data/domain/ExampleUnitTests.java",

@@ -25,6 +25,8 @@ import flint.data.core : PropertyOwner, PropertyValue, propertySegment, TypedPro
 import flint.java.lang : IllegalArgumentException, IllegalStateException, Iterable, NullPointerException;
 import flint.java.util : ArrayList, Collections, Iterator, List, Map, Objects, Optional;
 
+public import flint.data.domain.aggregate_root : AbstractAggregateRoot;
+public import flint.data.domain.events : AfterDomainEventPublication, DomainEvents;
 public import flint.data.domain.limit : Limit;
 public import flint.data.domain.scroll_position : KeysetScrollPosition, OffsetScrollPosition, ScrollPosition;
 
