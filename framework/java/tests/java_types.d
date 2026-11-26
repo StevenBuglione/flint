@@ -610,6 +610,17 @@ unittest
     assert(Locale.forLanguageTag("und") == Locale.ROOT && Locale.forLanguageTag("zh-Hant-TW") == Locale("zh", "TW"));
     assert(Locale.forLanguageTag("es-419").getCountry() == "419" && Locale.forLanguageTag("en_US") == Locale.ROOT);
     assert(Locale.forLanguageTag("de-DE-1996").getVariant() == "1996");
+    foreach (pair; [["IW", "he"], ["JI", "yi"], ["IN", "id"]])
+    {
+        const legacy = Locale(pair[0], "us");
+        const modern = Locale(pair[1], "US");
+        assert(legacy.getLanguage() == pair[1] && legacy.toLanguageTag() == pair[1] ~ "-US");
+        assert(legacy == modern && legacy.hashCode() == modern.hashCode());
+        assert(Locale.forLanguageTag(pair[0] ~ "-US") == modern);
+        assert(Locale.fromPosix(pair[0] ~ "_US.UTF-8") == modern);
+    }
+    assert(Locale("iww", "US").getLanguage() == "iww");
+    assert(Locale("İW", "US").getLanguage() == "İw");
     assert(Locale.fromPosix("en_US.UTF-8") == Locale.US && Locale.fromPosix("fr_FR@euro") == Locale.FRANCE);
     assert(Locale.fromPosix("C") == Locale.US && Locale.fromPosix("") == Locale.US
             && Locale.fromPosix("de") == Locale.GERMAN);

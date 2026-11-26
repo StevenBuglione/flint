@@ -3283,6 +3283,12 @@ struct Locale
     this(string language, string country = "", string variant = "") pure nothrow
     {
         this.language = asciiCase(language, false);
+        if (this.language == "iw")
+            this.language = "he";
+        else if (this.language == "ji")
+            this.language = "yi";
+        else if (this.language == "in")
+            this.language = "id";
         this.country = asciiCase(country, true);
         this.variant = variant;
     }
