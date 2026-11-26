@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 518 | 17 | 1 | 2,759 |
+| framework | jackson-core@3.1.8 | 517 | 17 | 1 | 2,760 |
 | framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -9948,7 +9948,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.util.temporal | 95 | 0 |
 | org.thymeleaf.web | 65 | 0 |
 | org.thymeleaf.web.servlet | 66 | 0 |
-| tools.jackson.core | 604 | 0 |
+| tools.jackson.core | 605 | 0 |
 | tools.jackson.core.async | 7 | 0 |
 | tools.jackson.core.base | 363 | 0 |
 | tools.jackson.core.exc | 11 | 0 |
@@ -10411,6 +10411,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.thymeleaf.context.Context` | 2 | Requires a backed insertion-ordered LinkedHashMap.keySet view and verified Locale default handling. |
 | framework | `org.thymeleaf.exceptions.TemplateAssertionException` | 2 | The positioned constructor uses locale-sensitive decimal formatting from Java String.format. |
 | framework | `org.thymeleaf.templatemode.TemplateMode#parse(String)` | 2 | Unknown-mode warnings use TemplateEngine.threadIndex and its logger. |
+| framework | `tools.jackson.core.JsonParser#nextName(SerializableString)` | 2 | The overload requires the deferred SerializableString API. |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_JAVA_COMMENTS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |

@@ -42819,7 +42819,7 @@
 "tools.jackson.core.JsonParser#nextIntValue(int)":{"status":"excluded","category":"deferred","phase":"2"},
 "tools.jackson.core.JsonParser#nextLongValue(long)":{"status":"excluded","category":"deferred","phase":"2"},
 "tools.jackson.core.JsonParser#nextName()":{"status":"ported","d":"flint.jackson.core.JsonParser.nextName"},
-"tools.jackson.core.JsonParser#nextName(SerializableString)":{"status":"ported","d":"flint.jackson.core.JsonParser.nextName"},
+"tools.jackson.core.JsonParser#nextName(SerializableString)":{"status":"excluded","category":"deferred","phase":"2","reason":"The overload requires the deferred SerializableString API."},
 "tools.jackson.core.JsonParser#nextNameMatch(PropertyNameMatcher)":{"status":"excluded","category":"deferred","phase":"2"},
 "tools.jackson.core.JsonParser#nextStringValue()":{"status":"ported","d":"flint.jackson.core.JsonParser.nextStringValue"},
 "tools.jackson.core.JsonParser#nextToken()":{"status":"ported","d":"flint.jackson.core.JsonParser.nextToken"},
