@@ -475,8 +475,6 @@
   "java.util.Collection#toArray()",
   "java.util.Collections",
   "java.util.Collections#reverse(List)",
-  "java.util.Collections#singleton(T)",
-  "java.util.Collections#singletonList(T)",
   "java.util.Collections#sort(List)",
   "java.util.Collections#sort(List,Comparator)",
   "java.util.Collections#unmodifiableList(List)",
