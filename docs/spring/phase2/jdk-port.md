@@ -70,7 +70,7 @@ Every JDK module must satisfy all eight rules.
    - The package module (`flint.java.util`) only publicly imports its leaves, so Java-style imports keep working.
    - Framework and engine code imports the leaves, never the package module.
    - A leaf imports only the leaves it really uses.
-2. **Separate DUB packages per area:** `flint:java` (lang and the core util interfaces), `flint:java-collections`, `flint:java-concurrent`, `flint:java-time`, `flint:java-text`, `flint:java-math`, `flint:java-regex`, `flint:java-io`, `flint:java-net`, `flint:java-security`.
+2. **Separate DUB packages per area:** `flint:java` (lang and the core util interfaces), `flint:java-collections`, `flint:java-util` (UUID, Base64, HexFormat and other small java.util value types that are not collections), `flint:java-concurrent`, `flint:java-time`, `flint:java-text`, `flint:java-math`, `flint:java-regex`, `flint:java-io`, `flint:java-net`, `flint:java-security`.
    - A module depends only on the packages it uses.
    - Dependencies run one way: `flint:java` sits at the bottom, and nothing in it imports another `flint:java-*` package.
 3. **Erased engine, thin typed facade** [B-1]:
