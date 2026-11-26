@@ -1,4 +1,5 @@
 // Ported from spring-security 7.2.0: crypto/src/test/java/org/springframework/security/crypto/password/DelegatingPasswordEncoderTests.java
+// Ported from spring-security 7.2.0: crypto/src/test/java/org/springframework/security/crypto/bcrypt/BCryptPasswordEncoderTests.java
 /*
  * Copyright 2004-present the original author or authors.
  *
@@ -95,6 +96,7 @@ private string thrown(T = IllegalArgumentException)(lazy bool action)
     return "<nothing thrown>";
 }
 
+@("DelegatingPasswordEncoderTests.constructorWhenIdForEncodeDoesNotExistThenIllegalArgumentException")
 unittest
 {
     // constructorWhenIdForEncodeNullThenIllegalArgumentException ... constructorWhenPrefixContainsSuffix...
@@ -119,6 +121,7 @@ unittest
     assert(collectException!IllegalArgumentException(f.encoder.setDefaultPasswordEncoderForMatches(null)) !is null);
 }
 
+@("DelegatingPasswordEncoderTests.matchesWhenCustomDefaultPasswordEncoderForMatchesThenDelegates")
 unittest
 {
     // matchesWhenCustomDefaultPasswordEncoderForMatchesThenDelegates, encodeWhenValidThenUsesIdForEncode
@@ -131,6 +134,7 @@ unittest
     assert(fixture().encoder.encode("password") == "{bcrypt}ENCODED-PASSWORD");
 }
 
+@("DelegatingPasswordEncoderTests.matchesWhenBCryptThenDelegatesToBCrypt")
 unittest
 {
     // matchesWhenBCryptThenDelegatesToBCrypt, matchesWhenNoopThenDelegatesToNoop
@@ -143,6 +147,7 @@ unittest
     assert(f.noop.calls == ["matches password ENCODED-PASSWORD"]);
 }
 
+@("DelegatingPasswordEncoderTests.matchesShouldThrowIllegalArgumentExceptionWhenNoPasswordEncoderIsMappedForTheId")
 unittest
 {
     // matchesWhenUnMappedThenIllegalArgumentException, matchesWhenNoClosingPrefixString..., matchesWhenNoStarting...,
@@ -160,6 +165,7 @@ unittest
     assert(f.bcrypt.calls.length == 0 && f.noop.calls.length == 0);
 }
 
+@("DelegatingPasswordEncoderTests.upgradeEncodingWhenDifferentIdThenTrue")
 unittest
 {
     // upgradeEncodingWhenEncodedPasswordNullThenFalse ... upgradeEncodingWhenDifferentIdThenTrue
@@ -202,6 +208,7 @@ private final class StubBCrypt : BCryptBackend
     }
 }
 
+@("BCryptPasswordEncoderTests.doesntMatchBogusEncodedValue")
 unittest
 {
     // BCryptPasswordEncoderTests: bad strengths, non-BCrypt values, upgradeEncoding by strength; the backend.
@@ -242,6 +249,7 @@ unittest
     }
 }
 
+@("BCryptPasswordEncoderTests.upgradeFromLowerStrength")
 unittest
 {
     if (!bcryptAvailable())
@@ -267,6 +275,7 @@ unittest
     assert(new BCryptPasswordEncoder().matches("admin", admin));
 }
 
+@("BCryptPasswordEncoderTests.encodeWhenPasswordOverMaxLengthThenThrowIllegalArgumentException")
 unittest
 {
     if (!bcryptAvailable())

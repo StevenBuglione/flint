@@ -13,8 +13,40 @@
       "status": "deferred"
     },
     "org/springframework/security/crypto/bcrypt/BCryptPasswordEncoderTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-crypto/tests/password_encoder_test.d",
+      "methods": {
+        "ported": [
+          "doesntMatchBogusEncodedValue",
+          "encodeWhenPasswordOverMaxLengthThenThrowIllegalArgumentException",
+          "upgradeFromLowerStrength"
+        ],
+        "skipped": {
+          "$2aCustomStrength": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2aMatches": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2aNotMatches": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2aUnicode": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2bCustomStrength": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2bMatches": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2bNotMatches": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2bUnicode": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2yCustomStrength": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2yMatches": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2yNotMatches": "Phase 2: the named password-encoder parity fixture is pending.",
+          "$2yUnicode": "Phase 2: the named password-encoder parity fixture is pending.",
+          "badHighCustomStrength": "Phase 2: the named password-encoder parity fixture is pending.",
+          "badLowCustomStrength": "Phase 2: the named password-encoder parity fixture is pending.",
+          "checkWhenNoRoundsThenTrue": "The pinned provider rejects cost 00.",
+          "customRandom": "Java SecureRandom injection has no adapter for the pinned provider.",
+          "doesntMatchEmptyEncodedValue": "Phase 2: the named password-encoder parity fixture is pending.",
+          "doesntMatchNullEncodedValue": "Phase 2: the named password-encoder parity fixture is pending.",
+          "matchesWhenPasswordOverMaxLengthThenAllowToMatch": "Phase 2: the named password-encoder parity fixture is pending.",
+          "passwordLargerThan72BytesShouldThrowIllegalArgumentException": "Phase 2: the named password-encoder parity fixture is pending.",
+          "upgradeFromNonBCrypt": "Phase 2: the named password-encoder parity fixture is pending.",
+          "upgradeFromNullOrEmpty": "Phase 2: the named password-encoder parity fixture is pending.",
+          "upgradeWhenNoRoundsThenTrue": "Phase 2: the named password-encoder parity fixture is pending."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/security/crypto/bcrypt/BCryptTests.java": {
       "phase": "2",
@@ -95,9 +127,43 @@
     "org/springframework/security/crypto/password/DelegatingPasswordEncoderTests.java": {
       "d": "security/security-crypto/tests/password_encoder_test.d",
       "methods": {
-        "ported": []
+        "ported": [
+          "constructorWhenIdForEncodeDoesNotExistThenIllegalArgumentException",
+          "matchesShouldThrowIllegalArgumentExceptionWhenNoPasswordEncoderIsMappedForTheId",
+          "matchesWhenBCryptThenDelegatesToBCrypt",
+          "matchesWhenCustomDefaultPasswordEncoderForMatchesThenDelegates",
+          "upgradeEncodingWhenDifferentIdThenTrue"
+        ],
+        "skipped": {
+          "constructorWhenIdContainsPrefixThenIllegalArgumentException": "Phase 2: the named password-encoder parity fixture is pending.",
+          "constructorWhenIdContainsSuffixThenIllegalArgumentException": "Phase 2: the named password-encoder parity fixture is pending.",
+          "constructorWhenIdForEncodeNullThenIllegalArgumentException": "Phase 2: the named password-encoder parity fixture is pending.",
+          "constructorWhenPrefixAndSuffixAreEmpty": "Phase 2: the named password-encoder parity fixture is pending.",
+          "constructorWhenPrefixContainsSuffixThenIllegalArgumentException": "Phase 2: the named password-encoder parity fixture is pending.",
+          "constructorWhenPrefixIsEmpty": "Phase 2: the named password-encoder parity fixture is pending.",
+          "constructorWhenPrefixIsNull": "Phase 2: the named password-encoder parity fixture is pending.",
+          "constructorWhenSuffixIsEmpty": "Phase 2: the named password-encoder parity fixture is pending.",
+          "constructorWhenSuffixIsNull": "Phase 2: the named password-encoder parity fixture is pending.",
+          "encodeWhenValidBySpecifyDelegatingPasswordEncoderThenUsesIdForEncode": "Phase 2: the named password-encoder parity fixture is pending.",
+          "encodeWhenValidThenUsesIdForEncode": "Phase 2: the named password-encoder parity fixture is pending.",
+          "matchesWhenBCryptBySpecifyDelegatingPasswordEncoderThenDelegatesToBCrypt": "Phase 2: the named password-encoder parity fixture is pending.",
+          "matchesWhenIdIsNullThenFalse": "Phase 2: the named password-encoder parity fixture is pending.",
+          "matchesWhenNoClosingPrefixStringThenIllegalArgumentException": "Phase 2: the named password-encoder parity fixture is pending.",
+          "matchesWhenNoIdStringThenFalse": "Phase 2: the named password-encoder parity fixture is pending.",
+          "matchesWhenNoStartingPrefixStringThenFalse": "Phase 2: the named password-encoder parity fixture is pending.",
+          "matchesWhenNoopThenDelegatesToNoop": "Phase 2: the named password-encoder parity fixture is pending.",
+          "matchesWhenNullIdThenDelegatesToInvalidId": "The Flint password-encoder map has no distinct null key.",
+          "matchesWhenPrefixInMiddleThenFalse": "Phase 2: the named password-encoder parity fixture is pending.",
+          "matchesWhenUnMappedThenIllegalArgumentException": "Phase 2: the named password-encoder parity fixture is pending.",
+          "setDefaultPasswordEncoderForMatchesWhenNullThenIllegalArgumentException": "Phase 2: the named password-encoder parity fixture is pending.",
+          "upgradeEncodingWhenEncodedPasswordNullThenFalse": "Phase 2: the named password-encoder parity fixture is pending.",
+          "upgradeEncodingWhenIdInvalidFormatThenTrue": "Phase 2: the named password-encoder parity fixture is pending.",
+          "upgradeEncodingWhenNullIdThenTrue": "Phase 2: the named password-encoder parity fixture is pending.",
+          "upgradeEncodingWhenSameIdAndEncoderFalseThenEncoderDecidesFalse": "Phase 2: the named password-encoder parity fixture is pending.",
+          "upgradeEncodingWhenSameIdAndEncoderTrueThenEncoderDecidesTrue": "Phase 2: the named password-encoder parity fixture is pending."
+        }
       },
-      "status": "ported"
+      "status": "partial"
     },
     "org/springframework/security/crypto/password/DigesterTests.java": {
       "phase": "2",

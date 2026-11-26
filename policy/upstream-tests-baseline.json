@@ -3622,7 +3622,6 @@
       "org/springframework/security/crypto/argon2/Argon2EncodingUtilsTests.java",
       "org/springframework/security/crypto/argon2/Argon2PasswordEncoderTests.java",
       "org/springframework/security/crypto/assertions/CryptoAssertionsTests.java",
-      "org/springframework/security/crypto/bcrypt/BCryptPasswordEncoderTests.java",
       "org/springframework/security/crypto/bcrypt/BCryptTests.java",
       "org/springframework/security/crypto/codec/HexTests.java",
       "org/springframework/security/crypto/codec/Utf8Tests.java",
