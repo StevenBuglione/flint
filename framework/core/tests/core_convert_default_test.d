@@ -21,7 +21,8 @@
  * spring-core/src/test/java/org/springframework/core/convert/converter/DefaultConversionServiceTests.java (the cases
  * that apply to Flint's erased DefaultConversionService), followed by Flint tests of Spring's documented default
  * converters (StringToBooleanConverter, StringToCharacterConverter, StringToNumberConverterFactory,
- * StringToEnumConverterFactory, NumberToNumberConverterFactory and NumberUtils.convertNumberToTargetClass).
+ * StringToEnumConverterFactory, NumberToNumberConverterFactory, CharacterToNumberFactory and
+ * NumberUtils.convertNumberToTargetClass).
  *
  * D's `int` stands for `int` and `Integer`; a conversion whose Java result is null is checked through the erased
  * `convert(Any, TypeDescriptor, TypeDescriptor)`, since the typed façade returns `T.init` for null.
@@ -51,7 +52,7 @@
  *   convertOptionalToObjectViaTypeDescriptorForMethodParameter.
  * - Java enum subclasses and integer-to-enum by ordinal (IntegerToEnumConverterFactory, EnumToIntegerConverter are
  *   not registered): stringToEnumWithSubclass, integerToEnum, integerToEnumWithSubclass, enumToInteger.
- * - Number to and from Character (not registered): numberToCharacter, characterToNumber.
+ * - Number to Character (not registered): numberToCharacter.
  * - Field reflection and generics introspection (`getClass().getField`, TypeDescriptor.collection/map, EnumSet,
  *   raw collections): stringToEnumSet, convertArrayToCollectionGenericTypeConversion, spr7766,
  *   convertCollectionToStringWithElementConversion, convertStringToCollectionWithElementConversion,
@@ -294,6 +295,25 @@ unittest
 {
     // numberToNumber
     assert(service().convert!long(1) == 1L);
+}
+
+@("characterToNumber")
+unittest
+{
+    assert(service().convert!int('A') == 65);
+}
+
+@("character conversion preserves the signed UTF-16 short and checks narrower targets")
+unittest
+{
+    auto conversion = service();
+    assert(conversion.convert!int(cast(wchar) 0x8000) == short.min);
+    assert(conversion.convert!long(cast(wchar) 0xFFFF) == -1);
+    assert(conversion.convert!float(cast(wchar) 0xFFFF) == -1.0f);
+    assert(conversion.convert!byte(cast(wchar) 0xFF80) == byte.min);
+    const belowByteRange = cast(wchar) 0xFF7F;
+    enum overflow = "Could not convert number [-129] of type [short] to target class [byte]: overflow";
+    assert(failureCause!byte(belowByteRange) == overflow);
 }
 
 unittest

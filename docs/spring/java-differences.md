@@ -205,6 +205,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | Repo | Java | Flint | Note |
 | --- | --- | --- | --- |
 | framework | `io.micrometer.observation.ObservationPredicate` | `flint.micrometer.observation.ObservationPredicate` | Inherits the test method from Flint's Java BiPredicate. Its combinators are deferred with the Java provider. |
+| framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
 | framework | `org.springframework.expression.spel.support.StandardTypeConverter#<init>()` | `flint.expression.spel.support.StandardTypeConverter` | Creates and retains one default conversion service per converter. Flint's core getSharedInstance factory creates a fresh service. |
 | framework | `tools.jackson.core.JsonPointer#length()` | `flint.jackson.core.JsonPointer.length` | Returns UTF-16 code units. |

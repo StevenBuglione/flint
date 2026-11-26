@@ -270,6 +270,8 @@ LocalizedResourceHelper keeps locale fallback behind the Core resource support m
 
 Multipart boundary generation uses `flint.conc.fillSecureRandom` from the method body. On venus, the Core size probe from `b360ec62` to this port moved from 8,844 to 19,197 loadable bytes and from 5,491 to 5,553 DMD templates. Both stay below their caps of 81,920 bytes and 8,550 templates. The Spring apps already link `conc` through the reactor. Their app budgets are checked by the merge train.
 
+Character-to-number conversion normalizes the UTF-16 code unit to a signed short inside the existing erased numeric converter. It shares target range checks and needs no additional converter registration. The Core probe on venus against `dd109d0e` kept 8,844 loadable bytes and moved from 5,491 to 5,502 DMD template instances against the 8,550 cap.
+
 ### Jackson tree search
 
 The first-match operations check an object's own property and then walk its stored children. A failed path lookup returns a missing node through the existing factory. The plural operations require Java List façades. Both their template counts (B-1) and the application cost of collection methods retained by virtual accumulator overloads (S-1) determine when the plural API can land.

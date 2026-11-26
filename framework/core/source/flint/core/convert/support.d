@@ -20,7 +20,7 @@
  * Modified by the Flint authors: ported from spring-framework v7.1.0,
  * spring-core/src/main/java/org/springframework/core/convert/support/{ConfigurableConversionService,
  * GenericConversionService,DefaultConversionService,StringToBooleanConverter,StringToCharacterConverter,
- * StringToNumberConverterFactory,NumberToNumberConverterFactory,ObjectToStringConverter,
+ * StringToNumberConverterFactory,NumberToNumberConverterFactory,CharacterToNumberFactory,ObjectToStringConverter,
  * StringToEnumConverterFactory,EnumToStringConverter,StringToArrayConverter,StringToCollectionConverter,
  * ArrayToStringConverter,CollectionToStringConverter}.java. The converters are erased over canonical type names.
  */
@@ -29,8 +29,9 @@
 `org.springframework.core.convert.support`: the `ConversionService` implementations.
 
 `DefaultConversionService` registers Spring's scalar converters: `string` to and from every D scalar (Java's
-primitives and wrappers) with Spring's parsing rules, number to number with overflow checks, `string` to and from
-integral enums (through `Descriptor.enumValues`), and comma-delimited `string` to and from `string[]`, `int[]`,
+primitives and wrappers) with Spring's parsing rules, and number and character to number with overflow checks.
+It converts `string` to and from integral enums through `Descriptor.enumValues`, and handles comma-delimited
+`string` to and from `string[]`, `int[]`,
 `long[]`, `List!string` and `Set!string`. Date and time, `ByteBuffer`, `Locale`, `Charset`, `UUID`, `Currency`,
 `Pattern` and the reflective `ObjectToObjectConverter` are not registered (Phase 1; the reflective one never).
 
@@ -305,6 +306,11 @@ private bool floatingName(string name) pure nothrow @nogc
     return name == "float" || name == "double" || name == "real";
 }
 
+private bool characterCodeUnitName(string name) pure nothrow @nogc
+{
+    return name == "char" || name == "wchar";
+}
+
 /// `string` to `bool`, `char` and the numbers, with Spring's rules: trimmed, empty is null.
 private final class StringToScalarConverter : ConditionalGenericConverter
 {
@@ -449,7 +455,7 @@ private final class ScalarToStringConverter : ConditionalGenericConverter
     }
 }
 
-/// Number to number, checking the range as `NumberUtils.convertNumberToTargetClass` does.
+/// Number or UTF-16 character to number, with Spring's `NumberUtils.convertNumberToTargetClass` range checks.
 private final class NumberToNumberConverter : ConditionalGenericConverter
 {
     ConvertiblePair[] getConvertibleTypes()
@@ -460,20 +466,27 @@ private final class NumberToNumberConverter : ConditionalGenericConverter
     bool matches(const TypeDescriptor sourceType, const TypeDescriptor targetType)
     {
         const source = sourceType.getName(), target = targetType.getName();
-        return source != target && (integralName(source) || floatingName(source))
-            && (integralName(target) || floatingName(target));
+        return source != target && (integralName(source) || floatingName(source)
+                || characterCodeUnitName(source)) && (integralName(target) || floatingName(target));
     }
 
     Any convert(Any source, const TypeDescriptor sourceType, const TypeDescriptor targetType)
     {
+        string sourceName = sourceType.getName();
         const target = targetType.getName();
+        if (characterCodeUnitName(sourceName))
+        {
+            // CharacterToNumberFactory converts the code unit to a signed short before applying the target's rules.
+            source = Any.of(cast(short) source.get!wchar);
+            sourceName = "short";
+        }
         if (floatingName(target))
             return target == "float" ? Any.of(source.get!float) : Any.of(source.get!double);
-        if (floatingName(sourceType.getName()))
+        if (floatingName(sourceName))
             return parseNumber(valueOf(cast(long) source.get!double), target);
         if (!fits(source, target))
             throw new IllegalArgumentException("Could not convert number [" ~ source.toString()
-                    ~ "] of type [" ~ sourceType.getName() ~ "] to target class [" ~ target ~ "]: overflow");
+                    ~ "] of type [" ~ sourceName ~ "] to target class [" ~ target ~ "]: overflow");
         return parseNumber(source.toString(), target);
     }
 

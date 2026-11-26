@@ -265,8 +265,17 @@
       "status": "deferred"
     },
     "org/springframework/core/convert/converter/DefaultConversionServiceTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/core/tests/core_convert_default_test.d",
+      "methods": {
+        "ported": [
+          "characterToNumber"
+        ],
+        "skipped": {
+          "numberToCharacter": "The reverse conversion is deferred.",
+          "numberToNumberNotSupportedNumber": "The test requires a custom Java Number subclass."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/core/convert/support/ByteBufferConverterTests.java": {
       "phase": "2",

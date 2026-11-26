@@ -1417,7 +1417,6 @@
       "org/springframework/core/convert/TypeDescriptorTests.java",
       "org/springframework/core/convert/converter/ConverterTests.java",
       "org/springframework/core/convert/converter/ConvertingComparatorTests.java",
-      "org/springframework/core/convert/converter/DefaultConversionServiceTests.java",
       "org/springframework/core/convert/support/ByteBufferConverterTests.java",
       "org/springframework/core/convert/support/CollectionToCollectionConverterTests.java",
       "org/springframework/core/convert/support/GenericConversionServiceTests.java",

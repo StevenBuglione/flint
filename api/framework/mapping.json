@@ -14373,7 +14373,7 @@
 "org.springframework.core.convert.support.DefaultConversionService":{"d":"flint.core.convert.support.DefaultConversionService","status":"ported"},
 "org.springframework.core.convert.support.DefaultConversionService#<init>()":{"d":"flint.core.convert.support.DefaultConversionService.this","status":"ported"},
 "org.springframework.core.convert.support.DefaultConversionService#addCollectionConverters(ConverterRegistry)":{"d":"flint.core.convert.support.DefaultConversionService.addCollectionConverters","status":"ported"},
-"org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)":{"d":"flint.core.convert.support.DefaultConversionService.addDefaultConverters","status":"ported"},
+"org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)":{"d":"flint.core.convert.support.DefaultConversionService.addDefaultConverters","status":"ported","note":"The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units."},
 "org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()":{"d":"flint.core.convert.support.DefaultConversionService.getSharedInstance","status":"ported","note":"Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4)."},
 "org.springframework.core.convert.support.GenericConversionService":{"d":"flint.core.convert.support.GenericConversionService","status":"ported"},
 "org.springframework.core.convert.support.GenericConversionService#<init>()":{"d":"flint.core.convert.support.GenericConversionService.this","status":"ported"},
