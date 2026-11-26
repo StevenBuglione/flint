@@ -5,6 +5,7 @@
   },
   "flint.java.util.concurrent.timeoutexception": {
     "incremental_linked_bytes": 687,
-    "template_instances": 40
+    "template_instances": 40,
+    "control": "tools/jdk-closure-controls/d-exception.d"
   }
 }

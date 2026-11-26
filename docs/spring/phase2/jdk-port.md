@@ -104,8 +104,20 @@ Rules 1, 4 and 5 are enforced by a check, not by review. `sol-jdk-core` builds i
 - **Size measurement:** loadable section bytes using the same ELF calculation as the package budget. The count includes `.bss` and excludes per-thread `.tbss` (decisions.md, 2026-11-26 01:20Z and 02:47Z).
 - **Budgets** (`jdk-leaf-rule`, decisions.md 2026-11-26 01:45Z): each leaf has its own budget, set at the measured value plus 10% and only shrinking afterwards. A package budget is the sum of its leaves; adding a leaf raises it by exactly that leaf's budget, with the trailer `Budget-Raise-Approved: jdk-leaf-rule`.
 
+The link-closure step checks each executable probe of a leaf listed in
+`leaf-budgets.json`. It compares the incremental loadable bytes to the cap
+in both O3 and Oz. The default baseline is the minimal control used in the
+closure report. A cap measured against a different baseline names its
+repository-relative D control source in `control`. It counts DMD templates
+from one invocation on the leaf source and its exact probe. Existing caps
+that use two invocations specify `"template_compile": "separate"`.
+The JSON report includes all observations and any overruns.
+Use `--enforce-leaf-budgets` with the standalone audit to make overruns fail.
+The definition-of-done step reports overruns while their historical
+measurements are reconciled.
+
 Run `python3 tools/gates.py --module framework/java --definition-of-done --step link-closure` on the Linux ELF
-runner. The audit uses `dub`, `ldc2`, `readelf` and `nm`. For investigation, run
+runner. The audit uses `dub`, `dmd`, `ldc2`, `readelf` and `nm`. For investigation, run
 `python3 tools/jdk_link_closure.py --package java --evidence <directory>` to retain linker maps and build logs.
 GNU ld's archive records identify the referring object and symbol for retained Phobos families when available.
 On venus, run both commands under the measurement queue's hold wrapper.

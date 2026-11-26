@@ -11,12 +11,14 @@ import tempfile
 from pathlib import Path
 
 from d_source import declared_module, imported_modules, tokens
-from measure_builds import copy_workspace, dub_invocation, elf_loadable_bytes, native_profiles
+from measure_builds import copy_workspace, dub_invocation, elf_loadable_bytes, native_profiles, template_instances
 from request_allocation_ratchet import git
+from workspace import dependencies, package_repos
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = 'flint.jdk-closure/1'
 PROBE_DIRECTORY = 'closure-probes'
+LEAF_BUDGET_METRICS = {'incremental_linked_bytes', 'template_instances'}
 BANNED_PHOBOS = tuple('std.' + family for family in (
     'format', 'conv', 'uni', 'regex', 'socket', 'net', 'process', 'file', 'path',
     'datetime', 'json', 'parallelism', 'concurrency',
@@ -555,6 +557,56 @@ def read_manifest(package, own_modules, all_modules=None):
     return entries
 
 
+def read_leaf_budgets(package, entries):
+    file = package / 'leaf-budgets.json'
+    if not file.is_file():
+        return {}
+    rows = json.loads(file.read_text(), object_pairs_hook=unique_object)
+    if not isinstance(rows, dict):
+        raise ValueError(f'{file}: expected a leaf budget object')
+    for leaf, budget in rows.items():
+        label = f'{file}: {leaf}'
+        if not any('source' in probe for probe in entries.get(leaf, {}).values()):
+            raise ValueError(f'{label}: leaf budget requires a registered executable probe')
+        if not isinstance(budget, dict) or set(budget) - LEAF_BUDGET_METRICS - {'control', 'template_compile'}:
+            raise ValueError(f'{label}: invalid leaf budget fields')
+        for metric in sorted(LEAF_BUDGET_METRICS):
+            value = budget.get(metric)
+            if type(value) is not int or value < 0:
+                raise ValueError(f'{label}: {metric} must be a nonnegative integer')
+        if budget.get('template_compile', 'joint') not in ('joint', 'separate'):
+            raise ValueError(f'{label}: invalid template_compile mode')
+        if 'control' in budget:
+            control = budget['control']
+            if not isinstance(control, str) or Path(control).is_absolute():
+                raise ValueError(f'{label}: invalid leaf budget control')
+            source = (ROOT / control).resolve()
+            shared = (ROOT / 'tools/jdk-closure-controls').resolve()
+            if (not (source.is_relative_to(package.resolve()) or source.is_relative_to(shared))
+                    or source.suffix != '.d' or not source.is_file()
+                    or leaf in source_imports(source.read_text())):
+                raise ValueError(f'{label}: invalid leaf budget control {control}')
+    return rows
+
+
+def leaf_budget_violations(report):
+    problems = []
+    for leaf, probes in report.items():
+        for name, budget in probes.items():
+            label = f'{leaf}/{name}'
+            limits = budget['limits']
+            byte_limit = limits['incremental_linked_bytes']
+            for profile, result in budget['profiles'].items():
+                actual = result['incremental_linked_bytes']
+                if actual > byte_limit:
+                    problems.append(f'{label} ({profile}) leaf budget: {actual} loadable bytes > {byte_limit}')
+            actual = budget['template_instances']
+            template_limit = limits['template_instances']
+            if actual > template_limit:
+                problems.append(f'{label} (DMD) leaf budget: {actual} template instances > {template_limit}')
+    return problems
+
+
 def check_covering_probe(package, entries, leaf, name, covering):
     label = f'{package}: {leaf}/{name}'
     if (not isinstance(covering, dict) or set(covering) != {'leaf', 'probe', 'abstract_type', 'concrete_type'}
@@ -668,7 +720,64 @@ def build_probe(workspace, directory, package, source, flags, evidence):
     return loadable_section_bytes(sections), map_symbols(map_text) | defined_symbols(symbols), map_text
 
 
-def audit(package, evidence):
+def template_imports(package, owners):
+    edges = dependencies(ROOT)
+    pending = [package]
+    seen = set()
+    while pending:
+        name = pending.pop()
+        if name not in seen:
+            seen.add(name)
+            pending.extend(edges[name])
+    return [owners[name][1] + '/source' for name in sorted(seen)]
+
+
+def count_source_templates(workspace, sources, imports, evidence, name):
+    command = ['dmd', '-preview=dip1000', '-vtemplates', '-c', '-o-',
+               *('-I' + path for path in imports), *(str(source) for source in sources)]
+    result = subprocess.run(command, cwd=workspace, text=True, capture_output=True)
+    output = result.stdout + result.stderr
+    if evidence:
+        (evidence / f'{name}-dmd.log').write_text(json.dumps(command) + '\n' + output)
+    if result.returncode:
+        raise BuildError(f'{name}: DMD template probe exited {result.returncode}:\n'
+                         + '\n'.join(output.splitlines()[-18:]))
+    return template_instances(output)
+
+
+def measure_leaf_templates(workspace, package, entries, budgets, evidence):
+    owners = package_repos(ROOT)
+    imports = template_imports(package, owners)
+    directory = workspace / owners[package][1]
+    for leaf, budget in budgets.items():
+        path = directory / 'source' / leaf.replace('.', '/')
+        implementation = path.with_suffix('.d')
+        if not implementation.is_file():
+            implementation = path / 'package.d'
+        mode = budget.get('template_compile', 'joint')
+        if mode == 'separate':
+            leaf_count = count_source_templates(workspace, [implementation], imports, evidence, leaf)
+        for name, entry in entries[leaf].items():
+            if 'source' not in entry:
+                continue
+            fixture = directory / entry['source']
+            label = f'{leaf}-{name}'
+            if mode == 'separate':
+                probe_count = count_source_templates(workspace, [fixture], imports, evidence, label)
+                detail = {'leaf': leaf_count, 'probe': probe_count}
+            else:
+                detail = {'joint': count_source_templates(workspace, [implementation, fixture], imports,
+                                                          evidence, label)}
+            yield leaf, name, {
+                'limits': {key: budget[key] for key in sorted(LEAF_BUDGET_METRICS)},
+                'control': budget.get('control'),
+                'profiles': {},
+                'template_compile': mode,
+                'template_instances': sum(detail.values()),
+                'template_detail': detail,
+            }
+
+def audit(package, evidence, *, budget_report=None):
     if not sys.platform.startswith('linux'):
         raise BuildError('JDK link-closure probes require the Linux ELF toolchain')
     policy = json.loads((ROOT / 'policy/framework.json').read_text())['modules']
@@ -685,6 +794,7 @@ def audit(package, evidence):
     if 'flint.java.character' in all_modules:
         all_modules.update(CHARACTER_TABLES)
     entries = read_manifest(packages[package], inventory[package], all_modules)
+    budgets = read_leaf_budgets(packages[package], entries) if budget_report is not None else {}
     if evidence:
         evidence.mkdir(parents=True, exist_ok=True)
     report = {}
@@ -699,6 +809,9 @@ def audit(package, evidence):
         control = Path(temporary) / 'control.d'
         control.write_text('module app;\n@safe:\nint main(string[] args) { return cast(int) args.length & 127; }\n')
         profiles = native_profiles()
+        if budgets:
+            for leaf, name, budget in measure_leaf_templates(workspace, package, entries, budgets, evidence):
+                budget_report.setdefault(leaf, {})[name] = budget
         for covered in coverage.values():
             for leaf, name, covering in covered:
                 witness = Path(temporary) / 'coverage.d'
@@ -711,6 +824,11 @@ def audit(package, evidence):
             control_problems = violations(control_symbols, all_modules, set(), set())
             if control_problems:
                 raise BuildError(f'{profile} control retained {", ".join(control_problems)}')
+            controls = {}
+            for index, control_path in enumerate(sorted({row['control'] for row in budgets.values() if 'control' in row})):
+                controls[control_path], _, _ = build_probe(
+                    workspace, workspace / f'.jdk-budget-control-{index}-{profile}', package,
+                    ROOT / control_path, profiles[profile], evidence)
             for leaf, probes in entries.items():
                 for name, entry in probes.items():
                     if 'covered_by' in entry:
@@ -744,6 +862,13 @@ def audit(package, evidence):
                             for base, case, covering in covered
                         }
                     report.setdefault(leaf, {}).setdefault(name, {})[profile] = result
+                    if leaf in budgets:
+                        budget = budget_report[leaf][name]
+                        baseline_bytes = controls.get(budget['control'], control_bytes)
+                        budget['profiles'][profile] = {
+                            'loadable_bytes': loadable, 'control_bytes': baseline_bytes,
+                            'incremental_linked_bytes': loadable - baseline_bytes,
+                        }
     return report
 
 
@@ -752,13 +877,19 @@ def main():
     parser.add_argument('--package', required=True, help='DUB subpackage name, e.g. java')
     parser.add_argument('--evidence', type=Path, help='keep linker maps and build logs in this directory')
     parser.add_argument('--release', action='store_true', help='fail on all retained violations')
+    parser.add_argument('--enforce-leaf-budgets', action='store_true',
+                        help='fail on leaf budget overruns while they are report-only by default')
     args = parser.parse_args()
     try:
-        report = audit(args.package, args.evidence)
+        budgets = {}
+        report = audit(args.package, args.evidence, budget_report=budgets)
         baseline = baseline_at(ROOT)
         current = {row for row in baseline if row.startswith(f'link|{args.package}|')}
         problems = baseline_growth(ROOT, baseline)
         problems += check_violations(link_violations(args.package, report), current, args.release)
+        budget_problems = leaf_budget_violations(budgets)
+        if args.enforce_leaf_budgets:
+            problems += budget_problems
         for leaf, probes in report.items():
             for probe, profiles in probes.items():
                 for profile, result in profiles.items():
@@ -778,7 +909,8 @@ def main():
     except (BuildError, OSError) as error:
         print(error, file=sys.stderr)
         return 2
-    print(json.dumps({'probes': report, 'problems': problems}, indent=2))
+    print(json.dumps({'probes': report, 'budgets': budgets, 'budget_problems': budget_problems,
+                      'problems': problems}, indent=2))
     return int(bool(problems))
 
 

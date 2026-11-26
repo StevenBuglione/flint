@@ -1,4 +1,6 @@
 """Regression tests for the JDK link-closure gate."""
+import contextlib
+import io
 import json
 import shutil
 import subprocess
@@ -12,6 +14,52 @@ import jdk_link_closure as closure
 
 
 class LinkClosureTests(unittest.TestCase):
+    def test_leaf_budget_controls_must_be_local_sources_for_registered_probes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package = Path(temporary)
+            leaf = 'flint.java.sample'
+            entries = {leaf: {'sample': {'source': 'closure/sample.d'}}}
+            file = package / 'leaf-budgets.json'
+            self.assertEqual(closure.read_leaf_budgets(package, entries), {})
+            caps = {'incremental_linked_bytes': 100, 'template_instances': 2}
+            file.write_text(json.dumps({leaf: caps}))
+            self.assertEqual(closure.read_leaf_budgets(package, entries), {leaf: caps})
+            control = package / 'closure-controls/parent.d'
+            control.parent.mkdir()
+            control.write_text('module app;')
+            caps['control'] = 'closure-controls/parent.d'
+            file.write_text(json.dumps({leaf: caps}))
+            with patch.object(closure, 'ROOT', package):
+                self.assertEqual(closure.read_leaf_budgets(package, entries), {leaf: caps})
+            caps['control'] = '../outside.d'
+            file.write_text(json.dumps({leaf: caps}))
+            with self.assertRaisesRegex(ValueError, 'invalid leaf budget control'):
+                closure.read_leaf_budgets(package, entries)
+            caps.pop('control')
+            caps['template_instances'] = True
+            file.write_text(json.dumps({leaf: caps}))
+            with self.assertRaisesRegex(ValueError, 'template_instances'):
+                closure.read_leaf_budgets(package, entries)
+
+    def test_leaf_budget_fails_either_profile_and_templates_independently(self):
+        budget = {
+            'limits': {'incremental_linked_bytes': 100, 'template_instances': 2},
+            'profiles': {
+                'O3': {'incremental_linked_bytes': 100},
+                'Oz': {'incremental_linked_bytes': 101},
+            },
+            'template_instances': 3,
+        }
+        report = {'flint.java.sample': {'sample': budget}}
+        problems = closure.leaf_budget_violations(report)
+        self.assertEqual(len(problems), 2)
+        self.assertIn('Oz', problems[0])
+        self.assertIn('101', problems[0])
+        self.assertIn('3', problems[1])
+        budget['profiles']['Oz']['incremental_linked_bytes'] = 100
+        budget['template_instances'] = 2
+        self.assertEqual(closure.leaf_budget_violations(report), [])
+
     def test_stringjoiner_first_object_receipt_is_exact(self):
         sections = {
             '.text._D4core10checkedint__T4muluZQgFNaNbNiNfmmKbZm': 15,
@@ -436,7 +484,7 @@ Discarded input sections
                     closure.audit('java', None)
 
     @unittest.skipUnless(sys.platform.startswith('linux') and all(shutil.which(tool)
-                         for tool in ('dub', 'ldc2', 'readelf', 'nm')), 'requires the ELF probe toolchain')
+                         for tool in ('dub', 'dmd', 'ldc2', 'readelf', 'nm')), 'requires the ELF probe toolchain')
     def test_real_thinlto_links_report_undeclared_data_in_both_profiles(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / 'workspace'
@@ -446,7 +494,9 @@ Discarded input sections
                 directory.mkdir(parents=True)
             (root / 'dub.sdl').write_text('name "flint"\ntargetType "none"\nsubPackage "framework/java"\n')
             (package / 'dub.sdl').write_text('name "java"\ntargetType "library"\n')
-            (root / 'policy/framework.json').write_text('{"modules":{"java":{"directory":"framework/java"}}}')
+            (root / 'policy/framework.json').write_text(
+                '{"modules":{"java":{"directory":"framework/java","dependencies":[]}}}')
+            (root / 'policy/packages.json').write_text('{"packages":{}}')
             (modules / 'data/table.d').write_text('module flint.java.data.table;\n@safe:\n'
                                                   'immutable int[6] values = [7, 5, 2, 8, 4, 0];\n')
             (modules / 'package.d').write_text('module flint.java;\npublic import flint.java.sample;\n@safe:\n')
@@ -474,6 +524,36 @@ Discarded input sections
                 report = closure.audit('java', None)['flint.java.sample']['sample']
                 for profile in report.values():
                     self.assertFalse(profile['violations'])
+                control_dir = package / 'closure-controls'
+                control_dir.mkdir()
+                (control_dir / 'minimal.d').write_text(
+                    'module app;\n@safe:\nint main(string[] args) { return cast(int) args.length & 127; }\n')
+                (package / 'leaf-budgets.json').write_text(json.dumps({
+                    'flint.java.sample': {'control': 'framework/java/closure-controls/minimal.d',
+                                          'incremental_linked_bytes': 0, 'template_instances': 100}}))
+                output = io.StringIO()
+                with (patch.object(sys, 'argv', ['jdk_link_closure.py', '--package', 'java', '--enforce-leaf-budgets']),
+                      patch.object(closure, 'baseline_at', return_value=set()),
+                      patch.object(closure, 'baseline_growth', return_value=[]),
+                      contextlib.redirect_stdout(output)):
+                    self.assertEqual(closure.main(), 1)
+                result = json.loads(output.getvalue())
+                budget = result['budgets']['flint.java.sample']['sample']
+                self.assertEqual(budget['control'], 'framework/java/closure-controls/minimal.d')
+                self.assertEqual(len(result['problems']), 2)
+                self.assertEqual(result['budget_problems'], result['problems'])
+                output = io.StringIO()
+                with (patch.object(sys, 'argv', ['jdk_link_closure.py', '--package', 'java']),
+                      patch.object(closure, 'baseline_at', return_value=set()),
+                      patch.object(closure, 'baseline_growth', return_value=[]),
+                      contextlib.redirect_stdout(output)):
+                    self.assertEqual(closure.main(), 0)
+                reported = json.loads(output.getvalue())
+                self.assertEqual(reported['budget_problems'], result['budget_problems'])
+                self.assertEqual(reported['problems'], [])
+                for profile, actual in budget['profiles'].items():
+                    self.assertGreater(actual['incremental_linked_bytes'], 0)
+                    self.assertTrue(any(profile in problem for problem in result['problems']))
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,22 +1,31 @@
 {
   "flint.java.nio.bufferoverflowexception": {
     "incremental_linked_bytes": 687,
-    "template_instances": 480
+    "template_instances": 480,
+    "control": "tools/jdk-closure-controls/runtime-exception.d",
+    "template_compile": "separate"
   },
   "flint.java.nio.bufferunderflowexception": {
     "incremental_linked_bytes": 704,
-    "template_instances": 480
+    "template_instances": 480,
+    "control": "tools/jdk-closure-controls/runtime-exception.d",
+    "template_compile": "separate"
   },
   "flint.java.nio.byteorder": {
     "incremental_linked_bytes": 80,
-    "template_instances": 2
+    "template_instances": 2,
+    "control": "tools/jdk-closure-controls/native-order.d"
   },
   "flint.java.nio.invalidmarkexception": {
     "incremental_linked_bytes": 687,
-    "template_instances": 480
+    "template_instances": 480,
+    "control": "tools/jdk-closure-controls/illegal-state-exception.d",
+    "template_compile": "separate"
   },
   "flint.java.nio.readonlybufferexception": {
     "incremental_linked_bytes": 704,
-    "template_instances": 480
+    "template_instances": 480,
+    "control": "tools/jdk-closure-controls/unsupported-operation-exception.d",
+    "template_compile": "separate"
   }
 }

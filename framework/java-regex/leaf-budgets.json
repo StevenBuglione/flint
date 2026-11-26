@@ -1,6 +1,7 @@
 {
   "flint.java.util.regex.pattern": {
     "incremental_linked_bytes": 66652,
-    "template_instances": 1527
+    "template_instances": 1527,
+    "template_compile": "separate"
   }
 }
