@@ -11,6 +11,7 @@ import flint.conc : Deadline;
 import flint.engine.aot.any : Any;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding,
     RowMaterializationPlan, TypedColumnCodec, materializeRow, planResult, validateEntity, validateMapping;
+import flint.engine.jpa.identity : EntityIdentity, IdentityIndex, IdentitySlot;
 import flint.engine.jpa.parameter_binding : ParameterBinding, bindParameters, planParameters;
 import flint.engine.jpa.registry : registerMappings;
 import flint.engine.jdbc : FlintDataSource, enablePostgres;
@@ -223,6 +224,27 @@ private void requireNullRejection(DataSource dataSource, scope const ref RowMate
         return;
     }
     assert(false, "SQL NULL must be rejected");
+}
+
+private void verifyManagedIdentity(Owner owner)
+{
+    IdentitySlot[4] backing;
+    scope index = IdentityIndex(backing[]);
+    Object[4] entities;
+    const key = EntityIdentity(0, owner.id);
+    const before = GC.stats().allocatedInCurrentThread;
+    const first = index.claim(key);
+    assert(first.ok && first.value.inserted);
+    entities[first.value.slot] = owner;
+    const found = index.find(key);
+    assert(found.ok && entities[found.value] is owner);
+    const second = index.claim(key);
+    assert(second.ok && !second.value.inserted && entities[second.value.slot] is owner);
+    const detached = index.detach(key);
+    assert(detached.ok && detached.value == first.value.slot);
+    entities[detached.value] = null;
+    assert(index.find(key).error.code == Status.notFound);
+    assert(GC.stats().allocatedInCurrentThread == before);
 }
 
 private void providerInsert(DataSource dataSource, long id, string name)
@@ -640,6 +662,7 @@ void main() @system
         providerInsert(dataSource, 1, "One");
         materialized = providerLoadOwner(dataSource, ownerPlan, 1);
         assert(materialized.loadOrder == 3);
+        verifyManagedIdentity(materialized);
         requireNullRejection(dataSource, ownerPlan,
             "select name, birth_date, null::bigint from jpa_seam_probe where id = ?", "id");
         requireNullRejection(dataSource, ownerPlan,

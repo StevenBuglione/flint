@@ -1,0 +1,132 @@
+/*
+ * Ported from hibernate-orm 7.1.0: hibernate-core/src/main/java/org/hibernate/engine/spi/EntityKey.java
+ * and hibernate-core/src/main/java/org/hibernate/engine/internal/StatefulPersistenceContext.java.
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright Red Hat Inc. and Hibernate Authors
+ * Modified by the Flint authors: root mapping ordinals and scalar bigint identifiers in bounded context storage.
+ */
+
+/// Scalar identity bookkeeping for one provider persistence context.
+module flint.engine.jpa.identity;
+
+import flint.arena : Error, Result, Status;
+
+@safe:
+
+/// A root entity mapping and its canonical signed bigint identifier.
+struct EntityIdentity
+{
+    /// Persistence-unit ordinal shared by the mappings in one inheritance root.
+    uint root;
+    /// The persistent identifier, including zero and negative values.
+    long identifier;
+}
+
+private enum SlotState : ubyte
+{
+    empty,
+    live,
+    deleted,
+}
+
+/// Scalar backing storage. The corresponding entity reference belongs in separate GC-scanned storage.
+struct IdentitySlot
+{
+    private EntityIdentity key;
+    private SlotState state;
+}
+
+/// The result of claiming an identity. An existing claim must keep its original entity reference.
+struct IdentityClaim
+{
+    /// Position in the context's object table, valid until the identity is detached or cleared.
+    size_t slot;
+    /// Whether this call assigned a new slot.
+    bool inserted;
+}
+
+private struct Probe
+{
+    size_t slot = size_t.max;
+    bool found;
+}
+
+/// Single-context index borrowing exclusively reserved storage for scalar slot metadata.
+struct IdentityIndex
+{
+    private IdentitySlot[] slots;
+
+    @disable this(this);
+    @disable void opAssign(IdentityIndex replacement);
+
+    /// Resets the backing slots for a new context. The caller provides one object-table slot per backing slot.
+    this(return scope IdentitySlot[] storage) nothrow @nogc
+    {
+        slots = storage;
+        clear();
+    }
+
+    /// Finds the context's slot for an existing identity.
+    Result!size_t find(EntityIdentity key) const scope nothrow @nogc
+    {
+        const result = probe(key);
+        if (!result.found)
+            return Result!size_t(size_t.max, Error(Status.notFound, "JPA identity is not managed"));
+        return Result!size_t(result.slot);
+    }
+
+    /// Assigns a slot for a new identity or returns the existing claim without changing it.
+    Result!IdentityClaim claim(EntityIdentity key) scope nothrow @nogc
+    {
+        const result = probe(key);
+        if (result.slot == size_t.max)
+            return Result!IdentityClaim(IdentityClaim.init, Error(Status.resourceExhausted,
+                    "JPA identity index is full"));
+        if (!result.found)
+            slots[result.slot] = IdentitySlot(key, SlotState.live);
+        return Result!IdentityClaim(IdentityClaim(result.slot, !result.found));
+    }
+
+    /// Detaches one identity and returns the slot whose entity reference the caller must clear.
+    Result!size_t detach(EntityIdentity key) scope nothrow @nogc
+    {
+        const result = find(key);
+        if (result.ok)
+            slots[result.value].state = SlotState.deleted;
+        return result;
+    }
+
+    /// Resets the index. The caller also clears its object table before reusing the slots.
+    void clear() scope nothrow @nogc
+    {
+        slots[] = IdentitySlot.init;
+    }
+
+    private Probe probe(EntityIdentity key) const scope nothrow @nogc
+    {
+        if (slots.length == 0)
+            return Probe.init;
+        size_t position = hashOf(key.identifier, key.root) % slots.length;
+        size_t available = size_t.max;
+        foreach (_; 0 .. slots.length)
+        {
+            const slot = &slots[position];
+            if (slot.state == SlotState.live)
+            {
+                if (slot.key.root == key.root && slot.key.identifier == key.identifier)
+                    return Probe(position, true);
+            }
+            else
+            {
+                if (available == size_t.max)
+                    available = position;
+                if (slot.state == SlotState.empty)
+                    break;
+            }
+            ++position;
+            if (position == slots.length)
+                position = 0;
+        }
+        return Probe(available, false);
+    }
+}
