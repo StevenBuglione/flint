@@ -10,6 +10,7 @@ import framework_budgets
 import check_exchange_retention
 import check_class_monitor
 import jdk_link_closure
+import jdk_package_licences
 import request_allocation_ratchet
 import template_budget_ratchet
 ROOT=Path(__file__).resolve().parents[1]
@@ -125,6 +126,7 @@ def boot_layers():
         found=[name for name,meta in libraries.items() if module==meta['module'] or module.startswith(meta['module']+'.')]
         return found or [owner(module)]
     for name,meta in libraries.items():
+        jdk_package_licences.check_headers(home(meta),'Apache-2.0')
         base=home(meta)/'source'
         for f in sorted(base.rglob('*.d')) if base.is_dir() else []:
             for module in imported_modules(tokens(f.read_text(encoding='utf-8'))):
@@ -157,11 +159,14 @@ def framework_layers():
     """ADR-030: Spring-layer modules (the Spring Framework API and the third-party APIs of rulebook R1) live under
     framework/<artifact>, outside the 37 engine packages. Each is listed in policy/framework.json and keeps the
     package rules: module paths, module-scope @safe:, declared imports only, no private engine imports, no
-    thread-local state and no unsafe annotations. EPL-2.0 sources live only in modules licensed EPL-2.0."""
+    thread-local state and no unsafe annotations. Modules with separate licences carry their own licence files."""
     path=ROOT/'policy/framework.json'
     if not path.is_file():return 0
     modules=json.loads(path.read_text(encoding='utf-8'))['modules']
     root_sdl=(ROOT/'dub.sdl').read_text(encoding='utf-8')
+    upstreams=jdk_package_licences.gpl_upstreams(ROOT)
+    gpl_packages={name for name,meta in modules.items() if jdk_package_licences.requires_gpl(name,meta,upstreams)}
+    pending_licences=jdk_package_licences.pending_at(ROOT,gpl_packages)
     jdk_baseline=jdk_link_closure.baseline_at(ROOT)
     jdk_history=jdk_link_closure.baseline_growth(ROOT,jdk_baseline)
     require(not jdk_history,'; '.join(jdk_history))
@@ -198,7 +203,8 @@ def framework_layers():
             require(dep in P or dep in modules,name+': unknown dependency '+dep)
         epl=meta['licence']=='EPL-2.0'
         jdk_imports=set()
-        require(epl==(base/'LICENSE').is_file(),name+': an EPL-2.0 module carries its own LICENSE, and only it')
+        jdk_package_licences.package_files(name,base,meta['licence'],name in gpl_packages,name in pending_licences)
+        jdk_package_licences.check_headers(base,meta['licence'])
         for f in sorted((base/'source').rglob('*.d')):
             text=f.read_text(encoding='utf-8');ts=list(tokens(text));where=str(f.relative_to(ROOT) if f.is_relative_to(ROOT) else f)
             module=declared_module(ts)
@@ -353,6 +359,7 @@ def structural(selected):
     mixin_packages=set()
     for n in selected:
         meta=P[n];pkg=package_root(n);sdl=(pkg/'dub.sdl').read_text(encoding='utf-8')
+        jdk_package_licences.check_headers(pkg,'Apache-2.0')
         actual=set(re.findall(r'dependency\s+"flint:([\w-]+)"\s+version="\*"',sdl))
         require(actual==set(meta['dependencies']),n+': SDL dependencies differ from policy')
         require(len(re.findall(r'\bdependency\b',sdl))==len(actual),n+': noncanonical dependency recipe')
