@@ -227,6 +227,28 @@ class TrainTests(unittest.TestCase):
         self.assertEqual(self.main_log(), ['base'])
         self.assertEqual(result['verifications'], 2)
 
+    def test_the_scheduler_runs_only_for_a_free_slot_whose_head_submitted(self):
+        self.assertFalse(merge_train.next_train(self.store, []))
+        self.store.queue('apps-landing', 'join', 'hand-lander')
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        subs = self.train.submissions()
+        self.assertFalse(merge_train.next_train(self.store, subs))  # the hand-lander's turn
+        self.store.queue('apps-landing', 'leave', 'hand-lander')
+        self.assertTrue(merge_train.next_train(self.store, subs))
+        self.store.claim('apps-landing', 'someone', 'codex', 'test: a hand landing in progress', 40)
+        self.assertFalse(merge_train.next_train(self.store, subs))
+
+    def test_one_scheduler_pass_lands_the_train_and_frees_the_slot(self):
+        self.lane('sol-a', {'src/a.txt': 'a'})
+        self.lane('sol-b', {'src/b.txt': 'b'})
+        lines = []
+        merge_train.serve(self.store, self.train, once=True, log=lines.append)
+        self.assertEqual(self.main_log(), ['sol-b: change', 'sol-a: change', 'base'])
+        self.assertNotIn('apps-landing', self.store.leases())
+        queue, _, _ = self.store.queue_view('apps-landing')
+        self.assertEqual(queue['members'], [])
+        self.assertIn('"landed": ["sol-a", "sol-b"]', lines[0])
+
     def test_the_closure_covers_the_apps_packages_and_shared_paths(self):
         paths = merge_train.closure_paths(merge_train.ROOT)
         for expected in ('framework/web/', 'framework/jdbc/', 'boot/core/flint-boot/', 'policy/', 'benchmarks/spring/'):

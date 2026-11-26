@@ -6,6 +6,7 @@
     merge_train.py show                                                          the submissions, in train order
     merge_train.py setup [--worktree PATH]                                       create the train's worktree
     merge_train.py run --agent NAME [--max 4] [--dry-run]                        hold apps-landing first
+    merge_train.py serve [--agent merge-train] [--poll 15]                       the continuous scheduler (venus)
 
 Coordinator request, 2026-11-26: the apps-landing queue was 9 deep at 7-10 minutes a hold. A lane whose change is green
 on its own module's definition of done submits its branch; the agent holding the apps-landing slot runs the train:
@@ -92,7 +93,7 @@ export PATH="$WT/.flint/bin:$WT/.tools/dmd2/linux/bin64:$PATH"
 H="python3 tools/measure_queue.py hold --"
 echo "== native blocks"; $H python3 tools/native_build.py --profile ci --target linux-x86_64-glibc --phase build --emit-dub || exit 4
 echo "== flint"; $H python3 tools/install_toolchains.py --compiler flint || exit 4
-echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@
+echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ --json
 '''
 
 
@@ -338,6 +339,48 @@ class Train:
             self.store.send(SLOT, [role], text)
 
 
+def next_train(store, submissions):
+    """Whether the scheduler should run a train now: the slot is free, something is submitted, and the head of the
+    apps-landing queue (if any) is a submitter, so a lane landing by hand keeps its turn."""
+    if not submissions:
+        return False
+    lease = store.leases().get(SLOT)
+    if lease and store.lease_live(lease):
+        return False
+    queue, _, _ = store.queue_view(SLOT)
+    members = [m['agent'] for m in queue.get('members', [])]
+    return not members or members[0] in {s['agent'] for s in submissions}
+
+
+def serve(store, train, agent='merge-train', poll=15, once=False, log=print):
+    """The continuous scheduler: whenever next_train() holds, take the head's place in the queue, claim the slot, run a
+    train, release. Runs on venus outside any lane's turn (coordinator, 2026-11-26)."""
+    while True:
+        if next_train(store, train.submissions()):
+            store.queue(SLOT, 'front', agent)
+            try:
+                store.claim(SLOT, agent, 'other', None, 120)
+            except SystemExit as exc:
+                log(f'{agent_utc()} claim refused: {exc}')
+                store.queue(SLOT, 'leave', agent)
+            else:
+                try:
+                    result = train.run(agent)
+                    log(f'{agent_utc()} train: {json.dumps(result)}')
+                except Exception as exc:  # a broken run must not stop the scheduler or keep the slot
+                    log(f'{agent_utc()} train error: {exc!r}')
+                finally:
+                    store.release(SLOT, agent, 'merge train')
+                    train.verifications = 0
+        if once:
+            return
+        time.sleep(poll)
+
+
+def agent_utc():
+    return agentctl.utc_now()
+
+
 def setup(worktree, repo=ROOT):
     """The train's venus worktree, detached at fp/main. Venus only rebases and pushes there; the apps verification
     runs on posidon, whose ~/flint-work/wt-train the verification creates on first use."""
@@ -357,6 +400,8 @@ def main(argv=None):
     s = sub.add_parser('withdraw'); s.add_argument('--role', required=True)
     sub.add_parser('show')
     s = sub.add_parser('setup'); s.add_argument('--worktree', type=Path, default=DEFAULT_WORKTREE)
+    s = sub.add_parser('serve'); s.add_argument('--agent', default='merge-train')
+    s.add_argument('--poll', type=int, default=15); s.add_argument('--worktree', type=Path, default=DEFAULT_WORKTREE)
     s = sub.add_parser('run'); s.add_argument('--agent', required=True)
     s.add_argument('--max', type=int, default=MAX_TRAIN, choices=range(1, MAX_TRAIN + 1))
     s.add_argument('--worktree', type=Path, default=DEFAULT_WORKTREE); s.add_argument('--dry-run', action='store_true')
@@ -375,6 +420,8 @@ def main(argv=None):
             print(f"{i}. {s['role']} ({s['agent']}) {s['ref']} {s['commit'][:12]} since {s['submitted']}")
     elif a.command == 'run':
         print(json.dumps(train.run(a.agent, a.max, a.dry_run), indent=2))
+    elif a.command == 'serve':
+        serve(store, train, a.agent, a.poll, log=lambda line: print(line, flush=True))
     return 0
 
 
