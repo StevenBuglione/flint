@@ -71,8 +71,8 @@ final class CommandLineArgs
 /// Parse `args` as Spring does: `--name=value`, `--name`, and `--` ending the options.
 CommandLineArgs parseCommandLine(scope const string[] args) pure
 {
-    import std.algorithm.searching : startsWith;
-    import std.string : indexOf;
+    import flint.boot.internal.text : startsWith;
+    import flint.boot.internal.text : indexOf;
 
     auto result = new CommandLineArgs;
     bool endOfOptions;
@@ -165,7 +165,7 @@ final class ProfileExpression
 /// Parse one profile expression.
 ProfileExpression parseProfileExpression(string expression) pure
 {
-    import std.string : strip;
+    import flint.engine.aot.text : strip = stripWhite;
 
     if (expression.strip.length == 0)
         throw new IllegalArgumentException("Invalid profile expression [" ~ expression ~ "]: must contain text");
@@ -207,7 +207,7 @@ private struct ExpressionParser
 
     ProfileExpression parse(Context context) pure
     {
-        import std.string : strip;
+        import flint.engine.aot.text : strip = stripWhite;
 
         ProfileExpression[] elements;
         char operator = 0;
@@ -243,13 +243,15 @@ private struct ExpressionParser
     ProfileExpression operandFor(string token) pure
     {
         import std.ascii : isWhite;
-        import std.algorithm.searching : any;
 
         if (token == "(")
             return parse(Context.parenthesis);
         if (token == "!")
             return new ProfileExpression(ProfileExpression.Kind.not, null, [parse(Context.negate)]);
-        wellFormed(!token.any!isWhite);
+        bool white;
+        foreach (dchar c; token)
+            white = white || isWhite(c);
+        wellFormed(!white);
         return new ProfileExpression(ProfileExpression.Kind.name, token, null);
     }
 

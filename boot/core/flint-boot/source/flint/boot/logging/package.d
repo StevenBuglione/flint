@@ -147,9 +147,9 @@ string levelName(LogLevel level) pure nothrow @nogc
 
 private string pidText(long pid) pure
 {
-    import std.conv : to;
+    import flint.engine.aot.text : decimal;
 
-    return pid > 0 ? pid.to!string : "";
+    return pid > 0 ? decimal(pid) : "";
 }
 
 /// `EnclosedInSquareBracketsConverter`: `[value] ` when set, else nothing.
@@ -262,11 +262,11 @@ private string spaces(size_t count) pure
 /// never shortened.
 string abbreviate(string name, size_t target) pure
 {
-    import std.array : join, split;
+    import flint.boot.internal.text : joined, pieces;
 
     if (name.length <= target)
         return name;
-    auto parts = name.split('.');
+    auto parts = pieces(name, '.');
     if (parts.length == 1)
         return name;
     size_t length = name.length;
@@ -280,5 +280,5 @@ string abbreviate(string name, size_t target) pure
             parts[index] = parts[index][0 .. 1];
         }
     }
-    return parts.join(".");
+    return joined(parts, ".");
 }

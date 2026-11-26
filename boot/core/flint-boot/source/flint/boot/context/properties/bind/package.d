@@ -235,7 +235,7 @@ final class PropertySourcesPlaceholdersResolver : PlaceholdersResolver
 
     private string resolve(string value, string[] visiting)
     {
-        import std.string : indexOf;
+        import flint.boot.internal.text : indexOf;
 
         if (value.indexOf("${") < 0)
             return unescape(value);
@@ -292,23 +292,22 @@ final class PropertySourcesPlaceholdersResolver : PlaceholdersResolver
     // SystemEnvironmentPropertySource.checkPropertyName: the name, with `.` then `-` as `_`, each also upper case.
     private static string[] environmentVariants(string name) pure
     {
-        import std.array : replace;
-        import std.uni : toUpper;
+        import flint.boot.internal.text : replaced, upperCase;
 
         string[] variants;
-        foreach (candidate; [name, name.toUpper])
+        foreach (candidate; [name, name.upperCase])
         {
             variants ~= candidate;
-            variants ~= candidate.replace(".", "_");
-            variants ~= candidate.replace("-", "_");
-            variants ~= candidate.replace(".", "_").replace("-", "_");
+            variants ~= candidate.replaced(".", "_");
+            variants ~= candidate.replaced("-", "_");
+            variants ~= candidate.replaced(".", "_").replaced("-", "_");
         }
         return variants;
     }
 
     private string placeholder(string value, size_t start, long end, string[] visiting)
     {
-        import std.string : indexOf;
+        import flint.boot.internal.text : indexOf;
 
         const content = resolve(value[start + 2 .. cast(size_t) end], visiting);
         const separator = defaultSeparator(content);
@@ -375,9 +374,9 @@ final class PropertySourcesPlaceholdersResolver : PlaceholdersResolver
 
     private static string unescape(string value) pure
     {
-        import std.array : replace;
+        import flint.boot.internal.text : replaced;
 
-        return value.replace("\\${", "${");
+        return value.replaced("\\${", "${");
     }
 }
 
@@ -555,7 +554,7 @@ private:
     // comma-separated value under `name`, or `name[0]`, `name[1]`, ... The bound list replaces any existing one.
     bool bindCollection(ConfigurationPropertyName name, const Descriptor type, ref Any instance, string durationUnit)
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
         auto elementType = elementDescriptor(type);
         foreach (source; sources)
@@ -576,7 +575,7 @@ private:
             for (size_t index;; index++)
             {
                 Any element;
-                if (!single.bindValue(name.append("[" ~ index.to!string ~ "]"), elementType, element, durationUnit))
+                if (!single.bindValue(name.append("[" ~ decimal(index) ~ "]"), elementType, element, durationUnit))
                     break;
                 elements ~= element;
             }
@@ -590,15 +589,15 @@ private:
 
     Any[] splitElements(string value, const Descriptor elementType, string durationUnit)
     {
-        import std.algorithm.iteration : splitter;
-        import std.string : strip;
+        import flint.boot.internal.text : pieces;
+        import flint.engine.aot.text : stripWhite;
 
         const text = placeholders.resolvePlaceholders(value);
         Any[] elements;
-        if (text.strip.length == 0)
+        if (text.stripWhite.length == 0)
             return elements;
-        foreach (part; text.splitter(','))
-            elements ~= convert(part.strip, elementType, durationUnit);
+        foreach (part; pieces(text, ','))
+            elements ~= convert(part.stripWhite, elementType, durationUnit);
         return elements;
     }
 
@@ -643,10 +642,10 @@ private:
 
     bool hasEmptyValue(ConfigurationPropertyName name)
     {
-        import std.string : strip;
+        import flint.engine.aot.text : stripWhite;
 
         auto direct = ConfigurationPropertySources.find(sources, name);
-        return direct !is null && placeholders.resolvePlaceholders(direct.getValue()).strip.length == 0;
+        return direct !is null && placeholders.resolvePlaceholders(direct.getValue()).stripWhite.length == 0;
     }
 
     // Record `key`; false when it was seen already.
@@ -778,7 +777,7 @@ private:
     Any defaultFor(const(typeof(Descriptor.annotations)) annotations, const Descriptor type,
             ConfigurationPropertyName name)
     {
-        import std.array : join;
+        import flint.boot.internal.text : joined;
         import flint.engine.aot.descriptor : findAnnotation;
 
         if (auto annotation = findAnnotation(annotations, typeNameOf!DefaultValue))
@@ -786,7 +785,7 @@ private:
             const values = annotation.value.get!DefaultValue.value;
             if (type.kind == TypeKind.struct_ || type.kind == TypeKind.class_)
                 return create(name, type);
-            return convert(values.join(","), type);
+            return convert(joined(values, ","), type);
         }
         return Any.init;
     }
@@ -838,7 +837,7 @@ private:
 /// `Duration` in the simple (`10s`, `500ms`) and ISO-8601 (`PT10S`) styles.
 Any convert(string text, const Descriptor type, string durationUnit = null)
 {
-    import std.string : strip;
+    import flint.engine.aot.text : strip = stripWhite;
 
     switch (type.name)
     {
@@ -913,9 +912,9 @@ private string canonicalEnumName(string name) pure
 
 private bool parseBoolean(string text, string type)
 {
-    import std.uni : toLower;
+    import flint.boot.internal.text : lowerCase;
 
-    switch (text.toLower)
+    switch (text.lowerCase)
     {
     case "true":
     case "on":
@@ -945,12 +944,8 @@ private double parseFloating(string text, string type)
 
 private Any integral(string text, string type)
 {
-    import std.conv : ConvException, to;
-
     long value;
-    try
-        value = parseNumber(text);
-    catch (ConvException)
+    if (!parseNumber(text, value))
         throw new ConversionFailedException(text, type, "For input string: \"" ~ text ~ "\"");
     bool fits(long low, long high)
     {
@@ -987,11 +982,12 @@ private Any checked(bool fits, Any value, string text, string type)
     return value;
 }
 
-// spring-core's NumberUtils.parseNumber for integral types: a sign, then `0x`, `0X` or `#` for hex.
-private long parseNumber(string text)
+// spring-core's NumberUtils.parseNumber for integral types: a sign, then `0x`, `0X` or `#` for hex; false when
+// the text is not a number in range.
+private bool parseNumber(string text, out long result) pure nothrow @nogc
 {
-    import std.algorithm.searching : startsWith;
-    import std.conv : to;
+    import flint.boot.internal.text : parseHex, startsWith;
+    import flint.engine.aot.text : parseLong;
 
     bool negative;
     string digits = text;
@@ -1002,19 +998,26 @@ private long parseNumber(string text)
     }
     long value;
     if (digits.startsWith("0x") || digits.startsWith("0X"))
-        value = digits[2 .. $].to!long(16);
+    {
+        if (!parseHex(digits[2 .. $], value))
+            return false;
+    }
     else if (digits.startsWith("#"))
-        value = digits[1 .. $].to!long(16);
-    else
-        value = digits.to!long;
-    return negative ? -value : value;
+    {
+        if (!parseHex(digits[1 .. $], value))
+            return false;
+    }
+    else if (!parseLong(digits, value))
+        return false;
+    result = negative ? -value : value;
+    return true;
 }
 
 /// Boot's `DurationStyle.detectAndParse`: `10s`, `-5m`, `500` (milliseconds), or ISO-8601 `PT1H30M`.
 auto parseDuration(string text, string defaultSuffix = null)
 {
-    import std.conv : ConvException, to;
-    import std.uni : toLower;
+    import flint.boot.internal.text : lowerCase;
+    import flint.engine.aot.text : parseLong;
 
     if (isIsoDuration(text))
         return parseIsoDuration(text);
@@ -1022,11 +1025,9 @@ auto parseDuration(string text, string defaultSuffix = null)
     while (split > 0 && isLetter(text[split - 1]))
         split--;
     long amount;
-    try
-        amount = text[0 .. split].to!long;
-    catch (ConvException)
+    if (!parseLong(text[0 .. split], amount))
         throw new ConversionFailedException(text, durationType, "'" ~ text ~ "' is not a valid duration");
-    const suffix = text[split .. $].toLower;
+    const suffix = text[split .. $].lowerCase;
     return simpleDuration(amount, suffix.length || defaultSuffix is null ? suffix : defaultSuffix, text);
 }
 
@@ -1078,10 +1079,9 @@ private auto simpleDuration(long amount, string suffix, string text)
 private auto parseIsoDuration(string text)
 {
     import core.time : Duration;
-    import std.conv : ConvException;
-    import std.uni : toUpper;
+    import flint.boot.internal.text : upperCase;
 
-    auto upper = text.toUpper;
+    auto upper = text.upperCase;
     const negative = upper[0] == '-';
     if (upper[0] == '-' || upper[0] == '+')
         upper = upper[1 .. $];
@@ -1105,7 +1105,7 @@ private auto parseIsoDuration(string text)
             }
         }
     }
-    catch (ConvException)
+    catch (InvalidIsoComponent)
         start = 0;
     if (start != upper.length)
         throw new ConversionFailedException(text, durationType, "'" ~ text ~ "' is not a valid ISO-8601 duration");
@@ -1114,25 +1114,41 @@ private auto parseIsoDuration(string text)
 
 private auto isoComponent(string number, char unit, bool time)
 {
-    import flint.engine.aot.text : tryParseDouble;
-    import std.conv : ConvException, to;
+    import flint.engine.aot.text : parseLong, tryParseDouble;
+
+    long whole()
+    {
+        long value;
+        if (!parseLong(number, value))
+            throw new InvalidIsoComponent;
+        return value;
+    }
 
     if (unit == 'S' && time)
     {
         // flint.engine.aot.text reads text as `std.conv.to!double` does, without its templates.
         const seconds = tryParseDouble(number);
         if (!seconds.ok)
-            throw new ConvException("not a number of seconds");
+            throw new InvalidIsoComponent;
         // core.time.nsecs truncates to its 100 ns resolution.
         return durationUnits[0] * (cast(long)(seconds.value * 1_000_000_000) / 100);
     }
     if (unit == 'D' && !time)
-        return durationUnits[7] * number.to!long;
+        return durationUnits[7] * whole();
     if (unit == 'H' && time)
-        return durationUnits[6] * number.to!long;
+        return durationUnits[6] * whole();
     if (unit == 'M' && time)
-        return durationUnits[5] * number.to!long;
-    throw new ConvException("misplaced unit");
+        return durationUnits[5] * whole();
+    throw new InvalidIsoComponent;
+}
+
+// A component of an ISO-8601 duration that is not a number, or not where its unit allows (parseIsoDuration).
+private final class InvalidIsoComponent : Exception
+{
+    this() pure nothrow @nogc
+    {
+        super("invalid ISO-8601 duration component");
+    }
 }
 
 /// Boot's `ConfigurationPropertiesBinder`: binds `@ConfigurationProperties` beans for the context, with a `Binder`

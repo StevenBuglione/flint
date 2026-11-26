@@ -135,12 +135,12 @@ class YamlPropertySourceLoader : PropertySourceLoader
 
 private OriginTrackedMapPropertySource[] sources(string name, Document[] documents) pure
 {
-    import std.conv : to;
+    import flint.engine.aot.text : decimal;
 
     OriginTrackedMapPropertySource[] result;
     foreach (index, document; documents)
     {
-        const suffix = documents.length != 1 ? " (document #" ~ index.to!string ~ ")" : "";
+        const suffix = documents.length != 1 ? " (document #" ~ decimal(index) ~ ")" : "";
         result ~= new OriginTrackedMapPropertySource(name ~ suffix, document.keys, document.values, true);
     }
     return result;
@@ -238,10 +238,9 @@ final class OriginTrackedPropertiesLoader
 
     private void loadKeyAndValue(bool expandLists, Document document, ref CharacterReader reader, ref dchar[] buffer)
     {
-        import std.conv : to;
-        import std.string : strip;
+        import flint.engine.aot.text : decimal, stripWhite;
 
-        auto key = loadKey(buffer, reader).strip;
+        auto key = loadKey(buffer, reader).stripWhite;
         if (expandLists && key.length >= 2 && key[$ - 2 .. $] == "[]")
         {
             key = key[0 .. $ - 2];
@@ -249,7 +248,7 @@ final class OriginTrackedPropertiesLoader
             do
             {
                 auto value = loadValue(buffer, reader, true);
-                document.put(key ~ "[" ~ (index++).to!string ~ "]", value);
+                document.put(key ~ "[" ~ decimal(index++) ~ "]", value);
                 if (!reader.isEndOfLine())
                     reader.read();
             }
@@ -261,7 +260,7 @@ final class OriginTrackedPropertiesLoader
 
     private static string loadKey(ref dchar[] buffer, ref CharacterReader reader)
     {
-        import std.conv : to;
+        import flint.boot.internal.text : utf8Text;
 
         buffer.length = 0;
         bool previousWhitespace;
@@ -270,20 +269,20 @@ final class OriginTrackedPropertiesLoader
             if (reader.isPropertyDelimiter())
             {
                 reader.read();
-                return buffer.to!string;
+                return utf8Text(buffer);
             }
             if (!reader.isWhiteSpace() && previousWhitespace)
-                return buffer.to!string;
+                return utf8Text(buffer);
             previousWhitespace = reader.isWhiteSpace();
             buffer ~= reader.getCharacter();
             reader.read();
         }
-        return buffer.to!string;
+        return utf8Text(buffer);
     }
 
     private OriginTrackedValue loadValue(ref dchar[] buffer, ref CharacterReader reader, bool splitLists)
     {
-        import std.conv : to;
+        import flint.boot.internal.text : utf8Text;
 
         buffer.length = 0;
         while (reader.isWhiteSpace() && !reader.isEndOfLine())
@@ -294,7 +293,7 @@ final class OriginTrackedPropertiesLoader
             buffer ~= reader.getCharacter();
             reader.read();
         }
-        return OriginTrackedValue.of(buffer.to!string, new TextResourceOrigin(resource, location));
+        return OriginTrackedValue.of(utf8Text(buffer), new TextResourceOrigin(resource, location));
     }
 
     private static bool isNewDocument(ref CharacterReader reader)
@@ -320,15 +319,13 @@ final class OriginTrackedPropertiesLoader
 
     private static dstring decode(const(ubyte)[] bytes, string encoding)
     {
-        import std.conv : to;
-        import std.uni : sicmp;
-        import std.utf : validate;
+        import flint.boot.internal.text : equalsIgnoreCase, utf32Text;
 
-        if (encoding.length && (sicmp(encoding, "UTF-8") == 0 || sicmp(encoding, "UTF8") == 0))
+        if (encoding.length && (equalsIgnoreCase(encoding, "UTF-8") || equalsIgnoreCase(encoding, "UTF8")))
         {
             auto text = cast(const(char)[]) bytes;
-            validate(text);
-            return text.to!dstring;
+            requireUtf8(text);
+            return utf32Text(text);
         }
         // ISO-8859-1: every byte is the code point of the same value.
         auto result = new dchar[bytes.length];
@@ -515,10 +512,8 @@ final class OriginTrackedYamlLoader
     /// The non-empty documents, in order.
     Document[] load()
     {
-        import std.utf : validate;
-
         auto text = cast(const(char)[]) content;
-        validate(text);
+        requireUtf8(text);
         Document[] documents;
         foreach (node; parseYaml(text.idup))
         {
@@ -534,7 +529,7 @@ final class OriginTrackedYamlLoader
 
     private void flatten(Document document, string path, YamlNode node)
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
         final switch (node.kind)
         {
@@ -563,7 +558,7 @@ final class OriginTrackedYamlLoader
                 return;
             }
             foreach (index, item; node.items)
-                flatten(document, path ~ "[" ~ index.to!string ~ "]", item);
+                flatten(document, path ~ "[" ~ decimal(index) ~ "]", item);
             return;
         case YamlNode.Kind.scalar:
             document.put(path, tracked(node.value, node));
@@ -579,4 +574,15 @@ final class OriginTrackedYamlLoader
         return OriginTrackedValue.of(value, new TextResourceOrigin(resource,
                 TextResourceOrigin.Location(node.line, node.column)));
     }
+}
+
+// Flint: Java's MalformedInputException is an IOException; std.utf's validate is not used, because its object pulls
+// std.net.curl and the rest of Phobos's network objects into every app (playbook S-21).
+private void requireUtf8(scope const(char)[] text)
+{
+    import flint.engine.aot.text : isValidUtf8;
+    import flint.java.io : IOException;
+
+    if (!isValidUtf8(text))
+        throw new IOException("Malformed input: the resource is not valid UTF-8");
 }

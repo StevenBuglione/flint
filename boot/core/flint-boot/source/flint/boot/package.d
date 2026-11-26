@@ -443,7 +443,7 @@ final class AnsiPropertySource : ConfigurationPropertySource
 
     ConfigurationProperty getConfigurationProperty(ConfigurationPropertyName name)
     {
-        import std.uni : toUpper;
+        import flint.boot.internal.text : toUpper = upperCase;
 
         if (name.getNumberOfElements() != 2)
             return null;
@@ -953,7 +953,7 @@ private:
     // `flint.main.*` binds onto the application, as Boot's `bindToSpringApplication` does.
     void bindMainProperties(ApplicationEnvironment environment)
     {
-        import std.uni : toUpper;
+        import flint.boot.internal.text : toUpper = upperCase;
 
         if (!bannerModeSet)
         {
@@ -982,7 +982,7 @@ private:
     {
         import flint.boot.context.properties.source : ConfigurationPropertyName;
         import flint.boot.logging.slf4j : Slf4jLoggingSystem;
-        import std.uni : toUpper;
+        import flint.boot.internal.text : toUpper = upperCase;
 
         logSettings.format.applicationName = environment.getProperty("flint.application.name", "");
         logSettings.format.applicationGroup = environment.getProperty("flint.application.group", "");
@@ -1057,23 +1057,24 @@ private:
 
     static string profileMessage(ApplicationEnvironment environment)
     {
-        import std.algorithm.iteration : map;
-        import std.array : join;
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
         const active = environment.getActiveProfiles();
         string quoted(const(string)[] profiles)
         {
-            return profiles.map!(p => "\"" ~ p ~ "\"").join(", ");
+            string result;
+            foreach (i, profile; profiles)
+                result ~= (i ? ", \"" : "\"") ~ profile ~ "\"";
+            return result;
         }
 
         if (active.length == 0)
         {
             const defaults = environment.getDefaultProfiles();
-            return "No active profile set, falling back to " ~ defaults.length.to!string ~ " default profile" ~ (
-                    defaults.length == 1 ? "" : "s") ~ ": " ~ quoted(defaults);
+            return "No active profile set, falling back to " ~ decimal(
+                    defaults.length) ~ " default profile" ~ (defaults.length == 1 ? "" : "s") ~ ": " ~ quoted(defaults);
         }
-        return "The following " ~ active.length.to!string ~ " profile" ~ (active.length == 1
+        return "The following " ~ decimal(active.length) ~ " profile" ~ (active.length == 1
                 ? " is" : "s are") ~ " active: " ~ quoted(active);
     }
 
@@ -1277,8 +1278,8 @@ void finishAllocationReport(string path)
     if (!otherThreadsAllocations(others) || !thisThreadAllocations(mine))
         return;
     FileError error; // a report that cannot be written is skipped, as before
-    cast(void) writeFile(path, cast(const(ubyte)[])(decimal(others.count + mine.count) ~ " "
-            ~ decimal(others.bytes + mine.bytes) ~ "\n"), error);
+    cast(void) writeFile(path, cast(const(ubyte)[])(
+            decimal(others.count + mine.count) ~ " " ~ decimal(others.bytes + mine.bytes) ~ "\n"), error);
 }
 
 string decimal(ulong value) pure nothrow
@@ -1305,7 +1306,7 @@ unittest
 E parseEnum(E)(string text, string property)
 {
     import std.ascii : isAlphaNum;
-    import std.uni : toUpper;
+    import flint.boot.internal.text : toUpper = upperCase;
 
     static string canonical(string value)
     {
@@ -1456,7 +1457,7 @@ string userName()
 
 bool ansiEnabled(ApplicationEnvironment environment)
 {
-    import std.uni : toUpper;
+    import flint.boot.internal.text : toUpper = upperCase;
 
     const mode = environment.getProperty("flint.output.ansi.enabled", "DETECT").toUpper;
     if (mode == "ALWAYS")
@@ -1477,7 +1478,7 @@ string ansiText(bool ansi, string code, string text) pure
 // Boot's AnsiColor, AnsiBackground and AnsiStyle names, prefixed as AnsiPropertySource exposes them.
 string ansiCode(string name) pure
 {
-    import std.algorithm.searching : startsWith;
+    import flint.boot.internal.text : startsWith;
 
     static immutable string[] colors = [
         "DEFAULT", "BLACK", "RED", "GREEN", "YELLOW", "BLUE", "MAGENTA", "CYAN", "WHITE",
@@ -1527,15 +1528,12 @@ string ansiCode(string name) pure
 // Boot's Ansi8BitColor: a number from 0 to 255 is an 8-bit colour.
 string eightBit(string key, string prefix, string named) pure
 {
-    import std.conv : ConvException, to;
+    import flint.engine.aot.text : parseLong;
 
     if (named !is null)
         return named;
-    try
-    {
-        const code = key.to!int;
-        return code >= 0 && code <= 255 ? prefix ~ key : null;
-    }
-    catch (ConvException)
+    long code; // std.conv's to!int: a sign and digits within int
+    if (!parseLong(key, code) || code < int.min || code > int.max)
         return null;
+    return code >= 0 && code <= 255 ? prefix ~ key : null;
 }

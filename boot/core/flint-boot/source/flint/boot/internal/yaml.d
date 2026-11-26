@@ -93,7 +93,8 @@ private struct Parser
 
     this(string text) pure
     {
-        import std.array : replace, split;
+        import flint.boot.internal.text : replace = replaced;
+        import flint.boot.internal.text : split = pieces;
 
         auto normalized = text.replace("\r\n", "\n").replace("\r", "\n");
         if (normalized.length >= 3 && normalized[0 .. 3] == "\xEF\xBB\xBF")
@@ -229,9 +230,9 @@ private struct Parser
 
     noreturn fail(string message) const pure
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
-        throw new YamlException(message ~ " (line " ~ (row + 1).to!string ~ ", column " ~ (col + 1).to!string ~ ")");
+        throw new YamlException(message ~ " (line " ~ decimal(row + 1) ~ ", column " ~ decimal(col + 1) ~ ")");
     }
 
     char peek(size_t offset = 0) const pure nothrow @nogc
@@ -460,7 +461,7 @@ private struct Parser
         while (col < line.length && !(line[col] == ':' && (col + 1 == line.length
                 || line[col + 1] == ' ' || line[col + 1] == '\t')))
             col++;
-        import std.string : stripRight;
+        import flint.boot.internal.text : stripRight = stripTrailing;
 
         return resolve(line[start .. col].stripRight, false);
     }
@@ -540,7 +541,7 @@ private struct Parser
     // Move to the next line that continues a plain scalar, counting the blank lines skipped.
     bool continuationLine(long parent, ref size_t blankLines) pure
     {
-        import std.string : strip;
+        import flint.engine.aot.text : strip = stripWhite;
 
         row++;
         col = 0;
@@ -576,7 +577,7 @@ private struct Parser
     // The rest of the current line up to a comment, trimmed.
     string lineValue() pure
     {
-        import std.string : stripRight;
+        import flint.boot.internal.text : stripRight = stripTrailing;
 
         const line = lines[row];
         const start = col;
@@ -614,7 +615,7 @@ private struct Parser
     // Line folding inside quotes: trailing spaces dropped, one line break becomes a space, blank lines newlines.
     void foldQuotedLine(ref string text) pure
     {
-        import std.string : stripRight;
+        import flint.boot.internal.text : stripRight = stripTrailing;
 
         text = text.stripRight;
         row++;
@@ -690,16 +691,19 @@ private struct Parser
 
     string unicodeEscape(string line, size_t digits) pure
     {
-        import std.conv : to;
-        import std.utf : encode;
+        import flint.boot.internal.text : parseUnsigned;
+        import flint.engine.aot.text : decimal, utf8;
 
         if (col + digits > line.length)
-            fail("expected escape sequence of " ~ digits.to!string ~ " hexadecimal numbers");
-        const code = line[col .. col + digits].to!uint(16);
+            fail("expected escape sequence of " ~ decimal(digits) ~ " hexadecimal numbers");
+        ulong code;
+        if (!parseUnsigned(line[col .. col + digits], 16, uint.max, code))
+            fail("expected escape sequence of " ~ decimal(digits) ~ " hexadecimal numbers");
         col += digits;
-        char[4] buffer;
-        const length = encode(buffer, cast(dchar) code);
-        return buffer[0 .. length].idup;
+        const text = utf8(cast(dchar) code);
+        if (text is null)
+            fail("found invalid Unicode character escape code");
+        return text;
     }
 
     YamlNode blockScalar(long parent) pure
@@ -791,7 +795,7 @@ private struct Parser
 
     static string joinLines(string[] content) pure
     {
-        import std.array : join;
+        import flint.boot.internal.text : join = joined;
 
         return content.join("\n");
     }
@@ -944,7 +948,7 @@ private struct Parser
 
     YamlNode flowPlain() pure
     {
-        import std.string : stripRight;
+        import flint.boot.internal.text : stripRight = stripTrailing;
 
         auto node = new YamlNode(YamlNode.Kind.scalar, cast(int) row, cast(int) col);
         const line = lines[row];
@@ -1009,8 +1013,8 @@ private string booleanText(string text) pure nothrow @nogc
 // An integer in YAML 1.1 notation (sign, `0b`, `0x`, leading-0 octal, `_` separators) as decimal text.
 private string integerText(string text) pure
 {
-    import std.array : replace;
-    import std.conv : ConvException, to;
+    import flint.boot.internal.text : parseUnsigned, replace = replaced;
+    import flint.engine.aot.text : decimal;
 
     string digits = text.replace("_", "");
     string sign;
@@ -1019,19 +1023,18 @@ private string integerText(string text) pure
         sign = digits[0] == '-' ? "-" : "";
         digits = digits[1 .. $];
     }
-    try
-    {
-        if (digits.length > 2 && digits[0 .. 2] == "0x")
-            return sign ~ digits[2 .. $].to!long(16).to!string;
-        if (digits.length > 2 && digits[0 .. 2] == "0b")
-            return sign ~ digits[2 .. $].to!long(2).to!string;
-        if (digits.length > 1 && digits[0] == '0')
-            return sign ~ digits[1 .. $].to!long(8).to!string;
-        return sign ~ digits.to!ulong
-            .to!string;
-    }
-    catch (ConvException)
-        return text;
+    // std.conv's radix forms: within long; the decimal one within ulong. Anything else stays as written.
+    ulong value;
+    bool parsed;
+    if (digits.length > 2 && digits[0 .. 2] == "0x")
+        parsed = parseUnsigned(digits[2 .. $], 16, long.max, value);
+    else if (digits.length > 2 && digits[0 .. 2] == "0b")
+        parsed = parseUnsigned(digits[2 .. $], 2, long.max, value);
+    else if (digits.length > 1 && digits[0] == '0')
+        parsed = parseUnsigned(digits[1 .. $], 8, long.max, value);
+    else
+        parsed = parseUnsigned(digits, 10, ulong.max, value);
+    return parsed ? sign ~ decimal(value) : text;
 }
 
 private bool isIntegerText(string text) pure nothrow @nogc

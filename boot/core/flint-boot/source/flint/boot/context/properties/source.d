@@ -178,7 +178,7 @@ final class ConfigurationPropertyName
     /// The elements from `offset` on. Throws `IndexOutOfBoundsException` when `offset` is out of range.
     ConfigurationPropertyName subName(int offset) pure
     {
-        import std.conv : to;
+        import flint.engine.aot.text : decimal;
 
         if (offset == 0)
             return this;
@@ -186,7 +186,7 @@ final class ConfigurationPropertyName
             return empty();
         if (offset < 0 || offset > elements.length)
             throw new IndexOutOfBoundsException(
-                    "Offset: " ~ offset.to!string ~ ", NumberOfElements: " ~ elements.length.to!string);
+                    "Offset: " ~ decimal(offset) ~ ", NumberOfElements: " ~ decimal(elements.length));
         return new ConfigurationPropertyName(elements[offset .. $], types[offset .. $]);
     }
 
@@ -211,7 +211,6 @@ final class ConfigurationPropertyName
     /// Orders names element by element: shorter names and indexed elements first, numeric indexes numerically.
     int compareTo(const ConfigurationPropertyName other) const pure
     {
-        import std.conv : to;
 
         const l1 = elements.length;
         const l2 = other.elements.length;
@@ -232,8 +231,7 @@ final class ConfigurationPropertyName
             int result;
             if (type1 == ElementType.NUMERICALLY_INDEXED && type2 == ElementType.NUMERICALLY_INDEXED)
             {
-                const v1 = e1.to!long, v2 = e2.to!long;
-                result = v1 < v2 ? -1 : (v1 > v2 ? 1 : 0);
+                result = compareIndexes(e1, e2);
             }
             else
                 result = e1 < e2 ? -1 : (e1 > e2 ? 1 : 0);
@@ -312,10 +310,21 @@ final class ConfigurationPropertyName
         return result;
     }
 
+    // Two numeric indexes in numeric order; an index past long (Boot's Long.parseLong throws) is ordered as text.
+    private static int compareIndexes(scope const(char)[] e1, scope const(char)[] e2) pure nothrow @nogc
+    {
+        import flint.engine.aot.text : parseLong;
+
+        long v1, v2;
+        if (parseLong(e1, v1) && parseLong(e2, v2))
+            return v1 < v2 ? -1 : (v1 > v2 ? 1 : 0);
+        return e1 < e2 ? -1 : (e1 > e2 ? 1 : 0);
+    }
+
     /// The name as an environment variable: upper-case uniform elements joined by `_` (`FLINT_MAIN_BANNERMODE`).
     string toSystemEnvironmentString(bool upperCase = true) const pure
     {
-        import std.uni : toUpper;
+        import flint.boot.internal.text : upperText = upperCase;
 
         string result;
         foreach (index; 0 .. cast(int) elements.length)
@@ -324,23 +333,22 @@ final class ConfigurationPropertyName
                 result ~= '_';
             result ~= getElement(index, Form.UNIFORM);
         }
-        return upperCase ? result.toUpper : result;
+        return upperCase ? upperText(result) : result;
     }
 
     /// The legacy environment variable form, which keeps dashes as underscores (`FLINT_MAIN_BANNER_MODE`).
     string toLegacySystemEnvironmentString() const pure
     {
-        import std.array : replace;
-        import std.uni : toUpper;
+        import flint.boot.internal.text : replaced, upperCase;
 
         string result;
         foreach (index; 0 .. cast(int) elements.length)
         {
             if (result.length)
                 result ~= '_';
-            result ~= getElement(index, Form.ORIGINAL).replace("-", "_");
+            result ~= getElement(index, Form.ORIGINAL).replaced("-", "_");
         }
-        return result.toUpper;
+        return result.upperCase;
     }
 
     /// Whether `name` is a valid configuration property name.
@@ -645,11 +653,11 @@ class InvalidConfigurationPropertyNameException : RuntimeException
     /// The rejected name and the characters that made it invalid.
     this(string name, string invalidCharacters) pure
     {
-        import flint.engine.aot.text : utf8;
-        import std.algorithm.iteration : map;
-        import std.array : join;
+        import flint.engine.aot.text : decodeUtf8, utf8;
 
-        const characters = invalidCharacters.map!(c => "'" ~ utf8(c) ~ "'").join(", ");
+        string characters;
+        for (size_t index; index < invalidCharacters.length;)
+            characters ~= (characters.length ? ", '" : "'") ~ utf8(decodeUtf8(invalidCharacters, index)) ~ "'";
         super("Configuration property name '" ~ name ~ "' is not valid:\n    Invalid characters: " ~ characters
                 ~ "\n    Bean: \n    Reason: Canonical names should be kebab-case ('-' separated), lowercase "
                 ~ "alpha-numeric characters and must start with a letter");
@@ -787,10 +795,9 @@ class MapConfigurationPropertySource : ConfigurationPropertySource
     /// Add every entry of `map`, sorted by key so iteration is deterministic.
     final void putAll(const string[string] map) pure
     {
-        import std.algorithm.sorting : sort;
-        import std.array : array;
+        import flint.boot.internal.text : sortStrings;
 
-        foreach (key; map.keys.array.sort)
+        foreach (key; sortStrings(map.keys.dup))
             put(key, map[key]);
     }
 
@@ -873,7 +880,7 @@ struct SystemEnvironmentPropertyMapper
     /// The name of the environment variable `key`, or `null` when it holds no usable element.
     static ConfigurationPropertyName map(string key) pure
     {
-        import std.uni : toLower;
+        import flint.boot.internal.text : lowerCase;
 
         if (key.length == 0)
             return null;
@@ -888,7 +895,7 @@ struct SystemEnvironmentPropertyMapper
             if (digits)
                 canonical ~= "[" ~ part ~ "]";
             else
-                canonical ~= (canonical.length ? "." : "") ~ part.toLower;
+                canonical ~= (canonical.length ? "." : "") ~ part.lowerCase;
         }
         // A key of underscores only (the shell's `_`) maps to the empty name, as Boot's does.
         return ConfigurationPropertyName.adapt(canonical is null ? "" : canonical, '.');
@@ -898,8 +905,7 @@ struct SystemEnvironmentPropertyMapper
     /// `foo.the.bar`), or `null` when `name` has no dashed element or the result is not a valid name.
     static ConfigurationPropertyName legacyName(ConfigurationPropertyName name) pure
     {
-        import std.array : replace;
-        import std.string : indexOf;
+        import flint.boot.internal.text : indexOf, replaced;
 
         if (name is null)
             return null;
@@ -914,16 +920,16 @@ struct SystemEnvironmentPropertyMapper
                 continue;
             }
             dashed = dashed || element.indexOf('-') >= 0;
-            text ~= (text.length ? "." : "") ~ element.replace("-", ".");
+            text ~= (text.length ? "." : "") ~ element.replaced("-", ".");
         }
         return dashed ? ConfigurationPropertyName.ofIfValid(text) : null;
     }
 
     private static string[] splitUnderscores(string key) pure
     {
-        import std.array : split;
+        import flint.boot.internal.text : pieces;
 
-        return key.split('_');
+        return pieces(key, '_');
     }
 }
 

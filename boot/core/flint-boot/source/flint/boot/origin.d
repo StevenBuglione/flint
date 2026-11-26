@@ -58,9 +58,9 @@ final class TextResourceOrigin : Origin
         /// `line:column`, both one-based.
         string toString() const pure
         {
-            import std.conv : to;
+            import flint.engine.aot.text : decimal;
 
-            return (line + 1).to!string ~ ":" ~ (column + 1).to!string;
+            return decimal(line + 1) ~ ":" ~ decimal(column + 1);
         }
     }
 

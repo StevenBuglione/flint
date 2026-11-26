@@ -59,12 +59,12 @@ final class Slf4jLoggingSystem
     /// Set the level of `loggerName` (`root` or empty for the root logger), as `logging.level.<name>` does.
     void setLogLevel(string loggerName, LogLevel level)
     {
-        import std.uni : sicmp;
+        import flint.boot.internal.text : equalsIgnoreCase;
 
         auto loggers = factory();
         if (loggers is null)
             return;
-        loggers.setLevel(sicmp(loggerName, "root") == 0 ? "" : loggerName, toLevel(level));
+        loggers.setLevel(equalsIgnoreCase(loggerName, "root") ? "" : loggerName, toLevel(level));
     }
 
     /// Restore `flint.slf4j`'s own output.
