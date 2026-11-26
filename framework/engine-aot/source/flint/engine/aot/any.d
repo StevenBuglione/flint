@@ -139,6 +139,8 @@ private template categoryOf(U)
         enum categoryOf = Category.boxed;
 }
 
+private enum isScalar(T) = categoryOf!T >= Category.text && categoryOf!T <= Category.floating;
+
 /// An erased value: a type name and the value.
 struct Any
 {
@@ -316,7 +318,7 @@ struct Any
         return slot_ == Slot.reference && (object_ is null || (cast(const U) object_) !is null);
     }
 
-    private bool holdsScalar(U)() const
+    private bool holdsScalar(U)() const pure nothrow @nogc
     {
         enum category = categoryOf!U;
         static if (category == Category.text)
@@ -366,6 +368,39 @@ struct Any
             return scalar!U();
     }
 
+    /// Extract an exact scalar type. A mismatch or null returns false and leaves `value` initialized.
+    bool tryGet(T)(out T value) const pure nothrow @nogc if (isScalar!T)
+    {
+        if (typeName_ != typeNameOf!T || isNull() || !holdsScalar!T())
+            return false;
+        value = readScalar!T();
+        return true;
+    }
+
+    /// Extract a non-null reference of the stored type. A base type does not match a stored subtype.
+    bool tryGet(T)(out T value) nothrow @nogc if (categoryOf!T == Category.reference)
+    {
+        if (typeName_ != typeNameOf!T || slot_ != Slot.reference)
+            return false;
+        value = cast(T) object_;
+        return value !is null;
+    }
+
+    /// Copy an inline or boxed struct of the stored type. Structs with assignment hooks are excluded.
+    bool tryGet(T)(out T value) nothrow @nogc
+            if (is(T == struct) && !is(T == Any) && !__traits(hasMember, T, "opAssign")
+                && __traits(compiles, (ref T destination, ref T source)@safe nothrow @nogc {
+                    destination = source;
+                }))
+    {
+        if (auto pointer = structPointer!T())
+        {
+            value = *pointer;
+            return true;
+        }
+        return false;
+    }
+
     private ref inout(U) boxed(U)() inout return
     {
         static if (isInlineable!U)
@@ -403,6 +438,11 @@ struct Any
     {
         if (!holds!U)
             throw mismatch(typeNameOf!U);
+        return readScalar!U();
+    }
+
+    private U readScalar(U)() const pure nothrow @nogc
+    {
         enum category = categoryOf!U;
         static if (category == Category.text)
             return string_;

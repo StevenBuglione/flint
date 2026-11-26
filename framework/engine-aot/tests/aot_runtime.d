@@ -709,6 +709,71 @@ private struct LargeTwin
     long[5] values;
 }
 
+@("Any.tryGet keeps exact scalar and reference types")
+unittest
+{
+    auto service = new OwnerService;
+    auto extract = () nothrow @nogc {
+        const number = Any.of(42);
+        int value;
+        assert(number.tryGet(value) && value == 42);
+        long widened = 123;
+        assert(!number.tryGet(widened) && widened == 0);
+        widened = -123;
+        assert(Any.of(42L).tryGet(widened) && widened == 42);
+        assert(!Any.init.tryGet(value) && value == 0);
+        double realValue;
+        assert(Any.of(2.5).tryGet(realValue) && realValue == 2.5);
+        realValue = 123.0;
+        assert(!Any.of(2.5f).tryGet(realValue) && realValue != realValue);
+        string text;
+        assert(Any.of("").tryGet(text) && text !is null && text.length == 0);
+        assert(!Any.of(cast(string) null).tryGet(text) && text is null);
+        value = 123;
+        assert(!Any.ofObject(service, "int").tryGet(value) && value == 0);
+
+        OwnerService item;
+        assert(Any.of(service).tryGet(item) && item is service);
+        assert(!Any.of(cast(OwnerService) null).tryGet(item) && item is null);
+        Base parent = service;
+        assert(!Any.of(service).tryGet(parent) && parent is null);
+        Repository view;
+        assert(Any.ofObject(service, typeNameOf!Repository).tryGet(view) && view is service);
+        assert(!Any.ofObject(service, typeNameOf!OwnerService).tryGet(view) && view is null);
+    };
+    extract();
+}
+
+@("Any.tryGet copies inline and boxed structs")
+unittest
+{
+    import flint.engine.aot.permanent : Permanent;
+
+    auto owner = Any.of(InlineGreeting(7, "name"));
+    assert(owner.box!InlineGreeting is null);
+    static assert(Any.boxes!LargeRecord);
+    LargeRecord seed;
+    seed.values[0] = 67;
+    auto heap = Any.of(seed);
+    auto permanent = Permanent(Permanent.boxBytes!LargeRecord(1));
+    auto carved = permanent.any(seed);
+    auto extract = () nothrow @nogc {
+        InlineGreeting small;
+        assert(owner.tryGet(small) && small.id == 7 && small.content == "name");
+        small.id++;
+        assert(owner.tryGet(small) && small.id == 7);
+        foreach (entry; [heap, carved])
+        {
+            LargeRecord large;
+            assert(entry.tryGet(large) && large.values[0] == 67);
+            large.values[0] = 100;
+            assert(entry.tryGet(large) && large.values[0] == 67);
+            assert(!entry.tryGet(small) && small == InlineGreeting.init);
+        }
+    };
+    extract();
+}
+
 unittest
 {
     import flint.engine.aot.any : Any;
