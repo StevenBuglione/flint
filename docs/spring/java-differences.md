@@ -196,7 +196,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | openjdk@21.0.13 | 234 | 135 | 1,871 | 16,181 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 548 | 21 | 88 | 11,756 |
+| security | spring-security@7.2.0 | 555 | 23 | 88 | 11,747 |
 
 ## Known gaps
 
@@ -4411,6 +4411,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.security.core.userdetails.UserDetailsPasswordService#NOOP` | `flint.security.core.userdetails.UserDetailsPasswordService.NOOP` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) | A property returns the shared stateless service. |
 | `org.springframework.security.core.userdetails.UserDetailsPasswordService#updatePassword(UserDetails,String)` | `flint.security.core.userdetails.UserDetailsPasswordService.updatePassword` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.springframework.security.provisioning
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.security.provisioning.InMemoryUserDetailsManager#changePassword(String,String)` | `flint.security.provisioning.InMemoryUserDetailsManager.changePassword` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.security.provisioning.InMemoryUserDetailsManager#updatePassword(UserDetails,String)` | `flint.security.provisioning.InMemoryUserDetailsManager.updatePassword` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 ## Excluded elements
 
@@ -10366,7 +10373,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.acls.domain | 139 | 0 |
 | org.springframework.security.acls.jdbc | 63 | 0 |
 | org.springframework.security.acls.model | 83 | 0 |
-| org.springframework.security.authentication | 100 | 32 |
+| org.springframework.security.authentication | 95 | 32 |
 | org.springframework.security.authentication.dao | 1 | 0 |
 | org.springframework.security.authentication.event | 10 | 0 |
 | org.springframework.security.authentication.jaas | 73 | 0 |
@@ -10542,7 +10549,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.oauth2.server.resource.web.reactive.function.client | 0 | 6 |
 | org.springframework.security.oauth2.server.resource.web.server | 0 | 4 |
 | org.springframework.security.oauth2.server.resource.web.server.authentication | 0 | 6 |
-| org.springframework.security.provisioning | 87 | 0 |
+| org.springframework.security.provisioning | 83 | 0 |
 | org.springframework.security.rsocket.api | 0 | 18 |
 | org.springframework.security.rsocket.authentication | 0 | 23 |
 | org.springframework.security.rsocket.authorization | 0 | 11 |

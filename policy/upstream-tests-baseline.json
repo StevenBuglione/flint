@@ -5099,7 +5099,6 @@
       "org/springframework/security/core/userdetails/UserTests.java",
       "org/springframework/security/core/userdetails/jdbc/JdbcDaoImplTests.java",
       "org/springframework/security/core/userdetails/memory/UserAttributeEditorTests.java",
-      "org/springframework/security/provisioning/InMemoryUserDetailsManagerTests.java",
       "org/springframework/security/provisioning/JdbcUserDetailsManagerTests.java"
     ],
     "security-crypto": [

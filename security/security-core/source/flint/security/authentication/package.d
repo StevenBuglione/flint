@@ -6,7 +6,7 @@
  * Ported from spring-security 7.2.0, core/src/main/java/org/springframework/security/authentication/{
  * AuthenticationManager,AuthenticationProvider,AuthenticationEventPublisher,DefaultAuthenticationEventPublisher,
  * ProviderManager,AbstractAuthenticationToken,UsernamePasswordAuthenticationToken,AnonymousAuthenticationToken,
- * AuthenticationTrustResolver,CachingUserDetailsService,
+ * AuthenticationTrustResolver,CachingUserDetailsService,AccountStatusUserDetailsChecker,
  * AuthenticationTrustResolverImpl,BadCredentialsException,AccountStatusException,DisabledException,LockedException,
  * AccountExpiredException,CredentialsExpiredException,ProviderNotFoundException,InsufficientAuthenticationException,
  * AuthenticationCredentialsNotFoundException,AuthenticationServiceException,InternalAuthenticationServiceException}.java.
@@ -18,7 +18,9 @@
 +/
 module flint.security.authentication;
 
-import flint.context : ApplicationEvent, ApplicationEventPublisher, ApplicationEventPublisherAware;
+import flint.context : ApplicationEvent, ApplicationEventPublisher, ApplicationEventPublisherAware,
+    MessageSource, MessageSourceAware;
+import flint.context.support : DelegatingMessageSource, MessageSourceAccessor;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.name : canonicalTypeName, simpleTypeName;
 import flint.engine.aot.objects : statelessInstance;
@@ -32,7 +34,8 @@ import flint.security.authentication.event : AbstractAuthenticationFailureEvent,
     AuthenticationFailureProxyUntrustedEvent, AuthenticationFailureServiceExceptionEvent, AuthenticationSuccessEvent;
 import flint.security.core : Authentication, AuthenticationException, authoritiesText,
     CredentialsContainer, GrantedAuthority;
-import flint.security.core.userdetails : UserCache, UserDetails, UserDetailsService, UsernameNotFoundException;
+import flint.security.core.userdetails : UserCache, UserDetails, UserDetailsChecker,
+    UserDetailsService, UsernameNotFoundException;
 import flint.security.core.userdetails.cache : NullUserCache;
 
 @safe:
@@ -51,6 +54,43 @@ interface AuthenticationProvider
     Authentication authenticate(Authentication authentication);
     /// Whether tokens of the type named `authenticationType` are supported.
     bool supports(string authenticationType);
+}
+
+/// Checks the status flags of an account in Spring Security's order.
+class AccountStatusUserDetailsChecker : UserDetailsChecker, MessageSourceAware
+{
+    protected MessageSourceAccessor messages;
+
+    /// Use the default exception messages until the context supplies a message source.
+    this()
+    {
+        messages = new MessageSourceAccessor(new DelegatingMessageSource);
+    }
+
+    /// Check the account and credential status.
+    void check(UserDetails user)
+    {
+        if (!user.isAccountNonLocked())
+            throw new LockedException(messages.getMessage("AccountStatusUserDetailsChecker.locked",
+                    null, "User account is locked"));
+        if (!user.isEnabled())
+            throw new DisabledException(messages.getMessage("AccountStatusUserDetailsChecker.disabled",
+                    null, "User is disabled"));
+        if (!user.isAccountNonExpired())
+            throw new AccountExpiredException(messages.getMessage("AccountStatusUserDetailsChecker.expired",
+                    null, "User account has expired"));
+        if (!user.isCredentialsNonExpired())
+            throw new CredentialsExpiredException(messages.getMessage(
+                    "AccountStatusUserDetailsChecker.credentialsExpired", null, "User credentials have expired"));
+    }
+
+    /// Use the message source to resolve diagnostics.
+    void setMessageSource(MessageSource messageSource)
+    {
+        if (messageSource is null)
+            throw new IllegalArgumentException("messageSource cannot be null");
+        messages = new MessageSourceAccessor(messageSource);
+    }
 }
 
 /// Loads user details through a configured cache, using the backing service on a miss.

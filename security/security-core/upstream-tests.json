@@ -610,8 +610,29 @@
       "status": "deferred"
     },
     "org/springframework/security/provisioning/InMemoryUserDetailsManagerTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-core/tests/user_details_provisioning_test.d",
+      "methods": {
+        "ported": [
+          "authenticateWhenInvalidMissingOrMalformedIdThenException",
+          "changePassword",
+          "changePasswordWhenCurrentUsernameIsNotInLowercaseThenChangesPassword",
+          "changePasswordWhenCustomSecurityContextHolderStrategyThenUses",
+          "changePasswordWhenUserNotFoundThenAppropriateException",
+          "changePasswordWhenUsernameIsNotInLowercase",
+          "createUserWhenUserAlreadyExistsThenException",
+          "loadUserByUsernameWhenNotInstanceOfCredentialsContainerThenReturnInstanceOfCredentialsContainer",
+          "loadUserByUsernameWhenUserNullThenException",
+          "updateUserWhenUserDoesNotExistThenException"
+        ],
+        "skipped": {
+          "constructorWhenUserPropertiesThenCreate": "The Properties constructor needs the UserAttributeEditor port.",
+          "constructorWhenUserPropertiesWithEmptyValueThenException": "The Properties constructor needs the UserAttributeEditor port.",
+          "constructorWhenUserPropertiesNoRolesThenException": "The Properties constructor needs the UserAttributeEditor port.",
+          "createUserWhenInstanceOfMutableUserDetailsThenChangePasswordWorks": "Custom package-private MutableUserDetails adoption is deferred.",
+          "loadUserByUsernameWhenInstanceOfCredentialsContainerThenReturnInstance": "Custom package-private MutableUserDetails adoption is deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/security/provisioning/JdbcUserDetailsManagerTests.java": {
       "phase": "2",
