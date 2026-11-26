@@ -32,7 +32,7 @@ import flint.jakarta.validation.constraints : AssertFalse, AssertTrue, DecimalMa
     NotNull, Null, Past, PastOrPresent, Pattern, Positive, PositiveOrZero, Size;
 import flint.java.time : Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, ZonedDateTime;
 import flint.java.util : RawCollection, RawMap;
-import flint.hibernate.validator.internal.regex : Regex, RegexBudgetException, RegexSyntaxException,
+import flint.java.util.regex.internal.engine : Regex, RegexBudgetException, RegexSyntaxException,
     RegexUnsupportedException, compileRegex;
 
 @safe:

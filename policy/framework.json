@@ -937,6 +937,7 @@
     "engine-aot",
     "jakarta-validation",
     "java",
+    "java-regex",
     "serde",
     "validate"
    ],
