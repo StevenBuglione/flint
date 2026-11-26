@@ -1116,6 +1116,9 @@
   "ai-commons": {
    "directory": "ai/ai-commons",
    "module": "flint.ai.content",
+   "also": [
+    "flint.ai.observation.conventions"
+   ],
    "repo": "ai",
    "licence": "Apache-2.0",
    "upstream": "spring-ai@v2.1.0",
