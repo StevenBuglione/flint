@@ -1088,3 +1088,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **D-DATA-2 (sol-data): approved.** Data Commons' initial scroll positions compare by value and are created by factories, where Java caches the instances.
   - **D-DATA-3 (sol-data): approved.** Typed property paths and the typed sort use D getter aliases where Java uses method references, with no runtime proxies.
   - **sol-ai: approved.** A narrow `-flint.ai.chat.messages.part` entry in `dscanner.ini`'s `object_const_check`, consistent with the existing Spring-namespace exemptions. Engines stay checked.
+- 2026-11-26 01:20Z, coordinator: **context's cap raise (0168bca6) is not applied.** framework-core traced the overage to a Phobos link cascade rather than module growth, so the caps stay as they are.
+  - **The cascade:** an LTO link resolves a template instance from the first Phobos archive member that defines it. That member drags in about 300-450 KB: std.net.curl, std.socket, regex, zip and more.
+  - **The two triggers:** `flint.util`'s use of std.uni, and engine-reactor's `Thread.sleep(25.msecs)`.
+  - **With both fixed:** context is 583 KB, beans 243 KB and core 11 KB, all well under their existing caps.
+  - **Owner's decision kept:** "only goes down" is respected; this simply removes the need to go up.
