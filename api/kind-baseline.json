@@ -1,7 +1,6 @@
 {
  "mismatches": {
   "org.hibernate.validator.HibernateValidatorConfiguration": "framework: Java interface, D class",
-  "org.springframework.core.convert.converter.GenericConverter.ConvertiblePair": "framework: Java class, D struct",
   "org.springframework.security.web.authentication.www.BasicAuthenticationConverter": "security: Java class, D struct",
   "tools.jackson.core.StreamReadConstraints": "framework: Java class, D struct",
   "tools.jackson.core.StreamWriteConstraints": "framework: Java class, D struct",

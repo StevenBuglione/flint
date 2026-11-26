@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 204 | 390 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,614 | 1,466 | 4,870 | 29,884 |
+| framework | spring-framework@v7.1.0 | 3,613 | 1,467 | 4,870 | 29,884 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2797,6 +2797,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.core.convert.converter.ConverterRegistry#addConverter(Class,Class,Converter)` | `flint.core.convert.converter.ConverterRegistry.addConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.convert.converter.ConverterRegistry#removeConvertible(Class,Class)` | `flint.core.convert.converter.ConverterRegistry.removeConvertible` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.core.convert.converter.GenericConverter.ConvertiblePair` | `flint.core.convert.converter.ConvertiblePair` | [R11](api-mapping.md#r11-object-identity-and-equality) | A struct with value equality, not a final class: a source/target pair of canonical type names. |
 
 #### org.springframework.core.env
 

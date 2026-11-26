@@ -14374,7 +14374,7 @@
 "org.springframework.core.convert.converter.GenericConverter":{"d":"flint.core.convert.converter.GenericConverter","status":"ported"},
 "org.springframework.core.convert.converter.GenericConverter#convert(Object,TypeDescriptor,TypeDescriptor)":{"d":"flint.core.convert.converter.GenericConverter.convert","status":"ported"},
 "org.springframework.core.convert.converter.GenericConverter#getConvertibleTypes()":{"d":"flint.core.convert.converter.GenericConverter.getConvertibleTypes","status":"ported"},
-"org.springframework.core.convert.converter.GenericConverter.ConvertiblePair":{"d":"flint.core.convert.converter.ConvertiblePair","status":"ported"},
+"org.springframework.core.convert.converter.GenericConverter.ConvertiblePair":{"d":"flint.core.convert.converter.ConvertiblePair","rules":["R11"],"status":"adapted","note":"A struct with value equality, not a final class: a source/target pair of canonical type names."},
 "org.springframework.core.convert.converter.GenericConverter.ConvertiblePair#<init>(Class,Class)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.core.convert.converter.GenericConverter.ConvertiblePair#equals(Object)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.core.convert.converter.GenericConverter.ConvertiblePair#getSourceType()":{"d":"flint.core.convert.converter.ConvertiblePair.getSourceType","status":"ported"},
