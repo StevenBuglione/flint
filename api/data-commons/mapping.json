@@ -14,6 +14,8 @@
 "org.springframework.data.core.PropertyPathUtil#resolve(Object)":{"status":"adapted","rules":["R9"],"d":"flint.data.core.PropertyPathUtil.resolve"},
 "org.springframework.data.core.TypeInformation":{"status":"adapted","rules":["R4"],"d":"flint.data.core.TypeInformation"},
 "org.springframework.data.core.TypeInformation#of(Class)":{"status":"adapted","rules":["R4"],"d":"flint.data.core.TypeInformation.of"},
+"org.springframework.data.core.TypeInformation#getProperty(String)":{"status":"ported","d":"flint.data.core.TypeInformation.getProperty"},
+"org.springframework.data.core.TypeInformation#getRequiredProperty(String)":{"status":"ported","d":"flint.data.core.TypeInformation.getRequiredProperty"},
 "org.springframework.data.core.TypeInformation#getType()":{"status":"adapted","rules":["R4"],"d":"flint.data.core.TypeInformation.getType"},
 "org.springframework.data.core.TypeInformation#isCollectionLike()":{"status":"ported","d":"flint.data.core.TypeInformation.isCollectionLike"},
 "org.springframework.data.core.TypeInformation#isMap()":{"status":"ported","d":"flint.data.core.TypeInformation.isMap"},

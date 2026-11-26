@@ -7,7 +7,8 @@ module flint.data.core.type_information;
 
 import flint.engine.aot.descriptor : Descriptor, DescriptorTable, TypeKind;
 import flint.java.classref : ClassRef, classOf;
-import flint.java.lang : IllegalArgumentException, IllegalStateException, JavaObject, stringHashCode;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, JavaObject,
+    NullPointerException, stringHashCode;
 
 @safe:
 
@@ -22,6 +23,12 @@ interface TypeInformation
 
     /// The canonical type token (R4).
     ClassRef getType() const pure nothrow @nogc;
+
+    /// The type of a named property, including a dot-separated path, or null if no such property exists.
+    TypeInformation getProperty(string property) const;
+
+    /// The type of a named property, or an error if no such property exists.
+    TypeInformation getRequiredProperty(string property) const;
 
     /// Whether this type describes a collection or array.
     bool isCollectionLike() const nothrow @nogc;
@@ -73,10 +80,15 @@ private TypeInformation lookupType(const(DescriptorTable) descriptors, ClassRef 
 {
     if (descriptors is null)
         throw new IllegalArgumentException("Descriptor table must not be null");
-    auto descriptor = descriptors.find(type.name);
+    return new TypeDiscoverer(descriptors, requireDescriptor(descriptors, type.name));
+}
+
+private const(Descriptor) requireDescriptor(const(DescriptorTable) descriptors, string name)
+{
+    auto descriptor = descriptors.find(name);
     if (descriptor is null)
-        throw new IllegalStateException("No Flint AOT descriptor registered for " ~ type.name);
-    return new TypeDiscoverer(descriptors, descriptor);
+        throw new IllegalStateException("No Flint AOT descriptor registered for " ~ name);
+    return descriptor;
 }
 
 private final class TypeDiscoverer : TypeInformation
@@ -93,6 +105,42 @@ private final class TypeDiscoverer : TypeInformation
     override ClassRef getType() const pure nothrow @nogc
     {
         return ClassRef(descriptor.name);
+    }
+
+    override TypeInformation getProperty(string property) const
+    {
+        if (property is null)
+            throw new NullPointerException("Property must not be null");
+
+        size_t start;
+        string currentType;
+        while (true)
+        {
+            auto current = start == 0 ? descriptor : requireDescriptor(descriptors, currentType);
+            size_t end = start;
+            while (end < property.length && property[end] != '.')
+                end++;
+
+            auto field = current.property(property[start .. end]);
+            if (field is null)
+                return null;
+            if (end == property.length)
+                return new TypeDiscoverer(descriptors, requireDescriptor(descriptors, field.type));
+
+            currentType = field.type;
+            start = end + 1;
+        }
+    }
+
+    override TypeInformation getRequiredProperty(string property) const
+    {
+        auto result = getProperty(property);
+        if (result is null)
+        {
+            const name = descriptor.name;
+            throw new IllegalArgumentException("Could not find required property " ~ property ~ " on " ~ name);
+        }
+        return result;
     }
 
     override bool isCollectionLike() const nothrow @nogc

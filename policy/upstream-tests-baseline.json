@@ -1546,7 +1546,6 @@
       "org/springframework/data/convert/SimplePropertyValueConversionsUnitTests.java",
       "org/springframework/data/convert/SimplePropertyValueConverterRegistryUnitTests.java",
       "org/springframework/data/convert/SimpleTypeInformationMapperUnitTests.java",
-      "org/springframework/data/core/ClassTypeInformationUnitTests.java",
       "org/springframework/data/core/CustomCollectionsUnitTests.java",
       "org/springframework/data/core/DataCmns511Tests.java",
       "org/springframework/data/core/NullableWrapperConvertersUnitTests.java",

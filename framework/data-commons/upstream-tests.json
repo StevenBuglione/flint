@@ -133,8 +133,53 @@
       "status": "deferred"
     },
     "org/springframework/data/core/ClassTypeInformationUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/class_type_information_tests.d",
+      "methods": {
+        "ported": [
+          "discoversTypeForNestedGenericField",
+          "discoversTypeForSimpleGenericField",
+          "handlesPropertyFieldMismatchCorrectly"
+        ],
+        "skipped": {
+          "considersGenericsOfTypeBounds": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "considersGenericsOfTypeToSpecializeToIfFullyResolved": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "createsToStringRepresentation": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "detectsSpecialMapAsMapValueType": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "detectsVavrMapComponentAndValueType": "Third-party Vavr collection descriptors are deferred.",
+          "detectsVavrTraversableComponentType": "Third-party Vavr collection descriptors are deferred.",
+          "discoveresMethodParameterTypesCorrectly": "Method parameter metadata is deferred.",
+          "discoversArraysAndCollections": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "discoversBoundType": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "discoversBoundTypeForNested": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "discoversBoundTypeForSpecialization": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "discoversImplementationBindingCorrectlyForLong": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "discoversImplementationBindingCorrectlyForNumber": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "discoversImplementationBindingCorrectlyForString": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "discoversMapKeyAndValueTypeFromTypedMap": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "discoversMapValueType": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "findsGetterOnInterface": "Interface-property descriptors are deferred.",
+          "mergesGenericsFromContextAndProvidedDefaultOnSpecialization": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "prefersLocalTypeMappingOverNestedWithSameGenericType": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "proxyTypeInformationShouldNotEqualUserClassTypeInfo": "Proxy user-type discovery is deferred.",
+          "rejectsNullClass": "D's type template argument cannot be null.",
+          "rejectsNullResolvableType": "The ResolvableType factory is deferred.",
+          "resolvesNestedGenericsToConcreteType": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "resolvesNestedInheritedTypeParameters": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "resolvesTypeParametersCorrectly": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "resolvesWildCardTypeCorrectly": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "returnsComponentTypeForMultiDimensionalArrayCorrectly": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "returnsEmptyOptionalForRawTypesOnly": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "returnsSameInstanceForCachedClass": "The runtime ClassTypeInformation cache is deferred.",
+          "specializedTypeEqualsAndHashCode": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "specializesTypeUsingTypeVariableContext": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "typeInfoDoesNotEqualForGenericTypesWithDifferentParent": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "typeInfoShouldPreserveGenericParameter": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "typeInformationConstantsShouldNotBeNull": "Raw Java type reference constants and ClassTypeInformation are deferred.",
+          "usesTargetTypeDirectlyIfNoGenericsAreInvolved": "Raw Java types, generic resolution and Java-specific class metadata remain deferred.",
+          "usesTargetTypeForWildcardedBaseOnSpecialization": "Raw Java types, generic resolution and Java-specific class metadata remain deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/core/CustomCollectionsUnitTests.java": {
       "phase": "2",
