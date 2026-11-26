@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,097 | 254 | 1,871 | 15,199 |
+| framework | openjdk@21.0.13 | 1,097 | 256 | 1,871 | 15,197 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2170,7 +2170,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Map#getOrDefault(Object,V)` | `flint.java.util.Map.getOrDefault` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Map#remove(Object)` | `flint.java.util.Map.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Map.Entry` | `flint.java.util.MapEntry` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to MapEntry and exposed through Map.Entry as an alias. |
-| `java.util.MissingFormatArgumentException` | `flint.java.util.formatter.MissingFormatArgumentException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
+| `java.util.MissingFormatArgumentException` | `flint.java.util.formatter.MissingFormatArgumentException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null format specifier slice counts as empty under R26. |
+| `java.util.MissingFormatArgumentException#<init>(String)` | `flint.java.util.formatter.MissingFormatArgumentException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Objects#equals(Object,Object)` | `flint.java.util.Objects.equals` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Objects#hash(Object...)` | `flint.java.util.Objects.hash` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.Objects#hashCode(Object)` | `flint.java.util.Objects.hashCode` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -2194,7 +2195,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.UUID#hashCode()` | `flint.java.util.uuid.UUID.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#toString()` | `flint.java.util.uuid.UUID.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#version()` | `flint.java.util.uuid.UUID.version_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `java.util.UnknownFormatConversionException` | `flint.java.util.formatter.UnknownFormatConversionException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
+| `java.util.UnknownFormatConversionException` | `flint.java.util.formatter.UnknownFormatConversionException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null conversion slice counts as empty under R26. |
+| `java.util.UnknownFormatConversionException#<init>(String)` | `flint.java.util.formatter.UnknownFormatConversionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.util.concurrent
 
@@ -10037,7 +10039,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,915 | 0 |
+| java.util | 1,913 | 0 |
 | java.util.concurrent | 1,237 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -10996,12 +10998,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ValueRange#checkValidIntValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.util.IllegalFormatConversionException#<init>(char,Class)` | 2 | Flint currently accepts a string name. Java retains the argument Class and exposes it through getArgumentClass(). |
-| framework | `java.util.MissingFormatArgumentException#<init>(String)` | 2 | The current Flint constructor accepts null. Java throws NullPointerException for a null format specifier. |
 | framework | `java.util.Objects#requireNonNull(T,String)` | 2 | Java distinguishes an absent exception detail message from a present empty message. The R5 Nullable!string message parameter is missing. |
 | framework | `java.util.Objects#requireNonNull(T,Supplier)` | 2 | Java calls the message Supplier only for a null object. The Supplier overload is missing. |
 | framework | `java.util.Objects#requireNonNullElse(T,T)` | 2 | Java selects the fallback when the first boxed value is absent and throws NullPointerException when both values are absent. The current method ignores absence in an R5 Nullable payload. |
 | framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
-| framework | `java.util.UnknownFormatConversionException#<init>(String)` | 2 | The current Flint constructor accepts null. Java throws NullPointerException for a null conversion. |
 | framework | `org.hibernate.validator.HibernateValidator#buildValidatorFactory(ConfigurationState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `org.hibernate.validator.HibernateValidator#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `org.hibernate.validator.HibernateValidator#createSpecializedConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
