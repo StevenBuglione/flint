@@ -200,10 +200,25 @@ interface PersistentPropertyAccessor(T, P) if (is(P : PersistentProperty!P))
     T getBean();
 }
 
-// The repository adapter uses the same metadata without retaining the property type parameter.
-package(flint.data) interface PersistentEntityIdentity
+/// Metadata shared by persistent entities with unspecified type parameters (D-DATA-28).
+template PersistentEntity()
 {
+    alias PersistentEntity = PersistentEntityType;
+}
+
+// A distinct backing type preserves deduction of P from PersistentEntity!(T, P).
+private interface PersistentEntityType
+{
+    /// The entity's domain type.
     ClassRef getType();
+
+    /// The metadata for the entity's domain type.
+    TypeInformation getTypeInformation();
+}
+
+// The repository adapter uses the same metadata without retaining the property type parameter.
+package(flint.data) interface PersistentEntityIdentity : PersistentEntityType
+{
     PersistentProperty!() getRequiredIdProperty();
     IdentifierAccessor getIdentifierAccessor(Any bean);
     bool isNew(Any bean);
@@ -280,9 +295,6 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
 
     /// Whether the given name denotes a transient property.
     bool isTransient(string name);
-
-    /// The metadata for the entity's domain type.
-    TypeInformation getTypeInformation();
 
     /// The registered type alias, or Alias.NONE when absent.
     Alias getTypeAlias();

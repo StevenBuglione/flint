@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-28",
+ "deviation": "AbstractPersistentProperty resolves the declared property name through its owner. The D constructor accepts a name and PersistentEntity!(), whose common metadata view exposes type and TypeInformation regardless of entity or property binding. Actual type comes from the resolved TypeInformation. Association-specific type selection remains deferred.",
+ "reason": "The Java constructor accepts a reflective Property and SimpleTypeHolder, which remain deferred. D cannot express Java wildcard entity parameterizations directly. The distinct interface behind the wildcard alias preserves deduction of the bound entity and property types."
+}

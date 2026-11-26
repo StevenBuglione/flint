@@ -719,8 +719,36 @@
       "status": "deferred"
     },
     "org/springframework/data/mapping/model/AbstractPersistentPropertyUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/abstract_persistent_property_tests.d",
+      "methods": {
+        "ported": [
+          "discoversComponentTypeCorrectly",
+          "resolvesActualType",
+          "resolvesFieldNameWithUnderscoresCorrectly"
+        ],
+        "skipped": {
+          "considersArrayPropertyEntitiesIfComponentTypeIsEntity": "Entity-type classification and SimpleTypeHolder remain deferred.",
+          "considersCollectionPropertyEntitiesIfComponentTypeIsEntity": "Entity-type classification and SimpleTypeHolder remain deferred.",
+          "considersCollectionPropertySimpleIfComponentTypeIsSimple": "SimpleTypeHolder remains deferred.",
+          "considersMapPropertyEntitiesIfValueTypeIsEntity": "Entity-type classification and SimpleTypeHolder remain deferred.",
+          "considersPropertiesEqualIfFieldEquals": "Reflective Property identity is not available.",
+          "considersVavrMaps": "Vavr map support remains deferred.",
+          "detectsJMoleculesAssociation": "JMolecules association integration remains deferred.",
+          "doesNotConsiderJavaTransientFieldsTransient": "Java reflected transient field metadata is unavailable.",
+          "doesNotConsiderPropertyWithTreeMapMapValueAnEntity": "Entity-type classification and SimpleTypeHolder remain deferred.",
+          "doesNotDiscoverGetterAndSetterIfNoPropertyDescriptorGiven": "Accessor metadata and JavaBeans descriptors remain deferred.",
+          "doesNotUseInvalidGettersAndASetters": "JavaBeans getter and setter discovery remains deferred.",
+          "findsSimpleGettersAndASetters": "JavaBeans getter and setter discovery remains deferred.",
+          "isEntityWorksForUntypedCollection": "Entity-type classification and SimpleTypeHolder remain deferred.",
+          "isEntityWorksForUntypedMaps": "Entity-type classification and SimpleTypeHolder remain deferred.",
+          "resolvesGenericsForRawType": "Inherited Java generic type resolution and getRawType remain deferred.",
+          "returnsAccessorsForGenericReturnType": "Generic accessor discovery remains deferred.",
+          "returnsNestedEntityTypeCorrectly": "Persistent entity type enumeration remains deferred.",
+          "usesCustomGetter": "JavaBeans custom accessors remain deferred.",
+          "usesCustomSetter": "JavaBeans custom accessors remain deferred."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/mapping/model/AnnotationBasedPersistentPropertyUnitTests.java": {
       "phase": "2",
