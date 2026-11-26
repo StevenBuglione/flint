@@ -77,6 +77,27 @@ class Resolve(unittest.TestCase):
         self.assertEqual(dod.owner('org.springframework.jdbc.core.JdbcTemplate#query', table), 'jdbc')
         self.assertEqual(dod.owner('org/springframework/boot/SpringApplicationTests', table), 'boot-core')
 
+    def test_spring_package_segments_reverse_r19_keyword_escapes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'policy').mkdir()
+            (root / 'policy' / 'framework.json').write_text(json.dumps({'modules': {
+                'ai-commons': {
+                    'module': 'flint.ai.content',
+                    'also': ['flint.ai.template_', 'flint.ai.function_.support', 'flint.ai.custom_'],
+                    'upstream': 'spring-ai@v2.1.0',
+                },
+            }}))
+            table = dod.ownership(root)
+
+        self.assertEqual(table, {
+            'org.springframework.ai.content': 'ai-commons',
+            'org.springframework.ai.template': 'ai-commons',
+            'org.springframework.ai.function.support': 'ai-commons',
+            'org.springframework.ai.custom_': 'ai-commons',
+        })
+        self.assertEqual(dod.owner('org/springframework/ai/template/NoOpTemplateRendererTests', table), 'ai-commons')
+
     def test_apps_are_chosen_by_dependency_closure(self):
         self.assertEqual(dod.using_apps(dod.resolve('framework/jdbc')), ['gs-relational-data-access', 'petclinic-rest'])
         self.assertNotIn('gs-relational-data-access', dod.using_apps(dod.resolve('framework/webmvc')))

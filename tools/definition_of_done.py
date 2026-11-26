@@ -44,6 +44,7 @@ if str(ROOT / 'tools') not in sys.path:
     sys.path.insert(0, str(ROOT / 'tools'))
 import workspace  # noqa: E402
 from jdk_link_closure import is_jdk_package  # noqa: E402
+from migration_manifest import KEYWORDS as D_KEYWORDS  # noqa: E402
 
 STEPS = ('resolve', 'structural', 'api', 'quality', 'tests', 'upstream-tests', 'budgets', 'link-closure', 'apps')
 UPSTREAM_TESTS = 'upstream-tests.json'
@@ -206,9 +207,8 @@ def ported_modules(root=ROOT):
 
 
 def ownership(root=ROOT):
-    """{Java package prefix: module}. A Spring port by rule R1 inverted (flint.X ports org.springframework.X), over
-    `module` and `also`; every module also by the packages its mapped elements come from (`d` under one of its D
-    modules), which covers ports of other libraries (Jackson, Jakarta, SLF4J). The longest prefix owns an element."""
+    """{Java package prefix: module}. Reverse R1/R19 for registered Spring modules and determine other
+    ports' packages from their mapped elements. The longest prefix owns an element."""
     if root in _OWNERSHIP:
         return _OWNERSHIP[root]
     d_owner, table = {}, {}
@@ -216,7 +216,10 @@ def ownership(root=ROOT):
         for d in modules:
             d_owner[d] = name
             if d.startswith('flint.') and str(upstream).startswith('spring-'):
-                table.setdefault('org.springframework.' + d[len('flint.'):], name)
+                segments = d.removeprefix('flint.').split('.')
+                package = '.'.join(part[:-1] if part.endswith('_') and part[:-1] in D_KEYWORDS else part
+                                   for part in segments)
+                table.setdefault('org.springframework.' + package, name)
     for mapping in sorted((root / 'api').glob('*/mapping.json')):
         for element, entry in json.loads(mapping.read_text()).get('elements', {}).items():
             d = entry.get('d')
