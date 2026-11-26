@@ -186,7 +186,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 498 | 22 | 1 | 2,774 |
-| framework | jackson-databind@3.1.8 | 589 | 61 | 5 | 9,812 |
+| framework | jackson-databind@3.1.8 | 572 | 61 | 5 | 9,829 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 168 | 147 | 0 | 2,075 |
@@ -10214,7 +10214,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.databind.deser.jackson | 41 | 0 |
 | tools.jackson.databind.deser.jdk | 549 | 0 |
 | tools.jackson.databind.deser.std | 304 | 0 |
-| tools.jackson.databind.exc | 70 | 0 |
+| tools.jackson.databind.exc | 87 | 0 |
 | tools.jackson.databind.ext | 54 | 0 |
 | tools.jackson.databind.ext.beans | 12 | 0 |
 | tools.jackson.databind.ext.javatime | 8 | 0 |
@@ -10742,6 +10742,23 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.databind.JsonNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.JsonNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonGenerator,String,BeanDescription,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonGenerator,String,JavaType)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonParser,String,BeanDescription,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#<init>(JsonParser,String,JavaType)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#from(JsonGenerator,String,BeanDescription,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#from(JsonGenerator,String,JavaType)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#from(JsonParser,String,BeanDescription,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#from(JsonParser,String,BeanDescription.Supplier,BeanPropertyDefinition)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#from(JsonParser,String,JavaType)` | 2 | Flint's constructor takes a message and diagnostic type name. The Java overload uses a processor and type or bean metadata. |
+| framework | `tools.jackson.databind.exc.InvalidDefinitionException#getType()` | 2 | Flint returns the type's diagnostic name as a string. JavaType remains deferred. |
+| framework | `tools.jackson.databind.exc.MismatchedInputException#<init>(JsonParser,String,JavaType)` | 2 | Flint's constructor takes a message, diagnostic target type and optional location. The Java overload uses a parser and JavaType. |
+| framework | `tools.jackson.databind.exc.MismatchedInputException#from(JsonParser,JavaType,String)` | 2 | Flint's constructor takes a message, diagnostic target type and optional location. The Java overload uses a parser and JavaType. |
+| framework | `tools.jackson.databind.exc.ValueInstantiationException#<init>(JsonParser,String,JavaType)` | 2 | Flint's constructor takes a message, diagnostic type name and cause. The Java overload uses a parser and JavaType. |
+| framework | `tools.jackson.databind.exc.ValueInstantiationException#<init>(JsonParser,String,JavaType,Throwable)` | 2 | Flint's constructor takes a message, diagnostic type name and cause. The Java overload uses a parser and JavaType. |
+| framework | `tools.jackson.databind.exc.ValueInstantiationException#from(JsonParser,String,JavaType)` | 2 | Flint's constructor takes a message, diagnostic type name and cause. The Java overload uses a parser and JavaType. |
+| framework | `tools.jackson.databind.exc.ValueInstantiationException#from(JsonParser,String,JavaType,Throwable)` | 2 | Flint's constructor takes a message, diagnostic type name and cause. The Java overload uses a parser and JavaType. |
+| framework | `tools.jackson.databind.exc.ValueInstantiationException#getType()` | 2 | Flint returns the type's diagnostic name as a string. JavaType remains deferred. |
 | framework | `tools.jackson.databind.node.ArrayNode#add(BigDecimal)` | 2 | Flint adds an existing JsonNode or a primitive number. |
 | framework | `tools.jackson.databind.node.ArrayNode#findParents(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
 | framework | `tools.jackson.databind.node.ArrayNode#findValues(String,List)` | 2 | ArrayList!JsonNode retains per-element vtables and dispatch thunks. Matched Oz builds add 17,056 loadable bytes to gs-rest-service and 16,336 to petclinic-rest. Deferred pending a thinner Java List facade. |
