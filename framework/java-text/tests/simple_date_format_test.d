@@ -294,3 +294,30 @@ unittest
     assert(date !is null && date.getTime() == 1_590_969_600_000L);
     assert(position.getIndex() == 10 && position.getErrorIndex() == -1);
 }
+
+@("DateFormat: a subclass can explicitly invoke the no-argument constructor")
+unittest
+{
+    import flint.java.text : DateFormat, ParsePosition;
+
+    final class ExplicitFormat : DateFormat
+    {
+        this()
+        {
+            super();
+        }
+
+        override string format(const Date date)
+        {
+            return "";
+        }
+
+        override Date parse(string text, ParsePosition position)
+        {
+            return null;
+        }
+    }
+
+    auto format = new ExplicitFormat;
+    assert(format.getCalendar() is null);
+}
