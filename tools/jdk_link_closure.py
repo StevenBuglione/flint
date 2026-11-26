@@ -30,6 +30,19 @@ LEGACY_RECORD = re.compile(r'link\|(java(?:-[a-z0-9-]+)?)\|(flint\.java\w*(?:\.\
                            r'([a-z][a-z0-9-]*)\|(?:O3|Oz)\|undeclared module records (flint\.java(?:\.\w+)+)')
 # Temporary first-object exception approved in 64f0653bc. Remove when the compile-scope fix lands.
 FIRST_OBJECT_ALLOWANCES = {
+    ('java-concurrent-sync', 'flint.java.util.concurrent.brokenbarrierexception', 'construct'): {
+        'profiles': ('O3', 'Oz'),
+        'module': 'flint.java.util.concurrent.atomic.atomicreference',
+        'member': 'flint.java.util.concurrent.atomic.atomicreference.o',
+        'referrer': 'flint.java.util.concurrent.brokenbarrierexception.o',
+        'trigger': '_D6object__T10RTInfoImplVAmA2i84i680ZQzyG2m',
+        'sections': {
+            '.rodata._D6object__T10RTInfoImplVAmA2i84i680ZQzyG2m': 16,
+            '.data._D5flint4java4util10concurrent6atomic15atomicreference12__ModuleInfoZ': 60,
+            '__minfo': 8,
+        },
+        'existing_probe': True,
+    },
     ('java-nio', 'flint.java.nio.bufferunderflowexception', 'underflow'): {
         'profiles': ('O3', 'Oz'),
         'module': 'flint.java.nio.bufferoverflowexception',

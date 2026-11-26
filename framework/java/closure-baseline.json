@@ -39,6 +39,8 @@
     "link|java-concurrent-exec|flint.java.util.concurrent.executionexception|throw-catch|Oz|undeclared module records flint.java.util.calendar",
     "link|java-concurrent-exec|flint.java.util.concurrent.executionexception|throw-catch|Oz|undeclared module records flint.java.util.date",
     "link|java-concurrent-exec|flint.java.util.concurrent.executionexception|throw-catch|Oz|undeclared module records flint.java.util.timezone",
+    "link|java-concurrent-sync|flint.java.util.concurrent.brokenbarrierexception|construct|O3|undeclared module records flint.java.util.concurrent.atomic.atomicreference",
+    "link|java-concurrent-sync|flint.java.util.concurrent.brokenbarrierexception|construct|Oz|undeclared module records flint.java.util.concurrent.atomic.atomicreference",
     "link|java-concurrent|flint.java.util.concurrent.timeoutexception|throw-catch|O3|undeclared module records flint.java.util.concurrent.callable",
     "link|java-concurrent|flint.java.util.concurrent.timeoutexception|throw-catch|Oz|undeclared module records flint.java.util.concurrent.callable",
     "link|java-io|flint.java.io.unsupportedencodingexception|throw-catch|O3|undeclared module records flint.java.character",
