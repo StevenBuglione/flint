@@ -2,7 +2,7 @@
 `org.springframework.http`: HTTP status codes, methods, headers, media types and entities.
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/http/
-(CacheControl.java, ETag.java, HttpStatusCode.java, DefaultHttpStatusCode.java, HttpStatus.java, HttpMethod.java, HttpHeaders.java,
+(CacheControl.java, ETag.java, HttpStatusCode.java, DefaultHttpStatusCode.java, HttpStatus.java, HttpMethod.java, HttpHeaders.java, HttpRange.java,
 MediaType.java, MediaTypeFactory.java, HttpEntity.java, ResponseEntity.java, RequestEntity.java, ProblemDetail.java) and
 spring-core/src/main/java/org/springframework/util/MimeType.java.
 
@@ -14,15 +14,17 @@ are structs (ADR-030 section 5); Java enums with methods follow proposed rule R1
 +/
 module flint.http;
 
-import flint.core.io : Resource;
-import flint.java.lang : IllegalArgumentException, IllegalStateException, NullPointerException,
-    NumberFormatException, UnsupportedOperationException;
+import flint.core.io : InputStreamResource, Resource;
+import flint.core.io.support : ResourceRegion;
+import flint.java.io : IOException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, JavaObject, Long,
+    NullPointerException, NumberFormatException, UnsupportedOperationException;
 import flint.java.net : URI;
 import flint.engine.aot.any : Any;
 import flint.http.mime_registry : mimeRegistrations, registeredMimeTypeIndices, registeredMimeTypeNames;
 import flint.java.nio.charset : Charset;
 import flint.java.time : Duration, Instant, ZonedDateTime;
-import flint.java.util : ArrayList, Collections, List, Optional;
+import flint.java.util : ArrayList, Collection, Collections, List, Optional;
 import flint.java.util.concurrent : TimeUnit, toSeconds;
 import flint.util : InvalidMimeTypeException, MimeType, MimeTypeParameter, MimeTypeUtils, StringUtils, toLowerAscii;
 import std.typecons : Nullable, nullable;
@@ -782,6 +784,258 @@ struct ETag
                 return tag;
         }
         return "\"" ~ tag ~ "\"";
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// HttpRange
+
+/// An HTTP byte range.
+abstract class HttpRange
+{
+    private enum string byteRangePrefix = "bytes=";
+    private enum maxRanges = 100;
+
+    /// The inclusive start relative to a representation of `length` bytes.
+    long getRangeStart(long length) const;
+
+    /// The inclusive end relative to a representation of `length` bytes.
+    long getRangeEnd(long length) const;
+
+    /// Selects this range from a resource of known positive length.
+    /// Throws: `IllegalArgumentException` for an unreadable length or a range outside the resource.
+    ResourceRegion toResourceRegion(Resource resource)
+    {
+        if (resource is null)
+            throw new NullPointerException("resource");
+        // The default InputStreamResource would consume its one read to determine the length.
+        if (typeid(cast(Object) resource) is typeid(InputStreamResource))
+            throw new IllegalArgumentException("Cannot convert an InputStreamResource to a ResourceRegion");
+        const length = getLengthFor(resource);
+        const start = getRangeStart(length);
+        const end = getRangeEnd(length);
+        if (start >= length)
+            throw new IllegalArgumentException("'position' exceeds the resource length " ~ decimal(length));
+        return new ResourceRegion(resource, start, end - start + 1);
+    }
+
+    /// Selects each range. Multiple ranges together must cover fewer bytes than the resource length.
+    static List!ResourceRegion toResourceRegions(List!HttpRange ranges, Resource resource)
+    {
+        if (ranges is null || ranges.isEmpty())
+            return Collections.emptyList!ResourceRegion();
+        auto regions = new ArrayList!ResourceRegion(ranges.size());
+        foreach (range; ranges)
+        {
+            if (range is null)
+                throw new NullPointerException("range");
+            regions.add(range.toResourceRegion(resource));
+        }
+        if (regions.size() > 1)
+        {
+            const length = getLengthFor(resource);
+            long total;
+            foreach (region; regions)
+            {
+                const count = region.getCount();
+                if (count > long.max - total)
+                    throw new IllegalArgumentException(
+                            "The sum of all ranges exceeds the resource length (" ~ decimal(length) ~ ")");
+                total += count;
+            }
+            if (total >= length)
+                throw new IllegalArgumentException("The sum of all ranges (" ~ decimal(
+                        total) ~ ") should be less than the resource length (" ~ decimal(length) ~ ")");
+        }
+        return regions;
+    }
+
+    private static long getLengthFor(Resource resource)
+    {
+        long length;
+        try
+            length = resource.contentLength();
+        catch (IOException ex)
+            throw new IllegalArgumentException("Failed to obtain Resource content length", ex);
+        if (length <= 0)
+            throw new IllegalArgumentException("Resource content length should be > 0");
+        return length;
+    }
+
+    /// An open-ended range.
+    static HttpRange createByteRange(long firstBytePos)
+    {
+        if (firstBytePos < 0)
+            throw new IllegalArgumentException("Invalid first byte position: " ~ decimal(firstBytePos));
+        return new ByteRange(firstBytePos, -1);
+    }
+
+    /// A range with both endpoints.
+    static HttpRange createByteRange(long firstBytePos, long lastBytePos)
+    {
+        if (firstBytePos < 0)
+            throw new IllegalArgumentException("Invalid first byte position: " ~ decimal(firstBytePos));
+        if (lastBytePos < firstBytePos)
+            throw new IllegalArgumentException("firstBytePosition=" ~ decimal(
+                    firstBytePos) ~ " should be less than or equal to lastBytePosition=" ~ decimal(lastBytePos));
+        return new ByteRange(firstBytePos, lastBytePos);
+    }
+
+    /// A range with the last `suffixLength` bytes.
+    static HttpRange createSuffixRange(long suffixLength)
+    {
+        if (suffixLength < 0)
+            throw new IllegalArgumentException("Invalid suffix length: " ~ decimal(suffixLength));
+        return new ByteRange(-1, suffixLength);
+    }
+
+    /// Parses up to 100 byte ranges. Throws `IllegalArgumentException` for invalid input.
+    static List!HttpRange parseRanges(string ranges)
+    {
+        if (ranges.length == 0)
+            return Collections.emptyList!HttpRange();
+        if (ranges.length < byteRangePrefix.length || ranges[0 .. byteRangePrefix.length] != byteRangePrefix)
+            throw new IllegalArgumentException("Range '" ~ ranges ~ "' does not start with 'bytes='");
+
+        ranges = ranges[byteRangePrefix.length .. $];
+        string[maxRanges] tokens;
+        size_t count;
+        size_t start;
+        for (size_t i = 0; i <= ranges.length; i++)
+        {
+            if (i != ranges.length && ranges[i] != ',')
+                continue;
+            const token = trimmedAscii(ranges[start .. i]);
+            if (token.length != 0)
+            {
+                if (count < maxRanges)
+                    tokens[count] = token;
+                count++;
+            }
+            start = i + 1;
+        }
+        if (count > maxRanges)
+            throw new IllegalArgumentException("Too many ranges: " ~ decimal(count));
+
+        auto result = new ArrayList!HttpRange(cast(int) count);
+        foreach (token; tokens[0 .. count])
+            result.add(parseRange(token));
+        return result;
+    }
+
+    private static HttpRange parseRange(string range)
+    {
+        foreach (i, c; range)
+        {
+            if (c != '-')
+                continue;
+            if (i == 0)
+                return createSuffixRange(Long.parseLong(range[1 .. $]));
+            const first = Long.parseLong(range[0 .. i]);
+            return i + 1 == range.length ? createByteRange(first) : createByteRange(first,
+                    Long.parseLong(range[i + 1 .. $]));
+        }
+        throw new IllegalArgumentException("Range '" ~ range ~ "' does not contain \"-\"");
+    }
+
+    /// Resolves `Range` after checking the optional `If-Range` validator.
+    static List!HttpRange resolveRanges(const HttpHeaders requestHeaders, const HttpHeaders responseHeaders)
+    {
+        if (requestHeaders.containsHeader(HttpHeaders.IF_RANGE))
+        {
+            const values = requestHeaders.get(HttpHeaders.IF_RANGE);
+            if (values.length != 1)
+                return Collections.emptyList!HttpRange();
+            if (values[0] is null)
+                throw new NullPointerException("If-Range");
+            const validator = trimmedAscii(values[0]);
+            const selected = validator.length && validator[0] == '"'
+                ? responseHeaders.getETag() : responseHeaders.getFirst(HttpHeaders.LAST_MODIFIED);
+            // Java's String.equals(null) is false even for the empty string.
+            if (selected is null || validator != selected)
+                return Collections.emptyList!HttpRange();
+        }
+        return requestHeaders.getRange();
+    }
+
+    /// Formats ranges for an HTTP `Range` field.
+    static string toString(Collection!HttpRange ranges)
+    {
+        if (ranges is null || ranges.isEmpty())
+            throw new IllegalArgumentException("Ranges Collection must not be empty");
+        char[] value = byteRangePrefix.dup;
+        bool first = true;
+        foreach (range; ranges)
+        {
+            if (range is null)
+                throw new NullPointerException("range");
+            if (!first)
+                value ~= ", ";
+            first = false;
+            value ~= range.toString();
+        }
+        return value.idup;
+    }
+
+    /// The range as text. Implementations can supply the byte range syntax.
+    override string toString() const
+    {
+        return typeid(this).name;
+    }
+
+    mixin JavaObject;
+
+    /// By default a custom range uses reference equality.
+    bool equals(Object other)
+    {
+        return this is other;
+    }
+
+    /// The identity hash unless the range defines value equality.
+    int hashCode()
+    {
+        return cast(int) super.toHash();
+    }
+}
+
+private final class ByteRange : HttpRange
+{
+    // A negative start denotes a suffix. A negative end means a range open to the end.
+    private long start;
+    private long end;
+
+    this(long start, long end) pure nothrow @nogc
+    {
+        this.start = start;
+        this.end = end;
+    }
+
+    override long getRangeStart(long length) const pure nothrow @nogc
+    {
+        return start >= 0 ? start : (end < length ? length - end : 0);
+    }
+
+    override long getRangeEnd(long length) const pure nothrow @nogc
+    {
+        return start >= 0 && end >= 0 && end < length ? end : length - 1;
+    }
+
+    override string toString() const pure nothrow
+    {
+        return (start < 0 ? "" : decimal(start)) ~ "-" ~ (end < 0 ? "" : decimal(end));
+    }
+
+    override bool equals(Object other) pure nothrow @nogc
+    {
+        auto range = cast(ByteRange) other;
+        return range !is null && start == range.start && end == range.end;
+    }
+
+    override int hashCode() pure nothrow @nogc
+    {
+        if (start < 0)
+            return Long.hashCode(end);
+        return 31 * (31 + Long.hashCode(start)) + (end < 0 ? 0 : Long.hashCode(end));
     }
 }
 
@@ -2072,6 +2326,18 @@ struct HttpHeaders
                 result.add(Charset.forName(token));
         }
         return result;
+    }
+
+    /// Formats the byte ranges as a `Range` header value.
+    void setRange(List!HttpRange ranges)
+    {
+        set(RANGE, HttpRange.toString(ranges));
+    }
+
+    /// The byte ranges from the first `Range` field, or an empty list if absent.
+    List!HttpRange getRange() const
+    {
+        return HttpRange.parseRanges(getFirst(RANGE));
     }
 
     /// Sets `Allow`.

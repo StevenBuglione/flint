@@ -678,6 +678,12 @@ web probe measured 536,729 to 537,009 linked bytes and 11,906 to 13,092 DMD temp
 `f441226c` to `8841ac5e`. The new header declarations instantiate typed ETag and charset lists.
 The tests cover repeated fields, commas inside quoted tags, weak comparison and malformed values.
 
+HTTP byte-range parsing keeps at most 100 token slices on the stack before constructing the result
+list. Range formatting iterates the existing class collection directly, and regional conversion
+reuses Core's resource length and region APIs. On venus the matched web probe measured 536,969
+to 537,009 linked bytes and 10,410 to 11,036 DMD template instances from `1da72da6` to `66361cbb`.
+The tests cover the 100-range boundary, stale validators, length failures and byte-count overflow.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

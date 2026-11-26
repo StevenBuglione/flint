@@ -1,0 +1,5 @@
+{
+ "id": "D-WEB-2",
+ "deviation": "`HttpRange.toResourceRegions` throws `IllegalArgumentException` if the sum of byte counts exceeds `long.max`.",
+ "reason": "Spring's unchecked signed sum can wrap before the length comparison. An overflow also exceeds the resource's representable length."
+}

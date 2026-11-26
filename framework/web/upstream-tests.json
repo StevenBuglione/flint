@@ -111,8 +111,35 @@
       "status": "deferred"
     },
     "org/springframework/http/HttpRangeTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/web/tests/http_range_tests.d",
+      "methods": {
+        "ported": [
+          "byteRange",
+          "byteRangeOfZeroLength",
+          "byteRangeWithoutLastPosition",
+          "invalidFirstPosition",
+          "invalidLastLessThanFirst",
+          "invalidSuffixLength",
+          "parseRanges",
+          "parseRangesValidations",
+          "rangeToString",
+          "resolveRangesIgnoresInvalidRangeWhenIfRangeDoesNotMatch",
+          "resolveRangesWithMatchingIfRangeDate",
+          "resolveRangesWithMatchingIfRangeETag",
+          "resolveRangesWithNonMatchingIfRangeDate",
+          "resolveRangesWithNonMatchingIfRangeETag",
+          "resolveRangesWithoutIfRange",
+          "suffixRange",
+          "suffixRangeShorterThanRepresentation",
+          "toResourceRegion",
+          "toResourceRegionExceptionLength",
+          "toResourceRegionIllegalLength",
+          "toResourceRegionInputStreamResource",
+          "toResourceRegionStartingAtResourceByteCount",
+          "toResourceRegionsValidations"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/http/HttpStatusTests.java": {
       "d": "framework/web/tests/http_status_tests.d",
