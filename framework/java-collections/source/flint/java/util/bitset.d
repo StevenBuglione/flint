@@ -34,6 +34,10 @@ import core.bitop : bsf, bsr, popcnt;
 /// A growable vector of bits indexed by nonnegative Java integers.
 class BitSet
 {
+    private import flint.java.lang.javaobject : JavaObject;
+
+    mixin JavaObject;
+
     private enum wordShift = 6;
     private enum wordBits = 1 << wordShift;
     private enum bitMask = wordBits - 1;
@@ -224,6 +228,24 @@ class BitSet
         auto copy = new ulong[source.length];
         copy[] = source;
         return copy;
+    }
+
+    /// Compares the set bits independently of the allocated capacity.
+    bool equals(Object other) const pure nothrow @nogc
+    {
+        if (this is other)
+            return true;
+        auto set = cast(BitSet) other;
+        return set !is null && wordsInUse == set.wordsInUse && words[0 .. wordsInUse] == set.words[0 .. wordsInUse];
+    }
+
+    /// Returns Java's bit-set hash, independent of allocated capacity.
+    int hashCode() const pure nothrow @nogc
+    {
+        ulong hash = 1_234;
+        for (int remaining = wordsInUse; remaining > 0; --remaining)
+            hash ^= words[remaining - 1] * remaining;
+        return cast(int)((hash >> 32) ^ hash);
     }
 
     /// Reports whether the two bit sets have any set bit in common.
