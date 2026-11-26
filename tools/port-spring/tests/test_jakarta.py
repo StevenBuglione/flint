@@ -134,8 +134,11 @@ def main():
         scratch = Path(scratch)
         check_cli(flint, helper, cache, scratch)
         for name, source, _ in generated:
-            # Same-module enum references are linked with the existing leaf's declarations.
-            (scratch / f"{name}.d").write_text(source + "\n" + option_types, encoding="utf-8")
+            # Compile each candidate in the Jakarta leaf that provides its referenced types.
+            imports = "import flint.java.classref : ClassRef;\n"
+            dependencies = "\n".join(f"struct {other}\n{{{body}}}" for other, body in hand.items() if other != name)
+            leaf = source + "\n" + ("" if imports in source else imports) + option_types + "\n" + dependencies
+            (scratch / f"{name}.d").write_text(leaf, encoding="utf-8")
         result = run(flint, "api", "headers", scratch)
         assert result.returncode == 0, (result.stdout, result.stderr)
         for compiler in ("dmd", "ldc2"):

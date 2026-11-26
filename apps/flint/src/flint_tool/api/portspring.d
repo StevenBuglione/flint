@@ -240,7 +240,7 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
         out string body, out string error)
 {
     import flint_tool.api.coverage : parseMapping;
-    import flint_tool.api.enum_defaults : enumAnnotationBody;
+    import flint_tool.api.annotation_references : annotationReferenceBody;
     import std.file : readText;
     import std.path : buildPath;
 
@@ -250,11 +250,11 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
         error = "translator declaration does not match " ~ type.decl.id ~ " in the manifest";
         return null;
     }
-    string[] enumFields;
+    string[] referenceFields;
     foreach (ref field; candidate["members"].arrayNoRef)
-        if ("enum" in field)
-            enumFields ~= field["name"].str;
-    const shadow = shadowedAttributeType(manifest, type, enumFields);
+        if ("reference" in field)
+            referenceFields ~= field["name"].str;
+    const shadow = shadowedAttributeType(manifest, type, referenceFields);
     if (shadow.length)
     {
         error = type.decl.id ~ ": unsupported annotation type: ambiguous same-package " ~ shadow;
@@ -269,10 +269,10 @@ private string mappingFragment(string root, const ref Upstream pin, const ref Ma
         error = path ~ " has no matching rulebook v2 mapping for " ~ pin.key;
         return null;
     }
-    if (enumFields.length)
+    if (referenceFields.length)
     {
         const classifier = Classifier(mapping);
-        body = enumAnnotationBody(manifest, type, classifier, request.module_, candidate, error);
+        body = annotationReferenceBody(manifest, type, classifier, request.module_, candidate, error);
     }
     else
         body = candidate["body"].str;

@@ -1,5 +1,5 @@
-/// Complete annotation fields whose Java enum types and defaults need manifest and mapping lookup.
-module flint_tool.api.enum_defaults;
+/// Complete annotation fields that reference mapped Java enum and annotation types.
+module flint_tool.api.annotation_references;
 
 import flint_tool.api.coverage : Classifier, Status, validSymbol;
 import flint_tool.api.java : Member, MemberKind, TypeKind;
@@ -8,32 +8,33 @@ import std.json : JSONValue;
 
 @safe:
 
-/// Add the enum fields to the helper's draft body. An empty result reports a reference that cannot be ported.
-string enumAnnotationBody(const ref Manifest manifest, const ref ApiType annotation,
+/// Complete the helper's draft body. An empty result reports a reference that cannot be ported.
+string annotationReferenceBody(const ref Manifest manifest, const ref ApiType annotation,
         const ref Classifier classifier, string module_, const ref JSONValue candidate, out string error)
 {
-    const draft = candidate["enumBody"].str;
-    const references = JavaReferences(manifest.types, candidate["package"].str, candidate["enumImports"].arrayNoRef);
+    const draft = candidate["referenceBody"].str;
+    const references = JavaReferences(manifest.types, candidate["package"].str,
+            candidate["referenceImports"].arrayNoRef);
     string rendered;
     size_t cursor;
     foreach (ref field; candidate["members"].arrayNoRef)
     {
-        if ("enum" !in field)
+        if ("reference" !in field)
             continue;
-        const reference = field["enum"];
+        const reference = field["reference"];
         const offset = reference["offset"].integer;
         if (offset < 0 || offset < cursor || offset >= draft.length)
         {
-            error = "invalid helper offset for enum annotation field";
+            error = "invalid helper offset for referenced annotation field";
             return null;
         }
         const attribute = memberNamed(annotation.decl.members, field["name"].str, MemberKind.attribute);
         if (attribute is null)
         {
-            error = "enum annotation field does not match the pinned manifest";
+            error = "referenced annotation field does not match the pinned manifest";
             return null;
         }
-        const declaration = enumField(references, classifier, module_, *attribute, field, error);
+        const declaration = referenceField(references, classifier, module_, *attribute, field, error);
         if (error.length)
             return null;
         rendered ~= draft[cursor .. cast(size_t) offset] ~ declaration;
@@ -42,28 +43,32 @@ string enumAnnotationBody(const ref Manifest manifest, const ref ApiType annotat
     return rendered ~ draft[cursor .. $];
 }
 
-private string enumField(const ref JavaReferences references, const ref Classifier classifier,
+private string referenceField(const ref JavaReferences references, const ref Classifier classifier,
         string module_, const ref Member attribute, const ref JSONValue field, out string error)
 {
     import std.algorithm.searching : canFind, startsWith;
     import std.string : indexOf;
 
-    const reference = field["enum"];
+    const reference = field["reference"];
     const javaType = reference["type"].str;
     const id = references.typeId(javaType);
     const array = reference["array"].boolean;
     const option = references.findType(id);
-    if (option is null || option.decl.kind != TypeKind.enum_ || !matchesAttribute(attribute.type, javaType, array))
+    if (option is null || (option.decl.kind != TypeKind.enum_
+            && option.decl.kind != TypeKind.annotation) || !matchesAttribute(attribute.type, javaType, array))
     {
-        error = attribute.name ~ ": unsupported annotation type " ~ javaType ~ " in the pinned enum manifest";
+        error = attribute.name ~ ": unsupported annotation type " ~ javaType ~ " in the pinned manifest";
         return null;
     }
 
+    const nested = option.decl.kind == TypeKind.annotation;
     const typeSymbol = mappedSymbol(classifier, id);
     const modulePrefix = module_ ~ ".";
     if (!typeSymbol.startsWith(modulePrefix) || typeSymbol[modulePrefix.length .. $].indexOf('.') >= 0)
     {
-        error = attribute.name ~ ": unsupported enum type outside destination module or without a mapping: " ~ id;
+        const kind = nested ? "nested annotation" : "enum";
+        error = attribute.name ~ ": unsupported " ~ kind ~ " type outside destination module or without a mapping: "
+            ~ id;
         return null;
     }
     if (classifier.classify(id).rules.canFind("R15"))
@@ -71,13 +76,18 @@ private string enumField(const ref JavaReferences references, const ref Classifi
         error = attribute.name ~ ": unsupported R15 enum annotation type: " ~ id;
         return null;
     }
+    if (nested && !classifier.classify(id).rules.canFind("R2"))
+    {
+        error = attribute.name ~ ": unsupported nested annotation type without an R2 mapping: " ~ id;
+        return null;
+    }
     const defaults = reference["defaults"];
     string declaration = "    " ~ typeSymbol[modulePrefix.length .. $] ~ (array ? "[] " : " ") ~ field["symbol"].str;
     if (!defaults.isNull)
-        declaration ~= enumInitializer(references, classifier, *option, attribute, typeSymbol,
-                modulePrefix, defaults, array, error);
+        declaration ~= referenceInitializer(references, classifier, *option, attribute,
+                typeSymbol, modulePrefix, defaults, array, error);
     else if (attribute.defaultValue.length)
-        error = attribute.name ~ ": unsupported enum default does not match the pinned manifest";
+        error = attribute.name ~ ": unsupported reference default does not match the pinned manifest";
     return declaration ~ ";\n";
 }
 
@@ -91,42 +101,84 @@ private bool matchesAttribute(string spelling, string helperType, bool array)
     return base == helperType;
 }
 
-private string enumInitializer(const ref JavaReferences references, const ref Classifier classifier,
+private string referenceInitializer(const ref JavaReferences references, const ref Classifier classifier,
         const ref ApiType option, const ref Member attribute, string typeSymbol, string modulePrefix,
         const ref JSONValue defaults, bool array, out string error)
 {
-    import std.algorithm.searching : startsWith;
     import std.array : join;
-    import std.string : indexOf;
 
-    const javaNames = manifestDefaults(attribute.defaultValue);
+    const javaDefaults = manifestDefaults(attribute.defaultValue);
     const elements = defaults.arrayNoRef;
-    if ((!array && elements.length != 1) || elements.length != javaNames.length || !attribute.defaultValue.length)
+    if ((!array && elements.length != 1) || elements.length != javaDefaults.length || !attribute.defaultValue.length)
     {
-        error = attribute.name ~ ": unsupported enum default does not match the pinned manifest";
+        error = attribute.name ~ ": unsupported reference default does not match the pinned manifest";
         return null;
     }
-    const prefix = typeSymbol ~ ".";
     string[] names;
     foreach (index, ref element; elements)
     {
-        const name = references.constantName(option, element.str);
-        const constant = memberNamed(option.decl.members, name, MemberKind.constant);
-        if (constant is null || element.str != javaNames[index])
+        if (element.str != javaDefaults[index])
         {
-            error = attribute.name ~ ": unsupported enum constant in the pinned manifest: " ~ element.str;
+            error = attribute.name ~ ": unsupported reference default does not match the pinned manifest";
             return null;
         }
-        const symbol = mappedSymbol(classifier, memberId(option.decl, *constant));
-        if (!symbol.startsWith(prefix) || symbol[prefix.length .. $].indexOf('.') >= 0)
-        {
-            error = attribute.name ~ ": unsupported enum constant mapping: " ~ element.str;
+        const symbol = option.decl.kind == TypeKind.annotation ? nestedDefault(references, option,
+                attribute, typeSymbol, element.str, error) : enumDefault(references, classifier,
+                option, attribute, typeSymbol, element.str, error);
+        if (error.length)
             return null;
-        }
         names ~= symbol[modulePrefix.length .. $];
     }
 
     return array ? " = [" ~ names.join(", ") ~ "]" : " = " ~ names[0];
+}
+
+private string enumDefault(const ref JavaReferences references, const ref Classifier classifier,
+        const ref ApiType option, const ref Member attribute, string typeSymbol, string expression, out string error)
+{
+    import std.algorithm.searching : startsWith;
+    import std.string : indexOf;
+
+    const name = references.constantName(option, expression);
+    const constant = memberNamed(option.decl.members, name, MemberKind.constant);
+    if (constant is null)
+    {
+        error = attribute.name ~ ": unsupported enum constant in the pinned manifest: " ~ expression;
+        return null;
+    }
+    const prefix = typeSymbol ~ ".";
+    const symbol = mappedSymbol(classifier, memberId(option.decl, *constant));
+    if (!symbol.startsWith(prefix) || symbol[prefix.length .. $].indexOf('.') >= 0)
+    {
+        error = attribute.name ~ ": unsupported enum constant mapping: " ~ expression;
+        return null;
+    }
+    return symbol;
+}
+
+private string nestedDefault(const ref JavaReferences references, const ref ApiType nested,
+        const ref Member attribute, string typeSymbol, string expression, out string error)
+{
+    import std.algorithm.searching : endsWith;
+
+    if (expression.length && expression[0] == '@')
+    {
+        const spelling = expression[1 .. $];
+        const name = spelling.endsWith("()") ? spelling[0 .. $ - 2] : spelling;
+        if (references.typeId(name) == nested.decl.id)
+        {
+            foreach (ref member; nested.decl.members)
+                if (!member.defaultValue.length)
+                {
+                    error = attribute.name ~ ": unsupported zero-argument nested default for "
+                        ~ nested.decl.id ~ " with required attribute " ~ member.name;
+                    return null;
+                }
+            return typeSymbol ~ ".init";
+        }
+    }
+    error = attribute.name ~ ": unsupported nested annotation default: " ~ expression;
+    return null;
 }
 
 private string[] manifestDefaults(string text)
@@ -314,10 +366,10 @@ unittest
         "example.Mode#MISSING":{"status":"ported","d":"flint.example.Choice.missing"}
     }}`, mapping, error), error);
     const classifier = Classifier(mapping);
-    const candidate = parseJSON(`{"package":"example","enumImports":[],"enumBody":"struct Setting\n{\n}\n",
+    const candidate = parseJSON(`{"package":"example","referenceImports":[],"referenceBody":"struct Setting\n{\n}\n",
         "members":[{"name":"value","symbol":"value",
-        "enum":{"type":"Mode","offset":17,"array":true,"defaults":["Mode.FAST"]}}]}`);
-    assert(enumAnnotationBody(manifest, annotation, classifier, "flint.example", candidate,
+        "reference":{"type":"Mode","offset":17,"array":true,"defaults":["Mode.FAST"]}}]}`);
+    assert(annotationReferenceBody(manifest, annotation, classifier, "flint.example", candidate,
             error) == "struct Setting\n{\n    Choice[] value = [Choice.fast_];\n}\n", error);
 
     Mapping structEnum;
@@ -325,14 +377,14 @@ unittest
         "example.Mode":{"status":"adapted","rules":["R15"],"d":"flint.example.Choice"}
     }}`, structEnum, error), error);
     const structClassifier = Classifier(structEnum);
-    assert(!enumAnnotationBody(manifest, annotation, structClassifier, "flint.example", candidate, error).length);
+    assert(!annotationReferenceBody(manifest, annotation, structClassifier, "flint.example", candidate, error).length);
     assert(error.indexOf("unsupported R15 enum annotation type") >= 0, error);
 
-    auto bad = parseJSON(`{"package":"example","enumImports":[],"enumBody":"struct Setting\n{\n}\n",
+    auto bad = parseJSON(`{"package":"example","referenceImports":[],"referenceBody":"struct Setting\n{\n}\n",
         "members":[{"name":"value","symbol":"value",
-        "enum":{"type":"Mode","offset":17,"array":true,"defaults":["Mode.MISSING"]}}]}`);
+        "reference":{"type":"Mode","offset":17,"array":true,"defaults":["Mode.MISSING"]}}]}`);
     annotation.decl.members[0].defaultValue = "{ Mode.MISSING }";
-    assert(!enumAnnotationBody(manifest, annotation, classifier, "flint.example", bad, error).length);
+    assert(!annotationReferenceBody(manifest, annotation, classifier, "flint.example", bad, error).length);
     assert(error.indexOf("unsupported enum constant in the pinned manifest") >= 0, error);
 }
 
@@ -382,4 +434,49 @@ unittest
     const demand = JavaReferences(options, "elsewhere", singleDemand.arrayNoRef);
     assert(demand.typeId("Mode") == "first.Mode");
     assert(demand.constantName(options[1], "FAST") == "FAST");
+}
+
+@("zero-argument nested defaults require an exact R2 mapping and defaulted attributes")
+unittest
+{
+    import flint_tool.api.coverage : Mapping, parseMapping;
+    import std.json : parseJSON;
+    import std.string : indexOf;
+
+    Manifest manifest;
+    manifest.types.length = 1;
+    auto nested = &manifest.types[0].decl;
+    nested.name = "Nested";
+    nested.package_ = "example";
+    nested.kind = TypeKind.annotation;
+    nested.members = [Member(MemberKind.attribute, "label")];
+    nested.members[0].defaultValue = `"default"`;
+    ApiType annotation;
+    annotation.decl.members = [
+        Member(MemberKind.attribute, "value"), Member(MemberKind.attribute, "items")
+    ];
+    annotation.decl.members[0].type = "Nested";
+    annotation.decl.members[0].defaultValue = "@Nested";
+    annotation.decl.members[1].type = "Nested[]";
+    annotation.decl.members[1].defaultValue = "@Nested()";
+    Mapping mapping;
+    string error;
+    assert(parseMapping(`{"elements":{
+        "example.Nested":{"status":"adapted","rules":["R2"],"d":"flint.example.Mapped"}
+    }}`, mapping, error), error);
+    const classifier = Classifier(mapping);
+    const candidate = parseJSON(`{"package":"example","referenceImports":[],"referenceBody":"struct Setting\n{\n}\n",
+        "members":[{"name":"value","symbol":"value",
+        "reference":{"type":"Nested","offset":17,"array":false,"defaults":["@Nested"]}},
+        {"name":"items","symbol":"items",
+        "reference":{"type":"Nested","offset":17,"array":true,"defaults":["@Nested()"]}}]}`);
+    assert(annotationReferenceBody(manifest, annotation, classifier, "flint.example", candidate,
+            error) == "struct Setting\n{\n    Mapped value = Mapped.init;\n    Mapped[] items = [Mapped.init];\n}\n",
+            error);
+    assert(!annotationReferenceBody(manifest, annotation, classifier, "flint.other", candidate, error).length);
+    assert(error.indexOf("outside destination module") >= 0, error);
+
+    nested.members[0].defaultValue = null;
+    assert(!annotationReferenceBody(manifest, annotation, classifier, "flint.example", candidate, error).length);
+    assert(error.indexOf("required attribute label") >= 0, error);
 }

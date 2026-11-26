@@ -25,8 +25,8 @@ typedef struct {
     Slice name;
     Text symbol;
     TSNode node;
-    Slice enum_type;
-    TSNode enum_default;
+    Slice reference_type;
+    TSNode reference_default;
     size_t offset;
     bool array;
 } Field;
@@ -479,30 +479,36 @@ static bool array_default(const JavaFile *annotation, Text *output, TSNode value
     return !output->failed;
 }
 
-static bool enum_constant(const JavaFile *java, TSNode node)
+static bool reference_default(const JavaFile *java, TSNode node)
 {
+    if (kind(node, "marker_annotation") || kind(node, "annotation")) {
+        TSNode arguments = member(node, "arguments");
+        if (!ts_node_is_null(arguments) && ts_node_named_child_count(arguments))
+            return false;
+        return qualified_identifier(node_text(java, member(node, "name")));
+    }
     return (kind(node, "identifier") || kind(node, "field_access")) && qualified_identifier(node_text(java, node));
 }
 
-static int emit_enum_field(const JavaFile *java, Field *field, TSNode type, size_t offset)
+static int emit_reference_field(const JavaFile *java, Field *field, TSNode type, size_t offset)
 {
     Slice spelling = node_text(java, type);
     if (!qualified_identifier(spelling) || is(spelling, "String") || is(spelling, "Class"))
         return diagnostic(java, type, "unsupported annotation type");
-    field->enum_type = spelling;
+    field->reference_type = spelling;
     field->offset = offset;
     TSNode value = member(field->node, "value");
-    field->enum_default = value;
+    field->reference_default = value;
     if (ts_node_is_null(value))
         return 0;
     if (field->array && kind(value, "element_value_array_initializer")) {
         for (uint32_t index = 0; index < ts_node_named_child_count(value); ++index) {
             TSNode element = ts_node_named_child(value, index);
-            if (!ts_node_is_extra(element) && !enum_constant(java, element))
-                return diagnostic(java, element, "unsupported enum annotation default");
+            if (!ts_node_is_extra(element) && !reference_default(java, element))
+                return diagnostic(java, element, "unsupported referenced annotation default");
         }
-    } else if (!enum_constant(java, value)) {
-        return diagnostic(java, value, "unsupported enum annotation default");
+    } else if (!reference_default(java, value)) {
+        return diagnostic(java, value, "unsupported referenced annotation default");
     }
     return 0;
 }
@@ -525,7 +531,7 @@ static int emit_field(JavaFile *annotation, Field *field, Text *output)
         return diagnostic(annotation, node, "unsupported annotation type");
     field->array = array;
     if (!type)
-        return emit_enum_field(annotation, field, type_node, output->length);
+        return emit_reference_field(annotation, field, type_node, output->length);
     if (!strcmp(type->java, "Class"))
         annotation->class_ref = true;
 
@@ -610,12 +616,12 @@ static void json_string(Slice text)
     putchar('"');
 }
 
-static void emit_enum_reference(const JavaFile *java, const Field *field)
+static void emit_field_reference(const JavaFile *java, const Field *field)
 {
-    fputs(",\"enum\":{\"type\":", stdout);
-    json_string(field->enum_type);
+    fputs(",\"reference\":{\"type\":", stdout);
+    json_string(field->reference_type);
     printf(",\"offset\":%zu,\"array\":%s,\"defaults\":", field->offset, field->array ? "true" : "false");
-    TSNode value = field->enum_default;
+    TSNode value = field->reference_default;
     if (ts_node_is_null(value)) {
         fputs("null}", stdout);
         return;
@@ -640,7 +646,7 @@ static void emit_enum_reference(const JavaFile *java, const Field *field)
 
 static void emit_imports(const JavaFile *java)
 {
-    fputs(",\"enumImports\":[", stdout);
+    fputs(",\"referenceImports\":[", stdout);
     bool first = true;
     for (uint32_t index = 0; index < ts_node_named_child_count(java->root); ++index) {
         TSNode node = ts_node_named_child(java->root, index);
@@ -667,22 +673,22 @@ static void emit_candidate(const JavaFile *annotation, Slice name, const Text *s
     json_string(contents(symbol));
     fputs(annotation->is_enum ? ",\"kind\":\"enum\"" : ",\"kind\":\"annotation\"", stdout);
     fputs(",\"members\":[", stdout);
-    bool has_enum_fields = false;
+    bool has_references = false;
     for (size_t index = 0; index < count; ++index) {
         fputs(index ? ",{\"name\":" : "{\"name\":", stdout);
         json_string(fields[index].name);
         fputs(",\"symbol\":", stdout);
         json_string(contents(&fields[index].symbol));
-        if (fields[index].enum_type.length) {
-            has_enum_fields = true;
-            emit_enum_reference(annotation, &fields[index]);
+        if (fields[index].reference_type.length) {
+            has_references = true;
+            emit_field_reference(annotation, &fields[index]);
         }
         putchar('}');
     }
     printf("],\"inherited\":%s,\"classRef\":%s,\"%s\":", annotation->inherited ? "true" : "false",
-           annotation->class_ref ? "true" : "false", has_enum_fields ? "enumBody" : "body");
+           annotation->class_ref ? "true" : "false", has_references ? "referenceBody" : "body");
     json_string(contents(body));
-    if (has_enum_fields)
+    if (has_references)
         emit_imports(annotation);
     puts("}");
 }

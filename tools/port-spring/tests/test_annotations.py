@@ -19,6 +19,26 @@ class AnnotationTests(unittest.TestCase):
             path.write_text(source, encoding="utf-8")
             return subprocess.run([HELPER, path], capture_output=True, check=False)
 
+    def test_nested_annotation_defaults_are_reported_as_references(self):
+        source = """package demo;
+public @interface Settings {
+    Nested value() default @Nested;
+    Nested[] options() default {@Nested(), @demo.Nested};
+    Nested[] empty() default {};
+    Nested[] required();
+}
+"""
+        result = self.run_helper(source)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        candidate = json.loads(result.stdout)
+        self.assertNotIn("body", candidate)
+        self.assertIn("referenceBody", candidate)
+        fields = {field["name"]: field["reference"] for field in candidate["members"]}
+        self.assertEqual(fields["value"]["defaults"], ["@Nested"])
+        self.assertEqual(fields["options"]["defaults"], ["@Nested()", "@demo.Nested"])
+        self.assertEqual(fields["empty"]["defaults"], [])
+        self.assertIsNone(fields["required"]["defaults"])
+
     def test_value_first_and_defaults(self):
         source = """package org.springframework.demo;
 import java.lang.annotation.Retention;
@@ -88,19 +108,19 @@ public @interface Settings {
 }""")
         self.assertEqual(result.returncode, 0, result.stderr.decode())
         candidate = json.loads(result.stdout)
-        self.assertIn("enumBody", candidate)
+        self.assertIn("referenceBody", candidate)
         self.assertNotIn("body", candidate)
         members = {field["name"]: field for field in candidate["members"]}
         self.assertIn({"path": "example.options.Mode", "static": False, "wildcard": False},
-                      candidate["enumImports"])
+                      candidate["referenceImports"])
         self.assertIn({"path": "example.options.Mode.FAST", "static": True, "wildcard": False},
-                      candidate["enumImports"])
-        self.assertEqual(members["value"]["enum"]["type"], "Mode")
-        self.assertEqual(members["value"]["enum"]["defaults"], ["FAST", "example.options.Mode.SLOW"])
-        self.assertTrue(members["value"]["enum"]["array"])
-        self.assertEqual(members["local"]["enum"]["type"], "LocalMode")
-        self.assertEqual(members["local"]["enum"]["defaults"], ["LocalMode.A"])
-        self.assertIsNone(members["required"]["enum"]["defaults"])
+                      candidate["referenceImports"])
+        self.assertEqual(members["value"]["reference"]["type"], "Mode")
+        self.assertEqual(members["value"]["reference"]["defaults"], ["FAST", "example.options.Mode.SLOW"])
+        self.assertTrue(members["value"]["reference"]["array"])
+        self.assertEqual(members["local"]["reference"]["type"], "LocalMode")
+        self.assertEqual(members["local"]["reference"]["defaults"], ["LocalMode.A"])
+        self.assertIsNone(members["required"]["reference"]["defaults"])
 
     def test_enum_reference_cannot_use_a_method_call(self):
         result = self.run_helper(
@@ -108,7 +128,7 @@ public @interface Settings {
         )
         self.assertEqual(result.returncode, 2)
         self.assertEqual(result.stdout, b"")
-        self.assertIn(b"unsupported enum annotation default", result.stderr)
+        self.assertIn(b"unsupported referenced annotation default", result.stderr)
 
     def test_integral_defaults_preserve_java_width_and_negation(self):
         result = self.run_helper("""package example;
