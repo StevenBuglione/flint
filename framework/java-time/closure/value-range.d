@@ -15,5 +15,7 @@ int main(string[] args)
         range = ValueRange.of(lower, cast(long) args[3].length, upper);
     else
         range = ValueRange.of(lower, upper);
+    if (args.length > 5)
+        return range.hashCode();
     return range.isValidIntValue(cast(long) args.length) ? 0 : 1;
 }

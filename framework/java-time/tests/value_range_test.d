@@ -67,3 +67,17 @@ import flint.java.time.temporal.valuerange : ValueRange;
     const expected = "-9223372036854775808/-9223372036854775807 - -9223372036854775806/-9223372036854775805";
     assert(fullBuffer.toString() == expected);
 }
+
+@("range hash matches Java's signed 32-bit values") unittest
+{
+    const before = GC.stats().allocatedInCurrentThread;
+    assert(ValueRange.of(0, 0).hashCode() == 0);
+    assert(ValueRange.of(1, 28, 31).hashCode() == 1_966_109);
+    assert(ValueRange.of(-4, 6, 3, 12).hashCode() == 655_359);
+    assert(ValueRange.of(-8, -7, -5, -4).hashCode() == 196_623);
+    assert(ValueRange.of(0, 32_768).hashCode() == -2_147_450_880);
+    assert(ValueRange.of(long.min, 0, 0, 0).hashCode() == int.min);
+    assert(ValueRange.of(long.min, long.max).hashCode() == 1);
+    assert(ValueRange.of(1, 28, 31).hashCode() == ValueRange.of(1, 1, 28, 31).hashCode());
+    assert(GC.stats().allocatedInCurrentThread == before);
+}

@@ -97,6 +97,16 @@ struct ValueRange
             && smallestMaximum == other.smallestMaximum && maximum == other.maximum;
     }
 
+    /// Combine the four bounds with the signed shifts and wrapping sum observed in Java SE 21.
+    int hashCode() const pure nothrow @nogc
+    {
+        ulong hash = cast(ulong) minimum;
+        hash += (cast(ulong) largestMinimum << 16) + cast(ulong)(largestMinimum >> 48);
+        hash += (cast(ulong) smallestMaximum << 32) + cast(ulong)(smallestMaximum >> 32);
+        hash += (cast(ulong) maximum << 48) + cast(ulong)(maximum >> 16);
+        return cast(int)(hash ^ (hash >> 32));
+    }
+
     /// Display each varying endpoint as its two bounds separated by a slash.
     string toString() const pure nothrow
     {
