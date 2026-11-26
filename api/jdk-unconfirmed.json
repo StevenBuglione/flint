@@ -393,7 +393,6 @@
   "java.util.ArrayList#sort(Comparator)",
   "java.util.ArrayList#toArray()",
   "java.util.Arrays",
-  "java.util.Arrays#asList(T...)",
   "java.util.Arrays#toString(Object[])",
   "java.util.Arrays#toString(boolean[])",
   "java.util.Arrays#toString(byte[])",

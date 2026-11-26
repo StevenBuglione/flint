@@ -6448,7 +6448,7 @@
 "java.util.ArrayList#sort(Comparator)":{"d":"flint.java.util.ArrayList.sort","status":"ported"},
 "java.util.ArrayList#toArray()":{"d":"flint.java.util.ArrayList.toArray","rules":["R23"],"status":"adapted"},
 "java.util.Arrays":{"d":"flint.java.util.Arrays","status":"ported"},
-"java.util.Arrays#asList(T...)":{"d":"flint.java.util.Arrays.asList","rules":["R7"],"status":"adapted"},
+"java.util.Arrays#asList(T...)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java returns a fixed-size view backed by the supplied array. The current fixed-size copy loses writes in both directions. A null D array counts as empty under R26."},
 "java.util.Arrays#toString(Object[])":{"d":"flint.java.util.Arrays.toString","rules":["R23"],"status":"adapted"},
 "java.util.Arrays#toString(boolean[])":{"d":"flint.java.util.Arrays.toString","status":"ported"},
 "java.util.Arrays#toString(byte[])":{"d":"flint.java.util.Arrays.toString","status":"ported"},

@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,081 | 265 | 1,871 | 15,204 |
+| framework | openjdk@21.0.13 | 1,081 | 264 | 1,871 | 15,205 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2125,7 +2125,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.AbstractList#indexOf(Object)` | `flint.java.util.AbstractList.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.AbstractList#lastIndexOf(Object)` | `flint.java.util.AbstractList.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.ArrayList#toArray()` | `flint.java.util.ArrayList.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
-| `java.util.Arrays#asList(T...)` | `flint.java.util.Arrays.asList` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.Arrays#toString(Object[])` | `flint.java.util.Arrays.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.BitSet` | `flint.java.util.bitset.BitSet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.bitset. Re-exporting from the lower-tier flint.java.util module would create a DUB dependency cycle. |
 | `java.util.Calendar#isSet` | `flint.java.util.Calendar.isSet` | [R24](api-mapping.md#r24-final-instance-fields) |  |
@@ -10050,7 +10049,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,915 | 0 |
+| java.util | 1,916 | 0 |
 | java.util.concurrent | 1,237 | 0 |
 | java.util.concurrent.atomic | 285 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -11028,6 +11027,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.time.temporal.ChronoUnit#isSupportedBy(Temporal)` | 2 | Requires the Temporal contract. |
 | framework | `java.time.temporal.ValueRange#checkValidIntValue(long,TemporalField)` | 2 | Requires TemporalField. |
 | framework | `java.time.temporal.ValueRange#checkValidValue(long,TemporalField)` | 2 | Requires TemporalField. |
+| framework | `java.util.Arrays#asList(T...)` | 2 | Java returns a fixed-size view backed by the supplied array. The current fixed-size copy loses writes in both directions. A null D array counts as empty under R26. |
 | framework | `java.util.Collections#emptyList()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptyMap()` | 2 | Java permits no-op clear and removal of a missing key on this empty factory result. The existing result throws UnsupportedOperationException. |
 | framework | `java.util.Collections#emptySet()` | 2 | Java permits no-op clear, removal of a missing element and removeIf on this empty factory result. The existing result throws UnsupportedOperationException. |
