@@ -2337,8 +2337,25 @@
       "status": "deferred"
     },
     "tools/jackson/databind/ser/SerializationOrderTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-databind/tests/serialization_order_test.d",
+      "methods": {
+        "ported": [
+          "testAlphaAndCreatorOrdering",
+          "testAlphabeticOrder",
+          "testCreatorPropsNotFirstWhenBothSortingDisabled",
+          "testCreatorVsExplicitOrdering",
+          "testExplicitOrder",
+          "testImplicitOrderByCreator",
+          "testOrderByIndexEtc",
+          "testOrderWithFeature",
+          "testOrderWrt268",
+          "testStrictAlphaAndCreatorOrdering"
+        ],
+        "skipped": {
+          "testOrderWithMixins": "The existing D case is gated on MapperBuilder.addMixIn support."
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/databind/ser/SimpleTypeSerializationTest.java": {
       "phase": "2",
