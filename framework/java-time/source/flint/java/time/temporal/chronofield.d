@@ -1,6 +1,7 @@
 /// Built-in Java SE 21 temporal field metadata (R18).
 module flint.java.time.temporal.chronofield;
 
+import flint.java.time.temporal.chronounit : ChronoUnit;
 import flint.java.time.temporal.valuerange : ValueRange;
 
 @safe:
@@ -112,4 +113,55 @@ bool isTimeBased(ChronoField field) pure nothrow @nogc
 string toString(ChronoField field) pure nothrow @nogc
 {
     return displayNames[field];
+}
+
+private struct FieldUnits
+{
+    ChronoUnit base;
+    ChronoUnit span;
+}
+
+private immutable FieldUnits[fieldCount] units = [
+    ChronoField.NANO_OF_SECOND: FieldUnits(ChronoUnit.NANOS, ChronoUnit.SECONDS),
+    ChronoField.NANO_OF_DAY: FieldUnits(ChronoUnit.NANOS, ChronoUnit.DAYS),
+    ChronoField.MICRO_OF_SECOND: FieldUnits(ChronoUnit.MICROS, ChronoUnit.SECONDS),
+    ChronoField.MICRO_OF_DAY: FieldUnits(ChronoUnit.MICROS, ChronoUnit.DAYS),
+    ChronoField.MILLI_OF_SECOND: FieldUnits(ChronoUnit.MILLIS, ChronoUnit.SECONDS),
+    ChronoField.MILLI_OF_DAY: FieldUnits(ChronoUnit.MILLIS, ChronoUnit.DAYS),
+    ChronoField.SECOND_OF_MINUTE: FieldUnits(ChronoUnit.SECONDS, ChronoUnit.MINUTES),
+    ChronoField.SECOND_OF_DAY: FieldUnits(ChronoUnit.SECONDS, ChronoUnit.DAYS),
+    ChronoField.MINUTE_OF_HOUR: FieldUnits(ChronoUnit.MINUTES, ChronoUnit.HOURS),
+    ChronoField.MINUTE_OF_DAY: FieldUnits(ChronoUnit.MINUTES, ChronoUnit.DAYS),
+    ChronoField.HOUR_OF_AMPM: FieldUnits(ChronoUnit.HOURS, ChronoUnit.HALF_DAYS),
+    ChronoField.CLOCK_HOUR_OF_AMPM: FieldUnits(ChronoUnit.HOURS, ChronoUnit.HALF_DAYS),
+    ChronoField.HOUR_OF_DAY: FieldUnits(ChronoUnit.HOURS, ChronoUnit.DAYS),
+    ChronoField.CLOCK_HOUR_OF_DAY: FieldUnits(ChronoUnit.HOURS, ChronoUnit.DAYS),
+    ChronoField.AMPM_OF_DAY: FieldUnits(ChronoUnit.HALF_DAYS, ChronoUnit.DAYS),
+    ChronoField.DAY_OF_WEEK: FieldUnits(ChronoUnit.DAYS, ChronoUnit.WEEKS),
+    ChronoField.ALIGNED_DAY_OF_WEEK_IN_MONTH: FieldUnits(ChronoUnit.DAYS, ChronoUnit.WEEKS),
+    ChronoField.ALIGNED_DAY_OF_WEEK_IN_YEAR: FieldUnits(ChronoUnit.DAYS, ChronoUnit.WEEKS),
+    ChronoField.DAY_OF_MONTH: FieldUnits(ChronoUnit.DAYS, ChronoUnit.MONTHS),
+    ChronoField.DAY_OF_YEAR: FieldUnits(ChronoUnit.DAYS, ChronoUnit.YEARS),
+    ChronoField.EPOCH_DAY: FieldUnits(ChronoUnit.DAYS, ChronoUnit.FOREVER),
+    ChronoField.ALIGNED_WEEK_OF_MONTH: FieldUnits(ChronoUnit.WEEKS, ChronoUnit.MONTHS),
+    ChronoField.ALIGNED_WEEK_OF_YEAR: FieldUnits(ChronoUnit.WEEKS, ChronoUnit.YEARS),
+    ChronoField.MONTH_OF_YEAR: FieldUnits(ChronoUnit.MONTHS, ChronoUnit.YEARS),
+    ChronoField.PROLEPTIC_MONTH: FieldUnits(ChronoUnit.MONTHS, ChronoUnit.FOREVER),
+    ChronoField.YEAR_OF_ERA: FieldUnits(ChronoUnit.YEARS, ChronoUnit.FOREVER),
+    ChronoField.YEAR: FieldUnits(ChronoUnit.YEARS, ChronoUnit.FOREVER),
+    ChronoField.ERA: FieldUnits(ChronoUnit.ERAS, ChronoUnit.FOREVER),
+    ChronoField.INSTANT_SECONDS: FieldUnits(ChronoUnit.SECONDS, ChronoUnit.FOREVER),
+    ChronoField.OFFSET_SECONDS: FieldUnits(ChronoUnit.SECONDS, ChronoUnit.FOREVER),
+];
+
+/// The smallest unit applied by this field.
+ChronoUnit getBaseUnit(ChronoField field) pure nothrow @nogc
+{
+    return units[field].base;
+}
+
+/// The unit covered by the field's full span.
+ChronoUnit getRangeUnit(ChronoField field) pure nothrow @nogc
+{
+    return units[field].span;
 }

@@ -495,7 +495,8 @@
    "module": "flint.java.time.period",
    "also": [
     "flint.java.time.temporal.valuerange",
-    "flint.java.time.temporal.chronofield"
+    "flint.java.time.temporal.chronofield",
+    "flint.java.time.temporal.chronounit"
    ],
    "repo": "framework",
    "licence": "Apache-2.0",
@@ -514,9 +515,9 @@
     "dmd_incremental_seconds": 0.6,
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
-    "incremental_linked_bytes": 25746,
+    "incremental_linked_bytes": 28294,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 2943
+    "template_instances": 3903
    },
    "provisional": [
     "dmd_cold_seconds",

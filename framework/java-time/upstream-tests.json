@@ -6,7 +6,8 @@
   "flint_tests": [
     "framework/java-time/tests/period_test.d",
     "framework/java-time/tests/value_range_test.d",
-    "framework/java-time/tests/chrono_field_test.d"
+    "framework/java-time/tests/chrono_field_test.d",
+    "framework/java-time/tests/temporal_metadata_test.d"
   ],
   "classes": {}
 }

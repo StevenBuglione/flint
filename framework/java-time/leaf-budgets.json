@@ -10,5 +10,9 @@
   "flint.java.time.temporal.chronofield": {
     "incremental_linked_bytes": 3437,
     "template_instances": 975
+  },
+  "flint.java.time.temporal.chronounit": {
+    "incremental_linked_bytes": 2548,
+    "template_instances": 960
   }
 }

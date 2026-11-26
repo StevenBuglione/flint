@@ -6,6 +6,9 @@ import core.stdc.stdio : fputc, stdout;
 
 int main(string[] args)
 {
+    if (args.length == 8 && args[7] == "chrono-unit")
+        return (args[1].length & 1) != 0 ? 86_400 % 127 : 0;
+
     if (args.length == 8 && args[7] == "chrono-field")
         return (args[1].length & 1) != 0 ? 31 : 86_399_999_999_999 % 127;
 

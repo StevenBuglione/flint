@@ -3,13 +3,20 @@ module app;
 import core.stdc.stdio : fputc, stdout;
 import flint.java.time : LocalDate;
 import flint.java.time.period : Period;
-import flint.java.time.temporal.chronofield : ChronoField, range;
+import flint.java.time.temporal.chronofield : ChronoField, getBaseUnit, range;
+import flint.java.time.temporal.chronounit : getDuration;
 import flint.java.time.temporal.valuerange : ValueRange;
 
 @safe:
 
 int main(string[] args)
 {
+    if (args.length == 8 && args[7] == "chrono-unit")
+    {
+        const field = (args[1].length & 1) != 0 ? ChronoField.DAY_OF_MONTH : ChronoField.NANO_OF_DAY;
+        return cast(int)(field.getBaseUnit().getDuration().getSeconds() % 127);
+    }
+
     if (args.length == 8 && args[7] == "chrono-field")
     {
         const field = (args[1].length & 1) != 0 ? ChronoField.DAY_OF_MONTH : ChronoField.NANO_OF_DAY;
