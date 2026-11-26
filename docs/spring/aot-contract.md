@@ -679,7 +679,10 @@ SpEL is compiled to typed D at build time (`engine/aot/spel.d`); nothing interpr
     (`spelCompareStrings`). `null` orders before every value (Spring's StandardTypeComparator), and the other
     operand is still evaluated;
   - `and`, `or`, `not`, `&&`, `||`, `!`;
-  - `?:` ternary, `?:` Elvis and `?.` safe navigation;
+  - `?:` ternary, `?:` Elvis and `?.` safe navigation. A ternary whose branches differ in type yields a runtime
+    `Any` holding the chosen branch's own value, as Spring's does (`true ? 1 : 2L` is an Integer). Elvis takes the
+    fallback, evaluated only then, for null or an empty string; a number or boolean is never null, so it is the
+    value itself; a runtime value is tested by `spelElvis`;
   - indexing of arrays and strings;
   - `length()`, `size()`, `isEmpty()`, `toUpperCase()`, `toLowerCase()`, `trim()`, `startsWith()`, `endsWith()` and `contains()` on strings.
 - **Outside the subset** (`T(...)`, `new`, `.?[...]` selection, `.![...]` projection, `matches`, `instanceof`, `between`, unknown names): FLINT-E1107 with the construct named. Expressions in the subset never fail at runtime for a reason the build could have seen.

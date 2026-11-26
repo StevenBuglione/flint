@@ -499,6 +499,11 @@ unittest
     expect(spel("null < 0")).toEqual("!(" ~ runtime ~ "spelIsNull(0)) : bool");
     expect(spel("#id >= null")).toEqual("(" ~ runtime ~ "spelIsNull(id) || true) : bool");
     expect(spel("null <= null")).toEqual("true : bool");
+    // Spring's ternary yields the chosen branch's own value; Elvis keeps a number and replaces null.
+    enum any = `imported!"flint.engine.aot.any".Any`;
+    expect(spel("true ? 1 : 2L")).toEqual("(true ? " ~ any ~ ".of(1) : " ~ any ~ ".of(2L)) : Any");
+    expect(spel("null ?: 'x'")).toEqual(`"x" : string`);
+    expect(spel("0 ?: 1")).toEqual("0 : int");
     expect(spel("'a' lt 'b'")).toEqual("(" ~ runtime ~ `spelCompareStrings("a", "b") < 0) : bool`);
     expect(spel("2 Ge 1 AND NOT (3 Div 2 EQ 2)")).toEqual("((2 >= 1) && !(((3 / 2) == 2))) : bool");
     expect(spel("2147483647L + 1")).toEqual("(2147483647L + cast(long) (1)) : long");

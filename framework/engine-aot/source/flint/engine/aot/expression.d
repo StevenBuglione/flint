@@ -100,9 +100,18 @@ int spelCompareStrings(scope const(char)[] a, scope const(char)[] b) pure nothro
 
 /// `false`, having evaluated `value`: a compiled comparison of a number or boolean with SpEL's `null` (never equal,
 /// and ordered after it), which still evaluates its operand as Spring does.
-bool spelIsNull(T)(T value) pure nothrow @nogc if (__traits(isArithmetic, T))
+bool spelIsNull(T)(T) pure nothrow @nogc if (__traits(isArithmetic, T))
 {
     return false;
+}
+
+/// SpEL's Elvis over a runtime value: `fallback` (evaluated only then) when `value` is null or an empty string,
+/// else `value`, as Spring's `Elvis.getValueInternal`.
+Any spelElvis(Any value, lazy Any fallback)
+{
+    if (value.isNull || (value.holds!string && value.get!string.length == 0))
+        return fallback;
+    return value;
 }
 
 /// The `float` counterpart of `spelDouble`, for a literal with the `f` suffix.

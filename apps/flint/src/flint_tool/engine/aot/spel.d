@@ -833,8 +833,10 @@ private struct Parser
         // Java's String.compareTo orders by UTF-16 code units, where D's operators compare UTF-8 bytes: a
         // supplementary character (a surrogate pair) sorts before U+E000..U+FFFF in Java.
         if (ordering)
-            return Compiled("(" ~ runtime ~ "spelCompareStrings(" ~ left.code ~ ", " ~ right.code ~ ") " ~ operator ~ " 0)",
-                    "bool");
+        {
+            const order = runtime ~ "spelCompareStrings(" ~ left.code ~ ", " ~ right.code ~ ")";
+            return Compiled("(" ~ order ~ " " ~ operator ~ " 0)", "bool");
+        }
         return Compiled("(" ~ left.code ~ " " ~ operator ~ " " ~ right.code ~ ")", "bool");
     }
 
@@ -875,21 +877,53 @@ private struct Parser
         return Compiled(code, "bool");
     }
 
+    /++
+    `value ?: fallback`, as Spring's Elvis: the fallback (evaluated only then) when the value is null or an empty
+    string, else the value. A number or boolean is never null, so it is the value itself; the null literal is the
+    fallback; a runtime value (`Any`) is tested when the expression runs (spelElvis).
+    +/
     Compiled elvis(Compiled value, Compiled fallback)
     {
+        if (value.type == "null")
+            return fallback;
         value = resolved(value, fallback.type == "null" ? "string" : fallback.type);
+        if (numeric(value.type) || value.type == "bool")
+            return value;
         if (value.type == "string")
             return Compiled("((" ~ value.code ~ ").length ? " ~ value.code ~ " : " ~ text(fallback) ~ ")", "string");
+        if (value.type == "Any")
+            return Compiled(runtime ~ "spelElvis(" ~ value.code ~ ", " ~ boxed(fallback) ~ ")", "Any");
         return Compiled("((" ~ value.code ~ ") is null ? " ~ convert(fallback,
                 value.type) ~ " : " ~ value.code ~ ")", value.type);
     }
 
+    /++
+    `condition ? whenTrue : whenFalse`. Spring's ternary yields the chosen branch's own value, so branches of
+    different types (`true ? 1 : 2L` is an Integer) make a runtime value (`Any`) holding whichever ran. The null
+    literal beside a reference type takes that type, as before.
+    +/
     Compiled ternary(Compiled condition, Compiled whenTrue, Compiled whenFalse)
     {
-        const type = whenTrue.type == whenFalse.type ? whenTrue.type : numeric(whenTrue.type)
-            && numeric(whenFalse.type) ? "double" : whenTrue.type == "null" ? whenFalse.type : whenTrue.type;
+        string type = whenTrue.type == whenFalse.type ? whenTrue.type : whenTrue.type == "null"
+            ? whenFalse.type : whenFalse.type == "null" ? whenTrue.type : "Any";
+        // A number or boolean cannot hold null: beside the null literal it is boxed too.
+        if (type != "Any" && whenTrue.type != whenFalse.type && (numeric(type) || type == "bool"))
+            type = "Any";
+        if (type == "Any")
+            return Compiled("(" ~ truth(condition) ~ " ? " ~ boxed(whenTrue) ~ " : " ~ boxed(whenFalse) ~ ")", "Any");
         return Compiled("(" ~ truth(condition) ~ " ? " ~ convert(resolved(whenTrue, type),
                 type) ~ " : " ~ convert(resolved(whenFalse, type), type) ~ ")", type);
+    }
+
+    // `value` as an Any expression: itself when it already is one, Any.init for the null literal.
+    string boxed(Compiled value)
+    {
+        value = resolved(value, "string");
+        if (value.type == "Any")
+            return value.code;
+        return value.type == "null"
+            ? "imported!\"flint.engine.aot.any\".Any.init" : "imported!\"flint.engine.aot.any\".Any.of("
+            ~ value.code ~ ")";
     }
 
     static string literal(string text)
