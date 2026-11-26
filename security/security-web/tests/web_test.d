@@ -7,6 +7,7 @@ import flint.security.authentication : ProviderManager;
 import flint.security.authentication.dao : DaoAuthenticationProvider;
 import flint.security.authorization : AuthenticatedAuthorizationManager, SingleResultAuthorizationManager;
 import flint.security.core : Authentication, AuthorityUtils;
+import flint.security.core.authority : FactorGrantedAuthority;
 import flint.security.core.context : SecurityContextHolder;
 import flint.security.core.userdetails : User;
 import flint.security.crypto.password : NoOpPasswordEncoder;
@@ -122,7 +123,8 @@ unittest
 
     response = new MockHttpServletResponse;
     chain.doFilter(request("Basic YWRtaW46YWRtaW4="), response, endpoint); // admin:admin
-    assert(endpoint.called && endpoint.seen.getName() == "admin" && endpoint.seen.getAuthorities().length == 3);
+    assert(endpoint.called && endpoint.seen.getName() == "admin" && endpoint.seen.getAuthorities().length == 4);
+    assert(cast(FactorGrantedAuthority) endpoint.seen.getAuthorities()[3]!is null);
     assert(response.getStatus() == 200);
 }
 

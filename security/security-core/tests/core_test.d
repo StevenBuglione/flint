@@ -35,6 +35,7 @@ import flint.security.authentication : AuthenticationManager, AuthenticationProv
     BadCredentialsException, DisabledException,
     LockedException, ProviderManager, ProviderNotFoundException, UsernamePasswordAuthenticationToken;
 import flint.security.authentication.dao : DaoAuthenticationProvider;
+import flint.security.core.authority : FactorGrantedAuthority;
 import flint.security.authorization : AuthorityAuthorizationManager, AuthorizationDeniedException;
 import flint.security.core : Authentication, AuthorityUtils, GrantedAuthority, SimpleGrantedAuthority;
 import flint.security.core.context : SecurityContextHolder, SecurityContextImpl;
@@ -123,7 +124,8 @@ unittest
     auto provider = daoProvider();
     assert(provider.supports(typeNameOf!UsernamePasswordAuthenticationToken) && !provider.supports("x.Other"));
     auto result = provider.authenticate(token("rod", "koala"));
-    assert(result.isAuthenticated() && result.getName() == "rod" && result.getAuthorities().length == 2);
+    assert(result.isAuthenticated() && result.getName() == "rod" && result.getAuthorities().length == 3);
+    assert(cast(FactorGrantedAuthority) result.getAuthorities()[2]!is null);
     assert(cast(UserDetails) result.getPrincipal().asObject() !is null);
     assert(provider.authenticate(token("rod", "koala")).isAuthenticated());
     assert(collectException!BadCredentialsException(provider.authenticate(token("rod", "wrong")))

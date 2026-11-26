@@ -5,7 +5,8 @@
 // Modified by the Flint authors.
 /*
  * Ported from spring-security 7.2.0, core/src/main/java/org/springframework/security/core/userdetails/{UserDetails,
- * User,UserDetailsService,UsernameNotFoundException,UserDetailsChecker,UserCache}.java. User's builder is UserBuilder with
+ * User,UserDetailsService,UsernameNotFoundException,UserDetailsChecker,UserCache,
+ * UserDetailsPasswordService}.java. User's builder is UserBuilder with
  * Java's methods; withDefaultPasswordEncoder is not ported.
  */
 
@@ -13,6 +14,9 @@
 `org.springframework.security.core.userdetails`: user records for authentication.
 +/
 module flint.security.core.userdetails;
+
+import flint.engine.aot.objects : statelessInstance;
+import std.typecons : Nullable;
 
 import flint.java.lang : IllegalArgumentException;
 import flint.security.core : AuthenticationException, authoritiesText, CredentialsContainer,
@@ -44,6 +48,27 @@ interface UserDetailsService
 {
     /// The user named `username`. Throws `UsernameNotFoundException` when there is none.
     UserDetails loadUserByUsername(string username);
+}
+
+/// Persists an updated encoded password for a user.
+interface UserDetailsPasswordService
+{
+    /// The shared service that returns the current user without writing.
+    static @property UserDetailsPasswordService NOOP() nothrow @nogc
+    {
+        return statelessInstance!NoOpUserDetailsPasswordService();
+    }
+
+    /// Change the password in the repository and return the updated user.
+    UserDetails updatePassword(UserDetails user, Nullable!string newPassword);
+}
+
+private final class NoOpUserDetailsPasswordService : UserDetailsPasswordService
+{
+    UserDetails updatePassword(UserDetails user, Nullable!string newPassword)
+    {
+        return user;
+    }
 }
 
 /// Stores user details under the user's name.
@@ -179,6 +204,9 @@ class User : UserDetails, CredentialsContainer
     override string toString()
     {
         import flint.engine.aot.name : canonicalTypeName;
+        import flint.engine.aot.objects : statelessInstance;
+        import std.typecons : Nullable;
+
         import flint.java.lang : valueOf;
 
         return canonicalTypeName(typeid(this).name) ~ " [Username=" ~ username

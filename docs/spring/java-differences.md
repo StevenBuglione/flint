@@ -196,7 +196,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | openjdk@21.0.13 | 234 | 135 | 1,871 | 16,181 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 501 | 3 | 88 | 11,821 |
+| security | spring-security@7.2.0 | 548 | 21 | 88 | 11,756 |
 
 ## Known gaps
 
@@ -4372,12 +4372,45 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.security.authentication.AuthenticationProvider#supports(Class)` | `flint.security.authentication.AuthenticationProvider.supports` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
+#### org.springframework.security.authentication.dao
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider#createSuccessAuthentication(Object,Authentication,UserDetails)` | `flint.security.authentication.dao.AbstractUserDetailsAuthenticationProvider.createSuccessAuthentication` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider#setAuthoritiesMapper(GrantedAuthoritiesMapper)` | `flint.security.authentication.dao.AbstractUserDetailsAuthenticationProvider.setAuthoritiesMapper` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider#setPostAuthenticationChecks(UserDetailsChecker)` | `flint.security.authentication.dao.AbstractUserDetailsAuthenticationProvider.setPostAuthenticationChecks` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider#setPreAuthenticationChecks(UserDetailsChecker)` | `flint.security.authentication.dao.AbstractUserDetailsAuthenticationProvider.setPreAuthenticationChecks` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider#supports(Class)` | `flint.security.authentication.dao.AbstractUserDetailsAuthenticationProvider.supports` | [R4](api-mapping.md#r4-classt-parameters) | Uses the established provider contract with a canonical authentication type name. |
+| `org.springframework.security.authentication.dao.DaoAuthenticationProvider#createSuccessAuthentication(Object,Authentication,UserDetails)` | `flint.security.authentication.dao.DaoAuthenticationProvider.createSuccessAuthentication` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.security.authentication.dao.DaoAuthenticationProvider#setCompromisedPasswordChecker(CompromisedPasswordChecker)` | `flint.security.authentication.dao.DaoAuthenticationProvider.setCompromisedPasswordChecker` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.security.authentication.dao.DaoAuthenticationProvider#setUserDetailsPasswordService(UserDetailsPasswordService)` | `flint.security.authentication.dao.DaoAuthenticationProvider.setUserDetailsPasswordService` | [R9](api-mapping.md#r9-functional-interfaces) |  |
+
 #### org.springframework.security.core.authority
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.security.core.authority.FactorGrantedAuthority#equals(Object)` | `flint.security.core.authority.FactorGrantedAuthority.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.security.core.authority.FactorGrantedAuthority#hashCode()` | `flint.security.core.authority.FactorGrantedAuthority.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.security.core.authority.FactorGrantedAuthority#withAuthority(String)` | `flint.security.core.authority.FactorGrantedAuthority.withAuthority` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.security.core.authority.FactorGrantedAuthority#withFactor(String)` | `flint.security.core.authority.FactorGrantedAuthority.withFactor` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.security.core.authority.FactorGrantedAuthority.Builder` | `flint.security.core.authority.FactorGrantedAuthority.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `org.springframework.security.core.authority.FactorGrantedAuthority.Builder#issuedAt(Instant)` | `flint.security.core.authority.FactorGrantedAuthority.Builder.issuedAt` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.security.core.authority.SimpleGrantedAuthority` | `flint.security.core.SimpleGrantedAuthority` | [R1](api-mapping.md#r1-packages-and-names) | Import the class from flint.security.core until the authority module is ported. |
 | `org.springframework.security.core.authority.SimpleGrantedAuthority#equals(Object)` | `flint.security.core.SimpleGrantedAuthority.opEquals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+
+#### org.springframework.security.core.authority.mapping
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper#mapAuthorities(Collection)` | `flint.security.core.authority.mapping.GrantedAuthoritiesMapper.mapAuthorities` | [R10](api-mapping.md#r10-streams-and-collections) | Uses the GrantedAuthority array carried by the authentication API. |
+| `org.springframework.security.core.authority.mapping.NullAuthoritiesMapper#mapAuthorities(Collection)` | `flint.security.core.authority.mapping.NullAuthoritiesMapper.mapAuthorities` | [R10](api-mapping.md#r10-streams-and-collections) | Uses the GrantedAuthority array carried by the authentication API. |
+
+#### org.springframework.security.core.userdetails
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.security.core.userdetails.UserDetailsPasswordService#NOOP` | `flint.security.core.userdetails.UserDetailsPasswordService.NOOP` | [R17](api-mapping.md#r17-shared-constants-of-generic-classes) | A property returns the shared stateless service. |
+| `org.springframework.security.core.userdetails.UserDetailsPasswordService#updatePassword(UserDetails,String)` | `flint.security.core.userdetails.UserDetailsPasswordService.updatePassword` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 ## Excluded elements
 
@@ -10334,14 +10367,14 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.acls.jdbc | 63 | 0 |
 | org.springframework.security.acls.model | 83 | 0 |
 | org.springframework.security.authentication | 100 | 32 |
-| org.springframework.security.authentication.dao | 29 | 0 |
+| org.springframework.security.authentication.dao | 1 | 0 |
 | org.springframework.security.authentication.event | 10 | 0 |
 | org.springframework.security.authentication.jaas | 73 | 0 |
 | org.springframework.security.authentication.jaas.event | 8 | 0 |
 | org.springframework.security.authentication.jaas.memory | 6 | 0 |
 | org.springframework.security.authentication.ott | 58 | 0 |
 | org.springframework.security.authentication.ott.reactive | 0 | 12 |
-| org.springframework.security.authentication.password | 8 | 2 |
+| org.springframework.security.authentication.password | 0 | 2 |
 | org.springframework.security.authorization | 155 | 24 |
 | org.springframework.security.authorization.event | 14 | 0 |
 | org.springframework.security.authorization.method | 131 | 57 |
@@ -10397,13 +10430,13 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.security.converter | 3 | 0 |
 | org.springframework.security.core | 17 | 0 |
 | org.springframework.security.core.annotation | 19 | 0 |
-| org.springframework.security.core.authority | 31 | 0 |
-| org.springframework.security.core.authority.mapping | 38 | 0 |
+| org.springframework.security.core.authority | 10 | 0 |
+| org.springframework.security.core.authority.mapping | 33 | 0 |
 | org.springframework.security.core.context | 48 | 11 |
 | org.springframework.security.core.parameters | 10 | 0 |
 | org.springframework.security.core.session | 38 | 24 |
 | org.springframework.security.core.token | 37 | 0 |
-| org.springframework.security.core.userdetails | 17 | 11 |
+| org.springframework.security.core.userdetails | 14 | 11 |
 | org.springframework.security.core.userdetails.jdbc | 12 | 0 |
 | org.springframework.security.core.userdetails.memory | 14 | 0 |
 | org.springframework.security.crypto.argon2 | 7 | 0 |

@@ -146,8 +146,49 @@
       "status": "deferred"
     },
     "org/springframework/security/authentication/dao/DaoAuthenticationProviderTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-core/tests/dao_authentication_provider_test.d",
+      "methods": {
+        "ported": [
+          "authenticateWhenBadCredentialsAndPasswordManagerThenNoUpdate",
+          "authenticateWhenNotUpgradeAndPasswordManagerThenNoUpdate",
+          "authenticateWhenPasswordLeakedThenException",
+          "authenticateWhenPasswordNotLeakedThenNoException",
+          "authenticateWhenSuccessAndPasswordManagerThenUpdates",
+          "authenticateWhenSuccessThenIssuesFactor",
+          "constructWhenPasswordEncoderProvidedThenSets",
+          "testAuthenticateFailsForIncorrectPasswordCase",
+          "testAuthenticateFailsIfAccountExpired",
+          "testAuthenticateFailsIfAccountLocked",
+          "testAuthenticateFailsIfCredentialsExpired",
+          "testAuthenticateFailsIfUserDisabled",
+          "testAuthenticateFailsWhenAuthenticationDaoHasBackendFailure",
+          "testAuthenticateFailsWithEmptyUsername",
+          "testAuthenticateFailsWithInvalidPassword",
+          "testAuthenticateFailsWithInvalidUsernameAndChangePasswordEncoder",
+          "testAuthenticateFailsWithInvalidUsernameAndHideUserNotFoundExceptionFalse",
+          "testAuthenticateFailsWithInvalidUsernameAndHideUserNotFoundExceptionsWithDefaultOfTrue",
+          "testAuthenticateFailsWithMixedCaseUsernameIfDefaultChanged",
+          "testAuthenticates",
+          "testAuthenticatesASecondTime",
+          "testAuthenticatesWithForcePrincipalAsString",
+          "testDetectsNullBeingReturnedFromAuthenticationDao",
+          "testGettersSetters",
+          "testGoesBackToAuthenticationDaoToObtainLatestPasswordIfCachedPasswordSeemsIncorrect",
+          "testReceivedBadCredentialsWhenCredentialsNotProvided",
+          "testStartupFailsIfNoUserCacheSet",
+          "testStartupSuccess",
+          "testSupports",
+          "testUserNotFoundBCryptPasswordEncoder",
+          "testUserNotFoundDefaultEncoder",
+          "testUserNotFoundEncodesPassword",
+          "testUserNotFoundNullCredentials"
+        ],
+        "skipped": {
+          "testDisabledUserTiming": "Opt-in 100-sample timing comparison on a dedicated runner. The ordinary suite verifies that disabled accounts still execute the password check.",
+          "testSec2056": "Opt-in 100-sample timing comparison on a dedicated runner. The ordinary suite verifies the missing-user BCrypt path and deterministic dummy-encode and match counts."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/security/authentication/event/AuthenticationEventTests.java": {
       "d": "security/security-core/tests/authentication_event_test.d",
@@ -431,8 +472,16 @@
       "status": "deferred"
     },
     "org/springframework/security/core/authority/FactorGrantedAuthorityTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-core/tests/factor_granted_authority_test.d",
+      "methods": {
+        "ported": [
+          "buildWhenAllFieldsSetThenCreatesCorrectly",
+          "buildWhenEmptyAuthorityThenThrowsException",
+          "buildWhenNullAuthorityThenThrowsException",
+          "buildWhenOnlyAuthorityThenDefaultsIssuedAtToNow"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/security/core/authority/SimpleGrantedAuthorityTests.java": {
       "phase": "2",
