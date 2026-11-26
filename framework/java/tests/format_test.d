@@ -420,3 +420,28 @@ unittest
     auto aggregate = collectException!IllegalFormatConversionException(String.format("%H", [1, 2]));
     assert(aggregate !is null && aggregate.getMessage() == "h != int[]");
 }
+
+@("String.format renders epoch milliseconds and truncates epoch seconds toward zero")
+unittest
+{
+    assert(String.format("%tQ %ts %tQ %ts", -999L, -999L, -1001L, -1001L) == "-999 0 -1001 -1");
+    assert(String.format("%tQ %<ts", long.min) == "-9223372036854775808 -9223372036854775");
+    assert(String.format("%2$10TQ/%<-6Ts/%1$tQ", 7049L, -1001L) == "     -1001/-1    /7049");
+    assert(String.format("[%8tQ][%-7Ts]", cast(Object) null, cast(Object) null) == "[    null][NULL   ]");
+    assert(String.format("%tQ/%ts/%TQ/%Ts/%1$tQ/%1$<tQ", 1L, 2001L, 3L, 4001L) == "1/2/3/4/1/1");
+}
+
+@("String.format distinguishes the date suffix in epoch diagnostics")
+unittest
+{
+    import std.exception : collectException;
+
+    auto wrong = collectException!IllegalFormatConversionException(String.format("%TQ", "value"));
+    assert(wrong.getMessage() == "Q != java.lang.String");
+    wrong = collectException!IllegalFormatConversionException(String.format("%ts", 123));
+    assert(wrong.getMessage() == "s != java.lang.Integer");
+    auto missing = collectException!MissingFormatArgumentException(String.format("%2$Ts", 0L));
+    assert(missing.getFormatSpecifier() == "%2$TS");
+    auto unknown = collectException!UnknownFormatConversionException(String.format("%ts %q", "value"));
+    assert(unknown.getConversion() == "q");
+}
