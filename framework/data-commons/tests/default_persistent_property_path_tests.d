@@ -5,12 +5,16 @@
 module flint.data.mapping.context.default_persistent_property_path_tests;
 
 import flint.core.convert.converter : Converter;
-import flint.data.mapping : PersistentProperty, PersistentPropertyPath;
+import flint.data.core : TypeInformation;
+import flint.data.mapping : PersistentEntity, PersistentProperty, PersistentPropertyPath;
 import flint.data.mapping.context.default_persistent_property_path : DefaultPersistentPropertyPath;
+import flint.data.mapping.model : AbstractPersistentProperty, BasicPersistentEntity;
+import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
-import flint.java.util : List;
+import flint.java.util : List, Map;
 import std.exception : collectException;
+import std.meta : AliasSeq;
 
 @safe:
 
@@ -213,4 +217,130 @@ unittest
 {
     auto sample = paths();
     assert(collectException!IllegalArgumentException(sample.two.toPath("  ")) !is null);
+}
+
+private final class PathChild
+{
+    string name;
+}
+
+private class PathParent
+{
+}
+
+private final class PathChildExtension : PathParent
+{
+    string additional;
+}
+
+private final class PathRoot
+{
+    PathChild child;
+    List!PathChild children;
+    PathChild[] array;
+    Map!(string, PathChild) map;
+    PathParent parent;
+}
+
+private final class MetadataProperty : AbstractPersistentProperty!MetadataProperty
+{
+    this(string name, PersistentEntity!() owner)
+    {
+        super(name, owner);
+    }
+
+    override bool isIdProperty()
+    {
+        return false;
+    }
+
+    override bool isVersionProperty()
+    {
+        return false;
+    }
+
+    override bool isTransient()
+    {
+        return false;
+    }
+
+    override bool isAssociation()
+    {
+        return false;
+    }
+}
+
+private alias MetadataPath = DefaultPersistentPropertyPath!MetadataProperty;
+
+private struct RegisteredPaths
+{
+    PersistentEntity!() root;
+    PersistentEntity!() child;
+    PersistentEntity!() parent;
+    PersistentEntity!() extension;
+}
+
+private RegisteredPaths registeredPaths()
+{
+    auto table = DescriptorTable.withBuiltins();
+    static foreach (Type; AliasSeq!(PathRoot, PathChild, PathParent, PathChildExtension,
+            List!PathChild, PathChild[], Map!(string, PathChild)))
+        table.add(descriptorOf!Type());
+    return RegisteredPaths(new BasicPersistentEntity!(PathRoot, MetadataProperty)(TypeInformation.of!PathRoot(table)),
+            new BasicPersistentEntity!(PathChild, MetadataProperty)(TypeInformation.of!PathChild(table)),
+            new BasicPersistentEntity!(PathParent,
+                MetadataProperty)(TypeInformation.of!PathParent(table)),
+            new BasicPersistentEntity!(PathChildExtension, MetadataProperty)(
+                TypeInformation.of!PathChildExtension(table)));
+}
+
+@("append validates the registered child's owner for scalar, list, array and map paths")
+unittest
+{
+    auto sample = registeredPaths();
+    auto leaf = new MetadataProperty("name", sample.child);
+    const names = ["child", "children", "array", "map"];
+    foreach (name; names)
+    {
+        auto base = MetadataPath.empty().append(new MetadataProperty(name, sample.root));
+        auto full = base.append(leaf);
+        assert(full.toDotPath() == name ~ ".name");
+        assert(full.getLeafProperty() is leaf);
+        assert(base.getLength() == 1 && base.toDotPath() == name);
+    }
+}
+
+@("append rejects null and a subtype owner that is not the exact leaf type")
+unittest
+{
+    auto sample = registeredPaths();
+    auto empty = MetadataPath.empty();
+    assert(collectException!IllegalArgumentException(empty.append(null)) !is null);
+    auto base = empty.append(new MetadataProperty("parent", sample.root));
+    assert(sample.parent.getTypeInformation().isAssignableFrom(sample.extension.getTypeInformation()));
+    auto wrongOwner = new MetadataProperty("additional", sample.extension);
+    assert(collectException!IllegalArgumentException(base.append(wrongOwner)) !is null);
+    assert(base.toDotPath() == "parent");
+}
+
+@("type matching uses each declared property's actual type")
+unittest
+{
+    auto sample = registeredPaths();
+    auto empty = MetadataPath.empty();
+    auto childType = sample.child.getTypeInformation();
+    auto stringType = childType.getRequiredProperty("name");
+    assert(!empty.containsPropertyOfType(childType));
+    const names = ["child", "children", "array", "map"];
+    foreach (name; names)
+    {
+        auto base = empty.append(new MetadataProperty(name, sample.root));
+        assert(!base.containsPropertyOfType(stringType));
+        auto path = base.append(new MetadataProperty("name", sample.child));
+        assert(path.containsPropertyOfType(childType) && path.containsPropertyOfType(stringType));
+        if (name != "child")
+            assert(!path.containsPropertyOfType(sample.root.getTypeInformation().getRequiredProperty(name)));
+        assert(!path.containsPropertyOfType(sample.extension.getTypeInformation()));
+        assert(!path.containsPropertyOfType(null));
+    }
 }

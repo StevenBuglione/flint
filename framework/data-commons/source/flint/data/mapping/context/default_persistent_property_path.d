@@ -5,9 +5,11 @@
 module flint.data.mapping.context.default_persistent_property_path;
 
 import flint.core.convert.converter : Converter;
+import flint.data.core : TypeInformation;
 import flint.data.mapping : PersistentProperty, PersistentPropertyPath;
+import flint.data.mapping.model.abstract_persistent_property : AbstractPersistentProperty;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, JavaObject;
-import flint.java.util : Iterator, List, Objects;
+import flint.java.util : ArrayList, Iterator, List, Objects;
 import flint.util : StringUtils;
 
 @safe:
@@ -29,6 +31,44 @@ package final class DefaultPersistentPropertyPath(P) : PersistentPropertyPath!P,
         if (properties is null)
             throw new IllegalArgumentException("Properties must not be null");
         this.properties = properties;
+    }
+
+    /// An empty property path.
+    static DefaultPersistentPropertyPath empty()
+    {
+        return new DefaultPersistentPropertyPath(List!P.of());
+    }
+
+    static if (is(P : AbstractPersistentProperty!P))
+    {
+        /// Append a property declared by the current leaf's actual type.
+        DefaultPersistentPropertyPath append(P property)
+        {
+            if (property is null)
+                throw new IllegalArgumentException("Property must not be null");
+            if (properties.isEmpty())
+                return new DefaultPersistentPropertyPath(List!P.of(property));
+
+            const leafType = getLeafProperty().getActualType();
+            if (property.getOwner().getType() != leafType)
+                throw new IllegalArgumentException(
+                        "Cannot append property " ~ property.getName() ~ " to type " ~ leafType.name);
+
+            auto extended = new ArrayList!P(properties);
+            extended.add(property);
+            return new DefaultPersistentPropertyPath(extended);
+        }
+
+        /// Whether a property's declared metadata resolves to the given actual type.
+        bool containsPropertyOfType(TypeInformation type)
+        {
+            if (type is null)
+                return false;
+            foreach (property; properties)
+                if (type.equals(cast(Object) property.getTypeInformation().getActualType()))
+                    return true;
+            return false;
+        }
     }
 
     mixin PersistentPropertyPath!P.Defaults;
