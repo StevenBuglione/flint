@@ -27,7 +27,7 @@ import flint.expression : EvaluationContext, PropertyAccessor;
 import flint.expression.spel : SpelEvaluationException, SpelMessage;
 import flint.expression.spel.standard.literal : LiteralParser, utf16Length;
 import flint.expression.spel.context : EvaluationContextAccess, descriptorProperty, propertyTargetType;
-import flint.java.lang : IndexOutOfBoundsException;
+import flint.java.lang : IllegalStateException, IndexOutOfBoundsException;
 import flint.java.util : List;
 
 @safe:
@@ -35,11 +35,11 @@ package(flint.expression.spel.standard):
 
 struct PropertyStep
 {
-    // A null name denotes an array index.
+    // A null name denotes a read of an index plan in the enclosing expression.
     string name;
     size_t position;
     bool nullSafe;
-    int index;
+    uint index;
 }
 
 enum PropertySeparator : ubyte
@@ -48,29 +48,6 @@ enum PropertySeparator : ubyte
     dot,
     safeDot,
     bracket,
-}
-
-PropertyStep readPropertyStep(ref LiteralParser reader, bool nullSafe)
-{
-    reader.skipWhitespace();
-    const position = reader.position;
-    if (reader.peek == '[')
-    {
-        ++reader.position;
-        reader.skipWhitespace();
-        const value = reader.readLiteral();
-        if (value.typeName() != "int")
-            throw reader.errorAt(position, SpelMessage.OOD);
-        reader.skipWhitespace();
-        if (reader.peek != ']')
-            throw reader.errorAt(reader.position, SpelMessage.OOD);
-        ++reader.position;
-        return PropertyStep(null, position, nullSafe, value.get!int);
-    }
-    const name = reader.readIdentifierName();
-    if (name is null)
-        throw reader.errorAt(position, SpelMessage.OOD);
-    return PropertyStep(name, position, nullSafe);
 }
 
 PropertySeparator readSeparator(ref LiteralParser reader) pure nothrow @nogc
@@ -91,56 +68,57 @@ PropertySeparator readSeparator(ref LiteralParser reader) pure nothrow @nogc
     return PropertySeparator.absent;
 }
 
-/// Read through erased AOT accessors at the Spring API boundary.
-Any readPropertyPath(string source, scope const(PropertyStep)[] steps, Any root, EvaluationContext context)
+/// Apply one descriptor-backed path step at the Spring API boundary.
+void readPathStep(string source, const ref PropertyStep step, ref Any root, EvaluationContext context,
+        EvaluationContextAccess standard, const DescriptorTable table, const ref Any index)
 {
-    auto standard = cast(EvaluationContextAccess) context;
-    const table = standard is null ? null : standard.descriptorTable();
-    foreach (ref step; steps)
+    if (step.nullSafe && root.isNull())
+        return;
+    if (step.name is null)
     {
-        if (step.nullSafe && root.isNull())
-            continue;
-        if (step.name is null)
-        {
-            if (root.isNull())
-                throw propertyError(source, step, SpelMessage.CANNOT_INDEX_INTO_NULL_VALUE);
-            root = readArrayIndex(source, step, root, table);
-            continue;
-        }
-        const type = propertyTargetType(root);
-        try
-        {
-            auto accessors = configuredAccessors(context, standard);
-            if (readProperty(context, accessors, table, root, type, step.name))
-                continue;
-        }
-        catch (SpelEvaluationException error)
-            throw error;
-        catch (Exception error)
-            throw propertyError(source, step, SpelMessage.EXCEPTION_DURING_PROPERTY_READ, error.msg, error);
-        if (root.isNull())
-            throw propertyError(source, step, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL);
-        throw propertyError(source, step, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, type);
+        root = readArrayIndex(source, step, root, table, index);
+        return;
     }
-    return root;
+    const type = propertyTargetType(root);
+    try
+    {
+        auto accessors = configuredAccessors(context, standard);
+        if (readProperty(context, accessors, table, root, type, step.name))
+            return;
+    }
+    catch (SpelEvaluationException error)
+        throw error;
+    catch (Exception error)
+        throw evaluationErrorAt(source, step.position, SpelMessage.EXCEPTION_DURING_PROPERTY_READ,
+                step.name, error.msg, error);
+    if (root.isNull())
+        throw evaluationErrorAt(source, step.position, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL, step.name);
+    throw evaluationErrorAt(source, step.position, SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, step.name, type);
 }
 
-private Any readArrayIndex(string source, const ref PropertyStep step, ref Any target, const DescriptorTable table)
+private Any readArrayIndex(string source, const ref PropertyStep step, ref Any target,
+        const DescriptorTable table, const ref Any value)
 {
+    if (target.isNull())
+        throw evaluationErrorAt(source, step.position, SpelMessage.CANNOT_INDEX_INTO_NULL_VALUE);
+    if (value.isNull())
+        throw new IllegalStateException("No index");
     const type = target.typeName();
     const descriptor = table is null ? null : table.find(type);
     if (descriptor is null || descriptor.kind != TypeKind.array || descriptor.length is null || descriptor
             .element is null)
-        throw new SpelEvaluationException(cast(int) utf16Length(source[0 .. step.position]),
-                SpelMessage.INDEXING_NOT_SUPPORTED_FOR_TYPE, type);
+        throw evaluationErrorAt(source, step.position, SpelMessage.INDEXING_NOT_SUPPORTED_FOR_TYPE, type);
 
+    if (value.typeName() != "int")
+        throw evaluationErrorAt(source, step.position, SpelMessage.TYPE_CONVERSION_ERROR, value.typeName(), "int");
+    const index = value.get!int;
     const length = descriptor.length(target);
-    if (step.index < 0)
-        throw new IndexOutOfBoundsException(step.index);
-    if (cast(size_t) step.index >= length)
-        throw new SpelEvaluationException(cast(int) utf16Length(source[0 .. step.position]),
-                SpelMessage.ARRAY_INDEX_OUT_OF_BOUNDS, decimal(length), decimal(step.index), null);
-    return descriptor.element(target, step.index);
+    if (index < 0)
+        throw new IndexOutOfBoundsException(index);
+    if (cast(size_t) index >= length)
+        throw evaluationErrorAt(source, step.position, SpelMessage.ARRAY_INDEX_OUT_OF_BOUNDS,
+                decimal(length), decimal(index));
+    return descriptor.element(target, index);
 }
 
 private List!PropertyAccessor configuredAccessors(EvaluationContext context, EvaluationContextAccess standard)
@@ -221,9 +199,8 @@ private Match matchTarget(scope string[] names, const ref Any target, string typ
     return best;
 }
 
-private SpelEvaluationException propertyError(string source, const ref PropertyStep step,
-        SpelMessage code, string detail = null, Throwable cause = null)
+pragma(inline, false) SpelEvaluationException evaluationErrorAt(string source, size_t offset,
+        SpelMessage code, string detail = null, string context = null, Throwable cause = null)
 {
-    return new SpelEvaluationException(cast(int) utf16Length(source[0 .. step.position]), code,
-            step.name, detail, cause);
+    return new SpelEvaluationException(cast(int) utf16Length(source[0 .. offset]), code, detail, context, cause);
 }

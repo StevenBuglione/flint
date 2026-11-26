@@ -20,20 +20,28 @@ module flint.expression.indexing_tests;
 
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
-import flint.expression.spel : SpelEvaluationException, SpelMessage;
+import flint.expression.spel : SpelEvaluationException, SpelMessage, SpelParseException;
 import flint.expression.spel.standard : SpelExpressionParser;
 import flint.expression.spel.support : StandardEvaluationContext;
-import flint.java.lang : IndexOutOfBoundsException;
+import flint.java.lang : IllegalStateException, IndexOutOfBoundsException;
 
 @safe:
 
 private final class ArrayRoot
 {
     private Any values;
+    private int offset;
+    private int reads;
 
     Any getProperty()
     {
         return values;
+    }
+
+    int getOffset()
+    {
+        ++reads;
+        return offset;
     }
 }
 
@@ -84,6 +92,64 @@ unittest
     assert(expression.getValue(context).get!int == 42);
 }
 
+@("computed array indexes use the original root")
+unittest
+{
+    auto root = new ArrayRoot;
+    root.values = Any.of([[4, 5], [6, 7]]);
+    root.offset = 1;
+    auto context = contextFor(root);
+    context.setVariable("column", Any.of(0));
+    auto parser = new SpelExpressionParser;
+    auto expression = parser.parseExpression("property[#this.offset][#column + offset]");
+    assert(expression.getValue(context).get!int == 7);
+    assert(root.reads == 2);
+
+    auto explicitRoot = new ArrayRoot;
+    explicitRoot.values = Any.of([[10, 11], [12, 13]]);
+    assert(expression.getValue(context, Any.of(explicitRoot)).get!int == 10);
+    assert(root.reads == 2 && explicitRoot.reads == 2);
+}
+
+@("null-safe and untaken array hops skip computed indexes")
+unittest
+{
+    auto root = new ArrayRoot;
+    auto context = contextFor(root);
+    auto parser = new SpelExpressionParser;
+    auto safe = parser.parseExpression("property?.[offset + 1]");
+    assert(safe.getValue(context).isNull());
+    assert(root.reads == 0);
+
+    root.values = Any.of([2, 3]);
+    assert(parser.parseExpression("false ? property[offset] : 4").getValue(context).get!int == 4);
+    assert(root.reads == 0);
+    assert(safe.getValue(context).get!int == 3);
+    assert(root.reads == 1);
+}
+
+@("nested array index plans preserve pending arithmetic operands")
+unittest
+{
+    auto root = new ArrayRoot;
+    root.values = Any.of([0, 0]);
+    auto context = contextFor(root);
+    auto parser = new SpelExpressionParser;
+    string source = "0";
+    foreach (_; 0 .. 200)
+        source = "1 + 2 * property[" ~ source ~ "]";
+    assert(parser.parseExpression(source).getValue(context).get!int == 1);
+    try
+    {
+        parser.parseExpression("property[" ~ source ~ "]");
+        assert(false);
+    }
+    catch (SpelParseException error)
+    {
+        assert(error.getMessageCode() == SpelMessage.MAX_EXPRESSION_NESTING_DEPTH_EXCEEDED);
+    }
+}
+
 @("array indexes check the receiver and bounds before invoking the descriptor")
 unittest
 {
@@ -109,6 +175,17 @@ unittest
     root.values = Any.of([1]);
     check("property[1]", SpelMessage.ARRAY_INDEX_OUT_OF_BOUNDS, 8,
             "EL1024E: The array has '1' elements, index '1' is invalid");
+    check("property[true]", SpelMessage.TYPE_CONVERSION_ERROR, 8,
+            "EL1001E: Type conversion problem, cannot convert from bool to int");
+    try
+    {
+        parser.parseExpression("property[null]").getValue(context);
+        assert(false);
+    }
+    catch (IllegalStateException error)
+    {
+        assert(error.msg == "No index");
+    }
     try
     {
         parser.parseExpression("property[-1]").getValue(context);

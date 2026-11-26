@@ -27,7 +27,7 @@ import flint.expression.spel : SpelEvaluationException, SpelMessage;
 import flint.expression.spel.context : EvaluationContextAccess;
 import flint.expression.spel.standard.arithmetic : ArithmeticExpression, isRootReference, parseArithmetic;
 import flint.expression.spel.standard.literal : utf16Length;
-import flint.expression.spel.standard.property : PropertyStep, readPropertyPath;
+import flint.expression.spel.standard.property : PropertyStep, evaluationErrorAt, readPathStep;
 import flint.java.lang : ArithmeticException, IllegalArgumentException;
 
 @safe:
@@ -101,22 +101,27 @@ class SpelExpression : Expression
         return expression.variable !is null && !isRootReference(expression.variable);
     }
 
-    private Any evaluateWithContext(EvaluationContext context, Any rootObject, bool useContextRoot)
+    pragma(inline, false) private Any evaluateWithContext(EvaluationContext context, Any rootObject, bool useRoot)
     {
         auto standard = cast(EvaluationContextAccess) context;
         // Guard virtual behavior: a subclass may override either lookup.
-        if (!expression.hasProperties() && (context is null || (standard !is null && standard.isStandardContext())))
-            return unwrap(evaluate(standard, rootObject, useContextRoot));
-        if (useContextRoot && context !is null)
-            rootObject = context.getRootObject().getValue();
-        return unwrap(expression.evaluate(rootObject, (string name, scope const(PropertyStep)[] path) {
-                const useRoot = name is null || isRootReference(name);
-                auto receiver = useRoot ? rootObject : context is null ? Any.init : context.lookupVariable(name);
-                return path.length ? readPropertyPath(expressionString, path, receiver, context) : receiver;
+        const direct = !expression.hasProperties() && standard !is null && standard.isStandardContext();
+        if (useRoot && context !is null)
+        {
+            if (!direct)
+                rootObject = context.getRootObject().getValue();
+            else if (expression.readsRoot)
+                rootObject = standard.readRootObject().getValue();
+        }
+        const table = standard !is null && expression.hasProperties() ? standard.descriptorTable() : null;
+        return unwrap(expression.evaluate(rootObject, (string name) => context is null ? Any.init
+                : direct ? standard.readVariable(name) : context.lookupVariable(name),
+                (ref Any receiver, const ref PropertyStep step, const ref Any index) {
+                readPathStep(expressionString, step, receiver, context, standard, table, index);
             }));
     }
 
-    private Any unwrap(Result!Any result)
+    pragma(inline, false) private Any unwrap(Result!Any result)
     {
         if (result.ok())
             return result.value;
@@ -124,8 +129,8 @@ class SpelExpression : Expression
             throw new ArithmeticException(result.error.message);
         if (result.error.code == Status.conflict)
         {
-            const position = cast(int) utf16Length(expressionString[0 .. result.error.offset]);
-            throw new SpelEvaluationException(position, SpelMessage.TYPE_CONVERSION_ERROR, result.error.message);
+            throw evaluationErrorAt(expressionString, result.error.offset,
+                    SpelMessage.TYPE_CONVERSION_ERROR, result.error.message, "boolean");
         }
         throw new EvaluationException(result.error.message);
     }
@@ -138,8 +143,13 @@ class SpelExpression : Expression
             return Result!Any(Any.init, Error(Status.unsupported, "Property reads use the SpEL API boundary"));
         if (useContextRoot && expression.readsRoot && context !is null)
             rootObject = context.readRootObject().getValue();
-        return expression.evaluate(rootObject, (string name,
-                scope const(PropertyStep)[]) nothrow @nogc => context is null ? Any.init : context.readVariable(name));
+        static void noPath(ref Any, const ref PropertyStep, const ref Any) @safe nothrow @nogc
+        {
+            assert(0);
+        }
+
+        return expression.evaluate(rootObject, (string name) nothrow @nogc => context is null ? Any.init
+                : context.readVariable(name), &noPath);
     }
 }
 

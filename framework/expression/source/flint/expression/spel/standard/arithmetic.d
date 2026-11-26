@@ -27,7 +27,7 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decodeUtf8;
 import flint.expression.spel : SpelMessage;
 import flint.expression.spel.standard.literal : LiteralName, LiteralParser, literalName, startsIdentifier;
-import flint.expression.spel.standard.property : PropertySeparator, PropertyStep, readPropertyStep, readSeparator;
+import flint.expression.spel.standard.property : PropertySeparator, PropertyStep, readSeparator;
 import flint.java.lang : IllegalArgumentException;
 import std.ascii : isAlpha, isDigit, toLower;
 
@@ -46,55 +46,139 @@ struct ArithmeticExpression
     string variable;
     bool readsRoot;
     private immutable(PropertyStep[])[] propertyPaths;
+    private immutable(Instruction[])[] indexPlans;
+    private size_t instructionCount;
 
     bool hasProperties() const pure nothrow @nogc
     {
         return propertyPaths.length != 0;
     }
 
-    Result!Any evaluate(Read)(Any root, scope Read read)
+    Result!Any evaluate(Read, ReadStep)(Any root, scope Read read, scope ReadStep readStep)
     {
         if (variable !is null)
-            return Result!Any(isRootReference(variable) ? root : read(variable, null));
+            return Result!Any(lookup(root, variable, read));
         if (instructions.length == 0)
             return Result!Any(constant);
-        if (instructions.length == 1 && instructions[0].op == Op.property)
-            return Result!Any(read(instructions[0].variable, propertyPaths[instructions[0].jump]));
-        enum shortStack = 16;
-        if (instructions.length < 2 * shortStack)
+        if (instructions.length == 1 && instructions[0].op == Op.property && indexPlans.length == 0)
+            return evaluateInStack(root, read, readStep, null);
+        if (instructionCount < 2 * shortStack)
         {
             Scalar[shortStack] stack;
-            return evaluateStack(stack, root, read);
+            return evaluateInStack(root, read, readStep, stack);
         }
         Scalar[maxStack] stack;
-        return evaluateStack(stack, root, read);
+        return evaluateInStack(root, read, readStep, stack);
     }
 
 private:
-    // The evaluator advances to a lookup or the final result. Only the lookup may dispatch to user code.
-    Result!Any evaluateStack(Read)(scope Scalar[] stack, ref Any root, scope Read read)
+    enum shortStack = 16;
+
+    // Array lookups suspend a path on the frame stack. Every program borrows the same scalar stack.
+    pragma(inline, false) Result!Any evaluateInStack(Read, ReadStep)(ref Any root, scope Read read,
+            scope ReadStep readStep, scope Scalar[] stack)
     {
-        size_t depth, next;
-        Result!Any result;
-        while (auto instruction = advance(stack, depth, next, result))
+        if (indexPlans.length == 0)
         {
-            const path = instruction.op == Op.property ? propertyPaths[instruction.jump] : null;
-            auto value = path.length == 0 && isRootReference(instruction.variable) ? root
-                : read(instruction.variable, path);
-            const scalar = Scalar.from(value);
-            // Only the bottom operand can become the result. Keep its original box when it is opaque.
-            if (scalar.kind == ValueKind.other && depth == 0)
-                result.value = value;
-            stack[depth++] = scalar;
+            EvaluationFrame[1] frames;
+            return run(root, read, readStep, stack, frames);
         }
-        return result;
+        if (stack.length == shortStack)
+        {
+            EvaluationFrame[2 * shortStack] frames;
+            return run(root, read, readStep, stack, frames);
+        }
+        EvaluationFrame[maxNesting + 1] frames;
+        return run(root, read, readStep, stack, frames);
     }
 
-    const(Instruction)* advance(scope Scalar[] stack, ref size_t sp, ref size_t pc, ref Result!Any result) nothrow @nogc
+    pragma(inline, false) Result!Any run(Read, ReadStep)(ref Any root, scope Read read,
+            scope ReadStep readStep, scope Scalar[] stack, scope EvaluationFrame[] frames)
     {
-        for (; pc < instructions.length;)
+        size_t level;
+        frames[0].program = instructions;
+        bool resumePath;
+        Error error;
+        for (;;)
         {
-            const instruction = &instructions[pc++];
+            auto frame = &frames[level];
+            if (resumePath && runPath(*frame, readStep))
+            {
+                const step = &frame.path[0];
+                frames[++level] = EvaluationFrame(indexPlans[step.index], frame.base + frame.depth);
+                resumePath = false;
+                continue;
+            }
+
+            const(Instruction)* instruction;
+            if (resumePath && frame.program.length == 1)
+                frame.value = frame.target;
+            else
+            {
+                if (resumePath)
+                    push(*frame, stack, frame.target);
+                instruction = advance(frame.program, stack[frame.base .. $], frame.depth,
+                        frame.next, frame.value, error);
+            }
+
+            if (instruction !is null)
+            {
+                auto target = lookup(root, instruction.variable, read);
+                resumePath = instruction.op == Op.property;
+                if (resumePath)
+                {
+                    frame.target = target;
+                    frame.path = propertyPaths[instruction.jump];
+                }
+                else
+                    push(*frame, stack, target);
+                continue;
+            }
+
+            if (level == 0 || error.code != Status.ok)
+                return Result!Any(frame.value, error);
+            auto parent = &frames[--level];
+            readStep(parent.target, parent.path[0], frame.value);
+            parent.path = parent.path[1 .. $];
+            resumePath = true;
+        }
+    }
+
+    // Return with the index step still at the head of the path when a child program must run.
+    static bool runPath(ReadStep)(ref EvaluationFrame frame, scope ReadStep readStep)
+    {
+        const Any noIndex;
+        while (frame.path.length)
+        {
+            const step = &frame.path[0];
+            if (step.name is null && !frame.target.isNull())
+                return true;
+            readStep(frame.target, *step, noIndex);
+            frame.path = frame.path[1 .. $];
+        }
+        return false;
+    }
+
+    static Any lookup(Read)(ref Any root, string name, scope Read read)
+    {
+        return name is null || isRootReference(name) ? root : read(name);
+    }
+
+    static void push(ref EvaluationFrame frame, scope Scalar[] stack, Any value) nothrow @nogc
+    {
+        const scalar = Scalar.from(value);
+        // Only the bottom operand can become the result. Keep its original box when it is opaque.
+        if (scalar.kind == ValueKind.other && frame.depth == 0)
+            frame.value = value;
+        stack[frame.base + frame.depth++] = scalar;
+    }
+
+    static const(Instruction)* advance(return scope const(Instruction)[] program, scope Scalar[] stack,
+            ref size_t sp, ref size_t pc, ref Any value, ref Error failure) nothrow @nogc
+    {
+        for (; pc < program.length;)
+        {
+            const instruction = &program[pc++];
             if (instruction.op == Op.literal)
             {
                 stack[sp++] = instruction.value;
@@ -113,7 +197,7 @@ private:
                         stack[sp - 1]) : stepBoolean(*instruction, stack[sp - 1], sp, pc);
                 if (error.code != Status.ok)
                 {
-                    result.error = error;
+                    failure = error;
                     return null;
                 }
                 continue;
@@ -122,13 +206,13 @@ private:
             const applied = applyOperator(instruction.op, stack[sp - 1], right);
             if (!applied.ok())
             {
-                result.error = Error(applied.error.code, applied.error.message, instruction.position);
+                failure = Error(applied.error.code, applied.error.message, instruction.position);
                 return null;
             }
             stack[sp - 1] = applied.value;
         }
         if (stack[0].kind != ValueKind.other)
-            result.value = stack[0].pack();
+            value = stack[0].pack();
         return null;
     }
 }
@@ -145,7 +229,13 @@ ArithmeticExpression parseArithmetic(string source)
         throw parser.reader.errorAt(end, SpelMessage.MORE_INPUT, source[end .. $]);
     if (parser.instructions.length == 0)
         return ArithmeticExpression(parser.firstLiteral, null, parser.firstVariable, parser.readsRoot);
-    return ArithmeticExpression(Any.init, parser.instructions.idup, null, parser.readsRoot, parser.propertyPaths.idup);
+    auto expression = ArithmeticExpression(Any.init, parser.instructions.idup, null,
+            parser.readsRoot, parser.propertyPaths.idup, parser.indexPlans.idup);
+    // A suspended lookup has yet to push its value. Counting all plans' instructions bounds the small stack.
+    expression.instructionCount = expression.instructions.length;
+    foreach (ref index; expression.indexPlans)
+        expression.instructionCount += index.length;
+    return expression;
 }
 
 private enum Op : ubyte
@@ -185,6 +275,17 @@ private struct Instruction
     string variable;
 }
 
+private struct EvaluationFrame
+{
+    immutable(Instruction)[] program;
+    size_t base;
+    size_t depth;
+    size_t next;
+    Any value;
+    immutable(PropertyStep)[] path;
+    Any target;
+}
+
 private struct ArithmeticParser
 {
     LiteralParser reader;
@@ -194,6 +295,7 @@ private struct ArithmeticParser
     string firstVariable;
     bool readsRoot;
     immutable(PropertyStep)[][] propertyPaths;
+    immutable(Instruction)[][] indexPlans;
 
     size_t conditional(uint nesting)
     {
@@ -334,14 +436,14 @@ private struct ArithmeticParser
             readsRoot |= isRootReference(name);
             const separator = readSeparator(reader);
             if (separator != PropertySeparator.absent)
-                property(position, name, readPropertyStep(reader, separator == PropertySeparator.safeDot));
+                property(position, name, readStep(separator == PropertySeparator.safeDot, nesting), nesting);
             else
                 operand(position, Any.init, name);
         }
         else if (reader.peek == '[')
         {
             readsRoot = true;
-            property(position, null, readPropertyStep(reader, false));
+            property(position, null, readStep(false, nesting), nesting);
         }
         else
         {
@@ -349,7 +451,7 @@ private struct ArithmeticParser
             if (name !is null && literalName(name) == LiteralName.other)
             {
                 readsRoot = true;
-                property(position, null, PropertyStep(name, position, false));
+                property(position, null, PropertyStep(name, position, false), nesting);
             }
             else
             {
@@ -426,14 +528,44 @@ private struct ArithmeticParser
             instructions ~= Instruction(Op.variable, position, Scalar.init, 0, variable);
     }
 
-    void property(size_t position, string target, PropertyStep first)
+    PropertyStep readStep(bool nullSafe, uint nesting)
+    {
+        reader.skipWhitespace();
+        const position = reader.position;
+        if (reader.peek != '[')
+        {
+            const name = reader.readIdentifierName();
+            if (name is null)
+                throw reader.errorAt(position, SpelMessage.OOD);
+            return PropertyStep(name, position, nullSafe);
+        }
+        checkNesting(nesting);
+        ++reader.position;
+        ArithmeticParser index = ArithmeticParser(reader);
+        index.indexPlans = indexPlans;
+        index.propertyPaths = propertyPaths;
+        index.conditional(nesting + 1);
+        index.emitFirstOperand();
+        reader.position = index.reader.position;
+        if (reader.peek != ']')
+            throw reader.errorAt(reader.position, SpelMessage.OOD);
+        ++reader.position;
+        indexPlans = index.indexPlans;
+        propertyPaths = index.propertyPaths;
+        // Every child is stored once in the outer plan's table. Source length bounds this offset.
+        const slot = cast(uint) indexPlans.length;
+        indexPlans ~= index.instructions.idup;
+        return PropertyStep(null, position, nullSafe, slot);
+    }
+
+    void property(size_t position, string target, PropertyStep first, uint nesting)
     {
         emitFirstOperand();
         auto steps = [first];
         auto separator = readSeparator(reader);
         while (separator != PropertySeparator.absent)
         {
-            steps ~= readPropertyStep(reader, separator == PropertySeparator.safeDot);
+            steps ~= readStep(separator == PropertySeparator.safeDot, nesting);
             separator = readSeparator(reader);
         }
         instructions ~= Instruction(Op.property, position, Scalar.init, propertyPaths.length, target);

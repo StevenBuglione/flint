@@ -110,9 +110,8 @@ private struct DiagnosticText
 }
 
 private immutable DiagnosticText[] diagnosticTexts = [
-    DiagnosticText(SpelMessage.TYPE_CONVERSION_ERROR,
-            "Type conversion problem, cannot convert from ",
-            " to boolean"),
+    DiagnosticText(SpelMessage.TYPE_CONVERSION_ERROR, "Type conversion problem, cannot convert from ",
+            "", " to "),
     DiagnosticText(SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL, "Property or field '",
             "' cannot be found on null"),
     DiagnosticText(SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE, "Property or field '",
