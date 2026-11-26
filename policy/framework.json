@@ -570,7 +570,8 @@
     "flint.java.time.temporal.chronounit",
     "flint.java.time.yearmonth",
     "flint.java.time.monthday",
-    "flint.java.time.year"
+    "flint.java.time.year",
+    "flint.java.time.zone.zoneoffsettransition"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",

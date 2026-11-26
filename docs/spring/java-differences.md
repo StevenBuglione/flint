@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 3 | 7 | 0 | 4,442 |
 | framework | micrometer-observation@1.18.0 | 44 | 36 | 0 | 232 |
-| framework | openjdk@21.0.13 | 200 | 110 | 1,871 | 16,240 |
+| framework | openjdk@21.0.13 | 213 | 113 | 1,871 | 16,224 |
 | framework | aspectj@1.9.27 | 19 | 75 | 191 | 25 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
@@ -1742,6 +1742,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.temporal.ChronoUnit#toString()` | `flint.java.time.temporal.chronounit.toString` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.time.temporal.ValueRange` | `flint.java.time.temporal.valuerange.ValueRange` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.temporal.ValueRange#equals(Object)` | `flint.java.time.temporal.valuerange.ValueRange.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+
+#### java.time.zone
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.time.zone.ZoneOffsetTransition` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.zone.ZoneOffsetTransition#equals(Object)` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.zone.ZoneOffsetTransition#isValidOffset(ZoneOffset)` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition.isValidOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### java.util
 
@@ -9195,7 +9203,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.chrono | 405 | 0 |
 | java.time.format | 141 | 0 |
 | java.time.temporal | 111 | 0 |
-| java.time.zone | 69 | 0 |
+| java.time.zone | 53 | 0 |
 | java.util | 2,321 | 0 |
 | java.util.concurrent | 1,264 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |

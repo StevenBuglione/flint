@@ -724,7 +724,8 @@
     "framework/java-time/tests/chrono_field_test.d",
     "framework/java-time/tests/temporal_metadata_test.d",
     "framework/java-time/tests/year_month_test.d",
-    "framework/java-time/tests/date_values_test.d"
+    "framework/java-time/tests/date_values_test.d",
+    "framework/java-time/tests/zone_offset_transition_test.d"
   ],
   "module": "java-time",
   "note": "Original Flint tests exercise the Java SE 21 API, including the Period text used in Spring's binding test and numeric overflow diagnostics checked against the Java 21 runtime. No OpenJDK test code is ported.",
