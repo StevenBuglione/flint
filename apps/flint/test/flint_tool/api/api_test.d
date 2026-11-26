@@ -153,6 +153,8 @@ unittest
     expect(validRule("R1")).toEqual(true);
     expect(validRule("R14")).toEqual(true);
     expect(validRule("R15")).toEqual(false);
+    expect(validRule("R16")).toEqual(true);
+    expect(validRule("R17")).toEqual(false);
     expect(validRule("R0")).toEqual(false);
     expect(validRule("R01")).toEqual(false);
 }
@@ -193,7 +195,7 @@ unittest
     expect(error).toEqual("a.B: a ported element needs its D symbol `d` under flint.");
     expect(parseMapping(`{"elements":{"a.B":{"status":"adapted","rules":["R3","R99"]}}}`, mapping, error)).toEqual(
             false);
-    expect(error).toEqual("a.B: `R99` is not a rulebook rule, R1 to R14");
+    expect(error).toEqual("a.B: `R99` is not a rulebook rule, R1 to R14 or R16");
     expect(parseMapping(`{"elements":{"a.B":{"status":"adapted"}}}`, mapping, error)).toEqual(false);
     expect(parseMapping(`{"elements":{"a.B":{"status":"excluded","category":"jmx"}}}`, mapping, error)).toEqual(false);
     expect(parseMapping(`{"elements":{"a.B":{"status":"excluded","category":"deferred"}}}`, mapping, error)).toEqual(

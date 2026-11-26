@@ -144,6 +144,17 @@ Builders keep Java's method chain exactly (`ResponseEntity.ok().header(...).body
 
 Java strings index UTF-16 code units, and D strings index UTF-8 bytes. Every ported routine that does index arithmetic, such as `AntPathMatcher`, `UriComponentsBuilder`, `StringUtils` and `PathPattern`, is reviewed for this and tested with non-ASCII input. Public methods that return an index document the unit, and keep Java's unit wherever the index crosses the API.
 
+### R16: Sealed interfaces and the records that implement them
+
+R15 is reserved for the Java-enums proposal in `docs/spring/phase1/web-mvc.md`. R16 says how R3 and R11 combine when a record implements an interface (coordinator, 2026-11-26, from sol-ai's `MessagePart`):
+- **The interface stays a D interface** (R3), sealed or not. Its constants become static members.
+- **A record that implements an interface is a `final class`**, because only classes implement D interfaces. It mixes in `JavaObject` and defines member-wise `equals`, `hashCode` and `toString`, so R11's record equality holds. Its accessors keep the record names (`text()`, `payload()`).
+- **A record that implements no interface stays a struct** (R11).
+- **`sealed` and `permits` have no D equivalent.** Each permitted class is `final`, and the interface's doc comment lists the permitted classes. No closed-world mechanism (tagged unions, visitors, registries) is added.
+- **User code reads as in Java:** `List!MessagePart`, a `withAttributes` that returns `MessagePart`, and `if (auto t = cast(TextPart) part)` for `instanceof TextPart t`.
+
+Mapping: the records are `adapted` with rules `R16` (plus `R11` where equality is the point). The interface is `ported`.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:
