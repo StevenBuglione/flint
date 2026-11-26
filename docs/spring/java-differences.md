@@ -2183,12 +2183,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
-| `java.util.StringJoiner` | `flint.java.util.stringjoiner.StringJoiner` | [R1](api-mapping.md#r1-packages-and-names) | Import the leaf flint.java.util.stringjoiner. |
-| `java.util.StringJoiner#<init>(CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text) |  |
-| `java.util.StringJoiner#<init>(CharSequence,CharSequence,CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.util.StringJoiner` | `flint.java.util.stringjoiner.StringJoiner` | [R1](api-mapping.md#r1-packages-and-names) | Import the leaf flint.java.util.stringjoiner. Null separator, framing and empty-value slices count as empty under R26. |
+| `java.util.StringJoiner#<init>(CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.StringJoiner#<init>(CharSequence,CharSequence,CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.StringJoiner#add(CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.add` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.util.StringJoiner#length()` | `flint.java.util.stringjoiner.StringJoiner.length` | [R14](api-mapping.md#r14-strings-and-text) |  |
-| `java.util.StringJoiner#setEmptyValue(CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.setEmptyValue` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.util.StringJoiner#setEmptyValue(CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.setEmptyValue` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.StringJoiner#toString()` | `flint.java.util.stringjoiner.StringJoiner.toString` | [R11](api-mapping.md#r11-object-identity-and-equality), [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.util.UUID` | `flint.java.util.uuid.UUID` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.uuid; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.UUID#equals(Object)` | `flint.java.util.uuid.UUID.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |

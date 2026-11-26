@@ -56,13 +56,6 @@ final class StringJoiner
     /// Creates a joiner with the supplied delimiter, prefix and suffix.
     this(string delimiter, string prefix, string suffix)
     {
-        if (prefix is null)
-            failNull("The prefix must not be null");
-        if (delimiter is null)
-            failNull("The delimiter must not be null");
-        if (suffix is null)
-            failNull("The suffix must not be null");
-
         this.delimiter = delimiter;
         this.prefix = prefix;
         this.suffix = suffix;
@@ -73,10 +66,8 @@ final class StringJoiner
     /// Replaces the output used before the first element is added.
     StringJoiner setEmptyValue(string value)
     {
-        if (value is null)
-            failNull("The empty value must not be null");
         const units = javaLength(utf16Length(value));
-        emptyValue = value;
+        emptyValue = value.length == 0 ? "" : value;
         emptyUnits = units;
         return this;
     }
@@ -93,7 +84,7 @@ final class StringJoiner
     StringJoiner merge(StringJoiner other)
     {
         if (other is null)
-            failNull(null);
+            failNull();
         if (other.elementCount == 0)
             return this;
         return append(other.render("", ""), other.contentUnits);
@@ -194,9 +185,9 @@ private size_t utf16Length(scope const(char)[] text) pure nothrow @nogc
     return units;
 }
 
-pragma(inline, false) private noreturn failNull(string message)
+pragma(inline, false) private noreturn failNull()
 {
     import flint.java.lang : NullPointerException;
 
-    throw new NullPointerException(message);
+    throw new NullPointerException();
 }

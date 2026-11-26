@@ -36,13 +36,20 @@ import std.exception : assertThrown;
     assert(receiver.add("new").toString() == "( | new)");
 }
 
-@("StringJoiner validates separators, framing, empty values and merge arguments") unittest
+@("StringJoiner treats null separator, framing and empty-value slices as empty") unittest
 {
-    assertThrown!NullPointerException(new StringJoiner(null));
-    assertThrown!NullPointerException(new StringJoiner(";", null, "end"));
-    assertThrown!NullPointerException(new StringJoiner(";", "begin", null));
+    assert(new StringJoiner(null).add("a").add("b").toString() == "ab");
+    assert(new StringJoiner(";", null, "end").add("a").toString() == "aend");
+    assert(new StringJoiner(";", "begin", null).add("a").toString() == "begina");
     auto joiner = new StringJoiner("=", "«", "»");
-    assertThrown!NullPointerException(joiner.setEmptyValue(null));
+    assert(joiner.toString() == "«»");
+    assert(joiner.setEmptyValue(null).length() == 0 && joiner.toString() == "");
+    assert(joiner.add("a").toString() == "«a»");
+}
+
+@("StringJoiner rejects a null merge argument") unittest
+{
+    auto joiner = new StringJoiner("=", "«", "»");
     assertThrown!NullPointerException(joiner.merge(null));
     assert(joiner.toString() == "«»");
 }
