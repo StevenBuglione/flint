@@ -37,6 +37,12 @@ class BitSet
     private enum wordShift = 6;
     private enum wordBits = 1 << wordShift;
     private enum bitMask = wordBits - 1;
+    private enum RangeChange : ubyte
+    {
+        set,
+        clear,
+        flip
+    }
 
     private ulong[] words;
     private int wordsInUse;
@@ -73,6 +79,21 @@ class BitSet
             clear(bitIndex);
     }
 
+    /// Sets the bits in the half-open range [fromIndex, toIndex).
+    void set(int fromIndex, int toIndex) pure
+    {
+        changeRange(fromIndex, toIndex, RangeChange.set);
+    }
+
+    /// Sets or clears the bits in the half-open range [fromIndex, toIndex).
+    void set(int fromIndex, int toIndex, bool value) pure
+    {
+        if (value)
+            set(fromIndex, toIndex);
+        else
+            clear(fromIndex, toIndex);
+    }
+
     /// Clears one bit without changing the capacity.
     void clear(int bitIndex) pure
     {
@@ -82,6 +103,12 @@ class BitSet
             return;
         words[word] &= ~maskAt(bitIndex);
         recalculateWordsInUse();
+    }
+
+    /// Clears the half-open range [fromIndex, toIndex) without growing the capacity.
+    void clear(int fromIndex, int toIndex) pure
+    {
+        changeRange(fromIndex, toIndex, RangeChange.clear);
     }
 
     /// Clears all bits without changing the capacity.
@@ -99,6 +126,12 @@ class BitSet
         expandTo(word);
         words[word] ^= maskAt(bitIndex);
         recalculateWordsInUse();
+    }
+
+    /// Toggles the bits in the half-open range [fromIndex, toIndex).
+    void flip(int fromIndex, int toIndex) pure
+    {
+        changeRange(fromIndex, toIndex, RangeChange.flip);
     }
 
     /// Finds the first set bit at or after the index, or returns -1.
@@ -166,11 +199,73 @@ class BitSet
     private static void checkIndex(int index, int minimum, string label) pure
     {
         if (index < minimum)
-        {
-            import flint.java.lang : IndexOutOfBoundsException, Integer;
+            rejectIndex(index, label);
+    }
 
-            throw new IndexOutOfBoundsException(label ~ Integer.toString(index));
+    pragma(inline, false) private static void rejectIndex(int index, string label) pure
+    {
+        import flint.java.lang : IndexOutOfBoundsException, Integer;
+
+        throw new IndexOutOfBoundsException(label ~ Integer.toString(index));
+    }
+
+    pragma(inline, false) private static void rejectRange(int fromIndex, int toIndex) pure
+    {
+        import flint.java.lang : IndexOutOfBoundsException, Integer;
+
+        if (fromIndex < 0)
+            rejectIndex(fromIndex, "fromIndex < 0: ");
+        if (toIndex < 0)
+            rejectIndex(toIndex, "toIndex < 0: ");
+        throw new IndexOutOfBoundsException(
+                "fromIndex: " ~ Integer.toString(fromIndex) ~ " > toIndex: " ~ Integer.toString(toIndex));
+    }
+
+    pragma(inline, false) private void changeRange(int fromIndex, int toIndex, RangeChange change) pure
+    {
+        if (fromIndex < 0 || toIndex < fromIndex)
+            rejectRange(fromIndex, toIndex);
+        if (fromIndex == toIndex)
+            return;
+
+        const firstWord = fromIndex >> wordShift;
+        const lastBit = toIndex - 1;
+        int lastWord = lastBit >> wordShift;
+        ulong lastMask = ulong.max >> (bitMask - (lastBit & bitMask));
+        if (change == RangeChange.clear)
+        {
+            if (firstWord >= wordsInUse)
+                return;
+            if (lastWord >= wordsInUse)
+            {
+                lastWord = wordsInUse - 1;
+                lastMask = ulong.max;
+            }
         }
+        else
+            expandTo(lastWord);
+
+        const firstMask = ulong.max << (fromIndex & bitMask);
+        foreach (word; firstWord .. lastWord + 1)
+        {
+            const lower = word == firstWord ? firstMask : ulong.max;
+            const upper = word == lastWord ? lastMask : ulong.max;
+            const mask = lower & upper;
+            final switch (change)
+            {
+            case RangeChange.set:
+                words[word] |= mask;
+                break;
+            case RangeChange.clear:
+                words[word] &= ~mask;
+                break;
+            case RangeChange.flip:
+                words[word] ^= mask;
+                break;
+            }
+        }
+        if (change != RangeChange.set)
+            recalculateWordsInUse();
     }
 
     private void expandTo(int word) pure nothrow
