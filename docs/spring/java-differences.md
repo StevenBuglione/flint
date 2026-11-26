@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 130 | 134 | 0 | 2,126 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 23 | 42 | 0 | 4,387 |
+| framework | thymeleaf@3.1.7.RELEASE | 30 | 43 | 0 | 4,379 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 228 | 118 | 1,871 | 16,204 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -3855,6 +3855,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.thymeleaf.exceptions.TemplateProcessingException#getLine()` | `flint.thymeleaf.exceptions.TemplateProcessingException.getLine` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.thymeleaf.exceptions.TemplateProcessingException#getTemplateName()` | `flint.thymeleaf.exceptions.TemplateProcessingException.getTemplateName` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.thymeleaf.exceptions.TemplateProcessingException#setTemplateName(String)` | `flint.thymeleaf.exceptions.TemplateProcessingException.setTemplateName` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+
+#### org.thymeleaf.standard.inline
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.standard.inline.StandardInlineMode#parse(String)` | `flint.thymeleaf.standard.inline.parse` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 
 #### org.thymeleaf.templatemode
 
@@ -9798,7 +9804,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.spring6.webflow.view | 17 | 0 |
 | org.thymeleaf.standard | 26 | 0 |
 | org.thymeleaf.standard.expression | 338 | 0 |
-| org.thymeleaf.standard.inline | 57 | 0 |
+| org.thymeleaf.standard.inline | 49 | 0 |
 | org.thymeleaf.standard.processor | 287 | 0 |
 | org.thymeleaf.standard.serializer | 15 | 0 |
 | org.thymeleaf.standard.util | 16 | 0 |
