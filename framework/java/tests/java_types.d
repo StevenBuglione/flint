@@ -620,6 +620,15 @@ unittest
     assert(Locale.forLanguageTag("es-419-1996-1996-POSIX").getVariant() == "1996_1996_POSIX");
     assert(Locale.forLanguageTag("es-419-POSIX--1996").getVariant() == "POSIX");
     assert(Locale.forLanguageTag("es-419-POSIX-123-1996").getVariant() == "POSIX");
+    assert(Locale.forLanguageTag("en-US-POSIX-x-lvariant-ABC-a1").getVariant() == "POSIX_ABC_a1");
+    assert(Locale.forLanguageTag("X-LVARIANT-a1-b").getVariant() == "a1_b");
+    assert(Locale.forLanguageTag("x-opaque-LVARIANT-ABC-lvariant-xy").getVariant() == "ABC_lvariant_xy");
+    assert(Locale.forLanguageTag("x-lvariant-ABC-!!-DEF").getVariant() == "ABC");
+    assert(Locale.forLanguageTag("en-US-u-ca-x-lvariant-ABC").getVariant() == "ABC");
+    assert(Locale.forLanguageTag("en-US-u-x-lvariant-ABC") == Locale.US);
+    assert(Locale.forLanguageTag("en-US-0-01-x-lvariant-ABC") == Locale.US);
+    assert(Locale.forLanguageTag("x-notgood!-lvariant-ABC") == Locale.ROOT);
+    assert(Locale.forLanguageTag("x-lvariant") == Locale.ROOT);
     foreach (pair; [["IW", "he"], ["JI", "yi"], ["IN", "id"]])
     {
         const legacy = Locale(pair[0], "us");

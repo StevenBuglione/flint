@@ -3261,8 +3261,8 @@ class Properties : LinkedHashMap!(string, string)
 /++
 Java's `Locale` (clean room, from the Java SE specification): a language, a country (region) and a variant,
 normalized as Java does (the language lower case, the country upper case). Like flint.java's `Charset`, it is a
-value type, so its constants are `static immutable`. Scripts and extensions are not modeled: `forLanguageTag`
-skips a script subtag and stops at the first extension or private-use subtag. `getDefault` reads the POSIX locale
+value type, so its constants are `static immutable`. `forLanguageTag` skips scripts and extensions and restores
+legacy variants from `x-lvariant` private use. `getDefault` reads the POSIX locale
 (`LC_ALL`, then `LANG`) once per call; `setDefault` is not provided, because framework modules keep no mutable
 module state.
 +/
@@ -3432,7 +3432,7 @@ struct Locale
                 ++next;
             }
         }
-        else
+        else if (!subtags.length || !isPrivateUseSingleton(subtags[0]))
             return Locale.init;
         if (next < subtags.length && isAlpha(subtags[next], 4, 4))
             next++; // script: not modeled
@@ -3443,23 +3443,77 @@ struct Locale
 
     private static string parseTagVariants(string[] subtags) pure nothrow
     {
+        size_t next;
+        while (next < subtags.length && isVariant(subtags[next]))
+            ++next;
+        string[][2] variants = [subtags[0 .. next], legacyTagVariants(subtags[next .. $])];
+
         string first;
         char[] joined;
-        foreach (subtag; subtags)
-        {
-            if (!isVariant(subtag))
-                break;
-            if (!first.length)
-                first = subtag;
-            else
+        foreach (group; variants)
+            foreach (subtag; group)
             {
-                if (!joined.length)
-                    joined = first.dup;
-                joined ~= '_';
-                joined ~= subtag;
+                if (!first.length)
+                    first = subtag;
+                else
+                {
+                    if (!joined.length)
+                        joined = first.dup;
+                    joined ~= '_';
+                    joined ~= subtag;
+                }
             }
-        }
         return joined.length ? joined.idup : first;
+    }
+
+    private static string[] legacyTagVariants(string[] subtags) pure nothrow @nogc
+    {
+        const next = skipTagExtensions(subtags);
+        if (next == subtags.length || !isPrivateUseSingleton(subtags[next]))
+            return null;
+
+        size_t end = next + 1;
+        while (end < subtags.length && isTagPayload(subtags[end], 1))
+            ++end;
+        foreach (i; next + 1 .. end)
+            if (isLegacyVariantMarker(subtags[i]))
+                return subtags[i + 1 .. end];
+        return null;
+    }
+
+    private static size_t skipTagExtensions(string[] subtags) pure nothrow @nogc
+    {
+        size_t next;
+        while (next < subtags.length && isAlpha(subtags[next], 1, 1) && !isPrivateUseSingleton(subtags[next]))
+        {
+            const first = ++next;
+            while (next < subtags.length && isTagPayload(subtags[next], 2))
+                ++next;
+            if (next == first)
+                return subtags.length;
+        }
+        return next;
+    }
+
+    private static bool isPrivateUseSingleton(string subtag) pure nothrow @nogc
+    {
+        return subtag.length == 1 && (subtag[0] | 0x20) == 'x';
+    }
+
+    private static bool isTagPayload(string subtag, size_t minLength) pure nothrow @nogc
+    {
+        return subtag.length >= minLength && subtag.length <= 8 && isAsciiAlphanumeric(subtag);
+    }
+
+    private static bool isLegacyVariantMarker(string subtag) pure nothrow @nogc
+    {
+        enum marker = "lvariant";
+        if (subtag.length != marker.length)
+            return false;
+        foreach (i, ch; subtag)
+            if ((ch | 0x20) != marker[i])
+                return false;
+        return true;
     }
 
     /// The default locale: the POSIX locale of `LC_ALL`, else `LANG` (`en_US.UTF-8` gives en-US); `C`, `POSIX` or
