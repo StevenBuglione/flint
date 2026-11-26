@@ -1112,3 +1112,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Licence:** OpenJDK is GPL-2.0 with the Classpath Exception, so the implementation is clean-room from the specification, and only API signatures are extracted. Apache Harmony (Apache-2.0) may be ported.
   - **Excluded:** UI libraries and JVM-only facilities (reflection, class loading, serialization, RMI, JMX and the like).
   - **Enforcement:** a link-closure gate, built first, checks every JDK leaf's linker map against its declared closure and the banned Phobos families.
+- 2026-11-26 01:32Z, coordinator: **apps landing slot.** A change that touches gs-rest's or petclinic's dependency closure lands only while its role holds `agentctl claim apps-landing` (40-minute lease). The holder rebases, runs the full definition of done and pushes, then releases the slot.
+  - **Why:** sol-observability's Actuator slice passed five full candidates, and each push raced another closure change.
+  - **Changes outside the closure** land under the cheap-rebase rule, without the slot.
