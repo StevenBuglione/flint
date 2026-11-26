@@ -3294,6 +3294,14 @@ struct Locale
     static immutable Locale GERMANY = Locale("de", "DE"); ///
     static immutable Locale ITALY = Locale("it", "IT"); ///
     static immutable Locale JAPAN = Locale("ja", "JP"); ///
+    static immutable Locale KOREAN = Locale("ko"); ///
+    static immutable Locale KOREA = Locale("ko", "KR"); ///
+    static immutable Locale CANADA_FRENCH = Locale("fr", "CA"); ///
+    static immutable Locale SIMPLIFIED_CHINESE = Locale("zh", "CN"); ///
+    static immutable Locale TRADITIONAL_CHINESE = Locale("zh", "TW"); ///
+    static immutable Locale CHINA = SIMPLIFIED_CHINESE; ///
+    static immutable Locale PRC = SIMPLIFIED_CHINESE; ///
+    static immutable Locale TAIWAN = TRADITIONAL_CHINESE; ///
 
     /// The language code, lower case; empty when absent.
     string getLanguage() const pure nothrow @nogc

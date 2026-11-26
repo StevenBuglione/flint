@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,220 | 397 | 1,871 | 14,933 |
+| framework | openjdk@21.0.13 | 1,220 | 405 | 1,871 | 14,925 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2561,6 +2561,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.List#of(E...)` | `flint.java.util.List.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.Locale` | `flint.java.util.Locale` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable D value for language, country and variant. The current constructor does not canonicalize legacy language aliases. Script and extension data are deferred. |
 | `java.util.Locale#CANADA` | `flint.java.util.Locale.CANADA` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#CANADA_FRENCH` | `flint.java.util.Locale.CANADA_FRENCH` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#CHINA` | `flint.java.util.Locale.CHINA` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#CHINESE` | `flint.java.util.Locale.CHINESE` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#ENGLISH` | `flint.java.util.Locale.ENGLISH` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#FRANCE` | `flint.java.util.Locale.FRANCE` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -2571,7 +2573,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Locale#ITALY` | `flint.java.util.Locale.ITALY` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#JAPAN` | `flint.java.util.Locale.JAPAN` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#JAPANESE` | `flint.java.util.Locale.JAPANESE` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#KOREA` | `flint.java.util.Locale.KOREA` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#KOREAN` | `flint.java.util.Locale.KOREAN` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#PRC` | `flint.java.util.Locale.PRC` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#ROOT` | `flint.java.util.Locale.ROOT` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#SIMPLIFIED_CHINESE` | `flint.java.util.Locale.SIMPLIFIED_CHINESE` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#TAIWAN` | `flint.java.util.Locale.TAIWAN` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.Locale#TRADITIONAL_CHINESE` | `flint.java.util.Locale.TRADITIONAL_CHINESE` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#UK` | `flint.java.util.Locale.UK` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Locale#US` | `flint.java.util.Locale.US` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.Map#containsKey(Object)` | `flint.java.util.Map.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -10623,7 +10631,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 123 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,900 | 0 |
+| java.util | 1,892 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
