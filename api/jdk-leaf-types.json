@@ -17,6 +17,7 @@
   "java.util.IllegalFormatConversionException": "flint.java.util.formatter",
   "java.util.IllegalFormatException": "flint.java.util.formatter",
   "java.util.MissingFormatArgumentException": "flint.java.util.formatter",
+  "java.util.StringJoiner": "flint.java.util.stringjoiner",
   "java.util.UUID": "flint.java.util.uuid",
   "java.util.UnknownFormatConversionException": "flint.java.util.formatter",
   "java.util.concurrent.BrokenBarrierException": "flint.java.util.concurrent.brokenbarrierexception",

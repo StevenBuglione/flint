@@ -1806,14 +1806,17 @@
     },
     "java/util/StringJoiner/MergeTest.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the StringJoiner specification and Temurin parity.",
       "status": "deferred"
     },
     "java/util/StringJoiner/StringJoinerOomUtf16Test.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the StringJoiner specification and Temurin parity.",
       "status": "deferred"
     },
     "java/util/StringJoiner/StringJoinerTest.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the StringJoiner specification and Temurin parity.",
       "status": "deferred"
     },
     "java/util/StringTokenizer/FormFeed.java": {

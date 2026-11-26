@@ -12,6 +12,58 @@ import jdk_link_closure as closure
 
 
 class LinkClosureTests(unittest.TestCase):
+    def test_stringjoiner_first_object_receipt_is_exact(self):
+        sections = {
+            '.text._D4core10checkedint__T4muluZQgFNaNbNiNfmmKbZm': 15,
+            '.text._D4core8internal5array5utils__T12__arrayAllocTaZQrFNaNbNemZAv': 36,
+            '.rodata._D6object__T10RTInfoImplVAmA2i132i2728ZQBbyG2m': 16,
+            '.data._D5flint4java4util9hexformat12__ModuleInfoZ': 36,
+            '.eh_frame': 48,
+            '__minfo': 8,
+        }
+        trigger = '_D6object__T10RTInfoImplVAmA2i132i2728ZQBbyG2m'
+        header = ('Archive member included to satisfy reference by file (symbol)\n\n'
+                  'lib.a(flint.java.util.hexformat.o)\n'
+                  f'  flint.java.util.stringjoiner.o (symbol from plugin) ({trigger})\n\n'
+                  'Discarded input sections\n'
+                  ' .text.discarded 0x0000 0xb /tmp/lto-llvm-test.o\n'
+                  'Linker script and memory map\n')
+        rows = ''.join(f' {name}\n                0x0100 {size:#x} /tmp/lto-llvm-test.o\n'
+                       for name, size in sections.items())
+        rows += ' .comment 0x0040 0x14 /tmp/lto-llvm-test.o\n'
+        allowance = closure.FIRST_OBJECT_ALLOWANCES['java-util', 'flint.java.util.stringjoiner', 'full']
+        self.assertEqual(closure.first_object_placement(header + rows, allowance), sections)
+        self.assertIsNone(closure.first_object_placement(header.replace(trigger, '_D3badFZv') + rows, allowance))
+        self.assertIsNone(closure.first_object_placement(header + rows.replace('0x30', '0x31'), allowance))
+        extra = ' .text._D5flint4java4util9hexformat3badFZv 0x0200 0xf /tmp/lto-llvm-test.o\n'
+        self.assertIsNone(closure.first_object_placement(header + rows + extra, allowance))
+        unparsed = ' .extra unexpected-layout\t/tmp/lto-llvm-test.o\n'
+        self.assertIsNone(closure.first_object_placement(header + rows + unparsed, allowance))
+
+    def test_only_exact_stringjoiner_metadata_profiles_can_seed_new_probe(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(['git', 'init', '-q', root], check=True)
+            closure.git(root, '-c', 'user.name=Test', '-c', 'user.email=test@example.test',
+                        'commit', '-qm', 'Seed', '--allow-empty')
+            leaf = 'flint.java.util.stringjoiner'
+            path = root / 'framework/java-util/closure-probes' / leaf / 'full.json'
+            path.parent.mkdir(parents=True)
+            path.write_text(json.dumps({'leaves': ['flint.java.lang']}))
+            edge = f'link|java-util|{leaf}|full|O3|undeclared module records flint.java.util.hexformat'
+            def approved(row):
+                return closure.may_seed_module_record(root, None, row, set())
+
+            self.assertTrue(approved(edge))
+            self.assertTrue(approved(edge.replace('|O3|', '|Oz|')))
+            self.assertFalse(approved(edge.replace('|O3|', '|O2|')))
+            self.assertFalse(approved(edge.replace('|full|', '|other|')))
+            self.assertFalse(approved(edge.replace('module records', 'leaf')))
+            closure.git(root, 'add', '.')
+            closure.git(root, '-c', 'user.name=Test', '-c', 'user.email=test@example.test',
+                        'commit', '-qm', 'Add probe without exemption')
+            self.assertFalse(approved(edge))
+
     def test_baseline_compares_each_commit_and_rejects_readded_violations(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -234,13 +286,13 @@ Discarded input sections
             path.write_text(json.dumps(entry))
             self.assertEqual(closure.probe_record(root, None, 'java-time', leaf, 'sample'), entry)
             row = f'link|java-time|{leaf}|sample|O3|undeclared module records flint.java.util'
-            self.assertFalse(closure.may_seed_legacy_record(root, None, row, {'flint.java.util'}))
+            self.assertFalse(closure.may_seed_module_record(root, None, row, {'flint.java.util'}))
 
             closure.git(root, 'add', '-A')
             closure.git(root, '-c', 'user.name=Test', '-c', 'user.email=test@example.test',
                         'commit', '-qm', 'Move probe to its own file')
             self.assertEqual(closure.probe_record(root, 'HEAD', 'java-time', leaf, 'sample'), entry)
-            self.assertFalse(closure.may_seed_legacy_record(root, 'HEAD', row, {'flint.java.util'}))
+            self.assertFalse(closure.may_seed_module_record(root, 'HEAD', row, {'flint.java.util'}))
 
     def test_selective_reexport_from_a_leaf_still_needs_a_probe(self):
         with tempfile.TemporaryDirectory() as temporary:

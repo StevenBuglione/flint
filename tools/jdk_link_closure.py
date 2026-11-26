@@ -28,6 +28,28 @@ BASELINE = 'framework/java/closure-baseline.json'
 BASELINE_SCHEMA = 'flint.jdk-closure-baseline/1'
 LEGACY_RECORD = re.compile(r'link\|(java(?:-[a-z0-9-]+)?)\|(flint\.java\w*(?:\.\w+)+)\|'
                            r'([a-z][a-z0-9-]*)\|(?:O3|Oz)\|undeclared module records (flint\.java(?:\.\w+)+)')
+# Temporary first-object exception approved in 64f0653bc. Remove when the compile-scope fix lands.
+FIRST_OBJECT_ALLOWANCES = {
+    ('java-util', 'flint.java.util.stringjoiner', 'full'): {
+        'profiles': ('O3', 'Oz'),
+        'module': 'flint.java.util.hexformat',
+        'member': 'flint.java.util.hexformat.o',
+        'referrer': 'flint.java.util.stringjoiner.o',
+        'trigger': '_D6object__T10RTInfoImplVAmA2i132i2728ZQBbyG2m',
+        'sections': {
+            '.rodata._D6object__T10RTInfoImplVAmA2i132i2728ZQBbyG2m': 16,
+            '.data._D5flint4java4util9hexformat12__ModuleInfoZ': 36,
+            '__minfo': 8,
+            '.text._D4core10checkedint__T4muluZQgFNaNbNiNfmmKbZm': 15,
+            '.text._D4core8internal5array5utils__T12__arrayAllocTaZQrFNaNbNemZAv': 36,
+            '.eh_frame': 48,
+        },
+    },
+}
+FIRST_OBJECT_ROWS = {
+    '|'.join(('link', *probe, profile, f"undeclared module records {allowance['module']}"))
+    for probe, allowance in FIRST_OBJECT_ALLOWANCES.items() for profile in allowance['profiles']
+}
 # The original Character generator keeps these tables beside the public functions.
 # New tables belong in data modules so the checker can identify them by module owner.
 CHARACTER_TABLES = {f'flint.java.character.{name}' for name in (
@@ -121,6 +143,33 @@ def defined_symbols(text):
     if not rows:
         raise ValueError('missing defined symbols in probe executable')
     return {name for name in rows if SYMBOL.fullmatch(name)}
+
+
+def first_object_placement(text, allowance):
+    """Verify the admission and exact live contributions of the allowed archive member."""
+    header, _, live = text.partition('Linker script and memory map\n')
+    member = re.escape(allowance['member'])
+    referrer = re.escape(allowance['referrer'])
+    trigger = re.escape(allowance['trigger'])
+    admission = rf'^\S+\({member}\)\n[ \t]+{referrer} \(symbol from plugin\) \({trigger}\)$'
+    if not re.search(admission, header, re.MULTILINE):
+        return None
+    contributions = re.findall(r'^[ \t]+(\S+)(?:[ \t]+|\n[ \t]+)0x[0-9a-f]+[ \t]+0x([0-9a-f]+)'
+                               r'[ \t]+(\S+\.o)$', live, re.MULTILINE)
+    trigger_section = f".rodata.{allowance['trigger']}"
+    providers = [obj for section, _, obj in contributions if section == trigger_section]
+    if len(providers) != 1:
+        return None
+    provider = providers[0]
+    rows = [(section, int(size, 16)) for section, size, obj in contributions if obj == provider]
+    provider_lines = [parts for line in live.splitlines()
+                      if (parts := line.split()) and parts[-1] == provider and parts[0] != 'LOAD']
+    if len(rows) != len(provider_lines):
+        return None
+    rows = [(section, size) for section, size in rows if size and section != '.comment']
+    if sorted(rows) != sorted(allowance['sections'].items()):
+        return None
+    return dict(rows)
 
 
 def mangle_prefix(name):
@@ -278,19 +327,23 @@ def probe_record(root, commit, package, leaf, probe):
     return json.loads(fragment, object_pairs_hook=unique_object)
 
 
-def may_seed_legacy_record(root, commit, row, existing_modules):
-    # Decision 523bd5bd allows a new probe to inherit only the known flint.java.lang module metadata debt.
+def may_seed_module_record(root, commit, row, existing_modules):
+    # Decision 523bd5bd allows a new probe to inherit the known flint.java.lang module metadata debt.
     record = LEGACY_RECORD.fullmatch(row)
     if not record:
         return False
     package, leaf, probe, module = record.groups()
-    if module not in existing_modules:
+    placement = row in FIRST_OBJECT_ROWS
+    if module not in existing_modules and not placement:
         return False
     previous = commit + '^' if commit else 'HEAD'
     if probe_record(root, previous, package, leaf, probe) is not None:
         return False
     current = probe_record(root, commit, package, leaf, probe)
-    return current is not None and 'flint.java.lang' in current.get('leaves', [])
+    if current is None:
+        return False
+    leaves = current.get('leaves', [])
+    return module not in leaves if placement else 'flint.java.lang' in leaves
 
 
 def baseline_growth(root, current):
@@ -313,7 +366,7 @@ def baseline_growth(root, current):
     for (_, previous), (commit, entries) in zip(versions, versions[1:]):
         label = commit[:12] if commit else 'working tree'
         for row in sorted(entries - previous):
-            if row in seen or not may_seed_legacy_record(root, commit, row, existing_modules):
+            if row in seen or not may_seed_module_record(root, commit, row, existing_modules):
                 problems.append(f'{BASELINE}: violation added in {label}: {row}')
         seen.update(entries)
     return problems
@@ -592,6 +645,15 @@ def audit(package, evidence):
                         'signed_delta_bytes': loadable - control_bytes, 'violations': problems,
                         'phobos_archive_triggers': phobos_triggers(map_text, families),
                     }
+                    allowance = FIRST_OBJECT_ALLOWANCES.get((package, leaf, name))
+                    if allowance and profile in allowance['profiles']:
+                        module = allowance['module']
+                        record = f'undeclared module records {module}'
+                        if record in problems:
+                            if placement := first_object_placement(map_text, allowance):
+                                result['first_object_contributions'] = placement
+                            else:
+                                problems[f'unexpected first-object contributions from {module}'] = problems[record]
                     if covered := coverage.get((leaf, name)):
                         result['covers'] = {
                             f'{base}/{case}': covered_symbols(symbols, base, covering)

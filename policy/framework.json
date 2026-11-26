@@ -742,7 +742,8 @@
    "directory": "framework/java-util",
    "module": "flint.java.util.uuid",
    "also": [
-    "flint.java.util.hexformat"
+    "flint.java.util.hexformat",
+    "flint.java.util.stringjoiner"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
@@ -762,9 +763,9 @@
     "dmd_incremental_seconds": 0.6,
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
-    "incremental_linked_bytes": 19763,
+    "incremental_linked_bytes": 31850,
     "compiler_peak_rss_bytes": 536870912,
-    "template_instances": 1077
+    "template_instances": 1347
    },
    "provisional": [
     "dmd_cold_seconds",

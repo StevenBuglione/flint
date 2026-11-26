@@ -3,6 +3,10 @@
     "incremental_linked_bytes": 16401,
     "template_instances": 443
   },
+  "flint.java.util.stringjoiner": {
+    "incremental_linked_bytes": 12087,
+    "template_instances": 270
+  },
   "flint.java.util.uuid": {
     "incremental_linked_bytes": 3362,
     "template_instances": 634
