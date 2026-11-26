@@ -78,6 +78,25 @@ class FormatFlagsConversionMismatchException : IllegalFormatException
     }
 }
 
+/// Java's `IllegalFormatCodePointException`: an invalid Unicode code point.
+class IllegalFormatCodePointException : IllegalFormatException
+{
+    private int codePoint;
+
+    /// The invalid code point.
+    this(int codePoint, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super("Code point = 0x" ~ hex(cast(uint) codePoint), file, line);
+        this.codePoint = codePoint;
+    }
+
+    /// The invalid code point.
+    int getCodePoint() const pure nothrow @nogc
+    {
+        return codePoint;
+    }
+}
+
 /// Java's `IllegalFormatFlagsException`: incompatible formatting flags.
 class IllegalFormatFlagsException : IllegalFormatException
 {
@@ -803,6 +822,8 @@ private string javaTypeName(Any argument) pure nothrow
         return "java.lang.Double";
     case "float":
         return "java.lang.Float";
+    case "long":
+        return "java.lang.Long";
     case "char", "wchar", "dchar":
         return "java.lang.Character";
     default:
@@ -812,16 +833,24 @@ private string javaTypeName(Any argument) pure nothrow
 
 private string characterText(Any argument)
 {
-    import flint.engine.aot.text : utf8;
-
-    const character = argument.typeName == "char" || argument.typeName == "wchar" || argument.typeName == "dchar";
-    if (!character && !isIntegral(argument.typeName))
+    const typeName = argument.typeName;
+    const character = typeName == "char" || typeName == "wchar" || typeName == "dchar";
+    if (!character && (!isIntegral(typeName) || typeName == "long"))
         throw new IllegalFormatConversionException('c', javaTypeName(argument));
     const code = character ? cast(long) argument.get!dchar : argument.get!long;
     const text = code < 0 || code > 0x10FFFF ? null : utf8(cast(dchar) code);
-    if (text is null)
-        throw new IllegalFormatException("Code point = 0x" ~ hex(cast(ulong) code));
-    return text;
+    return text is null ? unencodableCharacter(typeName, character, code) : text;
+}
+
+private string unencodableCharacter(string typeName, bool character, long code)
+{
+    const signedCodePoint = typeName == "byte" || typeName == "short" || typeName == "int";
+    // Java accepts lone UTF-16 surrogate code units. R14 projects them to U+FFFD.
+    if ((character || signedCodePoint) && code >= 0xD800 && code <= 0xDFFF)
+        return "\uFFFD";
+    if (signedCodePoint)
+        throw new IllegalFormatCodePointException(cast(int) code);
+    throw new IllegalFormatException("Code point = 0x" ~ hex(cast(ulong) code));
 }
 
 private string integralText(const ref Spec spec, Any argument)
