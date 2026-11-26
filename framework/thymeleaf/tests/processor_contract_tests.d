@@ -1,6 +1,5 @@
 module processor_contract_tests;
 
-import flint.java.lang : IllegalArgumentException;
 import flint.thymeleaf.processor : AbstractProcessor, IProcessor;
 import flint.thymeleaf.templatemode : TemplateMode;
 
@@ -9,11 +8,6 @@ import flint.thymeleaf.templatemode : TemplateMode;
 private final class Processor : AbstractProcessor
 {
     this(TemplateMode mode, int precedence)
-    {
-        super(mode, precedence);
-    }
-
-    this(typeof(null) mode, int precedence)
     {
         super(mode, precedence);
     }
@@ -48,16 +42,18 @@ private final class CustomProcessor : IProcessor
     }
 }
 
-@("a null mode is rejected instead of selecting HTML") unittest
+@("the base processor requires a TemplateMode value") unittest
 {
-    try
-    {
-        new Processor(null, 1);
-        assert(false, "expected a null template mode to be rejected");
-    }
-    catch (IllegalArgumentException error)
-    {
-        assert(error.msg == "Template mode cannot be null");
-    }
+    static assert(!__traits(compiles, {
+            final class NullModeProcessor : AbstractProcessor
+            {
+                this()
+                {
+                    super(null, 1);
+                }
+            }
+
+            new NullModeProcessor();
+        }));
     assert((new Processor(TemplateMode.init, 1)).getTemplateMode() == TemplateMode.HTML);
 }

@@ -20,7 +20,6 @@
  */
 module flint.thymeleaf.processor;
 
-import flint.java.lang : IllegalArgumentException;
 import flint.thymeleaf.templatemode : TemplateMode;
 
 @safe:
@@ -41,18 +40,11 @@ abstract class AbstractProcessor : IProcessor
     private immutable TemplateMode templateMode;
     private immutable int precedence;
 
-    /// Retains the supplied mode and precedence (R15).
+    /// Retains the supplied mode and precedence (R5, R15).
     this(TemplateMode templateMode, int precedence) nothrow @nogc
     {
         this.templateMode = templateMode;
         this.precedence = precedence;
-    }
-
-    /// Rejects an explicit null mode with Thymeleaf's diagnostic (R15, D-7).
-    this(typeof(null) templateMode, int precedence)
-    {
-        this(TemplateMode.init, precedence);
-        throw new IllegalArgumentException("Template mode cannot be null");
     }
 
     /// The template mode supported by this processor.

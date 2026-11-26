@@ -4235,7 +4235,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.thymeleaf.processor.AbstractProcessor#<init>(TemplateMode,int)` | `flint.thymeleaf.processor.AbstractProcessor` | [R15](api-mapping.md#r15-enums-with-fields), [D-7](api-mapping.md#deviations) | Use the TemplateMode value. An explicit null overload preserves the Java IllegalArgumentException. |
+| `org.thymeleaf.processor.AbstractProcessor#<init>(TemplateMode,int)` | `flint.thymeleaf.processor.AbstractProcessor` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R15](api-mapping.md#r15-enums-with-fields) | The TemplateMode parameter is a D value. Passing null is rejected at compile time. |
 | `org.thymeleaf.processor.AbstractProcessor#getTemplateMode()` | `flint.thymeleaf.processor.AbstractProcessor.getTemplateMode` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.thymeleaf.processor.IProcessor#getTemplateMode()` | `flint.thymeleaf.processor.IProcessor.getTemplateMode` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 

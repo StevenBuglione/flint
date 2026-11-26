@@ -42549,7 +42549,7 @@
 "org.thymeleaf.preprocessor.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.thymeleaf.processor.**":{"status":"excluded","category":"deferred","phase":"2"},
 "org.thymeleaf.processor.AbstractProcessor":{"status":"ported","d":"flint.thymeleaf.processor.AbstractProcessor"},
-"org.thymeleaf.processor.AbstractProcessor#<init>(TemplateMode,int)":{"status":"adapted","d":"flint.thymeleaf.processor.AbstractProcessor","rules":["R15","D-7"],"note":"Use the TemplateMode value. An explicit null overload preserves the Java IllegalArgumentException."},
+"org.thymeleaf.processor.AbstractProcessor#<init>(TemplateMode,int)":{"status":"adapted","d":"flint.thymeleaf.processor.AbstractProcessor","rules":["R5","R15"],"note":"The TemplateMode parameter is a D value. Passing null is rejected at compile time."},
 "org.thymeleaf.processor.AbstractProcessor#getPrecedence()":{"status":"ported","d":"flint.thymeleaf.processor.AbstractProcessor.getPrecedence"},
 "org.thymeleaf.processor.AbstractProcessor#getTemplateMode()":{"status":"adapted","d":"flint.thymeleaf.processor.AbstractProcessor.getTemplateMode","rules":["R15"]},
 "org.thymeleaf.processor.IProcessor":{"status":"ported","d":"flint.thymeleaf.processor.IProcessor"},
