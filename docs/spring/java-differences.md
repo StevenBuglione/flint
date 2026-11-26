@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 130 | 123 | 0 | 2,137 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 3 | 7 | 0 | 4,442 |
+| framework | thymeleaf@3.1.7.RELEASE | 7 | 26 | 0 | 4,419 |
 | framework | micrometer-observation@1.18.0 | 44 | 36 | 0 | 232 |
 | framework | openjdk@21.0.13 | 213 | 113 | 1,871 | 16,224 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -3748,6 +3748,30 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.util.pattern.PathPatternParser#parse(String)` | `flint.web.util.pattern.PathPatternParser.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PatternParseException` | `flint.web.util.pattern.PatternParseException` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PatternParseException#getPosition()` | `flint.web.util.pattern.PatternParseException.getPosition` | [R14](api-mapping.md#r14-strings-and-text) |  |
+
+#### org.thymeleaf.exceptions
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.exceptions.TemplateEngineException` | `flint.thymeleaf.exceptions.TemplateEngineException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateEngineException#<init>(String)` | `flint.thymeleaf.exceptions.TemplateEngineException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateEngineException#<init>(String,Throwable)` | `flint.thymeleaf.exceptions.TemplateEngineException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateInputException` | `flint.thymeleaf.exceptions.TemplateInputException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateInputException#<init>(String)` | `flint.thymeleaf.exceptions.TemplateInputException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateInputException#<init>(String,String,Throwable)` | `flint.thymeleaf.exceptions.TemplateInputException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.thymeleaf.exceptions.TemplateInputException#<init>(String,String,int,int)` | `flint.thymeleaf.exceptions.TemplateInputException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.thymeleaf.exceptions.TemplateInputException#<init>(String,String,int,int,Throwable)` | `flint.thymeleaf.exceptions.TemplateInputException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.thymeleaf.exceptions.TemplateInputException#<init>(String,Throwable)` | `flint.thymeleaf.exceptions.TemplateInputException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException` | `flint.thymeleaf.exceptions.TemplateProcessingException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException#<init>(String)` | `flint.thymeleaf.exceptions.TemplateProcessingException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException#<init>(String,String,Throwable)` | `flint.thymeleaf.exceptions.TemplateProcessingException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException#<init>(String,String,int,int)` | `flint.thymeleaf.exceptions.TemplateProcessingException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException#<init>(String,String,int,int,Throwable)` | `flint.thymeleaf.exceptions.TemplateProcessingException` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException#<init>(String,Throwable)` | `flint.thymeleaf.exceptions.TemplateProcessingException` | [R8](api-mapping.md#r8-exceptions) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException#getCol()` | `flint.thymeleaf.exceptions.TemplateProcessingException.getCol` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException#getLine()` | `flint.thymeleaf.exceptions.TemplateProcessingException.getLine` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException#getTemplateName()` | `flint.thymeleaf.exceptions.TemplateProcessingException.getTemplateName` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.thymeleaf.exceptions.TemplateProcessingException#setTemplateName(String)` | `flint.thymeleaf.exceptions.TemplateProcessingException.setTemplateName` | [R8](api-mapping.md#r8-exceptions), [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.thymeleaf.templatemode
 
@@ -9645,7 +9669,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.context | 168 | 0 |
 | org.thymeleaf.dialect | 23 | 0 |
 | org.thymeleaf.engine | 448 | 0 |
-| org.thymeleaf.exceptions | 40 | 0 |
+| org.thymeleaf.exceptions | 17 | 0 |
 | org.thymeleaf.expression | 576 | 0 |
 | org.thymeleaf.extras.springsecurity6.auth | 0 | 22 |
 | org.thymeleaf.extras.springsecurity6.dialect | 0 | 10 |

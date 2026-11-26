@@ -198,6 +198,7 @@
     },
     "org/thymeleaf/parsing/ParsingExceptionLineColTest.java": {
       "phase": "2",
+      "reason": "Requires a template parser, the processing engine, and a cached template model.",
       "status": "deferred"
     },
     "org/thymeleaf/spring/messageresolver/SpringMessageResolverTest.java": {
