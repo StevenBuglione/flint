@@ -14,6 +14,7 @@ import std.typecons : Nullable;
 private abstract class AuditorValue
 {
     abstract bool isPresent() nothrow @nogc;
+    protected abstract Object referenceValue();
 }
 
 package(flint.data) abstract class Auditor(T) : AuditorValue
@@ -69,7 +70,22 @@ package(flint.data) abstract class Auditor(T) : AuditorValue
         if (auto typed = cast(Auditor) other)
             return optionalValue() == typed.optionalValue();
         auto value = cast(AuditorValue) other;
-        return value !is null && !isPresent() && !value.isPresent();
+        if (value is null)
+            return false;
+        const present = isPresent();
+        const otherPresent = value.isPresent();
+        if (!present || !otherPresent)
+            return present == otherPresent;
+        auto reference = referenceValue();
+        return reference !is null && Objects.equals(reference, value.referenceValue());
+    }
+
+    protected override Object referenceValue()
+    {
+        static if (is(T == class) || is(T == interface))
+            return cast(Object) getValue();
+        else
+            return null;
     }
 
     int hashCode()

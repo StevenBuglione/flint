@@ -80,3 +80,22 @@ unittest
     assert(none().toString() == "Auditor.none()");
     assert(StringAuditor.of("").isPresent());
 }
+
+@("Auditor references compare by the wrapped value across type arguments")
+unittest
+{
+    static class Person
+    {
+    }
+
+    static final class Reviewer : Person
+    {
+    }
+
+    auto reviewer = new Reviewer();
+    auto specific = Auditor!Reviewer.of(reviewer);
+    auto general = Auditor!Person.of(reviewer);
+    assert(specific.equals(general) && general.equals(specific));
+    assert(specific.hashCode() == general.hashCode());
+    assert(!specific.equals(Auditor!Person.of(new Reviewer())));
+}
