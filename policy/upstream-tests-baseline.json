@@ -5128,7 +5128,6 @@
       "io/micrometer/core/instrument/internal/DefaultLongTaskTimerTest.java",
       "io/micrometer/core/instrument/internal/DefaultMeterTest.java",
       "io/micrometer/core/instrument/logging/LoggingMeterRegistryTest.java",
-      "io/micrometer/core/instrument/noop/NoopLongTaskTimerTest.java",
       "io/micrometer/core/instrument/observation/DefaultMeterObservationHandlerTest.java",
       "io/micrometer/core/instrument/observation/ObservationOrTimerCompatibleInstrumentationTest.java",
       "io/micrometer/core/instrument/push/PushMeterRegistryTest.java",

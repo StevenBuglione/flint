@@ -25,6 +25,7 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Clock.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/MockClock.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Timer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/LongTaskTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/DistributionSummary.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopDistributionSummary.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/distribution/HistogramSupport.java
@@ -1159,6 +1160,73 @@ interface HistogramSupport : Meter
         {
             Support histogram = this;
             return histogram.takeSnapshot();
+        }
+    }
+}
+
+/// A timer that reports the durations of tasks still in progress.
+interface LongTaskTimer : HistogramSupport
+{
+    /// A handle for one started task.
+    static class Sample
+    {
+        /// Construct a task handle in a timer implementation.
+        this() nothrow @nogc
+        {
+        }
+
+        /// Stop the task and return its elapsed nanoseconds.
+        abstract long stop();
+
+        /// Read the elapsed duration in the requested unit.
+        abstract double duration(TimeUnit unit);
+    }
+
+    /// Start a task and return its sample.
+    Sample start();
+
+    /// Read the combined duration of active tasks in the requested unit.
+    double duration(TimeUnit unit);
+
+    /// Return the number of active tasks.
+    int activeTasks();
+
+    /// Read the average duration of active tasks in the requested unit.
+    double mean(TimeUnit unit);
+
+    /// Read the longest active task's duration in the requested unit.
+    double max(TimeUnit unit);
+
+    /// The unit used for published time measurements.
+    TimeUnit baseTimeUnit();
+
+    /// The legacy task ID API always returns -1.
+    deprecated("Use Sample.stop()") long stop(long task);
+
+    /// The legacy task ID API always returns -1.
+    deprecated("Use Sample.duration(TimeUnit)") double duration(long task, TimeUnit unit);
+
+    /// Micrometer's mean, legacy IDs and legacy snapshot overload (R3).
+    mixin template Defaults(alias SnapshotDefaults = HistogramSupport.Defaults, alias Unit = TimeUnit,
+            alias TaskTimer = LongTaskTimer)
+    {
+        mixin SnapshotDefaults;
+
+        override double mean(Unit unit)
+        {
+            TaskTimer timer = this;
+            const count = timer.activeTasks();
+            return count == 0 ? 0.0 : timer.duration(unit) / count;
+        }
+
+        deprecated("Use Sample.stop()") override long stop(long task)
+        {
+            return -1;
+        }
+
+        deprecated("Use Sample.duration(TimeUnit)") override double duration(long task, Unit unit)
+        {
+            return -1.0;
         }
     }
 }

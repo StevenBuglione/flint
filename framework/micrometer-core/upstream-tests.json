@@ -673,8 +673,16 @@
       "status": "ported"
     },
     "io/micrometer/core/instrument/noop/NoopLongTaskTimerTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/noop_long_task_timer_test.d",
+      "methods": {
+        "ported": [
+          "returnsActiveTasks",
+          "returnsDuration",
+          "returnsId",
+          "returnsStart"
+        ]
+      },
+      "status": "ported"
     },
     "io/micrometer/core/instrument/noop/NoopMeterTest.java": {
       "d": "framework/micrometer-core/tests/noop_meter_test.d",

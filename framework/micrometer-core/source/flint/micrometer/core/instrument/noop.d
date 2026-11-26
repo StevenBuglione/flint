@@ -19,6 +19,7 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopDistributionSummary.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopFunctionCounter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopFunctionTimer.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopLongTaskTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopTimeGauge.java
 // Modified by the Flint authors.
@@ -27,7 +28,7 @@ module flint.micrometer.core.instrument.noop;
 import flint.java.util : Collections, List;
 import flint.java.util.concurrent : TimeUnit;
 import flint.micrometer.core.instrument : AbstractMeter, Counter, DistributionSummary,
-    FunctionCounter, FunctionTimer, Gauge, Measurement, Meter, TimeGauge, Timer;
+    FunctionCounter, FunctionTimer, Gauge, LongTaskTimer, Measurement, Meter, TimeGauge, Timer;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot;
 
 @safe:
@@ -176,6 +177,64 @@ class NoopTimer : NoopMeter, Timer
     }
 
     mixin Timer.NoopCallbackDefaults callbackDefaults;
+}
+
+/// A disabled long task timer that returns an inert sample for each start.
+class NoopLongTaskTimer : NoopMeter, LongTaskTimer
+{
+    alias duration = defaults.duration;
+    alias takeSnapshot = defaults.takeSnapshot;
+
+    /// Retain the ID of the disabled timer.
+    this(Meter.Id id)
+    {
+        super(id);
+    }
+
+    override LongTaskTimer.Sample start()
+    {
+        return new NoopSample;
+    }
+
+    override double duration(TimeUnit) nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override int activeTasks() nothrow @nogc
+    {
+        return 0;
+    }
+
+    override double max(TimeUnit) nothrow @nogc
+    {
+        return 0.0;
+    }
+
+    override TimeUnit baseTimeUnit() nothrow @nogc
+    {
+        return TimeUnit.SECONDS;
+    }
+
+    override HistogramSnapshot takeSnapshot()
+    {
+        return HistogramSnapshot.empty(0, 0, 0);
+    }
+
+    mixin LongTaskTimer.Defaults defaults;
+
+    private static final class NoopSample : LongTaskTimer.Sample
+    {
+        override long stop() nothrow @nogc
+        {
+            return 0;
+        }
+
+        override double duration(TimeUnit) nothrow @nogc
+        {
+            return 0.0;
+        }
+    }
 }
 
 /// A disabled function counter whose count is zero.

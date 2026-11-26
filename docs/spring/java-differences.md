@@ -189,7 +189,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-databind@3.1.8 | 513 | 49 | 5 | 9,900 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 182 | 155 | 0 | 2,053 |
+| framework | micrometer-core@1.18.0 | 200 | 158 | 0 | 2,032 |
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 71 | 90 | 0 | 4,291 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
@@ -1001,6 +1001,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.ImmutableTag` | `flint.micrometer.core.instrument.ImmutableTag` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `io.micrometer.core.instrument.ImmutableTag#equals(Object)` | `flint.micrometer.core.instrument.ImmutableTag.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `io.micrometer.core.instrument.ImmutableTag#hashCode()` | `flint.micrometer.core.instrument.ImmutableTag.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality), [R14](api-mapping.md#r14-strings-and-text) |  |
+| `io.micrometer.core.instrument.LongTaskTimer#duration(long,TimeUnit)` | `flint.micrometer.core.instrument.LongTaskTimer.Defaults.duration` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.core.instrument.LongTaskTimer#mean(TimeUnit)` | `flint.micrometer.core.instrument.LongTaskTimer.Defaults.mean` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.core.instrument.LongTaskTimer#stop(long)` | `flint.micrometer.core.instrument.LongTaskTimer.Defaults.stop` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `io.micrometer.core.instrument.Measurement#<init>(DoubleSupplier,Statistic)` | `flint.micrometer.core.instrument.Measurement.this` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `io.micrometer.core.instrument.Measurement#<init>(Supplier,Statistic)` | `flint.micrometer.core.instrument.Measurement.this` | [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `io.micrometer.core.instrument.Meter` | `flint.micrometer.core.instrument.Meter` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -9759,7 +9762,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.common.util | 7 | 0 |
 | io.micrometer.core.annotation | 17 | 0 |
 | io.micrometer.core.aop | 35 | 0 |
-| io.micrometer.core.instrument | 288 | 0 |
+| io.micrometer.core.instrument | 275 | 0 |
 | io.micrometer.core.instrument.binder | 27 | 0 |
 | io.micrometer.core.instrument.binder.cache | 79 | 0 |
 | io.micrometer.core.instrument.binder.commonspool2 | 6 | 0 |
@@ -9792,7 +9795,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.docs | 10 | 0 |
 | io.micrometer.core.instrument.dropwizard | 45 | 0 |
 | io.micrometer.core.instrument.logging | 20 | 0 |
-| io.micrometer.core.instrument.noop | 8 | 0 |
 | io.micrometer.core.instrument.observation | 19 | 0 |
 | io.micrometer.core.instrument.push | 20 | 0 |
 | io.micrometer.core.instrument.search | 56 | 0 |
