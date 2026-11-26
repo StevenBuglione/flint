@@ -11123,6 +11123,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat#parse(String)` | 2 | SimpleDateFormat failures propagate a UTF-8 byte offset to ParseException. Java reports a UTF-16 code-unit offset (R14). The convenience overload accepts a returned date even when the parser consumes no input. Java rejects a parse that leaves the start position unchanged. |
 | framework | `java.text.DateFormat#setLenient(boolean)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#setTimeZone(TimeZone)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
+| framework | `java.text.DecimalFormat` | 2 | The Java public formatter class and mutable pattern configuration are pending. |
+| framework | `java.text.DecimalFormat#applyPattern(String)` | 2 | Applying a pattern requires the public DecimalFormat. Java changes fractional precision and the multiplier on the same formatter instance. |
+| framework | `java.text.DecimalFormatSymbols` | 2 | The public locale symbol table and mutable symbol API are pending. |
 | framework | `java.text.FieldPosition` | 2 | Flint has no FieldPosition binding for numeric or attribute field positions and UTF-16 output offsets. |
 | framework | `java.text.Format` | 2 | Flint has no shared Format superclass. The generic formatting contract needs StringBuffer, FieldPosition and AttributedCharacterIterator. |
 | framework | `java.text.Format#format(Object,StringBuffer,FieldPosition)` | 2 | The virtual append contract needs canonical java.lang.StringBuffer, including caller buffer identity and UTF-16 length. |
