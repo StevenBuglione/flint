@@ -629,6 +629,14 @@ unittest
     assert(Locale.forLanguageTag("en-US-0-01-x-lvariant-ABC") == Locale.US);
     assert(Locale.forLanguageTag("x-notgood!-lvariant-ABC") == Locale.ROOT);
     assert(Locale.forLanguageTag("x-lvariant") == Locale.ROOT);
+    assert(Locale.forLanguageTag("i-KLinGon") == Locale("tlh"));
+    assert(Locale.forLanguageTag("i-default") == Locale.ENGLISH);
+    assert(Locale.forLanguageTag("sgn-BE-FR") == Locale("sfb"));
+    assert(Locale.forLanguageTag("no-bok") == Locale("nb"));
+    assert(Locale.forLanguageTag("zh-min-nan") == Locale("nan"));
+    assert(Locale.forLanguageTag("i-klingon-US") == Locale.ROOT);
+    assert(Locale.forLanguageTag("i\rklingon") == Locale.ROOT);
+    assert(Locale.forLanguageTag("zh-min-nan-US") == Locale("min", "US"));
     foreach (pair; [["IW", "he"], ["JI", "yi"], ["IN", "id"]])
     {
         const legacy = Locale(pair[0], "us");

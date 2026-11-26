@@ -643,6 +643,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Keep a borrowed slice for a single parsed Locale variant.** The parser joins consecutive variant subtags only when more than one is present. On venus against `7608221e5`, the Java module probe measured 129,496 O3 and 122,144 Oz incremental loadable bytes before and after the change with LDC 1.43.0. DMD template instances rose from 4,445 to 4,449 against the 7,350 cap.
 
+- **Match grandfathered Locale tags without case-fold allocation.** The immutable Java replacement table checks whole tags, with ordinary short language-region tags bypassing lookup. On venus against `5b42d9dd1`, the Java module probe measured 129,496 O3 and 122,144 Oz incremental loadable bytes before and after the change with LDC 1.43.0. DMD template instances rose from 4,449 to 4,451 against the 7,350 cap.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

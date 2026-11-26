@@ -3411,6 +3411,7 @@ struct Locale
     /// The locale of a BCP 47 tag (`en-US`, `de`, `und`, `zh-Hant-TW`); an ill-formed subtag ends the parse.
     static Locale forLanguageTag(string languageTag) pure nothrow
     {
+        languageTag = replaceGrandfatheredTag(languageTag);
         string[] subtags;
         size_t start;
         foreach (i; 0 .. languageTag.length + 1)
@@ -3439,6 +3440,39 @@ struct Locale
         if (next < subtags.length && (isAlpha(subtags[next], 2, 2) || isDigits(subtags[next], 3)))
             region = subtags[next++];
         return Locale(lang, region, parseTagVariants(subtags[next .. $]));
+    }
+
+    private static string replaceGrandfatheredTag(string tag) pure nothrow @nogc
+    {
+        if (tag.length < 5 || tag.length > 11 || (tag.length == 5 && tag[1] != '-'))
+            return tag;
+
+        struct Replacement
+        {
+            string original;
+            string replacement;
+        }
+
+        // Java SE 21 grandfathered tags, including replacements carrying private use.
+        static immutable Replacement[] replacements = [
+            Replacement("art-lojban", "jbo"), Replacement("cel-gaulish", "xtg-x-cel-gaulish"),
+            Replacement("en-gb-oed", "en-GB-x-oed"), Replacement("i-ami", "ami"),
+            Replacement("i-bnn", "bnn"), Replacement("i-default", "en-x-i-default"),
+            Replacement("i-enochian", "und-x-i-enochian"), Replacement("i-hak", "hak"),
+            Replacement("i-klingon", "tlh"), Replacement("i-lux", "lb"),
+            Replacement("i-mingo", "see-x-i-mingo"), Replacement("i-navajo", "nv"),
+            Replacement("i-pwn", "pwn"), Replacement("i-tao", "tao"), Replacement("i-tay",
+                    "tay"), Replacement("i-tsu", "tsu"), Replacement("no-bok", "nb"),
+            Replacement("no-nyn", "nn"), Replacement("sgn-be-fr", "sfb"),
+            Replacement("sgn-be-nl", "vgt"), Replacement("sgn-ch-de", "sgg"),
+            Replacement("zh-guoyu", "cmn"), Replacement("zh-hakka", "hak"),
+            Replacement("zh-min", "nan-x-zh-min"), Replacement("zh-min-nan", "nan"),
+            Replacement("zh-xiang", "hsn"),
+        ];
+        foreach (entry; replacements)
+            if (matchesLowercaseTag(tag, entry.original))
+                return entry.replacement;
+        return tag;
     }
 
     private static string parseTagVariants(string[] subtags) pure nothrow
@@ -3476,7 +3510,7 @@ struct Locale
         while (end < subtags.length && isTagPayload(subtags[end], 1))
             ++end;
         foreach (i; next + 1 .. end)
-            if (isLegacyVariantMarker(subtags[i]))
+            if (matchesLowercaseTag(subtags[i], "lvariant"))
                 return subtags[i + 1 .. end];
         return null;
     }
@@ -3505,14 +3539,16 @@ struct Locale
         return subtag.length >= minLength && subtag.length <= 8 && isAsciiAlphanumeric(subtag);
     }
 
-    private static bool isLegacyVariantMarker(string subtag) pure nothrow @nogc
+    private static bool matchesLowercaseTag(string tag, string lower) pure nothrow @nogc
     {
-        enum marker = "lvariant";
-        if (subtag.length != marker.length)
+        if (tag.length != lower.length)
             return false;
-        foreach (i, ch; subtag)
-            if ((ch | 0x20) != marker[i])
+        foreach (i, ch; tag)
+        {
+            const folded = (ch >= 'A' && ch <= 'Z') ? ch + ('a' - 'A') : ch;
+            if (folded != lower[i])
                 return false;
+        }
         return true;
     }
 
