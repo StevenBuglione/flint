@@ -938,3 +938,31 @@ unittest
         }
     }
 }
+
+@("Locale extension key sets expose only canonical items and reject mutation")
+unittest
+{
+    import flint.java.lang : UnsupportedOperationException;
+    import flint.java.util : Locale;
+    import std.exception : assertThrown;
+
+    const locale = Locale.forLanguageTag("en-x-a-b-lvariant-ABC");
+    auto privateKeys = locale.getExtensionKeys();
+    assert(privateKeys.size() == 1 && privateKeys.contains('x'));
+    assert(locale.stripExtensions().getExtensionKeys().isEmpty());
+
+    const tags = Locale.forLanguageTag("en-a-aaa-u-attr-ATTR-ca-nu-thai");
+    auto singletons = tags.getExtensionKeys();
+    auto attributes = tags.getUnicodeLocaleAttributes();
+    auto keywords = tags.getUnicodeLocaleKeys();
+    assert(singletons.size() == 2 && singletons.contains('a') && singletons.contains('u'));
+    assert(attributes.size() == 1 && attributes.contains("attr"));
+    assert(keywords.size() == 2 && keywords.contains("ca") && keywords.contains("nu"));
+    assertThrown!UnsupportedOperationException(singletons.add('z'));
+    assertThrown!UnsupportedOperationException(attributes.remove("attr"));
+    assertThrown!UnsupportedOperationException(keywords.clear());
+    assertThrown!UnsupportedOperationException(Locale.ROOT.getExtensionKeys().add('u'));
+    auto iterator = keywords.iterator();
+    iterator.next();
+    assertThrown!UnsupportedOperationException(iterator.remove());
+}
