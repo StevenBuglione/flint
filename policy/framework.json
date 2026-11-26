@@ -579,6 +579,84 @@
     "flint.java.util.concurrent.scheduledfuture"
    ]
   },
+  "java-concurrent-rejection": {
+   "directory": "framework/java-concurrent-rejection",
+   "module": "flint.java.util.concurrent.rejectedexecutionexception",
+   "java_types": [
+    "java.util.concurrent.RejectedExecutionException"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-concurrent-rejection/bench",
+    "baseline": "framework/java-concurrent-rejection/bench/baseline",
+    "edit_source": "framework/java-concurrent-rejection/source/flint/java/util/concurrent/rejectedexecutionexception.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 964,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 486
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
+  "java-concurrent-service": {
+   "directory": "framework/java-concurrent-service",
+   "module": "flint.java.util.concurrent.executorservice",
+   "java_types": [
+    "java.util.concurrent.ExecutorService"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "arena",
+    "conc",
+    "engine-reactor",
+    "java",
+    "java-concurrent-exec",
+    "java-concurrent-rejection"
+   ],
+   "bench": {
+    "fixture": "framework/java-concurrent-service/bench",
+    "baseline": "framework/java-concurrent-service/bench/baseline",
+    "edit_source": "framework/java-concurrent-service/source/flint/java/util/concurrent/executorservice.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 59387,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1605
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ],
+   "also": [
+    "flint.java.util.concurrent.internal.executoradmissions",
+    "flint.java.util.concurrent.internal.managedoffload",
+    "flint.java.util.concurrent.internal.executorrouting"
+   ]
+  },
   "java-concurrent-sync": {
    "directory": "framework/java-concurrent-sync",
    "module": "flint.java.util.concurrent.locks",
