@@ -92,6 +92,11 @@ abstract class DateFormat
     /// The calendar the format computes fields with; its zone and leniency are the format's.
     protected Calendar calendar;
 
+    /// A date format with no installed calendar.
+    protected this() pure nothrow @nogc
+    {
+    }
+
     /// `date` as text.
     abstract string format(const Date date);
 
