@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 34 | 44 | 0 | 4,374 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 228 | 118 | 1,871 | 16,204 |
+| framework | openjdk@21.0.13 | 231 | 133 | 1,871 | 16,186 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 510 | 1 | 88 | 11,814 |
@@ -1800,6 +1800,21 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition#createDateTime(LocalDateTime,ZoneOffset,ZoneOffset)` | `flint.java.time.zone.zoneoffsettransitionrule.createDateTime` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition#valueOf(String)` | `flint.java.time.zone.zoneoffsettransitionrule.valueOf` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition#values()` | `flint.java.time.zone.zoneoffsettransitionrule.values` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `java.time.zone.ZoneRules` | `flint.java.time.zone.zonerules.ZoneRules` | [R11](api-mapping.md#r11-object-identity-and-equality) | This slice supports rules created from one fixed offset. |
+| `java.time.zone.ZoneRules#equals(Object)` | `flint.java.time.zone.zonerules.ZoneRules.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.zone.ZoneRules#getDaylightSavings(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.getDaylightSavings` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.zone.ZoneRules#getOffset(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.getOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.zone.ZoneRules#getOffset(LocalDateTime)` | `flint.java.time.zone.zonerules.ZoneRules.getOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.zone.ZoneRules#getStandardOffset(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.getStandardOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.zone.ZoneRules#getTransition(LocalDateTime)` | `flint.java.time.zone.zonerules.ZoneRules.getTransition` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.zone.ZoneRules#getTransitionRules()` | `flint.java.time.zone.zonerules.ZoneRules.getTransitionRules` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.time.zone.ZoneRules#getTransitions()` | `flint.java.time.zone.zonerules.ZoneRules.getTransitions` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.time.zone.ZoneRules#getValidOffsets(LocalDateTime)` | `flint.java.time.zone.zonerules.ZoneRules.getValidOffsets` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `java.time.zone.ZoneRules#isDaylightSavings(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.isDaylightSavings` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.zone.ZoneRules#isValidOffset(LocalDateTime,ZoneOffset)` | `flint.java.time.zone.zonerules.ZoneRules.isValidOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.zone.ZoneRules#nextTransition(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.nextTransition` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.zone.ZoneRules#of(ZoneOffset)` | `flint.java.time.zone.zonerules.ZoneRules.of` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.time.zone.ZoneRules#previousTransition(Instant)` | `flint.java.time.zone.zonerules.ZoneRules.previousTransition` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### java.util
 
@@ -9338,7 +9353,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.chrono | 405 | 0 |
 | java.time.format | 141 | 0 |
 | java.time.temporal | 111 | 0 |
-| java.time.zone | 33 | 0 |
+| java.time.zone | 15 | 0 |
 | java.util | 2,321 | 0 |
 | java.util.concurrent | 1,264 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |

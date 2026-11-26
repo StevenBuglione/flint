@@ -1,0 +1,5 @@
+{
+  "source": "closure/zone-rules-transition-views.d",
+  "leaves": ["flint.java.lang", "flint.java.time", "flint.java.util", "flint.java.time.zone.zoneoffsettransition", "flint.java.time.zone.zoneoffsettransitionrule"],
+  "data": []
+}

@@ -1,0 +1,5 @@
+{
+  "source": "closure/zone-rules-fixed-queries.d",
+  "leaves": ["flint.java.lang", "flint.java.time"],
+  "data": []
+}

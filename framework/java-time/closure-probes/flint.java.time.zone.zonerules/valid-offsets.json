@@ -1,0 +1,5 @@
+{
+  "source": "closure/zone-rules-valid-offsets.d",
+  "leaves": ["flint.java.lang", "flint.java.time", "flint.java.util"],
+  "data": []
+}
