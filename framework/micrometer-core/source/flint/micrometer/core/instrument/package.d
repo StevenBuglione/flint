@@ -630,6 +630,45 @@ interface Meter
     /// Measurements sampled from this meter.
     MeasurementIterable measure();
 
+    /// Supplies a meter for a set of tags.
+    static interface MeterProvider(T) if (hasNominalBase!(T, Meter)())
+    {
+        /// Find or register the meter with the given tags.
+        T withTags(TagIterable tags);
+
+        /++
+        Forward a Tag subtype iterable without changing its element order or identity.
+        Concrete implementations can keep this overload visible with `alias withTags = Provider.withTags`,
+        where `Provider` is their `MeterProvider!T` specialization.
+        +/
+        T withTags(E)(Iterable!E tags) if (!is(E == Tag) && is(E : Tag) && hasNominalBase!(E, Tag)())
+        {
+            return withTags(tags is null ? null : new TagIterableView!E(tags));
+        }
+
+        /// Find or register the meter with alternating tag keys and values.
+        T withTags(scope const(string)[] tags...);
+
+        /// Find or register the meter with a single additional tag.
+        T withTag(string key, string value);
+
+        /// The Java defaults normalize tag pairs before invoking the provider.
+        mixin template Defaults(alias Result = T, alias Provider = MeterProvider!T, alias tagSet = Tags)
+        {
+            override Result withTags(scope const(string)[] tags...)
+            {
+                Provider provider = this;
+                return provider.withTags(tagSet.of(tags));
+            }
+
+            override Result withTag(string key, string value)
+            {
+                Provider provider = this;
+                return provider.withTags(tagSet.of(key, value));
+            }
+        }
+    }
+
     /// The kind of measurements the meter reports.
     enum Type : ubyte
     {
@@ -766,6 +805,75 @@ interface Meter
         }
 
         mixin JavaObject;
+    }
+}
+
+// Java bounds only accept nominal inheritance, including secondary interfaces.
+private bool hasNominalBase(T, Base)()
+{
+    static if (is(T == Base))
+        return true;
+    else
+    {
+        static if (is(T Parents == super))
+            static foreach (Parent; Parents)
+                if (hasNominalBase!(Parent, Base)())
+                    return true;
+        return false;
+    }
+}
+
+private final class TagIterableView(E) : TagIterable
+{
+    private Iterable!E source;
+
+    this(Iterable!E source)
+    {
+        this.source = source;
+    }
+
+    override Iterator!Tag iterator()
+    {
+        auto cursor = source.iterator();
+        return cursor is null ? null : new TagIteratorView!E(cursor);
+    }
+
+    override void forEach(void delegate(Tag) @safe action)
+    {
+        if (action is null)
+            source.forEach(null);
+        else
+            source.forEach((E tag) => action(tag));
+    }
+
+    override int opApply(scope int delegate(Tag) @safe action)
+    {
+        return source.opApply((E tag) => action(tag));
+    }
+}
+
+private final class TagIteratorView(E) : Iterator!Tag
+{
+    private Iterator!E cursor;
+
+    this(Iterator!E cursor)
+    {
+        this.cursor = cursor;
+    }
+
+    override bool hasNext()
+    {
+        return cursor.hasNext();
+    }
+
+    override Tag next()
+    {
+        return cursor.next();
+    }
+
+    override void remove()
+    {
+        cursor.remove();
     }
 }
 

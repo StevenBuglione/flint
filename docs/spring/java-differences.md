@@ -189,7 +189,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 142 | 139 | 0 | 2,109 |
+| framework | micrometer-core@1.18.0 | 143 | 142 | 0 | 2,105 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 49 | 57 | 0 | 4,346 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
@@ -896,6 +896,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.Meter.Id#withTag(Statistic)` | `flint.micrometer.core.instrument.Meter.Id.withTag` | [R7](api-mapping.md#r7-overloads) |  |
 | `io.micrometer.core.instrument.Meter.Id#withTag(Tag)` | `flint.micrometer.core.instrument.Meter.Id.withTag` | [R7](api-mapping.md#r7-overloads) |  |
 | `io.micrometer.core.instrument.Meter.Id#withTags(Iterable)` | `flint.micrometer.core.instrument.Meter.Id.withTags` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `io.micrometer.core.instrument.Meter.MeterProvider#withTag(String,String)` | `flint.micrometer.core.instrument.Meter.MeterProvider.Defaults.withTag` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `io.micrometer.core.instrument.Meter.MeterProvider#withTags(Iterable)` | `flint.micrometer.core.instrument.Meter.MeterProvider.withTags` | [R10](api-mapping.md#r10-streams-and-collections) | Iterable!Tag passes through directly. A subtype iterable is forwarded through a lazy typed view. Concrete implementors can merge the inherited overload into their overload set with an alias. |
+| `io.micrometer.core.instrument.Meter.MeterProvider#withTags(String...)` | `flint.micrometer.core.instrument.Meter.MeterProvider.Defaults.withTags` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R7](api-mapping.md#r7-overloads) |  |
 | `io.micrometer.core.instrument.Meter.Type` | `flint.micrometer.core.instrument.Meter.Type` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `io.micrometer.core.instrument.MeterRegistry#counter(String,Iterable)` | `flint.micrometer.core.instrument.MeterRegistry.counter` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `io.micrometer.core.instrument.MeterRegistry#counter(String,String...)` | `flint.micrometer.core.instrument.MeterRegistry.counter` | [R7](api-mapping.md#r7-overloads) |  |
@@ -9391,7 +9394,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.common.util | 7 | 0 |
 | io.micrometer.core.annotation | 17 | 0 |
 | io.micrometer.core.aop | 35 | 0 |
-| io.micrometer.core.instrument | 306 | 0 |
+| io.micrometer.core.instrument | 302 | 0 |
 | io.micrometer.core.instrument.binder | 27 | 0 |
 | io.micrometer.core.instrument.binder.cache | 79 | 0 |
 | io.micrometer.core.instrument.binder.commonspool2 | 6 | 0 |
