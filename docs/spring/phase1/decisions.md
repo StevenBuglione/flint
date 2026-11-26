@@ -1302,3 +1302,10 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Scope:** reference types first; arrays and primitives come later.
   - **First user:** `ApplicationObjectSupport.requiredContextClass` (sol-web).
 - 2026-11-26 07:36Z, coordinator: **`fillSecureRandom` moves to a dependency-free `flint:conc` leaf** (sol-jdk-math-regex), with a `public import` kept from `flint.conc`. `UUID.randomUUID` was linking conc's arena static-root machinery, about 10 KB per app (sol-ai's `Document` trace).
+- 2026-11-26 07:40Z, coordinator, under the owner's standing approval: **calibrating `flint budget` tolerances to measured noise, if the median re-measure isn't enough.** Two trains (05:50–06:44 and 06:44–07:33) landed nothing, mostly because of borderline misses at the 0.5% (gs-rest) and 1% (petclinic) tolerances. Each costs a 10-minute bisect step on posidon.
+  - **Trigger:** if the first train with the median-of-5 re-measure (started 07:33) still bounces a lane on a miss under 2× tolerance.
+  - **Calibration (m7 with proof-harness):**
+    - run `flint budget --repeat 5` for both apps on main, on posidon;
+    - set each endpoint's tolerance to max(current tolerance, 3× its measured spread), capped at 2%;
+    - one commit carries every endpoint's samples and cites this decision.
+  - **Unchanged:** the budgets (instruction counts) themselves, the certified workloads, and the rule that real regressions bisect to their submission. Endpoints above the 2% cap need their own decision, with the cause of the noise.
