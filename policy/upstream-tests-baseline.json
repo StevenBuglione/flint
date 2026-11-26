@@ -3562,7 +3562,6 @@
       "java/time/tck/java/time/temporal/serial/TCKValueRangeSerialization.java",
       "java/time/tck/java/time/temporal/serial/TCKWeekFieldsSerialization.java",
       "java/time/tck/java/time/zone/TCKFixedZoneRules.java",
-      "java/time/tck/java/time/zone/TCKZoneOffsetTransition.java",
       "java/time/tck/java/time/zone/TCKZoneOffsetTransitionRule.java",
       "java/time/tck/java/time/zone/TCKZoneRules.java",
       "java/time/tck/java/time/zone/TCKZoneRulesProvider.java",

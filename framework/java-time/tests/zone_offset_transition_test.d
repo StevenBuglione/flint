@@ -2,7 +2,7 @@ module flint.java.time.zone_offset_transition_test;
 
 import core.memory : GC;
 import flint.java.lang : IllegalArgumentException;
-import flint.java.time : LocalDateTime, ZoneOffset;
+import flint.java.time : DateTimeException, LocalDateTime, ZoneOffset;
 import flint.java.time.zone.zoneoffsettransition : ZoneOffsetTransition;
 import std.typecons : Nullable;
 
@@ -67,4 +67,41 @@ import std.typecons : Nullable;
 
     rejects(ZoneOffset.UTC, "Offsets must not be equal");
     rejects(ZoneOffset.MAX, "Nano-of-second must be zero");
+}
+
+@("transition factories require date and offset values") unittest
+{
+    static assert(!is(typeof(ZoneOffsetTransition.of(null, ZoneOffset.UTC, ZoneOffset.MAX))));
+    static assert(!is(typeof(ZoneOffsetTransition.of(LocalDateTime.init, null, ZoneOffset.MAX))));
+    static assert(!is(typeof(ZoneOffsetTransition.of(LocalDateTime.init, ZoneOffset.UTC, null))));
+}
+
+@("offset extremes admit a 36-hour change") unittest
+{
+    const before = LocalDateTime.of(2024, 2, 28, 13, 30);
+    const gap = ZoneOffsetTransition.of(before, ZoneOffset.MIN, ZoneOffset.MAX);
+    assert(gap.getDuration().getSeconds() == 129_600);
+    assert(gap.getDateTimeAfter() == LocalDateTime.of(2024, 3, 1, 1, 30));
+    const overlap = ZoneOffsetTransition.of(gap.getDateTimeAfter(), ZoneOffset.MAX, ZoneOffset.MIN);
+    assert(overlap.getDuration().getSeconds() == -129_600);
+    assert(overlap.getDateTimeAfter() == before);
+    assert(gap.compareTo(overlap) == 0);
+}
+
+@("the derived local time checks both ends of the date range") unittest
+{
+    const latest = LocalDateTime.of(999_999_999, 12, 31, 23, 59, 59);
+    const gap = ZoneOffsetTransition.of(latest, ZoneOffset.UTC, ZoneOffset.ofTotalSeconds(1));
+    const overlap = ZoneOffsetTransition.of(LocalDateTime.MIN, ZoneOffset.ofTotalSeconds(1), ZoneOffset.UTC);
+    foreach (transition; [gap, overlap])
+    {
+        try
+        {
+            transition.getDateTimeAfter();
+            assert(false);
+        }
+        catch (DateTimeException)
+        {
+        }
+    }
 }

@@ -381,8 +381,11 @@
       "status": "deferred"
     },
     "java/time/tck/java/time/zone/TCKZoneOffsetTransition.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": [
+        "framework/java-time/tests/zone_offset_transition_test.d"
+      ],
+      "reason": "plain-gpl. Original Flint coverage tests factory validation, transition geometry, offset validity, ordering, equality, hashing and diagnostics. R11 factory arguments are typed values.",
+      "status": "excluded"
     },
     "java/time/tck/java/time/zone/TCKZoneOffsetTransitionRule.java": {
       "phase": "2",

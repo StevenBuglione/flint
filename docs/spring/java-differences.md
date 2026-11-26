@@ -1747,7 +1747,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.time.zone.ZoneOffsetTransition` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.time.zone.ZoneOffsetTransition` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition` | [R11](api-mapping.md#r11-object-identity-and-equality) | The value struct exposes compareTo directly. Java Comparable callers use a D template constraint on compareTo. |
 | `java.time.zone.ZoneOffsetTransition#equals(Object)` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.zone.ZoneOffsetTransition#isValidOffset(ZoneOffset)` | `flint.java.time.zone.zoneoffsettransition.ZoneOffsetTransition.isValidOffset` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
