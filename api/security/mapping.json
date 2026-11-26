@@ -4096,7 +4096,7 @@
 "org.springframework.security.crypto.encrypt.TextEncryptor#decrypt(String)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.security.crypto.encrypt.TextEncryptor#encrypt(String)":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.security.crypto.factory.PasswordEncoderFactories":{"d":"flint.security.crypto.factory.PasswordEncoderFactories","status":"ported"},
-"org.springframework.security.crypto.factory.PasswordEncoderFactories#createDelegatingPasswordEncoder()":{"d":"flint.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder","status":"ported"},
+"org.springframework.security.crypto.factory.PasswordEncoderFactories#createDelegatingPasswordEncoder()":{"d":"flint.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder","status":"ported","note":"Known gap: the factory registers bcrypt and noop, covering 2 of Spring's 14 default ids. The other ids are deferred with their encoders. BCrypt is the encoding default. An encoded password with an unmapped {id} throws IllegalArgumentException through the unmapped-id handler."},
 "org.springframework.security.crypto.keygen.Base64StringKeyGenerator":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.security.crypto.keygen.Base64StringKeyGenerator#<init>()":{"category":"deferred","phase":"2","status":"excluded"},
 "org.springframework.security.crypto.keygen.Base64StringKeyGenerator#<init>(Base64.Encoder)":{"category":"deferred","phase":"2","status":"excluded"},

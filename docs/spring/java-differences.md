@@ -210,6 +210,7 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `tools.jackson.core.JsonPointer#length()` | `flint.jackson.core.JsonPointer.length` | Returns UTF-16 code units. |
 | security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.InMemoryUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
 | security | `org.springframework.security.config.annotation.authentication.configurers.provisioning.JdbcUserDetailsManagerConfigurer` | `flint.security.config.annotation.authentication.builders.JdbcUserDetailsManagerConfigurer` | Known gap: temporarily declared in the authentication builders module. R1 places the canonical declaration in the provisioning configurers module. |
+| security | `org.springframework.security.crypto.factory.PasswordEncoderFactories#createDelegatingPasswordEncoder()` | `flint.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder` | Known gap: the factory registers bcrypt and noop, covering 2 of Spring's 14 default ids. The other ids are deferred with their encoders. BCrypt is the encoding default. An encoded password with an unmapped {id} throws IllegalArgumentException through the unmapped-id handler. |
 
 ## Adapted elements
 
