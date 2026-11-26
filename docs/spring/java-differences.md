@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,615 | 1,478 | 4,870 | 29,871 |
+| framework | spring-framework@v7.1.0 | 3,615 | 1,482 | 4,870 | 29,867 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2777,20 +2777,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.beans.factory.BeanDefinitionStoreException#<init>(String,String,String,Throwable)` | `flint.beans.factory.BeanDefinitionStoreException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An existing string overload forwards to the Nullable constructor. |
 | `org.springframework.beans.factory.BeanDefinitionStoreException#<init>(String,String,Throwable)` | `flint.beans.factory.BeanDefinitionStoreException.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.beans.factory.BeanDefinitionStoreException#getResourceDescription()` | `flint.beans.factory.BeanDefinitionStoreException.getResourceDescription` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.beans.factory.BeanFactory#getBean(Class)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.BeanFactory#getBean(Class,Object...)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.BeanFactory#getBean(String,Class)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.BeanFactory#getBeanProvider(Class)` | `flint.beans.factory.BeanFactory.getBeanProvider` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.BeanFactory#isTypeMatch(String,Class)` | `flint.beans.factory.BeanFactory.isTypeMatch` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.beans.factory.BeanFactory#getBean(Class)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.beans.factory.BeanFactory#getBean(Class,Object...)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.beans.factory.BeanFactory#getBean(String,Class)` | `flint.beans.factory.BeanFactory.getBean` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.beans.factory.BeanFactory#getBeanProvider(Class)` | `flint.beans.factory.BeanFactory.getBeanProvider` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.beans.factory.BeanFactory#isTypeMatch(String,Class)` | `flint.beans.factory.BeanFactory.isTypeMatch` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
 | `org.springframework.beans.factory.BeanIsNotAFactoryException#<init>(String,Class)` | `flint.beans.factory.BeanIsNotAFactoryException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanNotOfRequiredTypeException#<init>(String,Class,Class)` | `flint.beans.factory.BeanNotOfRequiredTypeException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.BeanNotOfRequiredTypeException#<init>(String,Type,Class)` | `flint.beans.factory.BeanNotOfRequiredTypeException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForAnnotation(Class)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForAnnotation` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(Class)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForType` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(Class,boolean,boolean)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForType` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.ListableBeanFactory#getBeansOfType(Class)` | `flint.beans.factory.ListableBeanFactory.getBeansOfType` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.ListableBeanFactory#getBeansOfType(Class,boolean,boolean)` | `flint.beans.factory.ListableBeanFactory.getBeansOfType` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.beans.factory.ListableBeanFactory#getBeansWithAnnotation(Class)` | `flint.beans.factory.ListableBeanFactory.getBeansWithAnnotation` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForAnnotation(Class)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForAnnotation` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(Class)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForType` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.beans.factory.ListableBeanFactory#getBeanNamesForType(Class,boolean,boolean)` | `flint.beans.factory.ListableBeanFactory.getBeanNamesForType` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.beans.factory.ListableBeanFactory#getBeansOfType(Class)` | `flint.beans.factory.ListableBeanFactory.getBeansOfType` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.beans.factory.ListableBeanFactory#getBeansOfType(Class,boolean,boolean)` | `flint.beans.factory.ListableBeanFactory.getBeansOfType` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.beans.factory.ListableBeanFactory#getBeansWithAnnotation(Class)` | `flint.beans.factory.ListableBeanFactory.getBeansWithAnnotation` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
 | `org.springframework.beans.factory.NoSuchBeanDefinitionException#<init>(Class)` | `flint.beans.factory.NoSuchBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.NoSuchBeanDefinitionException#<init>(Class,String)` | `flint.beans.factory.NoSuchBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.beans.factory.NoUniqueBeanDefinitionException#<init>(Class,Collection)` | `flint.beans.factory.NoUniqueBeanDefinitionException.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -3015,14 +3015,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.core.convert.ConversionService` | `flint.core.convert.ConversionService` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.core.convert.ConversionService#canConvert(Class,Class)` | `flint.core.convert.ConversionService.canConvert` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.core.convert.ConversionService#canConvert(TypeDescriptor,TypeDescriptor)` | `flint.core.convert.ConversionService.canConvert` | [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.core.convert.ConversionService#convert(Object,Class)` | `flint.core.convert.ConversionService.convert` | [R4](api-mapping.md#r4-classt-parameters), [R23](api-mapping.md#r23-object-typed-values), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.core.convert.ConversionService#convert(Object,TypeDescriptor,TypeDescriptor)` | `flint.core.convert.ConversionService.convert` | [R23](api-mapping.md#r23-object-typed-values), [D-CORE-2](api-mapping.md#deviations) |  |
 | `org.springframework.core.convert.TypeDescriptor` | `flint.core.convert.TypeDescriptor` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.core.convert.converter
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.core.convert.converter.ConverterRegistry#addConverter(Class,Class,Converter)` | `flint.core.convert.converter.ConverterRegistry.addConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.core.convert.converter.ConverterRegistry#removeConvertible(Class,Class)` | `flint.core.convert.converter.ConverterRegistry.removeConvertible` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.core.convert.converter.ConverterRegistry#addConverter(Class,Class,Converter)` | `flint.core.convert.converter.ConverterRegistry.addConverter` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.core.convert.converter.ConverterRegistry#removeConvertible(Class,Class)` | `flint.core.convert.converter.ConverterRegistry.removeConvertible` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
 | `org.springframework.core.convert.converter.GenericConverter.ConvertiblePair` | `flint.core.convert.converter.ConvertiblePair` | [R11](api-mapping.md#r11-object-identity-and-equality) | A struct with value equality, not a final class: a source/target pair of canonical type names. |
 
 #### org.springframework.core.env
@@ -3030,9 +3034,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.core.env.AbstractPropertyResolver#convertValueIfNecessary(Object,Class)` | `flint.core.env.AbstractPropertyResolver.convertValueIfNecessary` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.core.env.PropertyResolver#getProperty(String,Class)` | `flint.core.env.PropertyResolver.getProperty` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.core.env.PropertyResolver#getProperty(String,Class,T)` | `flint.core.env.PropertyResolver.getProperty` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.core.env.PropertyResolver#getRequiredProperty(String,Class)` | `flint.core.env.PropertyResolver.getRequiredProperty` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.core.env.PropertyResolver#getProperty(String,Class)` | `flint.core.env.PropertyResolver.getProperty` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.core.env.PropertyResolver#getProperty(String,Class,T)` | `flint.core.env.PropertyResolver.getProperty` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
+| `org.springframework.core.env.PropertyResolver#getRequiredProperty(String,Class)` | `flint.core.env.PropertyResolver.getRequiredProperty` | [R4](api-mapping.md#r4-classt-parameters), [D-CORE-2](api-mapping.md#deviations) |  |
 
 #### org.springframework.core.io
 
@@ -10239,7 +10243,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.core | 174 | 0 |
 | org.springframework.core.annotation | 151 | 0 |
 | org.springframework.core.codec | 0 | 147 |
-| org.springframework.core.convert | 64 | 0 |
+| org.springframework.core.convert | 60 | 0 |
 | org.springframework.core.convert.converter | 14 | 0 |
 | org.springframework.core.convert.support | 15 | 0 |
 | org.springframework.core.env | 29 | 0 |
