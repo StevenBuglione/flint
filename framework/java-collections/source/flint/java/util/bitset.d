@@ -127,28 +127,28 @@ class BitSet
     int nextSetBit(int fromIndex) const pure
     {
         checkIndex(fromIndex, 0, "fromIndex < 0: ");
-        return nextBit(fromIndex, true);
+        return scanBit(fromIndex, true, true);
     }
 
     /// Finds the first clear bit at or after the index.
     int nextClearBit(int fromIndex) const pure
     {
         checkIndex(fromIndex, 0, "fromIndex < 0: ");
-        return nextBit(fromIndex, false);
+        return scanBit(fromIndex, false, true);
     }
 
     /// Finds the last set bit at or before the index, or returns -1.
     int previousSetBit(int fromIndex) const pure
     {
         checkIndex(fromIndex, -1, "fromIndex < -1: ");
-        return previousBit(fromIndex, true);
+        return scanBit(fromIndex, true, false);
     }
 
     /// Finds the last clear bit at or before the index, or returns -1.
     int previousClearBit(int fromIndex) const pure
     {
         checkIndex(fromIndex, -1, "fromIndex < -1: ");
-        return previousBit(fromIndex, false);
+        return scanBit(fromIndex, false, false);
     }
 
     /// Returns one more than the highest set bit, or zero for an empty set.
@@ -353,48 +353,38 @@ class BitSet
             --wordsInUse;
     }
 
-    pragma(inline, false) private int nextBit(int fromIndex, bool set) const pure nothrow @nogc
+    pragma(inline, false) private int scanBit(int fromIndex, bool set, bool forward) const pure nothrow @nogc
     {
+        const liveWords = wordsInUse;
         auto word = fromIndex >> wordShift;
-        if (word >= wordsInUse)
-            return set ? -1 : fromIndex;
-
-        const invert = set ? 0UL : ulong.max;
-        auto matches = (words[word] ^ invert) & (ulong.max << (fromIndex & bitMask));
-        while (matches == 0)
-        {
-            if (++word == wordsInUse)
-                return set ? -1 : cast(int)(cast(uint) word * wordBits);
-            matches = words[word] ^ invert;
-        }
-        return word * wordBits + bsf(matches);
-    }
-
-    pragma(inline, false) private int previousBit(int fromIndex, bool set) const pure nothrow @nogc
-    {
-        if (fromIndex == -1)
-            return -1;
-
-        auto word = fromIndex >> wordShift;
-        const invert = set ? 0UL : ulong.max;
         ulong mask = ulong.max;
-        if (word >= wordsInUse)
+        if (word >= liveWords)
         {
             if (!set)
                 return fromIndex;
-            if (wordsInUse == 0)
+            if (forward)
                 return -1;
-            word = wordsInUse - 1;
+            word = liveWords - 1;
         }
         else
-            mask >>= bitMask - (fromIndex & bitMask);
+        {
+            const offset = fromIndex & bitMask;
+            mask = forward ? mask << offset : mask >> (bitMask - offset);
+        }
+        if (word < 0)
+            return -1;
+
+        const stop = forward ? liveWords : -1;
+        const step = forward ? 1 : -1;
+        const invert = set ? 0UL : ulong.max;
         auto matches = (words[word] ^ invert) & mask;
         while (matches == 0)
         {
-            if (--word < 0)
-                return -1;
+            word += step;
+            if (word == stop)
+                return forward && !set ? cast(int)(cast(uint) word * wordBits) : -1;
             matches = words[word] ^ invert;
         }
-        return word * wordBits + bsr(matches);
+        return word * wordBits + (forward ? bsf(matches) : bsr(matches));
     }
 }
