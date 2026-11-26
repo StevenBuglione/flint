@@ -14,16 +14,15 @@ private auto runBinding(string[] properties...)
     auto application = new FlintApplication(ClassRef("property_relaxed.app.PropertyRelaxedApplication"));
     application.setWebApplicationType(WebApplicationType.NONE);
     application.setOutput((string) {});
-    return application.run([
-        "--flint.boot.enableautoconfiguration=false", "--proof.properties.enabled=true"
-    ] ~ properties);
+    return application.run(["--flint.boot.enableautoconfiguration=false"] ~ properties);
 }
 
 @("ConfigurationProperties binds through both prefix spellings and ignores unknown fields by default")
 unittest
 {
     static assert(ConfigurationProperties.init.ignoreUnknownFields);
-    auto context = runBinding("--proof.named.level=12", "--proof.value.level=34", "--proof.named.unmapped=unknown");
+    auto context = runBinding("--proof.properties.enabled=true", "--proof.named.level=12",
+            "--proof.value.level=34", "--proof.named.unmapped=unknown");
     scope (exit)
         context.close();
 
@@ -42,7 +41,8 @@ unittest
     static assert(!ConfigurationProperties.init.ignoreInvalidFields);
     try
     {
-        auto context = runBinding("--proof.named.level=12", "--proof.value.level=not-a-number");
+        auto context = runBinding("--proof.properties.enabled=true", "--proof.named.level=12",
+                "--proof.value.level=not-a-number");
         context.close();
     }
     catch (Exception failure)
@@ -57,4 +57,18 @@ unittest
         return;
     }
     assert(false, "the invalid integer must fail startup");
+}
+
+@("A disabled enabling configuration registers no properties beans")
+unittest
+{
+    auto context = runBinding("--proof.properties.enabled=false", "--proof.named.level=12", "--proof.value.level=34");
+    scope (exit)
+        context.close();
+
+    assert(!context.containsLocalBean("bindingConfiguration"), "the enabling configuration must remain disabled");
+    assert(!context.containsLocalBean("proof.named-property_relaxed.binding.NamedPrefixProperties"),
+            "the disabled configuration must not register the named prefix");
+    assert(!context.containsLocalBean("proof.value-property_relaxed.binding.ValuePrefixProperties"),
+            "the disabled configuration must not register the value prefix");
 }
