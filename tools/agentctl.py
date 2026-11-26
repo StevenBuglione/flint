@@ -9,6 +9,8 @@ can move between harnesses without losing context. Nothing here depends on a har
     agentctl.py register ROLE --area TEXT [--worktree PATH] [--claude-session ID] [--queued]
     agentctl.py claim ROLE --agent NAME --harness NAME [--force REASON] [--ttl-min N]
     agentctl.py queue ROLE join|leave|show [--agent NAME]   a FIFO queue for a slot such as apps-landing
+    agentctl.py id next R|B|S|D-<AREA> --agent NAME [--note TEXT]   the next free playbook or deviation ID
+    agentctl.py id show                                 every ID handed out
     agentctl.py heartbeat ROLE --agent NAME
     agentctl.py release ROLE --agent NAME [--note TEXT]
     agentctl.py send --from ROLE --to ROLE[,ROLE...|all] [MESSAGE | -]
@@ -25,6 +27,7 @@ The shared directory is $FLINT_COORD_DIR, or the `coordination` folder beside th
     roles.json            role -> area, worktree, Claude session id (informational)
     leases.json           role -> the agent that holds it now, its harness and last heartbeat
     queues.json           role -> its FIFO queue of agents waiting to claim it, and when the slot last freed
+    ids.json              kind (R, B, S, D-<AREA>) -> the last ID handed out, and who took each
     inbox/<role>.md       append-only mail, one "- <UTC time> <from> -> <to>: text" entry per message
     cursors/<role>.json   how far the role has read its inbox
     state/<role>.md       the role's hand-off state, rewritten at the end of every turn
@@ -82,6 +85,24 @@ def coord_dir() -> Path:
     except (OSError, subprocess.CalledProcessError):
         main_checkout = repo_root()
     return main_checkout.parent / 'coordination'
+
+
+ID_KIND = __import__('re').compile(r'^(R|B|S|D-[A-Z][A-Z0-9]*)$')
+
+
+def highest_id(kind: str, repo: Path | None = None) -> int:
+    """The highest `<kind>-<n>` in docs/ on fp/main and HEAD of the repository (0 when none)."""
+    import re
+    repo = repo or repo_root()
+    pattern = re.compile(r'\b' + re.escape(kind) + r'-([0-9]+)\b')
+    best = 0
+    for ref in ('fp/main', 'HEAD'):
+        if subprocess.run(['git', 'rev-parse', '--verify', '-q', ref], cwd=repo, capture_output=True).returncode:
+            continue
+        done = subprocess.run(['git', 'grep', '-hoE', r'\b' + kind + r'-[0-9]+\b', ref, '--', 'docs'], cwd=repo,
+                              capture_output=True, text=True)
+        best = max([best] + [int(m.group(1)) for m in pattern.finditer(done.stdout)])
+    return best
 
 
 def check_role(name: str) -> str:
@@ -152,6 +173,23 @@ class Store:
     def lease_live(self, lease: dict, now: float | None = None) -> bool:
         now = time.time() if now is None else now
         return now - parse_utc(lease['heartbeat']) < lease.get('ttl_min', DEFAULT_TTL_MIN) * 60
+
+    # IDs.
+    def next_id(self, kind: str, agent: str, note: str | None = None, repo: Path | None = None) -> str:
+        """Hand out the next free ID of a kind, atomically: one more than the highest of the counter and of what
+        fp/main and HEAD already use in docs/, so IDs taken but not landed yet are never reissued."""
+        if not ID_KIND.match(kind):
+            raise SystemExit(f'agentctl: ID kind must be R, B, S or D-<AREA> (letters and digits), not {kind!r}')
+        with self.locked():
+            ids = self._read_json('ids.json', {})
+            entry = ids.setdefault(kind, {'last': 0, 'issued': []})
+            number = max(entry['last'], highest_id(kind, repo)) + 1
+            entry['last'] = number
+            entry['issued'].append({'id': f'{kind}-{number}', 'agent': agent, 'time': utc_now(),
+                                    **({'note': note} if note else {})})
+            self._write_json('ids.json', ids)
+            self.event('id', id_kind=kind, id=f'{kind}-{number}', agent=agent)
+            return f'{kind}-{number}'
 
     # Queues.
     def queues(self) -> dict:
@@ -516,6 +554,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser('claim'); p.add_argument('role'); p.add_argument('--agent', required=True)
     p.add_argument('--harness', required=True, choices=HARNESSES); p.add_argument('--force', metavar='REASON')
     p.add_argument('--ttl-min', type=int, default=DEFAULT_TTL_MIN)
+    p = sub.add_parser('id'); p.add_argument('action', choices=('next', 'show')); p.add_argument('kind', nargs='?')
+    p.add_argument('--agent'); p.add_argument('--note')
     p = sub.add_parser('queue'); p.add_argument('role'); p.add_argument('action', choices=('join', 'leave', 'show'))
     p.add_argument('--agent')
     p = sub.add_parser('heartbeat'); p.add_argument('role'); p.add_argument('--agent', required=True)
@@ -546,6 +586,15 @@ def main(argv: list[str] | None = None) -> int:
         print(table(store, with_next=args.command == 'board'))
     elif args.command == 'register':
         store.register(check_role(args.role), args.area, args.worktree, args.claude_session, args.queued)
+    elif args.command == 'id':
+        if args.action == 'next':
+            if not args.kind or not args.agent:
+                parser.error('id next needs KIND and --agent')
+            print(store.next_id(args.kind, args.agent, args.note))
+        else:
+            for kind, entry in sorted(store._read_json('ids.json', {}).items()):
+                print(f"{kind}: last {kind}-{entry['last']}; " +
+                      ', '.join(f"{i['id']} {i['agent']}" for i in entry['issued'][-5:]))
     elif args.command == 'queue':
         if args.action != 'show':
             if not args.agent:

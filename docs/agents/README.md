@@ -60,6 +60,17 @@ The agent holding `apps-landing` runs `python3 tools/merge_train.py run --agent 
 
 A submission that conflicts fails alone.
 
+## IDs for the playbook and deviations
+
+Never pick an R-, B-, S- or D-<AREA>- number by hand; two lanes took R-109, B-10 and S-21 on the same day. Take the next free one:
+
+```bash
+python3 tools/agentctl.py id next R --agent <name> --note "<what it is for>"      # also B, S, D-JDBC, D-DATA, ...
+python3 tools/agentctl.py id show
+```
+
+It hands out one more than the highest of `fp/main`'s docs, your `HEAD`'s docs and every ID already handed out, under the coordination lock. An ID you took but haven't landed yet is never given to anyone else. `coordination/ids.json` records who took each one.
+
 ## The protocol: every agent, every turn
 
 ```bash

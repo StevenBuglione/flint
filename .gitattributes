@@ -1,0 +1,4 @@
+# Append-only logs every lane adds rows to: concurrent appends conflict textually but never in meaning, so merges
+# and rebases keep both sides (coordinator, 2026-11-26; the merge train bounced lanes on these).
+docs/spring/performance-playbook.md merge=union
+docs/spring/phase1/decisions.md merge=union

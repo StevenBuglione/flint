@@ -247,5 +247,52 @@ class QueueTests(unittest.TestCase):
         self.assertEqual(sorted(members), sorted(f'lane{i}' for i in range(12)))
 
 
+
+class IdTests(unittest.TestCase):
+    """agentctl id next: playbook and deviation IDs without collisions (coordinator, 2026-11-26)."""
+
+    def setUp(self):
+        import subprocess
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name) / 'coordination'
+        self.repo = Path(self.temp.name) / 'repo'
+        (self.repo / 'docs').mkdir(parents=True)
+        (self.repo / 'docs' / 'playbook.md').write_text('R-7 one\nR-109 two\nB-10\nD-JDBC-2 and D-DATA-4\nXR-500\n')
+        for argv in (['init', '-q'], ['add', '.'], ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid',
+                                                     'commit', '-q', '-m', 'docs']):
+            subprocess.run(['git', *argv], cwd=self.repo, check=True, capture_output=True)
+        self.store = agentctl.Store(self.root)
+
+    def test_ids_continue_from_the_highest_in_the_repository(self):
+        self.assertEqual(self.store.next_id('R', 'sol-a', repo=self.repo), 'R-110')
+        self.assertEqual(self.store.next_id('B', 'sol-a', repo=self.repo), 'B-11')
+        self.assertEqual(self.store.next_id('S', 'sol-a', repo=self.repo), 'S-1')
+        self.assertEqual(self.store.next_id('D-JDBC', 'sol-a', repo=self.repo), 'D-JDBC-3')
+
+    def test_an_issued_id_is_never_reissued_before_it_lands(self):
+        first = self.store.next_id('R', 'sol-a', repo=self.repo)
+        second = self.store.next_id('R', 'sol-b', 'gc pause', repo=self.repo)
+        self.assertEqual((first, second), ('R-110', 'R-111'))
+        issued = json.loads((self.root / 'ids.json').read_text())['R']['issued']
+        self.assertEqual([(i['id'], i['agent']) for i in issued], [('R-110', 'sol-a'), ('R-111', 'sol-b')])
+        self.assertEqual(issued[1]['note'], 'gc pause')
+
+    def test_concurrent_requests_get_distinct_ids(self):
+        results = []
+        threads = [threading.Thread(target=lambda: results.append(self.store.next_id('R', 'x', repo=self.repo)))
+                   for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        self.assertEqual(sorted(results, key=lambda r: int(r.split('-')[1])), [f'R-{n}' for n in range(110, 120)])
+
+    def test_bad_kinds_are_refused(self):
+        for kind in ('Q', 'D-', 'D-jdbc', 'R-1'):
+            with self.assertRaises(SystemExit):
+                self.store.next_id(kind, 'x', repo=self.repo)
+
+
 if __name__ == '__main__':
     unittest.main()

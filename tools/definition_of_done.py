@@ -968,6 +968,8 @@ def main(argv=None):
     p.add_argument('--definition-of-done', action='store_true', required=True)
     p.add_argument('--step', action='append', choices=STEPS, help='run only this step (repeatable; resolve always runs)')
     p.add_argument('--apps', default='auto', help='auto (the Spring apps that use the module), none, or APP,APP')
+    p.add_argument('--no-apps', dest='apps', action='store_const', const='none',
+                   help='the same as --apps none: skip the apps step locally when the merge train verifies it')
     p.add_argument('--release', action='store_true', help='api: deferred exclusions fail too')
     p.add_argument('--no-hold', action='store_true', help='do not run under measure_queue.py hold')
     p.add_argument('--flint', type=Path, help='the flint executable (default: .flint/bin/flint)')
