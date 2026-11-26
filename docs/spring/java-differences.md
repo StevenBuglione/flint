@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 204 | 390 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,613 | 1,467 | 4,870 | 29,884 |
+| framework | spring-framework@v7.1.0 | 3,607 | 1,473 | 4,870 | 29,884 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3871,6 +3871,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.validation.BindException#<init>(Object,String)` | `flint.validation.BindException.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.validation.BindException#getFieldValue(String)` | `flint.validation.BindException.getFieldValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.validation.BindException#getRawFieldValue(String)` | `flint.validation.BindException.getRawFieldValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.validation.BindException#getTarget()` | `flint.validation.BindException.getTarget` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.validation.BindException#reject(String,Object[],String)` | `flint.validation.BindException.reject` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.validation.BindException#rejectValue(String,String,Object[],String)` | `flint.validation.BindException.rejectValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.validation.BindingResultUtils#getBindingResult(Map,String)` | `flint.validation.BindingResultUtils.getBindingResult` | [R10](api-mapping.md#r10-streams-and-collections) | The wildcard Map uses the existing erased RawMap view so models with different key and value types are accepted. |
 | `org.springframework.validation.BindingResultUtils#getRequiredBindingResult(Map,String)` | `flint.validation.BindingResultUtils.getRequiredBindingResult` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.validation.DefaultMessageCodesResolver#resolveMessageCodes(String,String,String,Class)` | `flint.validation.DefaultMessageCodesResolver.resolveMessageCodes` | [R4](api-mapping.md#r4-classt-parameters) |  |
