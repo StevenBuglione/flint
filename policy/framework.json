@@ -534,7 +534,8 @@
    "directory": "framework/java-concurrent-exec",
    "module": "flint.java.util.concurrent.executionexception",
    "java_types": [
-    "java.util.concurrent.ExecutionException"
+    "java.util.concurrent.ExecutionException",
+    "java.util.concurrent.Executor"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
@@ -562,6 +563,9 @@
     "ldc_cold_seconds",
     "ldc_incremental_seconds",
     "compiler_peak_rss_bytes"
+   ],
+   "also": [
+    "flint.java.util.concurrent.executor"
    ]
   },
   "java-concurrent-sync": {

@@ -1,6 +1,8 @@
 {"rulebook":2,
 "upstream":["spring-framework@v7.1.0", "jakarta-annotation@3.0.0", "jakarta-validation@3.1.1", "jakarta-persistence@3.2.0", "jakarta-servlet@6.1.0", "jackson-core@3.1.8", "jackson-databind@3.1.8", "jackson-annotations@2.21", "slf4j-api@2.0.20", "micrometer-core@1.18.0", "hibernate-validator@9.1.6.Final", "thymeleaf@3.1.7.RELEASE", "micrometer-observation@1.18.0", "openjdk@21.0.13", "aspectj@1.9.27", "micrometer-commons@1.18.0"],
 "elements":{
+"java.util.concurrent.Executor":{"status":"adapted","d":"flint.java.util.concurrent.executor.Executor","rules":["R1"],"note":"Import the nominal interface from flint.java.util.concurrent.executor."},
+"java.util.concurrent.Executor#execute(Runnable)":{"status":"adapted","d":"flint.java.util.concurrent.executor.Executor.execute","rules":["R7","R9"],"note":"Accepts an owned @safe D delegate in addition to Runnable. Untyped null selects the original Runnable overload."},
 "java.util.concurrent.ExecutionException":{"status":"adapted","rules":["R1","R8"],"d":"flint.java.util.concurrent.executionexception.ExecutionException","note":"Import the checked exception from flint.java.util.concurrent.executionexception."},
 "java.util.concurrent.ExecutionException#<init>()":{"status":"ported","d":"flint.java.util.concurrent.executionexception.ExecutionException.this"},
 "java.util.concurrent.ExecutionException#<init>(String)":{"status":"ported","d":"flint.java.util.concurrent.executionexception.ExecutionException.this"},

@@ -30,6 +30,22 @@ LEGACY_RECORD = re.compile(r'link\|(java(?:-[a-z0-9-]+)?)\|(flint\.java\w*(?:\.\
                            r'([a-z][a-z0-9-]*)\|(?:O3|Oz)\|undeclared module records (flint\.java(?:\.\w+)+)')
 # Temporary first-object exception approved in 64f0653bc. Remove when the compile-scope fix lands.
 FIRST_OBJECT_ALLOWANCES = {
+    ('java-concurrent-exec', 'flint.java.util.concurrent.executor', 'dispatch'): {
+        'profiles': ('O3', 'Oz'),
+        'module': 'flint.java.util.concurrent.executionexception',
+        'member': 'flint.java.util.concurrent.executionexception.o',
+        'referrer': 'flint.java.util.concurrent.executor.o',
+        'trigger': '_D6object__T10RTInfoImplVAmA2i40i8ZQxyG2m',
+        'sections': {
+            '.text._D4core8internal5array13concatenation__T14_d_arraycatnTXHTAyaTyaTQhTQkZQBfFNaNbNeQxQzZQBc': 162,
+            '.text._D4core8internal5array5utils__T12__arrayAllocTaZQrFNaNbNemZAv': 36,
+            '.rodata.str1.16': 115,
+            '.rodata._D6object__T10RTInfoImplVAmA2i40i8ZQxyG2m': 16,
+            '.eh_frame': 104,
+            '.data._D5flint4java4util10concurrent18executionexception12__ModuleInfoZ': 56,
+            '__minfo': 8,
+        },
+    },
     ('java-io', 'flint.java.io.unsupportedencodingexception', 'throw-catch'): {
         'profiles': ('O3', 'Oz'),
         'module': 'flint.java.io.interruptedioexception',
