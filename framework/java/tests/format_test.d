@@ -256,3 +256,24 @@ unittest
     const wrongType = collectException!IllegalFormatConversionException(String.format("%E", 7));
     assert(wrongType.getMessage() == "e != java.lang.Integer");
 }
+
+@("String.format chooses general notation after rounding and retains significant zeros")
+unittest
+{
+    assert(String.format("%g|%g|%.0g|%.0g", 1.25, -0.0, 0.0, 9.5) == "1.25000|-0.00000|0|1e+01");
+    assert(String.format("%.3g|%.3g|%.3g", 0.0000994, 0.0001, 0.00009995) == "9.94e-05|0.000100|0.000100");
+    assert(String.format("%.3g|%.3g|%.3g", 999.4, 999.5, 1000.0) == "999|1.00e+03|1.00e+03");
+    assert(String.format("%,.7g|%,.3g|%0,14.5g", 12_345.0, 12_345.0, 1234.0) == "12,345.00|1.23e+04|00000001,234.0");
+}
+
+@("String.format applies general signs and uppercase rendering")
+unittest
+{
+    import std.exception : collectException;
+
+    assert(String.format("[%+012.4g][%(012.4G]", 0.125, -12_345.0) == "[+000000.1250][(01.235E+04)]");
+    assert(String.format("[%+012G][%+010G][%010G]", double.infinity, double.nan,
+            cast(Object) null) == "[   +INFINITY][       NAN][      NULL]");
+    const wrongType = collectException!IllegalFormatConversionException(String.format("%G", 7));
+    assert(wrongType.getMessage() == "g != java.lang.Integer");
+}
