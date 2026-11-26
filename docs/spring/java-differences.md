@@ -11140,9 +11140,12 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat#setLenient(boolean)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DateFormat#setTimeZone(TimeZone)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DecimalFormat` | 2 | The Java public formatter class and mutable pattern configuration are pending. |
+| framework | `java.text.DecimalFormat#<init>(String,DecimalFormatSymbols)` | 2 | Requires the public formatter and symbols classes. Java copies the supplied symbol settings on construction. |
 | framework | `java.text.DecimalFormat#applyPattern(String)` | 2 | Applying a pattern requires the public DecimalFormat. Java changes fractional precision and the multiplier on the same formatter instance. |
 | framework | `java.text.DecimalFormat#format(double,StringBuffer,FieldPosition)` | 2 | Requires DecimalFormat, caller-owned StringBuffer and UTF-16 FieldPosition updates alongside binary64 formatting. |
 | framework | `java.text.DecimalFormat#format(long,StringBuffer,FieldPosition)` | 2 | Requires DecimalFormat, caller-owned StringBuffer and UTF-16 FieldPosition updates alongside exact signed long formatting and scaling. |
+| framework | `java.text.DecimalFormat#getDecimalFormatSymbols()` | 2 | Requires the public symbols class. Java returns an independent copy of the formatter symbol settings. |
+| framework | `java.text.DecimalFormat#setDecimalFormatSymbols(DecimalFormatSymbols)` | 2 | Requires the public symbols class. Java copies supplied symbol settings into the formatter. |
 | framework | `java.text.DecimalFormatSymbols` | 2 | The public locale symbol table and mutable symbol API are pending. |
 | framework | `java.text.DecimalFormatSymbols#getInstance(Locale)` | 2 | Requires the public locale-specific symbols factory. The pinned Java factory selects separators and honors the Unicode numbering-system extension. |
 | framework | `java.text.DecimalFormatSymbols#getZeroDigit()` | 2 | Requires the public symbols object. Java returns the localized zero digit, including Devanagari zero with the matching Unicode numbering-system extension. |
