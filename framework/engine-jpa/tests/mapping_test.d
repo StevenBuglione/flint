@@ -207,10 +207,25 @@ unittest
 @("a mapping registry cannot retain stack storage")
 unittest
 {
+    static const(TypeInfo_Class[1]) classTable = [typeid(Record)];
     static assert(!__traits(compiles, () @safe {
             immutable(EntityMapping)[1] localMappings = [recordMapping];
             return registerMappings(localMappings[]);
         }));
+    static assert(!__traits(compiles, () @safe {
+            immutable(EntityMapping)[1] localMappings = [recordMapping];
+            return registerMappings(localMappings[], classTable[]);
+        }));
+
+    static immutable EntityMapping[] descriptors = [recordMapping];
+    static auto registerWithLocalClasses()
+    {
+        TypeInfo_Class[1] localClasses = [typeid(Record)];
+        return registerMappings(descriptors, localClasses[]);
+    }
+
+    const registered = registerWithLocalClasses();
+    assert(registered.ok && registered.value.findExactObject(new Record) is &descriptors[0]);
 }
 
 @("an exact type guard rejects missing metadata, null entities and subclasses")
