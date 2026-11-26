@@ -271,21 +271,22 @@
       "status": "partial"
     },
     "org/springframework/aop/support/PointcutsTests.java": {
-      "d": "framework/aop/tests/pointcut_tests.d",
+      "d": [
+        "framework/aop/tests/pointcut_tests.d",
+        "framework/aop/tests/bean_pointcuts_tests.d"
+      ],
       "methods": {
         "ported": [
-          "trueCase"
-        ],
-        "skipped": {
-          "intersectionOfSpecificGettersAndSubclassGetters": "Phase 2: getter and setter pointcuts and composition are deferred.",
-          "matches": "Phase 2: getter and setter pointcuts and composition are deferred.",
-          "simpleIntersection": "Phase 2: getter and setter pointcuts and composition are deferred.",
-          "unionOfAllSettersAndSubclassSetters": "Phase 2: getter and setter pointcuts and composition are deferred.",
-          "unionOfSettersAndGetters": "Phase 2: getter and setter pointcuts and composition are deferred.",
-          "unionOfSpecificGetters": "Phase 2: getter and setter pointcuts and composition are deferred."
-        }
+          "trueCase",
+          "matches",
+          "unionOfSettersAndGetters",
+          "unionOfSpecificGetters",
+          "unionOfAllSettersAndSubclassSetters",
+          "intersectionOfSpecificGettersAndSubclassGetters",
+          "simpleIntersection"
+        ]
       },
-      "status": "partial"
+      "status": "ported"
     },
     "org/springframework/aop/support/RegexpMethodPointcutAdvisorIntegrationTests.java": {
       "phase": "2",

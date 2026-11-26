@@ -18,6 +18,7 @@ import flint.aop : ClassFilter, MethodMatcher, Pointcut;
 import flint.aop.support.class_filters : ClassPredicate, asClassFilter;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MethodDescriptor;
+import flint.engine.aot.objects : statelessInstance;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException,
     UnsupportedOperationException, stringHashCode;
 import flint.util : PatternMatchUtils;
@@ -186,6 +187,18 @@ abstract class DynamicMethodMatcherPointcut : DynamicMethodMatcher, Pointcut
 /// Utility operations over pointcuts.
 abstract class Pointcuts
 {
+    /// Selects zero-argument methods starting with get and returning a value.
+    static Pointcut GETTERS() nothrow @nogc
+    {
+        return statelessInstance!GetterPointcut();
+    }
+
+    /// Selects one-argument methods starting with set and returning void.
+    static Pointcut SETTERS() nothrow @nogc
+    {
+        return statelessInstance!SetterPointcut();
+    }
+
     /// Matches either of the supplied pointcuts.
     static Pointcut union_(Pointcut first, Pointcut second)
     {
@@ -213,5 +226,46 @@ abstract class Pointcuts
         auto matcher = pointcut.getMethodMatcher();
         return matcher.matches(method, targetClass) && (!matcher.isRuntime()
                 || matcher.matches(method, targetClass, args));
+    }
+}
+
+private abstract class BeanAccessorPointcut : StaticMethodMatcher, Pointcut
+{
+    final ClassFilter getClassFilter() nothrow @nogc
+    {
+        return ClassFilter.TRUE;
+    }
+
+    final MethodMatcher getMethodMatcher() nothrow @nogc
+    {
+        return this;
+    }
+}
+
+private final class GetterPointcut : BeanAccessorPointcut
+{
+    override bool matches(const(MethodDescriptor)* method, const Descriptor) nothrow @nogc
+    {
+        return method.name.length >= 3 && method.name[0 .. 3] == "get" && method.parameters.length == 0
+            && method.returnType != "void";
+    }
+
+    override string toString() const nothrow @nogc
+    {
+        return "Pointcuts.GETTERS";
+    }
+}
+
+private final class SetterPointcut : BeanAccessorPointcut
+{
+    override bool matches(const(MethodDescriptor)* method, const Descriptor) nothrow @nogc
+    {
+        return method.name.length >= 3 && method.name[0 .. 3] == "set" && method.parameters.length == 1
+            && method.returnType == "void";
+    }
+
+    override string toString() const nothrow @nogc
+    {
+        return "Pointcuts.SETTERS";
     }
 }

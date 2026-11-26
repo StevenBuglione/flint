@@ -168,7 +168,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 120 | 244 | 0 | 15,432 |
 | boot | spring-boot@v4.2.0 | 36 | 14 | 2,133 | 13,420 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,306 | 1,257 | 4,848 | 30,423 |
+| framework | spring-framework@v7.1.0 | 3,306 | 1,259 | 4,848 | 30,421 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -1805,6 +1805,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.support.NameMatchMethodPointcut#matches(Method,Class)` | `flint.aop.support.NameMatchMethodPointcut.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.support.NameMatchMethodPointcut#setMappedNames(String...)` | `flint.aop.support.NameMatchMethodPointcut.setMappedNames` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.aop.support.NameMatchMethodPointcut#toString()` | `flint.aop.support.NameMatchMethodPointcut.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.aop.support.Pointcuts#GETTERS` | `flint.aop.support.Pointcuts.GETTERS` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.aop.support.Pointcuts#SETTERS` | `flint.aop.support.Pointcuts.SETTERS` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.aop.support.Pointcuts#matches(Pointcut,Method,Class,Object...)` | `flint.aop.support.Pointcuts.matches` | [R4](api-mapping.md#r4-classt-parameters), [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.aop.support.Pointcuts#union(Pointcut,Pointcut)` | `flint.aop.support.Pointcuts.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.aop.support.RootClassFilter#<init>(Class)` | `flint.aop.support.RootClassFilter` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -8821,7 +8823,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.aop.framework.autoproxy.target | 21 | 0 |
 | org.springframework.aop.interceptor | 97 | 0 |
 | org.springframework.aop.scope | 20 | 0 |
-| org.springframework.aop.support | 161 | 0 |
+| org.springframework.aop.support | 159 | 0 |
 | org.springframework.aop.support.annotation | 26 | 0 |
 | org.springframework.aop.target | 116 | 0 |
 | org.springframework.aop.target.dynamic | 20 | 0 |
