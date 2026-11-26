@@ -224,3 +224,17 @@ unittest
     expectBean("booleanPrefixed", true, ["foo.test": "true"]);
     expectBean("booleanPrefixed", false, ["test": "true"]);
 }
+
+@("ConditionalOnMissingBeanTests.impliedOnBeanMethod")
+unittest
+{
+    expectBean("exampleBean", true, ["test.example-bean": "true"]);
+    expectBean("exampleBean2", false, ["test.example-bean": "true"]);
+}
+
+@("An inferred missing-bean condition supplies the fallback when the user bean is absent")
+unittest
+{
+    expectBean("exampleBean", false);
+    expectBean("exampleBean2", true);
+}

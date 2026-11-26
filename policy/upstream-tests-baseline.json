@@ -445,7 +445,6 @@
       "org/springframework/boot/autoconfigure/condition/ConditionalOnExpressionTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnJavaTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnJndiTests.java",
-      "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingBeanTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingBeanWithFilteredClasspathTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnMissingFilterBeanTests.java",
       "org/springframework/boot/autoconfigure/condition/ConditionalOnNotWarDeploymentTests.java",
