@@ -68,9 +68,12 @@ NOT_BUILD_PREFIXES = ('apps/flint/test/', 'apps/flint/src/flint_tool/api/', 'doc
 UNION_FILES = ('docs/spring/performance-playbook.md', 'docs/spring/phase1/decisions.md')
 # Generated pages: a conflict confined to them is resolved by regenerating them (coordinator, 2026-11-26); the API gate
 # on the candidate then proves the result.
-GENERATED_FILES = ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md')
+GENERATED_FILES = ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md',
+                   # tools/api_differences.py --write regenerates the JDK table too (api-coverage, 8cad51c23).
+                   'docs/spring/jdk-coverage.md')
 # Files the regeneration may also rewrite; staged with the pages so `rebase --continue` does not stop on them (sol-web).
-REGENERATED_ALSO = ('api/dependency-baseline.json',)
+# Both ratchets shrink on --write.
+REGENERATED_ALSO = ('api/dependency-baseline.json', 'api/kind-baseline.json')
 # Tables keyed by entry ID ('| S-32 | ...'). A union merge keeps both sides' versions of a row both sides edited
 # (S-32 five times, coordinator 2026-11-26 15:00Z); the train merges such a row three-way by its ID instead.
 ROW_FILES = ('docs/spring/performance-playbook.md',)
@@ -687,8 +690,9 @@ class Train:
             if any('<<<<<<<' in (self.worktree / path).read_text() for path in GENERATED_FILES
                    if (self.worktree / path).is_file()):
                 return done  # a conflict in a hand-written part of the page: a real one
-            also = [path for path in REGENERATED_ALSO if (self.worktree / path).is_file()]
-            git(['add', '--', *GENERATED_FILES, *also], self.worktree, check=False)
+            # Only paths that exist: one missing pathspec makes `git add` stage nothing.
+            staged = [path for path in GENERATED_FILES + REGENERATED_ALSO if (self.worktree / path).is_file()]
+            git(['add', '--', *staged], self.worktree, check=False)
             self.store.event('train-regenerated', files=conflicted)
             done = git(['-c', 'core.editor=true', '-c', f'core.attributesFile={self.attributes()}', 'rebase',
                         '--continue'], self.worktree, check=False)
