@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 202 | 348 | 0 | 15,246 |
 | boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,557 | 1,412 | 4,870 | 29,995 |
+| framework | spring-framework@v7.1.0 | 3,557 | 1,451 | 4,870 | 29,956 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -2479,6 +2479,50 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.cache.Cache.ValueWrapper#get()` | `flint.cache.Cache.ValueWrapper.get` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.cache.CacheManager#getCacheNames()` | `flint.cache.CacheManager.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.CacheManager#resetCaches()` | `flint.cache.CacheManager.resetCaches` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+
+#### org.springframework.cache.annotation
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.cache.annotation.CacheConfig` | `flint.cache.annotation.CacheConfig` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheConfig#cacheManager` | `flint.cache.annotation.CacheConfig.cacheManager` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheConfig#cacheNames` | `flint.cache.annotation.CacheConfig.cacheNames` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheConfig#cacheResolver` | `flint.cache.annotation.CacheConfig.cacheResolver` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheConfig#keyGenerator` | `flint.cache.annotation.CacheConfig.keyGenerator` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheConfig#value` | `flint.cache.annotation.CacheConfig.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict` | `flint.cache.annotation.CacheEvict` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict#allEntries` | `flint.cache.annotation.CacheEvict.allEntries` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict#beforeInvocation` | `flint.cache.annotation.CacheEvict.beforeInvocation` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict#cacheManager` | `flint.cache.annotation.CacheEvict.cacheManager` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict#cacheNames` | `flint.cache.annotation.CacheEvict.cacheNames` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict#cacheResolver` | `flint.cache.annotation.CacheEvict.cacheResolver` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict#condition` | `flint.cache.annotation.CacheEvict.condition` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict#key` | `flint.cache.annotation.CacheEvict.key` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict#keyGenerator` | `flint.cache.annotation.CacheEvict.keyGenerator` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CacheEvict#value` | `flint.cache.annotation.CacheEvict.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CachePut` | `flint.cache.annotation.CachePut` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CachePut#cacheManager` | `flint.cache.annotation.CachePut.cacheManager` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CachePut#cacheNames` | `flint.cache.annotation.CachePut.cacheNames` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CachePut#cacheResolver` | `flint.cache.annotation.CachePut.cacheResolver` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CachePut#condition` | `flint.cache.annotation.CachePut.condition` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CachePut#key` | `flint.cache.annotation.CachePut.key` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CachePut#keyGenerator` | `flint.cache.annotation.CachePut.keyGenerator` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CachePut#unless` | `flint.cache.annotation.CachePut.unless` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.CachePut#value` | `flint.cache.annotation.CachePut.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable` | `flint.cache.annotation.Cacheable` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable#cacheManager` | `flint.cache.annotation.Cacheable.cacheManager` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable#cacheNames` | `flint.cache.annotation.Cacheable.cacheNames` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable#cacheResolver` | `flint.cache.annotation.Cacheable.cacheResolver` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable#condition` | `flint.cache.annotation.Cacheable.condition` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable#key` | `flint.cache.annotation.Cacheable.key` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable#keyGenerator` | `flint.cache.annotation.Cacheable.keyGenerator` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable#sync` | `flint.cache.annotation.Cacheable.sync` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable#unless` | `flint.cache.annotation.Cacheable.unless` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Cacheable#value` | `flint.cache.annotation.Cacheable.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Caching` | `flint.cache.annotation.Caching` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Caching#cacheable` | `flint.cache.annotation.Caching.cacheable` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Caching#evict` | `flint.cache.annotation.Caching.evict` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.cache.annotation.Caching#put` | `flint.cache.annotation.Caching.put` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.cache.concurrent
 
@@ -9694,7 +9738,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.beans.propertyeditors | 155 | 0 |
 | org.springframework.beans.support | 70 | 0 |
 | org.springframework.cache | 3 | 0 |
-| org.springframework.cache.annotation | 101 | 0 |
+| org.springframework.cache.annotation | 62 | 0 |
 | org.springframework.cache.caffeine | 40 | 0 |
 | org.springframework.cache.concurrent | 22 | 0 |
 | org.springframework.cache.config | 9 | 0 |
