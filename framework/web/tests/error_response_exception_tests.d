@@ -12,11 +12,12 @@ module flint.web.error_response_exception_tests;
 
 import flint.core : MethodParameter;
 import flint.engine.aot.any : Any;
-import flint.http : HttpHeaders, HttpMethod, HttpStatus, MediaType, ProblemDetail;
+import flint.http : HttpHeaders, HttpMethod, HttpStatus, HttpStatusCode, MediaType, ProblemDetail;
 import flint.web : ErrorResponse, HttpMediaTypeNotAcceptableException,
     HttpMediaTypeNotSupportedException, HttpRequestMethodNotSupportedException;
 import flint.web.bind : MissingPathVariableException, MissingRequestCookieException,
     MissingRequestHeaderException, MissingServletRequestParameterException;
+import flint.web.multipart.support : MissingServletRequestPartException;
 
 @safe:
 
@@ -208,8 +209,6 @@ unittest
 @("ErrorResponseExceptionTests.missingServletRequestPartException")
 unittest
 {
-    import flint.web.multipart.support : MissingServletRequestPartException;
-
     auto ex = new MissingServletRequestPartException("file");
 
     assertStatus(ex, HttpStatus.BAD_REQUEST);
@@ -217,6 +216,51 @@ unittest
     assertDetailMessageCode(ex, null, [Any.of(ex.getRequestPartName())]);
 
     assert(ex.getHeaders().isEmpty());
+}
+
+@("MissingServletRequestPartException uses subclass accessors")
+unittest
+{
+    auto ex = new CustomizedMissingPart;
+
+    assert(ex.partNameDuringStatusLookup is null);
+    assert(ex.bodyReads == 1, "construction must initialize the body through getBody");
+    assertStatus(ex, HttpStatus.UNPROCESSABLE_CONTENT);
+    assertDetail(ex, "A required upload is missing");
+    assertDetailMessageCode(ex, null, [Any.of("upload")]);
+}
+
+private final class CustomizedMissingPart : MissingServletRequestPartException
+{
+    string partNameDuringStatusLookup;
+    size_t bodyReads;
+
+    this()
+    {
+        super("attachment");
+    }
+
+    override HttpStatusCode getStatusCode()
+    {
+        partNameDuringStatusLookup = super.getRequestPartName();
+        return HttpStatus.UNPROCESSABLE_CONTENT;
+    }
+
+    override ProblemDetail getBody()
+    {
+        ++bodyReads;
+        return super.getBody();
+    }
+
+    override string getMessage() const pure nothrow @nogc
+    {
+        return "A required upload is missing";
+    }
+
+    override string getRequestPartName() const pure nothrow @nogc
+    {
+        return "upload";
+    }
 }
 
 // Needs ValidationTestHelper, which needs spring-context's MessageSource (framework-core).

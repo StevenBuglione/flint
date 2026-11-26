@@ -28,9 +28,9 @@ class MissingServletRequestPartException : ServletException, ErrorResponse
     this(string requestPartName)
     {
         super("Required part '" ~ requestPartName ~ "' is not present.");
-        this.requestPartName = requestPartName;
         body = ProblemDetail.forStatus(getStatusCode());
-        body.setDetail(msg);
+        this.requestPartName = requestPartName;
+        getBody().setDetail(getMessage());
     }
 
     /// The name of the missing part.
@@ -52,6 +52,6 @@ class MissingServletRequestPartException : ServletException, ErrorResponse
 
     override Any[] getDetailMessageArguments()
     {
-        return [Any.of(requestPartName)];
+        return [Any.of(getRequestPartName())];
     }
 }

@@ -821,6 +821,13 @@ loadable bytes at O3 and grew by 576 at Oz, with template counts of 6,060
 and 8,481 in both variants. The stock maps identify the inherited Phobos
 objects covered by `6c9e5f49`.
 
+The missing multipart part exception initializes its problem detail through
+the subclass accessors. Matched venus probes at `c2f2dc71d` and `5956f78cb`
+retained 528,953 O3 and 522,513 Oz loadable bytes for Web, 1,627,646 O3 and
+1,552,526 Oz for Web MVC, and 1,795,158 O3 and 1,713,062 Oz for framework-test.
+Template counts were 6,991, 6,060 and 8,479 respectively in both variants.
+The stock linker maps identify the inherited Phobos objects under `6c9e5f49`.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |
