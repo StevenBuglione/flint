@@ -1122,3 +1122,7 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-26 01:40Z, coordinator: **D-SPEL-2 (sol-template) is not approved.** It would have required `nothrow @nogc` on `EvaluationContext` methods, restricting user implementations.
   - **Instead:** porting-guide rule 7. The evaluator takes a `@nogc` fast path for Flint's own final contexts and a generic GC-allowed path for any other implementation, with parity tests.
   - **No deviation is needed.**
+- 2026-11-26 01:42Z, coordinator, under the owner's standing approval: **D-DATA-4 (sol-data) is approved.**
+  - **The clash:** only on `Window!int`. Java tells `positionAt(int index)` from `positionAt(Integer item)` by boxing, which R5 erases.
+  - **The resolution:** `positionAt(index)` keeps Java's index meaning, and element lookup is `positionAt!int(item)`.
+  - **Tests (R7):** they assert Java's choice for both calls.
