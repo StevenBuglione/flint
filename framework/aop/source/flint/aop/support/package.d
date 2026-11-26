@@ -3,16 +3,23 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DynamicMethodMatcher.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/DynamicMethodMatcherPointcut.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/Pointcuts.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/StaticMethodMatcherPointcut.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/support/NameMatchMethodPointcut.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
  * Modified by the Flint authors.
  */
 module flint.aop.support;
 
+public import flint.aop.support.class_filters : ClassFilters, RootClassFilter;
+
 import flint.aop : ClassFilter, MethodMatcher, Pointcut;
+import flint.aop.support.class_filters : ClassPredicate, asClassFilter;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : Descriptor, MethodDescriptor;
-import flint.java.lang : IllegalArgumentException, UnsupportedOperationException;
+import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException,
+    UnsupportedOperationException, stringHashCode;
+import flint.util : PatternMatchUtils;
 
 @safe:
 
@@ -32,6 +39,113 @@ abstract class StaticMethodMatcher : MethodMatcher
     final bool matches(const(MethodDescriptor)*, const Descriptor, Any[]...)
     {
         throw new UnsupportedOperationException("Illegal MethodMatcher usage");
+    }
+}
+
+/// A pointcut using static method metadata and a configurable class filter.
+abstract class StaticMethodMatcherPointcut : StaticMethodMatcher, Pointcut
+{
+    private ClassFilter classFilter;
+
+    /// Starts with a filter that accepts every class.
+    this()
+    {
+        classFilter = ClassFilter.TRUE;
+    }
+
+    /// Selects a class filter for subsequent matching.
+    void setClassFilter(ClassFilter filter)
+    {
+        classFilter = filter;
+    }
+
+    /// R9 delegate overload.
+    void setClassFilter(ClassPredicate filter)
+    {
+        setClassFilter(asClassFilter(filter));
+    }
+
+    /// Returns the configured class filter.
+    ClassFilter getClassFilter()
+    {
+        return classFilter;
+    }
+
+    /// Uses this pointcut's static method test.
+    final MethodMatcher getMethodMatcher()
+    {
+        return this;
+    }
+}
+
+/// Selects methods by name, including all overloads of a matching name.
+class NameMatchMethodPointcut : StaticMethodMatcherPointcut
+{
+    mixin JavaObject;
+
+    private string[] mappedNames;
+
+    /// Replaces the configured patterns with one pattern.
+    void setMappedName(string pattern)
+    {
+        setMappedNames(pattern);
+    }
+
+    /// Replaces the configured patterns with a copy of the supplied list.
+    void setMappedNames(scope string[] patterns...)
+    {
+        mappedNames = patterns.dup;
+    }
+
+    /// Adds a pattern while configuring the pointcut.
+    NameMatchMethodPointcut addMethodName(string pattern)
+    {
+        mappedNames ~= pattern;
+        return this;
+    }
+
+    /// Whether any configured pattern selects the candidate name.
+    override bool matches(const(MethodDescriptor)* method, const Descriptor)
+    {
+        foreach (pattern; mappedNames)
+            if (method.name == pattern || isMatch(method.name, pattern))
+                return true;
+        return false;
+    }
+
+    /// Checks Spring's simple wildcard syntax. Subclasses can supply a different matcher.
+    protected bool isMatch(string methodName, string pattern)
+    {
+        return PatternMatchUtils.simpleMatch(pattern, methodName);
+    }
+
+    /// Whether the two pointcuts have the same patterns in the same order.
+    bool equals(Object other)
+    {
+        auto pointcut = cast(NameMatchMethodPointcut) other;
+        return pointcut !is null && mappedNames == pointcut.mappedNames;
+    }
+
+    /// Hashes the ordered patterns using Java's list hash.
+    int hashCode() const nothrow @nogc
+    {
+        int hash = 1;
+        foreach (pattern; mappedNames)
+            hash = 31 * hash + stringHashCode(pattern);
+        return hash;
+    }
+
+    /// Describes the pointcut and its patterns.
+    override string toString() const
+    {
+        string text = typeid(this).name ~ ": [";
+        foreach (index, pattern; mappedNames)
+        {
+            if (index != 0)
+                text ~= ", ";
+            text ~= pattern;
+        }
+        return text ~ "]";
     }
 }
 
@@ -78,7 +192,10 @@ abstract class Pointcuts
             throw new IllegalArgumentException("Pointcut must not be null");
         if (pointcut is Pointcut.TRUE)
             return true;
-        if (!pointcut.getClassFilter().matches(targetClass))
+        auto filter = pointcut.getClassFilter();
+        if (filter is null)
+            throw new NullPointerException();
+        if (!filter.matches(targetClass))
             return false;
         auto matcher = pointcut.getMethodMatcher();
         return matcher.matches(method, targetClass) && (!matcher.isRuntime()

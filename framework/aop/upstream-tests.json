@@ -181,8 +181,22 @@
       "status": "deferred"
     },
     "org/springframework/aop/support/ClassFiltersTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/aop/tests/class_filter_tests.d",
+      "methods": {
+        "ported": [
+          "union",
+          "intersection",
+          "negateClassFilter",
+          "negateTrueClassFilter",
+          "negateTrueClassFilterAppliedTwice",
+          "negateIsNotEqualsToOriginalFilter",
+          "negateOnSameFilterIsEquals",
+          "negateHasNotSameHashCodeAsOriginalFilter",
+          "negateOnSameFilterHasSameHashCode",
+          "toStringIncludesRepresentationOfOriginalFilter"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/aop/support/ClassUtilsTests.java": {
       "phase": "2",
@@ -229,8 +243,20 @@
       "status": "partial"
     },
     "org/springframework/aop/support/NameMatchMethodPointcutTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/aop/tests/name_match_pointcut_tests.d",
+      "methods": {
+        "ported": [
+          "isMatch",
+          "equalsAndHashCode"
+        ],
+        "skipped": {
+          "methodNamePatternsMappedAsVarargs": "Phase 2: ProxyFactory and linked advice execution are deferred.",
+          "methodNamePatternsMappedIndividually": "Phase 2: ProxyFactory and linked advice execution are deferred.",
+          "noMappedMethodNamePatterns": "Phase 2: ProxyFactory and linked advice execution are deferred.",
+          "serializable": "Rulebook jvm-platform: Java serialization is excluded."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/aop/support/PointcutsTests.java": {
       "d": "framework/aop/tests/pointcut_tests.d",
@@ -254,8 +280,16 @@
       "status": "deferred"
     },
     "org/springframework/aop/support/RootClassFilterTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/aop/tests/class_filter_tests.d",
+      "methods": {
+        "ported": [
+          "matches",
+          "equals",
+          "hashCodeBehavior",
+          "toStringOutput"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/aop/support/annotation/AnnotationMatchingPointcutTests.java": {
       "phase": "2",

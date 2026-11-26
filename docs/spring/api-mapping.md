@@ -255,7 +255,7 @@ Each deviation is the smallest change D or the closed world forces. Adding one m
 | D-1 | `mixin FlintMain!App;` beside the application class | D's entry point must be a free function |
 | D-3 | All-default callback interfaces are abstract classes | D interfaces have no default method bodies |
 | D-4 | `Class<T>` tokens are template parameters (R4) | D types are not runtime values |
-| D-7 | Typed `null` constants for unrelated overload pairs | D resolves `null` differently for unrelated types |
+| D-7 | Typed `null` constants for unrelated overload pairs, including `ClassFilter.NULL` for class filters and delegates | D resolves `null` differently for unrelated types |
 | D-8 | No `throws` clauses | D has no checked exceptions |
 | D-14 | String indices in UTF-8 internally (R14) | D strings are UTF-8 |
 | D-MICROMETER-1 | `Tags` has a private constructor and private concrete implementations. The null overloads of `Tags.of`, `Tags.and` and `Tags.concat` use typed null values (D-7). | The fieldless empty implementation reuses Flint's allocation-free Java constant support. D's overload resolution needs an explicit type for null across unrelated string, tag and iterable overloads. |

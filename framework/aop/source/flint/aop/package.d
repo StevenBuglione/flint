@@ -13,8 +13,12 @@
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/TruePointcut.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/Advisor.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/ClassFilter.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/DynamicIntroductionAdvice.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/IntroductionAwareMethodMatcher.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/IntroductionInfo.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/MethodMatcher.java
  * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/Pointcut.java
+ * Ported from spring-projects/spring-framework v7.1.0, spring-aop/src/main/java/org/springframework/aop/TargetClassAware.java
  * Copyright 2002-present the original author or authors.
  * SPDX-License-Identifier: Apache-2.0
  * Modified by the Flint authors.
@@ -63,6 +67,9 @@ private final class EmptyAdvice : Advice
 /// Matches the generated descriptor for a candidate target class (R4).
 interface ClassFilter
 {
+    /// A typed null for overloads that also accept a delegate (R7, D-7).
+    enum ClassFilter NULL = null;
+
     /// Whether this filter selects the target class or interface.
     bool matches(const Descriptor targetClass);
 
@@ -163,6 +170,34 @@ private final class TruePointcut : Pointcut
 interface PointcutAdvisor : Advisor
 {
     Pointcut getPointcut();
+}
+
+/// Matches methods using the target's known introductions as additional static context.
+interface IntroductionAwareMethodMatcher : MethodMatcher
+{
+    /// Whether this method can receive advice given the target's introductions.
+    bool matches(const(MethodDescriptor)* method, const Descriptor targetClass, bool hasIntroductions);
+}
+
+/// Reports the additional interfaces an introduction supplies.
+interface IntroductionInfo
+{
+    /// The AOT descriptors of the interfaces introduced on the proxy.
+    const(Descriptor)[] getInterfaces();
+}
+
+/// Advice that can supply behavior for an introduced interface.
+interface DynamicIntroductionAdvice : Advice
+{
+    /// Whether the advice implements the described interface.
+    bool implementsInterface(const Descriptor interfaceType);
+}
+
+/// Exposes the known target type behind a proxy or target source.
+interface TargetClassAware
+{
+    /// Returns the AOT descriptor of the target, or null when the type is unknown.
+    const(Descriptor) getTargetClass();
 }
 
 /// Marker for advice that runs before a joinpoint.
