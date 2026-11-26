@@ -131,6 +131,18 @@ FIRST_OBJECT_ALLOWANCES = {
             '.eh_frame': 48,
         },
     },
+    ('java-zip', 'flint.java.util.zip.dataformatexception', 'catch'): {
+        'profiles': ('O3', 'Oz'),
+        'module': 'flint.java.util.zip.checksum',
+        'member': 'flint.java.util.zip.checksum.o',
+        'referrer': 'flint.java.util.zip.dataformatexception.o',
+        'trigger': '_D6object__T10RTInfoImplVAmA2i84i680ZQzyG2m',
+        'sections': {
+            '.rodata._D6object__T10RTInfoImplVAmA2i84i680ZQzyG2m': 16,
+            '.data._D5flint4java4util3zip8checksum12__ModuleInfoZ': 40,
+            '__minfo': 8,
+        },
+    },
 }
 # Keep the reviewed row and its seeding mode as history when the live allowance is retired.
 FIRST_OBJECT_ROWS = {
