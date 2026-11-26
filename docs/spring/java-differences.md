@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 43 | 99 | 2,133 | 13,328 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,615 | 1,476 | 4,870 | 29,873 |
+| framework | spring-framework@v7.1.0 | 3,615 | 1,478 | 4,870 | 29,871 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3009,6 +3009,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.core.annotation.OrderUtils#getOrder(Class,Integer)` | `flint.core.annotation.types.OrderUtils.getOrder` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.annotation.OrderUtils#getOrder(Class,int)` | `flint.core.annotation.types.OrderUtils.getOrder` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.annotation.OrderUtils#getPriority(Class)` | `flint.core.annotation.types.OrderUtils.getPriority` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### org.springframework.core.convert
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.core.convert.ConversionService` | `flint.core.convert.ConversionService` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.core.convert.TypeDescriptor` | `flint.core.convert.TypeDescriptor` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.core.convert.converter
 
@@ -10232,7 +10239,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.core | 174 | 0 |
 | org.springframework.core.annotation | 151 | 0 |
 | org.springframework.core.codec | 0 | 147 |
-| org.springframework.core.convert | 66 | 0 |
+| org.springframework.core.convert | 64 | 0 |
 | org.springframework.core.convert.converter | 14 | 0 |
 | org.springframework.core.convert.support | 15 | 0 |
 | org.springframework.core.env | 29 | 0 |
