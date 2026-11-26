@@ -1156,3 +1156,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Conditions:** the commit proves the delta comes from the new declarations (probe with and without them, nothing existing grew), and carries the trailer `Budget-Raise-Approved: api-growth-rule` with the numbers.
   - **Not covered:** growth of existing code, or an avoidable implementation cost, still needs a request.
   - **First use:** sol-ai's RateLimit, +51 templates, so ai-model's template cap goes from 1,200 to 1,260.
+- 2026-11-26 02:12Z, owner: **keep the three pre-approved budget-raise rules** (`new-module-rule`, `api-growth-rule`, `jdk-leaf-rule`).
+  - **This amends owner decision 3** (2026-11-23, "template budgets only go down"). A raise is allowed only in a commit carrying `Budget-Raise-Approved: <id>`, naming one of these rules (`policy/budget-raise-rules.json`) or a recorded decision. `tools/template_budget_ratchet.py` enforces it (30a78ed3).
+  - **Every other raise** still needs a reviewed request with evidence.
