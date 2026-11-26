@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/model/{ApiKey,ChatModelDescription,EmbeddingModelDescription,ModelDescription,ModelOptions,ModelRequest,ModelResult,NoopApiKey,ResultMetadata,SimpleApiKey,SpringAIModelProperties,SpringAIModels}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/model/{ApiKey,ChatModelDescription,EmbeddingModelDescription,EmbeddingUtils,ModelDescription,ModelOptions,ModelRequest,ModelResult,NoopApiKey,ResultMetadata,SimpleApiKey,SpringAIModelProperties,SpringAIModels}.java
 // Modified by the Flint authors.
 module flint.ai.model;
 
 import flint.java.lang : JavaObject, stringHashCode;
+import std.typecons : Nullable;
 
 @safe:
 
@@ -102,6 +103,24 @@ interface ModelResult(T)
 /// Marker for metadata associated with the result of an AI model.
 interface ResultMetadata
 {
+}
+
+/// Conversion utilities for embedding vectors.
+final class EmbeddingUtils
+{
+    @disable this();
+
+    /// Copies primitive values to a new array of boxed floats (R5).
+    static Nullable!float[] toFloatArray(scope const(float)[] array) pure
+    {
+        if (array.length == 0)
+            return (new Nullable!float[1])[0 .. 0];
+
+        auto result = new Nullable!float[array.length];
+        foreach (i, value; array)
+            result[i] = Nullable!float(value);
+        return result;
+    }
 }
 
 /// Property keys that select the provider for each type of AI model.
