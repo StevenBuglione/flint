@@ -1259,3 +1259,13 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **Coverage:** inline zero and scalar values, a null reference as `Any`'s null, and identity kept for references.
   - **Where it applies:** new mapping entries cite R23 rather than per-module deviations (first user: sol-data's `IdentifierAccessor`).
   - **Who:** api-coverage adds the rule.
+- 2026-11-26 05:15Z, coordinator, under the owner's standing approval: **`List!T` per-type cost, second design** (sol-jdk-core).
+  - **Pilot result:** the first pilot cut LDC marginal bytes per element type by about 30%: class from 17.3 to 12.0 KB, JsonNode from 17.0 to 11.8 KB, Meter unchanged. In a lean probe, the per-T typed interface thunks, vtables and ClassInfo still cost about 3.5 KB.
+  - **Approved for measurement:**
+    - nominal `List!T` becomes an erased marker over one non-template `RawList` virtual contract;
+    - typed `get`, `add` and iteration methods become non-virtual;
+    - each `T` gets one final internal view adapter;
+    - `ArrayList!T` and `AbstractList!T` stay public and subclassable, as compatibility adapters.
+  - **Before the full conversion:** measured numbers for factories and one internal mutable-result entry point (Jackson, Meter), with a target of about 2–3 KiB per `T` on LDC O3 and Oz and no DMD regression. Cross-implementation `List.equals` and `hashCode` stay exact. Reads and foreach stay allocation-free.
+  - **A deviation:** classes that implement `List!T` directly need the legacy adapter. This gets a D-id with an R10 mapping note.
+- 2026-11-26 05:15Z, coordinator: **the Deviations table in api-mapping.md becomes generated** from one file per deviation (`api/deviations/`), owned by api-coverage, because parallel submissions kept conflicting on its rows. Union merge is unsafe for that file's prose.
