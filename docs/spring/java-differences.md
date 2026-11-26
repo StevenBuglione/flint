@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 520 | 28 | 1 | 2,746 |
+| framework | jackson-core@3.1.8 | 524 | 28 | 1 | 2,742 |
 | framework | jackson-databind@3.1.8 | 511 | 137 | 5 | 9,814 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -11056,7 +11056,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.filter | 183 | 0 |
 | tools.jackson.core.io | 277 | 0 |
 | tools.jackson.core.io.schubfach | 34 | 0 |
-| tools.jackson.core.json | 462 | 0 |
+| tools.jackson.core.json | 458 | 0 |
 | tools.jackson.core.json.async | 168 | 0 |
 | tools.jackson.core.sym | 147 | 0 |
 | tools.jackson.core.tree | 2 | 0 |
@@ -11993,15 +11993,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.json.JsonReadContext#<init>(JsonReadContext,int,DupDetector,int,int,int)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.JsonReadContext#createRootContext(DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.JsonReadContext#createRootContext(int,int,DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_ZEROS_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_NON_NUMERIC_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_SINGLE_QUOTES` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_UNESCAPED_CONTROL_CHARS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_UNQUOTED_PROPERTY_NAMES` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonWriteContext#<init>(int,JsonWriteContext,DupDetector,Object)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.JsonWriteContext#createRootContext(DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char)` | 2 | Requires SerializableString and the explicit generator context and output configuration. |

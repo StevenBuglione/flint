@@ -320,7 +320,8 @@ unittest
 {
     auto p = createParser("[ \"a\x01b\" ]");
     assert(p.nextToken() == JsonToken.START_ARRAY);
-    expectFailure(() { p.nextToken(); }, "Illegal character");
+    // Jackson's ParserMinimalBase._throwUnquotedSpace wording.
+    expectFailure(() { p.nextToken(); }, "Illegal unquoted character ((CTRL-CHAR, code 1))");
 }
 
 @("SimpleParserTest.currentName at START_OBJECT names the enclosing property")

@@ -665,8 +665,19 @@
       "status": "ported"
     },
     "tools/jackson/core/unittest/read/AposUnescapedControlChars1750Test.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/apos_unescaped_control_chars1750_test.d",
+      "methods": {
+        "ported": [
+          "controlCharsInAposValueAllowed",
+          "controlCharsInAposNameAllowed",
+          "controlCharsInAposDisallowed",
+          "linefeedsUpdateRow"
+        ],
+        "skipped": {
+          "controlCharsStreamedToWriter": "needs JsonParser.readString(Writer), which jackson-core does not have yet"
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/read/ArrayParsingTest.java": {
       "phase": "2",
@@ -768,12 +779,33 @@
       "status": "ported"
     },
     "tools/jackson/core/unittest/read/NonStandardAposQuotedNamesTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/non_standard_apos_quoted_names_test.d",
+      "methods": {
+        "ported": [
+          "singleQuotesDefault",
+          "singleQuotesEnabled",
+          "singleQuotesEscaped",
+          "singleQuotedKeys721",
+          "singleQuotedValues721"
+        ]
+      },
+      "status": "ported"
     },
     "tools/jackson/core/unittest/read/NonStandardJsonReadFeaturesTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/non_standard_json_read_features_test.d",
+      "methods": {
+        "ported": [
+          "defaults",
+          "nonStandardAnyCharQuoting"
+        ],
+        "skipped": {
+          "leadingZeroesUTF8": "the non-standard number features arrive with the read features' number slice",
+          "leadingZeroesReader": "the non-standard number features arrive with the read features' number slice",
+          "allowNaN": "the non-standard number features arrive with the read features' number slice",
+          "allowInfinity": "the non-standard number features arrive with the read features' number slice"
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/read/NonStandardLeadingPlusSign784Test.java": {
       "phase": "2",
@@ -784,8 +816,17 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/read/NonStandardUnquotedNamesTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/non_standard_unquoted_names_test.d",
+      "methods": {
+        "ported": [
+          "simpleUnquotedBytes",
+          "simpleUnquotedChars",
+          "largeUnquoted",
+          "unquotedIssue510",
+          "nonStandardNameChars"
+        ]
+      },
+      "status": "ported"
     },
     "tools/jackson/core/unittest/read/NumberCoercionTest.java": {
       "phase": "2",
