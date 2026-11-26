@@ -20,14 +20,74 @@
  */
 module flint.expression.context_tests;
 
+import flint.core.convert : TypeDescriptor;
 import flint.engine.aot.any : Any;
 import flint.expression : EvaluationContext, EvaluationException, TypedValue;
 import flint.expression.spel : SpelParseException;
 import flint.expression.spel.standard : SpelExpressionParser;
 import flint.expression.spel.support : StandardEvaluationContext;
-import flint.java.lang : IllegalArgumentException, IllegalStateException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, NullPointerException;
+import flint.java.util.function_ : Supplier;
 
 @safe:
+
+@("variable assignment preserves the typed value and evaluates its supplier once") unittest
+{
+    EvaluationContext context = new StandardEvaluationContext;
+    auto descriptor = TypeDescriptor.forObject(Any.of("example"));
+    int calls;
+    TypedValue supply()
+    {
+        ++calls;
+        return TypedValue(Any.of("assigned"), descriptor);
+    }
+
+    auto assigned = context.assignVariable("name", Supplier!TypedValue.of(&supply));
+    assert(calls == 1);
+    assert(assigned.getTypeDescriptor() is descriptor);
+    assert(context.lookupVariable("name") == assigned.getValue());
+
+    try
+    {
+        context.assignVariable("name", cast(Supplier!TypedValue) null);
+        assert(0, "expected a null supplier to fail");
+    }
+    catch (NullPointerException)
+    {
+        assert(context.lookupVariable("name") == assigned.getValue());
+    }
+
+    (cast(StandardEvaluationContext) context).assignVariable("name", () => TypedValue.NULL);
+    assert(context.lookupVariable("name").isNull());
+}
+
+@("an overriding context can decline assignment without evaluating the delegate") unittest
+{
+    static final class RejectingContext : StandardEvaluationContext
+    {
+        override TypedValue assignVariable(string name, Supplier!TypedValue)
+        {
+            assert(name == "name");
+            throw new IllegalStateException("assignment denied");
+        }
+    }
+
+    EvaluationContext context = new RejectingContext;
+    context.setVariable("name", Any.of("original"));
+    try
+    {
+        context.assignVariable("name", () {
+            assert(0, "rejected assignment must leave the supplier unevaluated");
+            return TypedValue.NULL;
+        });
+        assert(0, "expected the custom assignment policy to reject the bind");
+    }
+    catch (IllegalStateException failure)
+    {
+        assert(failure.msg == "assignment denied");
+        assert(context.lookupVariable("name") == Any.of("original"));
+    }
+}
 
 @("a parsed variable reads the current context")
 unittest

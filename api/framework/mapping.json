@@ -15782,7 +15782,7 @@
 "org.springframework.expression.ConstructorResolver":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.expression.ConstructorResolver#resolve(EvaluationContext,String,List)":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.expression.EvaluationContext":{"status":"ported","d":"flint.expression.EvaluationContext"},
-"org.springframework.expression.EvaluationContext#assignVariable(String,Supplier)":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.expression.EvaluationContext#assignVariable(String,Supplier)":{"status":"adapted","d":"flint.expression.EvaluationContext.assignVariable","rules":["R3","R9"]},
 "org.springframework.expression.EvaluationContext#getBeanResolver()":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.expression.EvaluationContext#getConstructorResolvers()":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.expression.EvaluationContext#getIndexAccessors()":{"status":"excluded","category":"deferred","phase":"2"},

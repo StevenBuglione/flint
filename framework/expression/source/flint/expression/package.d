@@ -24,8 +24,9 @@ module flint.expression;
 import flint.core.convert : TypeDescriptor;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decimal;
-import flint.java.lang : RuntimeException;
+import flint.java.lang : NullPointerException, RuntimeException;
 import flint.java.util : List;
+import flint.java.util.function_ : Supplier;
 
 @safe:
 
@@ -58,6 +59,15 @@ interface EvaluationContext
     /// The default root for expressions evaluated with this context.
     TypedValue getRootObject();
 
+    /// Assign a variable from an expression. The context controls when to request the value (R3, R9).
+    TypedValue assignVariable(string name, Supplier!TypedValue valueSupplier);
+
+    /// Assign a variable from a D delegate, using the context's assignment policy (R9).
+    final TypedValue assignVariable(string name, TypedValue delegate() @safe valueSupplier)
+    {
+        return assignVariable(name, valueSupplier is null ? null : Supplier!TypedValue.of(valueSupplier));
+    }
+
     /// Bind a value to a name.
     void setVariable(string name, Any value);
 
@@ -68,14 +78,30 @@ interface EvaluationContext
     List!PropertyAccessor getPropertyAccessors();
 
     /// Java default methods for custom evaluation contexts (R3).
-    mixin template Defaults()
+    /// Set includePropertyAccessors to false when the context provides its own accessor list.
+    mixin template Defaults(bool includePropertyAccessors = true)
     {
-        private import flint.expression : PropertyAccessor;
-        private import flint.java.util : Collections, List;
+        alias assignVariable = EvaluationContext.assignVariable;
 
-        override List!PropertyAccessor getPropertyAccessors()
+        // Share the implementation with the interface thunk and keep it out of expression callers.
+        pragma(inline, false) override TypedValue assignVariable(string name, Supplier!TypedValue valueSupplier)
         {
-            return Collections.emptyList!PropertyAccessor();
+            if (valueSupplier is null)
+                throw new NullPointerException;
+            auto value = valueSupplier.get();
+            setVariable(name, value.getValue());
+            return value;
+        }
+
+        static if (includePropertyAccessors)
+        {
+            private import flint.expression : PropertyAccessor;
+            private import flint.java.util : Collections, List;
+
+            override List!PropertyAccessor getPropertyAccessors()
+            {
+                return Collections.emptyList!PropertyAccessor();
+            }
         }
     }
 }

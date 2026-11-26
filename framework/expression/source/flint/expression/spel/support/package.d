@@ -100,6 +100,8 @@ class StandardTypeConverter : TypeConverter
 /// The reusable SpEL context for a root object and named variables.
 class StandardEvaluationContext : EvaluationContextAccess
 {
+    mixin EvaluationContext.Defaults!(false);
+
     protected override final bool isStandardContext() nothrow @nogc
     {
         return typeid(cast(Object) this) is typeid(StandardEvaluationContext);

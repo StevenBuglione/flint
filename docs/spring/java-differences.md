@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 163 | 271 | 0 | 15,362 |
 | boot | spring-boot@v4.2.0 | 40 | 22 | 2,133 | 13,408 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,461 | 1,377 | 4,848 | 30,148 |
+| framework | spring-framework@v7.1.0 | 3,461 | 1,378 | 4,848 | 30,147 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2269,6 +2269,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.expression.EvaluationContext#assignVariable(String,Supplier)` | `flint.expression.EvaluationContext.assignVariable` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.expression.EvaluationContext#getPropertyAccessors()` | `flint.expression.EvaluationContext.getPropertyAccessors` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.expression.TargetedAccessor#getSpecificTargetClasses()` | `flint.expression.TargetedAccessor.getSpecificTargetClasses` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.expression.TypeConverter#convertValue(Object,TypeDescriptor,TypeDescriptor)` | `flint.expression.TypeConverter.convertValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -9174,7 +9175,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.core.type.filter | 36 | 0 |
 | org.springframework.dao.annotation | 8 | 0 |
 | org.springframework.dao.support | 16 | 0 |
-| org.springframework.expression | 80 | 0 |
+| org.springframework.expression | 79 | 0 |
 | org.springframework.expression.common | 73 | 0 |
 | org.springframework.expression.spel | 167 | 0 |
 | org.springframework.expression.spel.ast | 267 | 0 |
