@@ -1,0 +1,5 @@
+{
+ "id": "D-WEB-3",
+ "deviation": "Generic converter `Type` arguments use `TypeDescriptor`. An ordinary `HttpOutputMessage` receives bytes through `writeBody`, and a streaming body writes to the sender's `OutputStream`. The streaming byte-array overload copies its bytes before retaining them.",
+ "reason": "Flint's closed world supplies type information ahead of time. Its ordinary message sink handles delivery, and a deferred write must own its bytes."
+}

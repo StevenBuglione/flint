@@ -14,9 +14,18 @@ Boot configures it.
 module flint.http.converter;
 
 import flint.core : NestedRuntimeException;
+import flint.core.convert : TypeDescriptor;
+import flint.core.io : InputStreamResource, Resource;
+import flint.core.io.support : ResourceRegion;
 import flint.engine.aot.any : Any;
-import flint.http : HttpHeaders, HttpInputMessage, HttpOutputMessage, MediaType;
+import flint.engine.aot.name : typeNameOf;
+import flint.engine.aot.text : decodeUtf8;
+import flint.http : HttpHeaders, HttpInputMessage, HttpOutputMessage, MediaType, MediaTypeFactory,
+    StreamingHttpOutputMessage, decimal;
+import flint.java.io : IOException, InputStream, OutputStream;
+import flint.java.lang : IllegalArgumentException, UnsupportedOperationException;
 import flint.java.nio.charset : Charset, StandardCharsets;
+import flint.java.util : RawCollection;
 
 @safe:
 
@@ -203,6 +212,383 @@ abstract class AbstractHttpMessageConverter : HttpMessageConverter
 
     /// Writes the body.
     protected abstract void writeInternal(Any value, HttpOutputMessage outputMessage);
+}
+
+/// GenericHttpMessageConverter.java, Spring Framework v7.1.0. Modified by the Flint authors.
+interface GenericHttpMessageConverter : HttpMessageConverter
+{
+    alias canRead = HttpMessageConverter.canRead;
+    alias canWrite = HttpMessageConverter.canWrite;
+    alias read = HttpMessageConverter.read;
+    alias write = HttpMessageConverter.write;
+
+    bool canRead(const TypeDescriptor type, string contextClass, scope const(MediaType)* mediaType);
+    bool canWrite(const TypeDescriptor type, string typeName, scope const(MediaType)* mediaType);
+    Any read(const TypeDescriptor type, string contextClass, HttpInputMessage inputMessage);
+    void write(Any value, const TypeDescriptor type, scope const(MediaType)* contentType, HttpOutputMessage output);
+}
+
+/// AbstractGenericHttpMessageConverter.java, Spring Framework v7.1.0. Modified by the Flint authors.
+abstract class AbstractGenericHttpMessageConverter : AbstractHttpMessageConverter, GenericHttpMessageConverter
+{
+    alias canRead = AbstractHttpMessageConverter.canRead;
+    alias canWrite = AbstractHttpMessageConverter.canWrite;
+    alias read = AbstractHttpMessageConverter.read;
+    alias write = AbstractHttpMessageConverter.write;
+    alias writeInternal = AbstractHttpMessageConverter.writeInternal;
+
+    protected this(MediaType[] mediaTypes...)
+    {
+        super(mediaTypes);
+    }
+
+    protected this(Charset charset, MediaType[] mediaTypes...)
+    {
+        super(charset, mediaTypes);
+    }
+
+    protected override bool supports(string typeName)
+    {
+        return true;
+    }
+
+    override bool canRead(const TypeDescriptor type, string contextClass, scope const(MediaType)* mediaType)
+    {
+        return type is null || type.getElementTypeDescriptor() !is null
+            ? canRead(mediaType) : canRead(type.getName(), mediaType);
+    }
+
+    override bool canWrite(const TypeDescriptor type, string typeName, scope const(MediaType)* mediaType)
+    {
+        return canWrite(typeName, mediaType);
+    }
+
+    abstract override Any read(const TypeDescriptor type, string contextClass, HttpInputMessage inputMessage);
+
+    override void write(Any value, scope const(MediaType)* contentType, HttpOutputMessage output)
+    {
+        write(value, null, contentType, output);
+    }
+
+    final override void write(Any value, const TypeDescriptor type,
+            scope const(MediaType)* contentType, HttpOutputMessage output)
+    {
+        auto headers = output.getHeaders();
+        addDefaultHeaders(headers, value, contentType);
+        if (auto streaming = cast(StreamingHttpOutputMessage) output)
+            streaming.setBody(new ConverterStreamingBody(this, headers, value, type, contentType));
+        else
+            writeInternal(value, type, output);
+    }
+
+    /// Whether the value can be written more than once.
+    bool canWriteRepeatedly(Any value, scope const(MediaType)* contentType)
+    {
+        return false;
+    }
+
+    protected override void writeInternal(Any value, HttpOutputMessage output)
+    {
+        writeInternal(value, null, output);
+    }
+
+    protected abstract void writeInternal(Any value, const TypeDescriptor type, HttpOutputMessage output);
+}
+
+private final class ConverterStreamingBody : StreamingHttpOutputMessage.Body
+{
+    private AbstractGenericHttpMessageConverter converter;
+    private HttpHeaders headers;
+    private Any value;
+    private const(TypeDescriptor) type;
+    private MediaType mediaType;
+    private bool hasMediaType;
+
+    this(AbstractGenericHttpMessageConverter converter, HttpHeaders headers, Any value,
+            const TypeDescriptor type, scope const(MediaType)* contentType)
+    {
+        this.converter = converter;
+        this.headers = headers;
+        this.value = value;
+        this.type = type;
+        hasMediaType = contentType !is null;
+        if (hasMediaType)
+            mediaType = *contentType;
+    }
+
+    void writeTo(OutputStream output)
+    {
+        converter.writeInternal(value, type, new StreamHttpOutputMessage(headers, output));
+    }
+
+    bool repeatable()
+    {
+        return converter.canWriteRepeatedly(value, hasMediaType ? &mediaType : null);
+    }
+}
+
+private final class StreamHttpOutputMessage : HttpOutputMessage
+{
+    private HttpHeaders headers;
+    private OutputStream output;
+
+    this(HttpHeaders headers, OutputStream output)
+    {
+        this.headers = headers;
+        this.output = output;
+    }
+
+    HttpHeaders getHeaders()
+    {
+        return headers;
+    }
+
+    void writeBody(scope const(ubyte)[] bytes)
+    {
+        output.write(bytes);
+    }
+}
+
+/// ResourceRegionHttpMessageConverter.java, Spring Framework v7.1.0. Modified by the Flint authors.
+class ResourceRegionHttpMessageConverter : AbstractGenericHttpMessageConverter
+{
+    private TypeDescriptor regionType;
+    private TypeDescriptor collectionType;
+
+    this()
+    {
+        super(MediaType.ALL);
+        regionType = TypeDescriptor.valueOf!ResourceRegion();
+        collectionType = TypeDescriptor.valueOf!RawCollection();
+    }
+
+    override bool canRead(string typeName, scope const(MediaType)* mediaType)
+    {
+        return false;
+    }
+
+    override bool canRead(const TypeDescriptor type, string contextClass, scope const(MediaType)* mediaType)
+    {
+        return false;
+    }
+
+    alias read = AbstractGenericHttpMessageConverter.read;
+
+    override Any read(const TypeDescriptor type, string contextClass, HttpInputMessage inputMessage)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    protected override Any readInternal(string typeName, HttpInputMessage inputMessage)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    override bool canWrite(string typeName, scope const(MediaType)* mediaType)
+    {
+        return typeName == typeNameOf!ResourceRegion;
+    }
+
+    override bool canWrite(const TypeDescriptor type, string typeName, scope const(MediaType)* mediaType)
+    {
+        if (type is null)
+            return false;
+        if (type.isAssignableTo(regionType))
+            return true;
+        if (!type.isAssignableTo(collectionType))
+            return false;
+        auto element = type.getElementTypeDescriptor();
+        return element !is null && element.isAssignableTo(regionType);
+    }
+
+    override bool canWriteRepeatedly(Any value, scope const(MediaType)* contentType)
+    {
+        if (auto region = cast(ResourceRegion) value.asObject())
+            return repeatable(region);
+        foreach (element; regions(value))
+            if (!repeatable(regionOf(element)))
+                return false;
+        return true;
+    }
+
+    /// Spring's original repeatable-write hook.
+    protected bool supportsRepeatableWrites(Any value)
+    {
+        return canWriteRepeatedly(value, null);
+    }
+
+    private static bool repeatable(ResourceRegion region)
+    {
+        return cast(InputStreamResource) region.getResource() is null;
+    }
+
+    protected override void writeInternal(Any value, const TypeDescriptor type, HttpOutputMessage output)
+    {
+        if (auto region = cast(ResourceRegion) value.asObject())
+        {
+            writeResourceRegion(region, output);
+            return;
+        }
+        auto parts = regions(value);
+        if (parts.length == 1)
+            writeResourceRegion(regionOf(parts[0]), output);
+        else
+            writeCollection(parts, output);
+    }
+
+    protected override MediaType* getDefaultContentType(Any value)
+    {
+        auto region = cast(ResourceRegion) value.asObject();
+        if (region is null)
+        {
+            auto parts = regions(value);
+            if (parts.length != 0)
+                region = regionOf(parts[0]);
+        }
+        auto mediaType = new MediaType;
+        *mediaType = MediaTypeFactory.getMediaType(region is null ? null : region.getResource())
+            .orElse(MediaType.APPLICATION_OCTET_STREAM);
+        return mediaType;
+    }
+
+    /// Writes a single region with Content-Range and Content-Length.
+    protected void writeResourceRegion(ResourceRegion region, HttpOutputMessage output)
+    {
+        if (region is null)
+            throw new IllegalArgumentException("ResourceRegion must not be null");
+        auto headers = output.getHeaders();
+        auto resource = region.getResource();
+        const start = region.getPosition();
+        const length = resource.contentLength();
+        const count = boundedCount(region, length);
+        headers.add(HttpHeaders.CONTENT_RANGE, formatRange(start, count, length));
+        headers.setContentLength(count);
+        auto input = resource.getInputStream();
+        scope (exit)
+            closeRegion(input);
+        copyRegion(input, output, start, count);
+    }
+
+    private static Any[] regions(Any value)
+    {
+        auto collection = cast(RawCollection) value.asObject();
+        if (collection is null)
+            throw new HttpMessageNotWritableException("Expected a ResourceRegion or a collection of ResourceRegion");
+        return collection.toAnyArray();
+    }
+
+    private static ResourceRegion regionOf(Any value)
+    {
+        auto region = cast(ResourceRegion) value.asObject();
+        if (region is null)
+            throw new HttpMessageNotWritableException("Collection contains a value other than ResourceRegion");
+        return region;
+    }
+
+    private static void writeCollection(scope Any[] parts, HttpOutputMessage output)
+    {
+        import std.uuid : randomUUID;
+
+        auto headers = output.getHeaders();
+        auto contentType = headers.getContentType();
+        const boundary = randomUUID().toString();
+        headers.set(HttpHeaders.CONTENT_TYPE, "multipart/byteranges; boundary=" ~ boundary);
+
+        Resource resource;
+        InputStream input;
+        long offset;
+        scope (exit)
+            closeRegion(input);
+        foreach (part; parts)
+        {
+            auto region = regionOf(part);
+            const start = region.getPosition();
+            if (resource !is region.getResource() || start < offset)
+            {
+                if (input !is null)
+                {
+                    auto previous = input;
+                    input = null;
+                    previous.close();
+                }
+                resource = region.getResource();
+                input = resource.getInputStream();
+                offset = 0;
+            }
+            const length = resource.contentLength();
+            writeText(output, "\r\n--" ~ boundary ~ "\r\n");
+            if (contentType !is null)
+                writeText(output, "Content-Type: " ~ contentType.toString() ~ "\r\n");
+            writeText(output, "Content-Range: " ~ formatRange(start, region.getCount(), length) ~ "\r\n\r\n");
+            const count = boundedCount(region, length);
+            copyRegion(input, output, start - offset, count);
+            offset = start + count;
+        }
+        writeText(output, "\r\n--" ~ boundary ~ "--");
+    }
+
+    private static long boundedCount(ResourceRegion region, long length)
+    {
+        const remaining = length - region.getPosition();
+        return region.getCount() < remaining ? region.getCount() : remaining;
+    }
+
+    private static string formatRange(long start, long count, long length)
+    {
+        return "bytes " ~ decimal(start) ~ "-" ~ decimal(start + count - 1) ~ "/" ~ decimal(length);
+    }
+
+    private static void writeText(HttpOutputMessage output, string text)
+    {
+        foreach (offset, c; text)
+        {
+            if (c < 128)
+                continue;
+            char[] ascii = text[0 .. offset].dup;
+            size_t pos = offset;
+            while (pos < text.length)
+            {
+                const point = decodeUtf8(text, pos);
+                ascii ~= point < 128 ? cast(char) point : '?';
+            }
+            output.writeBody(cast(const(ubyte)[]) ascii);
+            return;
+        }
+        output.writeBody(cast(const(ubyte)[]) text);
+    }
+
+    private static void closeRegion(InputStream input)
+    {
+        if (input is null)
+            return;
+        try
+            input.close();
+        catch (IOException)
+        {
+        }
+    }
+
+    private static void copyRegion(InputStream input, HttpOutputMessage output, long skip, long count)
+    {
+        ubyte[4096] chunk;
+        while (skip > 0)
+        {
+            const size = cast(size_t)(skip < chunk.length ? skip : chunk.length);
+            const n = input.read(chunk[0 .. size]);
+            if (n <= 0)
+                throw new IOException("Could not skip to the beginning of the resource range");
+            skip -= n;
+        }
+        while (count > 0)
+        {
+            const size = cast(size_t)(count < chunk.length ? count : chunk.length);
+            const n = input.read(chunk[0 .. size]);
+            if (n <= 0)
+                break;
+            output.writeBody(chunk[0 .. n]);
+            count -= n;
+        }
+    }
 }
 
 /// `StringHttpMessageConverter`: `string` bodies, `text/plain` and `*/*`.

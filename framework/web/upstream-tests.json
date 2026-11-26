@@ -563,8 +563,20 @@
       "status": "deferred"
     },
     "org/springframework/http/converter/ResourceRegionHttpMessageConverterTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/web/tests/resource_region_http_message_converter_tests.d",
+      "methods": {
+        "ported": [
+          "applicationOctetStreamDefaultContentType",
+          "canReadResource",
+          "canWriteResource",
+          "canWriteResourceCollection",
+          "partialContentMultipleByteRanges",
+          "partialContentMultipleByteRangesInRandomOrderAndOverlapping",
+          "shouldWritePartialContentByteRange",
+          "shouldWritePartialContentByteRangeNoEnd"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/http/converter/StringHttpMessageConverterTests.java": {
       "d": "framework/web/tests/string_http_message_converter_tests.d",

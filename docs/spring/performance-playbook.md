@@ -684,6 +684,12 @@ reuses Core's resource length and region APIs. On venus the matched web probe me
 to 537,009 linked bytes and 10,410 to 11,036 DMD template instances from `1da72da6` to `66361cbb`.
 The tests cover the 100-range boundary, stale validators, length failures and byte-count overflow.
 
+Resource-region output copies through a 4 KiB stack buffer. Multipart output keeps one resource
+stream open while ranges move forward, reopening it for another resource or a backward range.
+The matched venus web probe moved from 537,009 to 536,737 linked bytes and from 11,036 to 11,212
+DMD template instances at `504ef130` and `bdd16d0e`. The converter tests pin multipart framing,
+overlapping ranges, deferred output and ownership of buffered streaming bodies.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

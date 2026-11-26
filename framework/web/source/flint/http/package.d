@@ -16,7 +16,7 @@ module flint.http;
 
 import flint.core.io : InputStreamResource, Resource;
 import flint.core.io.support : ResourceRegion;
-import flint.java.io : IOException;
+import flint.java.io : IOException, OutputStream;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, JavaObject, Long,
     NullPointerException, NumberFormatException, UnsupportedOperationException;
 import flint.java.net : URI;
@@ -3880,6 +3880,83 @@ interface HttpOutputMessage : HttpMessage
 {
     /// Appends `bytes` to the body (Java writes to `getBody()`, an `OutputStream`).
     void writeBody(scope const(ubyte)[] bytes);
+}
+
+/// StreamingHttpOutputMessage.java, Spring Framework v7.1.0. Modified by the Flint authors.
+interface StreamingHttpOutputMessage : HttpOutputMessage
+{
+    /// Writes to the stream supplied when the message is sent.
+    interface Body
+    {
+        void writeTo(OutputStream output);
+        bool repeatable();
+
+        mixin template Defaults()
+        {
+            bool repeatable()
+            {
+                return false;
+            }
+        }
+    }
+
+    void setBody(Body body);
+    void setBody(scope const(ubyte)[] body);
+    void setBody(void delegate(OutputStream) @safe body);
+
+    /// Adapts owned byte content and D delegates to the streaming body contract.
+    mixin template Defaults(alias Message = StreamingHttpOutputMessage,
+            alias BytesBody = BytesStreamingBody, alias DelegateBody = DelegateStreamingBody)
+    {
+        void setBody(scope const(ubyte)[] body)
+        {
+            (cast(Message) this).setBody(new BytesBody(body.idup));
+        }
+
+        void setBody(void delegate(imported!"flint.java.io".OutputStream) @safe body)
+        {
+            (cast(Message) this).setBody(new DelegateBody(body));
+        }
+    }
+}
+
+private final class BytesStreamingBody : StreamingHttpOutputMessage.Body
+{
+    private immutable(ubyte)[] bytes;
+
+    this(immutable(ubyte)[] bytes)
+    {
+        this.bytes = bytes;
+    }
+
+    void writeTo(OutputStream output)
+    {
+        output.write(bytes);
+        output.flush();
+    }
+
+    bool repeatable()
+    {
+        return true;
+    }
+}
+
+private final class DelegateStreamingBody : StreamingHttpOutputMessage.Body
+{
+    mixin StreamingHttpOutputMessage.Body.Defaults;
+    private void delegate(OutputStream) @safe body;
+
+    this(void delegate(OutputStream) @safe body)
+    {
+        if (body is null)
+            throw new NullPointerException("body");
+        this.body = body;
+    }
+
+    void writeTo(OutputStream output)
+    {
+        body(output);
+    }
 }
 
 /// `HttpRequest`: a method and a URI.
