@@ -228,6 +228,7 @@ R2 keeps annotation modules leaves, and Flint AOT matches UDAs by their canonica
 - **The annotations** keep the package's own module, unchanged: `org.springframework.boot.autoconfigure.condition` → `flint.boot.autoconfigure.condition`.
 - **The package's runtime types** all go in ONE sibling module with the fixed suffix `_runtime`: `ConditionMessage`, `ConditionOutcome` and `ConditionEvaluationReport` are in `flint.boot.autoconfigure.condition_runtime`.
 - **The leaf never imports the runtime module.** The runtime module may import the leaf.
+- **Marker types stay in the leaf.** A dependency-free type that Flint AOT matches by name, and that imports nothing (Spring Data's `Repository!(T, ID)`), stays in the leaf module beside the annotations, under its canonical name. Every other runtime type goes in the `_runtime` sibling (coordinator, 2026-11-26).
 - **Where it recurs:** `context.annotation`'s runtime classes and the `web.bind.annotation` helpers.
 
 Mapping: each runtime type and its members are `adapted` with rule `R22` (plus any other rule that shapes them), with `d` under the `_runtime` module. The annotations map under R2 as usual.
