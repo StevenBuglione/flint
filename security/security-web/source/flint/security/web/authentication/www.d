@@ -58,8 +58,6 @@ struct BasicAuthenticationConverter
     /// one.
     static UsernamePasswordAuthenticationToken convert(HttpServletRequest request)
     {
-        import std.base64 : Base64;
-
         auto header = request.getHeader("Authorization");
         if (header is null)
             return null;
@@ -70,15 +68,72 @@ struct BasicAuthenticationConverter
             throw new BadCredentialsException("Empty basic authentication token");
         const encoded = trim(header[6 .. $]);
         string token;
-        try
-            token = cast(string) Base64.decode(encoded).idup;
-        catch (Exception)
+        if (!decodeBase64(encoded, token))
             throw new BadCredentialsException("Failed to decode basic authentication token");
         foreach (i, c; token)
             if (c == ':')
                 return UsernamePasswordAuthenticationToken.unauthenticated(Any.of(token[0 .. i]),
                         Any.of(token[i + 1 .. $]));
         throw new BadCredentialsException("Invalid basic authentication token");
+    }
+
+    /++
+    Java's `Base64.getDecoder().decode` (RFC 4648 basic alphabet), clean-room from the Java SE specification:
+    padding is optional, but a padded final unit needs its full padding; any character outside the alphabet,
+    padding before the end, or a final unit of one character fails. Not std.base64, whose object drags Phobos's
+    exception, curl and socket objects into every executable (playbook S-9).
+    +/
+    private static bool decodeBase64(string encoded, out string decoded) pure nothrow
+    {
+        auto bytes = new char[encoded.length / 4 * 3 + 3];
+        size_t length;
+        uint bits;
+        int count;
+        size_t i;
+        for (; i < encoded.length; i++)
+        {
+            const value = base64Value(encoded[i]);
+            if (value < 0)
+                break;
+            bits = bits << 6 | value;
+            if (++count == 4)
+            {
+                bytes[length++] = cast(char)(bits >> 16);
+                bytes[length++] = cast(char)(bits >> 8);
+                bytes[length++] = cast(char) bits;
+                bits = 0;
+                count = 0;
+            }
+        }
+        if (count == 1)
+            return false;
+        // The rest may only be the final unit's padding: two '=' after two characters, one after three.
+        const padding = encoded.length - i;
+        if (padding != 0 && (count == 0 || padding != 4 - count))
+            return false;
+        foreach (c; encoded[i .. $])
+            if (c != '=')
+                return false;
+        if (count == 2)
+            bytes[length++] = cast(char)(bits >> 4);
+        else if (count == 3)
+        {
+            bytes[length++] = cast(char)(bits >> 10);
+            bytes[length++] = cast(char)(bits >> 2);
+        }
+        decoded = bytes[0 .. length].idup;
+        return true;
+    }
+
+    private static int base64Value(char c) pure nothrow @nogc
+    {
+        if (c >= 'A' && c <= 'Z')
+            return c - 'A';
+        if (c >= 'a' && c <= 'z')
+            return c - 'a' + 26;
+        if (c >= '0' && c <= '9')
+            return c - '0' + 52;
+        return c == '+' ? 62 : c == '/' ? 63 : -1;
     }
 
     private static string trim(string text) pure nothrow @nogc
@@ -164,4 +219,21 @@ class BasicAuthenticationFilter : SecurityFilter
             return true;
         return existing.getName() != username;
     }
+}
+
+@("BasicAuthenticationConverter decodes Java's basic Base64: padded or not; rejects bad alphabet and padding")
+unittest
+{
+    string token;
+    assert(BasicAuthenticationConverter.decodeBase64("dXNlcjpwYXNz", token) && token == "user:pass");
+    assert(BasicAuthenticationConverter.decodeBase64("YTpi", token) && token == "a:b");
+    assert(BasicAuthenticationConverter.decodeBase64("YTpiYw==", token) && token == "a:bc");
+    assert(BasicAuthenticationConverter.decodeBase64("YTpiYw", token) && token == "a:bc", "padding is optional");
+    assert(BasicAuthenticationConverter.decodeBase64("YTpiYzE=", token) && token == "a:bc1");
+    assert(BasicAuthenticationConverter.decodeBase64("", token) && token == "");
+    assert(!BasicAuthenticationConverter.decodeBase64("YTpi*", token), "outside the alphabet");
+    assert(!BasicAuthenticationConverter.decodeBase64("YTpiYw=", token), "partial padding");
+    assert(!BasicAuthenticationConverter.decodeBase64("YT=pYw==", token), "padding before the end");
+    assert(!BasicAuthenticationConverter.decodeBase64("YTpiY", token), "a dangling sixth bit group");
+    assert(!BasicAuthenticationConverter.decodeBase64("YTpi====", token), "padding after a full unit");
 }
