@@ -191,7 +191,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 143 | 142 | 0 | 2,105 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
-| framework | thymeleaf@3.1.7.RELEASE | 49 | 57 | 0 | 4,346 |
+| framework | thymeleaf@3.1.7.RELEASE | 53 | 64 | 0 | 4,335 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
 | framework | openjdk@21.0.13 | 231 | 134 | 1,871 | 16,185 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
@@ -4007,6 +4007,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.thymeleaf.expression.IExpressionObjects#getObject(String)` | `flint.thymeleaf.expression.IExpressionObjects.getObject` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.thymeleaf.expression.IExpressionObjects#getObjectNames()` | `flint.thymeleaf.expression.IExpressionObjects.getObjectNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+
+#### org.thymeleaf.standard.expression
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.thymeleaf.standard.expression.StandardExpressionExecutionContext` | `flint.thymeleaf.standard.expression.StandardExpressionExecutionContext` | [R15](api-mapping.md#r15-enums-with-fields) | Reference identity becomes value equality. All eight flag tuples are pairwise distinct. |
+| `org.thymeleaf.standard.expression.StandardExpressionExecutionContext#NORMAL` | `flint.thymeleaf.standard.expression.StandardExpressionExecutionContext.NORMAL` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.standard.expression.StandardExpressionExecutionContext#RESTRICTED` | `flint.thymeleaf.standard.expression.StandardExpressionExecutionContext.RESTRICTED` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.standard.expression.StandardExpressionExecutionContext#RESTRICTED_FORBID_UNSAFE_EXP_RESULTS` | `flint.thymeleaf.standard.expression.StandardExpressionExecutionContext.RESTRICTED_FORBID_UNSAFE_EXP_RESULTS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.standard.expression.StandardExpressionExecutionContext#RESTRICTED_WITH_NORMAL_LINK_PARAMETERS` | `flint.thymeleaf.standard.expression.StandardExpressionExecutionContext.RESTRICTED_WITH_NORMAL_LINK_PARAMETERS` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.standard.expression.StandardExpressionExecutionContext#withTypeConversion()` | `flint.thymeleaf.standard.expression.StandardExpressionExecutionContext.withTypeConversion` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `org.thymeleaf.standard.expression.StandardExpressionExecutionContext#withoutTypeConversion()` | `flint.thymeleaf.standard.expression.StandardExpressionExecutionContext.withoutTypeConversion` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 
 #### org.thymeleaf.standard.inline
 
@@ -9962,7 +9974,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.thymeleaf.spring6.web.webflux | 0 | 64 |
 | org.thymeleaf.spring6.webflow.view | 17 | 0 |
 | org.thymeleaf.standard | 26 | 0 |
-| org.thymeleaf.standard.expression | 338 | 0 |
+| org.thymeleaf.standard.expression | 327 | 0 |
 | org.thymeleaf.standard.inline | 49 | 0 |
 | org.thymeleaf.standard.processor | 287 | 0 |
 | org.thymeleaf.standard.serializer | 15 | 0 |
