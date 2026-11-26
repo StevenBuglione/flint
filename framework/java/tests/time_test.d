@@ -592,3 +592,28 @@ unittest
     const basicDate = "20240331+0100";
     assert(DateTimeFormatter.BASIC_ISO_DATE.parse(basicDate).toOffset(basicDate).getTotalSeconds() == 3_600);
 }
+
+@("DateTimeFormatter prints a local override zone without creating an offset")
+unittest
+{
+    import std.exception : collectException;
+
+    const offset = ZoneId.of("+05:45");
+    const named = ZoneId.of("UTC");
+    const local = LocalDateTime.parse("2024-03-31T02:15:30");
+    const date = local.toLocalDate();
+    const time = local.toLocalTime();
+
+    assert(DateTimeFormatter.ofPattern("uuuu-MM-dd VV").withZone(offset).format(date) == "2024-03-31 +05:45");
+    assert(DateTimeFormatter.ofPattern("HH:mm:ss VV").withZone(named).format(time) == "02:15:30 UTC");
+    const formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss VV");
+    assert(formatter.withZone(offset).format(local) == "2024-03-31 02:15:30 +05:45");
+    assert(formatter.withZone(named).format(local) == "2024-03-31 02:15:30 UTC");
+    assert(collectException!DateTimeException(formatter.format(local)) !is null);
+
+    const optional = DateTimeFormatter.ofPattern("HH:mm[ XXX][ VV]").withZone(offset);
+    assert(optional.format(local) == "02:15 +05:45");
+    const requiredOffset = DateTimeFormatter.ofPattern("HH:mm XXX").withZone(offset);
+    assert(collectException!DateTimeException(requiredOffset.format(local)) !is null);
+    assert(DateTimeFormatter.ISO_DATE_TIME.withZone(named).format(local) == "2024-03-31T02:15:30");
+}
