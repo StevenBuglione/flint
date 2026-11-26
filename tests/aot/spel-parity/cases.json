@@ -88,19 +88,16 @@
   {
     "id": "negative-exponent",
     "expression": "2L ^ -1L",
-    "runtimeOnly": "The AOT integer power path defers Spring's truncation for negative exponents.",
     "expected": {"type": "long", "value": "0"}
   },
   {
     "id": "unit-negative-exponent",
     "expression": "1L ^ -5L",
-    "runtimeOnly": "The AOT integer power path defers Spring's truncation for negative exponents.",
     "expected": {"type": "long", "value": "1"}
   },
   {
     "id": "power-overflow",
     "expression": "10L ^ 30L",
-    "runtimeOnly": "The AOT integer power path defers Spring's saturation on overflow.",
     "expected": {"type": "long", "value": "9223372036854775807"}
   },
   {
@@ -116,7 +113,6 @@
   {
     "id": "comparison-alias-case",
     "expression": "2.5 Ge 2.5f",
-    "runtimeOnly": "The AOT comparison parser currently matches word operators case-sensitively.",
     "expected": {"type": "bool", "value": "true"}
   },
   {
@@ -137,13 +133,11 @@
   {
     "id": "string-utf16-order",
     "expression": "'😀' < '\uE000'",
-    "runtimeOnly": "Compiled comparisons order strings by D UTF-8 bytes, which differ from Java UTF-16 here.",
     "expected": {"type": "bool", "value": "true"}
   },
   {
     "id": "null-order",
     "expression": "null < 0",
-    "runtimeOnly": "The compiled null path only handles equality and inequality. Spring orders null first.",
     "expected": {"type": "bool", "value": "true"}
   },
   {
@@ -164,7 +158,6 @@
   {
     "id": "boolean-alias-case",
     "expression": "NoT true Or false",
-    "runtimeOnly": "The AOT parser currently matches word operators case-sensitively.",
     "expected": {"type": "bool", "value": "false"}
   },
   {
@@ -297,7 +290,6 @@
   {
     "id": "ternary-branch-type",
     "expression": "true ? 1 : 2L",
-    "runtimeOnly": "The AOT ternary promotes differing numeric branches to double. Spring retains the selected type.",
     "expected": {"type": "int", "value": "1"}
   },
   {
@@ -308,13 +300,11 @@
   {
     "id": "elvis-null",
     "expression": "null ?: 'fallback'",
-    "runtimeOnly": "The AOT Elvis path cannot yet type a fallback on a null-typed left operand.",
     "expected": {"type": "string", "value": "fallback"}
   },
   {
     "id": "elvis-zero",
     "expression": "0 ?: 1",
-    "runtimeOnly": "The AOT Elvis path emits a null test for numeric literals.",
     "expected": {"type": "int", "value": "0"}
   }
 ]
