@@ -1,5 +1,5 @@
 {
  "id": "D-AOT-MEMBER",
- "deviation": "Java's `AccessibleObject` and `Member` map to engine-aot's `MemberDescriptorRef`: the declaring descriptor, the kind, a safe pointer for a method, constructor or property, and `.init` when absent. Only metadata Flint AOT generates is exposed; a missing category throws `UnsupportedOperationException` until the generator adds it. framework-core owns the type, and every lane cites this deviation (coordinator, 2026-11-26).",
- "reason": "Flint has no runtime reflection"
+ "deviation": "Java's `AccessibleObject` and `Member` map to `flint.engine.aot.descriptor.MemberDescriptorRef`. It identifies a member by declaring descriptor, kind and table index, and `.init` is an absent member. Its accessors return safe pointers to the generated method, constructor or property metadata. An API that asks for metadata the tables lack (JVM modifiers, backing-field details, a category the generator does not emit yet) throws `UnsupportedOperationException` until the generator adds it. framework-core owns the type, and every lane cites this deviation (coordinator, 2026-11-26).",
+ "reason": "Flint has no runtime reflection; the published AOT tables replace it. Property entries may describe accessors and need not identify a backing field."
 }
