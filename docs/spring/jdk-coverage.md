@@ -18,7 +18,7 @@ Overall: types 142/1307 (11%), members 1164/15237 (8%).
 | `java.security.interfaces` | sol-security | 0 / 19 | 0 / 42 | 0% |  |  |
 | `java.security.spec` | sol-security | 0 / 35 | 0 / 166 | 0% |  |  |
 | `java.sql` | sol-data | 27 / 55 | 264 / 1236 | 21% | 291 |  |
-| `java.text` | sol-template | 5 / 32 | 30 / 518 | 6% | 35 |  |
+| `java.text` | sol-template | 5 / 32 | 30 / 518 | 6% | 29 |  |
 | `java.time` | sol-jdk-time-text | 7 / 19 | 114 / 786 | 15% | 24 | 4 |
 | `java.time.chrono` | sol-jdk-time-text | 0 / 21 | 0 / 384 | 0% |  |  |
 | `java.time.format` | sol-jdk-time-text | 2 / 8 | 9 / 133 | 7% | 11 |  |
