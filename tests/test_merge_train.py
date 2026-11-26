@@ -446,7 +446,8 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
         self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-c', 'sol-d'], ['sol-b']))
         self.assertEqual(result['pending'], ['sol-e'])  # one acceptance verifier: a batch of four
-        self.assertEqual([m for m in posidon.modes[:4]], [('budget', tuple(merge_train.APPS))] * 4)  # each alone
+        # The whole stack first (red), then each closure-touching submission alone.
+        self.assertEqual(posidon.modes[:5], [('budget', tuple(merge_train.APPS))] * 5)
         mail = self.store.inbox('sol-b', True, False)
         self.assertIn("petclinic-rest 'list vets' 407,377 -> 412,348 (+1.22%, tolerance 1.00%)", mail)
 
@@ -457,7 +458,31 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         posidon = self.ModalVerifier(self, 'posidon', budget=True)
         result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
         self.assertEqual(result['landed'], ['sol-a', 'sol-b'])
-        self.assertEqual(len(posidon.modes), 2)  # sol-a alone, then the stack once
+        self.assertEqual(posidon.modes, [('budget', tuple(merge_train.APPS))])  # the stack once, green: no screens
+
+    def test_a_green_stack_lands_on_one_posidon_run_without_screens(self):
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d')):
+            self.lane(role, {f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
+        self.assertEqual(result['landed'], ['sol-a', 'sol-b', 'sol-c', 'sol-d'])
+        self.assertEqual(posidon.modes, [('budget', tuple(merge_train.APPS))])
+        events = [json.loads(line)['event'] for line in (self.store.root / 'events.jsonl').read_text().splitlines()]
+        self.assertNotIn('train-screened', events)
+
+    def test_an_acceptance_failure_with_a_red_stack_budget_checks_the_green_prefix(self):
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e', 'sol-f')):
+            self.lane(role, {'src/SLOW' if role == 'sol-a' else 'src/BAD' if role == 'sol-f' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        desktop, neptune = self.FakeVerifier(self, 'desktop'), self.FakeVerifier(self, 'neptune')
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(desktop, neptune, posidon).run('runner')
+        # sol-f fails acceptance on neptune and is bisected there; the acceptance-green prefix (sol-a..sol-e) is
+        # budget-checked, red, screened: sol-a regressed alone and goes back, sol-b..sol-e land.
+        self.assertEqual(sorted(result['failed']), ['sol-a', 'sol-f'])
+        self.assertEqual(result['landed'], ['sol-b', 'sol-c', 'sol-d', 'sol-e'])
+        self.assertTrue(all(mode[0] == 'budget' for mode in posidon.modes[:3]), posidon.modes)
 
     def test_a_budget_only_failure_is_bisected_with_flint_budget_alone(self):
         for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d')):

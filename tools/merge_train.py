@@ -661,8 +661,9 @@ class Train:
         good, bad = (ends[first - 1] if first else 0), ends[first]
         return self._resolve(batch, applied, failed, good, bad, results[first], base)
 
-    def _resolve(self, batch, applied, failed, good, bad, verdict, base):
-        """Bisect applied[good:bad] (applied[:good] is green, the candidate ending at bad red) and settle what lands."""
+    def _resolve(self, batch, applied, failed, good, bad, verdict, base, verifier=None):
+        """Bisect applied[good:bad] (applied[:good] is green, the candidate ending at bad red) and settle what lands.
+        `verifier` bisects (default: the budget verifier, last); an acceptance failure is bisected on its own verifier."""
         ok, bad_log = verdict
         if ok is None:  # the verifier failed: land what is green before it, blame nobody
             self.store.event('train-verifier-failed', log=bad_log[-2000:])
@@ -672,7 +673,7 @@ class Train:
             middle_log = ''
             while bad - good > 1:
                 middle = (good + bad) // 2
-                ok, middle_log = self.verify(applied[middle - 1][1], **step)
+                ok, middle_log = self.verify(applied[middle - 1][1], verifier, **step)
                 if ok is None:
                     bad = None
                     break
@@ -682,7 +683,7 @@ class Train:
                     bad, bad_log = middle, middle_log
             if bad is None:
                 self.store.event('train-verifier-failed', log=middle_log[-2000:])
-            elif bad == 1 and self.verify(base, **step)[0] is not True:
+            elif bad == 1 and self.verify(base, verifier, **step)[0] is not True:
                 # Main itself is red: blame nobody; every submission waits for main to be fixed.
                 self.store.event('train-main-red', base=base)
                 return {'landed': [], 'failed': [], 'pushed': None, 'logs': {}, 'main_red': base,
@@ -711,45 +712,59 @@ class Train:
         return found
 
     def _screened(self, batch, base, max_train, budget_verifier, others):
-        """Coordinator (c), 2026-11-26: while the acceptance verifiers check the stacked candidates, posidon
-        budget-checks each closure-touching submission alone on main; one that regresses alone is returned at once
-        with its misses. The rest land after one budget check of their whole stack (combinations)."""
+        """Stack first (coordinator, 2026-11-26 12:3xZ, replacing screen-first): while the acceptance verifiers check
+        the stacked candidates, posidon, the only budget runner, budget-checks the whole stack once. When both are
+        green everything lands on one posidon run. Only a red stack budget screens each closure-touching submission
+        alone on main (_budget_red), so the lane that regresses alone is returned at once with its misses."""
         from concurrent.futures import ThreadPoolExecutor
         batch = batch[:max_train * len(others)]
-        singles = self.singles(batch, base)
         applied, failed = self.build(batch, base)
         if not applied:
             return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': [], 'tip': None}
         ends = [min(len(applied), (k + 1) * max_train) for k in range(len(others)) if k * max_train < len(applied)]
-
-        def screen():
-            return [(submission, self.verify(tip, budget_verifier, mode='budget', apps=list(APPS)))
-                    for submission, tip in singles]
         with ThreadPoolExecutor(1 + len(ends)) as pool:
-            screened = pool.submit(screen)
+            stack = pool.submit(self.verify, applied[-1][1], budget_verifier, mode='budget', apps=list(APPS))
             accepted = [pool.submit(self.verify, applied[end - 1][1], verifier) for end, verifier in zip(ends, others)]
-            screened, accepted = screened.result(), [f.result() for f in accepted]
+            verdict, accepted = stack.result(), [f.result() for f in accepted]
+        self.store.event('train-stack-budget', candidates=len(applied), ok=verdict[0])
+        first = next((k for k, (ok, _) in enumerate(accepted) if ok is not True), None)
+        if first is not None:  # an acceptance failure: bisect inside its group on the verifier that failed it
+            good, bad = (ends[first - 1] if first else 0), ends[first]
+            outcome = self._resolve(batch, applied, failed, good, bad, accepted[first], base, others[first])
+            landed = outcome['landed']
+            if verdict[0] is True or not landed or 'main_red' in outcome:
+                return outcome
+            # The whole stack's budget was not green, so the acceptance-green prefix needs its own budget verdict.
+            verdict = self.verify(landed[-1][1], budget_verifier, mode='budget', apps=list(APPS))
+            self.store.event('train-budget-prefix', candidates=len(landed), prefix_green=verdict[0])
+            if verdict[0] is True:
+                return outcome
+            return self._budget_red(batch, landed, outcome['failed'], base, max_train, budget_verifier, verdict)
+        if verdict[0] is True:
+            return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
+        return self._budget_red(batch, applied, failed, base, max_train, budget_verifier, verdict)
+
+    def _budget_red(self, batch, applied, failed, base, max_train, budget_verifier, verdict):
+        """The stack `applied` (acceptance-green) failed flint budget. Screen each closure-touching submission alone on
+        main: one that regresses alone is returned at once and the rest are stacked again and verified as usual
+        (acceptance changes with the stack). If none regresses alone it is a combination: bisect the stack with flint
+        budget. A verifier that could not run blames nobody and lands nothing."""
+        if verdict[0] is None:
+            return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
+        singles = self.singles([submission for submission, _ in applied], base)
+        screened = [(submission, self.verify(tip, budget_verifier, mode='budget', apps=list(APPS)))
+                    for submission, tip in singles]
         # Only a parsed flint budget regression returns a lane; any other red from a screen is no verdict.
         regressed = {s['role']: log for s, (ok, log) in screened if ok is False and budget_misses(log)}
         self.store.event('train-screened', screened=[s['role'] for s, _ in screened], regressed=sorted(regressed))
-        if regressed:
-            # Returned at once; the rest are stacked again and verified as usual (acceptance changed with the stack).
-            failed += [(s, 'flint budget regressed with this submission alone on main:\n' + regressed[s['role']])
-                       for s in batch if s['role'] in regressed]
-            rest = [s for s in batch if s['role'] not in regressed]
-            outcome = self._stacked(rest, base, max_train)
-            outcome['failed'] = failed + outcome['failed']
-            outcome['batch'] = batch
-            return outcome
-        first = next((k for k, (ok, _) in enumerate(accepted) if ok is not True), None)
-        if first is not None:  # an acceptance failure: bisect inside its group with full verifications
-            good, bad = (ends[first - 1] if first else 0), ends[first]
-            return self._resolve(batch, applied, failed, good, bad, accepted[first], base)
-        ok, log = self.verify(applied[-1][1], budget_verifier, mode='budget', apps=list(APPS))
-        if ok is True:
-            return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
-        # Each passed alone but the stack does not: a combination; bisect the whole stack with flint budget.
-        return self._resolve(batch, applied, failed, 0, len(applied), (ok, log), base)
+        if not regressed:
+            return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
+        failed = failed + [(s, 'flint budget regressed with this submission alone on main:\n' + regressed[s['role']])
+                           for s, _ in applied if s['role'] in regressed]
+        outcome = self._stacked([s for s, _ in applied if s['role'] not in regressed], base, max_train)
+        outcome['failed'] = failed + outcome['failed']
+        outcome['batch'] = batch
+        return outcome
 
     def push(self, submissions, base, tip, attempts):
         """Push the verified train; when main moved, rebase again and push, verifying again only if the new commits
