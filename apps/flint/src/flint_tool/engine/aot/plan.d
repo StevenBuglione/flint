@@ -5,6 +5,7 @@
 /// request-mapping tables, descriptors and derived queries, plus the diagnostics.
 module flint_tool.engine.aot.plan;
 
+import flint_tool.engine.aot.jpa : JpaMapping, analyzeJpa;
 import flint_tool.engine.aot.merge : MergedSet;
 import flint_tool.engine.aot.model : Annotation, AnnotationType, Method, Model, Parameter, TypeDecl, TypeRef, clone;
 import flint_tool.engine.aot.query : DerivedQuery;
@@ -503,6 +504,8 @@ struct ModulePlan
     ListenerPlan[] listeners;
     /// ditto
     QueryPlan[] queries;
+    /// Jakarta Persistence mappings emitted for this source unit.
+    JpaMapping[] jpaMappings;
     /// Other extracted modules whose models this one's output depends on.
     string[] consulted;
     /// Container types (`Optional!T`, `Map!(K, V)`, `List!T`, arrays) of bound properties, described by engine-aot's
@@ -518,8 +521,8 @@ struct ModulePlan
     bool empty() const
     {
         return !exportsDescriptors && beans.length == 0 && descriptors.length == 0
-            && containerDescriptors.length == 0 && handlers.length == 0
-            && exceptionHandlers.length == 0 && listeners.length == 0 && queries.length == 0;
+            && containerDescriptors.length == 0 && handlers.length == 0 && exceptionHandlers.length == 0
+            && listeners.length == 0 && queries.length == 0 && jpaMappings.length == 0;
     }
 }
 
@@ -779,7 +782,32 @@ private final class Analysis
         markDescribed();
         planContainers();
         planDateModule();
+        planJpaMappings();
         planFastPath();
+    }
+
+    void planJpaMappings()
+    {
+        import flint_tool.engine.aot.names : jpaEntity;
+        import std.algorithm.searching : any;
+
+        foreach (name; input.userModules)
+        {
+            const extracted = model.module_(name);
+            if (extracted is null)
+                continue;
+            foreach (ref decl; extracted.types)
+            {
+                if (!decl.annotations.any!(annotation => annotation.type == jpaEntity)
+                        || !classesPresent(["flint.engine.jpa.mapping.EntityMapping"]))
+                    continue;
+                const merged = mergedOf(decl);
+                const before = plan.diagnostics.length;
+                auto mapping = analyzeJpa(model, decl, merged, &error);
+                if (plan.diagnostics.length == before)
+                    moduleFor(name).jpaMappings ~= mapping;
+            }
+        }
     }
 
     /// The fast path's two beans (flint_tool.engine.aot.fast), when the option is on, an endpoint qualifies and the

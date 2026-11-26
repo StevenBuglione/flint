@@ -133,6 +133,25 @@ enum repository = "flint.data.repository.Repository";
 /// `@JsonProperty`.
 enum jsonProperty = "flint.jackson.annotation.JsonProperty";
 
+/// Canonical Jakarta Persistence UDA namespace.
+enum jpaAnnotations = "flint.jakarta.persistence.annotations.";
+/// Jakarta Persistence entity metadata.
+enum jpaEntity = jpaAnnotations ~ "Entity";
+/// ditto
+enum jpaMappedSuperclass = jpaAnnotations ~ "MappedSuperclass";
+/// ditto
+enum jpaTable = jpaAnnotations ~ "Table";
+/// ditto
+enum jpaColumn = jpaAnnotations ~ "Column";
+/// ditto
+enum jpaId = jpaAnnotations ~ "Id";
+/// ditto
+enum jpaTransient = jpaAnnotations ~ "Transient";
+/// Jakarta Persistence lifecycle metadata.
+enum jpaEntityListeners = jpaAnnotations ~ "EntityListeners";
+/// ditto
+enum jpaPostLoad = jpaAnnotations ~ "PostLoad";
+
 /// `@Async`.
 enum async_ = "flint.scheduling.annotation.Async";
 

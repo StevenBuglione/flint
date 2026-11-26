@@ -719,4 +719,16 @@ private enum CodeInfo[] generalCodes = [
     CodeInfo("FLINT-E1118", ExitCode.user, "@ConditionalOnBooleanProperty needs exactly one of name or value",
             "Set either name or value to the property names that the condition reads.",
             `@ConditionalOnBooleanProperty(name: ["jobs.enabled"])`),
+    CodeInfo("FLINT-E1140", ExitCode.user, "a Jakarta entity cannot be constructed",
+            "Generated field mappings need a public, concrete class with an accessible no-argument constructor.",
+            "@Entity class Owner { this() {} }"),
+    CodeInfo("FLINT-E1141", ExitCode.user, "a Jakarta persistent field cannot be mapped",
+            "Generated field mappings need public fields with distinct member and column names. The supported "
+            ~ "field types are long, string and LocalDate.", `@Column(name: "full_name") string name;`),
+    CodeInfo("FLINT-E1142", ExitCode.user, "a Jakarta mapping uses an unsupported feature",
+            "This mapping slice supports field access to one primary table with one @Id and @PostLoad callbacks.",
+            "@Id long id;"),
+    CodeInfo("FLINT-E1143", ExitCode.user, "a Jakarta PostLoad callback cannot be generated",
+            "Use an accessible void instance method with no parameters on the entity, or one entity parameter "
+            ~ "on a fieldless listener with an implicit constructor.", "@PostLoad void loaded() {}"),
 ];

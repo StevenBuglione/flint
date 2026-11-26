@@ -2273,9 +2273,10 @@ unittest
 @("Jakarta entities expose typed JPA mapping tables from their generated module")
 unittest
 {
-    import std.file : readText;
+    import std.file : dirEntries, readText, SpanMode;
     import std.path : buildPath;
     import flint_tool.engine.aot.driver : AotRequest, runAot;
+    import flint_tool.support.process : Launch, capture;
 
     const project = copyFixture("jpa");
     scope (exit)
@@ -2283,7 +2284,9 @@ unittest
     AotRequest request;
     request.root = project;
     request.compiler = compiler();
-    request.importPaths = closureImports(["boot/core/flint-boot-autoconfigure", "framework/engine-jpa"]);
+    request.importPaths = closureImports([
+        "boot/core/flint-boot-autoconfigure", "framework/engine-jpa"
+    ]);
     request.flags = ["-preview=dip1000"];
     request.environmentKey = "test";
     auto outcome = runAot(request);
@@ -2292,9 +2295,81 @@ unittest
         expect(item.code ~ " " ~ item.message).toEqual("");
     expect(outcome.ok).toBeTrue();
 
-    const generated = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot",
-            "jpa_probe", "entity.d"));
+    const generated = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "jpa_probe", "entity.d"));
     expect(generated.canFind("jpaMappings()")).toBeTrue();
+    expect(generated.canFind("jpaTypedCodec()")).toBeTrue();
+    string[] sources;
+    foreach (directory; ["src", ".flint/generated/aot"])
+        foreach (entry; dirEntries(buildPath(project, directory), "*.d", SpanMode.depth))
+            sources ~= entry.name;
+    Launch launch;
+    launch.directory = project;
+    const checked = capture([
+        compiler(), "-o-", "-preview=dip1000", "-I" ~ buildPath(project, "src"),
+        "-I" ~ buildPath(project, ".flint", "generated", "aot")
+    ] ~ request.importPaths ~ sources, launch);
+    expect(checked.combined()).toEqual("");
+    expect(checked.ok).toBeTrue();
+
+    verifyGeneratedJpaWithPostgres(project);
+
+    request.flags ~= "-version=JpaUnreachableConstructor";
+    request.environmentKey = "test-private-jpa-constructor";
+    outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    expect(outcome.ok).toBeFalse();
+    expect(outcome.diagnostics.length).toEqual(1);
+    expect(outcome.diagnostics[0].code).toEqual("FLINT-E1140");
+
+    request.flags[$ - 1] = "-version=JpaStatefulListener";
+    request.environmentKey = "test-stateful-jpa-listener";
+    outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    expect(outcome.ok).toBeFalse();
+    expect(outcome.diagnostics.length).toEqual(1);
+    expect(outcome.diagnostics[0].code).toEqual("FLINT-E1143");
+    expect(outcome.diagnostics[0].message.canFind("stateful Jakarta listener")).toBeTrue();
+
+    request.importPaths = closureImports([
+        "boot/core/flint-boot-autoconfigure", "framework/jakarta-persistence"
+    ]);
+    request.flags = ["-preview=dip1000"];
+    request.environmentKey = "test-without-jpa-provider";
+    outcome = runAot(request);
+    expect(outcome.extractionErrors).toEqual("");
+    expect(outcome.ok).toBeTrue();
+    const optional = readText(buildPath(project, ".flint", "generated", "aot", "flint_aot", "jpa_probe", "entity.d"));
+    expect(optional.canFind("flint.engine.jpa")).toBeFalse();
+}
+
+/// The pinned PostgreSQL run links the same generated source used by the compiler check.
+private void verifyGeneratedJpaWithPostgres(string project)
+{
+    import std.file : write;
+    import std.json : JSONValue;
+    import std.path : buildPath;
+    import std.process : environment;
+    import flint_tool.support.process : Launch, capture;
+
+    const compiler = environment.get("FLINT_AOT_JPA_POSTGRES_COMPILER");
+    if (!compiler.length)
+        return;
+    const root = JSONValue(repositoryRoot()).toString();
+    string recipe = "name \"aot-jpa-postgres\"\n" ~ "targetType \"executable\"\n"
+        ~ "sourcePaths \"src\" \"postgres\" \".flint/generated/aot\"\n"
+        ~ "importPaths \"src\" \".flint/generated/aot\"\n" ~ "dflags \"-preview=dip1000\"\n";
+    foreach (dependency; [
+        "arena", "boot-autoconfigure", "engine-aot", "engine-jdbc", "engine-jpa",
+        "jakarta-persistence", "java"
+    ])
+        recipe ~= "dependency \"flint:" ~ dependency ~ "\" path=" ~ root ~ "\n";
+    write(buildPath(project, "dub.sdl"), recipe);
+    Launch launch;
+    launch.directory = project;
+    const run = capture(["dub", "run", "--compiler=" ~ compiler], launch);
+    if (!run.ok)
+        expect(run.combined()).toEqual("");
+    expect(run.ok).toBeTrue();
 }
 
 @("no java.util.Date described: no customizer")

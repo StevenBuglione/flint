@@ -7,6 +7,7 @@
 /// it spells, and `flint.engine.aot.*`; never another generated module.
 module flint_tool.engine.aot.emit;
 
+import flint_tool.engine.aot.jpa_emit : renderJpa, usesJpaDate;
 import flint_tool.engine.aot.merge : MergedSet;
 import flint_tool.engine.aot.model : Annotation, Method, Parameter, TypeRef, Value;
 import flint_tool.engine.aot.plan : ArgumentPlan, BeanPlan, ConfigPlan, DescriptorPlan,
@@ -223,6 +224,17 @@ private struct Emitter
             declarations ~= exceptionInvoker(handler);
         foreach (ref listener; plan.listeners)
             declarations ~= listenerInvoker(listener);
+        if (plan.jpaMappings.length)
+        {
+            foreach (ref mapping; plan.jpaMappings)
+                foreach (ref callback; mapping.postLoad)
+                    if (callback.listener.length)
+                    {
+                        imports[callback.module_] = true;
+                        imports["flint.engine.aot.objects"] = true;
+                    }
+            declarations ~= renderJpa(plan.jpaMappings);
+        }
         const entry = registration();
         string[] names = imports.keys;
         sort(names);
@@ -262,6 +274,16 @@ private struct Emitter
             text ~= "import flint.engine.aot.query : DerivedQuery, QueryKind;\n";
         if ("permanent" in used || plan.descriptors.length)
             text ~= "import flint.engine.aot.permanent : Permanent;\n";
+        if (plan.jpaMappings.length)
+        {
+            text ~= "import flint.arena : Error, Result, Status;\n"
+                ~ "import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping;\n"
+                ~ "import flint.java.sql : Types;\n";
+            if (usesJpaDate(plan.jpaMappings))
+                text ~= "import flint.engine.jpa : TypedColumnCodec;\n"
+                    ~ "import flint.java.sql : PreparedStatement, ResultSet;\n"
+                    ~ "import flint.java.time : LocalDate;\n";
+        }
         return text ~ "import flint.engine.aot.registry : AotRegistry;\n";
     }
 

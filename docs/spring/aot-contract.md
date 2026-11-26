@@ -719,6 +719,22 @@ A method carrying `@Cacheable`, `@CachePut`, `@CacheEvict` or `@Caching` also ge
 key generator compares those arguments element by element, as Spring's `SimpleKey` does with `Arrays.deepEquals`,
 through the descriptors it resolves once per advised method.
 
+### Jakarta Persistence entity mappings
+
+When the application includes `flint:engine-jpa`, Flint AOT reads direct Jakarta `@Entity` declarations in
+application source, and the `@MappedSuperclass` declarations available to extraction. Each generated source
+unit with entities exports `jpaMappings()` returning an `immutable(EntityMapping)[]`. The provider can consume
+that table directly. The generic AOT registry has no dependency on the provider.
+
+The first slice supports one primary table, one `@Id`, public instance fields of type `long`, `string` or
+`LocalDate`, and a reachable no-argument constructor. Field ordinals start at the oldest mapped superclass.
+`@Transient` fields do not have ordinals. SQL column nullability and D field null representability are recorded
+separately. A unit with a DATE mapping also exports `jpaTypedCodec()` for the standard JDBC DATE conversions.
+
+Generated thunks use checked casts, and the provider's separate exact-type guard validates concrete entities.
+`PostLoad` invokes fieldless listeners first, then mapped-superclass and entity callbacks. Stateful listeners
+need a persistence-unit owner. Unsupported mapping shapes use FLINT-E1140–E1143.
+
 ## 10. Diagnostics
 
 | Code | Meaning |
