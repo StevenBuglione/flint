@@ -1038,3 +1038,28 @@ unittest
     assert(!copyOf(stripped).hasExtensions());
     assert(copyOf(stripped).getVariant() == "JP");
 }
+
+@("Locale.hashCode matches Java SE 21 for normalized values")
+unittest
+{
+    import flint.java.util : Locale;
+
+    // Expected values from the original Temurin 21.0.13+9 Locale witness.
+    const japanese = Locale.of("ja", "JP", "JP");
+    assert(Locale.ROOT.hashCode() == 0);
+    assert(Locale.US.hashCode() == 96_636_889);
+    assert(Locale.forLanguageTag("en-Latn-US").hashCode() == -1_929_371_928);
+    assert(japanese.hashCode() == 1_703_425_729);
+    assert(japanese.stripExtensions().hashCode() == 100_858_921);
+    assert(Locale.forLanguageTag("en-u-ca").hashCode() == 99_918_337);
+    assert(Locale.forLanguageTag("x-example").hashCode() == 1_942_879_509);
+    assert(Locale.of("en", "US", "𝄞").hashCode() == 98_409_283);
+
+    const extended = Locale.forLanguageTag("en-u-nu-thai-ca-japanese-a-aaa");
+    const reordered = Locale.forLanguageTag("en-A-AAA-U-CA-JAPANESE-NU-THAI");
+    assert(extended.hashCode() == -1_160_112_206);
+    assert(javaHashCode(reordered) == extended.hashCode());
+    int[Locale] values;
+    values[extended] = 42;
+    assert(values[reordered] == 42);
+}
