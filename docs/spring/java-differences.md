@@ -11166,8 +11166,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DecimalFormat#format(double,StringBuffer,FieldPosition)` | 2 | Requires DecimalFormat, caller-owned StringBuffer and UTF-16 FieldPosition updates alongside binary64 formatting. |
 | framework | `java.text.DecimalFormat#format(long,StringBuffer,FieldPosition)` | 2 | Requires DecimalFormat, caller-owned StringBuffer and UTF-16 FieldPosition updates alongside exact signed long formatting and scaling. |
 | framework | `java.text.DecimalFormat#getDecimalFormatSymbols()` | 2 | Requires the public symbols class. Java returns an independent copy of the formatter symbol settings. |
+| framework | `java.text.DecimalFormat#getGroupingSize()` | 2 | Requires the public formatter. Java returns the configured interval from the pattern or the setter. |
 | framework | `java.text.DecimalFormat#getMultiplier()` | 2 | Requires the public formatter. Java exposes the current multiplier from either the pattern or the setter. |
 | framework | `java.text.DecimalFormat#setDecimalFormatSymbols(DecimalFormatSymbols)` | 2 | Requires the public symbols class. Java copies supplied symbol settings into the formatter. |
+| framework | `java.text.DecimalFormat#setGroupingSize(int)` | 2 | Requires the public formatter. Java accepts 0 through 127, rejects out-of-range values without changing the interval, and uses zero to suppress grouping separators. |
 | framework | `java.text.DecimalFormat#setMultiplier(int)` | 2 | Requires the public formatter and arbitrary signed multiplier support. Java accepts zero and negatives and preserves their effects on signed zeros and infinity. |
 | framework | `java.text.DecimalFormatSymbols` | 2 | The public locale symbol table and mutable symbol API are pending. |
 | framework | `java.text.DecimalFormatSymbols#getInstance(Locale)` | 2 | Requires the public locale-specific symbols factory. The pinned Java factory selects separators and honors the Unicode numbering-system extension. |
