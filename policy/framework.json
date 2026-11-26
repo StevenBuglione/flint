@@ -301,7 +301,9 @@
    "repo": "framework",
    "licence": "BSD-3-Clause",
    "upstream": "jakarta-persistence@3.2.0",
-   "dependencies": [],
+   "dependencies": [
+    "java"
+   ],
    "bench": {
     "fixture": "framework/jakarta-persistence/bench",
     "baseline": "framework/jakarta-persistence/bench/baseline",

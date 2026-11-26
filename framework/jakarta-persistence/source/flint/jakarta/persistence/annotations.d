@@ -39,10 +39,16 @@
  *
  * Copyright (c) 2008, 2020 Oracle and/or its affiliates. All rights reserved.
  *   ExcludeSuperclassListeners.java
+ *
+ * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
+ *   CascadeType.java, ElementCollection.java, IdClass.java, ManyToMany.java, ManyToOne.java,
+ *   MapKeyClass.java, OneToMany.java, OneToOne.java
  */
 
 /// Jakarta Persistence mapping annotations and their option enums.
 module flint.jakarta.persistence.annotations;
+
+import flint.java.classref : ClassRef;
 
 @safe:
 
@@ -795,4 +801,105 @@ struct Cacheable
 {
     /// Whether or not the entity should be cached.
     bool value = true;
+}
+
+// Association targets and cascades
+
+/// Defines the set of cascadable operations that are propagated to the associated entity.
+enum CascadeType
+{
+    ALL,
+    PERSIST,
+    MERGE,
+    REMOVE,
+    REFRESH,
+    DETACH,
+}
+
+/// Specifies a single-valued association to another entity class that has many-to-one multiplicity.
+struct ManyToOne
+{
+    /// The entity class targeted by the association. An empty ClassRef asks the provider to infer it.
+    ClassRef targetEntity = ClassRef.init;
+    /// The operations that must be cascaded to the target of the association.
+    CascadeType[] cascade = [];
+    /// Whether the association should be lazily loaded or must be eagerly fetched.
+    FetchType fetch = FetchType.EAGER;
+    /// Whether the association is optional.
+    bool optional = true;
+}
+
+/// Specifies a many-valued association with one-to-many multiplicity.
+struct OneToMany
+{
+    /// The entity class targeted by the association. An empty ClassRef asks the provider to infer it.
+    ClassRef targetEntity = ClassRef.init;
+    /// The operations that must be cascaded to the target of the association.
+    CascadeType[] cascade = [];
+    /// Whether the association should be lazily loaded or must be eagerly fetched.
+    FetchType fetch = FetchType.LAZY;
+    /// The field that owns the relationship.
+    string mappedBy = "";
+    /// Whether to apply the remove operation to entities that have been removed from the relationship and to
+    /// cascade the remove operation to those entities.
+    bool orphanRemoval = false;
+}
+
+/// Specifies a single-valued association to another entity class that has one-to-one multiplicity.
+struct OneToOne
+{
+    /// The entity class targeted by the association. An empty ClassRef asks the provider to infer it.
+    ClassRef targetEntity = ClassRef.init;
+    /// The operations that must be cascaded to the target of the association.
+    CascadeType[] cascade = [];
+    /// Whether the association should be lazily loaded or must be eagerly fetched.
+    FetchType fetch = FetchType.EAGER;
+    /// Whether the association is optional.
+    bool optional = true;
+    /// The field that owns the relationship.
+    string mappedBy = "";
+    /// Whether to apply the remove operation to entities that have been removed from the relationship and to
+    /// cascade the remove operation to those entities.
+    bool orphanRemoval = false;
+}
+
+/// Specifies a many-valued association with many-to-many multiplicity, mapping to an intermediate table called the
+/// join table.
+struct ManyToMany
+{
+    /// The entity class targeted by the association. An empty ClassRef asks the provider to infer it.
+    ClassRef targetEntity = ClassRef.init;
+    /// The operations that must be cascaded to the target of the association.
+    CascadeType[] cascade = [];
+    /// Whether the association should be lazily loaded or must be eagerly fetched.
+    FetchType fetch = FetchType.LAZY;
+    /// The field that owns the relationship.
+    string mappedBy = "";
+}
+
+/// Declares a collection of instances of a Basic basic type or Embeddable embeddable class.
+struct ElementCollection
+{
+    /// The basic or embeddable class that is the element type of the collection.
+    ClassRef targetClass = ClassRef.init;
+    /// Whether the collection should be lazily loaded or must be eagerly fetched.
+    FetchType fetch = FetchType.LAZY;
+}
+
+/// Specifies the type of the map key for associations of type java.util.Map.
+struct MapKeyClass
+{
+    /// The type of the map key.
+    ClassRef value;
+}
+
+// Type tokens and converters
+
+/// Specifies a composite primary key type whose fields or properties map to the Id identifier fields or properties
+/// of the annotated entity class.
+struct IdClass
+{
+    /// The primary key class, which must declare fields or properties with names and types that match the `Id`
+    /// fields and properties of the annotated entity class.
+    ClassRef value;
 }
