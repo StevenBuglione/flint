@@ -3068,6 +3068,8 @@ class Properties : LinkedHashMap!(string, string)
     /// The value of `key`, then the defaults' value; null when neither has it.
     string getProperty(string key)
     {
+        if (key is null)
+            throw new NullPointerException();
         if (containsKey(key))
             return get(key);
         return defaults is null ? null : defaults.getProperty(key);
@@ -3083,6 +3085,8 @@ class Properties : LinkedHashMap!(string, string)
     /// Set `key` to `value`; the previous value, or null.
     string setProperty(string key, string value)
     {
+        if (key is null || value is null)
+            throw new NullPointerException();
         return put(key, value);
     }
 
@@ -3095,6 +3099,7 @@ class Properties : LinkedHashMap!(string, string)
                 result.add(key);
         foreach (key; keySet().toArray())
             result.add(key);
+        result.freeze();
         return result;
     }
 
@@ -3195,7 +3200,7 @@ class Properties : LinkedHashMap!(string, string)
 
     private static string unescape(string text)
     {
-        string result;
+        string result = "";
         for (size_t i = 0; i < text.length; i++)
         {
             if (text[i] != '\\' || i + 1 == text.length)
