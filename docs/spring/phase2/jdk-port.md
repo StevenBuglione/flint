@@ -144,12 +144,42 @@ The release check fails with any violation still present.
 
 ## Lanes
 
-| Role | Owns | Order |
+**JDK first (owner, 2026-11-26 16:20Z).** Every gpt-6.2-sol lane now works on the Java standard library until its in-scope packages are ported, because every later port reuses them. Each lane first lands only what's already in flight: entries queued in the merge train, main-push slices that are verified and ready, and fixes for red main. Other Spring work is parked on private branches. A lane then takes its JDK packages below.
+
+| Role | Owns (one owner per package; new code goes in package-scoped leaf modules) | Start with |
 |---|---|---|
-| `sol-jdk-core` | the link-closure gate; `flint:java` (lang) and `flint:java-collections` | 1. The gate. 2. Split today's `flint:java` into leaves without changing public names (framework-core reviews; it owns `flint:java`). 3. Collections faithful to Java (live views, orders, CME), plus `Arrays`, `Collections`, `Objects`, `Optional*`, streams and functions |
-| `sol-jdk-time-text` | `flint:java-time`, `flint:java-text`, `Locale` | `java.time` with a tzdb data leaf, then `java.time.format`, then `java.text` |
-| `sol-jdk-math-regex` | `flint:java-math`, `flint:java-regex`, `UUID`, `Base64`, `HexFormat` | `BigInteger` and `BigDecimal` (ported from OpenJDK), then a Java-semantics regex engine |
-| `sol-jdk-concurrent-io` | `flint:java-concurrent`, `flint:java-io`, `flint:java-net`, `flint:java-security` (OpenSSL wrappers only) | concurrency on fibers and the offload pool, then io, nio and charset, then net, then the security facades |
+| `sol-jdk-core` | the link-closure gate; the collections design: `Collection`, `List`, `Set`, `Map`, `Iterator`, `ListIterator`, `AbstractList/Set/Map`, `ArrayList`, `LinkedList`, `HashMap`, `HashSet`, `LinkedHashMap/Set`, live views and `ConcurrentModificationException`; `Arrays`, `Collections`, `Objects`, `Optional*` | the erased List/Set/Map redesign, which every other collection lane builds on |
+| `sol-ai` | the rest of `java.util`'s collections: `TreeMap`, `TreeSet`, `NavigableMap/Set`, `SortedMap/Set`, `PriorityQueue`, `ArrayDeque`, `Deque`, `Queue`, `BitSet`, `EnumMap`, `EnumSet`, `IdentityHashMap`, `WeakHashMap` | `BitSet` and `EnumSet`, which don't depend on the redesign; the rest on sol-jdk-core's design |
+| `sol-context` | `java.util.function` (all of it) and `java.util.stream` (R10 range facade) | `java.util.function` |
+| `sol-framework` | `java.lang` core: boxed types with parse and format, `Math`, `StrictMath`, `StringBuilder`, `CharSequence`, `Comparable`, `Iterable`, `AutoCloseable`, `Runnable`, `Enum`, `Record`, and the exception and error hierarchy | the boxed types and the exception hierarchy |
+| `sol-boot` | `java.lang` runtime: `System` (time, properties, environment, line separator), `Runtime` (subset), `Thread` facade over fibers, `ThreadLocal` and `InheritableThreadLocal` over `FiberLocal`, `ProcessHandle` (subset) | `System` and `ThreadLocal` |
+| `sol-jdk-math-regex` | `java.math` (finish `BigDecimal`, `MathContext`), `java.util.regex` (finish), `Character` (full Unicode, in progress), `UUID`, `Base64`, `HexFormat`, `Random`, `SplittableRandom`, `java.util.random` | `Character` and `BigDecimal` |
+| `sol-jdk-time-text` | `java.time` (finish), `java.time.chrono`, `java.time.format`, the tzdb data module, `Locale` (root and English first) | `java.time.format` |
+| `sol-template` | `java.text`: `NumberFormat`, `DecimalFormat`, `DecimalFormatSymbols`, `MessageFormat`, `ChoiceFormat`, `SimpleDateFormat`, `DateFormat`, `FieldPosition`, `ParsePosition`, `BreakIterator` (basic), `Normalizer`, `Collator` (root) | `DecimalFormat` and `MessageFormat`, using sol-jdk-time-text's `Locale` |
+| `sol-jdk-concurrent-io` | `java.util.concurrent` execution: `Executor`, `ExecutorService`, `ScheduledExecutorService`, `Executors`, `Future`, `CompletableFuture`, `CompletionStage`, `ForkJoinPool` facade, `TimeUnit`, on fibers and the offload pool | `CompletableFuture` and `ExecutorService` |
+| `sol-observability` | `java.util.concurrent` data and synchronizers: `ConcurrentHashMap`, `ConcurrentLinkedQueue/Deque`, `CopyOnWriteArrayList/Set`, the blocking queues, `CountDownLatch`, `Semaphore`, `CyclicBarrier`, `Phaser`, `Exchanger`, `java.util.concurrent.locks`, the rest of `java.util.concurrent.atomic` | `java.util.concurrent.locks` and the synchronizers |
+| `sol-test` | `java.io`: `InputStream`, `OutputStream`, `Reader`, `Writer` and all their buffered, byte-array, char-array, string, piped, filter, data and print variants, `File` (over `flint:os`), the `java.io` exceptions | `Reader`, `Writer` and `InputStream`/`OutputStream` |
+| `sol-jackson` | `java.nio`: `Buffer`, `ByteBuffer` and the typed buffers, `ByteOrder`, and `java.nio.charset` (`Charset`, `CharsetEncoder`, `CharsetDecoder`, `StandardCharsets`, `CoderResult`) | `java.nio.charset` |
+| `sol-data` | `java.nio.file` and `java.nio.file.attribute` (`Path`, `Paths`, `Files`, `FileSystem`, attributes) over `flint:os`, plus `java.sql` additions `framework/jdbc` needs | `Path` and `Files` |
+| `sol-web` | `java.net`: `URI`, `URL` (parsing only), `URLEncoder`, `URLDecoder`, `InetAddress`, `InetSocketAddress`, `HttpCookie`, the `java.net` exceptions | `URI`, `URLEncoder` and `URLDecoder` |
+| `sol-security` | `java.security` and `javax.crypto` as thin facades over the pinned OpenSSL only: `MessageDigest`, `SecureRandom`, `Mac`, `KeyGenerator`, `Cipher`, `KeyFactory`, keys, specs and the exceptions. No new cryptographic algorithm. | `MessageDigest` and `SecureRandom` |
+| `sol-jpa` | `java.util.zip` over the pinned zlib: `CRC32`, `CRC32C`, `Adler32`, `Checksum`, `Deflater`, `Inflater`, the deflater, inflater and GZIP streams | `CRC32` and `Deflater`/`Inflater` |
+| `sol-aop` | the rest of `java.util`: `Formatter` (printf semantics), `Scanner`, `Properties`, `StringJoiner`, `StringTokenizer`, `Iterator` helpers, `EventObject`/`EventListener`, `Timer` facade | `StringJoiner` and `Properties`, then `Formatter` |
+| `sol-translator` | bulk mechanical translation of OpenJDK sources for the other lanes: exception classes, constants-only types, simple interfaces and value classes, each checked against the hand-port rules and handed to the package owner | the `java.*` exception classes for sol-framework, sol-test and sol-web |
+
+**How each lane works:**
+- **Source:** port from OpenJDK 21.0.13 under GPL-2.0-only WITH Classpath-exception-2.0, keeping each file's header. Port the applicable jtreg tests from the scoped inventory, and compare behaviour with the pinned Temurin oracle.
+- **Modules:** new code goes in package-scoped leaf modules, so an app links only what it uses. Each new module registers under new-module-rule, with measured caps.
+- **Landing:** a module outside the apps' closure lands through main-push; anything in the closure goes through the train.
+- **Coverage:** classify every element you port in `api/framework/mapping.json` as you go, and report your packages' coverage (done / in scope) in your hand-off each run.
+- **Order within a package:** what Spring, Jackson, Hibernate and the other ported libraries call first, then the rest.
+- **Cross-lane types:** if a package needs a type another lane owns, ask that lane through agentctl. Don't write a second copy.
+
+**Claude roles during JDK first:**
+- **Everyone:** finish in-flight work: Boot's per-request regression, web-http's S-9 batch, framework-core's batch, and flint-aot's queued stack.
+- **api-coverage:** reconcile the OpenJDK manifest with the `flint.java` code already written (about 15,000 lines, mostly unclassified), and publish JDK coverage per package.
+- **framework-core:** reviews everything in `flint:java`.
+- **proof-harness:** keeps the train and the per-module probes running.
 
 **Reviewers:**
 - framework-core: anything in `flint:java`, and any change to existing Spring modules that switch to the new leaves;
