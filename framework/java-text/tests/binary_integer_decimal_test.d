@@ -1,6 +1,7 @@
 module flint.java.text.internal.binary_integer_decimal_test;
 
-import flint.java.text.internal.binarydecimal : BinaryDecimal, tryBoundedBinaryDecimal, tryIntegerBinaryDecimal;
+import flint.java.text.internal.binarydecimal : BinaryDecimal, tryBoundedBinaryDecimal,
+    tryFiniteBinaryDecimal, tryIntegerBinaryDecimal;
 
 @safe:
 
@@ -71,4 +72,25 @@ unittest
         assert(!tryBoundedBinaryDecimal(bits, result));
         assert(result == previous);
     }
+}
+
+@("FloatingDecimal general conversion covers subnormal and wide decimal digits")
+unittest
+{
+    static void check(ulong bits, string digits, int point, bool negative, bool rounded)
+    {
+        BinaryDecimal result;
+        assert(tryFiniteBinaryDecimal(bits, result));
+        assert(result.digits[0 .. result.count] == digits && result.decimalAt == point);
+        assert(result.negative == negative && result.roundedUp == rounded && !result.exact);
+    }
+
+    check(0x3f40_624d_d2f1_a9fc, "50", -3, false, false);
+    check(1, "49", -323, false, false);
+    check(0x8010_0000_0000_0000, "22250738585072014", -307, true, true);
+    check(0x7fef_ffff_ffff_ffff, "17976931348623157", 309, false, false);
+
+    BinaryDecimal result;
+    assert(!tryFiniteBinaryDecimal(0x7ff0_0000_0000_0000, result));
+    assert(!tryFiniteBinaryDecimal(0x7ff8_0000_0000_0000, result));
 }
