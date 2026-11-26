@@ -145,8 +145,21 @@
       "status": "deferred"
     },
     "org/springframework/ai/chat/messages/part/StreamingPartsTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "ai/ai-model/tests/streaming_parts_tests.d",
+      "methods": {
+        "ported": [
+          "stampingPreservesOtherAttributesAndPayload",
+          "stripOfUnstampedPartIsSameValue"
+        ],
+        "skipped": {
+          "completeStampsIndexOnly": "StreamingParts.partIndex is pending.",
+          "partIndexIsNullWhenAbsentOrMalformed": "StreamingParts.partIndex is pending.",
+          "partialStampsIndexAndPartialFlag": "StreamingParts.partIndex is pending.",
+          "stripRemovesStreamingAttributesOnly": "StreamingParts.partIndex is pending.",
+          "withAttributesReplacesAttributesOnEveryRecord": "ToolCallPart, ToolResultPart, MediaPart and UnknownPart are pending."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/ai/chat/metadata/ChatGenerationMetadataCategoryTests.java": {
       "phase": "2",

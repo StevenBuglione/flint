@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,ReasoningPart,TextPart}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,ReasoningPart,StreamingParts,TextPart}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages.part;
 
 import core.exception : onOutOfMemoryError;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException, stringHashCode;
-import flint.java.util : Map;
+import flint.java.util : LinkedHashMap, Map;
 import std.typecons : Nullable;
 
 @safe:
 
 private alias PartAttributes = Map!(string, string);
+// Reuse the concrete map that Map.copyOf instantiates for part attributes.
+private alias MutablePartAttributes = LinkedHashMap!(string, string);
 private alias NullablePayload = Nullable!OpaquePayload;
 private alias NullableText = Nullable!string;
 
@@ -125,6 +127,67 @@ interface MessagePart
 
     /// Creates a copy with the supplied attributes.
     MessagePart withAttributes(PartAttributes attributes);
+}
+
+/// Transport attributes for the content blocks of a streaming chat response.
+final class StreamingParts
+{
+    /// Zero-based content block index.
+    enum string PART_INDEX_ATTRIBUTE = "partIndex";
+
+    /// Flag set to "true" for a delta.
+    enum string PARTIAL_ATTRIBUTE = "partial";
+
+    @disable this();
+
+    /// Returns a copy marked as a delta of the indexed content block.
+    static MessagePart partial(MessagePart part, int index)
+    {
+        return stamp(part, index, true);
+    }
+
+    /// Returns a copy of the complete indexed block with its partial flag removed.
+    static MessagePart complete(MessagePart part, int index)
+    {
+        return stamp(part, index, false);
+    }
+
+    /// Returns whether the part carries the partial flag.
+    static bool isPartial(MessagePart part)
+    {
+        import flint.java.lang : Boolean;
+
+        return Boolean.parseBoolean(part.attributes().get(PARTIAL_ATTRIBUTE));
+    }
+
+    /// Removes the streaming attributes, preserving identity if neither is present.
+    static MessagePart strip(MessagePart part)
+    {
+        auto attributes = part.attributes();
+        if (!attributes.containsKey(PART_INDEX_ATTRIBUTE) && !attributes.containsKey(PARTIAL_ATTRIBUTE))
+            return part;
+        auto stripped = new MutablePartAttributes(attributes);
+        stripped.remove(PART_INDEX_ATTRIBUTE);
+        stripped.remove(PARTIAL_ATTRIBUTE);
+        return part.withAttributes(stripped);
+    }
+
+    private static MessagePart stamp(MessagePart part, int index, bool partial)
+    {
+        import flint.java.lang : Integer;
+
+        if (part is null)
+            throw new IllegalArgumentException("part must not be null");
+        if (index < 0)
+            throw new IllegalArgumentException("index must not be negative");
+        auto attributes = new MutablePartAttributes(part.attributes());
+        attributes.put(PART_INDEX_ATTRIBUTE, Integer.toString(index));
+        if (partial)
+            attributes.put(PARTIAL_ATTRIBUTE, "true");
+        else
+            attributes.remove(PARTIAL_ATTRIBUTE);
+        return part.withAttributes(attributes);
+    }
 }
 
 /// Provider-owned data that a message part can carry back to its origin unchanged.
