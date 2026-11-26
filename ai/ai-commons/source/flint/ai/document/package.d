@@ -497,6 +497,12 @@ class Document
 
 private void validateDocumentText(string text, string message)
 {
+    if (!hasDocumentText(text))
+        throw new IllegalArgumentException(message);
+}
+
+package(flint.ai) bool hasDocumentText(string text) pure nothrow @nogc
+{
     import flint.engine.aot.text : decodeUtf8;
 
     // Match Java Character.isWhitespace without loading the wider flint.util module.
@@ -510,11 +516,11 @@ private void validateDocumentText(string text, string message)
             break;
         default:
             if (point < 0x2000 || point > 0x200a || point == 0x2007)
-                return;
+                return true;
             break;
         }
     }
-    throw new IllegalArgumentException(message);
+    return false;
 }
 
 private alias DocumentList = List!Document;

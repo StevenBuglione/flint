@@ -177,7 +177,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 
 | Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 188 | 315 | 0 | 15,293 |
+| ai | spring-ai@v2.1.0 | 194 | 322 | 0 | 15,280 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
 | framework | spring-framework@v7.1.0 | 3,489 | 1,389 | 4,849 | 30,107 |
@@ -388,12 +388,19 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.ai.evaluation.EvaluationRequest#<init>(List,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R7](api-mapping.md#r7-overloads), [R10](api-mapping.md#r10-streams-and-collections) | Use a typed null for the String or List constructor, as the untyped null call is ambiguous. |
+| `org.springframework.ai.evaluation.EvaluationRequest#<init>(String,List,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.evaluation.EvaluationRequest#<init>(String,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R7](api-mapping.md#r7-overloads) | Use a typed null for the String or List constructor, as the untyped null call is ambiguous. |
+| `org.springframework.ai.evaluation.EvaluationRequest#equals(Object)` | `flint.ai.evaluation.EvaluationRequest.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.evaluation.EvaluationRequest#getDataList()` | `flint.ai.evaluation.EvaluationRequest.getDataList` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.evaluation.EvaluationRequest#hashCode()` | `flint.ai.evaluation.EvaluationRequest.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,float,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#equals(Object)` | `flint.ai.evaluation.EvaluationResponse.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#getMetadata()` | `flint.ai.evaluation.EvaluationResponse.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#hashCode()` | `flint.ai.evaluation.EvaluationResponse.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#toString()` | `flint.ai.evaluation.EvaluationResponse.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.evaluation.Evaluator#doGetSupportingData(EvaluationRequest)` | `flint.ai.evaluation.Evaluator.doGetSupportingData` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 
 #### org.springframework.ai.image
 
@@ -8426,7 +8433,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.ai.elevenlabs.api | 0 | 290 |
 | org.springframework.ai.embedding | 50 | 0 |
 | org.springframework.ai.embedding.observation | 37 | 0 |
-| org.springframework.ai.evaluation | 13 | 0 |
 | org.springframework.ai.google.genai | 0 | 150 |
 | org.springframework.ai.google.genai.aot | 0 | 3 |
 | org.springframework.ai.google.genai.cache | 0 | 80 |

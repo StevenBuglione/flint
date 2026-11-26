@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/evaluation/EvaluationResponse.java
+// Ported from spring-ai v2.1.0, spring-ai-commons/src/main/java/org/springframework/ai/evaluation/{EvaluationRequest,EvaluationResponse,Evaluator}.java
 // Modified by the Flint authors.
 module flint.ai.evaluation;
 
+import flint.ai.document : Document;
 import flint.engine.aot.any : Any;
 import flint.java.lang : Boolean, JavaObject, floatToString, stringHashCode;
-import flint.java.util : Map;
+import flint.java.util : List, Map;
 
 @safe:
 
@@ -120,4 +121,142 @@ class EvaluationResponse
     }
 
     mixin JavaObject;
+}
+
+private alias EvaluationDocuments = List!Document;
+
+/// User text, supporting documents and the response to evaluate.
+class EvaluationRequest
+{
+    private string userText_;
+    private EvaluationDocuments dataList_;
+    private string responseContent_;
+
+    /// Creates a request with the shared empty document list.
+    this(string userText, string responseContent)
+    {
+        import flint.java.util : Collections;
+
+        this(userText, Collections.emptyList!Document(), responseContent);
+    }
+
+    /// Creates a request with empty user text.
+    this(EvaluationDocuments dataList, string responseContent) pure nothrow @nogc
+    {
+        this("", dataList, responseContent);
+    }
+
+    /// Keeps the supplied document list by reference.
+    this(string userText, EvaluationDocuments dataList, string responseContent) pure nothrow @nogc
+    {
+        userText_ = userText;
+        dataList_ = dataList;
+        responseContent_ = responseContent;
+    }
+
+    /// Returns the user's text.
+    string getUserText() const pure nothrow @nogc
+    {
+        return userText_;
+    }
+
+    /// Returns the supplied supporting documents.
+    EvaluationDocuments getDataList()
+    {
+        return dataList_;
+    }
+
+    /// Returns the response content to evaluate.
+    string getResponseContent() const pure nothrow @nogc
+    {
+        return responseContent_;
+    }
+
+    /// Compares the request fields and supporting documents.
+    bool equals(Object other)
+    {
+        if (this is other)
+            return true;
+        auto that = cast(EvaluationRequest) other;
+        if (that is null || !sameEvaluationText(userText_, that.userText_)
+                || !sameEvaluationText(responseContent_, that.responseContent_))
+            return false;
+        return dataList_ is that.dataList_ || (dataList_ !is null && dataList_.equals(cast(Object) that.dataList_));
+    }
+
+    /// Hashes the text, documents and response in Java field order.
+    int hashCode()
+    {
+        int hash = 31 + stringHashCode(userText_);
+        hash = 31 * hash + (dataList_ is null ? 0 : dataList_.hashCode());
+        return 31 * hash + stringHashCode(responseContent_);
+    }
+
+    /// Renders the request fields in Java display format.
+    override string toString()
+    {
+        const data = dataList_ is null ? "null" : dataList_.toString();
+        return "EvaluationRequest{userText='" ~ (userText_ is null
+                ? "null" : userText_) ~ "', dataList=" ~ data ~ ", chatResponse=" ~ (responseContent_ is null
+                ? "null" : responseContent_) ~ "}";
+    }
+
+    mixin JavaObject;
+}
+
+private bool sameEvaluationText(string left, string right) pure nothrow @nogc
+{
+    return (left is null) == (right is null) && left == right;
+}
+
+/// Evaluates an AI response against an evaluation request.
+interface Evaluator
+{
+    /// Evaluates the response.
+    EvaluationResponse evaluate(EvaluationRequest request);
+
+    /// Returns the request's nonblank supporting text in document order.
+    string doGetSupportingData(EvaluationRequest request);
+
+    /// Supplies the default supporting-text implementation (R3).
+    mixin template Defaults(alias joinSupportingData = supportingData)
+    {
+        import flint.ai.evaluation : EvaluationRequest;
+
+        override string doGetSupportingData(EvaluationRequest request)
+        {
+            return joinSupportingData(request);
+        }
+    }
+
+    private static string supportingData(EvaluationRequest request)
+    {
+        import flint.ai.document : hasDocumentText;
+        import flint.java.lang : NullPointerException;
+
+        if (request is null)
+            throw new NullPointerException();
+        auto documents = request.getDataList();
+        if (documents is null)
+            throw new NullPointerException();
+
+        version (Windows)
+            enum separator = "\r\n";
+        else
+            enum separator = "\n";
+
+        string result = "";
+        foreach (document; documents)
+        {
+            if (document is null)
+                throw new NullPointerException();
+            const text = document.getText();
+            if (text.isNull || !hasDocumentText(text.get()))
+                continue;
+            if (result.length != 0)
+                result ~= separator;
+            result ~= text.get();
+        }
+        return result;
+    }
 }
