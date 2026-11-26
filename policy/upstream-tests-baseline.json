@@ -1551,7 +1551,6 @@
       "org/springframework/data/domain/ExampleMatcherUnitTests.java",
       "org/springframework/data/domain/ExampleUnitTests.java",
       "org/springframework/data/domain/FloatVectorUnitTests.java",
-      "org/springframework/data/domain/LimitUnitTests.java",
       "org/springframework/data/domain/ManagedTypesUnitTests.java",
       "org/springframework/data/domain/NumberVectorUnitTests.java",
       "org/springframework/data/domain/PageImplUnitTests.java",

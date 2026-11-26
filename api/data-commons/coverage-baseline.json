@@ -1,7 +1,7 @@
 {"schema":"flint.api-coverage-baseline/1",
-"unclassified":3827,
+"unclassified":0,
 "upstreams":{
-"spring-data-commons@4.2.0":{"unclassified":3827,"modules":{
-"spring-data-commons":3827
+"spring-data-commons@4.2.0":{"unclassified":0,"modules":{
+"spring-data-commons":0
 }}
 }}

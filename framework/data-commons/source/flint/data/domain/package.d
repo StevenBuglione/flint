@@ -15,14 +15,16 @@ $(UL
     $(LI `Streamable` is `Iterable` here (R10); `map` takes a delegate (R9). `Sort` has `Iterable`'s methods but does
         not declare the interface: `Iterable!(Sort.Order)` inside `Sort`'s own base list is a recursive template
         expansion in D.)
-    $(LI Not ported yet: the `TypedPropertyPath` overloads and `TypedSort` (property paths), `Pageable.toLimit` and
-        `toScrollPosition` (`Limit`, `ScrollPosition`), and `SliceImpl`.)
+    $(LI Pending ports include the `TypedPropertyPath` overloads, `TypedSort`, `Pageable.toScrollPosition` and
+        `SliceImpl`.)
 )
 +/
 module flint.data.domain;
 
 import flint.java.lang : IllegalArgumentException, Iterable;
 import flint.java.util : ArrayList, Collections, Iterator, List, Objects, Optional;
+
+public import flint.data.domain.limit : Limit;
 
 @safe:
 
@@ -522,6 +524,8 @@ interface Pageable
     bool hasPrevious();
     /// This, or empty when unpaged.
     Optional!Pageable toOptional();
+    /// A limit of the current page size, or unlimited when unpaged.
+    Limit toLimit();
 
     /// Java's default methods (R3).
     mixin template Defaults()
@@ -533,7 +537,8 @@ interface Pageable
 
         bool isUnpaged()
         {
-            return !isPaged();
+            Pageable pageable = this;
+            return !pageable.isPaged();
         }
 
         Sort getSortOr(Sort sort)
@@ -546,6 +551,12 @@ interface Pageable
         Optional!Pageable toOptional()
         {
             return isUnpaged() ? Optional!Pageable.empty() : Optional!Pageable.of(this);
+        }
+
+        Limit toLimit()
+        {
+            Pageable pageable = this;
+            return pageable.isUnpaged() ? Limit.unlimited() : Limit.of(pageable.getPageSize());
         }
     }
 }

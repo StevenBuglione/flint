@@ -197,8 +197,18 @@
       "status": "deferred"
     },
     "org/springframework/data/domain/LimitUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/data-commons/tests/limit_tests.d",
+      "methods": {
+        "ported": [
+          "unlimitedReusesInstance",
+          "unlimitedReturnsTrueOnIsLimited",
+          "limitOfCapturesMaxValue",
+          "isUnlimitedReturnsFalseIfLimited",
+          "unlimitedErrorsOnMax",
+          "equalsProperly"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/data/domain/ManagedTypesUnitTests.java": {
       "phase": "2",
