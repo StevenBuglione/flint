@@ -6,4 +6,6 @@ public import flint.java.util.zip.checksum : Checksum;
 public import flint.java.util.zip.crc32 : CRC32;
 public import flint.java.util.zip.crc32c : CRC32C;
 
+public import flint.java.util.zip.dataformatexception : DataFormatException;
+
 @safe:
