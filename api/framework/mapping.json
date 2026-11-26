@@ -25170,7 +25170,7 @@
 "org.springframework.mock.web.MockHttpServletResponse#getCharacterEncoding()":{"status":"ported","d":"flint.mock.web.MockHttpServletResponse.getCharacterEncoding"},
 "org.springframework.mock.web.MockHttpServletResponse#getContentAsByteArray()":{"status":"excluded","category":"deferred","phase":"2"},
 "org.springframework.mock.web.MockHttpServletResponse#getContentAsString()":{"status":"excluded","category":"deferred","phase":"2"},
-"org.springframework.mock.web.MockHttpServletResponse#getContentAsString(Charset)":{"status":"excluded","category":"deferred","phase":"2"},
+"org.springframework.mock.web.MockHttpServletResponse#getContentAsString(Charset)":{"status":"adapted","d":"flint.mock.web.MockHttpServletResponse.getContentAsString","rules":["R5","R7","R8"],"note":"Charset.init represents a null fallback. The explicitly configured encoding takes precedence, and UnsupportedEncodingException is a D exception."},
 "org.springframework.mock.web.MockHttpServletResponse#getContentLength()":{"status":"ported","d":"flint.mock.web.MockHttpServletResponse.getContentLength"},
 "org.springframework.mock.web.MockHttpServletResponse#getContentLengthLong()":{"status":"ported","d":"flint.mock.web.MockHttpServletResponse.getContentLengthLong"},
 "org.springframework.mock.web.MockHttpServletResponse#getContentType()":{"status":"adapted","d":"flint.mock.web.MockHttpServletResponse.getContentType","rules":["R1","R10"],"note":"Uses the existing Jakarta ServletResponse string signature. A null slice represents absence."},

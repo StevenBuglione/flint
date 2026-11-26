@@ -11,6 +11,7 @@ dependency "flint:engine-aot" version="*"
 dependency "flint:jackson-databind" version="*"
 dependency "flint:jakarta-servlet" version="*"
 dependency "flint:java" version="*"
+dependency "flint:java-io" version="*"
 dependency "flint:web" version="*"
 dependency "flint:webmvc" version="*"
 

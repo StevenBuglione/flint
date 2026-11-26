@@ -158,7 +158,7 @@ private void appendUnit(ref char[] result, ushort value, bool littleEndian) pure
     result ~= littleEndian ? high : low;
 }
 
-private string decodeText(string text, Charset charset) pure nothrow
+package(flint) string decodeText(string text, Charset charset) pure nothrow
 {
     if (text.length == 0)
         return text;

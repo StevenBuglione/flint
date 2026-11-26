@@ -1269,6 +1269,7 @@
     "jackson-databind",
     "jakarta-servlet",
     "java",
+    "java-io",
     "web",
     "webmvc"
    ],

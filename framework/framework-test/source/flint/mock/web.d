@@ -19,9 +19,12 @@ import flint.jakarta.servlet : DispatcherType, Filter, FilterRegistration, Reque
     Servlet, ServletContext, ServletInputStream, ServletOutputStream, ServletRegistration;
 import flint.jakarta.servlet.http : Cookie, HttpServletRequest, HttpServletResponse;
 import flint.java.io : PrintWriter, Writer;
-import flint.java.lang : IllegalArgumentException, IllegalStateException, NumberFormatException,
-    UnsupportedOperationException;
+import flint.java.io.unsupportedencodingexception : UnsupportedEncodingException;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, NullPointerException,
+    NumberFormatException, UnsupportedOperationException;
+import flint.java.nio.charset : Charset;
 import flint.java.util : Locale;
+import flint.test.web.servlet.form : decodeText;
 import std.typecons : Nullable;
 
 @safe:
@@ -766,6 +769,30 @@ class MockHttpServletResponse : HttpServletResponse
     string getContentAsString(string charset) const
     {
         return decodeContent(charset);
+    }
+
+    /++
+    Decodes the body using the explicitly configured response encoding, or the fallback if none was set.
+    Throws: `UnsupportedEncodingException` if the explicitly configured encoding is unsupported,
+    or `NullPointerException` if neither charset is present.
+    +/
+    string getContentAsString(Charset fallbackCharset)
+    {
+        Charset charset = fallbackCharset;
+        if (characterEncodingSet)
+        {
+            const encoding = getCharacterEncoding();
+            if (encoding is null)
+                throw new NullPointerException("characterEncoding");
+            try
+                charset = Charset.forName(encoding);
+            catch (IllegalArgumentException)
+                throw new UnsupportedEncodingException(encoding);
+        }
+        else if (charset == Charset.init)
+            throw new NullPointerException("fallbackCharset");
+
+        return content.length == 0 ? "" : decodeText(cast(string) content.idup, charset);
     }
 
     pragma(inline, false) private string decodeContent(string charset) const

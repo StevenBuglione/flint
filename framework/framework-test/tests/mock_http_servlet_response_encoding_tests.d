@@ -7,7 +7,11 @@ Modified by the Flint authors: JUnit cases become D unittests.
 +/
 module mock_http_servlet_response_encoding_tests;
 
-import flint.java.lang : IllegalArgumentException;
+import std.exception : assertThrown;
+
+import flint.java.io.unsupportedencodingexception : UnsupportedEncodingException;
+import flint.java.lang : IllegalArgumentException, NullPointerException;
+import flint.java.nio.charset : Charset, StandardCharsets;
 import flint.mock.web : MockHttpServletResponse;
 
 @safe:
@@ -180,6 +184,63 @@ unittest
     response.setContentType("application/json");
     response.getWriter().write(content);
     assert(response.getContentAsString() == content);
+}
+
+@("contentAsUtf8")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    enum content = "Příliš žluťoučký kůň úpěl ďábelské ódy";
+    response.getOutputStream().write(cast(const(ubyte)[]) content);
+    assert(response.getContentAsString(StandardCharsets.UTF_8) == content);
+}
+
+@("The explicit response charset takes precedence over the fallback charset")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    response.setDefaultCharacterEncoding("ISO-8859-1");
+    response.getOutputStream().write([0x41, 0x00, 0xE9, 0x00]);
+
+    assert(response.getContentAsString(StandardCharsets.UTF_16LE) == "Aé");
+    response.setCharacterEncoding("UTF_16LE");
+    assert(response.getContentAsString(StandardCharsets.US_ASCII) == "Aé");
+    assert(response.getContentAsString(Charset.init) == "Aé");
+}
+
+@("An unsupported explicit response charset fails even when the fallback is valid")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    response.setCharacterEncoding("flint-invalid-charset");
+    assertThrown!UnsupportedEncodingException(response.getContentAsString(StandardCharsets.UTF_8));
+}
+
+@("An absent fallback cannot decode a response without an explicit charset")
+unittest
+{
+    auto response = new MockHttpServletResponse;
+    assertThrown!NullPointerException(response.getContentAsString(Charset.init));
+
+    const decoded = response.getContentAsString(StandardCharsets.UTF_8);
+    assert(decoded !is null && decoded.length == 0);
+}
+
+private class EncodingOverrideResponse : MockHttpServletResponse
+{
+    override string getCharacterEncoding()
+    {
+        return "UTF-16LE";
+    }
+}
+
+@("Explicit decoding uses the response's encoding getter")
+unittest
+{
+    auto response = new EncodingOverrideResponse;
+    response.setCharacterEncoding("ISO-8859-1");
+    response.getOutputStream().write([0x41, 0x00, 0xE9, 0x00]);
+    assert(response.getContentAsString(StandardCharsets.US_ASCII) == "Aé");
 }
 
 @("Clearing the charset preserves unrelated Content-Type parameters")
