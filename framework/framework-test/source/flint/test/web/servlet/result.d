@@ -14,7 +14,7 @@ Hamcrest-matcher overloads are not ported (Hamcrest is a separate library).
 module flint.test.web.servlet.result;
 
 import flint.http : HttpHeaders, HttpStatus, MediaType;
-import flint.java.lang : AssertionError, IllegalStateException, Integer, Long;
+import flint.java.lang : AssertionError, IllegalStateException, Integer, Long, String;
 import flint.java.nio.charset : Charset;
 import flint.test.json : JsonComparator, JsonCompareMode, JsonComparison;
 import flint.test.util : AssertionErrors, JsonPathExpectationsHelper;
@@ -46,15 +46,10 @@ struct MockMvcResultMatchers
         return new HeaderResultMatchers;
     }
 
-    /// Matchers on the JSON body at `expression` (`String.format` arguments applied with `{}`-free `%s`).
+    /// Matchers on the JSON body at `expression`, formatted with Java's format specifiers.
     static JsonPathResultMatchers jsonPath(Args...)(string expression, Args args)
     {
-        import std.format : format;
-
-        static if (Args.length == 0)
-            return new JsonPathResultMatchers(expression);
-        else
-            return new JsonPathResultMatchers(format(expression, args));
+        return new JsonPathResultMatchers(expression, args);
     }
 
     /// Asserts the forwarded URL.
@@ -748,19 +743,43 @@ class HeaderResultMatchers
 }
 
 /// `JsonPathResultMatchers`.
-final class JsonPathResultMatchers
+class JsonPathResultMatchers
 {
     private JsonPathExpectationsHelper helper;
+    private string expectedPrefix;
 
-    ///
-    this(string expression) pure nothrow @nogc
+    /// Compiles the JSON path for subsequent matchers.
+    this(string expression)
     {
         helper = JsonPathExpectationsHelper(expression);
     }
 
-    private static immutable(char)[] content(MvcResult result)
+    /// Formats the expression with the supplied arguments (R7).
+    protected this(Args...)(string expression, Args args) if (Args.length != 0)
     {
-        return result.getResponse().getContentAsString("UTF-8");
+        this(String.format(expression, args));
+    }
+
+    /// Verifies the prefix before interpreting the rest of the response body as JSON.
+    JsonPathResultMatchers prefix(string prefix)
+    {
+        expectedPrefix = prefix;
+        return this;
+    }
+
+    private string content(MvcResult result)
+    {
+        auto body = result.getResponse().getContentAsString("UTF-8");
+        if (body.length < expectedPrefix.length)
+            AssertionErrors.fail("JSON prefix \"" ~ expectedPrefix ~ "\" not found");
+        const actualPrefix = body[0 .. expectedPrefix.length];
+        if (actualPrefix != expectedPrefix)
+        {
+            const message = "Expected a JSON payload prefixed with \"" ~ expectedPrefix;
+            AssertionErrors.fail(message ~ "\" but found: '" ~ actualPrefix ~ "'");
+        }
+        return
+        body[expectedPrefix.length .. $];
     }
 
     /// Asserts the value at the path equals `expectedValue`.
@@ -782,6 +801,20 @@ final class JsonPathResultMatchers
     {
         auto h = helper;
         return ResultMatcher.of((MvcResult result) { h.doesNotExist(content(result)); });
+    }
+
+    /// Asserts that this path selects a value, including a JSON null.
+    ResultMatcher hasJsonPath()
+    {
+        auto h = helper;
+        return ResultMatcher.of((MvcResult result) { h.hasJsonPath(content(result)); });
+    }
+
+    /// Asserts that this path selects no value, including a JSON null.
+    ResultMatcher doesNotHaveJsonPath()
+    {
+        auto h = helper;
+        return ResultMatcher.of((MvcResult result) { h.doesNotHaveJsonPath(content(result)); });
     }
 
     /// Asserts the value at the path is empty.

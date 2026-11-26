@@ -99,7 +99,7 @@
         "dscanner.style.long_line: Line is longer than # characters": 1
       },
       "framework/framework-test/source/flint/test/util.d": {
-        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 2
+        "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 1
       },
       "framework/framework-test/source/flint/test/web/servlet/request.d": {
         "dscanner.metric.cyclomatic_complexity: Cyclomatic complexity of this function is #.": 1
