@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,100 | 258 | 1,871 | 15,192 |
+| framework | openjdk@21.0.13 | 1,095 | 258 | 1,871 | 15,197 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10014,7 +10014,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 720 | 0 |
+| java.io | 725 | 0 |
 | java.lang | 2,018 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10907,6 +10907,12 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.OutputStreamWriter#<init>(OutputStream)` | 2 | Java rejects a null output stream during construction. The existing constructor accepts one. |
 | framework | `java.io.OutputStreamWriter#close()` | 2 | Java flushes buffered output, closes once, and rejects subsequent writes and flushes. The existing method forwards every close without flushing or tracking the closed state. |
 | framework | `java.io.OutputStreamWriter#flush()` | 2 | Java drains its encoded buffer before flushing the stream and rejects flush after close. The existing writer emits bytes eagerly and forwards flush even after close. |
+| framework | `java.io.PrintWriter#<init>(File)` | 2 | The existing type has no File constructor. |
+| framework | `java.io.PrintWriter#<init>(OutputStream)` | 2 | Java rejects a null output during construction and buffers writes. The existing constructor accepts a null sink and wraps an eager writer. |
+| framework | `java.io.PrintWriter#<init>(Writer)` | 2 | Java rejects a null writer during construction. The existing constructor accepts one. |
+| framework | `java.io.PrintWriter#checkError()` | 2 | Error tracking and the public checkError accessor are pending. |
+| framework | `java.io.PrintWriter#close()` | 2 | Java records checked close failures in the error state and ignores repeated closes after success. The existing method forwards every close and propagates checked failures. |
+| framework | `java.io.PrintWriter#flush()` | 2 | A checked flush failure or a flush after closure sets Java's error state. The existing method forwards flush and propagates checked failures. |
 | framework | `java.io.StringWriter#write(String)` | 2 | Java appends the text null for a null string. The existing plain D slice treats null as empty. The distinct nullable string contract requires R5. |
 | framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. |
 | framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. |
