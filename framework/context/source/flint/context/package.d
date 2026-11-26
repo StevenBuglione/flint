@@ -207,7 +207,7 @@ private final class PayloadListener(T) : GenericApplicationListener
 
 /++
 Interface that encapsulates event publication. Java's overloads are `final` over the erased `publishEventErased`
-(deviation D-22).
+(deviation D-CORE-2).
 +/
 interface ApplicationEventPublisher
 {

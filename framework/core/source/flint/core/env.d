@@ -52,7 +52,7 @@ import flint.util : Assert, PropertyPlaceholderHelper, StringUtils;
 Interface for resolving properties against any underlying source.
 
 Java's `getProperty` and `getRequiredProperty` overloads are `final` here, over the virtual `getPropertyErased`,
-so the `Class`-typed overloads can be template façades (R4) callable on any implementation (deviation D-22).
+so the `Class`-typed overloads can be template façades (R4) callable on any implementation (deviation D-CORE-2).
 +/
 interface PropertyResolver
 {

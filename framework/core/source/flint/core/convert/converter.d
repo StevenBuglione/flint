@@ -87,7 +87,7 @@ interface ConditionalGenericConverter : GenericConverter, ConditionalConverter
 }
 
 /// For registering converters with a type conversion system. Java's overloads are `final` over the virtual
-/// `addConverterErased` and `removeConvertibleErased` (deviation D-22).
+/// `addConverterErased` and `removeConvertibleErased` (deviation D-CORE-2).
 interface ConverterRegistry
 {
     /// The erased primitive: add a generic converter.

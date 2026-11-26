@@ -289,7 +289,7 @@ A service interface for type conversion: the entry point into the conversion sys
 
 Java's `canConvert` and `convert` overloads are `final` here, over the virtual `canConvertErased` and
 `convertErased`, so the `Class`-typed overloads can be template façades (R4) callable on any implementation
-(deviation D-22).
+(deviation D-CORE-2).
 +/
 interface ConversionService
 {

@@ -24,7 +24,7 @@
  * BeanCreationException,BeanCreationNotAllowedException,BeanCurrentlyInCreationException,BeanInitializationException,
  * BeanIsAbstractException,BeanNotOfRequiredTypeException,FactoryBeanNotInitializedException,
  * UnsatisfiedDependencyException,BeanDefinitionStoreException}.java. Class-typed lookups are template façades (R4)
- * over erased primitives (deviation D-22); bean types are canonical D names.
+ * over erased primitives (deviation D-CORE-2); bean types are canonical D names.
  */
 
 /++
@@ -32,7 +32,7 @@
 
 `getBean!T()`, `getBean!T(name)`, `getBeansOfType!T()` and `getBeanProvider!T()` are Java's `Class`-typed
 lookups (R4); they are `final` façades over the erased `getBeanErased`, `getBeanNamesForTypeErased` and
-`getBeansOfTypeErased`, which implementations provide (deviation D-22).
+`getBeansOfTypeErased`, which implementations provide (deviation D-CORE-2).
 +/
 module flint.beans.factory;
 
@@ -589,7 +589,7 @@ class BeanIsNotAFactoryException : BeanNotOfRequiredTypeException
 }
 
 /++
-The erased side of `FactoryBean!T` that the bean factory calls (the proposed D-22 pattern): `mixin
+The erased side of `FactoryBean!T` that the bean factory calls (the D-CORE-2 pattern): `mixin
 FactoryBean!T.Defaults` implements it from `getObject`.
 +/
 interface FactoryBeanErased
