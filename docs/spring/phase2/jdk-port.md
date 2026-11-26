@@ -167,6 +167,16 @@ The release check fails with any violation still present.
 | `sol-aop` | the rest of `java.util`: `Formatter` (printf semantics), `Scanner`, `Properties`, `StringJoiner`, `StringTokenizer`, `Iterator` helpers, `EventObject`/`EventListener`, `Timer` facade | `StringJoiner` and `Properties`, then `Formatter` |
 | `sol-translator` | bulk mechanical translation of OpenJDK sources for the other lanes: exception classes, constants-only types, simple interfaces and value classes, each checked against the hand-port rules and handed to the package owner | the `java.*` exception classes for sol-framework, sol-test and sol-web |
 
+**Packages added after the reconciliation (coordinator, 2026-11-26 16:40Z):** the coverage table (docs/spring/jdk-coverage.md) listed in-scope packages with no owner. Each goes to the lane that owns the closest package, after that lane's first items:
+- `java.lang.annotation` (`Annotation`, `ElementType`, `RetentionPolicy` and the meta-annotations, as R2 UDAs and enums) → sol-framework.
+- `java.lang.ref` (`WeakReference`, `SoftReference`, `PhantomReference`, `ReferenceQueue`, `Cleaner`, over the GC's weak references) → sol-boot.
+- `javax.sql` (`DataSource`, `ConnectionPoolDataSource`, `RowSet` basics; Spring JDBC uses `DataSource` everywhere) → sol-data, **first priority among these**.
+- `java.nio.channels` and `java.nio.channels.spi` (channels over Flint's engines and `flint:os`) → sol-jackson, after `java.nio` buffers.
+- `java.util.jar` (manifest and JAR reading over java-zip) → sol-jpa, after `java.util.zip`.
+- `java.security.cert`, `javax.security.auth.x500`, `javax.net` and `javax.net.ssl` (OpenSSL facades only), plus `javax.security.auth` and its `callback`, `login` and `spi` packages (Subject and principals first, JAAS login last), and `javax.security.cert`, `javax.crypto.interfaces` → sol-security.
+- Every `*.spi` package (`java.net.spi`, `java.nio.charset.spi`, `java.nio.file.spi`, `java.text.spi`, `java.util.spi`) → the owner of its parent package.
+- The 1,862 **unconfirmed** rows that `tools/jdk_coverage.py` classified automatically are confirmed by the owning lane as it works through its package, against the pinned Temurin oracle.
+
 **How each lane works:**
 - **Source:** port from OpenJDK 21.0.13 under GPL-2.0-only WITH Classpath-exception-2.0, keeping each file's header. Port the applicable jtreg tests from the scoped inventory, and compare behaviour with the pinned Temurin oracle.
 - **Modules:** new code goes in package-scoped leaf modules, so an app links only what it uses. Each new module registers under new-module-rule, with measured caps.
