@@ -4,9 +4,9 @@
 // Modified by the Flint authors.
 /*
  * Ported from spring-framework v7.1.0, spring-context/src/main/java/org/springframework/validation/{Errors,
- * AbstractErrors,BindingResult,AbstractBindingResult,BeanPropertyBindingResult,MapBindingResult,BindException,
- * ObjectError,FieldError,MessageCodesResolver,MessageCodeFormatter,DefaultMessageCodesResolver,Validator,
- * SmartValidator,ValidationUtils}.java. Object-typed values are flint.engine.aot.any.Any; bean properties are read
+ * AbstractErrors,BindingResult,BindingResultUtils,AbstractBindingResult,BeanPropertyBindingResult,MapBindingResult,
+ * BindException,ObjectError,FieldError,MessageCodesResolver,MessageCodeFormatter,DefaultMessageCodesResolver,
+ * Validator,SmartValidator,ValidationUtils}.java. Object-typed values are flint.engine.aot.any.Any; bean properties are read
  * through Flint AOT descriptors instead of BeanWrapper reflection; Class-typed parameters are type names (R4).
  */
 
@@ -22,11 +22,11 @@ module flint.validation;
 
 import flint.context : MessageSourceResolvable;
 import flint.context.support : DefaultMessageSourceResolvable;
-import flint.engine.aot.any : Any;
+import flint.engine.aot.any : Any, AnyTypeException;
 import flint.engine.aot.descriptor : Descriptor, DescriptorTable;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, RuntimeException,
     UnsupportedOperationException, valueOf;
-import flint.java.util : ArrayList, Collections, List, Map;
+import flint.java.util : ArrayList, Collections, List, Map, RawMap;
 import flint.java.util.function_ : Function;
 import flint.util : Assert, StringUtils;
 
@@ -770,6 +770,41 @@ interface BindingResult : Errors
     string[] resolveMessageCodes(string errorCode, string field);
     /// The fields suppressed during binding.
     string[] getSuppressedFields();
+}
+
+/// Finds a named binding result in a model map.
+abstract class BindingResultUtils
+{
+    /// The named result or null when it is absent. Throws IllegalStateException for an attribute of the wrong type.
+    static BindingResult getBindingResult(RawMap model, string name)
+    {
+        Assert.notNull(model, "Model map must not be null");
+        Assert.notNull(name, "Name must not be null");
+
+        Any attribute;
+        try
+            attribute = model.getAny(Any.of(BindingResult.MODEL_KEY_PREFIX ~ name));
+        catch (AnyTypeException)
+            return null; // A typed map whose keys cannot contain the requested String has no matching entry.
+
+        if (attribute.isNull())
+            return null;
+        auto object = attribute.asObject();
+        if (auto result = cast(BindingResult) object)
+            return result;
+        const text = object is null ? attribute.toString() : valueOf(object);
+        throw new IllegalStateException("BindingResult attribute is not of type BindingResult: " ~ text);
+    }
+
+    /// The named result. Throws IllegalStateException when it is missing.
+    static BindingResult getRequiredBindingResult(RawMap model, string name)
+    {
+        auto result = getBindingResult(model, name);
+        if (result is null)
+            throw new IllegalStateException(
+                    "No BindingResult attribute found for name '" ~ name ~ "'- have you exposed the correct model?");
+        return result;
+    }
 }
 
 /// Abstract implementation of `BindingResult`: the error list and code resolution (Spring's `AbstractBindingResult`).

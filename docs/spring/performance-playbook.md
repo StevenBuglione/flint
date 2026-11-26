@@ -275,6 +275,7 @@ Character-to-number conversion normalizes the UTF-16 code unit to a signed short
 SimpleRouteMatcher retains the original route string and delegates matching, extraction and ordering to its configured PathMatcher. The Core probe on venus against `b63261658` kept 8,844 loadable bytes and moved from 5,491 to 5,510 DMD template instances against the 8,550 cap.
 
 StreamUtils copies and drains through one heap buffer per transfer, and its wrappers forward bulk reads and writes. The Core probe on venus against the rebased batch parent `837240684` moved from 19,197 to 19,237 loadable bytes and from 5,583 to 5,613 DMD template instances against caps of 81,920 bytes and 8,550 instances.
+BindingResultUtils looks up the prefixed model key through the Java map's existing erased view. It formats the attribute only on a type error. The Context probe on venus against `49a07739d` kept 631,100 loadable bytes and moved from 5,010 to 5,029 DMD template instances against the 9,350 cap.
 
 ### Jackson tree search
 

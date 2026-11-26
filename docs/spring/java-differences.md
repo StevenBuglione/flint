@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 203 | 359 | 0 | 15,234 |
 | boot | spring-boot@v4.2.0 | 44 | 97 | 2,133 | 13,329 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,593 | 1,447 | 4,870 | 29,924 |
+| framework | spring-framework@v7.1.0 | 3,595 | 1,449 | 4,870 | 29,920 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3773,6 +3773,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.validation.BindingResultUtils#getBindingResult(Map,String)` | `flint.validation.BindingResultUtils.getBindingResult` | [R10](api-mapping.md#r10-streams-and-collections) | The wildcard Map uses the existing erased RawMap view so models with different key and value types are accepted. |
+| `org.springframework.validation.BindingResultUtils#getRequiredBindingResult(Map,String)` | `flint.validation.BindingResultUtils.getRequiredBindingResult` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.validation.DefaultMessageCodesResolver#resolveMessageCodes(String,String,String,Class)` | `flint.validation.DefaultMessageCodesResolver.resolveMessageCodes` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.validation.MessageCodesResolver#resolveMessageCodes(String,String,String,Class)` | `flint.validation.MessageCodesResolver.resolveMessageCodes` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.validation.ObjectError#contains(Class)` | `flint.validation.ObjectError.contains` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -10073,7 +10075,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.util.function | 44 | 0 |
 | org.springframework.util.unit | 26 | 0 |
 | org.springframework.util.xml | 70 | 0 |
-| org.springframework.validation | 143 | 0 |
+| org.springframework.validation | 139 | 0 |
 | org.springframework.validation.annotation | 4 | 0 |
 | org.springframework.validation.beanvalidation | 82 | 0 |
 | org.springframework.validation.method | 69 | 0 |
