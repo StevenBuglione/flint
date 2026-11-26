@@ -165,6 +165,59 @@ Discarded input sections
             with self.assertRaisesRegex(ValueError, 'missing probes for flint.java.sample'):
                 closure.read_manifest(package, modules)
 
+    def test_independent_probe_files_can_share_a_leaf_with_legacy_entries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory)
+            leaf = 'flint.java.sample'
+            fragments = package / 'closure-probes' / leaf
+            fragments.mkdir(parents=True)
+            fixtures = package / 'closure'
+            fixtures.mkdir()
+            first = {'source': 'closure/first.d', 'leaves': [], 'data': []}
+            second = {'source': 'closure/second.d', 'leaves': [], 'data': []}
+            for name in ('first', 'second'):
+                (fixtures / f'{name}.d').write_text(f'import {leaf};\n')
+            (fragments / 'second.json').write_text(json.dumps(second))
+            self.assertEqual(closure.read_manifest(package, {leaf: True}), {leaf: {'second': second}})
+
+            manifest = package / 'closure.json'
+            manifest.write_text(json.dumps({'schema': closure.SCHEMA, 'probes': {leaf: {'first': first}}}))
+            self.assertEqual(closure.read_manifest(package, {leaf: True}), {leaf: {'first': first, 'second': second}})
+
+            (fragments / 'first.json').write_text(json.dumps(first))
+            with self.assertRaisesRegex(ValueError, 'duplicate probe record'):
+                closure.read_manifest(package, {leaf: True})
+            (fragments / 'first.json').unlink()
+            (fragments / 'second.json').write_text(json.dumps(first))
+            with self.assertRaisesRegex(ValueError, 'duplicate probe source'):
+                closure.read_manifest(package, {leaf: True})
+
+    def test_probe_files_preserve_identity_in_baseline_history(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(['git', 'init', '-q', root], check=True)
+            package = root / 'framework/java-time'
+            leaf = 'flint.java.time.sample'
+            path = package / 'closure-probes' / leaf / 'sample.json'
+            path.parent.mkdir(parents=True)
+            entry = {'source': 'closure/sample.d', 'leaves': ['flint.java.lang'], 'data': []}
+            legacy = package / 'closure.json'
+            legacy.write_text(json.dumps({'schema': closure.SCHEMA, 'probes': {leaf: {'sample': entry}}}))
+            closure.git(root, 'add', '.')
+            closure.git(root, '-c', 'user.name=Test', '-c', 'user.email=test@example.test',
+                        'commit', '-qm', 'Add legacy probe')
+            legacy.unlink()
+            path.write_text(json.dumps(entry))
+            self.assertEqual(closure.probe_record(root, None, 'java-time', leaf, 'sample'), entry)
+            row = f'link|java-time|{leaf}|sample|O3|undeclared module records flint.java.util'
+            self.assertFalse(closure.may_seed_legacy_record(root, None, row, {'flint.java.util'}))
+
+            closure.git(root, 'add', '-A')
+            closure.git(root, '-c', 'user.name=Test', '-c', 'user.email=test@example.test',
+                        'commit', '-qm', 'Move probe to its own file')
+            self.assertEqual(closure.probe_record(root, 'HEAD', 'java-time', leaf, 'sample'), entry)
+            self.assertFalse(closure.may_seed_legacy_record(root, 'HEAD', row, {'flint.java.util'}))
+
     def test_selective_reexport_from_a_leaf_still_needs_a_probe(self):
         with tempfile.TemporaryDirectory() as temporary:
             package = Path(temporary)
@@ -204,7 +257,10 @@ Discarded input sections
                     self.assertIn('undeclared data flint.java.data.table', profile['violations'])
                     self.assertGreater(profile['loadable_bytes'], 0)
                 entry['data'].append('flint.java.data.table')
-                manifest.write_text(json.dumps(document))
+                fragment = package / 'closure-probes/flint.java.sample/sample.json'
+                fragment.parent.mkdir(parents=True)
+                fragment.write_text(json.dumps(entry))
+                manifest.unlink()
                 report = closure.audit('java', None)['flint.java.sample']['sample']
                 for profile in report.values():
                     self.assertFalse(profile['violations'])

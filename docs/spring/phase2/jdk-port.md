@@ -99,7 +99,7 @@ Rules 1, 4 and 5 are enforced by a check, not by review. `sol-jdk-core` builds i
   - no symbol from a banned Phobos family;
   - no symbol from a `flint.java*` leaf that isn't in the leaf's declared closure;
   - no data table that isn't declared for that leaf.
-- **The declared closure** lives in a small checked-in file per package, for example `framework/java-collections/closure.json`, which lists the leaves each leaf may pull in.
+- **The declared closure** lists the leaves and data each probe may pull in. New probe records live in separate files so lanes can add them independently.
 - **Wiring:** a step in the module definition of done for every `flint:java*` package, plus a structural-gate check for the banned imports.
 - **Size measurement:** loadable section bytes using the same ELF calculation as the package budget. The count includes `.bss` and excludes per-thread `.tbss` (decisions.md, 2026-11-26 01:20Z and 02:47Z).
 - **Budgets** (`jdk-leaf-rule`, decisions.md 2026-11-26 01:45Z): each leaf has its own budget, set at the measured value plus 10% and only shrinking afterwards. A package budget is the sum of its leaves; adding a leaf raises it by exactly that leaf's budget, with the trailer `Budget-Raise-Approved: jdk-leaf-rule`.
@@ -110,11 +110,19 @@ runner. The audit uses `dub`, `ldc2`, `readelf` and `nm`. For investigation, run
 GNU ld's archive records identify the referring object and symbol for retained Phobos families when available.
 On venus, run both commands under the measurement queue's hold wrapper.
 
-`closure.json` uses schema `flint.jdk-closure/1`. The `probes` object maps a leaf's D module name to named
-probe records. Each record has a package-relative `source` under `closure/` or `bench/`, a `leaves` list of
-other modules the probe may retain, and a `data` list. The probe's own leaf is implicit. Put new table-only
-modules under a `.data` component so the gate can identify their symbols. Write separate probes for common
-operations and operations that intentionally need optional data. Use runtime input to exercise the operation.
+Add each new record under `closure-probes/<D leaf module>/<probe-name>.json` in its package directory.
+The fully qualified D module names the leaf, and the file stem is the probe name. The JSON object has a
+package-relative `source` under `closure/` or `bench/`, a `leaves` list of other modules the probe may retain,
+and a `data` list. The probe's own leaf is implicit.
+
+Existing `closure.json` files use schema `flint.jdk-closure/1` and map each leaf to named records under
+`probes`. The gate reads both layouts and requires each leaf and probe name pair and each source fixture
+to be unique in a package. When moving a record to its own file, remove the old entry in the same commit
+and keep its leaf and probe name so its closure history stays intact.
+
+Put new table-only modules under a `.data` component so the gate can identify their symbols. Write separate
+probes for common operations and operations that intentionally need optional data. Use runtime input to exercise
+the operation.
 
 The initial JDK packages' existing violations are recorded in
 [`framework/java/closure-baseline.json`](../../../framework/java/closure-baseline.json). The structural and

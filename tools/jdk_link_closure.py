@@ -16,6 +16,7 @@ from request_allocation_ratchet import git
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = 'flint.jdk-closure/1'
+PROBE_DIRECTORY = 'closure-probes'
 BANNED_PHOBOS = tuple('std.' + family for family in (
     'format', 'conv', 'uni', 'regex', 'socket', 'net', 'process', 'file', 'path',
     'datetime', 'json', 'parallelism', 'concurrency',
@@ -253,12 +254,21 @@ def committed_text(root, commit, path):
 
 
 def probe_record(root, commit, package, leaf, probe):
-    path = f'framework/{package}/closure.json'
-    if commit is None:
-        source = (root / path).read_text() if (root / path).is_file() else None
-    else:
-        source = committed_text(root, commit, path)
-    return json.loads(source)['probes'].get(leaf, {}).get(probe) if source else None
+    def read(path):
+        if commit is not None:
+            return committed_text(root, commit, path)
+        file = root / path
+        return file.read_text() if file.is_file() else None
+
+    prefix = f'framework/{package}'
+    legacy = read(f'{prefix}/closure.json')
+    record = json.loads(legacy, object_pairs_hook=unique_object)['probes'].get(leaf, {}).get(probe) if legacy else None
+    fragment = read(f'{prefix}/{PROBE_DIRECTORY}/{leaf}/{probe}.json')
+    if fragment is None:
+        return record
+    if record is not None:
+        raise ValueError(f'{prefix}: duplicate probe record {leaf}/{probe}')
+    return json.loads(fragment, object_pairs_hook=unique_object)
 
 
 def may_seed_legacy_record(root, commit, row, existing_modules):
@@ -336,38 +346,58 @@ def check_names(names, modules, want_data):
             raise ValueError(f'unknown or wrongly classified module {name}')
 
 
+def manifest_entries(package):
+    manifest = package / 'closure.json'
+    directory = package / PROBE_DIRECTORY
+    fragments = sorted(directory.rglob('*.json'))
+    entries = {}
+    if manifest.is_file():
+        document = json.loads(manifest.read_text(), object_pairs_hook=unique_object)
+        if (not isinstance(document, dict) or set(document) != {'schema', 'probes'}
+                or document['schema'] != SCHEMA or not isinstance(document['probes'], dict)):
+            raise ValueError(f'{manifest}: expected {SCHEMA} and a probes object')
+        entries = document['probes']
+    elif not fragments:
+        raise ValueError(f'{package}: missing JDK closure manifest')
+    for fragment in fragments:
+        relative = fragment.relative_to(directory)
+        if len(relative.parts) != 2:
+            raise ValueError(f'{fragment}: expected {PROBE_DIRECTORY}/<leaf>/<probe>.json')
+        leaf, probe = relative.parts[0], fragment.stem
+        probes = entries.setdefault(leaf, {})
+        if not isinstance(probes, dict):
+            raise ValueError(f'{manifest}: {leaf} needs at least one probe')
+        if probe in probes:
+            raise ValueError(f'{fragment}: duplicate probe record {leaf}/{probe}')
+        probes[probe] = json.loads(fragment.read_text(), object_pairs_hook=unique_object)
+    return entries
+
+
 def read_manifest(package, own_modules, all_modules=None):
     modules = own_modules if all_modules is None else all_modules
-    path = package / 'closure.json'
-    if not path.is_file():
-        raise ValueError(f'{path}: missing JDK closure manifest')
-    document = json.loads(path.read_text(), object_pairs_hook=unique_object)
-    if (not isinstance(document, dict) or set(document) != {'schema', 'probes'}
-            or document['schema'] != SCHEMA or not isinstance(document['probes'], dict)):
-        raise ValueError(f'{path}: expected {SCHEMA} and a probes object')
-    entries = document['probes']
+    entries = manifest_entries(package)
     expected = {name for name, public_leaf in own_modules.items() if public_leaf}
     missing, extra = sorted(expected - entries.keys()), sorted(entries.keys() - expected)
     if missing:
-        raise ValueError(f'{path}: missing probes for {", ".join(missing)}')
+        raise ValueError(f'{package}: missing probes for {", ".join(missing)}')
     if extra or not expected:
-        raise ValueError(f'{path}: expected probes for public API leaves only; extra: {", ".join(extra)}')
+        raise ValueError(f'{package}: expected probes for public API leaves only; extra: {", ".join(extra)}')
     seen = set()
     for module, probes in entries.items():
         if not isinstance(probes, dict) or not probes:
-            raise ValueError(f'{path}: {module} needs at least one probe')
+            raise ValueError(f'{package}: {module} needs at least one probe')
         for name, entry in probes.items():
             if (not re.fullmatch(r'[a-z][a-z0-9-]*', name) or not isinstance(entry, dict)
                     or set(entry) != {'source', 'leaves', 'data'} or not isinstance(entry['source'], str)):
-                raise ValueError(f'{path}: invalid probe record {module}/{name}')
+                raise ValueError(f'{package}: invalid probe record {module}/{name}')
             check_names(entry['leaves'], modules, want_data=False)
             check_names(entry['data'], modules, want_data=True)
             source = (package / entry['source']).resolve()
             relative = source.relative_to(package.resolve()) if source.is_relative_to(package.resolve()) else None
             if not relative or relative.parts[0] not in ('closure', 'bench') or source.suffix != '.d' or not source.is_file():
-                raise ValueError(f'{path}: missing or invalid probe source {entry["source"]}')
+                raise ValueError(f'{package}: missing or invalid probe source {entry["source"]}')
             if source in seen:
-                raise ValueError(f'{path}: duplicate probe source {entry["source"]}')
+                raise ValueError(f'{package}: duplicate probe source {entry["source"]}')
             seen.add(source)
             text = source.read_text()
             imports = source_imports(text)
