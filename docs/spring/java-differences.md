@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 65 | 85 | 0 | 4,302 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 234 | 137 | 1,871 | 16,179 |
+| framework | openjdk@21.0.13 | 236 | 138 | 1,871 | 16,176 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 555 | 23 | 88 | 11,747 |
@@ -1896,6 +1896,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.validation.Validator#validate(T,Class...)` | `flint.jakarta.validation.Validator.validate` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.validation.Validator#validateProperty(T,String,Class...)` | `flint.jakarta.validation.Validator.validateProperty` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.validation.Validator#validateValue(Class,String,Object,Class...)` | `flint.jakarta.validation.Validator.validateValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### java.io
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.io.UnsupportedEncodingException` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
 
 #### java.math
 
@@ -9811,7 +9817,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 803 | 0 |
+| java.io | 800 | 0 |
 | java.lang | 2,055 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |

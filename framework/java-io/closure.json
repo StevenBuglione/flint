@@ -1,0 +1,15 @@
+{
+  "probes": {
+    "flint.java.io.unsupportedencodingexception": {
+      "throw-catch": {
+        "data": [],
+        "leaves": [
+          "flint.java.io",
+          "flint.java.lang"
+        ],
+        "source": "closure/unsupported.d"
+      }
+    }
+  },
+  "schema": "flint.jdk-closure/1"
+}

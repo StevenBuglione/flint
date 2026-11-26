@@ -498,6 +498,21 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-io": {
+   "directory": "framework/java-io",
+   "module": "flint.java.io.unsupportedencodingexception",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-io/bench",
+    "baseline": "framework/java-io/bench/baseline",
+    "edit_source": "framework/java-io/source/flint/java/io/unsupportedencodingexception.d"
+   }
+  },
   "java-math": {
    "directory": "framework/java-math",
    "module": "flint.java.math",

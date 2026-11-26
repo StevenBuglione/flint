@@ -1,0 +1,1715 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-io",
+  "classes": {
+    "java/io/BufferedInputStream/CloseStream.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedInputStream/CountUpdate.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedInputStream/Fill.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedInputStream/LargeCopyWithMark.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedInputStream/ReadAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedInputStream/ReadZeroBytes.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedInputStream/SkipTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedInputStream/TransferTo.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedReader/BigMark.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedReader/EOL.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedReader/Fill.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedReader/Lines.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedReader/MarkedFillAtEOF.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedReader/ReadLine.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedReader/ReadLineSync.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedReader/Ready.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedReader/SkipNegative.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/BufferedWriter/Cleanup.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ByteArrayInputStream/ChunkedTransferTo.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ByteArrayInputStream/ReadAllReadNTransferTo.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ByteArrayInputStream/Skip.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ByteArrayOutputStream/EncodingTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ByteArrayOutputStream/MaxCapacity.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ByteArrayOutputStream/ToString.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ByteArrayOutputStream/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ByteArrayOutputStream/WriteToReleasesCarrier.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/CharArrayReader/Constructor.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/CharArrayReader/OverflowInRead.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/CharArrayReader/OverflowInSkip.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/CharArrayReader/ReadCharBuffer.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ClassCache/ContinuousGCTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ClassCache/NullValueTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Console/CharsetTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Console/ModuleSelectionTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Console/RedirectTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Console/SecurityManagerTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/DataInputStream/OpsAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/DataInputStream/ReadFully.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/DataInputStream/ReadLinePushback.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/DataInputStream/ReadUTF.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/DataInputStream/SkipBytes.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/DataOutputStream/CounterOverflow.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/DataOutputStream/WriteUTF.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Externalizable/compatibility/ExternalizableBlockData.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Externalizable/definesWriteObject/DefinesWriteObject.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/AccessDenied.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/Basic.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/CheckPermission.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/CheckTempDir.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/CompareTo.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/Cons.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/Create.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/CreateNewFile.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/DeleteOnExit.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/DeleteOnExitLong.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/DeleteOnExitNPE.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/EmptyPath.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/FileMethods.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/GetAbsolutePath.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/GetCanonicalPath.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/GetParent.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/GetXSpace.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/HashCodeEquals.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/IsAbsolute.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/IsHidden.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/LastModifiedTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/ListNull.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/ListRoots.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/ListSpace.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/MacPath.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/MaxPath.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/MaxPathLength.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/Mkdir.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/NulFile.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/NullArgs.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/SetAccess.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/SetLastModified.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/SetReadOnly.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/SymLinks.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/TempDirDoesNotExist.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/TimeZoneLastModified.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/ToURI.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/ToURL.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/Unicode.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/UserDirChangedTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/WinDeviceName.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/WinDirRelative.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/WinMaxPath.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/WinSpecialFiles.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/createTempFile/NameTooLong.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/createTempFile/Patterns.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/createTempFile/SecurityTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/createTempFile/SpecialTempFile.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/File/createTempFile/TargetDirectory.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileDescriptor/Finalize.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileDescriptor/RememberAppend.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileDescriptor/Sharing.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileDescriptor/Sync.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileInputStream/Available.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileInputStream/LargeFileAvailable.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileInputStream/LeadingSlash.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileInputStream/NegativeAvailable.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileInputStream/OpenDir.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileInputStream/OpsAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileInputStream/ReadXBytes.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileInputStream/TransferTo.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileInputStream/UnreferencedFISClosesFd.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileOutputStream/AtomicAppend.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileOutputStream/FileOpenTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileOutputStream/ManyFiles.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileOutputStream/OpenNUL.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileOutputStream/OpsAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileOutputStream/UnreferencedFOSClosesFd.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilePermission/Correctness.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilePermission/FilePermissionCollection.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilePermission/FilePermissionCollectionMerge.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilePermission/FilePermissionTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilePermission/Invalid.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilePermission/MergeName.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilePermission/ReadFileOnPath.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilePermission/SpecTests.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileReader/ConstructorTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FileWriter/ConstructorTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilterOutputStream/BoundsCheck.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilterOutputStream/SuppressedException.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/FilterOutputStream/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/IOException/LastErrorString.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStream/NullInputStream.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStream/OpsAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStream/ReadAllBytes.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStream/ReadNBytes.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStream/ReadParams.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStream/Skip.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStream/TransferTo.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStreamReader/GrowAfterEOF.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStreamReader/NullCreate.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStreamReader/One.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStreamReader/ReadCharBuffer.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStreamReader/ReadOffset.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/InputStreamReader/StatefulDecoderNearEOF.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/LineNumberInputStream/Available.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/LineNumberInputStream/MarkReset.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/LineNumberInputStream/Skip.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/LineNumberInputStream/SkipEOL.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/LineNumberReader/MarkReset.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/LineNumberReader/MarkSplitCRLF.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/LineNumberReader/Read.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/LineNumberReader/ReadReadLine.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/LineNumberReader/Skip.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/NegativeInitSize.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ObjectInputStream/NegativeArraySizeTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ObjectInputStream/PeekInputStreamTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ObjectInputStream/ResolveProxyClass.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ObjectInputStream/TestObjectStreamClass.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ObjectStreamClass/ObjectStreamClassCaching.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/ObjectStreamClass/TestOSCClassLoaderLeak.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/OutputStream/NullOutputStream.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/OutputStream/WriteParams.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/OutputStreamWriter/BoundsCheck.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/OutputStreamWriter/CloseWriterOnFailedFlush.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/OutputStreamWriter/Encode.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/OutputStreamWriter/NullCreate.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/OutputStreamWriter/TestWrite.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/OutputStreamWriter/WriteAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedInputStream/CloseAndAvailableRC.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedInputStream/ClosedWriter.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedInputStream/Constructors.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedInputStream/FasterWriter.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedInputStream/WriterLoop.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedOutputStream/ClosedWrite.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedOutputStream/DeadReader.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedOutputStream/MultipleConnect.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedOutputStream/NotConnected.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedOutputStream/WriteAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedReader/Constructors.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedReader/ReadToArray.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedReader/Ready.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedWriter/ConnectAfterReaderClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedWriter/FlushAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PipedWriter/WriteAfterReaderClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/CheckError.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/ClearErrorStream.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/EncodingConstructor.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/EncodingTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/FailingConstructors.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/FormatLocale.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/InheritEncodingTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/NullConstructor.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/OversynchronizedTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintStream/WriteBytes.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintWriter/CheckError.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintWriter/ClearErrorWriter.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintWriter/EncodingTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintWriter/FailingConstructors.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintWriter/OpsAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintWriter/OversynchronizedTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PrintWriter/SubClass.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PushbackInputStream/Available.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PushbackInputStream/ClosedStream.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PushbackInputStream/MarkReset.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PushbackInputStream/Skip.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PushbackInputStream/TransferTo.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PushbackReader/MarkReset.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PushbackReader/ReadCloseRaceNPE.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/PushbackReader/Skip.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/Close.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/EOF.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/FileLengthTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/OpenSync.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/OpsAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/ParameterCheck.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/ReadLine.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/ReadWritePrimitives.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/Seek.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/SetLength.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/UnreferencedRAFClosesFd.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/WriteBytesChars.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/WriteUTF.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/RandomAccessFile/skipBytes/SkipBytes.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/NullLock.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/NullReader.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/OpsAfterClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/ReadCharBuffer.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/ReadIntoReadOnlyBuffer.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/ReadIntoZeroLengthArray.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/ReadParams.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/ReaderBulkReadContract.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/Skip.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/SkipNegative.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Reader/TransferTo.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/SequenceInputStream/Close.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/SequenceInputStream/ConstructorNull.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/SequenceInputStream/LotsOfStreams.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/SequenceInputStream/TransferTo.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/ClassCastExceptionDetail/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/GetField/ReadFieldsCNF.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/GetField/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/InvalidClassException/TestIceConstructors.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/InvalidClassException/noargctor/DefaultPackage.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/InvalidClassException/noargctor/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/InvalidObjectException/TestIoeConstructors.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/NPEProvoker/NPEProvoker.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/NoClassDefFoundErrorTrap/NoClassDefFoundErrorTrap.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/PutField/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/PutField/Write2.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/arraySuidConflict/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/auditStreamSubclass/AuditStreamSubclass.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/available/Available.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/backRefCNFException/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/badSerialPersistentField/BadSerialPersistentField.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/badSerialVersionUID/BadSerialVersionUID.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/badSubstByReplace/BadSubstByReplace.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/checkModifiers/CheckModifiers.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/class/NonSerializableTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/classDescFlagConflict/Read.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/classDescGetField/GetField.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/classDescHooks/CNFException.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/classDescHooks/ClassDescHooks.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/classDescHooks/ExternLoopback.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/classDescHooks/Loopback.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/clearHandleTable/ClearHandleTable.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/cloneArray/CloneArray.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/concurrentClassDescLookup/ConcurrentClassDescLookup.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/corruptedUTFConsumption/CorruptedUTFConsumption.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/defaultDataEnd/DefaultDataEnd.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/defaultReadObjectCNFException/DefaultReadObjectCNFException.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/defaulted/GetFieldWrite.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/duplicateSerialFields/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/array/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/badResolve/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/basic/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/classObject/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/constantSubclasses/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/ignoreSerializationFields/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/ignoreSerializationMethods/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/mismatchedTypecode/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/missingConstant/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/enum/unshared/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/evolution/AddedExternField/WriteAddedField.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/evolution/AddedField/WriteAddedField.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/evolution/AddedSuperClass/WriteAddedSuperClass.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/evolution/RenamePackage/RenamePackageTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/expectedStackTrace/ExpectedStackTrace.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/explicitCNFException/ExplicitCNFException.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/failureAtomicity/FailureAtomicity.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/fieldTypeString/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/finalFields/FinalFields.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/getSuidClinitError/GetSuidClinitError.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/illegalHandle/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/inactiveRegistration/InactiveRegistration.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/longString/LongString.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/lookupAnyInvocation/LookupAnyInvocation.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/lookupInterfaceDesc/LookupInterfaceDesc.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/maskSyntheticModifier/MaskSyntheticModifierTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/misplacedArrayClassDesc/MisplacedArrayClassDesc.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/modifyStaticFields/ModifyStaticFields.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/nestedReplace/NestedReplace.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/noSuchFieldClarification/NoSuchFieldClarification.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/nonserializable/ExceptionDetail.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/notAvailable/NotAvailable.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/nullArgExceptionOrder/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/AnnotateClass.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/ArrayFields.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/ArraysOfArrays.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/BinaryTree.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/CheckForException.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/CheckingEquality.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/CircularList.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/SerializeWithException.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/SimpleArrays.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/ValidateClass.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/oldTests/WritePrimitive.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/optionalDataEnd/OptionalDataEnd.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/packageAccess/PackageAccessTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/parents/OriginalClass.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/partialClassDesc/PartialClassDesc.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/primitiveClasses/PrimitiveClasses.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/proxy/Basic.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/proxy/replace/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/proxy/skipMissing/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/readObjectNoData/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/readPastObject/ReadPastObject.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/AbsentStreamValuesTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/BadCanonicalCtrTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/BadValues.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/BasicRecordSer.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/ConstructorAccessTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/ConstructorPermissionTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/CycleTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/DifferentStreamFieldsTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/ProhibitedMethods.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/ReadResolveTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/RecordClassTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/SerialPersistentFieldsTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/SerialVersionUIDTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/StreamRefTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/ThrowingConstructorTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/UnsharedTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/WriteReplaceTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/migration/AssignableFromTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/migration/DefaultValuesTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/records/migration/SuperStreamFieldsTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/recursiveClassDescLookup/Test.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/replaceStringArray/ReplaceStringArray.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/replaceWithNull/ReplaceWithNull.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/resolveClass/MethodTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/resolveClass/consTest/ConsTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/resolveClass/deserializeButton/DeserializeButtonTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/resolveClassException/ResolveClassException.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/resolveProxyClass/NonPublicInterface.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/sanityCheck/SanityCheck.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/CheckArrayTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/CheckInputOrderTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/FilterWithSecurityManagerTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/GlobalFilterTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/InvalidGlobalFilterTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/MixedFiltersTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/SerialFactoryExample.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/SerialFactoryFaults.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/SerialFilterFactoryTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/SerialFilterFunctionTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialFilter/SerialFilterTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialver/classpath/ClasspathTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/serialver/nested/NestedTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/skipToEndOfBlockData/SkipToEndOfBlockData.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/skipWriteObject/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/skippedObjCNFException/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/stopCustomDeserialization/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/subclass/SubclassTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/subclassGC/SubclassGC.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/superclassDataLoss/SuperclassDataLossTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/survivePrematureClose/SurvivePrematureClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/typeSafeEnum/TypeSafeEnum.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/typeStringBackRef/TypeStringBackRef.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/underlyingOutputStreamException/UnderlyingOutputStreamException.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/unnamedPackageSwitch/UnnamedPackageSwitchTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/unresolvableObjectStreamClass/UnresolvableObjectStreamClass.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/unresolvedClassDesc/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/unshared/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/userRWObjError/UserRWObjError.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/validate/Validate.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/verifyDynamicObjHandleTable/VerifyDynamicObjHandleTable.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/writeObjectMemory/WriteObjectMemory.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/writeReplace/WriteReplace.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Serializable/wrongReturnTypes/Write.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StreamTokenizer/Comment.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StreamTokenizer/NullConstruct.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StreamTokenizer/QuoteTest.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StreamTokenizer/ReadAhead.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StreamTokenizer/Reset.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StringBufferInputStream/OverflowInRead.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StringReader/ClosedReady.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StringReader/NegativeMarkLimit.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StringReader/Skip.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/StringWriter/NegativeBufferSize.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/SystemInAvailable.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Unicode.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Writer/Append.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Writer/Bug6856817.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Writer/NullWriter.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Writer/WriteFromString.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/Writer/WriteParams.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/BCat.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/BufferSizes.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/BufferedReaderMark.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/Cat.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/LineLengths.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/LineNumbers.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/RandomLines.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/SmallReads.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/StringConvert.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/UTF16.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/UTF8.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/charStreams/WriteLengths.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/etc/FailingFlushAndClose.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/GeneralSolaris.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/GeneralWin32.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/unix/TrailingSlash.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/win32/BadDriveLetter.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/win32/DriveOnly.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/win32/DriveRelativePath.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/win32/DriveSlash.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/win32/RenameDelete.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/win32/SJIS.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/pathNames/win32/bug6344646.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/readBytes/MemoryLeak.java": {
+      "status": "deferred",
+      "phase": "2"
+    },
+    "java/io/readBytes/ReadBytesBounds.java": {
+      "status": "deferred",
+      "phase": "2"
+    }
+  }
+}
