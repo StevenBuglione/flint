@@ -179,7 +179,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | --- | --- | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 202 | 348 | 0 | 15,246 |
 | boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
-| data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
+| data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
 | framework | spring-framework@v7.1.0 | 3,516 | 1,403 | 4,870 | 30,045 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
@@ -735,15 +735,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.data.core.PropertyPathUtil#resolve(Object)` | `flint.data.core.PropertyPathUtil.resolve` | [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `org.springframework.data.core.TypeInformation` | `flint.data.core.TypeInformation` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.core.TypeInformation#getType()` | `flint.data.core.TypeInformation.getType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.core.TypeInformation#isSubTypeOf(Class)` | `flint.data.core.TypeInformation.isSubTypeOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.core.TypeInformation#of(Class)` | `flint.data.core.TypeInformation.of` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.data.core.TypedPropertyPath` | `flint.data.core.TypedPropertyPath` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.data.core.TypedPropertyPath#of(TypedPropertyPath)` | `flint.data.core.TypedPropertyPath.of` | [R9](api-mapping.md#r9-functional-interfaces) |  |
-| `org.springframework.data.core.TypedPropertyPath#path(PropertyReference)` | `flint.data.core.TypedPropertyPath.path` | [R9](api-mapping.md#r9-functional-interfaces) |  |
-| `org.springframework.data.core.TypedPropertyPath#then(PropertyReference)` | `flint.data.core.TypedPropertyPath.then` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 
 #### org.springframework.data.domain
 
@@ -9443,7 +9440,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.data.auditing.config | 33 | 0 |
 | org.springframework.data.config | 25 | 0 |
 | org.springframework.data.convert | 255 | 0 |
-| org.springframework.data.core | 116 | 0 |
+| org.springframework.data.core | 119 | 0 |
 | org.springframework.data.crossstore | 29 | 0 |
 | org.springframework.data.domain | 182 | 0 |
 | org.springframework.data.domain.jaxb | 27 | 0 |
