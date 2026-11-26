@@ -9123,7 +9123,6 @@
       "org/springframework/web/accept/MappingMediaTypeFileExtensionResolverTests.java",
       "org/springframework/web/accept/MediaTypeParamApiVersionResolverTests.java",
       "org/springframework/web/accept/PathApiVersionResolverTests.java",
-      "org/springframework/web/accept/QueryApiVersionResolverTests.java",
       "org/springframework/web/accept/SemanticApiVersionParserTests.java",
       "org/springframework/web/accept/StandardApiVersionDeprecationHandlerTests.java",
       "org/springframework/web/bind/EscapedErrorsTests.java",

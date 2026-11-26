@@ -4,8 +4,8 @@
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/web/accept/
 (ContentNegotiationStrategy.java, ContentNegotiationManager.java, FixedContentNegotiationStrategy.java,
 HeaderContentNegotiationStrategy.java, MediaTypeFileExtensionResolver.java, ApiVersionResolver.java,
-HeaderApiVersionResolver.java, InvalidApiVersionException.java, MissingApiVersionException.java,
-NotAcceptableApiVersionException.java).
+HeaderApiVersionResolver.java, QueryApiVersionResolver.java, InvalidApiVersionException.java,
+MissingApiVersionException.java, NotAcceptableApiVersionException.java).
 Copyright 2002-present the original author or authors.
 Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 Modified by the Flint authors: translated to D under the rulebook. Spring Boot's default manager has only the
@@ -17,10 +17,11 @@ import flint.http : HttpHeaders, HttpStatus, InvalidMediaTypeException, MediaTyp
 import flint.jakarta.servlet.http : HttpServletRequest;
 import flint.java.lang : IllegalArgumentException;
 import flint.java.util : ArrayList, Collections, List, Objects;
-import flint.util : InvalidMimeTypeException, MimeTypeUtils;
+import flint.util : InvalidMimeTypeException, MimeTypeUtils, StringUtils;
 import flint.web : HttpMediaTypeNotAcceptableException;
 import flint.web.context.request : NativeWebRequest;
 import flint.web.server : ResponseStatusException;
+import flint.web.util : UriComponentsBuilder;
 import std.typecons : Nullable, nullable;
 
 @safe:
@@ -48,6 +49,32 @@ class HeaderApiVersionResolver : ApiVersionResolver
     {
         const value = request.getHeader(headerName);
         return value is null ? Nullable!string.init : nullable(value);
+    }
+}
+
+/// Reads the API version from the raw URI query.
+class QueryApiVersionResolver : ApiVersionResolver
+{
+    private string queryParamName;
+
+    ///
+    this(string queryParamName) pure nothrow @nogc
+    {
+        this.queryParamName = queryParamName;
+    }
+
+    /// Returns the first matching value, preserving the query's escaping.
+    override Nullable!string resolveVersion(HttpServletRequest request)
+    {
+        const query = request.getQueryString();
+        if (StringUtils.hasText(query))
+        {
+            const uri = UriComponentsBuilder.fromUriString("?" ~ query).build();
+            foreach (ref const pair; uri.getQueryParams())
+                if (pair[0] == queryParamName)
+                    return pair[1] is null ? Nullable!string.init : nullable(pair[1]);
+        }
+        return Nullable!string.init;
     }
 }
 

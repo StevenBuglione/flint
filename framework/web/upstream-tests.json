@@ -1026,8 +1026,16 @@
       "status": "deferred"
     },
     "org/springframework/web/accept/QueryApiVersionResolverTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/query_api_version_resolver_tests.d",
+      "methods": {
+        "ported": [
+          "resolve",
+          "noQueryString",
+          "noQueryParam"
+        ]
+      },
+      "note": "ported in framework-test",
+      "status": "ported"
     },
     "org/springframework/web/accept/SemanticApiVersionParserTests.java": {
       "phase": "2",

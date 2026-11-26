@@ -859,6 +859,17 @@ bytes for Web, Web MVC, and framework-test. DMD templates moved from
 probe and both compiler suites verify first-value selection and the
 distinction between an empty header and an absent header.
 
+The query API version resolver uses the existing URI builder to read the
+first parameter with the configured name. The builder skips blank queries
+and leading equals signs in line with Spring's query matcher. The
+resolver builds the URI only for a raw query containing text. DMD and LDC
+each matched 77,819 lookups against the pinned Spring grammar on Java 21.
+On the rebased closure at `9694a6bd7` and `87f60709b`, Web held at
+529,385 O3 and 522,945 Oz loadable bytes. Web MVC dropped 32 bytes and
+framework-test added 32 bytes in each profile. Templates moved from
+7,055 to 7,062, 6,142 to 6,144, and 8,557 to 8,559 respectively. The
+inherited Phobos overage uses decision `6c9e5f49`.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

@@ -19,6 +19,7 @@ import flint.java.io : File;
 import flint.java.lang : ClassCastException, IllegalArgumentException, IllegalStateException, NullPointerException;
 import flint.java.net : URI;
 import flint.java.util : Map;
+import flint.util : StringUtils;
 import std.typecons : Nullable, nullable;
 
 @safe:
@@ -791,7 +792,7 @@ final class UriComponentsBuilder
     /// Parses `query` into parameters and appends them.
     UriComponentsBuilder query(string query) pure nothrow
     {
-        if (query is null)
+        if (!StringUtils.hasText(query))
             return this;
         size_t start;
         foreach (i; 0 .. query.length + 1)
@@ -800,6 +801,9 @@ final class UriComponentsBuilder
             {
                 auto pair = query[start .. i];
                 start = i + 1;
+                // Spring's query matcher only starts at a non-empty name.
+                while (pair.length != 0 && pair[0] == '=')
+                    pair = pair[1 .. $];
                 if (pair.length == 0)
                     continue;
                 ptrdiff_t eq = -1;
