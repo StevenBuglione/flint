@@ -184,6 +184,8 @@ The largest costs are per-request allocation and the collector pauses it causes.
 
 `framework-test` also exhibits S-9. The O3 link map at `e4e8ac8a` shows a `std.json.JSONValue` associative-array helper referenced by `flint.mock.web.o` resolving from Phobos `curl.o`. That member pulls in socket, regex and concurrency code. On venus, `tools/measure_builds.py --framework-sizes --framework framework-test` measured 1,748,022 incremental loadable bytes both before and after the status matcher port. DMD library-plus-probe template instances fell from 9,910 to 9,905. The status range matcher formats its diagnostic only on failure and uses the existing Java integer formatter. The 03:33Z S-9 ratchet applies while this cascade remains, with an absolute cap of 1,552,384 bytes.
 
+The MockMvc header and content matcher port reuses Jackson for comparison, `HttpHeaders` for date parsing, and Java `Long` for the numeric header assertion. On venus the unchanged `framework-test` probe moved from 1,748,022 to 1,748,142 incremental loadable bytes against `cbf1e27b`. DMD library-plus-probe templates moved from 9,905 to 9,973, within the 12,450 cap. The S-9 ratchet covers the 120-byte growth of this API slice.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

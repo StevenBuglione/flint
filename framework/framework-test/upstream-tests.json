@@ -49,12 +49,28 @@
       "status": "deferred"
     },
     "org/springframework/test/json/JsonComparatorTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/json_comparator_tests.d",
+      "methods": {
+        "ported": [
+          "lenientWhenDifferentArrayOrder",
+          "lenientWhenDifferentValue",
+          "lenientWhenExtraArrayItem",
+          "lenientWhenExtraField",
+          "lenientWhenMissingField",
+          "strictWhenDifferentArrayOrder",
+          "strictWhenDifferentValue",
+          "strictWhenExtraField",
+          "strictWhenSameContentWithDifferentFormatting",
+          "whenActualNull",
+          "whenBothNull",
+          "whenExpectedNull"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/test/json/JsonComparatorUtilsTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "reason": "D-TEST-1 uses an always-available Jackson comparator. These tests exercise dynamic JsonUnit and JSONassert discovery.",
+      "status": "excluded"
     },
     "org/springframework/test/json/JsonContentTests.java": {
       "phase": "2",
@@ -461,16 +477,43 @@
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/result/ContentResultMatchersTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/content_result_matchers_tests.d",
+      "methods": {
+        "ported": [
+          "bytes",
+          "bytesNoMatch",
+          "jsonLenientMatch",
+          "jsonLenientMatchWithDeprecatedBooleanFlag",
+          "jsonLenientNoMatch",
+          "jsonStrictMatch",
+          "jsonStrictMatchWithDeprecatedBooleanFlag",
+          "jsonStrictNoMatch",
+          "jsonStrictNoMatchWithDeprecatedBooleanFlag",
+          "jsonUtf8Match",
+          "string",
+          "stringNoMatch",
+          "typeMatches",
+          "typeNoMatch"
+        ],
+        "skipped": {
+          "stringMatcher": "The Hamcrest string matcher overload needs the Flint Hamcrest port",
+          "stringMatcherNoMatch": "The Hamcrest string matcher overload needs the Flint Hamcrest port"
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/test/web/servlet/result/FlashAttributeResultMatchersTests.java": {
       "phase": "2",
       "status": "deferred"
     },
     "org/springframework/test/web/servlet/result/HeaderResultMatchersTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/header_result_matchers_tests.d",
+      "methods": {
+        "ported": [
+          "matchDateFormattedWithHttpHeaders"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/test/web/servlet/result/JsonPathResultMatchersTests.java": {
       "phase": "2",

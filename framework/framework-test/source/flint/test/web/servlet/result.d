@@ -13,12 +13,17 @@ Hamcrest-matcher overloads are not ported (Hamcrest is a separate library).
 +/
 module flint.test.web.servlet.result;
 
-import flint.http : HttpStatus, MediaType;
-import flint.java.lang : AssertionError, IllegalStateException, Integer;
+import flint.http : HttpHeaders, HttpStatus, MediaType;
+import flint.java.lang : AssertionError, IllegalStateException, Integer, Long;
+import flint.java.nio.charset : Charset;
+import flint.test.json : JsonComparator, JsonCompareMode, JsonComparison;
 import flint.test.util : AssertionErrors, JsonPathExpectationsHelper;
 import flint.test.web.servlet : MvcResult, ResultHandler, ResultMatcher;
+import std.typecons : Nullable;
 
 @safe:
+
+private alias NullableJsonText = Nullable!string;
 
 /// `MockMvcResultMatchers`: static factory methods for matchers.
 struct MockMvcResultMatchers
@@ -533,8 +538,13 @@ class StatusResultMatchers
 }
 
 /// `ContentResultMatchers`.
-final class ContentResultMatchers
+class ContentResultMatchers
 {
+    /// Obtain the standard instance through `MockMvcResultMatchers.content()`.
+    protected this() pure nothrow @nogc
+    {
+    }
+
     /// Asserts the content type equals `contentType` (parameters included).
     ResultMatcher contentType(immutable(char)[] contentType)
     {
@@ -571,6 +581,12 @@ final class ContentResultMatchers
     }
 
     /// Asserts the character encoding.
+    ResultMatcher encoding(Charset characterEncoding)
+    {
+        return encoding(characterEncoding.name());
+    }
+
+    /// ditto
     ResultMatcher encoding(immutable(char)[] characterEncoding)
     {
         return ResultMatcher.of((MvcResult result) {
@@ -597,23 +613,66 @@ final class ContentResultMatchers
         });
     }
 
-    /// Asserts the JSON body equals `jsonContent` structurally (strict: same keys, same array order).
+    /// Asserts that the JSON body matches `jsonContent` in lenient mode.
     ResultMatcher json(immutable(char)[] jsonContent)
     {
-        return ResultMatcher.of((MvcResult result) {
-            import std.json : parseJSON;
+        return json(jsonContent, JsonCompareMode.LENIENT);
+    }
 
-            auto expected = parseJSON(jsonContent);
-            auto actual = parseJSON(result.getResponse().getContentAsString("UTF-8"));
-            AssertionErrors.assertTrue("JSON content expected:<" ~ jsonContent ~ "> but was:<" ~ result.getResponse()
-                .getContentAsString("UTF-8") ~ ">", expected == actual);
+    /// Asserts that the JSON body matches `jsonContent` with the given strictness.
+    deprecated("since 6.2, use JsonCompareMode") ResultMatcher json(immutable(char)[] jsonContent, bool strict)
+    {
+        return json(jsonContent, strict ? JsonCompareMode.STRICT : JsonCompareMode.LENIENT);
+    }
+
+    /// Asserts that the JSON body matches `jsonContent` in the selected mode.
+    ResultMatcher json(immutable(char)[] jsonContent, JsonCompareMode compareMode)
+    {
+        return json(jsonContent, JsonComparator.of(compareMode));
+    }
+
+    /// Asserts that the JSON body matches `jsonContent` according to the given comparator.
+    ResultMatcher json(immutable(char)[] jsonContent, JsonComparator comparator)
+    {
+        return ResultMatcher.of((MvcResult result) {
+            const actual = result.getResponse().getContentAsString("UTF-8");
+            comparator.assertIsMatch(NullableJsonText(jsonContent), NullableJsonText(actual));
         });
+    }
+
+    /// Accepts a JSON comparator delegate (R9).
+    ResultMatcher json(immutable(char)[] jsonContent, JsonComparison delegate(NullableJsonText,
+            NullableJsonText) @safe comparator)
+    {
+        return json(jsonContent, new DelegateJsonComparator(comparator));
+    }
+}
+
+private final class DelegateJsonComparator : JsonComparator
+{
+    mixin JsonComparator.Defaults;
+
+    private JsonComparison delegate(NullableJsonText, NullableJsonText) @safe comparator;
+
+    this(JsonComparison delegate(NullableJsonText, NullableJsonText) @safe comparator)
+    {
+        this.comparator = comparator;
+    }
+
+    override JsonComparison compare(NullableJsonText expected, NullableJsonText actual)
+    {
+        return comparator(expected, actual);
     }
 }
 
 /// `HeaderResultMatchers`.
-final class HeaderResultMatchers
+class HeaderResultMatchers
 {
+    /// Obtain the standard instance through `MockMvcResultMatchers.header()`.
+    protected this() pure nothrow @nogc
+    {
+    }
+
     /// Asserts the first value of header `name`.
     ResultMatcher string(immutable(char)[] name, immutable(char)[] value)
     {
@@ -655,11 +714,35 @@ final class HeaderResultMatchers
     ResultMatcher longValue(immutable(char)[] name, long value)
     {
         return ResultMatcher.of((MvcResult result) {
-            import std.conv : to;
+            auto response = result.getResponse();
+            const actual = response.getHeader(name);
+            if (actual !is null)
+                AssertionErrors.assertEquals("Response header '" ~ name ~ "'", value, Long.parseLong(actual));
+            else if (!response.containsHeader(name))
+                AssertionErrors.fail("Response does not contain header '" ~ name ~ "'");
+        });
+    }
 
+    /// Asserts the first value of `name` as an HTTP date, with second precision.
+    ResultMatcher dateValue(immutable(char)[] name, long value)
+    {
+        return ResultMatcher.of((MvcResult result) {
             const actual = result.getResponse().getHeader(name);
-            AssertionErrors.assertTrue("Response does not contain header '" ~ name ~ "'", actual !is null);
-            AssertionErrors.assertEquals("Response header '" ~ name ~ "'", value, actual.to!long);
+            if (actual is null)
+                AssertionErrors.fail("Response does not contain header '" ~ name ~ "'");
+
+            auto headers = HttpHeaders.create();
+            headers.setDate("expected", value);
+            headers.set("actual", actual);
+            const expectedDate = headers.getFirstDate("expected");
+            const actualDate = headers.getFirstDate("actual");
+            if (expectedDate != actualDate)
+            {
+                const expected = headers.getFirst("expected");
+                const message = "Response header '" ~ name ~ "'='" ~ actual
+                    ~ "' does not match expected value '" ~ expected ~ "'";
+                AssertionErrors.fail(message, Long.toString(expectedDate), Long.toString(actualDate));
+            }
         });
     }
 }

@@ -269,6 +269,7 @@ Each deviation is the smallest change D or the closed world forces. Adding one m
 | D-JPA-2 | Jakarta built-in option enums such as `LockModeType` remain D enums. `EntityManager` option overloads accept them at the API boundary, as in `em.find!Owner(id, LockModeType.PESSIMISTIC_WRITE)`. Provider-defined options use `FindOption` and `RefreshOption`. | D enums cannot implement interfaces. The enum keeps `NamedQuery.lockMode` a compile-time UDA value. |
 | D-DATA-4 | In `Window!int`, `positionAt(index)` selects by index and `positionAt!int(item)` selects by value. | R5 represents Java's boxed `Integer` as `int`, so the Java overloads otherwise have identical D signatures. |
 | D-VALIDATION-3 | Whole-input regex matching stops after 20,000,000 VM steps with a budget exception. Hibernate Validator maps the exhausted match budget to HV000028. | The bounded engine keeps a backtracking match from stalling a request thread. Java does not impose this bound. |
+| D-TEST-1 | `JsonComparator.of` uses the Jackson tree for Spring's strict and lenient JSON comparison modes. `ContentResultMatchers.json` accepts an explicit comparator or delegate. | Spring 7.1 discovers JsonUnit or JSONassert on the classpath. Flint's closed world uses one built-in comparator, with an explicit hook for custom behavior. |
 
 ## Exclusions
 
