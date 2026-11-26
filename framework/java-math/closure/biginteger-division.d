@@ -19,9 +19,8 @@ int main(string[] args) @system
         return 1;
     auto square = b.pow(2);
     auto parts = square.divideAndRemainder(b);
-    if (square.compareTo(b) <= 0 || square.divide(b).compareTo(b) != 0
-            || parts[0].compareTo(b) != 0 || parts[1].signum() != 0
-            || square.remainder(b).signum() != 0 || square.mod(b).signum() != 0)
+    if (square.compareTo(b) <= 0 || square.divide(b).compareTo(b) != 0 || parts[0].compareTo(b) != 0
+            || parts[1].signum() != 0 || square.remainder(b).signum() != 0 || square.mod(b).signum() != 0)
         return 1;
     const text = total.toString(16);
     if (text.length != 11 || text[0] != '1')
