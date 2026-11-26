@@ -18,7 +18,7 @@
 // Modified by the Flint authors.
 module message_part_tests;
 
-import flint.ai.chat.messages.part : MessagePart, OpaquePayload, ReasoningPart, TextPart;
+import flint.ai.chat.messages.part : MessagePart, OpaquePayload, ReasoningPart, TextPart, UnknownPart;
 import flint.java.lang : IllegalArgumentException, NullPointerException, UnsupportedOperationException;
 import flint.java.util : HashMap, Map;
 import std.exception : assertThrown;
@@ -162,6 +162,60 @@ unittest
         return;
     }
     assert(false, "null payload data must be rejected");
+}
+
+@("unknownPartKeepsRawJson")
+unittest
+{
+    auto part = new UnknownPart("anthropic", "server_tool_use", `{"type":"server_tool_use"}`,
+            Nullable!OpaquePayload.init, Map!(string, string).of());
+
+    assert(part.provider() == "anthropic");
+    assert(part.kind() == "server_tool_use");
+    assert(part.rawJson() == `{"type":"server_tool_use"}`);
+}
+
+@("unknown part replacement preserves raw bytes and record semantics")
+unittest
+{
+    enum raw = "{\r\n  \"type\" : \"未来\"\r\n}";
+    auto payload = nullable(OpaquePayload("p", "k", "data"));
+    auto attributes = new HashMap!(string, string);
+    attributes.put("old", "value");
+    auto original = new UnknownPart("p", "k", raw, payload, attributes);
+    attributes.put("old", "changed");
+    attributes.put("new", "value");
+
+    MessagePart view = original;
+    auto replacement = cast(UnknownPart) view.withAttributes(attributes);
+    assert(replacement !is null && replacement !is original);
+    attributes.put("new", "changed");
+    assert(original.attributes().get("old") == "value");
+    assert(!original.attributes().containsKey("new"));
+    assert(replacement.attributes().get("new") == "value");
+    assertThrown!UnsupportedOperationException(replacement.attributes().remove("old"));
+    assert(replacement.rawJson() == raw);
+    assert(replacement.payload().get() == payload.get());
+    auto equal = new UnknownPart("p", "k", raw, payload, Map!(string, string).of("new", "value", "old", "changed"));
+    assert(replacement == equal && replacement.hashCode() == equal.hashCode());
+    assert(replacement != original);
+    assert(replacement.toString() == "UnknownPart[provider=p, kind=k, rawJson=" ~ raw
+            ~ ", payload=OpaquePayload[provider=p, kind=k, data=data], attributes={old=changed, new=value}]");
+    assert(UnknownPart.FLINT_AI_PROVIDER == "spring-ai");
+}
+
+@("unknown parts reject missing constructor inputs and keep empty raw text")
+unittest
+{
+    auto attributes = Map!(string, string).of();
+    Nullable!OpaquePayload noPayload;
+    assertThrown!IllegalArgumentException(new UnknownPart("\u2003", "k", "{}", noPayload, attributes));
+    assertThrown!IllegalArgumentException(new UnknownPart("p", " ", "{}", noPayload, attributes));
+    assertThrown!IllegalArgumentException(new UnknownPart("p", "k", null, noPayload, attributes));
+    assertThrown!IllegalArgumentException(new UnknownPart("p", "k", "{}", noPayload, null));
+    auto part = new UnknownPart("p", "k", "", noPayload, attributes);
+    assert(part.rawJson() !is null && part.rawJson().length == 0);
+    assert(part.payload().isNull);
 }
 
 @("opaque payload validation and lossless data")

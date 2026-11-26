@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,ReasoningPart,StreamingParts,TextPart}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,ReasoningPart,StreamingParts,TextPart,UnknownPart}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages.part;
 
@@ -406,6 +406,96 @@ final class ReasoningPart : MessagePart
     {
         return renderRecord("ReasoningPart[text=", recordText(text_), ", summary=", recordText(summary_),
                 ", payload=", payloadText(payload_), ", attributes=", attributes_.toString());
+    }
+
+    mixin JavaObject;
+}
+
+/// A part whose provider or transport type is unknown to the adapter.
+final class UnknownPart : MessagePart
+{
+    /// Provider identifier reserved for unrecognized Spring AI serialized types (R1).
+    enum string FLINT_AI_PROVIDER = "spring-ai";
+
+    private string provider_;
+    private string kind_;
+    private string rawJson_;
+    private NullablePayload payload_;
+    private PartAttributes attributes_;
+
+    /// Creates an unknown part with its original JSON text and a snapshot of its attributes.
+    this(string provider, string kind, string rawJson, NullablePayload payload, PartAttributes attributes)
+    {
+        import flint.util : Assert;
+
+        Assert.hasText(provider, "provider must not be empty");
+        Assert.hasText(kind, "kind must not be empty");
+        Assert.isTrue(rawJson !is null, "rawJson must not be null");
+        provider_ = provider;
+        kind_ = kind;
+        rawJson_ = rawJson;
+        payload_ = payload;
+        attributes_ = copyAttributes(attributes);
+    }
+
+    /// The producer of this part.
+    string provider() const pure nothrow @nogc
+    {
+        return provider_;
+    }
+
+    /// The producer's discriminator for this part.
+    string kind() const pure nothrow @nogc
+    {
+        return kind_;
+    }
+
+    /// This part's original JSON text.
+    string rawJson() const pure nothrow @nogc
+    {
+        return rawJson_;
+    }
+
+    override NullablePayload payload()
+    {
+        return payload_;
+    }
+
+    override PartAttributes attributes()
+    {
+        return attributes_;
+    }
+
+    override UnknownPart withAttributes(PartAttributes attributes)
+    {
+        return new UnknownPart(provider_, kind_, rawJson_, payload_, attributes);
+    }
+
+    /// Compares all five record components.
+    bool equals(Object other)
+    {
+        auto that = cast(UnknownPart) other;
+        return that !is null && provider_ == that.provider_ && kind_ == that.kind_
+            && rawJson_ == that.rawJson_ && samePayload(payload_, that.payload_)
+            && attributes_.equals(cast(Object) that.attributes_);
+    }
+
+    /// Computes the Java record hash of the five components.
+    int hashCode()
+    {
+        const discriminator = 31 * stringHashCode(provider_) + stringHashCode(kind_);
+        const content = 31 * discriminator + stringHashCode(rawJson_);
+        return 31 * (31 * content + payloadHash(payload_)) + attributes_.hashCode();
+    }
+
+    /// Formats the five record components.
+    override string toString()
+    {
+        string[11] parts = [
+            "UnknownPart[provider=", provider_, ", kind=", kind_, ", rawJson=", rawJson_,
+            ", payload=", payloadText(payload_), ", attributes=", attributes_.toString(), "]"
+        ];
+        return joinRecord(parts[]);
     }
 
     mixin JavaObject;

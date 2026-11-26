@@ -124,6 +124,7 @@
           "reasoningPartWithPayloadIsReplayableOnlyToItsProvider",
           "reasoningPartWithoutPayloadIsReplayableEverywhere",
           "textPartOfHasNoPayloadAndEmptyAttributes",
+          "unknownPartKeepsRawJson",
           "whenAttributesIsNullThenThrow",
           "whenOpaquePayloadHasNullComponentThenThrow",
           "whenTextIsNullThenThrow"
@@ -134,7 +135,6 @@
           "toolResultPartContentIsDefensivelyCopied": "ToolResultPart is pending.",
           "toolResultPartOfWrapsToolResponseAsSingleTextPart": "ToolResultPart and ToolResponseMessage are pending.",
           "toolResultPartToToolResponseJoinsTextContentOnly": "ToolResultPart is pending.",
-          "unknownPartKeepsRawJson": "UnknownPart is pending.",
           "whenToolCallIsNullThenThrow": "ToolCallPart is pending."
         }
       },
@@ -156,7 +156,7 @@
           "partIndexIsNullWhenAbsentOrMalformed": "StreamingParts.partIndex is pending.",
           "partialStampsIndexAndPartialFlag": "StreamingParts.partIndex is pending.",
           "stripRemovesStreamingAttributesOnly": "StreamingParts.partIndex is pending.",
-          "withAttributesReplacesAttributesOnEveryRecord": "ToolCallPart, ToolResultPart, MediaPart and UnknownPart are pending."
+          "withAttributesReplacesAttributesOnEveryRecord": "ToolCallPart, ToolResultPart and MediaPart are pending."
         }
       },
       "status": "partial"
