@@ -519,6 +519,15 @@ class UpstreamTests(unittest.TestCase):
         record['classes']['java/sql/Timestamp/TimestampTests.java']['covered_by'] = 'framework/jdbc/tests/timestamp_test.d'
         self.assertEqual(dod.check_upstream_tests(jdk, record, self.root), [])
 
+    def test_module_files_skip_build_output_only_below_the_checkout(self):
+        nested = self.root / '.flint' / 'checkout'
+        (nested / 'framework' / 'beans' / 'source').mkdir(parents=True)
+        (nested / 'framework' / 'beans' / 'source' / 'a.d').write_text('module a;')
+        (nested / 'framework' / 'beans' / '.dub').mkdir(parents=True)
+        (nested / 'framework' / 'beans' / '.dub' / 'gen.d').write_text('module gen;')
+        found = dod.module_files(module(name='beans', directory='framework/beans', roots=['framework/beans']), nested)
+        self.assertEqual([p.name for p in found], ['a.d'])
+
     def test_an_openjdk_port_owns_the_java_packages_its_d_modules_name(self):
         policy = self.root / 'policy' / 'framework.json'
         policy.parent.mkdir(parents=True, exist_ok=True)

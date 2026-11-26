@@ -461,8 +461,12 @@ def unittest_names(path):
 
 
 def module_files(module, root=ROOT):
+    """The module's D files, skipping build output. The skip list is matched against the path below `root`, so a
+    checkout that itself lies under a .flint or build directory still finds its sources (sol-context)."""
     skip = ('/.dub/', '/.flint/', '/build/', '/artifacts/')
-    return sorted(p for r in module.roots for p in (root / r).rglob('*.d') if not any(s in str(p) for s in skip))
+    root = Path(root)
+    return sorted(p for r in module.roots for p in (root / r).rglob('*.d')
+                  if not any(s in '/' + str(p.relative_to(root)) for s in skip))
 
 
 def scan_tests(files, root=ROOT):
