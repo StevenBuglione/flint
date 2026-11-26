@@ -4,8 +4,10 @@ Measured on venus at `17d2aacb` with LDC 1.43.0 (LLVM 22.1.8), the pinned Flint 
 The probes use the release and size profiles in `policy/profiles.toml`, both with ThinLTO.
 
 The control links the D runtime and returns its runtime argument count. Its file-backed allocated ELF
-sections total 328,749 bytes in each profile. Deltas sum those same sections in the probe and subtract
-the control. The audit counts names per probe and profile after section GC.
+sections total 328,749 bytes in each profile. The historical deltas below use file-backed sections for
+both the probe and the control. Current reports use the same ELF metric as the package budget, including
+`.bss` and excluding `.tbss`. Under that metric the historical control uses 330,117 bytes in each
+profile. The audit counts names per probe and profile after section GC.
 
 | Probe | O3 delta (B) | Oz delta (B) | O3 violations | Oz violations |
 | --- | ---: | ---: | ---: | ---: |

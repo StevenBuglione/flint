@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 
 from d_source import declared_module, imported_modules, tokens
-from measure_builds import copy_workspace, dub_invocation, native_profiles
+from measure_builds import copy_workspace, dub_invocation, elf_loadable_bytes, native_profiles
 from request_allocation_ratchet import git
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,8 +34,6 @@ CHARACTER_TABLES = {f'flint.java.character.{name}' for name in (
     'uppercaseLetterRanges', 'lowercaseLetterRanges', 'numberRanges',
 )}
 SYMBOL = re.compile(r'(?<![\w])_D[0-9][\w$]*(?:\.[\w$]+)*')
-SECTION = re.compile(r'^\s*\[\s*\d+\]\s+\S+\s+(\S+)\s+[\da-f]+\s+[\da-f]+\s+([\da-f]+)'
-                     r'\s+[\da-f]+\s+([A-Za-z]+)\s+\d')
 
 
 class BuildError(RuntimeError):
@@ -159,12 +157,11 @@ def violations(symbols, modules, leaves, data):
 
 
 def loadable_section_bytes(text):
-    """Sum file-backed ELF sections with SHF_ALLOC, excluding padding and NOBITS."""
-    sizes = [int(match[2], 16) for line in text.splitlines() if (match := SECTION.match(line))
-             and match[1] != 'NOBITS' and 'A' in match[3]]
-    if not sizes or not sum(sizes):
+    """Use the package budget's ELF metric and reject missing evidence."""
+    total = elf_loadable_bytes(text)
+    if not total:
         raise ValueError('missing loadable ELF sections in probe executable')
-    return sum(sizes)
+    return total
 
 
 def is_namespace(stream):

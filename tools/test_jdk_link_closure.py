@@ -117,14 +117,15 @@ Discarded input sections
         self.assertEqual(closure.check_violations(set(leaking), set(existing)),
                          ['new violation: undeclared leaf flint.java.time'])
 
-    def test_file_backed_allocated_sections_exclude_padding_and_nobits(self):
+    def test_loadable_sections_exclude_padding_and_thread_local_bss(self):
         sections = """
   [ 1] .text            PROGBITS 00004000 004000 000020 00 AX  0   0  8
   [ 2] .rodata          PROGBITS 00009000 009000 000012 00  A  0   0  8
   [ 3] .bss             NOBITS   0000a000 00a000 000fff 00 WA  0   0  8
-  [ 4] .debug_info      PROGBITS 00000000 00a000 000080 00     0   0  1
+  [ 4] .tbss            NOBITS   0000b000 00a000 000800 00 WAT 0   0  8
+  [ 5] .debug_info      PROGBITS 00000000 00a000 000080 00     0   0  1
 """
-        self.assertEqual(closure.loadable_section_bytes(sections), 0x32)
+        self.assertEqual(closure.loadable_section_bytes(sections), 0x1031)
         with self.assertRaisesRegex(ValueError, 'loadable'):
             closure.loadable_section_bytes('no section headers')
 
