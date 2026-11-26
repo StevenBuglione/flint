@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,941 | 710 | 0 | 1,921 | 13,849 |
+| framework | openjdk@21.0.13 | 1,941 | 712 | 0 | 1,921 | 13,847 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2840,6 +2840,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.ArrayList#toArray()` | `flint.java.util.ArrayList.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Arrays#toString(Object[])` | `flint.java.util.Arrays.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.BitSet` | `flint.java.util.bitset.BitSet` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.bitset. Re-exporting from the lower-tier flint.java.util module would create a DUB dependency cycle. A null array argument counts as empty under R26. Java throws NullPointerException. |
+| `java.util.BitSet#equals(Object)` | `flint.java.util.bitset.BitSet.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.util.BitSet#hashCode()` | `flint.java.util.bitset.BitSet.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.BitSet#valueOf(long[])` | `flint.java.util.bitset.BitSet.valueOf` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Calendar#isSet` | `flint.java.util.Calendar.isSet` | [R24](api-mapping.md#r24-final-instance-fields) |  |
 | `java.util.Collection#contains(Object)` | `flint.java.util.Collection.contains` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -11053,7 +11055,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,899 | 0 |
+| java.util | 1,897 | 0 |
 | java.util.concurrent | 1,198 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
