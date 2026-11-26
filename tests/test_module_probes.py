@@ -42,6 +42,25 @@ class Judging(unittest.TestCase):
         self.assertEqual(module_probes.judge({'web': {'incremental_linked_bytes': None}}, self.CAPS, {}), [])
 
 
+class Measuring(unittest.TestCase):
+    def test_measure_builds_runs_with_the_linked_natives_excluded(self):
+        # 17:15Z train: the base worktree links .native, which .gitignore's `.native/` does not match as a link, and
+        # measure_builds refused it as an untracked input; the train landed nothing.
+        from unittest import mock
+        seen = {}
+
+        def fake(command, cwd, capture_output, text, env):
+            seen.update(env=env, excludes=Path(env['GIT_CONFIG_VALUE_0']).read_text())
+            out = Path(command[command.index('--output') + 1])
+            out.write_text('{"framework": {"aop": {"incremental_linked_bytes": 1, "template_instances": 2}}}')
+            return mock.Mock(returncode=0, stdout='', stderr='')
+        with mock.patch.object(module_probes.subprocess, 'run', side_effect=fake):
+            values = module_probes.measure(['aop'], Path('.'))
+        self.assertEqual(values, {'aop': {'incremental_linked_bytes': 1, 'template_instances': 2}})
+        self.assertEqual(seen['env']['GIT_CONFIG_KEY_0'], 'core.excludesFile')
+        self.assertIn('.native', seen['excludes'].split())
+
+
 class Selection(unittest.TestCase):
     def test_owner_is_the_longest_directory(self):
         directories = {'boot': 'boot/boot', 'boot-autoconfigure': 'boot/boot-autoconfigure', 'core': 'framework/core'}

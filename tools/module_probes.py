@@ -104,7 +104,14 @@ def measure(modules, root):
         command = [sys.executable, 'tools/measure_builds.py', '--framework-sizes', '--output', str(out)]
         for module in modules:
             command += ['--framework', module]
-        done = subprocess.run(command, cwd=root, capture_output=True, text=True)
+        # A verifier links .native (and .tools) into its worktree; .gitignore's `.native/` matches only a directory,
+        # so measure_builds' commit-identity check would call the link an untracked input (17:15Z train). These
+        # probes are not certified evidence: exclude the two links for this run only, through git's environment.
+        excludes = Path(directory) / 'excludes'
+        excludes.write_text('.native\n.tools\n')
+        env = dict(os.environ, GIT_CONFIG_COUNT='1', GIT_CONFIG_KEY_0='core.excludesFile',
+                   GIT_CONFIG_VALUE_0=str(excludes))
+        done = subprocess.run(command, cwd=root, capture_output=True, text=True, env=env)
         if done.returncode != 0 or not out.is_file():
             raise RuntimeError(f'measure_builds --framework-sizes failed in {root}:\n{(done.stdout + done.stderr)[-3000:]}')
         rows = json.loads(out.read_text()).get('framework', {})
