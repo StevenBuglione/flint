@@ -5665,8 +5665,6 @@
       "java/util/concurrent/CompletableFuture/ThenComposeAsyncTest.java",
       "java/util/concurrent/CompletableFuture/ThenComposeExceptionTest.java",
       "java/util/concurrent/ExecutorCompletionService/ExecutorCompletionServiceLoops.java",
-      "java/util/concurrent/ExecutorService/CloseTest.java",
-      "java/util/concurrent/ExecutorService/Invoke.java",
       "java/util/concurrent/Executors/AutoShutdown.java",
       "java/util/concurrent/Executors/PrivilegedCallables.java",
       "java/util/concurrent/Executors/Throws.java",
@@ -5717,6 +5715,10 @@
     "java-concurrent-copyonwrite": [
       "java/util/concurrent/CopyOnWriteArrayList/COWSubList.java",
       "java/util/concurrent/CopyOnWriteArrayList/EqualsRace.java"
+    ],
+    "java-concurrent-service": [
+      "java/util/concurrent/ExecutorService/CloseTest.java",
+      "java/util/concurrent/ExecutorService/Invoke.java"
     ],
     "java-concurrent-sync": [
       "java/util/concurrent/ArrayBlockingQueue/WhiteBox.java",

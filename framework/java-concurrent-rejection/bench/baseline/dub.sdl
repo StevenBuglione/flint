@@ -1,0 +1,5 @@
+name "probe-java-concurrent-rejection-baseline"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java" path="../../../.."

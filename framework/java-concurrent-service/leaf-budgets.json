@@ -1,0 +1,7 @@
+{
+  "flint.java.util.concurrent.executorservice": {
+    "incremental_linked_bytes": 59537,
+    "template_instances": 868,
+    "control": "framework/java-concurrent-service/closure/executorservice_provider.d"
+  }
+}
