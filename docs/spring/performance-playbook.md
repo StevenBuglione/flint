@@ -307,6 +307,8 @@ Tree pointer traversal shares one iterative walk for `at` and `requiredAt`. The 
 
 The string `requiredAt` overload follows S-1 by keeping optional pointer compilation out of the node vtable (D-JACKSON-11). The protected `_at` traversal hook remains virtual. From `1cdb6ad3` to `5dd3cca0`, pinned LDC with `flint build --profile size` on venus reduced allocated ELF sections from 3,725,133 to 3,720,253 bytes in gs-rest-service and from 10,476,967 to 10,472,783 in petclinic-rest. Sharing the out-of-line required-access and typed-cast exception paths at `bdf38451` reduced those sizes to 3,719,741 and 10,472,255 bytes. Call sites still supply the original diagnostic and source location. The databind probe moved from 426,685 loadable bytes to 421,325 with 4,112 DMD template instances.
 
+Jackson pointer prefixes keep slices of the original expression and reuse decoded property names. A parsed segment publishes its cached prefix with an acquire load and release store. Length and hashing preserve Java UTF-16 units. Reusing the segment allocator and a sized buffer for failure diagnostics replaces duplicated construction and string concatenation templates. The matched jackson-core probe on venus at `78ab8174` and `c7466e4a` moved from 43,045 to 43,157 loadable bytes and from 600 to 599 DMD templates. Pinned LDC with `flint build --profile size` added 560 loadable bytes to gs-rest-service and 536 to petclinic-rest.
+
 ## 3. Build time
 
 | ID | Rule | Evidence | Enforced by |

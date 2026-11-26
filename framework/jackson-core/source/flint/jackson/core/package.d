@@ -427,7 +427,8 @@ class JsonPointer
         if (expression.length == 0)
             return empty();
         if (expression[0] != SEPARATOR)
-            throw invalidArgument("Invalid input: JSON Pointer expression must start with '/': \"" ~ expression ~ "\"");
+            throw invalidArgument(join("Invalid input: JSON Pointer expression must start with '/': \"",
+                    expression, "\""));
 
         auto result = empty();
         size_t end = expression.length;
@@ -436,7 +437,7 @@ class JsonPointer
             if (marker != SEPARATOR)
                 continue;
             const propertyName = decodePointerProperty(expression[offset + 1 .. end]);
-            result = new ParsedJsonPointer(expression[offset .. $], propertyName,
+            result = ParsedJsonPointer.create(expression[offset .. $], propertyName,
                     readPointerIndex(propertyName), result);
             end = offset;
         }
@@ -455,6 +456,20 @@ class JsonPointer
         import flint.engine.aot.objects : statelessInstance;
 
         return statelessInstance!EmptyJsonPointer();
+    }
+
+    /// Length of this expression in Java UTF-16 code units (R14).
+    int length() pure nothrow @nogc
+    {
+        int units;
+        foreach (value; toString())
+        {
+            if (value < 0x80 || value >= 0xC0)
+                ++units;
+            if (value >= 0xF0 && value <= 0xF4)
+                ++units;
+        }
+        return units;
     }
 
     /// Whether this pointer selects the current node.
@@ -518,6 +533,85 @@ class JsonPointer
         return null;
     }
 
+    /// The existing final segment, or null when this pointer is empty.
+    JsonPointer last() pure nothrow @nogc
+    {
+        JsonPointer previous;
+        auto current = this;
+        while (true)
+        {
+            auto next = current.tail();
+            if (next is null)
+                return previous;
+            previous = current;
+            current = next;
+        }
+    }
+
+    /// The pointer without its final segment, or null when this pointer is empty.
+    JsonPointer head()
+    {
+        auto leaf = last();
+        if (leaf is null)
+            return null;
+        auto terminator = leaf.tail();
+        const suffixLength = leaf.toString().length;
+        ParsedJsonPointer prefix;
+        ParsedJsonPointer previous;
+        for (auto current = this; current !is leaf; current = current.tail())
+        {
+            const expression = current.toString();
+            auto segment = ParsedJsonPointer.create(expression[0 .. $ - suffixLength],
+                    current.getMatchingProperty(), current.getMatchingIndex(), terminator);
+            if (previous is null)
+                prefix = segment;
+            else
+                previous.remainder = segment;
+            previous = segment;
+        }
+        return prefix is null ? terminator : prefix;
+    }
+
+    /// Whether both pointers have the same expression (R11).
+    bool equals(Object other) pure nothrow @nogc
+    {
+        auto pointer = cast(JsonPointer) other;
+        return pointer !is null && (pointer is this || toString() == pointer.toString());
+    }
+
+    /// Java string hash of the expression, with Jackson's -1 sentinel for zero (R11).
+    int hashCode() pure nothrow @nogc
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        const expression = toString();
+        uint hash;
+        size_t i;
+        while (i < expression.length)
+        {
+            const codePoint = decodeUtf8(expression, i);
+            if (codePoint <= 0xFFFF)
+                hash = 31 * hash + codePoint;
+            else
+            {
+                const supplementary = codePoint - 0x10000;
+                hash = 31 * hash + (0xD800 | (supplementary >> 10));
+                hash = 31 * hash + (0xDC00 | (supplementary & 0x3FF));
+            }
+        }
+        return hash == 0 ? -1 : cast(int) hash;
+    }
+
+    override bool opEquals(Object other) pure nothrow @nogc
+    {
+        return equals(other);
+    }
+
+    override size_t toHash() pure nothrow @nogc
+    {
+        return cast(uint) hashCode();
+    }
+
     /// The original spelling of the pointer expression.
     override string toString() pure nothrow @nogc
     {
@@ -535,6 +629,12 @@ private final class ParsedJsonPointer : JsonPointer
     private string propertyName;
     private int index;
     private JsonPointer remainder;
+    private JsonPointer cachedHead;
+
+    static ParsedJsonPointer create(string expression, string propertyName, int index, JsonPointer tail) pure nothrow
+    {
+        return new ParsedJsonPointer(expression, propertyName, index, tail);
+    }
 
     this(string expression, string propertyName, int index, JsonPointer remainder) pure nothrow @nogc
     {
@@ -559,10 +659,43 @@ private final class ParsedJsonPointer : JsonPointer
         return remainder;
     }
 
+    override JsonPointer head()
+    {
+        import core.atomic : MemoryOrder, atomicLoad, atomicStore;
+
+        auto prefix = atomicLoad!(MemoryOrder.acq)(cachedHead);
+        if (prefix is null)
+        {
+            // As with Jackson's volatile cache, concurrent callers may build equivalent prefixes.
+            prefix = super.head();
+            atomicStore!(MemoryOrder.rel)(cachedHead, prefix);
+        }
+        return prefix;
+    }
+
     override string toString() pure nothrow @nogc
     {
         return expression;
     }
+}
+
+private char[] jsonTextBuffer(size_t length) pure nothrow
+{
+    return new char[length];
+}
+
+// A strongly pure builder publishes one immutable diagnostic to its caller.
+private char[] join(string first, string second, string third, string fourth = null, string fifth = null) pure nothrow
+{
+    const string[5] parts = [first, second, third, fourth, fifth];
+    auto message = jsonTextBuffer(first.length + second.length + third.length + fourth.length + fifth.length);
+    size_t offset;
+    foreach (part; parts)
+    {
+        message[offset .. offset + part.length] = part;
+        offset += part.length;
+    }
+    return message;
 }
 
 private int readPointerIndex(string propertyName) pure nothrow @nogc
@@ -599,7 +732,7 @@ private string decodePointerProperty(string propertyName) pure nothrow
 // A strongly pure function returns a fresh buffer that can become an immutable string.
 private char[] decodeEscapedPointerProperty(string propertyName, size_t first) pure nothrow
 {
-    auto decoded = new char[propertyName.length];
+    auto decoded = jsonTextBuffer(propertyName.length);
     decoded[0 .. first] = propertyName[0 .. first];
     size_t written = first;
     for (size_t i = first; i < propertyName.length; ++i)
@@ -838,9 +971,9 @@ struct StreamWriteConstraints
         import flint.engine.aot.text : decimal;
         import flint.jackson.core.exc : StreamConstraintsException;
 
-        throw new StreamConstraintsException(
-                "Document nesting depth (" ~ decimal(depth) ~ ") exceeds the maximum allowed (" ~ decimal(
-                _maxNestingDepth) ~ ", from `StreamWriteConstraints.getMaxNestingDepth()`)");
+        throw new StreamConstraintsException(join("Document nesting depth (", decimal(depth),
+                ") exceeds the maximum allowed (",
+                decimal(_maxNestingDepth), ", from `StreamWriteConstraints.getMaxNestingDepth()`)"));
     }
 }
 
@@ -1294,8 +1427,8 @@ abstract class JsonParser
     {
         immutable value = getIntValue();
         if (value < short.min || value > short.max)
-            throw coercionError("Numeric value (" ~ getString() ~ ") out of range of `short` (-32768 - 32767)",
-                    currentToken());
+            throw coercionError(join("Numeric value (", getString(),
+                    ") out of range of `short` (-32768 - 32767)"), currentToken());
         return cast(short) value;
     }
 
@@ -1304,8 +1437,8 @@ abstract class JsonParser
     {
         immutable value = getIntValue();
         if (value < byte.min || value > 255)
-            throw coercionError("Numeric value (" ~ getString() ~ ") out of range of `byte` (-128 - 255)",
-                    currentToken());
+            throw coercionError(join("Numeric value (", getString(),
+                    ") out of range of `byte` (-128 - 255)"), currentToken());
         return cast(byte) value;
     }
 
@@ -1320,7 +1453,7 @@ abstract class JsonParser
             return true;
         if (t == JsonToken.VALUE_FALSE)
             return false;
-        throw coercionError("Current token (" ~ tokenName(t) ~ ") not of boolean type", t);
+        throw coercionError(join("Current token (", tokenName(t), ") not of boolean type"), t);
     }
 
     /// String value of a scalar token, converting numbers and booleans; null for other tokens.

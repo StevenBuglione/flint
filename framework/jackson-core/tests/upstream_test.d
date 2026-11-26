@@ -225,6 +225,19 @@ unittest
     }
 }
 
+@("coercion diagnostics retain token text and target ranges")
+unittest
+{
+    auto parser = createParser("32768");
+    assert(parser.nextToken() == JsonToken.VALUE_NUMBER_INT);
+    expectFailure!InputCoercionException(() { parser.getShortValue(); },
+            "Numeric value (32768) out of range of `short` (-32768 - 32767)");
+    expectFailure!InputCoercionException(() { parser.getByteValue(); },
+            "Numeric value (32768) out of range of `byte` (-128 - 255)");
+    expectFailure!InputCoercionException(() { parser.getBooleanValue(); },
+            "Current token (VALUE_NUMBER_INT) not of boolean type");
+}
+
 // SimpleParserTest
 
 @("SimpleParserTest.simpleValidity and keyword parsing")

@@ -569,24 +569,24 @@
       "methods": {
         "ported": [
           "emptyPointer",
+          "equality",
           "iZeroIndex",
+          "last",
+          "longNumbers",
           "pointerWithEmptyPropertyName",
-          "simpleTail"
+          "properties",
+          "quotedPath",
+          "simplePath",
+          "simplePathLonger",
+          "simpleTail",
+          "wonkyNumber173"
         ],
         "skipped": {
           "append": "The additional pointer operations and standalone assertions await the next core pointer slice.",
           "appendIndex": "The additional pointer operations and standalone assertions await the next core pointer slice.",
           "appendProperty": "The additional pointer operations and standalone assertions await the next core pointer slice.",
           "appendPropertyEmpty": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "appendWithFinalSlash": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "equality": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "last": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "longNumbers": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "properties": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "quotedPath": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "simplePath": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "simplePathLonger": "The additional pointer operations and standalone assertions await the next core pointer slice.",
-          "wonkyNumber173": "The additional pointer operations and standalone assertions await the next core pointer slice."
+          "appendWithFinalSlash": "The additional pointer operations and standalone assertions await the next core pointer slice."
         }
       },
       "status": "partial"
