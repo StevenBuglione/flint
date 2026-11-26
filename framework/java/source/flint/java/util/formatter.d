@@ -4,12 +4,12 @@ one non-template engine over erased arguments (`Any[]`), so a call site instanti
 boxing (rulebook R7) and never `std.format`.
 
 Specifiers are `%[argument_index$][flags][width][.precision]conversion`, with `<` for the previous argument.
-Conversions: `b B s S c d o x X f e E n %`; flags `- # + space 0 , (`. Arguments format as Java's would: `%s` as
+Conversions: `b B s S c d o x X f e E g G n %`; flags `- # + space 0 , (`. Arguments format as Java's would: `%s` as
 `String.valueOf` (null, `true`, `Double.toString`, an object's `toString`), `%d`/`%o`/`%x` for integral types (`%x`
 of a negative `int` is its 32-bit two's complement, of a `long` its 64-bit one), `%c` for a character or code
-point, and `%f` and `%e`/`%E` for floating point (precision 6 by default, rounded half up).
+point, and `%f`, `%e`/`%E` and `%g`/`%G` for floating point (precision 6 by default, rounded half up).
 
-The renderer uses the root locale's `.` and `,`. `%g`, `%a`, `%h` and the date/time conversions throw
+The renderer uses the root locale's `.` and `,`. `%a`, `%h` and the date/time conversions throw
 `UnknownFormatConversionException`.
 +/
 module flint.java.util.formatter;
@@ -693,7 +693,7 @@ private string convert(const ref Spec spec, Any argument)
         return integralText(spec, argument);
     case 'o', 'x', 'X':
         return radixText(spec, argument);
-    case 'f', 'e', 'E':
+    case 'f', 'e', 'E', 'g', 'G':
         return floatingText(spec, argument);
     default:
         throw new UnknownFormatConversionException([spec.conversion]);
@@ -928,7 +928,7 @@ private string radixText(const ref Spec spec, Any argument)
 
 private string floatingText(const ref Spec spec, Any argument)
 {
-    const uppercase = spec.conversion == 'E';
+    const uppercase = asciiLower(spec.conversion) != spec.conversion;
     if (argument.isNull)
         return uppercase ? "NULL" : "null";
     if (argument.typeName != "double" && argument.typeName != "float")
@@ -940,7 +940,7 @@ private string floatingText(const ref Spec spec, Any argument)
     const precision = spec.precision < 0 ? 6 : spec.precision;
     const magnitude = negative ? -value : value;
     const text = spec.conversion == 'f' ? fixedMagnitude(spec, magnitude,
-            precision) : scientificMagnitude(spec, magnitude, precision);
+            precision) : significantMagnitude(spec, magnitude, precision);
     return signed(spec, text, negative);
 }
 
@@ -949,11 +949,13 @@ private string fixedMagnitude(const ref Spec spec, double magnitude, int precisi
     string whole, fraction;
     decimalDigits(magnitude, whole, fraction);
     roundHalfUp(whole, fraction, precision);
-    auto body = spec.has(Flag.group) ? grouped(whole) : whole;
-    if (precision > 0 || spec.has(Flag.alternate))
-        body ~= "." ~ fraction;
-    return
-    body;
+    return plainText(spec, whole, fraction);
+}
+
+private string plainText(const ref Spec spec, string whole, string fraction)
+{
+    const integer = spec.has(Flag.group) ? grouped(whole) : whole;
+    return fraction.length != 0 || spec.has(Flag.alternate) ? integer ~ "." ~ fraction : integer;
 }
 
 /// `NaN` and the infinities, with Java's sign flags.
@@ -974,8 +976,29 @@ private string nonFinite(const ref Spec spec, double value, bool negative, bool 
     return uppercase ? "INFINITY" : "Infinity";
 }
 
-/// Round a single leading digit and the requested number of following digits.
-private string scientificMagnitude(const ref Spec spec, double magnitude, int precision)
+private string significantMagnitude(const ref Spec spec, double magnitude, int precision)
+{
+    const general = asciiLower(spec.conversion) == 'g';
+    const significantDigits = precision == 0 ? 1 : precision;
+    string whole, fraction;
+    const exponent = roundedMantissa(magnitude, general ? significantDigits - 1 : precision, whole, fraction);
+    // General notation is selected using the exponent after rounding.
+    if (general && exponent >= -4 && exponent < significantDigits)
+        return generalPlainText(spec, whole, fraction, exponent);
+    return scientificText(spec, whole, fraction, exponent);
+}
+
+private string generalPlainText(const ref Spec spec, string whole, string fraction, int exponent)
+{
+    if (exponent < 0)
+        return "0." ~ "000"[0 .. -exponent - 1] ~ whole ~ fraction;
+    const significand = whole ~ fraction;
+    const point = exponent + 1;
+    return plainText(spec, significand[0 .. point], significand[point .. $]);
+}
+
+/// Round a single leading digit and its fractional digits and return the adjusted exponent.
+private int roundedMantissa(double magnitude, int precision, out string whole, out string fraction)
 {
     ptrdiff_t point;
     auto significand = decimalSignificand(magnitude, point);
@@ -985,16 +1008,21 @@ private string scientificMagnitude(const ref Spec spec, double magnitude, int pr
         --point;
     }
     int exponent = magnitude == 0 ? 0 : cast(int) point - 1;
-    string whole = significand[0 .. 1];
-    string fraction = significand[1 .. $];
+    whole = significand[0 .. 1];
+    fraction = significand[1 .. $];
     roundHalfUp(whole, fraction, precision);
     if (whole.length > 1)
     {
         ++exponent;
         whole = whole[0 .. 1]; // A mantissa of 10 becomes 1 with the next exponent.
     }
-    const separator = precision > 0 || spec.has(Flag.alternate) ? "." : "";
-    const marker = spec.conversion == 'E' ? "E" : "e";
+    return exponent;
+}
+
+private string scientificText(const ref Spec spec, string whole, string fraction, int exponent)
+{
+    const separator = fraction.length != 0 || spec.has(Flag.alternate) ? "." : "";
+    const marker = asciiLower(spec.conversion) == spec.conversion ? "e" : "E";
     const sign = exponent < 0 ? "-" : "+";
     const exponentDigits = decimal(exponent < 0 ? -exponent : exponent);
     const leadingZero = exponentDigits.length == 1 ? "0" : "";
