@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 56 | 69 | 0 | 4,327 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 231 | 133 | 1,871 | 16,186 |
+| framework | openjdk@21.0.13 | 233 | 135 | 1,871 | 16,182 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 509 | 1 | 88 | 11,815 |
@@ -1959,6 +1959,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.atomic.AtomicBoolean` | `flint.java.util.concurrent.atomic.atomicboolean.AtomicBoolean` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `java.util.concurrent.atomic.AtomicInteger` | `flint.java.util.concurrent.atomic.atomicinteger.AtomicInteger` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `java.util.concurrent.atomic.AtomicLong` | `flint.java.util.concurrent.atomic.atomiclong.AtomicLong` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+
+#### java.util.function
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.util.function.IntSupplier` | `flint.java.util.function_.intsupplier.IntSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `java.util.function.LongSupplier` | `flint.java.util.function_.longsupplier.LongSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 
 #### java.util.regex
 
@@ -9587,7 +9594,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.concurrent | 1,264 | 0 |
 | java.util.concurrent.atomic | 291 | 0 |
 | java.util.concurrent.locks | 215 | 0 |
-| java.util.function | 122 | 0 |
+| java.util.function | 118 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 96 | 0 |
 | java.util.regex | 62 | 0 |

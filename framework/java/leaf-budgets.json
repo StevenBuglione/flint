@@ -6,5 +6,13 @@
   "flint.java.object": {
     "incremental_linked_bytes": 1184,
     "template_instances": 35
+  },
+  "flint.java.util.function_.intsupplier": {
+    "incremental_linked_bytes": 1012,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.longsupplier": {
+    "incremental_linked_bytes": 1030,
+    "template_instances": 37
   }
 }
