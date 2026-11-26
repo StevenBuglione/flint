@@ -92,6 +92,20 @@ struct ManagedSnapshotSlot
         return Error.init;
     }
 
+    /// Creates the initial baseline from previously checked write values.
+    package Error captureValues(LoadedSnapshotPlan initial, scope const(AttributeValue)[] values) scope nothrow @nogc
+    {
+        assert(initial.mapping !is null && values.length == initial.mapping.attributes.length);
+        const error = storeCapturedSnapshots(bank(active).arena, bank(active).fields, values);
+        if (error.code != Status.ok)
+        {
+            clear();
+            return error;
+        }
+        plan = initial;
+        return Error.init;
+    }
+
     /// Tests descriptor identity before another plan uses this snapshot's entity.
     package bool usesMapping(scope immutable(EntityMapping)* mapping) const scope nothrow @nogc
     {
@@ -226,13 +240,36 @@ private Error storeSnapshots(scope const ref EntityMapping mapping, Object entit
             : readMapped(attribute, entity);
         if (!current.ok)
             return current.error;
-        const snapshot = captureAttribute(arena, current.value);
-        if (!snapshot.ok)
-            return Error(snapshot.error.code, snapshot.error.message, attribute.ordinal);
-        staging[attribute.ordinal] = snapshot.value;
+        const error = storeField(arena, staging[attribute.ordinal], current.value, attribute.ordinal);
+        if (error.code != Status.ok)
+            return error;
         if (values.length != 0)
             values[attribute.ordinal] = current.value;
     }
+    return Error.init;
+}
+
+private Error storeCapturedSnapshots(scope ref RequestArena arena, scope AttributeSnapshot[] storage,
+        scope const(AttributeValue)[] values) nothrow @nogc
+{
+    if (storage.length < values.length)
+        return Error(Status.resourceExhausted, "insufficient loaded snapshot slots");
+    foreach (ordinal, ref value; values)
+    {
+        const error = storeField(arena, storage[ordinal], value, ordinal);
+        if (error.code != Status.ok)
+            return error;
+    }
+    return Error.init;
+}
+
+private Error storeField(scope ref RequestArena arena, ref AttributeSnapshot target,
+        scope const ref AttributeValue value, size_t ordinal) nothrow @nogc
+{
+    const snapshot = captureAttribute(arena, value);
+    if (!snapshot.ok)
+        return Error(snapshot.error.code, snapshot.error.message, ordinal);
+    target = snapshot.value;
     return Error.init;
 }
 
@@ -272,7 +309,7 @@ private DirtyResult compareSnapshots(scope const LoadedSnapshotPlan plan, Object
     return DirtyResult(count);
 }
 
-private ReadResult readMapped(scope const ref AttributeMapping attribute, Object entity) nothrow @nogc
+package ReadResult readMapped(scope const ref AttributeMapping attribute, Object entity) nothrow @nogc
 {
     auto current = attribute.read(entity);
     if (!current.ok)

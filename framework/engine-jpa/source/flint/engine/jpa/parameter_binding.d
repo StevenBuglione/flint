@@ -3,16 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/// Checked entity write bindings and assigned-ID insertion at the JDBC boundary.
+/// Checked entity write bindings and single-table insertion at the JDBC boundary.
 module flint.engine.jpa.parameter_binding;
 
 import flint.arena : Error, Result, Status;
 import flint.engine.jpa.identity : EntityIdentity;
-import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, planLoadedSnapshot;
+import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, planLoadedSnapshot, readMapped;
 import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.mapping : AttributeKind, AttributeValue, EntityMapping, validateEntity, validateMapping;
 import flint.engine.jpa.result_binding : TypedColumnCodec, TypedColumnWriter;
-import flint.java.sql : Connection, PreparedStatement, Types;
+import flint.jakarta.persistence : GenerationType;
+import flint.java.sql : Connection, PreparedStatement, ResultSet, Types;
 
 @safe:
 
@@ -151,7 +152,7 @@ private Status bindValue(PreparedStatement statement, int parameter, const ref A
     return Status.ok;
 }
 
-/// Provider-compiled SQL and verified bindings for an assigned-key INSERT.
+/// Provider-compiled SQL and verified bindings for a single-table INSERT.
 struct InsertPlan
 {
     private string sql;
@@ -173,12 +174,25 @@ private alias InsertPlanResult = Result!InsertPlan;
 InsertPlanResult planInsert(immutable(EntityMapping)* mapping, string sql,
         immutable(ParameterBinding)[] bindings, TypedColumnCodec typed = TypedColumnCodec()) nothrow @nogc
 {
+    return buildInsertPlan(mapping, sql, bindings, typed, false);
+}
+
+/// Checks an INSERT whose sole BIGINT key is produced by the database's IDENTITY column.
+InsertPlanResult planIdentityInsert(immutable(EntityMapping)* mapping, string sql,
+        immutable(ParameterBinding)[] bindings, TypedColumnCodec typed = TypedColumnCodec()) nothrow @nogc
+{
+    return buildInsertPlan(mapping, sql, bindings, typed, true);
+}
+
+private InsertPlanResult buildInsertPlan(immutable(EntityMapping)* mapping, string sql,
+        immutable(ParameterBinding)[] bindings, TypedColumnCodec typed, bool generated) nothrow @nogc
+{
     const parameters = planParameters(mapping, bindings, typed);
     if (!parameters.ok)
         return InsertPlanResult(InsertPlan.init, parameters.error);
     if (sql.length == 0)
         return InsertPlanResult(InsertPlan.init, Error(Status.invalidArgument, "missing static insert SQL"));
-    const layout = validateInsertLayout(*mapping, bindings);
+    const layout = validateInsertLayout(*mapping, bindings, generated);
     if (layout.code != Status.ok)
         return InsertPlanResult(InsertPlan.init, layout);
     const snapshot = planLoadedSnapshot(mapping);
@@ -188,34 +202,50 @@ InsertPlanResult planInsert(immutable(EntityMapping)* mapping, string sql,
 }
 
 private Error validateInsertLayout(scope const ref EntityMapping mapping,
-        scope const(ParameterBinding)[] parameterBindings) nothrow @nogc
+        scope const(ParameterBinding)[] parameterBindings, bool generated) nothrow @nogc
 {
-    if (mapping.generatesId || mapping.idOrdinals.length != 1)
-        return Error(Status.unsupported, "static inserts require an assigned integer key");
-    const key = &mapping.attributes[mapping.idOrdinals[0]];
-    if (!key.insertable || key.kind != AttributeKind.integer)
-        return Error(Status.unsupported, "static inserts require an insertable integer key", key.ordinal);
+    const keyError = validateInsertKey(mapping, generated);
+    if (keyError.code != Status.ok)
+        return keyError;
     if (mapping.versionOrdinal != uint.max)
     {
         const revision = &mapping.attributes[mapping.versionOrdinal];
         if (!revision.insertable || revision.kind != AttributeKind.integer || revision.sqlType != Types.BIGINT)
             return Error(Status.unsupported, "versioned inserts require an initial BIGINT version", revision.ordinal);
     }
-    return validateInsertBindings(mapping, parameterBindings);
+    const skipped = generated ? mapping.idOrdinals[0] : uint.max;
+    return validateInsertBindings(mapping, parameterBindings, skipped);
+}
+
+private Error validateInsertKey(scope const ref EntityMapping mapping, bool generated) pure nothrow @nogc
+{
+    if (mapping.idOrdinals.length != 1 || mapping.generatesId != generated)
+        return Error(Status.unsupported, "insert plan does not match the identifier strategy");
+    const key = &mapping.attributes[mapping.idOrdinals[0]];
+    if (generated)
+    {
+        if (mapping.generationStrategy != GenerationType.IDENTITY
+                || key.kind != AttributeKind.integer || key.sqlType != Types.BIGINT)
+            return Error(Status.unsupported, "generated inserts require a BIGINT IDENTITY key", key.ordinal);
+    }
+    else if (!key.insertable || key.kind != AttributeKind.integer)
+        return Error(Status.unsupported, "static inserts require an insertable integer key", key.ordinal);
+    return Error.init;
 }
 
 private Error validateInsertBindings(scope const ref EntityMapping mapping,
-        scope const(ParameterBinding)[] parameterBindings) nothrow @nogc
+        scope const(ParameterBinding)[] parameterBindings, uint skipped) nothrow @nogc
 {
     size_t count;
     foreach (ref attribute; mapping.attributes)
-        count += attribute.insertable;
+        count += attribute.insertable && attribute.ordinal != skipped;
     if (parameterBindings.length != count)
         return Error(Status.invalidArgument, "incomplete static insert layout");
 
     foreach (index, ref binding; parameterBindings)
     {
-        if (!mapping.attributes[binding.ordinal].insertable || cast(size_t) binding.parameter > count)
+        if (binding.ordinal == skipped || !mapping.attributes[binding.ordinal].insertable
+                || cast(size_t) binding.parameter > count)
             return Error(Status.invalidArgument, "invalid static insert binding", index);
         foreach (ref previous; parameterBindings[0 .. index])
             if (previous.ordinal == binding.ordinal)
@@ -230,8 +260,8 @@ Error executeManagedInsert(const ref InsertPlan plan, Connection connection,
         scope ref ManagedEntities entities, EntityIdentity key, Object entity, AttributeValue[] values)
 {
     const mapping = plan.parameters.mapping;
-    if (mapping is null || connection is null)
-        return Error(Status.invalidArgument, "missing insert plan or connection");
+    if (mapping is null || connection is null || mapping.generatesId)
+        return Error(Status.invalidArgument, "missing assigned insert plan or connection");
     const count = mapping.attributes.length;
     if (values.length < count)
         return Error(Status.resourceExhausted, "insufficient insert value slots");
@@ -262,8 +292,12 @@ private Error checkInsertedValues(scope const ref EntityMapping mapping, long id
     const ordinal = mapping.idOrdinals[0];
     if (captured[ordinal].kind != AttributeKind.integer || captured[ordinal].integer != identifier)
         return Error(Status.invalidArgument, "inserted entity identifier differs from its key", ordinal);
-    const revision = mapping.versionOrdinal;
-    if (revision != uint.max && captured[revision].kind != AttributeKind.integer)
+    return checkInitialVersion(mapping.versionOrdinal, captured);
+}
+
+private Error checkInitialVersion(uint revision, scope const(AttributeValue)[] capturedAttributes) pure nothrow @nogc
+{
+    if (revision != uint.max && capturedAttributes[revision].kind != AttributeKind.integer)
         return Error(Status.invalidArgument, "inserted entity version is not an integer", revision);
     return Error.init;
 }
@@ -273,10 +307,123 @@ private Error insertRow(const ref InsertPlan plan, Connection connection, const(
     auto statement = connection.prepareStatement(plan.sql);
     scope (exit)
         statement.close();
-    const bound = bindMappedValues(plan.parameters, statement, null, captured);
+    return executeInsertStatement(plan.parameters, statement, captured);
+}
+
+private Error executeInsertStatement(scope const ref ParameterBindingPlan parameters,
+        PreparedStatement statement, const(AttributeValue)[] captured)
+{
+    const bound = bindMappedValues(parameters, statement, null, captured);
     if (bound.code != Status.ok)
         return bound;
     if (statement.executeUpdate() != 1)
         return Error(Status.ioError, "managed insert affected an unexpected number of rows");
     return Error.init;
+}
+
+private alias GeneratedKeyResult = Result!long;
+
+/// Reads one non-NULL integer from a generated-keys cursor positioned before its first row.
+/// The caller owns the cursor and closes it after this operation.
+GeneratedKeyResult readGeneratedIntegerKey(ResultSet keys)
+{
+    if (keys is null || !keys.next())
+        return GeneratedKeyResult(0, Error(Status.ioError, "generated key result has no row"));
+    auto metadata = keys.getMetaData();
+    if (metadata is null || metadata.getColumnCount() != 1)
+        return GeneratedKeyResult(0, Error(Status.invalidArgument, "expected one generated key column"));
+    const kind = metadata.getColumnType(1);
+    if (kind != Types.BIGINT && kind != Types.INTEGER && kind != Types.SMALLINT && kind != Types.TINYINT)
+        return GeneratedKeyResult(0, Error(Status.invalidArgument, "generated key is not an integer"));
+    const identifier = keys.getLong(1);
+    if (keys.wasNull() || keys.next())
+        return GeneratedKeyResult(0, Error(Status.ioError, "expected one non-NULL generated key"));
+    return GeneratedKeyResult(identifier);
+}
+
+/// Inserts using the provider's stable, one-column key-name array and reserves identity capacity before SQL.
+/// Complete rollback and detach affected state through the caller's transaction.
+GeneratedKeyResult executeIdentityInsert(const ref InsertPlan plan, Connection connection,
+        scope ref ManagedEntities entities, uint root, Object entity, AttributeValue[] values, string[] columns)
+{
+    const mapping = plan.parameters.mapping;
+    const checked = validateIdentityArguments(mapping, connection, values.length, columns);
+    if (checked.code != Status.ok)
+        return GeneratedKeyResult(0, checked);
+
+    auto captured = values[0 .. mapping.attributes.length];
+    scope (exit)
+        captured[] = AttributeValue.init;
+    const reserved = entities.reserveIdentityInsert();
+    if (!reserved.ok)
+        return GeneratedKeyResult(0, reserved.error);
+    scope (exit)
+        entities.cancelInsert(reserved.value);
+
+    const initial = collectIdentityInput(*mapping, entity, captured);
+    if (initial.code != Status.ok)
+        return GeneratedKeyResult(0, initial);
+    const written = insertGeneratedRow(plan, connection, captured, columns);
+    if (!written.ok)
+        return written;
+
+    const ordinal = mapping.idOrdinals[0];
+    captured[ordinal] = AttributeValue(AttributeKind.integer, written.value);
+    const key = EntityIdentity(root, written.value);
+    const staged = entities.stageIdentityInsert(reserved.value, key, plan.snapshot, captured);
+    if (staged.code != Status.ok)
+        return GeneratedKeyResult(0, staged);
+    mapping.attributes[ordinal].write(entity, captured[ordinal]);
+    const published = entities.publishInsert(reserved.value, entity);
+    return GeneratedKeyResult(written.value, published);
+}
+
+private Error validateIdentityArguments(scope immutable(EntityMapping)* mapping,
+        Connection connection, size_t valueCount, scope const(string)[] columns)
+{
+    if (mapping is null || connection is null || !mapping.generatesId)
+        return Error(Status.invalidArgument, "missing IDENTITY insert plan or connection");
+    if (valueCount < mapping.attributes.length)
+        return Error(Status.resourceExhausted, "insufficient insert value slots");
+    if (columns.length != 1 || columns[0] != mapping.attributes[mapping.idOrdinals[0]].column)
+        return Error(Status.invalidArgument, "missing or mismatched generated key column name");
+    if (connection.getAutoCommit())
+        return Error(Status.invalidArgument, "managed insert requires a JDBC transaction");
+    return Error.init;
+}
+
+private Error collectIdentityInput(scope const ref EntityMapping mapping, Object entity,
+        scope AttributeValue[] capturedAttributes) nothrow @nogc
+{
+    const checked = validateEntity(mapping, entity);
+    if (checked.code != Status.ok)
+        return checked;
+    const id = mapping.idOrdinals[0];
+    foreach (ref attribute; mapping.attributes)
+    {
+        if (attribute.ordinal == id)
+            continue;
+        const value = readMapped(attribute, entity);
+        if (!value.ok)
+            return value.error;
+        capturedAttributes[attribute.ordinal] = value.value;
+    }
+    return checkInitialVersion(mapping.versionOrdinal, capturedAttributes);
+}
+
+private GeneratedKeyResult insertGeneratedRow(const ref InsertPlan plan, Connection connection,
+        const(AttributeValue)[] captured, string[] columns)
+{
+    auto statement = connection.prepareStatement(plan.sql, columns);
+    scope (exit)
+        statement.close();
+    const written = executeInsertStatement(plan.parameters, statement, captured);
+    if (written.code != Status.ok)
+        return GeneratedKeyResult(0, written);
+
+    auto keys = statement.getGeneratedKeys();
+    scope (exit)
+        if (keys !is null)
+            keys.close();
+    return readGeneratedIntegerKey(keys);
 }

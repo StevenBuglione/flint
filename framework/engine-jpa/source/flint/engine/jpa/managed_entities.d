@@ -32,6 +32,7 @@ struct ManagedEntities
     private ManagedSnapshotSlot[] snapshots;
     private size_t insertionSlot = size_t.max;
     private ulong insertionTicket;
+    private bool awaitingKey;
 
     @disable this(this);
     @disable void opAssign(ManagedEntities replacement);
@@ -70,6 +71,8 @@ struct ManagedEntities
     {
         if (entity is null)
             return Error(Status.invalidArgument, "cannot manage a null JPA entity");
+        if (awaitingKey)
+            return Error(Status.conflict, "context capacity is reserved for an IDENTITY insert");
         const claim = index.claim(key);
         if (!claim.ok)
             return claim.error;
@@ -93,12 +96,9 @@ struct ManagedEntities
     package TicketResult stageInsert(EntityIdentity key, LoadedSnapshotPlan plan, Object entity,
             scope AttributeValue[] values) scope nothrow @nogc
     {
-        if (snapshots.length == 0)
-            return TicketResult(0, Error(Status.unsupported, "JPA insert requires snapshot storage"));
-        if (insertionSlot != size_t.max)
-            return TicketResult(0, Error(Status.conflict, "a JPA insert is already pending in this context"));
-        if (insertionTicket == ulong.max)
-            return TicketResult(0, Error(Status.resourceExhausted, "JPA insert tickets exhausted"));
+        const available = checkInsertAvailability();
+        if (available.code != Status.ok)
+            return TicketResult(0, available);
         const reserved = index.reserve(key);
         if (!reserved.ok)
             return TicketResult(0, reserved.error);
@@ -118,10 +118,50 @@ struct ManagedEntities
         return TicketResult(ticket);
     }
 
+    /// Reserves one bounded vacancy before JDBC returns the canonical key.
+    package TicketResult reserveIdentityInsert() scope nothrow @nogc
+    {
+        const available = checkInsertAvailability();
+        if (available.code != Status.ok)
+            return TicketResult(0, available);
+        if (!index.hasVacancy())
+            return TicketResult(0, Error(Status.resourceExhausted, "JPA identity index is full"));
+        awaitingKey = true;
+        return TicketResult(++insertionTicket);
+    }
+
+    /// Assigns the reserved capacity to the generated key and records its initial state.
+    package Error stageIdentityInsert(ulong ticket, EntityIdentity key, LoadedSnapshotPlan plan,
+            scope const(AttributeValue)[] captured) scope nothrow @nogc
+    {
+        if (!ownsInsert(ticket) || !awaitingKey)
+            return Error(Status.conflict, "JPA IDENTITY reservation retired");
+        const reserved = index.reserve(key);
+        if (!reserved.ok)
+            return reserved.error;
+        if (!reserved.value.inserted)
+            return Error(Status.conflict, "generated JPA identity is already managed");
+
+        awaitingKey = false;
+        insertionSlot = reserved.value.slot;
+        return snapshots[insertionSlot].captureValues(plan, captured);
+    }
+
+    private Error checkInsertAvailability() const scope nothrow @nogc
+    {
+        if (snapshots.length == 0)
+            return Error(Status.unsupported, "JPA insert requires snapshot storage");
+        if (awaitingKey || insertionSlot != size_t.max)
+            return Error(Status.conflict, "a JPA insert is already pending in this context");
+        if (insertionTicket == ulong.max)
+            return Error(Status.resourceExhausted, "JPA insert tickets exhausted");
+        return Error.init;
+    }
+
     /// Publishes the reserved entry once SQL and statement close succeed.
     package Error publishInsert(ulong ticket, Object entity) scope nothrow @nogc
     {
-        if (!ownsInsert(ticket))
+        if (!ownsInsert(ticket) || awaitingKey)
             return Error(Status.conflict, "JPA insert reservation retired");
         roots[insertionSlot] = entity;
         index.finishReservation(insertionSlot, true);
@@ -134,6 +174,11 @@ struct ManagedEntities
     {
         if (!ownsInsert(ticket))
             return;
+        if (awaitingKey)
+        {
+            awaitingKey = false;
+            return;
+        }
         snapshots[insertionSlot].clear();
         index.finishReservation(insertionSlot, false);
         insertionSlot = size_t.max;
@@ -141,7 +186,7 @@ struct ManagedEntities
 
     private bool ownsInsert(ulong ticket) const scope nothrow @nogc
     {
-        return insertionSlot != size_t.max && insertionTicket == ticket;
+        return (awaitingKey || insertionSlot != size_t.max) && insertionTicket == ticket;
     }
 
     /// Finds the managed instance for a canonical key.
@@ -221,6 +266,7 @@ struct ManagedEntities
         roots[] = null;
         index.clear();
         insertionSlot = size_t.max;
+        awaitingKey = false;
         foreach (ref snapshot; snapshots)
             snapshot.clear();
     }

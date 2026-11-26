@@ -29,6 +29,7 @@ import flint.jdbc.datasource : ConnectionHolder, DataSourceTransactionManager, D
 import flint.transaction : CannotCreateTransactionException, TransactionDefinition,
     TransactionStatus, UnexpectedRollbackException;
 import flint.transaction.support : TransactionSynchronization, TransactionSynchronizationManager, TransactionTemplate;
+import jpa_generated_insert : verifyGeneratedInserts;
 import jpa_timestamp : verifyTimestampMapping;
 import jpa_version_update : verifyManagedDeletes, verifyManagedInserts, verifyTransactionalUpdates,
     verifyVersionedUpdate;
@@ -931,6 +932,7 @@ void main() @system
     verifyTransactionalUpdates(dataSource, jdbc, manager);
     verifyManagedDeletes(dataSource, jdbc);
     verifyManagedInserts(dataSource);
+    verifyGeneratedInserts(dataSource, jdbc);
     verifyFlushFailure(dataSource, outer, true);
     verifyFlushFailure(dataSource, outer, false);
     verifySynchronizationOnly(dataSource, manager, jdbc);

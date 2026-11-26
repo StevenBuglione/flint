@@ -82,6 +82,15 @@ struct IdentityIndex
         return claimSlot(key, SlotState.live);
     }
 
+    /// Checks capacity before reserving a slot whose database-generated key is still unknown.
+    package bool hasVacancy() const scope nothrow @nogc
+    {
+        foreach (ref slot; slots)
+            if (slot.state == SlotState.empty || slot.state == SlotState.deleted)
+                return true;
+        return false;
+    }
+
     /// Reserves a slot that excludes the same key from other claims before it is visible to find.
     package Result!IdentityClaim reserve(EntityIdentity key) scope nothrow @nogc
     {
