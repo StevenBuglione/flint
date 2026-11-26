@@ -237,12 +237,13 @@ private bool checkPorted(const ref MappingEntry entry, out string error)
 
 private bool checkAdapted(const ref MappingEntry entry, out string error)
 {
+    enum known = "R1 to R22, or a deviation such as D-7";
     if (entry.rules.length == 0)
-        error = entry.match ~ ": an adapted element needs the rulebook `rules` it follows, R1 to R22";
+        error = entry.match ~ ": an adapted element needs the rulebook `rules` it follows, " ~ known;
     foreach (rule; entry.rules)
     {
         if (!validRule(rule) && error.length == 0)
-            error = entry.match ~ ": `" ~ rule ~ "` is not a rulebook rule, R1 to R22";
+            error = entry.match ~ ": `" ~ rule ~ "` is not a rulebook rule, " ~ known;
     }
     if (entry.symbol.length && !validSymbol(entry.symbol) && error.length == 0)
         error = entry.match ~ ": `d` must be a D symbol under flint.";
@@ -315,11 +316,14 @@ bool validSymbol(string symbol)
     return !start;
 }
 
-/// Whether `rule` is a rulebook rule id, `R1` to `R22`.
+/// Whether `rule` is a rulebook rule id, `R1` to `R22`, or a deviation id (`D-7`, `D-JPA-2`). Whether a deviation is
+/// defined in docs/spring/api-mapping.md is checked by tools/api_differences.py.
 bool validRule(string rule)
 {
     import std.conv : ConvException, to;
 
+    if (rule.length > 2 && rule[0 .. 2] == "D-")
+        return validDeviation(rule[2 .. $]);
     if (rule.length < 2 || rule.length > 3 || rule[0] != 'R' || rule[1] == '0')
         return false;
     try
@@ -329,6 +333,26 @@ bool validRule(string rule)
     }
     catch (ConvException)
         return false;
+}
+
+/// Upper-case letters and digits in dash-separated groups: `7`, `JPA-2`, `AOT-MEMBER`.
+private bool validDeviation(string rest)
+{
+    bool start = true;
+    foreach (c; rest)
+    {
+        if (c == '-')
+        {
+            if (start)
+                return false;
+            start = true;
+            continue;
+        }
+        if (!((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')))
+            return false;
+        start = false;
+    }
+    return !start;
 }
 
 /// Whether `id` matches `pattern`.

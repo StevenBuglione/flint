@@ -205,6 +205,13 @@ unittest
     expect(validRule("R21")).toEqual(true);
     expect(validRule("R22")).toEqual(true);
     expect(validRule("R23")).toEqual(false);
+    expect(validRule("D-7")).toEqual(true);
+    expect(validRule("D-JPA-2")).toEqual(true);
+    expect(validRule("D-AOT-MEMBER")).toEqual(true);
+    expect(validRule("D-")).toEqual(false);
+    expect(validRule("D-jpa-2")).toEqual(false);
+    expect(validRule("D-JPA-")).toEqual(false);
+    expect(validRule("D--1")).toEqual(false);
     expect(validRule("R0")).toEqual(false);
     expect(validRule("R01")).toEqual(false);
 }
@@ -245,7 +252,7 @@ unittest
     expect(error).toEqual("a.B: a ported element needs its D symbol `d` under flint.");
     expect(parseMapping(`{"elements":{"a.B":{"status":"adapted","rules":["R3","R99"]}}}`, mapping, error)).toEqual(
             false);
-    expect(error).toEqual("a.B: `R99` is not a rulebook rule, R1 to R22");
+    expect(error).toEqual("a.B: `R99` is not a rulebook rule, R1 to R22, or a deviation such as D-7");
     expect(parseMapping(`{"elements":{"a.B":{"status":"adapted"}}}`, mapping, error)).toEqual(false);
     expect(parseMapping(`{"elements":{"a.B":{"status":"excluded","category":"jmx"}}}`, mapping, error)).toEqual(false);
     expect(parseMapping(`{"elements":{"a.B":{"status":"excluded","category":"deferred"}}}`, mapping, error)).toEqual(
