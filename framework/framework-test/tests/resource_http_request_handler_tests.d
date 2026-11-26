@@ -862,21 +862,6 @@ version (FlintResourceHttpCaching)
 
         assert(f.response.getHeader("Cache-Control") == "max-age=3600");
     }
-
-    @("ResourceHttpRequestHandlerTests.HttpCachingTests.ignoreLastModified")
-    unittest
-    {
-        auto f = setup();
-        f.setPathWithinHandlerMapping("foo.css");
-        f.handler.setUseLastModified(false);
-        f.handler.afterPropertiesSet();
-        f.handler.handleRequest(f.request, f.response);
-
-        assert(f.response.getContentType() == "text/css");
-        assert(f.response.getContentLengthLong() == 17);
-        assert(!f.response.containsHeader("Last-Modified"));
-        assert(f.response.getContentAsString() == "h1 { color:red; }");
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1169,6 +1154,41 @@ unittest
         f.handler.handleRequest(f.request, f.response);
         assert(f.response.getStatus() == 200);
         assert(f.response.getContentAsString() == "h1 { color:red; }");
+    });
+}
+
+@("ResourceHttpRequestHandlerTests.HttpCachingTests.ignoreLastModified")
+unittest
+{
+    withFileClasspath((ref Fixture f, long timestamp) {
+        f.handler.setUseLastModified(false);
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getContentType() == "text/css");
+        assert(f.response.getContentLengthLong() == 17);
+        assert(!f.response.containsHeader(HttpHeaders.LAST_MODIFIED));
+        assert(f.response.getContentAsString() == "h1 { color:red; }");
+    });
+}
+
+@("Flint.ResourceHttpRequestHandler.togglesFileDatePreconditions")
+unittest
+{
+    withFileClasspath((ref Fixture f, long timestamp) {
+        f.request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, HttpHeaders.formatDate(timestamp));
+        assert(f.handler.isUseLastModified());
+
+        f.handler.setUseLastModified(false);
+        assert(!f.handler.isUseLastModified());
+        f.handler.handleRequest(f.request, f.response);
+        assert(f.response.getStatus() == 200);
+        assert(!f.response.containsHeader(HttpHeaders.LAST_MODIFIED));
+        assert(f.response.getContentAsString() == "h1 { color:red; }");
+
+        f.handler.setUseLastModified(true);
+        auto cached = new MockHttpServletResponse();
+        f.handler.handleRequest(f.request, cached);
+        assert(cached.getStatus() == 304);
+        assert(cached.getContentAsByteArray().length == 0);
     });
 }
 

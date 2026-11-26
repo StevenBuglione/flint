@@ -744,6 +744,15 @@ O3 and 522,473 Oz incremental loadable bytes. DMD templates went from 6,753 to
 profile and 30 templates. Its inherited Phobos overage and Web's use the
 base-relative rule in `6c9e5f49`.
 
+The configured resource handler reads one atomic flag before looking up a file
+timestamp. Disabling it skips both the metadata lookup and date preconditions.
+Matched venus probes at `76759961e` and `8c837ac7d` added 88 loadable bytes in
+both O3 and Oz for Web MVC and framework-test. Web MVC templates rose from
+6,006 to 6,025, and framework-test stayed at 8,467. The existing Phobos cascade
+uses the base-relative rule in `6c9e5f49`. LDC release allocated 49,152 GC bytes
+for 1,024 handlers on both builds. The file-backed tests cover header
+suppression, an unconditional body and the restored 304 response.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

@@ -701,6 +701,7 @@
       "methods": {
         "ported": [
           "HttpCachingTests.defaultCachingHeaders",
+          "HttpCachingTests.ignoreLastModified",
           "HttpCachingTests.shouldRespondWithModifiedResource",
           "ResourceHandlingTests.resourceNotFound",
           "ResourceHandlingTests.servesHtmlResources",
@@ -717,7 +718,6 @@
           "HttpCachingTests.configureCacheSeconds": "Requires cache policy, ETag configuration or a file-backed fixture.",
           "HttpCachingTests.configureCacheSecondsToZero": "Requires cache policy, ETag configuration or a file-backed fixture.",
           "HttpCachingTests.configureVersionResourceResolver": "Requires cache policy, ETag configuration or a file-backed fixture.",
-          "HttpCachingTests.ignoreLastModified": "Requires cache policy, ETag configuration or a file-backed fixture.",
           "HttpCachingTests.overwritesExistingCacheControlHeaders": "Requires cache policy, ETag configuration or a file-backed fixture.",
           "HttpCachingTests.shouldRespondWithModifiedResourceWhenEtagNoMatch": "Requires cache policy, ETag configuration or a file-backed fixture.",
           "HttpCachingTests.shouldRespondWithNotModifiedWhenEtag": "Requires cache policy, ETag configuration or a file-backed fixture.",

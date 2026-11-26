@@ -14,6 +14,7 @@ Boot's unconfigured catch-all raises `NoResourceFoundException` for the error co
 +/
 module flint.web.servlet.resource;
 
+import core.atomic : MemoryOrder, atomicLoad, atomicStore;
 import flint.core.io : ClassPathResource, FileSystemResource, Resource;
 import flint.engine.aot.any : Any;
 import flint.http : HttpHeaders, HttpMethod, HttpStatus, HttpStatusCode, MediaType, MediaTypeFactory, ProblemDetail;
@@ -368,6 +369,7 @@ class ResourceHttpRequestHandler : HttpRequestHandler, ImmediateFailure
 {
     private ResourceHandlerConfiguration configuration;
     private bool initialized;
+    private shared bool useLastModified = true;
 
     /// Sets the classpath locations before the handler is initialized or proved empty.
     final void setLocations(List!Resource sources)
@@ -380,6 +382,18 @@ class ResourceHttpRequestHandler : HttpRequestHandler, ImmediateFailure
                 throw new IllegalStateException("Resource handler locations are frozen");
             configuration = sources.isEmpty() ? null : new ClassPathResourceHandlerConfiguration(sources);
         }
+    }
+
+    /// Controls whether the resource timestamp drives response headers and date preconditions.
+    void setUseLastModified(bool enabled)
+    {
+        atomicStore!(MemoryOrder.raw)(useLastModified, enabled);
+    }
+
+    /// Returns whether the handler uses the resource timestamp, enabled by default.
+    bool isUseLastModified()
+    {
+        return atomicLoad!(MemoryOrder.raw)(useLastModified);
     }
 
     /// Validates the explicit locations and creates their resolver and message converter.
@@ -543,7 +557,7 @@ private final class ClassPathResourceHandlerConfiguration : ResourceHandlerConfi
         if (converter is null)
             throw new IllegalStateException("ResourceHttpMessageConverter not initialized");
 
-        const lastModified = resource.isFile() ? resource.lastModified() : -1;
+        const lastModified = handler.isUseLastModified() && resource.isFile() ? resource.lastModified() : -1;
         if (new ServletWebRequest(request, response).checkNotModified(lastModified))
             return;
 
