@@ -77,7 +77,8 @@ struct ZoneOffsetTransition
     private ZoneOffset before_;
     private ZoneOffset after_ = ZoneOffset.ofHours(1);
 
-    private this(LocalDateTime transition, ZoneOffset before, ZoneOffset after) pure nothrow @nogc
+    // Recurring rules can produce a transition whose offsets are equal.
+    package(flint.java.time.zone) this(LocalDateTime transition, ZoneOffset before, ZoneOffset after) pure nothrow @nogc
     {
         beforeTime_ = transition;
         before_ = before;
@@ -141,7 +142,7 @@ struct ZoneOffsetTransition
 
     bool isValidOffset(ZoneOffset offset) const pure nothrow @nogc
     {
-        return isOverlap() && (offset == before_ || offset == after_);
+        return !isGap() && (offset == before_ || offset == after_);
     }
 
     // Instantiate the nullable adapter in its caller so it does not couple archive members.

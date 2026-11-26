@@ -388,8 +388,11 @@
       "status": "excluded"
     },
     "java/time/tck/java/time/zone/TCKZoneOffsetTransitionRule.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": [
+        "framework/java-time/tests/zone_offset_transition_rule_test.d"
+      ],
+      "reason": "plain-gpl. Original Flint tests cover typed factory inputs, validation, recurring date and time rules, offset queries, value equality, hashes and display.",
+      "status": "excluded"
     },
     "java/time/tck/java/time/zone/TCKZoneRules.java": {
       "phase": "2",
@@ -728,7 +731,8 @@
     "framework/java-time/tests/temporal_metadata_test.d",
     "framework/java-time/tests/year_month_test.d",
     "framework/java-time/tests/date_values_test.d",
-    "framework/java-time/tests/zone_offset_transition_test.d"
+    "framework/java-time/tests/zone_offset_transition_test.d",
+    "framework/java-time/tests/zone_offset_transition_rule_test.d"
   ],
   "module": "java-time",
   "note": "Original Flint tests exercise the Java SE 21 API, including the Period text used in Spring's binding test and numeric overflow diagnostics checked against the Java 21 runtime. No OpenJDK test code is ported.",
