@@ -102,6 +102,7 @@ if (requiredContextClass().isInstance(cast(Object) context)) ...   // Applicatio
 - **A `String` that may be `null` distinctly from `""`** → `Nullable!string`. D's `null` and `""` compare equal, so `@Nullable String` parameters must use `Nullable!string`.
 - **Any other Java value that may be `null` where the D type is a value type** → `Nullable!T` (`std.typecons.Nullable`, as for strings). This covers boxed `Long`/`Integer` IDs and `@Nullable` boxed parameters and returns: `Persistable!ID.getId()` returns `Nullable!long` when `ID` is `long`. Coordinator, 2026-11-26, under the owner's standing approval.
 - **Reference types** (classes, interfaces) keep plain `null`. **`Optional!T` is only for `java.util.Optional`**, never for a nullable value.
+- **A parameter Java null-checks only to throw** (`IllegalArgumentException` or `NullPointerException` on `null`), where the D type is a value type that can't hold `null` (an enum, a struct or record, a primitive), gets no throw-only `f(typeof(null))` overload. Passing `null` fails to compile instead, which a test pins with `static assert(!__traits(compiles, f(null)))`. Typed-`null` overloads stay only where D-7's overload ambiguity applies. Coordinator, 2026-11-26, from api-coverage.
 
 ### R6: Java Beans properties
 
@@ -234,7 +235,7 @@ A Java enum that declares methods but has no instance fields and implements no i
 - **Constants** keep Java's names and order, so a constant's position is its `ordinal()`.
 - **Methods** become free functions in the same module, called by UFCS (`access.cap(other)`), so call sites read as in Java. A selective import lists the functions beside the enum: `import flint.boot.actuate.endpoint : Access, cap;`.
 - **Static methods** become same-module free functions too, called without a receiver: Spring AI's `FinishReasonCategory.categorize(s)` is `categorize(s)`, imported by name.
-- **Java's `null` behaviour** for enum-typed parameters (`cap(null)` throws) is kept through a typed `null` overload (D-7).
+- **A `null` argument for an enum-typed parameter** (Java's `cap(null)` throws) doesn't compile in D, because the D parameter is a value type. No throw-only typed-`null` overload is added. A test pins the rejection with `static assert(!__traits(compiles, access.cap(null)))`, and a ported upstream test that expects the exception counts as ported through that assertion. (Changed 2026-11-26 15:25Z from a typed-`null` overload: rejecting at compile time is stronger and adds no public symbol.)
 - **Enums with fields** follow R15, and **enums that implement an interface** follow R18.
 
 Mapping: the constants are `ported`, and the methods are `adapted` with rule `R20`.
