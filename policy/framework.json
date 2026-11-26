@@ -738,8 +738,8 @@
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
     "compiler_peak_rss_bytes": 536870912,
-    "incremental_linked_bytes": 1471,
-    "template_instances": 962
+    "incremental_linked_bytes": 2158,
+    "template_instances": 1442
    }
   },
   "java-regex": {

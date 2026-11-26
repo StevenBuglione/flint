@@ -10,5 +10,9 @@
   "flint.java.nio.byteorder": {
     "incremental_linked_bytes": 80,
     "template_instances": 2
+  },
+  "flint.java.nio.invalidmarkexception": {
+    "incremental_linked_bytes": 687,
+    "template_instances": 480
   }
 }
