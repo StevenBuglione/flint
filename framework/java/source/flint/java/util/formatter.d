@@ -16,6 +16,7 @@ decimal rounding beyond 15 significant digits.
 module flint.java.util.formatter;
 
 import flint.engine.aot.any : Any;
+import flint.engine.aot.text : decodeUtf8;
 import flint.java.lang : IllegalArgumentException;
 
 @safe:
@@ -27,6 +28,33 @@ class IllegalFormatException : IllegalArgumentException
     this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, null, file, line);
+    }
+}
+
+/// Java's `DuplicateFormatFlagsException`: a flag occurs more than once in a specifier.
+class DuplicateFormatFlagsException : IllegalFormatException
+{
+    private string flags;
+
+    /// The repeated flags. A null slice counts as empty (R26).
+    this(string flags, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super("Flags = '" ~ flags ~ "'", file, line);
+        this.flags = flags;
+    }
+
+    /// The repeated flags.
+    string getFlags() const pure nothrow @nogc
+    {
+        return flags;
+    }
+}
+
+private class IllegalFormatArgumentIndexException : IllegalFormatException
+{
+    this(string message) pure nothrow
+    {
+        super(message);
     }
 }
 
@@ -81,26 +109,42 @@ class IllegalFormatConversionException : IllegalFormatException
 /// `format` with `arguments` substituted, as `java.util.Formatter.format(format, args).toString()`.
 string formatJava(string format, scope Any[] arguments)
 {
+    // Validate every specifier before resolving arguments, as Formatter does.
+    Spec[4] specs;
+    Spec extra;
+    size_t count;
+    for (size_t start = nextSpecifier(format, 0); start < format.length;)
+    {
+        const end = count < specs.length ? parseSpec(format, start, specs[count]) : parseSpec(format, start, extra);
+        ++count;
+        start = nextSpecifier(format, end);
+    }
+
     Pieces result;
     size_t next; // the next ordinary index
     ptrdiff_t previous = -1;
-    size_t i;
-    while (i < format.length)
+    size_t end;
+    foreach (i; 0 .. count)
     {
-        if (format[i] != '%')
-        {
-            size_t end = i;
-            while (end < format.length && format[end] != '%')
-                end++;
-            result.put(format[i .. end]);
-            i = end;
-            continue;
-        }
+        // For longer formats, reparse only the validated suffix beyond the stack slots.
         Spec spec;
-        i = parseSpec(format, i, spec);
+        if (i < specs.length)
+            spec = specs[i];
+        else
+            parseSpec(format, nextSpecifier(format, end), spec);
+        result.put(format[end .. spec.start]);
         result.put(render(spec, arguments, next, previous));
+        end = spec.start + spec.text.length;
     }
+    result.put(format[end .. $]);
     return result.text();
+}
+
+private size_t nextSpecifier(scope const(char)[] format, size_t start) pure nothrow @nogc
+{
+    while (start < format.length && format[start] != '%')
+        ++start;
+    return start;
 }
 
 /++
@@ -139,6 +183,7 @@ private struct Pieces
 private struct Spec
 {
     string text; // the specifier as written, for messages
+    size_t start;
     ptrdiff_t index = -1; // explicit 1-based index, 0 for `<`, -1 for ordinary
     bool leftJustify, alternate, plus, space, zeroPad, group, parentheses;
     int width = -1;
@@ -149,80 +194,169 @@ private struct Spec
 /// Parse the specifier at `format[start]` (a `%`); returns the index after it.
 private size_t parseSpec(string format, size_t start, out Spec spec)
 {
-    size_t i = parseIndex(format, start + 1, spec);
-    i = parseFlags(format, i, spec);
-    const widthStart = i;
-    while (i < format.length && format[i] >= '0' && format[i] <= '9')
-        i++;
-    if (i > widthStart)
-        spec.width = cast(int) number(format[widthStart .. i]);
+    const indexStart = start + 1;
+    if (indexStart < format.length && validConversion(format[indexStart]))
+    {
+        spec.start = start;
+        spec.text = format[start .. indexStart + 1];
+        spec.conversion = format[indexStart];
+        return indexStart + 1;
+    }
+    const indexEnd = digitsEnd(format, indexStart);
+    const hasIndex = indexEnd > indexStart && indexEnd < format.length && format[indexEnd] == '$';
+    const flagsStart = hasIndex ? indexEnd + 1 : indexStart;
+    size_t widthStart = flagsStart;
+    while (widthStart < format.length && includes("-#+ 0,(<", format[widthStart]))
+        ++widthStart;
+    const widthEnd = digitsEnd(format, widthStart);
+    size_t i = widthEnd;
+    size_t precisionStart = widthEnd;
     if (i < format.length && format[i] == '.')
     {
-        const precisionStart = ++i;
-        while (i < format.length && format[i] >= '0' && format[i] <= '9')
-            i++;
+        precisionStart = ++i;
+        i = digitsEnd(format, i);
         if (i == precisionStart)
-            throw new UnknownFormatConversionException(format[precisionStart - 1 .. i]);
-        spec.precision = cast(int) number(format[precisionStart .. i]);
+            invalidSpecifier(format, indexStart);
     }
-    if (i >= format.length)
-        throw new UnknownFormatConversionException("%");
-    spec.conversion = format[i];
-    spec.text = format[start .. i + 1];
-    return i + 1;
+    const conversionStart = i;
+    const end = conversionEnd(format, conversionStart, indexStart);
+
+    if (hasIndex)
+        spec.index = argumentIndex(format[indexStart .. indexEnd]);
+    parseFlags(format[flagsStart .. widthStart], spec);
+    if (widthEnd > widthStart)
+        spec.width = cast(int) number(format[widthStart .. widthEnd]);
+    if (precisionStart != widthEnd)
+        spec.precision = cast(int) number(format[precisionStart .. conversionStart]);
+
+    spec.conversion = checkedConversion(format[conversionStart .. end]);
+    spec.start = start;
+    spec.text = format[start .. end];
+    return end;
 }
 
-/// The argument index: `n$`, or `<` for the previous argument.
-private size_t parseIndex(string format, size_t i, ref Spec spec) pure nothrow @nogc
+private size_t conversionEnd(string format, size_t end, size_t indexStart)
 {
-    size_t digits = i;
-    while (digits < format.length && format[digits] >= '0' && format[digits] <= '9')
-        digits++;
-    if (digits > i && digits < format.length && format[digits] == '$')
+    if (end + 1 < format.length && (format[end] == 't' || format[end] == 'T') && conversionCharacter(format[end + 1]))
+        ++end;
+    if (end >= format.length || !conversionCharacter(format[end]))
+        invalidSpecifier(format, indexStart);
+    return end + 1;
+}
+
+private char checkedConversion(string conversion)
+{
+    if (conversion.length == 1)
     {
-        spec.index = number(format[i .. digits]);
-        return digits + 1;
+        if (!validConversion(conversion[0]))
+            throw new UnknownFormatConversionException(conversion);
     }
-    if (i < format.length && format[i] == '<')
-    {
-        spec.index = 0;
-        return i + 1;
-    }
+    else if (!includes("HIklMSLNpzZsQBbhAaCYyjmdeRTrDFc", conversion[1]))
+        throw new UnknownFormatConversionException("t" ~ conversion[1 .. $]);
+    return conversion[0];
+}
+
+private size_t digitsEnd(scope const(char)[] format, size_t i) pure nothrow @nogc
+{
+    while (i < format.length && format[i] >= '0' && format[i] <= '9')
+        ++i;
     return i;
 }
 
-private size_t parseFlags(string format, size_t i, ref Spec spec) pure nothrow @nogc
+private bool conversionCharacter(char c) pure nothrow @nogc
 {
-    for (; i < format.length; i++)
+    return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '%';
+}
+
+private bool validConversion(char c) pure nothrow @nogc
+{
+    switch (c)
     {
-        switch (format[i])
+    case 'b', 'B', 'h', 'H', 's', 'S', 'c', 'C', 'd', 'o', 'x', 'X', 'e', 'E', 'f', 'g', 'G', 'a',
+            'A', '%', 'n':
+            return true;
+    default:
+        return false;
+    }
+}
+
+private bool includes(scope const(char)[] choices, char c) pure nothrow @nogc
+{
+    foreach (choice; choices)
+        if (choice == c)
+            return true;
+    return false;
+}
+
+private void invalidSpecifier(string format, size_t index)
+{
+    if (index == format.length)
+        throw new UnknownFormatConversionException("%");
+    size_t end = index;
+    const first = decodeUtf8(format, end);
+    // Report the first UTF-16 unit. Invalid UTF-8 and lone surrogates become U+FFFD (R14).
+    throw new UnknownFormatConversionException(first == 0xFFFD || first > 0xFFFF ? "\uFFFD" : format[index .. end]);
+}
+
+private int argumentIndex(scope const(char)[] digits)
+{
+    int value;
+    foreach (c; digits)
+    {
+        const digit = c - '0';
+        if (value > (int.max - digit) / 10)
+            throw new IllegalFormatArgumentIndexException("Format argument index: (not representable as int)");
+        value = value * 10 + digit;
+    }
+    if (value == 0)
+        throw new IllegalFormatArgumentIndexException("Illegal format argument index = 0");
+    return value;
+}
+
+private void parseFlags(string flags, ref Spec spec)
+{
+    foreach (i, flag; flags)
+    {
+        const text = flags[i .. i + 1];
+        switch (flag)
         {
         case '-':
-            spec.leftJustify = true;
+            setFlag(spec.leftJustify, text);
             break;
         case '#':
-            spec.alternate = true;
+            setFlag(spec.alternate, text);
             break;
         case '+':
-            spec.plus = true;
+            setFlag(spec.plus, text);
             break;
         case ' ':
-            spec.space = true;
+            setFlag(spec.space, text);
             break;
         case '0':
-            spec.zeroPad = true;
+            setFlag(spec.zeroPad, text);
             break;
         case ',':
-            spec.group = true;
+            setFlag(spec.group, text);
             break;
         case '(':
-            spec.parentheses = true;
+            setFlag(spec.parentheses, text);
+            break;
+        case '<':
+            if (spec.index == 0)
+                throw new DuplicateFormatFlagsException(text);
+            spec.index = 0;
             break;
         default:
-            return i;
+            assert(0, "parseFlags requires a validated flag");
         }
     }
-    return i;
+}
+
+private void setFlag(ref bool present, string flag)
+{
+    if (present)
+        throw new DuplicateFormatFlagsException(flag);
+    present = true;
 }
 
 private long number(string digits) pure nothrow @nogc
