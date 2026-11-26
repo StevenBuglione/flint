@@ -11042,6 +11042,14 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.ReflectiveOperationException#<init>(String)` | 2 | Requires the checked ReflectiveOperationException base and a cause that can be initialized later. |
 | framework | `java.lang.ReflectiveOperationException#<init>(String,Throwable)` | 2 | Requires the checked ReflectiveOperationException base and a cause initialized even when null. |
 | framework | `java.lang.ReflectiveOperationException#<init>(Throwable)` | 2 | Requires the checked ReflectiveOperationException base with a detail derived from the cause and the cause already initialized. |
+| framework | `java.lang.StringBuffer` | 2 | Missing mutable text type required by Format and SimpleDateFormat. Java synchronizes operations on each buffer and append returns the original buffer. |
+| framework | `java.lang.StringBuffer#<init>()` | 2 | Requires a mutable StringBuffer that starts empty for Format.format(Object). |
+| framework | `java.lang.StringBuffer#<init>(String)` | 2 | Requires initializing the mutable buffer with the supplied text and counting its UTF-16 code units (R14). Java rejects null. A null D string initializes an empty buffer under R26. |
+| framework | `java.lang.StringBuffer#append(String)` | 2 | Requires synchronized string append and return of the original buffer. Java appends the literal null for a null String. R5 Nullable!string preserves the distinction from an empty String. A plain string convenience overload awaits owner approval. |
+| framework | `java.lang.StringBuffer#append(char)` | 2 | Requires synchronized append of one UTF-16 code unit (R14) and return of the original buffer. |
+| framework | `java.lang.StringBuffer#append(char[],int,int)` | 2 | Requires synchronized append of a checked UTF-16 offset and count (R14), including overflow rejection, and return of the original buffer. |
+| framework | `java.lang.StringBuffer#length()` | 2 | Requires synchronized access to the length in UTF-16 code units (R14), used by format field offsets. |
+| framework | `java.lang.StringBuffer#toString()` | 2 | Requires a synchronized immutable snapshot of the buffer text. |
 | framework | `java.net.URI#<init>(String)` | 2 | Requires a public string constructor with Java URI syntax validation and URISyntaxException diagnostics. |
 | framework | `java.net.URI#compareTo(URI)` | 2 | Requires ordering by URI component, including percent escape hex normalization and case-insensitive scheme and host comparison. |
 | framework | `java.net.URI#create(String)` | 2 | Requires Java URI syntax validation. The current parser accepts invalid scheme starts, unclosed IPv6 literals, and repeated unescaped fragment delimiters. |
