@@ -3618,7 +3618,6 @@
       "org/springframework/security/core/userdetails/MapReactiveUserDetailsServiceTests.java",
       "org/springframework/security/core/userdetails/UserDetailsByNameServiceWrapperTests.java",
       "org/springframework/security/core/userdetails/UserTests.java",
-      "org/springframework/security/core/userdetails/cache/SpringCacheBasedUserCacheTests.java",
       "org/springframework/security/core/userdetails/jdbc/JdbcDaoImplTests.java",
       "org/springframework/security/core/userdetails/memory/UserAttributeEditorTests.java",
       "org/springframework/security/provisioning/InMemoryUserDetailsManagerTests.java",

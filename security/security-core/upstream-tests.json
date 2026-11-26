@@ -543,8 +543,14 @@
       "status": "ported"
     },
     "org/springframework/security/core/userdetails/cache/SpringCacheBasedUserCacheTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "security/security-core/tests/flint_cache_based_user_cache_test.d",
+      "methods": {
+        "ported": [
+          "cacheOperationsAreSuccessful",
+          "startupDetectsMissingCache"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/security/core/userdetails/jdbc/JdbcDaoImplTests.java": {
       "phase": "2",
@@ -564,6 +570,104 @@
     }
   },
   "module": "security-core",
+  "notes": {
+    "deferred_logging": {
+      "restore": "Restore these Commons Logging statements in one Security Core slice after coordinating its SLF4J dependency. Guard disabled log levels before formatting.",
+      "statements": [
+        {
+          "level": "DEBUG",
+          "line": 124,
+          "purpose": "No matching authentication failure event.",
+          "upstream_file": "authentication/DefaultAuthenticationEventPublisher.java"
+        },
+        {
+          "level": "TRACE",
+          "line": 179,
+          "purpose": "Authentication provider attempt and position.",
+          "upstream_file": "authentication/ProviderManager.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 191,
+          "purpose": "Authentication stopped on an account status exception.",
+          "upstream_file": "authentication/ProviderManager.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 199,
+          "purpose": "Authentication stopped on an internal service exception.",
+          "upstream_file": "authentication/ProviderManager.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 207,
+          "purpose": "Authentication provider reported a failure.",
+          "upstream_file": "authentication/ProviderManager.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 262,
+          "purpose": "All attempted providers failed.",
+          "upstream_file": "authentication/ProviderManager.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 148,
+          "purpose": "User lookup failed in the authentication provider.",
+          "upstream_file": "authentication/dao/AbstractUserDetailsAuthenticationProvider.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 232,
+          "purpose": "Provider authenticated the user.",
+          "upstream_file": "authentication/dao/AbstractUserDetailsAuthenticationProvider.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 84,
+          "purpose": "No credentials supplied for password verification.",
+          "upstream_file": "authentication/dao/DaoAuthenticationProvider.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 90,
+          "purpose": "Password verification failed.",
+          "upstream_file": "authentication/dao/DaoAuthenticationProvider.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 188,
+          "purpose": "The JDBC user query returned no results.",
+          "upstream_file": "core/userdetails/jdbc/JdbcDaoImpl.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 203,
+          "purpose": "The JDBC user had no authorities.",
+          "upstream_file": "core/userdetails/jdbc/JdbcDaoImpl.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 49,
+          "purpose": "Cache lookup and hit status.",
+          "upstream_file": "core/userdetails/cache/SpringCacheBasedUserCache.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 55,
+          "purpose": "User details inserted into the cache.",
+          "upstream_file": "core/userdetails/cache/SpringCacheBasedUserCache.java"
+        },
+        {
+          "level": "DEBUG",
+          "line": 60,
+          "purpose": "User details removed through the UserDetails overload.",
+          "upstream_file": "core/userdetails/cache/SpringCacheBasedUserCache.java"
+        }
+      ],
+      "upstream_root": "core/src/main/java/org/springframework/security"
+    }
+  },
   "schema": "flint.upstream-tests/1",
   "test_packages": [
     ":security-core"
