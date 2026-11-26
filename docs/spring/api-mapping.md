@@ -155,6 +155,14 @@ R15 is reserved for the Java-enums proposal in `docs/spring/phase1/web-mvc.md`. 
 
 Mapping: the records are `adapted` with rules `R16` (plus `R11` where equality is the point). The interface is `ported`.
 
+### R17: Shared constants of generic classes
+
+Java often shares one instance of a generic class as a constant: Spring Data's `Range.unbounded()`, `Bound.unbounded()` and the initial `ScrollPosition`s (D-DATA-2, and the D-DATA-5 that sol-data proposed). D cannot share one object across instantiations of a class template, and Flint keeps no mutable module-level state. Coordinator, 2026-11-26, under the owner's standing approval:
+- **A constant whose class has fields** becomes a value-equal instance created per type instantiation (`Range!int.unbounded()` and `Range!string.unbounded()` are separate objects). `equals`, `hashCode` and the `is*()` queries (`isUnbounded()`, `isInitial()`) return Java's results. Reference identity (`==` on references, `a is b`) is not preserved, so code must compare with `equals`.
+- **A constant whose class has no fields** keeps one shared instance through `flint.engine.aot.objects.statelessInstance`, exactly as in Java.
+
+Mapping: the factory method or constant is `adapted` with rule `R17`. A lane cites R17 instead of adding a per-module deviation.
+
 ## Namespaces
 
 Each D namespace has one owner, so a Spring package never collides with Flint's own code:
