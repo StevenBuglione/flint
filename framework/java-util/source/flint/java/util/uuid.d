@@ -59,6 +59,38 @@ final class UUID
         return cast(int)(least >> 61);
     }
 
+    /// Return the version-1 timestamp in 100-nanosecond ticks since 1582-10-15 UTC.
+    long timestamp() const pure
+    {
+        requireTimeBased();
+        const ulong low = most >> 32;
+        const ulong middle = (most >> 16) & 0xffff;
+        const ulong high = most & 0xfff;
+        return cast(long)((high << 48) | (middle << 32) | low);
+    }
+
+    /// Return the 14-bit version-1 clock sequence.
+    int clockSequence() const pure
+    {
+        requireTimeBased();
+        return cast(int)((least >> 48) & 0x3fff);
+    }
+
+    /// Return the 48-bit version-1 node identifier.
+    long node() const pure
+    {
+        requireTimeBased();
+        return cast(long)(least & 0xffff_ffff_ffffUL);
+    }
+
+    private void requireTimeBased() const pure
+    {
+        import flint.java.lang : UnsupportedOperationException;
+
+        if (version_() != 1)
+            throw new UnsupportedOperationException("Not a time-based UUID");
+    }
+
     /// Render the standard 8-4-4-4-12 layout in lowercase hexadecimal.
     override string toString() const pure nothrow
     {

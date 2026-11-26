@@ -12,6 +12,8 @@ class UUIDOracle {
             for (long least : words)
                 write(most, least);
 
+        for (long word : words)
+            write((word & ~0xf000L) | 0x1000L, word);
         for (int version = 0; version < 16; ++version) {
             for (int variantNibble = 0; variantNibble < 16; ++variantNibble) {
                 long most = 0x91a5_307b_ce48_0fd2L | ((long) version << 12);
@@ -23,7 +25,10 @@ class UUIDOracle {
 
     private static void write(long most, long least) {
         UUID value = new UUID(most, least);
-        System.out.printf(Locale.ROOT, "%d\t%d\t%d\t%d\t%s\n", value.getMostSignificantBits(),
+        System.out.printf(Locale.ROOT, "%d\t%d\t%d\t%d\t%s", value.getMostSignificantBits(),
             value.getLeastSignificantBits(), value.version(), value.variant(), value);
+        if (value.version() == 1)
+            System.out.printf(Locale.ROOT, "\t%d\t%d\t%d", value.timestamp(), value.clockSequence(), value.node());
+        System.out.print('\n');
     }
 }
