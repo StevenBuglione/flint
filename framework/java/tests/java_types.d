@@ -141,6 +141,17 @@ unittest
     assert(javaHashCode(true) == 1231 && javaHashCode(5L) == 5 && javaHashCode(-1L) == 0);
 }
 
+@("javaHashCode uses Float rather than widened Double bits")
+unittest
+{
+    assert(javaHashCode(1.5f) == 0x3fc00000);
+    assert(cast(uint) javaHashCode(-0.0f) == 0x80000000);
+    assert(javaHashCode(-float.nan) == 0x7fc00000);
+    assert(javaHashCode(float.infinity) == 0x7f800000);
+    assert(cast(uint) javaHashCode(-float.infinity) == 0xff800000);
+    assert(javaHashCode(1.5) == 0x3ff80000);
+}
+
 unittest
 {
     // Boxed-number statics with Java's messages.
@@ -796,3 +807,4 @@ unittest
     }
     assert(empty.size() == 0);
 }
+
