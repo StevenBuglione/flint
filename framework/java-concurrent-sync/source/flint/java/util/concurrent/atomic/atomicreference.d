@@ -106,4 +106,35 @@ class AtomicReference(T)
     {
         setRelease(newValue);
     }
+
+    /// Attempts a conditional update with plain ordering.
+    final bool weakCompareAndSetPlain(T expected, T newValue) nothrow @nogc
+    {
+        return slot.weakCompareAndSetPlain(expected, newValue);
+    }
+
+    /// Attempts a conditional update with acquire ordering.
+    final bool weakCompareAndSetAcquire(T expected, T newValue) nothrow @nogc
+    {
+        return slot.weakCompareAndSetAcquire(expected, newValue);
+    }
+
+    /// Attempts a conditional update with release ordering on success.
+    final bool weakCompareAndSetRelease(T expected, T newValue) nothrow @nogc
+    {
+        return slot.weakCompareAndSetRelease(expected, newValue);
+    }
+
+    /// Attempts a conditional update with Java volatile ordering.
+    final bool weakCompareAndSetVolatile(T expected, T newValue) nothrow @nogc
+    {
+        return slot.weakCompareAndSetVolatile(expected, newValue);
+    }
+
+    /// Attempts a plain conditional update.
+    deprecated("Use weakCompareAndSetPlain for plain memory ordering.") final bool weakCompareAndSet(
+            T expected, T newValue) nothrow @nogc
+    {
+        return weakCompareAndSetPlain(expected, newValue);
+    }
 }

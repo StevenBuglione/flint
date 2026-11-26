@@ -1,7 +1,7 @@
 /// Atomic publication of a GC object reference through a `shared` slot.
 module flint.conc.sys.slot;
 
-import core.atomic : MemoryOrder, atomicExchange, atomicLoad, atomicStore, cas;
+import core.atomic : MemoryOrder, atomicExchange, atomicLoad, atomicStore, cas, casWeak;
 
 @safe:
 
@@ -52,4 +52,32 @@ package(flint.conc) @trusted Object casWitness(ref shared Object slot, Object ex
     shared Object witness = cast(shared) expected;
     cas(&slot, &witness, cast(shared) desired);
     return cast(Object) witness;
+}
+
+// SAFETY: compares and copies GC-visible references. The slot owns the published reference,
+// and object-internal synchronization stays with the caller.
+package(flint.conc) @trusted bool weakSlotPlain(ref shared Object slot, Object expected, Object next) nothrow @nogc
+{
+    return casWeak!(MemoryOrder.raw, MemoryOrder.raw)(&slot, cast(shared) expected, cast(shared) next);
+}
+
+// SAFETY: compares and copies GC-visible references. The slot owns the published reference,
+// and object-internal synchronization stays with the caller.
+package(flint.conc) @trusted bool weakSlotAcquire(ref shared Object slot, Object expected, Object next) nothrow @nogc
+{
+    return casWeak!(MemoryOrder.acq, MemoryOrder.acq)(&slot, cast(shared) expected, cast(shared) next);
+}
+
+// SAFETY: compares and copies GC-visible references. The slot owns the published reference,
+// and object-internal synchronization stays with the caller.
+package(flint.conc) @trusted bool weakSlotRelease(ref shared Object slot, Object expected, Object next) nothrow @nogc
+{
+    return casWeak!(MemoryOrder.rel, MemoryOrder.raw)(&slot, cast(shared) expected, cast(shared) next);
+}
+
+// SAFETY: compares and copies GC-visible references. The slot owns the published reference,
+// and object-internal synchronization stays with the caller.
+package(flint.conc) @trusted bool weakSlotVolatile(ref shared Object slot, Object expected, Object next) nothrow @nogc
+{
+    return casWeak!(MemoryOrder.seq, MemoryOrder.seq)(&slot, cast(shared) expected, cast(shared) next);
 }

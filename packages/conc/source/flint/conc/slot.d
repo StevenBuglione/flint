@@ -2,7 +2,7 @@
 module flint.conc.slot;
 
 import flint.conc.sys.slot : casWitness, exchangeSlot, loadSlot, loadVolatileSlot, replaceSlot,
-    storeSlot, storeVolatileSlot;
+    storeSlot, storeVolatileSlot, weakSlotAcquire, weakSlotPlain, weakSlotRelease, weakSlotVolatile;
 
 @safe:
 
@@ -64,6 +64,26 @@ struct ProcessSlot(T) if (is(T == class) || (is(T == interface) && is(typeof(T.i
     T getAndSet(T reference) shared nothrow @nogc
     {
         return cast(T) replaceSlot(value, cast(Object) reference);
+    }
+
+    package(flint) bool weakCompareAndSetPlain(T expected, T desired) shared nothrow @nogc
+    {
+        return weakSlotPlain(value, cast(Object) expected, cast(Object) desired);
+    }
+
+    package(flint) bool weakCompareAndSetAcquire(T expected, T desired) shared nothrow @nogc
+    {
+        return weakSlotAcquire(value, cast(Object) expected, cast(Object) desired);
+    }
+
+    package(flint) bool weakCompareAndSetRelease(T expected, T desired) shared nothrow @nogc
+    {
+        return weakSlotRelease(value, cast(Object) expected, cast(Object) desired);
+    }
+
+    package(flint) bool weakCompareAndSetVolatile(T expected, T desired) shared nothrow @nogc
+    {
+        return weakSlotVolatile(value, cast(Object) expected, cast(Object) desired);
     }
 }
 
