@@ -216,13 +216,17 @@ class SimpleDateFormat : DateFormat
         return new Date(defaultCenturyStart);
     }
 
-    /// Read two-digit years into the hundred years from `startDate`.
+    /// Read two-digit years into the hundred years from `startDate` and set the calendar to that date.
+    /// Throws NullPointerException if the date or calendar is null.
     void set2DigitYearStart(const Date startDate)
     {
-        auto start = new GregorianCalendar(calendar.getTimeZone());
-        start.setTime(startDate);
+        if (startDate is null)
+            throw new NullPointerException();
         defaultCenturyStart = startDate.getTime();
-        defaultCenturyStartYear = start.get(Calendar.YEAR);
+        if (calendar is null)
+            throw new NullPointerException();
+        calendar.setTimeInMillis(defaultCenturyStart);
+        defaultCenturyStartYear = calendar.get(Calendar.YEAR);
     }
 
     /// Throws `NullPointerException` if the date or the installed calendar is missing.
