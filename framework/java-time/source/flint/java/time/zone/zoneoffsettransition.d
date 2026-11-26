@@ -60,7 +60,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Ported from OpenJDK jdk-21.0.13-ga, src/java.base/share/classes/java/time/zone/ZoneOffsetTransition.java.
+// Ported from openjdk 21.0.13: src/java.base/share/classes/java/time/zone/ZoneOffsetTransition.java
 // Modified by the Flint authors.
 module flint.java.time.zone.zoneoffsettransition;
 
@@ -171,7 +171,9 @@ struct ZoneOffsetTransition
     string toString() const pure nothrow
     {
         const prefix = isGap() ? "Transition[Gap at " : "Transition[Overlap at ";
-        const string[6] parts = [prefix, beforeTime_.toString(), before_.getId(), " to ", after_.getId(), "]"];
+        const string[6] parts = [
+            prefix, beforeTime_.toString(), before_.getId(), " to ", after_.getId(), "]"
+        ];
         size_t size;
         foreach (part; parts)
             size += part.length;
