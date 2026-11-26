@@ -1283,3 +1283,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **sol-jdk-concurrent-io's rename is cleared** (median 1.000). The 05:07Z train blamed it wrongly.
   - **Open:** the RTInfo closure problem that linkonce hid (a shared GC-bitmap definition drags in unrelated archive members) needs a remedy that costs nothing at runtime. Candidates are per-module separate compilation or a dedicated bitmap member, decided on measured build times (sol-jdk-core).
   - **Narrower use:** linkonce for dev or edit builds only would need its own decision, with numbers.
+- 2026-11-26 05:55Z, coordinator, under the owner's standing approval: **borderline `flint budget` misses are re-measured, not tolerated.** The 1% per-endpoint tolerance is at the noise floor on some petclinic-rest endpoints: main alone missed by +1.17%, and flint-aot by +1.11%.
+  - **The method:** an endpoint missing by less than twice its tolerance is re-measured (about 5 runs), and the median is judged. The report lists all samples. m7 implements this in `flint budget`; until it lands, the train re-runs a borderline miss once before bouncing a lane.
+  - **No budget or tolerance changes.** Widening an endpoint's tolerance needs its measured spread and a separate decision.
