@@ -675,6 +675,7 @@
       "methods": {
         "ported": [
           "addingAndIdPropertySetsIdPropertyInternally",
+          "assertInvariants",
           "considersComparatorForPropertyOrder",
           "detectsImmutableEntity",
           "detectsPropertyWithAnnotation",
@@ -696,7 +697,6 @@
           "supportsSubtypeInstancesOnPropertyAccessorLookup"
         ],
         "skipped": {
-          "assertInvariants": "The MutablePersistentEntity interface and environment contract remain deferred.",
           "exposesPropertyPopulationNotRequired": "Creator and property-population metadata remain deferred.",
           "exposesPropertyPopulationRequired": "Creator and property-population metadata remain deferred.",
           "findAnnotationShouldBeThreadSafe": "The concurrent lookup fixture remains deferred.",

@@ -4,14 +4,16 @@
 // Modified by the Flint authors.
 module basic_persistent_entity_tests;
 
+import flint.context : EnvironmentAware;
 import flint.core.annotation : AliasFor;
 import flint.core.annotation.types : AnnotationConfigurationException;
+import flint.core.env : EnvironmentCapable, StandardEnvironment;
 import flint.data.annotation : CreatedBy, CreatedDate, Immutable, LastModifiedBy, Reference, Transient, TypeAlias;
 import flint.data.core : TypeInformation;
 import flint.data.domain : Persistable;
 import flint.data.mapping : Alias, Association, AssociationHandler, MappingException,
     PersistentEntity, PersistentProperty, PropertyHandler;
-import flint.data.mapping.model : BasicPersistentEntity;
+import flint.data.mapping.model : BasicPersistentEntity, MutablePersistentEntity;
 import flint.data.repository.core.support : PersistentEntityInformation;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : DescriptorTable, descriptorOf;
@@ -209,6 +211,51 @@ private BasicPersistentEntity!(T, Property) mapped(T)(Comparator!Property compar
 unittest
 {
     assertThrown!IllegalArgumentException(new BasicPersistentEntity!(Person, Property)(null));
+}
+
+@("assertInvariants")
+unittest
+{
+    PersistentEntity!(Person, Property) entity = mapped!Person();
+    assert(entity.getName() !is null);
+}
+
+@("mutable entity registration dispatches through its startup interface")
+unittest
+{
+    MutablePersistentEntity!(Person, Property) entity = mapped!Person(
+            Comparator!Property.comparing!string((Property property) => property.getName()));
+    auto revision = new Property("revision", classOf!long);
+    auto identifier = new Property("id", classOf!Long, identifier:
+            true);
+    entity.addPersistentProperty(revision);
+    entity.addPersistentProperty(identifier);
+    auto association = new Association!Property(revision, null);
+    entity.addAssociation(association);
+    entity.verify();
+
+    auto properties = entity.iterator();
+    assert(properties.next() is identifier && properties.next() is revision && !properties.hasNext());
+    Association!Property visited;
+    entity.doWithAssociations((current) { visited = current; });
+    assert(visited is association);
+}
+
+@("entity environment defaults lazily and preserves injected identity")
+unittest
+{
+    EnvironmentAware aware = mapped!Person();
+    auto capable = cast(EnvironmentCapable) aware;
+    assert(capable !is null);
+    const baseline = capable.getEnvironment();
+    assert(cast(const(StandardEnvironment)) baseline !is null && capable.getEnvironment() is baseline);
+    auto injected = new StandardEnvironment();
+    aware.setEnvironment(injected);
+    assert(capable.getEnvironment() is injected);
+    aware.setEnvironment(null);
+    const replacement = capable.getEnvironment();
+    assert(cast(const(StandardEnvironment)) replacement !is null);
+    assert(replacement !is injected && replacement !is baseline && capable.getEnvironment() is replacement);
 }
 
 @("rejectsNullProperty")

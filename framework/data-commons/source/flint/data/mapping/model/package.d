@@ -1,10 +1,12 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/model/BasicPersistentEntity.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/model/{BasicPersistentEntity,MutablePersistentEntity}.java
 // Copyright 2011-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
 // Modified by the Flint authors.
 module flint.data.mapping.model;
 
+import flint.context : EnvironmentAware;
 import flint.core.annotation.types : AnnotationConfigurationException;
+import flint.core.env : Environment, EnvironmentCapable, StandardEnvironment;
 import flint.data.annotation : Immutable, TypeAlias;
 import flint.data.core.type_information : TypeInformation, registeredDescriptor;
 import flint.data.domain.persistable : PersistableState;
@@ -23,11 +25,28 @@ import std.typecons : Nullable;
 
 @safe:
 
+/// Entity metadata that accepts registrations during startup.
+interface MutablePersistentEntity(T, P) : PersistentEntity!(T, P), EnvironmentAware
+        if (is(P : PersistentProperty!P))
+{
+    /// Registers a property with the entity.
+    void addPersistentProperty(P property);
+
+    /// Registers an association with the entity.
+    void addAssociation(Association!P association);
+
+    /// Verifies and prepares the registered entity metadata.
+    void verify();
+}
+
 /// Mutable persistent metadata built from explicit property registration before serving requests.
-class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : PersistentProperty!P))
+class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentCapable
+        if (is(P
+            : PersistentProperty!P))
 {
     private TypeInformation information;
     private const(Descriptor) descriptor;
+    private Environment environment;
     private Comparator!P comparator;
     private List!P properties;
     private List!P propertyView;
@@ -122,7 +141,7 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     }
 
     /// Registers a property and remembers the identifier and version roles.
-    void addPersistentProperty(P property)
+    override void addPersistentProperty(P property)
     {
         if (property is null)
             throw new IllegalArgumentException("Property must not be null");
@@ -167,7 +186,7 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     }
 
     /// Registers an association, respecting the inverse-property comparator when configured.
-    void addAssociation(Association!P association)
+    override void addAssociation(Association!P association)
     {
         if (association is null)
             throw new IllegalArgumentException("Association must not be null");
@@ -270,10 +289,24 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     }
 
     /// Applies the configured order after registration.
-    void verify()
+    override void verify()
     {
         if (comparator !is null)
             properties.sort(comparator);
+    }
+
+    /// Supplies the environment used by this entity metadata.
+    override void setEnvironment(Environment environment)
+    {
+        this.environment = environment;
+    }
+
+    /// Returns the configured environment or lazily creates the standard one.
+    override Environment getEnvironment()
+    {
+        if (environment is null)
+            environment = new StandardEnvironment();
+        return environment;
     }
 
     override IdentifierAccessor getIdentifierAccessor(Any bean)
