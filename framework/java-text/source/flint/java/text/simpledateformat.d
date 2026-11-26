@@ -16,7 +16,8 @@ parsed date. 'Y' parses as the calendar year.
 +/
 module flint.java.text.simpledateformat;
 
-import flint.java.lang : IllegalArgumentException, NullPointerException;
+import flint.engine.aot.text : decodeUtf8;
+import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, NullPointerException;
 import flint.java.util : Locale;
 import flint.java.util.calendar : Calendar, GregorianCalendar;
 import flint.java.util.date : Date;
@@ -321,21 +322,30 @@ class SimpleDateFormat : DateFormat
         }
     }
 
-    /// Throws `NullPointerException` if the parse position is missing.
+    /// Parse with a position and error index in UTF-16 code units. Throws `NullPointerException` if the position is missing.
     override Date parse(string text, ParsePosition pos)
     {
         if (pos is null)
             throwNullPointerException();
-        auto state = Parser(text, pos.getIndex(), defaultCenturyStartYear);
-        foreach (i, e; compiled)
+        const start = pos.getIndex();
+        if (start < 0 && compiled.length)
+            throw new IndexOutOfBoundsException(start);
+        const byteStart = compiled.length ? utf8Offset(text, start) : 0;
+        if (byteStart == size_t.max)
         {
-            const abutting = i + 1 < compiled.length && isNumeric(e) && isNumeric(compiled[i + 1]);
-            if (!(e.letter == 0 ? state.literal(e.text) : state.field(e, abutting, isLenient())))
-            {
-                pos.setErrorIndex(cast(int) state.pos);
-                return null;
-            }
+            pos.setErrorIndex(start);
+            return null;
         }
+
+        auto state = Parser(text, byteStart, defaultCenturyStartYear);
+        const error = parseFields(state, byteStart, start);
+        if (error >= 0)
+        {
+            pos.setErrorIndex(error);
+            return null;
+        }
+
+        const end = start + utf16Width(text[byteStart .. state.pos]);
         long millis;
         try
         {
@@ -345,11 +355,31 @@ class SimpleDateFormat : DateFormat
         }
         catch (IllegalArgumentException)
         {
-            pos.setErrorIndex(cast(int) state.pos);
+            pos.setErrorIndex(end);
             return null;
         }
-        pos.setIndex(cast(int) state.pos);
+        pos.setIndex(end);
         return new Date(millis);
+    }
+
+    private int parseFields(ref Parser state, size_t byteStart, int start)
+    {
+        foreach (i, e; compiled)
+        {
+            if (e.letter == 0)
+            {
+                if (!state.literal(e.text))
+                {
+                    const previous = utf16Width(state.text[byteStart .. state.pos]);
+                    return start + previous + literalPrefixWidth(state.text[state.pos .. $], e.text);
+                }
+                continue;
+            }
+            const abutting = i + 1 < compiled.length && isNumeric(e) && isNumeric(compiled[i + 1]);
+            if (!state.field(e, abutting, isLenient()))
+                return start + utf16Width(state.text[byteStart .. state.pos]);
+        }
+        return -1;
     }
 
     // CalendarBuilder.establish: the parsed fields, in the order they were parsed, set on a cleared calendar.
@@ -593,6 +623,46 @@ private struct TextBuffer
 }
 
 // ---- parsing
+
+// A byte parser cannot begin on the low surrogate or beyond the last code unit.
+private size_t utf8Offset(scope string text, int units) pure nothrow @nogc
+{
+    size_t offset;
+    while (units > 0 && offset < text.length)
+        units -= decodeUtf8(text, offset) > 0xFFFF ? 2 : 1;
+    return units == 0 ? offset : size_t.max;
+}
+
+private int utf16Width(scope string text) pure nothrow @nogc
+{
+    int units;
+    size_t offset;
+    while (offset < text.length)
+        units += decodeUtf8(text, offset) > 0xFFFF ? 2 : 1;
+    return units;
+}
+
+private int literalPrefixWidth(scope string text, scope string expected) pure nothrow @nogc
+{
+    int units;
+    size_t actualOffset;
+    size_t expectedOffset;
+    while (actualOffset < text.length && expectedOffset < expected.length)
+    {
+        const actual = decodeUtf8(text, actualOffset);
+        const wanted = decodeUtf8(expected, expectedOffset);
+        if (actual == wanted)
+            units += actual > 0xFFFF ? 2 : 1;
+        else
+        {
+            // Different supplementary code points can share their high surrogate.
+            if (actual > 0xFFFF && wanted > 0xFFFF && (actual >> 10) == (wanted >> 10))
+                ++units;
+            break;
+        }
+    }
+    return units;
+}
 
 private struct ParsedField
 {
