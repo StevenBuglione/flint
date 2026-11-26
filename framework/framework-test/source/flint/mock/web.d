@@ -457,12 +457,47 @@ class MockHttpServletRequest : HttpServletRequest
 
     string getServerName()
     {
-        return serverName;
+        size_t nameEnd;
+        const host = readHostHeader(nameEnd);
+        return host is null ? serverName : host[0 .. nameEnd];
     }
 
     int getServerPort()
     {
+        size_t nameEnd;
+        const host = readHostHeader(nameEnd);
+        foreach (i; nameEnd .. host.length)
+            if (host[i] == ':')
+                return cast(int) parseIntegerHeader(host[i + 1 .. $], int.min, int.max);
         return serverPort;
+    }
+
+    // A bracketed host keeps its brackets. Port lookup starts after the name.
+    pragma(inline, false) private string readHostHeader(out size_t nameEnd)
+    {
+        const rawHost = getHeader(HttpHeaders.HOST);
+        if (rawHost is null)
+            return null;
+
+        size_t start;
+        size_t end = rawHost.length;
+        while (start < end && rawHost[start] <= ' ')
+            ++start;
+        while (end > start && rawHost[end - 1] <= ' ')
+            --end;
+        const host = rawHost[start .. end];
+
+        const bracketed = host.length != 0 && host[0] == '[';
+        const delimiter = bracketed ? ']' : ':';
+        while (nameEnd < host.length && host[nameEnd] != delimiter)
+            ++nameEnd;
+        if (bracketed)
+        {
+            if (nameEnd == host.length)
+                throw new IllegalStateException("Invalid Host header: " ~ rawHost);
+            ++nameEnd;
+        }
+        return host;
     }
 
     string getRemoteAddr()
