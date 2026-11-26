@@ -1104,3 +1104,6 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **The caps are unchanged.** This corrects a measurement artefact; it does not loosen any cap. m7 implements it.
 - 2026-11-26 01:20Z, coordinator: **the 1.19× and 0.889 size gaps get a lever.** framework-core removes the remaining triggers of the Phobos link cascade (std.socket, std.uni, std.net.curl) from gs-rest and petclinic, one trigger per commit, measuring app Oz before and after.
   - **Starting point:** cf17a00b's case tables currently add 16 KB to gs-rest and 8 KB to petclinic, duplicating std.uni. They will be halved.
+- 2026-11-26 01:25Z, coordinator, under the owner's standing approval: **D-JPA-2 (sol-jpa) is approved.** `LockModeType` is a D enum with Java's values and NONE as the `@NamedQuery` default, so the annotation remains compile-time metadata.
+  - **Why it deviates:** Java's enum also implements `FindOption` and `RefreshOption`, which a D enum cannot.
+  - **How calls stay Java-shaped:** `EntityManager`'s option overloads accept the built-in enum values at that boundary.
