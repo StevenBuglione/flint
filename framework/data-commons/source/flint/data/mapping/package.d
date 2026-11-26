@@ -1,9 +1,9 @@
-// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,AssociationHandler,IdentifierAccessor,MappingException,Parameter,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,PropertyHandler,TargetAwareIdentifierAccessor}.java
+// Ported from spring-data-commons 4.2.0: src/main/java/org/springframework/data/mapping/{Alias,Association,AssociationHandler,IdentifierAccessor,InstanceCreatorMetadata,MappingException,Parameter,PersistentEntity,PersistentProperty,PersistentPropertyAccessor,PropertyHandler,TargetAwareIdentifierAccessor}.java
 // Alias: Copyright 2016-present the original author or authors.
 // Association, AssociationHandler and PropertyHandler: Copyright 2011-present the original author or authors.
 // IdentifierAccessor: Copyright 2014-present the original author or authors.
 // MappingException, PersistentEntity and PersistentProperty: Copyright 2011-present the original author or authors.
-// Parameter: Copyright 2021-present the original author or authors.
+// InstanceCreatorMetadata and Parameter: Copyright 2021-present the original author or authors.
 // PersistentPropertyAccessor: Copyright 2014-present the original author or authors.
 // TargetAwareIdentifierAccessor: Copyright 2017-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
@@ -21,7 +21,7 @@ import flint.engine.aot.objects : statelessInstance;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, IllegalStateException, Iterable, JavaObject,
     NullPointerException, RuntimeException, String;
-import flint.java.util : NoSuchElementException, Objects;
+import flint.java.util : List, NoSuchElementException, Objects;
 import flint.util : StringUtils;
 import std.typecons : Nullable;
 
@@ -213,6 +213,12 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// The entity's qualified name.
     string getName();
 
+    /// The registered creator metadata, or null when no creator is selected.
+    InstanceCreatorMetadata!(T, P) getInstanceCreatorMetadata();
+
+    /// Whether the property is supplied by the selected creator.
+    bool isCreatorArgument(PersistentProperty!() property);
+
     /// The identifier property, or null when no identifier is mapped.
     P getIdProperty();
 
@@ -354,6 +360,44 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     }
 }
 
+/// Describes the parameters used to create instances of a persistent entity.
+interface InstanceCreatorMetadata(T, P) if (is(P : PersistentProperty!P))
+{
+    /// Whether the creator receives this persistent property.
+    bool isCreatorParameter(PersistentProperty!() property);
+
+    /// Whether the parameter represents a parent or receiver.
+    bool isParentParameter(Parameter!(T, P) parameter);
+
+    /// The number of parameters the creator accepts.
+    int getParameterCount();
+
+    /// The creator's parameters in declaration order.
+    List!(Parameter!(T, P)) getParameters();
+
+    /// Whether this creator accepts any parameters.
+    bool hasParameters();
+
+    /// Supplies the default parameter queries (R3).
+    mixin template Defaults()
+    {
+        bool isParentParameter(Parameter!(T, P))
+        {
+            return false;
+        }
+
+        int getParameterCount()
+        {
+            return getParameters().size();
+        }
+
+        bool hasParameters()
+        {
+            return !getParameters().isEmpty();
+        }
+    }
+}
+
 /// Metadata for a parameter of an entity creator.
 class Parameter(T, P) if (is(P : PersistentProperty!P))
 {
@@ -450,6 +494,12 @@ class Parameter(T, P) if (is(P : PersistentProperty!P))
     bool isTransient()
     {
         return annotations.isPresent!Transient() || (entity !is null && hasName() && entity.isTransient(name.get));
+    }
+
+    package(flint.data) bool maps(PersistentProperty!() property)
+    {
+        return property !is null && entity !is null && hasName() && Objects.equals(property,
+                entity.getPersistentProperty(name.get));
     }
 }
 

@@ -1,0 +1,5 @@
+{
+ "id": "D-DATA-21",
+ "deviation": "InstanceCreatorMetadata is typed to the entity and property pair. BasicPersistentEntity derives creator parameters from registered constructor descriptors, preferring PersistenceCreator, canonical, no-argument and sole candidates in that order.",
+ "reason": "Descriptor metadata supplies declared argument names and types. A read-only parameter list preserves order and allows creator metadata to be shared after initialization."
+}

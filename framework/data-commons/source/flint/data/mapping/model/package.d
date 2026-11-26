@@ -8,16 +8,16 @@ module flint.data.mapping.model;
 import flint.context : EnvironmentAware;
 import flint.core.annotation.types : AnnotationConfigurationException;
 import flint.core.env : Environment, EnvironmentCapable, StandardEnvironment;
-import flint.data.annotation : Immutable, TypeAlias;
-import flint.data.core.type_information : TypeInformation, registeredDescriptor;
+import flint.data.annotation : Immutable, PersistenceCreator, TypeAlias;
+import flint.data.core.type_information : TypeInformation, registeredDescriptor, registeredTypeInformation;
 import flint.data.domain.persistable : PersistableState;
 import flint.data.mapping : Alias, Association, AssociationHandler, IdentifierAccessor,
-    MappingException, PersistentEntity, PersistentProperty,
-    PersistentPropertyAccessor,
+    InstanceCreatorMetadata, MappingException, Parameter, PersistentEntity,
+    PersistentProperty, PersistentPropertyAccessor,
     PrimitivePropertyKind, PropertyHandler, TargetAwareIdentifierAccessor, primitivePropertyKind;
 import flint.engine.aot.any : Any;
-import flint.engine.aot.descriptor : Descriptor, MergedAnnotation, PropertyDescriptor,
-    findMergedAnnotation = findAnnotation;
+import flint.engine.aot.descriptor : ConstructorDescriptor, Descriptor, MergedAnnotation,
+    ParameterDescriptor, PropertyDescriptor, findMergedAnnotation = findAnnotation;
 import flint.engine.aot.objects : statelessInstance;
 import flint.java.classref : ClassRef, classOf;
 import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
@@ -130,6 +130,8 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
     private TypeInformation information;
     private const(Descriptor) descriptor;
     private Environment environment;
+    private InstanceCreatorMetadata!(T, P) creator;
+    private bool creatorResolved;
     private PersistentPropertyAccessorFactory!(T, P) propertyAccessorFactory;
     private Comparator!P comparator;
     private List!P properties;
@@ -169,6 +171,29 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
     override string getName()
     {
         return getType().name;
+    }
+
+    override InstanceCreatorMetadata!(T, P) getInstanceCreatorMetadata()
+    {
+        synchronized (this)
+        {
+            if (!creatorResolved)
+            {
+                if (descriptor !is null)
+                    if (const selected = preferredConstructor(descriptor.constructors))
+                        creator = new DescriptorCreatorMetadata!(T, P)(this, information, selected.parameters);
+                creatorResolved = true;
+            }
+            return creator;
+        }
+    }
+
+    override bool isCreatorArgument(PersistentProperty!() property)
+    {
+        if (property is null)
+            return false;
+        auto metadata = getInstanceCreatorMetadata();
+        return metadata !is null && metadata.isCreatorParameter(property);
     }
 
     override ClassRef getType()
@@ -470,6 +495,64 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
         const conflict = "Attempt to add " ~ role ~ " property " ~ candidate.getName();
         const registered = " but already have property " ~ existing.getName() ~ " registered as " ~ role;
         throw new MappingException(Nullable!string(conflict ~ registered ~ "; Check your mapping configuration"));
+    }
+}
+
+private const(ConstructorDescriptor)* preferredConstructor(return scope const(ConstructorDescriptor)[] constructors)
+{
+    const(ConstructorDescriptor)* canonical;
+    const(ConstructorDescriptor)* noArguments;
+    foreach (ref candidate; constructors)
+    {
+        if (findCheckedAnnotation(candidate.annotations, classOf!PersistenceCreator.name) !is null)
+            return &candidate;
+        if (candidate.canonical && canonical is null)
+            canonical = &candidate;
+        if (!candidate.parameters.length && noArguments is null)
+            noArguments = &candidate;
+    }
+    if (canonical !is null)
+        return canonical;
+    if (noArguments !is null)
+        return noArguments;
+    return constructors.length == 1 ? &constructors[0] : null;
+}
+
+private final class DescriptorCreatorMetadata(T, P) : InstanceCreatorMetadata!(T, P)
+{
+    private List!(Parameter!(T, P)) parameters;
+
+    this(PersistentEntity!(T, P) entity, TypeInformation owner, const(ParameterDescriptor)[] declaredParameters)
+    {
+        if (!declaredParameters.length)
+        {
+            parameters = Collections.emptyList!(Parameter!(T, P))();
+            return;
+        }
+
+        auto items = new ArrayList!(Parameter!(T, P))(cast(int) declaredParameters.length);
+        foreach (ref declared; declaredParameters)
+        {
+            const name = declared.name is null ? Nullable!string.init : Nullable!string(declared.name);
+            auto type = registeredTypeInformation(owner, declared.type);
+            items.add(new Parameter!(T, P)(name, type, declared.annotations, entity));
+        }
+        parameters = Collections.unmodifiableList(items);
+    }
+
+    mixin InstanceCreatorMetadata!(T, P).Defaults;
+
+    override bool isCreatorParameter(PersistentProperty!() property)
+    {
+        foreach (parameter; parameters)
+            if (parameter.maps(property))
+                return true;
+        return false;
+    }
+
+    override List!(Parameter!(T, P)) getParameters()
+    {
+        return parameters;
     }
 }
 

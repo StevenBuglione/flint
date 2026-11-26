@@ -100,6 +100,13 @@ package(flint.data) const(Descriptor) registeredDescriptor(TypeInformation infor
     return name is null ? known.descriptor : known.descriptors.find(name);
 }
 
+// Resolves another declared type in the same descriptor table.
+package(flint.data) TypeInformation registeredTypeInformation(TypeInformation information, string name)
+{
+    auto known = cast(TypeDiscoverer) information;
+    return known is null ? null : lookupType(known.descriptors, ClassRef(name));
+}
+
 private final class TypeDiscoverer : TypeInformation
 {
     private const(DescriptorTable) descriptors;
