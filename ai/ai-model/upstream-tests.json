@@ -1,0 +1,445 @@
+{
+  "classes": {
+    "org/springframework/ai/aot/AiRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/aot/KnuddelsRuntimeHintsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/aot/SpringAiCoreRuntimeHintsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/aot/SpringAiCoreRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/aot/ToolBeanRegistrationAotProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/aot/ToolRuntimeHintsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/transcription/observation/DefaultTranscriptionModelObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/transcription/observation/TranscriptionModelMeterObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/transcription/observation/TranscriptionModelObservationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/transcription/observation/TranscriptionModelTranscriptObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/tts/DefaultTextToSpeechOptionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/tts/TextToSpeechModelTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/tts/observation/DefaultTextToSpeechModelObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/tts/observation/TextToSpeechModelMeterObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/tts/observation/TextToSpeechModelObservationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/audio/tts/observation/TextToSpeechModelTextContentObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/ChatModelTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/memory/InMemoryChatMemoryRepositoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/memory/MessageWindowChatMemoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/AssistantMessageBackwardCompatibilityTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/AssistantMessagePartsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/AssistantMessageTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/MessageUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/SystemMessageTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/ToolResponseMessagePartsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/UserMessagePartsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/UserMessageTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/part/MessagePartJsonTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/part/MessagePartTests.java": {
+      "d": "ai/ai-model/tests/message_part_tests.d",
+      "methods": {
+        "ported": [
+          "whenOpaquePayloadHasNullComponentThenThrow"
+        ],
+        "skipped": {
+          "attributesAreDefensivelyCopiedAndUnmodifiable": "TextPart is pending.",
+          "mediaPartOfWrapsMedia": "MediaPart and Media are pending.",
+          "partsWithSameComponentsAreEqual": "TextPart and ReasoningPart are pending.",
+          "reasoningPartIsAMessagePart": "ReasoningPart and MessagePart are pending.",
+          "reasoningPartOfIsPlainText": "ReasoningPart is pending.",
+          "reasoningPartWithAttributesReturnsACopy": "ReasoningPart is pending.",
+          "reasoningPartWithPayloadIsReplayableOnlyToItsProvider": "ReasoningPart is pending.",
+          "reasoningPartWithoutPayloadIsReplayableEverywhere": "ReasoningPart is pending.",
+          "textPartOfHasNoPayloadAndEmptyAttributes": "TextPart is pending.",
+          "toolCallPartOfWrapsToolCall": "ToolCallPart and AssistantMessage.ToolCall are pending.",
+          "toolResultPartContentIsDefensivelyCopied": "ToolResultPart is pending.",
+          "toolResultPartOfWrapsToolResponseAsSingleTextPart": "ToolResultPart and ToolResponseMessage are pending.",
+          "toolResultPartToToolResponseJoinsTextContentOnly": "ToolResultPart is pending.",
+          "unknownPartKeepsRawJson": "UnknownPart is pending.",
+          "whenAttributesIsNullThenThrow": "TextPart is pending.",
+          "whenTextIsNullThenThrow": "TextPart is pending.",
+          "whenToolCallIsNullThenThrow": "ToolCallPart is pending."
+        }
+      },
+      "status": "partial"
+    },
+    "org/springframework/ai/chat/messages/part/StreamingPartIndexerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/messages/part/StreamingPartsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/metadata/ChatGenerationMetadataCategoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/metadata/ChatGenerationMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/metadata/ChatResponseMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/metadata/DefaultUsageTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/metadata/EmptyUsageTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/metadata/FinishReasonCategoryTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/model/ChatResponseTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/model/GenerationTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/model/GuardrailRefusalTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/model/MessageAggregatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/observation/ChatModelCompletionObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/observation/ChatModelMeterObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/observation/ChatModelObservationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/observation/ChatModelPromptContentObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/observation/DefaultChatModelObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/prompt/ChatOptionsBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/prompt/PromptTemplateBuilderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/prompt/PromptTemplateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/prompt/PromptTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/chat/prompt/SystemPromptTemplateTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/converter/BeanOutputConverterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/converter/CompositeResponseTextCleanerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/converter/ListOutputConverterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/converter/MarkdownCodeBlockCleanerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/converter/ThinkingTagCleanerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/decision/DecisionOptionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/decision/DecisionPromptTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/decision/DecisionResponseTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/decision/answer/DecisionAnswerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/decision/observation/DecisionModelMeterObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/decision/observation/DefaultDecisionModelObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/decision/question/DecisionQuestionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/embedding/AbstractEmbeddingModelTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/embedding/TokenCountBatchingStrategyTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/embedding/observation/DefaultEmbeddingModelObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/embedding/observation/EmbeddingModelMeterObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/embedding/observation/EmbeddingModelObservationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/image/observation/DefaultImageModelObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/image/observation/ImageModelMeterObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/image/observation/ImageModelObservationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/image/observation/ImageModelPromptContentObservationHandlerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/metadata/UsageTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/EmbeddingUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/MediaTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/MutableResponseMetadataTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/observation/ModelObservationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/observation/ModelUsageMetricsGeneratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/tool/DefaultToolCallingChatOptionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/tool/DefaultToolCallingManagerDecisionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/tool/DefaultToolCallingManagerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/tool/DefaultToolCallingManagerTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/tool/DefaultToolExecutionResultTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/tool/ToolCallingChatOptionsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/tool/ToolExecutionResultTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/model/transformer/KeywordMetadataEnricherTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/support/UsageCalculatorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/augment/AugmentedToolCallbackProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/augment/AugmentedToolCallbackTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/augment/ToolInputSchemaAugmenterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/execution/DefaultToolCallResultConverterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/execution/DefaultToolExecutionExceptionProcessorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/function/FunctionToolCallbackTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/method/MethodToolCallbackExceptionHandlingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/method/MethodToolCallbackGenericTypesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/method/MethodToolCallbackProviderTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/observation/DefaultToolCallingObservationConventionTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/observation/ToolCallingContentObservationFilterTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/observation/ToolCallingObservationContextTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/tool/support/ToolUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/util/json/JsonSchemaGeneratorTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "org/springframework/ai/util/json/schema/JsonSchemaUtilsTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
+  "module": "ai-model",
+  "schema": "flint.upstream-tests/1",
+  "test_packages": [
+    ":ai-model"
+  ],
+  "upstream": "spring-ai@v2.1.0",
+  "upstream_modules": [
+    "spring-ai-model"
+  ]
+}

@@ -1,0 +1,18 @@
+name "ai-model"
+description "Spring AI's spring-ai-model for Flint"
+license "Apache-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "flint:core" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+    dependency "flint:java" version="*"
+}

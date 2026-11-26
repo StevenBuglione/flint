@@ -1,0 +1,8 @@
+name "probe-ai-model"
+targetType "executable"
+sourcePaths "source"
+importPaths "source"
+targetPath "build"
+targetName "probe-ai-model"
+dflags "-preview=dip1000"
+dependency "flint:ai-model" path="../../.."

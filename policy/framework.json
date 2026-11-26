@@ -837,6 +837,40 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "ai-model": {
+   "directory": "ai/ai-model",
+   "module": "flint.ai.chat.messages.part",
+   "repo": "ai",
+   "licence": "Apache-2.0",
+   "upstream": "spring-ai@v2.1.0",
+   "dependencies": [
+    "core"
+   ],
+   "test_dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "ai/ai-model/bench",
+    "baseline": "ai/ai-model/bench/baseline",
+    "edit_source": "ai/ai-model/source/flint/ai/chat/messages/part.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 1.4,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 8.4,
+    "ldc_incremental_seconds": 4.2,
+    "incremental_linked_bytes": 100,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 1200
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "security-crypto": {
    "directory": "security/security-crypto",
    "module": "flint.security.crypto",
