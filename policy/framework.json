@@ -576,6 +576,7 @@
    "directory": "framework/data-commons",
    "module": "flint.data.domain",
    "also": [
+    "flint.data.annotation",
     "flint.data.core"
    ],
    "repo": "data-commons",
