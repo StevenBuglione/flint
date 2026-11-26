@@ -853,6 +853,43 @@ interface Counter : Meter
 /// Count recorded durations and report their total and recent maximum.
 interface Timer : Meter
 {
+    /// Start a sample using the system clock.
+    static Sample start()
+    {
+        return start(Clock.SYSTEM);
+    }
+
+    /// Start a sample using the given clock.
+    static Sample start(Clock clock)
+    {
+        return new Sample(clock);
+    }
+
+    /// Capture the start time before choosing the timer that will receive it.
+    static class Sample
+    {
+        private Clock clock;
+        private immutable long startTime;
+
+        private this(Clock clock)
+        {
+            if (clock is null)
+                throw new NullPointerException("clock");
+            this.clock = clock;
+            startTime = clock.monotonicTime();
+        }
+
+        /// Record and return the elapsed time in nanoseconds.
+        long stop(Timer timer)
+        {
+            const elapsed = clock.monotonicTime() - startTime;
+            if (timer is null)
+                throw new NullPointerException("timer");
+            timer.record(elapsed, TimeUnit.NANOSECONDS);
+            return elapsed;
+        }
+    }
+
     /// Configure a timer before registering it.
     static Builder builder(string name)
     {
