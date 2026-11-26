@@ -10998,6 +10998,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.Writer#write(String)` | 2 | Java forwards a whole string to the virtual string-range overload with UTF-16 length. The existing method is abstract and has no string-range overload. |
 | framework | `java.lang.AssertionError#<init>(Object)` | 2 | Requires converting an Object detail to its Java string and retaining a Throwable detail as the cause. |
 | framework | `java.lang.Iterable#forEach(Consumer)` | 2 | Requires default traversal with a Consumer for iterator-only implementations. |
+| framework | `java.net.URI#<init>(String)` | 2 | Requires a public string constructor with Java URI syntax validation and URISyntaxException diagnostics. |
+| framework | `java.net.URI#compareTo(URI)` | 2 | Requires ordering by URI component, including percent escape hex normalization and case-insensitive scheme and host comparison. |
 | framework | `java.net.URI#create(String)` | 2 | Requires Java URI syntax validation. The current parser accepts invalid scheme starts, unclosed IPv6 literals, and repeated unescaped fragment delimiters. |
 | framework | `java.net.URI#equals(Object)` | 2 | Java compares scheme, host and percent escape hex digits case-insensitively. Flint compares the original URI text. |
 | framework | `java.net.URI#hashCode()` | 2 | Requires Java component equality and hashing. Flint hashes the original URI text. |

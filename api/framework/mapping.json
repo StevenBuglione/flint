@@ -5766,6 +5766,8 @@
 "java.math.RoundingMode#values()":{"status":"adapted","rules":["R20"],"d":"flint.java.math.roundingmode.values"},
 "java.net.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.net.URI":{"status":"adapted","rules":["R11"],"d":"flint.java.net.URI","note":"An immutable D struct holds the original URI text and is copied by value."},
+"java.net.URI#<init>(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"Requires a public string constructor with Java URI syntax validation and URISyntaxException diagnostics."},
+"java.net.URI#compareTo(URI)":{"status":"excluded","category":"deferred","phase":"2","reason":"Requires ordering by URI component, including percent escape hex normalization and case-insensitive scheme and host comparison."},
 "java.net.URI#create(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"Requires Java URI syntax validation. The current parser accepts invalid scheme starts, unclosed IPv6 literals, and repeated unescaped fragment delimiters."},
 "java.net.URI#equals(Object)":{"status":"excluded","category":"deferred","phase":"2","reason":"Java compares scheme, host and percent escape hex digits case-insensitively. Flint compares the original URI text."},
 "java.net.URI#getScheme()":{"status":"adapted","d":"flint.java.net.URI.getScheme","rules":["R5"],"note":"A null string denotes an absent scheme. Every present scheme is nonempty."},
