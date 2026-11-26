@@ -610,6 +610,16 @@ unittest
     assert(Locale.forLanguageTag("und") == Locale.ROOT && Locale.forLanguageTag("zh-Hant-TW") == Locale("zh", "TW"));
     assert(Locale.forLanguageTag("es-419").getCountry() == "419" && Locale.forLanguageTag("en_US") == Locale.ROOT);
     assert(Locale.forLanguageTag("de-DE-1996").getVariant() == "1996");
+    assert(Locale.forLanguageTag("zh-CMN-yue-TW") == Locale("cmn", "TW"));
+    assert(Locale.forLanguageTag("ABCDEFGH-CMN-US") == Locale("cmn", "US"));
+    assert(Locale.forLanguageTag("abc-def-ghi-jkl-lmn-CA") == Locale("def"));
+    assert(Locale.forLanguageTag("und-US") == Locale("", "US"));
+    assert(Locale.forLanguageTag("UND-US") == Locale("und", "US"));
+    assert(Locale.forLanguageTag("abc-und-US") == Locale("und", "US"));
+    assert(Locale.forLanguageTag("es-419-1996-ABCD1-Posix").getVariant() == "1996_ABCD1_Posix");
+    assert(Locale.forLanguageTag("es-419-1996-1996-POSIX").getVariant() == "1996_1996_POSIX");
+    assert(Locale.forLanguageTag("es-419-POSIX--1996").getVariant() == "POSIX");
+    assert(Locale.forLanguageTag("es-419-POSIX-123-1996").getVariant() == "POSIX");
     foreach (pair; [["IW", "he"], ["JI", "yi"], ["IN", "id"]])
     {
         const legacy = Locale(pair[0], "us");

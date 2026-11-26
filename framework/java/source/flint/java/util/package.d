@@ -3419,14 +3419,18 @@ struct Locale
                 subtags ~= languageTag[start .. i];
                 start = i + 1;
             }
-        string lang, region, variantTag;
+        string lang, region;
         size_t next;
         if (subtags.length && isAlpha(subtags[0], 2, 8))
         {
             lang = subtags[0] == "und" ? "" : subtags[0];
             next = 1;
             while (next < subtags.length && next <= 3 && isAlpha(subtags[next], 3, 3))
-                next++; // extended language subtags
+            {
+                if (next == 1)
+                    lang = subtags[next];
+                ++next;
+            }
         }
         else
             return Locale.init;
@@ -3434,9 +3438,28 @@ struct Locale
             next++; // script: not modeled
         if (next < subtags.length && (isAlpha(subtags[next], 2, 2) || isDigits(subtags[next], 3)))
             region = subtags[next++];
-        if (next < subtags.length && isVariant(subtags[next]))
-            variantTag = subtags[next];
-        return Locale(lang, region, variantTag);
+        return Locale(lang, region, parseTagVariants(subtags[next .. $]));
+    }
+
+    private static string parseTagVariants(string[] subtags) pure nothrow
+    {
+        string first;
+        char[] joined;
+        foreach (subtag; subtags)
+        {
+            if (!isVariant(subtag))
+                break;
+            if (!first.length)
+                first = subtag;
+            else
+            {
+                if (!joined.length)
+                    joined = first.dup;
+                joined ~= '_';
+                joined ~= subtag;
+            }
+        }
+        return joined.length ? joined.idup : first;
     }
 
     /// The default locale: the POSIX locale of `LC_ALL`, else `LANG` (`en_US.UTF-8` gives en-US); `C`, `POSIX` or

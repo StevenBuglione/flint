@@ -641,6 +641,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Scan Locale variant components in order.** The tag renderer uses the same ASCII validation as the parser and starts an `x-lvariant` suffix at the first eligible legacy component. On venus against `a864057e6`, the Java module probe measured 129,496 O3 and 122,144 Oz incremental loadable bytes before and after the change with LDC 1.43.0. DMD template instances rose from 4,440 to 4,445 against the 7,350 cap.
 
+- **Keep a borrowed slice for a single parsed Locale variant.** The parser joins consecutive variant subtags only when more than one is present. On venus against `7608221e5`, the Java module probe measured 129,496 O3 and 122,144 Oz incremental loadable bytes before and after the change with LDC 1.43.0. DMD template instances rose from 4,445 to 4,449 against the 7,350 cap.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:
