@@ -11126,6 +11126,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DateFormat#setTimeZone(TimeZone)` | 2 | After setCalendar(null), the call dereferences the missing Calendar and terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.DecimalFormat` | 2 | The Java public formatter class and mutable pattern configuration are pending. |
 | framework | `java.text.DecimalFormat#applyPattern(String)` | 2 | Applying a pattern requires the public DecimalFormat. Java changes fractional precision and the multiplier on the same formatter instance. |
+| framework | `java.text.DecimalFormat#format(double,StringBuffer,FieldPosition)` | 2 | Requires DecimalFormat, caller-owned StringBuffer and UTF-16 FieldPosition updates alongside binary64 formatting. |
+| framework | `java.text.DecimalFormat#format(long,StringBuffer,FieldPosition)` | 2 | Requires DecimalFormat, caller-owned StringBuffer and UTF-16 FieldPosition updates alongside exact signed long formatting and scaling. |
 | framework | `java.text.DecimalFormatSymbols` | 2 | The public locale symbol table and mutable symbol API are pending. |
 | framework | `java.text.FieldPosition` | 2 | Flint has no FieldPosition binding for numeric or attribute field positions and UTF-16 output offsets. |
 | framework | `java.text.Format` | 2 | Flint has no shared Format superclass. The generic formatting contract needs StringBuffer, FieldPosition and AttributedCharacterIterator. |
