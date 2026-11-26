@@ -441,14 +441,14 @@ abstract class AbstractMessageConverterMethodProcessor : HandlerMethodArgumentRe
     The middle of Spring's `writeWithMessageConverters`, from the acceptable and producible types to the selected
     type. Pure, so Flint's fast path fills its Accept table with this very code (fast-path.md).
     +/
-    package(flint) static Selection selectMediaType(MediaType[] acceptableTypes,
-            MediaType[] producibleTypes, string valueType, out MediaType selectedMediaType)
+    package(flint) static Selection selectMediaType(MediaType[] acceptableTypes, MediaType[] producibleTypes,
+            string valueType, out MediaType selectedMediaType)
     {
         MediaType[] compatibleMediaTypes;
         determineCompatibleMediaTypes(acceptableTypes, producibleTypes, compatibleMediaTypes);
         if (compatibleMediaTypes.length == 0 && valueType == "flint.http.ProblemDetail")
-            determineCompatibleMediaTypes(cast(MediaType[]) problemMediaTypes.dup, producibleTypes,
-                    compatibleMediaTypes);
+            determineCompatibleMediaTypes(cast(MediaType[]) problemMediaTypes.dup,
+                    producibleTypes, compatibleMediaTypes);
         if (compatibleMediaTypes.length == 0)
             return Selection.notAcceptable;
         MimeTypeUtils.sortBySpecificity(compatibleMediaTypes);
@@ -1285,8 +1285,8 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
     Flint's fast path (S7): the prepared invocable `doResolveException` would invoke for `exception` raised for
     `handlerMethod`, and the adapter it was prepared from; null when no handler method resolves it.
     +/
-    package(flint.web) ServletInvocableHandlerMethod adviceFor(HandlerMethod handlerMethod,
-            Exception exception, out RequestMappingHandlerAdapter preparedFrom)
+    package(flint.web) ServletInvocableHandlerMethod adviceFor(HandlerMethod handlerMethod, Exception exception,
+            out RequestMappingHandlerAdapter preparedFrom)
     {
         Object bean;
         HandlerGroup* group;
@@ -1301,8 +1301,8 @@ class ExceptionHandlerExceptionResolver : AbstractHandlerExceptionResolver
     Flint's fast path (S7): the arguments `doResolveException` provides, in `storage`: the exception, its causes,
     then the handler method; null when they do not fit.
     +/
-    package(flint.web) static Any[] providedArguments(Exception exception,
-            HandlerMethod handlerMethod, return scope Any[] storage)
+    package(flint.web) static Any[] providedArguments(Exception exception, HandlerMethod handlerMethod,
+            return scope Any[] storage)
     {
         size_t at;
         if (storage.length == 0)
