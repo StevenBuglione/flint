@@ -189,7 +189,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jackson-databind@3.1.8 | 609 | 54 | 5 | 9,799 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 137 | 138 | 0 | 2,115 |
+| framework | micrometer-core@1.18.0 | 142 | 139 | 0 | 2,109 |
 | framework | hibernate-validator@9.1.6.Final | 25 | 0 | 0 | 775 |
 | framework | thymeleaf@3.1.7.RELEASE | 45 | 55 | 0 | 4,352 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
@@ -980,6 +980,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile` | [R1](api-mapping.md#r1-packages-and-names) | The canonical import is unchanged. The declaration lives in an internal leaf to break the Java package cycle. |
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile#equals(Object)` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `io.micrometer.core.instrument.distribution.ValueAtPercentile#hashCode()` | `flint.micrometer.core.instrument.distribution.ValueAtPercentile.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+
+#### io.micrometer.core.instrument.noop
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `io.micrometer.core.instrument.noop.NoopMeter#measure()` | `flint.micrometer.core.instrument.noop.NoopMeter.measure` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### io.micrometer.core.instrument.util
 
@@ -9401,7 +9407,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | io.micrometer.core.instrument.docs | 10 | 0 |
 | io.micrometer.core.instrument.dropwizard | 45 | 0 |
 | io.micrometer.core.instrument.logging | 20 | 0 |
-| io.micrometer.core.instrument.noop | 52 | 0 |
+| io.micrometer.core.instrument.noop | 46 | 0 |
 | io.micrometer.core.instrument.observation | 19 | 0 |
 | io.micrometer.core.instrument.push | 20 | 0 |
 | io.micrometer.core.instrument.search | 56 | 0 |

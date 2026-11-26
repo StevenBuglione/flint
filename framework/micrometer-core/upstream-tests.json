@@ -645,16 +645,28 @@
       "status": "deferred"
     },
     "io/micrometer/core/instrument/noop/NoopGaugeTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/noop_gauge_test.d",
+      "methods": {
+        "ported": [
+          "returnsId",
+          "returnsValueAsZero"
+        ]
+      },
+      "status": "ported"
     },
     "io/micrometer/core/instrument/noop/NoopLongTaskTimerTest.java": {
       "phase": "2",
       "status": "deferred"
     },
     "io/micrometer/core/instrument/noop/NoopMeterTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/noop_meter_test.d",
+      "methods": {
+        "ported": [
+          "returnsId",
+          "returnsMeasureAsEmptyList"
+        ]
+      },
+      "status": "ported"
     },
     "io/micrometer/core/instrument/noop/NoopTimeGaugeTest.java": {
       "phase": "2",
