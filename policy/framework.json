@@ -573,7 +573,9 @@
     "flint.java.time.year",
     "flint.java.time.zone.zoneoffsettransition",
     "flint.java.time.zone.zoneoffsettransitionrule",
-    "flint.java.time.zone.zonerules"
+    "flint.java.time.zone.zonerules",
+    "flint.java.time.zone.internal.rulestorage",
+    "flint.java.time.zone.internal.suppliedrules"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
