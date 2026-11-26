@@ -1,0 +1,5 @@
+{
+ "id": "D-WEB-1",
+ "deviation": "`MediaTypeFactory.getMediaTypes` returns a fresh mutable list for a known extension. Java returns the registry's backing list.",
+ "reason": "A caller can edit its local result while other requests continue reading the immutable registry."
+}

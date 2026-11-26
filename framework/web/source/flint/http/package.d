@@ -3,7 +3,7 @@
 
 Ported from spring-projects/spring-framework v7.1.0, spring-web/src/main/java/org/springframework/http/
 (HttpStatusCode.java, DefaultHttpStatusCode.java, HttpStatus.java, HttpMethod.java, HttpHeaders.java,
-MediaType.java, HttpEntity.java, ResponseEntity.java, RequestEntity.java, ProblemDetail.java) and
+MediaType.java, MediaTypeFactory.java, HttpEntity.java, ResponseEntity.java, RequestEntity.java, ProblemDetail.java) and
 spring-core/src/main/java/org/springframework/util/MimeType.java.
 
 Copyright 2002-present the original author or authors.
@@ -14,11 +14,14 @@ are structs (ADR-030 section 5); Java enums with methods follow proposed rule R1
 +/
 module flint.http;
 
+import flint.core.io : Resource;
 import flint.java.lang : IllegalArgumentException, NumberFormatException, UnsupportedOperationException;
 import flint.java.net : URI;
 import flint.engine.aot.any : Any;
+import flint.http.mime_registry : mimeRegistrations, registeredMimeTypeIndices, registeredMimeTypeNames;
 import flint.java.nio.charset : Charset;
-import flint.util : InvalidMimeTypeException, MimeType, MimeTypeParameter, MimeTypeUtils;
+import flint.java.util : ArrayList, Collections, List, Optional;
+import flint.util : InvalidMimeTypeException, MimeType, MimeTypeParameter, MimeTypeUtils, StringUtils;
 
 @safe:
 
@@ -948,6 +951,97 @@ struct MediaType
                 builder ~= ", ";
         }
         return builder.idup;
+    }
+}
+
+/// Determines media types from filename extensions in Spring's `mime.types` registry.
+final class MediaTypeFactory
+{
+    private @disable this();
+
+    private static immutable MediaType[] mediaTypes = makeMediaTypes();
+
+    /// The first media type for the resource's filename, if present.
+    static Optional!MediaType getMediaType(Resource resource)
+    {
+        return resource is null ? Optional!MediaType.empty() : getMediaType(resource.getFilename());
+    }
+
+    /// The first media type for the filename, if present.
+    static Optional!MediaType getMediaType(string filename)
+    {
+        auto matches = findMediaTypes(filename);
+        return matches.length == 0 ? Optional!MediaType.empty() : Optional!MediaType.of(mediaTypes[matches[0]]);
+    }
+
+    /// The media types for the filename, in registry order.
+    static List!MediaType getMediaTypes(string filename)
+    {
+        auto matches = findMediaTypes(filename);
+        if (matches.length == 0)
+            return Collections.emptyList!MediaType();
+        auto result = new ArrayList!MediaType(cast(int) matches.length);
+        foreach (index; matches)
+            result.add(mediaTypes[index]);
+        return result;
+    }
+
+    // The MIME strings are split at compile time, including the canonical text cached by MediaType.constant.
+    private static MediaType[] makeMediaTypes() pure
+    {
+        auto types = new MediaType[registeredMimeTypeNames.length];
+        foreach (i, name; registeredMimeTypeNames)
+        {
+            size_t slash;
+            while (name[slash] != '/')
+                ++slash;
+            types[i] = MediaType.constant(name[0 .. slash], name[slash + 1 .. $]);
+        }
+        return types;
+    }
+
+    private static immutable(ushort)[] findMediaTypes(string filename) pure nothrow @nogc
+    {
+        auto extension = StringUtils.getFilenameExtension(filename);
+        if (extension.length == 0)
+            return null;
+        size_t start, end = mimeRegistrations.length;
+        while (start < end)
+        {
+            const middle = start + (end - start) / 2;
+            ref const entry = mimeRegistrations[middle];
+            const order = compareExtension(extension, entry.extension);
+            if (order < 0)
+                end = middle;
+            else if (order > 0)
+                start = middle + 1;
+            else
+                return registeredMimeTypeIndices[entry.offset .. entry.offset + entry.count];
+        }
+        return null;
+    }
+
+    // The registry is ASCII. Of non-ASCII code points, only the Kelvin sign lowercases to an ASCII code point
+    // without also yielding a combining mark under Java's Locale.ROOT.
+    private static int compareExtension(scope const(char)[] extension, string key) pure nothrow @nogc
+    {
+        size_t i;
+        foreach (registered; key)
+        {
+            if (i == extension.length)
+                return -1;
+            char actual = extension[i++];
+            if (actual >= 'A' && actual <= 'Z')
+                actual = cast(char)(actual - 'A' + 'a');
+            else if (actual == '\xE2' && extension.length - i >= 2 && extension[i .. i + 2] == "\x84\xAA")
+            {
+                actual = 'k';
+                i += 2;
+            }
+            if (actual != registered)
+                return cast(int) actual - registered;
+        }
+        return i == extension.length ? 0 : 1;
     }
 }
 

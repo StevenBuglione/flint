@@ -655,6 +655,13 @@ web probe on venus, `tools/measure_builds.py --framework-sizes --framework web` 
 above the 126,976-byte cap. The probe exercises Accept parsing. The fixed-strategy tests cover order,
 precedence and isolation of returned arrays.
 
+`MediaTypeFactory` constructs the canonical types at compile time and searches a sorted extension
+table. Looking up one type returns a value without building a list. The allocation test covers
+known and unknown extensions and a resource filename. On venus, the same web probe measured
+547,337 to 547,393 linked bytes and 11,763 to 11,852 DMD template instances from `052467c6` to
+`ca1a2401`. The coordinator's temporary base-relative ratchet applies while the web probe retains
+the Phobos cascade (decision `6c9e5f49`). The absolute cap remains 126,976 bytes.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

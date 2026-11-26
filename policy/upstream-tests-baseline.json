@@ -8983,7 +8983,6 @@
       "org/springframework/http/ContentDispositionTests.java",
       "org/springframework/http/HttpMethodTests.java",
       "org/springframework/http/HttpRangeTests.java",
-      "org/springframework/http/MediaTypeFactoryTests.java",
       "org/springframework/http/RequestEntityTests.java",
       "org/springframework/http/ResponseCookieTests.java",
       "org/springframework/http/WebBeanUtilsRuntimeHintsTests.java",

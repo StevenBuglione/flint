@@ -96,8 +96,14 @@
       "status": "ported"
     },
     "org/springframework/http/MediaTypeFactoryTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/web/tests/media_type_factory_tests.d",
+      "methods": {
+        "ported": [
+          "getMediaType",
+          "nullParameter"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/http/MediaTypeTests.java": {
       "d": "framework/web/tests/media_type_tests.d",
