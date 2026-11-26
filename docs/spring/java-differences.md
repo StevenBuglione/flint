@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,076 | 280 | 1,871 | 15,194 |
+| framework | openjdk@21.0.13 | 1,066 | 278 | 1,871 | 15,206 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -1931,8 +1931,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.io.ByteArrayOutputStream#toByteArray()` | `flint.java.io.ByteArrayOutputStream.toByteArray` | [R26](api-mapping.md#r26-null-arrays) | Returns an independent unsigned byte slice. An empty result uses the plain D array representation. |
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D exception hierarchy for Java's checked I/O exception. |
 | `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
-| `java.io.PrintWriter#print(Object)` | `flint.java.io.PrintWriter.print` | [R23](api-mapping.md#r23-object-typed-values) |  |
-| `java.io.PrintWriter#println(Object)` | `flint.java.io.PrintWriter.println` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.io.UnsupportedEncodingException` | `flint.java.io.unsupportedencodingexception.UnsupportedEncodingException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) |  |
 
 #### java.lang
@@ -10037,7 +10035,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 734 | 0 |
+| java.io | 746 | 0 |
 | java.lang | 2,018 | 0 |
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -10937,13 +10935,25 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.PrintWriter#checkError()` | 2 | Error tracking and the public checkError accessor are pending. |
 | framework | `java.io.PrintWriter#close()` | 2 | Java records checked close failures in the error state and ignores repeated closes after success. The existing method forwards every close and propagates checked failures. |
 | framework | `java.io.PrintWriter#flush()` | 2 | A checked flush failure or a flush after closure sets Java's error state. The existing method forwards flush and propagates checked failures. |
+| framework | `java.io.PrintWriter#print(Object)` | 2 | Java records checked errors in the PrintWriter error state. The existing Object overload propagates the sink's write failure. |
 | framework | `java.io.PrintWriter#print(String)` | 2 | Java prints literal null for an absent string. The existing UTF-8 slice treats it as empty. The distinct nullable text contract needs R5. |
+| framework | `java.io.PrintWriter#print(boolean)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
 | framework | `java.io.PrintWriter#print(char)` | 2 | Java invokes the virtual single-character write. The existing template formats the character and invokes the text overload directly. |
 | framework | `java.io.PrintWriter#print(char[])` | 2 | Java routes through the ranged character-array write and records checked write errors. The existing slice overload writes directly and propagates those errors. R26 covers the null-array case. |
+| framework | `java.io.PrintWriter#print(double)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
+| framework | `java.io.PrintWriter#print(float)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
+| framework | `java.io.PrintWriter#print(int)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
+| framework | `java.io.PrintWriter#print(long)` | 2 | Checked write errors must be recorded in the PrintWriter error state. |
 | framework | `java.io.PrintWriter#println()` | 2 | Java uses its platform line separator. The existing method always emits LF. |
+| framework | `java.io.PrintWriter#println(Object)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#println(String)` | 2 | Java prints literal null for an absent string and uses its platform line separator. The existing slice treats null as empty and always emits LF. |
+| framework | `java.io.PrintWriter#println(boolean)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#println(char)` | 2 | The single-character write dispatch and platform line separator contracts are pending. |
 | framework | `java.io.PrintWriter#println(char[])` | 2 | The character-array write dispatch, checked error state and platform line separator contracts are pending. |
+| framework | `java.io.PrintWriter#println(double)` | 2 | The platform line separator and checked write error state contracts are pending. |
+| framework | `java.io.PrintWriter#println(float)` | 2 | The platform line separator and checked write error state contracts are pending. |
+| framework | `java.io.PrintWriter#println(int)` | 2 | The platform line separator and checked write error state contracts are pending. |
+| framework | `java.io.PrintWriter#println(long)` | 2 | The platform line separator and checked write error state contracts are pending. |
 | framework | `java.io.PrintWriter#write(String)` | 2 | Java forwards to the virtual UTF-16 ranged write and records checked errors. The existing method writes the slice directly and propagates errors. |
 | framework | `java.io.StringWriter#write(String)` | 2 | Java appends the text null for a null string. The existing plain D slice treats null as empty. The distinct nullable string contract requires R5. |
 | framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. |
