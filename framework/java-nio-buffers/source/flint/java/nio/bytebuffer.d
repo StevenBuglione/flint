@@ -31,6 +31,7 @@
 /** Java NIO byte buffers backed by a D byte array. */
 module flint.java.nio.bytebuffer;
 
+import core.bitop : bswap;
 import flint.engine.aot.any : Any;
 import flint.java.lang : Comparable, IllegalArgumentException, JavaObject, NullPointerException;
 import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkIndex, checkRange;
@@ -322,37 +323,124 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
         return this;
     }
 
+    wchar getChar() pure
+    {
+        return cast(wchar) readNumber(wchar.sizeof);
+    }
+
+    wchar getChar(int index) const pure
+    {
+        return cast(wchar) readNumber(index, wchar.sizeof);
+    }
+
+    ByteBuffer putChar(wchar value) pure
+    {
+        return putNumber(wchar.sizeof, cast(ulong) value);
+    }
+
+    ByteBuffer putChar(int index, wchar value) pure
+    {
+        return putNumber(index, wchar.sizeof, cast(ulong) value);
+    }
+
     short getShort() pure
     {
-        if (remaining() < shortWidth)
-            throwUnderflow();
-        const value = readShortAt(position());
-        advance(shortWidth);
-        return value;
+        return cast(short) readNumber(short.sizeof);
     }
 
     short getShort(int index) const pure
     {
-        checkIndex(index, shortWidth, limit());
-        return readShortAt(index);
+        return cast(short) readNumber(index, short.sizeof);
     }
 
     ByteBuffer putShort(short value) pure
     {
-        checkWritable();
-        if (remaining() < shortWidth)
-            throwOverflow();
-        writeShortAt(position(), value);
-        advance(shortWidth);
-        return this;
+        return putNumber(short.sizeof, cast(ulong) value);
     }
 
     ByteBuffer putShort(int index, short value) pure
     {
-        checkWritable();
-        checkIndex(index, shortWidth, limit());
-        writeShortAt(index, value);
-        return this;
+        return putNumber(index, short.sizeof, cast(ulong) value);
+    }
+
+    int getInt() pure
+    {
+        return cast(int) readNumber(int.sizeof);
+    }
+
+    int getInt(int index) const pure
+    {
+        return cast(int) readNumber(index, int.sizeof);
+    }
+
+    ByteBuffer putInt(int value) pure
+    {
+        return putNumber(int.sizeof, cast(ulong) value);
+    }
+
+    ByteBuffer putInt(int index, int value) pure
+    {
+        return putNumber(index, int.sizeof, cast(ulong) value);
+    }
+
+    long getLong() pure
+    {
+        return cast(long) readNumber(long.sizeof);
+    }
+
+    long getLong(int index) const pure
+    {
+        return cast(long) readNumber(index, long.sizeof);
+    }
+
+    ByteBuffer putLong(long value) pure
+    {
+        return putNumber(long.sizeof, cast(ulong) value);
+    }
+
+    ByteBuffer putLong(int index, long value) pure
+    {
+        return putNumber(index, long.sizeof, cast(ulong) value);
+    }
+
+    float getFloat() pure
+    {
+        return FloatBits(cast(uint) readNumber(float.sizeof)).value;
+    }
+
+    float getFloat(int index) const pure
+    {
+        return FloatBits(cast(uint) readNumber(index, float.sizeof)).value;
+    }
+
+    ByteBuffer putFloat(float value) pure
+    {
+        return putNumber(float.sizeof, floatBits(value));
+    }
+
+    ByteBuffer putFloat(int index, float value) pure
+    {
+        return putNumber(index, float.sizeof, floatBits(value));
+    }
+
+    double getDouble() pure
+    {
+        return DoubleBits(readNumber(double.sizeof)).value;
+    }
+
+    double getDouble(int index) const pure
+    {
+        return DoubleBits(readNumber(index, double.sizeof)).value;
+    }
+
+    ByteBuffer putDouble(double value) pure
+    {
+        return putNumber(double.sizeof, doubleBits(value));
+    }
+
+    ByteBuffer putDouble(int index, double value) pure
+    {
+        return putNumber(index, double.sizeof, doubleBits(value));
     }
 
     bool equals(Object other) pure nothrow @nogc
@@ -393,23 +481,59 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
         return summary(readOnly ? "java.nio.HeapByteBufferR" : "java.nio.HeapByteBuffer");
     }
 
-    private enum int shortWidth = short.sizeof;
-
-    pragma(inline, false) private short readShortAt(int index) const pure nothrow @nogc
+    pragma(inline, false) private ulong readNumber(int width) pure
     {
-        const start = origin + index;
-        const first = cast(ubyte) backing[start];
-        const second = cast(ubyte) backing[start + 1];
-        return cast(short)(littleEndian ? first | (second << 8) : (first << 8) | second);
+        if (width > remaining())
+            throwUnderflow();
+        const value = readNumberAt(position(), width);
+        advance(width);
+        return value;
     }
 
-    pragma(inline, false) private void writeShortAt(int index, short value) pure nothrow @nogc
+    pragma(inline, false) private ulong readNumber(int index, int width) const pure
     {
-        const high = cast(byte)(cast(ushort) value >> 8);
-        const low = cast(byte) value;
+        checkIndex(index, width, limit());
+        return readNumberAt(index, width);
+    }
+
+    pragma(inline, false) private ByteBuffer putNumber(int width, ulong value) pure
+    {
+        checkWritable();
+        if (width > remaining())
+            throwOverflow();
+        writeNumberAt(position(), width, value);
+        advance(width);
+        return this;
+    }
+
+    pragma(inline, false) private ByteBuffer putNumber(int index, int width, ulong value) pure
+    {
+        checkWritable();
+        checkIndex(index, width, limit());
+        writeNumberAt(index, width, value);
+        return this;
+    }
+
+    pragma(inline, false) private ulong readNumberAt(int index, int width) const pure nothrow @nogc
+    {
         const start = origin + index;
-        backing[start] = littleEndian ? low : high;
-        backing[start + 1] = littleEndian ? high : low;
+        const bytes = backing[start .. start + width];
+        ulong value;
+        foreach (wireByte; bytes)
+            value = (value << 8) | cast(ubyte) wireByte;
+        return littleEndian ? reverseBytes(value, width) : value;
+    }
+
+    pragma(inline, false) private void writeNumberAt(int index, int width, ulong value) pure nothrow @nogc
+    {
+        const start = origin + index;
+        if (!littleEndian)
+            value = reverseBytes(value, width);
+        foreach (ref wireByte; backing[start .. start + width])
+        {
+            wireByte = cast(byte) value;
+            value >>= 8;
+        }
     }
 
     private void copyFromBuffer(int index, scope ByteBuffer source, int offset, int length) scope pure nothrow @nogc
@@ -444,6 +568,38 @@ pragma(inline, false) private noreturn throwOverflow() pure
 pragma(inline, false) private noreturn throwUnderflow() pure
 {
     throw new BufferUnderflowException;
+}
+
+private ulong reverseBytes(ulong value, int width) pure nothrow @nogc
+{
+    // The primitive occupies the low bytes before and after reversing.
+    return bswap(value) >> (8 * (ulong.sizeof - width));
+}
+
+private union FloatBits
+{
+    uint bits;
+    float value;
+}
+
+private union DoubleBits
+{
+    ulong bits;
+    double value;
+}
+
+private uint floatBits(float value) pure nothrow @nogc
+{
+    FloatBits converted;
+    converted.value = value;
+    return converted.bits;
+}
+
+private ulong doubleBits(double value) pure nothrow @nogc
+{
+    DoubleBits converted;
+    converted.value = value;
+    return converted.bits;
 }
 
 private byte[] allocateStorage(int capacity) pure nothrow

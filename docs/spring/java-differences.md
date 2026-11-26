@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,070 | 309 | 1,871 | 15,171 |
+| framework | openjdk@21.0.13 | 1,090 | 309 | 1,871 | 15,151 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10076,7 +10076,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 137 | 0 |
 | java.net | 817 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 298 | 0 |
+| java.nio | 278 | 0 |
 | java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 103 | 0 |
@@ -11067,26 +11067,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.ByteBuffer#asIntBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#asLongBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.ByteBuffer#asShortBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getChar()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getChar(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getDouble()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getDouble(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getFloat()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getFloat(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getInt()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getInt(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getLong()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#getLong(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putChar(char)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putChar(int,char)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putDouble(double)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putDouble(int,double)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putFloat(float)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putFloat(int,float)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putInt(int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putInt(int,int)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putLong(int,long)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#putLong(long)` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.text.DateFormat` | 2 | Java DateFormat extends Format and is usable through its generic format(Object) contract. Flint has no Format supertype. |
 | framework | `java.text.DateFormat#<init>()` | 2 | Subclass initialization is implicit. Flint has no DateFormat constructor for an explicit super() call, which Java subclasses can make. |
 | framework | `java.text.DateFormat#format(Date)` | 2 | With SimpleDateFormat, a null Date or an absent Calendar can terminate the process. Java throws NullPointerException (R8). |

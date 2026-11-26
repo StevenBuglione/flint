@@ -10,6 +10,7 @@ import flint.java.nio.byteorder : ByteOrder;
 import flint.java.nio.invalidmarkexception : InvalidMarkException;
 import flint.java.nio.readonlybufferexception : ReadOnlyBufferException;
 import flint.java.lang : IllegalArgumentException, IndexOutOfBoundsException, NullPointerException;
+import std.bitmanip : littleEndianToNative, nativeToLittleEndian;
 import std.exception : assertThrown;
 import std.typecons : Nullable;
 
@@ -299,4 +300,57 @@ unittest
     assert(view.position() == 3 && view.reset().position() == 3);
     assert(readOnly.position() == 3 && readOnly.reset().position() == 3);
     assert(storage == [0, 1, 2, 3, 4]);
+}
+
+@("Heap ByteBuffer primitive access keeps UTF-16 and raw floating-point bits in both orders")
+unittest
+{
+    foreach (order; [ByteOrder.BIG_ENDIAN, ByteOrder.LITTLE_ENDIAN])
+    {
+        byte[] bytes = new byte[32];
+        bytes[0] = bytes[31] = 85;
+        auto view = ByteBuffer.wrap(bytes, 1, 29).slice().order(order).position(1).mark();
+        const floatNaN = littleEndianToNative!float(nativeToLittleEndian(0x7FC1_2345u));
+        const doubleNaN = littleEndianToNative!double(nativeToLittleEndian(0xFFF8_0000_0000_0421UL));
+        assert(view.putChar(cast(wchar) 0xD800).putInt(int.min).putLong(long.min + 7)
+                .putFloat(floatNaN).putDouble(doubleNaN) is view);
+        assert(view.position() == 27 && view.reset().position() == 1);
+        assert(bytes[2] == (order == ByteOrder.BIG_ENDIAN ? cast(byte) 0xD8 : 0));
+        assert(bytes[3] == (order == ByteOrder.LITTLE_ENDIAN ? cast(byte) 0xD8 : 0));
+        assert(bytes[0] == 85 && bytes[31] == 85);
+
+        auto readOnly = view.asReadOnlyBuffer().order(order);
+        assert(readOnly.getChar() == 0xD800 && readOnly.getInt() == int.min);
+        assert(readOnly.getLong() == long.min + 7);
+        assert(nativeToLittleEndian(readOnly.getFloat()) == nativeToLittleEndian(floatNaN));
+        assert(nativeToLittleEndian(readOnly.getDouble()) == nativeToLittleEndian(doubleNaN));
+        assert(readOnly.position() == 27 && readOnly.reset().position() == 1);
+        assert(readOnly.getChar(1) == 0xD800 && readOnly.getInt(3) == int.min);
+        assert(readOnly.getLong(7) == long.min + 7);
+        assert(nativeToLittleEndian(readOnly.getFloat(15)) == nativeToLittleEndian(floatNaN));
+        assert(nativeToLittleEndian(readOnly.getDouble(19)) == nativeToLittleEndian(doubleNaN));
+
+        assert(view.putChar(1, cast(wchar) 0xFFFF).putInt(3, int.max).putLong(7, long.max)
+                .putFloat(15, -0.0f).putDouble(19, -0.0) is view);
+        assert(view.position() == 1 && readOnly.position() == 1 && view.reset().position() == 1);
+        assert(view.getChar(1) == 0xFFFF && view.getInt(3) == int.max && view.getLong(7) == long.max);
+        assert(nativeToLittleEndian(view.getFloat(15)) == nativeToLittleEndian(0x8000_0000u));
+        assert(nativeToLittleEndian(view.getDouble(19)) == nativeToLittleEndian(0x8000_0000_0000_0000UL));
+    }
+}
+
+@("Heap ByteBuffer primitive failures leave cursor and storage intact")
+unittest
+{
+    auto view = ByteBuffer.allocate(16).position(1).limit(2).mark();
+    assertThrown!BufferUnderflowException(view.getDouble());
+    assertThrown!BufferOverflowException(view.putInt(2));
+    rejectsMessage!IndexOutOfBoundsException(() { view.getChar(1); }, null);
+    rejectsMessage!IndexOutOfBoundsException(() { view.putDouble(-1, 0.0); }, null);
+    auto readOnly = view.asReadOnlyBuffer();
+    assertThrown!ReadOnlyBufferException(readOnly.putFloat(0.0f));
+    assertThrown!ReadOnlyBufferException(readOnly.putLong(-1, 0));
+    assert(view.position() == 1 && view.reset().position() == 1);
+    assert(readOnly.position() == 1 && readOnly.reset().position() == 1);
+    assert(view.get(0) == 0 && view.get(1) == 0);
 }
