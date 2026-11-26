@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,107 | 240 | 1,871 | 15,203 |
+| framework | openjdk@21.0.13 | 1,106 | 240 | 1,871 | 15,204 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -10004,7 +10004,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.security.interfaces | 0 | 61 |
 | java.security.spec | 0 | 201 |
 | java.sql | 1,005 | 0 |
-| java.text | 519 | 0 |
+| java.text | 520 | 0 |
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
@@ -10878,6 +10878,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.MessageFormat#<init>(String,Locale)` | 2 | Accepts unknown format types when applying the pattern. |
 | framework | `java.text.MessageFormat#format(String,Object...)` | 2 | Numeric subformats do not yet match Java keyword case handling or reject arguments of the wrong type. |
 | framework | `java.text.MessageFormat#toPattern()` | 2 | Returns the input pattern text instead of serializing the parsed pattern in Java canonical form. |
+| framework | `java.text.SimpleDateFormat#set2DigitYearStart(Date)` | 2 | Computes the year window in a separate calendar. Java sets the time of the formatter's caller-visible calendar when applying the requested start. |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.MonthDay#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
 | framework | `java.time.MonthDay#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |

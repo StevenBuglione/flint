@@ -6119,7 +6119,7 @@
 "java.text.SimpleDateFormat#applyPattern(String)":{"d":"flint.java.text.SimpleDateFormat.applyPattern","status":"ported"},
 "java.text.SimpleDateFormat#get2DigitYearStart()":{"d":"flint.java.text.SimpleDateFormat.get2DigitYearStart","status":"ported"},
 "java.text.SimpleDateFormat#parse(String,ParsePosition)":{"d":"flint.java.text.SimpleDateFormat.parse","status":"ported"},
-"java.text.SimpleDateFormat#set2DigitYearStart(Date)":{"d":"flint.java.text.SimpleDateFormat.set2DigitYearStart","status":"ported"},
+"java.text.SimpleDateFormat#set2DigitYearStart(Date)":{"status":"excluded","category":"deferred","phase":"2","reason":"Computes the year window in a separate calendar. Java sets the time of the formatter's caller-visible calendar when applying the requested start."},
 "java.text.SimpleDateFormat#toPattern()":{"d":"flint.java.text.SimpleDateFormat.toPattern","status":"ported"},
 "java.text.spi.**":{"status":"excluded","category":"deferred","phase":"3"},
 "java.time.**":{"status":"excluded","category":"deferred","phase":"2"},
