@@ -149,6 +149,7 @@
           "reasoningPartWithPayloadIsReplayableOnlyToItsProvider",
           "reasoningPartWithoutPayloadIsReplayableEverywhere",
           "textPartOfHasNoPayloadAndEmptyAttributes",
+          "toolResultPartContentIsDefensivelyCopied",
           "unknownPartKeepsRawJson",
           "whenAttributesIsNullThenThrow",
           "whenOpaquePayloadHasNullComponentThenThrow",
@@ -157,9 +158,8 @@
         "skipped": {
           "mediaPartOfWrapsMedia": "MediaPart and Media are pending.",
           "toolCallPartOfWrapsToolCall": "ToolCallPart and AssistantMessage.ToolCall are pending.",
-          "toolResultPartContentIsDefensivelyCopied": "ToolResultPart is pending.",
-          "toolResultPartOfWrapsToolResponseAsSingleTextPart": "ToolResultPart and ToolResponseMessage are pending.",
-          "toolResultPartToToolResponseJoinsTextContentOnly": "ToolResultPart is pending.",
+          "toolResultPartOfWrapsToolResponseAsSingleTextPart": "Requires the legacy ToolResponseMessage.ToolResponse value and conversion.",
+          "toolResultPartToToolResponseJoinsTextContentOnly": "Requires the legacy ToolResponseMessage.ToolResponse value and conversion.",
           "whenToolCallIsNullThenThrow": "ToolCallPart is pending."
         }
       },

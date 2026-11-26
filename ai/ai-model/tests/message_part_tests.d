@@ -18,13 +18,72 @@
 // Modified by the Flint authors.
 module message_part_tests;
 
-import flint.ai.chat.messages.part : MessagePart, OpaquePayload, ReasoningPart, TextPart, UnknownPart;
+import flint.ai.chat.messages.part : MessagePart, OpaquePayload, ReasoningPart, TextPart, ToolResultPart, UnknownPart;
 import flint.java.lang : IllegalArgumentException, NullPointerException, UnsupportedOperationException;
-import flint.java.util : HashMap, Map;
+import flint.java.util : ArrayList, HashMap, List, Map;
 import std.exception : assertThrown;
 import std.typecons : Nullable, nullable;
 
 @safe:
+
+@("toolResultPartContentIsDefensivelyCopied")
+unittest
+{
+    auto content = new ArrayList!MessagePart();
+    content.add(TextPart.of("a"));
+    auto part = new ToolResultPart(nullable("id-1"), nullable("tool"), content, false,
+            Nullable!OpaquePayload.init, Map!(string, string).of());
+    content.add(TextPart.of("b"));
+
+    assert(part.content().size() == 1);
+    assertThrown!UnsupportedOperationException(part.content().add(TextPart.of("c")));
+}
+
+@("tool result records preserve ordered content, metadata and nullable components")
+unittest
+{
+    alias Parts = List!MessagePart;
+    alias Attributes = Map!(string, string);
+    auto first = TextPart.of("result");
+    auto second = ReasoningPart.of("evidence");
+    auto content = Parts.of(first, second);
+    auto attributes = Attributes.of("source", "provider");
+    auto payload = nullable(OpaquePayload("provider", "kind", "raw"));
+    auto part = new ToolResultPart(Nullable!string.init, nullable(""), content, true, payload, attributes);
+    auto equivalent = new ToolResultPart(nullable(cast(string) null), nullable(""), Parts.of(first,
+            second), true, payload, attributes);
+    auto reordered = new ToolResultPart(Nullable!string.init, nullable(""), Parts.of(second,
+            first), true, payload, attributes);
+
+    MessagePart base = part;
+    assert(part.id().isNull && !part.name().isNull && part.name().get() == "" && part.isError());
+    assert(part == equivalent && part.hashCode() == equivalent.hashCode());
+    assert(!part.equals(reordered));
+    assert(base.payload() == payload && base.attributes().get("source") == "provider");
+    assert(part.toString() == "ToolResultPart[id=null, name=, content=[" ~ first.toString() ~ ", " ~ second.toString()
+            ~ "], isError=true, payload=" ~ payload.get().toString() ~ ", attributes={source=provider}]");
+    auto replacement = cast(ToolResultPart) base.withAttributes(Attributes.of("new", "value"));
+    assert(replacement !is null && replacement !is part);
+    assert(replacement.content().equals(cast(Object) part.content()) && replacement.isError());
+    assert(replacement.attributes().get("new") == "value" && part.attributes().get("source") == "provider");
+}
+
+@("tool result records reject missing lists and null content elements")
+unittest
+{
+    alias Parts = List!MessagePart;
+    alias Attributes = Map!(string, string);
+    const emptyText = Nullable!string.init;
+    const emptyPayload = Nullable!OpaquePayload.init;
+    assertThrown!IllegalArgumentException(new ToolResultPart(emptyText, emptyText, null, false,
+            emptyPayload, Attributes.of()));
+    auto content = new ArrayList!MessagePart();
+    content.add(null);
+    assertThrown!NullPointerException(new ToolResultPart(emptyText, emptyText, content, false,
+            emptyPayload, Attributes.of()));
+    assertThrown!IllegalArgumentException(new ToolResultPart(emptyText, emptyText, Parts.of(),
+            false, emptyPayload, null));
+}
 
 @("textPartOfHasNoPayloadAndEmptyAttributes")
 unittest

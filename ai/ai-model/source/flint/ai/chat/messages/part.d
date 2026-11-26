@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,ReasoningPart,StreamingParts,TextPart,UnknownPart}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/chat/messages/part/{MessagePart,OpaquePayload,ReasoningPart,StreamingParts,TextPart,ToolResultPart,UnknownPart}.java
 // Modified by the Flint authors.
 module flint.ai.chat.messages.part;
 
 import core.exception : onOutOfMemoryError;
 import flint.java.lang : IllegalArgumentException, JavaObject, NullPointerException, stringHashCode;
-import flint.java.util : LinkedHashMap, Map;
+import flint.java.util : LinkedHashMap, List, Map;
 import std.typecons : Nullable;
 
 @safe:
@@ -30,6 +30,7 @@ private alias PartAttributes = Map!(string, string);
 private alias MutablePartAttributes = LinkedHashMap!(string, string);
 private alias NullablePayload = Nullable!OpaquePayload;
 private alias NullableText = Nullable!string;
+private alias ResultParts = List!MessagePart;
 
 // LDC's size profile needs the constructor inlined. DMD avoids importing its body in the caller.
 version (LDC)
@@ -506,6 +507,110 @@ final class UnknownPart : MessagePart
         string[11] parts = [
             "UnknownPart[provider=", provider_, ", kind=", kind_, ", rawJson=", rawJson_,
             ", payload=", payloadText(payload_), ", attributes=", attributes_.toString(), "]"
+        ];
+        return joinRecord(parts[]);
+    }
+
+    mixin JavaObject;
+}
+
+/// The ordered result of a single tool call (R16).
+final class ToolResultPart : MessagePart
+{
+    private NullableText id_;
+    private NullableText name_;
+    private ResultParts content_;
+    private bool error_;
+    private NullablePayload payload_;
+    private PartAttributes attributes_;
+
+    /// Captures the ordered content and attributes as unmodifiable snapshots.
+    this(NullableText id, NullableText name, ResultParts content, bool isError, NullablePayload payload,
+            PartAttributes attributes)
+    {
+        if (content is null)
+            throw new IllegalArgumentException("content must not be null");
+        if (attributes is null)
+            throw new IllegalArgumentException("attributes must not be null");
+
+        content_ = ResultParts.copyOf(content);
+        foreach (part; content_)
+            if (part is null)
+                throw new NullPointerException();
+
+        id_ = normalizeText(id);
+        name_ = normalizeText(name);
+        error_ = isError;
+        payload_ = payload;
+        attributes_ = copyAttributes(attributes);
+    }
+
+    /// The identifier of the corresponding tool call, when supplied.
+    NullableText id()
+    {
+        return id_;
+    }
+
+    /// The tool name, when supplied.
+    NullableText name()
+    {
+        return name_;
+    }
+
+    /// The content returned by the tool, in order.
+    ResultParts content()
+    {
+        return content_;
+    }
+
+    /// Whether the tool reported an error.
+    bool isError() const pure nothrow @nogc
+    {
+        return error_;
+    }
+
+    override NullablePayload payload()
+    {
+        return payload_;
+    }
+
+    override PartAttributes attributes()
+    {
+        return attributes_;
+    }
+
+    override ToolResultPart withAttributes(PartAttributes attributes)
+    {
+        return new ToolResultPart(id_, name_, content_, error_, payload_, attributes);
+    }
+
+    /// Compares the six record components.
+    bool equals(Object other)
+    {
+        auto that = cast(ToolResultPart) other;
+        return that !is null && sameText(id_, that.id_) && sameText(name_, that.name_)
+            && content_.equals(cast(Object) that.content_) && error_ == that.error_
+            && samePayload(payload_, that.payload_) && attributes_.equals(cast(Object) that.attributes_);
+    }
+
+    /// Hashes the six record components in Java order.
+    int hashCode()
+    {
+        import flint.java.lang.boolean : Boolean;
+
+        const callHash = 31 * textHash(id_) + textHash(name_);
+        const contentHash = 31 * callHash + content_.hashCode();
+        const resultHash = 31 * contentHash + Boolean.hashCode(error_);
+        return 31 * (31 * resultHash + payloadHash(payload_)) + attributes_.hashCode();
+    }
+
+    /// Formats the six record components.
+    override string toString()
+    {
+        string[13] parts = [
+            "ToolResultPart[id=", recordText(id_), ", name=", recordText(name_), ", content=",
+            content_.toString(), ", isError=", error_ ? "true" : "false", ", payload=",
+            payloadText(payload_), ", attributes=", attributes_.toString(), "]"
         ];
         return joinRecord(parts[]);
     }
