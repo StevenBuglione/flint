@@ -116,3 +116,55 @@ unittest
     assert(String.format("[%.1s][%.2s]", "😀x", "é😀x") == "[\ufffd][é\ufffd]");
     assert(String.format("[%4.2S][%3.0s]", "a😀z", "é") == "[  A\ufffd][   ]");
 }
+
+@("String.format validates widths, precisions and flags before resolving arguments")
+unittest
+{
+    import std.exception : collectException;
+
+    void check(string format, string message)
+    {
+        const error = collectException!IllegalFormatException(String.format(format));
+        assert(error !is null && error.getMessage() == message, format);
+    }
+
+    check("%2147483648s", "-2147483648");
+    check("%.2147483648s", "-2147483648");
+    check("%2$+-S", "%-+2$S");
+    check("%+ 3X", "Flags = '^+ '");
+    check("% +s", "Conversion = s, Flags = + ");
+    check("%#-b", "Conversion = b, Flags = #");
+    check("%s %#d", "Conversion = d, Flags = #");
+    check("%-0.2d", "%-0.2d");
+    check("%-.2Tq", "2");
+    check("%-Tp", "%-TP");
+    check("%+5n", "5");
+    check("%5.2n", "2");
+    check("%,+n", "Flags = '+,'");
+    assert(String.format("%-3%|%%|%n") == "%  |%|\n");
+}
+
+@("Formatter validation exceptions retain their diagnostic payloads")
+unittest
+{
+    import flint.java.util.formatter : FormatFlagsConversionMismatchException, IllegalFormatFlagsException,
+        IllegalFormatPrecisionException, IllegalFormatWidthException, MissingFormatWidthException;
+    import std.exception : collectException;
+
+    const width = collectException!IllegalFormatWidthException(String.format("%2147483648s"));
+    assert(width.getWidth() == int.min);
+    const precision = collectException!IllegalFormatPrecisionException(String.format("%.2d"));
+    assert(precision.getPrecision() == 2);
+    const flags = collectException!IllegalFormatFlagsException(String.format("%+ 3X"));
+    assert(flags.getFlags() == "^+ ");
+    const missing = collectException!MissingFormatWidthException(String.format("%2$+-S"));
+    assert(missing.getFormatSpecifier() == "%-+2$S");
+    const mismatch = collectException!FormatFlagsConversionMismatchException(String.format("%#2B"));
+    assert(mismatch.getFlags() == "#" && mismatch.getConversion() == 'b');
+
+    const surrogate = new FormatFlagsConversionMismatchException(null, cast(wchar) 0xD800);
+    assert(surrogate.getFlags().length == 0 && surrogate.getConversion() == 0xD800);
+    assert(surrogate.getMessage() == "Conversion = \uFFFD, Flags = ");
+    assert((new IllegalFormatFlagsException(null)).getMessage() == "Flags = ''");
+    assert((new MissingFormatWidthException(null)).getFormatSpecifier().length == 0);
+}
