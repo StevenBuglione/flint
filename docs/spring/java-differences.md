@@ -11174,11 +11174,13 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.DecimalFormat#getDecimalFormatSymbols()` | 2 | Requires the public symbols class. Java returns an independent copy of the formatter symbol settings. |
 | framework | `java.text.DecimalFormat#getGroupingSize()` | 2 | Requires the public formatter. Java returns the configured interval from the pattern or the setter. |
 | framework | `java.text.DecimalFormat#getMaximumIntegerDigits()` | 2 | Requires the public formatter. Java reports the configured width, with a separate 309-digit limit for primitive formatting. |
+| framework | `java.text.DecimalFormat#getMinimumIntegerDigits()` | 2 | Requires the public formatter. Java reports the configured minimum, with primitive formatting capped separately at 309 integer digits. |
 | framework | `java.text.DecimalFormat#getMultiplier()` | 2 | Requires the public formatter. Java exposes the current multiplier from either the pattern or the setter. |
 | framework | `java.text.DecimalFormat#getRoundingMode()` | 2 | Requires the public formatter. Java defaults to HALF_EVEN and returns the current rounding mode. |
 | framework | `java.text.DecimalFormat#setDecimalFormatSymbols(DecimalFormatSymbols)` | 2 | Requires the public symbols class. Java copies supplied symbol settings into the formatter. |
 | framework | `java.text.DecimalFormat#setGroupingSize(int)` | 2 | Requires the public formatter. Java accepts 0 through 127, rejects out-of-range values without changing the interval, and uses zero to suppress grouping separators. |
 | framework | `java.text.DecimalFormat#setMaximumIntegerDigits(int)` | 2 | Requires the public formatter and integer truncation. Java retains the least significant digits, clamps negative widths to zero, and reduces the minimum when the maximum becomes smaller. |
+| framework | `java.text.DecimalFormat#setMinimumIntegerDigits(int)` | 2 | Requires the public formatter and coupled width settings. Java pads with leading zeros, clamps negative widths to zero, and raises the maximum when the new minimum exceeds it. |
 | framework | `java.text.DecimalFormat#setMultiplier(int)` | 2 | Requires the public formatter and arbitrary signed multiplier support. Java accepts zero and negatives and preserves their effects on signed zeros and infinity. |
 | framework | `java.text.DecimalFormat#setRoundingMode(RoundingMode)` | 2 | Requires the public formatter and rounding beyond HALF_EVEN. Java rejects a null mode without changing it, and UNNECESSARY throws ArithmeticException when formatting requires rounding. R5 governs null at the D enum boundary. |
 | framework | `java.text.DecimalFormatSymbols` | 2 | The public locale symbol table and mutable symbol API are pending. |
