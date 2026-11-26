@@ -289,8 +289,46 @@
       "status": "deferred"
     },
     "org/springframework/data/domain/SortUnitTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": [
+        "framework/data-commons/tests/domain.d",
+        "framework/data-commons/tests/typed_sort_tests.d"
+      ],
+      "methods": {
+        "ported": [
+          "appliesDefaultForOrder",
+          "appliesDefaultForOrderForProperty",
+          "appliesPropertyPath",
+          "appliesPropertyPaths",
+          "appliesPropertyPathsWithOrders",
+          "preventsNullProperties",
+          "preventsNullProperty",
+          "preventsEmptyProperty",
+          "preventsNoProperties",
+          "allowsCombiningSorts",
+          "handlesAdditionalNullSort",
+          "configuresIgnoreCaseForOrder",
+          "orderDoesNotIgnoreCaseByDefault",
+          "orderFactoryMethodsConsiderPropertyPath",
+          "createsOrderWithDirection",
+          "ordersWithDifferentIgnoreCaseDoNotEqual",
+          "orderWithNullHandlingHintNullsFirst",
+          "orderWithNullHandlingHintNullsLast",
+          "orderWithNullHandlingHintNullsNative",
+          "orderWithDefaultNullHandlingHint",
+          "retainsNullHandlingAfterChangingDirection",
+          "createsNewOrderForDifferentProperty",
+          "createsNewOrderForDifferentPropertyPath",
+          "createsNewOrderFromPaths",
+          "translatesTypedSortCorrectly",
+          "allowsCombiningTypedSorts",
+          "reversesSortCorrectly",
+          "reversesTypedSortCorrectly"
+        ],
+        "skipped": {
+          "preventsNullDirection": "Sort.Direction is a D struct and cannot be null."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/data/domain/VectorUnitTests.java": {
       "phase": "2",

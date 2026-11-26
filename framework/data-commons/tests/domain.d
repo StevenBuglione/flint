@@ -1,8 +1,7 @@
 // Ported from spring-data-commons 4.2.0: src/test/java/org/springframework/data/domain/{SortUnitTests,PageImplUnitTests,PageRequestUnitTests,AbstractPageRequestUnitTests,DirectionUnitTests}.java
 // Copyright 2008-present the original author or authors.
 // Licensed under the Apache License, Version 2.0.
-// Modified by the Flint authors: the `TypedPropertyPath` and `TypedSort` cases wait on those types.
-// `preventsNullDirection` and `preventsNullProperties` have no D counterpart (a struct and a D array).
+// Modified by the Flint authors. A Direction struct cannot be null in D.
 module flint.data.domain_test;
 
 import flint.data.domain;
@@ -43,47 +42,73 @@ private void assertNotEqualsAndHashcode(A, B)(A first, B second)
 
 // SortUnitTests
 
-@("Sort: appliesDefaultForOrder")
+@("SortUnitTests.appliesDefaultForOrder")
 unittest
 {
     assert(Sort.by("foo").iterator().next().getDirection() == Sort.DEFAULT_DIRECTION);
 }
 
-@("Sort: preventsNullProperty, preventsEmptyProperty, preventsNoProperties")
+@("SortUnitTests.preventsNullProperties")
+unittest
+{
+    assertThrown!IllegalArgumentException(Sort.by(Direction.ASC, cast(string[]) null));
+}
+
+@("SortUnitTests.preventsNullProperty")
 unittest
 {
     assertThrown!IllegalArgumentException(Sort.by(Direction.ASC, cast(string) null));
+}
+
+@("SortUnitTests.preventsEmptyProperty")
+unittest
+{
     assertThrown!IllegalArgumentException(Sort.by(Direction.ASC, ""));
+}
+
+@("SortUnitTests.preventsNoProperties")
+unittest
+{
     assertThrown!IllegalArgumentException(Sort.by(Direction.ASC, new string[0]));
 }
 
-@("Sort: allowsCombiningSorts, handlesAdditionalNullSort")
+@("SortUnitTests.allowsCombiningSorts")
 unittest
 {
     auto sort = Sort.by("foo").and(Sort.by("bar"));
     assert(ordersOf(sort) == [Order.by("foo"), Order.by("bar")]);
+}
+
+@("SortUnitTests.handlesAdditionalNullSort")
+unittest
+{
     assert(ordersOf(Sort.by("foo").and(Sort.unsorted())) == [Order.by("foo")]);
 }
 
-@("Sort: configuresIgnoreCaseForOrder, orderDoesNotIgnoreCaseByDefault")
+@("SortUnitTests.configuresIgnoreCaseForOrder")
 unittest
 {
     assert(Order.asc("foo").ignoreCase().isIgnoreCase());
     assert(Sort.by(Order.by("foo").ignoreCase()).descending().iterator().next().isIgnoreCase());
     assert(Sort.by(Order.by("foo").ignoreCase()).ascending().iterator().next().isIgnoreCase());
+}
+
+@("SortUnitTests.orderDoesNotIgnoreCaseByDefault")
+unittest
+{
     assert(!Order.by("foo").isIgnoreCase());
     assert(!Order.asc("foo").isIgnoreCase());
     assert(!Order.desc("foo").isIgnoreCase());
 }
 
-@("Sort: createsOrderWithDirection")
+@("SortUnitTests.createsOrderWithDirection")
 unittest
 {
     assert(Order.asc("foo").getDirection() == Direction.ASC);
     assert(Order.desc("foo").getDirection() == Direction.DESC);
 }
 
-@("Sort: ordersWithDifferentIgnoreCaseDoNotEqual")
+@("SortUnitTests.ordersWithDifferentIgnoreCaseDoNotEqual")
 unittest
 {
     auto foo = Order.by("foo");
@@ -92,16 +117,31 @@ unittest
     assert(foo.hashCode() != fooIgnoreCase.hashCode());
 }
 
-@("Sort: null handling hints")
+@("SortUnitTests.orderWithNullHandlingHintNullsFirst")
 unittest
 {
     assert(Order.by("foo").nullsFirst().getNullHandling() == NullHandling.NULLS_FIRST);
+}
+
+@("SortUnitTests.orderWithNullHandlingHintNullsLast")
+unittest
+{
     assert(Order.by("foo").nullsLast().getNullHandling() == NullHandling.NULLS_LAST);
+}
+
+@("SortUnitTests.orderWithNullHandlingHintNullsNative")
+unittest
+{
     assert(Order.by("foo").nullsNative().getNullHandling() == NullHandling.NATIVE);
+}
+
+@("SortUnitTests.orderWithDefaultNullHandlingHint")
+unittest
+{
     assert(Order.by("foo").getNullHandling() == NullHandling.NATIVE);
 }
 
-@("Sort: retainsNullHandlingAfterChangingDirection")
+@("SortUnitTests.retainsNullHandlingAfterChangingDirection")
 unittest
 {
     auto order = Order.by("foo").with_(NullHandling.NULLS_FIRST);
@@ -109,7 +149,7 @@ unittest
     assert(Sort.by(order).descending().iterator().next().getNullHandling() == NullHandling.NULLS_FIRST);
 }
 
-@("Sort: createsNewOrderForDifferentProperty")
+@("SortUnitTests.createsNewOrderForDifferentProperty")
 unittest
 {
     auto source = Order.desc("foo").nullsFirst().ignoreCase();
@@ -127,7 +167,7 @@ unittest
             "firstName", "lastName"));
 }
 
-@("Sort: reversesSortCorrectly")
+@("SortUnitTests.reversesSortCorrectly")
 unittest
 {
     assert(ordersOf(Sort.by(Order.asc("center"), Order.desc("radius")).reverse()) == [

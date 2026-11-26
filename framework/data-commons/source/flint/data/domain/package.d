@@ -15,13 +15,14 @@ $(UL
     $(LI `Streamable` is `Iterable` here (R10); `map` takes a delegate (R9). `Sort` has `Iterable`'s methods but does
         not declare the interface: `Iterable!(Sort.Order)` inside `Sort`'s own base list is a recursive template
         expansion in D.)
-    $(LI Pending ports include the `TypedPropertyPath` overloads, `TypedSort` and `SliceImpl`.)
+    $(LI Typed sort resolves named getter aliases at compile time. `SliceImpl` remains pending.)
 )
 +/
 module flint.data.domain;
 
-import flint.java.lang : IllegalArgumentException, IllegalStateException, Iterable;
-import flint.java.util : ArrayList, Collections, Iterator, List, Objects, Optional;
+import flint.data.core : PropertyOwner, PropertyValue, propertySegment, TypedPropertyPath;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, Iterable, NullPointerException;
+import flint.java.util : ArrayList, Collections, Iterator, List, Map, Objects, Optional;
 
 public import flint.data.domain.limit : Limit;
 public import flint.data.domain.scroll_position : KeysetScrollPosition, OffsetScrollPosition, ScrollPosition;
@@ -75,12 +76,49 @@ class Sort
     /// A sort for the given properties, all in `direction`.
     static Sort by(Direction direction, string[] properties...)
     {
+        return byNames(direction, properties);
+    }
+
+    /// A sort by typed property paths of one domain type, ascending.
+    static Sort by(T, P, Paths...)(TypedPropertyPath!(T, P) first, Paths remaining)
+    {
+        return by(DEFAULT_DIRECTION, first, remaining);
+    }
+
+    /// A sort by typed property paths of one domain type in the given direction.
+    static Sort by(T, P, Paths...)(Direction direction, TypedPropertyPath!(T, P) first, Paths remaining)
+    {
+        string[1 + Paths.length] properties;
+        properties[0] = pathName(first);
+        foreach (index, path; remaining)
+        {
+            static assert(is(typeof(path).Owner == T), "A sort's typed property paths must share the same domain type");
+            properties[index + 1] = pathName(path);
+        }
+        return byNames(direction, properties[]);
+    }
+
+    private static Sort byNames(Direction direction, scope const(string)[] properties)
+    {
         if (properties.length == 0)
             throw new IllegalArgumentException("At least one property must be given");
         auto result = new ArrayList!Order();
         foreach (property; properties)
             result.add(new Order(direction, property));
         return Sort.by(cast(List!Order) result);
+    }
+
+    private static string pathName(T, P)(TypedPropertyPath!(T, P) path)
+    {
+        if (path is null)
+            throw new NullPointerException("Property path must not be null");
+        return path.toDotPath();
+    }
+
+    /// Start a typed sort for `T`. Prefer using `by` with typed property paths in new code.
+    static TypedSort!T sort(T)()
+    {
+        return new TypedSort!T(null);
     }
 
     /// A sort instance representing no sorting at all.
@@ -224,6 +262,37 @@ class Sort
         return Sort.by(cast(List!Order) result);
     }
 
+    /// A sort defined by a chain of named property getters.
+    static class TypedSort(T) : Sort
+    {
+        private string path;
+
+        private this(string path)
+        {
+            super(path.length ? List!Order.of(Order.by(path)) : Collections.emptyList!Order());
+            this.path = path;
+        }
+
+        /// Append a getter. Collection and map getters navigate from the element or value type.
+        TypedSort!(PropertyTarget!(PropertyValue!getter)) by(alias getter)()
+                if (is(T : PropertyOwner!getter))
+        {
+            alias Target = PropertyTarget!(PropertyValue!getter);
+            enum segment = propertySegment!getter;
+            return new TypedSort!Target(path.length ? path ~ "." ~ segment : segment);
+        }
+    }
+
+    private template PropertyTarget(Value)
+    {
+        static if (is(Value : Map!(K, V), K, V))
+            alias PropertyTarget = V;
+        else static if (is(Value : Iterable!V, V))
+            alias PropertyTarget = V;
+        else
+            alias PropertyTarget = Value;
+    }
+
     /// Enumeration for sort directions: `Sort.Direction.ASC` and `Sort.Direction.DESC`.
     static struct Direction
     {
@@ -343,16 +412,34 @@ class Sort
             return new Order(DEFAULT_DIRECTION, property);
         }
 
+        /// An ascending order for a typed property path.
+        static Order by(T, P)(TypedPropertyPath!(T, P) property)
+        {
+            return by(pathName(property));
+        }
+
         /// An ascending order for `property`.
         static Order asc(string property)
         {
             return new Order(Direction.ASC, property, NullHandling.NATIVE);
         }
 
+        /// An ascending order for a typed property path.
+        static Order asc(T, P)(TypedPropertyPath!(T, P) property)
+        {
+            return asc(pathName(property));
+        }
+
         /// A descending order for `property`.
         static Order desc(string property)
         {
             return new Order(Direction.DESC, property, NullHandling.NATIVE);
+        }
+
+        /// A descending order for a typed property path.
+        static Order desc(T, P)(TypedPropertyPath!(T, P) property)
+        {
+            return desc(pathName(property));
         }
 
         ///
@@ -403,10 +490,22 @@ class Sort
             return new Order(direction, property, ignoreCase_, nullHandling);
         }
 
+        /// The same order for a different typed property path.
+        Order withProperty(T, P)(TypedPropertyPath!(T, P) property)
+        {
+            return withProperty(pathName(property));
+        }
+
         /// A sort of these properties in this order's direction.
         Sort withProperties(string[] properties...)
         {
             return Sort.by(direction, properties);
+        }
+
+        /// A sort in this order's direction for typed property paths of one domain type.
+        Sort withProperties(T, P, Paths...)(TypedPropertyPath!(T, P) first, Paths remaining)
+        {
+            return Sort.by(direction, first, remaining);
         }
 
         /// The same order, ignoring case.
