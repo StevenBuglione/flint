@@ -1,0 +1,12 @@
+[project]
+name = "property-relaxed"
+version = "0.1.0"
+flint = "1.0"
+type = "executable"
+base-package = "property_relaxed"
+description = "Flint AOT fixture for relaxed property names in Boot's application environment."
+
+[dependencies]
+"flint:boot-core" = {}
+"flint:boot-autoconfigure" = {}
+"flint:context" = {}

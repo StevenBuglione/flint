@@ -207,29 +207,36 @@
       "status": "ported"
     },
     "org/springframework/boot/autoconfigure/condition/ConditionalOnPropertyTests.java": {
-      "d": "tests/aot/property-conditions/main.d",
+      "d": [
+        "tests/aot/property-conditions/main.d",
+        "tests/aot/property-relaxed/test/property_relaxed/relaxed_test.d"
+      ],
       "methods": {
         "ported": [
           "allPropertiesAreDefined",
+          "caseInsensitive",
           "defaultValueIsNotSet",
           "defaultValueIsSet",
           "defaultValueIsSetDifferentValue",
           "disableIfNotConfiguredOtherwise",
+          "disableIfNotConfiguredOtherwiseWithConfig",
+          "disableIfNotConfiguredOtherwiseWithConfigDifferentCase",
           "enabledIfNotConfiguredOtherwise",
+          "enabledIfNotConfiguredOtherwiseWithConfig",
           "enabledIfNotConfiguredOtherwiseWithConfigDifferentCase",
           "multiValuesAllSet",
           "multiValuesOnlyOneSet",
           "notAllPropertiesAreDefined",
+          "prefix",
           "prefixWithoutPeriod",
           "propertyValueEqualsFALSE",
           "propertyValueEqualsFalse",
+          "relaxedEnabledByDefault",
+          "relaxedName",
+          "simpleValueIsSet",
           "usingValueAttribute"
         ],
         "skipped": {
-          "caseInsensitive": "Relaxed lookup across camel case and kebab case is deferred.",
-          "disableIfNotConfiguredOtherwiseWithConfig": "Relaxed lookup across camel case and kebab case is deferred.",
-          "disableIfNotConfiguredOtherwiseWithConfigDifferentCase": "Relaxed lookup across camel case and kebab case is deferred.",
-          "enabledIfNotConfiguredOtherwiseWithConfig": "Relaxed lookup across camel case and kebab case is deferred.",
           "metaAndDirectAnnotationConditionDoesNotMatchWhenNeitherPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
           "metaAndDirectAnnotationConditionDoesNotMatchWhenOnlyDirectPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
           "metaAndDirectAnnotationConditionDoesNotMatchWhenOnlyMetaPropertyIsSet": "Composed property conditions and alias overrides are deferred.",
@@ -244,12 +251,8 @@
           "multiplePropertiesConditionReportWhenMatched": "Condition evaluation report output is deferred.",
           "nameAndValueMustNotBeSpecified": "Attribute validation has a separate AOT diagnostic port pending.",
           "nameOrValueMustBeSpecified": "Attribute validation has a separate AOT diagnostic port pending.",
-          "prefix": "Relaxed lookup across camel case and kebab case is deferred.",
-          "relaxedEnabledByDefault": "Relaxed lookup across camel case and kebab case is deferred.",
-          "relaxedName": "Relaxed lookup across camel case and kebab case is deferred.",
           "repeatablePropertiesConditionReportWhenDoesNotMatch": "Condition evaluation report output is deferred.",
-          "repeatablePropertiesConditionReportWhenMatched": "Condition evaluation report output is deferred.",
-          "simpleValueIsSet": "Relaxed lookup across camel case and kebab case is deferred."
+          "repeatablePropertiesConditionReportWhenMatched": "Condition evaluation report output is deferred."
         }
       },
       "status": "partial"

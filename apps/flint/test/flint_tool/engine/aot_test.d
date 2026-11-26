@@ -914,6 +914,32 @@ unittest
     runGeneratedContextStartup("property-conditions");
 }
 
+@("Boot property conditions resolve relaxed names through the real application environment")
+unittest
+{
+    import std.file : getcwd;
+    import std.process : environment;
+    import flint_tool.app : dispatch;
+
+    const project = copyFixture("property-relaxed");
+    scope (exit)
+        remove(project);
+    const directory = getcwd();
+    const variables = environment.toAA();
+    scope (exit)
+    {
+        assert(getcwd() == directory, "property-relaxed commands changed the working directory");
+        const current = environment.toAA();
+        assert(current == variables, "property-relaxed commands changed the process environment");
+    }
+    version (LDC)
+        enum testCompiler = "ldc2";
+    else
+        enum testCompiler = "dmd";
+    assert(dispatch(["lock", "-C", project]) == 0, "property-relaxed lock");
+    assert(dispatch(["test", "-C", project, "--compiler", testCompiler, "--locked"]) == 0, "property-relaxed test");
+}
+
 private void runGeneratedContextStartup(string fixture)
 {
     const project = copyFixture(fixture);
