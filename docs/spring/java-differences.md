@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 202 | 348 | 0 | 15,246 |
 | boot | spring-boot@v4.2.0 | 44 | 49 | 2,133 | 13,377 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 104 | 0 | 3,675 |
-| framework | spring-framework@v7.1.0 | 3,516 | 1,403 | 4,870 | 30,045 |
+| framework | spring-framework@v7.1.0 | 3,512 | 1,402 | 4,870 | 30,050 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3158,12 +3158,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.converter.json.JacksonJsonHttpMessageConverter` | `flint.http.converter.json.JacksonJsonHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.json.JacksonJsonHttpMessageConverter#<init>()` | `flint.http.converter.json.JacksonJsonHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.json.JacksonJsonHttpMessageConverter#<init>(JsonMapper)` | `flint.http.converter.json.JacksonJsonHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.http.converter.json.JacksonJsonHttpMessageConverter#<init>(JsonMapper.Builder)` | `flint.http.converter.json.JacksonJsonHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.http.server
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.http.server.PathContainer` | `flint.web.util.pattern.PathContainer` | [R14](api-mapping.md#r14-strings-and-text) | Decoded UTF-8 segments are held in a package-scoped value used by matching. Public PathPattern entry points take path strings. PathContainer members and matrix variables remain deferred. |
 | `org.springframework.http.server.ServletServerHttpResponse#getBody()` | `flint.http.server.ServletServerHttpResponse.writeBody` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.jdbc.core
@@ -3807,6 +3807,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver.NamedValueInfo` | `flint.web.method.annotation.NamedValueInfo` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to a module-level value record for the resolver hook. |
+| `org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver.NamedValueInfo#<init>(String,boolean,String)` | `flint.web.method.annotation.NamedValueInfo` | [R13](api-mapping.md#r13-nested-and-inner-classes), [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.method.annotation.ExceptionHandlerMethodResolver` | `flint.web.method.annotation.ExceptionHandlerMethodResolver` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.method.annotation.ExceptionHandlerMethodResolver#<init>(Class)` | `flint.web.method.annotation.ExceptionHandlerMethodResolver` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.method.annotation.ExceptionHandlerMethodResolver#hasExceptionMappings()` | `flint.web.method.annotation.ExceptionHandlerMethodResolver.hasExceptionMappings` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -3827,6 +3829,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.web.method.support.HandlerMethodArgumentResolverComposite#addResolvers(List)` | `flint.web.method.support.HandlerMethodArgumentResolverComposite.addResolvers` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.web.method.support.HandlerMethodReturnValueHandlerComposite#addHandlers(List)` | `flint.web.method.support.HandlerMethodReturnValueHandlerComposite.addHandlers` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.web.method.support.ModelAndViewContainer#getModel()` | `flint.web.method.support.ModelAndViewContainer.getModel` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) | The lazy default model uses an ordered Java collection facade with Any values. Redirect models are deferred. |
 
 #### org.springframework.web.servlet
 
@@ -3881,18 +3884,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#addInterceptors(InterceptorRegistry)` | `flint.web.servlet.config.annotation.WebMvcConfigurationSupport.addInterceptors` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#addReturnValueHandlers(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurationSupport.addReturnValueHandlers` | [R10](api-mapping.md#r10-streams-and-collections), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#configureHandlerExceptionResolvers(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurationSupport.configureHandlerExceptionResolvers` | [R10](api-mapping.md#r10-streams-and-collections), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#configureMessageConverters(HttpMessageConverters.ServerBuilder)` | `flint.web.servlet.config.annotation.WebMvcConfigurationSupport.configureMessageConverters` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#configureMessageConverters(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurationSupport.configureMessageConverters` | [R10](api-mapping.md#r10-streams-and-collections), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#extendHandlerExceptionResolvers(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurationSupport.extendHandlerExceptionResolvers` | [R10](api-mapping.md#r10-streams-and-collections), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#extendMessageConverters(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurationSupport.extendMessageConverters` | [R10](api-mapping.md#r10-streams-and-collections), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#getInterceptors(FormattingConversionService,ResourceUrlProvider)` | `flint.web.servlet.config.annotation.WebMvcConfigurationSupport.getInterceptors` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport#getMessageConverters()` | `flint.web.servlet.config.annotation.WebMvcConfigurationSupport.getMessageConverters` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurer` | `flint.web.servlet.config.annotation.WebMvcConfigurer` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurer#addArgumentResolvers(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurer.addArgumentResolvers` | [R10](api-mapping.md#r10-streams-and-collections), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurer#addInterceptors(InterceptorRegistry)` | `flint.web.servlet.config.annotation.WebMvcConfigurer.addInterceptors` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurer#addReturnValueHandlers(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurer.addReturnValueHandlers` | [R10](api-mapping.md#r10-streams-and-collections), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurer#configureHandlerExceptionResolvers(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurer.configureHandlerExceptionResolvers` | [R10](api-mapping.md#r10-streams-and-collections), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
-| `org.springframework.web.servlet.config.annotation.WebMvcConfigurer#configureMessageConverters(HttpMessageConverters.ServerBuilder)` | `flint.web.servlet.config.annotation.WebMvcConfigurer.configureMessageConverters` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurer#configureMessageConverters(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurer.configureMessageConverters` | [R10](api-mapping.md#r10-streams-and-collections), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurer#extendHandlerExceptionResolvers(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurer.extendHandlerExceptionResolvers` | [R10](api-mapping.md#r10-streams-and-collections), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.web.servlet.config.annotation.WebMvcConfigurer#extendMessageConverters(List)` | `flint.web.servlet.config.annotation.WebMvcConfigurer.extendMessageConverters` | [R10](api-mapping.md#r10-streams-and-collections), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -3908,9 +3908,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.web.servlet.mvc.method.RequestMappingInfo` | `flint.web.servlet.mvc.method.RequestMappingInfo` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.web.servlet.mvc.method.RequestMappingInfo#<init>(PatternsRequestCondition,RequestMethodsRequestCondition,ParamsRequestCondition,HeadersRequestCondition,ConsumesRequestCondition,ProducesRequestCondition,VersionRequestCondition,RequestCondition)` | `flint.web.servlet.mvc.method.RequestMappingInfo` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.web.servlet.mvc.method.RequestMappingInfo#<init>(RequestMappingInfo,RequestCondition)` | `flint.web.servlet.mvc.method.RequestMappingInfo` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.web.servlet.mvc.method.RequestMappingInfo#<init>(String,PatternsRequestCondition,RequestMethodsRequestCondition,ParamsRequestCondition,HeadersRequestCondition,ConsumesRequestCondition,ProducesRequestCondition,VersionRequestCondition,RequestCondition)` | `flint.web.servlet.mvc.method.RequestMappingInfo` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.web.servlet.mvc.method.RequestMappingInfo#compareTo(RequestMappingInfo,HttpServletRequest)` | `flint.web.servlet.mvc.method.RequestMappingInfo.compareTo` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.web.servlet.mvc.method.RequestMappingInfo#getMatchingCondition(HttpServletRequest)` | `flint.web.servlet.mvc.method.RequestMappingInfo.getMatchingCondition` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.web.servlet.mvc.method.RequestMappingInfo#getName()` | `flint.web.servlet.mvc.method.RequestMappingInfo.getName` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
@@ -3954,9 +3951,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.web.util.pattern.PathPattern#compareTo(PathPattern)` | `flint.web.util.pattern.PathPattern.compareTo` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PathPattern#getPatternString()` | `flint.web.util.pattern.PathPattern.getPatternString` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PathPattern#hasPatternSyntax()` | `flint.web.util.pattern.PathPattern.hasPatternSyntax` | [R14](api-mapping.md#r14-strings-and-text) |  |
-| `org.springframework.web.util.pattern.PathPattern#matchAndExtract(PathContainer)` | `flint.web.util.pattern.PathPattern.matchAndExtract` | [R14](api-mapping.md#r14-strings-and-text) |  |
-| `org.springframework.web.util.pattern.PathPattern#matches(PathContainer)` | `flint.web.util.pattern.PathPattern.matches` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `org.springframework.web.util.pattern.PathPattern#matchAndExtract(PathContainer)` | `flint.web.util.pattern.PathPattern.matchAndExtract` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text) | The public overload parses a UTF-8 path string and returns a nullable read-only result pointer. |
+| `org.springframework.web.util.pattern.PathPattern#matches(PathContainer)` | `flint.web.util.pattern.PathPattern.matches` | [R14](api-mapping.md#r14-strings-and-text) | The public overload parses a UTF-8 path string. |
 | `org.springframework.web.util.pattern.PathPattern#toString()` | `flint.web.util.pattern.PathPattern.toString` | [R14](api-mapping.md#r14-strings-and-text) |  |
+| `org.springframework.web.util.pattern.PathPattern.PathMatchInfo` | `flint.web.util.pattern.PathMatchInfo` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to a module-level value record. Matrix-variable access is deferred. |
+| `org.springframework.web.util.pattern.PathPattern.PathMatchInfo#getUriVariables()` | `flint.web.util.pattern.PathMatchInfo.getUriVariables` | [R10](api-mapping.md#r10-streams-and-collections) | Returns ordered name and value pairs. |
 | `org.springframework.web.util.pattern.PathPatternParser` | `flint.web.util.pattern.PathPatternParser` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PathPatternParser#defaultInstance` | `flint.web.util.pattern.PathPatternParser.defaultInstance` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `org.springframework.web.util.pattern.PathPatternParser#parse(String)` | `flint.web.util.pattern.PathPatternParser.parse` | [R14](api-mapping.md#r14-strings-and-text) |  |
@@ -9745,14 +9744,14 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.http.converter | 155 | 0 |
 | org.springframework.http.converter.cbor | 8 | 0 |
 | org.springframework.http.converter.feed | 13 | 0 |
-| org.springframework.http.converter.json | 214 | 0 |
+| org.springframework.http.converter.json | 215 | 0 |
 | org.springframework.http.converter.multipart | 30 | 0 |
 | org.springframework.http.converter.protobuf | 25 | 0 |
 | org.springframework.http.converter.smile | 8 | 0 |
 | org.springframework.http.converter.support | 3 | 0 |
 | org.springframework.http.converter.xml | 78 | 0 |
 | org.springframework.http.converter.yaml | 8 | 0 |
-| org.springframework.http.server | 63 | 0 |
+| org.springframework.http.server | 62 | 0 |
 | org.springframework.http.server.observation | 56 | 0 |
 | org.springframework.http.server.reactive | 0 | 201 |
 | org.springframework.http.server.reactive.observation | 0 | 62 |
@@ -9932,7 +9931,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.web.jsf | 29 | 0 |
 | org.springframework.web.jsf.el | 18 | 0 |
 | org.springframework.web.method | 37 | 0 |
-| org.springframework.web.method.annotation | 126 | 0 |
+| org.springframework.web.method.annotation | 124 | 0 |
 | org.springframework.web.method.support | 32 | 0 |
 | org.springframework.web.multipart | 35 | 0 |
 | org.springframework.web.multipart.support | 81 | 0 |
@@ -9967,17 +9966,17 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.web.service.annotation | 41 | 0 |
 | org.springframework.web.service.invoker | 171 | 29 |
 | org.springframework.web.service.registry | 70 | 0 |
-| org.springframework.web.servlet | 142 | 0 |
+| org.springframework.web.servlet | 143 | 0 |
 | org.springframework.web.servlet.config | 37 | 0 |
-| org.springframework.web.servlet.config.annotation | 262 | 0 |
+| org.springframework.web.servlet.config.annotation | 265 | 0 |
 | org.springframework.web.servlet.function | 310 | 0 |
 | org.springframework.web.servlet.function.support | 16 | 0 |
-| org.springframework.web.servlet.handler | 185 | 0 |
+| org.springframework.web.servlet.handler | 187 | 0 |
 | org.springframework.web.servlet.i18n | 67 | 0 |
 | org.springframework.web.servlet.mvc | 77 | 0 |
 | org.springframework.web.servlet.mvc.annotation | 4 | 0 |
 | org.springframework.web.servlet.mvc.condition | 120 | 0 |
-| org.springframework.web.servlet.mvc.method | 59 | 0 |
+| org.springframework.web.servlet.mvc.method | 62 | 0 |
 | org.springframework.web.servlet.mvc.method.annotation | 365 | 4 |
 | org.springframework.web.servlet.mvc.support | 44 | 0 |
 | org.springframework.web.servlet.resource | 186 | 0 |
@@ -10012,7 +10011,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.web.socket.sockjs.transport.handler | 0 | 78 |
 | org.springframework.web.socket.sockjs.transport.session | 0 | 87 |
 | org.springframework.web.util | 359 | 0 |
-| org.springframework.web.util.pattern | 47 | 0 |
+| org.springframework.web.util.pattern | 45 | 0 |
 | org.thymeleaf | 153 | 0 |
 | org.thymeleaf.cache | 117 | 0 |
 | org.thymeleaf.context | 157 | 0 |
