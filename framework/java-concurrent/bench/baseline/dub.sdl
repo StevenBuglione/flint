@@ -1,0 +1,4 @@
+name "probe-java-concurrent-baseline"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"

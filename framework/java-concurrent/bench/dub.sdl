@@ -1,0 +1,5 @@
+name "probe-java-concurrent"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-concurrent" path="../../.."

@@ -2645,6 +2645,8 @@
 "io.micrometer.observation.contextpropagation.**":{"status":"excluded","category":"deferred","phase":"2"},
 "io.micrometer.observation.docs.**":{"status":"excluded","category":"deferred","phase":"2"},
 "io.micrometer.observation.transport.**":{"status":"excluded","category":"deferred","phase":"2"},
+"java.util.concurrent.Callable":{"status":"adapted","d":"flint.java.util.concurrent.callable.Callable","rules":["R1","R3","R9"]},
+"java.util.concurrent.Callable#call()":{"status":"adapted","d":"flint.java.util.concurrent.callable.Callable.call","rules":["R8"]},
 "jakarta.annotation.Generated":{"status":"ported","d":"flint.jakarta.annotation.Generated"},
 "jakarta.annotation.Generated#comments":{"status":"ported","d":"flint.jakarta.annotation.Generated.comments"},
 "jakarta.annotation.Generated#date":{"status":"ported","d":"flint.jakarta.annotation.Generated.date"},
