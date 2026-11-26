@@ -18,5 +18,13 @@
   "flint.java.time.yearmonth": {
     "incremental_linked_bytes": 14309,
     "template_instances": 487
+  },
+  "flint.java.time.monthday": {
+    "incremental_linked_bytes": 14366,
+    "template_instances": 484
+  },
+  "flint.java.time.year": {
+    "incremental_linked_bytes": 13249,
+    "template_instances": 489
   }
 }
