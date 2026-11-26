@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 197 | 323 | 0 | 15,276 |
 | boot | spring-boot@v4.2.0 | 43 | 32 | 2,133 | 13,395 |
 | data-commons | spring-data-commons@4.2.0 | 203 | 107 | 0 | 3,672 |
-| framework | spring-framework@v7.1.0 | 3,502 | 1,397 | 4,850 | 30,085 |
+| framework | spring-framework@v7.1.0 | 3,502 | 1,398 | 4,850 | 30,084 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 378 | 0 | 934 |
@@ -2731,7 +2731,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.HttpMethod#valueOf(String)` | `flint.http.HttpMethod.valueOf` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpMethod#values()` | `flint.http.HttpMethod.values` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpOutputMessage` | `flint.http.HttpOutputMessage` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.http.HttpOutputMessage#getBody()` | `flint.http.HttpOutputMessage.getBody` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.http.HttpOutputMessage#getBody()` | `flint.http.HttpOutputMessage.writeBody` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.http.HttpStatus` | `flint.http.HttpStatus` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpStatus#ACCEPTED` | `flint.http.HttpStatus.ACCEPTED` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.http.HttpStatus#ALREADY_REPORTED` | `flint.http.HttpStatus.ALREADY_REPORTED` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -3046,6 +3046,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.http.converter.json.JacksonJsonHttpMessageConverter#<init>()` | `flint.http.converter.json.JacksonJsonHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.json.JacksonJsonHttpMessageConverter#<init>(JsonMapper)` | `flint.http.converter.json.JacksonJsonHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.http.converter.json.JacksonJsonHttpMessageConverter#<init>(JsonMapper.Builder)` | `flint.http.converter.json.JacksonJsonHttpMessageConverter` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### org.springframework.http.server
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.http.server.ServletServerHttpResponse#getBody()` | `flint.http.server.ServletServerHttpResponse.writeBody` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.jdbc.core
 
@@ -9538,7 +9544,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.http.converter.support | 3 | 0 |
 | org.springframework.http.converter.xml | 78 | 0 |
 | org.springframework.http.converter.yaml | 8 | 0 |
-| org.springframework.http.server | 64 | 0 |
+| org.springframework.http.server | 63 | 0 |
 | org.springframework.http.server.observation | 56 | 0 |
 | org.springframework.http.server.reactive | 0 | 201 |
 | org.springframework.http.server.reactive.observation | 0 | 62 |

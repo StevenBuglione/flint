@@ -687,8 +687,24 @@
       "status": "deferred"
     },
     "org/springframework/http/server/ServletServerHttpResponseTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/framework-test/tests/servlet_server_http_response_tests.d",
+      "methods": {
+        "ported": [
+          "getBody",
+          "getHeaders",
+          "getHeadersWithNoContentType",
+          "preExistingContentTypeIsOverriddenImmediately",
+          "setStatusCode"
+        ],
+        "skipped": {
+          "appliesFlushCallsOnOutputStream": "Requires a body stream and its opt-in flush property.",
+          "contentTypeHeaderNotCopiedToProperties": "Requires Content-Type writes through the servlet header API.",
+          "getHeadersWithContentType": "Requires a view of servlet response headers.",
+          "preExistingHeadersFromHttpServletResponse": "Requires a view of servlet response headers.",
+          "skipFlushCallsOnOutputStream": "Requires a body stream with a separately callable flush operation."
+        }
+      },
+      "status": "partial"
     },
     "org/springframework/http/server/observation/DefaultServerRequestObservationConventionTests.java": {
       "phase": "2",
