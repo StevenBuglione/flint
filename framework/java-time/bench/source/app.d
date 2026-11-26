@@ -1,6 +1,7 @@
 module app;
 
 import core.stdc.stdio : fputc, stdout;
+import flint.java.time : LocalDate;
 import flint.java.time.period : Period;
 
 @safe:
@@ -8,7 +9,19 @@ import flint.java.time.period : Period;
 int main(string[] args)
 {
     const offset = args.length > 1 ? "P2M3D" : "P6Y3M1D";
-    const period = Period.parse(offset).plusMonths(10).normalized();
+    Period period;
+    if (args.length > 2)
+    {
+        static immutable LocalDate[2] january = [
+            LocalDate.of(2020, 1, 1), LocalDate.of(2020, 1, 31)
+        ];
+        static immutable LocalDate[2] march = [LocalDate.of(2020, 3, 1), LocalDate.of(2020, 3, 31)];
+        const start = january[args[1].length & 1];
+        const end = march[args[2].length & 1];
+        period = (args.length & 1) != 0 ? Period.between(start, end) : Period.between(end, start);
+    }
+    else
+        period = Period.parse(offset).plusMonths(10).normalized();
     foreach (c; period.toString())
         fputc(c, stdout);
     fputc('\n', stdout);

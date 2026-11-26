@@ -2,6 +2,7 @@ module flint.java.time.period_test;
 
 import core.memory : GC;
 import flint.java.lang : ArithmeticException, NullPointerException, NumberFormatException;
+import flint.java.time : LocalDate;
 import flint.java.time.format : DateTimeParseException;
 import flint.java.time.period : Period;
 
@@ -115,4 +116,26 @@ import flint.java.time.period : Period;
     const rendered = period.toString();
     const bytes = GC.stats().allocatedInCurrentThread - before;
     assert(rendered == input[] && bytes > 0 && bytes <= 16);
+}
+
+@("period between preserves directed month-end and leap-day differences") unittest
+{
+    Period between(LocalDate start, LocalDate end) pure nothrow @nogc
+    {
+        return Period.between(start, end);
+    }
+
+    const januaryEnd = LocalDate.of(2020, 1, 31);
+    const leapDay = LocalDate.of(2020, 2, 29);
+    const marchStart = LocalDate.of(2020, 3, 1);
+    const marchEnd = LocalDate.of(2020, 3, 31);
+    assert(between(januaryEnd, leapDay) == Period.ofDays(29));
+    assert(between(januaryEnd, marchStart) == Period.of(0, 1, 1));
+    assert(between(marchStart, januaryEnd) == Period.of(0, -1, -1));
+    assert(between(marchEnd, leapDay) == Period.of(0, -1, -2));
+    assert(between(leapDay, LocalDate.of(2021, 2, 28)) == Period.of(0, 11, 30));
+    assert(between(LocalDate.of(2020, 12, 31), LocalDate.of(2021, 1, 1)) == Period.ofDays(1));
+    assert(between(leapDay, leapDay) == Period.ZERO);
+    assert(between(LocalDate.MIN, LocalDate.MAX) == Period.of(1_999_999_998, 11, 30));
+    assert(between(LocalDate.MAX, LocalDate.MIN) == Period.of(-1_999_999_998, -11, -30));
 }

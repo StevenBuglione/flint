@@ -3,6 +3,7 @@ module flint.java.time.period;
 
 import flint.engine.aot.text : parseLong;
 import flint.java.lang : ArithmeticException, NullPointerException, NumberFormatException;
+import flint.java.time : LocalDate, epochDayOf;
 import flint.java.time.format : DateTimeParseException;
 
 @safe:
@@ -46,6 +47,33 @@ struct Period
     static Period ofDays(int days) pure nothrow @nogc
     {
         return of(0, 0, days);
+    }
+
+    /// The directed ISO calendar difference from the start date to the exclusive end date.
+    static Period between(LocalDate startDateInclusive, LocalDate endDateExclusive) pure nothrow @nogc
+    {
+        const endMonth = endDateExclusive.getMonthValue();
+        const startDay = startDateInclusive.getDayOfMonth();
+        const endDay = endDateExclusive.getDayOfMonth();
+        const yearDifference = endDateExclusive.getYear() - startDateInclusive.getYear();
+        long months = 12L * yearDifference + endMonth - startDateInclusive.getMonthValue();
+        int days = endDay - startDay;
+        if (months > 0 && days < 0)
+        {
+            // Stop in the previous month, clipping the start day to its length.
+            --months;
+            const previousYear = endDateExclusive.getYear() - (endMonth == 1 ? 1 : 0);
+            const previousMonth = endMonth == 1 ? 12 : endMonth - 1;
+            const firstOfEndMonth = endDateExclusive.toEpochDay() - endDay + 1;
+            const previousLength = cast(int)(firstOfEndMonth - epochDayOf(previousYear, previousMonth, 1));
+            days = endDay + (previousLength > startDay ? previousLength - startDay : 0);
+        }
+        else if (months < 0 && days > 0)
+        {
+            ++months;
+            days -= endDateExclusive.lengthOfMonth();
+        }
+        return of(cast(int)(months / 12), cast(int)(months % 12), days);
     }
 
     static Period parse(scope const(char)[] text) pure

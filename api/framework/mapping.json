@@ -33,7 +33,7 @@
 "java.time.Period#hashCode()":{"status":"ported","d":"flint.java.time.period.Period.hashCode"},
 "java.time.Period#toString()":{"status":"ported","d":"flint.java.time.period.Period.toString"},
 "java.time.Period#addTo(Temporal)":{"status":"excluded","category":"deferred","phase":"2"},
-"java.time.Period#between(LocalDate,LocalDate)":{"status":"excluded","category":"deferred","phase":"2"},
+"java.time.Period#between(LocalDate,LocalDate)":{"status":"ported","d":"flint.java.time.period.Period.between"},
 "java.time.Period#from(TemporalAmount)":{"status":"excluded","category":"deferred","phase":"2"},
 "java.time.Period#get(TemporalUnit)":{"status":"excluded","category":"deferred","phase":"2"},
 "java.time.Period#getChronology()":{"status":"excluded","category":"deferred","phase":"2"},
