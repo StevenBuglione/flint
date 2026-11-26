@@ -91,7 +91,13 @@ mkdir -p .flint && { [ -e .flint/peers ] || ln -s "$SHARED/.flint/peers" .flint/
 [ -d .native/install ] || { mkdir -p .native && cp -a "$SHARED/.native/install" .native/; }
 export PATH="$WT/.flint/bin:$WT/.tools/dmd2/linux/bin64:$PATH"
 H="python3 tools/measure_queue.py hold --"
-echo "== native blocks"; $H python3 tools/native_build.py --profile ci --target linux-x86_64-glibc --phase build --emit-dub || exit 4
+# A full native build only when what defines the libraries changed since the last one here; otherwise just the Flint
+# C shims over the installed libraries, plus the dub blocks (a full build recompiles OpenSSL every time).
+INPUTS=$(git ls-tree -r HEAD -- policy/native-lock.json policy/native-c.toml tools/native_build.py native/conan-index | sha256sum | cut -c1-64)
+SHIMS=""; [ -f .native/train-native-inputs ] && [ "$(cat .native/train-native-inputs)" = "$INPUTS" ] && SHIMS="--shims-only"
+echo "== native blocks ${SHIMS:-full build}"
+$H python3 tools/native_build.py --profile ci --target linux-x86_64-glibc --phase build $SHIMS --emit-dub || exit 4
+echo "$INPUTS" > .native/train-native-inputs
 echo "== flint"; $H python3 tools/install_toolchains.py --compiler flint || exit 4
 echo "== apps"; python3 tools/gates.py --module framework/web --definition-of-done --step apps --apps @APPS@ --json
 '''
