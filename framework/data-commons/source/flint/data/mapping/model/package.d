@@ -254,7 +254,7 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     }
 
     /// The last transient property registered under the name.
-    P getTransientProperty(string name)
+    override P getTransientProperty(string name)
     {
         foreach_reverse (property; transientProperties)
             if (property.getName() == name)
@@ -263,9 +263,10 @@ class BasicPersistentEntity(T, P) : PersistentEntity!(T, P) if (is(P : Persisten
     }
 
     /// Whether the name belongs to a registered transient property.
-    bool isTransient(string name)
+    override bool isTransient(string name)
     {
-        return getTransientProperty(name) !is null;
+        auto property = getTransientProperty(name);
+        return property !is null && property.isTransient();
     }
 
     /// Applies the configured order after registration.

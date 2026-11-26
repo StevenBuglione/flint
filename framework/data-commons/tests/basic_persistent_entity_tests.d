@@ -379,17 +379,35 @@ unittest
 @("transient registration is separate from persistent lookup and iteration")
 unittest
 {
-    auto entity = mapped!Person();
+    auto model = mapped!Person();
     auto identifier = new Property("id", classOf!Long, true);
     auto transientProperty = new Property("revision", classOf!long, false, true, true);
-    entity.addPersistentProperty(identifier);
-    entity.addPersistentProperty(transientProperty);
-    entity.addPersistentProperty(transientProperty);
+    model.addPersistentProperty(identifier);
+    model.addPersistentProperty(transientProperty);
+    model.addPersistentProperty(transientProperty);
+    PersistentEntity!(Person, Property) entity = model;
     assert(entity.getTransientProperty("revision") is transientProperty);
     assert(entity.isTransient("revision") && !entity.isTransient("id"));
+    assert(entity.getTransientProperty("id") is null && entity.getTransientProperty(null) is null);
+    assert(!entity.isTransient(null));
     assert(!entity.hasVersionProperty() && entity.getPersistentProperty("revision") is null);
     auto properties = entity.iterator();
     assert(properties.next() is identifier && !properties.hasNext());
+}
+
+@("transient lookup retains the last registration under a name")
+unittest
+{
+    auto model = mapped!Person();
+    auto original = new Property("revision", classOf!long, transient_:
+            true);
+    auto latest = new Property("revision", classOf!long, transient_:
+            true);
+    model.addPersistentProperty(original);
+    model.addPersistentProperty(latest);
+    model.addPersistentProperty(original);
+    PersistentEntity!(Person, Property) entity = model;
+    assert(entity.getTransientProperty("revision") is latest && !entity.iterator().hasNext());
 }
 
 @("rejectsNullBeanForPropertyAccessor")

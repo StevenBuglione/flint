@@ -252,6 +252,12 @@ interface PersistentEntity(T, P) : PersistentEntityIdentity, Iterable!P if (is(P
     /// The named persistent property, or an IllegalStateException when absent.
     P getRequiredPersistentProperty(string name);
 
+    /// The registered transient property with the given name, or null.
+    P getTransientProperty(string name);
+
+    /// Whether the given name denotes a transient property.
+    bool isTransient(string name);
+
     /// The metadata for the entity's domain type.
     TypeInformation getTypeInformation();
 
