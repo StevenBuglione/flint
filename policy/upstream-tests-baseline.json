@@ -4704,7 +4704,6 @@
       "io/micrometer/core/instrument/internal/DefaultLongTaskTimerTest.java",
       "io/micrometer/core/instrument/internal/DefaultMeterTest.java",
       "io/micrometer/core/instrument/logging/LoggingMeterRegistryTest.java",
-      "io/micrometer/core/instrument/noop/NoopFunctionTimerTest.java",
       "io/micrometer/core/instrument/noop/NoopLongTaskTimerTest.java",
       "io/micrometer/core/instrument/noop/NoopTimeGaugeTest.java",
       "io/micrometer/core/instrument/observation/DefaultMeterObservationHandlerTest.java",

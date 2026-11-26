@@ -32,6 +32,7 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopMeter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/Gauge.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/FunctionCounter.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/FunctionTimer.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/AbstractMeter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/util/MeterEquivalence.java
 // Modified by the Flint authors.
@@ -1045,6 +1046,48 @@ interface FunctionCounter : Meter
     /// Micrometer's default lazy count measurement (R3).
     mixin template Defaults(alias Measurements = MeasurementIterable, alias sample = countMeasurement)
     {
+        override Measurements measure()
+        {
+            return sample(this);
+        }
+    }
+}
+
+/// A timer that samples a monotonically increasing count and total time.
+interface FunctionTimer : Meter
+{
+    /// Sample the number of timed events.
+    double count();
+
+    /// Sample the total time in the requested unit.
+    double totalTime(TimeUnit unit);
+
+    /// Sample the time per event in the requested unit.
+    double mean(TimeUnit unit);
+
+    /// The unit used for published measurements.
+    TimeUnit baseTimeUnit();
+
+    package static double meanOf(FunctionTimer timer, TimeUnit unit)
+    {
+        const events = timer.count();
+        return events == 0.0 ? 0.0 : timer.totalTime(unit) / events;
+    }
+
+    private static MeasurementIterable functionTimerMeasurements(FunctionTimer timer)
+    {
+        return new MeterMeasurements(timer);
+    }
+
+    /// Micrometer's mean and lazy measurements (R3).
+    mixin template Defaults(alias Measurements = MeasurementIterable,
+            alias sample = functionTimerMeasurements, alias Unit = TimeUnit, alias average = meanOf)
+    {
+        override double mean(Unit unit)
+        {
+            return average(this, unit);
+        }
+
         override Measurements measure()
         {
             return sample(this);
@@ -2141,7 +2184,13 @@ private final class MeterMeasurements : MeasurementIterable
             measurements[2] = newSample(&summary.max, Statistic.MAX);
     }
 
-    // Keep the cold allocation shared across the timer and summary constructors.
+    this(FunctionTimer functionTimer)
+    {
+        measurements[0] = newSample(&functionTimer.count, Statistic.COUNT);
+        measurements[1] = newSample(() => functionTimer.totalTime(functionTimer.baseTimeUnit()), Statistic.TOTAL_TIME);
+    }
+
+    // Keep the cold allocation shared across constructors.
     pragma(inline, false) private static Measurement newSample(double delegate() @safe read, Statistic statistic)
     {
         return new Measurement(read, statistic);

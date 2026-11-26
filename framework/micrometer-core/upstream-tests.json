@@ -651,8 +651,16 @@
       "status": "ported"
     },
     "io/micrometer/core/instrument/noop/NoopFunctionTimerTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/micrometer-core/tests/function_timer_test.d",
+      "methods": {
+        "ported": [
+          "returnsCountAsZero",
+          "returnsId",
+          "returnsNanosAsTimeUnit",
+          "returnsTotalTimeAsZero"
+        ]
+      },
+      "status": "ported"
     },
     "io/micrometer/core/instrument/noop/NoopGaugeTest.java": {
       "d": "framework/micrometer-core/tests/noop_gauge_test.d",

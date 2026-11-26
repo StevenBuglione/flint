@@ -18,12 +18,14 @@
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopCounter.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopDistributionSummary.java
 // Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopFunctionCounter.java
+// Ported from micrometer-core 1.18.0: micrometer-core/src/main/java/io/micrometer/core/instrument/noop/NoopFunctionTimer.java
 // Modified by the Flint authors.
 module flint.micrometer.core.instrument.noop;
 
 import flint.java.util : Collections, List;
+import flint.java.util.concurrent : TimeUnit;
 import flint.micrometer.core.instrument : AbstractMeter, Counter, DistributionSummary,
-    FunctionCounter, Gauge, Measurement, Meter;
+    FunctionCounter, FunctionTimer, Gauge, Measurement, Meter;
 import flint.micrometer.core.instrument.distribution : HistogramSnapshot;
 
 @safe:
@@ -115,6 +117,36 @@ class NoopFunctionCounter : NoopMeter, FunctionCounter
     override double count()
     {
         return 0.0;
+    }
+}
+
+/// A disabled function timer with no observations.
+class NoopFunctionTimer : NoopMeter, FunctionTimer
+{
+    /// Retain the ID of the disabled function timer.
+    this(Meter.Id id)
+    {
+        super(id);
+    }
+
+    override double count()
+    {
+        return 0.0;
+    }
+
+    override double totalTime(TimeUnit)
+    {
+        return 0.0;
+    }
+
+    override double mean(TimeUnit unit)
+    {
+        return FunctionTimer.meanOf(this, unit);
+    }
+
+    override TimeUnit baseTimeUnit()
+    {
+        return TimeUnit.NANOSECONDS;
     }
 }
 
