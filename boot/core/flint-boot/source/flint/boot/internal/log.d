@@ -99,33 +99,37 @@ string render(Throwable failure)
     return text;
 }
 
-private string lineText(size_t line) pure
+private string lineText(size_t line) pure nothrow
 {
-    import std.conv : to;
+    import flint.engine.aot.text : decimal;
 
-    return line.to!string;
+    return decimal(line);
 }
 
-/// Milliseconds since the Unix epoch.
-long nowMillis()
-{
-    import std.datetime.systime : Clock;
+// Flint: the time, zone offset and process id come from flint.engine.aot, not std.datetime and std.process, whose
+// SysTime and process objects pull std.socket, std.net.curl and the rest of Phobos's network objects into every
+// app (playbook S-9).
 
-    return (Clock.currTime.stdTime - 621_355_968_000_000_000L) / 10_000;
+/// Milliseconds since the Unix epoch.
+long nowMillis() nothrow @nogc
+{
+    import flint.engine.aot.clock : currentTimeMillis;
+
+    return currentTimeMillis();
 }
 
 /// The local zone's current offset from UTC, in minutes.
-int localOffsetMinutes()
+int localOffsetMinutes() nothrow @nogc
 {
-    import std.datetime.systime : Clock;
+    import flint.engine.aot.clock : aotLocalOffsetMinutes = localOffsetMinutes;
 
-    return cast(int) Clock.currTime.utcOffset.total!"minutes";
+    return aotLocalOffsetMinutes();
 }
 
 /// This process's id.
-long processId()
+long processId() nothrow @nogc
 {
-    import std.process : thisProcessID;
+    import flint.engine.aot.host : hostProcessId = processId;
 
-    return thisProcessID;
+    return hostProcessId();
 }

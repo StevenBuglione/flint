@@ -34,6 +34,7 @@ import flint.boot.context.properties.source : ConfigurationPropertyName, Configu
 import flint.boot.env : OriginTrackedMapPropertySource, PropertiesPropertySourceLoader,
     PropertySourceLoader, YamlPropertySourceLoader;
 import flint.boot.internal.core_env : CommandLineArgs;
+import flint.engine.aot.text : stripWhite;
 import flint.java.lang : IllegalStateException, RuntimeException;
 
 @safe:
@@ -58,41 +59,41 @@ final class FileConfigDataResourceReader : ConfigDataResourceReader
     const(ubyte)[] read(string path)
     {
         import flint.engine.aot.host : describe, FileError, fileFacts, readFile;
-        import std.file : FileException;
+        import flint.java.io : IOException;
 
         if (!fileFacts(path).regular)
             return null;
         FileError error;
         auto bytes = readFile(path, error);
         if (error != FileError.none)
-            throw new FileException(path, describe(error));
+            throw new IOException(path ~ " (" ~ describe(error) ~ ")");
         return bytes;
     }
 
     /// The subdirectories of `directory`, sorted by name.
     string[] subdirectories(string directory)
     {
-        import std.algorithm.sorting : sort;
-        import std.file : SpanMode, dirEntries;
+        import flint.engine.aot.host : describe, FileError, subdirectoryPaths;
+        import flint.java.io : IOException;
 
         if (!directoryExists(directory))
             return null;
-        string[] result;
-        foreach (entry; dirEntries(directory, SpanMode.shallow))
-        {
-            if (entry.isDir)
-                result ~= entry.name;
-        }
-        result.sort();
+        // Flint: the host facade, not std.file's dirEntries, whose DirEntry links SysTime and through it
+        // std.socket and std.net.curl into every app (playbook S-9). A listing that fails throws, as dirEntries does.
+        FileError error;
+        auto result = subdirectoryPaths(directory, error);
+        if (error != FileError.none)
+            throw new IOException(directory ~ " (" ~ describe(error) ~ ")");
+        sortStrings(result);
         return result;
     }
 
     /// Whether `directory` is an existing directory.
     bool directoryExists(string directory)
     {
-        import std.file : exists, isDir;
+        import flint.engine.aot.host : fileFacts;
 
-        return exists(directory) && isDir(directory);
+        return fileFacts(directory).directory;
     }
 }
 
@@ -108,10 +109,7 @@ struct ConfigDataLocation
     /// Parse one location.
     static ConfigDataLocation of(string location) pure
     {
-        import std.algorithm.searching : startsWith;
-        import std.string : strip;
-
-        auto text = location.strip;
+        auto text = location.stripWhite;
         if (text.startsWith(OPTIONAL_PREFIX))
             return ConfigDataLocation(text[OPTIONAL_PREFIX.length .. $], true);
         return ConfigDataLocation(text, false);
@@ -138,17 +136,16 @@ struct ConfigDataLocation
     /// The location groups of a property value: `,` separates groups, `;` locations within a group.
     static ConfigDataLocation[][] groups(string text) pure
     {
-        import std.algorithm.iteration : filter, map, splitter;
-        import std.array : array;
-        import std.string : strip;
-
         ConfigDataLocation[][] result;
-        foreach (group; text.splitter(','))
+        foreach (group; pieces(text, ','))
         {
-            auto locations = group.splitter(';').map!(l => l.strip)
-                .filter!(l => l.length > 0)
-                .map!(l => ConfigDataLocation.of(l))
-                .array;
+            ConfigDataLocation[] locations;
+            foreach (piece; pieces(group, ';'))
+            {
+                const location = piece.stripWhite;
+                if (location.length > 0)
+                    locations ~= ConfigDataLocation.of(location);
+            }
             if (locations.length)
                 result ~= locations;
         }
@@ -393,9 +390,7 @@ private:
         auto source = new MapConfigurationPropertySource("commandLineArgs");
         foreach (name; args.getOptionNames())
         {
-            import std.array : join;
-
-            source.put(name, args.getOptionValues(name).join(","),
+            source.put(name, joined(args.getOptionValues(name), ','),
                     "\"" ~ name ~ "\" from property source \"commandLineArgs\"");
         }
         return source;
@@ -442,8 +437,6 @@ private:
 
     bool locationExists(ConfigDataLocation location)
     {
-        import std.algorithm.searching : endsWith;
-
         const path = resolve(location.getValue());
         if (!isFileLocation(location.getValue()))
             return reader.directoryExists(path.endsWith("/*/") ? path[0 .. $ - 3] : path[0 .. $ - 1]);
@@ -453,8 +446,6 @@ private:
     // `classpath:/config/` → the class path directory; `file:./config/*/` → each subdirectory.
     string[] directoriesOf(ConfigDataLocation location)
     {
-        import std.algorithm.searching : endsWith;
-
         const path = resolve(location.getValue());
         if (path.endsWith("/*/"))
             return reader.subdirectories(path[0 .. $ - 3]).map!(d => d ~ "/");
@@ -463,8 +454,7 @@ private:
 
     string resolve(string value) const pure
     {
-        import std.algorithm.searching : startsWith;
-        import std.path : buildNormalizedPath;
+        import flint.engine.aot.host : normalizedPath;
 
         string root, rest;
         if (value.startsWith("classpath:"))
@@ -485,7 +475,7 @@ private:
         while (rest.startsWith("/"))
             rest = rest[1 .. $];
         const trailing = value.length && value[$ - 1] == '/';
-        auto path = rest.length ? buildNormalizedPath(root, rest) : buildNormalizedPath(root);
+        auto path = rest.length ? normalizedPath(root, rest) : normalizedPath(root);
         return trailing ? path ~ "/" : path;
     }
 
@@ -509,11 +499,9 @@ private:
 
     Document[] loadPath(ConfigDataLocation location, string path, bool profileSpecific)
     {
-        import std.algorithm.searching : endsWith, startsWith;
+        import flint.engine.aot.host : normalizedPath;
 
-        import std.path : buildNormalizedPath;
-
-        path = buildNormalizedPath(path);
+        path = normalizedPath(path);
         auto bytes = reader.read(path);
         if (bytes is null)
             return null;
@@ -535,8 +523,6 @@ private:
 
     string describe(ConfigDataLocation location, string path) const pure
     {
-        import std.algorithm.searching : startsWith;
-
         if (location.getValue().startsWith("classpath:"))
         {
             auto relative = path.length > options.classpathRoot.length ? path[options.classpathRoot.length .. $] : path;
@@ -692,10 +678,7 @@ private:
 string[] listValue(ConfigurationPropertySource[] sources, string name, string[] fallback,
         PlaceholdersResolver resolver = null)
 {
-    import std.algorithm.iteration : filter, map, splitter;
-    import std.array : array;
-    import std.conv : to;
-    import std.string : strip;
+    import flint.engine.aot.text : decimal;
 
     string resolved(string value)
     {
@@ -707,16 +690,23 @@ string[] listValue(ConfigurationPropertySource[] sources, string name, string[] 
     {
         ConfigurationPropertySource[] one = [source];
         if (auto property = ConfigurationPropertySources.find(one, canonical))
-            return resolved(property.getValue()).splitter(',').map!(s => s.strip)
-                .filter!(s => s.length > 0)
-                .array;
+        {
+            string[] values;
+            foreach (piece; pieces(resolved(property.getValue()), ','))
+            {
+                const value = piece.stripWhite;
+                if (value.length > 0)
+                    values ~= value;
+            }
+            return values;
+        }
         string[] items;
         for (size_t index;; index++)
         {
-            auto item = ConfigurationPropertySources.find(one, canonical.append("[" ~ index.to!string ~ "]"));
+            auto item = ConfigurationPropertySources.find(one, canonical.append("[" ~ decimal(index) ~ "]"));
             if (item is null)
                 break;
-            items ~= resolved(item.getValue()).strip;
+            items ~= resolved(item.getValue()).stripWhite;
         }
         if (items.length)
             return items;
@@ -740,4 +730,56 @@ private string[] map(alias f)(string[] values)
     foreach (value; values)
         result ~= f(value);
     return result;
+}
+
+// Flint: plain loops for the string handling below, not std.algorithm, std.array, std.string or std.conv, whose
+// instances and ModuleInfo pull Phobos's network objects into every app (playbook S-9).
+
+private bool startsWith(scope const(char)[] text, scope const(char)[] prefix) pure nothrow @nogc
+{
+    return text.length >= prefix.length && text[0 .. prefix.length] == prefix;
+}
+
+private bool endsWith(scope const(char)[] text, scope const(char)[] suffix) pure nothrow @nogc
+{
+    return text.length >= suffix.length && text[$ - suffix.length .. $] == suffix;
+}
+
+// The pieces of `text` between `separator`s, empty ones included, as std.algorithm's `splitter`: none for "".
+private string[] pieces(string text, char separator) pure nothrow
+{
+    if (text.length == 0)
+        return null;
+    string[] result;
+    size_t start;
+    foreach (i, c; text)
+    {
+        if (c != separator)
+            continue;
+        result ~= text[start .. i];
+        start = i + 1;
+    }
+    return result ~ text[start .. $];
+}
+
+// `values` joined by `separator`, as std.array's `join`.
+private string joined(scope const string[] values, char separator) pure nothrow
+{
+    string result;
+    foreach (i, value; values)
+        result ~= i == 0 ? value : separator ~ value;
+    return result;
+}
+
+// `values` sorted in place by code unit, as std.algorithm's `sort` orders strings.
+private void sortStrings(string[] values) pure nothrow @nogc
+{
+    foreach (i; 1 .. values.length)
+    {
+        auto value = values[i];
+        size_t j = i;
+        for (; j > 0 && values[j - 1] > value; j--)
+            values[j] = values[j - 1];
+        values[j] = value;
+    }
 }

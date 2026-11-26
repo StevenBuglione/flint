@@ -938,11 +938,9 @@ class FlintApplication
 private:
     ApplicationEnvironment prepareEnvironment(DefaultApplicationArguments arguments)
     {
-        import std.process : environment;
-
         ConfigDataEnvironmentOptions options;
         options.args = arguments.args;
-        options.environment = environmentVariablesSet ? environmentVariables : environment.toAA();
+        options.environment = environmentVariablesSet ? environmentVariables : processEnvironment();
         options.additionalProfiles = additionalProfiles;
         options.defaultProperties = defaultProperties;
         options.inlinedProperties = testProperties;
@@ -1021,14 +1019,18 @@ private:
     Banner resourceBanner(ApplicationEnvironment environment)
     {
         import flint.boot.context.config : FileConfigDataResourceReader;
-        import std.algorithm.searching : startsWith;
-        import std.path : buildNormalizedPath;
+        import flint.engine.aot.host : normalizedPath;
+
+        static bool startsWith(string text, string prefix) pure nothrow @nogc
+        {
+            return text.length >= prefix.length && text[0 .. prefix.length] == prefix;
+        }
 
         const location = environment.getProperty("flint.banner.location", "classpath:banner.txt");
         string path = location;
-        if (path.startsWith("classpath:"))
-            path = buildNormalizedPath("resources", path["classpath:".length .. $].stripSlash);
-        else if (path.startsWith("file:"))
+        if (startsWith(path, "classpath:"))
+            path = normalizedPath("resources", path["classpath:".length .. $].stripSlash);
+        else if (startsWith(path, "file:"))
             path = path["file:".length .. $];
         ConfigDataResourceReader reader = resourceReader is null ? new FileConfigDataResourceReader : resourceReader;
         auto bytes = reader.read(path);
@@ -1040,15 +1042,15 @@ private:
     void logStarting(ApplicationEnvironment environment)
     {
         import flint.boot.internal.log : processId;
-        import std.conv : to;
-        import std.file : getcwd, thisExePath;
+        import flint.engine.aot.host : currentDirectory, executablePath;
+        import flint.engine.aot.text : decimal;
 
         string message = "Starting " ~ applicationName();
         const version_ = environment.getProperty("flint.application.version");
         if (version_.length)
             message ~= " v" ~ version_;
-        message ~= " using Flint " ~ FlintBootVersion.getVersion() ~ " with PID " ~ processId().to!string;
-        message ~= " (" ~ thisExePath() ~ " started by " ~ userName() ~ " in " ~ getcwd() ~ ")";
+        message ~= " using Flint " ~ FlintBootVersion.getVersion() ~ " with PID " ~ decimal(processId());
+        message ~= " (" ~ executablePath() ~ " started by " ~ userName() ~ " in " ~ currentDirectory() ~ ")";
         log().info(message);
         log().info(profileMessage(environment));
     }
@@ -1254,10 +1256,10 @@ private:
 /// request. Returns the file, or null when the variable is unset.
 string startAllocationReport()
 {
-    import std.process : environment;
     import flint.arena.gc : installAllocationCounter;
+    import flint.engine.aot.host : environmentVariable;
 
-    const path = environment.get("FLINT_ALLOCATION_REPORT", null);
+    const path = environmentVariable("FLINT_ALLOCATION_REPORT", null);
     if (path.length)
         cast(void) installAllocationCounter();
     return path;
@@ -1266,19 +1268,17 @@ string startAllocationReport()
 /// ditto
 void finishAllocationReport(string path)
 {
-    import std.file : FileException, write;
     import flint.arena.gc : Allocations, otherThreadsAllocations, thisThreadAllocations;
+    import flint.engine.aot.host : FileError, writeFile;
 
     if (path.length == 0)
         return;
     Allocations others, mine;
     if (!otherThreadsAllocations(others) || !thisThreadAllocations(mine))
         return;
-    try
-        write(path, decimal(others.count + mine.count) ~ " " ~ decimal(others.bytes + mine.bytes) ~ "\n");
-    catch (FileException)
-    {
-    }
+    FileError error; // a report that cannot be written is skipped, as before
+    cast(void) writeFile(path, cast(const(ubyte)[])(decimal(others.count + mine.count) ~ " "
+            ~ decimal(others.bytes + mine.bytes) ~ "\n"), error);
 }
 
 string decimal(ulong value) pure nothrow
@@ -1435,11 +1435,23 @@ size_t lastIndexOf(string text, char ch) pure nothrow @nogc
     return 0;
 }
 
+// Flint: the process environment through flint.engine.aot.host, not std.process, whose object pulls std.socket,
+// std.net.curl and the rest of Phobos's network objects into every app (playbook S-9).
+string[string] processEnvironment()
+{
+    import flint.engine.aot.host : environmentEntries;
+
+    string[string] variables;
+    foreach (entry; environmentEntries())
+        variables[entry.name] = entry.value;
+    return variables;
+}
+
 string userName()
 {
-    import std.process : environment;
+    import flint.engine.aot.host : environmentVariable;
 
-    return environment.get("USER", environment.get("USERNAME", "unknown"));
+    return environmentVariable("USER", environmentVariable("USERNAME", "unknown"));
 }
 
 bool ansiEnabled(ApplicationEnvironment environment)
@@ -1451,10 +1463,10 @@ bool ansiEnabled(ApplicationEnvironment environment)
         return true;
     if (mode == "NEVER")
         return false;
+    import flint.engine.aot.host : environmentVariable;
     import flint.term : Stream, describe;
-    import std.process : env = environment;
 
-    return describe(Stream.output).terminal && env.get("TERM", "") != "dumb";
+    return describe(Stream.output).terminal && environmentVariable("TERM", "") != "dumb";
 }
 
 string ansiText(bool ansi, string code, string text) pure

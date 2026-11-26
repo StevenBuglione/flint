@@ -1045,29 +1045,31 @@ private bool isLetter(char ch) pure nothrow @nogc
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
 }
 
+// Flint: one Duration per suffix of simpleDuration (nanoseconds as 100 ns), built at compile time. A run-time
+// core.time.dur!unit instance is one Phobos already instantiates, so the link takes it from Phobos's std.socket
+// object, and std.socket pulls std.net.curl and the rest of Phobos's network objects into every app (playbook S-9).
+private immutable imported!"core.time".Duration[8] durationUnits = () {
+    import core.time : dur, Duration;
+
+    Duration[8] units = [
+        dur!"hnsecs"(1), dur!"usecs"(1), dur!"msecs"(1), dur!"msecs"(1), dur!"seconds"(1),
+        dur!"minutes"(1), dur!"hours"(1), dur!"days"(1)
+    ];
+    return units;
+}();
+
 // DurationStyle.Unit: the suffix's unit; no suffix means milliseconds.
 private auto simpleDuration(long amount, string suffix, string text)
 {
-    import core.time : dur;
+    import core.time : Duration;
 
     static immutable string[] suffixes = ["ns", "us", "", "ms", "s", "m", "h", "d"];
-    static immutable string[] units = [
-        "nsecs", "usecs", "msecs", "msecs", "seconds", "minutes", "hours", "days"
-    ];
     foreach (index, candidate; suffixes)
     {
         if (candidate != suffix)
             continue;
-        switch (units[index])
-        {
-            static foreach (unit; ["nsecs", "usecs", "msecs", "seconds", "minutes", "hours", "days"])
-            {
-        case unit:
-                return dur!unit(amount);
-            }
-        default:
-            break;
-        }
+        // core.time.nsecs truncates to its 100 ns resolution, as dur!"nsecs" does.
+        return index == 0 ? durationUnits[0] * (amount / 100) : durationUnits[index] * amount;
     }
     throw new ConversionFailedException(text, durationType, "Unknown unit '" ~ suffix ~ "'");
 }
@@ -1112,7 +1114,6 @@ private auto parseIsoDuration(string text)
 
 private auto isoComponent(string number, char unit, bool time)
 {
-    import core.time : days, hours, minutes, nsecs;
     import flint.engine.aot.text : tryParseDouble;
     import std.conv : ConvException, to;
 
@@ -1122,14 +1123,15 @@ private auto isoComponent(string number, char unit, bool time)
         const seconds = tryParseDouble(number);
         if (!seconds.ok)
             throw new ConvException("not a number of seconds");
-        return nsecs(cast(long)(seconds.value * 1_000_000_000));
+        // core.time.nsecs truncates to its 100 ns resolution.
+        return durationUnits[0] * (cast(long)(seconds.value * 1_000_000_000) / 100);
     }
     if (unit == 'D' && !time)
-        return days(number.to!long);
+        return durationUnits[7] * number.to!long;
     if (unit == 'H' && time)
-        return hours(number.to!long);
+        return durationUnits[6] * number.to!long;
     if (unit == 'M' && time)
-        return minutes(number.to!long);
+        return durationUnits[5] * number.to!long;
     throw new ConvException("misplaced unit");
 }
 
