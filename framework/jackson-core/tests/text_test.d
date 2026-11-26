@@ -65,7 +65,8 @@ unittest
     import std.algorithm.searching : startsWith;
 
     assert(readError("[1, 'x']").startsWith("Unexpected character (''' (code 39)): "));
-    assert(readError("[1, \x01]").startsWith("Unexpected character ((CTRL-CHAR, code 1)): "));
+    // A control character between tokens is Jackson's illegal white space (ParserMinimalBase._reportInvalidSpace).
+    assert(readError("[1, \x01]").startsWith("Illegal character ((CTRL-CHAR, code 1)): only regular white space"));
     // Negative: a well-formed document has no error.
     assert(readError("[1, 2]") is null);
 }

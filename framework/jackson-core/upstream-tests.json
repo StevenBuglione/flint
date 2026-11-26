@@ -673,8 +673,22 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/read/CommentParsingTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/comment_parsing_test.d",
+      "methods": {
+        "ported": [
+          "defaultSettings",
+          "commentsDisabled",
+          "commentsEnabled",
+          "commentsWithUTF8",
+          "yamlCommentsBytes",
+          "yamlCommentsChars",
+          "cCommentsBytes",
+          "cCommentsChars",
+          "cppCommentsBytes",
+          "cppCommentsChars"
+        ]
+      },
+      "status": "ported"
     },
     "tools/jackson/core/unittest/read/DataInputTest.java": {
       "phase": "2",
@@ -744,8 +758,14 @@
       "status": "partial"
     },
     "tools/jackson/core/unittest/read/NonStandardAllowRSTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/non_standard_allow_rs_test.d",
+      "methods": {
+        "ported": [
+          "recordSeparatorEnabled",
+          "recordSeparatorDisabled"
+        ]
+      },
+      "status": "ported"
     },
     "tools/jackson/core/unittest/read/NonStandardAposQuotedNamesTest.java": {
       "phase": "2",
@@ -920,12 +940,38 @@
       "status": "deferred"
     },
     "tools/jackson/core/unittest/read/TrailingCommas616Test.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/trailing_commas616_test.d",
+      "methods": {
+        "ported": [
+          "rootLevelComma616",
+          "rootLevelComma616Bytes",
+          "rootLevelComma616DataInput"
+        ]
+      },
+      "status": "ported"
     },
     "tools/jackson/core/unittest/read/TrailingCommasTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/jackson-core/tests/trailing_commas_test.d",
+      "methods": {
+        "ported": [
+          "arrayBasic",
+          "arrayInnerComma",
+          "arrayLeadingComma",
+          "arrayTrailingComma",
+          "arrayTrailingCommas",
+          "arrayTrailingCommasTriple",
+          "objectBasic",
+          "objectInnerComma",
+          "objectLeadingComma",
+          "objectTrailingComma",
+          "objectTrailingCommaWithNextFieldName",
+          "objectTrailingCommas"
+        ],
+        "skipped": {
+          "objectTrailingCommaWithNextFieldNameStr": "needs JsonParser.nextName(SerializableString), which jackson-core does not have yet"
+        }
+      },
+      "status": "partial"
     },
     "tools/jackson/core/unittest/read/UTF32ParseTest.java": {
       "phase": "2",

@@ -1397,6 +1397,9 @@ class UTF8StreamJsonParser : JsonParser
     private JsonToken _currToken;
     private bool _closed;
     private bool _nameCopied;
+    // The factory's JsonReadFeature mask. Each non-standard construct is looked at only where strict JSON would end
+    // a token or fail, so a parser with the defaults never reads it.
+    private uint _readFeatures;
 
     // The current token's span: string contents or number text.
     private JsonTextToken _text;
@@ -1418,6 +1421,7 @@ class UTF8StreamJsonParser : JsonParser
     this(ObjectReadContext readCtxt, JsonFactory factory, const(ubyte)[] content)
     {
         _factory = factory;
+        _readFeatures = factory._formatReadFeatures;
         _constraints = factory.streamReadConstraints();
         _streamReadContext = JsonReadContext.createRootContext();
         reuse(readCtxt, content);
@@ -1502,15 +1506,155 @@ class UTF8StreamJsonParser : JsonParser
         return _closed;
     }
 
+    // What skipWhitespace does with a byte: stop at it (a token), skip it (a blank), or look closer (`/`, `#` or a
+    // control character: a comment or RS when their features are on, Jackson's error otherwise).
+    private enum Space : ubyte
+    {
+        token,
+        blank,
+        odd,
+    }
+
+    private static immutable Space[256] spaceKind = () {
+        Space[256] kinds;
+        foreach (c; 0 .. 0x20)
+            kinds[c] = Space.odd;
+        kinds[' '] = kinds['\t'] = kinds['\n'] = kinds['\r'] = Space.blank;
+        kinds['/'] = kinds['#'] = Space.odd;
+        return kinds;
+    }();
+
     private void skipWhitespace()
     {
         while (_inputPtr < _input.length)
         {
-            immutable c = _input[_inputPtr];
-            if (c != ' ' && c != '\t' && c != '\n' && c != '\r')
+            immutable kind = spaceKind[_input[_inputPtr]];
+            if (kind == Space.blank)
+                ++_inputPtr;
+            else if (kind == Space.token || !skipOdd())
                 return;
-            ++_inputPtr;
         }
+    }
+
+    private bool allows(JsonReadFeature f) const pure nothrow @nogc
+    {
+        return (_readFeatures & (1u << f)) != 0;
+    }
+
+    private enum commentsDisabled = "maybe a (non-standard) comment? (not recognized as one since Feature "
+        ~ "'ALLOW_COMMENTS' not enabled for parser)";
+
+    // At `/`, `#` or a control character between tokens: skip a comment or RS its feature allows (true), leave a `#`
+    // that ALLOW_YAML_COMMENTS doesn't make a comment to the value it starts (false), or fail as Jackson does.
+    private bool skipOdd()
+    {
+        immutable c = _input[_inputPtr];
+        if (c == '/')
+        {
+            if (!allows(JsonReadFeature.ALLOW_JAVA_COMMENTS))
+                throw unexpected(c, commentsDisabled);
+            ++_inputPtr;
+            if (_inputPtr == _input.length)
+                throw eofInComment();
+            immutable kind = _input[_inputPtr++];
+            if (kind == '/')
+                skipLine();
+            else if (kind == '*')
+                skipBlockComment();
+            else
+                throw unexpected(kind, "was expecting either '*' or '/' for a comment");
+            return true;
+        }
+        if (c == '#')
+        {
+            if (!allows(JsonReadFeature.ALLOW_YAML_COMMENTS))
+                return false;
+            ++_inputPtr;
+            skipLine();
+            return true;
+        }
+        if (c == 0x1E && allows(JsonReadFeature.ALLOW_RS_CONTROL_CHAR))
+        {
+            ++_inputPtr;
+            return true;
+        }
+        throw invalidSpace(c);
+    }
+
+    // A `//` or `#` comment: up to and including its line feed or carriage return, or to the end of input.
+    private void skipLine()
+    {
+        while (_inputPtr < _input.length)
+        {
+            immutable c = _input[_inputPtr++];
+            if (c == '\n' || c == '\r')
+                return;
+            skipCommentByte(c);
+        }
+    }
+
+    // A `/* ... */` comment, after its opening.
+    private void skipBlockComment()
+    {
+        while (_inputPtr < _input.length)
+        {
+            immutable c = _input[_inputPtr++];
+            if (c == '*' && _inputPtr < _input.length && _input[_inputPtr] == '/')
+            {
+                ++_inputPtr;
+                return;
+            }
+            if (c != '\n' && c != '\r')
+                skipCommentByte(c);
+        }
+        throw eofInComment();
+    }
+
+    // One comment character after its first byte: a control character other than tab fails, and a multi-byte UTF-8
+    // sequence must be well formed (Jackson's comment input codes).
+    private void skipCommentByte(ubyte c)
+    {
+        if (c < 0x20)
+        {
+            if (c != '\t')
+                throw invalidSpace(c);
+            return;
+        }
+        if (c < 0x80)
+            return;
+        immutable extra = c >= 0xC0 && c < 0xE0 ? 1 : c >= 0xE0 && c < 0xF0 ? 2 : c >= 0xF0 && c < 0xF8 ? 3 : 0;
+        if (extra == 0)
+            throw invalidUtf8("start", c);
+        foreach (i; 0 .. extra)
+        {
+            if (_inputPtr == _input.length)
+                throw eofInComment();
+            immutable next = _input[_inputPtr++];
+            if ((next & 0xC0) != 0x80)
+                throw invalidUtf8("middle", next);
+        }
+    }
+
+    // Jackson's _reportInvalidInitial and _reportInvalidOther: "Invalid UTF-8 start byte 0xc3".
+    private JacksonException invalidUtf8(string which, ubyte b)
+    {
+        return readError("Invalid UTF-8 " ~ which ~ " byte 0x" ~ hexBytes[b * 2 .. b * 2 + 2]);
+    }
+
+    private JacksonException eofInComment()
+    {
+        return endOfInputError("Unexpected end-of-input in a comment");
+    }
+
+    // ParserMinimalBase._reportInvalidSpace: a control character between tokens.
+    private JacksonException invalidSpace(ubyte c)
+    {
+        enum spaceRule = "only regular white space (\\r, \\n, \\t) is allowed between tokens";
+        enum rsHint = spaceRule ~ " (consider enabling `JsonReadFeature.ALLOW_RS_CONTROL_CHAR` to allow use of "
+            ~ "Record Separators (\\u001E))";
+        string rule = c == 0x1E ? rsHint : spaceRule; // not immutable: that is another concatenation instance
+        // The literal, string, literal, string shape of `unexpected`'s message: no new concatenation instance.
+        return readError("Illegal character ((CTRL-CHAR, code " ~ decimal(c) ~ ")): " ~ rule);
     }
 
     override JsonToken nextToken()
@@ -1531,7 +1675,11 @@ class UTF8StreamJsonParser : JsonParser
             return _currToken;
         }
         if (_streamReadContext.expectComma())
+        {
             c = afterComma(c);
+            if (c == 0) // a trailing comma closed the scope (ALLOW_TRAILING_COMMA)
+                return _currToken;
+        }
         if (_streamReadContext.inObject())
             return _currToken = readName(c);
         return _currToken = readValue(c);
@@ -1541,15 +1689,18 @@ class UTF8StreamJsonParser : JsonParser
     private JsonToken endOfInput()
     {
         if (!_streamReadContext.inRoot())
-            throw new UnexpectedEndOfInputException(this, JsonToken.NOT_AVAILABLE,
-                    "Unexpected end-of-input: expected close marker for " ~ _streamReadContext.typeDesc()
-                    ~ " (start marker at " ~ locationAt(_streamReadContext._startOffset)
-                        .toString() ~ ")", currentLocation());
+        {
+            // The calls stay inside the concatenation: operands passed as values, not variables, keep its instance.
+            auto context = _streamReadContext;
+            throw endOfInputError("Unexpected end-of-input: expected close marker for " ~ context.typeDesc()
+                    ~ " (start marker at " ~ locationAt(context._startOffset).toString() ~ ")");
+        }
         close();
         return JsonToken.NOT_AVAILABLE;
     }
 
-    // Consume the comma that must separate entries and return the first byte of the next one.
+    // Consume the comma that must separate entries and return the first byte of the next one, or 0 when that byte
+    // closed the scope (a trailing comma). skipWhitespace never stops at a 0: it is a control character.
     private ubyte afterComma(ubyte c)
     {
         if (c != ',')
@@ -1560,8 +1711,22 @@ class UTF8StreamJsonParser : JsonParser
             throw eofIn("a value");
         c = _input[_inputPtr];
         if (c == ']' || c == '}')
-            throw unexpected(c, "expected a value");
+            return closeAfterComma(c);
         return c;
+    }
+
+    // A close marker right after a comma: the scope's end with ALLOW_TRAILING_COMMA, a missing array element with
+    // ALLOW_MISSING_VALUES (readValue reports it as null and leaves the marker), an error otherwise.
+    private ubyte closeAfterComma(ubyte c)
+    {
+        if (allows(JsonReadFeature.ALLOW_TRAILING_COMMA))
+        {
+            closeScope(c);
+            return 0;
+        }
+        if (c == ']' && _streamReadContext.inArray() && allows(JsonReadFeature.ALLOW_MISSING_VALUES))
+            return c;
+        throw unexpected(c, "expected a value");
     }
 
     private JsonToken readName(ubyte c)
@@ -1577,9 +1742,7 @@ class UTF8StreamJsonParser : JsonParser
             throw stringError(scanner.offset, error.message);
         if (token.length > _constraints.maxNameLength)
         {
-            immutable limit = decimal(_constraints.maxNameLength);
-            throw new StreamConstraintsException("Name length (" ~ decimal(
-                    cast(long) token.length) ~ ") exceeds the maximum allowed (" ~ limit ~ ")");
+            throw lengthError("Name", token.length, _constraints.maxNameLength, null);
         }
         _inputPtr = scanner.offset;
         skipWhitespace();
@@ -1619,9 +1782,21 @@ class UTF8StreamJsonParser : JsonParser
         default:
             if (c == '-' || (c >= '0' && c <= '9'))
                 return readNumber();
-            throw unexpected(c,
-                    "expected a valid value (JSON String, Number, Array, Object or token 'null', 'true' or 'false')");
+            return unexpectedValue(c);
         }
+    }
+
+    // ReaderBasedJsonParser._handleUnexpectedValue: a missing value (ALLOW_MISSING_VALUES) is null and leaves its
+    // comma or close marker for the next token; anything else fails.
+    private JsonToken unexpectedValue(ubyte c)
+    {
+        immutable missing = c == ',' || (c == ']' && _streamReadContext.inArray());
+        if (missing && !_streamReadContext.inRoot() && allows(JsonReadFeature.ALLOW_MISSING_VALUES))
+            return JsonToken.VALUE_NULL;
+        if (missing || c == '}')
+            throw unexpected(c, "expected a value");
+        throw unexpected(c,
+                "expected a valid value (JSON String, Number, Array, Object or token 'null', 'true' or 'false')");
     }
 
     private JsonToken readString()
@@ -1632,9 +1807,7 @@ class UTF8StreamJsonParser : JsonParser
         if (error.code)
             throw stringError(scanner.offset, error.message);
         if (_text.length > _constraints.maxStringLength)
-            throw new StreamConstraintsException("String value length (" ~ decimal(cast(
-                    long) _text.length) ~ ") exceeds the maximum allowed (" ~ decimal(_constraints.maxStringLength)
-                    ~ ")");
+            throw lengthError("String value", _text.length, _constraints.maxStringLength, null);
         _inputPtr = scanner.offset;
         return JsonToken.VALUE_STRING;
     }
@@ -1642,7 +1815,7 @@ class UTF8StreamJsonParser : JsonParser
     private void enter(JsonReadContext child)
     {
         if (child.getNestingDepth() > _constraints.maxNestingDepth)
-            throw new StreamConstraintsException("Document nesting depth (" ~ decimal(
+            throw constraintError("Document nesting depth (" ~ decimal(
                     child.getNestingDepth()) ~ ") exceeds the maximum allowed (" ~ decimal(
                     _constraints.maxNestingDepth) ~ ", from `StreamReadConstraints.getMaxNestingDepth()`)",
                     currentLocation());
@@ -1669,7 +1842,7 @@ class UTF8StreamJsonParser : JsonParser
         if (end > _input.length || cast(const(char)[]) _input[_inputPtr .. end] != word)
             throw unrecognized();
         _inputPtr = end;
-        if (_inputPtr < _input.length && !separator(_input[_inputPtr]))
+        if (_inputPtr < _input.length && !separator(_input[_inputPtr]) && spaceKind[_input[_inputPtr]] != Space.odd)
             throw unrecognized();
         return token;
     }
@@ -1690,16 +1863,21 @@ class UTF8StreamJsonParser : JsonParser
         _inputPtr = scanner.offset;
         immutable length = _number.end - _number.start;
         if (length > _constraints.maxNumberLength)
-            throw new StreamConstraintsException("Number value length (" ~ decimal(cast(
-                    long) length) ~ ") exceeds the maximum allowed (" ~ decimal(_constraints.maxNumberLength) ~ ")",
-                    currentLocation());
-        if (_inputPtr < _input.length && !separator(_input[_inputPtr]))
+            throw lengthError("Number value", length, _constraints.maxNumberLength, currentLocation());
+        if (_inputPtr < _input.length && !separator(_input[_inputPtr]) && !oddEndsNumber(_input[_inputPtr]))
         {
             if (length == 1 && leadingZero(_number.start))
                 throw readError("Invalid numeric value: Leading zeroes not allowed");
             throw unexpected(_input[_inputPtr], "Expected space separating root-level values", true);
         }
         return _number.fractional ? JsonToken.VALUE_NUMBER_FLOAT : JsonToken.VALUE_NUMBER_INT;
+    }
+
+    // A comment start or control character ends a number inside an Array or Object, where Jackson stops at any
+    // non-digit; at the root it needs a space first, as Jackson's _verifyRootSpace requires.
+    private bool oddEndsNumber(ubyte c)
+    {
+        return spaceKind[c] == Space.odd && !_streamReadContext.inRoot();
     }
 
     // Whether a '0' at `offset` is followed by another digit.
@@ -2043,18 +2221,48 @@ class UTF8StreamJsonParser : JsonParser
                 .idup ~ "': was expecting (JSON String, Number, Array, Object or token 'null', 'true' or 'false')");
     }
 
+    // StreamReadConstraints' length limits, built at one site: "Name length (12) exceeds the maximum allowed (10)".
+    private JacksonException lengthError(string what, size_t length, long limit, TokenStreamLocation location)
+    {
+        return constraintError(what ~ " length (" ~ decimal(
+                cast(long) length) ~ ") exceeds the maximum allowed (" ~ decimal(limit) ~ ")", location);
+    }
+
+    // The one construction site of the parser's StreamConstraintsException.
+    private JacksonException constraintError(string message, TokenStreamLocation location)
+    {
+        return new StreamConstraintsException(message, location);
+    }
+
     private JacksonException eofIn(string what)
     {
-        return new UnexpectedEndOfInputException(this, JsonToken.NOT_AVAILABLE,
-                "Unexpected end-of-input within/between " ~ what, currentLocation());
+        return endOfInputError("Unexpected end-of-input within/between " ~ what);
+    }
+
+    // "000102...ff": a byte's two lowercase hex digits are a slice of this.
+    private static immutable char[512] hexBytes = () {
+        char[512] digits;
+        foreach (i; 0 .. 256)
+        {
+            digits[i * 2] = lowerHexDigits[i >> 4];
+            digits[i * 2 + 1] = lowerHexDigits[i & 0xF];
+        }
+        return digits;
+    }();
+
+    // The one construction site of the parser's end-of-input errors between tokens (each `new` site is a template
+    // instance in this module's budget).
+    private JacksonException endOfInputError(string message, JsonToken token = JsonToken.NOT_AVAILABLE)
+    {
+        return new UnexpectedEndOfInputException(this, token, message, currentLocation());
     }
 
     private JacksonException stringError(size_t offset, string message)
     {
         _inputPtr = offset;
         if (offset >= _input.length)
-            return new UnexpectedEndOfInputException(this, JsonToken.VALUE_STRING,
-                    "Unexpected end-of-input: was expecting closing quote for a string value", currentLocation());
+            return endOfInputError("Unexpected end-of-input: was expecting closing quote for a string value",
+                    JsonToken.VALUE_STRING);
         return readError("Illegal character in JSON string: " ~ message);
     }
 }
