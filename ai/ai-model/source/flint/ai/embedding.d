@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/embedding/{DefaultEmbeddingOptions,DefaultEmbeddingOptionsBuilder,EmbeddingOptions,EmbeddingRequest}.java
+// Ported from spring-ai v2.1.0, spring-ai-model/src/main/java/org/springframework/ai/embedding/{DefaultEmbeddingOptions,DefaultEmbeddingOptionsBuilder,EmbeddingOptions,EmbeddingRequest,EmbeddingResultMetadata}.java
 // Modified by the Flint authors.
 module flint.ai.embedding;
 
-import flint.ai.model : ModelOptions, ModelRequest;
+import flint.ai.model : ModelOptions, ModelRequest, ResultMetadata;
+import flint.engine.aot.any : Any;
 import flint.java.util : List;
+import flint.util : MimeType;
 import std.typecons : Nullable;
 
 @safe:
@@ -198,5 +200,114 @@ class EmbeddingRequest : ModelRequest!(List!string)
     override EmbeddingOptions getOptions()
     {
         return options_;
+    }
+}
+
+/// Metadata about the source document of an embedding.
+class EmbeddingResultMetadata : ResultMetadata
+{
+    private ModalityType modalityType_;
+    private string documentId_;
+    private MimeType mimeType_;
+    private Any documentData_;
+
+    /// The modality of the source document.
+    enum ModalityType
+    {
+        /// Text.
+        TEXT,
+        /// Image.
+        IMAGE,
+        /// Audio.
+        AUDIO,
+        /// Video.
+        VIDEO
+    }
+
+    /// Infers the modality of the source document from its MIME type.
+    static class ModalityUtils
+    {
+        private static immutable MimeType imageType = MimeType.literal("image", "*");
+        private static immutable MimeType audioType = MimeType.literal("audio", "*");
+        private static immutable MimeType videoType = MimeType.literal("video", "*");
+        private static immutable MimeType textType = MimeType.literal("text", "*");
+
+        /// Checks the supported MIME families in Spring AI's order.
+        static ModalityType getModalityType(MimeType mimeType)
+        {
+            import flint.ai.chat.messages.part : joinRecord;
+            import flint.java.lang : IllegalArgumentException;
+
+            if (mimeType.isCompatibleWith(imageType))
+                return ModalityType.IMAGE;
+            if (mimeType.isCompatibleWith(audioType))
+                return ModalityType.AUDIO;
+            if (mimeType.isCompatibleWith(videoType))
+                return ModalityType.VIDEO;
+            if (mimeType.isCompatibleWith(textType))
+                return ModalityType.TEXT;
+
+            string[2] message = ["Unsupported MimeType: ", mimeType.toString()];
+            throw new IllegalArgumentException(joinRecord(message[]));
+        }
+
+        /// Returns the text modality when the MIME type is absent.
+        static ModalityType getModalityType(Nullable!MimeType mimeType)
+        {
+            return mimeType.isNull ? ModalityType.TEXT : getModalityType(mimeType.get());
+        }
+    }
+
+    /// Creates metadata for a plain text source with an empty document ID.
+    this()
+    {
+        import flint.util : MimeTypeUtils;
+
+        this("", ModalityType.TEXT, MimeTypeUtils.TEXT_PLAIN, Any.init);
+    }
+
+    /// Creates metadata for the supplied source document.
+    this(string documentId, ModalityType modalityType, MimeType mimeType, Any documentData) pure nothrow @nogc
+    {
+        documentId_ = documentId;
+        modalityType_ = modalityType;
+        mimeType_ = mimeType;
+        documentData_ = documentData;
+    }
+
+    /// Rejects an absent modality or MIME type.
+    this(string documentId, Nullable!ModalityType modalityType, Nullable!MimeType mimeType, Any documentData)
+    {
+        import flint.java.lang : IllegalArgumentException;
+
+        if (modalityType.isNull)
+            throw new IllegalArgumentException("ModalityType must not be null");
+        if (mimeType.isNull)
+            throw new IllegalArgumentException("MimeType must not be null");
+        this(documentId, modalityType.get(), mimeType.get(), documentData);
+    }
+
+    /// Returns the source modality.
+    ModalityType getModalityType()
+    {
+        return modalityType_;
+    }
+
+    /// Returns the source MIME type.
+    MimeType getMimeType()
+    {
+        return mimeType_;
+    }
+
+    /// Returns the source document ID.
+    string getDocumentId()
+    {
+        return documentId_;
+    }
+
+    /// Returns the supplied document data, if present.
+    Any getDocumentData()
+    {
+        return documentData_;
     }
 }
