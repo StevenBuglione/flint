@@ -313,6 +313,17 @@ struct ManagedEntities
         return &snapshots[target.slot];
     }
 
+    package bool setDeletePending(scope const ref ManagedTarget target, bool pending) scope nothrow @nogc
+    {
+        return index.setDeletePending(target.slot, pending);
+    }
+
+    /// Checks that the target still owns the attachment marked for deletion.
+    package ManagedSnapshotSlot* snapshotForDelete(scope const ref ManagedTarget target) return scope nothrow @nogc
+    {
+        return index.deletePending(target.slot) ? snapshotFor(target) : null;
+    }
+
     /// Releases the entity's root and baseline, then returns the detached instance.
     EntityResult detach(EntityIdentity key) scope nothrow @nogc
     {

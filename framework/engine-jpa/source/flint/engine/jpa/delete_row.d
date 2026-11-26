@@ -88,6 +88,11 @@ Error executeManagedDelete(const ref DeletePlan plan, Connection connection,
     const resolved = entities.resolveTarget(key, plan.mapping, target);
     if (resolved.code != Status.ok)
         return resolved;
+    // A nested delete on this attachment borrows the marker until it returns.
+    const alreadyPending = entities.setDeletePending(target, true);
+    scope (exit)
+        if (!alreadyPending)
+            entities.setDeletePending(target, false);
     const type = validateEntity(*plan.mapping, target.entity);
     if (type.code != Status.ok)
         return type;
@@ -100,7 +105,7 @@ Error executeManagedDelete(const ref DeletePlan plan, Connection connection,
     const executed = deleteTarget(plan, connection, entities, target, key.identifier);
     if (executed.code != Status.ok)
         return executed;
-    auto slot = entities.snapshotFor(target);
+    auto slot = entities.snapshotForDelete(target);
     if (slot is null || !slot.usesMapping(plan.mapping))
         return Error(Status.conflict, "managed entity retired during delete");
     return entities.detach(key).error;
@@ -109,7 +114,7 @@ Error executeManagedDelete(const ref DeletePlan plan, Connection connection,
 private Error deleteTarget(const ref DeletePlan plan, Connection connection,
         scope ref ManagedEntities entities, scope ref ManagedTarget target, long identifier)
 {
-    auto slot = entities.snapshotFor(target);
+    auto slot = entities.snapshotForDelete(target);
     if (slot is null || !slot.usesMapping(plan.mapping))
         return Error(Status.conflict, "managed entity retired before delete");
     if (plan.versionSlot != 0)
@@ -125,6 +130,8 @@ private Error deleteTarget(const ref DeletePlan plan, Connection connection,
     statement.setLong(plan.keySlot, identifier);
     if (plan.versionSlot != 0)
         statement.setLong(plan.versionSlot, target.loadedVersion);
+    if (entities.snapshotForDelete(target) is null)
+        return Error(Status.conflict, "managed entity retired before delete");
     const affected = statement.executeUpdate();
     if (affected == 0)
         return Error(Status.conflict, "managed delete predicate matched no row");

@@ -10,7 +10,7 @@ import flint.arena : Error, Result, Status;
 import flint.engine.jpa : AttributeKind, AttributeMapping, AttributeValue, EntityMapping, ResultBinding;
 import flint.engine.jpa.delete_row : DeletePlan, executeManagedDelete, planDelete;
 import flint.engine.jpa.identity : EntityIdentity, IdentitySlot;
-import flint.engine.jpa.loaded_state : ManagedSnapshotSlot;
+import flint.engine.jpa.loaded_state : LoadedSnapshotPlan, ManagedSnapshotSlot, planLoadedSnapshot;
 import flint.engine.jpa.managed_entities : ManagedEntities;
 import flint.engine.jpa.parameter_binding : InsertPlan, ParameterBinding, executeManagedInsert, planInsert;
 import flint.engine.jpa.result_binding : ManagedRowMaterializationPlan, materializeManagedRow, planManagedResult;
@@ -19,12 +19,13 @@ import flint.engine.jpa.update : DeleteAction, InsertAction, InsertInputs, Mutat
     MutationPhase, MutationPlans, UpdateAction,
     VersionBindings, executeManagedUpdate, executeVersionedUpdate, UpdatePlan,
     flushManagedMutations, flushManagedUpdate, flushManagedUpdates, planUpdate;
-import flint.java.sql : Connection, SQLException, Types;
+import flint.java.sql : Connection, PreparedStatement, SQLException, Types;
 import flint.javax.sql : DataSource;
 import flint.jdbc.core : JdbcTemplate;
 import flint.jdbc.datasource : ConnectionHolder, DataSourceTransactionManager, DataSourceUtils;
 import flint.transaction : TransactionDefinition, TransactionStatus, UnexpectedRollbackException;
 import flint.transaction.support : TransactionSynchronization, TransactionSynchronizationManager, TransactionTemplate;
+import std.typecons : BlackHole;
 
 @safe:
 
@@ -35,13 +36,21 @@ private final class VersionedOwner
     long revision;
     bool rejectRevision;
     uint nameReads;
+    DeleteRebindContext deleteRebind;
 }
 
 private alias AttrResult = Result!AttributeValue;
 
 private AttrResult readId(Object entity) nothrow @nogc
 {
-    return AttrResult(AttributeValue(AttributeKind.integer, (cast(VersionedOwner) entity).id));
+    auto owner = cast(VersionedOwner) entity;
+    auto rebound = owner.deleteRebind;
+    if (rebound !is null)
+    {
+        owner.deleteRebind = null;
+        rebound.reattach();
+    }
+    return AttrResult(AttributeValue(AttributeKind.integer, owner.id));
 }
 
 private AttrResult readName(Object entity) nothrow @nogc
@@ -811,6 +820,9 @@ void verifyManagedDeletes(DataSource dataSource, JdbcTemplate jdbc)
         assert(executeManagedDelete(planned.value, independent, managed, ownerKey).code == Status.invalidArgument);
     }
     assertStored(connection, "Outer", 11);
+    verifyDeleteRebind(connection, planned.value, read.value, DeleteRebind.identifier);
+    verifyDeleteRebind(connection, planned.value, read.value, DeleteRebind.binding);
+    verifyDeleteRebind(connection, planned.value, read.value, DeleteRebind.close);
 
     assert(executeManagedDelete(multiple.value, connection, managed, ownerKey).code == Status.ioError);
     assert(managed.find(ownerKey).value is owner);
@@ -841,6 +853,142 @@ void verifyManagedDeletes(DataSource dataSource, JdbcTemplate jdbc)
     verifyUnversionedDelete(connection, managed);
     connection.rollback();
     assertStored(connection, "Delete winner", 12);
+}
+
+private final class DeleteRebindContext
+{
+    IdentitySlot[1] identities;
+    Object[1] roots;
+    ManagedSnapshotSlot[1] snapshots;
+    ManagedEntities managed;
+    LoadedSnapshotPlan plan;
+
+    this(LoadedSnapshotPlan loadedPlan)
+    {
+        plan = loadedPlan;
+        snapshots = [ManagedSnapshotSlot(new AttributeSnapshot[3], new ubyte[16])];
+        Error error;
+        managed = ManagedEntities(identities[], roots[], error, snapshots[]);
+        assert(error.code == Status.ok);
+    }
+
+    void reattach() nothrow @nogc
+    {
+        auto owner = cast(VersionedOwner) managed.detach(ownerKey).value;
+        assert(owner !is null);
+        owner.name = "Reattached";
+        assert(managed.manage(ownerKey, owner, plan).code == Status.ok);
+    }
+
+}
+
+private enum DeleteRebind
+{
+    identifier,
+    binding,
+    close,
+}
+
+private final class RebindingDeleteStatement : BlackHole!PreparedStatement
+{
+    private PreparedStatement statement;
+    private DeleteRebindContext attached;
+    private DeleteRebind phase;
+
+    this(PreparedStatement statement, DeleteRebindContext attached, DeleteRebind phase)
+    {
+        this.statement = statement;
+        this.attached = attached;
+        this.phase = phase;
+    }
+
+    override void setLong(int position, long value)
+    {
+        statement.setLong(position, value);
+        reattach(DeleteRebind.binding);
+    }
+
+    override int executeUpdate()
+    {
+        return statement.executeUpdate();
+    }
+
+    override void close()
+    {
+        statement.close();
+        reattach(DeleteRebind.close);
+    }
+
+    private void reattach(DeleteRebind current)
+    {
+        if (phase == current && attached !is null)
+        {
+            attached.reattach();
+            attached = null;
+        }
+    }
+}
+
+private final class RebindingDeleteConnection : BlackHole!Connection
+{
+    private Connection connection;
+    private DeleteRebindContext attached;
+    private DeleteRebind phase;
+
+    this(Connection connection, DeleteRebindContext attached, DeleteRebind phase)
+    {
+        this.connection = connection;
+        this.attached = attached;
+        this.phase = phase;
+    }
+
+    override bool getAutoCommit()
+    {
+        return connection.getAutoCommit();
+    }
+
+    override PreparedStatement prepareStatement(string sql)
+    {
+        return new RebindingDeleteStatement(connection.prepareStatement(sql), attached, phase);
+    }
+}
+
+private void verifyDeleteRebind(Connection connection, const ref DeletePlan deletePlan,
+        const ref ManagedRowMaterializationPlan readPlan, DeleteRebind phase)
+{
+    const loaded = planLoadedSnapshot(&mapping);
+    assert(loaded.ok);
+    auto context = new DeleteRebindContext(loaded.value);
+    scope (exit)
+        context.managed.clear();
+    loadRows(readPlan, connection, context.managed);
+    auto owner = cast(VersionedOwner) context.managed.find(ownerKey).value;
+    assert(owner !is null);
+    const prior = context.managed.lazyHandle(ownerKey);
+    assert(prior.ok);
+
+    auto deleting = connection;
+    if (phase == DeleteRebind.identifier)
+        owner.deleteRebind = context;
+    else
+        deleting = new RebindingDeleteConnection(connection, context, phase);
+    const before = GC.stats().allocatedInCurrentThread;
+    const result = executeManagedDelete(deletePlan, deleting, context.managed, ownerKey);
+    assert(result.code == Status.conflict, "rebound owner was deleted through an earlier attachment");
+    if (phase == DeleteRebind.identifier)
+        assert(GC.stats().allocatedInCurrentThread == before);
+    assert(owner.deleteRebind is null);
+    assert(context.managed.find(ownerKey).value is owner);
+    assert(context.managed.resolveLazyOwner(prior.value).error.code == Status.notFound);
+    uint[1] dirtyOrdinals;
+    const dirty = context.managed.dirty(ownerKey, dirtyOrdinals[]);
+    assert(dirty.ok && dirty.value == 0);
+    if (phase == DeleteRebind.close)
+    {
+        assertDeleteAbsent(connection);
+        connection.rollback();
+    }
+    assertStored(connection, "Outer", 11);
 }
 
 private void assertDeleteAbsent(Connection connection, long identifier = 1)

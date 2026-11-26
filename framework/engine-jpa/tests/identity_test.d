@@ -107,3 +107,28 @@ unittest
     destroy(index);
     assert(!index.finishPostLoad(position));
 }
+
+@("nested deletes borrow a live marker and a replacement gets its own marker")
+unittest
+{
+    IdentitySlot[1] slots;
+    scope index = IdentityIndex(slots[]);
+    enum key = EntityIdentity(0, 1);
+    const first = index.claim(key);
+    assert(first.ok);
+    const position = first.value.slot;
+    assert(!index.setDeletePending(position, true));
+    assert(index.setDeletePending(position, true));
+    assert(index.deletePending(position));
+
+    assert(index.detach(key).ok && !index.deletePending(position));
+    const second = index.claim(key);
+    assert(second.ok && second.value.slot == position);
+    assert(!index.setDeletePending(position, true));
+    assert(index.setDeletePending(position, false));
+    assert(!index.deletePending(position) && index.find(key).ok);
+
+    assert(!index.setDeletePending(position, true));
+    destroy(index);
+    assert(!index.setDeletePending(position, false) && !index.deletePending(position));
+}

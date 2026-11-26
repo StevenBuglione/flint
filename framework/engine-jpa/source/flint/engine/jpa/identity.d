@@ -37,6 +37,7 @@ struct IdentitySlot
     private EntityIdentity key;
     private SlotState state;
     private bool postLoadPending;
+    private bool deletePending;
     private uint generation;
 }
 
@@ -153,6 +154,23 @@ struct IdentityIndex
             return false;
         slot.postLoadPending = false;
         return true;
+    }
+
+    /// Reports a live attachment marked by a synchronous delete.
+    package bool deletePending(size_t position) const scope nothrow @nogc
+    {
+        return position < slots.length && slots[position].state == SlotState.live && slots[position].deletePending;
+    }
+
+    /// Returns the previous marker so a nested delete can leave its caller's marker in place.
+    package bool setDeletePending(size_t position, bool pending) scope nothrow @nogc
+    {
+        if (position >= slots.length || slots[position].state != SlotState.live)
+            return false;
+        auto slot = &slots[position];
+        const previous = slot.deletePending;
+        slot.deletePending = pending;
+        return previous;
     }
 
     /// Assigns a slot for a new identity or returns the existing claim without changing it.
