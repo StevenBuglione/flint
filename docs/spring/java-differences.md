@@ -1925,7 +1925,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.io.ByteArrayOutputStream#toByteArray()` | `flint.java.io.ByteArrayOutputStream.toByteArray` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns an independent unsigned byte slice. A zero-length slice represents an empty Java array. |
+| `java.io.ByteArrayOutputStream#toByteArray()` | `flint.java.io.ByteArrayOutputStream.toByteArray` | [R26](api-mapping.md#r26-null-arrays) | Returns an independent unsigned byte slice. An empty result uses the plain D array representation. |
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D exception hierarchy for Java's checked I/O exception. |
 | `java.io.PrintWriter#append(CharSequence)` | `flint.java.io.PrintWriter.append` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.io.PrintWriter#print(Object)` | `flint.java.io.PrintWriter.print` | [R23](api-mapping.md#r23-object-typed-values) |  |

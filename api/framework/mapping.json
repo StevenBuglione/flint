@@ -5507,7 +5507,7 @@
 "java.io.ByteArrayOutputStream#<init>()":{"d":"flint.java.io.ByteArrayOutputStream.this","status":"ported"},
 "java.io.ByteArrayOutputStream#reset()":{"d":"flint.java.io.ByteArrayOutputStream.reset","status":"ported"},
 "java.io.ByteArrayOutputStream#size()":{"d":"flint.java.io.ByteArrayOutputStream.size","status":"ported"},
-"java.io.ByteArrayOutputStream#toByteArray()":{"status":"adapted","d":"flint.java.io.ByteArrayOutputStream.toByteArray","rules":["R5"],"note":"Returns an independent unsigned byte slice. A zero-length slice represents an empty Java array."},
+"java.io.ByteArrayOutputStream#toByteArray()":{"status":"adapted","d":"flint.java.io.ByteArrayOutputStream.toByteArray","rules":["R26"],"note":"Returns an independent unsigned byte slice. An empty result uses the plain D array representation."},
 "java.io.ByteArrayOutputStream#toString()":{"status":"excluded","category":"deferred","phase":"2","reason":"The current method returns raw UTF-8 bytes as D text. Java decodes using the default charset and replaces malformed input."},
 "java.io.ByteArrayOutputStream#write(int)":{"d":"flint.java.io.ByteArrayOutputStream.write","status":"ported"},
 "java.io.File":{"d":"flint.java.io.File","status":"ported"},
