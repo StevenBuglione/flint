@@ -11087,7 +11087,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.SimpleDateFormat#<init>(String)` | 2 | Uses Locale.US for named fields instead of Java's default Locale.Category.FORMAT. |
 | framework | `java.text.SimpleDateFormat#<init>(String,Locale)` | 2 | Rejects named fields with a non-English locale. Java uses that locale's date and time names. |
 | framework | `java.text.SimpleDateFormat#applyPattern(String)` | 2 | Reports only the last digit of an invalid ISO 8601 X repeat count of ten or more. Java reports the full count. |
-| framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Interprets the initial ParsePosition index and reports consumed and error indices in UTF-8 bytes. Java uses UTF-16 code units (R14). |
+| framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Interprets the initial ParsePosition index and reports consumed and error indices in UTF-8 bytes. Java uses UTF-16 code units (R14). Passing a null ParsePosition terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.SimpleDateFormat#set2DigitYearStart(Date)` | 2 | Computes the year window in a separate calendar. Java sets the time of the formatter's caller-visible calendar when applying the requested start. |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.MonthDay#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
