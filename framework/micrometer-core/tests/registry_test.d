@@ -178,7 +178,8 @@ unittest
 {
     auto timer = (new SimpleMeterRegistry).timer("latency");
     assert(timer.mean(TimeUnit.SECONDS) == 0);
-    auto measurements = timer.measure().iterator();
+    auto view = timer.measure();
+    auto measurements = view.iterator();
     auto count = measurements.next();
     auto total = measurements.next();
     auto maximum = measurements.next();
@@ -186,6 +187,14 @@ unittest
     assert(count.getStatistic() == Statistic.COUNT);
     assert(total.getStatistic() == Statistic.TOTAL_TIME);
     assert(maximum.getStatistic() == Statistic.MAX);
+    size_t index;
+    view.forEach((reading) { assert(reading is [count, total, maximum][index++]); });
+    assert(index == 3);
+    foreach (reading; view)
+    {
+        assert(reading is count);
+        break;
+    }
     timer.record(-1, TimeUnit.SECONDS);
     timer.record(Duration.ofMillis(-1));
     assert(count.getValue() == 0);

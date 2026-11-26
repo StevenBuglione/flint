@@ -1784,31 +1784,24 @@ private final class CounterMeasurement : Measurement, MeasurementIterable
 private final class MeterMeasurements : MeasurementIterable
 {
     private Measurement[3] measurements;
-    private size_t length;
-    private long delegate() nothrow @nogc readCount;
     private Timer timer;
+    private DistributionSummary summary;
 
     this(Timer timer)
     {
         this.timer = timer;
-        readCount = &timer.count;
         measurements[0] = newSample(&count, Statistic.COUNT);
         measurements[1] = newSample(&totalTime, Statistic.TOTAL_TIME);
         measurements[2] = newSample(&maximumTime, Statistic.MAX);
-        length = 3;
     }
 
     this(DistributionSummary summary, bool withMaximum)
     {
-        readCount = &summary.count;
+        this.summary = summary;
         measurements[0] = newSample(&count, Statistic.COUNT);
         measurements[1] = newSample(&summary.totalAmount, Statistic.TOTAL);
-        length = 2;
         if (withMaximum)
-        {
             measurements[2] = newSample(&summary.max, Statistic.MAX);
-            length = 3;
-        }
     }
 
     // Keep the cold allocation shared across the timer and summary constructors.
@@ -1819,7 +1812,7 @@ private final class MeterMeasurements : MeasurementIterable
 
     private double count() nothrow @nogc
     {
-        return cast(double) readCount();
+        return cast(double)(timer is null ? summary.count() : timer.count());
     }
 
     private double totalTime() nothrow @nogc
@@ -1832,6 +1825,12 @@ private final class MeterMeasurements : MeasurementIterable
         return timer.max(timer.baseTimeUnit());
     }
 
+    private size_t measurementCount() const nothrow @nogc
+    {
+        // The optional maximum is the only slot that can be empty.
+        return measurements[2] is null ? 2 : 3;
+    }
+
     override Iterator!Measurement iterator()
     {
         return new MeasurementIterator(measurements[0], measurements[1], measurements[2]);
@@ -1839,17 +1838,27 @@ private final class MeterMeasurements : MeasurementIterable
 
     override void forEach(void delegate(Measurement) @safe action)
     {
-        foreach (sample; measurements[0 .. length])
+        foreach (sample; measurements[0 .. measurementCount()])
             action(sample);
     }
 
     override int opApply(scope int delegate(Measurement) @safe visit)
     {
-        foreach (sample; measurements[0 .. length])
+        foreach (sample; measurements[0 .. measurementCount()])
             if (const result = visit(sample))
                 return result;
         return 0;
     }
+}
+
+@("a default summary view stops after COUNT and TOTAL")
+unittest
+{
+    auto view = DistributionSummary.measurementsOf(new NoopDistributionSummary(null), false);
+    const expected = [Statistic.COUNT, Statistic.TOTAL];
+    size_t index;
+    view.forEach((reading) { assert(reading.getStatistic() == expected[index++]); });
+    assert(index == expected.length);
 }
 
 private final class MeasurementIterator : Iterator!Measurement
