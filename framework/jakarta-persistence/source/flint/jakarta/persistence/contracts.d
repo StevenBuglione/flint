@@ -7,6 +7,10 @@
  * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  * jakarta/persistence/FindOption.java, LockOption.java, RefreshOption.java:
  * Copyright (c) 2023 Oracle and/or its affiliates. All rights reserved.
+ * jakarta/persistence/ParameterMode.java, SynchronizationType.java:
+ * Copyright (c) 2011, 2023 Oracle and/or its affiliates. All rights reserved.
+ * jakarta/persistence/PersistenceContextType.java:
+ * Copyright (c) 2008, 2023 Oracle and/or its affiliates. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  * Modified by the Flint authors: D interfaces (R3), nullable integer (R5), DDoc exceptions (R8),
  * and built-in options as enums (D-JPA-2).
@@ -103,4 +107,40 @@ enum PessimisticLockScope
 
     /// Also lock join-table and collection-table rows for relationships and collections owned by the entity.
     EXTENDED,
+}
+
+/// Direction of a stored procedure parameter.
+enum ParameterMode
+{
+    /// Input parameter.
+    IN,
+
+    /// Input and output parameter.
+    INOUT,
+
+    /// Output parameter.
+    OUT,
+
+    /// Reference cursor that can return a result set.
+    REF_CURSOR,
+}
+
+/// Lifetime of a persistence context.
+enum PersistenceContextType
+{
+    /// Default. The context is scoped to a transaction.
+    TRANSACTION,
+
+    /// The context can span transactions.
+    EXTENDED,
+}
+
+/// Controls whether the persistence context joins the current transaction automatically.
+enum SynchronizationType
+{
+    /// Join the current transaction automatically.
+    SYNCHRONIZED,
+
+    /// Join the current transaction only after an explicit joinTransaction call.
+    UNSYNCHRONIZED,
 }
