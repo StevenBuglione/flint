@@ -478,6 +478,15 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
                          ['framework/web/source/flint/web/package.d', 'policy/request-allocations.json',
                           'apps/flint/src/flint_tool/engine/builder.d'])
 
+    def test_only_one_scheduler_runs(self):
+        import fcntl
+        (self.store.root / 'train').mkdir(exist_ok=True)
+        with open(self.store.root / 'train' / 'scheduler.lock', 'a+') as held:
+            fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            lines = []
+            merge_train.serve(self.store, self.train, once=True, log=lines.append)
+            self.assertIn('another scheduler holds', lines[0])
+
     def test_the_closure_covers_the_apps_packages_and_shared_paths(self):
         paths = merge_train.closure_paths(merge_train.ROOT)
         for expected in ('framework/web/', 'framework/jdbc/', 'boot/core/flint-boot/', 'policy/profiles.toml', 'benchmarks/spring/'):

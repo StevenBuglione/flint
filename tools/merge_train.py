@@ -609,7 +609,17 @@ def next_train(store, submissions):
 
 def serve(store, train, agent='merge-train', poll=15, once=False, log=print):
     """The continuous scheduler: whenever next_train() holds, take the head's place in the queue, claim the slot, run a
-    train, release. Runs on venus outside any lane's turn (coordinator, 2026-11-26)."""
+    train, release. Runs on venus outside any lane's turn (coordinator, 2026-11-26). One instance at a time: every
+    scheduler shares the agent name, so the slot's lease cannot keep two apart; an exclusive lock does."""
+    import fcntl
+    (store.root / 'train').mkdir(parents=True, exist_ok=True)
+    guard = open(store.root / 'train' / 'scheduler.lock', 'a+')
+    try:
+        fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        log(f'{agent_utc()} another scheduler holds {guard.name}; exiting')
+        return
+    guard.seek(0); guard.truncate(); guard.write(f'{os.getpid()}\n'); guard.flush()
     while True:
         if next_train(store, train.submissions()):
             if train.verify_commands is None and train.verifiers and isinstance(train.verifiers[0], RemoteVerifier):
