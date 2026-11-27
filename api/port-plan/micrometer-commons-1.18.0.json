@@ -1,0 +1,21 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "micrometer-commons-1.18.0",
+"types": {
+"io.micrometer.common.KeyValue": {
+"kind": "interface",
+"module": "flint.micrometer.common",
+"d": "KeyValue",
+"status": "ported"
+},
+"io.micrometer.common.KeyValues": {
+"kind": "abstract class",
+"module": "flint.micrometer.common",
+"d": "KeyValues",
+"status": "adapted",
+"rules": [
+"D-MICROMETER-1"
+]
+}
+}
+}

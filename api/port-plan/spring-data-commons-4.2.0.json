@@ -1,0 +1,328 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "spring-data-commons-4.2.0",
+"types": {
+"org.springframework.data.annotation.AccessType": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "AccessType",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.CreatedBy": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "CreatedBy",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.CreatedDate": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "CreatedDate",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.Id": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "Id",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.Immutable": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "Immutable",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.LastModifiedBy": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "LastModifiedBy",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.LastModifiedDate": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "LastModifiedDate",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.PersistenceCreator": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "PersistenceCreator",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.Persistent": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "Persistent",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.QueryAnnotation": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "QueryAnnotation",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.ReadOnlyProperty": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "ReadOnlyProperty",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.Reference": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "Reference",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.Transient": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "Transient",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.TypeAlias": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "TypeAlias",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.annotation.Version": {
+"kind": "uda",
+"module": "flint.data.annotation",
+"d": "Version",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.core.PropertyPathUtil": {
+"kind": "class",
+"module": "flint.data.core",
+"d": "PropertyPathUtil",
+"status": "ported"
+},
+"org.springframework.data.core.PropertyResolutionException": {
+"kind": "class",
+"module": "flint.data.core",
+"d": "PropertyResolutionException",
+"status": "ported"
+},
+"org.springframework.data.core.TypeInformation": {
+"kind": "interface",
+"module": "flint.data.core",
+"d": "TypeInformation",
+"status": "adapted",
+"rules": [
+"R4"
+],
+"storage": "unset"
+},
+"org.springframework.data.domain.AbstractPageRequest": {
+"kind": "abstract class",
+"module": "flint.data.domain",
+"d": "AbstractPageRequest",
+"status": "ported"
+},
+"org.springframework.data.domain.AfterDomainEventPublication": {
+"kind": "uda",
+"module": "flint.data.domain",
+"d": "AfterDomainEventPublication",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.domain.DomainEvents": {
+"kind": "uda",
+"module": "flint.data.domain",
+"d": "DomainEvents",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.domain.KeysetScrollPosition": {
+"kind": "final class",
+"module": "flint.data.domain",
+"d": "KeysetScrollPosition",
+"status": "ported"
+},
+"org.springframework.data.domain.Limit": {
+"kind": "interface",
+"module": "flint.data.domain",
+"d": "Limit",
+"status": "adapted",
+"rules": [
+"R3"
+]
+},
+"org.springframework.data.domain.OffsetScrollPosition": {
+"kind": "final class",
+"module": "flint.data.domain",
+"d": "OffsetScrollPosition",
+"status": "ported"
+},
+"org.springframework.data.domain.PageRequest": {
+"kind": "class",
+"module": "flint.data.domain",
+"d": "PageRequest",
+"status": "ported"
+},
+"org.springframework.data.domain.Pageable": {
+"kind": "interface",
+"module": "flint.data.domain",
+"d": "Pageable",
+"status": "adapted",
+"rules": [
+"R3"
+]
+},
+"org.springframework.data.domain.ScrollPosition": {
+"kind": "interface",
+"module": "flint.data.domain",
+"d": "ScrollPosition",
+"status": "ported"
+},
+"org.springframework.data.domain.Sort": {
+"kind": "class",
+"module": "flint.data.domain",
+"d": "Sort",
+"status": "ported"
+},
+"org.springframework.data.mapping.Alias": {
+"kind": "abstract class",
+"module": "flint.data.mapping",
+"d": "Alias",
+"status": "adapted",
+"rules": [
+"D-DATA-11"
+]
+},
+"org.springframework.data.mapping.IdentifierAccessor": {
+"kind": "interface",
+"module": "flint.data.mapping",
+"d": "IdentifierAccessor",
+"status": "ported"
+},
+"org.springframework.data.mapping.MappingException": {
+"kind": "class",
+"module": "flint.data.mapping",
+"d": "MappingException",
+"status": "ported"
+},
+"org.springframework.data.mapping.TargetAwareIdentifierAccessor": {
+"kind": "abstract class",
+"module": "flint.data.mapping",
+"d": "TargetAwareIdentifierAccessor",
+"status": "ported"
+},
+"org.springframework.data.mapping.context.InvalidPersistentPropertyPath": {
+"kind": "class",
+"module": "flint.data.mapping.context",
+"d": "InvalidPersistentPropertyPath",
+"status": "ported"
+},
+"org.springframework.data.mapping.model.EntityInstantiators": {
+"kind": "class",
+"module": "flint.data.mapping.model",
+"d": "EntityInstantiators",
+"status": "adapted",
+"rules": [
+"D-DATA-25"
+]
+},
+"org.springframework.data.mapping.model.MappingInstantiationException": {
+"kind": "class",
+"module": "flint.data.mapping.model",
+"d": "MappingInstantiationException",
+"status": "ported"
+},
+"org.springframework.data.mapping.model.PreferredConstructorDiscoverer": {
+"kind": "interface",
+"module": "flint.data.mapping.model",
+"d": "PreferredConstructorDiscoverer",
+"status": "ported"
+},
+"org.springframework.data.repository.NoRepositoryBean": {
+"kind": "uda",
+"module": "flint.data.repository",
+"d": "NoRepositoryBean",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.repository.RepositoryDefinition": {
+"kind": "uda",
+"module": "flint.data.repository",
+"d": "RepositoryDefinition",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.data.support.IsNewStrategy": {
+"kind": "interface",
+"module": "flint.data.support",
+"d": "IsNewStrategy",
+"status": "ported"
+},
+"org.springframework.data.support.PageableExecutionUtils": {
+"kind": "abstract class",
+"module": "flint.data.support",
+"d": "PageableExecutionUtils",
+"status": "ported"
+},
+"org.springframework.data.support.PersistableIsNewStrategy": {
+"kind": "final class",
+"module": "flint.data.support",
+"d": "PersistableIsNewStrategy",
+"status": "adapted",
+"rules": [
+"R18"
+]
+}
+}
+}

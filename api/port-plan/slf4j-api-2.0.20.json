@@ -1,0 +1,180 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "slf4j-api-2.0.20",
+"types": {
+"org.slf4j.ILoggerFactory": {
+"kind": "interface",
+"module": "flint.slf4j",
+"d": "ILoggerFactory",
+"status": "ported"
+},
+"org.slf4j.IMarkerFactory": {
+"kind": "interface",
+"module": "flint.slf4j",
+"d": "IMarkerFactory",
+"status": "ported"
+},
+"org.slf4j.Logger": {
+"kind": "interface",
+"module": "flint.slf4j",
+"d": "Logger",
+"status": "ported"
+},
+"org.slf4j.LoggerFactory": {
+"kind": "final class",
+"module": "flint.slf4j",
+"d": "LoggerFactory",
+"status": "ported"
+},
+"org.slf4j.MDC": {
+"kind": "final class",
+"module": "flint.slf4j",
+"d": "MDC",
+"status": "ported"
+},
+"org.slf4j.Marker": {
+"kind": "interface",
+"module": "flint.slf4j",
+"d": "Marker",
+"status": "ported"
+},
+"org.slf4j.MarkerFactory": {
+"kind": "final class",
+"module": "flint.slf4j",
+"d": "MarkerFactory",
+"status": "ported"
+},
+"org.slf4j.event.DefaultLoggingEvent": {
+"kind": "class",
+"module": "flint.slf4j.event",
+"d": "DefaultLoggingEvent",
+"status": "ported"
+},
+"org.slf4j.event.EventConstants": {
+"kind": "struct",
+"module": "flint.slf4j.event",
+"d": "EventConstants",
+"status": "ported"
+},
+"org.slf4j.event.KeyValuePair": {
+"kind": "final class",
+"module": "flint.slf4j.event",
+"d": "KeyValuePair",
+"status": "ported"
+},
+"org.slf4j.event.Level": {
+"kind": "enum",
+"module": "flint.slf4j.event",
+"d": "Level",
+"status": "ported"
+},
+"org.slf4j.event.LoggingEvent": {
+"kind": "interface",
+"module": "flint.slf4j.event",
+"d": "LoggingEvent",
+"status": "ported"
+},
+"org.slf4j.helpers.AbstractLogger": {
+"kind": "abstract class",
+"module": "flint.slf4j.helpers",
+"d": "AbstractLogger",
+"status": "ported"
+},
+"org.slf4j.helpers.BasicMarker": {
+"kind": "class",
+"module": "flint.slf4j.helpers",
+"d": "BasicMarker",
+"status": "ported"
+},
+"org.slf4j.helpers.BasicMarkerFactory": {
+"kind": "class",
+"module": "flint.slf4j.helpers",
+"d": "BasicMarkerFactory",
+"status": "ported"
+},
+"org.slf4j.helpers.FormattingTuple": {
+"kind": "final class",
+"module": "flint.slf4j.helpers",
+"d": "FormattingTuple",
+"status": "ported"
+},
+"org.slf4j.helpers.MessageFormatter": {
+"kind": "struct",
+"module": "flint.slf4j.helpers",
+"d": "MessageFormatter",
+"status": "ported"
+},
+"org.slf4j.helpers.NOPLogger": {
+"kind": "class",
+"module": "flint.slf4j.helpers",
+"d": "NOPLogger",
+"status": "ported"
+},
+"org.slf4j.helpers.NOPLoggerFactory": {
+"kind": "class",
+"module": "flint.slf4j.helpers",
+"d": "NOPLoggerFactory",
+"status": "ported"
+},
+"org.slf4j.helpers.NOPMDCAdapter": {
+"kind": "class",
+"module": "flint.slf4j.helpers",
+"d": "NOPMDCAdapter",
+"status": "ported"
+},
+"org.slf4j.helpers.NormalizedParameters": {
+"kind": "final class",
+"module": "flint.slf4j.helpers",
+"d": "NormalizedParameters",
+"status": "ported"
+},
+"org.slf4j.spi.CallerBoundaryAware": {
+"kind": "interface",
+"module": "flint.slf4j.spi",
+"d": "CallerBoundaryAware",
+"status": "ported"
+},
+"org.slf4j.spi.DefaultLoggingEventBuilder": {
+"kind": "class",
+"module": "flint.slf4j.spi",
+"d": "DefaultLoggingEventBuilder",
+"status": "ported"
+},
+"org.slf4j.spi.LocationAwareLogger": {
+"kind": "interface",
+"module": "flint.slf4j.spi",
+"d": "LocationAwareLogger",
+"status": "ported"
+},
+"org.slf4j.spi.LoggingEventAware": {
+"kind": "interface",
+"module": "flint.slf4j.spi",
+"d": "LoggingEventAware",
+"status": "ported"
+},
+"org.slf4j.spi.LoggingEventBuilder": {
+"kind": "interface",
+"module": "flint.slf4j.spi",
+"d": "LoggingEventBuilder",
+"status": "ported"
+},
+"org.slf4j.spi.MDCAdapter": {
+"kind": "interface",
+"module": "flint.slf4j.spi",
+"d": "MDCAdapter",
+"status": "ported"
+},
+"org.slf4j.spi.NOPLoggingEventBuilder": {
+"kind": "final class",
+"module": "flint.slf4j.spi",
+"d": "NOPLoggingEventBuilder",
+"status": "ported"
+},
+"org.slf4j.spi.SLF4JServiceProvider": {
+"kind": "interface",
+"module": "flint.slf4j.spi",
+"d": "SLF4JServiceProvider",
+"status": "ported"
+}
+}
+}

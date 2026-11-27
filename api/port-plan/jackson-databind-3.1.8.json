@@ -1,0 +1,245 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "jackson-databind-3.1.8",
+"types": {
+"tools.jackson.databind.DeserializationFeature": {
+"kind": "enum",
+"module": "flint.jackson.databind.cfg",
+"d": "DeserializationFeature",
+"status": "adapted",
+"rules": [
+"R18"
+]
+},
+"tools.jackson.databind.JsonNode": {
+"kind": "abstract class",
+"module": "flint.jackson.databind.node",
+"d": "JsonNode",
+"status": "ported"
+},
+"tools.jackson.databind.MapperFeature": {
+"kind": "enum",
+"module": "flint.jackson.databind.cfg",
+"d": "MapperFeature",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"tools.jackson.databind.ObjectMapper": {
+"kind": "class",
+"module": "flint.jackson.databind",
+"d": "ObjectMapper",
+"status": "ported"
+},
+"tools.jackson.databind.ObjectWriter": {
+"kind": "class",
+"module": "flint.jackson.databind",
+"d": "ObjectWriter",
+"status": "ported"
+},
+"tools.jackson.databind.PropertyNamingStrategies": {
+"kind": "final class",
+"module": "flint.jackson.databind",
+"d": "PropertyNamingStrategies",
+"status": "ported"
+},
+"tools.jackson.databind.PropertyNamingStrategy": {
+"kind": "abstract class",
+"module": "flint.jackson.databind",
+"d": "PropertyNamingStrategy",
+"status": "ported"
+},
+"tools.jackson.databind.SerializationFeature": {
+"kind": "enum",
+"module": "flint.jackson.databind.cfg",
+"d": "SerializationFeature",
+"status": "adapted",
+"rules": [
+"R18"
+]
+},
+"tools.jackson.databind.annotation.JsonNaming": {
+"kind": "struct",
+"module": "flint.jackson.databind.annotation",
+"d": "JsonNaming",
+"status": "ported"
+},
+"tools.jackson.databind.cfg.ConstructorDetector": {
+"kind": "struct",
+"module": "flint.jackson.databind.cfg",
+"d": "ConstructorDetector",
+"status": "ported"
+},
+"tools.jackson.databind.cfg.DateTimeFeature": {
+"kind": "enum",
+"module": "flint.jackson.databind.cfg",
+"d": "DateTimeFeature",
+"status": "ported"
+},
+"tools.jackson.databind.cfg.EnumFeature": {
+"kind": "enum",
+"module": "flint.jackson.databind.cfg",
+"d": "EnumFeature",
+"status": "ported"
+},
+"tools.jackson.databind.cfg.MapperConfig": {
+"kind": "final class",
+"module": "flint.jackson.databind.cfg",
+"d": "MapperConfig",
+"status": "ported",
+"storage": "unset"
+},
+"tools.jackson.databind.exc.InvalidDefinitionException": {
+"kind": "class",
+"module": "flint.jackson.databind.exc",
+"d": "InvalidDefinitionException",
+"status": "ported"
+},
+"tools.jackson.databind.exc.InvalidFormatException": {
+"kind": "class",
+"module": "flint.jackson.databind.exc",
+"d": "InvalidFormatException",
+"status": "ported"
+},
+"tools.jackson.databind.exc.MismatchedInputException": {
+"kind": "class",
+"module": "flint.jackson.databind.exc",
+"d": "MismatchedInputException",
+"status": "ported"
+},
+"tools.jackson.databind.exc.UnrecognizedPropertyException": {
+"kind": "class",
+"module": "flint.jackson.databind.exc",
+"d": "UnrecognizedPropertyException",
+"status": "ported"
+},
+"tools.jackson.databind.exc.ValueInstantiationException": {
+"kind": "class",
+"module": "flint.jackson.databind.exc",
+"d": "ValueInstantiationException",
+"status": "ported"
+},
+"tools.jackson.databind.introspect.BeanPropertyDefinition": {
+"kind": "final class",
+"module": "flint.jackson.databind.introspect",
+"d": "BeanPropertyDefinition",
+"status": "ported"
+},
+"tools.jackson.databind.json.JsonMapper": {
+"kind": "class",
+"module": "flint.jackson.databind",
+"d": "JsonMapper",
+"status": "ported"
+},
+"tools.jackson.databind.node.ArrayNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "ArrayNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.BigIntegerNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "BigIntegerNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.BooleanNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "BooleanNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.ContainerNode": {
+"kind": "abstract class",
+"module": "flint.jackson.databind.node",
+"d": "ContainerNode",
+"status": "ported",
+"storage": "unset"
+},
+"tools.jackson.databind.node.DecimalNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "DecimalNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.DoubleNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "DoubleNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.FloatNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "FloatNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.IntNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "IntNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.JsonNodeFactory": {
+"kind": "class",
+"module": "flint.jackson.databind.node",
+"d": "JsonNodeFactory",
+"status": "ported"
+},
+"tools.jackson.databind.node.JsonNodeType": {
+"kind": "enum",
+"module": "flint.jackson.databind.node",
+"d": "JsonNodeType",
+"status": "ported"
+},
+"tools.jackson.databind.node.LongNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "LongNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.MissingNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "MissingNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.NullNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "NullNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.NumericNode": {
+"kind": "abstract class",
+"module": "flint.jackson.databind.node",
+"d": "NumericNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.ObjectNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "ObjectNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.ShortNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "ShortNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.StringNode": {
+"kind": "final class",
+"module": "flint.jackson.databind.node",
+"d": "StringNode",
+"status": "ported"
+},
+"tools.jackson.databind.node.ValueNode": {
+"kind": "abstract class",
+"module": "flint.jackson.databind.node",
+"d": "ValueNode",
+"status": "ported"
+}
+}
+}

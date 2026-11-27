@@ -1,0 +1,51 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "aspectj-1.9.27",
+"types": {
+"org.aspectj.lang.JoinPoint": {
+"kind": "interface",
+"module": "flint.aspectj.lang",
+"d": "JoinPoint",
+"status": "ported"
+},
+"org.aspectj.lang.NoAspectBoundException": {
+"kind": "class",
+"module": "flint.aspectj.lang",
+"d": "NoAspectBoundException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.aspectj.lang.ProceedingJoinPoint": {
+"kind": "interface",
+"module": "flint.aspectj.lang",
+"d": "ProceedingJoinPoint",
+"status": "ported"
+},
+"org.aspectj.lang.Signature": {
+"kind": "interface",
+"module": "flint.aspectj.lang",
+"d": "Signature",
+"status": "ported"
+},
+"org.aspectj.lang.SoftException": {
+"kind": "class",
+"module": "flint.aspectj.lang",
+"d": "SoftException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.aspectj.lang.annotation.control.CodeGenerationHint": {
+"kind": "uda",
+"module": "flint.aspectj.lang.annotation.control",
+"d": "CodeGenerationHint",
+"status": "adapted",
+"rules": [
+"R2"
+]
+}
+}
+}
