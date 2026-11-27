@@ -142,18 +142,22 @@
     },
     "java/util/Base64/Base64GetEncoderTest.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the Base64 specification and Temurin parity (tools/Base64Oracle.java).",
       "status": "deferred"
     },
     "java/util/Base64/TestBase64.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the Base64 specification and Temurin parity (tools/Base64Oracle.java).",
       "status": "deferred"
     },
     "java/util/Base64/TestBase64Golden.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the Base64 specification and Temurin parity (tools/Base64Oracle.java).",
       "status": "deferred"
     },
     "java/util/Base64/TestEncodingDecodingLength.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the Base64 specification and Temurin parity (tools/Base64Oracle.java).",
       "status": "deferred"
     },
     "java/util/Calendar/BuddhistCalendarTest.java": {
@@ -2845,6 +2849,7 @@
     }
   },
   "flint_tests": [
+    "framework/java-util/tests/base64_test.d",
     "framework/java-util/tests/hexformat_test.d",
     "framework/java-util/tests/random_seed_test.d",
     "framework/java-util/tests/randomgenerator_test.d",
@@ -2854,7 +2859,7 @@
     "framework/java-util/tests/uuid_test.d"
   ],
   "module": "java-util",
-  "note": "UUIDOracle.java generates the UUID corpus using public Java SE 21 APIs. The random UUID layout and entropy smoke test is an original Flint test. HexFormatOracle.java generates the primitive hexadecimal width and case cases.",
+  "note": "UUIDOracle.java generates the UUID corpus using public Java SE 21 APIs. The random UUID layout and entropy smoke test is an original Flint test. HexFormatOracle.java generates the primitive hexadecimal width and case cases. Base64Oracle.java generates the Base64 encoder, decoder and MIME line-separator cases.",
   "schema": "flint.upstream-tests/1",
   "test_packages": [
     ":java-util"

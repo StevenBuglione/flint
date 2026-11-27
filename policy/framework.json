@@ -1968,6 +1968,7 @@
    "directory": "framework/java-util",
    "module": "flint.java.util.uuid",
    "also": [
+    "flint.java.util.base64",
     "flint.java.util.hexformat",
     "flint.java.util.random",
     "flint.java.util.random.random",
