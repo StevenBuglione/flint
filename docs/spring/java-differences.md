@@ -1535,7 +1535,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.ConstructorResult` | `flint.jakarta.persistence.ConstructorResult` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ConstructorResult#columns` | `flint.jakarta.persistence.ConstructorResult.columns` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ConstructorResult#targetClass` | `flint.jakarta.persistence.ConstructorResult.targetClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `jakarta.persistence.Convert` | `flint.jakarta.persistence.Convert` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `jakarta.persistence.Convert` | `flint.jakarta.persistence.Convert` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Convert#attributeName` | `flint.jakarta.persistence.Convert.attributeName` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Convert#converter` | `flint.jakarta.persistence.Convert.converter` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.Convert#disableConversion` | `flint.jakarta.persistence.Convert.disableConversion` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1551,7 +1551,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.DiscriminatorColumn#options` | `flint.jakarta.persistence.DiscriminatorColumn.options` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.DiscriminatorValue` | `flint.jakarta.persistence.DiscriminatorValue` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.DiscriminatorValue#value` | `flint.jakarta.persistence.DiscriminatorValue.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.persistence.ElementCollection` | `flint.jakarta.persistence.ElementCollection` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `jakarta.persistence.ElementCollection` | `flint.jakarta.persistence.ElementCollection` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ElementCollection#fetch` | `flint.jakarta.persistence.ElementCollection.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ElementCollection#targetClass` | `flint.jakarta.persistence.ElementCollection.targetClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.Embeddable` | `flint.jakarta.persistence.Embeddable` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1559,7 +1559,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.EmbeddedId` | `flint.jakarta.persistence.EmbeddedId` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Entity` | `flint.jakarta.persistence.Entity` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Entity#name` | `flint.jakarta.persistence.Entity.name` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.persistence.EntityListeners` | `flint.jakarta.persistence.EntityListeners` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `jakarta.persistence.EntityListeners` | `flint.jakarta.persistence.EntityListeners` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.EntityListeners#value` | `flint.jakarta.persistence.EntityListeners.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.EntityResult` | `flint.jakarta.persistence.EntityResult` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.EntityResult#discriminatorColumn` | `flint.jakarta.persistence.EntityResult.discriminatorColumn` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1585,7 +1585,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.GeneratedValue#generator` | `flint.jakarta.persistence.GeneratedValue.generator` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.GeneratedValue#strategy` | `flint.jakarta.persistence.GeneratedValue.strategy` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Id` | `flint.jakarta.persistence.Id` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.persistence.IdClass` | `flint.jakarta.persistence.IdClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `jakarta.persistence.IdClass` | `flint.jakarta.persistence.IdClass` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.IdClass#value` | `flint.jakarta.persistence.IdClass.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.Index` | `flint.jakarta.persistence.Index` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Index#columnList` | `flint.jakarta.persistence.Index.columnList` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1625,19 +1625,19 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.JoinTable#uniqueConstraints` | `flint.jakarta.persistence.JoinTable.uniqueConstraints` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Lob` | `flint.jakarta.persistence.Lob` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.LockModeType` | `flint.jakarta.persistence.LockModeType` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
-| `jakarta.persistence.ManyToMany` | `flint.jakarta.persistence.ManyToMany` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `jakarta.persistence.ManyToMany` | `flint.jakarta.persistence.ManyToMany` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToMany#cascade` | `flint.jakarta.persistence.ManyToMany.cascade` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToMany#fetch` | `flint.jakarta.persistence.ManyToMany.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToMany#mappedBy` | `flint.jakarta.persistence.ManyToMany.mappedBy` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToMany#targetEntity` | `flint.jakarta.persistence.ManyToMany.targetEntity` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `jakarta.persistence.ManyToOne` | `flint.jakarta.persistence.ManyToOne` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `jakarta.persistence.ManyToOne` | `flint.jakarta.persistence.ManyToOne` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToOne#cascade` | `flint.jakarta.persistence.ManyToOne.cascade` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToOne#fetch` | `flint.jakarta.persistence.ManyToOne.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToOne#optional` | `flint.jakarta.persistence.ManyToOne.optional` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToOne#targetEntity` | `flint.jakarta.persistence.ManyToOne.targetEntity` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.MapKey` | `flint.jakarta.persistence.MapKey` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.MapKey#name` | `flint.jakarta.persistence.MapKey.name` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.persistence.MapKeyClass` | `flint.jakarta.persistence.MapKeyClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `jakarta.persistence.MapKeyClass` | `flint.jakarta.persistence.MapKeyClass` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.MapKeyClass#value` | `flint.jakarta.persistence.MapKeyClass.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.MapKeyColumn` | `flint.jakarta.persistence.MapKeyColumn` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.MapKeyColumn#columnDefinition` | `flint.jakarta.persistence.MapKeyColumn.columnDefinition` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1716,13 +1716,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.NamedSubgraph#attributeNodes` | `flint.jakarta.persistence.NamedSubgraph.attributeNodes` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.NamedSubgraph#name` | `flint.jakarta.persistence.NamedSubgraph.name` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.NamedSubgraph#type` | `flint.jakarta.persistence.NamedSubgraph.type` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `jakarta.persistence.OneToMany` | `flint.jakarta.persistence.OneToMany` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `jakarta.persistence.OneToMany` | `flint.jakarta.persistence.OneToMany` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToMany#cascade` | `flint.jakarta.persistence.OneToMany.cascade` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToMany#fetch` | `flint.jakarta.persistence.OneToMany.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToMany#mappedBy` | `flint.jakarta.persistence.OneToMany.mappedBy` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToMany#orphanRemoval` | `flint.jakarta.persistence.OneToMany.orphanRemoval` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToMany#targetEntity` | `flint.jakarta.persistence.OneToMany.targetEntity` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `jakarta.persistence.OneToOne` | `flint.jakarta.persistence.OneToOne` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `jakarta.persistence.OneToOne` | `flint.jakarta.persistence.OneToOne` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToOne#cascade` | `flint.jakarta.persistence.OneToOne.cascade` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToOne#fetch` | `flint.jakarta.persistence.OneToOne.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToOne#mappedBy` | `flint.jakarta.persistence.OneToOne.mappedBy` | [R2](api-mapping.md#r2-annotations) |  |
