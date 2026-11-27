@@ -44,7 +44,7 @@
     "java/nio/Buffer/CharAt.java": {
       "status": "deferred",
       "phase": "2",
-      "reason": "The GPL-only test uses CharBuffer.wrap(CharSequence) with string backing. Original Flint tests cover array and heap byte-backed character access."
+      "reason": "The GPL-only test cannot be ported. Original Flint tests cover array, heap byte-backed and text-backed (wrap(CharSequence)) character access."
     },
     "java/nio/Buffer/Chars.java": {
       "status": "deferred",
@@ -94,7 +94,7 @@
     "java/nio/Buffer/StringCharBufferSliceTest.java": {
       "status": "deferred",
       "phase": "2",
-      "reason": "Requires typed buffers or typed binary access beyond this heap byte slice."
+      "reason": "The GPL-only test cannot be ported. Original Flint tests in char_sequence_test.d cover slices, subsequences and duplicates of text-backed buffers from wrap(CharSequence)."
     }
   }
 }

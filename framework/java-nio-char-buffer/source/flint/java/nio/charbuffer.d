@@ -52,7 +52,8 @@ class CharBuffer : Buffer, Comparable!CharBuffer
     {
         words,
         bigEndian,
-        littleEndian
+        littleEndian,
+        text
     }
 
     private enum ubyte readOnlyFlag = 4;
@@ -98,6 +99,34 @@ class CharBuffer : Buffer, Comparable!CharBuffer
         if (words is null)
             words = allocateWords(0);
         return new CharBuffer(cast(byte[]) words, 0, BufferCursor(capacity, offset, offset + length), Storage.words);
+    }
+
+    /// Wrap UTF-8 text as a read-only buffer of its UTF-16 code units, like Java's string-backed buffer: no
+    /// accessible array, native order (R14, R26).
+    static CharBuffer wrap(scope const(char)[] text) pure
+    {
+        return wrapText(text, 0, 0, true);
+    }
+
+    /// ditto, positioned at UTF-16 unit `start` with its limit at `end`; the capacity is the text's UTF-16 length.
+    static CharBuffer wrap(scope const(char)[] text, int start, int end) pure
+    {
+        return wrapText(text, start, end, false);
+    }
+
+    private static CharBuffer wrapText(scope const(char)[] text, int start, int end, bool whole) pure
+    {
+        auto buffer = new CharBuffer(null, 0, BufferCursor(0, 0, 0), Storage.text | readOnlyFlag);
+        const capacity = arraySize(buffer.scanOrWriteUtf16(text, size_t.max, size_t.max));
+        if (whole)
+            end = capacity;
+        // Java's Buffer constructor rejects the bounds and wrap rethrows a bare IndexOutOfBoundsException.
+        if (start < 0 || end < start || end > capacity)
+            throw new IndexOutOfBoundsException;
+        buffer.backing = cast(byte[]) allocateWords(capacity);
+        buffer.scanOrWriteUtf16(text, 0, capacity);
+        buffer.cursor = BufferCursor(capacity, start, end);
+        return buffer;
     }
 
     alias position = Buffer.position;
@@ -366,6 +395,21 @@ class CharBuffer : Buffer, Comparable!CharBuffer
     CharBuffer append(wchar value) pure
     {
         return put(value);
+    }
+
+    /// Append UTF-8 text as UTF-16 code units, as Java's `append(CharSequence)` puts `csq.toString()` (R14, R26).
+    final CharBuffer append(scope const(char)[] text) pure
+    {
+        return put(text);
+    }
+
+    /// Append UTF-16 units `start` to `end` of UTF-8 text, as Java puts `csq.subSequence(start, end)`. A read-only
+    /// heap buffer rejects first; the bounds are checked before the put's own checks (R14, R26).
+    final CharBuffer append(scope const(char)[] text, int start, int end) pure
+    {
+        checkWritableHeap();
+        checkFromToIndex(start, end, arraySize(scanOrWriteUtf16(text, size_t.max, size_t.max)));
+        return put(text, start, end);
     }
 
     /// Transfer remaining characters to target. Java's signature declares IOException.

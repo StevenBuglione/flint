@@ -91,7 +91,8 @@ unittest
     assert(view.position(2).rewind().position() == 0);
     assert(values == [9, 1, 2, 3, 7]);
 
-    auto empty = CharBuffer.wrap(null);
+    // Java needs the same cast: wrap(null) is ambiguous between char[] and CharSequence there too.
+    auto empty = CharBuffer.wrap(cast(wchar[]) null);
     assert(empty.capacity() == 0 && empty.hasArray() && empty.array().length == 0);
     assert(!(cast(Buffer) empty).array().isNull());
 }
