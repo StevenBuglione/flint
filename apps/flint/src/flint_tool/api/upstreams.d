@@ -275,10 +275,11 @@ Fetched fetchUpstream(const ref Upstream upstream, string cache, bool offline)
     if (exists(staging))
         rmdirRecurse(staging);
     mkdirRecurse(staging);
-    // tar runs beside the archive and names it relatively: GNU tar (Git for Windows) reads `C:` in an archive
-    // path as a remote host.
+    // tar runs in the cache and names the archive and the staging directory, both there, relatively: GNU tar (Git
+    // for Windows) reads `C:` in an archive path as a remote host, and a relative --cache would not resolve from
+    // inside the cache.
     const unpacked = upstream.format == "tar.gz" ? capture([
-        "tar", "-xzf", baseName(archive), "-C", staging, "--strip-components=1"
+        "tar", "-xzf", baseName(archive), "-C", baseName(staging), "--strip-components=1"
     ], Launch(dirName(archive))) : capture(["unzip", "-q", "-o", archive, "-d", staging]);
     if (!unpacked.ok)
     {

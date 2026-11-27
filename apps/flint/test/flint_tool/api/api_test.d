@@ -410,6 +410,21 @@ unittest
             "package p;\npublic class A { }\n");
     expect(fetchUpstream(*pinned, cache, true).cached).toEqual(true);
 
+    // A cache named relative to the working directory (flint api fetch --cache build/api), from which tar's own
+    // working directory, the cache, differs.
+    {
+        import std.file : getcwd;
+        import std.path : relativePath;
+
+        Upstream elsewhere = upstreams[0];
+        elsewhere.version_ = "1.0-relative";
+        const relative = relativePath(buildPath(work, "relative-cache"), getcwd());
+        const unpacked = fetchUpstream(elsewhere, relative, false);
+        expect(unpacked.failure).toEqual("");
+        expect(readText(buildPath(unpacked.directory, "src", "main", "java", "p", "A.java"))).toEqual(
+                "package p;\npublic class A { }\n");
+    }
+
     Upstream tampered = upstreams[0];
     tampered.version_ = "1.0-bad";
     tampered.sha256 = "0000000000000000000000000000000000000000000000000000000000000000";
