@@ -23,14 +23,15 @@
  * questions.
  */
 
-// Ported from openjdk 21.0.13: src/java.base/share/classes/java/lang/Integer.java (parseInt, decode),
-// java/lang/Character.java (digit) and java/lang/NumberFormatException.java (forInputString).
+// Ported from openjdk 21.0.13: src/java.base/share/classes/java/lang/Integer.java (parseInt, parseUnsignedInt,
+// decode, toString), java/lang/Long.java (parseLong, parseUnsignedLong, decode, toUnsignedString),
+// java/lang/Character.java (digit) and java/lang/NumberFormatException.java (forInputString, forCharSequence).
 // Modified by the Flint authors: the parsers return a status instead of throwing, so the boxed-type leaves
 // stay nothrow @nogc until they report a failure; text is UTF-8, decoded one BMP character at a time, so
 // Java's UTF-16 code units and their digit values are unchanged; the exception messages are built only in a
 // zero-parameter template that imports flint.java.lang on first use (S-132).
 
-/// Java's `Integer.parseInt` and `Integer.decode` for the boxed-type leaves (`Byte`, `Short`).
+/// Java's integer parsing and formatting for the boxed-type leaves (`Byte`, `Short`, `Integer`, `Long`).
 module flint.java.internal.integers;
 
 import flint.java.lang.character.decimaldigits : javaDecimalDigit;
@@ -51,6 +52,16 @@ package(flint) enum IntParse : ubyte
     zeroLength,
     /// `Sign character in wrong position` (decode)
     signInWrongPosition,
+    /// `Illegal leading minus sign on unsigned string s.`
+    leadingMinus,
+    /// `String value s exceeds range of unsigned int.`
+    unsignedIntRange,
+    /// `String value s exceeds range of unsigned long.`
+    unsignedLongRange,
+    /// `Bad digit at end of s` (parseUnsignedLong)
+    badDigitAtEnd,
+    /// `Error at index N in: "s"`, without the last UTF-16 unit of `s` (parseUnsignedLong)
+    errorAtIndex,
 }
 
 /// Java's `Character.digit(char, radix)`: the value of one UTF-16 code unit in `radix`, or -1. Decimal digits of
@@ -106,12 +117,14 @@ private uint nextUnit(scope const(char)[] s, ref size_t i) pure nothrow @nogc
     return unit < (width == 1 ? 0x80 : 0x800) ? uint.max : unit;
 }
 
-// Java's digit loop: accumulate negatively against the limit, so MIN_VALUE parses and overflow is caught.
-private bool accumulate(scope const(char)[] digits, int radix, bool negative, out int result) pure nothrow @nogc
+// Java's digit loop for `int` or `long`: accumulate negatively against the limit, so MIN_VALUE parses and overflow
+// is caught. On failure, `failure` is the UTF-16 index in `digits` of the character Java rejects.
+pure nothrow @nogc private bool accumulate(T)(scope const(char)[] digits, int radix, bool negative,
+        out T result, out size_t failure)
 {
-    const int limit = negative ? int.min : -int.max;
-    const int multmin = limit / radix;
-    int value = 0;
+    const T limit = negative ? T.min : -T.max;
+    const T multmin = limit / radix;
+    T value = 0;
     size_t i;
     while (i < digits.length)
     {
@@ -122,13 +135,23 @@ private bool accumulate(scope const(char)[] digits, int radix, bool negative, ou
         if (value < limit + digit)
             return false;
         value -= digit;
+        failure++; // A digit is one BMP character, so one UTF-16 unit.
     }
     result = negative ? value : -value;
     return true;
 }
 
-/// Java's `Integer.parseInt(s, radix)`. A D null string is Java's `""`.
-package(flint) IntParse parseJavaInt(scope const(char)[] s, int radix, out int result) pure nothrow @nogc
+/// Java's `s.length()`: the UTF-16 units of UTF-8 text. A four-byte sequence is a surrogate pair.
+package(flint) size_t javaLength(scope const(char)[] s) pure nothrow @nogc
+{
+    size_t units;
+    foreach (c; s)
+        units += ((c & 0xC0) != 0x80) + (c >= 0xF0);
+    return units;
+}
+
+// Java's parseInt/parseLong(String, radix) for `int` or `long`.
+private IntParse parseSigned(T)(scope const(char)[] s, int radix, out T result) pure nothrow @nogc
 {
     if (radix < 2)
         return IntParse.radixTooSmall;
@@ -148,7 +171,112 @@ package(flint) IntParse parseJavaInt(scope const(char)[] s, int radix, out int r
             return IntParse.badInput;
         start = 1;
     }
-    return accumulate(s[start .. $], radix, negative, result) ? IntParse.ok : IntParse.badInput;
+    size_t failure;
+    return accumulate(s[start .. $], radix, negative, result, failure) ? IntParse.ok : IntParse.badInput;
+}
+
+/// Java's `Integer.parseInt(s, radix)`. A D null string is Java's `""`.
+package(flint) IntParse parseJavaInt(scope const(char)[] s, int radix, out int result) pure nothrow @nogc
+{
+    return parseSigned(s, radix, result);
+}
+
+/// Java's `Long.parseLong(s, radix)`. A D null string is Java's `""`.
+package(flint) IntParse parseJavaLong(scope const(char)[] s, int radix, out long result) pure nothrow @nogc
+{
+    return parseSigned(s, radix, result);
+}
+
+/++
+Java's `Integer.parseUnsignedInt(s, radix)`. Java parses short text with `parseInt` and longer text with
+`Long.parseLong`; both reach the same value or the same message here, so one `long` parse stands for the two.
++/
+package(flint) IntParse parseJavaUnsignedInt(scope const(char)[] s, int radix, out int result) pure nothrow @nogc
+{
+    if (s.length == 0)
+        return IntParse.badInput;
+    if (s[0] == '-')
+        return IntParse.leadingMinus;
+    long value;
+    const status = parseSigned(s, radix, value);
+    if (status != IntParse.ok)
+        return status;
+    if ((value & 0xffff_ffff_0000_0000L) != 0)
+        return IntParse.unsignedIntRange;
+    result = cast(int) value;
+    return IntParse.ok;
+}
+
+/++
+Java's `Long.parseUnsignedLong(s, radix)`. Text of at most 12 UTF-16 units (18 in radix 10) is `parseLong`; longer
+text parses all but its last unit as `parseLong(s, 0, len - 1, radix)`, whose failure is `errorAtIndex` at the
+UTF-16 index `failure`, then adds the last digit under Java's overflow guard.
++/
+package(flint) pure nothrow @nogc IntParse parseJavaUnsignedLong(scope const(char)[] s, int radix,
+        out long result, out size_t failure)
+{
+    if (s.length == 0)
+        return IntParse.badInput;
+    if (s[0] == '-')
+        return IntParse.leadingMinus;
+    const units = javaLength(s);
+    if (units <= 12 || (radix == 10 && units <= 18))
+        return parseSigned(s, radix, result);
+    if (radix < 2)
+        return IntParse.radixTooSmall;
+    if (radix > 36)
+        return IntParse.radixTooLarge;
+    return parseLastDigitApart(s, units, radix, result, failure);
+}
+
+// Java's parseUnsignedLong for text over the parseLong limit, in a valid radix: parseLong(s, 0, len - 1, radix),
+// then the last digit under the overflow guard.
+pure nothrow @nogc private IntParse parseLastDigitApart(scope const(char)[] s, size_t units, int radix,
+        out long result, out size_t failure)
+{
+    size_t start;
+    if (s[0] < '0') // Possible leading "+"
+    {
+        if (s[0] != '+')
+            return IntParse.errorAtIndex;
+        start = 1;
+    }
+    const last = lastCharStart(s);
+    long first;
+    if (!accumulate(s[start .. last], radix, false, first, failure))
+    {
+        failure += start;
+        return IntParse.errorAtIndex;
+    }
+    if (s[last] >= 0xF0)
+    {
+        // The last unit is a low surrogate, so the prefix ends with its high surrogate, which is no digit.
+        failure = units - 2;
+        return IntParse.errorAtIndex;
+    }
+    size_t at = last;
+    const second = javaDigit(nextUnit(s, at), radix);
+    if (second < 0)
+        return IntParse.badDigitAtEnd;
+    result = first * radix + second;
+    // Java's guard: see Long.parseUnsignedLong for the proof that it detects exactly the overflowing values.
+    const int guard = radix * cast(int)(cast(ulong) first >>> 57);
+    if (guard >= 128 || (result >= 0 && guard >= 128 - 36))
+        return IntParse.unsignedLongRange;
+    return IntParse.ok;
+}
+
+// The byte offset where the last UTF-8 character of non-empty `s` begins.
+private size_t lastCharStart(scope const(char)[] s) pure nothrow @nogc
+{
+    size_t at = s.length;
+    foreach (_; 0 .. 4) // A UTF-8 character has at most three continuation bytes.
+    {
+        at--;
+        if (at == 0 || (s[at] & 0xC0) != 0x80)
+            break;
+    }
+    return at;
 }
 
 /// Where `Integer.decode` found the digits: Java retries a failed parse as `parseInt((negative ? "-" : "") +
@@ -188,6 +316,17 @@ private size_t radixPrefix(scope const(char)[] rest, ref int radix) pure nothrow
 /// with it; both reach the same value or the same failure, so one signed pass stands for the two.
 package(flint) IntParse decodeJavaInt(scope const(char)[] nm, out int result, out DecodeSite site) pure nothrow @nogc
 {
+    return decodeSigned(nm, result, site);
+}
+
+/// Java's `Long.decode(nm)`, as `decodeJavaInt` describes.
+package(flint) IntParse decodeJavaLong(scope const(char)[] nm, out long result, out DecodeSite site) pure nothrow @nogc
+{
+    return decodeSigned(nm, result, site);
+}
+
+private IntParse decodeSigned(T)(scope const(char)[] nm, out T result, out DecodeSite site) pure nothrow @nogc
+{
     if (nm.length == 0)
         return IntParse.zeroLength;
     size_t index;
@@ -204,7 +343,42 @@ package(flint) IntParse decodeJavaInt(scope const(char)[] nm, out int result, ou
         return IntParse.signInWrongPosition;
     if (index == nm.length)
         return IntParse.badInput;
-    return accumulate(nm[index .. $], site.radix, site.negative, result) ? IntParse.ok : IntParse.badInput;
+    size_t failure;
+    return accumulate(nm[index .. $], site.radix, site.negative, result, failure) ? IntParse.ok : IntParse.badInput;
+}
+
+/++
+Writes `magnitude` in `radix` (2 to 36) with Java's lower-case digits, right-aligned in `text`, and returns where
+the digits begin. Java's `toString(i, radix)`, `toUnsignedString` and `toHexString` family share this digit loop.
+A zero-parameter template, so formatting never links this module's parsers and the Unicode digit table.
++/
+package(flint) size_t formatJavaDigits()(ulong magnitude, uint radix, ref char[65] text) pure nothrow @nogc
+{
+    size_t at = text.length;
+    do
+    {
+        const digit = cast(uint)(magnitude % radix);
+        text[--at] = cast(char)(digit < 10 ? '0' + digit : 'a' + digit - 10);
+        magnitude /= radix;
+    }
+    while (magnitude);
+    return at;
+}
+
+/++
+Java's `toString(i, radix)` (`unsigned` false) or `toUnsignedString(i, radix)` (`unsigned` true) in GC memory. A
+radix outside 2 to 36 is 10, as in Java. A zero-parameter template, as `javaIntText` explains.
++/
+package(flint) string javaRadixText()(long value, int radix, bool unsigned) pure nothrow
+{
+    if (radix < 2 || radix > 36)
+        radix = 10;
+    char[65] text = void;
+    const negative = !unsigned && value < 0;
+    size_t at = formatJavaDigits(negative ? -cast(ulong) value : cast(ulong) value, radix, text);
+    if (negative)
+        text[--at] = '-';
+    return text[at .. $].idup;
 }
 
 /// Java's `Integer.toString(i)` in GC memory. A template, so the caller's object instantiates the array copy: a
@@ -226,12 +400,15 @@ package(flint) string javaIntText()(long value) pure nothrow
     return text[at .. $].idup;
 }
 
-/// Throws the `NumberFormatException` Java reports for `status` while parsing `s` in `radix`.
-package(flint) noreturn throwIntParse()(IntParse status, string s, int radix)
+/++
+Throws the `NumberFormatException` Java reports for `status` while parsing `s` in `radix`. `failure` is the
+UTF-16 index that `errorAtIndex` names.
++/
+package(flint) noreturn throwIntParse()(IntParse status, string s, int radix, size_t failure = 0)
 {
     import flint.java.lang : NumberFormatException;
 
-    final switch (status)
+    switch (status)
     {
     case IntParse.radixTooSmall:
         throw new NumberFormatException("radix " ~ javaIntText(radix) ~ " less than Character.MIN_RADIX");
@@ -245,6 +422,31 @@ package(flint) noreturn throwIntParse()(IntParse status, string s, int radix)
     case IntParse.badInput:
         throw new NumberFormatException(
                 "For input string: \"" ~ s ~ "\"" ~ (radix == 10 ? "" : " under radix " ~ javaIntText(radix)));
+    default:
+        throwUnsignedParse(status, s, failure);
+    }
+}
+
+// The messages of Java's parseUnsignedInt and parseUnsignedLong.
+private noreturn throwUnsignedParse()(IntParse status, string s, size_t failure)
+{
+    import flint.java.lang : NumberFormatException;
+
+    switch (status)
+    {
+    case IntParse.leadingMinus:
+        throw new NumberFormatException("Illegal leading minus sign on unsigned string " ~ s ~ ".");
+    case IntParse.unsignedIntRange:
+        throw new NumberFormatException("String value " ~ s ~ " exceeds range of unsigned int.");
+    case IntParse.unsignedLongRange:
+        throw new NumberFormatException("String value " ~ s ~ " exceeds range of unsigned long.");
+    case IntParse.badDigitAtEnd:
+        throw new NumberFormatException("Bad digit at end of " ~ s);
+    default:
+        // Java's s.subSequence(0, len - 1) drops the last UTF-16 unit, so a split pair ends in U+FFFD (R14).
+        const last = lastCharStart(s);
+        const text = s[0 .. last] ~ (s[last] >= 0xF0 ? "\uFFFD" : "");
+        throw new NumberFormatException("Error at index " ~ javaIntText(cast(long) failure) ~ " in: \"" ~ text ~ "\"");
     }
 }
 
@@ -270,4 +472,36 @@ package(flint) noreturn throwDecodeRange()(int value, string nm)
     import flint.java.lang : NumberFormatException;
 
     throw new NumberFormatException("Value " ~ javaIntText(value) ~ " out of range from input " ~ nm);
+}
+
+// DMD -O -inline folds the unreachable division of an inlined literal zero divisor into a "divide by zero" compile
+// error (as in flint.java.lang.math), so DMD keeps the unsigned division helpers out of line.
+version (DigitalMars)
+    private enum bool inlineDivision = false;
+else
+    private enum bool inlineDivision = true;
+
+/// Java's unsigned `dividend / divisor` for `uint` or `ulong`: `ArithmeticException("/ by zero")` on a zero divisor.
+package(flint) T unsignedQuotient(T)(T dividend, T divisor) pure
+{
+    pragma(inline, inlineDivision);
+    if (divisor == 0)
+        throwDivideByZero();
+    return dividend / divisor;
+}
+
+/// Java's unsigned `dividend % divisor` for `uint` or `ulong`: `ArithmeticException("/ by zero")` on a zero divisor.
+package(flint) T unsignedRemainder(T)(T dividend, T divisor) pure
+{
+    pragma(inline, inlineDivision);
+    if (divisor == 0)
+        throwDivideByZero();
+    return dividend % divisor;
+}
+
+private noreturn throwDivideByZero()() pure
+{
+    import flint.java.lang : ArithmeticException;
+
+    throw new ArithmeticException("/ by zero");
 }

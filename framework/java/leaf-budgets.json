@@ -66,5 +66,13 @@
   "flint.java.lang.short_": {
     "incremental_linked_bytes": 863,
     "template_instances": 64
+  },
+  "flint.java.lang.integer": {
+    "incremental_linked_bytes": 1760,
+    "template_instances": 70
+  },
+  "flint.java.lang.long_": {
+    "incremental_linked_bytes": 2711,
+    "template_instances": 70
   }
 }

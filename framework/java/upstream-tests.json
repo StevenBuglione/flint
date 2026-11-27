@@ -547,30 +547,37 @@
     },
     "java/lang/Integer/BitTwiddle.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover highestOneBit, lowestOneBit, numberOfLeading/TrailingZeros, bitCount, rotateLeft/Right, reverse, reverseBytes, signum, compress and expand.",
       "status": "deferred"
     },
     "java/lang/Integer/Decode.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover decode, including signs, radix prefixes, MIN_VALUE and every NumberFormatException message.",
       "status": "deferred"
     },
     "java/lang/Integer/GetInteger.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; it tests Integer.getInteger, which is deferred until System.getProperty is ported.",
       "status": "deferred"
     },
     "java/lang/Integer/ParsingTest.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover parse and parseUnsigned of String text with Java's messages; the CharSequence-range overloads it also tests are deferred until CharSequence is ported.",
       "status": "deferred"
     },
     "java/lang/Integer/ToString.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover toString, toString(radix), toUnsignedString and the hexadecimal, octal and binary forms.",
       "status": "deferred"
     },
     "java/lang/Integer/Unsigned.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover compareUnsigned, toUnsignedLong/String, parseUnsigned, divideUnsigned and remainderUnsigned, including the zero divisor.",
       "status": "deferred"
     },
     "java/lang/Integer/ValueOf.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; it tests valueOf's boxed-object cache identity, which has no D equivalent: a boxed Integer is the D int (R5), and framework/java/tests/integer_long_test.d covers valueOf returning the value.",
       "status": "deferred"
     },
     "java/lang/IntegralPrimitiveToString.java": {
@@ -579,26 +586,32 @@
     },
     "java/lang/Long/BitTwiddle.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover highestOneBit, lowestOneBit, numberOfLeading/TrailingZeros, bitCount, rotateLeft/Right, reverse, reverseBytes, signum, compress and expand.",
       "status": "deferred"
     },
     "java/lang/Long/Decode.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover decode, including signs, radix prefixes, MIN_VALUE and every NumberFormatException message.",
       "status": "deferred"
     },
     "java/lang/Long/GetLong.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; it tests Long.getLong, which is deferred until System.getProperty is ported.",
       "status": "deferred"
     },
     "java/lang/Long/ParsingTest.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover parse and parseUnsigned of String text with Java's messages; the CharSequence-range overloads it also tests are deferred until CharSequence is ported.",
       "status": "deferred"
     },
     "java/lang/Long/ToString.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover toString, toString(radix), toUnsignedString and the hexadecimal, octal and binary forms.",
       "status": "deferred"
     },
     "java/lang/Long/Unsigned.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/integer_long_test.d and a 270,515-call Integer/Long differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/integer-long/) cover compareUnsigned, toUnsignedLong/String, parseUnsigned, divideUnsigned and remainderUnsigned, including the zero divisor.",
       "status": "deferred"
     },
     "java/lang/Math/AbsPositiveZero.java": {
