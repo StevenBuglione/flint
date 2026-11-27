@@ -1,0 +1,11 @@
+{
+  "data": [],
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.util",
+    "flint.java.util.function_",
+    "flint.java.util.function_.function_",
+    "flint.java.util.function_.supplier"
+  ],
+  "source": "closure/collector.d"
+}

@@ -8,6 +8,7 @@ offered: `parallel()` returns the same sequential stream.
 module flint.java.util.stream;
 
 import flint.java.lang : IllegalStateException, valueOf;
+public import flint.java.util.stream.collector : Collector;
 import flint.java.util : ArrayList, Collection, Comparator, HashMap, Iterator, LinkedHashMap,
     LinkedHashSet, List, Map, NoSuchElementException, Objects, Optional, Set, compareNatural, stableSort;
 
@@ -375,12 +376,16 @@ final class Stream(T)
         return List!T.of(toArray());
     }
 
-    /// Collect the elements with a collector from `Collectors`. As in Java, the collector supplies its container before
-    /// the first element is pulled, accumulates each element as it is read and finishes after the last. A collector
-    /// offering only `apply(T[])` receives every element at once.
+    /// Collect the elements with a collector from `Collectors`, or a Java `Collector`. As in Java, the collector
+    /// supplies its container before the first element is pulled, accumulates each element as it is read and finishes
+    /// after the last. A collector offering only `apply(T[])` receives every element at once.
     auto collect(C)(C collector)
     {
-        static if (is(typeof(collector.supply!T())))
+        import flint.java.util.stream.collector : Collector, collectWith;
+
+        static if (is(C : Collector!(T, A, R), A, R))
+            return collectWith!(T, A, R)(collector, &take);
+        else static if (is(typeof(collector.supply!T())))
         {
             auto source = take();
             auto state = collector.supply!T();
