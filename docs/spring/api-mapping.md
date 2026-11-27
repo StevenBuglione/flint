@@ -147,6 +147,8 @@ A functional interface stays an interface, and every API that takes one also acc
 
 `Collectors` gets the common collectors.
 
+**Mapping.** `flint.java.util.List!T`, `Set!T` and `Map!(K, V)` are the ported JDK types themselves, so a signature that uses them is a ported dependency: the row stays `ported` and cites no rule. R10 is cited only where D uses something else in place of the Java collection (`Stream`'s range façade, a D array, an associative array or a snapshot slice), and that row is `adapted`. So `adapted` always means a real shape change. Coordinator, 2026-11-27, from api-coverage and sol-translator's porter accessor audit.
+
 ### R11: Object identity and equality
 
 | Java | D |
