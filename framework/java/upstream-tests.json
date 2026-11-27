@@ -5784,46 +5784,6 @@
       "phase": "2",
       "status": "deferred"
     },
-    "java/net/URLDecoder/B6463990.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/net/URLDecoder/EncodeDecode.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/net/URLDecoder/EncodingTest.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/net/URLDecoder/URLDecoderArgs.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/net/URLEncoder/DecodeNonEncoded.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/net/URLEncoder/Decoder.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/net/URLEncoder/EncodingTest.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/net/URLEncoder/SurrogatePairs.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/net/URLEncoder/URLEncodeDecode.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/net/URLEncoder/URLEncoderEncodeArgs.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
     "java/net/URLPermission/InvalidCharacterTest.java": {
       "phase": "2",
       "status": "deferred"
@@ -8457,26 +8417,6 @@
       "status": "deferred"
     },
     "java/nio/file/Files/walkFileTree/WalkWithSecurity.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/nio/file/Path/MacPathTest.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/nio/file/Path/MacToRealPathWithSM.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/nio/file/Path/PathOps.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/nio/file/Path/ToRealPath.java": {
-      "phase": "2",
-      "status": "deferred"
-    },
-    "java/nio/file/Path/UriImportExport.java": {
       "phase": "2",
       "status": "deferred"
     },
