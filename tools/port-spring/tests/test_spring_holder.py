@@ -8,7 +8,7 @@ import re
 import subprocess
 import tempfile
 
-from test_jakarta import ROOT, command, rejects, run
+from test_jakarta import ROOT, command, proposed, rejects, run
 
 
 PROJECT = "spring-ai"
@@ -66,7 +66,7 @@ def main():
     rows = json.loads((ROOT / "api/ai/mapping.json").read_text(encoding="utf-8"))["elements"]
     expected = {key: value for key, value in rows.items() if key == TYPE or key.startswith(TYPE + "#")}
     assert len(expected) == 19 and not any("#<init>" in key for key in expected)
-    assert json.loads(output["mapping"])["elements"] == expected, output
+    assert proposed(output["mapping"]) == expected, output
     rejects(flint, command(PROJECT, TAG, "org.springframework.ai.model.SpringAIModelProperties", helper, cache, MODULE),
             "unsupported constant holder")
     fields = constant_holder(PORT.read_text(encoding="utf-8"))

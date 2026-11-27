@@ -27,13 +27,43 @@ An annotation can use an enum that already maps to its destination D module. The
 
 Nested annotation fields and arrays use the same reference lookup and require an exact R2 mapping to the destination module. A zero-argument default uses the nested struct's `.init` when every Java attribute has a default. A single enum constant supplied as `@Nested(CONSTANT)` or `@Nested(value = CONSTANT)` initializes the mapped first field when every other attribute has a default. The CLI resolves the field type using the nested declaration's imports and the constant using the imports at the use site. A required array field uses D's default initialization, and an explicit Java empty array uses `[]`.
 
-Public top-level enums keep Java constant order. The R20 method slice recognizes one public instance method that checks an enum argument with Spring's `Assert.notNull` and returns the lesser ordinal through a conditional expression. It emits a same-module UFCS function. D rejects a null argument at compile time under R5 and R20. Constants with arguments or class bodies, other method bodies, fields and implemented interfaces require separate translations.
+Public top-level enums keep Java constant order. The R20 method slice recognizes one public instance method that checks an enum argument with Spring's `Assert.notNull` and returns the lesser ordinal through a conditional expression. It emits a same-module UFCS function whose receiver is named after the enum (`Access cap(Access access, Access maxPermitted)`), or `receiver` when that name is the Java parameter's; a D keyword takes R19's underscore. D rejects a null argument at compile time under R5 and R20. Constants with arguments or class bodies, other method bodies, fields and implemented interfaces require separate translations.
 
 The R8 exception slice accepts a public subclass of Spring's `TransactionUsageException` with one public `String` constructor whose body is exactly `super(message)`. The CLI checks the base class and its constructors against the pinned manifest and existing mapping. It emits a D constructor in `flint.transaction` that preserves the message and caller location. A checked `@SuppressWarnings("serial")` has no effect on the D declaration. Other exception hierarchies and constructor shapes require separate translations.
 
 The R3 marker interface recipe accepts a public top-level interface with an empty body and one parent, Spring's `Ordered`. The CLI resolves the parent through the pinned manifest and requires the exact ported mapping to `flint.core.Ordered`. A DMD and LDC golden verifies that the mapped parent is a D interface and that the generated subtype preserves inheritance.
 
 The R1 constant-holder recipe accepts a public final class with one private empty constructor and public static final `String` fields initialized by supported literals. The draft uses a final D class with a disabled constructor and `enum string` fields. Configuration keys beginning with `spring.` and constant expressions require separate translation rules.
+
+## Generated regions and provenance
+
+The emitted declarations sit in one generated region:
+
+```d
+// port:generated port-spring/1 spring-framework@v7.1.0 org.springframework.transaction.InvalidIsolationLevelException sha256:<hex>
+class InvalidIsolationLevelException : TransactionUsageException
+{ ... }
+// port:end
+```
+
+The marker records the porter output version (`porterVersion` in `flint_tool.api.portspring`), the pinned upstream and the Java type, so the gate can regenerate the region, and the SHA-256 of the region's text without its `// port:body <element-id>` ... `// port:end-body` regions. A lane fills only those body regions; any other edit fails gate (d) until the porter rule or the type's port plan changes and the region is regenerated. Proposed mapping rows carry `"generated": "port-spring/<N>"` (agreed with api-coverage, 2026-11-27). Bump the version whenever any shape's output changes. A type in a module whose path takes R19's keyword underscore (`flint.ai.template_`) cites R19 on its type row.
+
+## The correctness gate
+
+`python3 tools/gates.py --gate porter` (or `tools/porter_gate.py`) proves the porter against the hand-ported corpus (docs/spring/phase2/porter-plan.md, M1):
+
+- **(a) Determinism.** Every corpus type is ported twice, the second time in reverse order under another locale and time zone, and the outputs must match byte for byte. Every committed generated region is regenerated at its recorded request and must match.
+- **(b) Corpus reproduction.** Every hand-ported public top-level type with an exact mapped type row is offered to the porter. An accepted declaration must propose no mapping change. It is spliced into a copy of the module that declares the hand port, and `gate/porter_describe.d` prints both declarations' compile-time API on DMD and on LDC: kind, visibility, UDAs, deprecation, bases, member types with their parameter defaults, function attributes, field initializers and enum values. The descriptions must match. The owning package's unit tests (`dub test :<package>`) then run against the spliced tree on both compilers. A failure counts against a splice only when the unspliced tree passes.
+- **(d) Generated regions** keep their digests.
+
+Rejected types are unsupported, not divergences, and are published with their reasons. A divergence fails unless `api/porter-baseline.json` lists it with a reason. That list only shrinks, and the reproduced count per shape only grows (`--write-baseline` refuses a new divergence). The report at `artifacts/porter/report.json` gives the reproduction rate per Java kind and per shape. The gate needs `flint`, the helper, the pinned source caches of every upstream (`flint api fetch --cache <absolute dir>`), DMD, LDC and DUB, and exits 2 when one is missing. `--no-tests` and `--only <type>` are for development and never pass the gate.
+
+```sh
+python3 tools/measure_queue.py hold -- python3 tools/gates.py --gate porter \
+  --flint .flint/bin/flint --helper .flint/port-spring/flint-port-spring --cache "$PWD/.flint/cache/api"
+```
+
+`tools/port_plan.py --seed` writes `api/port-plan/<project>-<version>.json` from the mapped type rows and the hand ports' D kinds, keeping entries a lane already edited; `--check` validates the plans against the manifests and mapping rows.
 
 ## Verification
 

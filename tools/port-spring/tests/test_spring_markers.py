@@ -8,7 +8,7 @@ import re
 import subprocess
 import tempfile
 
-from test_jakarta import ROOT, command, rejects, run
+from test_jakarta import ROOT, command, proposed, rejects, run
 
 
 PROJECT = "spring-framework"
@@ -122,7 +122,7 @@ def main():
     output = json.loads(result.stdout)
     hand_port = STEREOTYPES.read_text(encoding="utf-8")
     assert component_signature(output["source"]) == component_signature(hand_port), output
-    assert json.loads(output["mapping"])["elements"] == {
+    assert proposed(output["mapping"]) == {
         COMPONENT: {"status": "adapted", "rules": ["R2"], "d": MODULE + ".Component"},
         COMPONENT + "#value": {"status": "adapted", "rules": ["R2"], "d": MODULE + ".Component.value"},
     }, output
