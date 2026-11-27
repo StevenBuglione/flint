@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,745 | 511 | 0 | 1,905 | 14,260 |
+| framework | openjdk@21.0.13 | 1,745 | 512 | 0 | 1,905 | 14,259 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2317,6 +2317,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.URLEncoder#encode(String)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R2](api-mapping.md#r2-annotations), [R26](api-mapping.md#r26-null-arrays), [D-NET-2](api-mapping.md#deviations) | Deprecated. Uses the UTF-8 platform default. |
 | `java.net.URLEncoder#encode(String,Charset)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R26](api-mapping.md#r26-null-arrays), [R5](api-mapping.md#r5-optional-and-nullable-values) | Charset.init represents an absent charset and raises NullPointerException. |
 | `java.net.URLEncoder#encode(String,String)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | An empty, illegal or unsupported charset name raises UnsupportedEncodingException. |
+| `java.net.UnknownHostException` | `flint.java.net.unknownhostexception.UnknownHostException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.unknownhostexception : UnknownHostException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
 
 #### java.nio
 
@@ -10816,7 +10817,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 767 | 0 |
+| java.net | 766 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 24 | 0 |
 | java.nio.channels | 0 | 264 |
@@ -11901,6 +11902,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.URI#equals(Object)` | 2 | Java compares scheme, host and percent escape hex digits case-insensitively. Flint compares the original URI text. |
 | framework | `java.net.URI#hashCode()` | 2 | Requires Java component equality and hashing. Flint hashes the original URI text. |
 | framework | `java.net.URI#toASCIIString()` | 2 | Java applies NFC normalization before percent-encoding non-ASCII text. The current implementation encodes the original UTF-8 bytes. |
+| framework | `java.net.UnknownHostException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
+| framework | `java.net.UnknownHostException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.UnknownServiceException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.UnknownServiceException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.nio.ByteBuffer#alignedSlice(int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |

@@ -363,6 +363,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net-exceptions": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-nio": {
       "repo": "framework",
       "version": "monorepo"

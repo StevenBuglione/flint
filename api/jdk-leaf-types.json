@@ -11,6 +11,7 @@
   "java.net.StandardProtocolFamily": "flint.java.net.standardprotocolfamily",
   "java.net.URLDecoder": "flint.java.net.urldecoder",
   "java.net.URLEncoder": "flint.java.net.urlencoder",
+  "java.net.UnknownHostException": "flint.java.net.unknownhostexception",
   "java.nio.Buffer": "flint.java.nio.buffer",
   "java.nio.BufferOverflowException": "flint.java.nio.bufferoverflowexception",
   "java.nio.BufferUnderflowException": "flint.java.nio.bufferunderflowexception",
