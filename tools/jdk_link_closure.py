@@ -43,6 +43,19 @@ INTERRUPTED_IO_FIRST_OBJECT = {
         '__minfo': 8,
     },
 }
+# The adders' class layout RTInfo is a template instance in the package's first object.
+ADDER_FIRST_OBJECT = {
+    'profiles': ('O3', 'Oz'),
+    'module': 'flint.java.util.concurrent.atomic.atomicmarkablereference',
+    'member': 'flint.java.util.concurrent.atomic.atomicmarkablereference.o',
+    'trigger': '_D6object__T10RTInfoImplVAmA2i48i16ZQyyG2m',
+    'sections': {
+        '.rodata._D6object__T10RTInfoImplVAmA2i48i16ZQyyG2m': 16,
+        '.rodata._D6object__T10RTInfoImplVAmA2i84i680ZQzyG2m': 16,
+        '.data._D5flint4java4util10concurrent6atomic23atomicmarkablereference12__ModuleInfoZ': 68,
+        '__minfo': 8,
+    },
+}
 FIRST_OBJECT_ALLOWANCES = {
     ('java-concurrent-exec', 'flint.java.util.concurrent.executor', 'dispatch'): {
         'profiles': ('O3', 'Oz'),
@@ -78,6 +91,14 @@ FIRST_OBJECT_ALLOWANCES = {
             '__minfo': 8,
         },
         'existing_probe': True,
+    },
+    ('java-concurrent-sync', 'flint.java.util.concurrent.atomic.doubleadder', 'operations'): {
+        **ADDER_FIRST_OBJECT,
+        'referrer': 'flint.java.util.concurrent.atomic.doubleadder.o',
+    },
+    ('java-concurrent-sync', 'flint.java.util.concurrent.atomic.longadder', 'operations'): {
+        **ADDER_FIRST_OBJECT,
+        'referrer': 'flint.java.util.concurrent.atomic.longadder.o',
     },
     ('java-nio', 'flint.java.nio.bufferunderflowexception', 'underflow'): {
         'profiles': ('O3', 'Oz'),

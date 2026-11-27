@@ -11,6 +11,14 @@
     "incremental_linked_bytes": 2180,
     "template_instances": 60
   },
+  "flint.java.util.concurrent.atomic.doubleadder": {
+    "incremental_linked_bytes": 24576,
+    "template_instances": 35
+  },
+  "flint.java.util.concurrent.atomic.longadder": {
+    "incremental_linked_bytes": 8602,
+    "template_instances": 35
+  },
   "flint.java.util.concurrent.brokenbarrierexception": {
     "incremental_linked_bytes": 944,
     "template_instances": 35
