@@ -102,6 +102,39 @@ python3 tools/port-spring/bean_types.py --helper .flint/port-spring/flint-port-s
 python3 tools/port-spring/bean_types.py ... --render org.springframework.transaction.InvalidTimeoutException
 ```
 
+### Skeleton mode, every declaration
+
+`skeletons.py` declares a whole Java class or interface in D: the header, fields, constructors and methods with their D signatures, DDoc from the Javadoc's main description, and the mapping rows. A body is derived where a mechanical shape covers it (trivial accessors, constructors that only forward and assign). Every other body is a marked region that the lane fills:
+
+```d
+int increment()
+{
+    // port:body org.springframework.example.Counter#increment()
+    assert(0, "port:body org.springframework.example.Counter#increment()");
+    // port:end-body
+}
+```
+
+`assert(0)` compiles in every attribute context, including `pure nothrow @nogc` and a constructor whose D base has no default constructor. It fails loudly until the body is written, and the element's row stays deferred until then. The signature rules are the accessors' (R5, R10, R19, R23), plus:
+- visibility as in Java (`package` for package-private); `static`, `abstract` and `final` as in Java; `override` where a Java superclass declares the method, or Java says `@Override` and the landed D base chain declares the name;
+- `throws` clauses are dropped (R8), and `@Deprecated` becomes `deprecated`;
+- a `Throwable` subclass's constructors take R8's `file, line` pair and are `pure nothrow`, and a `@Nullable String` message stays a plain `string` (R26, also in `bean_types.py`);
+- `equals`, `hashCode` and `toString` keep their names (R11), with `mixin JavaObject;` when the class declares `equals` or `hashCode`;
+- an interface's default methods are declared in the interface and carried, with their bodies, by `mixin template Defaults` (R3). A class mixes in each interface it implements directly whose D declaration has `Defaults` (or, before the interface lands, whose Java declaration has default methods). An interface whose plan kind is `abstract class` becomes one (deviation D-3);
+- a `public` or `protected` `final` instance field becomes R24's `final` accessor over a private `name_` field, a non-final one stays a D field, and a `static final` field with a literal initializer becomes an `enum`;
+- a field initializer that isn't a literal, or an initializer block, makes every constructor body a marked region, since Java runs them there.
+
+A member the rules can't declare yet (a generic method, varargs under R7, an unmapped type, a nested type under R13) is left out with a `// port:pending <element id>: <reason>` line, so the rest of the skeleton stays usable. Generic types and unmapped bases are rejected.
+
+The gate offers it every hand-ported class and interface. Each skeleton is spliced over the hand type, with selective imports for the mapped types, rulebook types and `JavaObject` the module lacks, and both are described on DMD and LDC. A member is reproduced when its description lines (all overloads of its D name, without the overload index) match and its row agrees. A type is reproduced when its whole non-private API matches and nothing is pending. Bodies don't affect the API, so package tests don't run for this shape. When a module with several spliced types doesn't compile, each type is retried alone, and a hand type the compiler can't describe is rejected. The reproduced element count is the `skeleton` floor. `"skeletonDivergences"` lists the number of divergent elements per type, and a new type or a higher count fails. `test_skeletons.py` covers the declarations, mechanical and marked bodies, pending members, R3, R8/R26, R11, R24, imports and the API comparison, and compiles a skeleton on DMD and LDC to check that a marked body fails with its element id.
+
+```sh
+python3 tools/port-spring/skeletons.py --helper .flint/port-spring/flint-port-spring --cache "$PWD/.flint/cache/api" \
+  --compare --json artifacts/porter/skeletons.json      # compiles: run under hold
+python3 tools/port-spring/skeletons.py ... --render org.springframework.transaction.support.DefaultTransactionStatus
+python3 tools/port-spring/skeletons.py ... --yield      # deferred classes and interfaces the rules can declare
+```
+
 `tools/port_plan.py --seed` writes `api/port-plan/<project>-<version>.json` from the mapped type rows and the hand ports' D kinds, keeping entries a lane already edited; `--check` validates the plans against the manifests and mapping rows.
 
 ## Verification

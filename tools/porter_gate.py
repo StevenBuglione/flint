@@ -26,6 +26,11 @@ mechanical constructors, splices each over the hand class, compares its non-priv
 and runs the owning package's tests. Its reproduced count is the `bean-class` floor, and its divergences are listed
 per type under "beanDivergences", which only shrinks.
 
+Skeleton mode (tools/port-spring/skeletons.py) declares every member of each hand-ported class and interface,
+derives the mechanical bodies and marks the rest, splices the skeleton over the hand type and compares each member's
+description on DMD and LDC and its row. Its reproduced element count is the `skeleton` floor; "skeletonDivergences"
+lists, per type, how many of its elements diverge, and neither a new type nor a larger count is accepted.
+
 Missing inputs (flint, the native helper, a pinned source cache, a compiler) are errors, never passes. Run it under
 tools/measure_queue.py hold on venus: it compiles.
 """
@@ -49,6 +54,7 @@ sys.path.insert(0, str(ROOT / 'tools' / 'port-spring'))
 import accessors  # noqa: E402
 import bean_types  # noqa: E402
 import beans  # noqa: E402
+import skeletons  # noqa: E402
 
 MARKER, END, BODY, BODY_END = '// port:generated ', '// port:end', '// port:body ', '// port:end-body'
 BASELINE = ROOT / 'api' / 'porter-baseline.json'
@@ -733,6 +739,66 @@ def bean_shape(helper, cache, summary, report, scratch, tests):
     return results, failures
 
 
+def skeleton_shape(helper, cache, summary, report, scratch):
+    """Skeleton mode (tools/port-spring/skeletons.py): every hand-ported class and interface declared, derived again
+    in opposite order from the same D facts, spliced and compared per member on DMD and LDC. Returns {type id:
+    {'elements': divergent element count, 'reason'}} for the types with divergent elements."""
+    universe = accessors.Universe(cache)
+    items, types, elements, derived, skipped = skeletons.compare(universe, helper, scratch)
+    failures = []
+    for item in reversed(items):
+        d = derived.get(item['type'])
+        if d is not None:
+            again = skeletons.derive(item, universe, *d['inputs'])
+            if again['text'] != d['text'] or again['rows'] != d['rows']:
+                failures.append(f'{item["type"]}: the skeleton differs between two runs')
+    skeleton_summary = skeletons.summarise(items, types, elements, skipped)
+    counts = skeleton_summary['elements']
+    declared = counts.get('reproduced', 0) + counts.get('diverged', 0)
+    summary['shapes']['skeleton'] = {'types': len(items), 'typesReproduced': skeleton_summary['types'].get('reproduced', 0),
+                                     'declared': declared, 'reproduced': counts.get('reproduced', 0),
+                                     'diverged': counts.get('diverged', 0), 'pending': counts.get('pending', 0),
+                                     'rate': round(counts.get('reproduced', 0) / declared, 4) if declared else 0.0}
+    report['skeletons'] = {**skeleton_summary, 'results': {'types': dict(sorted(types.items())),
+                                                           'elements': dict(sorted(elements.items()))}}
+    by_type = {}
+    for element, r in sorted(elements.items()):
+        if r['result'] == 'diverged':
+            type_id = element.split('#', 1)[0]
+            entry = by_type.setdefault(type_id, {'elements': 0, 'reason': f'{element}: {r["kind"]}: {r["reason"][:200]}'})
+            entry['elements'] += 1
+    return by_type, failures
+
+
+def compare_skeletons(baseline, by_type):
+    failures = []
+    listed = baseline.get('skeletonDivergences', {})
+    for type_id, entry in sorted(by_type.items()):
+        allowed = listed.get(type_id, {}).get('elements', 0)
+        if entry['elements'] > allowed:
+            failures.append(f'{type_id}: {entry["elements"]} divergent skeleton elements, {allowed} listed; first '
+                            + entry['reason'])
+    for type_id, entry in sorted(listed.items()):
+        if by_type.get(type_id, {}).get('elements', 0) < entry['elements']:
+            failures.append(f'{type_id}: fewer divergent skeleton elements than listed; lower the count with '
+                            '--write-baseline (the list only shrinks)')
+    return failures
+
+
+def skeleton_divergences(baseline, by_type, seed):
+    known = baseline.get('skeletonDivergences')
+    out = {}
+    for type_id, entry in sorted((by_type or {}).items()):
+        allowed = (known or {}).get(type_id, {}).get('elements', 0)
+        if known is not None and entry['elements'] > allowed and not seed:
+            raise EnvironmentProblem(f'{type_id} has {entry["elements"]} divergent skeleton elements, {allowed} '
+                                     'listed; fix the rule or the port plan')
+        previous = (known or {}).get(type_id)
+        out[type_id] = {'elements': entry['elements'],
+                        'reason': previous['reason'] if previous else 'triage: ' + entry['reason']}
+    return out
+
+
 def compare_accessors(baseline, results, key='accessorDivergences', what='accessor'):
     failures = []
     listed = baseline.get(key, {})
@@ -784,7 +850,7 @@ def per_element_divergences(baseline, key, results, seed):
     return out
 
 
-def write_baseline(baseline, results, summary, seed, accessor_results=None, bean_results=None):
+def write_baseline(baseline, results, summary, seed, accessor_results=None, bean_results=None, skeleton_types=None):
     listed = baseline.get('divergences', {})
     divergences = {}
     for type_id, r in sorted(results.items()):
@@ -807,7 +873,8 @@ def write_baseline(baseline, results, summary, seed, accessor_results=None, bean
                          'shape, which only grows. tools/porter_gate.py; docs/spring/phase2/porter-plan.md.',
                 'reproduced': dict(sorted(floors.items())), 'blocked': blocked, 'divergences': divergences,
                 'accessorDivergences': per_element_divergences(baseline, 'accessorDivergences', accessor_results, seed),
-                'beanDivergences': per_element_divergences(baseline, 'beanDivergences', bean_results, seed)}
+                'beanDivergences': per_element_divergences(baseline, 'beanDivergences', bean_results, seed),
+                'skeletonDivergences': skeleton_divergences(baseline, skeleton_types, seed)}
     BASELINE.write_text(json.dumps(document, indent=1, sort_keys=False) + '\n', encoding='utf-8')
 
 
@@ -833,7 +900,7 @@ def gate(args):
         results = reproduce(jobs, first, flint, helper, cache, not args.no_tests, scratch)
         report['blocked'] = dict(BLOCKED)
         summary = summarise(jobs, results)
-        accessor_results, bean_results = {}, {}
+        accessor_results, bean_results, skeleton_types = {}, {}, {}
         if not args.only:
             accessor_scratch = scratch / 'accessors'
             accessor_scratch.mkdir()
@@ -844,6 +911,10 @@ def gate(args):
             bean_results, bean_failures = bean_shape(helper, cache, summary, report, bean_scratch,
                                                      not args.no_tests)
             failures += bean_failures
+            skeleton_scratch = scratch / 'skeletons'
+            skeleton_scratch.mkdir()
+            skeleton_types, skeleton_failures = skeleton_shape(helper, cache, summary, report, skeleton_scratch)
+            failures += skeleton_failures
             report['blocked'] = dict(BLOCKED)
         if args.keep:
             shutil.copytree(scratch, args.keep, symlinks=True, dirs_exist_ok=True)
@@ -854,13 +925,14 @@ def gate(args):
     if args.write_baseline:
         if args.only or args.no_tests:
             raise EnvironmentProblem('--write-baseline needs the whole corpus with tests')
-        write_baseline(baseline, results, summary, args.seed, accessor_results, bean_results)
+        write_baseline(baseline, results, summary, args.seed, accessor_results, bean_results, skeleton_types)
         baseline = load_json(BASELINE)
     if not args.only:
         if baseline:
             failures += compare_baseline(baseline, results, summary)
             failures += compare_accessors(baseline, accessor_results)
             failures += compare_accessors(baseline, bean_results, 'beanDivergences', 'pure-bean')
+            failures += compare_skeletons(baseline, skeleton_types)
         else:
             failures.append('api/porter-baseline.json is missing; seed it with --write-baseline --seed')
     report['results'] = results
@@ -891,7 +963,7 @@ def main(argv=None):
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=1) + '\n', encoding='utf-8')
     brief = {k: v for k, v in report.items() if k not in ('results', 'rejections', 'configurationProperties',
-                                                          'accessors', 'beanTypes')}
+                                                          'accessors', 'beanTypes', 'skeletons')}
     print(json.dumps(brief, indent=1))
     for failure in failures:
         print('PORTER GATE FAILED:', failure, file=sys.stderr)

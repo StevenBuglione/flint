@@ -104,9 +104,10 @@ def base_name(java, scope):
     full = scope.resolve(java)
     if full in accessors.D_THROWABLES:
         return accessors.D_THROWABLES[full]
-    row = scope.universe.rows.get(full)
+    row = accessors.mapped_row(scope.universe, full)
     if row is None:
         raise accessors.Unsupported(f'base {full} is not mapped to a D symbol')
+    scope.used[row['d'].rsplit('.', 1)[1]] = row['d']
     return row['d'].rsplit('.', 1)[1]
 
 
@@ -236,6 +237,9 @@ def derive_constructor(ctor, decl, scope, names, base_overloads=None):
             if annotation['name'] != 'Nullable':
                 raise accessors.Unsupported(f'parameter annotation @{annotation["name"]}')
         nullable = any(a['name'] == 'Nullable' for a in p['annotations'])
+        if nullable and base_overloads is not None and accessors.strip_annotations(p['type'])[0] == 'String':
+            nullable = False  # R26: an exception's detail message stays a plain string
+            rules.add('R26')
         dtype = accessors.d_type(p['type'], nullable, scope, rules)
         renamed[p['name']] = accessors.d_name(p['name'])
         parameters.append(f'{dtype} {renamed[p["name"]]}')

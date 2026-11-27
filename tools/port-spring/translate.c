@@ -1569,7 +1569,14 @@ static void describe_parameters(const JavaFile *java, TSNode parameters)
         if (ts_node_is_null(name))
             name = member(child_of_kind(parameter, "variable_declarator"), "name");
         json_string(node_text(java, name));
-        describe_text("type", java, member(parameter, "type"));
+        TSNode type = member(parameter, "type");
+        for (uint32_t at = 0; ts_node_is_null(type) && at < ts_node_named_child_count(parameter); ++at) {
+            TSNode part = ts_node_named_child(parameter, at);  // a spread parameter's type has no field name
+            if (!kind(part, "modifiers") && !kind(part, "variable_declarator") && !kind(part, "identifier")
+                && !kind(part, "annotation") && !kind(part, "marker_annotation"))
+                type = part;
+        }
+        describe_text("type", java, type);
         printf(",\"variadic\":%s", kind(parameter, "spread_parameter") ? "true" : "false");
         describe_modifiers(java, parameter);
         putchar('}');

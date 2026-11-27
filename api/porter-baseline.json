@@ -10,7 +10,8 @@
   "enum-method-r20": 1,
   "exception-r8": 1,
   "marker-interface-r3": 1,
-  "r6-accessor": 393
+  "r6-accessor": 395,
+  "skeleton": 981
  },
  "blocked": {
   ":security-core/dmd": "security-crypto BCrypt needs the pinned crypt-blowfish native provider, which the gate's tree doesn't link (2 modules fail on main without it)."
@@ -799,6 +800,1952 @@
   "org.springframework.web.bind.MissingRequestValueException": {
    "kind": "api+mapping",
    "reason": "triage: dmd: hand `MissingRequestValueException.__ctor#0 public @safe MissingRequestValueException(string message, bool missingAfterConversion = false) @safe` / generated `MissingRequestValueException.__ctor#0 public @safe MissingRequestValueException(string msg) @safe` | org.springframework.web.bind.Missin"
+  }
+ },
+ "skeletonDivergences": {
+  "io.micrometer.core.instrument.AbstractMeter": {
+   "elements": 2,
+   "reason": "triage: io.micrometer.core.instrument.AbstractMeter#equals(Object): dependency: :micrometer-core has no DUB dependency declaring flint.micrometer.core.instrument.Meter"
+  },
+  "io.micrometer.core.instrument.Clock": {
+   "elements": 2,
+   "reason": "triage: io.micrometer.core.instrument.Clock#monotonicTime(): attributes: dmd: hand `Clock.monotonicTime public nothrow @nogc @safe long() nothrow @nogc @safe virtual abstract` / generated `Clock.monotonicTime public @safe long() @safe virtual abstract`"
+  },
+  "io.micrometer.core.instrument.Counter": {
+   "elements": 4,
+   "reason": "triage: io.micrometer.core.instrument.Counter#builder(String): dependency+mapping: :micrometer-core has no DUB dependency declaring flint.micrometer.core.instrument.Counter | hand adapted ['R12', 'R13'], porter ported []"
+  },
+  "io.micrometer.core.instrument.ImmutableTag": {
+   "elements": 2,
+   "reason": "triage: io.micrometer.core.instrument.ImmutableTag#hashCode(): attributes+mapping: dmd: hand `ImmutableTag.hashCode public nothrow @nogc @safe int() nothrow @nogc @safe virtual` / generated `ImmutableTag.hashCode public @safe int() @safe virtual` | hand adapted ['R11', 'R14'], porte"
+  },
+  "io.micrometer.core.instrument.Measurement": {
+   "elements": 3,
+   "reason": "triage: io.micrometer.core.instrument.Measurement#<init>(DoubleSupplier,Statistic): api+mapping: dmd: hand has 3 lines, generated 1 | hand adapted ['R9'], porter ported []"
+  },
+  "io.micrometer.core.instrument.Meter": {
+   "elements": 1,
+   "reason": "triage: io.micrometer.core.instrument.Meter#getId(): dependency: :micrometer-core has no DUB dependency declaring flint.micrometer.core.instrument.Meter"
+  },
+  "io.micrometer.core.instrument.MockClock": {
+   "elements": 4,
+   "reason": "triage: io.micrometer.core.instrument.MockClock#add(Duration): attributes: dmd: hand `MockClock.add public nothrow @nogc @safe long(long amount, TimeUnit unit) nothrow @nogc @safe virtual` / generated `MockClock.add public @safe long(long amount, TimeUnit unit) @safe virtual"
+  },
+  "io.micrometer.core.instrument.config.InvalidConfigurationException": {
+   "elements": 1,
+   "reason": "triage: io.micrometer.core.instrument.config.InvalidConfigurationException#<init>(String): api: dmd: hand has 2 lines, generated 1"
+  },
+  "io.micrometer.core.instrument.distribution.CountAtBucket": {
+   "elements": 6,
+   "reason": "triage: io.micrometer.core.instrument.distribution.CountAtBucket#<init>(double,double): api: dmd: hand `CountAtBucket.__ctor public deprecated nothrow @nogc @safe CountAtBucket(double bucket, double count) nothrow @nogc @safe final` / generated `CountAtBucket.__ctor public @safe CountAtBucket"
+  },
+  "io.micrometer.core.instrument.distribution.Histogram": {
+   "elements": 3,
+   "reason": "triage: io.micrometer.core.instrument.distribution.Histogram#close(): api: dmd: hand has 0 lines, generated 1"
+  },
+  "io.micrometer.core.instrument.distribution.TimeWindowMax": {
+   "elements": 6,
+   "reason": "triage: io.micrometer.core.instrument.distribution.TimeWindowMax#<init>(Clock,DistributionStatisticConfig): api: dmd: hand `TimeWindowMax.__ctor public @safe TimeWindowMax(Clock clock, const(DistributionStatisticConfig) config) @safe` / generated `TimeWindowMax.__ctor public @safe TimeWindowMax(Clock clock, Dist"
+  },
+  "io.micrometer.core.instrument.distribution.ValueAtPercentile": {
+   "elements": 6,
+   "reason": "triage: io.micrometer.core.instrument.distribution.ValueAtPercentile#<init>(double,double): attributes: dmd: hand `ValueAtPercentile.__ctor public nothrow @nogc @safe ValueAtPercentile(double percentile, double value) nothrow @nogc @safe final` / generated `ValueAtPercentile.__ctor public @safe ValueAtP"
+  },
+  "io.micrometer.core.instrument.noop.NoopCounter": {
+   "elements": 2,
+   "reason": "triage: io.micrometer.core.instrument.noop.NoopCounter#count(): compile: dmd: the spliced :micrometer-core does not compile: Error: class `flint.micrometer.core.instrument.noop.NoopCounter` cannot implicitly generate a default constructor when base class `flint.micrometer."
+  },
+  "io.micrometer.core.instrument.noop.NoopDistributionSummary": {
+   "elements": 5,
+   "reason": "triage: io.micrometer.core.instrument.noop.NoopDistributionSummary#count(): compile: dmd: the spliced :micrometer-core does not compile: Error: class `flint.micrometer.core.instrument.noop.NoopDistributionSummary` cannot implicitly generate a default constructor when base class `flint"
+  },
+  "io.micrometer.core.instrument.noop.NoopFunctionCounter": {
+   "elements": 1,
+   "reason": "triage: io.micrometer.core.instrument.noop.NoopFunctionCounter#count(): compile: dmd: the spliced :micrometer-core does not compile: Error: class `flint.micrometer.core.instrument.noop.NoopFunctionCounter` cannot implicitly generate a default constructor when base class `flint.mic"
+  },
+  "io.micrometer.core.instrument.noop.NoopFunctionTimer": {
+   "elements": 3,
+   "reason": "triage: io.micrometer.core.instrument.noop.NoopFunctionTimer#baseTimeUnit(): compile: dmd: the spliced :micrometer-core does not compile: Error: class `flint.micrometer.core.instrument.noop.NoopFunctionTimer` cannot implicitly generate a default constructor when base class `flint.micro"
+  },
+  "io.micrometer.core.instrument.noop.NoopGauge": {
+   "elements": 1,
+   "reason": "triage: io.micrometer.core.instrument.noop.NoopGauge#value(): compile: dmd: the spliced :micrometer-core does not compile: Error: class `flint.micrometer.core.instrument.noop.NoopGauge` cannot implicitly generate a default constructor when base class `flint.micrometer.co"
+  },
+  "io.micrometer.core.instrument.noop.NoopLongTaskTimer": {
+   "elements": 5,
+   "reason": "triage: io.micrometer.core.instrument.noop.NoopLongTaskTimer#activeTasks(): compile: dmd: the spliced :micrometer-core does not compile: Error: class `flint.micrometer.core.instrument.noop.NoopLongTaskTimer` cannot implicitly generate a default constructor when base class `flint.micro"
+  },
+  "io.micrometer.core.instrument.noop.NoopMeter": {
+   "elements": 1,
+   "reason": "triage: io.micrometer.core.instrument.noop.NoopMeter#measure(): compile: dmd: the spliced :micrometer-core does not compile: Error: class `flint.micrometer.core.instrument.noop.NoopMeter` cannot implicitly generate a default constructor when base class `flint.micrometer.co"
+  },
+  "io.micrometer.core.instrument.noop.NoopTimeGauge": {
+   "elements": 2,
+   "reason": "triage: io.micrometer.core.instrument.noop.NoopTimeGauge#baseTimeUnit(): compile: dmd: the spliced :micrometer-core does not compile: Error: class `flint.micrometer.core.instrument.noop.NoopTimeGauge` cannot implicitly generate a default constructor when base class `flint.micromete"
+  },
+  "io.micrometer.core.instrument.noop.NoopTimer": {
+   "elements": 11,
+   "reason": "triage: io.micrometer.core.instrument.noop.NoopTimer#baseTimeUnit(): compile: dmd: the spliced :micrometer-core does not compile: Error: class `flint.micrometer.core.instrument.noop.NoopTimer` cannot implicitly generate a default constructor when base class `flint.micrometer.co"
+  },
+  "io.micrometer.core.instrument.util.MeterEquivalence": {
+   "elements": 2,
+   "reason": "triage: io.micrometer.core.instrument.util.MeterEquivalence#equals(Meter,Object): api: dmd: hand `MeterEquivalence.equals public @safe bool(Meter meter, Any other) @safe static final` / generated `MeterEquivalence.equals public @safe bool(Meter m1, Any o) @safe static final`"
+  },
+  "io.micrometer.core.instrument.util.TimeUtils": {
+   "elements": 8,
+   "reason": "triage: io.micrometer.core.instrument.util.TimeUtils#convert(double,TimeUnit,TimeUnit): api: dmd: hand `TimeUtils.convert public pure nothrow @nogc @safe double(double amount, TimeUnit sourceUnit, TimeUnit destinationUnit) pure nothrow @nogc @safe static final` / generated `TimeUtils.convert "
+  },
+  "io.micrometer.observation.ObservationFilter": {
+   "elements": 1,
+   "reason": "triage: io.micrometer.observation.ObservationFilter#map(Observation.Context): dependency: :micrometer-observation has no DUB dependency declaring flint.micrometer.observation.Observation"
+  },
+  "io.micrometer.observation.ObservationRegistry": {
+   "elements": 3,
+   "reason": "triage: io.micrometer.observation.ObservationRegistry#create(): dependency: :micrometer-observation has no DUB dependency declaring flint.micrometer.observation.Observation, flint.micrometer.observation.ObservationRegistry"
+  },
+  "io.micrometer.observation.ObservationView": {
+   "elements": 1,
+   "reason": "triage: io.micrometer.observation.ObservationView#getContextView(): dependency: :micrometer-observation has no DUB dependency declaring flint.micrometer.observation.Observation"
+  },
+  "jakarta.servlet.Filter": {
+   "elements": 3,
+   "reason": "triage: jakarta.servlet.Filter#destroy(): mapping: hand adapted ['R1', 'R10'], porter adapted ['R3']"
+  },
+  "jakarta.servlet.FilterChain": {
+   "elements": 1,
+   "reason": "triage: jakarta.servlet.FilterChain#doFilter(ServletRequest,ServletResponse): mapping: hand adapted ['R1', 'R10'], porter ported []"
+  },
+  "jakarta.servlet.FilterConfig": {
+   "elements": 3,
+   "reason": "triage: jakarta.servlet.FilterConfig#getFilterName(): compile+mapping: dmd: the spliced :jakarta-servlet does not compile: Error: function `flint.jakarta.servlet.GenericFilter.getInitParameterNames` does not override any function | hand adapted ['R1', 'R10'], porter port"
+  },
+  "jakarta.servlet.RequestDispatcher": {
+   "elements": 22,
+   "reason": "triage: jakarta.servlet.RequestDispatcher#ERROR_EXCEPTION: mapping: hand adapted ['R1', 'R10'], porter ported []"
+  },
+  "jakarta.servlet.Servlet": {
+   "elements": 5,
+   "reason": "triage: jakarta.servlet.Servlet#destroy(): mapping: hand adapted ['R1', 'R10'], porter ported []"
+  },
+  "jakarta.servlet.ServletConfig": {
+   "elements": 3,
+   "reason": "triage: jakarta.servlet.ServletConfig#getInitParameter(String): compile+mapping: dmd: the spliced :jakarta-servlet does not compile: Error: function `flint.jakarta.servlet.GenericServlet.getInitParameterNames` does not override any function | hand adapted ['R1', 'R10'], porter por"
+  },
+  "jakarta.servlet.ServletContext": {
+   "elements": 7,
+   "reason": "triage: jakarta.servlet.ServletContext#getAttribute(String): mapping: hand adapted ['R1', 'R10'], porter adapted ['R23']"
+  },
+  "jakarta.servlet.ServletRequest": {
+   "elements": 29,
+   "reason": "triage: jakarta.servlet.ServletRequest#getAttribute(String): compile+mapping: dmd: the spliced :jakarta-servlet does not compile: Error: class `flint.jakarta.servlet.ServletRequestWrapper` interface function `Map!(string, string[]) getParameterMap() @safe` is not implemented | "
+  },
+  "jakarta.servlet.ServletResponse": {
+   "elements": 14,
+   "reason": "triage: jakarta.servlet.ServletResponse#flushBuffer(): mapping: hand adapted ['R1', 'R10'], porter ported []"
+  },
+  "jakarta.servlet.http.HttpFilter": {
+   "elements": 2,
+   "reason": "triage: jakarta.servlet.http.HttpFilter#doFilter(HttpServletRequest,HttpServletResponse,FilterChain): mapping: hand adapted ['R1', 'R10'], porter ported []"
+  },
+  "jakarta.servlet.http.HttpServletRequest": {
+   "elements": 17,
+   "reason": "triage: jakarta.servlet.http.HttpServletRequest#getAuthType(): compile+mapping: dmd: the spliced :jakarta-servlet does not compile: Error: class `flint.jakarta.servlet.http.HttpServletRequestWrapper` interface function `string changeSessionId() @safe` is not implemented | hand ad"
+  },
+  "jakarta.servlet.http.HttpServletResponse": {
+   "elements": 66,
+   "reason": "triage: jakarta.servlet.http.HttpServletResponse#SC_ACCEPTED: compile+mapping: dmd: the spliced :jakarta-servlet does not compile: Error: class `flint.jakarta.servlet.http.HttpServletResponseWrapper` interface function `void sendRedirect(string location, bool clearBuffer) @safe`"
+  },
+  "jakarta.validation.ConstraintDeclarationException": {
+   "elements": 2,
+   "reason": "triage: jakarta.validation.ConstraintDeclarationException#<init>(): api: dmd: hand `ConstraintDeclarationException.__ctor public pure nothrow @safe ConstraintDeclarationException(string message = null, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong"
+  },
+  "jakarta.validation.ConstraintDefinitionException": {
+   "elements": 2,
+   "reason": "triage: jakarta.validation.ConstraintDefinitionException#<init>(): api: dmd: hand `ConstraintDefinitionException.__ctor public pure nothrow @safe ConstraintDefinitionException(string message = null, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)_"
+  },
+  "jakarta.validation.ConstraintValidatorContext": {
+   "elements": 3,
+   "reason": "triage: jakarta.validation.ConstraintValidatorContext#buildConstraintViolationWithTemplate(String): dependency: :jakarta-validation has no DUB dependency declaring flint.jakarta.validation.ConstraintValidatorContext"
+  },
+  "jakarta.validation.GroupDefinitionException": {
+   "elements": 2,
+   "reason": "triage: jakarta.validation.GroupDefinitionException#<init>(): api: dmd: hand `GroupDefinitionException.__ctor public pure nothrow @safe GroupDefinitionException(string message = null, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) p"
+  },
+  "jakarta.validation.MessageInterpolator": {
+   "elements": 2,
+   "reason": "triage: jakarta.validation.MessageInterpolator#interpolate(String,Context): dependency: :jakarta-validation has no DUB dependency declaring flint.jakarta.validation.MessageInterpolator"
+  },
+  "jakarta.validation.NoProviderFoundException": {
+   "elements": 2,
+   "reason": "triage: jakarta.validation.NoProviderFoundException#<init>(): api: dmd: hand `NoProviderFoundException.__ctor public pure nothrow @safe NoProviderFoundException(string message = null, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) p"
+  },
+  "jakarta.validation.UnexpectedTypeException": {
+   "elements": 2,
+   "reason": "triage: jakarta.validation.UnexpectedTypeException#<init>(): api: dmd: hand `UnexpectedTypeException.__ctor public pure nothrow @safe UnexpectedTypeException(string message = null, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pur"
+  },
+  "jakarta.validation.ValidationException": {
+   "elements": 2,
+   "reason": "triage: jakarta.validation.ValidationException#<init>(): api: dmd: hand `ValidationException.__ctor public pure nothrow @safe ValidationException(string message = null, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothro"
+  },
+  "java.lang.ArithmeticException": {
+   "elements": 2,
+   "reason": "triage: java.lang.ArithmeticException#<init>(): api: dmd: hand `ArithmeticException.__ctor public @safe ArithmeticException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `ArithmeticException.__ctor public "
+  },
+  "java.lang.ClassCastException": {
+   "elements": 2,
+   "reason": "triage: java.lang.ClassCastException#<init>(): api: dmd: hand `ClassCastException.__ctor public @safe ClassCastException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `ClassCastException.__ctor public pur"
+  },
+  "java.lang.IllegalArgumentException": {
+   "elements": 2,
+   "reason": "triage: java.lang.IllegalArgumentException#<init>(): api: dmd: hand `IllegalArgumentException.__ctor public @safe IllegalArgumentException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `IllegalArgumentException"
+  },
+  "java.lang.IllegalStateException": {
+   "elements": 2,
+   "reason": "triage: java.lang.IllegalStateException#<init>(): api: dmd: hand `IllegalStateException.__ctor public @safe IllegalStateException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `IllegalStateException.__ctor p"
+  },
+  "java.lang.IndexOutOfBoundsException": {
+   "elements": 4,
+   "reason": "triage: java.lang.IndexOutOfBoundsException#<init>(): api: dmd: hand `IndexOutOfBoundsException.__ctor public pure nothrow @safe IndexOutOfBoundsException() pure nothrow @safe` / generated `IndexOutOfBoundsException.__ctor public pure nothrow @safe IndexOutOf"
+  },
+  "java.lang.NullPointerException": {
+   "elements": 2,
+   "reason": "triage: java.lang.NullPointerException#<init>(): compile: dmd: the spliced :java does not compile: Error: function `flint.java.lang.NullPointerException.fillInStackTrace` does not override any function"
+  },
+  "java.lang.NumberFormatException": {
+   "elements": 2,
+   "reason": "triage: java.lang.NumberFormatException#<init>(): api: dmd: hand `NumberFormatException.__ctor public @safe NumberFormatException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `NumberFormatException.__ctor p"
+  },
+  "java.lang.RuntimeException": {
+   "elements": 2,
+   "reason": "triage: java.lang.RuntimeException#<init>(): api: dmd: hand `RuntimeException.__ctor public @safe RuntimeException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `RuntimeException.__ctor public pure noth"
+  },
+  "java.lang.UnsupportedOperationException": {
+   "elements": 2,
+   "reason": "triage: java.lang.UnsupportedOperationException#<init>(): api: dmd: hand `UnsupportedOperationException.__ctor public @safe UnsupportedOperationException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `UnsupportedOpe"
+  },
+  "java.nio.Buffer": {
+   "elements": 20,
+   "reason": "triage: java.nio.Buffer#array(): compile: dmd: the spliced :java-nio-char-buffer does not compile: Error: function `flint.java.nio.buffer.Buffer.base` `package` functions cannot be `abstract`"
+  },
+  "java.nio.file.InvalidPathException": {
+   "elements": 6,
+   "reason": "triage: java.nio.file.InvalidPathException#<init>(String,String): compile+mapping: dmd: the spliced :java-nio-file does not compile: Error: function `@safe string flint.java.nio.file.invalidpathexception.InvalidPathException.getMessage()` does not override any function | hand adapte"
+  },
+  "java.sql.BatchUpdateException": {
+   "elements": 2,
+   "reason": "triage: java.sql.BatchUpdateException#getLargeUpdateCounts(): api: dmd: hand `BatchUpdateException.getLargeUpdateCounts public const pure nothrow @nogc @safe const(long)[]() const pure nothrow @nogc @safe virtual` / generated `BatchUpdateException.getLargeUpdateCount"
+  },
+  "java.sql.Connection": {
+   "elements": 31,
+   "reason": "triage: java.sql.Connection#TRANSACTION_NONE: dependency: :java has no DUB dependency declaring flint.java.util.concurrent.executor"
+  },
+  "java.sql.PreparedStatement": {
+   "elements": 3,
+   "reason": "triage: java.sql.PreparedStatement#executeLargeUpdate(): mapping: hand ported [], porter adapted ['R3']"
+  },
+  "java.sql.ResultSet": {
+   "elements": 2,
+   "reason": "triage: java.sql.ResultSet#getBytes(String): api: dmd: hand `ResultSet.getBytes public @safe ubyte[](int columnIndex) @safe virtual abstract` / generated `ResultSet.getBytes public @safe byte[](int columnIndex) @safe virtual abstract`"
+  },
+  "java.sql.SQLDataException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLDataException#<init>(): api: dmd: hand `SQLDataException.__ctor public @safe SQLDataException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLDataException.__ctor public pure noth"
+  },
+  "java.sql.SQLFeatureNotSupportedException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLFeatureNotSupportedException#<init>(): api: dmd: hand `SQLFeatureNotSupportedException.__ctor public @safe SQLFeatureNotSupportedException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLFeature"
+  },
+  "java.sql.SQLIntegrityConstraintViolationException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLIntegrityConstraintViolationException#<init>(): api: dmd: hand `SQLIntegrityConstraintViolationException.__ctor public @safe SQLIntegrityConstraintViolationException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / gen"
+  },
+  "java.sql.SQLInvalidAuthorizationSpecException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLInvalidAuthorizationSpecException#<init>(): api: dmd: hand `SQLInvalidAuthorizationSpecException.__ctor public @safe SQLInvalidAuthorizationSpecException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `"
+  },
+  "java.sql.SQLNonTransientConnectionException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLNonTransientConnectionException#<init>(): api: dmd: hand `SQLNonTransientConnectionException.__ctor public @safe SQLNonTransientConnectionException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLN"
+  },
+  "java.sql.SQLNonTransientException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLNonTransientException#<init>(): api: dmd: hand `SQLNonTransientException.__ctor public @safe SQLNonTransientException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLNonTransientException"
+  },
+  "java.sql.SQLRecoverableException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLRecoverableException#<init>(): api: dmd: hand `SQLRecoverableException.__ctor public @safe SQLRecoverableException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLRecoverableException.__"
+  },
+  "java.sql.SQLSyntaxErrorException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLSyntaxErrorException#<init>(): api: dmd: hand `SQLSyntaxErrorException.__ctor public @safe SQLSyntaxErrorException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLSyntaxErrorException.__"
+  },
+  "java.sql.SQLTimeoutException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLTimeoutException#<init>(): api: dmd: hand `SQLTimeoutException.__ctor public @safe SQLTimeoutException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLTimeoutException.__ctor public "
+  },
+  "java.sql.SQLTransactionRollbackException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLTransactionRollbackException#<init>(): api: dmd: hand `SQLTransactionRollbackException.__ctor public @safe SQLTransactionRollbackException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLTransac"
+  },
+  "java.sql.SQLTransientConnectionException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLTransientConnectionException#<init>(): api: dmd: hand `SQLTransientConnectionException.__ctor public @safe SQLTransientConnectionException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLTransie"
+  },
+  "java.sql.SQLTransientException": {
+   "elements": 1,
+   "reason": "triage: java.sql.SQLTransientException#<init>(): api: dmd: hand `SQLTransientException.__ctor public @safe SQLTransientException(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLTransientException.__ctor p"
+  },
+  "java.sql.SQLWarning": {
+   "elements": 3,
+   "reason": "triage: java.sql.SQLWarning#<init>(): api: dmd: hand `SQLWarning.__ctor public @safe SQLWarning(Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `SQLWarning.__ctor public pure nothrow @safe SQLWarni"
+  },
+  "java.sql.Statement": {
+   "elements": 6,
+   "reason": "triage: java.sql.Statement#execute(String): api: dmd: hand has 1 lines, generated 4"
+  },
+  "java.text.ParseException": {
+   "elements": 1,
+   "reason": "triage: java.text.ParseException#<init>(String,int): api: dmd: hand `ParseException.__ctor public pure nothrow @nogc @safe ParseException(string message, int errorOffset, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @nogc @safe` / g"
+  },
+  "java.text.ParsePosition": {
+   "elements": 2,
+   "reason": "triage: java.text.ParsePosition#<init>(int): attributes: dmd: hand `ParsePosition.__ctor public pure nothrow @nogc @safe ParsePosition(int index) pure nothrow @nogc @safe` / generated `ParsePosition.__ctor public @safe ParsePosition(int index) @safe`"
+  },
+  "java.time.DateTimeException": {
+   "elements": 1,
+   "reason": "triage: java.time.DateTimeException#<init>(String): api+mapping: dmd: hand `DateTimeException.__ctor public pure nothrow @safe DateTimeException(string message, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe` / "
+  },
+  "java.time.format.DateTimeParseException": {
+   "elements": 2,
+   "reason": "triage: java.time.format.DateTimeParseException#getErrorIndex(): compile: dmd: the spliced :java does not compile: Error: class `flint.java.time.format.DateTimeParseException` cannot implicitly generate a default constructor when base class `flint.java.time.DateTimeExceptio"
+  },
+  "java.util.ConcurrentModificationException": {
+   "elements": 2,
+   "reason": "triage: java.util.ConcurrentModificationException#<init>(): compile: dmd: the spliced :java does not compile: Error: alias `flint.java.util.Collection` recursive alias declaration"
+  },
+  "java.util.HexFormat": {
+   "elements": 21,
+   "reason": "triage: java.util.HexFormat#delimiter(): mapping: hand adapted ['R5'], porter ported []"
+  },
+  "java.util.MissingFormatArgumentException": {
+   "elements": 2,
+   "reason": "triage: java.util.MissingFormatArgumentException#<init>(String): compile+mapping: dmd: the spliced :java does not compile: Error: function `@safe string flint.java.util.formatter.MissingFormatArgumentException.getMessage()` does not override any function | hand adapted ['R26'], por"
+  },
+  "java.util.NoSuchElementException": {
+   "elements": 2,
+   "reason": "triage: java.util.NoSuchElementException#<init>(): api: dmd: hand `NoSuchElementException.__ctor public pure nothrow @safe NoSuchElementException(string message = null, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure "
+  },
+  "java.util.StringJoiner": {
+   "elements": 2,
+   "reason": "triage: java.util.StringJoiner#length(): api+mapping: dmd: hand `StringJoiner.length public const pure nothrow @nogc @safe int() const pure nothrow @nogc @safe final` / generated `StringJoiner.length public @safe int() @safe final` | hand adapted ['R14']"
+  },
+  "java.util.UnknownFormatConversionException": {
+   "elements": 2,
+   "reason": "triage: java.util.UnknownFormatConversionException#<init>(String): compile+mapping: dmd: the spliced :java does not compile: Error: function `@safe string flint.java.util.formatter.UnknownFormatConversionException.getMessage()` does not override any function | hand adapted ['R26'], p"
+  },
+  "java.util.concurrent.BrokenBarrierException": {
+   "elements": 2,
+   "reason": "triage: java.util.concurrent.BrokenBarrierException#<init>(): api: dmd: hand `BrokenBarrierException.__ctor public pure nothrow @nogc @safe BrokenBarrierException(string message = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @nogc @saf"
+  },
+  "java.util.concurrent.ExecutionException": {
+   "elements": 2,
+   "reason": "triage: java.util.concurrent.ExecutionException#<init>(): api: dmd: hand `ExecutionException.__ctor public @safe ExecutionException(Throwable cause) @safe` / generated `ExecutionException.__ctor protected pure nothrow @safe ExecutionException(string file = __FILE"
+  },
+  "java.util.concurrent.Executor": {
+   "elements": 1,
+   "reason": "triage: java.util.concurrent.Executor#execute(Runnable): api+mapping: dmd: hand has 3 lines, generated 1 | hand adapted ['R7', 'R9'], porter ported []"
+  },
+  "java.util.concurrent.TimeoutException": {
+   "elements": 2,
+   "reason": "triage: java.util.concurrent.TimeoutException#<init>(): api: dmd: hand `TimeoutException.__ctor public pure nothrow @nogc @safe TimeoutException(string message = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @nogc @safe` / generat"
+  },
+  "java.util.concurrent.locks.Condition": {
+   "elements": 4,
+   "reason": "triage: java.util.concurrent.locks.Condition#await(): mapping: hand adapted ['R8'], porter ported []"
+  },
+  "java.util.concurrent.locks.Lock": {
+   "elements": 2,
+   "reason": "triage: java.util.concurrent.locks.Lock#lockInterruptibly(): mapping: hand adapted ['R8'], porter ported []"
+  },
+  "java.util.random.RandomGenerator": {
+   "elements": 4,
+   "reason": "triage: java.util.random.RandomGenerator#nextDouble(): api: dmd: hand has 1 lines, generated 3"
+  },
+  "java.util.regex.PatternSyntaxException": {
+   "elements": 1,
+   "reason": "triage: java.util.regex.PatternSyntaxException#getIndex(): compile: dmd: the spliced :java-regex does not compile: Error: function `@safe string flint.java.util.regex.pattern.PatternSyntaxException.getMessage()` does not override any function"
+  },
+  "org.aopalliance.aop.AspectException": {
+   "elements": 1,
+   "reason": "triage: org.aopalliance.aop.AspectException#<init>(String): api: dmd: hand `AspectException.__ctor public @safe AspectException(string message) @safe` / generated `AspectException.__ctor public pure nothrow @safe AspectException(string message, string file = __FILE"
+  },
+  "org.slf4j.Logger": {
+   "elements": 38,
+   "reason": "triage: org.slf4j.Logger#atDebug(): api+mapping: dmd: hand `Logger.atDebug public @safe LoggingEventBuilder() @safe final abstract` / generated `Logger.atDebug public @safe LoggingEventBuilder() @safe virtual abstract` | hand ported [], porter adapt"
+  },
+  "org.slf4j.MDC": {
+   "elements": 10,
+   "reason": "triage: org.slf4j.MDC#clear(): dependency: :slf4j-api has no DUB dependency declaring flint.slf4j.MDC"
+  },
+  "org.slf4j.event.DefaultLoggingEvent": {
+   "elements": 16,
+   "reason": "triage: org.slf4j.event.DefaultLoggingEvent#<init>(Level,Logger): compile: dmd: the spliced :slf4j-api does not compile: Error: class `flint.slf4j.event.DefaultLoggingEvent` interface function `Marker[] getMarkers() @safe` is not implemented"
+  },
+  "org.slf4j.event.KeyValuePair": {
+   "elements": 4,
+   "reason": "triage: org.slf4j.event.KeyValuePair#<init>(String,Object): mapping: hand adapted ['R7'], porter adapted ['R23']"
+  },
+  "org.slf4j.event.LoggingEvent": {
+   "elements": 10,
+   "reason": "triage: org.slf4j.event.LoggingEvent#getArgumentArray(): compile+mapping: dmd: the spliced :slf4j-api does not compile: Error: class `flint.slf4j.event.DefaultLoggingEvent` interface function `List!(Any) getArguments() @safe` is not implemented | hand ported [], porter adap"
+  },
+  "org.slf4j.helpers.BasicMarker": {
+   "elements": 7,
+   "reason": "triage: org.slf4j.helpers.BasicMarker#add(Marker): compile: dmd: the spliced :slf4j-api does not compile: Error: class `flint.slf4j.helpers.BasicMarker` interface function `Marker[] references() @safe` is not implemented"
+  },
+  "org.slf4j.helpers.FormattingTuple": {
+   "elements": 2,
+   "reason": "triage: org.slf4j.helpers.FormattingTuple#<init>(String): api: dmd: hand `FormattingTuple.__ctor public pure nothrow @safe FormattingTuple(string message) pure nothrow @safe final` / generated `FormattingTuple.__ctor public @safe FormattingTuple(string message) @"
+  },
+  "org.slf4j.helpers.NOPLoggerFactory": {
+   "elements": 2,
+   "reason": "triage: org.slf4j.helpers.NOPLoggerFactory#<init>(): api: dmd: hand has 0 lines, generated 1"
+  },
+  "org.slf4j.helpers.NOPMDCAdapter": {
+   "elements": 7,
+   "reason": "triage: org.slf4j.helpers.NOPMDCAdapter#clearDequeByKey(String): api: dmd: hand `NOPMDCAdapter.clearDequeByKey public @safe void(string) @safe virtual` / generated `NOPMDCAdapter.clearDequeByKey public @safe void(string key) @safe virtual`"
+  },
+  "org.slf4j.helpers.NormalizedParameters": {
+   "elements": 2,
+   "reason": "triage: org.slf4j.helpers.NormalizedParameters#getArguments(): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.slf4j.spi.DefaultLoggingEventBuilder": {
+   "elements": 7,
+   "reason": "triage: org.slf4j.spi.DefaultLoggingEventBuilder#addArgument(Object): api+mapping: dmd: hand `DefaultLoggingEventBuilder.addArgument public @safe LoggingEventBuilder(Any delegate() @safe objectSupplier) @safe virtual` / generated `DefaultLoggingEventBuilder.addArgument public @safe "
+  },
+  "org.slf4j.spi.LoggingEventBuilder": {
+   "elements": 6,
+   "reason": "triage: org.slf4j.spi.LoggingEventBuilder#addArgument(Object): api+mapping: dmd: hand `LoggingEventBuilder.addArgument public @safe LoggingEventBuilder(Any delegate() @safe objectSupplier) @safe virtual abstract` / generated `LoggingEventBuilder.addArgument public @safe Loggi"
+  },
+  "org.slf4j.spi.NOPLoggingEventBuilder": {
+   "elements": 9,
+   "reason": "triage: org.slf4j.spi.NOPLoggingEventBuilder#addArgument(Object): api+mapping: dmd: hand `NOPLoggingEventBuilder.addArgument public @safe LoggingEventBuilder(Any delegate() @safe objectSupplier) @safe virtual abstract` / generated `NOPLoggingEventBuilder.addArgument public @safe"
+  },
+  "org.springframework.ai.chat.messages.AbstractMessage": {
+   "elements": 8,
+   "reason": "triage: org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,List,Map): api+mapping: dmd: hand `AbstractMessage.__ctor protected @safe AbstractMessage(MessageType messageType, Nullable!string text, Map!(string, Any) metadata) @safe` / generated `AbstractMessage.__ctor protected @safe "
+  },
+  "org.springframework.ai.chat.messages.SystemMessage": {
+   "elements": 4,
+   "reason": "triage: org.springframework.ai.chat.messages.SystemMessage#<init>(String): dependency: :ai-model has no DUB dependency declaring flint.ai.chat.messages.SystemMessage"
+  },
+  "org.springframework.ai.chat.metadata.EmptyRateLimit": {
+   "elements": 6,
+   "reason": "triage: org.springframework.ai.chat.metadata.EmptyRateLimit#getRequestsLimit(): attributes: dmd: hand `EmptyRateLimit.getRequestsLimit public pure nothrow @nogc @safe Nullable!long() pure nothrow @nogc @safe virtual` / generated `EmptyRateLimit.getRequestsLimit public @safe Nullable!long() @"
+  },
+  "org.springframework.ai.chat.metadata.RateLimit": {
+   "elements": 2,
+   "reason": "triage: org.springframework.ai.chat.metadata.RateLimit#getRequestsReset(): api+mapping: dmd: hand `RateLimit.getRequestsReset public @safe Nullable!(Duration)() @safe virtual abstract` / generated `RateLimit.getRequestsReset public @safe Duration() @safe virtual abstract` | hand adapted "
+  },
+  "org.springframework.ai.chat.metadata.Usage": {
+   "elements": 6,
+   "reason": "triage: org.springframework.ai.chat.metadata.Usage#getCacheReadInputTokens(): compile: dmd: the spliced :ai-model does not compile: Error: function `pure nothrow @nogc @safe int flint.ai.chat.metadata.DefaultUsage.getTotalTokens()` does not override any function"
+  },
+  "org.springframework.ai.chat.prompt.ChatOptions": {
+   "elements": 1,
+   "reason": "triage: org.springframework.ai.chat.prompt.ChatOptions#getStopSequences(): mapping: hand adapted ['R5'], porter ported []"
+  },
+  "org.springframework.ai.chat.prompt.DefaultChatOptions": {
+   "elements": 1,
+   "reason": "triage: org.springframework.ai.chat.prompt.DefaultChatOptions#getStopSequences(): mapping: hand adapted ['R5'], porter ported []"
+  },
+  "org.springframework.ai.content.Content": {
+   "elements": 1,
+   "reason": "triage: org.springframework.ai.content.Content#getMetadata(): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.ai.converter.MarkdownCodeBlockCleaner": {
+   "elements": 1,
+   "reason": "triage: org.springframework.ai.converter.MarkdownCodeBlockCleaner#clean(String): attributes: dmd: hand `MarkdownCodeBlockCleaner.clean public pure nothrow @nogc @safe Nullable!string(Nullable!string text) pure nothrow @nogc @safe virtual` / generated `MarkdownCodeBlockCleaner.clean public @sa"
+  },
+  "org.springframework.ai.converter.WhitespaceCleaner": {
+   "elements": 1,
+   "reason": "triage: org.springframework.ai.converter.WhitespaceCleaner#clean(String): attributes: dmd: hand `WhitespaceCleaner.clean public pure nothrow @nogc @safe Nullable!string(Nullable!string text) pure nothrow @nogc @safe virtual` / generated `WhitespaceCleaner.clean public @safe Nullable!st"
+  },
+  "org.springframework.ai.document.DefaultContentFormatter": {
+   "elements": 8,
+   "reason": "triage: org.springframework.ai.document.DefaultContentFormatter#builder(): dependency+mapping: :ai-commons has no DUB dependency declaring flint.ai.document.DefaultContentFormatter | hand adapted ['R12'], porter ported []"
+  },
+  "org.springframework.ai.embedding.DefaultEmbeddingOptions": {
+   "elements": 4,
+   "reason": "triage: org.springframework.ai.embedding.DefaultEmbeddingOptions#<init>(String,Integer): dependency: :ai-model has no DUB dependency declaring flint.ai.embedding.DefaultEmbeddingOptions"
+  },
+  "org.springframework.ai.embedding.DefaultEmbeddingOptionsBuilder": {
+   "elements": 3,
+   "reason": "triage: org.springframework.ai.embedding.DefaultEmbeddingOptionsBuilder#build(): dependency: :ai-model has no DUB dependency declaring flint.ai.embedding.EmbeddingOptions"
+  },
+  "org.springframework.ai.embedding.EmbeddingOptions": {
+   "elements": 3,
+   "reason": "triage: org.springframework.ai.embedding.EmbeddingOptions#builder(): dependency: :ai-model has no DUB dependency declaring flint.ai.embedding.EmbeddingOptions"
+  },
+  "org.springframework.ai.embedding.EmbeddingResultMetadata": {
+   "elements": 6,
+   "reason": "triage: org.springframework.ai.embedding.EmbeddingResultMetadata#<init>(): dependency: :ai-model has no DUB dependency declaring flint.ai.embedding.EmbeddingResultMetadata"
+  },
+  "org.springframework.ai.evaluation.EvaluationRequest": {
+   "elements": 6,
+   "reason": "triage: org.springframework.ai.evaluation.EvaluationRequest#<init>(List,String): api+mapping: dmd: hand `EvaluationRequest.__ctor public @safe EvaluationRequest(string userText, string responseContent) @safe` / generated `EvaluationRequest.__ctor public @safe EvaluationRequest(List!(Document) "
+  },
+  "org.springframework.ai.evaluation.EvaluationResponse": {
+   "elements": 5,
+   "reason": "triage: org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,String,Map): attributes: dmd: hand `EvaluationResponse.__ctor public pure nothrow @nogc @safe EvaluationResponse(bool pass, float score, string feedback, Map!(string, Any) metadata) pure nothrow @nogc @safe` / generated `Eval"
+  },
+  "org.springframework.ai.evaluation.Evaluator": {
+   "elements": 2,
+   "reason": "triage: org.springframework.ai.evaluation.Evaluator#doGetSupportingData(EvaluationRequest): api: dmd: hand `Evaluator.doGetSupportingData public @safe string(EvaluationRequest request) @safe virtual abstract` / generated `Evaluator.doGetSupportingData public @safe string(EvaluationRequest evaluat"
+  },
+  "org.springframework.ai.image.Image": {
+   "elements": 4,
+   "reason": "triage: org.springframework.ai.image.Image#<init>(String,String): attributes: dmd: hand `Image.__ctor public pure nothrow @nogc @safe Image(Nullable!string url, Nullable!string b64Json) pure nothrow @nogc @safe` / generated `Image.__ctor public @safe Image(Nullable!string url, "
+  },
+  "org.springframework.ai.model.NoopApiKey": {
+   "elements": 1,
+   "reason": "triage: org.springframework.ai.model.NoopApiKey#getValue(): attributes: dmd: hand `NoopApiKey.getValue public pure nothrow @nogc @safe string() pure nothrow @nogc @safe virtual` / generated `NoopApiKey.getValue public @safe string() @safe virtual`"
+  },
+  "org.springframework.ai.model.SpringAIModelProperties": {
+   "elements": 1,
+   "reason": "triage: org.springframework.ai.model.SpringAIModelProperties#MODEL_PREFIX: compile+mapping: dmd: the spliced :ai-model does not compile: Error: undefined identifier `FlintAIModelProperties` in module `flint.ai.model` | hand adapted ['R1'], porter ported []"
+  },
+  "org.springframework.ai.model.SpringAIModels": {
+   "elements": 18,
+   "reason": "triage: org.springframework.ai.model.SpringAIModels#ANTHROPIC: compile: dmd: the spliced :ai-model does not compile: Error: undefined identifier `FlintAIModels` in module `flint.ai.model`"
+  },
+  "org.springframework.ai.reader.ExtractedTextFormatter": {
+   "elements": 8,
+   "reason": "triage: org.springframework.ai.reader.ExtractedTextFormatter#alignToLeft(String): dependency: :ai-commons has no DUB dependency declaring flint.ai.reader.ExtractedTextFormatter"
+  },
+  "org.springframework.ai.template.NoOpTemplateRenderer": {
+   "elements": 1,
+   "reason": "triage: org.springframework.ai.template.NoOpTemplateRenderer#apply(String,Map): mapping: hand adapted ['R19'], porter adapted ['R23']"
+  },
+  "org.springframework.ai.tokenizer.TokenCountEstimator": {
+   "elements": 2,
+   "reason": "triage: org.springframework.ai.tokenizer.TokenCountEstimator#estimate(MediaContent): api: dmd: hand `TokenCountEstimator.estimate public @safe int(Iterable!(MediaContent) messages) @safe virtual abstract` / generated `TokenCountEstimator.estimate public @safe int(MediaContent content) @saf"
+  },
+  "org.springframework.aop.AopInvocationException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.AopInvocationException#<init>(String): api: dmd: hand `AopInvocationException.__ctor public @safe AopInvocationException(string message) @safe` / generated `AopInvocationException.__ctor public pure nothrow @safe AopInvocationException(string m"
+  },
+  "org.springframework.aop.Pointcut": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.Pointcut#getClassFilter(): mapping: hand adapted ['R4'], porter ported []"
+  },
+  "org.springframework.aop.ProxyMethodInvocation": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.ProxyMethodInvocation#invocableClone(): api: dmd: hand has 2 lines, generated 1"
+  },
+  "org.springframework.aop.aspectj.AspectJAopUtils": {
+   "elements": 3,
+   "reason": "triage: org.springframework.aop.aspectj.AspectJAopUtils#getAspectJPrecedenceInformationFor(Advisor): api: dmd: hand `AspectJAopUtils.getAspectJPrecedenceInformationFor public @safe AspectJPrecedenceInformation(Advisor advisor) @safe static` / generated `AspectJAopUtils.getAspectJPrecedenceInformationFor p"
+  },
+  "org.springframework.aop.framework.Advised": {
+   "elements": 5,
+   "reason": "triage: org.springframework.aop.framework.Advised#addAdvice(Advice): api: dmd: hand `Advised.addAdvice public @safe void(int position, Advice advice) @safe virtual abstract` / generated `Advised.addAdvice public @safe void(int pos, Advice advice) @safe virtual abstract`"
+  },
+  "org.springframework.aop.framework.AopConfigException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.framework.AopConfigException#<init>(String): api: dmd: hand `AopConfigException.__ctor public @safe AopConfigException(string message) @safe` / generated `AopConfigException.__ctor public pure nothrow @safe AopConfigException(string msg, string file "
+  },
+  "org.springframework.aop.framework.adapter.UnknownAdviceTypeException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.aop.framework.adapter.UnknownAdviceTypeException#<init>(Object): api: dmd: hand `UnknownAdviceTypeException.__ctor public @safe UnknownAdviceTypeException(Any advice) @safe` / generated `UnknownAdviceTypeException.__ctor public pure nothrow @safe UnknownAdviceTypeExcept"
+  },
+  "org.springframework.aop.framework.autoproxy.AutoProxyUtils": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.framework.autoproxy.AutoProxyUtils#DEFAULT_PROXY_CONFIG_BEAN_NAME: dependency+mapping: :aop has no DUB dependency declaring flint.beans.factory, flint.beans.factory.config | hand adapted ['R1'], porter ported []"
+  },
+  "org.springframework.aop.interceptor.ExposeBeanNameAdvisors": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.interceptor.ExposeBeanNameAdvisors#getBeanName(MethodInvocation): api+mapping: dmd: hand `ExposeBeanNameAdvisors.getBeanName public @safe string(MethodInvocation invocation) @safe static` / generated `ExposeBeanNameAdvisors.getBeanName public @safe string() @safe static` | hand "
+  },
+  "org.springframework.aop.scope.ScopedObject": {
+   "elements": 2,
+   "reason": "triage: org.springframework.aop.scope.ScopedObject#getTargetObject(): mapping: hand adapted ['R19', 'R23'], porter adapted ['R23']"
+  },
+  "org.springframework.aop.scope.ScopedProxyUtils": {
+   "elements": 3,
+   "reason": "triage: org.springframework.aop.scope.ScopedProxyUtils#getOriginalBeanName(String): mapping: hand adapted ['R5', 'R19'], porter adapted ['R5']"
+  },
+  "org.springframework.aop.support.ClassFilters": {
+   "elements": 3,
+   "reason": "triage: org.springframework.aop.support.ClassFilters#intersection(ClassFilter,ClassFilter): api+mapping: dmd: hand `ClassFilters.intersection public @safe ClassFilter(ClassFilter first, ClassFilter second) @safe static` / generated `ClassFilters.intersection public @safe ClassFilter(ClassFilter cf1, Clas"
+  },
+  "org.springframework.aop.support.DynamicMethodMatcher": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.support.DynamicMethodMatcher#isRuntime(): attributes: dmd: hand `DynamicMethodMatcher.isRuntime public nothrow @nogc @safe bool() nothrow @nogc @safe virtual final` / generated `DynamicMethodMatcher.isRuntime public @safe bool() @safe virtual final`"
+  },
+  "org.springframework.aop.support.MethodMatchers": {
+   "elements": 3,
+   "reason": "triage: org.springframework.aop.support.MethodMatchers#intersection(MethodMatcher,MethodMatcher): api: dmd: hand `MethodMatchers.intersection public @safe MethodMatcher(MethodMatcher first, MethodMatcher second) @safe static` / generated `MethodMatchers.intersection public @safe MethodMatcher(MethodMat"
+  },
+  "org.springframework.aop.support.NameMatchMethodPointcutAdvisor": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.support.NameMatchMethodPointcutAdvisor#setClassFilter(ClassFilter): api+mapping: dmd: hand has 2 lines, generated 1 | hand adapted ['R9'], porter ported []"
+  },
+  "org.springframework.aop.support.Pointcuts": {
+   "elements": 2,
+   "reason": "triage: org.springframework.aop.support.Pointcuts#intersection(Pointcut,Pointcut): api: dmd: hand `Pointcuts.intersection public @safe Pointcut(Pointcut first, Pointcut second) @safe static` / generated `Pointcuts.intersection public @safe Pointcut(Pointcut pc1, Pointcut pc2) @safe stati"
+  },
+  "org.springframework.aop.support.StaticMethodMatcher": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.support.StaticMethodMatcher#isRuntime(): compile+attributes: dmd: the spliced :aop does not compile: Error: class `flint.aop.support.NameMatchMethodPointcut` interface function `bool matches(const(MethodDescriptor)* method, const(Descriptor) targetClass, Any[] "
+  },
+  "org.springframework.aop.support.StaticMethodMatcherPointcut": {
+   "elements": 1,
+   "reason": "triage: org.springframework.aop.support.StaticMethodMatcherPointcut#setClassFilter(ClassFilter): api+mapping: dmd: hand `StaticMethodMatcherPointcut.setClassFilter public @safe void(ClassFilter filter) @safe virtual` / generated `StaticMethodMatcherPointcut.setClassFilter public @safe void(ClassFilter classFi"
+  },
+  "org.springframework.aop.support.annotation.AnnotationMatchingPointcut": {
+   "elements": 2,
+   "reason": "triage: org.springframework.aop.support.annotation.AnnotationMatchingPointcut#hashCode(): api: dmd: hand `AnnotationMatchingPointcut.hashCode public const nothrow @safe int() const nothrow @safe virtual` / generated `AnnotationMatchingPointcut.hashCode public @safe int() @safe virtual`"
+  },
+  "org.springframework.aop.target.PoolingConfig": {
+   "elements": 2,
+   "reason": "triage: org.springframework.aop.target.PoolingConfig#getActiveCount(): mapping: hand adapted ['R8'], porter ported []"
+  },
+  "org.springframework.beans.BeansException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.beans.BeansException#<init>(String): api: dmd: hand `BeansException.__ctor public pure nothrow @safe BeansException(string msg, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe` / generated `BeansE"
+  },
+  "org.springframework.beans.FatalBeanException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.beans.FatalBeanException#<init>(String): api: dmd: hand `FatalBeanException.__ctor public pure nothrow @safe FatalBeanException(string msg, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe` / generated"
+  },
+  "org.springframework.beans.factory.BeanCreationException": {
+   "elements": 5,
+   "reason": "triage: org.springframework.beans.factory.BeanCreationException#<init>(String): compile: dmd: the spliced :beans does not compile: Error: function `@safe string flint.beans.factory.BeanCreationException.toString()` does not override any function"
+  },
+  "org.springframework.beans.factory.BeanCreationNotAllowedException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.beans.factory.BeanCreationNotAllowedException#<init>(String,String): api: dmd: hand `BeanCreationNotAllowedException.__ctor public @safe BeanCreationNotAllowedException(string beanName, string message) @safe` / generated `BeanCreationNotAllowedException.__ctor public @safe "
+  },
+  "org.springframework.beans.factory.BeanDefinitionStoreException": {
+   "elements": 4,
+   "reason": "triage: org.springframework.beans.factory.BeanDefinitionStoreException#<init>(String): api: dmd: hand `BeanDefinitionStoreException.__ctor public @safe BeanDefinitionStoreException(Nullable!string resourceDescription, string beanName, Nullable!string msg) @safe` / generated `BeanDefinitionSt"
+  },
+  "org.springframework.beans.factory.BeanInitializationException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.beans.factory.BeanInitializationException#<init>(String): api: dmd: hand `BeanInitializationException.__ctor public pure nothrow @safe BeanInitializationException(string message) pure nothrow @safe` / generated `BeanInitializationException.__ctor public pure noth"
+  },
+  "org.springframework.beans.factory.FactoryBeanNotInitializedException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.beans.factory.FactoryBeanNotInitializedException#<init>(): api: dmd: hand `FactoryBeanNotInitializedException.__ctor public pure nothrow @safe FactoryBeanNotInitializedException() pure nothrow @safe` / generated `FactoryBeanNotInitializedException.__ctor public pu"
+  },
+  "org.springframework.beans.factory.NoUniqueBeanDefinitionException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.beans.factory.NoUniqueBeanDefinitionException#getBeanNamesFound(): compile: dmd: the spliced :beans does not compile: Error: function `@safe int flint.beans.factory.NoUniqueBeanDefinitionException.getNumberOfBeansFound()` does not override any function"
+  },
+  "org.springframework.beans.factory.config.BeanPostProcessor": {
+   "elements": 2,
+   "reason": "triage: org.springframework.beans.factory.config.BeanPostProcessor#postProcessAfterInitialization(Object,String): api+mapping: dmd: hand has 1 lines, generated 0 | hand ported [], porter adapted ['R3', 'R23']"
+  },
+  "org.springframework.beans.factory.config.ConfigurableBeanFactory": {
+   "elements": 16,
+   "reason": "triage: org.springframework.beans.factory.config.ConfigurableBeanFactory#SCOPE_PROTOTYPE: dependency: :beans has no DUB dependency declaring flint.java.util.concurrent.executor"
+  },
+  "org.springframework.beans.factory.config.SingletonBeanRegistry": {
+   "elements": 2,
+   "reason": "triage: org.springframework.beans.factory.config.SingletonBeanRegistry#getSingleton(String): api+mapping: dmd: hand `SingletonBeanRegistry.getSingleton public @safe Object(string beanName) @safe virtual abstract` / generated `SingletonBeanRegistry.getSingleton public @safe Any(string beanName) @safe virtu"
+  },
+  "org.springframework.beans.factory.support.BeanDefinitionDefaults": {
+   "elements": 6,
+   "reason": "triage: org.springframework.beans.factory.support.BeanDefinitionDefaults#isLazyInit(): api: dmd: hand `BeanDefinitionDefaults.isLazyInit public const pure nothrow @nogc @safe bool() const pure nothrow @nogc @safe virtual` / generated `BeanDefinitionDefaults.isLazyInit public @safe bool() @sa"
+  },
+  "org.springframework.beans.factory.support.BeanDefinitionOverrideException": {
+   "elements": 6,
+   "reason": "triage: org.springframework.beans.factory.support.BeanDefinitionOverrideException#<init>(String,BeanDefinition,BeanDefinition): compile: dmd: the spliced :beans does not compile: Error: function `@safe string flint.beans.factory.support.BeanDefinitionOverrideException.getResourceDescription()` does not override any function"
+  },
+  "org.springframework.beans.factory.support.BeanDefinitionRegistry": {
+   "elements": 7,
+   "reason": "triage: org.springframework.beans.factory.support.BeanDefinitionRegistry#containsBeanDefinition(String): compile: dmd: the spliced :beans does not compile: Error: class `flint.beans.factory.support.DefaultListableBeanFactory` interface function `bool isBeanDefinitionOverridable(string beanName) @safe` is not impl"
+  },
+  "org.springframework.beans.factory.support.BeanDefinitionValidationException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.beans.factory.support.BeanDefinitionValidationException#<init>(String): api: dmd: hand `BeanDefinitionValidationException.__ctor public pure nothrow @safe BeanDefinitionValidationException(string message) pure nothrow @safe` / generated `BeanDefinitionValidationException.__cto"
+  },
+  "org.springframework.boot.actuate.info.InfoContributor": {
+   "elements": 1,
+   "reason": "triage: org.springframework.boot.actuate.info.InfoContributor#contribute(Info.Builder): dependency: :boot-actuate has no DUB dependency declaring flint.boot.actuate.info.Info"
+  },
+  "org.springframework.boot.autoconfigure.condition.ConditionOutcome": {
+   "elements": 13,
+   "reason": "triage: org.springframework.boot.autoconfigure.condition.ConditionOutcome#<init>(boolean,ConditionMessage): api+mapping: dmd: hand `ConditionOutcome.__ctor public @safe ConditionOutcome(bool matched, ConditionMessage message) @safe` / generated `ConditionOutcome.__ctor public @safe ConditionOutcome(bool match, Condition"
+  },
+  "org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#<init>(Collection,Collection): api+mapping: dmd: hand `MutuallyExclusiveConfigurationPropertiesException.__ctor public @safe MutuallyExclusiveConfigurationPropertiesException(Collection!string configuredNames, Collection!string mutuallyExclusiv"
+  },
+  "org.springframework.cache.Cache": {
+   "elements": 9,
+   "reason": "triage: org.springframework.cache.Cache#clear(): dependency: :context has no DUB dependency declaring flint.cache.Cache"
+  },
+  "org.springframework.cache.CacheManager": {
+   "elements": 1,
+   "reason": "triage: org.springframework.cache.CacheManager#getCacheNames(): mapping: hand adapted ['R10'], porter ported []"
+  },
+  "org.springframework.cache.interceptor.CacheEvictOperation": {
+   "elements": 3,
+   "reason": "triage: org.springframework.cache.interceptor.CacheEvictOperation#<init>(CacheEvictOperation.Builder): dependency: :context has no DUB dependency declaring flint.cache.interceptor.CacheEvictOperation"
+  },
+  "org.springframework.cache.interceptor.CacheOperation": {
+   "elements": 11,
+   "reason": "triage: org.springframework.cache.interceptor.CacheOperation#<init>(Builder): dependency: :context has no DUB dependency declaring flint.cache.interceptor.CacheOperation"
+  },
+  "org.springframework.cache.interceptor.CachePutOperation": {
+   "elements": 2,
+   "reason": "triage: org.springframework.cache.interceptor.CachePutOperation#<init>(CachePutOperation.Builder): dependency: :context has no DUB dependency declaring flint.cache.interceptor.CachePutOperation"
+  },
+  "org.springframework.cache.interceptor.CacheableOperation": {
+   "elements": 3,
+   "reason": "triage: org.springframework.cache.interceptor.CacheableOperation#<init>(CacheableOperation.Builder): dependency: :context has no DUB dependency declaring flint.cache.interceptor.CacheableOperation"
+  },
+  "org.springframework.cache.support.NoOpCache": {
+   "elements": 8,
+   "reason": "triage: org.springframework.cache.support.NoOpCache#<init>(String): compile: dmd: the spliced :context does not compile: Error: class `flint.cache.support.NoOpCache` interface function `Object getNativeCache() @safe` is not implemented"
+  },
+  "org.springframework.cache.support.NoOpCacheManager": {
+   "elements": 2,
+   "reason": "triage: org.springframework.cache.support.NoOpCacheManager#getCacheNames(): attributes+mapping: dmd: hand `NoOpCacheManager.getCacheNames public nothrow @nogc @safe Collection!string() nothrow @nogc @safe virtual` / generated `NoOpCacheManager.getCacheNames public @safe Collection!string() @safe"
+  },
+  "org.springframework.cache.support.SimpleValueWrapper": {
+   "elements": 5,
+   "reason": "triage: org.springframework.cache.support.SimpleValueWrapper#<init>(Object): dependency+mapping: :context has no DUB dependency declaring flint.cache.Cache | hand adapted ['R7'], porter adapted ['R23']"
+  },
+  "org.springframework.context.ApplicationContextException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.context.ApplicationContextException#<init>(String): api: dmd: hand `ApplicationContextException.__ctor public pure nothrow @safe ApplicationContextException(string msg) pure nothrow @safe` / generated `ApplicationContextException.__ctor public pure nothrow "
+  },
+  "org.springframework.context.ApplicationEventPublisher": {
+   "elements": 2,
+   "reason": "triage: org.springframework.context.ApplicationEventPublisher#publishEvent(ApplicationEvent): api+mapping: dmd: hand `ApplicationEventPublisher.publishEvent public @safe void(ApplicationEvent event) @safe final abstract` / generated `ApplicationEventPublisher.publishEvent public @safe void(Any event) @safe"
+  },
+  "org.springframework.context.ConfigurableApplicationContext": {
+   "elements": 1,
+   "reason": "triage: org.springframework.context.ConfigurableApplicationContext#SHUTDOWN_HOOK_THREAD_NAME: api: dmd: hand `ConfigurableApplicationContext.SHUTDOWN_HOOK_THREAD_NAME public string = \"FlintContextShutdownHook\"` / generated `ConfigurableApplicationContext.SHUTDOWN_HOOK_THREAD_NAME public string = \"S"
+  },
+  "org.springframework.context.LifecycleProcessor": {
+   "elements": 2,
+   "reason": "triage: org.springframework.context.LifecycleProcessor#onClose(): mapping: hand ported [], porter adapted ['R3']"
+  },
+  "org.springframework.context.MessageSource": {
+   "elements": 1,
+   "reason": "triage: org.springframework.context.MessageSource#getMessage(MessageSourceResolvable,Locale): api+mapping: dmd: hand `MessageSource.getMessage public @safe string(MessageSourceResolvable resolvable, Locale locale) @safe virtual abstract` / generated `MessageSource.getMessage public @safe Nullable!string(st"
+  },
+  "org.springframework.context.MessageSourceResolvable": {
+   "elements": 2,
+   "reason": "triage: org.springframework.context.MessageSourceResolvable#getArguments(): mapping: hand ported [], porter adapted ['R3', 'R23']"
+  },
+  "org.springframework.context.NoSuchMessageException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.context.NoSuchMessageException#<init>(String): api: dmd: hand `NoSuchMessageException.__ctor public @safe NoSuchMessageException(string code) @safe` / generated `NoSuchMessageException.__ctor public pure nothrow @safe NoSuchMessageException(string code"
+  },
+  "org.springframework.context.SmartLifecycle": {
+   "elements": 2,
+   "reason": "triage: org.springframework.context.SmartLifecycle#isAutoStartup(): mapping: hand ported [], porter adapted ['R3']"
+  },
+  "org.springframework.context.event.ApplicationContextEvent": {
+   "elements": 2,
+   "reason": "triage: org.springframework.context.event.ApplicationContextEvent#<init>(ApplicationContext): compile: dmd: the spliced :context does not compile: Error: function `@safe ApplicationContext flint.context.event.ApplicationContextEvent.getSource()` does not override any function"
+  },
+  "org.springframework.context.event.ApplicationEventMulticaster": {
+   "elements": 2,
+   "reason": "triage: org.springframework.context.event.ApplicationEventMulticaster#multicastEvent(ApplicationEvent): compile: dmd: the spliced :context does not compile: Error: class `flint.context.event.SimpleApplicationEventMulticaster` interface function `void addApplicationListenerBean(string listenerBeanName) @safe` is "
+  },
+  "org.springframework.context.i18n.LocaleContext": {
+   "elements": 1,
+   "reason": "triage: org.springframework.context.i18n.LocaleContext#getLocale(): api+mapping: dmd: hand `LocaleContext.getLocale public @safe Locale() @safe virtual abstract` / generated `LocaleContext.getLocale public @safe Nullable!(Locale)() @safe virtual abstract` | hand ported [], porter "
+  },
+  "org.springframework.context.i18n.SimpleLocaleContext": {
+   "elements": 3,
+   "reason": "triage: org.springframework.context.i18n.SimpleLocaleContext#<init>(Locale): api+mapping: dmd: hand `SimpleLocaleContext.__ctor public pure nothrow @nogc @safe SimpleLocaleContext(Locale locale) pure nothrow @nogc @safe` / generated `SimpleLocaleContext.__ctor public @safe SimpleLocaleCont"
+  },
+  "org.springframework.context.support.AbstractMessageSource": {
+   "elements": 10,
+   "reason": "triage: org.springframework.context.support.AbstractMessageSource#getCommonMessages(): compile: dmd: the spliced :context does not compile: Error: function `@safe string flint.context.support.StaticMessageSource.resolveCodeWithoutArguments(string code, Locale locale)` does not override any funct"
+  },
+  "org.springframework.context.support.DelegatingMessageSource": {
+   "elements": 4,
+   "reason": "triage: org.springframework.context.support.DelegatingMessageSource#getMessage(MessageSourceResolvable,Locale): compile+mapping: dmd: the spliced :context does not compile: Error: class `flint.context.support.DelegatingMessageSource` interface function `string getMessage(string code, Any[] args, string defaultMessage, Locale lo"
+  },
+  "org.springframework.context.support.GenericApplicationContext": {
+   "elements": 17,
+   "reason": "triage: org.springframework.context.support.GenericApplicationContext#<init>(): compile: dmd: the spliced :context does not compile: Error: function `@safe Resource[] flint.context.support.GenericApplicationContext.getResources(string locationPattern)` does not override any function"
+  },
+  "org.springframework.context.support.MessageSourceAccessor": {
+   "elements": 6,
+   "reason": "triage: org.springframework.context.support.MessageSourceAccessor#getMessage(MessageSourceResolvable): api: dmd: hand `MessageSourceAccessor.getMessage public @safe string(string code, Any[] args = null) @safe virtual` / generated `MessageSourceAccessor.getMessage public @safe string(MessageSourceResolvable"
+  },
+  "org.springframework.core.AttributeAccessor": {
+   "elements": 3,
+   "reason": "triage: org.springframework.core.AttributeAccessor#getAttribute(String): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.core.NestedRuntimeException": {
+   "elements": 3,
+   "reason": "triage: org.springframework.core.NestedRuntimeException#<init>(String): api+mapping: dmd: hand `NestedRuntimeException.__ctor public pure nothrow @safe NestedRuntimeException(string msg, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe` / g"
+  },
+  "org.springframework.core.annotation.AnnotationAwareOrderComparator": {
+   "elements": 2,
+   "reason": "triage: org.springframework.core.annotation.AnnotationAwareOrderComparator#findOrder(Object): compile+mapping: dmd: the spliced :core does not compile: Error: function `@safe Nullable!int flint.core.annotation.types.AnnotationAwareOrderComparator.findOrder(Any obj)` does not override any function | hand ported"
+  },
+  "org.springframework.core.annotation.AnnotationConfigurationException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.core.annotation.AnnotationConfigurationException#<init>(String): api: dmd: hand `AnnotationConfigurationException.__ctor public pure nothrow @safe AnnotationConfigurationException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__)"
+  },
+  "org.springframework.core.convert.ConversionService": {
+   "elements": 2,
+   "reason": "triage: org.springframework.core.convert.ConversionService#canConvert(TypeDescriptor,TypeDescriptor): api+mapping: dmd: hand `ConversionService.canConvert public @safe bool(const(TypeDescriptor) sourceType, const(TypeDescriptor) targetType) @safe final abstract` / generated `ConversionService.canConvert public @sa"
+  },
+  "org.springframework.core.convert.converter.ConditionalConverter": {
+   "elements": 1,
+   "reason": "triage: org.springframework.core.convert.converter.ConditionalConverter#matches(TypeDescriptor,TypeDescriptor): api: dmd: hand `ConditionalConverter.matches public @safe bool(const(TypeDescriptor) sourceType, const(TypeDescriptor) targetType) @safe virtual abstract` / generated `ConditionalConverter.matches public @"
+  },
+  "org.springframework.core.convert.converter.ConverterRegistry": {
+   "elements": 1,
+   "reason": "triage: org.springframework.core.convert.converter.ConverterRegistry#addConverter(GenericConverter): api: dmd: hand `ConverterRegistry.addConverter public @safe void(GenericConverter converter) @safe final abstract` / generated `ConverterRegistry.addConverter public @safe void(GenericConverter converter) "
+  },
+  "org.springframework.core.convert.converter.GenericConverter": {
+   "elements": 2,
+   "reason": "triage: org.springframework.core.convert.converter.GenericConverter#convert(Object,TypeDescriptor,TypeDescriptor): api+mapping: dmd: hand `GenericConverter.convert public @safe Any(Any source, const(TypeDescriptor) sourceType, const(TypeDescriptor) targetType) @safe virtual abstract` / generated `GenericConverter.convert publi"
+  },
+  "org.springframework.core.env.AbstractEnvironment": {
+   "elements": 36,
+   "reason": "triage: org.springframework.core.env.AbstractEnvironment#<init>(): compile: dmd: the spliced :core does not compile: Error: function `flint.core.env.AbstractEnvironment.getProperty` cannot override `final` function `ConfigurableEnvironment.flint.core.env.PropertyResolver.getP"
+  },
+  "org.springframework.core.env.ConfigurableEnvironment": {
+   "elements": 2,
+   "reason": "triage: org.springframework.core.env.ConfigurableEnvironment#getSystemEnvironment(): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.core.env.ConfigurablePropertyResolver": {
+   "elements": 7,
+   "reason": "triage: org.springframework.core.env.ConfigurablePropertyResolver#getConversionService(): compile: dmd: the spliced :core does not compile: Error: class `flint.core.env.PropertySourcesPropertyResolver` interface function `void setValueSeparator(Nullable!string valueSeparator) @safe` is not implemen"
+  },
+  "org.springframework.core.env.Environment": {
+   "elements": 1,
+   "reason": "triage: org.springframework.core.env.Environment#acceptsProfiles(Profiles): api: dmd: hand has 2 lines, generated 1"
+  },
+  "org.springframework.core.env.MissingRequiredPropertiesException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.core.env.MissingRequiredPropertiesException#getMissingRequiredProperties(): api: dmd: hand `MissingRequiredPropertiesException.getMissingRequiredProperties public const @safe string[]() const @safe virtual` / generated `MissingRequiredPropertiesException.getMissingRequiredProperti"
+  },
+  "org.springframework.core.env.PropertyResolver": {
+   "elements": 6,
+   "reason": "triage: org.springframework.core.env.PropertyResolver#containsProperty(String): compile: dmd: the spliced :core does not compile: Error: class `flint.core.env.PropertySourcesPropertyResolver` interface function `Nullable!string getProperty(string key) @safe` is not implemented"
+  },
+  "org.springframework.core.env.PropertySourcesPropertyResolver": {
+   "elements": 3,
+   "reason": "triage: org.springframework.core.env.PropertySourcesPropertyResolver#<init>(PropertySources): compile: dmd: the spliced :core does not compile: Error: function `flint.core.env.PropertySourcesPropertyResolver.getProperty` does not override any function"
+  },
+  "org.springframework.core.env.SystemEnvironmentPropertySource": {
+   "elements": 2,
+   "reason": "triage: org.springframework.core.env.SystemEnvironmentPropertySource#<init>(String,Map): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.core.io.AbstractResource": {
+   "elements": 11,
+   "reason": "triage: org.springframework.core.io.AbstractResource#contentLength(): dependency: :core has no DUB dependency declaring flint.java.nio.channels.readablebytechannel"
+  },
+  "org.springframework.core.io.ByteArrayResource": {
+   "elements": 5,
+   "reason": "triage: org.springframework.core.io.ByteArrayResource#contentLength(): compile: dmd: the spliced :core does not compile: Error: function `@safe byte[] flint.core.io.ByteArrayResource.getContentAsByteArray()` does not override any function"
+  },
+  "org.springframework.core.io.DescriptiveResource": {
+   "elements": 1,
+   "reason": "triage: org.springframework.core.io.DescriptiveResource#<init>(String): api+mapping: dmd: hand `DescriptiveResource.__ctor public @safe DescriptiveResource(string description) @safe` / generated `DescriptiveResource.__ctor public @safe DescriptiveResource(Nullable!string description) "
+  },
+  "org.springframework.core.io.InputStreamResource": {
+   "elements": 4,
+   "reason": "triage: org.springframework.core.io.InputStreamResource#<init>(InputStreamSource): api+mapping: dmd: hand `InputStreamResource.__ctor public @safe InputStreamResource(InputStream delegate() @safe inputStreamSource) @safe` / generated `InputStreamResource.__ctor public @safe InputStreamResource(I"
+  },
+  "org.springframework.core.io.Resource": {
+   "elements": 10,
+   "reason": "triage: org.springframework.core.io.Resource#contentLength(): dependency: :core has no DUB dependency declaring flint.java.nio.channels.readablebytechannel, flint.java.nio.file"
+  },
+  "org.springframework.dao.CannotAcquireLockException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.CannotAcquireLockException#<init>(String): api+mapping: dmd: hand `CannotAcquireLockException.__ctor public pure nothrow @safe CannotAcquireLockException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure not"
+  },
+  "org.springframework.dao.CannotSerializeTransactionException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.CannotSerializeTransactionException#<init>(String): api: dmd: hand `CannotSerializeTransactionException.__ctor public pure nothrow @safe CannotSerializeTransactionException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)"
+  },
+  "org.springframework.dao.ConcurrencyFailureException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.ConcurrencyFailureException#<init>(String): api+mapping: dmd: hand `ConcurrencyFailureException.__ctor public pure nothrow @safe ConcurrencyFailureException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure n"
+  },
+  "org.springframework.dao.DataAccessException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.DataAccessException#<init>(String): api+mapping: dmd: hand `DataAccessException.__ctor public pure nothrow @safe DataAccessException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe` / "
+  },
+  "org.springframework.dao.DataAccessResourceFailureException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.DataAccessResourceFailureException#<init>(String): api+mapping: dmd: hand `DataAccessResourceFailureException.__ctor public pure nothrow @safe DataAccessResourceFailureException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__"
+  },
+  "org.springframework.dao.DataIntegrityViolationException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.DataIntegrityViolationException#<init>(String): api+mapping: dmd: hand `DataIntegrityViolationException.__ctor public pure nothrow @safe DataIntegrityViolationException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__"
+  },
+  "org.springframework.dao.DataRetrievalFailureException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.DataRetrievalFailureException#<init>(String): api+mapping: dmd: hand `DataRetrievalFailureException.__ctor public pure nothrow @safe DataRetrievalFailureException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pu"
+  },
+  "org.springframework.dao.DuplicateKeyException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.DuplicateKeyException#<init>(String): api+mapping: dmd: hand `DuplicateKeyException.__ctor public pure nothrow @safe DuplicateKeyException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe"
+  },
+  "org.springframework.dao.EmptyResultDataAccessException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.dao.EmptyResultDataAccessException#<init>(String,int): api+mapping: dmd: hand `EmptyResultDataAccessException.__ctor public pure nothrow @safe EmptyResultDataAccessException(string msg, int expectedSize, Throwable ex = null, string file = __FILE__, ulong line = cast(u"
+  },
+  "org.springframework.dao.IncorrectResultSizeDataAccessException": {
+   "elements": 4,
+   "reason": "triage: org.springframework.dao.IncorrectResultSizeDataAccessException#<init>(String,int): api: dmd: hand `IncorrectResultSizeDataAccessException.__ctor public pure nothrow @safe IncorrectResultSizeDataAccessException(string msg, int expectedSize, Throwable ex = null, string file = __FILE__, ulo"
+  },
+  "org.springframework.dao.IncorrectUpdateSemanticsDataAccessException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.dao.IncorrectUpdateSemanticsDataAccessException#<init>(String): api: dmd: hand `IncorrectUpdateSemanticsDataAccessException.__ctor public pure nothrow @safe IncorrectUpdateSemanticsDataAccessException(string msg, Throwable cause = null, string file = __FILE__, ulong li"
+  },
+  "org.springframework.dao.InvalidDataAccessApiUsageException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.InvalidDataAccessApiUsageException#<init>(String): api+mapping: dmd: hand `InvalidDataAccessApiUsageException.__ctor public pure nothrow @safe InvalidDataAccessApiUsageException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__"
+  },
+  "org.springframework.dao.InvalidDataAccessResourceUsageException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.InvalidDataAccessResourceUsageException#<init>(String): api+mapping: dmd: hand `InvalidDataAccessResourceUsageException.__ctor public pure nothrow @safe InvalidDataAccessResourceUsageException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cas"
+  },
+  "org.springframework.dao.NonTransientDataAccessException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.NonTransientDataAccessException#<init>(String): api+mapping: dmd: hand `NonTransientDataAccessException.__ctor public pure nothrow @safe NonTransientDataAccessException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__"
+  },
+  "org.springframework.dao.NonTransientDataAccessResourceException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.NonTransientDataAccessResourceException#<init>(String): api+mapping: dmd: hand `NonTransientDataAccessResourceException.__ctor public pure nothrow @safe NonTransientDataAccessResourceException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cas"
+  },
+  "org.springframework.dao.OptimisticLockingFailureException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.OptimisticLockingFailureException#<init>(String): api+mapping: dmd: hand `OptimisticLockingFailureException.__ctor public pure nothrow @safe OptimisticLockingFailureException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LI"
+  },
+  "org.springframework.dao.PessimisticLockingFailureException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.PessimisticLockingFailureException#<init>(String): api+mapping: dmd: hand `PessimisticLockingFailureException.__ctor public pure nothrow @safe PessimisticLockingFailureException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__"
+  },
+  "org.springframework.dao.QueryTimeoutException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.QueryTimeoutException#<init>(String): api+mapping: dmd: hand `QueryTimeoutException.__ctor public pure nothrow @safe QueryTimeoutException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe"
+  },
+  "org.springframework.dao.RecoverableDataAccessException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.RecoverableDataAccessException#<init>(String): api: dmd: hand `RecoverableDataAccessException.__ctor public pure nothrow @safe RecoverableDataAccessException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) "
+  },
+  "org.springframework.dao.TransientDataAccessException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.TransientDataAccessException#<init>(String): api+mapping: dmd: hand `TransientDataAccessException.__ctor public pure nothrow @safe TransientDataAccessException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure"
+  },
+  "org.springframework.dao.TransientDataAccessResourceException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.TransientDataAccessResourceException#<init>(String): api: dmd: hand `TransientDataAccessResourceException.__ctor public pure nothrow @safe TransientDataAccessResourceException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulon"
+  },
+  "org.springframework.dao.TypeMismatchDataAccessException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.dao.TypeMismatchDataAccessException#<init>(String): api+mapping: dmd: hand `TypeMismatchDataAccessException.__ctor public pure nothrow @safe TypeMismatchDataAccessException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__"
+  },
+  "org.springframework.data.core.PropertyResolutionException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.data.core.PropertyResolutionException#<init>(String): api+mapping: dmd: hand `PropertyResolutionException.__ctor public pure nothrow @safe PropertyResolutionException(string message, Throwable cause = null) pure nothrow @safe` / generated `PropertyResolutionException"
+  },
+  "org.springframework.data.domain.Limit": {
+   "elements": 1,
+   "reason": "triage: org.springframework.data.domain.Limit#unlimited(): attributes: dmd: hand `Limit.unlimited public nothrow @nogc @safe Limit() nothrow @nogc @safe static abstract` / generated `Limit.unlimited public @safe Limit() @safe static abstract`"
+  },
+  "org.springframework.data.domain.OffsetScrollPosition": {
+   "elements": 1,
+   "reason": "triage: org.springframework.data.domain.OffsetScrollPosition#toString(): mapping: hand ported [], porter adapted ['R11']"
+  },
+  "org.springframework.data.domain.PageRequest": {
+   "elements": 13,
+   "reason": "triage: org.springframework.data.domain.PageRequest#<init>(int,int,Sort): dependency: :data-commons has no DUB dependency declaring flint.data.domain.Sort"
+  },
+  "org.springframework.data.domain.Pageable": {
+   "elements": 1,
+   "reason": "triage: org.springframework.data.domain.Pageable#toOptional(): mapping: hand adapted ['R5', 'R3'], porter adapted ['R3', 'R5']"
+  },
+  "org.springframework.data.domain.ScrollPosition": {
+   "elements": 4,
+   "reason": "triage: org.springframework.data.domain.ScrollPosition#isInitial(): compile: dmd: the spliced :data-commons does not compile: Error: no property `Direction` for type `flint.data.domain.scroll_position.ScrollPosition`"
+  },
+  "org.springframework.data.mapping.Alias": {
+   "elements": 13,
+   "reason": "triage: org.springframework.data.mapping.Alias#empty(): compile+mapping: dmd: the spliced :data-commons does not compile: Error: class `flint.data.mapping.EmptyAlias` cannot inherit from class `Alias` because it is `final` | hand adapted ['R17'], porter ported []"
+  },
+  "org.springframework.data.mapping.MappingException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.data.mapping.MappingException#<init>(String): api+mapping: dmd: hand `MappingException.__ctor public @safe MappingException(Nullable!string message, Throwable cause) @safe` / generated `MappingException.__ctor public pure nothrow @safe MappingException(string"
+  },
+  "org.springframework.data.support.IsNewStrategy": {
+   "elements": 1,
+   "reason": "triage: org.springframework.data.support.IsNewStrategy#isNew(Object): compile+mapping: dmd: the spliced :data-commons does not compile: Error: function `@safe bool flint.data.support.is_new_strategy.PersistableIsNewStrategy.isNew(Object entity)` does not override any function | hand por"
+  },
+  "org.springframework.expression.AccessException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.expression.AccessException#<init>(String): api: dmd: hand `AccessException.__ctor public @safe AccessException(string message, Exception cause = null) @safe` / generated `AccessException.__ctor public pure nothrow @safe AccessException(string messa"
+  },
+  "org.springframework.expression.EvaluationContext": {
+   "elements": 3,
+   "reason": "triage: org.springframework.expression.EvaluationContext#getPropertyAccessors(): mapping: hand adapted ['R3', 'R10'], porter adapted ['R3']"
+  },
+  "org.springframework.expression.EvaluationException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.expression.EvaluationException#<init>(String): api: dmd: hand `EvaluationException.__ctor public @safe EvaluationException(int position, string message, Throwable cause) @safe` / generated `EvaluationException.__ctor public @safe EvaluationException(st"
+  },
+  "org.springframework.expression.Expression": {
+   "elements": 5,
+   "reason": "triage: org.springframework.expression.Expression#getValue(): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.expression.ExpressionException": {
+   "elements": 9,
+   "reason": "triage: org.springframework.expression.ExpressionException#<init>(String): compile: dmd: the spliced :expression does not compile: Error: function `@safe string flint.expression.ExpressionException.getMessage()` does not override any function"
+  },
+  "org.springframework.expression.ParseException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.expression.ParseException#<init>(String,int,String): api+mapping: dmd: hand `ParseException.__ctor public @safe ParseException(int position, string message) @safe` / generated `ParseException.__ctor public @safe ParseException(Nullable!string expressionString, int p"
+  },
+  "org.springframework.expression.PropertyAccessor": {
+   "elements": 4,
+   "reason": "triage: org.springframework.expression.PropertyAccessor#canRead(EvaluationContext,Object,String): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.expression.TypeConverter": {
+   "elements": 2,
+   "reason": "triage: org.springframework.expression.TypeConverter#canConvert(TypeDescriptor,TypeDescriptor): api: dmd: hand `TypeConverter.canConvert public @safe bool(const(TypeDescriptor) sourceType, const(TypeDescriptor) targetType) @safe virtual abstract` / generated `TypeConverter.canConvert public @safe boo"
+  },
+  "org.springframework.expression.spel.SpelEvaluationException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.expression.spel.SpelEvaluationException#getMessageCode(): compile: dmd: the spliced :expression does not compile: Error: class `flint.expression.spel.SpelEvaluationException` cannot implicitly generate a default constructor when base class `flint.expression.Evaluatio"
+  },
+  "org.springframework.expression.spel.SpelParseException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.expression.spel.SpelParseException#getMessageCode(): compile: dmd: the spliced :expression does not compile: Error: class `flint.expression.spel.SpelParseException` cannot implicitly generate a default constructor when base class `flint.expression.ParseException"
+  },
+  "org.springframework.http.InvalidMediaTypeException": {
+   "elements": 3,
+   "reason": "triage: org.springframework.http.InvalidMediaTypeException#<init>(String,String): compile+mapping: dmd: the spliced :web does not compile: Error: function `@safe string flint.http.InvalidMediaTypeException.getMessage()` does not override any function | hand ported [], porter adapted ['R26']"
+  },
+  "org.springframework.http.converter.HttpMessageConversionException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.http.converter.HttpMessageConversionException#<init>(String): api: dmd: hand `HttpMessageConversionException.__ctor public pure nothrow @safe HttpMessageConversionException(string message, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE"
+  },
+  "org.springframework.http.converter.HttpMessageNotReadableException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.http.converter.HttpMessageNotReadableException#<init>(String,HttpInputMessage): api: dmd: hand `HttpMessageNotReadableException.__ctor public pure nothrow @safe HttpMessageNotReadableException(string message, Throwable cause, HttpInputMessage httpInputMessage, string file = __FILE__, "
+  },
+  "org.springframework.http.converter.HttpMessageNotWritableException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.http.converter.HttpMessageNotWritableException#<init>(String): api: dmd: hand `HttpMessageNotWritableException.__ctor public pure nothrow @safe HttpMessageNotWritableException(string message, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LI"
+  },
+  "org.springframework.http.server.ServletServerHttpResponse": {
+   "elements": 6,
+   "reason": "triage: org.springframework.http.server.ServletServerHttpResponse#<init>(HttpServletResponse): compile: dmd: the spliced :web does not compile: Error: class `flint.http.server.ServletServerHttpResponse` interface function `void writeBody(scope const(ubyte)[] bytes) @safe` is not implemented"
+  },
+  "org.springframework.jdbc.BadSqlGrammarException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.BadSqlGrammarException#<init>(String,String,SQLException): attributes: dmd: hand `BadSqlGrammarException.__ctor public @safe BadSqlGrammarException(string task, string sql, SQLException ex, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `Bad"
+  },
+  "org.springframework.jdbc.CannotGetJdbcConnectionException": {
+   "elements": 3,
+   "reason": "triage: org.springframework.jdbc.CannotGetJdbcConnectionException#<init>(String): attributes: dmd: hand `CannotGetJdbcConnectionException.__ctor public @safe CannotGetJdbcConnectionException(string msg, IllegalStateException ex, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` "
+  },
+  "org.springframework.jdbc.IncorrectResultSetColumnCountException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.IncorrectResultSetColumnCountException#<init>(String,int,int): attributes: dmd: hand `IncorrectResultSetColumnCountException.__ctor public @safe IncorrectResultSetColumnCountException(int expectedCount, int actualCount, string file = __FILE__, ulong line = cast(ulong)__LINE_"
+  },
+  "org.springframework.jdbc.InvalidResultSetAccessException": {
+   "elements": 3,
+   "reason": "triage: org.springframework.jdbc.InvalidResultSetAccessException#<init>(SQLException): attributes: dmd: hand `InvalidResultSetAccessException.__ctor public @safe InvalidResultSetAccessException(SQLException ex, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `InvalidRes"
+  },
+  "org.springframework.jdbc.JdbcUpdateAffectedIncorrectNumberOfRowsException": {
+   "elements": 4,
+   "reason": "triage: org.springframework.jdbc.JdbcUpdateAffectedIncorrectNumberOfRowsException#<init>(String,int,int): compile: dmd: the spliced :jdbc does not compile: Error: function `@safe bool flint.jdbc.JdbcUpdateAffectedIncorrectNumberOfRowsException.wasDataUpdated()` does not override any function"
+  },
+  "org.springframework.jdbc.LobRetrievalFailureException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.LobRetrievalFailureException#<init>(String): attributes: dmd: hand `LobRetrievalFailureException.__ctor public @safe LobRetrievalFailureException(string msg, IOException ex, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `LobRe"
+  },
+  "org.springframework.jdbc.SQLWarningException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.SQLWarningException#<init>(String,SQLWarning): compile: dmd: the spliced :jdbc does not compile: Error: function `flint.jdbc.SQLWarningException.SQLWarning` is used as a type"
+  },
+  "org.springframework.jdbc.UncategorizedSQLException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.UncategorizedSQLException#<init>(String,String,SQLException): attributes+mapping: dmd: hand `UncategorizedSQLException.__ctor public @safe UncategorizedSQLException(string task, string sql, SQLException ex, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generate"
+  },
+  "org.springframework.jdbc.core.ArgumentPreparedStatementSetter": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.core.ArgumentPreparedStatementSetter#doSetValue(PreparedStatement,int,Object): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.jdbc.core.ArgumentTypePreparedStatementSetter": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.core.ArgumentTypePreparedStatementSetter#doSetValue(PreparedStatement,int,int,Object): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.jdbc.core.PreparedStatementCreatorFactory": {
+   "elements": 3,
+   "reason": "triage: org.springframework.jdbc.core.PreparedStatementCreatorFactory#<init>(String): api: dmd: hand has 3 lines, generated 2"
+  },
+  "org.springframework.jdbc.core.RowCountCallbackHandler": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.core.RowCountCallbackHandler#processRow(ResultSet): api: dmd: hand `RowCountCallbackHandler.processRow public @safe void(ResultSet, int) @safe virtual` / generated `RowCountCallbackHandler.processRow public @safe void(ResultSet rs, int rowNum) @safe virtual"
+  },
+  "org.springframework.jdbc.core.SqlParameterValue": {
+   "elements": 5,
+   "reason": "triage: org.springframework.jdbc.core.SqlParameterValue#<init>(SqlParameter,Object): api+mapping: dmd: hand `SqlParameterValue.__ctor public @safe SqlParameterValue(int sqlType, int scale, Any value) @safe` / generated `SqlParameterValue.__ctor public @safe SqlParameterValue(int sqlType, Nullable!"
+  },
+  "org.springframework.jdbc.core.SqlProvider": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.core.SqlProvider#getSql(): compile+mapping: dmd: the spliced :jdbc does not compile: Error: function `@safe string flint.jdbc.core.SimplePreparedStatementCreator.getSql()` does not override any function | hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.jdbc.core.SqlTypeValue": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.core.SqlTypeValue#setTypeValue(PreparedStatement,int,int,String): api+mapping: dmd: hand `SqlTypeValue.setTypeValue public @safe void(PreparedStatement ps, int paramIndex, int sqlType, string typeName) @safe virtual abstract` / generated `SqlTypeValue.setTypeValue public @safe v"
+  },
+  "org.springframework.jdbc.core.metadata.GenericTableMetaDataProvider": {
+   "elements": 24,
+   "reason": "triage: org.springframework.jdbc.core.metadata.GenericTableMetaDataProvider#<init>(DatabaseMetaData): compile: dmd: the spliced :jdbc does not compile: Error: class `flint.jdbc.core.metadata.GenericTableMetaDataProvider` interface function `void initializeWithTableColumnMetaData(DatabaseMetaData databaseMetaDa"
+  },
+  "org.springframework.jdbc.core.metadata.PostgresTableMetaDataProvider": {
+   "elements": 5,
+   "reason": "triage: org.springframework.jdbc.core.metadata.PostgresTableMetaDataProvider#<init>(DatabaseMetaData): compile: dmd: the spliced :jdbc does not compile: Error: function `@safe Nullable!string flint.jdbc.core.metadata.PostgresTableMetaDataProvider.metaDataCatalogNameToUse(Nullable!string catalogName)` does not o"
+  },
+  "org.springframework.jdbc.core.metadata.TableMetaDataContext": {
+   "elements": 8,
+   "reason": "triage: org.springframework.jdbc.core.metadata.TableMetaDataContext#getCatalogName(): api+mapping: dmd: hand `TableMetaDataContext.getCatalogName public @safe string() @safe virtual` / generated `TableMetaDataContext.getCatalogName public @safe Nullable!string() @safe virtual` | hand ported [], por"
+  },
+  "org.springframework.jdbc.core.metadata.TableMetaDataProvider": {
+   "elements": 15,
+   "reason": "triage: org.springframework.jdbc.core.metadata.TableMetaDataProvider#catalogNameToUse(String): compile+mapping: dmd: the spliced :jdbc does not compile: Error: function `@safe void flint.jdbc.core.metadata.GenericTableMetaDataProvider.initializeWithTableColumnMetaData(DatabaseMetaData databaseMetaData, string c"
+  },
+  "org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource#getTypeName(String): api+mapping: dmd: hand `AbstractSqlParameterSource.getTypeName public @safe string(string paramName) @safe virtual` / generated `AbstractSqlParameterSource.getTypeName public @safe Nullable!string(string paramName"
+  },
+  "org.springframework.jdbc.core.namedparam.EmptySqlParameterSource": {
+   "elements": 4,
+   "reason": "triage: org.springframework.jdbc.core.namedparam.EmptySqlParameterSource#getSqlType(String): api: dmd: hand `EmptySqlParameterSource.getSqlType public @safe int(string) @safe virtual` / generated `EmptySqlParameterSource.getSqlType public @safe int(string paramName) @safe virtual`"
+  },
+  "org.springframework.jdbc.core.namedparam.MapSqlParameterSource": {
+   "elements": 7,
+   "reason": "triage: org.springframework.jdbc.core.namedparam.MapSqlParameterSource#<init>(): api: dmd: hand `MapSqlParameterSource.__ctor public @safe MapSqlParameterSource(Map!(string, Any) values) @safe` / generated `MapSqlParameterSource.__ctor public @safe MapSqlParameterSource(string paramNam"
+  },
+  "org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations": {
+   "elements": 7,
+   "reason": "triage: org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations#getJdbcOperations(): compile: dmd: the spliced :jdbc does not compile: Error: function `flint.jdbc.core.namedparam.NamedParameterJdbcTemplate.execute` does not override any function"
+  },
+  "org.springframework.jdbc.core.namedparam.NamedParameterUtils": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.core.namedparam.NamedParameterUtils#buildSqlParameterList(ParsedSql,SqlParameterSource): mapping: hand adapted ['R10'], porter ported []"
+  },
+  "org.springframework.jdbc.core.namedparam.ParsedSql": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.core.namedparam.ParsedSql#toString(): api+mapping: dmd: hand `ParsedSql.toString public const @safe string() const @safe virtual` / generated `ParsedSql.toString public @safe string() @safe virtual` | hand ported [], porter adapted ['R11']"
+  },
+  "org.springframework.jdbc.core.namedparam.SqlParameterSource": {
+   "elements": 5,
+   "reason": "triage: org.springframework.jdbc.core.namedparam.SqlParameterSource#getParameterNames(): compile+mapping: dmd: the spliced :jdbc does not compile: Error: function `@safe string flint.jdbc.core.namedparam.AbstractSqlParameterSource.getTypeName(string paramName)` does not override any function | hand ported"
+  },
+  "org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils#extractCaseInsensitiveParameterNames(SqlParameterSource): mapping: hand adapted ['R10'], porter ported []"
+  },
+  "org.springframework.jdbc.core.simple.JdbcClient": {
+   "elements": 4,
+   "reason": "triage: org.springframework.jdbc.core.simple.JdbcClient#create(DataSource): dependency: :jdbc has no DUB dependency declaring flint.jdbc.core.simple.JdbcClient"
+  },
+  "org.springframework.jdbc.core.simple.SimpleJdbcInsert": {
+   "elements": 3,
+   "reason": "triage: org.springframework.jdbc.core.simple.SimpleJdbcInsert#execute(SqlParameterSource): api: dmd: hand `SimpleJdbcInsert.execute public @safe int(Map!(string, Any) args) @safe virtual` / generated `SimpleJdbcInsert.execute public @safe int(SqlParameterSource parameterSource) @safe virtual`"
+  },
+  "org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations": {
+   "elements": 3,
+   "reason": "triage: org.springframework.jdbc.core.simple.SimpleJdbcInsertOperations#execute(SqlParameterSource): api: dmd: hand `SimpleJdbcInsertOperations.execute public @safe int(Map!(string, Any) args) @safe virtual abstract` / generated `SimpleJdbcInsertOperations.execute public @safe int(SqlParameterSource param"
+  },
+  "org.springframework.jdbc.datasource.AbstractDataSource": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.datasource.AbstractDataSource#getLoginTimeout(): compile: dmd: the spliced :jdbc does not compile: Error: class `flint.jdbc.datasource.DriverManagerDataSource` interface function `Object unwrap(const(TypeInfo_Class) iface) @safe` is not implemented"
+  },
+  "org.springframework.jdbc.datasource.AbstractDriverBasedDataSource": {
+   "elements": 12,
+   "reason": "triage: org.springframework.jdbc.datasource.AbstractDriverBasedDataSource#getCatalog(): api+mapping: dmd: hand `AbstractDriverBasedDataSource.getCatalog public @safe string() @safe virtual` / generated `AbstractDriverBasedDataSource.getCatalog public @safe Nullable!string() @safe virtual` | hand port"
+  },
+  "org.springframework.jdbc.datasource.DataSourceTransactionManager": {
+   "elements": 20,
+   "reason": "triage: org.springframework.jdbc.datasource.DataSourceTransactionManager#<init>(): compile: dmd: the spliced :jdbc does not compile: Error: function `@safe Any flint.jdbc.datasource.DataSourceTransactionManager.doGetTransaction()` does not override any function"
+  },
+  "org.springframework.jdbc.datasource.DelegatingDataSource": {
+   "elements": 10,
+   "reason": "triage: org.springframework.jdbc.datasource.DelegatingDataSource#<init>(): compile: dmd: the spliced :jdbc does not compile: Error: class `flint.jdbc.datasource.DelegatingDataSource` interface function `Object unwrap(const(TypeInfo_Class) iface) @safe` is not implemented"
+  },
+  "org.springframework.jdbc.datasource.JdbcTransactionObjectSupport": {
+   "elements": 13,
+   "reason": "triage: org.springframework.jdbc.datasource.JdbcTransactionObjectSupport#createSavepoint(): compile+api+mapping: dmd: the spliced :jdbc does not compile: Error: class `flint.jdbc.datasource.DataSourceTransactionManager.DataSourceTransactionObject` interface function `Object createSavepoint() @safe` is not implem"
+  },
+  "org.springframework.jdbc.datasource.SimpleConnectionHandle": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.datasource.SimpleConnectionHandle#toString(): mapping: hand ported [], porter adapted ['R11']"
+  },
+  "org.springframework.jdbc.datasource.init.CompositeDatabasePopulator": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.datasource.init.CompositeDatabasePopulator#<init>(): api: dmd: hand `CompositeDatabasePopulator.__ctor public @safe CompositeDatabasePopulator(DatabasePopulator[] populators...) @safe` / generated `CompositeDatabasePopulator.__ctor public @safe CompositeData"
+  },
+  "org.springframework.jdbc.datasource.init.ResourceDatabasePopulator": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.datasource.init.ResourceDatabasePopulator#<init>(): api: dmd: hand has 3 lines, generated 1"
+  },
+  "org.springframework.jdbc.datasource.init.ScriptException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.datasource.init.ScriptException#<init>(String): api: dmd: hand `ScriptException.__ctor public @safe ScriptException(string message, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / generated `ScriptException.__c"
+  },
+  "org.springframework.jdbc.datasource.init.ScriptUtils": {
+   "elements": 7,
+   "reason": "triage: org.springframework.jdbc.datasource.init.ScriptUtils#DEFAULT_BLOCK_COMMENT_END_DELIMITER: compile: dmd: the spliced :jdbc does not compile: Error: no property `DEFAULT_COMMENT_PREFIXES` for type `flint.jdbc.datasource.init.ScriptUtils`"
+  },
+  "org.springframework.jdbc.datasource.init.UncategorizedScriptException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.datasource.init.UncategorizedScriptException#<init>(String): api: dmd: hand `UncategorizedScriptException.__ctor public @safe UncategorizedScriptException(string message, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) @safe` / gene"
+  },
+  "org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator": {
+   "elements": 3,
+   "reason": "triage: org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator#buildMessage(String,String,SQLException): api+mapping: dmd: hand `AbstractFallbackSQLExceptionTranslator.buildMessage protected @safe string(string task, string sql, SQLException ex) @safe virtual` / generated `AbstractFallbackSQLExceptionTranslator.build"
+  },
+  "org.springframework.jdbc.support.GeneratedKeyHolder": {
+   "elements": 4,
+   "reason": "triage: org.springframework.jdbc.support.GeneratedKeyHolder#<init>(List): mapping: hand adapted ['R10'], porter adapted ['R23']"
+  },
+  "org.springframework.jdbc.support.JdbcAccessor": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.support.JdbcAccessor#setDatabaseProductName(String): api: dmd: hand `JdbcAccessor.setDatabaseProductName public @safe void(string) @safe virtual` / generated `JdbcAccessor.setDatabaseProductName public @safe void(string dbName) @safe virtual`"
+  },
+  "org.springframework.jdbc.support.JdbcTransactionManager": {
+   "elements": 2,
+   "reason": "triage: org.springframework.jdbc.support.JdbcTransactionManager#afterPropertiesSet(): mapping: hand adapted ['R10'], porter ported []"
+  },
+  "org.springframework.jdbc.support.JdbcUtils": {
+   "elements": 4,
+   "reason": "triage: org.springframework.jdbc.support.JdbcUtils#commonDatabaseName(String): api+mapping: dmd: hand `JdbcUtils.commonDatabaseName public @safe string(string source) @safe static` / generated `JdbcUtils.commonDatabaseName public @safe Nullable!string(Nullable!string source) @safe static` | "
+  },
+  "org.springframework.jdbc.support.KeyHolder": {
+   "elements": 3,
+   "reason": "triage: org.springframework.jdbc.support.KeyHolder#getKey(): api: dmd: hand `KeyHolder.getKey public @safe Any() @safe virtual abstract` / generated `KeyHolder.getKey public @safe Number() @safe virtual abstract`"
+  },
+  "org.springframework.jdbc.support.SQLExceptionSubclassTranslator": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.support.SQLExceptionSubclassTranslator#doTranslate(String,String,SQLException): api+mapping: dmd: hand `SQLExceptionSubclassTranslator.doTranslate protected @safe DataAccessException(string task, string sql, SQLException ex) @safe virtual` / generated `SQLExceptionSubclassTranslator.doTransla"
+  },
+  "org.springframework.jdbc.support.SQLExceptionTranslator": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.support.SQLExceptionTranslator#translate(String,String,SQLException): api+mapping: dmd: hand `SQLExceptionTranslator.translate public @safe DataAccessException(string task, string sql, SQLException ex) @safe virtual abstract` / generated `SQLExceptionTranslator.translate public @saf"
+  },
+  "org.springframework.jdbc.support.SQLStateSQLExceptionTranslator": {
+   "elements": 1,
+   "reason": "triage: org.springframework.jdbc.support.SQLStateSQLExceptionTranslator#doTranslate(String,String,SQLException): api+mapping: dmd: hand `SQLStateSQLExceptionTranslator.doTranslate protected @safe DataAccessException(string task, string sql, SQLException ex) @safe virtual` / generated `SQLStateSQLExceptionTranslator.doTransla"
+  },
+  "org.springframework.orm.ObjectRetrievalFailureException": {
+   "elements": 3,
+   "reason": "triage: org.springframework.orm.ObjectRetrievalFailureException#<init>(String,Object): api+mapping: dmd: hand `ObjectRetrievalFailureException.__ctor public @safe ObjectRetrievalFailureException(const(TypeInfo_Class) persistentClass, Any identifier, string file = __FILE__, ulong line = cast(ulong)__"
+  },
+  "org.springframework.security.access.AccessDeniedException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.access.AccessDeniedException#<init>(String): api: dmd: hand `AccessDeniedException.__ctor public pure nothrow @safe AccessDeniedException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe` /"
+  },
+  "org.springframework.security.authentication.AbstractAuthenticationToken": {
+   "elements": 9,
+   "reason": "triage: org.springframework.security.authentication.AbstractAuthenticationToken#<init>(Collection): compile+api: dmd: the spliced :security-core does not compile: Error: class `flint.security.authentication.UsernamePasswordAuthenticationToken` interface function `GrantedAuthority[] getAuthorities() @safe` is not"
+  },
+  "org.springframework.security.authentication.AccountExpiredException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.AccountExpiredException#<init>(String): api: dmd: hand `AccountExpiredException.__ctor public pure nothrow @safe AccountExpiredException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @saf"
+  },
+  "org.springframework.security.authentication.AccountStatusException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.AccountStatusException#<init>(String): api: dmd: hand `AccountStatusException.__ctor public pure nothrow @safe AccountStatusException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe`"
+  },
+  "org.springframework.security.authentication.AuthenticationCredentialsNotFoundException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.AuthenticationCredentialsNotFoundException#<init>(String): api: dmd: hand `AuthenticationCredentialsNotFoundException.__ctor public pure nothrow @safe AuthenticationCredentialsNotFoundException(string message, Throwable cause, string file = __FILE__, ulong line = "
+  },
+  "org.springframework.security.authentication.AuthenticationServiceException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.AuthenticationServiceException#<init>(String): api: dmd: hand `AuthenticationServiceException.__ctor public pure nothrow @safe AuthenticationServiceException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pur"
+  },
+  "org.springframework.security.authentication.AuthenticationTrustResolver": {
+   "elements": 2,
+   "reason": "triage: org.springframework.security.authentication.AuthenticationTrustResolver#isAuthenticated(Authentication): mapping: hand ported [], porter adapted ['R3']"
+  },
+  "org.springframework.security.authentication.BadCredentialsException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.BadCredentialsException#<init>(String): api+mapping: dmd: hand `BadCredentialsException.__ctor public pure nothrow @safe BadCredentialsException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @saf"
+  },
+  "org.springframework.security.authentication.CachingUserDetailsService": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.CachingUserDetailsService#<init>(UserDetailsService): api: dmd: hand `CachingUserDetailsService.__ctor public @safe CachingUserDetailsService(UserDetailsService backingService) @safe` / generated `CachingUserDetailsService.__ctor public @safe CachingUserDetai"
+  },
+  "org.springframework.security.authentication.CredentialsExpiredException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.CredentialsExpiredException#<init>(String): api: dmd: hand `CredentialsExpiredException.__ctor public pure nothrow @safe CredentialsExpiredException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure noth"
+  },
+  "org.springframework.security.authentication.DisabledException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.DisabledException#<init>(String): api: dmd: hand `DisabledException.__ctor public pure nothrow @safe DisabledException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe` / generat"
+  },
+  "org.springframework.security.authentication.InsufficientAuthenticationException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.InsufficientAuthenticationException#<init>(String): api: dmd: hand `InsufficientAuthenticationException.__ctor public pure nothrow @safe InsufficientAuthenticationException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__L"
+  },
+  "org.springframework.security.authentication.InternalAuthenticationServiceException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.InternalAuthenticationServiceException#<init>(String): api: dmd: hand `InternalAuthenticationServiceException.__ctor public pure nothrow @safe InternalAuthenticationServiceException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulo"
+  },
+  "org.springframework.security.authentication.LockedException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.LockedException#<init>(String): api: dmd: hand `LockedException.__ctor public pure nothrow @safe LockedException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe` / generated `"
+  },
+  "org.springframework.security.authentication.ProviderManager": {
+   "elements": 4,
+   "reason": "triage: org.springframework.security.authentication.ProviderManager#<init>(List): api: dmd: hand `ProviderManager.__ctor public @safe ProviderManager(AuthenticationProvider[] providers, AuthenticationManager parent) @safe` / generated `ProviderManager.__ctor public @safe ProviderManager"
+  },
+  "org.springframework.security.authentication.ProviderNotFoundException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.ProviderNotFoundException#<init>(String): api: dmd: hand `ProviderNotFoundException.__ctor public pure nothrow @safe ProviderNotFoundException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow "
+  },
+  "org.springframework.security.authentication.UsernamePasswordAuthenticationToken": {
+   "elements": 6,
+   "reason": "triage: org.springframework.security.authentication.UsernamePasswordAuthenticationToken#<init>(Object,Object): api+mapping: dmd: hand `UsernamePasswordAuthenticationToken.__ctor public @safe UsernamePasswordAuthenticationToken(Any principal, Any credentials, GrantedAuthority[] authorities) @safe` / generated `UsernamePassw"
+  },
+  "org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider": {
+   "elements": 21,
+   "reason": "triage: org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider#additionalAuthenticationChecks(UserDetails,UsernamePasswordAuthenticationToken): compile+api: dmd: the spliced :security-core does not compile: Error: class `flint.security.authentication.dao.DaoAuthenticationProvider` interface function `bool supports(string authenticationType) @safe` is not "
+  },
+  "org.springframework.security.authentication.event.AbstractAuthenticationEvent": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.event.AbstractAuthenticationEvent#getAuthentication(): attributes: dmd: hand `AbstractAuthenticationEvent.getAuthentication public pure nothrow @nogc @safe Authentication() pure nothrow @nogc @safe virtual` / generated `AbstractAuthenticationEvent.getAuthentication p"
+  },
+  "org.springframework.security.authentication.password.CompromisedPasswordChecker": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.password.CompromisedPasswordChecker#check(String): api+mapping: dmd: hand `CompromisedPasswordChecker.check public @safe CompromisedPasswordDecision(string password) @safe virtual abstract` / generated `CompromisedPasswordChecker.check public @safe CompromisedPass"
+  },
+  "org.springframework.security.authentication.password.CompromisedPasswordException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.authentication.password.CompromisedPasswordException#<init>(String): api: dmd: hand `CompromisedPasswordException.__ctor public pure nothrow @safe CompromisedPasswordException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure no"
+  },
+  "org.springframework.security.authorization.AuthorityAuthorizationDecision": {
+   "elements": 3,
+   "reason": "triage: org.springframework.security.authorization.AuthorityAuthorizationDecision#<init>(boolean,Collection): api: dmd: hand `AuthorityAuthorizationDecision.__ctor public @safe AuthorityAuthorizationDecision(bool granted, GrantedAuthority[] authorities) @safe` / generated `AuthorityAuthorizationDecision.__ctor pub"
+  },
+  "org.springframework.security.authorization.AuthorizationDecision": {
+   "elements": 2,
+   "reason": "triage: org.springframework.security.authorization.AuthorizationDecision#<init>(boolean): attributes: dmd: hand `AuthorizationDecision.__ctor public pure nothrow @nogc @safe AuthorizationDecision(bool granted) pure nothrow @nogc @safe` / generated `AuthorizationDecision.__ctor public @safe Authorizati"
+  },
+  "org.springframework.security.authorization.AuthorizationDeniedException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.security.authorization.AuthorizationDeniedException#<init>(String): api: dmd: hand `AuthorizationDeniedException.__ctor public @safe AuthorizationDeniedException(string message, AuthorizationResult result = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) @s"
+  },
+  "org.springframework.security.core.AuthenticationException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.security.core.AuthenticationException#<init>(String): api+mapping: dmd: hand `AuthenticationException.__ctor public pure nothrow @safe AuthenticationException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @saf"
+  },
+  "org.springframework.security.core.authority.FactorGrantedAuthority": {
+   "elements": 17,
+   "reason": "triage: org.springframework.security.core.authority.FactorGrantedAuthority#AUTHORIZATION_CODE_AUTHORITY: dependency: :security-core has no DUB dependency declaring flint.security.core.authority.FactorGrantedAuthority"
+  },
+  "org.springframework.security.core.authority.SimpleGrantedAuthority": {
+   "elements": 2,
+   "reason": "triage: org.springframework.security.core.authority.SimpleGrantedAuthority#equals(Object): api: dmd: hand has 0 lines, generated 1"
+  },
+  "org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper#mapAuthorities(Collection): api+mapping: dmd: hand `GrantedAuthoritiesMapper.mapAuthorities public @safe GrantedAuthority[](GrantedAuthority[] authorities) @safe virtual abstract` / generated `GrantedAuthoritiesMapper.mapAuthorities public @"
+  },
+  "org.springframework.security.core.authority.mapping.NullAuthoritiesMapper": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.core.authority.mapping.NullAuthoritiesMapper#mapAuthorities(Collection): api+mapping: dmd: hand `NullAuthoritiesMapper.mapAuthorities public @safe GrantedAuthority[](GrantedAuthority[] authorities) @safe virtual` / generated `NullAuthoritiesMapper.mapAuthorities public @safe Collection"
+  },
+  "org.springframework.security.core.context.SecurityContextImpl": {
+   "elements": 3,
+   "reason": "triage: org.springframework.security.core.context.SecurityContextImpl#<init>(): attributes: dmd: hand `SecurityContextImpl.__ctor public pure nothrow @nogc @safe SecurityContextImpl() pure nothrow @nogc @safe` / generated `SecurityContextImpl.__ctor public @safe SecurityContextImpl() @safe`"
+  },
+  "org.springframework.security.core.userdetails.User": {
+   "elements": 13,
+   "reason": "triage: org.springframework.security.core.userdetails.User#<init>(String,String,Collection): compile+mapping: dmd: the spliced :security-core does not compile: Error: class `flint.security.core.userdetails.User` interface function `GrantedAuthority[] getAuthorities() @safe` is not implemented | hand ported []"
+  },
+  "org.springframework.security.core.userdetails.UserDetailsChecker": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.core.userdetails.UserDetailsChecker#check(UserDetails): api: dmd: hand `UserDetailsChecker.check public @safe void(UserDetails user) @safe virtual abstract` / generated `UserDetailsChecker.check public @safe void(UserDetails toCheck) @safe virtual abstract`"
+  },
+  "org.springframework.security.core.userdetails.UsernameNotFoundException": {
+   "elements": 3,
+   "reason": "triage: org.springframework.security.core.userdetails.UsernameNotFoundException#<init>(String): api: dmd: hand `UsernameNotFoundException.__ctor public pure nothrow @safe UsernameNotFoundException(string message, Throwable cause, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow "
+  },
+  "org.springframework.security.core.userdetails.cache.SpringCacheBasedUserCache": {
+   "elements": 5,
+   "reason": "triage: org.springframework.security.core.userdetails.cache.SpringCacheBasedUserCache#<init>(Cache): compile: dmd: the spliced :security-core does not compile: Error: undefined identifier `FlintCacheBasedUserCache` in module `flint.security.core.userdetails.cache`"
+  },
+  "org.springframework.security.crypto.password.AbstractValidatingPasswordEncoder": {
+   "elements": 2,
+   "reason": "triage: org.springframework.security.crypto.password.AbstractValidatingPasswordEncoder#upgradeEncoding(String): api+mapping: dmd: hand `AbstractValidatingPasswordEncoder.upgradeEncoding public @safe bool(string encodedPassword) @safe virtual final` / generated `AbstractValidatingPasswordEncoder.upgradeEncoding public @safe "
+  },
+  "org.springframework.security.crypto.password.DelegatingPasswordEncoder": {
+   "elements": 3,
+   "reason": "triage: org.springframework.security.crypto.password.DelegatingPasswordEncoder#<init>(String,Map): api: dmd: hand `DelegatingPasswordEncoder.__ctor public @safe DelegatingPasswordEncoder(string idForEncode, PasswordEncoder[string] idToPasswordEncoder) @safe` / generated `DelegatingPasswordEncoder.__ctor"
+  },
+  "org.springframework.security.crypto.password.PasswordEncoder": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.crypto.password.PasswordEncoder#upgradeEncoding(String): api+mapping: dmd: hand `PasswordEncoder.upgradeEncoding public @safe bool(string encodedPassword) @safe virtual abstract` / generated `PasswordEncoder.upgradeEncoding public @safe bool(Nullable!string encodedPassw"
+  },
+  "org.springframework.security.web.DefaultSecurityFilterChain": {
+   "elements": 4,
+   "reason": "triage: org.springframework.security.web.DefaultSecurityFilterChain#<init>(RequestMatcher,List): compile: dmd: the spliced :security-web does not compile: Error: class `flint.security.web.DefaultSecurityFilterChain` interface function `Filter[] getFilters() @safe` is not implemented"
+  },
+  "org.springframework.security.web.SecurityFilterChain": {
+   "elements": 2,
+   "reason": "triage: org.springframework.security.web.SecurityFilterChain#getFilters(): compile: dmd: the spliced :security-web does not compile: Error: class `flint.security.web.DefaultSecurityFilterChain` interface function `List!(Filter) getFilters() @safe` is not implemented"
+  },
+  "org.springframework.security.web.access.AccessDeniedHandler": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.web.access.AccessDeniedHandler#handle(HttpServletRequest,HttpServletResponse,AccessDeniedException): api: dmd: hand `AccessDeniedHandler.handle public @safe void(HttpServletRequest request, HttpServletResponse response, AccessDeniedException exception) @safe virtual abstract` / generated `AccessDeniedHand"
+  },
+  "org.springframework.security.web.access.AccessDeniedHandlerImpl": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.web.access.AccessDeniedHandlerImpl#handle(HttpServletRequest,HttpServletResponse,AccessDeniedException): api: dmd: hand `AccessDeniedHandlerImpl.handle public @safe void(HttpServletRequest, HttpServletResponse response, AccessDeniedException) @safe virtual` / generated `AccessDeniedHandlerImpl.handle public @"
+  },
+  "org.springframework.security.web.authentication.Http403ForbiddenEntryPoint": {
+   "elements": 1,
+   "reason": "triage: org.springframework.security.web.authentication.Http403ForbiddenEntryPoint#commence(HttpServletRequest,HttpServletResponse,AuthenticationException): api: dmd: hand `Http403ForbiddenEntryPoint.commence public @safe void(HttpServletRequest, HttpServletResponse response, AuthenticationException) @safe virtual` / generated `Http403ForbiddenEntryPoint.comme"
+  },
+  "org.springframework.security.web.context.RequestAttributeSecurityContextRepository": {
+   "elements": 3,
+   "reason": "triage: org.springframework.security.web.context.RequestAttributeSecurityContextRepository#<init>(): api: dmd: hand has 0 lines, generated 2"
+  },
+  "org.springframework.security.web.util.matcher.AnyRequestMatcher": {
+   "elements": 2,
+   "reason": "triage: org.springframework.security.web.util.matcher.AnyRequestMatcher#matches(HttpServletRequest): api: dmd: hand `AnyRequestMatcher.matches public @safe bool(HttpServletRequest) @safe virtual final` / generated `AnyRequestMatcher.matches public @safe bool(HttpServletRequest request) @safe virtual final"
+  },
+  "org.springframework.test.json.JsonComparator": {
+   "elements": 1,
+   "reason": "triage: org.springframework.test.json.JsonComparator#of(JsonCompareMode): mapping: hand adapted ['R3'], porter ported []"
+  },
+  "org.springframework.test.json.JsonComparison": {
+   "elements": 4,
+   "reason": "triage: org.springframework.test.json.JsonComparison#getMessage(): dependency: :framework-test has no DUB dependency declaring flint.test.json.JsonComparison"
+  },
+  "org.springframework.test.web.servlet.ResultMatcher": {
+   "elements": 1,
+   "reason": "triage: org.springframework.test.web.servlet.ResultMatcher#match(MvcResult): mapping: hand adapted ['R8'], porter ported []"
+  },
+  "org.springframework.test.web.servlet.result.CookieResultMatchers": {
+   "elements": 6,
+   "reason": "triage: org.springframework.test.web.servlet.result.CookieResultMatchers#<init>(): attributes: dmd: hand `CookieResultMatchers.__ctor protected pure nothrow @nogc @safe CookieResultMatchers() pure nothrow @nogc @safe` / generated `CookieResultMatchers.__ctor protected @safe CookieResultMatchers"
+  },
+  "org.springframework.test.web.servlet.result.HandlerResultMatchers": {
+   "elements": 1,
+   "reason": "triage: org.springframework.test.web.servlet.result.HandlerResultMatchers#<init>(): attributes: dmd: hand `HandlerResultMatchers.__ctor protected pure nothrow @nogc @safe HandlerResultMatchers() pure nothrow @nogc @safe` / generated `HandlerResultMatchers.__ctor protected @safe HandlerResultMatc"
+  },
+  "org.springframework.test.web.servlet.result.HeaderResultMatchers": {
+   "elements": 6,
+   "reason": "triage: org.springframework.test.web.servlet.result.HeaderResultMatchers#<init>(): compile: dmd: the spliced :framework-test does not compile: Error: function `flint.test.web.servlet.result.HeaderResultMatchers.string` is used as a type"
+  },
+  "org.springframework.test.web.servlet.result.JsonPathResultMatchers": {
+   "elements": 1,
+   "reason": "triage: org.springframework.test.web.servlet.result.JsonPathResultMatchers#value(Object): api+mapping: dmd: hand `JsonPathResultMatchers.value public symbol` / generated `JsonPathResultMatchers.value public @safe ResultMatcher(Any expectedValue) @safe virtual` | hand adapted ['R4'], porter adapted ['R2"
+  },
+  "org.springframework.test.web.servlet.result.ModelResultMatchers": {
+   "elements": 2,
+   "reason": "triage: org.springframework.test.web.servlet.result.ModelResultMatchers#<init>(): attributes: dmd: hand `ModelResultMatchers.__ctor protected pure nothrow @nogc @safe ModelResultMatchers() pure nothrow @nogc @safe` / generated `ModelResultMatchers.__ctor protected @safe ModelResultMatchers() @"
+  },
+  "org.springframework.test.web.servlet.result.StatusResultMatchers": {
+   "elements": 72,
+   "reason": "triage: org.springframework.test.web.servlet.result.StatusResultMatchers#<init>(): dependency: :framework-test has no DUB dependency declaring flint.http.HttpStatus"
+  },
+  "org.springframework.test.web.servlet.result.ViewResultMatchers": {
+   "elements": 1,
+   "reason": "triage: org.springframework.test.web.servlet.result.ViewResultMatchers#<init>(): attributes: dmd: hand `ViewResultMatchers.__ctor protected pure nothrow @nogc @safe ViewResultMatchers() pure nothrow @nogc @safe` / generated `ViewResultMatchers.__ctor protected @safe ViewResultMatchers() @safe"
+  },
+  "org.springframework.transaction.CannotCreateTransactionException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.CannotCreateTransactionException#<init>(String): api: dmd: hand `CannotCreateTransactionException.__ctor public pure nothrow @safe CannotCreateTransactionException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE"
+  },
+  "org.springframework.transaction.HeuristicCompletionException": {
+   "elements": 6,
+   "reason": "triage: org.springframework.transaction.HeuristicCompletionException#STATE_COMMITTED: compile: dmd: the spliced :tx does not compile: Error: class `flint.transaction.HeuristicCompletionException` cannot implicitly generate a default constructor when base class `flint.transaction.TransactionExce"
+  },
+  "org.springframework.transaction.IllegalTransactionStateException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.IllegalTransactionStateException#<init>(String): api: dmd: hand `IllegalTransactionStateException.__ctor public pure nothrow @safe IllegalTransactionStateException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE"
+  },
+  "org.springframework.transaction.NestedTransactionNotSupportedException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.NestedTransactionNotSupportedException#<init>(String): api: dmd: hand `NestedTransactionNotSupportedException.__ctor public pure nothrow @safe NestedTransactionNotSupportedException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast("
+  },
+  "org.springframework.transaction.NoTransactionException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.NoTransactionException#<init>(String): api: dmd: hand `NoTransactionException.__ctor public pure nothrow @safe NoTransactionException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @sa"
+  },
+  "org.springframework.transaction.SavepointManager": {
+   "elements": 3,
+   "reason": "triage: org.springframework.transaction.SavepointManager#createSavepoint(): api+mapping: dmd: hand `SavepointManager.createSavepoint public @safe Object() @safe virtual abstract` / generated `SavepointManager.createSavepoint public @safe Any() @safe virtual abstract` | hand ported [], por"
+  },
+  "org.springframework.transaction.TransactionDefinition": {
+   "elements": 2,
+   "reason": "triage: org.springframework.transaction.TransactionDefinition#getName(): api+mapping: dmd: hand `TransactionDefinition.getName public @safe string() @safe virtual abstract` / generated `TransactionDefinition.getName public @safe Nullable!string() @safe virtual abstract` | hand adapted "
+  },
+  "org.springframework.transaction.TransactionException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.TransactionException#<init>(String): api: dmd: hand `TransactionException.__ctor public pure nothrow @safe TransactionException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @safe` "
+  },
+  "org.springframework.transaction.TransactionExecutionListener": {
+   "elements": 6,
+   "reason": "triage: org.springframework.transaction.TransactionExecutionListener#afterBegin(TransactionExecution,Throwable): api: dmd: hand has 1 lines, generated 0"
+  },
+  "org.springframework.transaction.TransactionSuspensionNotSupportedException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.TransactionSuspensionNotSupportedException#<init>(String): api: dmd: hand `TransactionSuspensionNotSupportedException.__ctor public pure nothrow @safe TransactionSuspensionNotSupportedException(string msg, Throwable cause = null, string file = __FILE__, ulong line"
+  },
+  "org.springframework.transaction.TransactionSystemException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.transaction.TransactionSystemException#<init>(String): api: dmd: hand `TransactionSystemException.__ctor public pure nothrow @safe TransactionSystemException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure not"
+  },
+  "org.springframework.transaction.TransactionTimedOutException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.TransactionTimedOutException#<init>(String): api: dmd: hand `TransactionTimedOutException.__ctor public pure nothrow @safe TransactionTimedOutException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure"
+  },
+  "org.springframework.transaction.TransactionUsageException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.TransactionUsageException#<init>(String): api: dmd: hand `TransactionUsageException.__ctor public pure nothrow @safe TransactionUsageException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothr"
+  },
+  "org.springframework.transaction.UnexpectedRollbackException": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.UnexpectedRollbackException#<init>(String): api: dmd: hand `UnexpectedRollbackException.__ctor public pure nothrow @safe UnexpectedRollbackException(string msg, Throwable cause = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure n"
+  },
+  "org.springframework.transaction.interceptor.DefaultTransactionAttribute": {
+   "elements": 13,
+   "reason": "triage: org.springframework.transaction.interceptor.DefaultTransactionAttribute#<init>(): compile: dmd: the spliced :tx does not compile: Error: class `flint.transaction.interceptor.DefaultTransactionAttribute` interface function `string getQualifier() @safe` is not implemented"
+  },
+  "org.springframework.transaction.interceptor.NoRollbackRuleAttribute": {
+   "elements": 2,
+   "reason": "triage: org.springframework.transaction.interceptor.NoRollbackRuleAttribute#<init>(String): api: dmd: hand `NoRollbackRuleAttribute.__ctor public @safe NoRollbackRuleAttribute(ClassRef exceptionType) @safe` / generated `NoRollbackRuleAttribute.__ctor public @safe NoRollbackRuleAttribute(string ex"
+  },
+  "org.springframework.transaction.interceptor.TransactionAttribute": {
+   "elements": 3,
+   "reason": "triage: org.springframework.transaction.interceptor.TransactionAttribute#getLabels(): compile: dmd: the spliced :tx does not compile: Error: function `@safe string flint.transaction.interceptor.DefaultTransactionAttribute.getQualifier()` does not override any function"
+  },
+  "org.springframework.transaction.support.AbstractTransactionStatus": {
+   "elements": 16,
+   "reason": "triage: org.springframework.transaction.support.AbstractTransactionStatus#createAndHoldSavepoint(): compile: dmd: the spliced :tx does not compile: Error: undefined identifier `TransactionExecution.Defaults`"
+  },
+  "org.springframework.transaction.support.DefaultTransactionStatus": {
+   "elements": 3,
+   "reason": "triage: org.springframework.transaction.support.DefaultTransactionStatus#<init>(String,Object,boolean,boolean,boolean,boolean,boolean,Object): api+mapping: dmd: hand `DefaultTransactionStatus.__ctor public @safe DefaultTransactionStatus(string transactionName, Object transaction, bool newTransaction, bool newSynchronization, bool nested, bool readOnly, b"
+  },
+  "org.springframework.transaction.support.ResourceTransactionManager": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.support.ResourceTransactionManager#getResourceFactory(): api+mapping: dmd: hand `ResourceTransactionManager.getResourceFactory public @safe Object() @safe virtual abstract` / generated `ResourceTransactionManager.getResourceFactory public @safe Any() @safe virtual abstr"
+  },
+  "org.springframework.transaction.support.TransactionOperations": {
+   "elements": 1,
+   "reason": "triage: org.springframework.transaction.support.TransactionOperations#withoutTransaction(): compile: dmd: the spliced :tx does not compile: Error: function `flint.transaction.support.WithoutTransactionOperations.executeWithoutResult` does not override any function"
+  },
+  "org.springframework.transaction.support.TransactionSynchronizationManager": {
+   "elements": 9,
+   "reason": "triage: org.springframework.transaction.support.TransactionSynchronizationManager#bindResource(Object,Object): api+mapping: dmd: hand `TransactionSynchronizationManager.bindResource public @safe void(Object key, Object value) @safe static` / generated `TransactionSynchronizationManager.bindResource public @safe void(Any ke"
+  },
+  "org.springframework.transaction.support.TransactionSynchronizationUtils": {
+   "elements": 2,
+   "reason": "triage: org.springframework.transaction.support.TransactionSynchronizationUtils#sameResourceFactory(ResourceTransactionManager,Object): api+mapping: dmd: hand `TransactionSynchronizationUtils.sameResourceFactory public @safe bool(ResourceTransactionManager tm, Object resourceFactory) @safe static` / generated `TransactionSynchronizationUtils.sameR"
+  },
+  "org.springframework.transaction.support.TransactionTemplate": {
+   "elements": 7,
+   "reason": "triage: org.springframework.transaction.support.TransactionTemplate#<init>(): compile: dmd: the spliced :tx does not compile: Error: class `flint.transaction.support.TransactionTemplate` interface function `void executeWithoutResult(scope void delegate(TransactionStatus) @safe action) @"
+  },
+  "org.springframework.util.Assert": {
+   "elements": 8,
+   "reason": "triage: org.springframework.util.Assert#doesNotContain(String,String,String): api+mapping: dmd: hand `Assert.doesNotContain public @safe void(string textToSearch, string substring, Supplier!string messageSupplier) @safe static` / generated `Assert.doesNotContain public @safe void(Nullable!s"
+  },
+  "org.springframework.util.CollectionUtils": {
+   "elements": 3,
+   "reason": "triage: org.springframework.util.CollectionUtils#containsAny(Collection,Collection): api+mapping: dmd: hand `CollectionUtils.containsAny public symbol` / generated `CollectionUtils.containsAny public @safe bool(Collection!(Any) source, Collection!(Any) candidates) @safe static` | hand ported [], p"
+  },
+  "org.springframework.util.PatternMatchUtils": {
+   "elements": 2,
+   "reason": "triage: org.springframework.util.PatternMatchUtils#simpleMatch(String,String): api+mapping: dmd: hand `PatternMatchUtils.simpleMatch public @safe bool(const(string)[] patterns, string str) @safe static` / generated `PatternMatchUtils.simpleMatch public @safe bool(Nullable!string pattern, Nul"
+  },
+  "org.springframework.util.RouteMatcher": {
+   "elements": 5,
+   "reason": "triage: org.springframework.util.RouteMatcher#combine(String,String): dependency: :core has no DUB dependency declaring flint.util.RouteMatcher"
+  },
+  "org.springframework.util.SimpleRouteMatcher": {
+   "elements": 4,
+   "reason": "triage: org.springframework.util.SimpleRouteMatcher#<init>(PathMatcher): compile: dmd: the spliced :core does not compile: Error: class `flint.util.SimpleRouteMatcher` interface function `Route parseRoute(string routeValue) @safe` is not implemented"
+  },
+  "org.springframework.util.StringUtils": {
+   "elements": 26,
+   "reason": "triage: org.springframework.util.StringUtils#applyRelativePath(String,String): attributes: dmd: hand `StringUtils.applyRelativePath public pure nothrow @safe string(string path, string relativePath) pure nothrow @safe static` / generated `StringUtils.applyRelativePath public @safe string(st"
+  },
+  "org.springframework.util.StringValueResolver": {
+   "elements": 1,
+   "reason": "triage: org.springframework.util.StringValueResolver#resolveStringValue(String): api+mapping: dmd: hand `StringValueResolver.resolveStringValue public @safe string(string strVal) @safe virtual abstract` / generated `StringValueResolver.resolveStringValue public @safe Nullable!string(string str"
+  },
+  "org.springframework.validation.BindException": {
+   "elements": 36,
+   "reason": "triage: org.springframework.validation.BindException#<init>(BindingResult): compile: dmd: the spliced :context does not compile: Error: function `flint.validation.BindException.getMessage` does not override any function"
+  },
+  "org.springframework.validation.BindingResult": {
+   "elements": 6,
+   "reason": "triage: org.springframework.validation.BindingResult#addError(ObjectError): compile: dmd: the spliced :context does not compile: Error: class `flint.validation.BeanPropertyBindingResult` interface function `Map!(string, Any) getModel() @safe` is not implemented"
+  },
+  "org.springframework.validation.Errors": {
+   "elements": 26,
+   "reason": "triage: org.springframework.validation.Errors#addAllErrors(Errors): compile+mapping: dmd: the spliced :context does not compile: Error: class `flint.validation.BeanPropertyBindingResult` interface function `void reject(string errorCode, Any[] errorArgs, Nullable!string defaultMessage)"
+  },
+  "org.springframework.validation.FieldError": {
+   "elements": 5,
+   "reason": "triage: org.springframework.validation.FieldError#<init>(String,String,String): compile: dmd: the spliced :context does not compile: Error: function `flint.validation.FieldError.equals` does not override any function"
+  },
+  "org.springframework.validation.MessageCodeFormatter": {
+   "elements": 1,
+   "reason": "triage: org.springframework.validation.MessageCodeFormatter#format(String,String,String): api+mapping: dmd: hand `MessageCodeFormatter.format public @safe string(string errorCode, string objectName, string field) @safe virtual abstract` / generated `MessageCodeFormatter.format public @safe string(strin"
+  },
+  "org.springframework.validation.MessageCodesResolver": {
+   "elements": 1,
+   "reason": "triage: org.springframework.validation.MessageCodesResolver#resolveMessageCodes(String,String): api: dmd: hand has 2 lines, generated 1"
+  },
+  "org.springframework.validation.ObjectError": {
+   "elements": 4,
+   "reason": "triage: org.springframework.validation.ObjectError#<init>(String,String): compile+mapping: dmd: the spliced :context does not compile: Error: function `flint.validation.ObjectError.equals` does not override any function | hand ported [], porter adapted ['R5']"
+  },
+  "org.springframework.validation.Validator": {
+   "elements": 2,
+   "reason": "triage: org.springframework.validation.Validator#validate(Object,Errors): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.validation.beanvalidation.SpringValidatorAdapter": {
+   "elements": 3,
+   "reason": "triage: org.springframework.validation.beanvalidation.SpringValidatorAdapter#<init>(jakarta.validation.Validator): compile: dmd: the spliced :context does not compile: Error: undefined identifier `Validator`"
+  },
+  "org.springframework.web.ErrorResponse": {
+   "elements": 9,
+   "reason": "triage: org.springframework.web.ErrorResponse#getBody(): compile+mapping: dmd: the spliced :web does not compile: Error: class `flint.web.ErrorResponseException` interface function `Any[] getDetailMessageArguments(MessageSource messageSource, Locale locale) @safe` is not im"
+  },
+  "org.springframework.web.ErrorResponseException": {
+   "elements": 13,
+   "reason": "triage: org.springframework.web.ErrorResponseException#<init>(HttpStatusCode): compile: dmd: the spliced :web does not compile: Error: function `@safe string flint.web.ErrorResponseException.getMessage()` does not override any function"
+  },
+  "org.springframework.web.HttpMediaTypeException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.web.HttpMediaTypeException#getDetailMessageArguments(): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.HttpMediaTypeNotAcceptableException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.web.HttpMediaTypeNotAcceptableException#<init>(List): api+mapping: dmd: hand `HttpMediaTypeNotAcceptableException.__ctor public @safe HttpMediaTypeNotAcceptableException(MediaType[] mediaTypes) @safe` / generated `HttpMediaTypeNotAcceptableException.__ctor public @sa"
+  },
+  "org.springframework.web.HttpMediaTypeNotSupportedException": {
+   "elements": 7,
+   "reason": "triage: org.springframework.web.HttpMediaTypeNotSupportedException#<init>(MediaType,List): api+mapping: dmd: hand `HttpMediaTypeNotSupportedException.__ctor public @safe HttpMediaTypeNotSupportedException(MediaType contentType, MediaType[] supportedMediaTypes) @safe` / generated `HttpMediaTypeNotSupport"
+  },
+  "org.springframework.web.HttpRequestMethodNotSupportedException": {
+   "elements": 4,
+   "reason": "triage: org.springframework.web.HttpRequestMethodNotSupportedException#<init>(String): api: dmd: hand `HttpRequestMethodNotSupportedException.__ctor public @safe HttpRequestMethodNotSupportedException(string method, string[] supportedMethods = null) @safe` / generated `HttpRequestMethodNotSu"
+  },
+  "org.springframework.web.accept.ContentNegotiationStrategy": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.accept.ContentNegotiationStrategy#resolveMediaTypes(NativeWebRequest): compile: dmd: the spliced :web does not compile: Error: class `flint.web.accept.HeaderContentNegotiationStrategy` interface function `List!(MediaType) resolveMediaTypes(NativeWebRequest webRequest) @safe` is n"
+  },
+  "org.springframework.web.accept.HeaderContentNegotiationStrategy": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.accept.HeaderContentNegotiationStrategy#resolveMediaTypes(NativeWebRequest): compile: dmd: the spliced :web does not compile: Error: class `flint.web.accept.HeaderContentNegotiationStrategy` interface function `MediaType[] resolveMediaTypes(NativeWebRequest webRequest) @safe` is not im"
+  },
+  "org.springframework.web.bind.MissingPathVariableException": {
+   "elements": 5,
+   "reason": "triage: org.springframework.web.bind.MissingPathVariableException#<init>(String,MethodParameter): compile: dmd: the spliced :web does not compile: Error: function `@safe string flint.web.bind.MissingPathVariableException.getMessage()` does not override any function"
+  },
+  "org.springframework.web.bind.MissingRequestCookieException": {
+   "elements": 3,
+   "reason": "triage: org.springframework.web.bind.MissingRequestCookieException#<init>(String,MethodParameter): compile: dmd: the spliced :web does not compile: Error: function `@safe string flint.web.bind.MissingRequestCookieException.getMessage()` does not override any function"
+  },
+  "org.springframework.web.bind.MissingRequestHeaderException": {
+   "elements": 4,
+   "reason": "triage: org.springframework.web.bind.MissingRequestHeaderException#<init>(String,MethodParameter): compile: dmd: the spliced :web does not compile: Error: function `@safe string flint.web.bind.MissingRequestHeaderException.getMessage()` does not override any function"
+  },
+  "org.springframework.web.bind.MissingRequestValueException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.web.bind.MissingRequestValueException#<init>(String): api: dmd: hand `MissingRequestValueException.__ctor public @safe MissingRequestValueException(string message, bool missingAfterConversion = false) @safe` / generated `MissingRequestValueException.__ctor pu"
+  },
+  "org.springframework.web.bind.MissingServletRequestParameterException": {
+   "elements": 5,
+   "reason": "triage: org.springframework.web.bind.MissingServletRequestParameterException#<init>(String,MethodParameter,boolean): compile: dmd: the spliced :web does not compile: Error: function `@safe string flint.web.bind.MissingServletRequestParameterException.getMessage()` does not override any function"
+  },
+  "org.springframework.web.bind.ServletRequestBindingException": {
+   "elements": 2,
+   "reason": "triage: org.springframework.web.bind.ServletRequestBindingException#<init>(String): api+mapping: dmd: hand `ServletRequestBindingException.__ctor public @safe ServletRequestBindingException(string message, Throwable cause = null) @safe` / generated `ServletRequestBindingException.__ctor public pu"
+  },
+  "org.springframework.web.context.request.NativeWebRequest": {
+   "elements": 2,
+   "reason": "triage: org.springframework.web.context.request.NativeWebRequest#getNativeRequest(): compile+mapping: dmd: the spliced :web does not compile: Error: class `flint.web.context.request.ServletWebRequest` interface function `Any getNativeRequest() @safe` is not implemented | hand adapted ['R4'], porter ad"
+  },
+  "org.springframework.web.context.request.RequestAttributes": {
+   "elements": 8,
+   "reason": "triage: org.springframework.web.context.request.RequestAttributes#REFERENCE_REQUEST: compile: dmd: the spliced :web does not compile: Error: class `flint.web.context.request.ServletRequestAttributes` interface function `void registerDestructionCallback(string name, Runnable callback, int scope"
+  },
+  "org.springframework.web.context.request.ServletWebRequest": {
+   "elements": 11,
+   "reason": "triage: org.springframework.web.context.request.ServletWebRequest#<init>(HttpServletRequest): compile: dmd: the spliced :web does not compile: Error: class `flint.web.context.request.ServletWebRequest` interface function `string getHeader(string headerName) @safe` is not implemented"
+  },
+  "org.springframework.web.context.request.WebRequest": {
+   "elements": 6,
+   "reason": "triage: org.springframework.web.context.request.WebRequest#getContextPath(): compile: dmd: the spliced :web does not compile: Error: class `flint.web.context.request.ServletWebRequest` interface function `Nullable!string getHeader(string headerName) @safe` is not implemented"
+  },
+  "org.springframework.web.method.annotation.RequestHeaderMethodArgumentResolver": {
+   "elements": 2,
+   "reason": "triage: org.springframework.web.method.annotation.RequestHeaderMethodArgumentResolver#handleMissingValue(String,MethodParameter): api: dmd: hand `RequestHeaderMethodArgumentResolver.handleMissingValue protected @safe void(string name, MethodParameter parameter, NativeWebRequest request) @safe virtual` / generated `RequestHeaderMethod"
+  },
+  "org.springframework.web.method.support.HandlerMethodArgumentResolver": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.method.support.HandlerMethodArgumentResolver#resolveArgument(MethodParameter,ModelAndViewContainer,NativeWebRequest,WebDataBinderFactory): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.method.support.HandlerMethodArgumentResolverComposite": {
+   "elements": 5,
+   "reason": "triage: org.springframework.web.method.support.HandlerMethodArgumentResolverComposite#addResolvers(List): api+mapping: dmd: hand `HandlerMethodArgumentResolverComposite.addResolvers public @safe HandlerMethodArgumentResolverComposite(HandlerMethodArgumentResolver[] resolvers...) @safe virtual` / generated `HandlerMeth"
+  },
+  "org.springframework.web.method.support.HandlerMethodReturnValueHandler": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.method.support.HandlerMethodReturnValueHandler#handleReturnValue(Object,MethodParameter,ModelAndViewContainer,NativeWebRequest): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.method.support.HandlerMethodReturnValueHandlerComposite": {
+   "elements": 3,
+   "reason": "triage: org.springframework.web.method.support.HandlerMethodReturnValueHandlerComposite#addHandlers(List): api+mapping: dmd: hand `HandlerMethodReturnValueHandlerComposite.addHandlers public @safe HandlerMethodReturnValueHandlerComposite(HandlerMethodReturnValueHandler[] handlers...) @safe virtual` / generated `Handler"
+  },
+  "org.springframework.web.server.ResponseStatusException": {
+   "elements": 4,
+   "reason": "triage: org.springframework.web.server.ResponseStatusException#<init>(HttpStatusCode): compile: dmd: the spliced :web does not compile: Error: function `@safe ProblemDetail flint.web.server.ResponseStatusException.updateAndGetBody(MessageSource messageSource, Locale locale)` does not override an"
+  },
+  "org.springframework.web.servlet.HandlerAdapter": {
+   "elements": 2,
+   "reason": "triage: org.springframework.web.servlet.HandlerAdapter#handle(HttpServletRequest,HttpServletResponse,Object): api+mapping: dmd: hand `HandlerAdapter.handle public @safe ModelAndView(HttpServletRequest request, HttpServletResponse response, Object handler) @safe virtual abstract` / generated `HandlerAdapter.handle public @"
+  },
+  "org.springframework.web.servlet.HandlerExceptionResolver": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.servlet.HandlerExceptionResolver#resolveException(HttpServletRequest,HttpServletResponse,Object,Exception): api+mapping: dmd: hand `HandlerExceptionResolver.resolveException public @safe ModelAndView(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) @safe virtual abstract` / generat"
+  },
+  "org.springframework.web.servlet.HandlerInterceptor": {
+   "elements": 3,
+   "reason": "triage: org.springframework.web.servlet.HandlerInterceptor#afterCompletion(HttpServletRequest,HttpServletResponse,Object,Exception): api+mapping: dmd: hand has 1 lines, generated 0 | hand adapted ['R3'], porter adapted ['R3', 'R23']"
+  },
+  "org.springframework.web.servlet.NoHandlerFoundException": {
+   "elements": 4,
+   "reason": "triage: org.springframework.web.servlet.NoHandlerFoundException#<init>(String,String,HttpHeaders): api: dmd: hand `NoHandlerFoundException.__ctor public @safe NoHandlerFoundException(string httpMethod, string requestURL, HttpHeaders headers) @safe` / generated `NoHandlerFoundException.__ctor public pure"
+  },
+  "org.springframework.web.servlet.View": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.servlet.View#getContentType(): api+mapping: dmd: hand `View.getContentType public @safe string() @safe virtual abstract` / generated `View.getContentType public @safe Nullable!string() @safe virtual abstract` | hand adapted ['R10'], porter adap"
+  },
+  "org.springframework.web.servlet.ViewResolver": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.servlet.ViewResolver#resolveViewName(String,Locale): api: dmd: hand `ViewResolver.resolveViewName public @safe View(string viewName) @safe virtual abstract` / generated `ViewResolver.resolveViewName public @safe View(string viewName, Locale locale) @safe vir"
+  },
+  "org.springframework.web.servlet.config.annotation.InterceptorRegistration": {
+   "elements": 6,
+   "reason": "triage: org.springframework.web.servlet.config.annotation.InterceptorRegistration#<init>(HandlerInterceptor): attributes: dmd: hand `InterceptorRegistration.__ctor public pure nothrow @nogc @safe InterceptorRegistration(HandlerInterceptor interceptor) pure nothrow @nogc @safe` / generated `InterceptorRegistration.__ctor "
+  },
+  "org.springframework.web.servlet.config.annotation.InterceptorRegistry": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.servlet.config.annotation.InterceptorRegistry#getInterceptors(): api+mapping: dmd: hand `InterceptorRegistry.getInterceptors public @safe HandlerInterceptor[]() @safe virtual` / generated `InterceptorRegistry.getInterceptors protected @safe List!(Any)() @safe virtual` | hand po"
+  },
+  "org.springframework.web.servlet.config.annotation.WebMvcConfigurer": {
+   "elements": 5,
+   "reason": "triage: org.springframework.web.servlet.config.annotation.WebMvcConfigurer#addArgumentResolvers(List): api+mapping: dmd: hand has 1 lines, generated 0 | hand adapted ['R10', 'R3'], porter adapted ['R3']"
+  },
+  "org.springframework.web.servlet.handler.HandlerExceptionResolverComposite": {
+   "elements": 3,
+   "reason": "triage: org.springframework.web.servlet.handler.HandlerExceptionResolverComposite#getExceptionResolvers(): compile: dmd: the spliced :webmvc does not compile: Error: class `flint.web.servlet.handler.HandlerExceptionResolverComposite` interface function `ModelAndView resolveException(HttpServletRequest request, Http"
+  },
+  "org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter": {
+   "elements": 2,
+   "reason": "triage: org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter#handle(HttpServletRequest,HttpServletResponse,Object): compile+mapping: dmd: the spliced :webmvc does not compile: Error: class `flint.web.servlet.resource.HttpRequestHandlerAdapter` interface function `bool supports(Object handler) @safe` is not implemented | hand ported"
+  },
+  "org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver": {
+   "elements": 4,
+   "reason": "triage: org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver#applyStatusAndReason(int,String,HttpServletResponse): compile+mapping: dmd: the spliced :webmvc does not compile: Error: function `@safe ModelAndView flint.web.servlet.mvc.annotation.ResponseStatusExceptionResolver.doResolveException(HttpServletRequest request, HttpServl"
+  },
+  "org.springframework.web.servlet.mvc.method.annotation.HttpEntityMethodProcessor": {
+   "elements": 4,
+   "reason": "triage: org.springframework.web.servlet.mvc.method.annotation.HttpEntityMethodProcessor#handleReturnValue(Object,MethodParameter,ModelAndViewContainer,NativeWebRequest): compile+mapping: dmd: the spliced :webmvc does not compile: Error: class `flint.web.servlet.mvc.method.annotation.HttpEntityMethodProcessor` cannot implicitly generate a default constructor when base class `flint.web."
+  },
+  "org.springframework.web.servlet.mvc.method.annotation.HttpHeadersReturnValueHandler": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.servlet.mvc.method.annotation.HttpHeadersReturnValueHandler#handleReturnValue(Object,MethodParameter,ModelAndViewContainer,NativeWebRequest): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod#setHandlerMethodReturnValueHandlers(HandlerMethodReturnValueHandlerComposite): api: dmd: hand `ServletInvocableHandlerMethod.setHandlerMethodReturnValueHandlers public @safe void(HandlerMethodReturnValueHandlerComposite handlers, HandlerMethodReturnValueHandler responseBody) @safe vi"
+  },
+  "org.springframework.web.servlet.mvc.method.annotation.ServletRequestMethodArgumentResolver": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.servlet.mvc.method.annotation.ServletRequestMethodArgumentResolver#resolveArgument(MethodParameter,ModelAndViewContainer,NativeWebRequest,WebDataBinderFactory): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.servlet.mvc.method.annotation.ServletResponseMethodArgumentResolver": {
+   "elements": 1,
+   "reason": "triage: org.springframework.web.servlet.mvc.method.annotation.ServletResponseMethodArgumentResolver#resolveArgument(MethodParameter,ModelAndViewContainer,NativeWebRequest,WebDataBinderFactory): mapping: hand ported [], porter adapted ['R23']"
+  },
+  "org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver": {
+   "elements": 4,
+   "reason": "triage: org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver#<init>(): compile: dmd: the spliced :webmvc does not compile: Error: function `@safe ModelAndView flint.web.servlet.mvc.support.DefaultHandlerExceptionResolver.doResolveException(HttpServletRequest request, HttpServletR"
+  },
+  "org.springframework.web.servlet.resource.NoResourceFoundException": {
+   "elements": 3,
+   "reason": "triage: org.springframework.web.servlet.resource.NoResourceFoundException#<init>(HttpMethod,String,String): api: dmd: hand `NoResourceFoundException.__ctor public @safe NoResourceFoundException(HttpMethod httpMethod, string requestUri, string resourcePath) @safe` / generated `NoResourceFoundException.__ctor publ"
+  },
+  "org.thymeleaf.cache.AlwaysValidCacheEntryValidity": {
+   "elements": 3,
+   "reason": "triage: org.thymeleaf.cache.AlwaysValidCacheEntryValidity#<init>(): api: dmd: hand has 1 lines, generated 0"
+  },
+  "org.thymeleaf.cache.NonCacheableCacheEntryValidity": {
+   "elements": 3,
+   "reason": "triage: org.thymeleaf.cache.NonCacheableCacheEntryValidity#<init>(): api: dmd: hand has 1 lines, generated 0"
+  },
+  "org.thymeleaf.cache.TTLCacheEntryValidity": {
+   "elements": 3,
+   "reason": "triage: org.thymeleaf.cache.TTLCacheEntryValidity#<init>(long): api: dmd: hand `TTLCacheEntryValidity.__ctor public nothrow @nogc @safe TTLCacheEntryValidity(long cacheTTLMs) nothrow @nogc @safe` / generated `TTLCacheEntryValidity.__ctor public @safe TTLCacheEntryValid"
+  },
+  "org.thymeleaf.context.IContext": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.context.IContext#getVariableNames(): mapping: hand adapted ['R10'], porter ported []"
+  },
+  "org.thymeleaf.context.IdentifierSequences": {
+   "elements": 4,
+   "reason": "triage: org.thymeleaf.context.IdentifierSequences#<init>(): attributes: dmd: hand `IdentifierSequences.__ctor public pure nothrow @nogc @safe IdentifierSequences() pure nothrow @nogc @safe final` / generated `IdentifierSequences.__ctor public @safe IdentifierSequences() @"
+  },
+  "org.thymeleaf.dialect.AbstractDialect": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.dialect.AbstractDialect#<init>(String): attributes+mapping: dmd: hand `AbstractDialect.__ctor protected nothrow @nogc @safe AbstractDialect(string name) nothrow @nogc @safe` / generated `AbstractDialect.__ctor protected @safe AbstractDialect(string name) @safe"
+  },
+  "org.thymeleaf.engine.IThrottledTemplateWriterControl": {
+   "elements": 2,
+   "reason": "triage: org.thymeleaf.engine.IThrottledTemplateWriterControl#isOverflown(): mapping: hand adapted ['D-8'], porter ported []"
+  },
+  "org.thymeleaf.exceptions.AlreadyInitializedException": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.exceptions.AlreadyInitializedException#<init>(String): api+mapping: dmd: hand has 2 lines, generated 1 | hand adapted ['R8'], porter ported []"
+  },
+  "org.thymeleaf.exceptions.CacheConfigurationException": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.exceptions.CacheConfigurationException#<init>(String): api+mapping: dmd: hand has 2 lines, generated 1 | hand adapted ['R8'], porter ported []"
+  },
+  "org.thymeleaf.exceptions.ConfigurationException": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.exceptions.ConfigurationException#<init>(String): api+mapping: dmd: hand has 2 lines, generated 1 | hand adapted ['R8'], porter ported []"
+  },
+  "org.thymeleaf.exceptions.ParserInitializationException": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.exceptions.ParserInitializationException#<init>(String): api+mapping: dmd: hand has 2 lines, generated 1 | hand adapted ['R8'], porter ported []"
+  },
+  "org.thymeleaf.exceptions.TemplateEngineException": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.exceptions.TemplateEngineException#<init>(String): api+mapping: dmd: hand `TemplateEngineException.__ctor protected @safe TemplateEngineException(string message) @safe` / generated `TemplateEngineException.__ctor protected pure nothrow @safe TemplateEngineExceptio"
+  },
+  "org.thymeleaf.exceptions.TemplateInputException": {
+   "elements": 2,
+   "reason": "triage: org.thymeleaf.exceptions.TemplateInputException#<init>(String): api+mapping: dmd: hand `TemplateInputException.__ctor public @safe TemplateInputException(string message, Nullable!string templateName, Throwable cause) @safe` / generated `TemplateInputException.__ctor public @sa"
+  },
+  "org.thymeleaf.exceptions.TemplateProcessingException": {
+   "elements": 10,
+   "reason": "triage: org.thymeleaf.exceptions.TemplateProcessingException#<init>(String): compile+mapping: dmd: the spliced :thymeleaf does not compile: Error: function `@safe string flint.thymeleaf.exceptions.TemplateProcessingException.getMessage()` does not override any function | hand adapted ['R8'], p"
+  },
+  "org.thymeleaf.expression.IExpressionObjects": {
+   "elements": 2,
+   "reason": "triage: org.thymeleaf.expression.IExpressionObjects#RESTRICTED_NAME_MODIFIER: api: dmd: hand `IExpressionObjects.RESTRICTED_NAME_MODIFIER public immutable(string) = \"[restricted]\"` / generated `IExpressionObjects.RESTRICTED_NAME_MODIFIER public string = \"[restricted]\"`"
+  },
+  "org.thymeleaf.expression.Objects": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.expression.Objects#<init>(): api: dmd: hand has 1 lines, generated 0"
+  },
+  "org.thymeleaf.processor.AbstractProcessor": {
+   "elements": 2,
+   "reason": "triage: org.thymeleaf.processor.AbstractProcessor#<init>(TemplateMode,int): attributes+mapping: dmd: hand `AbstractProcessor.__ctor public nothrow @nogc @safe AbstractProcessor(TemplateMode templateMode, int precedence) nothrow @nogc @safe` / generated `AbstractProcessor.__ctor public @safe Abst"
+  },
+  "org.thymeleaf.processor.IProcessor": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.processor.IProcessor#getTemplateMode(): mapping: hand adapted ['R15'], porter ported []"
+  },
+  "org.thymeleaf.util.LoggingUtils": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.util.LoggingUtils#loggifyTemplateName(String): api+mapping: dmd: hand `LoggingUtils.loggifyTemplateName public pure nothrow @safe Nullable!string(Nullable!string templateName) pure nothrow @safe static final` / generated `LoggingUtils.loggifyTemplateName publi"
+  },
+  "org.thymeleaf.util.Validate": {
+   "elements": 1,
+   "reason": "triage: org.thymeleaf.util.Validate#notNull(Object,String): api: dmd: hand `Validate.notNull public @safe void(const(Any) value, string message) @safe static final` / generated `Validate.notNull public @safe void(Any object, string message) @safe static final`"
+  },
+  "tools.jackson.core.ObjectReadContext": {
+   "elements": 1,
+   "reason": "triage: tools.jackson.core.ObjectReadContext#empty(): attributes: dmd: hand `ObjectReadContext.empty public pure nothrow @safe ObjectReadContext() pure nothrow @safe static abstract` / generated `ObjectReadContext.empty public @safe ObjectReadContext() @safe static "
+  },
+  "tools.jackson.core.ObjectWriteContext": {
+   "elements": 1,
+   "reason": "triage: tools.jackson.core.ObjectWriteContext#empty(): attributes: dmd: hand `ObjectWriteContext.empty public pure nothrow @safe ObjectWriteContext() pure nothrow @safe static abstract` / generated `ObjectWriteContext.empty public @safe ObjectWriteContext() @safe sta"
+  },
+  "tools.jackson.core.TokenStreamContext": {
+   "elements": 19,
+   "reason": "triage: tools.jackson.core.TokenStreamContext#<init>(): api: dmd: hand has 0 lines, generated 3"
+  },
+  "tools.jackson.core.exc.InputCoercionException": {
+   "elements": 2,
+   "reason": "triage: tools.jackson.core.exc.InputCoercionException#_inputType: compile+mapping: dmd: the spliced :jackson-core does not compile: Error: function `flint.jackson.core.exc.InputCoercionException.withParser` does not override any function | hand ported [], porter adapted ['R24']"
+  },
+  "tools.jackson.core.exc.StreamConstraintsException": {
+   "elements": 2,
+   "reason": "triage: tools.jackson.core.exc.StreamConstraintsException#<init>(String): api: dmd: hand `StreamConstraintsException.__ctor public pure nothrow @safe StreamConstraintsException(string msg, TokenStreamLocation loc = null, string file = __FILE__, ulong line = cast(ulong)__LINE__) "
+  },
+  "tools.jackson.core.exc.StreamReadException": {
+   "elements": 4,
+   "reason": "triage: tools.jackson.core.exc.StreamReadException#<init>(JsonParser,String): compile: dmd: the spliced :jackson-core does not compile: Error: function `flint.jackson.core.exc.StreamReadException.processor` does not override any function"
+  },
+  "tools.jackson.core.exc.StreamWriteException": {
+   "elements": 2,
+   "reason": "triage: tools.jackson.core.exc.StreamWriteException#<init>(JsonGenerator,String): compile: dmd: the spliced :jackson-core does not compile: Error: function `flint.jackson.core.exc.StreamWriteException.processor` does not override any function"
+  },
+  "tools.jackson.core.exc.UnexpectedEndOfInputException": {
+   "elements": 2,
+   "reason": "triage: tools.jackson.core.exc.UnexpectedEndOfInputException#<init>(JsonParser,JsonToken,String): api: dmd: hand `UnexpectedEndOfInputException.__ctor public pure nothrow @safe UnexpectedEndOfInputException(JsonParser p, JsonToken token, string msg, TokenStreamLocation loc = null, string file = __FILE_"
+  },
+  "tools.jackson.core.json.JsonReadContext": {
+   "elements": 11,
+   "reason": "triage: tools.jackson.core.json.JsonReadContext#_child: compile: dmd: the spliced :jackson-core does not compile: Error: function `@safe Any flint.jackson.core.json.JsonReadContext.currentValue()` does not override any function"
+  },
+  "tools.jackson.core.json.JsonWriteContext": {
+   "elements": 18,
+   "reason": "triage: tools.jackson.core.json.JsonWriteContext#STATUS_EXPECT_NAME: compile: dmd: the spliced :jackson-core does not compile: Error: function `@safe Any flint.jackson.core.json.JsonWriteContext.currentValue()` does not override any function"
+  },
+  "tools.jackson.databind.exc.InvalidFormatException": {
+   "elements": 2,
+   "reason": "triage: tools.jackson.databind.exc.InvalidFormatException#_value: compile+mapping: dmd: the spliced :jackson-databind does not compile: Error: class `flint.jackson.databind.exc.InvalidFormatException` cannot implicitly generate a default constructor when base class `flint.jackson.da"
+  },
+  "tools.jackson.databind.json.JsonMapper": {
+   "elements": 3,
+   "reason": "triage: tools.jackson.databind.json.JsonMapper#<init>(): dependency: :jackson-databind has no DUB dependency declaring flint.jackson.databind.JsonMapper"
+  },
+  "tools.jackson.databind.node.BooleanNode": {
+   "elements": 12,
+   "reason": "triage: tools.jackson.databind.node.BooleanNode#<init>(boolean): compile: dmd: the spliced :jackson-databind does not compile: Error: function `@safe bool flint.jackson.databind.node.BooleanNode.JavaObject!().opEquals(Object other)` does not override any function"
+  },
+  "tools.jackson.databind.node.NullNode": {
+   "elements": 14,
+   "reason": "triage: tools.jackson.databind.node.NullNode#<init>(): dependency: :jackson-databind has no DUB dependency declaring flint.java.math"
+  },
+  "tools.jackson.databind.node.NumericNode": {
+   "elements": 15,
+   "reason": "triage: tools.jackson.databind.node.NumericNode#<init>(): dependency: :jackson-databind has no DUB dependency declaring flint.jackson.core.JsonParser, flint.java.math"
+  },
+  "tools.jackson.databind.node.StringNode": {
+   "elements": 17,
+   "reason": "triage: tools.jackson.databind.node.StringNode#<init>(String): dependency: :jackson-databind has no DUB dependency declaring flint.java.math"
   }
  }
 }

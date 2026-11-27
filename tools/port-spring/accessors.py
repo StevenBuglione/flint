@@ -101,6 +101,29 @@ class Universe:
                     self.rows.setdefault(key, row)
         self._index = {}
 
+    def predicted(self, type_id):
+        """With `predict` on (yield only): the R1 row a pinned, not yet mapped type will get when it is ported in the
+        same batch, its D module taken from the nearest mapped Java package. None otherwise."""
+        if not getattr(self, 'predict', False) or type_id not in self.types or self.exclusion(type_id):
+            return None
+        if not hasattr(self, '_packages'):
+            self._packages = {}
+            for java, row in self.rows.items():
+                package = self.types[java][2].get('package') if java in self.types else None
+                if package and java == f'{package}.{java[len(package) + 1:]}' and '.' not in java[len(package) + 1:]:
+                    self._packages.setdefault(package, row['d'].rsplit('.', 1)[0])
+        package = self.types[type_id][2].get('package', type_id.rsplit('.', 1)[0])
+        name = type_id[len(package) + 1:]
+        if '.' in name:
+            return None  # a nested type follows R13 inside its outer type's port
+        parts, tail = package.split('.'), []
+        while parts and '.'.join(parts) not in self._packages:
+            tail.insert(0, parts.pop())
+        if not parts:
+            return None
+        module = '.'.join([self._packages['.'.join(parts)]] + tail)
+        return {'status': 'predicted', 'd': f'{module}.{name.replace("Spring", "Flint")}'}
+
     def exclusion(self, type_id):
         """The category of the row that excludes a type outright (not one merely deferred), or None."""
         for classifier in self.classifiers.values():
@@ -166,6 +189,7 @@ class Scope:
         for type_id, decl in chain:
             for inner in decl['types']:
                 self.nested[inner['name']] = f'{type_id}.{inner["name"]}'
+        self.used = {}  # D name -> fully qualified D symbol of each mapped type d_type spelled
         self.type_variables = set()
         for _, decl in chain:
             for parameter in decl.get('typeParameters') or ():
@@ -188,6 +212,14 @@ class Scope:
         raise Unsupported(f'type {name} does not resolve to a pinned type')
 
 
+def mapped_row(universe, type_id):
+    """The exact mapped row of a type, or with prediction on (Universe.predicted) its R1 row; None otherwise."""
+    row = universe.rows.get(type_id)
+    if row is None and hasattr(universe, 'predicted'):
+        row = universe.predicted(type_id)
+    return row
+
+
 def strip_annotations(java):
     nullable = bool(re.search(r'@(?:[\w.]+\.)?Nullable\b', java))
     return re.sub(r'@[\w.]+(\([^)]*\))?\s*', '', java).strip(), nullable
@@ -207,14 +239,15 @@ def split_arguments(text):
     return [p for p in parts if p]
 
 
-def d_type(java, nullable, scope, rules, element=False):
-    """The D spelling of a Java type; adds the rules it applies to `rules`."""
+def d_type(java, nullable, scope, rules, element=False, throwables=False):
+    """The D spelling of a Java type; adds the rules it applies to `rules`. `throwables` spells Java's `Throwable` and
+    `Exception` as D's own (R8), as skeletons do."""
     java, inner_nullable = strip_annotations(java)
     java = re.sub(r'^\?\s+(extends|super)\s+', '', java).strip()
     if java == '?':
         raise Unsupported('unbounded wildcard')
     if java.endswith('[]'):
-        return d_type(java[:-2], False, scope, rules, element=True) + '[]'
+        return d_type(java[:-2], False, scope, rules, element=True, throwables=throwables) + '[]'
     if java in PRIMITIVES:
         return PRIMITIVES[java]
     if java == 'char':
@@ -240,23 +273,25 @@ def d_type(java, nullable, scope, rules, element=False):
     if full in COLLECTIONS:
         if len(arguments) != 1:
             raise Unsupported(f'raw {base}')
-        return f'{COLLECTIONS[full]}!({d_type(arguments[0], False, scope, rules, element=True)})'
+        return f'{COLLECTIONS[full]}!({d_type(arguments[0], False, scope, rules, element=True, throwables=throwables)})'
     if full == 'java.util.Map':
         if len(arguments) != 2:
             raise Unsupported('raw Map')
-        key = d_type(arguments[0], False, scope, rules, element=True)
-        value = d_type(arguments[1], False, scope, rules, element=True)
+        key = d_type(arguments[0], False, scope, rules, element=True, throwables=throwables)
+        value = d_type(arguments[1], False, scope, rules, element=True, throwables=throwables)
         return f'Map!({key}, {value})'
     if full == 'java.util.Optional':
         if len(arguments) != 1:
             raise Unsupported('raw Optional')
         rules.add('R5')
-        return f'Optional!({d_type(arguments[0], False, scope, rules, element=True)})'
+        return f'Optional!({d_type(arguments[0], False, scope, rules, element=True, throwables=throwables)})'
+    if throwables and full in D_THROWABLES:
+        return D_THROWABLES[full]
     if full == 'java.lang.Class':
         raise Unsupported('Class<?> needs a plan choice (R4: ClassRef or RuntimeClassRef)')
     if arguments:
         raise Unsupported(f'generic type {base}<...>')
-    row = scope.universe.rows.get(full)
+    row = mapped_row(scope.universe, full)
     if row is None:
         category = scope.universe.exclusion(full)
         if category:
@@ -266,6 +301,7 @@ def d_type(java, nullable, scope, rules, element=False):
     if plan.get('storage') not in (None, 'erased'):
         raise Unsupported(f'type {full} has templated storage')
     target = row['d'].rsplit('.', 1)[1]
+    scope.used[target] = row['d']
     if nullable and not element and plan.get('kind') in STRUCTURED:
         rules.add('R5')
         return f'Nullable!({target})'
