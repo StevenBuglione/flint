@@ -48,7 +48,7 @@ qualifier annotations.
 struct Qualifier
 {
     /// The qualifier value.
-    string value;
+    string value = "";
 }
 
 /++
