@@ -9,6 +9,7 @@ dependency "flint:engine-aot" version="*"
 dependency "flint:java" version="*"
 dependency "flint:java-nio" version="*"
 dependency "flint:java-nio-char-buffer" version="*"
+dependency "flint:java-nio-numeric-buffers" version="*"
 
 configuration "library" {
     targetType "library"

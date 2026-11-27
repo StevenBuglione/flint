@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,683 | 473 | 0 | 1,905 | 14,360 |
+| framework | openjdk@21.0.13 | 1,688 | 473 | 0 | 1,905 | 14,355 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -10775,7 +10775,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 133 | 0 |
 | java.net | 767 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 29 | 0 |
+| java.nio | 24 | 0 |
 | java.nio.channels | 0 | 306 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 86 | 0 |
@@ -11864,11 +11864,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.ByteBuffer#alignedSlice(int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |
 | framework | `java.nio.ByteBuffer#alignmentOffset(int,int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |
 | framework | `java.nio.ByteBuffer#allocateDirect(int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |
-| framework | `java.nio.ByteBuffer#asDoubleBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#asFloatBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#asIntBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#asLongBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
-| framework | `java.nio.ByteBuffer#asShortBuffer()` | 2 | Typed binary access and typed views follow the scalar byte and heap cursor slice. |
 | framework | `java.nio.CharBuffer#append(CharSequence)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#append(CharSequence,int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#chars()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |

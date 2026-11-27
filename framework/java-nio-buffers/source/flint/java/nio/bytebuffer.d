@@ -39,8 +39,13 @@ import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
 import flint.java.nio.byteorder : ByteOrder;
 import flint.java.nio.charbuffer : CharBuffer;
+import flint.java.nio.doublebuffer : DoubleBuffer;
+import flint.java.nio.floatbuffer : FloatBuffer;
+import flint.java.nio.intbuffer : IntBuffer;
 import flint.java.nio.internal.buffercursor : BufferCursor;
+import flint.java.nio.longbuffer : LongBuffer;
 import flint.java.nio.readonlybufferexception : ReadOnlyBufferException;
+import flint.java.nio.shortbuffer : ShortBuffer;
 import std.typecons : Nullable;
 
 @safe:
@@ -327,6 +332,32 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     final CharBuffer asCharBuffer() pure
     {
         return CharBuffer.ofBytes(backing[origin + position() .. origin + limit()], littleEndian, readOnly);
+    }
+
+    // The numeric views are `()` templates so only their callers link the numeric buffer modules.
+    ShortBuffer asShortBuffer()() pure
+    {
+        return ShortBuffer.ofBytes(backing[origin + position() .. origin + limit()], littleEndian, readOnly);
+    }
+
+    IntBuffer asIntBuffer()() pure
+    {
+        return IntBuffer.ofBytes(backing[origin + position() .. origin + limit()], littleEndian, readOnly);
+    }
+
+    LongBuffer asLongBuffer()() pure
+    {
+        return LongBuffer.ofBytes(backing[origin + position() .. origin + limit()], littleEndian, readOnly);
+    }
+
+    FloatBuffer asFloatBuffer()() pure
+    {
+        return FloatBuffer.ofBytes(backing[origin + position() .. origin + limit()], littleEndian, readOnly);
+    }
+
+    DoubleBuffer asDoubleBuffer()() pure
+    {
+        return DoubleBuffer.ofBytes(backing[origin + position() .. origin + limit()], littleEndian, readOnly);
     }
 
     wchar getChar() pure

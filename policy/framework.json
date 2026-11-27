@@ -813,7 +813,8 @@
     "engine-aot",
     "java",
     "java-nio",
-    "java-nio-char-buffer"
+    "java-nio-char-buffer",
+    "java-nio-numeric-buffers"
    ],
    "bench": {
     "fixture": "framework/java-nio-buffers/bench",
