@@ -1237,6 +1237,46 @@
     "ldc_incremental_seconds",
     "compiler_peak_rss_bytes"
    ]
+  },  "java-net-socket-address": {
+   "directory": "framework/java-net-socket-address",
+   "module": "flint.java.net.inetsocketaddress",
+   "also": [
+    "flint.java.net.internal.hostcase"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.InetSocketAddress"
+   ],
+   "dependencies": [
+    "engine-aot",
+    "java",
+    "java-net",
+    "java-net-address",
+    "java-net-exceptions"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-socket-address/bench",
+    "baseline": "framework/java-net-socket-address/bench/baseline",
+    "edit_source": "framework/java-net-socket-address/source/flint/java/net/inetsocketaddress.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 61394,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 565
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },
   "java-regex": {
    "directory": "framework/java-regex",

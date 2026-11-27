@@ -1,0 +1,5 @@
+name "probe-java-net-socket-address"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-net-socket-address" path="../../.."

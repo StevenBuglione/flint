@@ -10,8 +10,9 @@ import std.utf : encode;
 @safe:
 
 // Cases and expected rows from pinned Temurin 21.0.13+9 (LiteralResolutionOracle.java over inputs.tsv): case,
-// kind (all = getAllByName, one = getByName, sock = InetSocketAddress(String, int), lookup = getAllByName of a host
-// that reaches the name service), host with backslash-u escapes (<null> for null), port.
+// kind (all = getAllByName, one = getByName, lookup = getAllByName of a host that reaches the name service), host
+// with backslash-u escapes (<null> for null), port. The oracle's InetSocketAddress(String, int) rows are in
+// framework/java-net-socket-address.
 private static immutable string inputs = import("literalresolution/inputs.tsv");
 
 private static immutable string expected = import("literalresolution/temurin.tsv");
@@ -107,9 +108,8 @@ private string run(string kind, string host)
 
 unittest
 {
-    // Every InetAddress row of the Temurin oracle; the sock rows (InetSocketAddress) wait for its package. A lookup
-    // row reaches the name service, which Flint does not have yet: both sides throw UnknownHostException, and
-    // Flint's message is the host name.
+    // Every InetAddress row of the Temurin oracle. A lookup row reaches the name service, which Flint does not have
+    // yet: both sides throw UnknownHostException, and Flint's message is the host name.
     static immutable string[] lookupFailure = ["ex", "UnknownHostException"];
     const want = lines(expected);
     const cases = lines(inputs);
@@ -117,8 +117,6 @@ unittest
     foreach (i, line; cases)
     {
         auto f = split(line, '\t');
-        if (f[1] == "sock")
-            continue;
         const host = f[2] == "<null>" ? null : unescape(f[2]);
         auto actual = f[0] ~ "\t" ~ run(f[1], host);
         if (f[1] == "lookup")

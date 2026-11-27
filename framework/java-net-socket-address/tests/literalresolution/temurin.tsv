@@ -1,0 +1,28 @@
+sock-v4	ok	/1.2.3.4:80	false	1.2.3.4	16909140	Inet4Address|/1.2.3.4|-|0000000000
+sock-v6	ok	/[0:0:0:0:0:0:0:1]:443	false	0:0:0:0:0:0:0:1	444	Inet6Address|/0:0:0:0:0:0:0:1|0|0010000000
+sock-v6-bracketed	ok	/[0:0:0:0:0:0:0:1]:443	false	0:0:0:0:0:0:0:1	444	Inet6Address|/0:0:0:0:0:0:0:1|0|0010000000
+sock-empty	ok	localhost/127.0.0.1:8080	false	localhost	2130714513	Inet4Address|localhost/127.0.0.1|-|0010000000
+sock-localhost	ok	localhost/127.0.0.1:1	false	localhost	2130706434	Inet4Address|localhost/127.0.0.1|-|0010000000
+sock-invalid	ok	abc.invalid/<unresolved>:80	true	abc.invalid	1686239419	-
+sock-bsd	ok	0x1.2.3.4/<unresolved>:80	true	0x1.2.3.4	-272080248	-
+sock-ifname	ok	fe80::1%nosuchif0/<unresolved>:1	true	fe80::1%nosuchif0	182731969	-
+sock-mapped	ok	/10.0.0.1:22	false	10.0.0.1	167772183	Inet4Address|/10.0.0.1|-|0000100000
+sock-scoped	ok	/[fe80:0:0:0:0:0:0:1%3]:22	false	fe80:0:0:0:0:0:0:1%3	-41943017	Inet6Address|/fe80:0:0:0:0:0:0:1%3|3|0001000000
+sock-bad-literal	ok	[::1/<unresolved>:80	true	[::1	2768646	-
+sock-port-neg	ex	IllegalArgumentException	port out of range:-1	-
+sock-port-over	ex	IllegalArgumentException	port out of range:65536	-
+sock-port-neg-unresolved	ex	IllegalArgumentException	port out of range:-1	-
+sock-port-max	ok	/0.0.0.0:65535	false	0.0.0.0	65535	Inet4Address|/0.0.0.0|-|0100000000
+sock-null	ex	IllegalArgumentException	hostname can't be null	-
+tostring-0	ok	/[0:0:0:0:0:0:0:1]:80	false	0:0:0:0:0:0:0:1	81	Inet6Address|/0:0:0:0:0:0:0:1|0|0010000000
+tostring-1	ok	/[fedc:ba98:7654:3210:fedc:ba98:7654:3210]:80	false	fedc:ba98:7654:3210:fedc:ba98:7654:3210	-396372064	Inet6Address|/fedc:ba98:7654:3210:fedc:ba98:7654:3210|0|0000100000
+tostring-2	ok	/[0:0:0:0:0:0:c009:505]:80	false	0:0:0:0:0:0:c009:505	-1073150635	Inet6Address|/0:0:0:0:0:0:c009:505|0|0000000000
+tostring-3	ok	/127.0.0.1:80	false	127.0.0.1	2130706513	Inet4Address|/127.0.0.1|-|0010000000
+tostring-4	ok	/192.0.2.128:80	false	192.0.2.128	-1073741104	Inet4Address|/192.0.2.128|-|0000000000
+tostring-5	ok	/0.0.0.0:80	false	0.0.0.0	80	Inet4Address|/0.0.0.0|-|0100000000
+tostring-6	ok	:/<unresolved>:80	true	:	138	-
+tostring-7	ok	:1/<unresolved>:80	true	:1	1927	-
+tostring-8	ok	unresolved/<unresolved>:12345	true	unresolved	1184911818	-
+tostring-9	ok	/192.168.1.1:12345	false	192.168.1.1	-1062719174	Inet4Address|/192.168.1.1|-|0000100000
+tostring-10	ok	localhost/127.0.0.1:12345	false	localhost	2130718778	Inet4Address|localhost/127.0.0.1|-|0010000000
+tostring-11	ok	/225.225.225.0:80	false	225.225.225.0	-505290416	Inet4Address|/225.225.225.0|-|1000010000

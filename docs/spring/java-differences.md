@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,813 | 565 | 0 | 1,909 | 14,134 |
+| framework | openjdk@21.0.13 | 1,821 | 569 | 0 | 1,909 | 14,122 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2349,6 +2349,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.InetAddress#getAllByName(String)` | `flint.java.net.inetaddress.InetAddress.getAllByName` | [D-JDK-8](api-mapping.md#deviations) | Address literals resolve as in Java; host names other than localhost throw UnknownHostException until an engine host-name resolver exists. Returns a new array on every call. |
 | `java.net.InetAddress#getByAddress(String,byte[])` | `flint.java.net.inetaddress.InetAddress.getByAddress` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Accepts string or Nullable!string host; an absent host differs from the empty string. A null address slice counts as empty and raises UnknownHostException, as Java's null does. |
 | `java.net.InetAddress#getByName(String)` | `flint.java.net.inetaddress.InetAddress.getByName` | [D-JDK-8](api-mapping.md#deviations) | Address literals resolve as in Java; host names other than localhost throw UnknownHostException until an engine host-name resolver exists. A null host string is the empty host, which Java also maps to the loopback address. |
+| `java.net.InetSocketAddress` | `flint.java.net.inetsocketaddress.InetSocketAddress` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.inetsocketaddress : InetSocketAddress. Implements JavaObject without Serializable. An unresolved host name compares with String.equalsIgnoreCase and hashes as toLowerCase(Locale.ROOT), including the U+0130 and final-sigma rules; the sigma's word boundary follows the JDK word BreakIterator for letters, digits, U+0300 to U+036F marks and one mid-word or mid-number punctuation mark. |
+| `java.net.InetSocketAddress#<init>(String,int)` | `flint.java.net.inetsocketaddress.InetSocketAddress.this` | [D-JDK-8](api-mapping.md#deviations), [R26](api-mapping.md#r26-null-arrays) | Resolves through InetAddress.getByName, so a host name other than localhost gives an unresolved address until an engine host-name resolver exists. A null host string counts as the empty host (the loopback address), so Java's IllegalArgumentException "hostname can't be null" does not occur. As in Java, new InetSocketAddress(null, port) is ambiguous; cast the null. |
+| `java.net.InetSocketAddress#createUnresolved(String,int)` | `flint.java.net.inetsocketaddress.InetSocketAddress.createUnresolved` | [R26](api-mapping.md#r26-null-arrays) | A null host string counts as the empty host name, so Java's IllegalArgumentException "hostname can't be null" does not occur. |
+| `java.net.InetSocketAddress#equals(Object)` | `flint.java.net.inetsocketaddress.InetSocketAddress.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.ProtocolFamily` | `flint.java.net.protocolfamily.ProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.protocolfamily : ProtocolFamily. |
 | `java.net.SocketAddress` | `flint.java.net.socketaddress.SocketAddress` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.socketaddress : SocketAddress. Abstract socket address base without Java Serializable. |
 | `java.net.StandardProtocolFamily` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names), [R18](api-mapping.md#r18-enums-that-implement-an-interface) | Leaf import: flint.java.net.standardprotocolfamily : StandardProtocolFamily. D enum implementing ProtocolFamily via R18; call family.name() via R20 UFCS. |
@@ -10875,7 +10879,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 713 | 0 |
+| java.net | 701 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 20 | 0 |
 | java.nio.channels | 0 | 264 |
@@ -11958,6 +11962,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.InetAddress#getLoopbackAddress()` | 2 | Java returns one shared loopback instance; this leaf returns a new equal Inet4Address on each call until the compile-time constant instance (framework-core constantInstance) lands. |
 | framework | `java.net.InetAddress#isReachable(NetworkInterface,int,int)` | 2 | Requires NetworkInterface and ICMP echo or a TCP probe through the Flint network engines. |
 | framework | `java.net.InetAddress#isReachable(int)` | 2 | Requires ICMP echo or a TCP probe through the Flint network engines. |
+| framework | `java.net.InetSocketAddress#getHostName()` | 2 | Performs a reverse lookup when the address has no host name. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds socket addresses from an InetAddress or an unresolved host name only. getHostString returns the host name without a lookup. |
 | framework | `java.net.ProtocolException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.ProtocolException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.SocketTimeoutException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |

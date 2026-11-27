@@ -1,0 +1,107 @@
+port-0	0.0.0.0/0.0.0.0:0	0	0.0.0.0	0	0	0.0.0.0/0.0.0.0
+port-80	0.0.0.0/0.0.0.0:80	80	0.0.0.0	0	80	0.0.0.0/0.0.0.0
+port-max	0.0.0.0/0.0.0.0:65535	65535	0.0.0.0	0	65535	0.0.0.0/0.0.0.0
+port-neg	IllegalArgumentException	port out of range:-1
+port-over	IllegalArgumentException	port out of range:65536
+port-min	IllegalArgumentException	port out of range:-2147483648
+null-addr-8080	0.0.0.0/0.0.0.0:8080	8080	0.0.0.0	0	8080	0.0.0.0/0.0.0.0
+null-addr-80	0.0.0.0/0.0.0.0:80	80	0.0.0.0	0	80	0.0.0.0/0.0.0.0
+v4-80	/10.0.0.1:80	80	10.0.0.1	0	167772241	/10.0.0.1
+v4-80-again	/10.0.0.1:80	80	10.0.0.1	0	167772241	/10.0.0.1
+v4-81	/10.0.0.1:81	81	10.0.0.1	0	167772242	/10.0.0.1
+v4-named	example.com/10.0.0.1:80	80	example.com	0	167772241	example.com/10.0.0.1
+v4-named-empty	/10.0.0.1:80	80		0	167772241	/10.0.0.1
+v4-any-named	0.0.0.0/0.0.0.0:80	80	0.0.0.0	0	80	0.0.0.0/0.0.0.0
+v4-any-unnamed	/0.0.0.0:80	80	0.0.0.0	0	80	/0.0.0.0
+v4-bracket-host	h/192.168.0.1:443	443	h	0	-1062731332	h/192.168.0.1
+v4-slash-host	a/b/192.168.0.1:443	443	a/b	0	-1062731332	a/b/192.168.0.1
+v4-port-bad	IllegalArgumentException	port out of range:70000
+v4-port-neg	IllegalArgumentException	port out of range:-5
+v6-loopback	/[0:0:0:0:0:0:0:1]:8080	8080	0:0:0:0:0:0:0:1	0	8081	/0:0:0:0:0:0:0:1
+v6-named	host6/[fe80:0:0:0:0:0:0:1]:8080	8080	host6	0	-41934959	host6/fe80:0:0:0:0:0:0:1
+v6-scoped	/[fe80:0:0:0:0:0:0:1%3]:8080	8080	fe80:0:0:0:0:0:0:1%3	0	-41934959	/fe80:0:0:0:0:0:0:1%3
+v6-scoped-named	a/b/[fe80:0:0:0:0:0:0:1%3]:8080	8080	a/b	0	-41934959	a/b/fe80:0:0:0:0:0:0:1%3
+v6-mapped	/10.0.0.1:80	80	10.0.0.1	0	167772241	/10.0.0.1
+u-example	example.com/<unresolved>:80	80	example.com	1	-1944012979	-
+u-example-upper	EXAMPLE.com/<unresolved>:80	80	EXAMPLE.com	1	-1944012979	-
+u-example-mixed	example.COM/<unresolved>:80	80	example.COM	1	-1944012979	-
+u-example-81	example.com/<unresolved>:81	81	example.com	1	-1944012978	-
+u-literal-v4	10.0.0.1/<unresolved>:80	80	10.0.0.1	1	511552246	-
+u-empty	/<unresolved>:0	0		1	0	-
+u-null	IllegalArgumentException	hostname can't be null
+u-port-bad	IllegalArgumentException	port out of range:65536
+u-port-neg	IllegalArgumentException	port out of range:-1
+u-bracket	[::1]/<unresolved>:443	443	[::1]	1	85826082	-
+u-istanbul-upper	İSTANBUL/<unresolved>:1	1	İSTANBUL	1	-643200018	-
+u-istanbul-lower	istanbul/<unresolved>:1	1	istanbul	1	709137635	-
+u-dotless	ıstanbul/<unresolved>:1	1	ıstanbul	1	1378853659	-
+u-kelvin	K.test/<unresolved>:2	2	K.test	1	-1185609673	-
+u-k	k.test/<unresolved>:2	2	k.test	1	-1185609673	-
+u-sigma-final	ΟΔΟΣ/<unresolved>:3	3	ΟΔΟΣ	1	29511291	-
+u-sigma-lower	οδος/<unresolved>:3	3	οδος	1	29511291	-
+u-sigma-final-lower	οδος/<unresolved>:3	3	οδος	1	29511291	-
+u-sigma-alone	Σ/<unresolved>:3	3	Σ	1	966	-
+u-sigma-dot	ΟΔΟΣ.gr/<unresolved>:3	3	ΟΔΟΣ.gr	1	-1297437565	-
+u-sigma-mid	ΣΑΣ/<unresolved>:3	3	ΣΑΣ	1	955703	-
+u-strasse	STRASSE/<unresolved>:4	4	STRASSE	1	-1881992263	-
+u-strasse-sharp	straße/<unresolved>:4	4	straße	1	-891990086	-
+u-deseret-upper	𐐀x/<unresolved>:5	5	𐐀x	1	54887702	-
+u-deseret-lower	𐐨x/<unresolved>:5	5	𐐨x	1	54887702	-
+u-titlecase	ǅ/<unresolved>:6	6	ǅ	1	460	-
+u-titlecase-upper	Ǆ/<unresolved>:6	6	Ǆ	1	460	-
+u-titlecase-lower	ǆ/<unresolved>:6	6	ǆ	1	460	-
+u-sigma-dash	ΑΣ-Β/<unresolved>:7	7	ΑΣ-Β	1	29080286	-
+u-sigma-dashdash	ΑΣ--Β/<unresolved>:7	7	ΑΣ--Β	1	901431880	-
+u-sigma-underscore	ΑΣ_Β/<unresolved>:7	7	ΑΣ_Β	1	29081836	-
+u-sigma-mark-before	ΆΣ/<unresolved>:7	7	ΆΣ	1	932953	-
+u-sigma-mark-after	ΑΣ́/<unresolved>:7	7	ΑΣ́	1	938743	-
+u-sigma-digit-after	ΑΣ1/<unresolved>:7	7	ΑΣ1	1	938023	-
+u-sigma-digit-before	1Σ/<unresolved>:7	7	1Σ	1	2489	-
+u-sigma-dot-digit	ΑΣ.1/<unresolved>:7	7	ΑΣ.1	1	29078459	-
+u-sigma-first	Σ1Α/<unresolved>:7	7	Σ1Α	1	927914	-
+u-sigma-space	ΑΣ Β/<unresolved>:7	7	ΑΣ Β	1	29078922	-
+u-sigma-comma	ΑΣ,Β/<unresolved>:7	7	ΑΣ,Β	1	29079294	-
+u-sigma-modifier	ʰΣ/<unresolved>:7	7	ʰΣ	1	22297	-
+u-sigma-roman	ⅠΣ/<unresolved>:7	7	ⅠΣ	1	266329	-
+u-sigma-dotted-i	İΣ/<unresolved>:7	7	İΣ	1	125899	-
+u-sigma-apostrophe	ΑΣ'Β/<unresolved>:7	7	ΑΣ'Β	1	29080100	-
+u-sigma-colon	ΑΣ:Β/<unresolved>:7	7	ΑΣ:Β	1	29079728	-
+u-sigma-circled	ⒶΣ/<unresolved>:7	7	ⒶΣ	1	293114	-
+u-sigma-titlecase	ǅΣ/<unresolved>:7	7	ǅΣ	1	15043	-
+u-sigma-digits-dot	Α1.2Σ/<unresolved>:7	7	Α1.2Σ	1	874233829	-
+u-sigma-dot-word	Α.ΒΣ/<unresolved>:7	7	Α.ΒΣ	1	28226996	-
+u-sigma-long	ΑΣΣ/<unresolved>:7	7	ΑΣΣ	1	938967	-
+equal	port-80	null-addr-80	symmetric
+equal	port-80	v4-any-named	symmetric
+equal	port-80	v4-any-unnamed	symmetric
+equal	null-addr-80	v4-any-named	symmetric
+equal	null-addr-80	v4-any-unnamed	symmetric
+equal	v4-80	v4-80-again	symmetric
+equal	v4-80	v4-named	symmetric
+equal	v4-80	v4-named-empty	symmetric
+equal	v4-80	v6-mapped	symmetric
+equal	v4-80-again	v4-named	symmetric
+equal	v4-80-again	v4-named-empty	symmetric
+equal	v4-80-again	v6-mapped	symmetric
+equal	v4-named	v4-named-empty	symmetric
+equal	v4-named	v6-mapped	symmetric
+equal	v4-named-empty	v6-mapped	symmetric
+equal	v4-any-named	v4-any-unnamed	symmetric
+equal	v4-bracket-host	v4-slash-host	symmetric
+equal	v6-named	v6-scoped	symmetric
+equal	v6-named	v6-scoped-named	symmetric
+equal	v6-scoped	v6-scoped-named	symmetric
+equal	u-example	u-example-upper	symmetric
+equal	u-example	u-example-mixed	symmetric
+equal	u-example-upper	u-example-mixed	symmetric
+equal	u-istanbul-upper	u-istanbul-lower	symmetric
+equal	u-istanbul-upper	u-dotless	symmetric
+equal	u-istanbul-lower	u-dotless	symmetric
+equal	u-kelvin	u-k	symmetric
+equal	u-sigma-final	u-sigma-lower	symmetric
+equal	u-sigma-final	u-sigma-final-lower	symmetric
+equal	u-sigma-lower	u-sigma-final-lower	symmetric
+equal	u-deseret-upper	u-deseret-lower	symmetric
+equal	u-titlecase	u-titlecase-upper	symmetric
+equal	u-titlecase	u-titlecase-lower	symmetric
+equal	u-titlecase-upper	u-titlecase-lower	symmetric

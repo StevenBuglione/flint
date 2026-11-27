@@ -519,20 +519,24 @@
       "reason": "Needs host-name or reverse resolution; no engine host-name resolver yet (D-JDK-8)."
     },
     "java/net/InetSocketAddress/B4849451.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Unresolved host names that differ in case are equality rows of the InetSocketAddress Temurin oracle.",
+      "covered_by": "framework/java-net-socket-address/tests/inetsocketaddress_test.d"
     },
     "java/net/InetSocketAddress/B6469803.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Its getHostString cases are the tostring-9 and tostring-10 oracle rows.",
+      "covered_by": "framework/java-net-socket-address/tests/literalresolution_test.d"
     },
     "java/net/InetSocketAddress/CreateUnresolved.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. createUnresolved rows of the InetSocketAddress Temurin oracle check isUnresolved.",
+      "covered_by": "framework/java-net-socket-address/tests/inetsocketaddress_test.d"
     },
     "java/net/InetSocketAddress/ToString.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "Its getLocalHost row needs the local host name (no engine resolver yet, D-JDK-8). Its (String, int) and InetAddress rows are tostring-* oracle rows in framework/java-net-socket-address/tests/literalresolution_test.d."
     },
     "java/net/InterfaceAddress/Equals.java": {
       "phase": "2",
