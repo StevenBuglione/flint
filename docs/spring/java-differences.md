@@ -175,30 +175,28 @@ Flint has no runtime reflection or class loading. Flint AOT generates, at build 
 
 Element counts per upstream, as `flint api coverage` classifies them.
 
-Ported and adapted elements are written by hand or, where the row carries `generated`, by a porter (docs/spring/phase2/porter-plan.md); **By porter** counts the latter.
-
-| Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
-| boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
-| data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,626 | 1,554 | 0 | 4,870 | 29,784 |
-| framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
-| framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
-| framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
-| framework | jakarta-servlet@6.1.0 | 8 | 264 | 0 | 1 | 555 |
-| framework | jackson-core@3.1.8 | 529 | 28 | 0 | 1 | 2,737 |
-| framework | jackson-databind@3.1.8 | 517 | 131 | 0 | 5 | 9,814 |
-| framework | jackson-annotations@2.21 | 164 | 0 | 0 | 0 | 377 |
-| framework | slf4j-api@2.0.20 | 281 | 113 | 0 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 202 | 160 | 0 | 0 | 2,028 |
-| framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
-| framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
-| framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,467 | 424 | 0 | 1,905 | 14,625 |
-| framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
-| framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
-| security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
+| Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
+| --- | --- | ---: | ---: | ---: | ---: |
+| ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
+| boot | spring-boot@v4.2.0 | 47 | 111 | 2,133 | 13,312 |
+| data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 3,383 |
+| framework | spring-framework@v7.1.0 | 3,629 | 1,525 | 4,870 | 29,810 |
+| framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
+| framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
+| framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
+| framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
+| framework | jackson-core@3.1.8 | 529 | 28 | 1 | 2,737 |
+| framework | jackson-databind@3.1.8 | 511 | 137 | 5 | 9,814 |
+| framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
+| framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
+| framework | micrometer-core@1.18.0 | 200 | 162 | 0 | 2,028 |
+| framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
+| framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
+| framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
+| framework | openjdk@21.0.13 | 1,251 | 432 | 1,871 | 14,867 |
+| framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
+| framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
+| security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
 
 ## Known gaps
 
@@ -221,10 +219,13 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.nio.file.InvalidPathException` | `flint.java.nio.file.InvalidPathException` | Null input and reason strings count as empty under R26. |
 | framework | `java.nio.file.Path` | `flint.java.nio.file.Path` | Lexical contract. Path inheritance from Comparable<Path>, Iterable<Path> and Watchable is deferred to Phase 2 with compareTo, iterator and register. Provider equality and hashing are also deferred to Phase 2. Null strings and an array of additional parts that is null count as empty under R26. |
 | framework | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.TimeDefinition` | A null name counts as empty (R26). Java throws NullPointerException. |
-| framework | `java.util.ArrayList#sort(Comparator)` | `flint.java.util.ArrayList.sort` | When a comparison throws, the list still holds every element and equal elements keep their order. Java leaves the order unspecified; Temurin 21 keeps every element below 32 elements and can lose elements from larger lists (TimSort merges). |
-| framework | `java.util.Collections#sort(List)` | `flint.java.util.Collections.sort` | When a comparison throws, the list still holds every element and equal elements keep their order. Java leaves the order unspecified; Temurin 21 keeps every element below 32 elements and can lose elements from larger lists (TimSort merges). |
-| framework | `java.util.Collections#sort(List,Comparator)` | `flint.java.util.Collections.sort` | When a comparison throws, the list still holds every element and equal elements keep their order. Java leaves the order unspecified; Temurin 21 keeps every element below 32 elements and can lose elements from larger lists (TimSort merges). |
-| framework | `java.util.List#sort(Comparator)` | `flint.java.util.List.sort` | When a comparison throws, the list still holds every element and equal elements keep their order. Java leaves the order unspecified; Temurin 21 keeps every element below 32 elements and can lose elements from larger lists (TimSort merges). |
+| framework | `java.util.DuplicateFormatFlagsException#getMessage()` | `flint.java.util.formatter.DuplicateFormatFlagsException.getMessage` | Inherits RuntimeException.getMessage; the duplicate flag is recorded in the constructor. |
+| framework | `java.util.FormatFlagsConversionMismatchException#getMessage()` | `flint.java.util.formatter.FormatFlagsConversionMismatchException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
+| framework | `java.util.IllegalFormatCodePointException#getMessage()` | `flint.java.util.formatter.IllegalFormatCodePointException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
+| framework | `java.util.IllegalFormatFlagsException#getMessage()` | `flint.java.util.formatter.IllegalFormatFlagsException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
+| framework | `java.util.IllegalFormatPrecisionException#getMessage()` | `flint.java.util.formatter.IllegalFormatPrecisionException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
+| framework | `java.util.IllegalFormatWidthException#getMessage()` | `flint.java.util.formatter.IllegalFormatWidthException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
+| framework | `java.util.MissingFormatWidthException#getMessage()` | `flint.java.util.formatter.MissingFormatWidthException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
 | framework | `java.util.regex.Pattern` | `flint.java.util.regex.Pattern` | Under R26, a null expression or input slice counts as empty text. Java throws NullPointerException. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#addDefaultConverters(ConverterRegistry)` | `flint.core.convert.support.DefaultConversionService.addDefaultConverters` | The package-private CharacterToNumberFactory is represented in the erased numeric converter for char and wchar code units. |
 | framework | `org.springframework.core.convert.support.DefaultConversionService#getSharedInstance()` | `flint.core.convert.support.DefaultConversionService.getSharedInstance` | Returns a fresh default conversion service on each call. Flint keeps no mutable module-level state (ADR-030 section 4). |
@@ -246,16 +247,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,List,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
-| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,String,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,List,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R10](api-mapping.md#r10-streams-and-collections), [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,String,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#equals(Object)` | `flint.ai.chat.messages.AbstractMessage.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#getMessageType()` | `flint.ai.chat.messages.AbstractMessage.getMessageType` | [R15](api-mapping.md#r15-enums-with-fields) |  |
-| `org.springframework.ai.chat.messages.AbstractMessage#getMetadata()` | `flint.ai.chat.messages.AbstractMessage.getMetadata` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#getMetadata()` | `flint.ai.chat.messages.AbstractMessage.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#getParts()` | `flint.ai.chat.messages.AbstractMessage.getParts` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#getText()` | `flint.ai.chat.messages.AbstractMessage.getText` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#hashCode()` | `flint.ai.chat.messages.AbstractMessage.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality), [R15](api-mapping.md#r15-enums-with-fields) | The role contributes its stable ordinal in place of Java enum reference identity. Cross-runtime numeric hashes differ. |
-| `org.springframework.ai.chat.messages.AbstractMessage#legacyParts(String)` | `flint.ai.chat.messages.AbstractMessage.legacyParts` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#legacyParts(String)` | `flint.ai.chat.messages.AbstractMessage.legacyParts` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#messageType` | `flint.ai.chat.messages.AbstractMessage.messageType` | [R15](api-mapping.md#r15-enums-with-fields), [R24](api-mapping.md#r24-final-instance-fields) |  |
-| `org.springframework.ai.chat.messages.AbstractMessage#metadata` | `flint.ai.chat.messages.AbstractMessage.metadata` | [R23](api-mapping.md#r23-object-typed-values), [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#metadata` | `flint.ai.chat.messages.AbstractMessage.metadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values), [R24](api-mapping.md#r24-final-instance-fields) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#textContent` | `flint.ai.chat.messages.AbstractMessage.textContent` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R24](api-mapping.md#r24-final-instance-fields) |  |
 | `org.springframework.ai.chat.messages.AssistantMessage.ToolCall` | `flint.ai.chat.messages.AssistantMessage.ToolCall` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.messages.AssistantMessage.ToolCall#<init>(String,String,String,String)` | `flint.ai.chat.messages.AssistantMessage.ToolCall.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -274,7 +276,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.messages.SystemMessage.Builder` | `flint.ai.chat.messages.SystemMessage.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#<init>()` | `flint.ai.chat.messages.SystemMessage.Builder.init` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#build()` | `flint.ai.chat.messages.SystemMessage.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.chat.messages.SystemMessage.Builder#metadata(Map)` | `flint.ai.chat.messages.SystemMessage.Builder.metadata` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.SystemMessage.Builder#metadata(Map)` | `flint.ai.chat.messages.SystemMessage.Builder.metadata` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#text(String)` | `flint.ai.chat.messages.SystemMessage.Builder.text` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse` | `flint.ai.chat.messages.ToolResponseMessage.ToolResponse` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse#<init>(String,String,String)` | `flint.ai.chat.messages.ToolResponseMessage.ToolResponse.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -286,32 +288,45 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.ai.chat.messages.part.MessagePart#attributes()` | `flint.ai.chat.messages.part.MessagePart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.MessagePart#payload()` | `flint.ai.chat.messages.part.MessagePart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.part.MessagePart#withAttributes(Map)` | `flint.ai.chat.messages.part.MessagePart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.OpaquePayload` | `flint.ai.chat.messages.part.OpaquePayload` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.messages.part.ReasoningPart` | `flint.ai.chat.messages.part.ReasoningPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.ReasoningPart#<init>(String,String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ReasoningPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.ReasoningPart#<init>(String,String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ReasoningPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.ReasoningPart#attributes` | `flint.ai.chat.messages.part.ReasoningPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.ReasoningPart#payload` | `flint.ai.chat.messages.part.ReasoningPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ReasoningPart#summary` | `flint.ai.chat.messages.part.ReasoningPart.summary` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ReasoningPart#text` | `flint.ai.chat.messages.part.ReasoningPart.text` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.part.ReasoningPart#withAttributes(Map)` | `flint.ai.chat.messages.part.ReasoningPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.TextPart` | `flint.ai.chat.messages.part.TextPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.TextPart#<init>(String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.TextPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.TextPart#<init>(String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.TextPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.TextPart#attributes` | `flint.ai.chat.messages.part.TextPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.TextPart#payload` | `flint.ai.chat.messages.part.TextPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.part.TextPart#withAttributes(Map)` | `flint.ai.chat.messages.part.TextPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.ToolCallPart` | `flint.ai.chat.messages.part.ToolCallPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.ToolCallPart#<init>(ToolCall,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolCallPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#<init>(ToolCall,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolCallPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#attributes` | `flint.ai.chat.messages.part.ToolCallPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.ToolCallPart#of(ToolCall)` | `flint.ai.chat.messages.part.ToolCallPart.of` | [R11](api-mapping.md#r11-object-identity-and-equality) | The tool call is a D record value. A null argument is rejected at compile time. |
 | `org.springframework.ai.chat.messages.part.ToolCallPart#payload` | `flint.ai.chat.messages.part.ToolCallPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ToolCallPart#toolCall` | `flint.ai.chat.messages.part.ToolCallPart.toolCall` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#withAttributes(Map)` | `flint.ai.chat.messages.part.ToolCallPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart` | `flint.ai.chat.messages.part.ToolResultPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.ToolResultPart#<init>(String,String,List,boolean,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolResultPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.ToolResultPart#<init>(String,String,List,boolean,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolResultPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.ToolResultPart#attributes` | `flint.ai.chat.messages.part.ToolResultPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.part.ToolResultPart#content` | `flint.ai.chat.messages.part.ToolResultPart.content` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#id` | `flint.ai.chat.messages.part.ToolResultPart.id` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#name` | `flint.ai.chat.messages.part.ToolResultPart.name` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#of(ToolResponse)` | `flint.ai.chat.messages.part.ToolResultPart.of` | [R11](api-mapping.md#r11-object-identity-and-equality) | The response is a D record value. A null argument is rejected at compile time. |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#payload` | `flint.ai.chat.messages.part.ToolResultPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#toToolResponse()` | `flint.ai.chat.messages.part.ToolResultPart.toToolResponse` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.chat.messages.part.ToolResultPart#withAttributes(Map)` | `flint.ai.chat.messages.part.ToolResultPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.UnknownPart` | `flint.ai.chat.messages.part.UnknownPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.UnknownPart#<init>(String,String,String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.UnknownPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.UnknownPart#<init>(String,String,String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.UnknownPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
 | `org.springframework.ai.chat.messages.part.UnknownPart#SPRING_AI_PROVIDER` | `flint.ai.chat.messages.part.UnknownPart.FLINT_AI_PROVIDER` | [R1](api-mapping.md#r1-packages-and-names) |  |
+| `org.springframework.ai.chat.messages.part.UnknownPart#attributes` | `flint.ai.chat.messages.part.UnknownPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.UnknownPart#payload` | `flint.ai.chat.messages.part.UnknownPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.messages.part.UnknownPart#withAttributes(Map)` | `flint.ai.chat.messages.part.UnknownPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.ai.chat.metadata
 
@@ -358,17 +373,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.prompt.ChatOptions#getMaxTokens()` | `flint.ai.chat.prompt.ChatOptions.getMaxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getModel()` | `flint.ai.chat.prompt.ChatOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getPresencePenalty()` | `flint.ai.chat.prompt.ChatOptions.getPresencePenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.prompt.ChatOptions#getStopSequences()` | `flint.ai.chat.prompt.ChatOptions.getStopSequences` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#getStopSequences()` | `flint.ai.chat.prompt.ChatOptions.getStopSequences` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTemperature()` | `flint.ai.chat.prompt.ChatOptions.getTemperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTopK()` | `flint.ai.chat.prompt.ChatOptions.getTopK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTopP()` | `flint.ai.chat.prompt.ChatOptions.getTopP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.prompt.DefaultChatOptions#<init>(String,Double,Integer,Double,List,Double,Integer,Double)` | `flint.ai.chat.prompt.DefaultChatOptions.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptions#<init>(String,Double,Integer,Double,List,Double,Integer,Double)` | `flint.ai.chat.prompt.DefaultChatOptions.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#equals(Object)` | `flint.ai.chat.prompt.DefaultChatOptions.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getFrequencyPenalty()` | `flint.ai.chat.prompt.DefaultChatOptions.getFrequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getMaxTokens()` | `flint.ai.chat.prompt.DefaultChatOptions.getMaxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getModel()` | `flint.ai.chat.prompt.DefaultChatOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getPresencePenalty()` | `flint.ai.chat.prompt.DefaultChatOptions.getPresencePenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.prompt.DefaultChatOptions#getStopSequences()` | `flint.ai.chat.prompt.DefaultChatOptions.getStopSequences` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptions#getStopSequences()` | `flint.ai.chat.prompt.DefaultChatOptions.getStopSequences` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTemperature()` | `flint.ai.chat.prompt.DefaultChatOptions.getTemperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTopK()` | `flint.ai.chat.prompt.DefaultChatOptions.getTopK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTopP()` | `flint.ai.chat.prompt.DefaultChatOptions.getTopP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -378,6 +393,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.ai.content.Content#getMetadata()` | `flint.ai.content.Content.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.content.Content#getText()` | `flint.ai.content.Content.getText` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.content.Media.Format` | `flint.ai.content.Media.Format` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `org.springframework.ai.content.Media.Format#DOC_CSV` | `flint.ai.content.Media.Format.DOC_CSV` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -402,12 +418,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.content.Media.Format#VIDEO_THREE_GP` | `flint.ai.content.Media.Format.VIDEO_THREE_GP` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.content.Media.Format#VIDEO_WEBM` | `flint.ai.content.Media.Format.VIDEO_WEBM` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.content.Media.Format#VIDEO_WMV` | `flint.ai.content.Media.Format.VIDEO_WMV` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.content.MediaContent#getMedia()` | `flint.ai.content.MediaContent.getMedia` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.ai.converter
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.ai.converter.ListOutputConverter` | `flint.ai.converter.ListOutputConverter` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.converter.ListOutputConverter#convert(String)` | `flint.ai.converter.ListOutputConverter.convert` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.converter.MarkdownCodeBlockCleaner#clean(String)` | `flint.ai.converter.MarkdownCodeBlockCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.ResponseTextCleaner#clean(String)` | `flint.ai.converter.ResponseTextCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.StructuredOutputConverter#getJsonSchema()` | `flint.ai.converter.StructuredOutputConverter.getJsonSchema` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -418,31 +436,33 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.ai.document.DefaultContentFormatter#builder()` | `flint.ai.document.DefaultContentFormatter.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter#getExcludedEmbedMetadataKeys()` | `flint.ai.document.DefaultContentFormatter.getExcludedEmbedMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.document.DefaultContentFormatter#getExcludedInferenceMetadataKeys()` | `flint.ai.document.DefaultContentFormatter.getExcludedInferenceMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder` | `flint.ai.document.DefaultContentFormatter.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#build()` | `flint.ai.document.DefaultContentFormatter.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#from(DefaultContentFormatter)` | `flint.ai.document.DefaultContentFormatter.Builder.from` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedEmbedMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedEmbedMetadataKeys` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedEmbedMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedEmbedMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedEmbedMetadataKeys(String...)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedEmbedMetadataKeys` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedInferenceMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedInferenceMetadataKeys` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedInferenceMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedInferenceMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedInferenceMetadataKeys(String...)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedInferenceMetadataKeys` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withMetadataSeparator(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withMetadataSeparator` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withMetadataTemplate(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withMetadataTemplate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withTextTemplate(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withTextTemplate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.document.Document#<init>(String,String,Map)` | `flint.ai.document.Document.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.document.Document#<init>(String,String,Map)` | `flint.ai.document.Document.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.document.Document#equals(Object)` | `flint.ai.document.Document.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.document.Document#getFormattedContent(ContentFormatter,MetadataMode)` | `flint.ai.document.Document.getFormattedContent` | [R5](api-mapping.md#r5-optional-and-nullable-values) | The Nullable mode overload preserves Java null-mode validation. |
-| `org.springframework.ai.document.Document#getMetadata()` | `flint.ai.document.Document.getMetadata` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.document.Document#getMetadata()` | `flint.ai.document.Document.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.document.Document#getText()` | `flint.ai.document.Document.getText` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.document.Document#hashCode()` | `flint.ai.document.Document.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.document.DocumentMetadata` | `flint.ai.document.DocumentMetadata` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#CONTENT_REF` | `flint.ai.document.DocumentMetadata.CONTENT_REF` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#DISTANCE` | `flint.ai.document.DocumentMetadata.DISTANCE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentReader` | `flint.ai.document.DocumentReader` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.document.DocumentReader#read()` | `flint.ai.document.DocumentReader.read` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.ai.document.DocumentReader#read()` | `flint.ai.document.DocumentReader.read` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DocumentTransformer` | `flint.ai.document.DocumentTransformer` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.document.DocumentTransformer#transform(List)` | `flint.ai.document.DocumentTransformer.transform` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.ai.document.DocumentTransformer#transform(List)` | `flint.ai.document.DocumentTransformer.transform` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DocumentWriter` | `flint.ai.document.DocumentWriter` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.document.DocumentWriter#write(List)` | `flint.ai.document.DocumentWriter.write` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `org.springframework.ai.document.DocumentWriter#write(List)` | `flint.ai.document.DocumentWriter.write` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.ai.document.id
 
@@ -469,6 +489,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.embedding.EmbeddingOptions#getModel()` | `flint.ai.embedding.EmbeddingOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions.Builder#dimensions(Integer)` | `flint.ai.embedding.EmbeddingOptions.Builder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingRequest` | `flint.ai.embedding.EmbeddingRequest` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.embedding.EmbeddingRequest#<init>(List,EmbeddingOptions)` | `flint.ai.embedding.EmbeddingRequest.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.embedding.EmbeddingRequest#getInstructions()` | `flint.ai.embedding.EmbeddingRequest.getInstructions` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#<init>(String,ModalityType,MimeType,Object)` | `flint.ai.embedding.EmbeddingResultMetadata.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#getDocumentData()` | `flint.ai.embedding.EmbeddingResultMetadata.getDocumentData` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata.ModalityUtils#getModalityType(MimeType)` | `flint.ai.embedding.EmbeddingResultMetadata.ModalityUtils.getModalityType` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -477,14 +499,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.evaluation.EvaluationRequest#<init>(List,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R7](api-mapping.md#r7-overloads) | Use a typed null for the String or List constructor, as the untyped null call is ambiguous. |
+| `org.springframework.ai.evaluation.EvaluationRequest#<init>(List,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R7](api-mapping.md#r7-overloads), [R10](api-mapping.md#r10-streams-and-collections) | Use a typed null for the String or List constructor, as the untyped null call is ambiguous. |
+| `org.springframework.ai.evaluation.EvaluationRequest#<init>(String,List,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.evaluation.EvaluationRequest#<init>(String,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R7](api-mapping.md#r7-overloads) | Use a typed null for the String or List constructor, as the untyped null call is ambiguous. |
 | `org.springframework.ai.evaluation.EvaluationRequest#equals(Object)` | `flint.ai.evaluation.EvaluationRequest.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.ai.evaluation.EvaluationRequest#getDataList()` | `flint.ai.evaluation.EvaluationRequest.getDataList` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.evaluation.EvaluationRequest#hashCode()` | `flint.ai.evaluation.EvaluationRequest.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
-| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,float,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,float,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#equals(Object)` | `flint.ai.evaluation.EvaluationResponse.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.ai.evaluation.EvaluationResponse#getMetadata()` | `flint.ai.evaluation.EvaluationResponse.getMetadata` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#getMetadata()` | `flint.ai.evaluation.EvaluationResponse.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#hashCode()` | `flint.ai.evaluation.EvaluationResponse.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#toString()` | `flint.ai.evaluation.EvaluationResponse.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.evaluation.Evaluator#doGetSupportingData(EvaluationRequest)` | `flint.ai.evaluation.Evaluator.doGetSupportingData` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -673,16 +697,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfBottomTextLinesToDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfBottomTextLinesToDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopPagesToSkipBeforeDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopPagesToSkipBeforeDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopTextLinesToDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopTextLinesToDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.reader.JsonMetadataGenerator#generate(Map)` | `flint.ai.reader.JsonMetadataGenerator.generate` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.reader.JsonMetadataGenerator#generate(Map)` | `flint.ai.reader.JsonMetadataGenerator.generate` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.ai.template
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.ai.template.NoOpTemplateRenderer` | `flint.ai.template_.NoOpTemplateRenderer` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `org.springframework.ai.template.NoOpTemplateRenderer#apply(String,Map)` | `flint.ai.template_.NoOpTemplateRenderer.apply` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.ai.template.NoOpTemplateRenderer#apply(String,Map)` | `flint.ai.template_.NoOpTemplateRenderer.apply` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.TemplateRenderer` | `flint.ai.template_.TemplateRenderer` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `org.springframework.ai.template.TemplateRenderer#apply(String,Map)` | `flint.ai.template_.TemplateRenderer.apply` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.ai.template.TemplateRenderer#apply(String,Map)` | `flint.ai.template_.TemplateRenderer.apply` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.ValidationMode` | `flint.ai.template_.ValidationMode` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 
 #### org.springframework.ai.tokenizer
@@ -713,15 +737,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.boot.actuate.info.Info#equals(Object)` | `flint.boot.actuate.info.Info.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.boot.actuate.info.Info#get(String)` | `flint.boot.actuate.info.Info.get` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.boot.actuate.info.Info#getDetails()` | `flint.boot.actuate.info.Info.getDetails` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.boot.actuate.info.Info#getDetails()` | `flint.boot.actuate.info.Info.getDetails` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.boot.actuate.info.Info#hashCode()` | `flint.boot.actuate.info.Info.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.boot.actuate.info.Info.Builder` | `flint.boot.actuate.info.Info.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `org.springframework.boot.actuate.info.Info.Builder#withDetail(String,Object)` | `flint.boot.actuate.info.Info.Builder.withDetail` | [R11](api-mapping.md#r11-object-identity-and-equality), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.boot.actuate.info.Info.Builder#withDetails(Map)` | `flint.boot.actuate.info.Info.Builder.withDetails` | [R11](api-mapping.md#r11-object-identity-and-equality), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.boot.actuate.info.Info.Builder#withDetails(Map)` | `flint.boot.actuate.info.Info.Builder.withDetails` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.boot.actuate.info.InfoContributor` | `flint.boot.actuate.info.InfoContributor` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.boot.actuate.info.InfoEndpoint` | `flint.boot.actuate.info.InfoEndpoint` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.boot.actuate.info.InfoEndpoint#<init>(List)` | `flint.boot.actuate.info.InfoEndpoint.this` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) |  |
-| `org.springframework.boot.actuate.info.InfoEndpoint#info()` | `flint.boot.actuate.info.InfoEndpoint.info` | [R2](api-mapping.md#r2-annotations), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.boot.actuate.info.InfoEndpoint#<init>(List)` | `flint.boot.actuate.info.InfoEndpoint.this` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.actuate.info.InfoEndpoint#info()` | `flint.boot.actuate.info.InfoEndpoint.info` | [R2](api-mapping.md#r2-annotations), [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.springframework.boot.autoconfigure
 
@@ -753,10 +777,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#find(BeanFactory)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.find` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#get(ConfigurableListableBeanFactory)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.get` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
-| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getExclusions()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getExclusions` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getExclusions()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getExclusions` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getParent()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getParent` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
-| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getUnconditionalClasses()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getUnconditionalClasses` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
-| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#recordEvaluationCandidates(List)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.recordEvaluationCandidates` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getUnconditionalClasses()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getUnconditionalClasses` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#recordEvaluationCandidates(List)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.recordEvaluationCandidates` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#recordExclusions(Collection)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.recordExclusions` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage` | `flint.boot.autoconfigure.condition_runtime.ConditionMessage` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage#andCondition(Class,Object...)` | `flint.boot.autoconfigure.condition_runtime.ConditionMessage.andCondition` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R4](api-mapping.md#r4-classt-parameters), [R7](api-mapping.md#r7-overloads) |  |
@@ -828,12 +852,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#<init>(Collection,Collection)` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#throwIfMultipleNonNullValuesIn(Consumer)` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.throwIfMultipleNonNullValuesIn` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#getConfiguredNames()` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.getConfiguredNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#getMutuallyExclusiveNames()` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.getMutuallyExclusiveNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#throwIfMultipleNonNullValuesIn(Consumer)` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.throwIfMultipleNonNullValuesIn` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.springframework.boot.test.util
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.boot.test.util.TestPropertyValues.Pair#addTo(Map)` | `flint.boot.test.util.TestPropertyValues.Pair.addTo` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.boot.test.util.TestPropertyValues.Pair#fromMapEntry(Map.Entry)` | `flint.boot.test.util.TestPropertyValues.Pair.fromMapEntry` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `org.springframework.boot.test.util.TestPropertyValues.Pair#of(String,String)` | `flint.boot.test.util.TestPropertyValues.Pair.of` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
@@ -1097,7 +1124,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.model.EntityInstantiators#getInstantiatorFor(PersistentEntity)` | `flint.data.mapping.model.EntityInstantiators.getInstantiatorFor` | [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#<init>(List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#<init>(PersistentEntity,List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values), [D-DATA-25](api-mapping.md#deviations) |  |
-| `org.springframework.data.mapping.model.MappingInstantiationException#getConstructorArguments()` | `flint.data.mapping.model.MappingInstantiationException.getConstructorArguments` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.model.MappingInstantiationException#getConstructorArguments()` | `flint.data.mapping.model.MappingInstantiationException.getConstructorArguments` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#getEntityCreator()` | `flint.data.mapping.model.MappingInstantiationException.getEntityCreator` | [D-DATA-21](api-mapping.md#deviations), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#getEntityType()` | `flint.data.mapping.model.MappingInstantiationException.getEntityType` | [R4](api-mapping.md#r4-classt-parameters), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MutablePersistentEntity#setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory)` | `flint.data.mapping.model.MutablePersistentEntity.setPersistentPropertyAccessorFactory` | [D-DATA-17](api-mapping.md#deviations) |  |
@@ -1278,6 +1305,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.Meter.Id#getBaseUnit()` | `flint.micrometer.core.instrument.Meter.Id.getBaseUnit` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `io.micrometer.core.instrument.Meter.Id#getDescription()` | `flint.micrometer.core.instrument.Meter.Id.getDescription` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `io.micrometer.core.instrument.Meter.Id#getTag(String)` | `flint.micrometer.core.instrument.Meter.Id.getTag` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `io.micrometer.core.instrument.Meter.Id#getTags()` | `flint.micrometer.core.instrument.Meter.Id.getTags` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `io.micrometer.core.instrument.Meter.Id#getTagsAsIterable()` | `flint.micrometer.core.instrument.Meter.Id.getTagsAsIterable` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `io.micrometer.core.instrument.Meter.Id#hashCode()` | `flint.micrometer.core.instrument.Meter.Id.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality), [R14](api-mapping.md#r14-strings-and-text) |  |
 | `io.micrometer.core.instrument.Meter.Id#replaceTags(Iterable)` | `flint.micrometer.core.instrument.Meter.Id.replaceTags` | [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -1389,6 +1417,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `io.micrometer.core.instrument.noop.NoopMeter#measure()` | `flint.micrometer.core.instrument.noop.NoopMeter.measure` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `io.micrometer.core.instrument.noop.NoopTimer#record(BooleanSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `io.micrometer.core.instrument.noop.NoopTimer#record(DoubleSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `io.micrometer.core.instrument.noop.NoopTimer#record(IntSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
@@ -1513,7 +1542,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.ConstructorResult` | `flint.jakarta.persistence.ConstructorResult` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ConstructorResult#columns` | `flint.jakarta.persistence.ConstructorResult.columns` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ConstructorResult#targetClass` | `flint.jakarta.persistence.ConstructorResult.targetClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `jakarta.persistence.Convert` | `flint.jakarta.persistence.Convert` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.persistence.Convert` | `flint.jakarta.persistence.Convert` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.Convert#attributeName` | `flint.jakarta.persistence.Convert.attributeName` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Convert#converter` | `flint.jakarta.persistence.Convert.converter` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.Convert#disableConversion` | `flint.jakarta.persistence.Convert.disableConversion` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1529,7 +1558,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.DiscriminatorColumn#options` | `flint.jakarta.persistence.DiscriminatorColumn.options` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.DiscriminatorValue` | `flint.jakarta.persistence.DiscriminatorValue` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.DiscriminatorValue#value` | `flint.jakarta.persistence.DiscriminatorValue.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.persistence.ElementCollection` | `flint.jakarta.persistence.ElementCollection` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.persistence.ElementCollection` | `flint.jakarta.persistence.ElementCollection` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.ElementCollection#fetch` | `flint.jakarta.persistence.ElementCollection.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ElementCollection#targetClass` | `flint.jakarta.persistence.ElementCollection.targetClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.Embeddable` | `flint.jakarta.persistence.Embeddable` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1537,7 +1566,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.EmbeddedId` | `flint.jakarta.persistence.EmbeddedId` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Entity` | `flint.jakarta.persistence.Entity` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Entity#name` | `flint.jakarta.persistence.Entity.name` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.persistence.EntityListeners` | `flint.jakarta.persistence.EntityListeners` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.persistence.EntityListeners` | `flint.jakarta.persistence.EntityListeners` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.EntityListeners#value` | `flint.jakarta.persistence.EntityListeners.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.EntityResult` | `flint.jakarta.persistence.EntityResult` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.EntityResult#discriminatorColumn` | `flint.jakarta.persistence.EntityResult.discriminatorColumn` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1563,7 +1592,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.GeneratedValue#generator` | `flint.jakarta.persistence.GeneratedValue.generator` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.GeneratedValue#strategy` | `flint.jakarta.persistence.GeneratedValue.strategy` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Id` | `flint.jakarta.persistence.Id` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.persistence.IdClass` | `flint.jakarta.persistence.IdClass` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.persistence.IdClass` | `flint.jakarta.persistence.IdClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.IdClass#value` | `flint.jakarta.persistence.IdClass.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.Index` | `flint.jakarta.persistence.Index` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Index#columnList` | `flint.jakarta.persistence.Index.columnList` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1603,19 +1632,19 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.JoinTable#uniqueConstraints` | `flint.jakarta.persistence.JoinTable.uniqueConstraints` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.Lob` | `flint.jakarta.persistence.Lob` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.LockModeType` | `flint.jakarta.persistence.LockModeType` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
-| `jakarta.persistence.ManyToMany` | `flint.jakarta.persistence.ManyToMany` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.persistence.ManyToMany` | `flint.jakarta.persistence.ManyToMany` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.ManyToMany#cascade` | `flint.jakarta.persistence.ManyToMany.cascade` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToMany#fetch` | `flint.jakarta.persistence.ManyToMany.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToMany#mappedBy` | `flint.jakarta.persistence.ManyToMany.mappedBy` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToMany#targetEntity` | `flint.jakarta.persistence.ManyToMany.targetEntity` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `jakarta.persistence.ManyToOne` | `flint.jakarta.persistence.ManyToOne` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.persistence.ManyToOne` | `flint.jakarta.persistence.ManyToOne` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.ManyToOne#cascade` | `flint.jakarta.persistence.ManyToOne.cascade` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToOne#fetch` | `flint.jakarta.persistence.ManyToOne.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToOne#optional` | `flint.jakarta.persistence.ManyToOne.optional` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.ManyToOne#targetEntity` | `flint.jakarta.persistence.ManyToOne.targetEntity` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.MapKey` | `flint.jakarta.persistence.MapKey` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.MapKey#name` | `flint.jakarta.persistence.MapKey.name` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.persistence.MapKeyClass` | `flint.jakarta.persistence.MapKeyClass` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.persistence.MapKeyClass` | `flint.jakarta.persistence.MapKeyClass` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.MapKeyClass#value` | `flint.jakarta.persistence.MapKeyClass.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.MapKeyColumn` | `flint.jakarta.persistence.MapKeyColumn` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.MapKeyColumn#columnDefinition` | `flint.jakarta.persistence.MapKeyColumn.columnDefinition` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1694,13 +1723,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.persistence.NamedSubgraph#attributeNodes` | `flint.jakarta.persistence.NamedSubgraph.attributeNodes` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.NamedSubgraph#name` | `flint.jakarta.persistence.NamedSubgraph.name` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.NamedSubgraph#type` | `flint.jakarta.persistence.NamedSubgraph.type` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `jakarta.persistence.OneToMany` | `flint.jakarta.persistence.OneToMany` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.persistence.OneToMany` | `flint.jakarta.persistence.OneToMany` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.OneToMany#cascade` | `flint.jakarta.persistence.OneToMany.cascade` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToMany#fetch` | `flint.jakarta.persistence.OneToMany.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToMany#mappedBy` | `flint.jakarta.persistence.OneToMany.mappedBy` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToMany#orphanRemoval` | `flint.jakarta.persistence.OneToMany.orphanRemoval` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToMany#targetEntity` | `flint.jakarta.persistence.OneToMany.targetEntity` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `jakarta.persistence.OneToOne` | `flint.jakarta.persistence.OneToOne` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.persistence.OneToOne` | `flint.jakarta.persistence.OneToOne` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.persistence.OneToOne#cascade` | `flint.jakarta.persistence.OneToOne.cascade` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToOne#fetch` | `flint.jakarta.persistence.OneToOne.fetch` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.persistence.OneToOne#mappedBy` | `flint.jakarta.persistence.OneToOne.mappedBy` | [R2](api-mapping.md#r2-annotations) |  |
@@ -1954,6 +1983,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.servlet.ServletContext#getMinorVersion()` | `flint.jakarta.servlet.ServletContext.getMinorVersion` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletContext#getServerInfo()` | `flint.jakarta.servlet.ServletContext.getServerInfo` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletContext#setAttribute(String,Object)` | `flint.jakarta.servlet.ServletContext.setAttribute` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `jakarta.servlet.ServletException` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `jakarta.servlet.ServletException#<init>()` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `jakarta.servlet.ServletException#<init>(String)` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `jakarta.servlet.ServletException#<init>(String,Throwable)` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `jakarta.servlet.ServletException#<init>(Throwable)` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `jakarta.servlet.ServletException#getRootCause()` | `flint.jakarta.servlet.ServletException.getRootCause` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletInputStream` | `flint.jakarta.servlet.ServletInputStream` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletInputStream#isFinished()` | `flint.jakarta.servlet.ServletInputStream.isFinished` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletInputStream#isReady()` | `flint.jakarta.servlet.ServletInputStream.isReady` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -2156,73 +2191,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `jakarta.validation.Valid` | `flint.jakarta.validation.Valid` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.validation.Validator#validate(T,Class...)` | `flint.jakarta.validation.Validator.validate` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.validation.Validator#validateProperty(T,String,Class...)` | `flint.jakarta.validation.Validator.validateProperty` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.validation.Validator#validateValue(Class,String,Object,Class...)` | `flint.jakarta.validation.Validator.validateValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
-
-#### jakarta.validation.constraints
-
-| Java | Flint | Rules | Note |
-| --- | --- | --- | --- |
-| `jakarta.validation.constraints.AssertFalse` | `flint.jakarta.validation.constraints.AssertFalse` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.AssertFalse#message` | `flint.jakarta.validation.constraints.AssertFalse.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.AssertTrue` | `flint.jakarta.validation.constraints.AssertTrue` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.AssertTrue#message` | `flint.jakarta.validation.constraints.AssertTrue.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.DecimalMax` | `flint.jakarta.validation.constraints.DecimalMax` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.DecimalMax#inclusive` | `flint.jakarta.validation.constraints.DecimalMax.inclusive` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.DecimalMax#message` | `flint.jakarta.validation.constraints.DecimalMax.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.DecimalMax#value` | `flint.jakarta.validation.constraints.DecimalMax.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.DecimalMin` | `flint.jakarta.validation.constraints.DecimalMin` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.DecimalMin#inclusive` | `flint.jakarta.validation.constraints.DecimalMin.inclusive` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.DecimalMin#message` | `flint.jakarta.validation.constraints.DecimalMin.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.DecimalMin#value` | `flint.jakarta.validation.constraints.DecimalMin.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Digits` | `flint.jakarta.validation.constraints.Digits` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Digits#fraction` | `flint.jakarta.validation.constraints.Digits.fraction` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Digits#integer` | `flint.jakarta.validation.constraints.Digits.integer` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Digits#message` | `flint.jakarta.validation.constraints.Digits.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Email` | `flint.jakarta.validation.constraints.Email` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Email#flags` | `flint.jakarta.validation.constraints.Email.flags` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Email#message` | `flint.jakarta.validation.constraints.Email.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Email#regexp` | `flint.jakarta.validation.constraints.Email.regexp` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Future` | `flint.jakarta.validation.constraints.Future` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Future#message` | `flint.jakarta.validation.constraints.Future.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.FutureOrPresent` | `flint.jakarta.validation.constraints.FutureOrPresent` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.FutureOrPresent#message` | `flint.jakarta.validation.constraints.FutureOrPresent.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Max` | `flint.jakarta.validation.constraints.Max` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Max#message` | `flint.jakarta.validation.constraints.Max.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Max#value` | `flint.jakarta.validation.constraints.Max.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Min` | `flint.jakarta.validation.constraints.Min` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Min#message` | `flint.jakarta.validation.constraints.Min.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Min#value` | `flint.jakarta.validation.constraints.Min.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Negative` | `flint.jakarta.validation.constraints.Negative` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Negative#message` | `flint.jakarta.validation.constraints.Negative.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.NegativeOrZero` | `flint.jakarta.validation.constraints.NegativeOrZero` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.NegativeOrZero#message` | `flint.jakarta.validation.constraints.NegativeOrZero.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.NotBlank` | `flint.jakarta.validation.constraints.NotBlank` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.NotBlank#message` | `flint.jakarta.validation.constraints.NotBlank.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.NotEmpty` | `flint.jakarta.validation.constraints.NotEmpty` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.NotEmpty#message` | `flint.jakarta.validation.constraints.NotEmpty.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.NotNull` | `flint.jakarta.validation.constraints.NotNull` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.NotNull#message` | `flint.jakarta.validation.constraints.NotNull.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Null` | `flint.jakarta.validation.constraints.Null` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Null#message` | `flint.jakarta.validation.constraints.Null.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Past` | `flint.jakarta.validation.constraints.Past` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Past#message` | `flint.jakarta.validation.constraints.Past.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.PastOrPresent` | `flint.jakarta.validation.constraints.PastOrPresent` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.PastOrPresent#message` | `flint.jakarta.validation.constraints.PastOrPresent.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Pattern` | `flint.jakarta.validation.constraints.Pattern` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Pattern#flags` | `flint.jakarta.validation.constraints.Pattern.flags` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Pattern#message` | `flint.jakarta.validation.constraints.Pattern.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Pattern#regexp` | `flint.jakarta.validation.constraints.Pattern.regexp` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Positive` | `flint.jakarta.validation.constraints.Positive` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Positive#message` | `flint.jakarta.validation.constraints.Positive.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.PositiveOrZero` | `flint.jakarta.validation.constraints.PositiveOrZero` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.PositiveOrZero#message` | `flint.jakarta.validation.constraints.PositiveOrZero.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Size` | `flint.jakarta.validation.constraints.Size` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Size#max` | `flint.jakarta.validation.constraints.Size.max` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Size#message` | `flint.jakarta.validation.constraints.Size.message` | [R2](api-mapping.md#r2-annotations) |  |
-| `jakarta.validation.constraints.Size#min` | `flint.jakarta.validation.constraints.Size.min` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### java.io
 
@@ -2256,7 +2227,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.IndexOutOfBoundsException` | `flint.java.lang.IndexOutOfBoundsException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.IndexOutOfBoundsException#<init>(String)` | `flint.java.lang.IndexOutOfBoundsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.IndexOutOfBoundsException#<init>(int)` | `flint.java.lang.IndexOutOfBoundsException.this` | [R7](api-mapping.md#r7-overloads) | An int argument implicitly widens to the long overload. The index detail matches Java across the int range. |
-| `java.lang.Math` | `flint.java.lang.math.Math` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.lang.math; flint.java.lang does not re-export it until the JDK aggregate exists. NaN results are the canonical quiet NaN (Double.NaN's bits); HotSpot on x86-64 returns the sign-set default NaN for computed paths, which only doubleToRawLongBits can observe. |
 | `java.lang.NullPointerException` | `flint.java.lang.NullPointerException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.NullPointerException#<init>(String)` | `flint.java.lang.NullPointerException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.NumberFormatException` | `flint.java.lang.NumberFormatException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
@@ -2304,12 +2274,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `java.net.ProtocolFamily` | `flint.java.net.protocolfamily.ProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.protocolfamily : ProtocolFamily. |
-| `java.net.SocketAddress` | `flint.java.net.socketaddress.SocketAddress` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.socketaddress : SocketAddress. Abstract socket address base without Java Serializable. |
-| `java.net.StandardProtocolFamily` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names), [R18](api-mapping.md#r18-enums-that-implement-an-interface) | Leaf import: flint.java.net.standardprotocolfamily : StandardProtocolFamily. D enum implementing ProtocolFamily via R18; call family.name() via R20 UFCS. |
-| `java.net.StandardProtocolFamily#INET` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily.INET` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
-| `java.net.StandardProtocolFamily#INET6` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily.INET6` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
-| `java.net.StandardProtocolFamily#UNIX` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily.UNIX` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.net.URI` | `flint.java.net.URI` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable D struct holds the original URI text and is copied by value. |
 | `java.net.URI#getScheme()` | `flint.java.net.URI.getScheme` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null string denotes an absent scheme. Every present scheme is nonempty. |
 | `java.net.URLDecoder` | `flint.java.net.urldecoder.URLDecoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.urldecoder : URLDecoder. Null string inputs and charset names are treated as empty. |
@@ -2421,22 +2385,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.DateTimeException` | `flint.java.time.DateTimeException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.time.DateTimeException#<init>(String)` | `flint.java.time.DateTimeException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.DateTimeException#<init>(String,Throwable)` | `flint.java.time.DateTimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
-| `java.time.Duration` | `flint.java.time.Duration` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; ZERO is Duration.init. Members without their own row stay deferred: most do not yet check overflow as Java does. |
-| `java.time.Duration#equals(Object)` | `flint.java.time.Duration.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `java.time.Instant` | `flint.java.time.Instant` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; EPOCH is Instant.init. Members without their own row stay deferred: the MIN/MAX range and overflow checks are not implemented yet. |
-| `java.time.Instant#equals(Object)` | `flint.java.time.Instant.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `java.time.LocalDate` | `flint.java.time.LocalDate` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; LocalDate.init is EPOCH. Members without their own row stay deferred: of and withDayOfMonth report the DayOfMonth range as 1 - 31 where Java prints 1 - 28/31, plusDays and its relatives do not yet check overflow, and compareTo returns -1/0/1 where Java returns the field difference. |
-| `java.time.LocalDate#equals(Object)` | `flint.java.time.LocalDate.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `java.time.LocalDateTime` | `flint.java.time.LocalDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDate and a LocalTime; LocalDateTime.init is 1970-01-01T00:00. Members without their own row stay deferred: day and time arithmetic reports an out-of-range result as a Year error where Java reports EpochDay, plusYears does not check overflow, and compareTo returns -1/0/1 where Java returns the field difference. |
-| `java.time.LocalDateTime#equals(Object)` | `flint.java.time.LocalDateTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `java.time.LocalTime` | `flint.java.time.LocalTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct; LocalTime.init is MIDNIGHT. Members without their own row stay deferred. |
-| `java.time.LocalTime#equals(Object)` | `flint.java.time.LocalTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.MonthDay` | `flint.java.time.monthday.MonthDay` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import MonthDay from flint.java.time.monthday until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.MonthDay#equals(Object)` | `flint.java.time.monthday.MonthDay.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.MonthDay#parse(CharSequence)` | `flint.java.time.monthday.MonthDay.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.MonthDay#with(Month)` | `flint.java.time.monthday.MonthDay.with_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `java.time.OffsetDateTime` | `flint.java.time.OffsetDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDateTime and a ZoneOffset. Members without their own row stay deferred: compareTo returns -1/0/1 where Java returns field differences, withOffsetSameInstant goes through the instant where Java adds seconds to the local date-time (the out-of-range message differs), and ofInstant and atZoneSameInstant report an out-of-range result as a Year error where Java reports EpochDay. |
-| `java.time.OffsetDateTime#equals(Object)` | `flint.java.time.OffsetDateTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Period` | `flint.java.time.period.Period` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Period from flint.java.time.period until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.Period#equals(Object)` | `flint.java.time.period.Period.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Period#parse(CharSequence)` | `flint.java.time.period.Period.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2447,9 +2399,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.YearMonth` | `flint.java.time.yearmonth.YearMonth` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import YearMonth from flint.java.time.yearmonth until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.YearMonth#equals(Object)` | `flint.java.time.yearmonth.YearMonth.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.YearMonth#parse(CharSequence)` | `flint.java.time.yearmonth.YearMonth.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
-| `java.time.ZoneId` | `flint.java.time.ZoneId` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of an ID and its fixed offset; ZoneId.init is Z. Region IDs need the time-zone database, so of accepts only offsets and the UTC, GMT and UT prefixes, and systemDefault is UTC; both stay deferred. |
-| `java.time.ZoneOffset` | `flint.java.time.ZoneOffset` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of the total seconds; ZoneOffset.init is UTC. It is not a ZoneId subtype: toZoneId converts it. Members without their own row stay deferred: compareTo returns -1/0/1 where Java returns the difference of the total seconds. |
-| `java.time.ZonedDateTime` | `flint.java.time.ZonedDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDateTime, a ZoneOffset and a ZoneId. Members without their own row stay deferred: the factories wait for region rules (gap and overlap resolution) and the EpochDay range message. |
 
 #### java.time.format
 
@@ -2572,6 +2521,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Collection#remove(Object)` | `flint.java.util.Collection.remove` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Collection#toArray()` | `flint.java.util.Collection.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Date#clone()` | `flint.java.util.Date.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.DuplicateFormatFlagsException` | `flint.java.util.formatter.DuplicateFormatFlagsException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null flag slice counts as empty under R26. |
+| `java.util.DuplicateFormatFlagsException#<init>(String)` | `flint.java.util.formatter.DuplicateFormatFlagsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Enumeration` | `flint.java.util.enumeration.Enumeration` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import the generic interface from its direct Java leaf. |
+| `java.util.Enumeration#asIterator()` | `flint.java.util.enumeration.Enumeration.asIterator` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Implementors can mix in Enumeration.Defaults for the Java default. The method delegates to the existing enumeration and returns the canonical Iterator. |
+| `java.util.EventListener` | `flint.java.util.eventlistener.EventListener` | [R1](api-mapping.md#r1-packages-and-names) | Import the marker from its direct Java leaf. |
+| `java.util.EventObject` | `flint.java.util.eventobject.EventObject` | [R1](api-mapping.md#r1-packages-and-names) | Import the event base from its direct Java leaf. Java serialization is excluded from the JDK port. |
+| `java.util.EventObject#toString()` | `flint.java.util.eventobject.EventObject.toString` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Uses the runtime D class name in the same [source=...] layout and dispatches the source's toString. |
+| `java.util.FormatFlagsConversionMismatchException` | `flint.java.util.formatter.FormatFlagsConversionMismatchException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null flag slice counts as empty under R26. The conversion is a UTF-16 code unit; a lone surrogate displays as U+FFFD under R14. |
+| `java.util.FormatFlagsConversionMismatchException#<init>(String,char)` | `flint.java.util.formatter.FormatFlagsConversionMismatchException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.FormatFlagsConversionMismatchException#getConversion()` | `flint.java.util.formatter.FormatFlagsConversionMismatchException.getConversion` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.util.HashMap#containsKey(Object)` | `flint.java.util.HashMap.containsKey` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#containsValue(Object)` | `flint.java.util.HashMap.containsValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HashMap#get(Object)` | `flint.java.util.HashMap.get` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -2605,8 +2564,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.HexFormat#withDelimiter(String)` | `flint.java.util.hexformat.HexFormat.withDelimiter` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#withPrefix(String)` | `flint.java.util.hexformat.HexFormat.withPrefix` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#withSuffix(String)` | `flint.java.util.hexformat.HexFormat.withSuffix` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.IllegalFormatCodePointException` | `flint.java.util.formatter.IllegalFormatCodePointException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.IllegalFormatConversionException` | `flint.java.util.formatter.IllegalFormatConversionException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.IllegalFormatException` | `flint.java.util.formatter.IllegalFormatException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
+| `java.util.IllegalFormatFlagsException` | `flint.java.util.formatter.IllegalFormatFlagsException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null flag slice counts as empty under R26. |
+| `java.util.IllegalFormatFlagsException#<init>(String)` | `flint.java.util.formatter.IllegalFormatFlagsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.IllegalFormatPrecisionException` | `flint.java.util.formatter.IllegalFormatPrecisionException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
+| `java.util.IllegalFormatWidthException` | `flint.java.util.formatter.IllegalFormatWidthException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. |
+| `java.util.InputMismatchException` | `flint.java.util.inputmismatchexception.InputMismatchException` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | An empty detail string is treated as absent. Java preserves an explicitly empty detail (R26). Import from flint.java.util.inputmismatchexception while the canonical NoSuchElementException is declared in the util aggregate (R1). |
+| `java.util.InputMismatchException#<init>(String)` | `flint.java.util.inputmismatchexception.InputMismatchException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.List#indexOf(Object)` | `flint.java.util.List.indexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.List#lastIndexOf(Object)` | `flint.java.util.List.lastIndexOf` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.List#of(E...)` | `flint.java.util.List.of` | [R7](api-mapping.md#r7-overloads) |  |
@@ -2633,6 +2599,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Map.Entry` | `flint.java.util.MapEntry` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to MapEntry and exposed through Map.Entry as an alias. |
 | `java.util.MissingFormatArgumentException` | `flint.java.util.formatter.MissingFormatArgumentException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null format specifier slice counts as empty under R26. |
 | `java.util.MissingFormatArgumentException#<init>(String)` | `flint.java.util.formatter.MissingFormatArgumentException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.MissingFormatWidthException` | `flint.java.util.formatter.MissingFormatWidthException` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.formatter; flint.java.util does not re-export it until the JDK aggregate exists. A null specifier slice counts as empty under R26. |
+| `java.util.MissingFormatWidthException#<init>(String)` | `flint.java.util.formatter.MissingFormatWidthException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Objects#equals(Object,Object)` | `flint.java.util.Objects.equals` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Objects#hash(Object...)` | `flint.java.util.Objects.hash` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.Objects#hashCode(Object)` | `flint.java.util.Objects.hashCode` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -2641,7 +2609,21 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Objects#toString(Object)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Objects#toString(Object,String)` | `flint.java.util.Objects.toString` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.Optional` | `flint.java.util.Optional` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.PrimitiveIterator` | `flint.java.util.primitiveiterator.PrimitiveIterator` | [R1](api-mapping.md#r1-packages-and-names), [R13](api-mapping.md#r13-nested-and-inner-classes) | Import the generic interface from its direct Java leaf. OfInt, OfLong and OfDouble are hoisted out of the template and aliased back, so callers write PrimitiveIteratorOfInt or PrimitiveIterator!(int, IntConsumer).OfInt, never PrimitiveIterator.OfInt. |
+| `java.util.PrimitiveIterator.OfDouble` | `flint.java.util.primitiveiterator.PrimitiveIteratorOfDouble` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to PrimitiveIteratorOfDouble and exposed through PrimitiveIterator.OfDouble as an alias. Implementors mix in OfDouble.Defaults for the Java defaults. |
+| `java.util.PrimitiveIterator.OfDouble#forEachRemaining(DoubleConsumer)` | `flint.java.util.primitiveiterator.PrimitiveIteratorOfDouble.forEachRemaining` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R9](api-mapping.md#r9-functional-interfaces) | The Java default comes from OfDouble.Defaults. A final overload also takes a void delegate(double) action; Defaults re-exports it beside the consumer form, so both are callable through the implementing class. A null action throws NullPointerException before hasNext is called. |
+| `java.util.PrimitiveIterator.OfDouble#next()` | `flint.java.util.primitiveiterator.PrimitiveIteratorOfDouble.next` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R5](api-mapping.md#r5-optional-and-nullable-values) | The Java default comes from OfDouble.Defaults and returns the double from nextDouble unboxed. Java's Tripwire diagnostic is not ported. |
+| `java.util.PrimitiveIterator.OfInt` | `flint.java.util.primitiveiterator.PrimitiveIteratorOfInt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to PrimitiveIteratorOfInt and exposed through PrimitiveIterator.OfInt as an alias. Implementors mix in OfInt.Defaults for the Java defaults. |
+| `java.util.PrimitiveIterator.OfInt#forEachRemaining(IntConsumer)` | `flint.java.util.primitiveiterator.PrimitiveIteratorOfInt.forEachRemaining` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R9](api-mapping.md#r9-functional-interfaces) | The Java default comes from OfInt.Defaults. A final overload also takes a void delegate(int) action; Defaults re-exports it beside the consumer form, so both are callable through the implementing class. A null action throws NullPointerException before hasNext is called. |
+| `java.util.PrimitiveIterator.OfInt#next()` | `flint.java.util.primitiveiterator.PrimitiveIteratorOfInt.next` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R5](api-mapping.md#r5-optional-and-nullable-values) | The Java default comes from OfInt.Defaults and returns the int from nextInt unboxed. Java's Tripwire diagnostic is not ported. |
+| `java.util.PrimitiveIterator.OfLong` | `flint.java.util.primitiveiterator.PrimitiveIteratorOfLong` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to PrimitiveIteratorOfLong and exposed through PrimitiveIterator.OfLong as an alias. Implementors mix in OfLong.Defaults for the Java defaults. |
+| `java.util.PrimitiveIterator.OfLong#forEachRemaining(LongConsumer)` | `flint.java.util.primitiveiterator.PrimitiveIteratorOfLong.forEachRemaining` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R9](api-mapping.md#r9-functional-interfaces) | The Java default comes from OfLong.Defaults. A final overload also takes a void delegate(long) action; Defaults re-exports it beside the consumer form, so both are callable through the implementing class. A null action throws NullPointerException before hasNext is called. |
+| `java.util.PrimitiveIterator.OfLong#next()` | `flint.java.util.primitiveiterator.PrimitiveIteratorOfLong.next` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R5](api-mapping.md#r5-optional-and-nullable-values) | The Java default comes from OfLong.Defaults and returns the long from nextLong unboxed. Java's Tripwire diagnostic is not ported. |
+| `java.util.Properties` | `flint.java.util.Properties` | [R26](api-mapping.md#r26-null-arrays) | A null string slice passed as a property key or as a value to setProperty counts as empty. |
+| `java.util.Properties#getProperty(String)` | `flint.java.util.Properties.getProperty` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Properties#getProperty(String,String)` | `flint.java.util.Properties.getProperty` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Properties#load(InputStream)` | `flint.java.util.Properties.load` | [R14](api-mapping.md#r14-strings-and-text) | Decodes ISO-8859-1 and leaves the stream open. An isolated UTF-16 surrogate escape becomes U+FFFD in the D UTF-8 string. |
+| `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Random#nextBytes(byte[])` | `flint.java.util.random.random.Random.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
@@ -2653,6 +2635,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.StringJoiner#length()` | `flint.java.util.stringjoiner.StringJoiner.length` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.util.StringJoiner#setEmptyValue(CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.setEmptyValue` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.StringJoiner#toString()` | `flint.java.util.stringjoiner.StringJoiner.toString` | [R11](api-mapping.md#r11-object-identity-and-equality), [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.util.StringTokenizer` | `flint.java.util.stringtokenizer.StringTokenizer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import the leaf flint.java.util.stringtokenizer. Positions are UTF-8 offsets and delimiters match whole code points. A null string or delimiter set counts as empty under R26, where Java throws NullPointerException. |
+| `java.util.StringTokenizer#<init>(String)` | `flint.java.util.stringtokenizer.StringTokenizer.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.StringTokenizer#<init>(String,String)` | `flint.java.util.stringtokenizer.StringTokenizer.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.StringTokenizer#<init>(String,String,boolean)` | `flint.java.util.stringtokenizer.StringTokenizer.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.StringTokenizer#nextElement()` | `flint.java.util.stringtokenizer.StringTokenizer.nextElement` | [R23](api-mapping.md#r23-object-typed-values) | Returns the String token as Any. |
+| `java.util.StringTokenizer#nextToken(String)` | `flint.java.util.stringtokenizer.StringTokenizer.nextToken` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.UUID` | `flint.java.util.uuid.UUID` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.uuid; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.UUID#equals(Object)` | `flint.java.util.uuid.UUID.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#hashCode()` | `flint.java.util.uuid.UUID.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -2716,16 +2704,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `java.util.function.Consumer` | `flint.java.util.function_.consumer.Consumer` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.DoubleConsumer` | `flint.java.util.function_.doubleconsumer.DoubleConsumer` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
-| `java.util.function.Function` | `flint.java.util.function_.function_.Function` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
-| `java.util.function.Function#identity()` | `flint.java.util.function_.function_.Function.identity` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) | Call Function!(T, T).identity(). Flint binds Java's method type parameter on the interface specialization. |
+| `java.util.function.Function#identity()` | `flint.java.util.function_.Function.identity` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) | Call Function!(T, T).identity(). Flint binds Java's method type parameter on the interface specialization. |
 | `java.util.function.IntBinaryOperator` | `flint.java.util.function_.intbinaryoperator.IntBinaryOperator` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.IntConsumer` | `flint.java.util.function_.intconsumer.IntConsumer` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.IntSupplier` | `flint.java.util.function_.intsupplier.IntSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.LongConsumer` | `flint.java.util.function_.longconsumer.LongConsumer` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.LongSupplier` | `flint.java.util.function_.longsupplier.LongSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.Supplier` | `flint.java.util.function_.supplier.Supplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
-| `java.util.function.UnaryOperator` | `flint.java.util.function_.unaryoperator.UnaryOperator` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
-| `java.util.function.UnaryOperator#identity()` | `flint.java.util.function_.unaryoperator.UnaryOperator.identity` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) | Call UnaryOperator!T.identity(). Flint binds Java's factory type on the interface specialization. |
 
 #### java.util.random
 
@@ -2750,17 +2735,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.regex.Pattern#matcher(CharSequence)` | `flint.java.util.regex.pattern.Pattern.matcher` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.regex.Pattern#pattern()` | `flint.java.util.regex.pattern.Pattern.pattern` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.regex.Pattern#toString()` | `flint.java.util.regex.pattern.Pattern.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-
-#### java.util.stream
-
-| Java | Flint | Rules | Note |
-| --- | --- | --- | --- |
-| `java.util.stream.Collector` | `flint.java.util.stream.collector.Collector` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces), [R13](api-mapping.md#r13-nested-and-inner-classes) | A generic interface named with its type arguments, Collector!(T, A, R); the stream package re-exports it. Characteristics is hoisted beside it and aliased back. |
-| `java.util.stream.Collector#of(Supplier,BiConsumer,BinaryOperator,Characteristics...)` | `flint.java.util.stream.collector.Collector.of` | [R9](api-mapping.md#r9-functional-interfaces), [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces), [R26](api-mapping.md#r26-null-arrays) | Called as Collector!(T, A, A).of, with interfaces or delegates. A null function throws NullPointerException as in Java. A null characteristics array counts as empty (R26), and a null characteristic does not compile (R20). |
-| `java.util.stream.Collector#of(Supplier,BiConsumer,BinaryOperator,Function,Characteristics...)` | `flint.java.util.stream.collector.Collector.of` | [R9](api-mapping.md#r9-functional-interfaces), [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces), [R26](api-mapping.md#r26-null-arrays) | Called as Collector!(T, A, R).of, with interfaces or delegates. A null function throws NullPointerException as in Java. A null characteristics array counts as empty (R26), and a null characteristic does not compile (R20). |
-| `java.util.stream.Collector.Characteristics` | `flint.java.util.stream.collector.Characteristics` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted out of the generic Collector and exposed through Collector!(T, A, R).Characteristics as an alias. |
-| `java.util.stream.Stream#collect(Collector)` | `flint.java.util.stream.Stream.collect` | [R10](api-mapping.md#r10-streams-and-collections), [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) | Takes a Collector!(T, A, R) with the stream's own element type, since D has no ? super T. The getters, the stream check, the characteristics reads and the null checks follow Java's order. Under IDENTITY_FINISH a container that cannot become R throws ClassCastException in collect, where Java's unchecked cast fails at the caller. |
-| `java.util.stream.Stream#collect(Supplier,BiConsumer,BiConsumer)` | `flint.java.util.stream.Stream.collect` | [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) | Takes the three functions as Java interfaces or as D delegates. The accumulator takes the stream's own element type, since D has no ? super T. As in Java, all three are null-checked before the stream is taken, the supplier runs before the first element is pulled, and the sequential path never calls the combiner. A value-returning expression lambda such as (l, e) => l.add(e) needs a block body to fit the void accumulator delegate. |
 
 #### org.aopalliance.aop
 
@@ -3053,7 +3027,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.framework.Advised#getAdvisorCount()` | `flint.aop.framework.Advised.getAdvisorCount` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.aop.framework.Advised#getProxiedInterfaces()` | `flint.aop.framework.Advised.getProxiedInterfaces` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.framework.Advised#isInterfaceProxied(Class)` | `flint.aop.framework.Advised.isInterfaceProxied` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.aop.framework.AdvisorChainFactory#getInterceptorsAndDynamicInterceptionAdvice(Advised,Method,Class)` | `flint.aop.framework.AdvisorChainFactory.getInterceptorsAndDynamicInterceptionAdvice` | [R4](api-mapping.md#r4-classt-parameters), [R23](api-mapping.md#r23-object-typed-values), [D-AOT-MEMBER](api-mapping.md#deviations) |  |
+| `org.springframework.aop.framework.AdvisorChainFactory#getInterceptorsAndDynamicInterceptionAdvice(Advised,Method,Class)` | `flint.aop.framework.AdvisorChainFactory.getInterceptorsAndDynamicInterceptionAdvice` | [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values), [D-AOT-MEMBER](api-mapping.md#deviations) |  |
 | `org.springframework.aop.framework.AopConfigException#<init>(String,Throwable)` | `flint.aop.framework.AopConfigException` | [R8](api-mapping.md#r8-exceptions) |  |
 | `org.springframework.aop.framework.AopProxy#getProxy()` | `flint.aop.framework.AopProxy.getProxy` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.aop.framework.ProxyConfig#toString()` | `flint.aop.framework.ProxyConfig.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -3138,7 +3112,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.aop.support.ExpressionPointcut#getExpression()` | `flint.aop.support.ExpressionPointcut.getExpression` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.aop.support.IntroductionInfoSupport#getInterfaces()` | `flint.aop.support.IntroductionInfoSupport.getInterfaces` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.support.IntroductionInfoSupport#implementsInterface(Class)` | `flint.aop.support.IntroductionInfoSupport.implementsInterface` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.aop.support.IntroductionInfoSupport#publishedInterfaces` | `flint.aop.support.IntroductionInfoSupport.publishedInterfaces` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.aop.support.IntroductionInfoSupport#publishedInterfaces` | `flint.aop.support.IntroductionInfoSupport.publishedInterfaces` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.aop.support.IntroductionInfoSupport#suppressInterface(Class)` | `flint.aop.support.IntroductionInfoSupport.suppressInterface` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.support.MethodMatchers#matches(MethodMatcher,Method,Class,boolean)` | `flint.aop.support.MethodMatchers.matches` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.aop.support.MethodMatchers#union(MethodMatcher,MethodMatcher)` | `flint.aop.support.MethodMatchers.union_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
@@ -3233,14 +3207,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.beans.factory.annotation.Autowired` | `flint.beans.factory.annotation.Autowired` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.beans.factory.annotation.Autowired#required` | `flint.beans.factory.annotation.Autowired.required` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils` | `flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#qualifiedBeanOfType(BeanFactory,Class,String)` | `flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils.qualifiedBeanOfType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R4](api-mapping.md#r4-classt-parameters) | Uses the generated qualifier values on the bean definition and the described class's merged annotations. The generated values combine definition and factory-method qualifier metadata. |
-| `org.springframework.beans.factory.annotation.Qualifier` | `flint.beans.factory.annotation.Qualifier` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.beans.factory.annotation.Qualifier#value` | `flint.beans.factory.annotation.Qualifier.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.beans.factory.annotation.Value` | `flint.beans.factory.annotation.Value` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.beans.factory.annotation.Value#value` | `flint.beans.factory.annotation.Value.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.beans.factory.config
 
@@ -3294,6 +3262,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.cache.annotation.AnnotationCacheOperationSource` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) | Java serialization of the operation source is deferred. |
 | `org.springframework.cache.annotation.AnnotationCacheOperationSource#<init>(CacheAnnotationParser...)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.this` | [R7](api-mapping.md#r7-overloads) |  |
+| `org.springframework.cache.annotation.AnnotationCacheOperationSource#<init>(Set)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.annotation.AnnotationCacheOperationSource#determineCacheOperations(CacheOperationProvider)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.determineCacheOperations` | [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.annotation.AnnotationCacheOperationSource#equals(Object)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.cache.annotation.AnnotationCacheOperationSource#findCacheOperations(Class)` | `flint.cache.annotation_runtime.AnnotationCacheOperationSource.findCacheOperations` | [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -3375,8 +3344,11 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#getCacheKey(Method,Class)` | `flint.cache.interceptor.AbstractFallbackCacheOperationSource.getCacheKey` | [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#getCacheOperations(Method,Class)` | `flint.cache.interceptor.AbstractFallbackCacheOperationSource.getCacheOperations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.interceptor.AbstractFallbackCacheOperationSource#hasCacheOperations(Method,Class)` | `flint.cache.interceptor.AbstractFallbackCacheOperationSource.hasCacheOperations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.cache.interceptor.BasicOperation#getCacheNames()` | `flint.cache.interceptor.BasicOperation.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.interceptor.CacheOperation#equals(Object)` | `flint.cache.interceptor.CacheOperation.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.interceptor.CacheOperation#getCacheNames()` | `flint.cache.interceptor.CacheOperation.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.interceptor.CacheOperation#hashCode()` | `flint.cache.interceptor.CacheOperation.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.cache.interceptor.CacheOperation.Builder#getCacheNames()` | `flint.cache.interceptor.CacheOperation.Builder.getCacheNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.interceptor.CacheOperation.Builder#setCacheNames(String...)` | `flint.cache.interceptor.CacheOperation.Builder.setCacheNames` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.cache.interceptor.CacheOperationSource#getCacheOperations(Method,Class)` | `flint.cache.interceptor.CacheOperationSource.getCacheOperations` | [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.cache.interceptor.CacheOperationSource#hasCacheOperations(Method,Class)` | `flint.cache.interceptor.CacheOperationSource.hasCacheOperations` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [D-AOT-MEMBER](api-mapping.md#deviations), [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -3426,23 +3398,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.context.annotation.AnnotationConfigApplicationContext#<init>(Class...)` | `flint.context.annotation.AnnotationConfigApplicationContext.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.context.annotation.AnnotationConfigApplicationContext#register(Class...)` | `flint.context.annotation.AnnotationConfigApplicationContext.register` | [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.context.annotation.DependsOn` | `flint.context.annotation.DependsOn` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.DependsOn#value` | `flint.context.annotation.DependsOn.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.Description` | `flint.context.annotation.Description` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.Description#value` | `flint.context.annotation.Description.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.Fallback` | `flint.context.annotation.Fallback` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.Import` | `flint.context.annotation.Import` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.Import#value` | `flint.context.annotation.Import.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
-| `org.springframework.context.annotation.Lazy` | `flint.context.annotation.Lazy` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.Lazy#value` | `flint.context.annotation.Lazy.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.Primary` | `flint.context.annotation.Primary` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.PropertySource` | `flint.context.annotation.PropertySource` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.PropertySource#encoding` | `flint.context.annotation.PropertySource.encoding` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.PropertySource#ignoreResourceNotFound` | `flint.context.annotation.PropertySource.ignoreResourceNotFound` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.PropertySource#name` | `flint.context.annotation.PropertySource.name` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.PropertySource#value` | `flint.context.annotation.PropertySource.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.Role` | `flint.context.annotation.Role` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.context.annotation.Role#value` | `flint.context.annotation.Role.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.context.event
 
@@ -4193,6 +4148,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `org.springframework.jdbc.core.metadata.GenericTableMetaDataProvider#getTableParameterMetaData()` | `flint.jdbc.core.metadata.GenericTableMetaDataProvider.getTableParameterMetaData` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.jdbc.core.metadata.TableMetaDataContext#getTableColumns()` | `flint.jdbc.core.metadata.TableMetaDataContext.getTableColumns` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.jdbc.core.metadata.TableMetaDataContext#matchInParameterValuesWithInsertColumns(Map)` | `flint.jdbc.core.metadata.TableMetaDataContext.matchInParameterValuesWithInsertColumns` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.jdbc.core.metadata.TableMetaDataContext#matchInParameterValuesWithInsertColumns(SqlParameterSource)` | `flint.jdbc.core.metadata.TableMetaDataContext.matchInParameterValuesWithInsertColumns` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.jdbc.core.metadata.TableMetaDataContext#processMetaData(DataSource,List,String[])` | `flint.jdbc.core.metadata.TableMetaDataContext.processMetaData` | [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -4382,14 +4339,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.orm.ObjectRetrievalFailureException#<init>(String,Object,String,Throwable)` | `flint.orm.ObjectRetrievalFailureException.this` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.orm.ObjectRetrievalFailureException#getIdentifier()` | `flint.orm.ObjectRetrievalFailureException.getIdentifier` | [R7](api-mapping.md#r7-overloads) |  |
 | `org.springframework.orm.ObjectRetrievalFailureException#getPersistentClass()` | `flint.orm.ObjectRetrievalFailureException.getPersistentClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
-
-#### org.springframework.stereotype
-
-| Java | Flint | Rules | Note |
-| --- | --- | --- | --- |
-| `org.springframework.stereotype.Component` | `flint.stereotype.Component` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.stereotype.Component#value` | `flint.stereotype.Component.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.stereotype.Indexed` | `flint.stereotype.Indexed` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.test.json
 
@@ -4590,18 +4539,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.util.NumberUtils#parseNumber(String,Class,NumberFormat)` | `flint.util.NumberUtils.parseNumber` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.ObjectUtils#isCompatibleWithThrowsClause(Throwable,Class...)` | `flint.util.ObjectUtils.isCompatibleWithThrowsClause` | [R4](api-mapping.md#r4-classt-parameters) |  |
 
-#### org.springframework.util.unit
-
-| Java | Flint | Rules | Note |
-| --- | --- | --- | --- |
-| `org.springframework.util.unit.DataSize` | `flint.util.unit.DataSize` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable value struct (ADR-030 section 5); DataSize.init is zero bytes, and == compares bytes. |
-| `org.springframework.util.unit.DataSize#equals(Object)` | `flint.util.unit.DataSize.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.util.unit.DataSize#of(long,DataUnit)` | `flint.util.unit.DataSize.of` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | A null unit does not compile; Spring throws IllegalArgumentException. |
-| `org.springframework.util.unit.DataSize#parse(CharSequence)` | `flint.util.unit.DataSize.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Takes a string; a null text counts as empty and fails as an invalid data size, where Spring's Assert.notNull throws first. |
-| `org.springframework.util.unit.DataSize#parse(CharSequence,DataUnit)` | `flint.util.unit.DataSize.parse` | [R14](api-mapping.md#r14-strings-and-text), [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Takes a string. A null default unit does not compile; parse(text) gives Spring's bytes default. |
-| `org.springframework.util.unit.DataUnit` | `flint.util.unit.DataUnit` | [R15](api-mapping.md#r15-enums-with-fields) | A D enum in Spring's order: its private per-constant suffix and size stay internal under R15's allowance. |
-| `org.springframework.util.unit.DataUnit#fromSuffix(String)` | `flint.util.unit.fromSuffix` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | A same-module free function called without a receiver. |
-
 #### org.springframework.validation
 
 | Java | Flint | Rules | Note |
@@ -4621,13 +4558,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.validation.Validator#forInstanceOf(Class,BiConsumer)` | `flint.validation.Validator.forInstanceOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.validation.Validator#forType(Class,BiConsumer)` | `flint.validation.Validator.forType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.validation.Validator#supports(Class)` | `flint.validation.Validator.supports` | [R4](api-mapping.md#r4-classt-parameters) |  |
-
-#### org.springframework.validation.annotation
-
-| Java | Flint | Rules | Note |
-| --- | --- | --- | --- |
-| `org.springframework.validation.annotation.Validated` | `flint.validation.annotation.Validated` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.validation.annotation.Validated#value` | `flint.validation.annotation.Validated.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.validation.beanvalidation
 
@@ -5165,6 +5095,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.databind.DeserializationFeature#enabledByDefault()` | `flint.jackson.databind.cfg.enabledByDefault` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `tools.jackson.databind.DeserializationFeature#enabledIn(int)` | `flint.jackson.databind.cfg.enabledIn` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `tools.jackson.databind.DeserializationFeature#getMask()` | `flint.jackson.databind.cfg.getMask` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
+| `tools.jackson.databind.JsonNode#findValuesAsString(String)` | `flint.jackson.databind.node.JsonNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `tools.jackson.databind.JsonNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.JsonNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.JsonNode#require()` | `flint.jackson.databind.node.JsonNode.require` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requireNonNull()` | `flint.jackson.databind.node.JsonNode.requireNonNull` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requiredAt(String)` | `flint.jackson.databind.node.JsonNode.requiredAt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [D-JACKSON-11](api-mapping.md#deviations) |  |
@@ -5262,6 +5194,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `tools.jackson.databind.node.ArrayNode#equals(Object)` | `flint.jackson.databind.node.ArrayNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.databind.node.ArrayNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.ArrayNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.node.BigIntegerNode#equals(Object)` | `flint.jackson.databind.node.BigIntegerNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.BooleanNode#equals(Object)` | `flint.jackson.databind.node.BooleanNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.DecimalNode#equals(Object)` | `flint.jackson.databind.node.DecimalNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
@@ -5270,21 +5203,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.databind.node.IntNode#equals(Object)` | `flint.jackson.databind.node.IntNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.LongNode#equals(Object)` | `flint.jackson.databind.node.LongNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.MissingNode#equals(Object)` | `flint.jackson.databind.node.MissingNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.databind.node.MissingNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.MissingNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.node.NullNode#equals(Object)` | `flint.jackson.databind.node.NullNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.ObjectNode#equals(Object)` | `flint.jackson.databind.node.ObjectNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.databind.node.ObjectNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.ObjectNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.node.ShortNode#equals(Object)` | `flint.jackson.databind.node.ShortNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.StringNode#equals(Object)` | `flint.jackson.databind.node.StringNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
+| `tools.jackson.databind.node.ValueNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.ValueNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 ### security
-
-#### org.springframework.security.access.prepost
-
-| Java | Flint | Rules | Note |
-| --- | --- | --- | --- |
-| `org.springframework.security.access.prepost.PostAuthorize` | `flint.security.access.prepost.PostAuthorize` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.security.access.prepost.PostAuthorize#value` | `flint.security.access.prepost.PostAuthorize.value` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.security.access.prepost.PreAuthorize` | `flint.security.access.prepost.PreAuthorize` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.security.access.prepost.PreAuthorize#value` | `flint.security.access.prepost.PreAuthorize.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.security.authentication
 
@@ -7284,23 +7211,6 @@ These Java elements have no Flint counterpart, for the reason the category gives
 | Java | Reason | Note |
 | --- | --- | --- |
 | `java.lang.runtime.**` (9 elements) | `jvm-runtime` |  |
-
-#### java.net
-
-| Java | Reason | Note |
-| --- | --- | --- |
-| `java.net.NetPermission` | `jvm-platform` |  |
-| `java.net.NetPermission#**` (2 elements) | `jvm-platform` |  |
-| `java.net.NetPermission.**` (0 elements) | `jvm-platform` |  |
-| `java.net.SocketPermission` | `jvm-platform` |  |
-| `java.net.SocketPermission#**` (6 elements) | `jvm-platform` |  |
-| `java.net.SocketPermission.**` (0 elements) | `jvm-platform` |  |
-| `java.net.URLClassLoader` | `jvm-runtime` |  |
-| `java.net.URLClassLoader#**` (16 elements) | `jvm-runtime` |  |
-| `java.net.URLClassLoader.**` (0 elements) | `jvm-runtime` |  |
-| `java.net.URLPermission` | `jvm-platform` |  |
-| `java.net.URLPermission#**` (6 elements) | `jvm-platform` |  |
-| `java.net.URLPermission.**` (0 elements) | `jvm-platform` |  |
 
 #### java.security
 
@@ -10715,7 +10625,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.persistence.criteria | 419 | 0 |
 | jakarta.persistence.metamodel | 49 | 0 |
 | jakarta.persistence.spi | 48 | 0 |
-| jakarta.servlet | 304 | 0 |
+| jakarta.servlet | 300 | 0 |
 | jakarta.servlet.annotation | 54 | 0 |
 | jakarta.servlet.descriptor | 20 | 0 |
 | jakarta.servlet.http | 177 | 0 |
@@ -10729,11 +10639,11 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 770 | 0 |
-| java.lang | 1,881 | 0 |
+| java.lang | 1,983 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 767 | 0 |
+| java.net | 809 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 229 | 0 |
 | java.nio.channels | 0 | 306 |
@@ -10750,21 +10660,21 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.sql | 1,005 | 0 |
 | java.text | 535 | 0 |
 | java.text.spi | 0 | 27 |
-| java.time | 551 | 0 |
+| java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,899 | 0 |
+| java.util | 1,833 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
-| java.util.function | 82 | 0 |
+| java.util.function | 83 | 0 |
 | java.util.jar | 0 | 101 |
 | java.util.random | 67 | 0 |
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
-| java.util.stream | 257 | 0 |
+| java.util.stream | 287 | 0 |
 | java.util.zip | 258 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
@@ -11077,6 +10987,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.util.comparator | 30 | 0 |
 | org.springframework.util.concurrent | 13 | 0 |
 | org.springframework.util.function | 44 | 0 |
+| org.springframework.util.unit | 26 | 0 |
 | org.springframework.util.xml | 70 | 0 |
 | org.springframework.validation | 139 | 0 |
 | org.springframework.validation.annotation | 4 | 0 |
@@ -11609,10 +11520,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#setRoles(List)` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#getDispatcherTypes()` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#setDispatcherTypes(Set)` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |
-| framework | `jakarta.servlet.ServletException#<init>()` | 2 | Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
-| framework | `jakarta.servlet.ServletException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
-| framework | `jakarta.servlet.ServletException#<init>(String,Throwable)` | 2 | Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
-| framework | `jakarta.servlet.ServletException#<init>(Throwable)` | 2 | Missing cause-only constructor: Java initializes the cause, even to null, and derives the message from a non-null cause. Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
 | framework | `jakarta.validation.Validation#byDefaultProvider()` | 2 | Flint's byDefaultProvider() returns the Configuration itself; GenericBootstrap is deferred. |
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `java.io.ByteArrayInputStream` | 2 | The byte-array facade exposes the public sequential reads. The protected backing array, position, mark and count required by subclasses are missing. |
@@ -11784,6 +11691,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.ReflectiveOperationException#<init>(String)` | 2 | Requires the checked ReflectiveOperationException base and a cause that can be initialized later. |
 | framework | `java.lang.ReflectiveOperationException#<init>(String,Throwable)` | 2 | Requires the checked ReflectiveOperationException base and a cause initialized even when null. |
 | framework | `java.lang.ReflectiveOperationException#<init>(Throwable)` | 2 | Requires the checked ReflectiveOperationException base with a detail derived from the cause and the cause already initialized. |
+| framework | `java.lang.String#format(String,Object...)` | 2 | The erased renderer supports %h and %H through the boxed scalar hash and the R11 virtual toHash rule. Boxed Long supports all Java date/time suffixes in Locale.ROOT and the default UTC zone. Alternative locales and zones, Date, Calendar, temporal inputs, and Formattable remain deferred. |
 | framework | `java.lang.StringBuffer` | 2 | Missing mutable text type required by Format and SimpleDateFormat. Java synchronizes operations on each buffer and append returns the original buffer. |
 | framework | `java.lang.StringBuffer#<init>()` | 2 | Requires a mutable StringBuffer that starts empty for Format.format(Object). |
 | framework | `java.lang.StringBuffer#<init>(String)` | 2 | Requires initializing the mutable buffer with the supplied text and counting its UTF-16 code units (R14). Java rejects null. A null D string initializes an empty buffer under R26. |
@@ -11991,6 +11899,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Collections#singletonList(T)` | 2 | Java’s singleton list returns false when removing an absent element. The current list throws UnsupportedOperationException. |
 | framework | `java.util.Collections#unmodifiableMap(Map)` | 2 | Java returns a live read-only view. The current snapshot misses changes to existing values and new entries in the backing map. |
 | framework | `java.util.Collections#unmodifiableSet(Set)` | 2 | Java returns a live read-only view. The current snapshot misses additions and removals in the backing set. |
+| framework | `java.util.Formatter#format(String,Object...)` | 2 | The Formatter facade remains deferred. Its erased renderer supports %h and %H through the boxed scalar hash and the R11 virtual toHash rule. The internal date renderer handles all date/time suffixes for boxed Long in Locale.ROOT and UTC. Date, Calendar and temporal inputs still need their own projections. |
 | framework | `java.util.HexFormat#parseHex(char[],int,int)` | 2 | Requires a UTF-16 code-unit array overload. |
 | framework | `java.util.IllegalFormatConversionException#<init>(char,Class)` | 2 | Flint currently accepts a string name. Java retains the argument Class and exposes it through getArgumentClass(). |
 | framework | `java.util.List#subList(int,int)` | 2 | Java returns a backed range and invalidates it after structural modification of the parent. The current implementation returns a copy and throws IndexOutOfBoundsException for a reversed range. |
@@ -12041,10 +11950,12 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Optional#map(Function)` | 2 | Java rejects a null mapper even when the Optional is empty. Flint returns the empty value. |
 | framework | `java.util.Optional#of(T)` | 2 | Optional.of must keep empty string and array values present under R26. The current null check rejects zero-length D slices whose storage compares to null. |
 | framework | `java.util.Optional#or(Supplier)` | 2 | Java rejects a null supplier even when a value is present. Flint returns the present value. |
-| framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
+| framework | `java.util.PrimitiveIterator.OfDouble#forEachRemaining(Consumer)` | 2 | Overrides Iterator#forEachRemaining(Consumer), which the canonical Iterator does not declare yet; its R3 shape is sol-jdk-core's decision. The Java default forwards a Consumer that is also a DoubleConsumer unchanged and otherwise adapts its accept method. |
+| framework | `java.util.PrimitiveIterator.OfInt#forEachRemaining(Consumer)` | 2 | Overrides Iterator#forEachRemaining(Consumer), which the canonical Iterator does not declare yet; its R3 shape is sol-jdk-core's decision. The Java default forwards a Consumer that is also a IntConsumer unchanged and otherwise adapts its accept method. |
+| framework | `java.util.PrimitiveIterator.OfLong#forEachRemaining(Consumer)` | 2 | Overrides Iterator#forEachRemaining(Consumer), which the canonical Iterator does not declare yet; its R3 shape is sol-jdk-core's decision. The Java default forwards a Consumer that is also a LongConsumer unchanged and otherwise adapts its accept method. |
 | framework | `java.util.Random` | 2 | The seeded constructor and core generator methods (setSeed, next, nextBytes, nextInt, nextLong, nextBoolean, nextFloat, nextDouble) are available. The default constructor, bounded draws, nextGaussian, RandomGenerator interface and streams are deferred. |
 | framework | `java.util.Scanner#<init>(Readable)` | 2 | The Readable constructor awaits the interface's cross-package placement. Its method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
-| framework | `java.util.SplittableRandom` | 2 | The seeded constructor, split(), split(SplittableGenerator), nextInt(), nextLong() and nextBytes(byte[]) are available at flint.java.util.splittablerandom.SplittableRandom, which implements RandomGenerator.SplittableGenerator with Java's isDeprecated, nextBoolean, nextFloat and nextDouble defaults. The default constructor and the stream methods (splits, ints, longs, doubles) are deferred. |
+| framework | `java.util.SplittableRandom` | 2 | The seeded constructor, split(), nextInt(), nextLong() and nextBytes(byte[]) are available at flint.java.util.splittablerandom.SplittableRandom. The default constructor, RandomGenerator/SplittableGenerator interfaces and stream methods are deferred. |
 | framework | `java.util.UUID#fromString(String)` | 2 | The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion. |
 | framework | `java.util.UUID#nameUUIDFromBytes(byte[])` | 2 | Version 3 name-based UUIDs await the canonical Java MessageDigest MD5 provider. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
@@ -12067,6 +11978,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.function.Predicate#negate()` | 2 | The existing final D method prevents implementor overrides of Java's default method (R3). |
 | framework | `java.util.function.Predicate#not(Predicate)` | 2 | The existing D method accepts a null predicate at composition time (R8). Its call to the final negate method also prevents dispatch to an implementor's negate override (R3). |
 | framework | `java.util.function.Predicate#or(Predicate)` | 2 | The existing final D method prevents implementor overrides (R3) and accepts a null predicate at composition time. Java throws NullPointerException there (R8). |
+| framework | `java.util.function.UnaryOperator#identity()` | 2 | The inherited Function.identity factory returns Function. Java's UnaryOperator factory returns the nominal UnaryOperator. |
 | framework | `java.util.regex.Matcher` | 2 | Assignment to Java MatchResult and access to recorded match positions and groups await the Matcher state port. |
 | framework | `java.util.regex.Pattern#asMatchPredicate()` | 2 | Requires a Predicate adapter for whole-input matching. |
 | framework | `java.util.regex.Pattern#asPredicate()` | 2 | Requires the Matcher search API and a Predicate adapter. |
@@ -12085,15 +11997,33 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.regex.PatternSyntaxException#getPattern()` | 2 | Java preserves a null pattern separately from empty text. The D return value still uses a plain string (R5). |
 | framework | `java.util.stream.BaseStream#close()` | 2 | Flint's reference Stream lacks Java's close lifecycle. Java closes the pipeline once and propagates ordered handler failures. |
 | framework | `java.util.stream.BaseStream#onClose(Runnable)` | 2 | Flint's reference Stream lacks close handler registration. Java links the handlers to the shared pipeline. |
-| framework | `java.util.stream.Collectors#groupingBy(Function)` | 2 | Its result type Collector has no D counterpart yet. The D collector already classifies each element as it is pulled and rejects a null key, as Java does. |
-| framework | `java.util.stream.Collectors#toMap(Function,Function)` | 2 | Its result type Collector has no D counterpart yet. The D collector already maps each element as it is pulled and reports a duplicate key or a null value there, as Java does. |
-| framework | `java.util.stream.Collectors#toUnmodifiableList()` | 2 | Its result type Collector has no D counterpart yet. The D collector already rejects a null element after accumulating them all, as Java does. |
-| framework | `java.util.stream.Stream#concat(Stream,Stream)` | 2 | Flint lacks the composed close lifecycle. Java closes both inputs in order when the result is closed and suppresses a later handler failure. |
+| framework | `java.util.stream.Collectors#groupingBy(Function)` | 2 | The existing collector accepts a null classifier result. Java throws NullPointerException during accumulation (R8). |
+| framework | `java.util.stream.Collectors#toMap(Function,Function)` | 2 | The existing collector accepts null mapped values and buffers the whole source before checking for duplicate keys. Java rejects a null mapped value and detects duplicate keys during accumulation. |
+| framework | `java.util.stream.Collectors#toUnmodifiableList()` | 2 | The existing collector accepts null elements. Java rejects them with NullPointerException (R8). |
+| framework | `java.util.stream.Stream#allMatch(Predicate)` | 2 | The existing terminal returns true for an empty stream and a null predicate. On a consumed stream it rejects reuse first. Java rejects the null predicate eagerly in both cases (R8). |
+| framework | `java.util.stream.Stream#anyMatch(Predicate)` | 2 | The existing terminal returns false for an empty stream and a null predicate. On a consumed stream it rejects reuse first. Java rejects the null predicate eagerly in both cases (R8). |
+| framework | `java.util.stream.Stream#collect(Collector)` | 2 | Flint reads the entire source before invoking the collector's apply method. Java's sequential collection obtains the result before traversal and accumulates as each element is read, so an accumulation failure stops further traversal. |
+| framework | `java.util.stream.Stream#collect(Supplier,BiConsumer,BiConsumer)` | 2 | Flint has no three-argument collect overload. Java's sequential overload supplies the mutable result before traversal and accumulates during traversal. It validates the combiner even on the sequential path. |
+| framework | `java.util.stream.Stream#concat(Stream,Stream)` | 2 | Flint dereferences a null input and lacks the composed close lifecycle. Java rejects either null before taking either input and closes both inputs in order when the result is closed. |
 | framework | `java.util.stream.Stream#distinct()` | 2 | Flint merges distinct array slices with equal contents. Java compares arrays by reference identity and keeps distinct equal-content arrays in encounter order (R11). |
-| framework | `java.util.stream.Stream#flatMap(Function)` | 2 | The existing stage dereferences a null mapped stream and lacks closing the mapped stream on short-circuit. Java treats a null result as empty and closes each opened mapped stream. |
-| framework | `java.util.stream.Stream#mapToInt(ToIntFunction)` | 2 | Flint returns Stream!int, which offers sum, because IntStream is not ported yet. |
-| framework | `java.util.stream.Stream#mapToLong(ToLongFunction)` | 2 | Flint returns Stream!long, which offers sum, because LongStream is not ported yet. |
-| framework | `java.util.stream.Stream#sorted()` | 2 | Flint compares using the declared element type. Java sorts Comparable values even when they are typed as Object. Flint compares text by UTF-8 bytes, where Java uses UTF-16 code units (R14). The comparison inherits D's null class dispatch limitation (R8), which can fault on a null receiver. Java throws NullPointerException when comparing mixed null input. |
+| framework | `java.util.stream.Stream#filter(Predicate)` | 2 | The current stage accepts a null predicate and consumes the source when constructed. Java throws NullPointerException before consuming a fresh source or checking whether it was already used (R8). |
+| framework | `java.util.stream.Stream#findAny()` | 2 | Selecting a null reference currently returns an empty Optional. Java throws NullPointerException (R8). |
+| framework | `java.util.stream.Stream#findFirst()` | 2 | Selecting a null reference currently returns an empty Optional. Java throws NullPointerException (R8). |
+| framework | `java.util.stream.Stream#flatMap(Function)` | 2 | The existing stage accepts a null mapper, dereferences a null mapped stream and lacks closing the mapped stream on short-circuit. Java rejects a null mapper before consuming the source, treats a null result as empty and closes each opened mapped stream. |
+| framework | `java.util.stream.Stream#forEach(Consumer)` | 2 | Flint accepts a null action on an empty stream. Java rejects it (R8). A Java sequential source checks the consumed state before validating the action and becomes consumed even if validation fails. A derived Java stream validates the action first, leaving a fresh stream reusable. |
+| framework | `java.util.stream.Stream#forEachOrdered(Consumer)` | 2 | Flint accepts a null action on an empty stream. Java rejects it (R8). A Java sequential source checks the consumed state before validating the action and becomes consumed even if validation fails. A derived Java stream validates the action first, leaving a fresh stream reusable. |
+| framework | `java.util.stream.Stream#iterate(Object,UnaryOperator)` | 2 | The existing factory accepts a null operator and its first pull can return the seed. Java throws NullPointerException when the factory is called (R8). |
+| framework | `java.util.stream.Stream#map(Function)` | 2 | The current stage accepts a null mapper and consumes the source when constructed. Java throws NullPointerException before consuming a fresh source or checking whether it was already used (R8). |
+| framework | `java.util.stream.Stream#mapToInt(ToIntFunction)` | 2 | The current stage accepts a null mapper and consumes the source when constructed. Java throws NullPointerException before consuming a fresh source or checking whether it was already used (R8). |
+| framework | `java.util.stream.Stream#mapToLong(ToLongFunction)` | 2 | The current stage accepts a null mapper and consumes the source when constructed. Java throws NullPointerException before consuming a fresh source or checking whether it was already used (R8). |
+| framework | `java.util.stream.Stream#max(Comparator)` | 2 | The existing terminal returns an empty Optional when the selected reference is null and accepts a null comparator on a singleton. Java throws NullPointerException in both cases (R8). |
+| framework | `java.util.stream.Stream#min(Comparator)` | 2 | The existing terminal returns an empty Optional when the selected reference is null and accepts a null comparator on a singleton. Java throws NullPointerException in both cases (R8). |
+| framework | `java.util.stream.Stream#noneMatch(Predicate)` | 2 | The existing terminal returns true for an empty stream and a null predicate. On a consumed stream it rejects reuse first. Java rejects the null predicate eagerly in both cases (R8). |
+| framework | `java.util.stream.Stream#peek(Consumer)` | 2 | The current stage accepts a null action and consumes the source when constructed. Java throws NullPointerException before consuming a fresh source or checking whether it was already used (R8). |
+| framework | `java.util.stream.Stream#reduce(BinaryOperator)` | 2 | The existing terminal returns an empty Optional when reduction yields a null reference and accepts a null accumulator on a singleton. Java throws NullPointerException in both cases (R8). |
+| framework | `java.util.stream.Stream#reduce(Object,BinaryOperator)` | 2 | Flint returns the identity when the stream is empty and the accumulator is null. Java throws NullPointerException before consuming a fresh stream or checking a spent one (R8). |
+| framework | `java.util.stream.Stream#sorted()` | 2 | Flint traverses at stage creation and compares using the declared element type. Java defers traversal and sorts Comparable values even when they are typed as Object. Flint compares text by UTF-8 bytes, where Java uses UTF-16 code units (R14). The comparison inherits D's null class dispatch limitation (R8), which can fault on a null receiver. Java throws NullPointerException when comparing mixed null input. |
+| framework | `java.util.stream.Stream#sorted(Comparator)` | 2 | The existing method traverses and calls the comparator when the intermediate stage is created. Java postpones both until a terminal operation. |
 | framework | `java.util.stream.Stream#toArray(IntFunction)` | 2 | Flint has no typed array-generator overload. Java passes the result size to the generator and rejects elements incompatible with the returned array type. |
 | framework | `org.hibernate.validator.HibernateValidator#buildValidatorFactory(ConfigurationState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `org.hibernate.validator.HibernateValidator#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
