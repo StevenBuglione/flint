@@ -258,6 +258,12 @@ class SkeletonTests(unittest.TestCase):
         same = skeletons.with_imports('class A : Marker {}', 'module flint.example;\n', {'Marker': 'flint.example.Marker'})
         self.assertEqual(same, 'class A : Marker {}')
 
+    def test_imports_ignore_function_local_imports(self):
+        module = ('module flint.other;\n\nclass B\n{\n    void f()\n    {\n'
+                  '        import flint.java.nio.charset : Charset;\n    }\n}\n')
+        text = skeletons.with_imports('class A { Charset x; }', module, {'Charset': 'flint.java.nio.charset.Charset'})
+        self.assertEqual(text.split('class')[0], 'import flint.java.nio.charset : Charset;\n')
+
     def test_api_comparison_ignores_overload_order_and_private_members(self):
         hand = 'A visibility public\nA.f#0 public void(int x)\nA.f#1 public void()\nA.x private field int\n'
         spliced = 'A visibility public\nA.f#0 public void()\nA.f#1 public void(int x)\n'

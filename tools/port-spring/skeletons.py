@@ -781,7 +781,8 @@ def with_imports(text, module, used=None):
     lines = []
     for name, symbol in sorted((used or {}).items()):
         home = symbol.rsplit('.', 1)[0]
-        if (own and own.group(1) == home) or re.search(rf'\bimport\s+[^;]*\b{name}\b', module) \
+        if (own and own.group(1) == home) or re.search(rf'^(?:public\s+|private\s+|static\s+)*import\s[^;]*\b{name}\b',
+                                                        module, re.M) \
                 or re.search(rf'\b(?:class|interface|struct|enum|alias)\s+{name}\b', module):
             continue
         lines.append(f'import {home} : {name};\n')
