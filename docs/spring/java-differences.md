@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,912 | 634 | 0 | 1,915 | 13,960 |
+| framework | openjdk@21.0.13 | 1,914 | 640 | 0 | 1,915 | 13,952 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2897,6 +2897,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.BrokenBarrierException#<init>(String)` | `flint.java.util.concurrent.brokenbarrierexception.BrokenBarrierException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.Callable` | `flint.java.util.concurrent.callable.Callable` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.concurrent.Callable#call()` | `flint.java.util.concurrent.callable.Callable.call` | [R8](api-mapping.md#r8-exceptions) |  |
+| `java.util.concurrent.CancellationException` | `flint.java.util.concurrent.cancellationexception.CancellationException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Import the nominal unchecked exception from this leaf. An empty D detail is absent under R26. |
+| `java.util.concurrent.CancellationException#<init>(String)` | `flint.java.util.concurrent.cancellationexception.CancellationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.concurrent.CompletionException` | `flint.java.util.concurrent.completionexception.CompletionException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Import the nominal unchecked exception from this leaf. An empty D detail is absent under R26. |
+| `java.util.concurrent.CompletionException#<init>(String)` | `flint.java.util.concurrent.completionexception.CompletionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.concurrent.CompletionException#<init>(String,Throwable)` | `flint.java.util.concurrent.completionexception.CompletionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.concurrent.CompletionException#<init>(Throwable)` | `flint.java.util.concurrent.completionexception.CompletionException.this` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Preserves the cause. A non-RuntimeException cause's detail is rendered through javaToString, which does not invoke a custom checked Throwable.toString override. |
 | `java.util.concurrent.Delayed` | `flint.java.util.concurrent.delayed.Delayed` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import from flint.java.util.concurrent.delayed until the JDK aggregate is available. |
 | `java.util.concurrent.Delayed#getDelay(TimeUnit)` | `flint.java.util.concurrent.delayed.Delayed.getDelay` | [R5](api-mapping.md#r5-optional-and-nullable-values) | TimeUnit is a value enum, so a null unit is rejected at compile time. |
 | `java.util.concurrent.ExecutionException` | `flint.java.util.concurrent.executionexception.ExecutionException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Import the checked exception from flint.java.util.concurrent.executionexception. An empty detail is absent in Flint. Java preserves an explicitly empty String. |
@@ -10977,7 +10983,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,899 | 0 |
-| java.util.concurrent | 1,236 | 0 |
+| java.util.concurrent | 1,228 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |

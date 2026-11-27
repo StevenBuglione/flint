@@ -534,6 +534,8 @@
    "directory": "framework/java-concurrent-exec",
    "module": "flint.java.util.concurrent.executionexception",
    "java_types": [
+    "java.util.concurrent.CancellationException",
+    "java.util.concurrent.CompletionException",
     "java.util.concurrent.ExecutionException",
     "java.util.concurrent.Executor"
    ],
@@ -565,6 +567,8 @@
     "compiler_peak_rss_bytes"
    ],
    "also": [
+    "flint.java.util.concurrent.cancellationexception",
+    "flint.java.util.concurrent.completionexception",
     "flint.java.util.concurrent.executor"
    ]
   },
