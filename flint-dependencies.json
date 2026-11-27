@@ -355,6 +355,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-nio": {
       "repo": "framework",
       "version": "monorepo"

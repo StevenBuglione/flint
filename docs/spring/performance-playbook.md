@@ -542,6 +542,38 @@ bytes. Both profiles pass the JDK link-closure audit.
 
 | B-95 | **Format InvalidPathException when it is constructed.** The exception keeps the input, reason and index and serves the formatted detail through the inherited `@nogc` accessor. D-JDK-3 describes subclass message dispatch. R26 treats null strings as empty. | Venus pinned probes. After R26, `06bcabaec` added 8,692 O3 and 5,972 Oz loadable bytes with 459 templates. The prior string-null exception checks measured 9,356 O3 and 6,652 Oz loadable bytes with 461 templates. Initial leaf and package caps are 9,562 bytes and 505 templates. | java-nio-file definition of done, link closure and Temurin constructor cases. |
 
+The Java form encoder converts its own fresh output buffer to an immutable
+slice at the strongly pure return boundary. Over 2,000 warmed encodes of
+`café plus +`, UTF-8 allocations fell from 128,000 to 64,000 bytes and
+ISO-8859-1 allocations fell from 64,000 to 32,000 bytes. The ASCII input
+that needs no escaping still allocates zero bytes. Charset value
+comparisons also removed the decoder's decimal table from the stock O3
+and Oz encoder probes. Both codec probes still report inherited Java
+module records in the stock closure check.
+
+With the shared BMP decimal digit leaf, the stock LDC single-leaf probes
+add 15,244 O3 and 13,348 Oz loadable bytes for URLEncoder, and 17,588 O3
+and 16,060 Oz for URLDecoder. Isolated DMD library and probe builds use
+448 and 465 template instances respectively. The combined probe adds
+20,676 O3 and 18,160 Oz bytes and uses 472 template instances before the
+R26 null-slice changes. The stock closure audit accepts the 36 exact
+legacy module records under decision 523bd5bd. The strict release check
+still reports those records until the aggregate is split.
+
+The fixed UTF-8 overloads add 7,676 O3/6,212 Oz bytes for the encoder
+and 11,308 O3/9,428 Oz for the decoder. Named charset support adds the
+charset alias lookup, checked exception translation and non-UTF-8
+paths. Both codecs share the named lookup adapter. Malformed escapes
+use a separate error formatter.
+
+R26 treats null string slices as empty. Absent Charset values still
+report NullPointerException through a shared cold helper. The resulting
+named-codec probes add 14,828 O3 and 12,916 Oz bytes for URLEncoder
+and 17,084 O3 and 15,580 Oz bytes for URLDecoder. The combined probe
+adds 19,972 O3 and 18,876 Oz bytes and uses 467 templates. The first
+package caps are 21,970 bytes and 514 templates. Isolated encoder and decoder
+probes use 445 and 462 templates respectively.
+
 ## 4. Measuring honestly
 
 | ID | Rule | Evidence |

@@ -1,0 +1,60 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-net",
+  "test_packages": [
+    ":java-net"
+  ],
+  "classes": {
+    "java/net/URLDecoder/B6463990.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    },
+    "java/net/URLDecoder/EncodeDecode.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    },
+    "java/net/URLDecoder/EncodingTest.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    },
+    "java/net/URLDecoder/URLDecoderArgs.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    },
+    "java/net/URLEncoder/DecodeNonEncoded.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    },
+    "java/net/URLEncoder/Decoder.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    },
+    "java/net/URLEncoder/EncodingTest.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    },
+    "java/net/URLEncoder/SurrogatePairs.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    },
+    "java/net/URLEncoder/URLEncodeDecode.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    },
+    "java/net/URLEncoder/URLEncoderEncodeArgs.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
+    }
+  }
+}

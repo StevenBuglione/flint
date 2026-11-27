@@ -1,0 +1,5 @@
+{
+ "id": "D-NET-2",
+ "deviation": "The default charset of the deprecated one-argument Java form encoding and decoding methods is always UTF-8. Flint has no `file.encoding=COMPAT` override.",
+ "reason": "The Flint charset facade uses UTF-8 as its platform default. Java 21 uses the same default and provides a compatibility property for platform encodings."
+}

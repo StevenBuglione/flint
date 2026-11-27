@@ -1,0 +1,15 @@
+{
+  "source": "closure/form_decode.d",
+  "leaves": [
+    "flint.java.io",
+    "flint.java.io.unsupportedencodingexception",
+    "flint.java.lang",
+    "flint.java.lang.character.decimaldigits",
+    "flint.java.net.internal.formcharset",
+    "flint.java.net.internal.formcharsetname",
+    "flint.java.net.internal.formdecode",
+    "flint.java.net.internal.formutf8",
+    "flint.java.nio.charset"
+  ],
+  "data": []
+}

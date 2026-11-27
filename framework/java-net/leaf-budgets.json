@@ -1,0 +1,10 @@
+{
+  "flint.java.net.urldecoder": {
+    "incremental_linked_bytes": 18793,
+    "template_instances": 509
+  },
+  "flint.java.net.urlencoder": {
+    "incremental_linked_bytes": 16311,
+    "template_instances": 490
+  }
+}

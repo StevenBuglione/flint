@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,132 | 339 | 1,871 | 15,079 |
+| framework | openjdk@21.0.13 | 1,132 | 347 | 1,871 | 15,071 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2251,6 +2251,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `java.net.URI` | `flint.java.net.URI` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable D struct holds the original URI text and is copied by value. |
 | `java.net.URI#getScheme()` | `flint.java.net.URI.getScheme` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null string denotes an absent scheme. Every present scheme is nonempty. |
+| `java.net.URLDecoder` | `flint.java.net.urldecoder.URLDecoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.urldecoder : URLDecoder. Null string inputs and charset names are treated as empty. |
+| `java.net.URLDecoder#decode(String)` | `flint.java.net.urldecoder.URLDecoder.decode` | [R2](api-mapping.md#r2-annotations), [R26](api-mapping.md#r26-null-arrays), [D-NET-2](api-mapping.md#deviations) | Deprecated. Uses the UTF-8 platform default. |
+| `java.net.URLDecoder#decode(String,Charset)` | `flint.java.net.urldecoder.URLDecoder.decode` | [R26](api-mapping.md#r26-null-arrays), [R5](api-mapping.md#r5-optional-and-nullable-values) | Charset.init represents an absent charset and raises NullPointerException. |
+| `java.net.URLDecoder#decode(String,String)` | `flint.java.net.urldecoder.URLDecoder.decode` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | An empty, illegal or unsupported charset name raises UnsupportedEncodingException. |
+| `java.net.URLEncoder` | `flint.java.net.urlencoder.URLEncoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.urlencoder : URLEncoder. Null string inputs and charset names are treated as empty. |
+| `java.net.URLEncoder#encode(String)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R2](api-mapping.md#r2-annotations), [R26](api-mapping.md#r26-null-arrays), [D-NET-2](api-mapping.md#deviations) | Deprecated. Uses the UTF-8 platform default. |
+| `java.net.URLEncoder#encode(String,Charset)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R26](api-mapping.md#r26-null-arrays), [R5](api-mapping.md#r5-optional-and-nullable-values) | Charset.init represents an absent charset and raises NullPointerException. |
+| `java.net.URLEncoder#encode(String,String)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | An empty, illegal or unsupported charset name raises UnsupportedEncodingException. |
 
 #### java.nio
 
@@ -10527,7 +10535,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 43 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 137 | 0 |
-| java.net | 817 | 0 |
+| java.net | 809 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 229 | 0 |
 | java.nio.channels | 0 | 332 |

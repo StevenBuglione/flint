@@ -864,6 +864,51 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-net": {
+   "directory": "framework/java-net",
+   "module": "flint.java.net.urlencoder",
+   "also": [
+    "flint.java.net.internal.formcharset",
+    "flint.java.net.internal.formcharsetname",
+    "flint.java.net.internal.formdecode",
+    "flint.java.net.internal.formencode",
+    "flint.java.net.internal.formutf8",
+    "flint.java.net.urldecoder"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.URLDecoder",
+    "java.net.URLEncoder"
+   ],
+   "dependencies": [
+    "engine-aot",
+    "java",
+    "java-io"
+   ],
+   "bench": {
+    "fixture": "framework/java-net/bench",
+    "baseline": "framework/java-net/bench/baseline",
+    "edit_source": "framework/java-net/source/flint/java/net/urlencoder.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 21970,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 514
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-regex": {
    "directory": "framework/java-regex",
    "module": "flint.java.util.regex",
