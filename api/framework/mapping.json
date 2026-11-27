@@ -8591,7 +8591,7 @@
 "java.util.UUID#clockSequence()":{"status":"ported","d":"flint.java.util.uuid.UUID.clockSequence"},
 "java.util.UUID#compareTo(UUID)":{"status":"ported","d":"flint.java.util.uuid.UUID.compareTo"},
 "java.util.UUID#equals(Object)":{"status":"adapted","rules":["R11"],"d":"flint.java.util.uuid.UUID.equals"},
-"java.util.UUID#fromString(String)":{"status":"excluded","category":"deferred","phase":"2","reason":"The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion."},
+"java.util.UUID#fromString(String)":{"d":"flint.java.util.uuid.UUID.fromString","rules":["R26"],"status":"adapted","note":"A D null string is Java's \"\" here: Java throws NullPointerException, where Flint reports IllegalArgumentException (Invalid UUID string: ) (R26)."},
 "java.util.UUID#getLeastSignificantBits()":{"status":"ported","d":"flint.java.util.uuid.UUID.getLeastSignificantBits"},
 "java.util.UUID#getMostSignificantBits()":{"status":"ported","d":"flint.java.util.uuid.UUID.getMostSignificantBits"},
 "java.util.UUID#hashCode()":{"status":"adapted","rules":["R11"],"d":"flint.java.util.uuid.UUID.hashCode"},

@@ -34,6 +34,44 @@ final class UUID : Comparable!UUID
         return new UUID(cast(long) mostBits, cast(long) leastBits);
     }
 
+    /++
+    Java's `UUID.fromString(name)`: four hyphen-separated hexadecimal fields, shifted into the two words. Java
+    accepts fields shorter or longer than the canonical 8-4-4-4-12 layout, a leading `+` in a field, and the
+    digits of `Character.digit` in radix 16, and rejects a field beyond Java's signed `long` range; this port
+    keeps those rules, including the `NumberFormatException` and `IllegalArgumentException` messages. A D null
+    string is Java's `""` (R26).
+    +/
+    static UUID fromString(string name)
+    {
+        import flint.java.lang : IllegalArgumentException;
+
+        if (utf16Length(name) > 36)
+            throw new IllegalArgumentException("UUID string too large");
+
+        size_t[4] dashes;
+        size_t found;
+        foreach (index, char codeUnit; name)
+        {
+            if (codeUnit != '-')
+                continue;
+            if (found == dashes.length)
+                throw new IllegalArgumentException("Invalid UUID string: " ~ name);
+            dashes[found++] = index;
+        }
+        if (found != dashes.length)
+            throw new IllegalArgumentException("Invalid UUID string: " ~ name);
+
+        const first = parseHexField(name[0 .. dashes[0]]);
+        const second = parseHexField(name[dashes[0] + 1 .. dashes[1]]);
+        const third = parseHexField(name[dashes[1] + 1 .. dashes[2]]);
+        const fourth = parseHexField(name[dashes[2] + 1 .. dashes[3]]);
+        const fifth = parseHexField(name[dashes[3] + 1 .. $]);
+
+        const long mostBits = (first & 0xffff_ffffL) << 32 | (second & 0xffffL) << 16 | (third & 0xffffL);
+        const long leastBits = (fourth & 0xffffL) << 48 | (fifth & 0xffff_ffff_ffffL);
+        return new UUID(mostBits, leastBits);
+    }
+
     /// The upper 64 bits as a signed long.
     long getMostSignificantBits() const pure nothrow @nogc
     {
@@ -157,6 +195,111 @@ final class UUID : Comparable!UUID
     {
         return renderUuid(most, least);
     }
+}
+
+// Java's length in UTF-16 code units; a four-byte sequence is a surrogate pair.
+private size_t utf16Length(scope const(char)[] text) pure nothrow @nogc
+{
+    size_t units;
+    foreach (char codeUnit; text)
+    {
+        if ((codeUnit & 0xC0) == 0x80)
+            continue;
+        units += codeUnit >= 0xF0 ? 2 : 1;
+    }
+    return units;
+}
+
+// Java's `Long.parseLong(field, 16)` for one UUID field. `+` is the only sign a field can hold, because `-`
+// splits fields; the value must fit Java's signed `long` before the masks in `fromString` apply.
+private long parseHexField(string field)
+{
+    import flint.java.lang : NumberFormatException;
+    import flint.java.lang.character : digit;
+
+    if (field.length == 0)
+        throw new NumberFormatException("");
+    size_t byteIndex;
+    size_t unitIndex;
+    if (field[0] == '+')
+    {
+        byteIndex = 1;
+        unitIndex = 1;
+        if (byteIndex == field.length)
+            fieldError(field, 1);
+    }
+    enum long limit = -long.max;
+    enum long multmin = limit / 16;
+    long result;
+    while (byteIndex < field.length)
+    {
+        const start = unitIndex;
+        uint unit;
+        if (!nextBmpUnit(field, byteIndex, unit))
+            fieldError(field, start);
+        const value = digit(cast(wchar) unit, 16);
+        if (value < 0 || result < multmin)
+            fieldError(field, start);
+        result *= 16;
+        if (result < limit + value)
+            fieldError(field, start);
+        result -= value;
+        ++unitIndex;
+    }
+    return -result;
+}
+
+// The next BMP code unit of UTF-8 text; false for a malformed sequence or a supplementary character, whose Java
+// code units have no digit value.
+private bool nextBmpUnit(scope const(char)[] text, ref size_t index, out uint unit) pure nothrow @nogc
+{
+    const uint lead = cast(ubyte) text[index++];
+    if (lead < 0x80)
+    {
+        unit = lead;
+        return true;
+    }
+    uint value;
+    size_t extra;
+    if ((lead & 0xE0) == 0xC0)
+    {
+        extra = 1;
+        value = lead & 0x1F;
+    }
+    else if ((lead & 0xF0) == 0xE0)
+    {
+        extra = 2;
+        value = lead & 0x0F;
+    }
+    else
+        return false;
+    foreach (_; 0 .. extra)
+    {
+        if (index == text.length || (cast(ubyte) text[index] & 0xC0) != 0x80)
+            return false;
+        value = (value << 6) | (cast(ubyte) text[index++] & 0x3F);
+    }
+    if (extra == 1 ? value < 0x80 : value < 0x800)
+        return false;
+    unit = value;
+    return true;
+}
+
+// Java's `NumberFormatException.forCharSequence` for one field.
+private noreturn fieldError(string field, size_t index)
+{
+    import flint.java.lang : NumberFormatException;
+
+    char[20] number = void;
+    size_t at = number.length;
+    size_t value = index;
+    do
+    {
+        number[--at] = cast(char)('0' + value % 10);
+        value /= 10;
+    }
+    while (value);
+    throw new NumberFormatException("Error at index " ~ number[at .. $].idup ~ " in: \"" ~ field ~ "\"");
 }
 
 private char[] renderUuid(ulong most, ulong least) pure nothrow
