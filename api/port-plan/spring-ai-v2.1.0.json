@@ -576,5 +576,22 @@
 "d": "TokenCountEstimator",
 "status": "ported"
 }
+},
+"unresolved": {
+"org.springframework.ai.chat.messages.AssistantMessage.ToolCall": "no registered package declares flint.ai.chat.messages.AssistantMessage",
+"org.springframework.ai.chat.messages.SystemMessage.Builder": "no registered package declares flint.ai.chat.messages.SystemMessage",
+"org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse": "no registered package declares flint.ai.chat.messages.ToolResponseMessage",
+"org.springframework.ai.content.Media.Format": "no registered package declares flint.ai.content.Media",
+"org.springframework.ai.converter.AbstractConversionServiceOutputConverter": "flint.ai.converter.AbstractConversionServiceOutputConverter is a D template, which a plan kind does not describe yet",
+"org.springframework.ai.converter.StructuredOutputConverter": "flint.ai.converter.StructuredOutputConverter is a D template, which a plan kind does not describe yet",
+"org.springframework.ai.document.DefaultContentFormatter.Builder": "no registered package declares flint.ai.document.DefaultContentFormatter",
+"org.springframework.ai.embedding.DefaultEmbeddingOptions.Builder": "no registered package declares flint.ai.embedding.DefaultEmbeddingOptions",
+"org.springframework.ai.embedding.EmbeddingOptions.Builder": "no registered package declares flint.ai.embedding.EmbeddingOptions",
+"org.springframework.ai.embedding.EmbeddingResultMetadata.ModalityType": "no registered package declares flint.ai.embedding.EmbeddingResultMetadata",
+"org.springframework.ai.embedding.EmbeddingResultMetadata.ModalityUtils": "no registered package declares flint.ai.embedding.EmbeddingResultMetadata",
+"org.springframework.ai.model.ModelRequest": "flint.ai.model.ModelRequest is a D template, which a plan kind does not describe yet",
+"org.springframework.ai.model.ModelResult": "flint.ai.model.ModelResult is a D template, which a plan kind does not describe yet",
+"org.springframework.ai.observation.AiOperationMetadata.Builder": "no registered package declares flint.ai.observation.AiOperationMetadata",
+"org.springframework.ai.reader.ExtractedTextFormatter.Builder": "no registered package declares flint.ai.reader.ExtractedTextFormatter"
 }
 }

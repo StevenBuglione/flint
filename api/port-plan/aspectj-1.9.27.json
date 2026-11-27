@@ -47,5 +47,25 @@
 "R2"
 ]
 }
+},
+"unresolved": {
+"org.aspectj.lang.JoinPoint.EnclosingStaticPart": "no registered package declares flint.aspectj.lang.JoinPoint",
+"org.aspectj.lang.JoinPoint.StaticPart": "no registered package declares flint.aspectj.lang.JoinPoint",
+"org.aspectj.lang.annotation.AdviceName": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.After": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.AfterReturning": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.AfterThrowing": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.Around": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.Aspect": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.Before": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.DeclareAnnotation": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.DeclareError": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.DeclareMixin": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.DeclareParents": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.DeclarePrecedence": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.DeclareWarning": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.Pointcut": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.RequiredTypes": "no registered package declares flint.aspectj.lang.annotation",
+"org.aspectj.lang.annotation.SuppressAjWarnings": "no registered package declares flint.aspectj.lang.annotation"
 }
 }

@@ -19,13 +19,19 @@
 "kind": "struct",
 "module": "flint.security.access.prepost",
 "d": "PostAuthorize",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.security.access.prepost.PreAuthorize": {
 "kind": "struct",
 "module": "flint.security.access.prepost",
 "d": "PreAuthorize",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.security.authentication.AbstractAuthenticationToken": {
 "kind": "abstract class",
@@ -711,5 +717,17 @@
 "d": "RequestMatcher",
 "status": "ported"
 }
+},
+"unresolved": {
+"org.springframework.security.authorization.AuthenticatedAuthorizationManager": "flint.security.authorization.AuthenticatedAuthorizationManager is a D template, which a plan kind does not describe yet",
+"org.springframework.security.authorization.AuthorityAuthorizationManager": "flint.security.authorization.AuthorityAuthorizationManager is a D template, which a plan kind does not describe yet",
+"org.springframework.security.authorization.AuthorizationManager": "flint.security.authorization.AuthorizationManager is a D template, which a plan kind does not describe yet",
+"org.springframework.security.authorization.SingleResultAuthorizationManager": "flint.security.authorization.SingleResultAuthorizationManager is a D template, which a plan kind does not describe yet",
+"org.springframework.security.config.Customizer": "flint.security.config.Customizer is a D template, which a plan kind does not describe yet",
+"org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer.AuthorizationManagerRequestMatcherRegistry": "flint.security.config.annotation.web.configurers.AuthorizationManagerRequestMatcherRegistry does not resolve in :security-config's import closure",
+"org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer.AuthorizedUrl": "flint.security.config.annotation.web.configurers.AuthorizedUrl does not resolve in :security-config's import closure",
+"org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig": "flint.security.config.annotation.web.configurers.FrameOptionsConfig does not resolve in :security-config's import closure",
+"org.springframework.security.core.authority.FactorGrantedAuthority.Builder": "no registered package declares flint.security.core.authority.FactorGrantedAuthority",
+"org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder.BCryptVersion": "no registered package declares flint.security.crypto.bcrypt.BCryptPasswordEncoder"
 }
 }

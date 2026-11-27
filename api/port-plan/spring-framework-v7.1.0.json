@@ -624,7 +624,10 @@
 "kind": "struct",
 "module": "flint.beans.factory.annotation",
 "d": "Autowired",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils": {
 "kind": "abstract class",
@@ -639,13 +642,19 @@
 "kind": "struct",
 "module": "flint.beans.factory.annotation",
 "d": "Qualifier",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.beans.factory.annotation.Value": {
 "kind": "struct",
 "module": "flint.beans.factory.annotation",
 "d": "Value",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.beans.factory.config.BeanDefinition": {
 "kind": "interface",
@@ -1063,37 +1072,55 @@
 "kind": "struct",
 "module": "flint.context.annotation",
 "d": "DependsOn",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.context.annotation.Description": {
 "kind": "struct",
 "module": "flint.context.annotation",
 "d": "Description",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.context.annotation.Fallback": {
 "kind": "struct",
 "module": "flint.context.annotation",
 "d": "Fallback",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.context.annotation.Import": {
 "kind": "struct",
 "module": "flint.context.annotation",
 "d": "Import",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.context.annotation.Lazy": {
 "kind": "struct",
 "module": "flint.context.annotation",
 "d": "Lazy",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.context.annotation.Primary": {
 "kind": "struct",
 "module": "flint.context.annotation",
 "d": "Primary",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.context.annotation.Profile": {
 "kind": "struct",
@@ -1105,13 +1132,19 @@
 "kind": "struct",
 "module": "flint.context.annotation",
 "d": "PropertySource",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.context.annotation.Role": {
 "kind": "struct",
 "module": "flint.context.annotation",
 "d": "Role",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.context.annotation.Scope": {
 "kind": "struct",
@@ -2642,7 +2675,10 @@
 "kind": "struct",
 "module": "flint.stereotype",
 "d": "Component",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.stereotype.Controller": {
 "kind": "struct",
@@ -2654,7 +2690,10 @@
 "kind": "struct",
 "module": "flint.stereotype",
 "d": "Indexed",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.stereotype.Repository": {
 "kind": "struct",
@@ -3338,7 +3377,10 @@
 "kind": "struct",
 "module": "flint.validation.annotation",
 "d": "Validated",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "org.springframework.validation.beanvalidation.LocalValidatorFactoryBean": {
 "kind": "class",
@@ -4090,5 +4132,56 @@
 "R14"
 ]
 }
+},
+"unresolved": {
+"org.springframework.beans.factory.FactoryBean": "flint.beans.factory.FactoryBean is a D template, which a plan kind does not describe yet",
+"org.springframework.beans.factory.ObjectFactory": "flint.beans.factory.ObjectFactory is a D template, which a plan kind does not describe yet",
+"org.springframework.beans.factory.ObjectProvider": "flint.beans.factory.ObjectProvider is a D template, which a plan kind does not describe yet",
+"org.springframework.cache.Cache.ValueRetrievalException": "no registered package declares flint.cache.Cache",
+"org.springframework.cache.Cache.ValueWrapper": "no registered package declares flint.cache.Cache",
+"org.springframework.cache.annotation.AnnotationCacheOperationSource.CacheOperationProvider": "no registered package declares flint.cache.annotation_runtime.AnnotationCacheOperationSource",
+"org.springframework.cache.interceptor.CacheEvictOperation.Builder": "no registered package declares flint.cache.interceptor.CacheEvictOperation",
+"org.springframework.cache.interceptor.CacheOperation.Builder": "no registered package declares flint.cache.interceptor.CacheOperation",
+"org.springframework.cache.interceptor.CachePutOperation.Builder": "no registered package declares flint.cache.interceptor.CachePutOperation",
+"org.springframework.cache.interceptor.CacheableOperation.Builder": "no registered package declares flint.cache.interceptor.CacheableOperation",
+"org.springframework.context.ApplicationListener": "flint.context.ApplicationListener is a D template, which a plan kind does not describe yet",
+"org.springframework.core.OrderComparator.OrderSourceProvider": "flint.core.OrderSourceProvider does not resolve in :core's import closure",
+"org.springframework.core.annotation.MergedAnnotation": "flint.core.annotation.types.MergedAnnotation is a D template, which a plan kind does not describe yet",
+"org.springframework.core.convert.converter.Converter": "flint.core.convert.converter.Converter is a D template, which a plan kind does not describe yet",
+"org.springframework.core.io.DefaultResourceLoader.ClassPathAllResource": "no registered package declares flint.core.io.DefaultResourceLoader",
+"org.springframework.http.HttpStatus.Series": "no registered package declares flint.http.HttpStatus",
+"org.springframework.http.ResponseEntity.BodyBuilder": "no registered package declares flint.http.ResponseEntity",
+"org.springframework.http.ResponseEntity.HeadersBuilder": "no registered package declares flint.http.ResponseEntity",
+"org.springframework.http.server.PathContainer": "flint.web.util.pattern.PathContainer does not resolve in :web's import closure",
+"org.springframework.jdbc.core.BeanPropertyRowMapper": "flint.jdbc.core.BeanPropertyRowMapper is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.ConnectionCallback": "flint.jdbc.core.ConnectionCallback is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.DataClassRowMapper": "flint.jdbc.core.DataClassRowMapper is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.ParameterizedPreparedStatementSetter": "flint.jdbc.core.ParameterizedPreparedStatementSetter is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.PreparedStatementCallback": "flint.jdbc.core.PreparedStatementCallback is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.ResultSetExtractor": "flint.jdbc.core.ResultSetExtractor is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.RowMapper": "flint.jdbc.core.RowMapper is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.RowMapperResultSetExtractor": "flint.jdbc.core.RowMapperResultSetExtractor is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.SingleColumnRowMapper": "flint.jdbc.core.SingleColumnRowMapper is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.StatementCallback": "flint.jdbc.core.StatementCallback is a D template, which a plan kind does not describe yet",
+"org.springframework.jdbc.core.simple.JdbcClient.BatchEntry": "no registered package declares flint.jdbc.core.simple.JdbcClient",
+"org.springframework.jdbc.core.simple.JdbcClient.BatchSpec": "no registered package declares flint.jdbc.core.simple.JdbcClient",
+"org.springframework.jdbc.core.simple.JdbcClient.MappedQuerySpec": "no registered package declares flint.jdbc.core.simple.JdbcClient",
+"org.springframework.jdbc.core.simple.JdbcClient.ResultQuerySpec": "no registered package declares flint.jdbc.core.simple.JdbcClient",
+"org.springframework.jdbc.core.simple.JdbcClient.StatementSpec": "no registered package declares flint.jdbc.core.simple.JdbcClient",
+"org.springframework.test.json.JsonComparison.Result": "no registered package declares flint.test.json.JsonComparison",
+"org.springframework.test.web.servlet.request.ConfigurableSmartRequestBuilder": "flint.test.web.servlet.request.ConfigurableSmartRequestBuilder is a D template, which a plan kind does not describe yet",
+"org.springframework.transaction.interceptor.TransactionAspectSupport.TransactionInfo": "no registered package declares flint.transaction.interceptor.TransactionAspectSupport",
+"org.springframework.transaction.support.AbstractPlatformTransactionManager.SuspendedResourcesHolder": "no registered package declares flint.transaction.support.AbstractPlatformTransactionManager",
+"org.springframework.transaction.support.ResourceHolderSynchronization": "flint.transaction.support.ResourceHolderSynchronization is a D template, which a plan kind does not describe yet",
+"org.springframework.transaction.support.TransactionCallback": "flint.transaction.support.TransactionCallback is a D template, which a plan kind does not describe yet",
+"org.springframework.util.AntPathMatcher.AntPathStringMatcher": "flint.util.AntPathStringMatcher does not resolve in :core's import closure",
+"org.springframework.util.AntPathMatcher.AntPatternComparator": "flint.util.AntPatternComparator does not resolve in :core's import closure",
+"org.springframework.util.CompositeIterator": "flint.util.CompositeIterator is a D template, which a plan kind does not describe yet",
+"org.springframework.util.LinkedMultiValueMap": "flint.util.LinkedMultiValueMap is a D template, which a plan kind does not describe yet",
+"org.springframework.util.MultiValueMap": "flint.util.MultiValueMap is a D template, which a plan kind does not describe yet",
+"org.springframework.util.MultiValueMapAdapter": "flint.util.MultiValueMapAdapter is a D template, which a plan kind does not describe yet",
+"org.springframework.util.PropertyPlaceholderHelper.PlaceholderResolver": "flint.util.PlaceholderResolver does not resolve in :core's import closure",
+"org.springframework.util.RouteMatcher.Route": "no registered package declares flint.util.RouteMatcher",
+"org.springframework.validation.DefaultMessageCodesResolver.Format": "flint.validation.Format does not resolve in :context's import closure"
 }
 }

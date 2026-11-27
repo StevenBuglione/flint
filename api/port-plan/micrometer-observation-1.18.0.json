@@ -38,5 +38,15 @@
 "d": "ObservationView",
 "status": "ported"
 }
+},
+"unresolved": {
+"io.micrometer.observation.GlobalObservationConvention": "flint.micrometer.observation.GlobalObservationConvention is a D template, which a plan kind does not describe yet",
+"io.micrometer.observation.Observation.Context": "no registered package declares flint.micrometer.observation.Observation",
+"io.micrometer.observation.Observation.ContextView": "no registered package declares flint.micrometer.observation.Observation",
+"io.micrometer.observation.Observation.Event": "no registered package declares flint.micrometer.observation.Observation",
+"io.micrometer.observation.Observation.Scope": "no registered package declares flint.micrometer.observation.Observation",
+"io.micrometer.observation.ObservationConvention": "flint.micrometer.observation.ObservationConvention is a D template, which a plan kind does not describe yet",
+"io.micrometer.observation.ObservationHandler": "flint.micrometer.observation.ObservationHandler is a D template, which a plan kind does not describe yet",
+"io.micrometer.observation.ObservationRegistry.ObservationConfig": "no registered package declares flint.micrometer.observation.ObservationRegistry"
 }
 }
