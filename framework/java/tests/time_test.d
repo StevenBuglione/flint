@@ -285,6 +285,31 @@ unittest
     assert(odt.isBefore(LocalDateTime.of(2010, 9, 7, 9, 15).atOffset(ZoneOffset.UTC)));
 }
 
+@("java.time: compareTo returns the differences Java returns")
+unittest
+{
+    // LocalDate (and so LocalDateTime) returns the first differing year, month or day difference; LocalTime -1/0/1.
+    assert(LocalDate.of(2024, 3, 15).compareTo(LocalDate.of(2020, 12, 31)) == 4);
+    assert(LocalDate.of(2024, 3, 15).compareTo(LocalDate.of(2024, 7, 1)) == -4);
+    assert(LocalDate.of(2024, 3, 15).compareTo(LocalDate.of(2024, 3, 31)) == -16);
+    assert(LocalDate.MIN.compareTo(LocalDate.MAX) == -1_999_999_998);
+    assert(LocalDateTime.of(2024, 3, 15, 10, 0).compareTo(LocalDateTime.of(2024, 3, 10, 23, 0)) == 5);
+    assert(LocalDateTime.of(2024, 3, 15, 8, 0).compareTo(LocalDateTime.of(2024, 3, 15, 10, 0)) == -1);
+    // Instant and Duration: -1 or 1 for different seconds, otherwise the nanosecond difference.
+    assert(Instant.ofEpochSecond(5, 700).compareTo(Instant.ofEpochSecond(5, 200)) == 500);
+    assert(Instant.ofEpochSecond(4, 999_999_999).compareTo(Instant.ofEpochSecond(5)) == -1);
+    assert(Duration.ofSeconds(1, 999_999_999).compareTo(Duration.ofSeconds(1)) == 999_999_999);
+    assert(Duration.ofSeconds(long.min).compareTo(Duration.ofSeconds(long.max)) == -1);
+    // OffsetDateTime: equal offsets compare the local date-times; otherwise the instant, then the local date-time.
+    const plus2 = ZoneOffset.ofHours(2);
+    assert(OffsetDateTime.of(LocalDateTime.of(2024, 3, 15, 10, 0), plus2)
+            .compareTo(OffsetDateTime.of(LocalDateTime.of(2024, 1, 15, 10, 0), plus2)) == 2);
+    assert(OffsetDateTime.of(LocalDateTime.of(2024, 3, 15, 10, 0, 0, 500), plus2)
+            .compareTo(OffsetDateTime.of(LocalDateTime.of(2024, 3, 15, 8, 0, 0, 100), ZoneOffset.UTC)) == 400);
+    assert(OffsetDateTime.of(LocalDateTime.of(2024, 3, 15, 10, 0), plus2)
+            .compareTo(OffsetDateTime.of(LocalDateTime.of(2024, 3, 15, 8, 0), ZoneOffset.UTC)) == 1);
+}
+
 @("java.time: Instant and Duration arithmetic")
 unittest
 {

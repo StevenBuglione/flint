@@ -473,14 +473,14 @@ struct LocalDate
         return LocalDateTime(this, LocalTime.MIDNIGHT);
     }
 
-    /// Compares this date to another date: negative, zero or positive.
+    /// Compares this date to another date: the difference of the first differing year, month or day, as Java returns.
     int compareTo(LocalDate other) const pure nothrow @nogc
     {
         if (year_ != other.year_)
-            return year_ < other.year_ ? -1 : 1;
+            return year_ - other.year_;
         if (month_ != other.month_)
-            return month_ < other.month_ ? -1 : 1;
-        return day_ < other.day_ ? -1 : day_ > other.day_ ? 1 : 0;
+            return month_ - other.month_;
+        return day_ - other.day_;
     }
 
     /// `<` and `>` follow `compareTo`.
@@ -1461,12 +1461,12 @@ struct Instant
         return ZonedDateTime(LocalDateTime.ofEpochSecond(seconds_, nanos_, zone.offset()), zone.offset(), zone);
     }
 
-    /// Compares this instant to another: negative, zero or positive.
+    /// Compares this instant to another: -1 or 1 when the seconds differ, otherwise the difference of the nanoseconds, as Java returns.
     int compareTo(Instant other) const pure nothrow @nogc
     {
         if (seconds_ != other.seconds_)
             return seconds_ < other.seconds_ ? -1 : 1;
-        return nanos_ < other.nanos_ ? -1 : nanos_ > other.nanos_ ? 1 : 0;
+        return nanos_ - other.nanos_;
     }
 
     /// `<` and `>` follow `compareTo`.
@@ -1639,10 +1639,20 @@ struct OffsetDateTime
         return toInstant().atZone(zone);
     }
 
-    /// Compares by instant, then by local date-time.
+    /// Compares by instant, then by local date-time. With equal offsets this is the local date-time comparison; otherwise
+    /// -1 or 1 when the epoch seconds differ, then the difference of the nanoseconds, as Java returns.
     int compareTo(OffsetDateTime other) const pure nothrow @nogc
     {
-        const c = toInstant().compareTo(other.toInstant());
+        int c;
+        if (offset_.getTotalSeconds() == other.offset_.getTotalSeconds())
+            c = dateTime_.compareTo(other.dateTime_);
+        else
+        {
+            const seconds = toEpochSecond(), otherSeconds = other.toEpochSecond();
+            if (seconds != otherSeconds)
+                return seconds < otherSeconds ? -1 : 1;
+            c = dateTime_.getNano() - other.dateTime_.getNano();
+        }
         return c != 0 ? c : dateTime_.compareTo(other.dateTime_);
     }
 
@@ -2019,12 +2029,12 @@ struct Duration
         return isNegative() ? negated() : this;
     }
 
-    /// Compares by length.
+    /// Compares by length: -1 or 1 when the seconds differ, otherwise the difference of the nanoseconds, as Java returns.
     int compareTo(Duration other) const pure nothrow @nogc
     {
         if (seconds_ != other.seconds_)
             return seconds_ < other.seconds_ ? -1 : 1;
-        return nanos_ < other.nanos_ ? -1 : nanos_ > other.nanos_ ? 1 : 0;
+        return nanos_ - other.nanos_;
     }
 
     /// `<` and `>` follow `compareTo`.
