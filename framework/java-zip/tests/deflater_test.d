@@ -11,6 +11,16 @@ private const wrapped = cast(const(byte)[]) x"789c4bcbc9cc2b5148494dcb492c49c5a0
 private const raw = cast(const(byte)[]) x"4bcbc9cc2b5148494dcb492c49c5a07332d352932b93735201";
 private const withDictionary = cast(const(byte)[]) x"78bb734d09694b431547a37332d352932b9373520126540ecd";
 
+@("deflater exposes Java's compression constants")
+unittest
+{
+    assert(Deflater.DEFLATED == 8);
+    assert(Deflater.NO_COMPRESSION == 0 && Deflater.BEST_SPEED == 1 && Deflater.BEST_COMPRESSION == 9);
+    assert(Deflater.DEFAULT_COMPRESSION == -1);
+    assert(Deflater.DEFAULT_STRATEGY == 0 && Deflater.FILTERED == 1 && Deflater.HUFFMAN_ONLY == 2);
+    assert(Deflater.NO_FLUSH == 0 && Deflater.SYNC_FLUSH == 2 && Deflater.FULL_FLUSH == 3);
+}
+
 @("deflater finishes in single-byte output chunks and resets for replay")
 unittest
 {
@@ -33,10 +43,13 @@ unittest
         assert(encoder.finished() && encoder.needsInput());
         assert(encoder.getBytesRead() == payload.length);
         assert(encoder.getBytesWritten() == written);
+        assert(encoder.getTotalIn() == payload.length);
+        assert(encoder.getTotalOut() == written);
         assert(output[0 .. written] == wrapped);
         encoder.reset();
         assert(!encoder.finished() && encoder.needsInput());
         assert(encoder.getBytesRead() == 0 && encoder.getBytesWritten() == 0);
+        assert(encoder.getTotalIn() == 0 && encoder.getTotalOut() == 0);
     }
 }
 
