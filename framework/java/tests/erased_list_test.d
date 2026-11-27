@@ -5,12 +5,13 @@ Flint's tests of the erased collections of a class (playbook B-1): `ArrayList!T`
 +/
 module flint.java.erased_list_test;
 
-import flint.engine.aot.any : Any;
+import core.memory : GC;
+import flint.engine.aot.any : Any, AnyTypeException;
 import flint.engine.aot.name : typeNameOf;
 import flint.java.lang : ClassCastException, IllegalStateException, IndexOutOfBoundsException,
     UnsupportedOperationException;
-import flint.java.util : ArrayList, Collection, Collections, Comparator, HashMap, HashSet,
-    LinkedHashSet, List, MapEntry, NoSuchElementException, RawCollection, Set;
+import flint.java.util : AbstractList, ArrayList, Collection, Collections, Comparator, HashMap, HashSet,
+    ErasedArrayList, Iterator, LinkedHashSet, List, MapEntry, NoSuchElementException, RawCollection, Set;
 
 @safe:
 
@@ -268,4 +269,186 @@ unittest
     auto counts = new HashMap!(string, int)();
     counts.put("a", 1);
     assert(counts.entrySet().toString() == "[a=1]");
+}
+
+private interface PrimaryReference
+{
+    int value();
+}
+
+private interface ListReference
+{
+    int value();
+    int hashCode();
+}
+
+private extern (C++) interface ForeignReference
+{
+    int value();
+}
+
+private extern (Windows) interface IUnknown
+{
+    int query();
+}
+
+private interface ComReference : IUnknown
+{
+    int value();
+}
+
+private final class ReferenceValue : PrimaryReference, ListReference
+{
+    int number;
+
+    this(int number)
+    {
+        this.number = number;
+    }
+
+    int value()
+    {
+        return number;
+    }
+
+    int hashCode()
+    {
+        return 100 + number;
+    }
+
+    override bool opEquals(Object other)
+    {
+        return other is this;
+    }
+
+    override size_t toHash() @safe nothrow
+    {
+        return 1;
+    }
+}
+
+private final class ReversedReferenceList : ArrayList!ListReference
+{
+    this(ListReference[] source)
+    {
+        super(source);
+    }
+
+    override ListReference get(int index)
+    {
+        return super.get(size() - 1 - index);
+    }
+}
+
+private final class IteratorOverrideList : ArrayList!ListReference
+{
+    private ListReference yielded;
+
+    this(ListReference stored, ListReference yielded)
+    {
+        super([stored]);
+        this.yielded = yielded;
+    }
+
+    override Iterator!ListReference iterator()
+    {
+        return new ArrayList!ListReference([yielded]).iterator();
+    }
+}
+
+@("Erased ArrayList explicitly dispatches a custom iterator and keeps inherited indexed reads")
+unittest
+{
+    ListReference stored = new ReferenceValue(2);
+    ListReference yielded = new ReferenceValue(3);
+    List!ListReference list = new IteratorOverrideList(stored, yielded);
+
+    assert(list.iterator().next() is yielded);
+    list.forEach((ListReference value) { assert(value is stored); });
+    foreach (value; list)
+        assert(value is stored);
+    assert(list.toAnyArray()[0].get!ListReference is stored);
+    assert(list.remove(stored) && list.isEmpty());
+}
+
+@("Native interface lists share erased array storage and adjust references at typed boundaries")
+unittest
+{
+    static assert(is(ArrayList!ListReference : ErasedArrayList),
+            "native interface ArrayList should reuse erased storage");
+    static assert(is(ArrayList!Pet : ErasedArrayList));
+    static assert(!__traits(compiles, {
+            AbstractList!ListReference invalid = new ArrayList!ListReference();
+        }));
+    static assert(!__traits(compiles, { AbstractList!Pet invalid = new ArrayList!Pet(); }));
+    static assert(!is(ArrayList!int : ErasedArrayList));
+    static assert(__traits(getLinkage, ForeignReference) != "D");
+    static assert(__traits(getLinkage, ComReference) != "D");
+
+    auto owner = new ReferenceValue(2);
+    ListReference first = owner;
+    ListReference second = new ReferenceValue(3);
+    ListReference[] input = [first];
+    auto list = new ArrayList!ListReference(input);
+    auto view = Collections.unmodifiableList!ListReference(list);
+    auto snapshot = List!ListReference.of(input);
+    input[0] = second;
+    assert(list.get(0) is first && snapshot.get(0) is first);
+    assert(cast(Object) list.get(0) is owner);
+    assert(cast(AbstractList!ListReference) cast(Object) list is null);
+    try
+    {
+        list.get(-1);
+        assert(false, "expected the index check to throw");
+    }
+    catch (IndexOutOfBoundsException failure)
+        assert(failure.getMessage() == "Index -1 out of bounds for length 1");
+    try
+    {
+        list.add(2, first);
+        assert(false, "expected the insertion index check to throw");
+    }
+    catch (IndexOutOfBoundsException failure)
+        assert(failure.getMessage() == "Index: 2, Size: 1");
+
+    RawCollection raw = list;
+    raw.addAny(Any.of(second));
+    list.add(1, cast(ListReference) null);
+    assert(list.contains(null) && list.get(1) is null);
+    assert(raw.toAnyArray()[2].get!ListReference is second);
+    expectThrow!AnyTypeException(() @safe { raw.addAny(Any.of(new Plain)); return 0; });
+    assert(raw.size() == 3);
+    assert(list.set(1, second) is null && view.get(1) is second);
+    assert(list.removeAt(2) is second && view.size() == 2);
+
+    auto array = list.toArray();
+    assert(array[0] is first && array[1] is second);
+    array[0] = null;
+    assert(list.get(0) is first);
+    assert(list.subList(1, 2).get(0) is second);
+    auto copy = List!ListReference.__flintFromElements(List!ListReference.__flintElements(list));
+    assert(copy.equals(list) && copy.hashCode() == 31 * (31 + 102) + 103);
+    assert(List!ListReference.copyOf(list).get(1) is second);
+
+    int sum;
+    auto allocated = GC.stats().allocatedInCurrentThread;
+    assert(list.get(0) is first);
+    foreach (value; cast(List!ListReference) list)
+        sum += value.value();
+    assert(sum == 5 && GC.stats().allocatedInCurrentThread == allocated);
+    auto action = (ListReference value) { sum += value.value(); };
+    allocated = GC.stats().allocatedInCurrentThread;
+    list.forEach(action);
+    assert(sum == 10 && GC.stats().allocatedInCurrentThread == allocated);
+    auto cursor = list.iterator();
+    assert(cursor.next() is first);
+    cursor.remove();
+    assert(list.size() == 1 && cursor.next() is second);
+    expectThrow!UnsupportedOperationException(() @safe => view.add(first));
+
+    List!ListReference reversed = new ReversedReferenceList([first, second]);
+    assert(reversed.get(0) is second && reversed.iterator().next() is second);
+    assert(Collections.unmodifiableList(reversed).get(0) is second);
+    assert(reversed.toAnyArray()[0].get!ListReference is second);
+    assert(reversed.subList(0, 1).get(0) is second);
 }
