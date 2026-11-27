@@ -19,7 +19,7 @@ can move between harnesses without losing context. Nothing here depends on a har
     agentctl.py handoff ROLE --agent NAME [PATH | -]          replace the role's state (the old one is kept)
     agentctl.py brief ROLE [--harness NAME]             a start-up prompt for an agent taking the role
     agentctl.py worktree ROLE                           print (and create if missing) the role's git worktree
-    agentctl.py launch ROLE --harness codex [--loop MIN] [--profile NAME] [--agent NAME] [--dry-run]
+    agentctl.py launch ROLE --harness codex|agy|copilot [--loop MIN] [--profile NAME] [--agent NAME] [--dry-run]
 
 The shared directory is $FLINT_COORD_DIR, or the `coordination` folder beside the main checkout
 (/home/olfa/flint-work/coordination on venus). Layout:
@@ -58,7 +58,9 @@ from pathlib import Path
 
 DEFAULT_TTL_MIN = 45
 QUEUE_HEAD_MIN = 10
-HARNESSES = ('claude', 'codex', 'human', 'other')
+HARNESSES = ('claude', 'codex', 'agy', 'copilot', 'human', 'other')
+# Harnesses `launch` can run headless. For agy and copilot, --profile names the model.
+LAUNCH_HARNESSES = ('codex', 'agy', 'copilot')
 PLACEHOLDER_BODIES = frozenset({'noop', 'no-op', 'test', 'ping', 'x', '.'})
 
 
@@ -544,18 +546,31 @@ Your unread mail:
 
 def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | None, profile: str | None,
            dry_run: bool) -> int:
-    if harness != 'codex':
-        raise SystemExit('agentctl: launch supports --harness codex; start other harnesses by pasting `brief`')
+    if harness not in LAUNCH_HARNESSES:
+        raise SystemExit(f'agentctl: launch supports --harness {"|".join(LAUNCH_HARNESSES)}; '
+                         'start other harnesses by pasting `brief`')
     worktree = worktree_for(store, role) if dry_run else ensure_worktree(store, role)
     logs = store.root / 'logs' / role
     logs.mkdir(parents=True, exist_ok=True)
-    base = ['codex', 'exec', '--cd', str(worktree)] + (['--profile', profile] if profile else [])
     first = brief(store, role, harness).replace('<your-name>', agent)
     tick = (f'Continue as role {role} following docs/agents/README.md: check your inbox, continue your state\'s Next '
             f'step, push verified work, and rewrite your hand-off state before you finish (agent name {agent}).')
-    commands = [base + [first]]
-    if loop_min:
-        commands.append(base + ['resume', '--last', tick])
+    if harness == 'codex':
+        base = ['codex', 'exec', '--cd', str(worktree)] + (['--profile', profile] if profile else [])
+        commands = [base + [first]]
+        if loop_min:
+            commands.append(base + ['resume', '--last', tick])
+    else:
+        # agy and copilot run each tick as a fresh headless session from the brief: several lanes share one
+        # machine, so resuming "the most recent conversation" could pick up another lane's. The role's hand-off
+        # state carries the context between ticks, as it does across harnesses.
+        if harness == 'agy':
+            base = ['agy', '--dangerously-skip-permissions', '--add-dir', str(worktree)]
+            base += ['--model', profile or 'gemini-4-neon-high']
+            commands = [base + ['-p', first]]
+        else:
+            base = ['copilot', '--allow-all', '--no-ask-user', '--model', profile or 'auto']
+            commands = [base + ['-p', first]]
     if dry_run:
         for command in commands:
             print(shlex.join(command[:-1]) + ' <prompt of ' + str(len(command[-1])) + ' chars>')
@@ -565,7 +580,8 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
         command = commands[0] if index == 0 else commands[-1]
         stamp = utc_now().replace(':', '')
         with open(logs / f'{stamp}.log', 'w', encoding='utf-8') as out:
-            result = subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, cwd=worktree, check=False)
+            result = subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                    cwd=worktree, check=False)
         store.event('launch', role=role, harness=harness, agent=agent, exit=result.returncode, log=f'{stamp}.log')
         index += 1
         if not loop_min:
