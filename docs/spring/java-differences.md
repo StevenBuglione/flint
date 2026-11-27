@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,233 | 413 | 1,871 | 14,904 |
+| framework | openjdk@21.0.13 | 1,233 | 414 | 1,871 | 14,903 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 88 | 11,744 |
@@ -2467,6 +2467,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.format.DateTimeFormatter#ISO_OFFSET_TIME` | `flint.java.time.format.DateTimeFormatter.ISO_OFFSET_TIME` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
 | `java.time.format.DateTimeFormatter#ISO_ORDINAL_DATE` | `flint.java.time.format.DateTimeFormatter.ISO_ORDINAL_DATE` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
 | `java.time.format.DateTimeFormatter#ISO_TIME` | `flint.java.time.format.DateTimeFormatter.ISO_TIME` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter resolves parsed Fields through the existing typed temporal conversions. |
+| `java.time.format.DateTimeFormatter#ISO_WEEK_DATE` | `flint.java.time.format.DateTimeFormatter.ISO_WEEK_DATE` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter prints the ISO week-based year and week from the date, and resolves them STRICT (or SMART after withResolverStyle) as IsoFields does. IsoFields itself is not exposed yet. |
 | `java.time.format.DateTimeFormatter#RFC_1123_DATE_TIME` | `flint.java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME` | [R11](api-mapping.md#r11-object-identity-and-equality) | The immutable D formatter parses leniently and resolves SMART, as Java does, including every parsed field whatever the queried type. Day and month names are the fixed English abbreviations. |
 | `java.time.format.DateTimeFormatter#getZone()` | `flint.java.time.format.DateTimeFormatter.getZone` | [R5](api-mapping.md#r5-optional-and-nullable-values) | An absent override is represented by Nullable!ZoneId. |
 | `java.time.format.DateTimeFormatter#withResolverStyle(ResolverStyle)` | `flint.java.time.format.DateTimeFormatter.withResolverStyle` | [R11](api-mapping.md#r11-object-identity-and-equality) | Returns a copy of the immutable D value. ResolverStyle has no LENIENT member yet, so only STRICT and SMART can be requested. |
@@ -10747,7 +10748,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
-| java.time.format | 117 | 0 |
+| java.time.format | 116 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,877 | 0 |

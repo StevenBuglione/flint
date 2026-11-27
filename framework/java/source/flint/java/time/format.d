@@ -89,13 +89,16 @@ private enum Field : ubyte
     nanoOfSecond,
     amPmOfDay,
     instantSeconds,
+    weekBasedYear, // Java's IsoFields.WEEK_BASED_YEAR
+    weekOfWeekBasedYear, // IsoFields.WEEK_OF_WEEK_BASED_YEAR
 }
 
 private enum fieldCount = Field.max + 1;
 
 private immutable string[fieldCount] fieldNames = [
     "Year", "YearOfEra", "MonthOfYear", "DayOfMonth", "DayOfYear", "DayOfWeek", "HourOfDay",
-    "ClockHourOfAmPm", "MinuteOfHour", "SecondOfMinute", "NanoOfSecond", "AmPmOfDay", "InstantSeconds"
+    "ClockHourOfAmPm", "MinuteOfHour", "SecondOfMinute", "NanoOfSecond", "AmPmOfDay",
+    "InstantSeconds", "WeekBasedYear", "WeekOfWeekBasedYear"
 ];
 
 /**
@@ -446,6 +449,63 @@ struct Fields
             throw failed(text, e);
     }
 
+    // Resolves a parsed week-based year, week and day-of-week into the date, as Java's
+    // `IsoFields.WEEK_OF_WEEK_BASED_YEAR` does before the other date fields: the week-based year and the day are
+    // range-checked, then the week against the year's 52 or 53 weeks (STRICT) or against 1 - 52/53 (SMART, where
+    // week 53 of a 52-week year is the first week of the next).
+    private void resolveWeekDate(scope const(char)[] text)
+    {
+        if (!has(Field.weekBasedYear) || !has(Field.weekOfWeekBasedYear) || !has(Field.dayOfWeek))
+            return;
+        LocalDate date;
+        try
+        {
+            checkRange("WeekBasedYear", values_[Field.weekBasedYear], -999_999_999, 999_999_999);
+            checkRange("DayOfWeek", values_[Field.dayOfWeek], 1, 7);
+            const year = cast(int) values_[Field.weekBasedYear];
+            const week = values_[Field.weekOfWeekBasedYear], day = values_[Field.dayOfWeek];
+            if (!smart_)
+                checkRange("WeekOfWeekBasedYear", week, 1, weeksInWeekBasedYear(year));
+            else
+                checkVariable("WeekOfWeekBasedYear", week, "52/53", 53);
+            date = LocalDate.of(year, 1, 4).plusWeeks(week - 1); // 4 January is always in week 1
+            date = date.plusDays(day - 1 - date.getDayOfWeek());
+        }
+        catch (DateTimeException e)
+            throw failed(text, e);
+        present_ &= ~((1u << Field.weekBasedYear) | (1u << Field.weekOfWeekBasedYear));
+        addDate(date);
+    }
+
+    // The value a printer prints for `f`: the supplied or parsed value, or a week field derived from the date.
+    private bool printedValue(Field f, out long value) const
+    {
+        if (f >= Field.weekBasedYear)
+            return weekValue(f, value);
+        if (!has(f))
+            return false;
+        value = values_[f];
+        return true;
+    }
+
+    // The ISO week-based year or week of the date these fields hold; false when they hold no date. A week belongs
+    // to the year of its Thursday, so the first days of January can be in the previous week-based year and the
+    // last days of December in the next.
+    private bool weekValue(Field f, out long value) const
+    {
+        if (!hasDate())
+            return false;
+        const date = toLocalDate("");
+        long year = date.getYear();
+        long thursday = date.getDayOfYear() + 3 - date.getDayOfWeek(); // its day-of-year, Monday being 0
+        if (thursday < 1)
+            thursday += daysInYear(--year);
+        else if (thursday > date.lengthOfYear())
+            thursday -= daysInYear(year++);
+        value = f == Field.weekBasedYear ? year : (thursday - 1) / 7 + 1;
+        return true;
+    }
+
     /// The parsed offset; throws `DateTimeParseException` when none was parsed.
     ZoneOffset toOffset(scope const(char)[] text, string type = "ZoneOffset") const
     {
@@ -456,6 +516,20 @@ struct Fields
         catch (DateTimeException e)
             throw failed(text, e);
     }
+}
+
+private long daysInYear(long year) pure nothrow @nogc
+{
+    return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 366 : 365;
+}
+
+// 53 weeks when the year starts on a Thursday, or on a Wednesday in a leap year; otherwise 52.
+private long weeksInWeekBasedYear(int year)
+{
+    import flint.java.time : DayOfWeek;
+
+    const first = LocalDate.of(year, 1, 1).getDayOfWeek();
+    return first == DayOfWeek.THURSDAY || (first == DayOfWeek.WEDNESDAY && daysInYear(year) == 366) ? 53 : 52;
 }
 
 private enum Op : ubyte
@@ -567,6 +641,11 @@ private immutable Element[] isoOrdinalDate = [
     op(Op.caseInsensitive), num(Field.year, 4, 10, SignStyle.EXCEEDS_PAD), lit("-"),
     num(Field.dayOfYear, 3), op(Op.optionalStart), isoStrictOffset, op(Op.optionalEnd)
 ];
+private immutable Element[] isoWeekDate = [
+    op(Op.caseInsensitive), num(Field.weekBasedYear, 4, 10, SignStyle.EXCEEDS_PAD), lit("-W"),
+    num(Field.weekOfWeekBasedYear, 2), lit("-"), num(Field.dayOfWeek, 1), op(Op.optionalStart),
+    isoStrictOffset, op(Op.optionalEnd)
+];
 private immutable Element[] isoInstant = [op(Op.caseInsensitive), op(Op.instant)];
 private immutable Element[] basicIsoDate = [
     op(Op.caseInsensitive), num(Field.year, 4), num(Field.monthOfYear, 2), num(Field.dayOfMonth,
@@ -607,6 +686,8 @@ private enum describeIsoDate = `ParseCaseSensitive(false)(` ~ describeDate ~ `)[
 private enum describeIsoTime = `ParseCaseSensitive(false)(` ~ describeTime ~ `)[Offset(+HH:MM:ss,'Z')]`;
 private enum describeIsoOrdinalDate = `ParseCaseSensitive(false)Value(Year,4,10,EXCEEDS_PAD)'-'Value(DayOfYear,3)[`
     ~ describeStrictOffset ~ `]`;
+private enum describeIsoWeekDate = `ParseCaseSensitive(false)Value(WeekBasedYear,4,10,EXCEEDS_PAD)'-W'`
+    ~ `Value(WeekOfWeekBasedYear,2)'-'Value(DayOfWeek,1)[` ~ describeStrictOffset ~ `]`;
 private enum describeIsoInstant = `ParseCaseSensitive(false)Instant()`;
 private enum describeRfc1123 = `ParseCaseSensitive(false)ParseStrict(false)[Text(DayOfWeek)', ']`
     ~ `Value(DayOfMonth,1,2,NOT_NEGATIVE)' 'Text(MonthOfYear)' 'Value(Year,4)' 'Value(HourOfDay,2)':'`
@@ -652,6 +733,8 @@ struct DateTimeFormatter
     static immutable DateTimeFormatter ISO_TIME = DateTimeFormatter(isoTime, describeIsoTime);
     /// The ISO year and day-of-year formatter with an optional offset, such as '2024-060'.
     static immutable DateTimeFormatter ISO_ORDINAL_DATE = DateTimeFormatter(isoOrdinalDate, describeIsoOrdinalDate);
+    /// The ISO week-based year, week and day-of-week formatter with an optional offset, such as '2012-W48-6'.
+    static immutable DateTimeFormatter ISO_WEEK_DATE = DateTimeFormatter(isoWeekDate, describeIsoWeekDate);
     /// The ISO instant formatter in UTC, such as '2011-12-03T10:15:30Z'.
     static immutable DateTimeFormatter ISO_INSTANT = DateTimeFormatter(isoInstant, describeIsoInstant);
     /// The ISO date formatter without punctuation, such as '20111203'.
@@ -772,6 +855,7 @@ struct DateTimeFormatter
         }
         if (hasZone_ && !fields.zoneId_.length)
             fields.addZone(zone_);
+        fields.resolveWeekDate(text);
         fields.resolveAll(text);
         return fields;
     }
@@ -973,9 +1057,9 @@ private struct Printer
     {
         import flint.engine.aot.text : decimal;
 
-        if (!fields.has(e.field))
+        long value;
+        if (!fields.printedValue(e.field, value))
             return false;
-        const value = fields.values_[e.field];
         const magnitude = value < 0 ? -value : value;
         auto digits = padded(magnitude, e.minWidth);
         if (digits.length > e.maxWidth)
