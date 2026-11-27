@@ -72,6 +72,28 @@ class BitSet
         return new BitSet(copyWords(cast(const(ulong)[]) values[0 .. count]));
     }
 
+    /// Copies little-endian bytes, lowest bit indices first, and drops trailing zero bytes.
+    static BitSet valueOf(scope const(byte)[] bytes) pure nothrow
+    {
+        auto count = bytes.length;
+        while (count != 0 && bytes[count - 1] == 0)
+            --count;
+        if (count == 0)
+            return new BitSet(new ulong[0]);
+
+        auto words = new ulong[(count + 7) >> 3];
+        foreach (index; 0 .. count)
+            words[index >> 3] |= cast(ulong)(cast(ubyte) bytes[index]) << ((index & 7) * 8);
+        version (BigEndian)
+        {
+            import core.bitop : bswap;
+
+            foreach (ref word; words)
+                word = bswap(word);
+        }
+        return new BitSet(words);
+    }
+
     /// Tests the bit at the given index. Unallocated bits are clear.
     bool get(int bitIndex) const pure
     {
