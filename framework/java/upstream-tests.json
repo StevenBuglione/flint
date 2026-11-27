@@ -602,10 +602,12 @@
     },
     "java/lang/Math/AbsPositiveZero.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover Math.abs(float) and Math.abs(double) on signed zeros.",
       "status": "deferred"
     },
     "java/lang/Math/AbsTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover Math.abs(int|long|float|double); absExact is not ported yet.",
       "status": "deferred"
     },
     "java/lang/Math/Atan2Tests.java": {
@@ -614,6 +616,7 @@
     },
     "java/lang/Math/CeilAndFloorTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover Math.ceil(double) and Math.floor(double).",
       "status": "deferred"
     },
     "java/lang/Math/Clamp.java": {
@@ -658,6 +661,7 @@
     },
     "java/lang/Math/IeeeRecommendedTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover getExponent, ulp, signum, copySign, nextAfter, nextUp, nextDown and scalb on float and double.",
       "status": "deferred"
     },
     "java/lang/Math/IeeeRemainderTests.java": {
@@ -682,10 +686,12 @@
     },
     "java/lang/Math/MinMax.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover Math.max and Math.min on int, long, float and double, including NaN and signed zeros.",
       "status": "deferred"
     },
     "java/lang/Math/MultiplicationTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover Math.multiplyFull, multiplyHigh and unsignedMultiplyHigh.",
       "status": "deferred"
     },
     "java/lang/Math/PowTests.java": {
@@ -694,10 +700,12 @@
     },
     "java/lang/Math/Rint.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover Math.rint(double).",
       "status": "deferred"
     },
     "java/lang/Math/RoundTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover Math.round(float) and Math.round(double), including saturation and the 0.49999999999999994 case.",
       "status": "deferred"
     },
     "java/lang/Math/SinCosCornerCasesTests.java": {
