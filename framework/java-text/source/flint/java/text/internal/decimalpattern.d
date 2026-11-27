@@ -121,7 +121,14 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text,
     if (status != DecimalCompileStatus.accepted)
         return status;
     AffixPair negative;
-    const explicitNegative = bounds.hasNegative && bounds.negative.start != bounds.negative.end;
+    auto explicitNegative = bounds.hasNegative && bounds.negative.start != bounds.negative.end;
+    // Without a separator Java reads the whole pattern again as the negative subpattern, whose digit phase also
+    // skips exponent symbols: `0E0E` loses its suffix there, and with it the implicit minus sign.
+    if (!bounds.hasNegative && text.length != 0)
+    {
+        size_t position;
+        explicitNegative = scanSubpattern(text, position, false, bounds.negative);
+    }
     if (explicitNegative)
     {
         status = readAffixes(text, bounds.negative, symbols, negative);
@@ -154,7 +161,239 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text,
     return DecimalCompileStatus.accepted;
 }
 
+/// Compile a localized pattern (DecimalFormat.applyLocalizedPattern): `symbols` supplies the pattern characters
+/// as well as their expansions. `localizedPatternSymbolsEncodable` must accept the symbols.
+DecimalCompileStatus compileLocalizedDecimalPattern(scope string text,
+        ref scope const DecimalSymbolData symbols, out DecimalFixedPattern result) pure nothrow
+{
+    string pattern;
+    const status = delocalizePattern(text, symbols, pattern);
+    if (status != DecimalCompileStatus.accepted)
+        return status;
+    return compileFixedDecimalPattern(pattern, symbols, result);
+}
+
 private:
+
+// Rewrites a localized pattern as the nonlocalized one that applyPattern(pattern, true) reads it as. The phases,
+// quoting and symbol precedence follow that loop; literals are quoted in runs, so the affix patterns are unchanged.
+// Java's immediate exponent errors are reported here because a later digit re-entry would otherwise defer them.
+pure nothrow DecimalCompileStatus delocalizePattern(scope string text,
+        ref scope const DecimalSymbolData symbols, out string result)
+{
+    string output;
+    uint state;
+    auto status = delocalizeFrom(text, symbols, output, state);
+    // Java reads a pattern without a separator again as the negative subpattern. Quoting a positive suffix would
+    // hide symbols that this reading skips, so it is written out. A prefix-only pattern reads the same both ways.
+    if (status == DecimalCompileStatus.accepted
+            && (state & (Delocalize.negative | Delocalize.reachedDigits)) == Delocalize.reachedDigits)
+    {
+        appendUnit(output, ';');
+        state = Delocalize.negative;
+        status = delocalizeFrom(text, symbols, output, state);
+    }
+    if (status == DecimalCompileStatus.accepted)
+        result = output;
+    return status;
+}
+
+// The rewrite's state bits. Phases 0 and 2 read the same here, so one bit marks phase 1. A struct would add its
+// RTInfo template instances (B-93).
+enum Delocalize : uint
+{
+    digitPhase = 1,
+    negative = 2,
+    quoted = 4,
+    // An open quoted run of literals in the output.
+    run = 8,
+    reachedDigits = 16,
+    // Java's digitLeftCount + zeroDigitCount and useExponentialNotation for the positive subpattern.
+    digits = 32,
+    exponent = 64,
+}
+
+DecimalCompileStatus delocalizeFrom(scope string text, ref scope const DecimalSymbolData symbols,
+        ref string output, ref uint state) pure nothrow
+{
+    for (size_t position; position < text.length;)
+    {
+        if (state & Delocalize.digitPhase)
+        {
+            if (!digitToken(text, position, symbols, output, state))
+                return DecimalCompileStatus.malformed;
+            continue;
+        }
+        if (state & Delocalize.quoted)
+        {
+            if (text[position] == '\'')
+                quote(text, position, output, state);
+            else
+                literal(text, position, output, state);
+            continue;
+        }
+        if (phaseOneSymbol(text, position, symbols) != 0)
+        {
+            closeRun(output, state);
+            state |= Delocalize.digitPhase | Delocalize.reachedDigits;
+            continue;
+        }
+        affixToken(text, position, symbols, output, state);
+    }
+    if (state & Delocalize.quoted)
+        return DecimalCompileStatus.malformed;
+    closeRun(output, state);
+    return DecimalCompileStatus.accepted;
+}
+
+void closeRun(ref string output, ref uint state) pure nothrow
+{
+    if (state & Delocalize.run)
+        appendUnit(output, '\'');
+    state &= ~Delocalize.run;
+}
+
+// A literal quote is doubled inside or outside a run; a run opens only before another literal. UTF-8
+// continuation bytes never begin a symbol, so literals are copied a byte at a time.
+void literal(scope string text, ref size_t position, ref string output, ref uint state) pure nothrow
+{
+    if (!(state & Delocalize.run))
+        appendUnit(output, '\'');
+    state |= Delocalize.run;
+    appendUnit(output, text[position++]);
+}
+
+void quote(scope string text, ref size_t position, ref string output, ref uint state) pure nothrow
+{
+    ++position;
+    if (position < text.length && text[position] == '\'')
+    {
+        appendText(output, "''");
+        ++position;
+    }
+    else
+        state ^= Delocalize.quoted;
+}
+
+void affixToken(scope string text, ref size_t position, ref scope const DecimalSymbolData symbols,
+        ref string output, ref uint state) pure nothrow
+{
+    enum sign = "¤";
+    // A doubled sign is two signs here as well, so each is copied alone.
+    if (startsWith(text[position .. $], sign))
+    {
+        closeRun(output, state);
+        position += sign.length;
+        appendText(output, sign);
+        return;
+    }
+    if (text[position] == '\'')
+        return quote(text, position, output, state);
+    // Java rejects a separator in a prefix or in the negative subpattern, as the compiler does.
+    if (operator(text, position, symbols.patternSeparator, ";", output, state))
+    {
+        state |= Delocalize.negative;
+        return;
+    }
+    if (operator(text, position, symbols.percent, "%", output, state))
+        return;
+    if (operator(text, position, symbols.perMill, "‰", output, state))
+        return;
+    if (!operator(text, position, symbols.minusSign, "-", output, state))
+        literal(text, position, output, state);
+}
+
+bool operator(scope string text, ref size_t position, wchar symbol, string nonlocalized, ref string output,
+        ref uint state) pure nothrow
+{
+    if (!matchesUnit(text, position, symbol))
+        return false;
+    closeRun(output, state);
+    appendText(output, nonlocalized);
+    position += symbolWidth(symbol);
+    return true;
+}
+
+// One step of the digit phase; false when Java throws a malformed exponent here.
+bool digitToken(scope string text, ref size_t position, ref scope const DecimalSymbolData symbols,
+        ref string output, ref uint state) pure nothrow
+{
+    const symbol = phaseOneSymbol(text, position, symbols);
+    if (symbol != 0)
+    {
+        if (symbol == '#' || symbol == '0')
+            state |= Delocalize.digits;
+        appendUnit(output, symbol);
+        position += symbolWidth(symbolFor(symbol, symbols));
+        return true;
+    }
+    const separator = symbols.exponentSeparator;
+    const negative = (state & Delocalize.negative) != 0;
+    // An empty separator matches anywhere, but the positive subpattern then has no exponent digits and is
+    // rejected, so the negative subpattern never sees it.
+    if (!startsWith(text[position .. $], separator) || (negative && separator.length == 0))
+    {
+        state &= ~Delocalize.digitPhase;
+        return true;
+    }
+    position += separator.length;
+    appendUnit(output, 'E');
+    if (negative)
+        return true;
+    uint zeros;
+    for (; matchesUnit(text, position, symbols.zeroDigit); ++zeros)
+    {
+        appendUnit(output, '0');
+        position += symbolWidth(symbols.zeroDigit);
+    }
+    if ((state & Delocalize.exponent) || !(state & Delocalize.digits) || zeros == 0)
+        return false;
+    state = (state | Delocalize.exponent) & ~Delocalize.digitPhase;
+    return true;
+}
+
+// The nonlocalized digit-phase token for a localized digit, zero, grouping or decimal symbol, in Java's order.
+char phaseOneSymbol(scope string text, size_t position, ref scope const DecimalSymbolData symbols) pure nothrow @nogc
+{
+    if (matchesUnit(text, position, symbols.digit))
+        return '#';
+    if (matchesUnit(text, position, symbols.zeroDigit))
+        return '0';
+    if (matchesUnit(text, position, symbols.groupingSeparator))
+        return ',';
+    return matchesUnit(text, position, symbols.decimalSeparator) ? '.' : 0;
+}
+
+wchar symbolFor(char token, ref scope const DecimalSymbolData symbols) pure nothrow @nogc
+{
+    if (token == '#')
+        return symbols.digit;
+    if (token == '0')
+        return symbols.zeroDigit;
+    return token == ',' ? symbols.groupingSeparator : symbols.decimalSeparator;
+}
+
+bool matchesUnit(scope string text, size_t position, wchar unit) pure nothrow @nogc
+{
+    char[3] encoded;
+    const width = encodeSymbol(unit, encoded);
+    if (text.length - position < width)
+        return false;
+    foreach (i; 0 .. width)
+        if (text[position + i] != encoded[i])
+            return false;
+    return true;
+}
+
+size_t symbolWidth(wchar unit) pure nothrow @nogc
+{
+    return unit < 0x80 ? 1 : unit < 0x800 ? 2 : 3;
+}
+
+bool startsWith(scope string text, scope string head) pure nothrow @nogc
+{
+    return text.length >= head.length && text[0 .. head.length] == head;
+}
 
 void markCurrency(ref DecimalFixedPattern result, ref scope const AffixPair positive,
         ref scope const AffixPair negative, bool explicitNegative) pure nothrow @nogc

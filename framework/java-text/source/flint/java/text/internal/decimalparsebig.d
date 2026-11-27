@@ -157,7 +157,8 @@ bool terminatingShift(ulong remainder, ulong divisor, out uint shift) pure nothr
 
 // What divide(BigDecimal, MathContext) adds to the preferred scale before it rounds: the divisor's precision plus
 // the extra precision ceil(10 * precision / 3) that divide(BigDecimal) requests, less one when the dividend's
-// digits exceed the divisor's once both are normalized to [0.1, 1).
+// digits exceed the divisor's once both are normalized to [0.1, 1). Java's sum also subtracts and adds the
+// dividend's precision (mcp = xprec + ceil(10 yprec / 3)); those two terms cancel.
 long workingScale(scope const(char)[] stored, ulong divisor) pure nothrow @nogc
 {
     char[10] text;
