@@ -23,9 +23,8 @@ package(flint.java.util.zip) uint updateCrc32(uint crc, scope const(ubyte)[] dat
     return cast(uint) crc32_z(crc, data.ptr, data.length);
 }
 
-// SAFETY: The scoped slice has at least length live bytes. zlib reads them synchronously
-// and retains no pointer. The byte and ubyte element types have the same size, alignment
-// and valid representations, so the pointer reinterpretation reads the original bytes.
+// SAFETY: The scoped slice has at least length live bytes and zlib reads them
+// synchronously without retaining a pointer. Byte and ubyte share size and alignment.
 package(flint.java.util.zip) uint updateCrc32(uint crc, scope const(byte)[] data) @trusted nothrow @nogc
 {
     if (data.length == 0)
