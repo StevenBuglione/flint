@@ -78,5 +78,9 @@
   "flint.java.util.stream.collector": {
     "incremental_linked_bytes": 41404,
     "template_instances": 746
+  },
+  "flint.java.util.primitiveiterator": {
+    "incremental_linked_bytes": 8734,
+    "template_instances": 255
   }
 }
