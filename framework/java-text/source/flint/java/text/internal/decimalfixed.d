@@ -2,7 +2,7 @@
 /// Fixed-point rendering for resolved DecimalFormat patterns.
 module flint.java.text.internal.decimalfixed;
 
-import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData;
+import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData, encodeSymbol;
 
 @safe:
 
@@ -117,7 +117,7 @@ struct DecimalFieldSpans
     }
 }
 
-/// Writes using the ASCII numeric symbols of the explicit ROOT and English profiles.
+/// Writes with the given numeric symbols, which `bodySymbolsEncodable` must accept.
 /// Returns the required byte count and leaves a short buffer untouched.
 size_t renderDecimalLong(long value, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output) pure nothrow @nogc
@@ -208,51 +208,115 @@ pure nothrow @nogc size_t renderFixedDigits(scope const(char)[] digits, int deci
     integerCount += fallbackZero;
     const groups = integerCount && pattern.groupingSize ? (integerCount - 1) / pattern.groupingSize : 0;
     const decimalPoint = fractionCount != 0 || pattern.decimalSeparatorAlwaysShown;
-    const required = cast(ulong) affixes.prefix.length + integerCount + groups + decimalPoint
-        + fractionCount + affixes.suffix.length;
+    const localized = BodySymbols(symbols);
+    const integerBytes = localized.runWidth(digits, first, integerCount) + cast(ulong) groups * localized.groupingWidth;
+    const fractionBytes = localized.runWidth(digits, decimalAt, fractionCount);
+    const decimalBytes = decimalPoint ? localized.decimalWidth : 0;
+    const required = cast(ulong) affixes.prefix.length + integerBytes + decimalBytes + fractionBytes
+        + affixes.suffix.length;
     if (required > output.length)
         return required > size_t.max ? size_t.max : cast(size_t) required;
 
     const prefixEnd = affixes.prefix.length;
     output[0 .. prefixEnd] = affixes.prefix;
-    size_t at = prefixEnd + integerCount + groups;
-    writeInteger(digits, first, integerCount, pattern.groupingSize, symbols, output[prefixEnd .. at]);
+    size_t at = prefixEnd + cast(size_t) integerBytes;
+    const separator = writeInteger(digits, first, integerCount, pattern.groupingSize, localized,
+            output[prefixEnd .. at]);
+    const integerEnd = at;
     if (decimalPoint)
-        output[at++] = cast(char) symbols.decimalSeparator;
-    writeFraction(digits, decimalAt, cast(char) symbols.zeroDigit, output[at .. at + fractionCount]);
-    output[at + fractionCount .. cast(size_t) required] = affixes.suffix;
+        at = localized.putDecimal(output, at);
+    const fractionStart = at;
+    at += cast(size_t) fractionBytes;
+    writeFraction(digits, decimalAt, localized, output[fractionStart .. at]);
+    output[at .. cast(size_t) required] = affixes.suffix;
     if (fields !is null)
     {
-        recordFixedFields(*fields, prefixEnd, integerCount, groups ? pattern.groupingSize : 0,
-                at - decimalPoint, decimalPoint, fractionCount);
-        fields.recordAffixes(affixes, at + fractionCount);
+        // Java reports the integer digits with their separators, then the decimal separator, then the fraction.
+        if (groups != 0)
+            fields.record(DecimalField.groupingSeparator, prefixEnd + separator,
+                    prefixEnd + separator + localized.groupingWidth);
+        fields.record(DecimalField.integer, prefixEnd, integerEnd);
+        if (decimalPoint)
+            fields.record(DecimalField.decimalSeparator, integerEnd, fractionStart);
+        fields.record(DecimalField.fraction, fractionStart, at);
+        fields.recordAffixes(affixes, at);
     }
     return cast(size_t) required;
 }
 
-// Java reports the integer digits with their separators, then the decimal separator, then the fraction.
-private pure nothrow @nogc void recordFixedFields(ref scope DecimalFieldSpans fields, size_t integerStart,
-        size_t integerCount, uint groupingSize, size_t integerEnd, bool decimalPoint, size_t fractionCount)
+/// The UTF-8 forms of the symbols written in a number body.
+/// Java writes each digit as the 16-bit sum of the zero digit and the digit's value.
+struct BodySymbols
 {
-    if (groupingSize != 0)
+    char[3][10] digits;
+    ubyte[10] digitWidths;
+    // Zero when the ten digits straddle a UTF-8 width boundary, as zero digits just below U+0800 do.
+    ubyte uniformWidth;
+    char[3] grouping;
+    ubyte groupingWidth;
+    char[3] decimal;
+    ubyte decimalWidth;
+    char[3] minus;
+    ubyte minusWidth;
+
+    this(ref scope const DecimalSymbolData symbols) pure nothrow @nogc
     {
-        const separator = integerStart + (integerCount - 1) % groupingSize + 1;
-        fields.record(DecimalField.groupingSeparator, separator, separator + 1);
+        foreach (digit; 0 .. 10)
+            digitWidths[digit] = cast(ubyte) encodeSymbol(cast(wchar)(symbols.zeroDigit + digit), digits[digit]);
+        uniformWidth = digitWidths[0] == digitWidths[9] ? digitWidths[0] : 0;
+        groupingWidth = cast(ubyte) encodeSymbol(symbols.groupingSeparator, grouping);
+        decimalWidth = cast(ubyte) encodeSymbol(symbols.decimalSeparator, decimal);
+        minusWidth = cast(ubyte) encodeSymbol(symbols.minusSign, minus);
     }
-    fields.record(DecimalField.integer, integerStart, integerEnd);
-    if (decimalPoint)
-        fields.record(DecimalField.decimalSeparator, integerEnd, integerEnd + 1);
-    const fractionStart = integerEnd + decimalPoint;
-    fields.record(DecimalField.fraction, fractionStart, fractionStart + fractionCount);
+
+    /// The bytes of `count` digit positions from `first`; positions outside the stored digits are zeros.
+    ulong runWidth(scope const(char)[] stored, long first, size_t count) const pure nothrow @nogc
+    {
+        if (uniformWidth != 0)
+            return cast(ulong) count * uniformWidth;
+        ulong width;
+        foreach (i; 0 .. count)
+        {
+            const index = first + cast(long) i;
+            width += digitWidths[index >= 0 && index < stored.length ? stored[cast(size_t) index] - '0' : 0];
+        }
+        return width;
+    }
+
+    /// Writes the localized form of an ASCII digit and returns the next offset.
+    size_t putDigit(scope char[] output, size_t at, char digit) const pure nothrow @nogc
+    {
+        const value = digit - '0';
+        const width = digitWidths[value];
+        output[at .. at + width] = digits[value][0 .. width];
+        return at + width;
+    }
+
+    size_t putGrouping(scope char[] output, size_t at) const pure nothrow @nogc
+    {
+        output[at .. at + groupingWidth] = grouping[0 .. groupingWidth];
+        return at + groupingWidth;
+    }
+
+    size_t putDecimal(scope char[] output, size_t at) const pure nothrow @nogc
+    {
+        output[at .. at + decimalWidth] = decimal[0 .. decimalWidth];
+        return at + decimalWidth;
+    }
+
+    size_t putMinus(scope char[] output, size_t at) const pure nothrow @nogc
+    {
+        output[at .. at + minusWidth] = minus[0 .. minusWidth];
+        return at + minusWidth;
+    }
 }
 
-private void writeFraction(scope const(char)[] digits, int point, char zero, scope char[] output) pure nothrow @nogc
+private void writeFraction(scope const(char)[] digits, int point, ref scope const BodySymbols localized,
+        scope char[] output) pure nothrow @nogc
 {
-    foreach (position, ref digit; output)
-    {
-        const index = cast(long) position + point;
-        digit = index >= 0 && index < digits.length ? digits[cast(size_t) index] : zero;
-    }
+    size_t at;
+    for (long index = point; at < output.length; ++index)
+        at = localized.putDigit(output, at, index >= 0 && index < digits.length ? digits[cast(size_t) index] : '0');
 }
 
 private pure nothrow @nogc size_t integerWidth(size_t integralDigits,
@@ -271,18 +335,22 @@ uint primitiveFractionWidth(uint width) pure nothrow @nogc
     return width < limit ? width : limit;
 }
 
-private void writeInteger(scope const(char)[] digits, int firstDigit, size_t integerCount,
-        uint groupingSize, ref scope const DecimalSymbolData symbols, scope char[] output) pure nothrow @nogc
+// Returns the offset of the first grouping separator.
+private size_t writeInteger(scope const(char)[] digits, int firstDigit, size_t integerCount,
+        uint groupingSize, ref scope const BodySymbols localized, scope char[] output) pure nothrow @nogc
 {
     size_t at;
+    size_t separator;
     foreach (i; 0 .. integerCount)
     {
         if (i != 0 && groupingSize && (integerCount - i) % groupingSize == 0)
-            output[at++] = cast(char) symbols.groupingSeparator;
-        const index = firstDigit + cast(int) i;
-        if (index >= 0 && index < digits.length)
-            output[at++] = digits[cast(size_t) index];
-        else
-            output[at++] = cast(char) symbols.zeroDigit;
+        {
+            if (separator == 0)
+                separator = at;
+            at = localized.putGrouping(output, at);
+        }
+        const index = firstDigit + cast(long) i;
+        at = localized.putDigit(output, at, index >= 0 && index < digits.length ? digits[cast(size_t) index] : '0');
     }
+    return separator;
 }

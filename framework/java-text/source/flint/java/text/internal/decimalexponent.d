@@ -42,8 +42,8 @@
 /// Exponential rendering for resolved DecimalFormat patterns.
 module flint.java.text.internal.decimalexponent;
 
-import flint.java.text.internal.decimalfixed : DecimalField, DecimalFieldSpans, DecimalFixedPattern,
-    multiplyUnsignedWord, primitiveFractionWidth, writeWideUnsignedDigits;
+import flint.java.text.internal.decimalfixed : BodySymbols, DecimalField, DecimalFieldSpans,
+    DecimalFixedPattern, multiplyUnsignedWord, primitiveFractionWidth, writeWideUnsignedDigits;
 import flint.java.text.internal.decimaldigitlist : FixedRoundingMode, FixedRoundingStatus, roundSignificant;
 import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData;
 
@@ -93,40 +93,59 @@ pure nothrow @nogc size_t renderExponentDigits(scope const(char)[] digits, int d
 {
     const layout = ExponentLayout(digits.length, digits.length == 0 ? 0 : decimalAt, pattern, arbitraryWidths);
     const affixes = negative ? pattern.negative : pattern.positive;
+    const localized = BodySymbols(symbols);
     char[10] exponentDigits;
     const exponentStart = writeExponent(layout.exponent, exponentDigits);
-    const exponentWidth = exponentDigits.length - exponentStart;
-    const padding = pattern.minimumExponentDigits > exponentWidth ? pattern.minimumExponentDigits - exponentWidth : 0;
-    const required = cast(ulong) affixes.prefix.length + layout.totalDigits + layout.decimalPoint
-        + symbols.exponentSeparator.length + (layout.exponent < 0) + padding + exponentWidth + affixes.suffix.length;
+    const exponentCount = exponentDigits.length - exponentStart;
+    const padding = pattern.minimumExponentDigits > exponentCount ? pattern.minimumExponentDigits - exponentCount : 0;
+    const digitBytes = localized.runWidth(digits, 0, layout.totalDigits);
+    const exponentBytes = localized.runWidth(exponentDigits[exponentStart .. $],
+            -cast(long) padding, padding + exponentCount);
+    const decimalBytes = layout.decimalPoint ? localized.decimalWidth : 0;
+    const minusBytes = layout.exponent < 0 ? localized.minusWidth : 0;
+    const required = cast(ulong) affixes.prefix.length + digitBytes + decimalBytes
+        + symbols.exponentSeparator.length + minusBytes + exponentBytes + affixes.suffix.length;
     if (required > output.length)
         return required > size_t.max ? size_t.max : cast(size_t) required;
 
     size_t at = affixes.prefix.length;
     output[0 .. at] = affixes.prefix;
-    const zero = cast(char) symbols.zeroDigit;
+    size_t integerEnd = at;
     foreach (i; 0 .. layout.totalDigits)
     {
         if (i == layout.integerDigits)
-            output[at++] = cast(char) symbols.decimalSeparator;
-        output[at++] = i < digits.length ? digits[i] : zero;
+        {
+            integerEnd = at;
+            at = localized.putDecimal(output, at);
+        }
+        at = localized.putDigit(output, at, i < digits.length ? digits[i] : '0');
     }
-    if (layout.decimalPoint && layout.totalDigits == layout.integerDigits)
-        output[at++] = cast(char) symbols.decimalSeparator;
+    if (layout.integerDigits >= layout.totalDigits)
+    {
+        integerEnd = at;
+        if (layout.decimalPoint)
+            at = localized.putDecimal(output, at);
+    }
+    const symbolStart = at;
     output[at .. at + symbols.exponentSeparator.length] = symbols.exponentSeparator;
     at += symbols.exponentSeparator.length;
     const signStart = at;
     if (layout.exponent < 0)
-        output[at++] = cast(char) symbols.minusSign;
+        at = localized.putMinus(output, at);
     const exponentFieldStart = at;
-    output[at .. at + padding] = zero;
-    at += padding;
-    output[at .. at + exponentWidth] = exponentDigits[exponentStart .. $];
-    output[at + exponentWidth .. cast(size_t) required] = affixes.suffix;
+    foreach (i; 0 .. padding)
+        at = localized.putDigit(output, at, '0');
+    foreach (digit; exponentDigits[exponentStart .. $])
+        at = localized.putDigit(output, at, digit);
+    output[at .. cast(size_t) required] = affixes.suffix;
     if (fields !is null)
     {
-        recordExponentFields(*fields, layout, affixes.prefix.length, signStart, exponentFieldStart, at + exponentWidth);
-        fields.recordAffixes(affixes, at + exponentWidth);
+        const size_t[6] bounds = [
+            affixes.prefix.length, integerEnd, integerEnd + decimalBytes, symbolStart, signStart,
+            exponentFieldStart
+        ];
+        recordExponentFields(*fields, bounds, at);
+        fields.recordAffixes(affixes, at);
     }
     return cast(size_t) required;
 }
@@ -169,19 +188,19 @@ struct ExponentLayout
     }
 }
 
-// The integer field ends at the first decimal separator; the exponent field includes its padding zeros.
-void recordExponentFields(ref scope DecimalFieldSpans fields, ref scope const ExponentLayout layout,
-        size_t integerStart, size_t signStart, size_t exponentStart, size_t exponentEnd) pure nothrow @nogc
+// The bounds are UTF-8 offsets: integer start and end, fraction start, then the starts of the exponent symbol,
+// sign and digits. The integer field ends at the first decimal separator and the exponent includes its padding.
+pure nothrow @nogc void recordExponentFields(ref scope DecimalFieldSpans fields,
+        ref scope const size_t[6] bounds, size_t exponentEnd)
 {
-    // The layout never has more integer digits than total digits.
-    const integerEnd = integerStart + layout.integerDigits;
+    const integerStart = bounds[0], integerEnd = bounds[1], fractionStart = bounds[2],
+        symbolStart = bounds[3], signStart = bounds[4], exponentStart = bounds[5];
     fields.record(DecimalField.integer, integerStart, integerEnd);
-    if (layout.decimalPoint)
-        fields.record(DecimalField.decimalSeparator, integerEnd, integerEnd + 1);
-    const symbolStart = integerStart + layout.totalDigits + layout.decimalPoint;
-    fields.record(DecimalField.fraction, integerEnd + layout.decimalPoint, symbolStart);
+    if (fractionStart != integerEnd)
+        fields.record(DecimalField.decimalSeparator, integerEnd, fractionStart);
+    fields.record(DecimalField.fraction, fractionStart, symbolStart);
     fields.record(DecimalField.exponentSymbol, symbolStart, signStart);
-    if (layout.exponent < 0)
+    if (exponentStart != signStart)
         fields.record(DecimalField.exponentSign, signStart, exponentStart);
     fields.record(DecimalField.exponent, exponentStart, exponentEnd);
 }
