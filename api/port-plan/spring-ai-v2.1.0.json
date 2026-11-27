@@ -1,0 +1,580 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "spring-ai-v2.1.0",
+"types": {
+"org.springframework.ai.chat.messages.AbstractMessage": {
+"kind": "abstract class",
+"module": "flint.ai.chat.messages",
+"d": "AbstractMessage",
+"status": "ported"
+},
+"org.springframework.ai.chat.messages.Message": {
+"kind": "interface",
+"module": "flint.ai.chat.messages",
+"d": "Message",
+"status": "ported"
+},
+"org.springframework.ai.chat.messages.MessageType": {
+"kind": "struct",
+"module": "flint.ai.chat.messages",
+"d": "MessageType",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.chat.messages.SystemMessage": {
+"kind": "class",
+"module": "flint.ai.chat.messages",
+"d": "SystemMessage",
+"status": "ported"
+},
+"org.springframework.ai.chat.messages.part.MessagePart": {
+"kind": "interface",
+"module": "flint.ai.chat.messages.part",
+"d": "MessagePart",
+"status": "ported"
+},
+"org.springframework.ai.chat.messages.part.OpaquePayload": {
+"kind": "struct",
+"module": "flint.ai.chat.messages.part",
+"d": "OpaquePayload",
+"status": "adapted",
+"rules": [
+"R11"
+]
+},
+"org.springframework.ai.chat.messages.part.ReasoningPart": {
+"kind": "final class",
+"module": "flint.ai.chat.messages.part",
+"d": "ReasoningPart",
+"status": "adapted",
+"rules": [
+"R11",
+"R16"
+]
+},
+"org.springframework.ai.chat.messages.part.StreamingParts": {
+"kind": "final class",
+"module": "flint.ai.chat.messages.part",
+"d": "StreamingParts",
+"status": "ported"
+},
+"org.springframework.ai.chat.messages.part.TextPart": {
+"kind": "final class",
+"module": "flint.ai.chat.messages.part",
+"d": "TextPart",
+"status": "adapted",
+"rules": [
+"R11",
+"R16"
+]
+},
+"org.springframework.ai.chat.messages.part.ToolCallPart": {
+"kind": "final class",
+"module": "flint.ai.chat.messages.part",
+"d": "ToolCallPart",
+"status": "adapted",
+"rules": [
+"R11",
+"R16"
+]
+},
+"org.springframework.ai.chat.messages.part.ToolResultPart": {
+"kind": "final class",
+"module": "flint.ai.chat.messages.part",
+"d": "ToolResultPart",
+"status": "adapted",
+"rules": [
+"R11",
+"R16"
+]
+},
+"org.springframework.ai.chat.messages.part.UnknownPart": {
+"kind": "final class",
+"module": "flint.ai.chat.messages.part",
+"d": "UnknownPart",
+"status": "adapted",
+"rules": [
+"R11",
+"R16"
+]
+},
+"org.springframework.ai.chat.metadata.ChatGenerationMetadata": {
+"kind": "interface",
+"module": "flint.ai.chat.metadata",
+"d": "ChatGenerationMetadata",
+"status": "ported"
+},
+"org.springframework.ai.chat.metadata.DefaultUsage": {
+"kind": "class",
+"module": "flint.ai.chat.metadata",
+"d": "DefaultUsage",
+"status": "ported"
+},
+"org.springframework.ai.chat.metadata.EmptyRateLimit": {
+"kind": "class",
+"module": "flint.ai.chat.metadata",
+"d": "EmptyRateLimit",
+"status": "ported"
+},
+"org.springframework.ai.chat.metadata.FinishReasonCategory": {
+"kind": "enum",
+"module": "flint.ai.chat.metadata",
+"d": "FinishReasonCategory",
+"status": "ported"
+},
+"org.springframework.ai.chat.metadata.RateLimit": {
+"kind": "interface",
+"module": "flint.ai.chat.metadata",
+"d": "RateLimit",
+"status": "ported"
+},
+"org.springframework.ai.chat.metadata.Usage": {
+"kind": "interface",
+"module": "flint.ai.chat.metadata",
+"d": "Usage",
+"status": "ported"
+},
+"org.springframework.ai.chat.prompt.ChatOptions": {
+"kind": "interface",
+"module": "flint.ai.chat.prompt",
+"d": "ChatOptions",
+"status": "ported"
+},
+"org.springframework.ai.chat.prompt.DefaultChatOptions": {
+"kind": "class",
+"module": "flint.ai.chat.prompt",
+"d": "DefaultChatOptions",
+"status": "ported"
+},
+"org.springframework.ai.content.Content": {
+"kind": "interface",
+"module": "flint.ai.content",
+"d": "Content",
+"status": "ported"
+},
+"org.springframework.ai.content.MediaContent": {
+"kind": "interface",
+"module": "flint.ai.content",
+"d": "MediaContent",
+"status": "ported"
+},
+"org.springframework.ai.converter.FormatProvider": {
+"kind": "interface",
+"module": "flint.ai.converter",
+"d": "FormatProvider",
+"status": "ported"
+},
+"org.springframework.ai.converter.ListOutputConverter": {
+"kind": "class",
+"module": "flint.ai.converter",
+"d": "ListOutputConverter",
+"status": "adapted",
+"rules": [
+"R10"
+]
+},
+"org.springframework.ai.converter.MarkdownCodeBlockCleaner": {
+"kind": "class",
+"module": "flint.ai.converter",
+"d": "MarkdownCodeBlockCleaner",
+"status": "ported"
+},
+"org.springframework.ai.converter.ResponseTextCleaner": {
+"kind": "interface",
+"module": "flint.ai.converter",
+"d": "ResponseTextCleaner",
+"status": "ported"
+},
+"org.springframework.ai.converter.WhitespaceCleaner": {
+"kind": "class",
+"module": "flint.ai.converter",
+"d": "WhitespaceCleaner",
+"status": "ported"
+},
+"org.springframework.ai.document.ContentFormatter": {
+"kind": "interface",
+"module": "flint.ai.document",
+"d": "ContentFormatter",
+"status": "ported"
+},
+"org.springframework.ai.document.DefaultContentFormatter": {
+"kind": "final class",
+"module": "flint.ai.document",
+"d": "DefaultContentFormatter",
+"status": "ported"
+},
+"org.springframework.ai.document.Document": {
+"kind": "class",
+"module": "flint.ai.document",
+"d": "Document",
+"status": "ported"
+},
+"org.springframework.ai.document.DocumentMetadata": {
+"kind": "struct",
+"module": "flint.ai.document",
+"d": "DocumentMetadata",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.document.DocumentReader": {
+"kind": "interface",
+"module": "flint.ai.document",
+"d": "DocumentReader",
+"status": "adapted",
+"rules": [
+"R10"
+]
+},
+"org.springframework.ai.document.DocumentTransformer": {
+"kind": "interface",
+"module": "flint.ai.document",
+"d": "DocumentTransformer",
+"status": "adapted",
+"rules": [
+"R10"
+]
+},
+"org.springframework.ai.document.DocumentWriter": {
+"kind": "interface",
+"module": "flint.ai.document",
+"d": "DocumentWriter",
+"status": "adapted",
+"rules": [
+"R10"
+]
+},
+"org.springframework.ai.document.MetadataMode": {
+"kind": "enum",
+"module": "flint.ai.document",
+"d": "MetadataMode",
+"status": "ported"
+},
+"org.springframework.ai.document.id.IdGenerator": {
+"kind": "interface",
+"module": "flint.ai.document.id",
+"d": "IdGenerator",
+"status": "ported"
+},
+"org.springframework.ai.document.id.RandomIdGenerator": {
+"kind": "class",
+"module": "flint.ai.document.id",
+"d": "RandomIdGenerator",
+"status": "ported"
+},
+"org.springframework.ai.embedding.DefaultEmbeddingOptions": {
+"kind": "class",
+"module": "flint.ai.embedding",
+"d": "DefaultEmbeddingOptions",
+"status": "ported"
+},
+"org.springframework.ai.embedding.DefaultEmbeddingOptionsBuilder": {
+"kind": "class",
+"module": "flint.ai.embedding",
+"d": "DefaultEmbeddingOptionsBuilder",
+"status": "ported"
+},
+"org.springframework.ai.embedding.Embedding": {
+"kind": "class",
+"module": "flint.ai.embedding",
+"d": "Embedding",
+"status": "ported"
+},
+"org.springframework.ai.embedding.EmbeddingOptions": {
+"kind": "interface",
+"module": "flint.ai.embedding",
+"d": "EmbeddingOptions",
+"status": "ported"
+},
+"org.springframework.ai.embedding.EmbeddingRequest": {
+"kind": "class",
+"module": "flint.ai.embedding",
+"d": "EmbeddingRequest",
+"status": "adapted",
+"rules": [
+"R10"
+]
+},
+"org.springframework.ai.embedding.EmbeddingResultMetadata": {
+"kind": "class",
+"module": "flint.ai.embedding",
+"d": "EmbeddingResultMetadata",
+"status": "ported"
+},
+"org.springframework.ai.evaluation.EvaluationRequest": {
+"kind": "class",
+"module": "flint.ai.evaluation",
+"d": "EvaluationRequest",
+"status": "ported"
+},
+"org.springframework.ai.evaluation.EvaluationResponse": {
+"kind": "class",
+"module": "flint.ai.evaluation",
+"d": "EvaluationResponse",
+"status": "ported"
+},
+"org.springframework.ai.evaluation.Evaluator": {
+"kind": "interface",
+"module": "flint.ai.evaluation",
+"d": "Evaluator",
+"status": "ported"
+},
+"org.springframework.ai.image.Image": {
+"kind": "class",
+"module": "flint.ai.image",
+"d": "Image",
+"status": "ported"
+},
+"org.springframework.ai.image.ImageGeneration": {
+"kind": "class",
+"module": "flint.ai.image",
+"d": "ImageGeneration",
+"status": "ported"
+},
+"org.springframework.ai.image.ImageGenerationMetadata": {
+"kind": "interface",
+"module": "flint.ai.image",
+"d": "ImageGenerationMetadata",
+"status": "ported"
+},
+"org.springframework.ai.image.ImageOptions": {
+"kind": "interface",
+"module": "flint.ai.image",
+"d": "ImageOptions",
+"status": "ported"
+},
+"org.springframework.ai.image.ImageOptionsBuilder": {
+"kind": "struct",
+"module": "flint.ai.image",
+"d": "ImageOptionsBuilder",
+"status": "adapted",
+"rules": [
+"R12"
+]
+},
+"org.springframework.ai.model.ApiKey": {
+"kind": "interface",
+"module": "flint.ai.model",
+"d": "ApiKey",
+"status": "ported"
+},
+"org.springframework.ai.model.ChatModelDescription": {
+"kind": "interface",
+"module": "flint.ai.model",
+"d": "ChatModelDescription",
+"status": "ported"
+},
+"org.springframework.ai.model.EmbeddingModelDescription": {
+"kind": "interface",
+"module": "flint.ai.model",
+"d": "EmbeddingModelDescription",
+"status": "ported"
+},
+"org.springframework.ai.model.EmbeddingUtils": {
+"kind": "final class",
+"module": "flint.ai.model",
+"d": "EmbeddingUtils",
+"status": "ported"
+},
+"org.springframework.ai.model.ModelDescription": {
+"kind": "interface",
+"module": "flint.ai.model",
+"d": "ModelDescription",
+"status": "ported"
+},
+"org.springframework.ai.model.ModelOptions": {
+"kind": "interface",
+"module": "flint.ai.model",
+"d": "ModelOptions",
+"status": "ported"
+},
+"org.springframework.ai.model.NoopApiKey": {
+"kind": "class",
+"module": "flint.ai.model",
+"d": "NoopApiKey",
+"status": "ported"
+},
+"org.springframework.ai.model.ResultMetadata": {
+"kind": "interface",
+"module": "flint.ai.model",
+"d": "ResultMetadata",
+"status": "ported"
+},
+"org.springframework.ai.model.SimpleApiKey": {
+"kind": "final class",
+"module": "flint.ai.model",
+"d": "SimpleApiKey",
+"status": "adapted",
+"rules": [
+"R11",
+"R16"
+]
+},
+"org.springframework.ai.model.SpringAIModelProperties": {
+"kind": "final class",
+"module": "flint.ai.model",
+"d": "FlintAIModelProperties",
+"status": "ported"
+},
+"org.springframework.ai.model.SpringAIModels": {
+"kind": "final class",
+"module": "flint.ai.model",
+"d": "FlintAIModels",
+"status": "ported"
+},
+"org.springframework.ai.observation.AiOperationMetadata": {
+"kind": "struct",
+"module": "flint.ai.observation",
+"d": "AiOperationMetadata",
+"status": "adapted",
+"rules": [
+"R11"
+]
+},
+"org.springframework.ai.observation.ObservabilityHelper": {
+"kind": "final class",
+"module": "flint.ai.observation",
+"d": "ObservabilityHelper",
+"status": "ported"
+},
+"org.springframework.ai.observation.conventions.AiObservationAttributes": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "AiObservationAttributes",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.observation.conventions.AiObservationMetricAttributes": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "AiObservationMetricAttributes",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.observation.conventions.AiObservationMetricNames": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "AiObservationMetricNames",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.observation.conventions.AiOperationType": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "AiOperationType",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.observation.conventions.AiProvider": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "AiProvider",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.observation.conventions.AiTokenType": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "AiTokenType",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.observation.conventions.SpringAiKind": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "FlintAiKind",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.observation.conventions.VectorStoreObservationAttributes": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "VectorStoreObservationAttributes",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.observation.conventions.VectorStoreProvider": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "VectorStoreProvider",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.observation.conventions.VectorStoreSimilarityMetric": {
+"kind": "struct",
+"module": "flint.ai.observation.conventions",
+"d": "VectorStoreSimilarityMetric",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.springframework.ai.reader.ExtractedTextFormatter": {
+"kind": "final class",
+"module": "flint.ai.reader",
+"d": "ExtractedTextFormatter",
+"status": "ported"
+},
+"org.springframework.ai.reader.JsonMetadataGenerator": {
+"kind": "interface",
+"module": "flint.ai.reader",
+"d": "JsonMetadataGenerator",
+"status": "ported"
+},
+"org.springframework.ai.template.NoOpTemplateRenderer": {
+"kind": "class",
+"module": "flint.ai.template_",
+"d": "NoOpTemplateRenderer",
+"status": "adapted",
+"rules": [
+"R19"
+]
+},
+"org.springframework.ai.template.TemplateRenderer": {
+"kind": "interface",
+"module": "flint.ai.template_",
+"d": "TemplateRenderer",
+"status": "adapted",
+"rules": [
+"R10",
+"R19"
+]
+},
+"org.springframework.ai.template.ValidationMode": {
+"kind": "enum",
+"module": "flint.ai.template_",
+"d": "ValidationMode",
+"status": "adapted",
+"rules": [
+"R19"
+]
+},
+"org.springframework.ai.tokenizer.TokenCountEstimator": {
+"kind": "interface",
+"module": "flint.ai.tokenizer",
+"d": "TokenCountEstimator",
+"status": "ported"
+}
+}
+}

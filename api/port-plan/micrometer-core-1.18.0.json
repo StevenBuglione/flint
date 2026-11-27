@@ -1,0 +1,272 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "micrometer-core-1.18.0",
+"types": {
+"io.micrometer.core.instrument.AbstractMeter": {
+"kind": "abstract class",
+"module": "flint.micrometer.core.instrument",
+"d": "AbstractMeter",
+"status": "ported"
+},
+"io.micrometer.core.instrument.Clock": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "Clock",
+"status": "ported"
+},
+"io.micrometer.core.instrument.Counter": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "Counter",
+"status": "adapted",
+"rules": [
+"R3"
+]
+},
+"io.micrometer.core.instrument.DistributionSummary": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "DistributionSummary",
+"status": "ported"
+},
+"io.micrometer.core.instrument.FunctionCounter": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "FunctionCounter",
+"status": "ported"
+},
+"io.micrometer.core.instrument.FunctionTimer": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "FunctionTimer",
+"status": "ported"
+},
+"io.micrometer.core.instrument.Gauge": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "Gauge",
+"status": "ported"
+},
+"io.micrometer.core.instrument.ImmutableTag": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument",
+"d": "ImmutableTag",
+"status": "adapted",
+"rules": [
+"R11"
+]
+},
+"io.micrometer.core.instrument.LongTaskTimer": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "LongTaskTimer",
+"status": "ported"
+},
+"io.micrometer.core.instrument.Measurement": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument",
+"d": "Measurement",
+"status": "ported"
+},
+"io.micrometer.core.instrument.Meter": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "Meter",
+"status": "adapted",
+"rules": [
+"R3"
+]
+},
+"io.micrometer.core.instrument.MeterRegistry": {
+"kind": "abstract class",
+"module": "flint.micrometer.core.instrument",
+"d": "MeterRegistry",
+"status": "ported"
+},
+"io.micrometer.core.instrument.MockClock": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument",
+"d": "MockClock",
+"status": "ported"
+},
+"io.micrometer.core.instrument.Statistic": {
+"kind": "struct",
+"module": "flint.micrometer.core.instrument",
+"d": "Statistic",
+"status": "adapted",
+"rules": [
+"R11"
+]
+},
+"io.micrometer.core.instrument.Tag": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "Tag",
+"status": "adapted",
+"rules": [
+"R3"
+]
+},
+"io.micrometer.core.instrument.Tags": {
+"kind": "abstract class",
+"module": "flint.micrometer.core.instrument",
+"d": "Tags",
+"status": "adapted",
+"rules": [
+"R3",
+"R10",
+"R11"
+]
+},
+"io.micrometer.core.instrument.TimeGauge": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "TimeGauge",
+"status": "ported"
+},
+"io.micrometer.core.instrument.Timer": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument",
+"d": "Timer",
+"status": "ported"
+},
+"io.micrometer.core.instrument.config.InvalidConfigurationException": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.config",
+"d": "InvalidConfigurationException",
+"status": "ported"
+},
+"io.micrometer.core.instrument.distribution.CountAtBucket": {
+"kind": "final class",
+"module": "flint.micrometer.core.instrument.distribution",
+"d": "CountAtBucket",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"io.micrometer.core.instrument.distribution.DistributionStatisticConfig": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.distribution",
+"d": "DistributionStatisticConfig",
+"status": "ported"
+},
+"io.micrometer.core.instrument.distribution.Histogram": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument.distribution",
+"d": "Histogram",
+"status": "ported"
+},
+"io.micrometer.core.instrument.distribution.HistogramSnapshot": {
+"kind": "final class",
+"module": "flint.micrometer.core.instrument.distribution",
+"d": "HistogramSnapshot",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"io.micrometer.core.instrument.distribution.HistogramSupport": {
+"kind": "interface",
+"module": "flint.micrometer.core.instrument.distribution",
+"d": "HistogramSupport",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"io.micrometer.core.instrument.distribution.NoopHistogram": {
+"kind": "final class",
+"module": "flint.micrometer.core.instrument.distribution",
+"d": "NoopHistogram",
+"status": "ported"
+},
+"io.micrometer.core.instrument.distribution.TimeWindowMax": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.distribution",
+"d": "TimeWindowMax",
+"status": "ported"
+},
+"io.micrometer.core.instrument.distribution.ValueAtPercentile": {
+"kind": "final class",
+"module": "flint.micrometer.core.instrument.distribution",
+"d": "ValueAtPercentile",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"io.micrometer.core.instrument.noop.NoopCounter": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.noop",
+"d": "NoopCounter",
+"status": "ported"
+},
+"io.micrometer.core.instrument.noop.NoopDistributionSummary": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.noop",
+"d": "NoopDistributionSummary",
+"status": "ported"
+},
+"io.micrometer.core.instrument.noop.NoopFunctionCounter": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.noop",
+"d": "NoopFunctionCounter",
+"status": "ported"
+},
+"io.micrometer.core.instrument.noop.NoopFunctionTimer": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.noop",
+"d": "NoopFunctionTimer",
+"status": "ported"
+},
+"io.micrometer.core.instrument.noop.NoopGauge": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.noop",
+"d": "NoopGauge",
+"status": "ported"
+},
+"io.micrometer.core.instrument.noop.NoopLongTaskTimer": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.noop",
+"d": "NoopLongTaskTimer",
+"status": "ported"
+},
+"io.micrometer.core.instrument.noop.NoopMeter": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.noop",
+"d": "NoopMeter",
+"status": "ported"
+},
+"io.micrometer.core.instrument.noop.NoopTimeGauge": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.noop",
+"d": "NoopTimeGauge",
+"status": "ported"
+},
+"io.micrometer.core.instrument.noop.NoopTimer": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.noop",
+"d": "NoopTimer",
+"status": "ported"
+},
+"io.micrometer.core.instrument.simple.SimpleMeterRegistry": {
+"kind": "class",
+"module": "flint.micrometer.core.instrument.simple",
+"d": "SimpleMeterRegistry",
+"status": "ported"
+},
+"io.micrometer.core.instrument.util.MeterEquivalence": {
+"kind": "final class",
+"module": "flint.micrometer.core.instrument.util",
+"d": "MeterEquivalence",
+"status": "ported"
+},
+"io.micrometer.core.instrument.util.TimeUtils": {
+"kind": "final class",
+"module": "flint.micrometer.core.instrument.util",
+"d": "TimeUtils",
+"status": "ported"
+}
+}
+}

@@ -1,0 +1,202 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "jakarta-servlet-6.1.0",
+"types": {
+"jakarta.servlet.DispatcherType": {
+"kind": "enum",
+"module": "flint.jakarta.servlet",
+"d": "DispatcherType",
+"status": "ported"
+},
+"jakarta.servlet.Filter": {
+"kind": "interface",
+"module": "flint.jakarta.servlet",
+"d": "Filter",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.FilterChain": {
+"kind": "interface",
+"module": "flint.jakarta.servlet",
+"d": "FilterChain",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.FilterConfig": {
+"kind": "interface",
+"module": "flint.jakarta.servlet",
+"d": "FilterConfig",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.GenericFilter": {
+"kind": "abstract class",
+"module": "flint.jakarta.servlet",
+"d": "GenericFilter",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.GenericServlet": {
+"kind": "abstract class",
+"module": "flint.jakarta.servlet",
+"d": "GenericServlet",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.RequestDispatcher": {
+"kind": "interface",
+"module": "flint.jakarta.servlet",
+"d": "RequestDispatcher",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.Servlet": {
+"kind": "interface",
+"module": "flint.jakarta.servlet",
+"d": "Servlet",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.ServletConfig": {
+"kind": "interface",
+"module": "flint.jakarta.servlet",
+"d": "ServletConfig",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.ServletContext": {
+"kind": "interface",
+"module": "flint.jakarta.servlet",
+"d": "ServletContext",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.ServletException": {
+"kind": "class",
+"module": "flint.jakarta.servlet",
+"d": "ServletException",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.ServletInputStream": {
+"kind": "abstract class",
+"module": "flint.jakarta.servlet",
+"d": "ServletInputStream",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.ServletOutputStream": {
+"kind": "abstract class",
+"module": "flint.jakarta.servlet",
+"d": "ServletOutputStream",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.ServletRequest": {
+"kind": "interface",
+"module": "flint.jakarta.servlet",
+"d": "ServletRequest",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.ServletResponse": {
+"kind": "interface",
+"module": "flint.jakarta.servlet",
+"d": "ServletResponse",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.http.Cookie": {
+"kind": "class",
+"module": "flint.jakarta.servlet.http",
+"d": "Cookie",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.http.HttpFilter": {
+"kind": "abstract class",
+"module": "flint.jakarta.servlet.http",
+"d": "HttpFilter",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.http.HttpServlet": {
+"kind": "abstract class",
+"module": "flint.jakarta.servlet.http",
+"d": "HttpServlet",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.http.HttpServletRequest": {
+"kind": "interface",
+"module": "flint.jakarta.servlet.http",
+"d": "HttpServletRequest",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+},
+"jakarta.servlet.http.HttpServletResponse": {
+"kind": "interface",
+"module": "flint.jakarta.servlet.http",
+"d": "HttpServletResponse",
+"status": "adapted",
+"rules": [
+"R1",
+"R10"
+]
+}
+}
+}

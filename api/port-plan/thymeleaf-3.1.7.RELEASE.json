@@ -1,0 +1,238 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "thymeleaf-3.1.7.RELEASE",
+"types": {
+"org.thymeleaf.cache.AlwaysValidCacheEntryValidity": {
+"kind": "class",
+"module": "flint.thymeleaf.cache",
+"d": "AlwaysValidCacheEntryValidity",
+"status": "ported"
+},
+"org.thymeleaf.cache.ICacheEntryValidity": {
+"kind": "interface",
+"module": "flint.thymeleaf.cache",
+"d": "ICacheEntryValidity",
+"status": "ported"
+},
+"org.thymeleaf.cache.NonCacheableCacheEntryValidity": {
+"kind": "class",
+"module": "flint.thymeleaf.cache",
+"d": "NonCacheableCacheEntryValidity",
+"status": "ported"
+},
+"org.thymeleaf.cache.TTLCacheEntryValidity": {
+"kind": "class",
+"module": "flint.thymeleaf.cache",
+"d": "TTLCacheEntryValidity",
+"status": "ported"
+},
+"org.thymeleaf.context.IContext": {
+"kind": "interface",
+"module": "flint.thymeleaf.context",
+"d": "IContext",
+"status": "ported"
+},
+"org.thymeleaf.context.ILazyContextVariable": {
+"kind": "interface",
+"module": "flint.thymeleaf.context",
+"d": "ILazyContextVariable",
+"status": "adapted",
+"rules": [
+"R23"
+],
+"storage": "unset"
+},
+"org.thymeleaf.context.IdentifierSequences": {
+"kind": "final class",
+"module": "flint.thymeleaf.context",
+"d": "IdentifierSequences",
+"status": "ported"
+},
+"org.thymeleaf.dialect.AbstractDialect": {
+"kind": "class",
+"module": "flint.thymeleaf.dialect",
+"d": "AbstractDialect",
+"status": "ported"
+},
+"org.thymeleaf.dialect.IDialect": {
+"kind": "interface",
+"module": "flint.thymeleaf.dialect",
+"d": "IDialect",
+"status": "ported"
+},
+"org.thymeleaf.engine.HTMLElementType": {
+"kind": "struct",
+"module": "flint.thymeleaf.engine",
+"d": "HTMLElementType",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.thymeleaf.engine.IThrottledTemplateWriterControl": {
+"kind": "interface",
+"module": "flint.thymeleaf.engine",
+"d": "IThrottledTemplateWriterControl",
+"status": "ported"
+},
+"org.thymeleaf.exceptions.AlreadyInitializedException": {
+"kind": "class",
+"module": "flint.thymeleaf.exceptions",
+"d": "AlreadyInitializedException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.thymeleaf.exceptions.CacheConfigurationException": {
+"kind": "class",
+"module": "flint.thymeleaf.exceptions",
+"d": "CacheConfigurationException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.thymeleaf.exceptions.ConfigurationException": {
+"kind": "class",
+"module": "flint.thymeleaf.exceptions",
+"d": "ConfigurationException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.thymeleaf.exceptions.ParserInitializationException": {
+"kind": "class",
+"module": "flint.thymeleaf.exceptions",
+"d": "ParserInitializationException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.thymeleaf.exceptions.TemplateEngineException": {
+"kind": "abstract class",
+"module": "flint.thymeleaf.exceptions",
+"d": "TemplateEngineException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.thymeleaf.exceptions.TemplateInputException": {
+"kind": "class",
+"module": "flint.thymeleaf.exceptions",
+"d": "TemplateInputException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.thymeleaf.exceptions.TemplateOutputException": {
+"kind": "class",
+"module": "flint.thymeleaf.exceptions",
+"d": "TemplateOutputException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.thymeleaf.exceptions.TemplateProcessingException": {
+"kind": "class",
+"module": "flint.thymeleaf.exceptions",
+"d": "TemplateProcessingException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"org.thymeleaf.expression.IExpressionObjects": {
+"kind": "interface",
+"module": "flint.thymeleaf.expression",
+"d": "IExpressionObjects",
+"status": "ported"
+},
+"org.thymeleaf.expression.Objects": {
+"kind": "final class",
+"module": "flint.thymeleaf.expression",
+"d": "Objects",
+"status": "ported"
+},
+"org.thymeleaf.model.AttributeValueQuotes": {
+"kind": "enum",
+"module": "flint.thymeleaf.model",
+"d": "AttributeValueQuotes",
+"status": "ported"
+},
+"org.thymeleaf.processor.AbstractProcessor": {
+"kind": "abstract class",
+"module": "flint.thymeleaf.processor",
+"d": "AbstractProcessor",
+"status": "ported"
+},
+"org.thymeleaf.processor.IProcessor": {
+"kind": "interface",
+"module": "flint.thymeleaf.processor",
+"d": "IProcessor",
+"status": "ported"
+},
+"org.thymeleaf.standard.expression.StandardExpressionExecutionContext": {
+"kind": "struct",
+"module": "flint.thymeleaf.standard.expression",
+"d": "StandardExpressionExecutionContext",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.thymeleaf.standard.inline.StandardInlineMode": {
+"kind": "enum",
+"module": "flint.thymeleaf.standard.inline",
+"d": "StandardInlineMode",
+"status": "ported"
+},
+"org.thymeleaf.templatemode.TemplateMode": {
+"kind": "struct",
+"module": "flint.thymeleaf.templatemode",
+"d": "TemplateMode",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.thymeleaf.util.LoggingUtils": {
+"kind": "final class",
+"module": "flint.thymeleaf.util",
+"d": "LoggingUtils",
+"status": "ported"
+},
+"org.thymeleaf.util.NumberPointType": {
+"kind": "struct",
+"module": "flint.thymeleaf.util",
+"d": "NumberPointType",
+"status": "adapted",
+"rules": [
+"R15"
+]
+},
+"org.thymeleaf.util.ObjectUtils": {
+"kind": "final class",
+"module": "flint.thymeleaf.util",
+"d": "ObjectUtils",
+"status": "ported"
+},
+"org.thymeleaf.util.StringUtils": {
+"kind": "struct",
+"module": "flint.thymeleaf.util",
+"d": "StringUtils",
+"status": "ported"
+},
+"org.thymeleaf.util.Validate": {
+"kind": "final class",
+"module": "flint.thymeleaf.util",
+"d": "Validate",
+"status": "ported"
+}
+}
+}

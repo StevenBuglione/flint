@@ -1,0 +1,42 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "micrometer-observation-1.18.0",
+"types": {
+"io.micrometer.observation.KeyValuesConvention": {
+"kind": "interface",
+"module": "flint.micrometer.observation",
+"d": "KeyValuesConvention",
+"status": "ported"
+},
+"io.micrometer.observation.Observation": {
+"kind": "interface",
+"module": "flint.micrometer.observation",
+"d": "Observation",
+"status": "ported"
+},
+"io.micrometer.observation.ObservationFilter": {
+"kind": "interface",
+"module": "flint.micrometer.observation",
+"d": "ObservationFilter",
+"status": "ported"
+},
+"io.micrometer.observation.ObservationPredicate": {
+"kind": "interface",
+"module": "flint.micrometer.observation",
+"d": "ObservationPredicate",
+"status": "ported"
+},
+"io.micrometer.observation.ObservationRegistry": {
+"kind": "interface",
+"module": "flint.micrometer.observation",
+"d": "ObservationRegistry",
+"status": "ported"
+},
+"io.micrometer.observation.ObservationView": {
+"kind": "interface",
+"module": "flint.micrometer.observation",
+"d": "ObservationView",
+"status": "ported"
+}
+}
+}

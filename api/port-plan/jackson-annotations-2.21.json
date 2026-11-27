@@ -1,0 +1,216 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "jackson-annotations-2.21",
+"types": {
+"com.fasterxml.jackson.annotation.JacksonAnnotation": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JacksonAnnotation",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JacksonAnnotationsInside": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JacksonAnnotationsInside",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JacksonInject": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JacksonInject",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonAlias": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonAlias",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonAnyGetter": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonAnyGetter",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonAnySetter": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonAnySetter",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonAutoDetect": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonAutoDetect",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonBackReference": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonBackReference",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonClassDescription": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonClassDescription",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonCreator": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonCreator",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonEnumDefaultValue": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonEnumDefaultValue",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonFilter": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonFilter",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonFormat": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonFormat",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonGetter": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonGetter",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonIgnore": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonIgnore",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonIgnoreProperties": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonIgnoreProperties",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonIgnoreType": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonIgnoreType",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonInclude": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonInclude",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonIncludeProperties": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonIncludeProperties",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonKey": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonKey",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonManagedReference": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonManagedReference",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonMerge": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonMerge",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonProperty": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonProperty",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonPropertyDescription": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonPropertyDescription",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonPropertyOrder": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonPropertyOrder",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonRawValue": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonRawValue",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonRootName": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonRootName",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonSetter": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonSetter",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonTypeId": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonTypeId",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonTypeName": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonTypeName",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonUnwrapped": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonUnwrapped",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.JsonValue": {
+"kind": "struct",
+"module": "flint.jackson.annotation",
+"d": "JsonValue",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.Nulls": {
+"kind": "enum",
+"module": "flint.jackson.annotation",
+"d": "Nulls",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.OptBoolean": {
+"kind": "enum",
+"module": "flint.jackson.annotation",
+"d": "OptBoolean",
+"status": "ported"
+},
+"com.fasterxml.jackson.annotation.PropertyAccessor": {
+"kind": "enum",
+"module": "flint.jackson.annotation",
+"d": "PropertyAccessor",
+"status": "ported"
+}
+}
+}
