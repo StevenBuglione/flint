@@ -39,6 +39,7 @@ import flint.java.util.zip.internal.exceptions : throwNullPointerException;
 /// Compresses zlib or raw deflate data.
 class Deflater
 {
+    enum int DEFLATED = 8;
     enum int NO_COMPRESSION = 0;
     enum int BEST_SPEED = 1;
     enum int BEST_COMPRESSION = 9;
@@ -46,6 +47,9 @@ class Deflater
     enum int DEFAULT_STRATEGY = 0;
     enum int FILTERED = 1;
     enum int HUFFMAN_ONLY = 2;
+    enum int NO_FLUSH = 0;
+    enum int SYNC_FLUSH = 2;
+    enum int FULL_FLUSH = 3;
 
     private Object lock;
     private DeflateStream stream;
@@ -190,12 +194,32 @@ class Deflater
         }
     }
 
+    /// The low 32 bits of the input byte count, as Java's deprecated `getTotalIn`.
+    int getTotalIn()
+    {
+        synchronized (lock)
+        {
+            ensureOpen();
+            return cast(int) bytesRead;
+        }
+    }
+
     long getBytesWritten()
     {
         synchronized (lock)
         {
             ensureOpen();
             return bytesWritten;
+        }
+    }
+
+    /// The low 32 bits of the output byte count, as Java's deprecated `getTotalOut`.
+    int getTotalOut()
+    {
+        synchronized (lock)
+        {
+            ensureOpen();
+            return cast(int) bytesWritten;
         }
     }
 

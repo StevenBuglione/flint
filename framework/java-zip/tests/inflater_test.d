@@ -31,10 +31,13 @@ unittest
         assert(inflater.getRemaining() == 1);
         assert(inflater.getBytesRead() == wrapped.length);
         assert(inflater.getBytesWritten() == payload.length);
+        assert(inflater.getTotalIn() == wrapped.length);
+        assert(inflater.getTotalOut() == payload.length);
         assert(inflater.getAdler() == 0x26540ecd);
         inflater.reset();
         assert(!inflater.finished() && inflater.needsInput());
         assert(inflater.getBytesRead() == 0 && inflater.getBytesWritten() == 0);
+        assert(inflater.getTotalIn() == 0 && inflater.getTotalOut() == 0);
     }
     inflater.setInput(null);
     assert(inflater.needsInput());
