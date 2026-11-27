@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,656 | 1,555 | 0 | 4,870 | 29,753 |
+| framework | spring-framework@v7.1.0 | 3,717 | 1,559 | 65 | 4,870 | 29,688 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -4565,6 +4565,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.jdbc.support.KeyHolder#getKeyAs(Class)` | `flint.jdbc.support.KeyHolder.getKeyAs` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.jdbc.support.KeyHolder#getKeyList()` | `flint.jdbc.support.KeyHolder.getKeyList` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.jdbc.support.KeyHolder#getKeys()` | `flint.jdbc.support.KeyHolder.getKeys` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+
+#### org.springframework.jdbc.support.incrementer
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.jdbc.support.incrementer.AbstractColumnMaxValueIncrementer#getColumnName()` | `flint.jdbc.support.incrementer.AbstractColumnMaxValueIncrementer.getColumnName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.jdbc.support.incrementer.AbstractColumnMaxValueIncrementer#setColumnName(String)` | `flint.jdbc.support.incrementer.AbstractColumnMaxValueIncrementer.setColumnName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.jdbc.support.incrementer.AbstractDataFieldMaxValueIncrementer#getIncrementerName()` | `flint.jdbc.support.incrementer.AbstractDataFieldMaxValueIncrementer.getIncrementerName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `org.springframework.jdbc.support.incrementer.AbstractDataFieldMaxValueIncrementer#setIncrementerName(String)` | `flint.jdbc.support.incrementer.AbstractDataFieldMaxValueIncrementer.setIncrementerName` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
 #### org.springframework.mock.web
 
@@ -11167,7 +11176,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.jdbc.datasource.lookup | 45 | 0 |
 | org.springframework.jdbc.object | 174 | 0 |
 | org.springframework.jdbc.support | 95 | 0 |
-| org.springframework.jdbc.support.incrementer | 119 | 0 |
+| org.springframework.jdbc.support.incrementer | 54 | 0 |
 | org.springframework.jdbc.support.lob | 55 | 0 |
 | org.springframework.jdbc.support.rowset | 147 | 0 |
 | org.springframework.jms | 34 | 0 |
