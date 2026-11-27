@@ -1,0 +1,1035 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "jakarta-persistence-3.2.0",
+"types": {
+"jakarta.persistence.Access": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Access",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.AccessType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "AccessType",
+"status": "ported"
+},
+"jakarta.persistence.AssociationOverride": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "AssociationOverride",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.AssociationOverrides": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "AssociationOverrides",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.AttributeOverride": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "AttributeOverride",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.AttributeOverrides": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "AttributeOverrides",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.Basic": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Basic",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.CacheRetrieveMode": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "CacheRetrieveMode",
+"status": "adapted",
+"rules": [
+"R18"
+]
+},
+"jakarta.persistence.CacheStoreMode": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "CacheStoreMode",
+"status": "adapted",
+"rules": [
+"R18"
+]
+},
+"jakarta.persistence.Cacheable": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Cacheable",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.CascadeType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "CascadeType",
+"status": "ported"
+},
+"jakarta.persistence.CheckConstraint": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "CheckConstraint",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.CollectionTable": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "CollectionTable",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.Column": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Column",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.ColumnResult": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "ColumnResult",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.ConstraintMode": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "ConstraintMode",
+"status": "ported"
+},
+"jakarta.persistence.ConstructorResult": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "ConstructorResult",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.Convert": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Convert",
+"status": "adapted",
+"rules": [
+"R2",
+"R4"
+]
+},
+"jakarta.persistence.Converter": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Converter",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.Converts": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Converts",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.DiscriminatorColumn": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "DiscriminatorColumn",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.DiscriminatorType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "DiscriminatorType",
+"status": "ported"
+},
+"jakarta.persistence.DiscriminatorValue": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "DiscriminatorValue",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.ElementCollection": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "ElementCollection",
+"status": "adapted",
+"rules": [
+"R2",
+"R4"
+]
+},
+"jakarta.persistence.Embeddable": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Embeddable",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.Embedded": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Embedded",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.EmbeddedId": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "EmbeddedId",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.Entity": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Entity",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.EntityListeners": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "EntityListeners",
+"status": "adapted",
+"rules": [
+"R2",
+"R4"
+]
+},
+"jakarta.persistence.EntityResult": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "EntityResult",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.EntityTransaction": {
+"kind": "interface",
+"module": "flint.jakarta.persistence",
+"d": "EntityTransaction",
+"status": "ported"
+},
+"jakarta.persistence.EnumType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "EnumType",
+"status": "ported"
+},
+"jakarta.persistence.Enumerated": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Enumerated",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.EnumeratedValue": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "EnumeratedValue",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.ExcludeDefaultListeners": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "ExcludeDefaultListeners",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.ExcludeSuperclassListeners": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "ExcludeSuperclassListeners",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.FetchType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "FetchType",
+"status": "ported"
+},
+"jakarta.persistence.FieldResult": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "FieldResult",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.FindOption": {
+"kind": "interface",
+"module": "flint.jakarta.persistence",
+"d": "FindOption",
+"status": "ported"
+},
+"jakarta.persistence.FlushModeType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "FlushModeType",
+"status": "ported"
+},
+"jakarta.persistence.ForeignKey": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "ForeignKey",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.GeneratedValue": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "GeneratedValue",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.GenerationType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "GenerationType",
+"status": "ported"
+},
+"jakarta.persistence.Id": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Id",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.IdClass": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "IdClass",
+"status": "adapted",
+"rules": [
+"R2",
+"R4"
+]
+},
+"jakarta.persistence.Index": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Index",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.Inheritance": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Inheritance",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.InheritanceType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "InheritanceType",
+"status": "ported"
+},
+"jakarta.persistence.JoinColumn": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "JoinColumn",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.JoinColumns": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "JoinColumns",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.JoinTable": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "JoinTable",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.Lob": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Lob",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.LockModeType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "LockModeType",
+"status": "adapted",
+"rules": [
+"R18"
+]
+},
+"jakarta.persistence.LockOption": {
+"kind": "interface",
+"module": "flint.jakarta.persistence",
+"d": "LockOption",
+"status": "ported"
+},
+"jakarta.persistence.ManyToMany": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "ManyToMany",
+"status": "adapted",
+"rules": [
+"R2",
+"R4"
+]
+},
+"jakarta.persistence.ManyToOne": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "ManyToOne",
+"status": "adapted",
+"rules": [
+"R2",
+"R4"
+]
+},
+"jakarta.persistence.MapKey": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "MapKey",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.MapKeyClass": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "MapKeyClass",
+"status": "adapted",
+"rules": [
+"R2",
+"R4"
+]
+},
+"jakarta.persistence.MapKeyColumn": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "MapKeyColumn",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.MapKeyEnumerated": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "MapKeyEnumerated",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.MapKeyJoinColumn": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "MapKeyJoinColumn",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.MapKeyJoinColumns": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "MapKeyJoinColumns",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.MapKeyTemporal": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "MapKeyTemporal",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.MappedSuperclass": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "MappedSuperclass",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.MapsId": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "MapsId",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedAttributeNode": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedAttributeNode",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedEntityGraph": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedEntityGraph",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedEntityGraphs": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedEntityGraphs",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedNativeQueries": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedNativeQueries",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedNativeQuery": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedNativeQuery",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedQueries": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedQueries",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedQuery": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedQuery",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedStoredProcedureQueries": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedStoredProcedureQueries",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedStoredProcedureQuery": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedStoredProcedureQuery",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.NamedSubgraph": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "NamedSubgraph",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.OneToMany": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "OneToMany",
+"status": "adapted",
+"rules": [
+"R2",
+"R4"
+]
+},
+"jakarta.persistence.OneToOne": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "OneToOne",
+"status": "adapted",
+"rules": [
+"R2",
+"R4"
+]
+},
+"jakarta.persistence.OrderBy": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "OrderBy",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.OrderColumn": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "OrderColumn",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.ParameterMode": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "ParameterMode",
+"status": "ported"
+},
+"jakarta.persistence.PersistenceContext": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PersistenceContext",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PersistenceContextType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "PersistenceContextType",
+"status": "ported"
+},
+"jakarta.persistence.PersistenceContexts": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PersistenceContexts",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PersistenceProperty": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PersistenceProperty",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PersistenceUnit": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PersistenceUnit",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PersistenceUnitTransactionType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "PersistenceUnitTransactionType",
+"status": "ported"
+},
+"jakarta.persistence.PersistenceUnits": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PersistenceUnits",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PessimisticLockScope": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "PessimisticLockScope",
+"status": "adapted",
+"rules": [
+"R18"
+]
+},
+"jakarta.persistence.PostLoad": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PostLoad",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PostPersist": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PostPersist",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PostRemove": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PostRemove",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PostUpdate": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PostUpdate",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PrePersist": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PrePersist",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PreRemove": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PreRemove",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PreUpdate": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PreUpdate",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PrimaryKeyJoinColumn": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PrimaryKeyJoinColumn",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.PrimaryKeyJoinColumns": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "PrimaryKeyJoinColumns",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.QueryHint": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "QueryHint",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.RefreshOption": {
+"kind": "interface",
+"module": "flint.jakarta.persistence",
+"d": "RefreshOption",
+"status": "ported"
+},
+"jakarta.persistence.SecondaryTable": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "SecondaryTable",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.SecondaryTables": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "SecondaryTables",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.SequenceGenerator": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "SequenceGenerator",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.SequenceGenerators": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "SequenceGenerators",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.SharedCacheMode": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "SharedCacheMode",
+"status": "ported"
+},
+"jakarta.persistence.SqlResultSetMapping": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "SqlResultSetMapping",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.SqlResultSetMappings": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "SqlResultSetMappings",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.StoredProcedureParameter": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "StoredProcedureParameter",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.SynchronizationType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "SynchronizationType",
+"status": "ported"
+},
+"jakarta.persistence.Table": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Table",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.TableGenerator": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "TableGenerator",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.TableGenerators": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "TableGenerators",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.Temporal": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Temporal",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.TemporalType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "TemporalType",
+"status": "ported"
+},
+"jakarta.persistence.Transient": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Transient",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.UniqueConstraint": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "UniqueConstraint",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.ValidationMode": {
+"kind": "enum",
+"module": "flint.jakarta.persistence",
+"d": "ValidationMode",
+"status": "ported"
+},
+"jakarta.persistence.Version": {
+"kind": "uda",
+"module": "flint.jakarta.persistence",
+"d": "Version",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.criteria.JoinType": {
+"kind": "enum",
+"module": "flint.jakarta.persistence.criteria",
+"d": "JoinType",
+"status": "ported"
+},
+"jakarta.persistence.criteria.Nulls": {
+"kind": "enum",
+"module": "flint.jakarta.persistence.criteria",
+"d": "Nulls",
+"status": "ported"
+},
+"jakarta.persistence.metamodel.StaticMetamodel": {
+"kind": "uda",
+"module": "flint.jakarta.persistence.metamodel",
+"d": "StaticMetamodel",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"jakarta.persistence.spi.LoadState": {
+"kind": "enum",
+"module": "flint.jakarta.persistence.spi",
+"d": "LoadState",
+"status": "ported"
+}
+}
+}

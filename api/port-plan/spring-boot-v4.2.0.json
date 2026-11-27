@@ -1,0 +1,231 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "spring-boot-v4.2.0",
+"types": {
+"org.springframework.boot.actuate.endpoint.Access": {
+"kind": "enum",
+"module": "flint.boot.actuate.endpoint",
+"d": "Access",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"org.springframework.boot.actuate.info.Info": {
+"kind": "final class",
+"module": "flint.boot.actuate.info",
+"d": "Info",
+"status": "ported"
+},
+"org.springframework.boot.actuate.info.InfoContributor": {
+"kind": "interface",
+"module": "flint.boot.actuate.info",
+"d": "InfoContributor",
+"status": "adapted",
+"rules": [
+"R3"
+]
+},
+"org.springframework.boot.actuate.info.InfoEndpoint": {
+"kind": "class",
+"module": "flint.boot.actuate.info",
+"d": "InfoEndpoint",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.AutoConfiguration": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure",
+"d": "AutoConfiguration",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.AutoConfigureAfter": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure",
+"d": "AutoConfigureAfter",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.AutoConfigureBefore": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure",
+"d": "AutoConfigureBefore",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.AutoConfigureOrder": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure",
+"d": "AutoConfigureOrder",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.EnableAutoConfiguration": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure",
+"d": "EnableAutoConfiguration",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.SpringBootApplication": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure",
+"d": "FlintBootApplication",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport": {
+"kind": "final class",
+"module": "flint.boot.autoconfigure.condition_runtime",
+"d": "ConditionEvaluationReport",
+"status": "adapted",
+"rules": [
+"R22"
+]
+},
+"org.springframework.boot.autoconfigure.condition.ConditionMessage": {
+"kind": "final class",
+"module": "flint.boot.autoconfigure.condition_runtime",
+"d": "ConditionMessage",
+"status": "adapted",
+"rules": [
+"R22"
+]
+},
+"org.springframework.boot.autoconfigure.condition.ConditionOutcome": {
+"kind": "class",
+"module": "flint.boot.autoconfigure.condition_runtime",
+"d": "ConditionOutcome",
+"status": "adapted",
+"rules": [
+"R22"
+]
+},
+"org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure.condition",
+"d": "ConditionalOnBooleanProperty",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.condition.ConditionalOnClass": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure.condition",
+"d": "ConditionalOnClass",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure.condition",
+"d": "ConditionalOnMissingClass",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.condition.ConditionalOnNotWebApplication": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure.condition",
+"d": "ConditionalOnNotWebApplication",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication": {
+"kind": "uda",
+"module": "flint.boot.autoconfigure.condition",
+"d": "ConditionalOnWebApplication",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"org.springframework.boot.context.properties.source.ConfigurationPropertySources": {
+"kind": "struct",
+"module": "flint.boot.context.properties.source",
+"d": "ConfigurationPropertySources",
+"status": "ported"
+},
+"org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException": {
+"kind": "class",
+"module": "flint.boot.context.properties.source",
+"d": "MutuallyExclusiveConfigurationPropertiesException",
+"status": "ported"
+},
+"org.springframework.boot.diagnostics.FailureAnalyzedException": {
+"kind": "class",
+"module": "flint.boot.diagnostics",
+"d": "FailureAnalyzedException",
+"status": "ported"
+},
+"org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration": {
+"kind": "final class",
+"module": "flint.boot.security.autoconfigure",
+"d": "SecurityAutoConfiguration",
+"status": "ported"
+},
+"org.springframework.boot.security.autoconfigure.SecurityProperties": {
+"kind": "final class",
+"module": "flint.boot.security.autoconfigure",
+"d": "SecurityProperties",
+"status": "ported"
+},
+"org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration": {
+"kind": "final class",
+"module": "flint.boot.security.autoconfigure",
+"d": "UserDetailsServiceAutoConfiguration",
+"status": "ported"
+},
+"org.springframework.boot.security.autoconfigure.web.servlet.ConditionalOnDefaultServletWebSecurity": {
+"kind": "struct",
+"module": "flint.boot.security.autoconfigure.web.servlet",
+"d": "ConditionalOnDefaultServletWebSecurity",
+"status": "ported"
+},
+"org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration": {
+"kind": "final class",
+"module": "flint.boot.security.autoconfigure.web.servlet",
+"d": "SecurityFilterAutoConfiguration",
+"status": "ported"
+},
+"org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties": {
+"kind": "final class",
+"module": "flint.boot.security.autoconfigure.web.servlet",
+"d": "SecurityFilterProperties",
+"status": "ported"
+},
+"org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration": {
+"kind": "final class",
+"module": "flint.boot.security.autoconfigure.web.servlet",
+"d": "ServletWebSecurityAutoConfiguration",
+"status": "ported"
+},
+"org.springframework.boot.test.util.TestPropertyValues": {
+"kind": "final class",
+"module": "flint.boot.test.util",
+"d": "TestPropertyValues",
+"status": "ported"
+}
+}
+}

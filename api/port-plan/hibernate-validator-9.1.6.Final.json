@@ -1,0 +1,30 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "hibernate-validator-9.1.6.Final",
+"types": {
+"org.hibernate.validator.HibernateValidator": {
+"kind": "final class",
+"module": "flint.hibernate.validator",
+"d": "HibernateValidator",
+"status": "ported"
+},
+"org.hibernate.validator.HibernateValidatorConfiguration": {
+"kind": "final class",
+"module": "flint.hibernate.validator",
+"d": "HibernateValidatorConfiguration",
+"status": "ported"
+},
+"org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator": {
+"kind": "class",
+"module": "flint.hibernate.validator.messageinterpolation",
+"d": "ParameterMessageInterpolator",
+"status": "ported"
+},
+"org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator": {
+"kind": "class",
+"module": "flint.hibernate.validator.messageinterpolation",
+"d": "ResourceBundleMessageInterpolator",
+"status": "ported"
+}
+}
+}

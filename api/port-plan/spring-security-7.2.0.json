@@ -1,0 +1,715 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "spring-security-7.2.0",
+"types": {
+"org.springframework.security.access.AccessDeniedException": {
+"kind": "class",
+"module": "flint.security.access",
+"d": "AccessDeniedException",
+"status": "ported"
+},
+"org.springframework.security.access.expression.SecurityExpressionRoot": {
+"kind": "abstract class",
+"module": "flint.security.access.expression",
+"d": "SecurityExpressionRoot",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.access.prepost.PostAuthorize": {
+"kind": "struct",
+"module": "flint.security.access.prepost",
+"d": "PostAuthorize",
+"status": "ported"
+},
+"org.springframework.security.access.prepost.PreAuthorize": {
+"kind": "struct",
+"module": "flint.security.access.prepost",
+"d": "PreAuthorize",
+"status": "ported"
+},
+"org.springframework.security.authentication.AbstractAuthenticationToken": {
+"kind": "abstract class",
+"module": "flint.security.authentication",
+"d": "AbstractAuthenticationToken",
+"status": "ported"
+},
+"org.springframework.security.authentication.AccountExpiredException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "AccountExpiredException",
+"status": "ported"
+},
+"org.springframework.security.authentication.AccountStatusException": {
+"kind": "abstract class",
+"module": "flint.security.authentication",
+"d": "AccountStatusException",
+"status": "ported"
+},
+"org.springframework.security.authentication.AccountStatusUserDetailsChecker": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "AccountStatusUserDetailsChecker",
+"status": "ported"
+},
+"org.springframework.security.authentication.AnonymousAuthenticationToken": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "AnonymousAuthenticationToken",
+"status": "ported"
+},
+"org.springframework.security.authentication.AuthenticationCredentialsNotFoundException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "AuthenticationCredentialsNotFoundException",
+"status": "ported"
+},
+"org.springframework.security.authentication.AuthenticationEventPublisher": {
+"kind": "interface",
+"module": "flint.security.authentication",
+"d": "AuthenticationEventPublisher",
+"status": "ported"
+},
+"org.springframework.security.authentication.AuthenticationManager": {
+"kind": "interface",
+"module": "flint.security.authentication",
+"d": "AuthenticationManager",
+"status": "ported"
+},
+"org.springframework.security.authentication.AuthenticationProvider": {
+"kind": "interface",
+"module": "flint.security.authentication",
+"d": "AuthenticationProvider",
+"status": "ported"
+},
+"org.springframework.security.authentication.AuthenticationServiceException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "AuthenticationServiceException",
+"status": "ported"
+},
+"org.springframework.security.authentication.AuthenticationTrustResolver": {
+"kind": "interface",
+"module": "flint.security.authentication",
+"d": "AuthenticationTrustResolver",
+"status": "ported"
+},
+"org.springframework.security.authentication.AuthenticationTrustResolverImpl": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "AuthenticationTrustResolverImpl",
+"status": "ported"
+},
+"org.springframework.security.authentication.BadCredentialsException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "BadCredentialsException",
+"status": "ported"
+},
+"org.springframework.security.authentication.CachingUserDetailsService": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "CachingUserDetailsService",
+"status": "ported"
+},
+"org.springframework.security.authentication.CredentialsExpiredException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "CredentialsExpiredException",
+"status": "ported"
+},
+"org.springframework.security.authentication.DefaultAuthenticationEventPublisher": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "DefaultAuthenticationEventPublisher",
+"status": "ported"
+},
+"org.springframework.security.authentication.DisabledException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "DisabledException",
+"status": "ported"
+},
+"org.springframework.security.authentication.InsufficientAuthenticationException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "InsufficientAuthenticationException",
+"status": "ported"
+},
+"org.springframework.security.authentication.InternalAuthenticationServiceException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "InternalAuthenticationServiceException",
+"status": "ported"
+},
+"org.springframework.security.authentication.LockedException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "LockedException",
+"status": "ported"
+},
+"org.springframework.security.authentication.ProviderManager": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "ProviderManager",
+"status": "ported"
+},
+"org.springframework.security.authentication.ProviderNotFoundException": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "ProviderNotFoundException",
+"status": "ported"
+},
+"org.springframework.security.authentication.UsernamePasswordAuthenticationToken": {
+"kind": "class",
+"module": "flint.security.authentication",
+"d": "UsernamePasswordAuthenticationToken",
+"status": "ported"
+},
+"org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider": {
+"kind": "abstract class",
+"module": "flint.security.authentication.dao",
+"d": "AbstractUserDetailsAuthenticationProvider",
+"status": "ported"
+},
+"org.springframework.security.authentication.dao.DaoAuthenticationProvider": {
+"kind": "class",
+"module": "flint.security.authentication.dao",
+"d": "DaoAuthenticationProvider",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AbstractAuthenticationEvent": {
+"kind": "abstract class",
+"module": "flint.security.authentication.event",
+"d": "AbstractAuthenticationEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent": {
+"kind": "abstract class",
+"module": "flint.security.authentication.event",
+"d": "AbstractAuthenticationFailureEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent": {
+"kind": "class",
+"module": "flint.security.authentication.event",
+"d": "AuthenticationFailureBadCredentialsEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AuthenticationFailureCredentialsExpiredEvent": {
+"kind": "class",
+"module": "flint.security.authentication.event",
+"d": "AuthenticationFailureCredentialsExpiredEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AuthenticationFailureDisabledEvent": {
+"kind": "class",
+"module": "flint.security.authentication.event",
+"d": "AuthenticationFailureDisabledEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AuthenticationFailureExpiredEvent": {
+"kind": "class",
+"module": "flint.security.authentication.event",
+"d": "AuthenticationFailureExpiredEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AuthenticationFailureLockedEvent": {
+"kind": "class",
+"module": "flint.security.authentication.event",
+"d": "AuthenticationFailureLockedEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AuthenticationFailureProviderNotFoundEvent": {
+"kind": "class",
+"module": "flint.security.authentication.event",
+"d": "AuthenticationFailureProviderNotFoundEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AuthenticationFailureProxyUntrustedEvent": {
+"kind": "class",
+"module": "flint.security.authentication.event",
+"d": "AuthenticationFailureProxyUntrustedEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AuthenticationFailureServiceExceptionEvent": {
+"kind": "class",
+"module": "flint.security.authentication.event",
+"d": "AuthenticationFailureServiceExceptionEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.event.AuthenticationSuccessEvent": {
+"kind": "class",
+"module": "flint.security.authentication.event",
+"d": "AuthenticationSuccessEvent",
+"status": "ported"
+},
+"org.springframework.security.authentication.password.CompromisedPasswordChecker": {
+"kind": "interface",
+"module": "flint.security.authentication.password",
+"d": "CompromisedPasswordChecker",
+"status": "ported"
+},
+"org.springframework.security.authentication.password.CompromisedPasswordDecision": {
+"kind": "class",
+"module": "flint.security.authentication.password",
+"d": "CompromisedPasswordDecision",
+"status": "ported"
+},
+"org.springframework.security.authentication.password.CompromisedPasswordException": {
+"kind": "class",
+"module": "flint.security.authentication.password",
+"d": "CompromisedPasswordException",
+"status": "ported"
+},
+"org.springframework.security.authorization.AuthorityAuthorizationDecision": {
+"kind": "class",
+"module": "flint.security.authorization",
+"d": "AuthorityAuthorizationDecision",
+"status": "ported"
+},
+"org.springframework.security.authorization.AuthorizationDecision": {
+"kind": "class",
+"module": "flint.security.authorization",
+"d": "AuthorizationDecision",
+"status": "ported"
+},
+"org.springframework.security.authorization.AuthorizationDeniedException": {
+"kind": "class",
+"module": "flint.security.authorization",
+"d": "AuthorizationDeniedException",
+"status": "ported"
+},
+"org.springframework.security.authorization.AuthorizationResult": {
+"kind": "interface",
+"module": "flint.security.authorization",
+"d": "AuthorizationResult",
+"status": "ported"
+},
+"org.springframework.security.authorization.method.AuthorizationInterceptorsOrder": {
+"kind": "enum",
+"module": "flint.security.authorization.method",
+"d": "AuthorizationInterceptorsOrder",
+"status": "ported"
+},
+"org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder": {
+"kind": "class",
+"module": "flint.security.config.annotation.authentication.builders",
+"d": "AuthenticationManagerBuilder",
+"status": "ported"
+},
+"org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration": {
+"kind": "class",
+"module": "flint.security.config.annotation.authentication.configuration",
+"d": "AuthenticationConfiguration",
+"status": "ported"
+},
+"org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer": {
+"kind": "final class",
+"module": "flint.security.config.annotation.authentication.builders",
+"d": "InMemoryUserDetailsManagerConfigurer",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.config.annotation.authentication.configurers.provisioning.JdbcUserDetailsManagerConfigurer": {
+"kind": "final class",
+"module": "flint.security.config.annotation.authentication.builders",
+"d": "JdbcUserDetailsManagerConfigurer",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity": {
+"kind": "struct",
+"module": "flint.security.config.annotation.method.configuration",
+"d": "EnableMethodSecurity",
+"status": "ported"
+},
+"org.springframework.security.config.annotation.web.builders.HttpSecurity": {
+"kind": "final class",
+"module": "flint.security.config.annotation.web.builders",
+"d": "HttpSecurity",
+"status": "ported"
+},
+"org.springframework.security.config.annotation.web.configuration.EnableWebSecurity": {
+"kind": "struct",
+"module": "flint.security.config.annotation.web.configuration",
+"d": "EnableWebSecurity",
+"status": "ported"
+},
+"org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration": {
+"kind": "class",
+"module": "flint.security.config.annotation.web.configuration",
+"d": "WebSecurityConfiguration",
+"status": "ported"
+},
+"org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer": {
+"kind": "abstract class",
+"module": "flint.security.config.annotation.web.configurers",
+"d": "AbstractHttpConfigurer",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.config.annotation.web.configurers.AnonymousConfigurer": {
+"kind": "final class",
+"module": "flint.security.config.annotation.web.configurers",
+"d": "AnonymousConfigurer",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer": {
+"kind": "final class",
+"module": "flint.security.config.annotation.web.configurers",
+"d": "AuthorizeHttpRequestsConfigurer",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.config.annotation.web.configurers.CsrfConfigurer": {
+"kind": "final class",
+"module": "flint.security.config.annotation.web.configurers",
+"d": "CsrfConfigurer",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer": {
+"kind": "final class",
+"module": "flint.security.config.annotation.web.configurers",
+"d": "ExceptionHandlingConfigurer",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.config.annotation.web.configurers.HeadersConfigurer": {
+"kind": "final class",
+"module": "flint.security.config.annotation.web.configurers",
+"d": "HeadersConfigurer",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer": {
+"kind": "final class",
+"module": "flint.security.config.annotation.web.configurers",
+"d": "HttpBasicConfigurer",
+"status": "ported",
+"storage": "unset"
+},
+"org.springframework.security.core.Authentication": {
+"kind": "interface",
+"module": "flint.security.core",
+"d": "Authentication",
+"status": "ported"
+},
+"org.springframework.security.core.AuthenticationException": {
+"kind": "abstract class",
+"module": "flint.security.core",
+"d": "AuthenticationException",
+"status": "ported"
+},
+"org.springframework.security.core.CredentialsContainer": {
+"kind": "interface",
+"module": "flint.security.core",
+"d": "CredentialsContainer",
+"status": "ported"
+},
+"org.springframework.security.core.GrantedAuthority": {
+"kind": "interface",
+"module": "flint.security.core",
+"d": "GrantedAuthority",
+"status": "ported"
+},
+"org.springframework.security.core.authority.FactorGrantedAuthority": {
+"kind": "final class",
+"module": "flint.security.core.authority",
+"d": "FactorGrantedAuthority",
+"status": "ported"
+},
+"org.springframework.security.core.authority.SimpleGrantedAuthority": {
+"kind": "final class",
+"module": "flint.security.core",
+"d": "SimpleGrantedAuthority",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper": {
+"kind": "interface",
+"module": "flint.security.core.authority.mapping",
+"d": "GrantedAuthoritiesMapper",
+"status": "ported"
+},
+"org.springframework.security.core.authority.mapping.NullAuthoritiesMapper": {
+"kind": "class",
+"module": "flint.security.core.authority.mapping",
+"d": "NullAuthoritiesMapper",
+"status": "ported"
+},
+"org.springframework.security.core.context.SecurityContext": {
+"kind": "interface",
+"module": "flint.security.core.context",
+"d": "SecurityContext",
+"status": "ported"
+},
+"org.springframework.security.core.context.SecurityContextHolder": {
+"kind": "struct",
+"module": "flint.security.core.context",
+"d": "SecurityContextHolder",
+"status": "ported"
+},
+"org.springframework.security.core.context.SecurityContextHolderStrategy": {
+"kind": "interface",
+"module": "flint.security.core.context",
+"d": "SecurityContextHolderStrategy",
+"status": "ported"
+},
+"org.springframework.security.core.context.SecurityContextImpl": {
+"kind": "class",
+"module": "flint.security.core.context",
+"d": "SecurityContextImpl",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.User": {
+"kind": "class",
+"module": "flint.security.core.userdetails",
+"d": "User",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.User.UserBuilder": {
+"kind": "final class",
+"module": "flint.security.core.userdetails",
+"d": "UserBuilder",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.UserCache": {
+"kind": "interface",
+"module": "flint.security.core.userdetails",
+"d": "UserCache",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.UserDetails": {
+"kind": "interface",
+"module": "flint.security.core.userdetails",
+"d": "UserDetails",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.UserDetailsChecker": {
+"kind": "interface",
+"module": "flint.security.core.userdetails",
+"d": "UserDetailsChecker",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.UserDetailsPasswordService": {
+"kind": "interface",
+"module": "flint.security.core.userdetails",
+"d": "UserDetailsPasswordService",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.UserDetailsService": {
+"kind": "interface",
+"module": "flint.security.core.userdetails",
+"d": "UserDetailsService",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.UsernameNotFoundException": {
+"kind": "class",
+"module": "flint.security.core.userdetails",
+"d": "UsernameNotFoundException",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.cache.NullUserCache": {
+"kind": "class",
+"module": "flint.security.core.userdetails.cache",
+"d": "NullUserCache",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.cache.SpringCacheBasedUserCache": {
+"kind": "class",
+"module": "flint.security.core.userdetails.cache",
+"d": "FlintCacheBasedUserCache",
+"status": "ported"
+},
+"org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl": {
+"kind": "class",
+"module": "flint.security.core.userdetails.jdbc",
+"d": "JdbcDaoImpl",
+"status": "ported"
+},
+"org.springframework.security.crypto.bcrypt.BCrypt": {
+"kind": "struct",
+"module": "flint.security.crypto.bcrypt",
+"d": "BCrypt",
+"status": "ported"
+},
+"org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder": {
+"kind": "class",
+"module": "flint.security.crypto.bcrypt",
+"d": "BCryptPasswordEncoder",
+"status": "ported"
+},
+"org.springframework.security.crypto.factory.PasswordEncoderFactories": {
+"kind": "struct",
+"module": "flint.security.crypto.factory",
+"d": "PasswordEncoderFactories",
+"status": "ported"
+},
+"org.springframework.security.crypto.password.AbstractValidatingPasswordEncoder": {
+"kind": "abstract class",
+"module": "flint.security.crypto.password",
+"d": "AbstractValidatingPasswordEncoder",
+"status": "ported"
+},
+"org.springframework.security.crypto.password.DelegatingPasswordEncoder": {
+"kind": "class",
+"module": "flint.security.crypto.password",
+"d": "DelegatingPasswordEncoder",
+"status": "ported"
+},
+"org.springframework.security.crypto.password.NoOpPasswordEncoder": {
+"kind": "final class",
+"module": "flint.security.crypto.password",
+"d": "NoOpPasswordEncoder",
+"status": "ported"
+},
+"org.springframework.security.crypto.password.PasswordEncoder": {
+"kind": "interface",
+"module": "flint.security.crypto.password",
+"d": "PasswordEncoder",
+"status": "ported"
+},
+"org.springframework.security.provisioning.InMemoryUserDetailsManager": {
+"kind": "class",
+"module": "flint.security.provisioning",
+"d": "InMemoryUserDetailsManager",
+"status": "ported"
+},
+"org.springframework.security.provisioning.UserDetailsManager": {
+"kind": "interface",
+"module": "flint.security.provisioning",
+"d": "UserDetailsManager",
+"status": "ported"
+},
+"org.springframework.security.web.AuthenticationEntryPoint": {
+"kind": "interface",
+"module": "flint.security.web",
+"d": "AuthenticationEntryPoint",
+"status": "ported"
+},
+"org.springframework.security.web.DefaultSecurityFilterChain": {
+"kind": "class",
+"module": "flint.security.web",
+"d": "DefaultSecurityFilterChain",
+"status": "ported"
+},
+"org.springframework.security.web.FilterChainProxy": {
+"kind": "class",
+"module": "flint.security.web",
+"d": "FilterChainProxy",
+"status": "ported"
+},
+"org.springframework.security.web.SecurityFilterChain": {
+"kind": "interface",
+"module": "flint.security.web",
+"d": "SecurityFilterChain",
+"status": "ported"
+},
+"org.springframework.security.web.access.AccessDeniedHandler": {
+"kind": "interface",
+"module": "flint.security.web.access",
+"d": "AccessDeniedHandler",
+"status": "ported"
+},
+"org.springframework.security.web.access.AccessDeniedHandlerImpl": {
+"kind": "class",
+"module": "flint.security.web.access",
+"d": "AccessDeniedHandlerImpl",
+"status": "ported"
+},
+"org.springframework.security.web.access.ExceptionTranslationFilter": {
+"kind": "class",
+"module": "flint.security.web.access",
+"d": "ExceptionTranslationFilter",
+"status": "ported"
+},
+"org.springframework.security.web.authentication.AnonymousAuthenticationFilter": {
+"kind": "class",
+"module": "flint.security.web.authentication",
+"d": "AnonymousAuthenticationFilter",
+"status": "ported"
+},
+"org.springframework.security.web.authentication.Http403ForbiddenEntryPoint": {
+"kind": "class",
+"module": "flint.security.web.authentication",
+"d": "Http403ForbiddenEntryPoint",
+"status": "ported"
+},
+"org.springframework.security.web.authentication.www.BasicAuthenticationConverter": {
+"kind": "struct",
+"module": "flint.security.web.authentication.www",
+"d": "BasicAuthenticationConverter",
+"status": "ported"
+},
+"org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint": {
+"kind": "class",
+"module": "flint.security.web.authentication.www",
+"d": "BasicAuthenticationEntryPoint",
+"status": "ported"
+},
+"org.springframework.security.web.authentication.www.BasicAuthenticationFilter": {
+"kind": "class",
+"module": "flint.security.web.authentication.www",
+"d": "BasicAuthenticationFilter",
+"status": "ported"
+},
+"org.springframework.security.web.context.RequestAttributeSecurityContextRepository": {
+"kind": "class",
+"module": "flint.security.web.context",
+"d": "RequestAttributeSecurityContextRepository",
+"status": "ported"
+},
+"org.springframework.security.web.context.SecurityContextHolderFilter": {
+"kind": "class",
+"module": "flint.security.web.context",
+"d": "SecurityContextHolderFilter",
+"status": "ported"
+},
+"org.springframework.security.web.context.SecurityContextRepository": {
+"kind": "interface",
+"module": "flint.security.web.context",
+"d": "SecurityContextRepository",
+"status": "ported"
+},
+"org.springframework.security.web.csrf.CsrfFilter": {
+"kind": "class",
+"module": "flint.security.web.csrf",
+"d": "CsrfFilter",
+"status": "ported"
+},
+"org.springframework.security.web.csrf.MissingCsrfTokenException": {
+"kind": "class",
+"module": "flint.security.web.csrf",
+"d": "MissingCsrfTokenException",
+"status": "ported"
+},
+"org.springframework.security.web.header.HeaderWriter": {
+"kind": "interface",
+"module": "flint.security.web.header",
+"d": "HeaderWriter",
+"status": "ported"
+},
+"org.springframework.security.web.header.HeaderWriterFilter": {
+"kind": "class",
+"module": "flint.security.web.header",
+"d": "HeaderWriterFilter",
+"status": "ported"
+},
+"org.springframework.security.web.util.matcher.AnyRequestMatcher": {
+"kind": "final class",
+"module": "flint.security.web.util.matcher",
+"d": "AnyRequestMatcher",
+"status": "ported"
+},
+"org.springframework.security.web.util.matcher.RequestMatcher": {
+"kind": "interface",
+"module": "flint.security.web.util.matcher",
+"d": "RequestMatcher",
+"status": "ported"
+}
+}
+}

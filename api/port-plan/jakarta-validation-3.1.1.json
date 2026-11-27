@@ -1,0 +1,268 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "jakarta-validation-3.1.1",
+"types": {
+"jakarta.validation.Configuration": {
+"kind": "interface",
+"module": "flint.jakarta.validation",
+"d": "Configuration",
+"status": "ported",
+"storage": "unset"
+},
+"jakarta.validation.ConstraintDeclarationException": {
+"kind": "class",
+"module": "flint.jakarta.validation",
+"d": "ConstraintDeclarationException",
+"status": "ported"
+},
+"jakarta.validation.ConstraintDefinitionException": {
+"kind": "class",
+"module": "flint.jakarta.validation",
+"d": "ConstraintDefinitionException",
+"status": "ported"
+},
+"jakarta.validation.ConstraintValidatorContext": {
+"kind": "interface",
+"module": "flint.jakarta.validation",
+"d": "ConstraintValidatorContext",
+"status": "ported"
+},
+"jakarta.validation.ConstraintViolation": {
+"kind": "interface",
+"module": "flint.jakarta.validation",
+"d": "ConstraintViolation",
+"status": "ported",
+"storage": "unset"
+},
+"jakarta.validation.ConstraintViolationException": {
+"kind": "class",
+"module": "flint.jakarta.validation",
+"d": "ConstraintViolationException",
+"status": "ported"
+},
+"jakarta.validation.ElementKind": {
+"kind": "enum",
+"module": "flint.jakarta.validation",
+"d": "ElementKind",
+"status": "ported"
+},
+"jakarta.validation.GroupDefinitionException": {
+"kind": "class",
+"module": "flint.jakarta.validation",
+"d": "GroupDefinitionException",
+"status": "ported"
+},
+"jakarta.validation.MessageInterpolator": {
+"kind": "interface",
+"module": "flint.jakarta.validation",
+"d": "MessageInterpolator",
+"status": "ported"
+},
+"jakarta.validation.NoProviderFoundException": {
+"kind": "class",
+"module": "flint.jakarta.validation",
+"d": "NoProviderFoundException",
+"status": "ported"
+},
+"jakarta.validation.Path": {
+"kind": "interface",
+"module": "flint.jakarta.validation",
+"d": "Path",
+"status": "ported"
+},
+"jakarta.validation.Payload": {
+"kind": "interface",
+"module": "flint.jakarta.validation",
+"d": "Payload",
+"status": "ported"
+},
+"jakarta.validation.UnexpectedTypeException": {
+"kind": "class",
+"module": "flint.jakarta.validation",
+"d": "UnexpectedTypeException",
+"status": "ported"
+},
+"jakarta.validation.Valid": {
+"kind": "struct",
+"module": "flint.jakarta.validation",
+"d": "Valid",
+"status": "ported"
+},
+"jakarta.validation.Validation": {
+"kind": "final class",
+"module": "flint.jakarta.validation",
+"d": "Validation",
+"status": "ported"
+},
+"jakarta.validation.ValidationException": {
+"kind": "class",
+"module": "flint.jakarta.validation",
+"d": "ValidationException",
+"status": "ported"
+},
+"jakarta.validation.Validator": {
+"kind": "interface",
+"module": "flint.jakarta.validation",
+"d": "Validator",
+"status": "ported"
+},
+"jakarta.validation.ValidatorFactory": {
+"kind": "interface",
+"module": "flint.jakarta.validation",
+"d": "ValidatorFactory",
+"status": "ported"
+},
+"jakarta.validation.constraints.AssertFalse": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "AssertFalse",
+"status": "ported"
+},
+"jakarta.validation.constraints.AssertTrue": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "AssertTrue",
+"status": "ported"
+},
+"jakarta.validation.constraints.DecimalMax": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "DecimalMax",
+"status": "ported"
+},
+"jakarta.validation.constraints.DecimalMin": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "DecimalMin",
+"status": "ported"
+},
+"jakarta.validation.constraints.Digits": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Digits",
+"status": "ported"
+},
+"jakarta.validation.constraints.Email": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Email",
+"status": "ported"
+},
+"jakarta.validation.constraints.Future": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Future",
+"status": "ported"
+},
+"jakarta.validation.constraints.FutureOrPresent": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "FutureOrPresent",
+"status": "ported"
+},
+"jakarta.validation.constraints.Max": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Max",
+"status": "ported"
+},
+"jakarta.validation.constraints.Min": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Min",
+"status": "ported"
+},
+"jakarta.validation.constraints.Negative": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Negative",
+"status": "ported"
+},
+"jakarta.validation.constraints.NegativeOrZero": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "NegativeOrZero",
+"status": "ported"
+},
+"jakarta.validation.constraints.NotBlank": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "NotBlank",
+"status": "ported"
+},
+"jakarta.validation.constraints.NotEmpty": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "NotEmpty",
+"status": "ported"
+},
+"jakarta.validation.constraints.NotNull": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "NotNull",
+"status": "ported"
+},
+"jakarta.validation.constraints.Null": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Null",
+"status": "ported"
+},
+"jakarta.validation.constraints.Past": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Past",
+"status": "ported"
+},
+"jakarta.validation.constraints.PastOrPresent": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "PastOrPresent",
+"status": "ported"
+},
+"jakarta.validation.constraints.Pattern": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Pattern",
+"status": "ported"
+},
+"jakarta.validation.constraints.Positive": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Positive",
+"status": "ported"
+},
+"jakarta.validation.constraints.PositiveOrZero": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "PositiveOrZero",
+"status": "ported"
+},
+"jakarta.validation.constraints.Size": {
+"kind": "struct",
+"module": "flint.jakarta.validation.constraints",
+"d": "Size",
+"status": "ported"
+},
+"jakarta.validation.groups.Default": {
+"kind": "interface",
+"module": "flint.jakarta.validation.groups",
+"d": "Default",
+"status": "ported"
+},
+"jakarta.validation.metadata.ConstraintDescriptor": {
+"kind": "interface",
+"module": "flint.jakarta.validation.metadata",
+"d": "ConstraintDescriptor",
+"status": "ported",
+"storage": "unset"
+},
+"jakarta.validation.spi.ValidationProvider": {
+"kind": "interface",
+"module": "flint.jakarta.validation.spi",
+"d": "ValidationProvider",
+"status": "ported",
+"storage": "unset"
+}
+}
+}

@@ -1,0 +1,54 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "jakarta-annotation-3.0.0",
+"types": {
+"jakarta.annotation.Generated": {
+"kind": "struct",
+"module": "flint.jakarta.annotation",
+"d": "Generated",
+"status": "ported"
+},
+"jakarta.annotation.Nonnull": {
+"kind": "struct",
+"module": "flint.jakarta.annotation",
+"d": "Nonnull",
+"status": "ported"
+},
+"jakarta.annotation.Nullable": {
+"kind": "struct",
+"module": "flint.jakarta.annotation",
+"d": "Nullable",
+"status": "ported"
+},
+"jakarta.annotation.PostConstruct": {
+"kind": "struct",
+"module": "flint.jakarta.annotation",
+"d": "PostConstruct",
+"status": "ported"
+},
+"jakarta.annotation.PreDestroy": {
+"kind": "struct",
+"module": "flint.jakarta.annotation",
+"d": "PreDestroy",
+"status": "ported"
+},
+"jakarta.annotation.Priority": {
+"kind": "struct",
+"module": "flint.jakarta.annotation",
+"d": "Priority",
+"status": "ported"
+},
+"jakarta.annotation.Resource": {
+"kind": "struct",
+"module": "flint.jakarta.annotation",
+"d": "Resource",
+"status": "ported"
+},
+"jakarta.annotation.Resources": {
+"kind": "struct",
+"module": "flint.jakarta.annotation",
+"d": "Resources",
+"status": "ported"
+}
+}
+}

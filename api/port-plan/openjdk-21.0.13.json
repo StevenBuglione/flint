@@ -1,0 +1,1157 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "openjdk-21.0.13",
+"types": {
+"java.io.ByteArrayOutputStream": {
+"kind": "class",
+"module": "flint.java.io",
+"d": "ByteArrayOutputStream",
+"status": "ported"
+},
+"java.io.Closeable": {
+"kind": "interface",
+"module": "flint.java.io.closeable",
+"d": "Closeable",
+"status": "ported"
+},
+"java.io.FileNotFoundException": {
+"kind": "class",
+"module": "flint.java.io",
+"d": "FileNotFoundException",
+"status": "ported"
+},
+"java.io.Flushable": {
+"kind": "interface",
+"module": "flint.java.io.flushable",
+"d": "Flushable",
+"status": "ported"
+},
+"java.io.IOException": {
+"kind": "class",
+"module": "flint.java.io",
+"d": "IOException",
+"status": "adapted",
+"rules": [
+"R8"
+]
+},
+"java.io.InterruptedIOException": {
+"kind": "class",
+"module": "flint.java.io.interruptedioexception",
+"d": "InterruptedIOException",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.io.OutputStreamWriter": {
+"kind": "class",
+"module": "flint.java.io",
+"d": "OutputStreamWriter",
+"status": "ported"
+},
+"java.io.PrintWriter": {
+"kind": "class",
+"module": "flint.java.io",
+"d": "PrintWriter",
+"status": "ported"
+},
+"java.io.StringWriter": {
+"kind": "class",
+"module": "flint.java.io",
+"d": "StringWriter",
+"status": "ported"
+},
+"java.io.UncheckedIOException": {
+"kind": "class",
+"module": "flint.java.io",
+"d": "UncheckedIOException",
+"status": "ported"
+},
+"java.io.UnsupportedEncodingException": {
+"kind": "class",
+"module": "flint.java.io.unsupportedencodingexception",
+"d": "UnsupportedEncodingException",
+"status": "adapted",
+"rules": [
+"R1",
+"R8"
+]
+},
+"java.lang.ArithmeticException": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "ArithmeticException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.lang.AssertionError": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "AssertionError",
+"status": "adapted",
+"rules": [
+"R8",
+"R26"
+]
+},
+"java.lang.AutoCloseable": {
+"kind": "interface",
+"module": "flint.java.lang",
+"d": "AutoCloseable",
+"status": "ported"
+},
+"java.lang.ClassCastException": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "ClassCastException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.lang.IllegalArgumentException": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "IllegalArgumentException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.lang.IllegalStateException": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "IllegalStateException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.lang.IndexOutOfBoundsException": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "IndexOutOfBoundsException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.lang.NullPointerException": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "NullPointerException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.lang.Number": {
+"kind": "abstract class",
+"module": "flint.java.lang.number",
+"d": "Number",
+"status": "ported"
+},
+"java.lang.NumberFormatException": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "NumberFormatException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.lang.Runnable": {
+"kind": "interface",
+"module": "flint.java.lang",
+"d": "Runnable",
+"status": "ported"
+},
+"java.lang.RuntimeException": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "RuntimeException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.lang.System": {
+"kind": "struct",
+"module": "flint.java.lang.system",
+"d": "System",
+"status": "ported"
+},
+"java.lang.UnsupportedOperationException": {
+"kind": "class",
+"module": "flint.java.lang",
+"d": "UnsupportedOperationException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.lang.annotation.Documented": {
+"kind": "uda",
+"module": "flint.java.lang.annotation",
+"d": "Documented",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"java.lang.annotation.ElementType": {
+"kind": "enum",
+"module": "flint.java.lang.annotation",
+"d": "ElementType",
+"status": "ported"
+},
+"java.lang.annotation.Inherited": {
+"kind": "uda",
+"module": "flint.java.lang.annotation",
+"d": "Inherited",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"java.lang.annotation.Native": {
+"kind": "uda",
+"module": "flint.java.lang.annotation",
+"d": "Native",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"java.lang.annotation.Repeatable": {
+"kind": "uda",
+"module": "flint.java.lang.annotation",
+"d": "Repeatable",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"java.lang.annotation.Retention": {
+"kind": "uda",
+"module": "flint.java.lang.annotation",
+"d": "Retention",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"java.lang.annotation.RetentionPolicy": {
+"kind": "enum",
+"module": "flint.java.lang.annotation",
+"d": "RetentionPolicy",
+"status": "ported"
+},
+"java.lang.annotation.Target": {
+"kind": "uda",
+"module": "flint.java.lang.annotation",
+"d": "Target",
+"status": "adapted",
+"rules": [
+"R2"
+]
+},
+"java.math.BigInteger": {
+"kind": "class",
+"module": "flint.java.math",
+"d": "BigInteger",
+"status": "ported"
+},
+"java.math.RoundingMode": {
+"kind": "enum",
+"module": "flint.java.math.roundingmode",
+"d": "RoundingMode",
+"status": "ported"
+},
+"java.net.URI": {
+"kind": "struct",
+"module": "flint.java.net",
+"d": "URI",
+"status": "adapted",
+"rules": [
+"R11"
+]
+},
+"java.net.URLDecoder": {
+"kind": "struct",
+"module": "flint.java.net.urldecoder",
+"d": "URLDecoder",
+"status": "adapted",
+"rules": [
+"R1",
+"R3",
+"R26"
+]
+},
+"java.net.URLEncoder": {
+"kind": "struct",
+"module": "flint.java.net.urlencoder",
+"d": "URLEncoder",
+"status": "adapted",
+"rules": [
+"R1",
+"R3",
+"R26"
+]
+},
+"java.nio.Buffer": {
+"kind": "abstract class",
+"module": "flint.java.nio.buffer",
+"d": "Buffer",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.BufferOverflowException": {
+"kind": "class",
+"module": "flint.java.nio.bufferoverflowexception",
+"d": "BufferOverflowException",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.BufferUnderflowException": {
+"kind": "class",
+"module": "flint.java.nio.bufferunderflowexception",
+"d": "BufferUnderflowException",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.ByteBuffer": {
+"kind": "class",
+"module": "flint.java.nio.bytebuffer",
+"d": "ByteBuffer",
+"status": "adapted",
+"rules": [
+"R1",
+"R26"
+]
+},
+"java.nio.ByteOrder": {
+"kind": "struct",
+"module": "flint.java.nio.byteorder",
+"d": "ByteOrder",
+"status": "adapted",
+"rules": [
+"R1",
+"R15"
+]
+},
+"java.nio.CharBuffer": {
+"kind": "class",
+"module": "flint.java.nio.charbuffer",
+"d": "CharBuffer",
+"status": "adapted",
+"rules": [
+"R1",
+"R26"
+]
+},
+"java.nio.InvalidMarkException": {
+"kind": "class",
+"module": "flint.java.nio.invalidmarkexception",
+"d": "InvalidMarkException",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.ReadOnlyBufferException": {
+"kind": "class",
+"module": "flint.java.nio.readonlybufferexception",
+"d": "ReadOnlyBufferException",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.channels.ByteChannel": {
+"kind": "interface",
+"module": "flint.java.nio.channels.bytechannel",
+"d": "ByteChannel",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.channels.Channel": {
+"kind": "interface",
+"module": "flint.java.nio.channels.channel",
+"d": "Channel",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.channels.GatheringByteChannel": {
+"kind": "interface",
+"module": "flint.java.nio.channels.gatheringbytechannel",
+"d": "GatheringByteChannel",
+"status": "adapted",
+"rules": [
+"R1",
+"R26"
+]
+},
+"java.nio.channels.InterruptibleChannel": {
+"kind": "interface",
+"module": "flint.java.nio.channels.interruptiblechannel",
+"d": "InterruptibleChannel",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.channels.ReadableByteChannel": {
+"kind": "interface",
+"module": "flint.java.nio.channels.readablebytechannel",
+"d": "ReadableByteChannel",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.channels.ScatteringByteChannel": {
+"kind": "interface",
+"module": "flint.java.nio.channels.scatteringbytechannel",
+"d": "ScatteringByteChannel",
+"status": "adapted",
+"rules": [
+"R1",
+"R26"
+]
+},
+"java.nio.channels.SeekableByteChannel": {
+"kind": "interface",
+"module": "flint.java.nio.channels.seekablebytechannel",
+"d": "SeekableByteChannel",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.channels.WritableByteChannel": {
+"kind": "interface",
+"module": "flint.java.nio.channels.writablebytechannel",
+"d": "WritableByteChannel",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.nio.charset.CoderResult": {
+"kind": "struct",
+"module": "flint.java.nio.charset.coderresult",
+"d": "CoderResult",
+"status": "adapted",
+"rules": [
+"R1",
+"R15"
+]
+},
+"java.nio.charset.CodingErrorAction": {
+"kind": "struct",
+"module": "flint.java.nio.charset.codingerroraction",
+"d": "CodingErrorAction",
+"status": "adapted",
+"rules": [
+"R1",
+"R15"
+]
+},
+"java.nio.charset.IllegalCharsetNameException": {
+"kind": "class",
+"module": "flint.java.nio.charset",
+"d": "IllegalCharsetNameException",
+"status": "ported"
+},
+"java.nio.charset.StandardCharsets": {
+"kind": "struct",
+"module": "flint.java.nio.charset",
+"d": "StandardCharsets",
+"status": "ported"
+},
+"java.nio.charset.UnsupportedCharsetException": {
+"kind": "class",
+"module": "flint.java.nio.charset",
+"d": "UnsupportedCharsetException",
+"status": "ported"
+},
+"java.nio.file.InvalidPathException": {
+"kind": "class",
+"module": "flint.java.nio.file",
+"d": "InvalidPathException",
+"status": "ported"
+},
+"java.nio.file.Path": {
+"kind": "interface",
+"module": "flint.java.nio.file",
+"d": "Path",
+"status": "ported"
+},
+"java.sql.BatchUpdateException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "BatchUpdateException",
+"status": "ported"
+},
+"java.sql.Connection": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "Connection",
+"status": "ported"
+},
+"java.sql.DatabaseMetaData": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "DatabaseMetaData",
+"status": "ported"
+},
+"java.sql.Driver": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "Driver",
+"status": "ported"
+},
+"java.sql.DriverManager": {
+"kind": "struct",
+"module": "flint.java.sql",
+"d": "DriverManager",
+"status": "ported"
+},
+"java.sql.ParameterMetaData": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "ParameterMetaData",
+"status": "ported"
+},
+"java.sql.PreparedStatement": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "PreparedStatement",
+"status": "ported"
+},
+"java.sql.ResultSet": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "ResultSet",
+"status": "ported"
+},
+"java.sql.ResultSetMetaData": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "ResultSetMetaData",
+"status": "ported"
+},
+"java.sql.SQLDataException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLDataException",
+"status": "ported"
+},
+"java.sql.SQLException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLException",
+"status": "ported"
+},
+"java.sql.SQLFeatureNotSupportedException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLFeatureNotSupportedException",
+"status": "ported"
+},
+"java.sql.SQLIntegrityConstraintViolationException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLIntegrityConstraintViolationException",
+"status": "ported"
+},
+"java.sql.SQLInvalidAuthorizationSpecException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLInvalidAuthorizationSpecException",
+"status": "ported"
+},
+"java.sql.SQLNonTransientConnectionException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLNonTransientConnectionException",
+"status": "ported"
+},
+"java.sql.SQLNonTransientException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLNonTransientException",
+"status": "ported"
+},
+"java.sql.SQLRecoverableException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLRecoverableException",
+"status": "ported"
+},
+"java.sql.SQLSyntaxErrorException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLSyntaxErrorException",
+"status": "ported"
+},
+"java.sql.SQLTimeoutException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLTimeoutException",
+"status": "ported"
+},
+"java.sql.SQLTransactionRollbackException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLTransactionRollbackException",
+"status": "ported"
+},
+"java.sql.SQLTransientConnectionException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLTransientConnectionException",
+"status": "ported"
+},
+"java.sql.SQLTransientException": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLTransientException",
+"status": "ported"
+},
+"java.sql.SQLWarning": {
+"kind": "class",
+"module": "flint.java.sql",
+"d": "SQLWarning",
+"status": "ported"
+},
+"java.sql.Savepoint": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "Savepoint",
+"status": "ported"
+},
+"java.sql.Statement": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "Statement",
+"status": "ported"
+},
+"java.sql.Types": {
+"kind": "struct",
+"module": "flint.java.sql",
+"d": "Types",
+"status": "ported"
+},
+"java.sql.Wrapper": {
+"kind": "interface",
+"module": "flint.java.sql",
+"d": "Wrapper",
+"status": "ported"
+},
+"java.text.ParseException": {
+"kind": "class",
+"module": "flint.java.text",
+"d": "ParseException",
+"status": "ported"
+},
+"java.text.ParsePosition": {
+"kind": "class",
+"module": "flint.java.text",
+"d": "ParsePosition",
+"status": "ported"
+},
+"java.time.DateTimeException": {
+"kind": "class",
+"module": "flint.java.time",
+"d": "DateTimeException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.time.DayOfWeek": {
+"kind": "enum",
+"module": "flint.java.time",
+"d": "DayOfWeek",
+"status": "ported"
+},
+"java.time.Month": {
+"kind": "enum",
+"module": "flint.java.time",
+"d": "Month",
+"status": "ported"
+},
+"java.time.MonthDay": {
+"kind": "struct",
+"module": "flint.java.time.monthday",
+"d": "MonthDay",
+"status": "adapted",
+"rules": [
+"R1",
+"R11"
+]
+},
+"java.time.Period": {
+"kind": "struct",
+"module": "flint.java.time.period",
+"d": "Period",
+"status": "adapted",
+"rules": [
+"R1",
+"R11"
+]
+},
+"java.time.Year": {
+"kind": "struct",
+"module": "flint.java.time.year",
+"d": "Year",
+"status": "adapted",
+"rules": [
+"R1",
+"R11"
+]
+},
+"java.time.YearMonth": {
+"kind": "struct",
+"module": "flint.java.time.yearmonth",
+"d": "YearMonth",
+"status": "adapted",
+"rules": [
+"R1",
+"R11"
+]
+},
+"java.time.format.DateTimeParseException": {
+"kind": "class",
+"module": "flint.java.time.format",
+"d": "DateTimeParseException",
+"status": "adapted",
+"rules": [
+"R26"
+]
+},
+"java.time.format.SignStyle": {
+"kind": "enum",
+"module": "flint.java.time.format",
+"d": "SignStyle",
+"status": "ported"
+},
+"java.time.temporal.ChronoField": {
+"kind": "enum",
+"module": "flint.java.time.temporal.chronofield",
+"d": "ChronoField",
+"status": "adapted",
+"rules": [
+"R1",
+"R18"
+]
+},
+"java.time.temporal.ChronoUnit": {
+"kind": "enum",
+"module": "flint.java.time.temporal.chronounit",
+"d": "ChronoUnit",
+"status": "adapted",
+"rules": [
+"R1",
+"R18"
+]
+},
+"java.time.temporal.ValueRange": {
+"kind": "struct",
+"module": "flint.java.time.temporal.valuerange",
+"d": "ValueRange",
+"status": "adapted",
+"rules": [
+"R1",
+"R11"
+]
+},
+"java.time.zone.ZoneOffsetTransition": {
+"kind": "struct",
+"module": "flint.java.time.zone.zoneoffsettransition",
+"d": "ZoneOffsetTransition",
+"status": "adapted",
+"rules": [
+"R1",
+"R11"
+]
+},
+"java.time.zone.ZoneOffsetTransitionRule": {
+"kind": "struct",
+"module": "flint.java.time.zone.zoneoffsettransitionrule",
+"d": "ZoneOffsetTransitionRule",
+"status": "adapted",
+"rules": [
+"R1",
+"R11"
+]
+},
+"java.time.zone.ZoneRules": {
+"kind": "struct",
+"module": "flint.java.time.zone.zonerules",
+"d": "ZoneRules",
+"status": "adapted",
+"rules": [
+"R1",
+"R11"
+]
+},
+"java.util.Arrays": {
+"kind": "struct",
+"module": "flint.java.util",
+"d": "Arrays",
+"status": "ported"
+},
+"java.util.BitSet": {
+"kind": "class",
+"module": "flint.java.util.bitset",
+"d": "BitSet",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.Calendar": {
+"kind": "abstract class",
+"module": "flint.java.util",
+"d": "Calendar",
+"status": "ported"
+},
+"java.util.Collections": {
+"kind": "struct",
+"module": "flint.java.util",
+"d": "Collections",
+"status": "ported"
+},
+"java.util.ConcurrentModificationException": {
+"kind": "class",
+"module": "flint.java.util",
+"d": "ConcurrentModificationException",
+"status": "ported"
+},
+"java.util.Date": {
+"kind": "class",
+"module": "flint.java.util",
+"d": "Date",
+"status": "ported"
+},
+"java.util.GregorianCalendar": {
+"kind": "class",
+"module": "flint.java.util",
+"d": "GregorianCalendar",
+"status": "ported"
+},
+"java.util.HexFormat": {
+"kind": "final class",
+"module": "flint.java.util.hexformat",
+"d": "HexFormat",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.IllegalFormatConversionException": {
+"kind": "class",
+"module": "flint.java.util.formatter",
+"d": "IllegalFormatConversionException",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.IllegalFormatException": {
+"kind": "class",
+"module": "flint.java.util.formatter",
+"d": "IllegalFormatException",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.Locale": {
+"kind": "struct",
+"module": "flint.java.util",
+"d": "Locale",
+"status": "adapted",
+"rules": [
+"R11"
+]
+},
+"java.util.MissingFormatArgumentException": {
+"kind": "class",
+"module": "flint.java.util.formatter",
+"d": "MissingFormatArgumentException",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.NoSuchElementException": {
+"kind": "class",
+"module": "flint.java.util",
+"d": "NoSuchElementException",
+"status": "ported"
+},
+"java.util.Objects": {
+"kind": "struct",
+"module": "flint.java.util",
+"d": "Objects",
+"status": "ported"
+},
+"java.util.Properties": {
+"kind": "class",
+"module": "flint.java.util",
+"d": "Properties",
+"status": "ported"
+},
+"java.util.SimpleTimeZone": {
+"kind": "class",
+"module": "flint.java.util",
+"d": "SimpleTimeZone",
+"status": "ported"
+},
+"java.util.StringJoiner": {
+"kind": "final class",
+"module": "flint.java.util.stringjoiner",
+"d": "StringJoiner",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.TimeZone": {
+"kind": "abstract class",
+"module": "flint.java.util",
+"d": "TimeZone",
+"status": "ported"
+},
+"java.util.UUID": {
+"kind": "final class",
+"module": "flint.java.util.uuid",
+"d": "UUID",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.UnknownFormatConversionException": {
+"kind": "class",
+"module": "flint.java.util.formatter",
+"d": "UnknownFormatConversionException",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.concurrent.BrokenBarrierException": {
+"kind": "class",
+"module": "flint.java.util.concurrent.brokenbarrierexception",
+"d": "BrokenBarrierException",
+"status": "adapted",
+"rules": [
+"R1",
+"R8",
+"R26"
+]
+},
+"java.util.concurrent.Delayed": {
+"kind": "interface",
+"module": "flint.java.util.concurrent.delayed",
+"d": "Delayed",
+"status": "adapted",
+"rules": [
+"R1",
+"R3"
+]
+},
+"java.util.concurrent.ExecutionException": {
+"kind": "class",
+"module": "flint.java.util.concurrent.executionexception",
+"d": "ExecutionException",
+"status": "adapted",
+"rules": [
+"R1",
+"R8",
+"R26"
+]
+},
+"java.util.concurrent.Executor": {
+"kind": "interface",
+"module": "flint.java.util.concurrent.executor",
+"d": "Executor",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.concurrent.TimeUnit": {
+"kind": "enum",
+"module": "flint.java.util.concurrent",
+"d": "TimeUnit",
+"status": "ported"
+},
+"java.util.concurrent.TimeoutException": {
+"kind": "class",
+"module": "flint.java.util.concurrent.timeoutexception",
+"d": "TimeoutException",
+"status": "adapted",
+"rules": [
+"R1",
+"R8"
+]
+},
+"java.util.concurrent.atomic.AtomicBoolean": {
+"kind": "final class",
+"module": "flint.java.util.concurrent.atomic.atomicboolean",
+"d": "AtomicBoolean",
+"status": "adapted",
+"rules": [
+"R1",
+"R3"
+]
+},
+"java.util.concurrent.atomic.AtomicInteger": {
+"kind": "final class",
+"module": "flint.java.util.concurrent.atomic.atomicinteger",
+"d": "AtomicInteger",
+"status": "adapted",
+"rules": [
+"R1",
+"R3"
+]
+},
+"java.util.concurrent.atomic.AtomicLong": {
+"kind": "final class",
+"module": "flint.java.util.concurrent.atomic.atomiclong",
+"d": "AtomicLong",
+"status": "adapted",
+"rules": [
+"R1",
+"R3"
+]
+},
+"java.util.concurrent.locks.Condition": {
+"kind": "interface",
+"module": "flint.java.util.concurrent.locks",
+"d": "Condition",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.concurrent.locks.Lock": {
+"kind": "interface",
+"module": "flint.java.util.concurrent.locks",
+"d": "Lock",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.concurrent.locks.ReadWriteLock": {
+"kind": "interface",
+"module": "flint.java.util.concurrent.locks",
+"d": "ReadWriteLock",
+"status": "adapted",
+"rules": [
+"R1"
+]
+},
+"java.util.function.BooleanSupplier": {
+"kind": "interface",
+"module": "flint.java.util.function_",
+"d": "BooleanSupplier",
+"status": "ported"
+},
+"java.util.function.DoubleSupplier": {
+"kind": "interface",
+"module": "flint.java.util.function_",
+"d": "DoubleSupplier",
+"status": "ported"
+},
+"java.util.function.IntBinaryOperator": {
+"kind": "interface",
+"module": "flint.java.util.function_.intbinaryoperator",
+"d": "IntBinaryOperator",
+"status": "adapted",
+"rules": [
+"R1",
+"R3",
+"R9"
+]
+},
+"java.util.function.IntSupplier": {
+"kind": "interface",
+"module": "flint.java.util.function_.intsupplier",
+"d": "IntSupplier",
+"status": "adapted",
+"rules": [
+"R1",
+"R3",
+"R9"
+]
+},
+"java.util.function.LongSupplier": {
+"kind": "interface",
+"module": "flint.java.util.function_.longsupplier",
+"d": "LongSupplier",
+"status": "adapted",
+"rules": [
+"R1",
+"R3",
+"R9"
+]
+},
+"java.util.random.RandomGenerator": {
+"kind": "interface",
+"module": "flint.java.util.random",
+"d": "RandomGenerator",
+"status": "ported"
+},
+"java.util.regex.Pattern": {
+"kind": "final class",
+"module": "flint.java.util.regex",
+"d": "Pattern",
+"status": "ported"
+},
+"java.util.regex.PatternSyntaxException": {
+"kind": "class",
+"module": "flint.java.util.regex",
+"d": "PatternSyntaxException",
+"status": "ported"
+},
+"java.util.stream.Collectors": {
+"kind": "struct",
+"module": "flint.java.util.stream",
+"d": "Collectors",
+"status": "ported"
+},
+"javax.sql.CommonDataSource": {
+"kind": "interface",
+"module": "flint.javax.sql",
+"d": "CommonDataSource",
+"status": "ported"
+},
+"javax.sql.DataSource": {
+"kind": "interface",
+"module": "flint.javax.sql",
+"d": "DataSource",
+"status": "ported"
+}
+}
+}

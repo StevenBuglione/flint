@@ -1,0 +1,204 @@
+{
+"schema": "flint.port-plan/1",
+"upstream": "jackson-core-3.1.8",
+"types": {
+"tools.jackson.core.JacksonException": {
+"kind": "class",
+"module": "flint.jackson.core",
+"d": "JacksonException",
+"status": "ported"
+},
+"tools.jackson.core.JsonGenerator": {
+"kind": "abstract class",
+"module": "flint.jackson.core",
+"d": "JsonGenerator",
+"status": "ported"
+},
+"tools.jackson.core.JsonParser": {
+"kind": "abstract class",
+"module": "flint.jackson.core",
+"d": "JsonParser",
+"status": "ported"
+},
+"tools.jackson.core.JsonPointer": {
+"kind": "class",
+"module": "flint.jackson.core",
+"d": "JsonPointer",
+"status": "ported"
+},
+"tools.jackson.core.JsonToken": {
+"kind": "enum",
+"module": "flint.jackson.core",
+"d": "JsonToken",
+"status": "ported"
+},
+"tools.jackson.core.JsonTokenId": {
+"kind": "struct",
+"module": "flint.jackson.core",
+"d": "JsonTokenId",
+"status": "ported"
+},
+"tools.jackson.core.ObjectReadContext": {
+"kind": "interface",
+"module": "flint.jackson.core",
+"d": "ObjectReadContext",
+"status": "ported"
+},
+"tools.jackson.core.ObjectWriteContext": {
+"kind": "interface",
+"module": "flint.jackson.core",
+"d": "ObjectWriteContext",
+"status": "ported"
+},
+"tools.jackson.core.PrettyPrinter": {
+"kind": "interface",
+"module": "flint.jackson.core",
+"d": "PrettyPrinter",
+"status": "ported"
+},
+"tools.jackson.core.StreamReadConstraints": {
+"kind": "struct",
+"module": "flint.jackson.core",
+"d": "StreamReadConstraints",
+"status": "ported"
+},
+"tools.jackson.core.StreamReadFeature": {
+"kind": "enum",
+"module": "flint.jackson.core",
+"d": "StreamReadFeature",
+"status": "ported"
+},
+"tools.jackson.core.StreamWriteConstraints": {
+"kind": "struct",
+"module": "flint.jackson.core",
+"d": "StreamWriteConstraints",
+"status": "ported"
+},
+"tools.jackson.core.StreamWriteFeature": {
+"kind": "enum",
+"module": "flint.jackson.core",
+"d": "StreamWriteFeature",
+"status": "ported"
+},
+"tools.jackson.core.TokenStreamContext": {
+"kind": "abstract class",
+"module": "flint.jackson.core",
+"d": "TokenStreamContext",
+"status": "ported"
+},
+"tools.jackson.core.TokenStreamLocation": {
+"kind": "final class",
+"module": "flint.jackson.core",
+"d": "TokenStreamLocation",
+"status": "ported"
+},
+"tools.jackson.core.exc.InputCoercionException": {
+"kind": "class",
+"module": "flint.jackson.core.exc",
+"d": "InputCoercionException",
+"status": "ported"
+},
+"tools.jackson.core.exc.StreamConstraintsException": {
+"kind": "class",
+"module": "flint.jackson.core.exc",
+"d": "StreamConstraintsException",
+"status": "ported"
+},
+"tools.jackson.core.exc.StreamReadException": {
+"kind": "class",
+"module": "flint.jackson.core.exc",
+"d": "StreamReadException",
+"status": "ported"
+},
+"tools.jackson.core.exc.StreamWriteException": {
+"kind": "class",
+"module": "flint.jackson.core.exc",
+"d": "StreamWriteException",
+"status": "ported"
+},
+"tools.jackson.core.exc.UnexpectedEndOfInputException": {
+"kind": "class",
+"module": "flint.jackson.core.exc",
+"d": "UnexpectedEndOfInputException",
+"status": "ported"
+},
+"tools.jackson.core.io.NumberOutput": {
+"kind": "struct",
+"module": "flint.jackson.core.io",
+"d": "NumberOutput",
+"status": "ported"
+},
+"tools.jackson.core.json.JsonFactory": {
+"kind": "final class",
+"module": "flint.jackson.core.json",
+"d": "JsonFactory",
+"status": "ported"
+},
+"tools.jackson.core.json.JsonFactoryBuilder": {
+"kind": "final class",
+"module": "flint.jackson.core.json",
+"d": "JsonFactoryBuilder",
+"status": "ported"
+},
+"tools.jackson.core.json.JsonReadContext": {
+"kind": "final class",
+"module": "flint.jackson.core.json",
+"d": "JsonReadContext",
+"status": "ported"
+},
+"tools.jackson.core.json.JsonReadFeature": {
+"kind": "enum",
+"module": "flint.jackson.core.json",
+"d": "JsonReadFeature",
+"status": "ported"
+},
+"tools.jackson.core.json.JsonWriteContext": {
+"kind": "final class",
+"module": "flint.jackson.core.json",
+"d": "JsonWriteContext",
+"status": "ported"
+},
+"tools.jackson.core.json.JsonWriteFeature": {
+"kind": "enum",
+"module": "flint.jackson.core.json",
+"d": "JsonWriteFeature",
+"status": "ported"
+},
+"tools.jackson.core.json.UTF8JsonGenerator": {
+"kind": "class",
+"module": "flint.jackson.core.json",
+"d": "UTF8JsonGenerator",
+"status": "ported"
+},
+"tools.jackson.core.json.UTF8StreamJsonParser": {
+"kind": "class",
+"module": "flint.jackson.core.json",
+"d": "UTF8StreamJsonParser",
+"status": "ported"
+},
+"tools.jackson.core.util.ByteArrayBuilder": {
+"kind": "final class",
+"module": "flint.jackson.core.util",
+"d": "ByteArrayBuilder",
+"status": "ported"
+},
+"tools.jackson.core.util.DefaultPrettyPrinter": {
+"kind": "class",
+"module": "flint.jackson.core.util",
+"d": "DefaultPrettyPrinter",
+"status": "ported"
+},
+"tools.jackson.core.util.MinimalPrettyPrinter": {
+"kind": "class",
+"module": "flint.jackson.core.util",
+"d": "MinimalPrettyPrinter",
+"status": "ported"
+},
+"tools.jackson.core.util.Separators": {
+"kind": "final class",
+"module": "flint.jackson.core.util",
+"d": "Separators",
+"status": "ported"
+}
+}
+}
