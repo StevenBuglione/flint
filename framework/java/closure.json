@@ -75,6 +75,15 @@
         "source": "closure/valueof-array.d"
       }
     },
+    "flint.java.lang.arrayindexoutofboundsexception": {
+      "array-index": {
+        "data": [],
+        "leaves": [
+          "flint.java.lang"
+        ],
+        "source": "closure/array-index.d"
+      }
+    },
     "flint.java.lang.character.decimaldigits": {
       "decimal-digits": {
         "data": [],

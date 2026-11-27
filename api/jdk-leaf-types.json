@@ -3,6 +3,7 @@
  "types": {
   "java.io.InterruptedIOException": "flint.java.io.interruptedioexception",
   "java.io.UnsupportedEncodingException": "flint.java.io.unsupportedencodingexception",
+  "java.lang.ArrayIndexOutOfBoundsException": "flint.java.lang.arrayindexoutofboundsexception",
   "java.lang.Byte": "flint.java.lang.byte_",
   "java.lang.Math": "flint.java.lang.math",
   "java.lang.Number": "flint.java.lang.number",
