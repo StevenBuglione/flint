@@ -5812,6 +5812,8 @@
 "java.lang.Math#decrementExact(long)":{"d":"flint.java.lang.math.Math.decrementExact","status":"ported"},
 "java.lang.Math#divideExact(int,int)":{"d":"flint.java.lang.math.Math.divideExact","status":"ported"},
 "java.lang.Math#divideExact(long,long)":{"d":"flint.java.lang.math.Math.divideExact","status":"ported"},
+"java.lang.Math#fma(double,double,double)":{"d":"flint.java.lang.math.Math.fma","status":"ported"},
+"java.lang.Math#fma(float,float,float)":{"d":"flint.java.lang.math.Math.fma","status":"ported"},
 "java.lang.Math#floor(double)":{"d":"flint.java.lang.math.Math.floor","status":"ported"},
 "java.lang.Math#floorDiv(int,int)":{"d":"flint.java.lang.math.Math.floorDiv","status":"ported"},
 "java.lang.Math#floorDiv(long,int)":{"d":"flint.java.lang.math.Math.floorDiv","status":"ported"},

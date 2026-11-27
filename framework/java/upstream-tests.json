@@ -648,6 +648,7 @@
     },
     "java/lang/Math/FusedMultiplyAddTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 3,323,328-call raw-bit differential run against OpenJDK 21.0.13's BigDecimal path (-XX:-UseFMA; it matched the FMA intrinsic up to NaN bits) cover fma(double, double, double) and fma(float, float, float).",
       "status": "deferred"
     },
     "java/lang/Math/HyperbolicTests.java": {

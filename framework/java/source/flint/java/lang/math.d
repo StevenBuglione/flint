@@ -31,6 +31,8 @@
 // because both trap (or are undefined) in D where Java defines them. The throwing members are
 // zero-parameter templates that import the exceptions locally, so only code that calls them links
 // the flint.java.lang aggregate; the IEEE-754 core stays a zero-aggregate leaf.
+// fma is a clean-room exact 128-bit product and sum with one round-to-nearest-even, in place of
+// Java's BigDecimal arithmetic.
 
 module flint.java.lang.math;
 
@@ -235,6 +237,219 @@ private noreturn throwFloatingClampRange()(float min, float max) pure
     throwIllegalArgument(javaFloatString(min) ~ " > " ~ javaFloatString(max));
 }
 
+// An unsigned 128-bit integer for the exact fused multiply-add.
+private struct Wide
+{
+    ulong hi;
+    ulong lo;
+}
+
+// The exact 128-bit product of two 64-bit values.
+private Wide wideProduct()(ulong x, ulong y) pure nothrow @nogc
+{
+    enum ulong low32 = 0xFFFF_FFFF;
+    const ulong p00 = (x & low32) * (y & low32);
+    const ulong p01 = (x & low32) * (y >> 32);
+    const ulong p10 = (x >> 32) * (y & low32);
+    const ulong p11 = (x >> 32) * (y >> 32);
+    const ulong middle = (p00 >> 32) + (p01 & low32) + (p10 & low32);
+    return Wide(p11 + (p01 >> 32) + (p10 >> 32) + (middle >> 32), (middle << 32) | (p00 & low32));
+}
+
+// Leading zero bits of a nonzero value.
+private uint leadingZeros()(Wide v) pure nothrow @nogc
+{
+    import core.bitop : bsr;
+
+    return v.hi != 0 ? 63 - bsr(v.hi) : 127 - bsr(v.lo);
+}
+
+private Wide shiftLeft()(Wide v, uint n) pure nothrow @nogc
+{
+    if (n == 0)
+        return v;
+    if (n >= 64)
+        return Wide(v.lo << (n - 64), 0);
+    return Wide((v.hi << n) | (v.lo >> (64 - n)), v.lo << n);
+}
+
+// `v >> n`, with bit 0 set if any shifted-out bit was set, so later rounding still sees an inexact tail.
+private Wide shiftRightSticky()(Wide v, uint n) pure nothrow @nogc
+{
+    if (n == 0)
+        return v;
+    if (n >= 128)
+        return Wide(0, (v.hi | v.lo) != 0);
+    Wide shifted;
+    bool lost;
+    if (n >= 64)
+    {
+        shifted = Wide(0, n == 64 ? v.hi : v.hi >> (n - 64));
+        lost = v.lo != 0 || (n > 64 && (v.hi << (128 - n)) != 0);
+    }
+    else
+    {
+        shifted = Wide(v.hi >> n, (v.lo >> n) | (v.hi << (64 - n)));
+        lost = (v.lo << (64 - n)) != 0;
+    }
+    shifted.lo |= lost;
+    return shifted;
+}
+
+// Whether any bit below bit `n` of v is set.
+private bool bitsBelow()(Wide v, uint n) pure nothrow @nogc
+{
+    if (n >= 64)
+        return v.lo != 0 || (n > 64 && (v.hi << (128 - n)) != 0);
+    return n > 0 && (v.lo << (64 - n)) != 0;
+}
+
+private bool lessThan()(Wide x, Wide y) pure nothrow @nogc
+{
+    return x.hi != y.hi ? x.hi < y.hi : x.lo < y.lo;
+}
+
+// A finite nonzero double as `magnitude * 2^exponent`.
+private void splitDouble()(double v, out bool negative, out ulong magnitude, out int exponent) pure nothrow @nogc
+{
+    const bits = doubleToRawLongBits(v);
+    const biased = cast(int)((bits >>> (DOUBLE_SIGNIFICAND_WIDTH - 1)) & 0x7FF);
+    negative = bits < 0;
+    magnitude = bits & DOUBLE_SIGNIF_BIT_MASK;
+    if (biased == 0)
+        exponent = DOUBLE_MIN_EXPONENT - (DOUBLE_SIGNIFICAND_WIDTH - 1);
+    else
+    {
+        magnitude |= 1UL << (DOUBLE_SIGNIFICAND_WIDTH - 1);
+        exponent = biased - DOUBLE_EXP_BIAS - (DOUBLE_SIGNIFICAND_WIDTH - 1);
+    }
+}
+
+/*
+The raw bits of x * y + z rounded once, to nearest with ties to even, into the IEEE-754 binary format with
+`precision` significand bits and an `expWidth`-bit exponent field: Java's exact BigDecimal sum followed by one
+rounding. x and y are finite and nonzero, z is finite.
+
+The 106-bit product is exact. The addend is aligned to it; any bits shifted out of the smaller operand set a sticky
+bit far below the rounding position. Cancellation of more than one bit needs exponents within one bit of each
+other, where the shift loses nothing, so the sticky bit never reaches the rounding position.
+*/
+private ulong fusedMultiplyAddBits()(double x, double y, double z, uint precision, uint expWidth) pure nothrow @nogc
+{
+    bool xNegative, yNegative;
+    ulong xMagnitude, yMagnitude;
+    int xExponent, yExponent;
+    splitDouble(x, xNegative, xMagnitude, xExponent);
+    splitDouble(y, yNegative, yMagnitude, yExponent);
+
+    // Each operand is `value * 2^exponent`, normalized so that bit 127 of value is set.
+    Wide sum = wideProduct(xMagnitude, yMagnitude);
+    const uint shift = leadingZeros(sum);
+    sum = shiftLeft(sum, shift);
+    int exponent = xExponent + yExponent - cast(int) shift;
+    bool negative = xNegative != yNegative;
+    // An exact zero sum is +0.0, as BigDecimal's zero converts.
+    if (z != 0.0 && !addExactly(sum, exponent, negative, z))
+        return 0;
+    return roundWide(sum, exponent, negative, precision, expWidth);
+}
+
+// Add finite nonzero z to the normalized `big * 2^exponent` with sign `negative`, leaving the normalized sum there;
+// false when the sum is exactly zero.
+private bool addExactly()(ref Wide big, ref int exponent, ref bool negative, double z) pure nothrow @nogc
+{
+    bool zNegative;
+    ulong zMagnitude;
+    int zExponent;
+    splitDouble(z, zNegative, zMagnitude, zExponent);
+    // The magnitude sits in the high word, 64 bits up.
+    Wide small = Wide(zMagnitude, 0);
+    uint shift = leadingZeros(small);
+    small = shiftLeft(small, shift);
+    zExponent -= 64 + shift;
+
+    if (zExponent > exponent || (zExponent == exponent && lessThan(big, small)))
+    {
+        const Wide swap = big;
+        big = small;
+        small = swap;
+        const int swapExponent = exponent;
+        exponent = zExponent;
+        zExponent = swapExponent;
+        const bool swapNegative = negative;
+        negative = zNegative;
+        zNegative = swapNegative;
+    }
+    const long distance = cast(long) exponent - zExponent;
+    small = shiftRightSticky(small, distance >= 128 ? 128 : cast(uint) distance);
+
+    if (negative == zNegative)
+    {
+        // Make room for the carry; the low bits of big are zero, so the shift is exact.
+        big = shiftRightSticky(big, 1);
+        small = shiftRightSticky(small, 1);
+        ++exponent;
+        const ulong lo = big.lo + small.lo;
+        big = Wide(big.hi + small.hi + (lo < big.lo), lo);
+    }
+    else
+    {
+        const ulong lo = big.lo - small.lo;
+        big = Wide(big.hi - small.hi - (big.lo < small.lo), lo);
+        if ((big.hi | big.lo) == 0)
+            return false;
+    }
+    shift = leadingZeros(big);
+    big = shiftLeft(big, shift);
+    exponent -= shift;
+    return true;
+}
+
+// The raw bits of the normalized `value * 2^exponent` with sign `negative`, rounded to nearest with ties to even.
+private ulong roundWide()(Wide value, int exponent, bool negative, uint precision, uint expWidth) pure nothrow @nogc
+{
+    const int maxBiased = (1 << expWidth) - 1;
+    const ulong sign = cast(ulong) negative << (precision - 1 + expWidth);
+    // The binary exponent of bit 127, biased.
+    const long biased = cast(long) exponent + 127 + (maxBiased >> 1);
+    if (biased >= maxBiased)
+        return sign | (cast(ulong) maxBiased << (precision - 1));
+    const long kept = biased >= 1 ? precision : precision - 1 + biased;
+    if (kept < 0)
+        return sign;
+    const uint drop = cast(uint)(128 - kept);
+    const ulong significand = drop >= 128 ? 0 : drop == 64 ? value.hi : value.hi >> (drop - 64);
+    const uint guardBit = drop - 1;
+    const bool guard = ((guardBit >= 64 ? value.hi >> (guardBit - 64) : value.lo >> guardBit) & 1) != 0;
+    const bool up = guard && (bitsBelow(value, guardBit) || (significand & 1) != 0);
+    // A normal value adds its exponent field below the implicit bit; a carry out of the significand moves into the
+    // exponent field and, from the largest finite value, yields infinity.
+    const ulong field = biased >= 1 ? cast(ulong)(biased - 1) << (precision - 1) : 0;
+    return sign | (field + significand + up);
+}
+
+// NaN or infinite, read from the exponent field.
+private bool nonFinite()(double v) pure nothrow @nogc
+{
+    return (doubleToRawLongBits(v) & DOUBLE_EXP_BIT_MASK) == DOUBLE_EXP_BIT_MASK;
+}
+
+// Java's fma when an operand is NaN or infinite.
+private double fmaNonFinite()(double a, double b, double c) pure nothrow @nogc
+{
+    if (a != a || b != b || c != c)
+        return double.nan;
+    const bool infiniteA = a == double.infinity || a == -double.infinity;
+    const bool infiniteB = b == double.infinity || b == -double.infinity;
+    if (!infiniteA && !infiniteB)
+        return c; // c is infinite and the product finite, even where a * b alone would overflow.
+    if ((infiniteA && b == 0.0) || (infiniteB && a == 0.0))
+        return double.nan;
+    // The product is exactly infinite, so one more rounding changes nothing; inf + (-inf) is NaN.
+    const double product = a * b;
+    return product + c;
+}
+
 /++
 Java's `java.lang.Math` pure numeric constants, IEEE-754 operations and exact integer arithmetic.
 
@@ -245,7 +460,7 @@ divisor throws `ArithmeticException("/ by zero")` as Java's `/` does, and `MIN_V
 of trapping.
 
 The members that read IEEE-754 bits (`ceil`, `floor`, `rint`, `round`, `abs(float)`, `abs(double)`, `ulp`,
-`signum`, `copySign`, `getExponent`, `nextAfter`, `nextUp`, `nextDown` and `scalb`) cannot run in CTFE, because D
+`signum`, `copySign`, `getExponent`, `nextAfter`, `nextUp`, `nextDown`, `scalb` and `fma`) cannot run in CTFE, because D
 rejects reinterpreting a union field at compile time. A compile-time call fails to compile; it never folds at
 `real` precision and returns a result that differs from Java.
 +/
@@ -810,6 +1025,31 @@ struct Math
                 throwFloatingClampRange(min, max);
         }
         return Math.min(max, Math.max(value, min));
+    }
+
+    /// `a * b + c` with one rounding, as Java's exact product and sum followed by a single rounding to `double`.
+    static double fma()(double a, double b, double c) pure nothrow @nogc
+    {
+        if (nonFinite(a) || nonFinite(b) || nonFinite(c))
+            return fmaNonFinite(a, b, c);
+        // An exact zero product: the floating-point expression gives Java's sign of zero.
+        if (a == 0.0 || b == 0.0)
+            return a * b + c;
+        return longBitsToDouble(cast(long) fusedMultiplyAddBits(a, b, c, DOUBLE_SIGNIFICAND_WIDTH, 11));
+    }
+
+    /// `a * b + c` with one rounding, as Java's exact product and sum followed by a single rounding to `float`.
+    static float fma()(float a, float b, float c) pure nothrow @nogc
+    {
+        // Exponent fields, not `x - x == 0`: DMD folds that to true for NaN and infinity.
+        const bool finite = (floatToRawIntBits(a) & FLOAT_EXP_BIT_MASK) != FLOAT_EXP_BIT_MASK
+            && (floatToRawIntBits(b) & FLOAT_EXP_BIT_MASK) != FLOAT_EXP_BIT_MASK
+            && (floatToRawIntBits(c) & FLOAT_EXP_BIT_MASK) != FLOAT_EXP_BIT_MASK;
+        if (!finite)
+            return cast(float) fma(cast(double) a, cast(double) b, cast(double) c);
+        if (a == 0.0f || b == 0.0f)
+            return a * b + c;
+        return intBitsToFloat(cast(int) fusedMultiplyAddBits(a, b, c, FLOAT_SIGNIFICAND_WIDTH, 8));
     }
 
     /// Size of an ulp (unit in the last place) of `d`.

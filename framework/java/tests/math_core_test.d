@@ -327,3 +327,47 @@ unittest
     assert(after == before);
     assert(acc == acc);
 }
+
+@("Math fma rounds the exact product and sum once")
+unittest
+{
+    // The unfused 0.1 * 10.0 - 1.0 rounds the product to 1.0 first and gives 0.0.
+    const tenth = 0.1;
+    assert(tenth * 10.0 - 1.0 == 0.0 && sameDouble(Math.fma(tenth, 10.0, -1.0), 0x1p-54));
+    const u = 1 + 0x1p-52;
+    assert(sameDouble(Math.fma(u, u, -(u * u)), 0x1p-104));
+    const v = 1 + 0x1p-23f;
+    assert(sameFloat(Math.fma(0.1f, 10.0f, -1.0f), 0x1p-26f) && sameFloat(Math.fma(v, v, -(v * v)), 0x1p-46f));
+
+    // An intermediate overflow neither saturates nor becomes NaN against an infinite addend.
+    assert(sameDouble(Math.fma(double.max, 2.0, -double.max), double.max));
+    assert(sameDouble(Math.fma(double.max, 2.0, -double.infinity), -double.infinity));
+    assert(sameFloat(Math.fma(float.max, 2.0f, -float.max), float.max));
+    assert(sameFloat(Math.fma(float.max, 2.0f, -float.infinity), -float.infinity));
+    assert(sameDouble(Math.fma(double.infinity, 0.0, 1.0), double.nan));
+    assert(sameDouble(Math.fma(double.infinity, 1.0, -double.infinity), double.nan));
+    assert(sameDouble(Math.fma(1.0, 1.0, double.nan), double.nan));
+    assert(sameFloat(Math.fma(float.nan, 1.0f, 1.0f), float.nan));
+}
+
+@("Math fma signed zeros and subnormal rounding follow Java")
+unittest
+{
+    assert(dbits(Math.fma(-0.0, 1.0, 0.0)) == 0 && dbits(Math.fma(-0.0, 1.0, -0.0)) == 0x8000_0000_0000_0000UL);
+    // A nonzero product that underflows keeps its own sign; an exact zero sum is +0.0.
+    assert(dbits(Math.fma(1e-200, -1e-200, 0.0)) == 0x8000_0000_0000_0000UL);
+    assert(dbits(Math.fma(1e-200, 1e-200, -0.0)) == 0);
+    assert(dbits(Math.fma(2.0, 3.0, -6.0)) == 0 && dbits(Math.fma(-2.0, 3.0, 6.0)) == 0);
+    assert(sameDouble(Math.fma(0x1p-537, 0x1p-537, 0x1p-1074), 0x1p-1073));
+    // 2^-1075 is a tie between 0 and the smallest subnormal, so it rounds to even (0); 1.5 * 2^-1075 rounds up.
+    assert(dbits(Math.fma(0x1p-538, 0x1p-537, 0.0)) == 0 && dbits(Math.fma(0x1.8p-538, 0x1p-537, 0.0)) == 1);
+    assert(fbits(Math.fma(0x1p-75f, 0x1p-75f, 0.0f)) == 0 && fbits(Math.fma(0x1.8p-75f, 0x1p-75f, 0.0f)) == 1);
+}
+
+// fma is usable from nothrow @nogc code (fmaNoGc compiles); the bit-reading core keeps it out of CTFE.
+private double fmaNoGc() pure nothrow @nogc
+{
+    return Math.fma(1.0, 2.0, 3.0) + Math.fma(1.0f, 2.0f, 3.0f);
+}
+
+static assert(!__traits(compiles, { enum x = Math.fma(1.0, 2.0, 3.0); }));
