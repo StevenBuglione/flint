@@ -389,6 +389,37 @@ unittest
         assert(e.getErrorIndex() == 5);
 }
 
+@("DateTimeParseException distinguishes omitted and initialized causes")
+unittest
+{
+    import flint.java.lang : IllegalStateException;
+
+    auto cause = new DateTimeException("cause");
+    auto omitted = new DateTimeParseException("invalid", "input", 2);
+    assert(omitted.getCause() is null);
+    assert(omitted.initCause(cause) is omitted && omitted.getCause() is cause);
+    assert(omitted.getParsedString() == "input" && omitted.getErrorIndex() == 2);
+
+    Throwable nullCause;
+    auto explicitNull = new DateTimeParseException("invalid", "input", 2, nullCause);
+    auto literalNull = new DateTimeParseException("invalid", "input", 2, null, "caller.d", 42);
+    auto explicitCause = new DateTimeParseException("invalid", "input", 2, cause);
+    assert(explicitNull.getCause() is null && literalNull.getCause() is null);
+    assert(literalNull.file == "caller.d" && literalNull.line == 42);
+    assert(explicitCause.getCause() is cause);
+    foreach (error; [explicitNull, literalNull, explicitCause])
+    {
+        try
+        {
+            error.initCause(cause);
+            assert(false);
+        }
+        catch (IllegalStateException)
+        {
+        }
+    }
+}
+
 @("java.time parses from any characters: nothing keeps the text, an error copies it")
 unittest
 {
