@@ -152,8 +152,7 @@
 "d": "Convert",
 "status": "adapted",
 "rules": [
-"R2",
-"R4"
+"R2"
 ]
 },
 "jakarta.persistence.Converter": {
@@ -204,8 +203,7 @@
 "d": "ElementCollection",
 "status": "adapted",
 "rules": [
-"R2",
-"R4"
+"R2"
 ]
 },
 "jakarta.persistence.Embeddable": {
@@ -250,8 +248,7 @@
 "d": "EntityListeners",
 "status": "adapted",
 "rules": [
-"R2",
-"R4"
+"R2"
 ]
 },
 "jakarta.persistence.EntityResult": {
@@ -377,8 +374,7 @@
 "d": "IdClass",
 "status": "adapted",
 "rules": [
-"R2",
-"R4"
+"R2"
 ]
 },
 "jakarta.persistence.Index": {
@@ -462,8 +458,7 @@
 "d": "ManyToMany",
 "status": "adapted",
 "rules": [
-"R2",
-"R4"
+"R2"
 ]
 },
 "jakarta.persistence.ManyToOne": {
@@ -472,8 +467,7 @@
 "d": "ManyToOne",
 "status": "adapted",
 "rules": [
-"R2",
-"R4"
+"R2"
 ]
 },
 "jakarta.persistence.MapKey": {
@@ -491,8 +485,7 @@
 "d": "MapKeyClass",
 "status": "adapted",
 "rules": [
-"R2",
-"R4"
+"R2"
 ]
 },
 "jakarta.persistence.MapKeyColumn": {
@@ -654,8 +647,7 @@
 "d": "OneToMany",
 "status": "adapted",
 "rules": [
-"R2",
-"R4"
+"R2"
 ]
 },
 "jakarta.persistence.OneToOne": {
@@ -664,8 +656,7 @@
 "d": "OneToOne",
 "status": "adapted",
 "rules": [
-"R2",
-"R4"
+"R2"
 ]
 },
 "jakarta.persistence.OrderBy": {
@@ -1031,5 +1022,26 @@
 "d": "LoadState",
 "status": "ported"
 }
+},
+"unresolved": {
+"jakarta.persistence.AttributeConverter": "flint.jakarta.persistence.AttributeConverter is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.Parameter": "flint.jakarta.persistence.Parameter is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.TupleElement": "flint.jakarta.persistence.TupleElement is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.Attribute": "flint.jakarta.persistence.metamodel_runtime.Attribute is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.Attribute.PersistentAttributeType": "no registered package declares flint.jakarta.persistence.metamodel_runtime.Attribute",
+"jakarta.persistence.metamodel.BasicType": "flint.jakarta.persistence.metamodel.BasicType is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.Bindable": "flint.jakarta.persistence.metamodel.Bindable is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.Bindable.BindableType": "no registered package declares flint.jakarta.persistence.metamodel.Bindable",
+"jakarta.persistence.metamodel.CollectionAttribute": "flint.jakarta.persistence.metamodel_runtime.CollectionAttribute is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.EmbeddableType": "flint.jakarta.persistence.metamodel_runtime.EmbeddableType is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.ListAttribute": "flint.jakarta.persistence.metamodel_runtime.ListAttribute is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.ManagedType": "flint.jakarta.persistence.metamodel_runtime.ManagedType is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.MapAttribute": "flint.jakarta.persistence.metamodel_runtime.MapAttribute is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.PluralAttribute": "flint.jakarta.persistence.metamodel_runtime.PluralAttribute is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.PluralAttribute.CollectionType": "no registered package declares flint.jakarta.persistence.metamodel_runtime.PluralAttribute",
+"jakarta.persistence.metamodel.SetAttribute": "flint.jakarta.persistence.metamodel_runtime.SetAttribute is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.SingularAttribute": "flint.jakarta.persistence.metamodel_runtime.SingularAttribute is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.Type": "flint.jakarta.persistence.metamodel.Type is a D template, which a plan kind does not describe yet",
+"jakarta.persistence.metamodel.Type.PersistenceType": "no registered package declares flint.jakarta.persistence.metamodel.Type"
 }
 }

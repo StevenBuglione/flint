@@ -176,5 +176,8 @@
 "d": "SLF4JServiceProvider",
 "status": "ported"
 }
+},
+"unresolved": {
+"org.slf4j.MDC.MDCCloseable": "no registered package declares flint.slf4j.MDC"
 }
 }

@@ -234,5 +234,8 @@
 "d": "Validate",
 "status": "ported"
 }
+},
+"unresolved": {
+"org.thymeleaf.context.LazyContextVariable": "flint.thymeleaf.context.LazyContextVariable is a D template, which a plan kind does not describe yet"
 }
 }

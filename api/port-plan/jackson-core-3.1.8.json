@@ -200,5 +200,17 @@
 "d": "Separators",
 "status": "ported"
 }
+},
+"unresolved": {
+"tools.jackson.core.JsonParser.NumberType": "no registered package declares flint.jackson.core.JsonParser",
+"tools.jackson.core.JsonParser.NumberTypeFP": "no registered package declares flint.jackson.core.JsonParser",
+"tools.jackson.core.ObjectReadContext.Base": "no registered package declares flint.jackson.core.ObjectReadContext",
+"tools.jackson.core.ObjectWriteContext.Base": "no registered package declares flint.jackson.core.ObjectWriteContext",
+"tools.jackson.core.StreamWriteConstraints.Builder": "no registered package declares flint.jackson.core.StreamWriteConstraints",
+"tools.jackson.core.util.DefaultIndenter": "flint.jackson.core.util.DefaultIndenter does not resolve in :jackson-core's import closure",
+"tools.jackson.core.util.DefaultPrettyPrinter.FixedSpaceIndenter": "no registered package declares flint.jackson.core.util.DefaultPrettyPrinter",
+"tools.jackson.core.util.DefaultPrettyPrinter.Indenter": "no registered package declares flint.jackson.core.util.DefaultPrettyPrinter",
+"tools.jackson.core.util.DefaultPrettyPrinter.NopIndenter": "no registered package declares flint.jackson.core.util.DefaultPrettyPrinter",
+"tools.jackson.core.util.Separators.Spacing": "no registered package declares flint.jackson.core.util.Separators"
 }
 }

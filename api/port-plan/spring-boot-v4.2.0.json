@@ -227,5 +227,14 @@
 "d": "TestPropertyValues",
 "status": "ported"
 }
+},
+"unresolved": {
+"org.springframework.boot.actuate.info.Info.Builder": "no registered package declares flint.boot.actuate.info.Info",
+"org.springframework.boot.autoconfigure.condition.ConditionMessage.Builder": "no registered package declares flint.boot.autoconfigure.condition_runtime.ConditionMessage",
+"org.springframework.boot.autoconfigure.condition.ConditionMessage.ItemsBuilder": "no registered package declares flint.boot.autoconfigure.condition_runtime.ConditionMessage",
+"org.springframework.boot.autoconfigure.condition.ConditionMessage.Style": "no registered package declares flint.boot.autoconfigure.condition_runtime.ConditionMessage",
+"org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type": "no registered package declares flint.boot.autoconfigure.condition.ConditionalOnWebApplication",
+"org.springframework.boot.security.autoconfigure.SecurityProperties.User": "no registered package declares flint.boot.security.autoconfigure.SecurityProperties",
+"org.springframework.boot.test.util.TestPropertyValues.Pair": "no registered package declares flint.boot.test.util.TestPropertyValues"
 }
 }

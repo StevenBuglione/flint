@@ -6,8 +6,9 @@ with their IDs and, where known, whether storage is templated and whether a GC-f
 the plan, not D code, for a mechanical shape.
 
   --seed   writes the plans from every exact, mapped type row in api/*/mapping.json. The module and rules come
-           from the row and the D kind from compiling the hand port. Entries a lane already wrote are kept as they
-           are, so seeding again only adds types that were mapped since.
+           from the row and the D kind from compiling the hand port. A lane's kind and storage choices are kept;
+           module, name, status and rules follow the mapping row on every seed. Mapped types it can't classify go
+           under "unresolved" with the reason.
   --check  verifies every plan: the schema, a known kind, that a mapped type's module and rules agree with its
            mapping row, and that no entry names a type its upstream manifest doesn't declare.
 
@@ -101,33 +102,52 @@ def entry_for(t, row, kind):
 def seed():
     index = porter_gate.module_index(porter_gate.import_roots())
     by_package = collections.defaultdict(list)
-    rows = {}
+    rows, owner = {}, {}
     for stem, t, row in mapped_types():
         rows[t['id']] = (stem, t, row)
         module = row['d'].rsplit('.', 1)[0]
         owners = [porter_gate.package_of(p) for _, p in index.get(module, ())]
         by_package[owners[0] if owners and owners[0] else None].append(row['d'])
+        owner[row['d']] = owners[0] if owners and owners[0] else None
     kinds = {}
     with tempfile.TemporaryDirectory(prefix='flint-port-plan-') as directory:
         for package, symbols in sorted(by_package.items(), key=lambda item: str(item[0])):
             if package is not None:
                 kinds.update(probe_kinds(package, sorted(set(symbols)), Path(directory)))
     plans = collections.defaultdict(dict)
-    unresolved = 0
+    pending = collections.defaultdict(dict)
     for type_id, (stem, t, row) in sorted(rows.items()):
         kind = kinds.get(row['d'])
-        if kind is None or kind not in KINDS:
-            unresolved += 1
+        if kind in KINDS:
+            plans[stem][type_id] = entry_for(t, row, kind)
             continue
-        plans[stem][type_id] = entry_for(t, row, kind)
+        module = row['d'].rsplit('.', 1)[0]
+        if owner[row['d']] is None:
+            pending[stem][type_id] = f'no registered package declares {module}'
+        elif kind is None:
+            pending[stem][type_id] = f'{row["d"]} does not resolve in :{owner[row["d"]]}\'s import closure'
+        else:
+            pending[stem][type_id] = f'{row["d"]} is a D {kind}, which a plan kind does not describe yet'
+    unresolved = sum(len(v) for v in pending.values())
     PLANS.mkdir(parents=True, exist_ok=True)
     written = {}
-    for stem, types in sorted(plans.items()):
+    for stem in sorted(set(plans) | set(pending)):
         path = PLANS / f'{stem}.json'
         existing = porter_gate.load_json(path)['types'] if path.is_file() else {}
-        merged = dict(sorted({**types, **existing}.items()))
-        path.write_text(json.dumps({'schema': SCHEMA, 'upstream': stem, 'types': merged}, indent=0) + '\n',
-                        encoding='utf-8')
+        merged = dict(existing)
+        for type_id, fresh in plans[stem].items():
+            # The mapping row owns module, name, status and rules; a lane's kind and storage choices stay.
+            kept = {k: v for k, v in existing.get(type_id, {}).items() if k not in ('module', 'd', 'status', 'rules')}
+            merged[type_id] = {**fresh, **kept}
+            if 'rules' not in fresh:
+                merged[type_id].pop('rules', None)
+        merged = dict(sorted(merged.items()))
+        # Mapped types the seed couldn't classify stay listed with the reason, so a lane resolves them.
+        waiting = {k: v for k, v in sorted(pending[stem].items()) if k not in merged}
+        document = {'schema': SCHEMA, 'upstream': stem, 'types': merged}
+        if waiting:
+            document['unresolved'] = waiting
+        path.write_text(json.dumps(document, indent=0) + '\n', encoding='utf-8')
         written[stem] = len(merged)
     return written, unresolved
 
@@ -148,6 +168,8 @@ def check():
             failures.append(f'{path.name}: no pinned manifest api/upstream/{path.stem}.json')
             continue
         declared = {t['id'] for t in manifest['types']}
+        for type_id in set(plan.get('unresolved', {})) & set(plan['types']):
+            failures.append(f'{path.name}: {type_id} is both planned and unresolved; remove it from "unresolved"')
         classifier = mappings.get(pins[(manifest['project'], manifest['version'])].get('repo'))
         for type_id, entry in plan['types'].items():
             where = f'{path.name}: {type_id}'
