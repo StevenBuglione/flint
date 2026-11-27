@@ -9,6 +9,7 @@ module flint.java.util.stream;
 
 import flint.java.lang : IllegalStateException, valueOf;
 public import flint.java.util.stream.collector : Collector;
+import flint.java.util.function_ : BiConsumer, Supplier;
 import flint.java.util : ArrayList, Collection, Comparator, HashMap, Iterator, LinkedHashMap,
     LinkedHashSet, List, Map, NoSuchElementException, Objects, Optional, Set, compareNatural, stableSort;
 
@@ -396,6 +397,29 @@ final class Stream(T)
         }
         else
             return collector.apply(toArray());
+    }
+
+    /// Java's three-argument `collect`: `supplier` makes the container before the first element is pulled,
+    /// `accumulator` adds each element as it is read, and the container is the result. A sequential stream never
+    /// calls `combiner`, but as in Java a null one throws `NullPointerException` before the source is taken.
+    R collect(R)(R delegate() @safe supplier, void delegate(R, T) @safe accumulator, void delegate(R, R) @safe combiner)
+    {
+        if (supplier is null || accumulator is null || combiner is null)
+            throwNullPointerException();
+        auto source = take();
+        R container = supplier();
+        T next;
+        while (source(next))
+            accumulator(container, next);
+        return container;
+    }
+
+    /// The same with Java's functional interfaces (R9).
+    R collect(R)(Supplier!R supplier, BiConsumer!(R, T) accumulator, BiConsumer!(R, R) combiner)
+    {
+        if (supplier is null || accumulator is null || combiner is null)
+            throwNullPointerException();
+        return collect!R(supplier.asDelegate(), accumulator.asDelegate(), combiner.asDelegate());
     }
 
     /// How many elements.

@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,970 | 725 | 0 | 1,921 | 13,805 |
+| framework | openjdk@21.0.13 | 1,970 | 726 | 0 | 1,921 | 13,804 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -3073,6 +3073,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.stream.Collector#of(Supplier,BiConsumer,BinaryOperator,Function,Characteristics...)` | `flint.java.util.stream.collector.Collector.of` | [R9](api-mapping.md#r9-functional-interfaces), [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces), [R26](api-mapping.md#r26-null-arrays) | Called as Collector!(T, A, R).of, with interfaces or delegates. A null function throws NullPointerException as in Java. A null characteristics array counts as empty (R26), and a null characteristic does not compile (R20). |
 | `java.util.stream.Collector.Characteristics` | `flint.java.util.stream.collector.Characteristics` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted out of the generic Collector and exposed through Collector!(T, A, R).Characteristics as an alias. |
 | `java.util.stream.Stream#collect(Collector)` | `flint.java.util.stream.Stream.collect` | [R10](api-mapping.md#r10-streams-and-collections), [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) | Takes a Collector!(T, A, R) with the stream's own element type, since D has no ? super T. The getters, the stream check, the characteristics reads and the null checks follow Java's order. Under IDENTITY_FINISH a container that cannot become R throws ClassCastException in collect, where Java's unchecked cast fails at the caller. |
+| `java.util.stream.Stream#collect(Supplier,BiConsumer,BiConsumer)` | `flint.java.util.stream.Stream.collect` | [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) | Takes the three functions as Java interfaces or as D delegates. The accumulator takes the stream's own element type, since D has no ? super T. As in Java, all three are null-checked before the stream is taken, the supplier runs before the first element is pulled, and the sequential path never calls the combiner. A value-returning expression lambda such as (l, e) => l.add(e) needs a block body to fit the void accumulator delegate. |
 
 #### org.aopalliance.aop
 
@@ -11086,7 +11087,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.random | 67 | 0 |
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
-| java.util.stream | 258 | 0 |
+| java.util.stream | 257 | 0 |
 | java.util.zip | 258 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
@@ -12451,7 +12452,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.stream.Collectors#groupingBy(Function)` | 2 | Its result type Collector has no D counterpart yet. The D collector already classifies each element as it is pulled and rejects a null key, as Java does. |
 | framework | `java.util.stream.Collectors#toMap(Function,Function)` | 2 | Its result type Collector has no D counterpart yet. The D collector already maps each element as it is pulled and reports a duplicate key or a null value there, as Java does. |
 | framework | `java.util.stream.Collectors#toUnmodifiableList()` | 2 | Its result type Collector has no D counterpart yet. The D collector already rejects a null element after accumulating them all, as Java does. |
-| framework | `java.util.stream.Stream#collect(Supplier,BiConsumer,BiConsumer)` | 2 | Flint has no three-argument collect overload. Java's sequential overload supplies the mutable result before traversal and accumulates during traversal. It validates the combiner even on the sequential path. |
 | framework | `java.util.stream.Stream#concat(Stream,Stream)` | 2 | Flint lacks the composed close lifecycle. Java closes both inputs in order when the result is closed and suppresses a later handler failure. |
 | framework | `java.util.stream.Stream#distinct()` | 2 | Flint merges distinct array slices with equal contents. Java compares arrays by reference identity and keeps distinct equal-content arrays in encounter order (R11). |
 | framework | `java.util.stream.Stream#flatMap(Function)` | 2 | The existing stage dereferences a null mapped stream and lacks closing the mapped stream on short-circuit. Java treats a null result as empty and closes each opened mapped stream. |
