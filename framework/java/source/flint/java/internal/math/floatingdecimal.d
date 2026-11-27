@@ -23,7 +23,7 @@
  * questions.
  */
 // Ported from openjdk 21.0.13: src/java.base/share/classes/jdk/internal/math/FloatingDecimal.java
-// (readJavaFormatString and ASCIIToBinaryBuffer.doubleValue) and FDBigInteger.java (the arithmetic
+// (readJavaFormatString, parseHexString and ASCIIToBinaryBuffer.doubleValue) and FDBigInteger.java (the arithmetic
 // doubleValue uses), with src/java.base/share/classes/java/text/DigitList.java (getDouble).
 // Modified by the Flint authors.
 //
@@ -40,8 +40,6 @@ enum FloatingDecimalStatus : ubyte
     ok,
     /// Java throws NumberFormatException.
     numberFormat,
-    /// A hexadecimal floating-point string, which this port does not parse yet.
-    hexUnsupported,
     /// Input longer than int.max / 4 characters or digits, a limit that keeps the int digit and
     /// exponent arithmetic from overflowing, or a big-integer operand past its fixed capacity.
     capacity,
@@ -54,7 +52,7 @@ struct FloatingDecimalResult
     double value = 0;
 }
 
-/// Double.parseDouble for decimal input, without the NumberFormatException.
+/// Double.parseDouble, without the NumberFormatException.
 FloatingDecimalResult parseDouble(scope const(char)[] text) pure nothrow @nogc
 {
     if (text.length > maxTextLength)
@@ -130,6 +128,9 @@ enum ulong signifBitMask = fractHob - 1;
 enum ulong expBitMask = 0x7ffUL << expShift;
 enum ulong signBitMask = 1UL << 63;
 enum expBias = 1023;
+enum maxExponent = 1023;
+enum minExponent = -1022;
+enum minSubExponent = -1074;
 enum maxDecimalDigits = 15;
 enum maxDecimalExponent = 308;
 enum minDecimalExponent = -324;
@@ -210,10 +211,175 @@ bool trySpecial(scope const(char)[] rest, bool isNegative, out FloatingDecimalRe
     else if (rest[0] == 'I')
         result = rest == "Infinity" ? signed(isNegative, double.infinity) : failed();
     else if (rest.length > 1 && rest[0] == '0' && (rest[1] == 'x' || rest[1] == 'X'))
-        result = FloatingDecimalResult(FloatingDecimalStatus.hexUnsupported);
+        result = parseHex(rest, isNegative);
     else
         return false;
     return true;
+}
+
+// parseHexString after the sign: HexFloatPattern's C99 grammar, whose \p{XDigit} and \p{Digit} are ASCII,
+// `0[xX](H+\.?|H*\.H+)[pP][-+]?D+[fFdD]?`, then the double branch of the rounding.
+FloatingDecimalResult parseHex(scope const(char)[] s, bool isNegative) pure nothrow @nogc
+{
+    size_t i = 2;
+    const intStart = i;
+    while (i < s.length && hexDigit(s[i]) >= 0)
+        ++i;
+    const intEnd = i;
+    size_t fracStart = i;
+    if (i < s.length && s[i] == '.')
+    {
+        fracStart = ++i;
+        while (i < s.length && hexDigit(s[i]) >= 0)
+            ++i;
+    }
+    const fracEnd = i;
+    if ((intEnd == intStart && fracEnd == fracStart) || i == s.length || (s[i] != 'p' && s[i] != 'P'))
+        return failed();
+    bool positiveExponent = true;
+    if (++i < s.length && (s[i] == '+' || s[i] == '-'))
+        positiveExponent = s[i++] == '+';
+    const expStart = i;
+    while (i < s.length && s[i] >= '0' && s[i] <= '9')
+        ++i;
+    if (i == expStart || !DecimalScan.suffixOnly(s, i))
+        return failed();
+
+    // Java concatenates the integer digits without leading zeros and the fraction, then strips leading zeros
+    // again; HexSignificand indexes that string in place.
+    auto integer = s[intStart .. intEnd];
+    while (integer.length && integer[0] == '0')
+        integer = integer[1 .. $];
+    auto fraction = s[fracStart .. fracEnd];
+    const leftDigits = cast(int) integer.length;
+    const rightDigits = cast(int) fraction.length;
+    if (!leftDigits)
+        while (fraction.length && fraction[0] == '0')
+            fraction = fraction[1 .. $];
+    const signif = HexSignificand(integer, fraction);
+    const signifLength = cast(int)(integer.length + fraction.length);
+    const exponentAdjust = leftDigits >= 1 ? 4 * (leftDigits - 1) : -4 * (rightDigits - signifLength + 1);
+    if (signifLength == 0)
+        return signed(isNegative, 0.0);
+
+    // Integer.parseInt of the exponent digits; on overflow the signs alone decide the result.
+    long unsignedRawExponent;
+    foreach (c; s[expStart .. i])
+    {
+        unsignedRawExponent = unsignedRawExponent * 10 + (c - '0');
+        if (unsignedRawExponent > int.max)
+            return signed(isNegative, positiveExponent ? double.infinity : 0.0);
+    }
+    long exponent = (positiveExponent ? 1L : -1L) * unsignedRawExponent + exponentAdjust;
+
+    // The leading digit's highest one becomes the significand's bit 52.
+    ulong significand;
+    const ulong leadingDigit = signif[0];
+    int nextShift;
+    if (leadingDigit == 1)
+    {
+        significand |= leadingDigit << 52;
+        nextShift = 52 - 4;
+    }
+    else if (leadingDigit <= 3)
+    {
+        significand |= leadingDigit << 51;
+        nextShift = 52 - 5;
+        exponent += 1;
+    }
+    else if (leadingDigit <= 7)
+    {
+        significand |= leadingDigit << 50;
+        nextShift = 52 - 6;
+        exponent += 2;
+    }
+    else
+    {
+        significand |= leadingDigit << 49;
+        nextShift = 52 - 7;
+        exponent += 3;
+    }
+    int digit = 1;
+    for (; digit < signifLength && nextShift >= 0; ++digit)
+    {
+        significand |= cast(ulong) signif[digit] << nextShift;
+        nextShift -= 4;
+    }
+    bool round;
+    bool sticky;
+    if (digit < signifLength)
+    {
+        const ulong currentDigit = signif[digit];
+        switch (nextShift)
+        {
+        case -1:
+            significand |= (currentDigit & 0xE) >> 1;
+            round = (currentDigit & 0x1) != 0;
+            break;
+        case -2:
+            significand |= (currentDigit & 0xC) >> 2;
+            round = (currentDigit & 0x2) != 0;
+            sticky = (currentDigit & 0x1) != 0;
+            break;
+        case -3:
+            significand |= (currentDigit & 0x8) >> 3;
+            round = (currentDigit & 0x4) != 0;
+            sticky = (currentDigit & 0x3) != 0;
+            break;
+        default: // -4
+            round = (currentDigit & 0x8) != 0;
+            sticky = (currentDigit & 0x7) != 0;
+            break;
+        }
+        for (++digit; digit < signifLength && !sticky; ++digit)
+            sticky = signif[digit] != 0;
+    }
+
+    if (exponent > maxExponent)
+        return signed(isNegative, double.infinity);
+    if (exponent >= minExponent)
+        significand = (((exponent + expBias) << expShift) & expBitMask) | (signifBitMask & significand);
+    else
+    {
+        if (exponent < minSubExponent - 1)
+            return signed(isNegative, 0.0);
+        sticky = sticky || round;
+        const bitsDiscarded = 53 - (cast(int) exponent - minSubExponent + 1);
+        round = (significand & (1UL << (bitsDiscarded - 1))) != 0;
+        if (bitsDiscarded > 1)
+            sticky = sticky || (significand & ~(~0UL << (bitsDiscarded - 1))) != 0;
+        significand >>= bitsDiscarded;
+        const ulong subNormalBits = (cast(ulong)(minExponent - 1 + expBias) << expShift) & expBitMask;
+        significand = subNormalBits | (signifBitMask & significand);
+    }
+    // Round half to even on the least significant, round and sticky bits.
+    const leastZero = (significand & 1) == 0;
+    if ((leastZero && round && sticky) || (!leastZero && round))
+        ++significand;
+    return parsed(rawBitsToDouble(isNegative ? significand | signBitMask : significand));
+}
+
+int hexDigit(char c) pure nothrow @nogc
+{
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    if (c >= 'a' && c <= 'f')
+        return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F')
+        return c - 'A' + 10;
+    return -1;
+}
+
+// The significand string of parseHexString: the integer digits, then the fraction digits.
+struct HexSignificand
+{
+    const(char)[] integer;
+    const(char)[] fraction;
+
+    int opIndex(int position) const scope pure nothrow @nogc
+    {
+        return hexDigit(position < integer.length ? integer[position] : fraction[position - integer.length]);
+    }
 }
 
 // The decimal branch of readJavaFormatString.
