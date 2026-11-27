@@ -4,6 +4,7 @@
  */
 module splittablerandom_test;
 
+import flint.java.util.random : RandomGenerator;
 import flint.java.util.splittablerandom : SplittableRandom;
 
 @safe:
@@ -92,4 +93,87 @@ unittest
         else
             assert(after == 3_248_800_117_070_709_450L);
     }
+}
+
+private uint floatBits(float value) pure nothrow @nogc
+{
+    union Bits
+    {
+        float f;
+        uint u;
+    }
+
+    Bits bits = Bits(value);
+    return bits.u;
+}
+
+private ulong doubleBits(double value) pure nothrow @nogc
+{
+    union Bits
+    {
+        double d;
+        ulong u;
+    }
+
+    Bits bits = Bits(value);
+    return bits.u;
+}
+
+@("SplittableRandom interface defaults and split(source) match Java SE 21")
+unittest
+{
+    struct Case
+    {
+        long seed;
+        bool b1;
+        bool b2;
+        uint floatBits;
+        ulong doubleBits;
+        long childLong;
+        int childInt;
+        long sourceAfter;
+        long parentAfter;
+    }
+
+    // Verified against OpenJDK 21.0.13.1: two nextBoolean, nextFloat, nextDouble, then
+    // split(new SplittableRandom(seed ^ 0x5DEECE66DL)), which draws seed and gamma from the source.
+    static immutable Case[] cases = [
+        Case(0L, false, false, 0x3f1ab522U, 0x3fef1177150e4990UL, 5_154_934_264_725_718_343L, -1_047_837_613,
+                8_308_312_297_490_827_753L, 1_961_750_202_426_094_747L),
+        Case(1L, false, true, 0x3e172864U, 0x3fdc7061a43b90b2UL, 5_464_317_558_951_610_270L, 1_174_284_237,
+                2_010_107_843_054_164_608L, 8_195_237_237_126_968_761L),
+        Case(-1L, true, false, 0x3ddffb00U, 0x3fdb476cdb32ea60UL, -985_859_862_726_190_515L,
+                491_074_595, 3_461_050_000_980_081_823L, -5_431_262_886_246_717_010L),
+        Case(42L, true, false, 0x3f101a55U, 0x3fd607387fc392b8UL, -1_811_208_052_134_430_950L,
+                1_287_304_538, 3_982_747_700_749_827_168L, 701_532_786_141_963_250L),
+        Case(long.min, true, true, 0x3ed0dcbaU, 0x3fd64b89a0e0f8d4UL, -3_556_888_039_135_185_266L,
+                1_026_689_313, 4_780_342_463_487_050_087L, 903_114_586_442_990_803L),
+        Case(long.max, true, false, 0x3e8ff42cU, 0x3fc01018cc4a4cacUL, 3_052_214_053_535_044_713L, -917_927_054,
+                -8_367_861_547_587_271_144L, 5_990_184_416_167_851_723L),
+        Case(0x1234_5678_9abc_def0L, true, true, 0x3f5623c5U, 0x3fd05f2e6a09b60cUL, 3_005_735_061_745_835_056L,
+                1_758_396_878, -8_677_016_550_792_288_882L, -7_372_551_353_265_785_162L),
+    ];
+
+    foreach (c; cases)
+    {
+        auto r = new SplittableRandom(c.seed);
+        RandomGenerator.SplittableGenerator g = r;
+        assert(!g.isDeprecated());
+        assert(g.nextBoolean() == c.b1);
+        assert(g.nextBoolean() == c.b2);
+        assert(floatBits(g.nextFloat()) == c.floatBits);
+        assert(doubleBits(g.nextDouble()) == c.doubleBits);
+        auto source = new SplittableRandom(c.seed ^ 0x5DEECE66DL);
+        RandomGenerator.SplittableGenerator child = g.split(source);
+        assert(child.nextLong() == c.childLong);
+        assert(child.nextInt() == c.childInt);
+        assert(source.nextLong() == c.sourceAfter);
+        assert(r.nextLong() == c.parentAfter);
+    }
+
+    // The covariant overloads keep returning the concrete class.
+    auto r = new SplittableRandom(7L);
+    SplittableRandom a = r.split();
+    const SplittableRandom b = r.split(a);
+    assert(a !is b);
 }

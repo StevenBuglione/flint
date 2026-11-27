@@ -234,3 +234,40 @@ unittest
     assert(child1.nextLong() == 52);
     assert(child2.nextLong() == 502);
 }
+
+private final class IntOverrideGenerator : RandomGenerator
+{
+    private long longState = 0x0123_4567_89ab_cdefL;
+    private int intState = cast(int) 0x8000_0001U;
+
+    override long nextLong()
+    {
+        longState = longState * 6_364_136_223_846_793_005L + 1_442_695_040_888_963_407L;
+        return longState;
+    }
+
+    override int nextInt()
+    {
+        intState = intState * 1_103_515_245 + 12_345;
+        return intState;
+    }
+
+    mixin RandomGenerator.Defaults;
+}
+
+@("RandomGenerator nextBoolean and nextFloat defaults draw through an overridden nextInt")
+unittest
+{
+    // Verified against OpenJDK 21.0.13.1: a RandomGenerator overriding nextInt and nextLong with
+    // these two linear congruential steps. nextDouble still draws through nextLong.
+    static immutable bool[4] bools = [true, true, false, false];
+    static immutable uint[4] floats = [0x3db3f580U, 0x3e88d736U, 0x3dafdba0U, 0x3de7dd70U];
+
+    RandomGenerator g = new IntOverrideGenerator();
+    foreach (i; 0 .. 4)
+    {
+        assert(g.nextBoolean() == bools[i]);
+        assert(floatBits(g.nextFloat()) == floats[i]);
+    }
+    assert(doubleBits(g.nextDouble()) == 0x3fc67196919aefa0UL);
+}

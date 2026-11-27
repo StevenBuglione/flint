@@ -16,7 +16,7 @@ interface RandomGenerator
     /// Report whether this generator implementation is deprecated.
     bool isDeprecated();
 
-    /// Return a pseudorandomly chosen boolean derived from the sign bit of `nextLong()`.
+    /// Return a pseudorandomly chosen boolean derived from the sign bit of `nextInt()`.
     bool nextBoolean();
 
     /// Fill `bytes` with pseudorandom bytes, 8 low-order bytes per `nextLong()` call (R26).
@@ -25,13 +25,18 @@ interface RandomGenerator
     /// Return a pseudorandomly chosen 32-bit signed integer from the high 32 bits of `nextLong()`.
     int nextInt();
 
-    /// Return a pseudorandomly chosen float in `[0.0f, 1.0f)` from the high 24 bits of `nextLong()`.
+    /// Return a pseudorandomly chosen float in `[0.0f, 1.0f)` from the high 24 bits of `nextInt()`.
     float nextFloat();
 
     /// Return a pseudorandomly chosen double in `[0.0, 1.0)` from the high 53 bits of `nextLong()`.
     double nextDouble();
 
     /// Java's default method implementations for `RandomGenerator` (R3).
+    ///
+    /// A class that implements any of these members itself with stricter attributes (for example
+    /// `pure nothrow @nogc`) must not mix this in: the compiler then binds the interface slot to the
+    /// mixin's member, not the class's. Spell the remaining defaults out instead, as
+    /// `SplittableRandom` does.
     mixin template Defaults()
     {
         bool isDeprecated()
@@ -41,7 +46,7 @@ interface RandomGenerator
 
         bool nextBoolean()
         {
-            return nextLong() < 0;
+            return this.nextInt() < 0;
         }
 
         void nextBytes(scope byte[] bytes)
@@ -66,7 +71,7 @@ interface RandomGenerator
 
         float nextFloat()
         {
-            return cast(float)(cast(uint)(cast(ulong) nextLong() >>> 40)) * 0x1.0p-24f;
+            return cast(float)(cast(uint) this.nextInt() >>> 8) * 0x1.0p-24f;
         }
 
         double nextDouble()

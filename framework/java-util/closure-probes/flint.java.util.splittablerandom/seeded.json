@@ -1,5 +1,7 @@
 {
   "source": "closure/splittablerandom-seed.d",
-  "leaves": [],
+  "leaves": [
+    "flint.java.util.random.randomgenerator"
+  ],
   "data": []
 }

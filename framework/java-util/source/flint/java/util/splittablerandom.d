@@ -5,10 +5,12 @@
 /// Java SE 21's deterministic seeded splittable pseudorandom generator.
 module flint.java.util.splittablerandom;
 
+import flint.java.util.random.randomgenerator : RandomGenerator;
+
 @safe:
 
 /// Java's SplitMix64-based splittable pseudorandom number generator.
-final class SplittableRandom
+final class SplittableRandom : RandomGenerator.SplittableGenerator
 {
     private enum ulong goldenGamma = 0x9e3779b97f4a7c15UL;
 
@@ -28,9 +30,16 @@ final class SplittableRandom
     }
 
     /// Split off an independent generator from the current sequence.
-    SplittableRandom split() pure nothrow
+    pragma(inline, false) SplittableRandom split() pure nothrow
     {
         return new SplittableRandom(cast(ulong) nextLong(), mixGamma(nextSeed()));
+    }
+
+    /// Split off a generator whose seed and gamma come from two `source.nextLong()` draws.
+    SplittableRandom split(RandomGenerator.SplittableGenerator source)
+    {
+        const ulong splitSeed = cast(ulong) source.nextLong();
+        return new SplittableRandom(splitSeed, mixGamma(cast(ulong) source.nextLong()));
     }
 
     /// Return the next signed 32-bit pseudorandom value.
@@ -46,7 +55,7 @@ final class SplittableRandom
     }
 
     /// Fill the slice using the low bytes of successive nextLong draws (R26).
-    void nextBytes(scope byte[] bytes) pure nothrow @nogc
+    pragma(inline, false) void nextBytes(scope byte[] bytes) pure nothrow @nogc
     {
         size_t index;
         while (index < bytes.length)
@@ -59,6 +68,30 @@ final class SplittableRandom
                 word >>= 8;
             }
         }
+    }
+
+    /// Java's interface default: SplittableRandom is not deprecated (R3).
+    bool isDeprecated() pure nothrow @nogc
+    {
+        return false;
+    }
+
+    /// Java's interface default: the sign bit of `nextInt()` (R3).
+    bool nextBoolean() pure nothrow @nogc
+    {
+        return nextInt() < 0;
+    }
+
+    /// Java's interface default: the high 24 bits of `nextInt()` scaled into `[0.0f, 1.0f)` (R3).
+    float nextFloat() pure nothrow @nogc
+    {
+        return cast(float)(cast(uint) nextInt() >>> 8) * 0x1.0p-24f;
+    }
+
+    /// Java's interface default: the high 53 bits of `nextLong()` scaled into `[0.0, 1.0)` (R3).
+    double nextDouble() pure nothrow @nogc
+    {
+        return cast(double)(cast(ulong) nextLong() >>> 11) * 0x1.0p-53;
     }
 
     private ulong nextSeed() pure nothrow @nogc
