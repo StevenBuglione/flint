@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,543 | 413 | 0 | 1,905 | 14,560 |
+| framework | openjdk@21.0.13 | 1,683 | 473 | 0 | 1,905 | 14,360 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2358,8 +2358,68 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.CharBuffer#toString()` | `flint.java.nio.charbuffer.CharBuffer.toString` | [R14](api-mapping.md#r14-strings-and-text) | Returns UTF-8 and replaces each lone UTF-16 surrogate with U+FFFD. |
 | `java.nio.CharBuffer#wrap(char[])` | `flint.java.nio.charbuffer.CharBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#wrap(char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer` | `flint.java.nio.doublebuffer.DoubleBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import DoubleBuffer from flint.java.nio.doublebuffer. Heap arrays and byte-backed views. A null array slice is empty under R26. |
+| `java.nio.DoubleBuffer#get(double[])` | `flint.java.nio.doublebuffer.DoubleBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer#get(double[],int,int)` | `flint.java.nio.doublebuffer.DoubleBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer#get(int,double[])` | `flint.java.nio.doublebuffer.DoubleBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer#get(int,double[],int,int)` | `flint.java.nio.doublebuffer.DoubleBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer#order()` | `flint.java.nio.doublebuffer.DoubleBuffer.order` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.DoubleBuffer#put(double[])` | `flint.java.nio.doublebuffer.DoubleBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer#put(double[],int,int)` | `flint.java.nio.doublebuffer.DoubleBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer#put(int,double[])` | `flint.java.nio.doublebuffer.DoubleBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer#put(int,double[],int,int)` | `flint.java.nio.doublebuffer.DoubleBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer#wrap(double[])` | `flint.java.nio.doublebuffer.DoubleBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.DoubleBuffer#wrap(double[],int,int)` | `flint.java.nio.doublebuffer.DoubleBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer` | `flint.java.nio.floatbuffer.FloatBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import FloatBuffer from flint.java.nio.floatbuffer. Heap arrays and byte-backed views. A null array slice is empty under R26. |
+| `java.nio.FloatBuffer#get(float[])` | `flint.java.nio.floatbuffer.FloatBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer#get(float[],int,int)` | `flint.java.nio.floatbuffer.FloatBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer#get(int,float[])` | `flint.java.nio.floatbuffer.FloatBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer#get(int,float[],int,int)` | `flint.java.nio.floatbuffer.FloatBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer#order()` | `flint.java.nio.floatbuffer.FloatBuffer.order` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.FloatBuffer#put(float[])` | `flint.java.nio.floatbuffer.FloatBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer#put(float[],int,int)` | `flint.java.nio.floatbuffer.FloatBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer#put(int,float[])` | `flint.java.nio.floatbuffer.FloatBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer#put(int,float[],int,int)` | `flint.java.nio.floatbuffer.FloatBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer#wrap(float[])` | `flint.java.nio.floatbuffer.FloatBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.FloatBuffer#wrap(float[],int,int)` | `flint.java.nio.floatbuffer.FloatBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer` | `flint.java.nio.intbuffer.IntBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import IntBuffer from flint.java.nio.intbuffer. Heap arrays and byte-backed views. A null array slice is empty under R26. |
+| `java.nio.IntBuffer#get(int,int[])` | `flint.java.nio.intbuffer.IntBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer#get(int,int[],int,int)` | `flint.java.nio.intbuffer.IntBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer#get(int[])` | `flint.java.nio.intbuffer.IntBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer#get(int[],int,int)` | `flint.java.nio.intbuffer.IntBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer#order()` | `flint.java.nio.intbuffer.IntBuffer.order` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.IntBuffer#put(int,int[])` | `flint.java.nio.intbuffer.IntBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer#put(int,int[],int,int)` | `flint.java.nio.intbuffer.IntBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer#put(int[])` | `flint.java.nio.intbuffer.IntBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer#put(int[],int,int)` | `flint.java.nio.intbuffer.IntBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer#wrap(int[])` | `flint.java.nio.intbuffer.IntBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.IntBuffer#wrap(int[],int,int)` | `flint.java.nio.intbuffer.IntBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.InvalidMarkException` | `flint.java.nio.invalidmarkexception.InvalidMarkException` | [R1](api-mapping.md#r1-packages-and-names) | Import the exception from flint.java.nio.invalidmarkexception. It extends the canonical Java IllegalStateException. |
+| `java.nio.LongBuffer` | `flint.java.nio.longbuffer.LongBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import LongBuffer from flint.java.nio.longbuffer. Heap arrays and byte-backed views. A null array slice is empty under R26. |
+| `java.nio.LongBuffer#get(int,long[])` | `flint.java.nio.longbuffer.LongBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.LongBuffer#get(int,long[],int,int)` | `flint.java.nio.longbuffer.LongBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.LongBuffer#get(long[])` | `flint.java.nio.longbuffer.LongBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.LongBuffer#get(long[],int,int)` | `flint.java.nio.longbuffer.LongBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.LongBuffer#order()` | `flint.java.nio.longbuffer.LongBuffer.order` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.LongBuffer#put(int,long[])` | `flint.java.nio.longbuffer.LongBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.LongBuffer#put(int,long[],int,int)` | `flint.java.nio.longbuffer.LongBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.LongBuffer#put(long[])` | `flint.java.nio.longbuffer.LongBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.LongBuffer#put(long[],int,int)` | `flint.java.nio.longbuffer.LongBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.LongBuffer#wrap(long[])` | `flint.java.nio.longbuffer.LongBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.LongBuffer#wrap(long[],int,int)` | `flint.java.nio.longbuffer.LongBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.ReadOnlyBufferException` | `flint.java.nio.readonlybufferexception.ReadOnlyBufferException` | [R1](api-mapping.md#r1-packages-and-names) | Import the exception from flint.java.nio.readonlybufferexception. It extends the canonical Java UnsupportedOperationException. |
+| `java.nio.ShortBuffer` | `flint.java.nio.shortbuffer.ShortBuffer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import ShortBuffer from flint.java.nio.shortbuffer. Heap arrays and byte-backed views. A null array slice is empty under R26. |
+| `java.nio.ShortBuffer#get(int,short[])` | `flint.java.nio.shortbuffer.ShortBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ShortBuffer#get(int,short[],int,int)` | `flint.java.nio.shortbuffer.ShortBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ShortBuffer#get(short[])` | `flint.java.nio.shortbuffer.ShortBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ShortBuffer#get(short[],int,int)` | `flint.java.nio.shortbuffer.ShortBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ShortBuffer#order()` | `flint.java.nio.shortbuffer.ShortBuffer.order` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.ShortBuffer#put(int,short[])` | `flint.java.nio.shortbuffer.ShortBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ShortBuffer#put(int,short[],int,int)` | `flint.java.nio.shortbuffer.ShortBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ShortBuffer#put(short[])` | `flint.java.nio.shortbuffer.ShortBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ShortBuffer#put(short[],int,int)` | `flint.java.nio.shortbuffer.ShortBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ShortBuffer#wrap(short[])` | `flint.java.nio.shortbuffer.ShortBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.ShortBuffer#wrap(short[],int,int)` | `flint.java.nio.shortbuffer.ShortBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.nio.channels
 
@@ -10715,7 +10775,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 133 | 0 |
 | java.net | 767 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 229 | 0 |
+| java.nio | 29 | 0 |
 | java.nio.channels | 0 | 306 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 86 | 0 |

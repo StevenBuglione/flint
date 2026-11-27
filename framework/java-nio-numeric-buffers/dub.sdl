@@ -1,0 +1,20 @@
+name "java-nio-numeric-buffers"
+description "Java SE NIO typed primitive numeric buffers"
+license "GPL-2.0-only WITH Classpath-exception-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "flint:engine-aot" version="*"
+dependency "flint:java" version="*"
+dependency "flint:java-nio" version="*"
+dependency "flint:java-nio-char-buffer" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}

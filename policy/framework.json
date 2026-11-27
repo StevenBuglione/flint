@@ -934,6 +934,53 @@
     "template_instances": 545
    }
   },
+  "java-nio-numeric-buffers": {
+   "directory": "framework/java-nio-numeric-buffers",
+   "module": "flint.java.nio.intbuffer",
+   "also": [
+    "flint.java.nio.doublebuffer",
+    "flint.java.nio.floatbuffer",
+    "flint.java.nio.longbuffer",
+    "flint.java.nio.shortbuffer"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "engine-aot",
+    "java",
+    "java-nio",
+    "java-nio-char-buffer"
+   ],
+   "bench": {
+    "fixture": "framework/java-nio-numeric-buffers/bench",
+    "baseline": "framework/java-nio-numeric-buffers/bench/baseline",
+    "edit_source": "framework/java-nio-numeric-buffers/source/flint/java/nio/intbuffer.d"
+   },
+   "java_types": [
+    "java.nio.DoubleBuffer",
+    "java.nio.FloatBuffer",
+    "java.nio.IntBuffer",
+    "java.nio.LongBuffer",
+    "java.nio.ShortBuffer"
+   ],
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ],
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "compiler_peak_rss_bytes": 536870912,
+    "incremental_linked_bytes": 79073,
+    "template_instances": 895
+   }
+  },
   "java-nio-charset": {
    "directory": "framework/java-nio-charset",
    "module": "flint.java.nio.charset.coderresult",

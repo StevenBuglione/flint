@@ -1,0 +1,9 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-nio-numeric-buffers",
+  "test_packages": [
+    ":java-nio-numeric-buffers"
+  ],
+  "classes": {}
+}

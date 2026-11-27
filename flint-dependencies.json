@@ -387,6 +387,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-nio-numeric-buffers": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-regex": {
       "repo": "framework",
       "version": "monorepo"

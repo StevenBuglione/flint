@@ -1,0 +1,32 @@
+{
+  "flint.java.nio.doublebuffer": {
+    "incremental_linked_bytes": 29238,
+    "template_instances": 585,
+    "control": "framework/java-nio-numeric-buffers/bench/baseline/source/app.d",
+    "template_compile": "separate"
+  },
+  "flint.java.nio.floatbuffer": {
+    "incremental_linked_bytes": 28851,
+    "template_instances": 583,
+    "control": "framework/java-nio-numeric-buffers/bench/baseline/source/app.d",
+    "template_compile": "separate"
+  },
+  "flint.java.nio.intbuffer": {
+    "incremental_linked_bytes": 28605,
+    "template_instances": 567,
+    "control": "framework/java-nio-numeric-buffers/bench/baseline/source/app.d",
+    "template_compile": "separate"
+  },
+  "flint.java.nio.longbuffer": {
+    "incremental_linked_bytes": 28895,
+    "template_instances": 580,
+    "control": "framework/java-nio-numeric-buffers/bench/baseline/source/app.d",
+    "template_compile": "separate"
+  },
+  "flint.java.nio.shortbuffer": {
+    "incremental_linked_bytes": 27866,
+    "template_instances": 580,
+    "control": "framework/java-nio-numeric-buffers/bench/baseline/source/app.d",
+    "template_compile": "separate"
+  }
+}
