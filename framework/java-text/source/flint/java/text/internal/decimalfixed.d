@@ -26,6 +26,8 @@ immutable size_t[affixFieldWords] minusSignField = [DecimalField.sign, 0, "-".le
 struct DecimalFixedPattern
 {
     DecimalAffixes positive;
+    // The default is the Latin minus. compileFixedDecimalPattern replaces it with the symbols' minus sign, so only
+    // a pattern built without compiling (a test fixture) keeps this ASCII prefix.
     DecimalAffixes negative = DecimalAffixes("-", null, minusSignField[]);
     uint minimumIntegerDigits = 1;
     uint maximumIntegerDigits = int.max;

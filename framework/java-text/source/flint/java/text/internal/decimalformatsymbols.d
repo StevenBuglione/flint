@@ -80,6 +80,13 @@ bool bodySymbolsEncodable(ref scope const DecimalSymbolData symbols) pure nothro
         && !isSurrogate(symbols.percent) && !isSurrogate(symbols.perMill);
 }
 
+/// applyLocalizedPattern also matches the digit and pattern separator symbols against single UTF-16 units of
+/// the pattern; a UTF-8 pattern holds no lone surrogate to match.
+bool localizedPatternSymbolsEncodable(ref scope const DecimalSymbolData symbols) pure nothrow @nogc
+{
+    return bodySymbolsEncodable(symbols) && !isSurrogate(symbols.digit) && !isSurrogate(symbols.patternSeparator);
+}
+
 private bool isSurrogate(wchar unit) pure nothrow @nogc
 {
     return unit >= 0xD800 && unit <= 0xDFFF;
