@@ -12,7 +12,7 @@
     "template_instances": 60
   },
   "flint.java.util.concurrent.brokenbarrierexception": {
-    "incremental_linked_bytes": 928,
+    "incremental_linked_bytes": 944,
     "template_instances": 35
   },
   "flint.java.util.concurrent.delayed": {
