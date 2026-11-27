@@ -521,9 +521,9 @@ def main(argv=None):
             'note': 'Rows tools/jdk_coverage.py --classify added from the D code that exists (name, arity, parameter kinds). The '
                     'owning lane confirms each (signature and behaviour) and removes its id, or reclassifies it.',
             'ids': sorted(set(previous) | set(rows))}, indent=1) + '\n')
-        print(f'{len(rows)} rows added; {len(leaf)} types exist only in a leaf module')
+        print(f'{len(rows)} rows added; {len(leaf)} types exist only in a leaf module', file=sys.stderr)
     else:
-        print(f'{len(rows)} rows would be added; {len(leaf)} types exist only in a leaf module')
+        print(f'{len(rows)} rows would be added; {len(leaf)} types exist only in a leaf module', file=sys.stderr)
     (root / LEAF_TYPES).write_text(json.dumps({
         'note': 'JDK types that exist only in a leaf module, not at their R1 path (tools/jdk_coverage.py, from dmd -X). '
                 'The table reads this file, so it regenerates without a compiler.',
