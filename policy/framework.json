@@ -788,6 +788,8 @@
     "java.util.concurrent.atomic.AtomicMarkableReference",
     "java.util.concurrent.atomic.AtomicReference",
     "java.util.concurrent.atomic.AtomicStampedReference",
+    "java.util.concurrent.atomic.DoubleAdder",
+    "java.util.concurrent.atomic.LongAdder",
     "java.util.concurrent.locks.AbstractOwnableSynchronizer",
     "java.util.concurrent.locks.AbstractQueuedLongSynchronizer",
     "java.util.concurrent.locks.AbstractQueuedSynchronizer",
@@ -806,6 +808,9 @@
     "flint.java.util.concurrent.atomic.atomicmarkablereference",
     "flint.java.util.concurrent.atomic.atomicreference",
     "flint.java.util.concurrent.atomic.atomicstampedreference",
+    "flint.java.util.concurrent.atomic.doubleadder",
+    "flint.java.util.concurrent.atomic.internal.striped64",
+    "flint.java.util.concurrent.atomic.longadder",
     "flint.java.util.concurrent.brokenbarrierexception",
     "flint.java.util.concurrent.delayed",
     "flint.java.util.concurrent.locks.contracts"
@@ -815,7 +820,9 @@
    "upstream": "openjdk@21.0.13",
    "dependencies": [
     "conc",
-    "java"
+    "engine-aot",
+    "java",
+    "serde"
    ],
    "bench": {
     "fixture": "framework/java-concurrent-sync/bench",

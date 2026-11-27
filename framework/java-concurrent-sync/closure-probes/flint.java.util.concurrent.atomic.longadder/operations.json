@@ -1,0 +1,8 @@
+{
+  "source": "closure/long_adder.d",
+  "leaves": [
+    "flint.java.lang.number",
+    "flint.java.util.concurrent.atomic.internal.striped64"
+  ],
+  "data": []
+}

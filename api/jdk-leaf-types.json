@@ -129,6 +129,8 @@
   "java.util.concurrent.atomic.AtomicMarkableReference": "flint.java.util.concurrent.atomic.atomicmarkablereference",
   "java.util.concurrent.atomic.AtomicReference": "flint.java.util.concurrent.atomic.atomicreference",
   "java.util.concurrent.atomic.AtomicStampedReference": "flint.java.util.concurrent.atomic.atomicstampedreference",
+  "java.util.concurrent.atomic.DoubleAdder": "flint.java.util.concurrent.atomic.doubleadder",
+  "java.util.concurrent.atomic.LongAdder": "flint.java.util.concurrent.atomic.longadder",
   "java.util.jar.JarEntry": "flint.java.util.jar.jarentry",
   "java.util.jar.JarException": "flint.java.util.jar.jarexception",
   "java.util.zip.ZipEntry": "flint.java.util.zip.zipentry",
