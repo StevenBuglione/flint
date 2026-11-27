@@ -11,6 +11,7 @@
 module flint.serde.java_number;
 
 import flint.serde.internal.shortest : shortest;
+import flint.serde.sys.text : copyText;
 
 @safe:
 
@@ -57,15 +58,19 @@ else
     /// `Double.toString(value)` as a GC string.
     string javaDoubleString(double value) pure nothrow
     {
+        // Out of line: inlined, the formatter call and the copy grow every caller (Formatter.convert, Jackson).
+        pragma(inline, false);
         char[javaNumberCapacity] text;
-        return text[0 .. formatJavaDouble(value, text)].idup;
+        // Not .idup: its template instance lives in serde's first archive object (see flint.serde.sys.text).
+        return copyText(text[0 .. formatJavaDouble(value, text)]);
     }
 
     /// `Float.toString(value)` as a GC string.
     string javaFloatString(float value) pure nothrow
     {
+        pragma(inline, false);
         char[javaNumberCapacity] text;
-        return text[0 .. formatJavaFloat(value, text)].idup;
+        return copyText(text[0 .. formatJavaFloat(value, text)]);
     }
 }
 
