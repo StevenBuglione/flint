@@ -34,6 +34,33 @@ class BitSetOracle {
         System.out.println(Integer.toUnsignedString(longImportDigest()));
         System.out.println(Integer.toUnsignedString(equalityDigest()));
         System.out.println(Integer.toUnsignedString(orDigest()));
+        System.out.println(Integer.toUnsignedString(xorDigest()));
+    }
+
+    private static int xorDigest() {
+        BitSet left = new BitSet();
+        BitSet right = new BitSet();
+        int state = 0x2c9f4e17;
+        int digest = 0;
+        for (int step = 0; step < 512; ++step) {
+            state = state * 1_664_525 + 1_013_904_223;
+            if ((step & 15) == 0) {
+                left.clear();
+            }
+            if ((step & 7) == 0) {
+                right.clear();
+            }
+            left.flip((state >>> 13) & 255);
+            right.flip((state >>> 19) & 511);
+            left.xor((step & 3) == 0 ? left : right);
+            digest = 31 * digest + left.size();
+            digest = 31 * digest + left.length();
+            digest = 31 * digest + left.cardinality();
+            for (long word : left.toLongArray()) {
+                digest = 31 * digest + (int)(word ^ (word >>> 32));
+            }
+        }
+        return digest;
     }
 
     private static int orDigest() {

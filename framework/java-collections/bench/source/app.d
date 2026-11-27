@@ -28,6 +28,9 @@ int main(string[] args)
     bits.or(mask);
     if (!bits.get(0))
         return 1;
+    bits.xor(mask);
+    if (!bits.isEmpty())
+        return 1;
     bits.clear();
     return bits.isEmpty() ? 0 : 1;
 }
