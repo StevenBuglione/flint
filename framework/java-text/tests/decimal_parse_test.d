@@ -126,3 +126,52 @@ unittest
     auto tooLong = parse("0", "12345", 0, DecimalParseOptions.init, 4);
     assert(tooLong.kind == DecimalParseKind.capacity && tooLong.count == 5 && tooLong.index == 5);
 }
+
+private DecimalSymbolData symbols(wchar zero, wchar grouping, wchar decimal, wchar minus, string exponent)
+{
+    DecimalSymbolData result;
+    result.zeroDigit = zero;
+    result.groupingSeparator = grouping;
+    result.decimalSeparator = decimal;
+    result.minusSign = minus;
+    result.exponentSeparator = exponent;
+    return result;
+}
+
+private DecimalParseResult parseLocalized(string patternText, string text, ref const DecimalSymbolData data)
+{
+    DecimalFixedPattern pattern;
+    assert(compileFixedDecimalPattern(patternText, data, pattern) == DecimalCompileStatus.accepted);
+    char[64] digits;
+    return parseDecimal(text, 0, pattern, data, DecimalParseOptions.init, digits[]);
+}
+
+// Expected values are pinned Temurin 21.0.13+9 results for symbols set through the public DecimalFormatSymbols
+// setters on a ROOT instance.
+@("DecimalFormat.parse reads localized digits, separators and exponent signs")
+unittest
+{
+    const arabic = symbols('٠', '٬', '٫', '−', "أس");
+    // Multi-byte separators advance by their width; a trailing grouping separator is still left unread.
+    expectLong(parseLocalized("#,##0.###", "١٬٢٣٤٬", arabic), 1234, 10);
+    expectDouble(parseLocalized("#,##0.###", "−٠٫٠٠٠", arabic), -0.0, 13);
+    // The exponent takes the localized minus sign text and localized digits.
+    expectDouble(parseLocalized("#,##0.###", "١أس−٣", arabic), 0.001, 11);
+    // An en dash shares the minus sign's lead UTF-8 byte but is not the minus sign, so the exponent is unread.
+    expectLong(parseLocalized("0", "١أس–٣", arabic), 1, 2);
+    // Java subtracts the zero digit in int arithmetic, so U+0001 is not the digit nine.
+    const wrapping = symbols('￸', '\'', '。', 'ー', "");
+    expectLong(parseLocalized("0", "￹\u0001", wrapping), 1, 3);
+    // The digit test runs first, so an Arabic-Indic five used as the decimal separator is a digit.
+    const digitDecimal = symbols('0', ',', '٥', '-', "E");
+    expectLong(parseLocalized("0", "1,234٥5", digitDecimal), 123_455, 8);
+    // A minus sign that is also the grouping separator, after a supplementary exponent separator.
+    const minusGroups = symbols('0', '-', '.', '-', "\U0001F600");
+    expectDouble(parseLocalized("0", "1\U0001F600-3", minusGroups), 0.001, 7);
+    expectLong(parseLocalized("0", "8--7", minusGroups), 87, 4);
+    const letters = symbols('A', '_', ':', '~', "e");
+    expectDouble(parseLocalized("0", "Be~D", letters), 0.001, 4);
+    // Character.digit still admits other decimal digits.
+    const devanagari = symbols('०', ' ', ',', '-', "×10^");
+    expectLong(parseLocalized("0.###E0", "１２", devanagari), 12, 6);
+}
