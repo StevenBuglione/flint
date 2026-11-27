@@ -87,6 +87,25 @@ unittest
     assert(parsedBits(text[0 .. 1_101]) == 0x4340000000000001);
 }
 
+@("FloatingDecimal converts 1,101 significant digits at both ends of the double range")
+unittest
+{
+    // The largest correction-loop operands: a fixed big-integer capacity cut must fail here, not only in
+    // the out-of-repo oracle. Each text is head ~ '9' up to 1,101 significant digits ~ exponent.
+    static ulong worstCaseBits(string head, string exponent) pure nothrow @nogc
+    {
+        char[1_102 + 5] text = '9';
+        text[0 .. head.length] = head;
+        text[1_102 .. 1_102 + exponent.length] = exponent;
+        return parsedBits(text[0 .. 1_102 + exponent.length]);
+    }
+
+    assert(worstCaseBits("1.7976931348623157", "e308") == 0x7fefffffffffffff);
+    assert(worstCaseBits("1.7976931348623158", "e308") == 0x7ff0000000000000);
+    assert(worstCaseBits("4.9", "e-324") == 1);
+    assert(worstCaseBits("2.4703282292062327", "e-324") == 1);
+}
+
 @("DigitList.getDouble parses the stored digits, implicit zeros and decimal exponent")
 unittest
 {
