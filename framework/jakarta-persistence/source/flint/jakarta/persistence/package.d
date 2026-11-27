@@ -13,22 +13,27 @@ public import flint.jakarta.persistence.annotations : Access, AccessType, Associ
     FlushModeType, ForeignKey, GeneratedValue, GenerationType, Id, IdClass, Index, Inheritance,
     InheritanceType, JoinColumn, JoinColumns, JoinTable, Lob, LockModeType, ManyToMany, ManyToOne,
     MapKey, MapKeyClass, MapKeyColumn,
-    MapKeyEnumerated, MapKeyJoinColumn, MapKeyJoinColumns, MapKeyTemporal, MappedSuperclass,
-    MapsId, NamedAttributeNode, NamedEntityGraph, NamedEntityGraphs,
-    NamedNativeQueries, NamedNativeQuery, NamedQueries,
-    NamedQuery, NamedStoredProcedureQueries, NamedStoredProcedureQuery, NamedSubgraph, OneToMany,
-    OneToOne, OrderBy, OrderColumn, ParameterMode, PersistenceContext,
+    MapKeyEnumerated, MapKeyJoinColumn, MapKeyJoinColumns, MappedSuperclass, MapsId,
+    NamedAttributeNode, NamedEntityGraph, NamedEntityGraphs, NamedNativeQueries,
+    NamedNativeQuery, NamedQueries, NamedQuery,
+    NamedStoredProcedureQueries, NamedStoredProcedureQuery, NamedSubgraph, OneToMany, OneToOne,
+    OrderBy, OrderColumn, ParameterMode, PersistenceContext,
     PersistenceContexts, PersistenceContextType,
     PersistenceProperty, PersistenceUnit, PersistenceUnits, PostLoad, PostPersist, PostRemove,
     PostUpdate, PrePersist, PreRemove, PreUpdate,
     PrimaryKeyJoinColumn, PrimaryKeyJoinColumns,
     QueryHint, SecondaryTable, SecondaryTables, SequenceGenerator, SequenceGenerators,
     SqlResultSetMapping, SqlResultSetMappings, StoredProcedureParameter,
-    SynchronizationType, Table, TableGenerator,
-    TableGenerators, Temporal, TemporalType, Transient, UniqueConstraint, Version;
+    SynchronizationType, Table, TableGenerator, TableGenerators, TemporalType, Transient, UniqueConstraint, Version;
 public import flint.jakarta.persistence.contracts : AttributeConverter, CacheRetrieveMode,
     CacheStoreMode, EntityTransaction, FindOption, LockOption,
     Parameter, PersistenceUnitTransactionType,
     PessimisticLockScope, RefreshOption, SharedCacheMode, TupleElement, ValidationMode;
 
 @safe:
+
+// The deprecated attribute keeps the re-export itself quiet; importers of these names still see the deprecation.
+deprecated("since 3.2: newly-written code should use the date/time types defined in java.time")
+{
+    public import flint.jakarta.persistence.annotations : MapKeyTemporal, Temporal;
+}
