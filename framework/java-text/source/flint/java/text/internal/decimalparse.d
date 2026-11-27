@@ -44,7 +44,7 @@ module flint.java.text.internal.decimalparse;
 import flint.java.internal.math.floatingdecimal : FloatingDecimalStatus, digitListToDouble;
 import flint.java.lang.character.decimaldigits : javaDecimalDigit;
 import flint.java.text.internal.decimalfixed : DecimalFixedPattern;
-import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData;
+import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData, encodeSymbol;
 
 @safe:
 
@@ -84,6 +84,7 @@ struct DecimalParseResult
 
 /// DecimalFormat.parse(String, ParsePosition) for a fixed-point pattern without currency.
 /// `digits` receives the significant digits, which DigitList grows without bound.
+/// The pattern's affixes are expanded with the same `symbols`, which must pass `bodySymbolsEncodable`.
 DecimalParseResult parseDecimal(scope const(char)[] text, size_t start, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, DecimalParseOptions options, scope char[] digits) pure nothrow @nogc
 {
@@ -227,7 +228,7 @@ bool scanDigits(scope const(char)[] text, ref size_t position, ref scope const D
     {
         size_t width;
         const unit = unitAt(text, position, width);
-        const digit = unit == uint.max ? uint.max : javaDecimalDigit(unit);
+        const digit = digitValue(unit, symbols.zeroDigit);
         if (digit <= 9)
         {
             backup = -1;
@@ -241,6 +242,7 @@ bool scanDigits(scope const(char)[] text, ref size_t position, ref scope const D
                 break;
             parsed.decimalAt = cast(int) parsed.count;
             sawDecimal = true;
+            position += width - 1;
         }
         else if (unit == symbols.groupingSeparator && options.groupingUsed)
         {
@@ -248,6 +250,7 @@ bool scanDigits(scope const(char)[] text, ref size_t position, ref scope const D
                 break;
             // A grouping separator must be followed by a digit, or the scan resumes before it.
             backup = position;
+            position += width - 1;
         }
         else
         {
@@ -290,16 +293,30 @@ pure nothrow @nogc void appendDigit(uint digit, bool sawDecimal, scope char[] di
     digits[parsed.stored++] = cast(char)('0' + digit);
 }
 
-// Parses the exponent as Java's recursive subparse does, advancing only if it fits into a long.
+// Java tries the locale zero digit first, then Character.digit. Its difference is int arithmetic, so a zero
+// digit near U+FFFF does not wrap to U+0000.
+uint digitValue(uint unit, wchar zero) pure nothrow @nogc
+{
+    if (unit == uint.max)
+        return uint.max;
+    if (unit - zero <= 9)
+        return unit - zero;
+    return javaDecimalDigit(unit);
+}
+
+// Parses the exponent as Java's recursive subparse does, with an empty positive prefix and the minus sign text
+// as the negative prefix, advancing only if it fits into a long.
 void scanExponent(scope const(char)[] text, ref size_t position, ref scope const DecimalSymbolData symbols,
         out int exponent) pure nothrow @nogc
 {
     size_t at = position + symbols.exponentSeparator.length;
-    const negative = at < text.length && text[at] == symbols.minusSign;
+    char[3] minus;
+    const minusWidth = encodeSymbol(symbols.minusSign, minus);
+    const negative = regionMatches(text, at, minus[0 .. minusWidth]);
     if (negative)
-        ++at;
+        at += minusWidth;
     ExponentDigits parsed;
-    if (!scanExponentDigits(text, at, parsed) || !exponentFits(parsed, !negative))
+    if (!scanExponentDigits(text, at, symbols.zeroDigit, parsed) || !exponentFits(parsed, !negative))
         return;
     ulong magnitude;
     foreach (i; 0 .. parsed.count)
@@ -318,14 +335,15 @@ struct ExponentDigits
     size_t count;
 }
 
-bool scanExponentDigits(scope const(char)[] text, ref size_t at, ref ExponentDigits parsed) pure nothrow @nogc
+pure nothrow @nogc bool scanExponentDigits(scope const(char)[] text, ref size_t at, wchar zero,
+        ref ExponentDigits parsed)
 {
     bool sawDigit;
     for (; at < text.length; ++at)
     {
         size_t width;
         const unit = unitAt(text, at, width);
-        const digit = unit == uint.max ? uint.max : javaDecimalDigit(unit);
+        const digit = digitValue(unit, zero);
         if (digit > 9)
             break;
         sawDigit = true;
