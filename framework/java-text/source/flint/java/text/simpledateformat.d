@@ -31,10 +31,10 @@ class ParseException : Exception
 {
     private int errorOffset;
 
-    /// `message`, at `errorOffset` in the text. Empty detail is absent (R26).
-    this(string message, int errorOffset, string file = __FILE__, size_t line = __LINE__) pure nothrow @nogc
+    /// `s`, at `errorOffset` in the text. Empty detail is absent (R26).
+    this(string s, int errorOffset, string file = __FILE__, size_t line = __LINE__) pure nothrow @nogc
     {
-        super(message.length == 0 ? null : message, file, line);
+        super(s.length == 0 ? null : s, file, line);
         this.errorOffset = errorOffset;
     }
 
