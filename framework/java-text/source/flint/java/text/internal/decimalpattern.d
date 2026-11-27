@@ -139,24 +139,28 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text,
     result.maximumIntegerDigits = digits.maximumIntegerDigits;
     result.minimumExponentDigits = digits.minimumExponentDigits;
     result.minimumFractionDigits = digits.minimumFractionDigits;
-    result.maximumFractionDigits = text.length ? digits.maximumFractionDigits : 3;
+    // An empty pattern sets no digits but allows every fraction digit; grouping keeps the constructor's default.
+    result.maximumFractionDigits = text.length ? digits.maximumFractionDigits : int.max;
     result.groupingSize = text.length ? digits.groupingSize : 3;
     result.decimalSeparatorAlwaysShown = digits.decimalSeparatorAlwaysShown;
     markCurrency(result, positive, negative, explicitNegative);
     result.scale = positive.scale;
     result.positive = DecimalAffixes(positive.prefix.text, positive.suffix.text,
-            positive.prefix.fields, positive.suffix.fields);
+            positive.prefix.fields, positive.suffix.fields, positive.prefix.pattern, positive.suffix.pattern);
     if (explicitNegative && !sameAffixes(positive, negative))
         result.negative = DecimalAffixes(negative.prefix.text, negative.suffix.text,
-                negative.prefix.fields, negative.suffix.fields);
+                negative.prefix.fields, negative.suffix.fields, negative.prefix.pattern, negative.suffix.pattern);
     else
     {
         // Java's implicit negative prefix pattern is the symbolic minus sign followed by the positive prefix.
         DecodedAffix minus;
         appendSymbol(minus, AffixOperator.minus, symbols.minusSign);
         appendText(minus.text, positive.prefix.text);
+        appendText(minus.pattern, "'-");
+        appendText(minus.pattern, positive.prefix.pattern);
         result.negative = DecimalAffixes(minus.text, positive.suffix.text,
-                signedFields(minus.fields, positive.prefix.fields), positive.suffix.fields);
+                signedFields(minus.fields, positive.prefix.fields), positive.suffix.fields,
+                minus.pattern, positive.suffix.pattern);
     }
     return DecimalCompileStatus.accepted;
 }
@@ -173,7 +177,181 @@ DecimalCompileStatus compileLocalizedDecimalPattern(scope string text,
     return compileFixedDecimalPattern(pattern, symbols, result);
 }
 
+/// DecimalFormat.toPattern(localized) for a compiled state: the affix patterns quoted back and the digit counts
+/// written out, with the localized symbols when `localized`. Java builds the text in one StringBuilder; a state
+/// whose digit sections alone pass its int.max - 8 unit limit (the empty pattern's unlimited fraction digits)
+/// throws OutOfMemoryError there and returns false here.
+pure nothrow bool synthesizeDecimalPattern(ref scope const DecimalFixedPattern pattern,
+        ref scope const DecimalSymbolData symbols, bool localized, out string result)
+{
+    // Java's int arithmetic, as the setters would store it.
+    const minimumIntegers = cast(int) pattern.minimumIntegerDigits;
+    const grouping = cast(int) pattern.groupingSize;
+    const digitCount = pattern.minimumExponentDigits != 0 ? cast(int) pattern.maximumIntegerDigits
+        : (grouping > minimumIntegers ? grouping : minimumIntegers) + 1;
+    // toPattern stops after the positive subpattern when the negative one is the implicit minus-sign form.
+    const positive = pattern.positive.prefixPattern;
+    const negative = pattern.negative.prefixPattern;
+    const implicitNegative = pattern.negative.suffixPattern == pattern.positive.suffixPattern
+        && negative.length == positive.length + 2 && negative[0 .. 2] == "'-" && negative[2 .. $] == positive;
+    const passes = implicitNegative ? 1 : 2;
+    if (digitUnits(pattern, symbols, localized, digitCount) * passes > int.max - 8)
+        return false;
+    string text;
+    appendSubpattern(text, pattern.positive, pattern, symbols, localized, digitCount);
+    if (!implicitNegative)
+    {
+        appendCharacter(text, localized ? symbols.patternSeparator : ';');
+        appendSubpattern(text, pattern.negative, pattern, symbols, localized, digitCount);
+    }
+    result = text;
+    return true;
+}
+
 private:
+
+// The UTF-16 length of one digit section of toPattern.
+long digitUnits(ref scope const DecimalFixedPattern pattern, ref scope const DecimalSymbolData symbols,
+        bool localized, int digitCount) pure nothrow @nogc
+{
+    long units = pattern.maximumFractionDigits;
+    if (digitCount > 0)
+        units += cast(long) digitCount + (pattern.groupingSize == 0 ? 0 : (digitCount - 1) / pattern.groupingSize);
+    if (pattern.maximumFractionDigits > 0 || pattern.decimalSeparatorAlwaysShown)
+        ++units;
+    if (pattern.minimumExponentDigits != 0)
+    {
+        units += pattern.minimumExponentDigits;
+        // A UTF-8 lead byte begins one UTF-16 unit, and a four-byte one a surrogate pair.
+        foreach (unit; localized ? symbols.exponentSeparator : "E")
+            units += (unit & 0xC0) != 0x80 ? 1 + (unit >= 0xF0) : 0;
+    }
+    return units;
+}
+
+pure nothrow void appendSubpattern(ref string text, ref scope const DecimalAffixes affixes,
+        ref scope const DecimalFixedPattern pattern, ref scope const DecimalSymbolData symbols,
+        bool localized, int digitCount)
+{
+    appendAffixPattern(text, affixes.prefixPattern, symbols, localized);
+    const minimumIntegers = cast(int) pattern.minimumIntegerDigits;
+    const grouping = cast(int) pattern.groupingSize;
+    const zero = localized ? symbols.zeroDigit : '0';
+    const digit = localized ? symbols.digit : '#';
+    wchar groupingSymbol = ',';
+    wchar decimalSymbol = '.';
+    if (localized)
+    {
+        groupingSymbol = pattern.currencyFormat ? symbols.monetaryGroupingSeparator : symbols.groupingSeparator;
+        decimalSymbol = pattern.currencyFormat ? symbols.monetaryDecimalSeparator : symbols.decimalSeparator;
+    }
+    for (int i = digitCount; i > 0; --i)
+    {
+        if (i != digitCount && grouping != 0 && i % grouping == 0)
+            appendCharacter(text, groupingSymbol);
+        appendCharacter(text, i <= minimumIntegers ? zero : digit);
+    }
+    if (pattern.maximumFractionDigits > 0 || pattern.decimalSeparatorAlwaysShown)
+        appendCharacter(text, decimalSymbol);
+    foreach (i; 0 .. pattern.maximumFractionDigits)
+        appendCharacter(text, i < pattern.minimumFractionDigits ? zero : digit);
+    if (pattern.minimumExponentDigits != 0)
+    {
+        appendText(text, localized ? symbols.exponentSeparator : "E");
+        foreach (i; 0 .. pattern.minimumExponentDigits)
+            appendCharacter(text, zero);
+    }
+    appendAffixPattern(text, affixes.suffixPattern, symbols, localized);
+}
+
+// appendAffix(StringBuilder, String, String, boolean): literal runs are quoted as a whole when they hold a pattern
+// character; a quoted token is the token, localized for minus, percent and per-mille, or a literal quote.
+pure nothrow void appendAffixPattern(ref string text, scope string affixPattern,
+        ref scope const DecimalSymbolData symbols, bool localized)
+{
+    size_t position;
+    while (position < affixPattern.length)
+    {
+        size_t quote = position;
+        while (quote < affixPattern.length && affixPattern[quote] != '\'')
+            ++quote;
+        if (quote > position)
+            appendLiteralAffix(text, affixPattern[position .. quote], symbols, localized);
+        if (quote == affixPattern.length)
+            break;
+        position = quote + 1;
+        const token = affixPattern[position .. $];
+        if (startsWith(token, "¤¤"))
+        {
+            appendText(text, "¤¤");
+            position += "¤¤".length;
+            continue;
+        }
+        const operation = token[0] == '\'' ? AffixOperator.literal : affixOperator(token);
+        const width = operation == AffixOperator.perMille ? "‰".length
+            : operation == AffixOperator.currency ? "¤".length : 1;
+        if (localized && operation != AffixOperator.literal && operation != AffixOperator.currency)
+            appendCharacter(text, affixSymbol(operation, symbols));
+        else
+        {
+            // A literal quote is written twice.
+            appendText(text, token[0 .. width]);
+            if (operation == AffixOperator.literal)
+                appendUnit(text, '\'');
+        }
+        position += width;
+    }
+}
+
+// appendAffix(StringBuilder, String, boolean) for a literal run, which holds no quote. Java checks the plain
+// grouping and decimal separators even in a currency pattern, and never the exponent separator.
+pure nothrow void appendLiteralAffix(ref string text, scope string literal,
+        ref scope const DecimalSymbolData symbols, bool localized)
+{
+    bool quote;
+    for (size_t position; position < literal.length && !quote; ++position)
+        quote = patternUnit(literal, position, symbols, localized);
+    if (quote)
+        appendUnit(text, '\'');
+    appendText(text, literal);
+    if (quote)
+        appendUnit(text, '\'');
+}
+
+// The currency sign is a pattern character in both forms.
+pure nothrow @nogc bool patternUnit(scope string text, size_t position,
+        ref scope const DecimalSymbolData symbols, bool localized)
+{
+    if (startsWith(text[position .. $], "¤"))
+        return true;
+    return localized ? localizedUnit(text, position, symbols) : nonlocalizedUnit(text, position);
+}
+
+pure nothrow @nogc bool localizedUnit(scope string text, size_t position, ref scope const DecimalSymbolData symbols)
+{
+    return matchesUnit(text, position, symbols.zeroDigit) || matchesUnit(text, position, symbols.groupingSeparator)
+        || matchesUnit(text, position, symbols.decimalSeparator) || matchesUnit(text, position, symbols.percent)
+        || matchesUnit(text, position, symbols.perMill) || matchesUnit(text, position, symbols.digit)
+        || matchesUnit(text, position, symbols.patternSeparator) || matchesUnit(text, position, symbols.minusSign);
+}
+
+bool nonlocalizedUnit(scope string text, size_t position) pure nothrow @nogc
+{
+    switch (text[position])
+    {
+    case '0', ',', '.', '%', '#', ';', '-':
+        return true;
+    default:
+        return startsWith(text[position .. $], "‰");
+    }
+}
+
+void appendCharacter(ref string text, wchar unit) pure nothrow
+{
+    char[3] encoded;
+    foreach (byte_; encoded[0 .. encodeSymbol(unit, encoded)])
+        appendUnit(text, byte_);
+}
 
 // Rewrites a localized pattern as the nonlocalized one that applyPattern(pattern, true) reads it as. The phases,
 // quoting and symbol precedence follow that loop; literals are quoted in runs, so the affix patterns are unchanged.
