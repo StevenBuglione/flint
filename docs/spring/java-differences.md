@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,688 | 473 | 0 | 1,905 | 14,355 |
+| framework | openjdk@21.0.13 | 1,709 | 494 | 0 | 1,905 | 14,313 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2425,19 +2425,40 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.nio.channels.AcceptPendingException` | `flint.java.nio.channels.acceptpendingexception.AcceptPendingException` | [R1](api-mapping.md#r1-packages-and-names) | Import AcceptPendingException from flint.java.nio.channels.acceptpendingexception. It extends IllegalStateException. |
+| `java.nio.channels.AlreadyBoundException` | `flint.java.nio.channels.alreadyboundexception.AlreadyBoundException` | [R1](api-mapping.md#r1-packages-and-names) | Import AlreadyBoundException from flint.java.nio.channels.alreadyboundexception. It extends IllegalStateException. |
+| `java.nio.channels.AlreadyConnectedException` | `flint.java.nio.channels.alreadyconnectedexception.AlreadyConnectedException` | [R1](api-mapping.md#r1-packages-and-names) | Import AlreadyConnectedException from flint.java.nio.channels.alreadyconnectedexception. It extends IllegalStateException. |
+| `java.nio.channels.AsynchronousChannel` | `flint.java.nio.channels.asynchronouschannel.AsynchronousChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import AsynchronousChannel from flint.java.nio.channels.asynchronouschannel. |
 | `java.nio.channels.ByteChannel` | `flint.java.nio.channels.bytechannel.ByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import ByteChannel from flint.java.nio.channels.bytechannel. |
+| `java.nio.channels.CancelledKeyException` | `flint.java.nio.channels.cancelledkeyexception.CancelledKeyException` | [R1](api-mapping.md#r1-packages-and-names) | Import CancelledKeyException from flint.java.nio.channels.cancelledkeyexception. It extends IllegalStateException. |
 | `java.nio.channels.Channel` | `flint.java.nio.channels.channel.Channel` | [R1](api-mapping.md#r1-packages-and-names) | Import Channel from flint.java.nio.channels.channel. |
+| `java.nio.channels.ClosedSelectorException` | `flint.java.nio.channels.closedselectorexception.ClosedSelectorException` | [R1](api-mapping.md#r1-packages-and-names) | Import ClosedSelectorException from flint.java.nio.channels.closedselectorexception. It extends IllegalStateException. |
 | `java.nio.channels.CompletionHandler` | `flint.java.nio.channels.completionhandler.CompletionHandler` | [R1](api-mapping.md#r1-packages-and-names) | Import CompletionHandler from flint.java.nio.channels.completionhandler. |
+| `java.nio.channels.ConnectionPendingException` | `flint.java.nio.channels.connectionpendingexception.ConnectionPendingException` | [R1](api-mapping.md#r1-packages-and-names) | Import ConnectionPendingException from flint.java.nio.channels.connectionpendingexception. It extends IllegalStateException. |
 | `java.nio.channels.GatheringByteChannel` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import GatheringByteChannel from flint.java.nio.channels.gatheringbytechannel. A null ByteBuffer[] slice counts as empty under R26. |
 | `java.nio.channels.GatheringByteChannel#write(ByteBuffer[])` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel.write` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.channels.GatheringByteChannel#write(ByteBuffer[],int,int)` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel.write` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.channels.IllegalBlockingModeException` | `flint.java.nio.channels.illegalblockingmodeexception.IllegalBlockingModeException` | [R1](api-mapping.md#r1-packages-and-names) | Import IllegalBlockingModeException from flint.java.nio.channels.illegalblockingmodeexception. It extends IllegalStateException. |
+| `java.nio.channels.IllegalChannelGroupException` | `flint.java.nio.channels.illegalchannelgroupexception.IllegalChannelGroupException` | [R1](api-mapping.md#r1-packages-and-names) | Import IllegalChannelGroupException from flint.java.nio.channels.illegalchannelgroupexception. It extends IllegalArgumentException. |
+| `java.nio.channels.IllegalSelectorException` | `flint.java.nio.channels.illegalselectorexception.IllegalSelectorException` | [R1](api-mapping.md#r1-packages-and-names) | Import IllegalSelectorException from flint.java.nio.channels.illegalselectorexception. It extends IllegalArgumentException. |
 | `java.nio.channels.InterruptibleChannel` | `flint.java.nio.channels.interruptiblechannel.InterruptibleChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptibleChannel from flint.java.nio.channels.interruptiblechannel. |
+| `java.nio.channels.NoConnectionPendingException` | `flint.java.nio.channels.noconnectionpendingexception.NoConnectionPendingException` | [R1](api-mapping.md#r1-packages-and-names) | Import NoConnectionPendingException from flint.java.nio.channels.noconnectionpendingexception. It extends IllegalStateException. |
+| `java.nio.channels.NonReadableChannelException` | `flint.java.nio.channels.nonreadablechannelexception.NonReadableChannelException` | [R1](api-mapping.md#r1-packages-and-names) | Import NonReadableChannelException from flint.java.nio.channels.nonreadablechannelexception. It extends IllegalStateException. |
+| `java.nio.channels.NonWritableChannelException` | `flint.java.nio.channels.nonwritablechannelexception.NonWritableChannelException` | [R1](api-mapping.md#r1-packages-and-names) | Import NonWritableChannelException from flint.java.nio.channels.nonwritablechannelexception. It extends IllegalStateException. |
+| `java.nio.channels.NotYetBoundException` | `flint.java.nio.channels.notyetboundexception.NotYetBoundException` | [R1](api-mapping.md#r1-packages-and-names) | Import NotYetBoundException from flint.java.nio.channels.notyetboundexception. It extends IllegalStateException. |
+| `java.nio.channels.NotYetConnectedException` | `flint.java.nio.channels.notyetconnectedexception.NotYetConnectedException` | [R1](api-mapping.md#r1-packages-and-names) | Import NotYetConnectedException from flint.java.nio.channels.notyetconnectedexception. It extends IllegalStateException. |
+| `java.nio.channels.OverlappingFileLockException` | `flint.java.nio.channels.overlappingfilelockexception.OverlappingFileLockException` | [R1](api-mapping.md#r1-packages-and-names) | Import OverlappingFileLockException from flint.java.nio.channels.overlappingfilelockexception. It extends IllegalStateException. |
+| `java.nio.channels.ReadPendingException` | `flint.java.nio.channels.readpendingexception.ReadPendingException` | [R1](api-mapping.md#r1-packages-and-names) | Import ReadPendingException from flint.java.nio.channels.readpendingexception. It extends IllegalStateException. |
 | `java.nio.channels.ReadableByteChannel` | `flint.java.nio.channels.readablebytechannel.ReadableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import ReadableByteChannel from flint.java.nio.channels.readablebytechannel. |
 | `java.nio.channels.ScatteringByteChannel` | `flint.java.nio.channels.scatteringbytechannel.ScatteringByteChannel` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import ScatteringByteChannel from flint.java.nio.channels.scatteringbytechannel. A null ByteBuffer[] slice counts as empty under R26. |
 | `java.nio.channels.ScatteringByteChannel#read(ByteBuffer[])` | `flint.java.nio.channels.scatteringbytechannel.ScatteringByteChannel.read` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.channels.ScatteringByteChannel#read(ByteBuffer[],int,int)` | `flint.java.nio.channels.scatteringbytechannel.ScatteringByteChannel.read` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.channels.SeekableByteChannel` | `flint.java.nio.channels.seekablebytechannel.SeekableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import SeekableByteChannel from flint.java.nio.channels.seekablebytechannel. |
+| `java.nio.channels.ShutdownChannelGroupException` | `flint.java.nio.channels.shutdownchannelgroupexception.ShutdownChannelGroupException` | [R1](api-mapping.md#r1-packages-and-names) | Import ShutdownChannelGroupException from flint.java.nio.channels.shutdownchannelgroupexception. It extends IllegalStateException. |
+| `java.nio.channels.UnresolvedAddressException` | `flint.java.nio.channels.unresolvedaddressexception.UnresolvedAddressException` | [R1](api-mapping.md#r1-packages-and-names) | Import UnresolvedAddressException from flint.java.nio.channels.unresolvedaddressexception. It extends IllegalArgumentException. |
+| `java.nio.channels.UnsupportedAddressTypeException` | `flint.java.nio.channels.unsupportedaddresstypeexception.UnsupportedAddressTypeException` | [R1](api-mapping.md#r1-packages-and-names) | Import UnsupportedAddressTypeException from flint.java.nio.channels.unsupportedaddresstypeexception. It extends IllegalArgumentException. |
 | `java.nio.channels.WritableByteChannel` | `flint.java.nio.channels.writablebytechannel.WritableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import WritableByteChannel from flint.java.nio.channels.writablebytechannel. |
+| `java.nio.channels.WritePendingException` | `flint.java.nio.channels.writependingexception.WritePendingException` | [R1](api-mapping.md#r1-packages-and-names) | Import WritePendingException from flint.java.nio.channels.writependingexception. It extends IllegalStateException. |
 
 #### java.nio.charset
 
@@ -10776,7 +10797,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.net | 767 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 24 | 0 |
-| java.nio.channels | 0 | 306 |
+| java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 86 | 0 |
 | java.nio.charset.spi | 0 | 4 |

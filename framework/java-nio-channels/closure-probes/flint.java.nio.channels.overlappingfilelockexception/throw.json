@@ -1,0 +1,7 @@
+{
+  "source": "closure/overlapping_file_lock_exception.d",
+  "leaves": [
+    "flint.java.lang"
+  ],
+  "data": []
+}

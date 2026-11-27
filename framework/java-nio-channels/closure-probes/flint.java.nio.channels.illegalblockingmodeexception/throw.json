@@ -1,0 +1,7 @@
+{
+  "source": "closure/illegal_blocking_mode_exception.d",
+  "leaves": [
+    "flint.java.lang"
+  ],
+  "data": []
+}

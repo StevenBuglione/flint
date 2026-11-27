@@ -1,0 +1,7 @@
+{
+  "source": "closure/not_yet_bound_exception.d",
+  "leaves": [
+    "flint.java.lang"
+  ],
+  "data": []
+}

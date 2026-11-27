@@ -1,0 +1,7 @@
+{
+  "source": "closure/non_writable_channel_exception.d",
+  "leaves": [
+    "flint.java.lang"
+  ],
+  "data": []
+}

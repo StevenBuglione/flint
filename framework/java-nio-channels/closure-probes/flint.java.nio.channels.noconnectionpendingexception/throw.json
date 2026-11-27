@@ -1,0 +1,7 @@
+{
+  "source": "closure/no_connection_pending_exception.d",
+  "leaves": [
+    "flint.java.lang"
+  ],
+  "data": []
+}

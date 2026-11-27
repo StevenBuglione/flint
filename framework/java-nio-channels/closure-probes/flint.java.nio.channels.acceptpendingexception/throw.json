@@ -1,0 +1,7 @@
+{
+  "source": "closure/accept_pending_exception.d",
+  "leaves": [
+    "flint.java.lang"
+  ],
+  "data": []
+}

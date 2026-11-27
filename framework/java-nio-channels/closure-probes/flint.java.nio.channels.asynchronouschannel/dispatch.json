@@ -1,0 +1,9 @@
+{
+  "source": "closure/asynchronous_channel.d",
+  "leaves": [
+    "flint.java.io.closeable",
+    "flint.java.lang",
+    "flint.java.nio.channels.channel"
+  ],
+  "data": []
+}

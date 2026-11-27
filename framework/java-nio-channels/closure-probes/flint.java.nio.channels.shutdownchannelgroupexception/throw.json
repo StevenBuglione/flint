@@ -1,0 +1,7 @@
+{
+  "source": "closure/shutdown_channel_group_exception.d",
+  "leaves": [
+    "flint.java.lang"
+  ],
+  "data": []
+}
