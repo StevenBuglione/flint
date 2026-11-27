@@ -547,14 +547,41 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         """posidon with modes: records (mode, apps) per call; its red verdicts carry a flint budget report."""
         supports_modes = True
 
-        def __call__(self, commit, repo, mode='full', apps=None, tight=None):
+        def __call__(self, commit, repo, mode='full', apps=None, tight=None, ab_base=None):
             ok, log = super().__call__(commit, repo)
             self.modes = getattr(self, 'modes', []) + [(mode, tuple(apps or ()))]
+            files = git(self.test.work, 'ls-tree', '-r', '--name-only', commit).split()
+            if 'src/DRIFT' in files and 'src/SLOW' not in files:
+                ok = mode == 'ab'  # a flat per-request shift: red against stored numbers, green interleaved
+            elif mode == 'ab':
+                ok = 'src/SLOW' not in files  # a real regression stays red interleaved
             if not ok:
                 report = {'schema': 'flint.budget/1-report', 'failed': False,
                           'problems': ["petclinic-rest: 'list vets': instructions 407,377 -> 412,348 (+1.22%, tolerance +1.00%)"]}
                 log += '\n' + json.dumps(report)
             return ok, log
+
+    def test_a_flat_session_shift_is_cleared_by_the_interleaved_ab_and_lands(self):
+        # Coordinator, 2026-11-27 08:21Z: flint-aot read over the stored numbers by session drift alone and was within
+        # tolerance interleaved; such a lane rides on instead of being returned.
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d')):
+            self.lane(role, {'src/DRIFT' if role == 'sol-b' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(posidon).run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b', 'sol-c', 'sol-d'], []))
+        events = [json.loads(line) for line in (self.store.root / 'events.jsonl').read_text().splitlines()]
+        self.assertIn({'role': 'sol-b', 'ok': True}, [{k: e[k] for k in ('role', 'ok')} for e in events
+                                                         if e['event'] == 'train-interleaved'])
+
+    def test_a_real_regression_is_still_returned_after_the_interleaved_ab(self):
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c')):
+            self.lane(role, {'src/SLOW' if role == 'sol-b' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(posidon).run('runner')
+        self.assertEqual(result['failed'], ['sol-b'])
+        self.assertIn('ab', [mode for mode, _ in posidon.modes])
 
     def test_a_red_stack_checks_main_then_bisects_with_flint_budget_alone(self):
         for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e')):
@@ -616,8 +643,9 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b', 'sol-d'], ['sol-c']))
         self.assertEqual(posidon.modes[0][0], 'full')
         # The bisect steps run flint budget alone; the restack is a full verification again.
-        steps = posidon.modes[1:-1]
+        steps = [mode for mode in posidon.modes[1:-1] if mode[0] != 'ab']
         self.assertTrue(steps and all(mode == ('budget', ('petclinic-rest',)) for mode in steps), posidon.modes)
+        self.assertIn(('ab', ('petclinic-rest',)), posidon.modes)  # the interleaved tie-breaker ran, and confirmed it
         self.assertEqual(posidon.modes[-1][0], 'full')
 
     def playbook_base(self, rows):

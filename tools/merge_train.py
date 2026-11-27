@@ -227,7 +227,7 @@ cleanup() {
   for pid in $(pgrep -u "$USER" -f 'dmd' || true); do
     if tr '\0' '\n' < /proc/$pid/environ 2>/dev/null | grep -qx "FLINT_CACHE=$FLINT_CACHE"; then kill "$pid" 2>/dev/null; fi
   done
-  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$FLINT_CACHE.budget.json" "$FLINT_CACHE.tight.json" "$FLINT_CACHE.median.json" "$FLINT_CACHE.load" "$FLINT_CACHE.noisy" "$FLINT_CACHE.notight.json" "$FLINT_CACHE.modules.log" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
+  rm -rf "$FLINT_CACHE" "$FLINT_CACHE.dod.json" "$FLINT_CACHE.api.json" "$FLINT_CACHE.budget.json" "$FLINT_CACHE.tight.json" "$FLINT_CACHE.median.json" "$FLINT_CACHE.load" "$FLINT_CACHE.noisy" "$FLINT_CACHE.notight.json" "$FLINT_CACHE.modules.log" "$FLINT_CACHE.ab" "$WT/.flint/definition-of-done" "$WT/.flint/build" "$WT/artifacts"
   # Each app's whole .flint (its dub cache grew to 5 GB on posidon) and the CLI's build tree; the natives stay.
   rm -rf "$WT"/benchmarks/spring/flint/*/.flint "$WT"/benchmarks/spring/flint/*/.dub "$WT/apps/flint/.flint/build"
   find "$WT" -xdev -name .dub -type d -prune -exec rm -rf {} + 2>/dev/null
@@ -311,6 +311,30 @@ if [ "@MODE@" = budget ]; then
   cat "$FLINT_CACHE.budget.json" >> "$FLINT_CACHE.dod.json" 2>/dev/null
   cat "$FLINT_CACHE.dod.json"
   [ $rc -eq 2 ] && { echo "flint budget could not measure (exit 2): the verifier, not the candidate"; exit 3; }
+elif [ "@MODE@" = ab ]; then
+  # The interleaved flint budget A/B (coordinator, 2026-11-27 08:21Z): a lane that failed only flint budget is judged
+  # against its green prefix in one session (tools/budget_ab.py) before the train returns it.
+  echo "== interleaved A/B: @COMMIT@ against @AB_BASE@ (@BUDGET_APPS@)"
+  AB="$FLINT_CACHE.ab"; mkdir -p "$AB/base" "$AB/candidate"
+  ab_build() {
+    for app in @BUDGET_APPS@; do
+      ( cd "benchmarks/spring/flint/$app" && rm -rf .flint && python3 "$WT/tools/measure_queue.py" hold -- \
+          flint build --profile release --locked --verify > "$AB/$1-$app.log" 2>&1 && cp ".flint/build/release/$app" "$AB/$1/" ) \
+        || { tail -20 "$AB/$1-$app.log"; return 1; }
+    done
+  }
+  ab_checkout() {
+    git checkout -q -f --detach "$1" && $H python3 tools/native_build.py --profile ci --target linux-x86_64-glibc \
+      --phase build --shims-only --emit-dub > "$AB/native-$2.log" 2>&1
+  }
+  ab_build candidate || exit 3
+  ab_checkout "@AB_BASE@" base && ab_build base || exit 3
+  ab_checkout "@COMMIT@" candidate || exit 3
+  set -- ; for app in @BUDGET_APPS@; do set -- "$@" --app "$app"; done
+  load_start; $H python3 tools/budget_ab.py --base "$AB/base" --candidate "$AB/candidate" "$@" --repeat 5 > "$FLINT_CACHE.dod.json" 2>&1; rc=$?; load_stop
+  cat "$FLINT_CACHE.dod.json"
+  [ $rc -eq 2 ] && { echo "the interleaved A/B could not measure: the verifier, not the candidate"; exit 3; }
+  exit $rc
 else
   echo "== api gate"; $H python3 tools/gates.py --gate api > "$FLINT_CACHE.api.json" 2>&1 || { tail -40 "$FLINT_CACHE.api.json"; rm -f "$FLINT_CACHE.api.json"; exit 1; }
   rm -f "$FLINT_CACHE.api.json"
@@ -491,7 +515,7 @@ class RemoteVerifier:
 
     supports_modes = True
 
-    def script(self, commit, ref, stamp, mode='full', apps=None, tight=None, base=None):
+    def script(self, commit, ref, stamp, mode='full', apps=None, tight=None, base=None, ab_base=None):
         e = self.entry
         receipts = ''.join(f'{digest}  {path}\n' for path, digest in sorted(e.get('receipts', {}).items()))
         values = {'@PRELUDE@': e.get('prelude', ''), '@BARE@': e['bare'], '@REPO@': e.get('repo', e['bare']),
@@ -502,7 +526,7 @@ class RemoteVerifier:
                   '@CACHE_ROOT@': e.get('cache_root', '$HOME'), '@RECEIPTS@': receipts,
                   '@DOD_FLAGS@': '' if self.budget else '--no-flint-budget', '@APPS@': ','.join(APPS),
                   '@MODE@': mode, '@BUDGET_APPS@': ' '.join(apps or APPS), '@TIGHT@': json.dumps(tight or {}),
-                  '@COMMIT@': commit, '@REF@': ref, '@STAMP@': stamp, '@BASE@': base or ''}
+                  '@COMMIT@': commit, '@REF@': ref, '@STAMP@': stamp, '@BASE@': base or '', '@AB_BASE@': ab_base or ''}
         text = VERIFY_SCRIPT
         start = text.index("<<'PY'\n", text.index('TIGHT\n  apps=')) + len("<<'PY'\n")
         text = text.replace('@CLASSIFIER@', text[start:text.index('\nPY\n', start)])
@@ -512,7 +536,7 @@ class RemoteVerifier:
 
     takes_base = True  # the module probes judge a candidate against the train's base
 
-    def __call__(self, commit, repo, mode='full', apps=None, tight=None, base=None):
+    def __call__(self, commit, repo, mode='full', apps=None, tight=None, base=None, ab_base=None):
         stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()) + '-' + commit[:8]
         ref = f'train-{stamp}'
         env = dict(os.environ, GIT_SSH_COMMAND=shlex.join(self.ssh))
@@ -520,7 +544,7 @@ class RemoteVerifier:
                                 cwd=repo, env=env, capture_output=True, text=True)
         if pushed.returncode != 0:
             return None, f'{self.name}: pushing the candidate failed:\n{pushed.stderr}'
-        done = subprocess.run([*self.ssh, self.host, 'bash', '-s'], input=self.script(commit, ref, stamp, mode, apps, tight, base),
+        done = subprocess.run([*self.ssh, self.host, 'bash', '-s'], input=self.script(commit, ref, stamp, mode, apps, tight, base, ab_base),
                               capture_output=True, text=True)
         log = f'{self.name} ({self.host}), {self.entry["worktree"]} at {commit} ({ref}):\n{done.stdout}{done.stderr}'
         if done.returncode in UNAVAILABLE:
@@ -738,7 +762,7 @@ class Train:
             self.store.event('train-rows-merged', role=submission['role'], files=changed)
         return []
 
-    def verify(self, commit, verifier=None, mode='full', apps=None):
+    def verify(self, commit, verifier=None, mode='full', apps=None, ab_base=None):
         """(ok, log): True green, False red, None the verifier could not run. `mode` 'budget' runs flint budget alone
         for `apps` (bisecting a budget-only failure; acceptance is already proven)."""
         self.verifications += 1
@@ -746,6 +770,8 @@ class Train:
             chosen = verifier or self.verifiers[-1]
             if getattr(chosen, 'supports_modes', False):
                 extra = {'base': self.base} if getattr(chosen, 'takes_base', False) else {}
+                if ab_base:
+                    extra['ab_base'] = ab_base
                 return chosen(commit, self.worktree, mode=mode, apps=apps, tight=tight_endpoints(self.store), **extra)
             return chosen(commit, self.worktree)
         git(['checkout', '-q', '--detach', commit], self.worktree)
@@ -912,6 +938,7 @@ class Train:
         """Bisect applied[good:bad] (applied[:good] is green, the candidate ending at bad red) and settle what lands.
         `verifier` bisects (default: the budget verifier, last); an acceptance failure is bisected on its own verifier."""
         ok, bad_log = verdict
+        group_end = bad
         if ok is None:  # the verifier failed: land what is green before it, blame nobody
             self.store.event('train-verifier-failed', log=bad_log[-2000:])
         else:
@@ -933,6 +960,19 @@ class Train:
             elif bad == 1 and (main := self.verify(base, verifier, **step))[0] is not True:
                 # Main itself is red: blame nobody; every submission waits for main to be fixed.
                 return self._main_red(base, main[1], failed)
+            elif only and self.interleaved_clears(applied, bad, base, only):
+                # Coordinator, 2026-11-27 08:21Z: a lane that failed only flint budget is judged interleaved against
+                # its green prefix in one session before it is returned; within tolerance, it rides on. The rest of
+                # the red group (acceptance-green, since its failure was flint budget's alone) is judged the same way
+                # against it, once: stored numbers would fail it again for the same session shift.
+                good = bad
+                if bad < group_end:
+                    rest, _ = self.verify(applied[group_end - 1][1], self.budget_verifier(), mode='ab', apps=only,
+                                          ab_base=applied[bad - 1][1])
+                    self.store.event('train-interleaved', role=f'{applied[bad][0]["role"]}..{applied[group_end - 1][0]["role"]}',
+                                     ok=rest)
+                    if rest is True:
+                        good = group_end
             else:
                 failed.append((applied[bad - 1][0], 'the apps verification failed with this submission on the '
                                'train:\n' + bad_log))
@@ -1023,6 +1063,22 @@ class Train:
         if verdict[0] is True:
             return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
         return self._budget_red(batch, applied, failed, base, max_train, budget_verifier, verdict)
+
+    def budget_verifier(self):
+        """The verifier that runs flint budget and supports modes (posidon), or None."""
+        found = next((v for v in reversed(self.verifiers) if getattr(v, 'budget', False)), None)
+        return found if found is not None and getattr(found, 'supports_modes', False) else None
+
+    def interleaved_clears(self, applied, bad, base, apps):
+        """Whether submission `bad` (1-based) is within tolerance of the prefix before it, interleaved in one session on
+        the budget verifier (tools/budget_ab.py, median of 5 each). Only the budget verifier runs it."""
+        budget_verifier = self.budget_verifier()
+        if budget_verifier is None:
+            return False
+        prefix = applied[bad - 2][1] if bad > 1 else base
+        ok, log = self.verify(applied[bad - 1][1], budget_verifier, mode='ab', apps=apps, ab_base=prefix)
+        self.store.event('train-interleaved', role=applied[bad - 1][0]['role'], ok=ok)
+        return ok is True
 
     def _land_early(self, prefix, base, budget_verifier):
         """Push an acceptance-green prefix before the bisect behind it finishes (coordinator, 2026-11-27 02:26Z). The
