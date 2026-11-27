@@ -45,12 +45,18 @@
       },
       "integer": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.internal.integers",
+          "flint.java.lang.character.decimaldigits"
+        ],
         "source": "closure/integer.d"
       },
       "long": {
         "data": [],
-        "leaves": [],
+        "leaves": [
+          "flint.java.internal.integers",
+          "flint.java.lang.character.decimaldigits"
+        ],
         "source": "closure/long.d"
       },
       "string-format": {
@@ -262,6 +268,7 @@
         "data": [],
         "leaves": [
           "flint.java.lang",
+          "flint.java.lang.long_",
           "flint.java.util"
         ],
         "source": "closure/stream.d"
