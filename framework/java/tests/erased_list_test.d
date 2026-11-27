@@ -364,6 +364,9 @@ unittest
     List!ListReference list = new IteratorOverrideList(stored, yielded);
 
     assert(list.iterator().next() is yielded);
+    auto viewCursor = Collections.unmodifiableList(list).iterator();
+    assert(viewCursor.next() is yielded);
+    expectThrow!UnsupportedOperationException(() @safe { viewCursor.remove(); return 0; });
     list.forEach((ListReference value) { assert(value is stored); });
     foreach (value; list)
         assert(value is stored);
