@@ -5709,6 +5709,8 @@
 "java.io.SerializablePermission#**":{"status":"excluded","category":"jvm-platform"},
 "java.io.SerializablePermission.**":{"status":"excluded","category":"jvm-platform"},
 "java.lang.**":{"status":"excluded","category":"deferred","phase":"2"},
+"java.lang.System":{"status":"ported","d":"flint.java.lang.system.System"},
+"java.lang.System#lineSeparator()":{"status":"ported","d":"flint.java.lang.system.System.lineSeparator"},
 "java.lang.ArithmeticException":{"d":"flint.java.lang.ArithmeticException","rules":["R26"],"status":"adapted","note":"A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String."},
 "java.lang.ArithmeticException#<init>()":{"d":"flint.java.lang.ArithmeticException.this","status":"ported"},
 "java.lang.ArithmeticException#<init>(String)":{"d":"flint.java.lang.ArithmeticException.this","rules":["R26"],"status":"adapted"},

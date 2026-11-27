@@ -19,6 +19,10 @@
     "incremental_linked_bytes": 757,
     "template_instances": 33
   },
+  "flint.java.lang.system": {
+    "incremental_linked_bytes": 80,
+    "template_instances": 2
+  },
   "flint.java.object": {
     "incremental_linked_bytes": 1244,
     "template_instances": 35
