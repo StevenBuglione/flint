@@ -1,0 +1,11 @@
+Flint Java Lang Annotation
+Copyright 2026 The Flint authors
+
+This package implements the Java SE 21 java.lang.annotation enums and R2 UDA
+meta-annotations pinned to OpenJDK 21.0.13. Original Flint code is contributed
+under the package licence below by owner decision
+(docs/spring/phase1/decisions.md, flint:java* licence); conformance fixtures
+use reference results produced by executing the public Java SE 21 API.
+
+SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
+See LICENSE for the license and Classpath Exception.

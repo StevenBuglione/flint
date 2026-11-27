@@ -675,6 +675,57 @@
     "compiler_peak_rss_bytes"
    ]
   },
+  "java-lang-annotation": {
+   "directory": "framework/java-lang-annotation",
+   "module": "flint.java.lang.annotation",
+   "also": [
+    "flint.java.lang.annotation.documented",
+    "flint.java.lang.annotation.elementtype",
+    "flint.java.lang.annotation.inherited",
+    "flint.java.lang.annotation.native",
+    "flint.java.lang.annotation.repeatable",
+    "flint.java.lang.annotation.retention",
+    "flint.java.lang.annotation.retentionpolicy",
+    "flint.java.lang.annotation.target"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-lang-annotation/bench",
+    "baseline": "framework/java-lang-annotation/bench/baseline",
+    "edit_source": "framework/java-lang-annotation/source/flint/java/lang/annotation/elementtype.d"
+   },
+   "java_types": [
+    "java.lang.annotation.Documented",
+    "java.lang.annotation.ElementType",
+    "java.lang.annotation.Inherited",
+    "java.lang.annotation.Native",
+    "java.lang.annotation.Repeatable",
+    "java.lang.annotation.Retention",
+    "java.lang.annotation.RetentionPolicy",
+    "java.lang.annotation.Target"
+   ],
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 71,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 15
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
+  },
   "java-math": {
    "directory": "framework/java-math",
    "module": "flint.java.math",

@@ -1,0 +1,5 @@
+{
+  "source": "closure/target.d",
+  "leaves": ["flint.java.lang.annotation.elementtype"],
+  "data": []
+}

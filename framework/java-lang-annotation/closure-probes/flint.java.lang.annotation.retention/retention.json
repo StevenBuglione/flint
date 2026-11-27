@@ -1,0 +1,5 @@
+{
+  "source": "closure/retention.d",
+  "leaves": ["flint.java.lang.annotation.retentionpolicy"],
+  "data": []
+}

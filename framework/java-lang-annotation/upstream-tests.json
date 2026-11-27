@@ -1,0 +1,9 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-lang-annotation",
+  "test_packages": [
+    ":java-lang-annotation"
+  ],
+  "classes": {}
+}

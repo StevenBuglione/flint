@@ -1,0 +1,34 @@
+{
+  "flint.java.lang.annotation.documented": {
+    "incremental_linked_bytes": 0,
+    "template_instances": 3
+  },
+  "flint.java.lang.annotation.elementtype": {
+    "incremental_linked_bytes": 18,
+    "template_instances": 0
+  },
+  "flint.java.lang.annotation.inherited": {
+    "incremental_linked_bytes": 0,
+    "template_instances": 3
+  },
+  "flint.java.lang.annotation.native": {
+    "incremental_linked_bytes": 0,
+    "template_instances": 3
+  },
+  "flint.java.lang.annotation.repeatable": {
+    "incremental_linked_bytes": 62,
+    "template_instances": 5
+  },
+  "flint.java.lang.annotation.retention": {
+    "incremental_linked_bytes": 18,
+    "template_instances": 2
+  },
+  "flint.java.lang.annotation.retentionpolicy": {
+    "incremental_linked_bytes": 18,
+    "template_instances": 0
+  },
+  "flint.java.lang.annotation.target": {
+    "incremental_linked_bytes": 18,
+    "template_instances": 3
+  }
+}

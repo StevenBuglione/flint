@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,199 | 381 | 1,871 | 14,970 |
+| framework | openjdk@21.0.13 | 1,216 | 390 | 1,871 | 14,944 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2231,6 +2231,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.UnsupportedOperationException` | `flint.java.lang.UnsupportedOperationException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.UnsupportedOperationException#<init>(String)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.UnsupportedOperationException#<init>(String,Throwable)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+
+#### java.lang.annotation
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.lang.annotation.Documented` | `flint.java.lang.annotation.Documented` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Inherited` | `flint.java.lang.annotation.Inherited` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Native` | `flint.java.lang.annotation.Native` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Repeatable` | `flint.java.lang.annotation.Repeatable` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Repeatable#value` | `flint.java.lang.annotation.Repeatable.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `java.lang.annotation.Retention` | `flint.java.lang.annotation.Retention` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Retention#value` | `flint.java.lang.annotation.Retention.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Target` | `flint.java.lang.annotation.Target` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Target#value` | `flint.java.lang.annotation.Target.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### java.math
 
@@ -10577,7 +10591,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 770 | 0 |
 | java.lang | 1,983 | 0 |
-| java.lang.annotation | 43 | 0 |
+| java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
 | java.net | 809 | 0 |
@@ -11636,6 +11650,23 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.StringBuffer#append(char[],int,int)` | 2 | Requires synchronized append of a checked UTF-16 offset and count (R14), including overflow rejection, and return of the original buffer. |
 | framework | `java.lang.StringBuffer#length()` | 2 | Requires synchronized access to the length in UTF-16 code units (R14), used by format field offsets. |
 | framework | `java.lang.StringBuffer#toString()` | 2 | Requires a synchronized immutable snapshot of the buffer text. |
+| framework | `java.lang.annotation.Annotation` | 2 | Runtime annotation interface waits on the RuntimeClassRef annotationType() and R22 runtime sibling contract. |
+| framework | `java.lang.annotation.Annotation#annotationType()` | 2 | Waits on the Annotation runtime contract (R4 RuntimeClassRef). |
+| framework | `java.lang.annotation.Annotation#equals(Object)` | 2 | Waits on the Annotation runtime contract. |
+| framework | `java.lang.annotation.Annotation#hashCode()` | 2 | Waits on the Annotation runtime contract. |
+| framework | `java.lang.annotation.Annotation#toString()` | 2 | Waits on the Annotation runtime contract. |
+| framework | `java.lang.annotation.AnnotationFormatError` | 2 | Waits on the canonical Java Error hierarchy (R8) and R22 runtime sibling. |
+| framework | `java.lang.annotation.AnnotationFormatError#<init>(String)` | 2 | Waits on AnnotationFormatError. |
+| framework | `java.lang.annotation.AnnotationFormatError#<init>(String,Throwable)` | 2 | Waits on AnnotationFormatError. |
+| framework | `java.lang.annotation.AnnotationFormatError#<init>(Throwable)` | 2 | Waits on AnnotationFormatError. |
+| framework | `java.lang.annotation.AnnotationTypeMismatchException` | 2 | Waits on the MemberDescriptorRef (D-AOT-MEMBER) and RuntimeException leaf contracts. |
+| framework | `java.lang.annotation.AnnotationTypeMismatchException#<init>(Method,String)` | 2 | Waits on AnnotationTypeMismatchException. |
+| framework | `java.lang.annotation.AnnotationTypeMismatchException#element()` | 2 | Waits on AnnotationTypeMismatchException. |
+| framework | `java.lang.annotation.AnnotationTypeMismatchException#foundType()` | 2 | Waits on AnnotationTypeMismatchException. |
+| framework | `java.lang.annotation.IncompleteAnnotationException` | 2 | Waits on the RuntimeClassRef (R4) and RuntimeException leaf contracts. |
+| framework | `java.lang.annotation.IncompleteAnnotationException#<init>(Class,String)` | 2 | Waits on IncompleteAnnotationException. |
+| framework | `java.lang.annotation.IncompleteAnnotationException#annotationType()` | 2 | Waits on IncompleteAnnotationException. |
+| framework | `java.lang.annotation.IncompleteAnnotationException#elementName()` | 2 | Waits on IncompleteAnnotationException. |
 | framework | `java.net.ProtocolException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.ProtocolException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.SocketTimeoutException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |

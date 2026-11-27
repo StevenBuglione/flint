@@ -351,6 +351,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-lang-annotation": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-math": {
       "repo": "framework",
       "version": "monorepo"

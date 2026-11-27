@@ -1,0 +1,17 @@
+name "java-lang-annotation"
+description "Java SE annotation enums and meta-annotations"
+license "GPL-2.0-only WITH Classpath-exception-2.0"
+targetType "library"
+sourcePaths "source"
+importPaths "source"
+dflags "-preview=dip1000"
+dependency "flint:java" version="*"
+
+configuration "library" {
+    targetType "library"
+}
+configuration "unittest" {
+    targetType "library"
+    sourcePaths "source" "tests"
+    importPaths "source" "tests"
+}
