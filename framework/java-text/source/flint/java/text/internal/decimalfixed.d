@@ -187,17 +187,20 @@ size_t writeUnsignedDigits(ulong magnitude, scope char[] digits) pure nothrow @n
     return start;
 }
 
+/// Primitive values use NumberFormat's 309/340 capped widths; `arbitraryWidths` selects DecimalFormat's own
+/// widths, which BigInteger and BigDecimal formatting reads.
 pure nothrow @nogc size_t renderFixedDigits(scope const(char)[] digits, int decimalAt, bool negative,
         ref scope const DecimalFixedPattern pattern, ref scope const DecimalSymbolData symbols,
-        scope char[] output, scope DecimalFieldSpans* fields = null)
+        scope char[] output, scope DecimalFieldSpans* fields = null, bool arbitraryWidths = false)
 {
     const affixes = negative ? pattern.negative : pattern.positive;
     const integralDigits = decimalAt > 0 ? cast(size_t) decimalAt : 0;
     const visibleFraction = cast(int) digits.length - decimalAt;
     const fractionDigits = visibleFraction > 0 ? cast(size_t) visibleFraction : 0;
-    const minimumFraction = primitiveFractionWidth(pattern.minimumFractionDigits);
+    const minimumFraction = arbitraryWidths ? pattern.minimumFractionDigits
+        : primitiveFractionWidth(pattern.minimumFractionDigits);
     const fractionCount = fractionDigits > minimumFraction ? fractionDigits : minimumFraction;
-    size_t integerCount = primitiveWidth(integralDigits, pattern);
+    size_t integerCount = integerWidth(integralDigits, pattern, arbitraryWidths);
     const fallbackZero = integerCount == 0 && fractionCount == 0;
     // A negative start pads with zeros. A positive start skips truncated leading digits.
     // For the digitless fallback, start after the stored digits to emit a zero.
@@ -252,10 +255,12 @@ private void writeFraction(scope const(char)[] digits, int point, char zero, sco
     }
 }
 
-private size_t primitiveWidth(size_t integralDigits, ref scope const DecimalFixedPattern pattern) pure nothrow @nogc
+private pure nothrow @nogc size_t integerWidth(size_t integralDigits,
+        ref scope const DecimalFixedPattern pattern, bool arbitrary)
 {
     enum primitiveLimit = 309;
-    const maximum = pattern.maximumIntegerDigits < primitiveLimit ? pattern.maximumIntegerDigits : primitiveLimit;
+    const maximum = arbitrary || pattern.maximumIntegerDigits < primitiveLimit
+        ? pattern.maximumIntegerDigits : primitiveLimit;
     const width = integralDigits > pattern.minimumIntegerDigits ? integralDigits : pattern.minimumIntegerDigits;
     return width < maximum ? width : maximum;
 }
