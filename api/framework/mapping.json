@@ -5711,6 +5711,7 @@
 "java.lang.**":{"status":"excluded","category":"deferred","phase":"2"},
 "java.lang.System":{"status":"ported","d":"flint.java.lang.system.System"},
 "java.lang.System#currentTimeMillis()":{"status":"ported","d":"flint.java.lang.system.System.currentTimeMillis"},
+"java.lang.System#nanoTime()":{"status":"ported","d":"flint.java.lang.system.System.nanoTime"},
 "java.lang.System#lineSeparator()":{"status":"ported","d":"flint.java.lang.system.System.lineSeparator"},
 "java.lang.ArithmeticException":{"d":"flint.java.lang.ArithmeticException","rules":["R26"],"status":"adapted","note":"A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String."},
 "java.lang.ArithmeticException#<init>()":{"d":"flint.java.lang.ArithmeticException.this","status":"ported"},

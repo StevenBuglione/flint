@@ -23,10 +23,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-// Modified by the Flint authors: use the target platform's line separator and Flint's wall clock.
+// Modified by the Flint authors: use the target platform's line separator and Flint's wall and monotonic clocks.
 module flint.java.lang.system;
 
-import flint.engine.aot.clock : wallMillis = currentTimeMillis;
+import flint.engine.aot.clock : monoNanos = nanoTime, wallMillis = currentTimeMillis;
 
 @safe:
 
@@ -35,6 +35,9 @@ struct System
 {
     /// Read the wall clock in signed milliseconds since the Unix epoch.
     alias currentTimeMillis = wallMillis;
+
+    /// Read the monotonic clock in nanoseconds from an arbitrary origin. Only differences between reads are meaningful.
+    alias nanoTime = monoNanos;
 
     /// The target platform's initial line separator, independent of later property changes.
     static string lineSeparator() pure nothrow @nogc
