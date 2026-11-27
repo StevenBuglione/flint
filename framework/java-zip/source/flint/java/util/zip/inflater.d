@@ -211,7 +211,8 @@ class Inflater
     {
         synchronized (lock)
         {
-            requireSuccess(stream.close());
+            // Java's end() releases the stream without reporting zlib's final status.
+            stream.close();
             input = null;
         }
     }

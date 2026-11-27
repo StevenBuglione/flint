@@ -239,10 +239,9 @@ class Deflater
     {
         synchronized (lock)
         {
-            const status = stream.close();
+            // Java's end() releases the stream without reporting zlib's final status.
+            stream.close();
             input = null;
-            if (status != StreamStatus.dataError)
-                requireSuccess(status);
         }
     }
 
