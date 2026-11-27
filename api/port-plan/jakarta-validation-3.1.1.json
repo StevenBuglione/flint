@@ -86,7 +86,10 @@
 "kind": "struct",
 "module": "flint.jakarta.validation",
 "d": "Valid",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.Validation": {
 "kind": "final class",
@@ -116,133 +119,199 @@
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "AssertFalse",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.AssertTrue": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "AssertTrue",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.DecimalMax": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "DecimalMax",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.DecimalMin": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "DecimalMin",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Digits": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Digits",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Email": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Email",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Future": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Future",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.FutureOrPresent": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "FutureOrPresent",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Max": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Max",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Min": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Min",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Negative": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Negative",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.NegativeOrZero": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "NegativeOrZero",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.NotBlank": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "NotBlank",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.NotEmpty": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "NotEmpty",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.NotNull": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "NotNull",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Null": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Null",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Past": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Past",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.PastOrPresent": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "PastOrPresent",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Pattern": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Pattern",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Positive": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Positive",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.PositiveOrZero": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "PositiveOrZero",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.constraints.Size": {
 "kind": "struct",
 "module": "flint.jakarta.validation.constraints",
 "d": "Size",
-"status": "ported"
+"status": "adapted",
+"rules": [
+"R2"
+]
 },
 "jakarta.validation.groups.Default": {
 "kind": "interface",
@@ -264,5 +333,34 @@
 "status": "ported",
 "storage": "unset"
 }
+},
+"unresolved": {
+"jakarta.validation.ConstraintValidator": "flint.jakarta.validation.ConstraintValidator is a D template, which a plan kind does not describe yet",
+"jakarta.validation.ConstraintValidatorContext.ConstraintViolationBuilder": "no registered package declares flint.jakarta.validation.ConstraintValidatorContext",
+"jakarta.validation.MessageInterpolator.Context": "no registered package declares flint.jakarta.validation.MessageInterpolator",
+"jakarta.validation.Path.Node": "no registered package declares flint.jakarta.validation.Path",
+"jakarta.validation.constraints.AssertFalse.List": "no registered package declares flint.jakarta.validation.constraints.AssertFalse",
+"jakarta.validation.constraints.AssertTrue.List": "no registered package declares flint.jakarta.validation.constraints.AssertTrue",
+"jakarta.validation.constraints.DecimalMax.List": "no registered package declares flint.jakarta.validation.constraints.DecimalMax",
+"jakarta.validation.constraints.DecimalMin.List": "no registered package declares flint.jakarta.validation.constraints.DecimalMin",
+"jakarta.validation.constraints.Digits.List": "no registered package declares flint.jakarta.validation.constraints.Digits",
+"jakarta.validation.constraints.Email.List": "no registered package declares flint.jakarta.validation.constraints.Email",
+"jakarta.validation.constraints.Future.List": "no registered package declares flint.jakarta.validation.constraints.Future",
+"jakarta.validation.constraints.FutureOrPresent.List": "no registered package declares flint.jakarta.validation.constraints.FutureOrPresent",
+"jakarta.validation.constraints.Max.List": "no registered package declares flint.jakarta.validation.constraints.Max",
+"jakarta.validation.constraints.Min.List": "no registered package declares flint.jakarta.validation.constraints.Min",
+"jakarta.validation.constraints.Negative.List": "no registered package declares flint.jakarta.validation.constraints.Negative",
+"jakarta.validation.constraints.NegativeOrZero.List": "no registered package declares flint.jakarta.validation.constraints.NegativeOrZero",
+"jakarta.validation.constraints.NotBlank.List": "no registered package declares flint.jakarta.validation.constraints.NotBlank",
+"jakarta.validation.constraints.NotEmpty.List": "no registered package declares flint.jakarta.validation.constraints.NotEmpty",
+"jakarta.validation.constraints.NotNull.List": "no registered package declares flint.jakarta.validation.constraints.NotNull",
+"jakarta.validation.constraints.Null.List": "no registered package declares flint.jakarta.validation.constraints.Null",
+"jakarta.validation.constraints.Past.List": "no registered package declares flint.jakarta.validation.constraints.Past",
+"jakarta.validation.constraints.PastOrPresent.List": "no registered package declares flint.jakarta.validation.constraints.PastOrPresent",
+"jakarta.validation.constraints.Pattern.Flag": "no registered package declares flint.jakarta.validation.constraints.Pattern",
+"jakarta.validation.constraints.Pattern.List": "no registered package declares flint.jakarta.validation.constraints.Pattern",
+"jakarta.validation.constraints.Positive.List": "no registered package declares flint.jakarta.validation.constraints.Positive",
+"jakarta.validation.constraints.PositiveOrZero.List": "no registered package declares flint.jakarta.validation.constraints.PositiveOrZero",
+"jakarta.validation.constraints.Size.List": "no registered package declares flint.jakarta.validation.constraints.Size"
 }
 }

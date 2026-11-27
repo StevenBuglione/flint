@@ -241,5 +241,23 @@
 "d": "ValueNode",
 "status": "ported"
 }
+},
+"unresolved": {
+"tools.jackson.databind.EnumNamingStrategies.KebabCaseStrategy": "no registered package declares flint.jackson.databind.EnumNamingStrategies",
+"tools.jackson.databind.EnumNamingStrategies.LowerCamelCaseStrategy": "no registered package declares flint.jackson.databind.EnumNamingStrategies",
+"tools.jackson.databind.EnumNamingStrategies.LowerCaseStrategy": "no registered package declares flint.jackson.databind.EnumNamingStrategies",
+"tools.jackson.databind.EnumNamingStrategies.LowerDotCaseStrategy": "no registered package declares flint.jackson.databind.EnumNamingStrategies",
+"tools.jackson.databind.EnumNamingStrategies.SnakeCaseStrategy": "no registered package declares flint.jackson.databind.EnumNamingStrategies",
+"tools.jackson.databind.EnumNamingStrategies.UpperCamelCaseStrategy": "no registered package declares flint.jackson.databind.EnumNamingStrategies",
+"tools.jackson.databind.EnumNamingStrategies.UpperSnakeCaseStrategy": "no registered package declares flint.jackson.databind.EnumNamingStrategies",
+"tools.jackson.databind.PropertyNamingStrategies.KebabCaseStrategy": "no registered package declares flint.jackson.databind.PropertyNamingStrategies",
+"tools.jackson.databind.PropertyNamingStrategies.LowerCamelCaseStrategy": "no registered package declares flint.jackson.databind.PropertyNamingStrategies",
+"tools.jackson.databind.PropertyNamingStrategies.LowerCaseStrategy": "no registered package declares flint.jackson.databind.PropertyNamingStrategies",
+"tools.jackson.databind.PropertyNamingStrategies.LowerDotCaseStrategy": "no registered package declares flint.jackson.databind.PropertyNamingStrategies",
+"tools.jackson.databind.PropertyNamingStrategies.NamingBase": "no registered package declares flint.jackson.databind.PropertyNamingStrategies",
+"tools.jackson.databind.PropertyNamingStrategies.SnakeCaseStrategy": "no registered package declares flint.jackson.databind.PropertyNamingStrategies",
+"tools.jackson.databind.PropertyNamingStrategies.UpperCamelCaseStrategy": "no registered package declares flint.jackson.databind.PropertyNamingStrategies",
+"tools.jackson.databind.PropertyNamingStrategies.UpperSnakeCaseStrategy": "no registered package declares flint.jackson.databind.PropertyNamingStrategies",
+"tools.jackson.databind.json.JsonMapper.Builder": "no registered package declares flint.jackson.databind.JsonMapper"
 }
 }

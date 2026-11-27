@@ -212,5 +212,13 @@
 "d": "PropertyAccessor",
 "status": "ported"
 }
+},
+"unresolved": {
+"com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility": "no registered package declares flint.jackson.annotation.JsonAutoDetect",
+"com.fasterxml.jackson.annotation.JsonCreator.Mode": "no registered package declares flint.jackson.annotation.JsonCreator",
+"com.fasterxml.jackson.annotation.JsonFormat.Feature": "no registered package declares flint.jackson.annotation.JsonFormat",
+"com.fasterxml.jackson.annotation.JsonFormat.Shape": "no registered package declares flint.jackson.annotation.JsonFormat",
+"com.fasterxml.jackson.annotation.JsonInclude.Include": "no registered package declares flint.jackson.annotation.JsonInclude",
+"com.fasterxml.jackson.annotation.JsonProperty.Access": "no registered package declares flint.jackson.annotation.JsonProperty"
 }
 }

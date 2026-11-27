@@ -268,5 +268,17 @@
 "d": "TimeUtils",
 "status": "ported"
 }
+},
+"unresolved": {
+"io.micrometer.core.instrument.Counter.Builder": "no registered package declares flint.micrometer.core.instrument.Counter",
+"io.micrometer.core.instrument.DistributionSummary.Builder": "no registered package declares flint.micrometer.core.instrument.DistributionSummary",
+"io.micrometer.core.instrument.LongTaskTimer.Sample": "no registered package declares flint.micrometer.core.instrument.LongTaskTimer",
+"io.micrometer.core.instrument.Meter.Id": "no registered package declares flint.micrometer.core.instrument.Meter",
+"io.micrometer.core.instrument.Meter.MeterProvider": "no registered package declares flint.micrometer.core.instrument.Meter",
+"io.micrometer.core.instrument.Meter.Type": "no registered package declares flint.micrometer.core.instrument.Meter",
+"io.micrometer.core.instrument.MeterRegistry.Config": "no registered package declares flint.micrometer.core.instrument.MeterRegistry",
+"io.micrometer.core.instrument.Timer.Builder": "no registered package declares flint.micrometer.core.instrument.Timer",
+"io.micrometer.core.instrument.Timer.Sample": "no registered package declares flint.micrometer.core.instrument.Timer",
+"io.micrometer.core.instrument.distribution.DistributionStatisticConfig.Builder": "no registered package declares flint.micrometer.core.instrument.distribution.DistributionStatisticConfig"
 }
 }

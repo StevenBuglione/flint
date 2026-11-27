@@ -50,5 +50,8 @@
 "d": "Resources",
 "status": "ported"
 }
+},
+"unresolved": {
+"jakarta.annotation.Resource.AuthenticationType": "no registered package declares flint.jakarta.annotation.Resource"
 }
 }
