@@ -5,6 +5,8 @@
         "data": [],
         "leaves": [
           "flint.java.io",
+          "flint.java.io.closeable",
+          "flint.java.io.flushable",
           "flint.java.lang"
         ],
         "source": "closure/unsupported.d"
