@@ -1,60 +1,2784 @@
 {
-  "schema": "flint.upstream-tests/1",
-  "upstream": "openjdk@21.0.13",
+  "classes": {
+    "java/net/Authenticator/AuthNPETest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/B4678055.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/B4722333.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/B4759514.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/B4769350.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/B4921848.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/B4962064.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/B6870935.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/B8034170.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/BasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/BasicTest3.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/BasicTest4.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/Deadlock.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Authenticator/GetAuthenticatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/B6499348.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/BindException/Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieHandler/B6277794.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieHandler/B6644726.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieHandler/B6791927.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieHandler/CookieHandlerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieHandler/CookieManagerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieHandler/EmptyCookieHeader.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieHandler/LocalHostCookie.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieHandler/NullUriCookieTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieHandler/TestHttpCookie.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/CookieStoreTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramPacket/CheckBoundaries.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramPacket/Constructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramPacket/Getters.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramPacket/Offset.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramPacket/ReuseBuf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramPacket/Setters.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramPacket/Unresolved.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/AddressNotSet.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/B6411513.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/B8035653.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/BindFailTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/ConnectPortZero.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/Constructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/DatagramSocketExample.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/DatagramSocketMulticasting.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/DatagramTimeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/GetLocalAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/ImplicitBind.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/InheritHandle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/InterruptibleDatagramSocket.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/LocalSocketAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/OldDatagramSocketImplTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/PortUnreachable.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/ReportSocketClosed.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/ReuseAddressTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/Send12k.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/SendCheck.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/SendDatagramToBadAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/SendPortZero.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/SendReceiveMaxSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/SendSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/SetDatagramSocketImplFactory/ADatagramSocket.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/SetGetReceiveBufferSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/SetGetSendBufferSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/SupportedOptionsCheck.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/TestAfterClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/TimeoutWithSM.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocket/UnreferencedDatagramSockets.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocketImpl/CheckDiscard.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocketImpl/TestCreate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/DatagramSocketImpl/TestDefaultBehavior.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpCookie/CookieNegativeMaxAge.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpCookie/ExpiredCookieTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpCookie/IllegalCookieNameTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/HttpResponseCode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/HttpURLConWithProxy.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/HttpURLConnUsingProxy.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/HttpURLConnectionExpect100Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/HttpURLConnectionExpectContinueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/HttpURLConnectionHeadersOrder.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/HttpURLProxySelectionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/NoProxyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/Response1xxTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/SetAuthenticator/HTTPSetAuthenticatorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/SetAuthenticator/HTTPTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/UnmodifiableMaps.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HttpURLConnection/getResponseCode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/HugeDataTransferTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/IDN/IllegalArg.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/IDN/UseSTD3ASCIIRules.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/IPSupport/MinimumPermissions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet4Address/PingThis.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet4Address/isSiteLocalAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet4Address/textToNumericFormat.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/B4923906.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/B6206527.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/B6558853.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/IPv6AddressTypes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/IPv6Numeric.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/PreferIPv6AddressesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/Scoping.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/StringScope.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/serialize/Inet6AddressSerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/serialize/Inet6AddressSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Inet6Address/serialize/Serialize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/B5087907.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/B6246242.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/B6296240.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/BadDottedIPAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/CachedUnknownHostName.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/CheckJNI.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/GetLocalHostWithSM.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/GetLoopbackAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/HashSpread.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/HostsFileOrderingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/IPv4Formats.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/InternalNameServiceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/InternalNameServiceWithHostsFileTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/InternalNameServiceWithNoHostsFileTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/IsHostReachableBug.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/IsReachable.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/IsReachableViaLoopbackTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/NullCharInHostnameDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/WhiteSpaceHostTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/getOriginalHostName.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetAddress/ptr/Lookup.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetSocketAddress/B4849451.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetSocketAddress/B6469803.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetSocketAddress/CreateUnresolved.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InetSocketAddress/ToString.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InterfaceAddress/Equals.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/InterfaceAddress/NetworkPrefixLength.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/JarURLConnection/TestDefaultBehavior.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/B6425815.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/B6427403.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/Constructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/IPMulticastIF.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/JoinLeave.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/MultiDead.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/MulticastAddresses.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/MulticastTTL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/NetworkInterfaceEmptyGetInetAddressesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/NoLoopbackPackets.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/NoSetNetworkInterface.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/Promiscuous.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/PromiscuousIPv6.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/Reuse.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/SendPortZero.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/SetGetNetworkInterfaceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/SetLoopbackMode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/SetLoopbackModeIPv4.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/SetLoopbackOption.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/SetOutgoingIf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/SetTTLAndGetTTL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/SetTTLTo0.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/TestDefaults.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/TestInterfaces.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/TimeToLive.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/MulticastSocket/UnreferencedMulticastSockets.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkConfigurationProbe.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/Equals.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/GetMacAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/IPv4Only.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/IndexTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/NetParamsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/NetworkInterfaceRetrievalTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/NetworkInterfaceStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/NullMacAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/SubNetworkInterfaceTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/NetworkInterface/UniqueMacAddressesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/PlainSocketImpl/BigBacklog.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/PlainSocketImpl/CustomSocketImplFactory.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/PlainSocketImpl/SetBufferSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/PlainSocketImpl/SetOption.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/PortUnreachableException/Concurrent.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/PortUnreachableException/OneExceptionOnly.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/PortUnreachableException/Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ProxySelector/B6563259.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ProxySelector/B6737819.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ProxySelector/B8035158.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ProxySelector/LoopbackAddresses.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ProxySelector/MultiThreadedSystemProxies.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ProxySelector/NullArguments.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ProxySelector/NullSelector.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ProxySelector/ProxyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ProxySelector/SystemProxies.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ResponseCache/B6181108.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ResponseCache/ResponseCacheTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ResponseCache/Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ResponseCache/Test2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ResponseCache/getResponseCode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SctpSanity.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/AcceptCauseFileDescriptorLeak.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/AcceptInheritHandle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/AnotherSelectFdsLimit.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/ImplAccept.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/IsClosedAfterAsyncClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/NullConstructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/SelectFdsLimit.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/TestAfterClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/TestLocalAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ServerSocket/UnreferencedSockets.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SetFactoryPermission/SetFactoryPermission.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/AddressTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/AsyncShutdown.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/B6210227.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/CloseAvailable.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/ConnectionReset.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/DeadlockTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/ExceptionText.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/GetLocalAddress.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/HttpProxy.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/IDNTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/InheritHandle.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/InheritTimeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/LinkLocal.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/NullHost.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/OldSocketImplTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/ProxyCons.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/RST.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/ReadAfterReset.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/ReadTimeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/RejectIPv6.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/SetReceiveBufferSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/SetSoLinger.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/ShutdownBoth.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/ShutdownInput.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/SoTimeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/SocketAcceptInterruptTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/SocketGrowth.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/SocketReadInterruptTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/SocksConnectTimeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/Streams.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/TestAfterClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/TestClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/TestTcpNoDelay.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/Timeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/Timeouts.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/TrafficClass.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/UdpSocket.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/UrgentDataTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/asyncClose/AsyncClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/asyncClose/BrokenPipe.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/asyncClose/Leaky.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/asyncClose/Race.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/setReuseAddress/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socket/setReuseAddress/Restart.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketException/TestSocketExceptionCtor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketImpl/BadUsages.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketImpl/ImplSupportedOptions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketImpl/SocketImplCombinations.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketImpl/TestDefaultBehavior.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketInputStream/SocketClosedException.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketInputStream/SocketTimeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/AfterClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/CachedImplOptions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/ImmutableOptions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/MinimumRcvBufferSize.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/NullsAndBadValues.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/OptionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/RequiredOptions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/SupportedOptionsSet.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/TcpKeepAliveTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketOption/UnsupportedOptionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketPermission/ActionSpace.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketPermission/B4414825.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketPermission/Ctor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketPermission/Equals.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketPermission/NoAction.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketPermission/SocketPermissionCollection.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketPermission/SocketPermissionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/SocketPermission/Wildcard.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socks/BadProxySelector.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socks/SocksIPv6Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socks/SocksProxyVersion.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socks/SocksSocketImplTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/Socks/SocksV4Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URI/RelativeEncoding.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URI/Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URI/URItoURLTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/B4148751.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/B5086147.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/B6529759.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/B8282395.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/Constructor.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/EarlyOrDelayedParsing.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/Equals.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/GetContent.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/GetDefaultPort.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/HandlerLoop.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/HandlersPkgPrefix/HandlersPkgPrefix.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/HashCode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/JarHandlerPkgPrefix/JarHandlerPkgPrefix.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/LocaleDependentURLTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/NonOverridableHandlerFactory.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/OpenConnection.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/OpenStream.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/ParseAuthority.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/ParseURL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/PerConnectionProxy.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/Protocol.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/RacyHandler.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/RelativePath.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/RelativeURL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/RelativeURLTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/RestoreURL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/SpecifyHandler.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/TestIPv6Addresses.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/TestPort.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/TestRFC2732.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/URIToURLTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/URLFromURITest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URL/UppercaseScheme.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/AddURLTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/B6827999.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/B6896088.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/B7050028.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/ClassLoad.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/ClassPathTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/FindResourceDoesNotThrowException.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/GetURLsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/HttpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/NullURLTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/RemoveJar.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/URLParsing.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/closetest/CloseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/closetest/GetResourceAsStream.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/definePackage/SplitPackage.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/getresourceasstream/TestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLClassLoader/sealing/CheckSealedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/6212146/TestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/B5052093.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/ChunkedEncoding.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/Connect.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/ContentHandlers/ContentHandlersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/DisconnectAfterEOF.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/ExifContentGuesser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/GetContentType.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/GetFileNameMap.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/GetLastModified.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/GetResponseCode.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/GetXmlContentType.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/HandleContentTypeWithAttrs.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/HttpContinueStackOverflow.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/Redirect307Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/RedirectLimit.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/RequestProperties.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/RequestPropertyValues.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/ResendPostBody.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/Responses.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/SetDefaultUseCaches.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/SetIfModifiedSince.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/TIFFContentGuesser.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/TimeoutTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/UNCTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/URLConnectionHeaders.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/URLConnectionHeadersOrder.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/UnknownContentType.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/ZeroContentLength.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLConnection/contentHandler/UserContentHandler.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLDecoder/B6463990.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLDecoder/EncodeDecode.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLDecoder/EncodingTest.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLDecoder/URLDecoderArgs.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLEncoder/DecodeNonEncoded.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLEncoder/Decoder.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLEncoder/EncodingTest.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLEncoder/SurrogatePairs.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLEncoder/URLEncodeDecode.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLEncoder/URLEncoderEncodeArgs.java": {
+      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "status": "excluded"
+    },
+    "java/net/URLPermission/InvalidCharacterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLPermission/OpenURL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLPermission/URLPermissionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLPermission/URLTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLPermission/nstest/LookupTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/URLStreamHandler/TestDefaultBehavior.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/UnixDomainSocketAddress/AddressTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/UnixDomainSocketAddress/LengthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/UnixDomainSocketAddress/UnixDomainSocketAddressSerializationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ALPNFailureTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ALPNProxyFailureTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AbstractConnectTimeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AbstractConnectTimeoutHandshake.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AbstractThrowingPublishers.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AbstractThrowingPushPromises.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AbstractThrowingSubscribers.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AggregateRequestBodyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AsFileDownloadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AsyncExecutorShutdown.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AsyncShutdownNow.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AuthFilter.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AuthFilterCacheTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/AuthSchemesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/BasicAuthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/BasicRedirectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/BodyProcessorInputStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/BodySubscribersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/BufferingSubscriberCancelTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/BufferingSubscriberErrorCompleteTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/BufferingSubscriberTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ByteArrayPublishers.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/CancelRequestTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/CancelStreamedBodyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/CancelledResponse.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/CancelledResponse2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ConcurrentResponses.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ConnectExceptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ConnectTimeoutHandshakeAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ConnectTimeoutHandshakeSync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ConnectTimeoutNoProxyAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ConnectTimeoutNoProxySync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ConnectTimeoutWithProxyAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ConnectTimeoutWithProxySync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ContentLengthHeaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/CookieHeaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/CustomRequestPublisher.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/CustomResponseSubscriber.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/DebugLoggerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/DependentActionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/DependentPromiseActionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/DigestEchoClient.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/DigestEchoClientSSL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/EmptyAuthenticate.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/EncodedCharsInURI.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/EscapedOctetsInURI.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ExecutorShutdown.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ExpectContinue.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ExpectContinueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/FilePublisher/FilePublisherPermsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/FilePublisher/FilePublisherTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/FlowAdapterPublisherTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/FlowAdapterSubscriberTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/FlowAdaptersCompileOnly.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ForbiddenHeadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/GZIPInputStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HandshakeFailureTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HeadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HeadersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HeadersTest1.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HeadersTest2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/Http1ChunkedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpClientBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpClientClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpClientExceptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpClientLocalAddrTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpClientShutdown.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpGetInCancelledFuture.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpHeadersOf.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpInputStreamAvailableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpInputStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpRedirectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpRequestBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpRequestNewBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpResponseInputStreamInterruptTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpResponseInputStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpSlowServerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpVersionsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpsTunnelAuthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/HttpsTunnelTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ISO_8859_1_Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ImmutableFlowItems.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ImmutableHeaders.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/InterruptedBlockingSend.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/InvalidInputStreamSubscriptionRequest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/InvalidSSLContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/InvalidSubscriptionRequest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/LargeHandshakeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/LargeResponseContent.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/LargeResponseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/LineAdaptersCompileOnly.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/LineBodyHandlerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/LineStreamsAndSurrogatesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/LineSubscribersAndSurrogatesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ManyRequests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ManyRequests2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ManyRequestsLegacy.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/MappingResponseSubscriber.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/MaxStreams.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/MessageHeadersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/MethodsTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/MultiAuthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/NoBodyPartOne.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/NoBodyPartThree.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/NoBodyPartTwo.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/NonAsciiCharsInURI.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/PathSubscriber/BodyHandlerOfFileDownloadTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/PathSubscriber/BodyHandlerOfFileTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/PathSubscriber/BodySubscriberOfFileTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/PlainProxyConnectionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ProxyAuthDisabledSchemes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ProxyAuthDisabledSchemesSSL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ProxyAuthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ProxySelectorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ProxyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/RedirectMethodChange.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/RedirectTimeoutTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/RedirectWithCookie.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/RelayingPublishers.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/RequestBodyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/RequestBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/Response1xxTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/Response204.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/Response204V2Test.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ResponseBodyBeforeError.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ResponsePublisher.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/RestrictedHeadersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/RetryPost.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/RetryWithCookie.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SSLExceptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SendResponseHeadersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ServerCloseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ShortRequestBody.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ShortResponseBody.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ShortResponseBodyGet.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ShortResponseBodyPost.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ShortResponseBodyPostWithRetry.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ShutdownNow.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SmallTimeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SmokeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SpecialHeadersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SplitResponse.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SplitResponseAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SplitResponseKeepAlive.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SplitResponseKeepAliveAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SplitResponseSSL.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SplitResponseSSLAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SplitResponseSSLKeepAlive.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SplitResponseSSLKeepAliveAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/StreamCloseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/StreamingBody.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/SubscriberPublisherAPIExceptions.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/TestKitTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPublishersCustomAfterCancel.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPublishersCustomBeforeCancel.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPublishersIOAfterCancel.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPublishersIOBeforeCancel.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPublishersInNextRequest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPublishersInRequest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPublishersInSubscribe.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPublishersSanity.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPushPromisesAsInputStreamCustom.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPushPromisesAsInputStreamIO.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPushPromisesAsLinesCustom.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPushPromisesAsLinesIO.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPushPromisesAsStringCustom.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPushPromisesAsStringIO.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingPushPromisesSanity.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingSubscribersAsInputStream.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingSubscribersAsInputStreamAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingSubscribersAsLines.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingSubscribersAsLinesAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingSubscribersAsString.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingSubscribersAsStringAsync.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ThrowingSubscribersSanity.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/TimeoutBasic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/TimeoutOrdering.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/TlsContextTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/UnauthorizedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/UnknownBodyLengthTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/UserCookieTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/VersionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ZeroRedirects.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/examples/JavadocExamples.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/examples/WebSocketExample.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/BadHeadersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/BasicTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/ConnectionFlowControlTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/ConnectionReuseTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/ContinuationFrameTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/ErrorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/FixedThreadPoolTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/H2GoAwayTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/HpackBinaryTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/HpackCircularBufferDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/HpackDecoderDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/HpackEncoderDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/HpackHeaderTableDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/HpackHuffmanDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/HpackTestHelper.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/IdleConnectionTimeoutTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/IdlePooledConnectionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/ImplicitPushCancel.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/NoBodyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/PostPutTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/ProxyTest2.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/PushPromiseContinuation.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/RedirectTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/ServerPush.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/ServerPushWithDiffTypes.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/StreamFlowControlTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/TLSConnection.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/Timeout.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/TrailingHeadersTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/UserInfoTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/java.net.http/jdk/internal/net/http/hpack/BinaryPrimitivesTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/java.net.http/jdk/internal/net/http/hpack/CircularBufferTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/java.net.http/jdk/internal/net/http/hpack/DecoderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/java.net.http/jdk/internal/net/http/hpack/EncoderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/java.net.http/jdk/internal/net/http/hpack/HeaderTableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/java.net.http/jdk/internal/net/http/hpack/HuffmanTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/java.net.http/jdk/internal/net/http/hpack/SimpleHeaderTableTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/http2/java.net.http/jdk/internal/net/http/hpack/TestHelper.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/offline/OfflineTesting.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/security/Driver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/security/Security.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/security/filePerms/FileProcessorPermissionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/security/filePerms/SecurityBeforeFile.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ssltest/CertificateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/ssltest/TlsVersionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/Abort.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/AutomaticPong.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/BlowupOutputQueue.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/ConnectionHandoverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/HandshakeUrlEncodingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/HeaderWriterDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/MaskerDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/MessageQueueDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/PendingBinaryPingClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/PendingBinaryPongClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/PendingPingBinaryClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/PendingPingTextClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/PendingPongBinaryClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/PendingPongTextClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/PendingTextPingClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/PendingTextPongClose.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/ReaderDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/SendTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/WSHandshakeExceptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/WebSocketBuilderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/WebSocketExtendedTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/WebSocketProxyTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/WebSocketServerDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/WebSocketTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/java.net.http/jdk/internal/net/http/websocket/HeaderWriterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/java.net.http/jdk/internal/net/http/websocket/MaskerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/java.net.http/jdk/internal/net/http/websocket/MessageQueueTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/java.net.http/jdk/internal/net/http/websocket/ReaderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/websocket/security/WSURLPermissionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/AuthenticationFilterTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/ConnectionPoolTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/DefaultProxyDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/DemandTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/FlowTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/FramesDecoderTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/Http1HeaderParserTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/MinimalFutureTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/RawChannelTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/SSLEchoTubeTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/SSLFlowDelegateTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/SSLTubeTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/SelectorTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/WindowControllerTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/WrapperTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/AuthenticationFilterTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/DefaultProxy.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/FlowTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/Http1HeaderParserTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/RawChannelTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/SSLEchoTubeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/SSLFlowDelegateTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/SSLTubeTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/SelectorTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/WindowControllerTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/WrapperTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/common/DemandTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/common/MinimalFutureTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/httpclient/whitebox/java.net.http/jdk/internal/net/http/frame/FramesDecoderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ipv6tests/B6521014.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ipv6tests/BadIPv6Addresses.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ipv6tests/ScopeTests.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ipv6tests/TcpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/ipv6tests/UdpTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/AddressesCachingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/AddressesStaleCachingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/BootstrapResolverUsageTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/BuiltInResolverTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/EmptyResultsStreamTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/InetAddressUsageInGetProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/LookupPolicyMappingTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/LookupPolicyOfTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/ProviderGetExceptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/ResolutionWithExceptionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/ResolvePermissionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/ReverseLookupDelegationTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/RuntimePermissionTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/serviceProviderOriginType/classpath/ClasspathProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/InetAddressResolverProvider/serviceProviderOriginType/module/ModularProviderTest.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/spi/URLStreamHandlerProvider/Basic.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/vthread/BlockingSocketOps.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/vthread/HttpALot.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/vthread/InterruptHttp.java": {
+      "phase": "2",
+      "status": "deferred"
+    },
+    "java/net/whitebox/CookieTestDriver.java": {
+      "phase": "2",
+      "status": "deferred"
+    }
+  },
   "module": "java-net",
+  "schema": "flint.upstream-tests/1",
   "test_packages": [
     ":java-net"
   ],
-  "classes": {
-    "java/net/URLDecoder/B6463990.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    },
-    "java/net/URLDecoder/EncodeDecode.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    },
-    "java/net/URLDecoder/EncodingTest.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    },
-    "java/net/URLDecoder/URLDecoderArgs.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    },
-    "java/net/URLEncoder/DecodeNonEncoded.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    },
-    "java/net/URLEncoder/Decoder.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    },
-    "java/net/URLEncoder/EncodingTest.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    },
-    "java/net/URLEncoder/SurrogatePairs.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    },
-    "java/net/URLEncoder/URLEncodeDecode.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    },
-    "java/net/URLEncoder/URLEncoderEncodeArgs.java": {
-      "status": "excluded",
-      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
-      "covered_by": "framework/java-net/tests/form_codec_contract_tests.d"
-    }
-  }
+  "upstream": "openjdk@21.0.13"
 }

@@ -1027,6 +1027,9 @@
     "java.net.URLDecoder",
     "java.net.URLEncoder"
    ],
+   "jtreg_paths": [
+    "java/net"
+   ],
    "dependencies": [
     "engine-aot",
     "java",
