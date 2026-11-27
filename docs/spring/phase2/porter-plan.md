@@ -80,10 +80,14 @@ It is required in the root gate set and in every lane's definition of done, and 
 
 ## Milestones
 
-Each milestone ends with its gates green and its reproduction rate published.
+Each milestone ends with its gates green and reports two numbers:
+- **correctness:** the corpus reproduction rate, per shape and per element;
+- **yield:** how many deferred elements, Phase 2 Spring and third-party plus the JDK's in-scope members, the porter can now emit a gate-passing candidate for, by shape.
 
-1. **M1:** gates (a), (b) and (d) over the shapes already supported, the port-plan seed, and provenance in mapping.json.
-2. **M2:** getters, setters, fields, `@ConfigurationProperties` and type declarations, plus trivial constructors. First target: Boot's configuration-property classes.
-3. **M3:** `equals`/`hashCode`/`toString`, records, builders, exception families and enums, with the behaviour oracle (c) and the first `flint check --perf` rules (f).
-4. **M4:** skeleton mode for every remaining body, and JUnit test translation.
+The order changed on 2026-11-27 18:45Z: skeleton mode moves ahead of M3, because it removes hand-written declarations for every type.
+
+1. **M1 (done 18:26Z, d0caeccbd):** gates (a), (b) and (d) over the shapes already supported, the port-plan seed, and provenance in mapping.json.
+2. **M2:** `@ConfigurationProperties` specs derived from the pinned Java and rendered by boot/tools/configuration_properties.py (M2a: 117/137 fields exact). Then R6 getters, setters and fields for ordinary classes, measured per element; the 40 pure-bean classes are also reproduced as whole types (M2b).
+3. **M3 (was M4):** skeleton mode for every type, with all declarations, signatures, mapping rows, DDoc and headers generated, and the bodies marked; plus JUnit test translation.
+4. **M4 (was M3):** `equals`/`hashCode`/`toString`, records, builders, exception families and enums, filling bodies inside skeletons. Also the behaviour oracle (c) and the first `flint check --perf` rules (f).
 5. **M5:** body statement forms, one rule ID at a time, chosen by how many deferred elements each unlocks.
