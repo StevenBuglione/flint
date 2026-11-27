@@ -641,10 +641,12 @@
     },
     "java/lang/Math/ExpCornerCaseTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 233,155-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.exp(double).",
       "status": "deferred"
     },
     "java/lang/Math/Expm1Tests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 233,155-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.expm1(double).",
       "status": "deferred"
     },
     "java/lang/Math/FusedMultiplyAddTests.java": {
@@ -654,6 +656,7 @@
     },
     "java/lang/Math/HyperbolicTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 233,155-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.sinh, Math.cosh and Math.tanh.",
       "status": "deferred"
     },
     "java/lang/Math/HypotTests.java": {
@@ -681,14 +684,17 @@
     },
     "java/lang/Math/Log10Tests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 233,155-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.log10(double).",
       "status": "deferred"
     },
     "java/lang/Math/Log1pTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 233,155-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.log1p(double).",
       "status": "deferred"
     },
     "java/lang/Math/LogTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 233,155-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.log(double).",
       "status": "deferred"
     },
     "java/lang/Math/MinMax.java": {
@@ -703,6 +709,7 @@
     },
     "java/lang/Math/PowTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 233,155-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.pow(double, double).",
       "status": "deferred"
     },
     "java/lang/Math/Rint.java": {

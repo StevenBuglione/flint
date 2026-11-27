@@ -1282,4 +1282,76 @@ struct Math
 
     /// IEEE-754 remainder of `f1` divided by `f2` (delegates to FDLIBM).
     alias IEEEremainder = ieeeRemainderImpl;
+
+    /// Euler's number `e` raised to the power of `a` (delegates to FDLIBM).
+    static double exp()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdExp;
+
+        return fdExp(a);
+    }
+
+    /// `e^x - 1` accurate near zero (delegates to FDLIBM).
+    static double expm1()(double x) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdExpm1;
+
+        return fdExpm1(x);
+    }
+
+    /// Natural logarithm (base `e`) of `a` (delegates to FDLIBM).
+    static double log()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdLog;
+
+        return fdLog(a);
+    }
+
+    /// Base-10 logarithm of `a` (delegates to FDLIBM).
+    static double log10()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdLog10;
+
+        return fdLog10(a);
+    }
+
+    /// Natural logarithm of `x + 1` accurate near zero (delegates to FDLIBM).
+    static double log1p()(double x) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdLog1p;
+
+        return fdLog1p(x);
+    }
+
+    /// `a` raised to the power of `b` (delegates to FDLIBM).
+    static double pow()(double a, double b) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdPow;
+
+        return fdPow(a, b);
+    }
+
+    /// Hyperbolic sine of `x` (delegates to FDLIBM).
+    static double sinh()(double x) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdSinh;
+
+        return fdSinh(x);
+    }
+
+    /// Hyperbolic cosine of `x` (delegates to FDLIBM).
+    static double cosh()(double x) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdCosh;
+
+        return fdCosh(x);
+    }
+
+    /// Hyperbolic tangent of `x` (delegates to FDLIBM).
+    static double tanh()(double x) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdTanh;
+
+        return fdTanh(x);
+    }
 }

@@ -424,3 +424,55 @@ private double fdlibmSlice1NoGc() pure nothrow @nogc
 {
     return Math.sqrt(2.0) + Math.cbrt(2.0) + Math.hypot(3.0, 4.0) + Math.IEEEremainder(5.0, 2.0);
 }
+
+@("Math exp, expm1, log, log10, log1p, pow and hyperbolic functions match Java special cases")
+unittest
+{
+    // exp & expm1
+    assert(sameDouble(Math.exp(0.0), 1.0) && sameDouble(Math.exp(-0.0), 1.0));
+    assert(sameDouble(Math.exp(double.infinity), double.infinity));
+    assert(dbits(Math.exp(-double.infinity)) == 0);
+    assert(sameDouble(Math.exp(double.nan), double.nan));
+    assert(sameDouble(Math.exp(710.0), double.infinity));
+    assert(dbits(Math.exp(-750.0)) == 0);
+    assert(dbits(Math.expm1(0.0)) == 0 && dbits(Math.expm1(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.expm1(double.infinity), double.infinity));
+    assert(sameDouble(Math.expm1(-double.infinity), -1.0));
+    assert(sameDouble(Math.expm1(double.nan), double.nan));
+
+    // log, log10, log1p
+    assert(dbits(Math.log(1.0)) == 0);
+    assert(sameDouble(Math.log(0.0), -double.infinity) && sameDouble(Math.log(-0.0), -double.infinity));
+    assert(sameDouble(Math.log(-1.0), double.nan) && sameDouble(Math.log(double.infinity), double.infinity));
+    assert(sameDouble(Math.log10(1.0), 0.0) && sameDouble(Math.log10(1000.0), 3.0));
+    assert(sameDouble(Math.log10(0.0), -double.infinity) && sameDouble(Math.log10(-1.0), double.nan));
+    assert(dbits(Math.log1p(0.0)) == 0 && dbits(Math.log1p(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.log1p(-1.0), -double.infinity) && sameDouble(Math.log1p(-2.0), double.nan));
+    assert(sameDouble(Math.log1p(double.infinity), double.infinity));
+
+    // pow special cases (including (-1)^inf = NaN, NaN^0 = 1, (-0)^odd = -0, (-2)^0.5 = NaN)
+    assert(sameDouble(Math.pow(double.nan, 0.0), 1.0) && sameDouble(Math.pow(double.nan, -0.0), 1.0));
+    assert(sameDouble(Math.pow(1.0, double.infinity), double.nan));
+    assert(sameDouble(Math.pow(-1.0, -double.infinity), double.nan));
+    assert(sameDouble(Math.pow(-2.0, 0.5), double.nan));
+    assert(sameDouble(Math.pow(-double.infinity, 0.5), double.infinity));
+    assert(dbits(Math.pow(-0.0, 3.0)) == 0x8000_0000_0000_0000UL);
+    assert(dbits(Math.pow(-0.0, 2.0)) == 0);
+    assert(sameDouble(Math.pow(2.0, 10.0), 1024.0) && sameDouble(Math.pow(-2.0, 3.0), -8.0));
+
+    // sinh, cosh, tanh
+    assert(dbits(Math.sinh(0.0)) == 0 && dbits(Math.sinh(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.sinh(double.infinity), double.infinity));
+    assert(sameDouble(Math.sinh(-double.infinity), -double.infinity));
+    assert(sameDouble(Math.cosh(0.0), 1.0) && sameDouble(Math.cosh(-0.0), 1.0));
+    assert(sameDouble(Math.cosh(-double.infinity), double.infinity));
+    assert(dbits(Math.tanh(0.0)) == 0 && dbits(Math.tanh(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.tanh(double.infinity), 1.0) && sameDouble(Math.tanh(-double.infinity), -1.0));
+    assert(sameDouble(Math.tanh(double.nan), double.nan));
+}
+
+private double fdlibmSlice2NoGc() pure nothrow @nogc
+{
+    return Math.exp(1.0) + Math.expm1(0.1) + Math.log(2.0) + Math.log10(10.0) + Math.log1p(0.1) + Math.pow(2.0,
+            3.0) + Math.sinh(1.0) + Math.cosh(1.0) + Math.tanh(1.0);
+}

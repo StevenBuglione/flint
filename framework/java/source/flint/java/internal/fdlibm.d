@@ -98,9 +98,48 @@ private double powerOfTwoD(int n) pure nothrow @nogc
 
 private enum double INFINITY = double.infinity;
 private enum double DOUBLE_MIN_NORMAL = 0x1.0p-1022;
+private enum double DOUBLE_MAX_VALUE = double.max;
+private enum double TWO54 = 0x1.0p54;
+private enum double TWO_TO_THE_DOUBLE_SCALE_UP = 0x1.0p512;
+private enum double TWO_TO_THE_DOUBLE_SCALE_DOWN = 0x1.0p-512;
 private enum int SIGN_BIT = cast(int) 0x8000_0000U;
 private enum int EXP_BITS = 0x7ff0_0000;
 private enum int EXP_SIGNIF_BITS = 0x7fff_ffff;
+
+private double scalbD(double d, int scaleFactor) pure nothrow @nogc
+{
+    enum int MAX_SCALE = 1023 + 1022 + 53 + 1;
+    int scaleIncrement;
+    double expDelta;
+
+    if (scaleFactor < 0)
+    {
+        if (scaleFactor < -MAX_SCALE)
+            scaleFactor = -MAX_SCALE;
+        scaleIncrement = -512;
+        expDelta = TWO_TO_THE_DOUBLE_SCALE_DOWN;
+    }
+    else
+    {
+        if (scaleFactor > MAX_SCALE)
+            scaleFactor = MAX_SCALE;
+        scaleIncrement = 512;
+        expDelta = TWO_TO_THE_DOUBLE_SCALE_UP;
+    }
+
+    const int t = (scaleFactor >> 8) >>> 23;
+    const int expAdjust = ((scaleFactor + t) & 511) - t;
+
+    d *= powerOfTwoD(expAdjust);
+    scaleFactor -= expAdjust;
+
+    while (scaleFactor != 0)
+    {
+        d *= expDelta;
+        scaleFactor -= scaleIncrement;
+    }
+    return d;
+}
 
 private void sqrtNormalizeSubnormal(ref int ix0, ref int ix1, ref int m) pure nothrow @nogc
 {
@@ -557,4 +596,827 @@ package(flint.java) double fdIEEEremainder(double x, double p) pure nothrow @nog
         }
     }
     return __HI(x, __HI(x) ^ sx);
+}
+
+private void expReduce(ref double x, int hx, int xsb, out double hi, out double lo, out int k) pure nothrow @nogc
+{
+    static immutable double[2] half = [0.5, -0.5];
+    static immutable double[2] ln2HI = [0x1.62e42feep-1, -0x1.62e42feep-1];
+    static immutable double[2] ln2LO = [0x1.a39ef35793c76p-33, -0x1.a39ef35793c76p-33];
+    enum double invln2 = 0x1.71547652b82fep0;
+
+    if (hx < 0x3FF0_A2B2)
+    {
+        hi = x - ln2HI[xsb];
+        lo = ln2LO[xsb];
+        k = 1 - xsb - xsb;
+    }
+    else
+    {
+        k = cast(int)(invln2 * x + half[xsb]);
+        const double t = k;
+        hi = x - t * ln2HI[0];
+        lo = t * ln2LO[0];
+    }
+    x = hi - lo;
+}
+
+/// Bit-exact FDLIBM exponential (`FdLibm.Exp.compute`).
+package(flint.java) double fdExp(double x) pure nothrow @nogc
+{
+    enum double huge = 1.0e+300;
+    enum double twom1000 = 0x1.0p-1000;
+    enum double oThreshold = 0x1.62e42fefa39efp9;
+    enum double uThreshold = -0x1.74910d52d3051p9;
+
+    enum double P1 = 0x1.555555555553ep-3;
+    enum double P2 = -0x1.6c16c16bebd93p-9;
+    enum double P3 = 0x1.1566aaf25de2cp-14;
+    enum double P4 = -0x1.bbd41c5d26bf1p-20;
+    enum double P5 = 0x1.6376972bea4d0p-25;
+
+    int hx = __HI(x);
+    const int xsb = (hx >> 31) & 1;
+    hx &= EXP_SIGNIF_BITS;
+
+    if (hx >= 0x4086_2E42)
+    {
+        if (hx >= EXP_BITS)
+        {
+            if (((hx & 0xf_ffff) | __LO(x)) != 0)
+                return x + x;
+            return xsb == 0 ? x : 0.0;
+        }
+        if (x > oThreshold)
+            return INFINITY;
+        if (x < uThreshold)
+            return 0.0;
+    }
+
+    double hi = 0.0;
+    double lo = 0.0;
+    int k = 0;
+
+    if (hx > 0x3fd6_2e42)
+    {
+        expReduce(x, hx, xsb, hi, lo, k);
+    }
+    else if (hx < 0x3e30_0000)
+    {
+        if (huge + x > 1.0)
+            return 1.0 + x;
+    }
+
+    const double t = x * x;
+    const double c = x - t * (P1 + t * (P2 + t * (P3 + t * (P4 + t * P5))));
+    if (k == 0)
+        return 1.0 - ((x * c) / (c - 2.0) - x);
+
+    double y = 1.0 - ((lo - (x * c) / (2.0 - c)) - hi);
+    if (k >= -1021)
+    {
+        y = __HI(y, __HI(y) + (k << 20));
+        return y;
+    }
+    y = __HI(y, __HI(y) + ((k + 1000) << 20));
+    return y * twom1000;
+}
+
+private double expm1Scale(double x, double e, int k) pure nothrow @nogc
+{
+    if (k == -1)
+        return 0.5 * (x - e) - 0.5;
+    if (k == 1)
+    {
+        if (x < -0.25)
+            return -2.0 * (e - (x + 0.5));
+        return 1.0 + 2.0 * (x - e);
+    }
+    if (k <= -2 || k > 56)
+    {
+        double y = 1.0 - (e - x);
+        y = __HI(y, __HI(y) + (k << 20));
+        return y - 1.0;
+    }
+    double t = 1.0;
+    double y;
+    if (k < 20)
+    {
+        t = __HI(t, 0x3ff0_0000 - (0x2_00000 >> k));
+        y = t - (e - x);
+        y = __HI(y, __HI(y) + (k << 20));
+    }
+    else
+    {
+        t = __HI(t, (0x3ff - k) << 20);
+        y = x - (e + t);
+        y += 1.0;
+        y = __HI(y, __HI(y) + (k << 20));
+    }
+    return y;
+}
+
+private void expm1Reduce(ref double x, int hx, int xsb, out double c, out int k) pure nothrow @nogc
+{
+    enum double ln2Hi = 0x1.62e42feep-1;
+    enum double ln2Lo = 0x1.a39ef35793c76p-33;
+    enum double invln2 = 0x1.71547652b82fep0;
+
+    double hi;
+    double lo;
+    if (hx < 0x3FF0_A2B2)
+    {
+        if (xsb == 0)
+        {
+            hi = x - ln2Hi;
+            lo = ln2Lo;
+            k = 1;
+        }
+        else
+        {
+            hi = x + ln2Hi;
+            lo = -ln2Lo;
+            k = -1;
+        }
+    }
+    else
+    {
+        k = cast(int)(invln2 * x + (xsb == 0 ? 0.5 : -0.5));
+        const double t = k;
+        hi = x - t * ln2Hi;
+        lo = t * ln2Lo;
+    }
+    x = hi - lo;
+    c = (hi - x) - lo;
+}
+
+/// Bit-exact FDLIBM `exp(x) - 1` (`FdLibm.Expm1.compute`).
+package(flint.java) double fdExpm1(double x) pure nothrow @nogc
+{
+    enum double oThreshold = 0x1.62e42fefa39efp9;
+    enum double Q1 = -0x1.11111111110f4p-5;
+    enum double Q2 = 0x1.a01a019fe5585p-10;
+    enum double Q3 = -0x1.4ce199eaadbb7p-14;
+    enum double Q4 = 0x1.0cfca86e65239p-18;
+    enum double Q5 = -0x1.afdb76e09c32dp-23;
+
+    int hx = __HI(x);
+    const int xsb = hx & SIGN_BIT;
+    hx &= EXP_SIGNIF_BITS;
+
+    if (hx >= 0x4043_687A)
+    {
+        if (hx >= 0x4086_2E42)
+        {
+            if (hx >= EXP_BITS)
+            {
+                if (((hx & 0xf_ffff) | __LO(x)) != 0)
+                    return x + x;
+                return xsb == 0 ? x : -1.0;
+            }
+            if (x > oThreshold)
+                return INFINITY;
+        }
+        if (xsb != 0)
+            return -1.0;
+    }
+
+    double c = 0.0;
+    int k = 0;
+
+    if (hx > 0x3fd6_2e42)
+        expm1Reduce(x, hx, xsb, c, k);
+    else if (hx < 0x3c90_0000)
+        return x;
+
+    const double hfx = 0.5 * x;
+    const double hxs = x * hfx;
+    const double r1 = 1.0 + hxs * (Q1 + hxs * (Q2 + hxs * (Q3 + hxs * (Q4 + hxs * Q5))));
+    const double t = 3.0 - r1 * hfx;
+    double e = hxs * ((r1 - t) / (6.0 - x * t));
+    if (k == 0)
+        return x - (x * e - hxs);
+
+    e = (x * (e - c) - c) - hxs;
+    return expm1Scale(x, e, k);
+}
+
+private double logNearOne(double f, int k) pure nothrow @nogc
+{
+    enum double ln2Hi = 0x1.62e42feep-1;
+    enum double ln2Lo = 0x1.a39ef35793c76p-33;
+
+    if (f == 0.0)
+    {
+        if (k == 0)
+            return 0.0;
+        const double dk = cast(double) k;
+        return dk * ln2Hi + dk * ln2Lo;
+    }
+    const double R = f * f * (0.5 - 0.33333333333333333 * f);
+    if (k == 0)
+        return f - R;
+    const double dk = cast(double) k;
+    return dk * ln2Hi - ((R - dk * ln2Lo) - f);
+}
+
+/// Bit-exact FDLIBM natural logarithm (`FdLibm.Log.compute`).
+package(flint.java) double fdLog(double x) pure nothrow @nogc
+{
+    enum double ln2Hi = 0x1.62e42feep-1;
+    enum double ln2Lo = 0x1.a39ef35793c76p-33;
+    enum double Lg1 = 0x1.5555555555593p-1;
+    enum double Lg2 = 0x1.999999997fa04p-2;
+    enum double Lg3 = 0x1.2492494229359p-2;
+    enum double Lg4 = 0x1.c71c51d8e78afp-3;
+    enum double Lg5 = 0x1.7466496cb03dep-3;
+    enum double Lg6 = 0x1.39a09d078c69fp-3;
+    enum double Lg7 = 0x1.2f112df3e5244p-3;
+
+    int hx = __HI(x);
+    const int lx = __LO(x);
+
+    int k = 0;
+    if (hx < 0x0010_0000)
+    {
+        if (((hx & EXP_SIGNIF_BITS) | lx) == 0)
+            return -INFINITY;
+        if (hx < 0)
+            return double.nan;
+        k -= 54;
+        x *= TWO54;
+        hx = __HI(x);
+    }
+    if (hx >= EXP_BITS)
+        return x + x;
+
+    k += (hx >> 20) - 1023;
+    hx &= 0x000f_ffff;
+    int i = (hx + 0x9_5f64) & 0x10_0000;
+    x = __HI(x, hx | (i ^ 0x3ff0_0000));
+    k += (i >> 20);
+    const double f = x - 1.0;
+
+    if ((0x000f_ffff & (2 + hx)) < 3)
+        return logNearOne(f, k);
+
+    const double s = f / (2.0 + f);
+    const double dk = cast(double) k;
+    const double z = s * s;
+    i = hx - 0x6_147a;
+    const double w = z * z;
+    const int j = 0x6b851 - hx;
+    const double t1 = w * (Lg2 + w * (Lg4 + w * Lg6));
+    const double t2 = z * (Lg1 + w * (Lg3 + w * (Lg5 + w * Lg7)));
+    i |= j;
+    const double R = t2 + t1;
+    if (i > 0)
+    {
+        const double hfsq = 0.5 * f * f;
+        if (k == 0)
+            return f - (hfsq - s * (hfsq + R));
+        return dk * ln2Hi - ((hfsq - (s * (hfsq + R) + dk * ln2Lo)) - f);
+    }
+    if (k == 0)
+        return f - s * (f - R);
+    return dk * ln2Hi - ((s * (f - R) - dk * ln2Lo) - f);
+}
+
+/// Bit-exact FDLIBM base-10 logarithm (`FdLibm.Log10.compute`).
+package(flint.java) double fdLog10(double x) pure nothrow @nogc
+{
+    enum double ivln10 = 0x1.bcb7b1526e50ep-2;
+    enum double log10_2hi = 0x1.34413509f6p-2;
+    enum double log10_2lo = 0x1.9fef311f12b36p-42;
+
+    int hx = __HI(x);
+    const int lx = __LO(x);
+
+    int k = 0;
+    if (hx < 0x0010_0000)
+    {
+        if (((hx & EXP_SIGNIF_BITS) | lx) == 0)
+            return -INFINITY;
+        if (hx < 0)
+            return double.nan;
+        k -= 54;
+        x *= TWO54;
+        hx = __HI(x);
+    }
+    if (hx >= EXP_BITS)
+        return x + x;
+
+    k += (hx >> 20) - 1023;
+    const int i = (k & SIGN_BIT) >>> 31;
+    hx = (hx & 0x000f_ffff) | ((0x3ff - i) << 20);
+    const double y = cast(double)(k + i);
+    x = __HI(x, hx);
+    const double z = y * log10_2lo + ivln10 * fdLog(x);
+    return z + y * log10_2hi;
+}
+
+private void log1pReduce(double x, int hx, out int k, out int hu, out double f, out double c) pure nothrow @nogc
+{
+    double u;
+    if (hx < 0x4340_0000)
+    {
+        u = 1.0 + x;
+        hu = __HI(u);
+        k = (hu >> 20) - 1023;
+        c = k > 0 ? 1.0 - (u - x) : x - (u - 1.0);
+        c /= u;
+    }
+    else
+    {
+        u = x;
+        hu = __HI(u);
+        k = (hu >> 20) - 1023;
+        c = 0.0;
+    }
+    hu &= 0x000f_ffff;
+    if (hu < 0x6_a09e)
+    {
+        u = __HI(u, hu | 0x3ff0_0000);
+    }
+    else
+    {
+        k += 1;
+        u = __HI(u, hu | 0x3fe0_0000);
+        hu = (0x0010_0000 - hu) >> 2;
+    }
+    f = u - 1.0;
+}
+
+private double log1pNearZeroF(double f, double hfsq, int k, double c) pure nothrow @nogc
+{
+    enum double ln2Hi = 0x1.62e42feep-1;
+    enum double ln2Lo = 0x1.a39ef35793c76p-33;
+
+    if (f == 0.0)
+    {
+        if (k == 0)
+            return 0.0;
+        c += k * ln2Lo;
+        return k * ln2Hi + c;
+    }
+    const double R = hfsq * (1.0 - 0.66666666666666666 * f);
+    if (k == 0)
+        return f - R;
+    return k * ln2Hi - ((R - (k * ln2Lo + c)) - f);
+}
+
+private bool log1pSmall(double x, int ax, out double res) pure nothrow @nogc
+{
+    if (ax >= 0x3ff0_0000)
+    {
+        res = x == -1.0 ? -INFINITY : double.nan;
+        return true;
+    }
+    if (ax < 0x3e20_0000)
+    {
+        res = (TWO54 + x > 0.0 && ax < 0x3c90_0000) ? x : x - x * x * 0.5;
+        return true;
+    }
+    res = 0.0;
+    return false;
+}
+
+/// Bit-exact FDLIBM `log(1 + x)` (`FdLibm.Log1p.compute`).
+package(flint.java) double fdLog1p(double x) pure nothrow @nogc
+{
+    enum double ln2Hi = 0x1.62e42feep-1;
+    enum double ln2Lo = 0x1.a39ef35793c76p-33;
+    enum double Lp1 = 0x1.5555555555593p-1;
+    enum double Lp2 = 0x1.999999997fa04p-2;
+    enum double Lp3 = 0x1.2492494229359p-2;
+    enum double Lp4 = 0x1.c71c51d8e78afp-3;
+    enum double Lp5 = 0x1.7466496cb03dep-3;
+    enum double Lp6 = 0x1.39a09d078c69fp-3;
+    enum double Lp7 = 0x1.2f112df3e5244p-3;
+
+    const int hx = __HI(x);
+    const int ax = hx & EXP_SIGNIF_BITS;
+
+    int k = 1;
+    int hu = 0;
+    double f = 0.0;
+    double c = 0.0;
+
+    if (hx < 0x3FDA_827A)
+    {
+        double smallRes;
+        if (log1pSmall(x, ax, smallRes))
+            return smallRes;
+        if (hx > 0 || hx <= cast(int) 0xbfd2_bec3U)
+        {
+            k = 0;
+            f = x;
+            hu = 1;
+        }
+    }
+
+    if (hx >= EXP_BITS)
+        return x + x;
+
+    if (k != 0)
+        log1pReduce(x, hx, k, hu, f, c);
+
+    const double hfsq = 0.5 * f * f;
+    if (hu == 0)
+        return log1pNearZeroF(f, hfsq, k, c);
+
+    const double s = f / (2.0 + f);
+    const double z = s * s;
+    const double R = z * (Lp1 + z * (Lp2 + z * (Lp3 + z * (Lp4 + z * (Lp5 + z * (Lp6 + z * Lp7))))));
+    if (k == 0)
+        return f - (hfsq - s * (hfsq + R));
+    return k * ln2Hi - ((hfsq - (s * (hfsq + R) + (k * ln2Lo + c))) - f);
+}
+
+private void powLog2Normal(double xAbs, int ix, out double t1, out double t2) pure nothrow @nogc
+{
+    enum double CP = 0x1.ec709dc3a03fdp-1;
+    enum double CP_H = 0x1.ec709ep-1;
+    enum double CP_L = -0x1.e2fe0145b01f5p-28;
+    static immutable double[2] BP = [1.0, 1.5];
+    static immutable double[2] DP_H = [0.0, 0x1.2b8034p-1];
+    static immutable double[2] DP_L = [0.0, 0x1.cfdeb43cfd006p-27];
+    enum double L1 = 0x1.3333333333303p-1;
+    enum double L2 = 0x1.b6db6db6fabffp-2;
+    enum double L3 = 0x1.55555518f264dp-2;
+    enum double L4 = 0x1.17460a91d4101p-2;
+    enum double L5 = 0x1.d864a93c9db65p-3;
+    enum double L6 = 0x1.a7e284a454eefp-3;
+
+    int n = 0;
+    if (ix < 0x0010_0000)
+    {
+        xAbs *= 0x1.0p53;
+        n -= 53;
+        ix = __HI(xAbs);
+    }
+    n += (ix >> 20) - 0x3ff;
+    const int j = ix & 0x000f_ffff;
+    ix = j | 0x3ff0_0000;
+    int k;
+    if (j <= 0x3988E)
+    {
+        k = 0;
+    }
+    else if (j < 0xBB67A)
+    {
+        k = 1;
+    }
+    else
+    {
+        k = 0;
+        n += 1;
+        ix -= 0x0010_0000;
+    }
+    xAbs = __HI(xAbs, ix);
+
+    double u = xAbs - BP[k];
+    double v = 1.0 / (xAbs + BP[k]);
+    const double ss = u * v;
+    double sH = ss;
+    sH = __LO(sH, 0);
+    double tH = 0.0;
+    tH = __HI(tH, ((ix >> 1) | 0x2000_0000) + 0x0008_0000 + (k << 18));
+    double tL = xAbs - (tH - BP[k]);
+    const double sL = v * ((u - sH * tH) - sH * tL);
+
+    double s2 = ss * ss;
+    double r = s2 * s2 * (L1 + s2 * (L2 + s2 * (L3 + s2 * (L4 + s2 * (L5 + s2 * L6)))));
+    r += sL * (sH + ss);
+    s2 = sH * sH;
+    tH = 3.0 + s2 + r;
+    tH = __LO(tH, 0);
+    tL = r - ((tH - 3.0) - s2);
+
+    u = sH * tH;
+    v = sL * tH + tL * ss;
+    double pH = u + v;
+    pH = __LO(pH, 0);
+    const double pL = v - (pH - u);
+    const double zH = CP_H * pH;
+    const double zL = CP_L * pH + pL * CP + DP_L[k];
+    const double t = cast(double) n;
+    t1 = ((zH + zL) + DP_H[k]) + t;
+    t1 = __LO(t1, 0);
+    t2 = zL - (((t1 - t) - DP_H[k]) - zH);
+}
+
+private double powExp2(double pH, double pL, double z, double s) pure nothrow @nogc
+{
+    enum double OVT = 8.0085662595372944372e-17;
+    enum double P1 = 0x1.555555555553ep-3;
+    enum double P2 = -0x1.6c16c16bebd93p-9;
+    enum double P3 = 0x1.1566aaf25de2cp-14;
+    enum double P4 = -0x1.bbd41c5d26bf1p-20;
+    enum double P5 = 0x1.6376972bea4d0p-25;
+    enum double LG2 = 0x1.62e42fefa39efp-1;
+    enum double LG2_H = 0x1.62e43p-1;
+    enum double LG2_L = -0x1.05c610ca86c39p-29;
+
+    int j = __HI(z);
+    int i = __LO(z);
+    if (j >= 0x4090_0000)
+    {
+        if (((j - 0x4090_0000) | i) != 0)
+            return s * INFINITY;
+        if (pL + OVT > z - pH)
+            return s * INFINITY;
+    }
+    else if ((j & EXP_SIGNIF_BITS) >= 0x4090_cc00)
+    {
+        if (((j - cast(int) 0xc090_cc00U) | i) != 0)
+            return s * 0.0;
+        if (pL <= z - pH)
+            return s * 0.0;
+    }
+
+    i = j & EXP_SIGNIF_BITS;
+    int k = (i >> 20) - 0x3ff;
+    int n = 0;
+    if (i > 0x3fe0_0000)
+    {
+        n = j + (0x0010_0000 >> (k + 1));
+        k = ((n & EXP_SIGNIF_BITS) >> 20) - 0x3ff;
+        double t = 0.0;
+        t = __HI(t, n & ~(0x000f_ffff >> k));
+        n = ((n & 0x000f_ffff) | 0x0010_0000) >> (20 - k);
+        if (j < 0)
+            n = -n;
+        pH -= t;
+    }
+
+    double t = pL + pH;
+    t = __LO(t, 0);
+    const double u = t * LG2_H;
+    const double v = (pL - (t - pH)) * LG2 + t * LG2_L;
+    z = u + v;
+    const double w = v - (z - u);
+    t = z * z;
+    const double t1 = z - t * (P1 + t * (P2 + t * (P3 + t * (P4 + t * P5))));
+    const double r = (z * t1) / (t1 - 2.0) - (w + z * w);
+    z = 1.0 - (r - z);
+    j = __HI(z) + (n << 20);
+    if ((j >> 20) <= 0)
+    {
+        z = scalbD(z, n);
+    }
+    else
+    {
+        z = __HI(z, __HI(z) + (n << 20));
+    }
+    return s * z;
+}
+
+private int powClassifyYInt(double yAbs) pure nothrow @nogc
+{
+    if (yAbs >= 0x1.0p53)
+        return 2;
+    if (yAbs >= 1.0)
+    {
+        const long yAbsLong = cast(long) yAbs;
+        if (cast(double) yAbsLong == yAbs)
+            return 2 - cast(int)(yAbsLong & 0x1L);
+    }
+    return 0;
+}
+
+private bool powSpecialY(double x, double y, double xAbs, double yAbs, out double res) pure nothrow @nogc
+{
+    if (y == 2.0)
+    {
+        res = x * x;
+        return true;
+    }
+    if (y == 0.5 && x >= -DOUBLE_MAX_VALUE)
+    {
+        res = fdSqrt(x + 0.0);
+        return true;
+    }
+    if (yAbs == 1.0)
+    {
+        res = y == 1.0 ? x : 1.0 / x;
+        return true;
+    }
+    if (yAbs == INFINITY)
+    {
+        if (xAbs == 1.0)
+            res = double.nan;
+        else if (xAbs > 1.0)
+            res = y >= 0.0 ? y : 0.0;
+        else
+            res = y < 0.0 ? -y : 0.0;
+        return true;
+    }
+    res = 0.0;
+    return false;
+}
+
+private double powSpecialX(double xAbs, double y, int hx, int ix, int yIsInt) pure nothrow @nogc
+{
+    double z = xAbs;
+    if (y < 0.0)
+        z = 1.0 / z;
+    if (hx < 0)
+    {
+        if (((ix - 0x3ff0_0000) | yIsInt) == 0)
+            return double.nan;
+        if (yIsInt == 1)
+            z = -1.0 * z;
+    }
+    return z;
+}
+
+private bool powHugeY(double xAbs, double y, double s, out double t1, out double t2, out double res) pure nothrow @nogc
+{
+    enum double INV_LN2 = 0x1.71547652b82fep0;
+    enum double INV_LN2_H = 0x1.715476p0;
+    enum double INV_LN2_L = 0x1.4ae0bf85ddf44p-26;
+
+    if (xAbs < 0x1.fffff00000000p-1)
+    {
+        t1 = 0.0;
+        t2 = 0.0;
+        res = y < 0.0 ? s * INFINITY : s * 0.0;
+        return true;
+    }
+    if (xAbs > 0x1.00000ffffffffp0)
+    {
+        t1 = 0.0;
+        t2 = 0.0;
+        res = y > 0.0 ? s * INFINITY : s * 0.0;
+        return true;
+    }
+
+    const double t = xAbs - 1.0;
+    const double w = (t * t) * (0.5 - t * (0.3333333333333333333333 - t * 0.25));
+    const double u = INV_LN2_H * t;
+    const double v = t * INV_LN2_L - w * INV_LN2;
+    t1 = u + v;
+    t1 = __LO(t1, 0);
+    t2 = v - (t1 - u);
+    res = 0.0;
+    return false;
+}
+
+/// Bit-exact FDLIBM power `x^y` (`FdLibm.Pow.compute`).
+package(flint.java) double fdPow(double x, double y) pure nothrow @nogc
+{
+    if (y == 0.0)
+        return 1.0;
+    if (x != x || y != y)
+        return x + y;
+
+    const double yAbs = absD(y);
+    const double xAbs = absD(x);
+    double specialRes;
+    if (powSpecialY(x, y, xAbs, yAbs, specialRes))
+        return specialRes;
+
+    const int hx = __HI(x);
+    const int ix = hx & EXP_SIGNIF_BITS;
+    const int yIsInt = hx < 0 ? powClassifyYInt(yAbs) : 0;
+
+    if (xAbs == 0.0 || xAbs == INFINITY || xAbs == 1.0)
+        return powSpecialX(xAbs, y, hx, ix, yIsInt);
+
+    const int n = (hx >> 31) + 1;
+    if ((n | yIsInt) == 0)
+        return double.nan;
+
+    const double s = (n | (yIsInt - 1)) == 0 ? -1.0 : 1.0;
+
+    double t1;
+    double t2;
+    if (yAbs > 0x1.00000ffffffffp31)
+    {
+        double res;
+        if (powHugeY(xAbs, y, s, t1, t2, res))
+            return res;
+    }
+    else
+    {
+        powLog2Normal(xAbs, ix, t1, t2);
+    }
+
+    double y1 = y;
+    y1 = __LO(y1, 0);
+    const double pL = (y - y1) * t1 + y * t2;
+    const double pH = y1 * t1;
+    return powExp2(pH, pL, pL + pH, s);
+}
+
+/// Bit-exact FDLIBM hyperbolic sine (`FdLibm.Sinh.compute`).
+package(flint.java) double fdSinh(double x) pure nothrow @nogc
+{
+    enum double shuge = 1.0e307;
+
+    const int jx = __HI(x);
+    const int ix = jx & EXP_SIGNIF_BITS;
+
+    if (ix >= EXP_BITS)
+        return x + x;
+
+    const double h = jx < 0 ? -0.5 : 0.5;
+    if (ix < 0x4036_0000)
+    {
+        if (ix < 0x3e30_0000 && shuge + x > 1.0)
+            return x;
+        const double t = fdExpm1(absD(x));
+        if (ix < 0x3ff0_0000)
+            return h * (2.0 * t - t * t / (t + 1.0));
+        return h * (t + t / (t + 1.0));
+    }
+
+    if (ix < 0x4086_2E42)
+        return h * fdExp(absD(x));
+
+    const int lx = __LO(x);
+    if (ix < 0x4086_33CE || (ix == 0x4086_33ce && cast(uint) lx <= 0x8fb9_f87dU))
+    {
+        const double w = fdExp(0.5 * absD(x));
+        const double t = h * w;
+        return t * w;
+    }
+
+    return x * shuge;
+}
+
+/// Bit-exact FDLIBM hyperbolic cosine (`FdLibm.Cosh.compute`).
+package(flint.java) double fdCosh(double x) pure nothrow @nogc
+{
+    const int ix = __HI(x) & EXP_SIGNIF_BITS;
+
+    if (ix >= EXP_BITS)
+        return x * x;
+
+    if (ix < 0x3fd6_2e43)
+    {
+        const double t = fdExpm1(absD(x));
+        const double w = 1.0 + t;
+        if (ix < 0x3c80_0000)
+            return w;
+        return 1.0 + (t * t) / (w + w);
+    }
+
+    if (ix < 0x4036_0000)
+    {
+        const double t = fdExp(absD(x));
+        return 0.5 * t + 0.5 / t;
+    }
+
+    if (ix < 0x4086_2E42)
+        return 0.5 * fdExp(absD(x));
+
+    const int lx = __LO(x);
+    if (ix < 0x4086_33CE || (ix == 0x4086_33ce && cast(uint) lx <= 0x8fb9_f87dU))
+    {
+        const double w = fdExp(0.5 * absD(x));
+        const double t = 0.5 * w;
+        return t * w;
+    }
+
+    return INFINITY;
+}
+
+/// Bit-exact FDLIBM hyperbolic tangent (`FdLibm.Tanh.compute`).
+package(flint.java) double fdTanh(double x) pure nothrow @nogc
+{
+    enum double tiny = 1.0e-300;
+
+    const int jx = __HI(x);
+    const int ix = jx & EXP_SIGNIF_BITS;
+
+    if (ix >= EXP_BITS)
+    {
+        if (jx >= 0)
+            return 1.0 / x + 1.0;
+        return 1.0 / x - 1.0;
+    }
+
+    double z;
+    if (ix < 0x4036_0000)
+    {
+        if (ix < 0x3c80_0000)
+            return x * (1.0 + x);
+        if (ix >= 0x3ff0_0000)
+        {
+            const double t = fdExpm1(2.0 * absD(x));
+            z = 1.0 - 2.0 / (t + 2.0);
+        }
+        else
+        {
+            const double t = fdExpm1(-2.0 * absD(x));
+            z = -t / (t + 2.0);
+        }
+    }
+    else
+    {
+        z = 1.0 - tiny;
+    }
+    return jx >= 0 ? z : -z;
 }
