@@ -191,7 +191,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | jackson-databind@3.1.8 | 517 | 131 | 0 | 5 | 9,814 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 0 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 200 | 162 | 0 | 0 | 2,028 |
+| framework | micrometer-core@1.18.0 | 202 | 160 | 0 | 0 | 2,028 |
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
@@ -1274,7 +1274,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `io.micrometer.core.instrument.Meter.Id#getBaseUnit()` | `flint.micrometer.core.instrument.Meter.Id.getBaseUnit` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `io.micrometer.core.instrument.Meter.Id#getDescription()` | `flint.micrometer.core.instrument.Meter.Id.getDescription` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `io.micrometer.core.instrument.Meter.Id#getTag(String)` | `flint.micrometer.core.instrument.Meter.Id.getTag` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `io.micrometer.core.instrument.Meter.Id#getTags()` | `flint.micrometer.core.instrument.Meter.Id.getTags` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `io.micrometer.core.instrument.Meter.Id#getTagsAsIterable()` | `flint.micrometer.core.instrument.Meter.Id.getTagsAsIterable` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `io.micrometer.core.instrument.Meter.Id#hashCode()` | `flint.micrometer.core.instrument.Meter.Id.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality), [R14](api-mapping.md#r14-strings-and-text) |  |
 | `io.micrometer.core.instrument.Meter.Id#replaceTags(Iterable)` | `flint.micrometer.core.instrument.Meter.Id.replaceTags` | [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -1386,7 +1385,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `io.micrometer.core.instrument.noop.NoopMeter#measure()` | `flint.micrometer.core.instrument.noop.NoopMeter.measure` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `io.micrometer.core.instrument.noop.NoopTimer#record(BooleanSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `io.micrometer.core.instrument.noop.NoopTimer#record(DoubleSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `io.micrometer.core.instrument.noop.NoopTimer#record(IntSupplier)` | `flint.micrometer.core.instrument.noop.NoopTimer.record` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
