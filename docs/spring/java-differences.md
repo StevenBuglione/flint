@@ -186,7 +186,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
-| framework | jakarta-servlet@6.1.0 | 6 | 270 | 0 | 1 | 551 |
+| framework | jakarta-servlet@6.1.0 | 8 | 264 | 0 | 1 | 555 |
 | framework | jackson-core@3.1.8 | 529 | 28 | 0 | 1 | 2,737 |
 | framework | jackson-databind@3.1.8 | 517 | 131 | 0 | 5 | 9,814 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 0 | 377 |
@@ -1950,12 +1950,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `jakarta.servlet.ServletContext#getMinorVersion()` | `flint.jakarta.servlet.ServletContext.getMinorVersion` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletContext#getServerInfo()` | `flint.jakarta.servlet.ServletContext.getServerInfo` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletContext#setAttribute(String,Object)` | `flint.jakarta.servlet.ServletContext.setAttribute` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `jakarta.servlet.ServletException` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `jakarta.servlet.ServletException#<init>()` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `jakarta.servlet.ServletException#<init>(String)` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `jakarta.servlet.ServletException#<init>(String,Throwable)` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `jakarta.servlet.ServletException#<init>(Throwable)` | `flint.jakarta.servlet.ServletException` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `jakarta.servlet.ServletException#getRootCause()` | `flint.jakarta.servlet.ServletException.getRootCause` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletInputStream` | `flint.jakarta.servlet.ServletInputStream` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletInputStream#isFinished()` | `flint.jakarta.servlet.ServletInputStream.isFinished` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `jakarta.servlet.ServletInputStream#isReady()` | `flint.jakarta.servlet.ServletInputStream.isReady` | [R1](api-mapping.md#r1-packages-and-names), [R10](api-mapping.md#r10-streams-and-collections) |  |
@@ -10695,7 +10689,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.persistence.criteria | 419 | 0 |
 | jakarta.persistence.metamodel | 49 | 0 |
 | jakarta.persistence.spi | 48 | 0 |
-| jakarta.servlet | 300 | 0 |
+| jakarta.servlet | 304 | 0 |
 | jakarta.servlet.annotation | 54 | 0 |
 | jakarta.servlet.descriptor | 20 | 0 |
 | jakarta.servlet.http | 177 | 0 |
@@ -11589,6 +11583,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | boot | `org.springframework.boot.security.autoconfigure.SecurityProperties.User#setRoles(List)` | 2 | The Phase 1 API takes or returns an array; the List<String> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#getDispatcherTypes()` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |
 | boot | `org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties#setDispatcherTypes(Set)` | 2 | The Phase 1 API takes or returns an array; the Set<DispatcherType> signature is deferred. |
+| framework | `jakarta.servlet.ServletException#<init>()` | 2 | Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
+| framework | `jakarta.servlet.ServletException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
+| framework | `jakarta.servlet.ServletException#<init>(String,Throwable)` | 2 | Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
+| framework | `jakarta.servlet.ServletException#<init>(Throwable)` | 2 | Missing cause-only constructor: Java initializes the cause, even to null, and derives the message from a non-null cause. Java leaves the cause open to one later initCause call; the D ServletException has one merged (message, rootCause) constructor over the plain Exception base, with no initCause, so an omitted and an explicit null cause are indistinguishable. Pending web-http's (msg)/(msg, cause)/(cause) split. |
 | framework | `jakarta.validation.Validation#byDefaultProvider()` | 2 | Flint's byDefaultProvider() returns the Configuration itself; GenericBootstrap is deferred. |
 | framework | `jakarta.validation.spi.ValidationProvider#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `java.io.ByteArrayInputStream` | 2 | The byte-array facade exposes the public sequential reads. The protected backing array, position, mark and count required by subclasses are missing. |
