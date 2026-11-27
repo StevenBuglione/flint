@@ -196,7 +196,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | openjdk@21.0.13 | 1,220 | 390 | 1,871 | 14,940 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 552 | 29 | 88 | 11,744 |
+| security | spring-security@7.2.0 | 550 | 31 | 88 | 11,744 |
 
 ## Known gaps
 
@@ -5257,7 +5257,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.security.access.prepost.PostAuthorize` | `flint.security.access.prepost.PostAuthorize` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.security.access.prepost.PostAuthorize#value` | `flint.security.access.prepost.PostAuthorize.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.security.access.prepost.PreAuthorize` | `flint.security.access.prepost.PreAuthorize` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.security.access.prepost.PreAuthorize#value` | `flint.security.access.prepost.PreAuthorize.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.security.authentication
 
