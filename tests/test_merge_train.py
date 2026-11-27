@@ -614,6 +614,28 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(result['failed'], ['sol-b'])
         self.assertIn('ab', [mode for mode, _ in posidon.modes])
 
+    class BrokenAbVerifier(ModalVerifier):
+        """posidon whose interleaved A/B cannot run (2026-11-27 10:40Z: the candidate's tree lacked budget_ab.py)."""
+
+        def __call__(self, commit, repo, mode='full', apps=None, tight=None, ab_base=None):
+            ok, log = super().__call__(commit, repo, mode, apps, tight, ab_base)
+            return (None, log + '\nthe interleaved A/B could not measure') if mode == 'ab' else (ok, log)
+
+    def test_an_interleaved_ab_that_could_not_run_returns_nobody_and_pages_the_coordinator(self):
+        # Coordinator, 2026-11-27 10:55Z: infrastructure, not a verdict; hold the lanes at the head and page.
+        self.store.register('coordinator', 'coordinator', None, None)
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c')):
+            self.lane(role, {'src/DRIFT' if role == 'sol-b' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        result = self.stacked(self.BrokenAbVerifier(self, 'posidon', budget=True)).run('runner')
+        self.assertEqual(result['failed'], [])
+        self.assertIn('sol-b', result['pending'])
+        self.assertIn('could not run', self.store.inbox('coordinator', True, False))
+        events = [json.loads(line) for line in (self.store.root / 'events.jsonl').read_text().splitlines()]
+        self.assertTrue(any(e['event'] == 'train-interleaved-held' for e in events))
+        logs = [e['log'] for e in events if e['event'] == 'train-interleaved']
+        self.assertTrue(logs and all('could not measure' in Path(path).read_text() for path in logs))
+
     def test_the_daily_main_budget_runs_once_a_day_and_posts_its_numbers(self):
         self.store.register('coordinator', 'coordinator', None, None)
         posidon = self.ModalVerifier(self, 'posidon', budget=True)

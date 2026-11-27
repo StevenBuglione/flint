@@ -972,7 +972,12 @@ class Train:
                 # only flint budget's stored numbers is the session (coordinator, 08:50Z): the first lane is then
                 # judged interleaved against main by the tie-breaker below instead.
                 return self._main_red(base, main[1], failed)
-            elif only and self.interleaved_clears(applied, bad, base, only):
+            elif only and (cleared := self.interleaved_clears(applied, bad, base, only)) is None:
+                # Coordinator, 2026-11-27 10:55Z: an A/B that could not run is the infrastructure's failure, not a
+                # verdict. The lane is not returned: it and everything behind it stay queued, at the head, for the
+                # next train, and the coordinator is paged. What is green before it lands.
+                self._ab_not_run(applied[bad - 1][0]['role'])
+            elif only and cleared:
                 # Coordinator, 2026-11-27 08:21Z: a lane that failed only flint budget is judged interleaved against
                 # its green prefix in one session before it is returned; within tolerance, it rides on. The rest of
                 # the red group (acceptance-green, since its failure was flint budget's alone) is judged the same way
@@ -1091,14 +1096,15 @@ class Train:
 
     def interleaved_clears(self, applied, bad, base, apps):
         """Whether submission `bad` (1-based) is within tolerance of the prefix before it, interleaved in one session on
-        the budget verifier (tools/budget_ab.py, median of 5 each). Only the budget verifier runs it."""
+        the budget verifier (tools/budget_ab.py, median of 5 each): True, False, or None when the A/B could not run.
+        Only the budget verifier runs it."""
         budget_verifier = self.budget_verifier()
         if budget_verifier is None:
             return False
         prefix = applied[bad - 2][1] if bad > 1 else base
         ok, log = self.verify(applied[bad - 1][1], budget_verifier, mode='ab', apps=apps, ab_base=prefix)
         self.store.event('train-interleaved', role=applied[bad - 1][0]['role'], ok=ok, log=self.keep_log('interleaved', log))
-        return ok is True
+        return ok
 
     def _land_early(self, prefix, base, budget_verifier):
         """Push an acceptance-green prefix before the bisect behind it finishes (coordinator, 2026-11-27 02:26Z). The
@@ -1150,7 +1156,18 @@ class Train:
         self.store.event('train-interleaved', role='stack', against='main', ok=ok, log=self.keep_log('interleaved-stack', log))
         if ok is True:
             return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
+        if ok is None:
+            self._ab_not_run('the stack')
         return self._resolve(batch, applied, failed, 0, len(applied), (ok, log), base, budget_verifier, step=ab)
+
+    def _ab_not_run(self, who):
+        """Coordinator, 2026-11-27 10:55Z: an interleaved A/B that could not run is the infrastructure's failure, not a
+        verdict. Nobody is returned (the lanes stay queued, at the head, for the next train) and the coordinator is paged."""
+        self.store.event('train-interleaved-held', role=who)
+        if self.mail:
+            self._send('coordinator', f'merge train: the interleaved budget A/B for {who} could not run (the verifier, '
+                                      f'not the lanes); they stay queued at the head and are retried next train. '
+                                      f'Logs: {self.log_dir}/interleaved-*.log')
 
     def push(self, submissions, base, tip, attempts):
         with self.git_lock:
