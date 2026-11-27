@@ -21,6 +21,10 @@
     "incremental_linked_bytes": 2724,
     "template_instances": 241
   },
+  "flint.java.nio.channels.asynchronouscloseexception": {
+    "incremental_linked_bytes": 4581,
+    "template_instances": 243
+  },
   "flint.java.nio.channels.bytechannel": {
     "incremental_linked_bytes": 3886,
     "template_instances": 273
@@ -34,6 +38,14 @@
   "flint.java.nio.channels.channel": {
     "incremental_linked_bytes": 2302,
     "template_instances": 241
+  },
+  "flint.java.nio.channels.closedbyinterruptexception": {
+    "incremental_linked_bytes": 5276,
+    "template_instances": 243
+  },
+  "flint.java.nio.channels.closedchannelexception": {
+    "incremental_linked_bytes": 3868,
+    "template_instances": 243
   },
   "flint.java.nio.channels.closedselectorexception": {
     "incremental_linked_bytes": 845,
@@ -50,6 +62,10 @@
     "template_instances": 480,
     "control": "tools/jdk-closure-controls/illegal-state-exception.d",
     "template_compile": "separate"
+  },
+  "flint.java.nio.channels.filelockinterruptionexception": {
+    "incremental_linked_bytes": 3903,
+    "template_instances": 243
   },
   "flint.java.nio.channels.gatheringbytechannel": {
     "incremental_linked_bytes": 3305,
@@ -72,6 +88,10 @@
     "template_instances": 480,
     "control": "tools/jdk-closure-controls/runtime-exception.d",
     "template_compile": "separate"
+  },
+  "flint.java.nio.channels.interruptedbytimeoutexception": {
+    "incremental_linked_bytes": 3903,
+    "template_instances": 243
   },
   "flint.java.nio.channels.interruptiblechannel": {
     "incremental_linked_bytes": 2742,

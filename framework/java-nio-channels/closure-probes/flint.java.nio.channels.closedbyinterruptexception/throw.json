@@ -1,0 +1,10 @@
+{
+  "source": "closure/closed_by_interrupt_exception.d",
+  "leaves": [
+    "flint.java.io",
+    "flint.java.lang",
+    "flint.java.nio.channels.asynchronouscloseexception",
+    "flint.java.nio.channels.closedchannelexception"
+  ],
+  "data": []
+}
