@@ -660,6 +660,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Build Locale extension set snapshots at the getter boundary.** The locale keeps one canonical extension suffix, with frozen sets created only when callers ask for the keys or attributes. On venus against `af8b300f5`, LDC 1.43.0 Java module probes moved from 129,496 to 129,440 O3 and 122,144 to 122,088 Oz incremental loadable bytes. DMD template instances rose from 4,542 to 4,803 against 7,350.
 
+- **Keep the standard zero digit on a byte test.** A formatter with a `DecimalStyle` reads digits through one helper: with the zero digit `'0'` it tests the byte, as before, and only another zero digit decodes a UTF-8 character; signs and the decimal separator compare their encoded bytes. Printing appends ASCII digits unchanged for `'0'`. On venus (v4.2 toolchain) against the parent `52659928d`, the Java module stays at 129,496 incremental linked bytes and its DMD template count falls from 4,589 to 4,583 against the 7,350 cap. The `LocalDate.parse` closure probe grows from 377,981 to 379,565 O3 and from 370,369 to 371,857 Oz loadable bytes (LDC 1.43.0), and the `ofPattern` probe by 32 bytes. Moving the non-ASCII decode out of line did not shrink it (379,573 O3).
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

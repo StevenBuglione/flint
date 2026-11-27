@@ -1024,3 +1024,183 @@ unittest
     static assert(!__traits(compiles, DecimalStyle('1', '+', '-', '.')));
     static assert(!__traits(compiles, s.withZeroDigit(null)));
 }
+
+// decimal_style.tsv text: printable ASCII but `\` as it is, any other UTF-16 unit as `\uXXXX`.
+private string escapedUtf16(scope const(char)[] text) pure
+{
+    import flint.engine.aot.text : decodeUtf8;
+
+    static immutable hex = "0123456789ABCDEF";
+    string result;
+    void unit(uint u)
+    {
+        if (u >= 0x20 && u < 0x7F && u != '\\')
+            result ~= cast(char) u;
+        else
+            result ~= ['\\', 'u', hex[u >> 12], hex[(u >> 8) & 15], hex[(u >> 4) & 15], hex[u & 15]];
+    }
+
+    size_t i;
+    while (i < text.length)
+    {
+        const c = decodeUtf8(text, i);
+        if (c > 0xFFFF)
+        {
+            unit(0xD800 + ((c - 0x10000) >> 10));
+            unit(0xDC00 + ((c - 0x10000) & 0x3FF));
+        }
+        else
+            unit(c);
+    }
+    return result;
+}
+
+// The UTF-8 text of decimal_style.tsv's escaped input, which has no surrogate.
+private string unescapedUtf16(string text) pure
+{
+    import flint.engine.aot.text : utf8;
+    import std.conv : to;
+
+    string result;
+    for (size_t i = 0; i < text.length; ++i)
+    {
+        if (text[i] != '\\')
+        {
+            result ~= text[i];
+            continue;
+        }
+        result ~= utf8(cast(dchar) text[i + 2 .. i + 6].to!uint(16));
+        i += 5;
+    }
+    return result;
+}
+
+// The formatter a decimal_style.tsv row names, with the named style ("-" leaves the formatter's own).
+private DateTimeFormatter decimalStyleFormatter(string styleName, string formatterName)
+{
+    import flint.java.time.format : DecimalStyle, ResolverStyle;
+
+    const s = DecimalStyle.STANDARD;
+    const DecimalStyle[string] styles = [
+        "STANDARD": s, "ARABIC": s.withZeroDigit('\u0660'),
+        "DEVANAGARI": s.withZeroDigit('\u0966').withPositiveSign('P').withNegativeSign('N')
+            .withDecimalSeparator('\u066B'), "MINUS": s.withNegativeSign('\u2212'),
+        "COMMA": s.withDecimalSeparator(','),
+        "LETTERS": s.withZeroDigit('A').withPositiveSign('p').withNegativeSign('n')
+            .withDecimalSeparator('d'), "WRAP": s.withZeroDigit('\uFFF8'),
+        "SURROGATE": s.withZeroDigit('\uD7FB'), "SAMESIGN": s.withPositiveSign('-'),
+        "DIGITSIGN": s.withPositiveSign('1').withNegativeSign('2'),
+        "NUL": s.withZeroDigit('\0').withDecimalSeparator('\0'),
+        "FULLWIDTH": s.withNegativeSign('\uFF0D').withPositiveSign('\uFF0B').withDecimalSeparator('\u3002'),
+    ];
+    const DateTimeFormatter[string] constants = [
+        "ISO_LOCAL_DATE": DateTimeFormatter.ISO_LOCAL_DATE,
+        "ISO_LOCAL_TIME": DateTimeFormatter.ISO_LOCAL_TIME,
+        "ISO_LOCAL_DATE_TIME": DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+        "ISO_OFFSET_DATE_TIME": DateTimeFormatter.ISO_OFFSET_DATE_TIME,
+        "ISO_INSTANT": DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC.toZoneId()),
+        "BASIC_ISO_DATE": DateTimeFormatter.BASIC_ISO_DATE,
+        "ISO_ORDINAL_DATE": DateTimeFormatter.ISO_ORDINAL_DATE,
+        "ISO_WEEK_DATE": DateTimeFormatter.ISO_WEEK_DATE, "ISO_DATE": DateTimeFormatter.ISO_DATE,
+        "ISO_TIME": DateTimeFormatter.ISO_TIME,
+        "RFC_1123_DATE_TIME": DateTimeFormatter.RFC_1123_DATE_TIME,
+        "ISO_LOCAL_DATE.withZone": DateTimeFormatter.ISO_LOCAL_DATE,
+        "ISO_LOCAL_DATE.withResolverStyle": DateTimeFormatter.ISO_LOCAL_DATE,
+    ];
+    auto base = formatterName in constants;
+    DateTimeFormatter f = base ? *base : DateTimeFormatter.ofPattern(formatterName);
+    if (styleName != "-")
+        f = f.withDecimalStyle(styles[styleName]);
+    if (formatterName == "ISO_LOCAL_DATE.withZone")
+        f = f.withZone(ZoneOffset.UTC.toZoneId());
+    else if (formatterName == "ISO_LOCAL_DATE.withResolverStyle")
+        f = f.withResolverStyle(ResolverStyle.SMART);
+    return f;
+}
+
+// Formats the value of `kind` whose toString is `text`.
+private string decimalStyleFormat(string kind, const DateTimeFormatter f, string text)
+{
+    switch (kind)
+    {
+    case "date":
+        return f.format(LocalDate.parse(text));
+    case "time":
+        return f.format(LocalTime.parse(text));
+    case "dateTime":
+        return f.format(LocalDateTime.parse(text));
+    case "offset":
+        return f.format(OffsetDateTime.parse(text));
+    default:
+        return f.format(Instant.parse(text));
+    }
+}
+
+// Parses `text` into a value of `kind`; returns its toString.
+private string decimalStyleParse(string kind, const DateTimeFormatter f, string text)
+{
+    switch (kind)
+    {
+    case "date":
+        return LocalDate.parse(text, f).toString();
+    case "time":
+        return LocalTime.parse(text, f).toString();
+    case "dateTime":
+        return LocalDateTime.parse(text, f).toString();
+    case "offset":
+        return OffsetDateTime.parse(text, f).toString();
+    default:
+        return ZonedDateTime.parse(text, f).toString();
+    }
+}
+
+// One operation of decimal_style.tsv: the escaped result's toString, or `!` and the exception message (and a parse
+// exception's error index).
+private string decimalStyleResult(string op, string styleName, string formatterName, string input)
+{
+    import flint.engine.aot.text : decimal;
+
+    static immutable string[string] kinds = [
+        "ISO_LOCAL_DATE": "date", "ISO_LOCAL_TIME": "time", "ISO_LOCAL_DATE_TIME": "dateTime",
+        "ISO_OFFSET_DATE_TIME": "offset", "ISO_INSTANT": "instant", "BASIC_ISO_DATE": "date",
+        "ISO_ORDINAL_DATE": "date", "ISO_WEEK_DATE": "date", "ISO_DATE": "date", "ISO_TIME": "time",
+        "RFC_1123_DATE_TIME": "offset", "uuuu-MM-dd": "date", "u-M-d": "date", "yy-MM-dd": "date",
+        "yyyy-MM-dd": "date", "uuuuMMdd": "date", "uuuu D": "date", "HH:mm:ss.SSS": "time",
+        "H:m:s n": "time", "hh:mm a": "time", "uuuu-MM-dd'T'HH:mm:ssXXX": "offset",
+        "uuuu-MM-dd HH:mm:ss.SSSSSSSSS xx": "offset", "EEE, d MMM uuuu": "date",
+    ];
+    const f = decimalStyleFormatter(styleName, formatterName);
+    if (op == "getDecimalStyle")
+        return escapedUtf16(f.getDecimalStyle().toString());
+    if (op == "toString")
+        return escapedUtf16(f.toString());
+    const kind = kinds[formatterName], text = unescapedUtf16(input);
+    try
+        return escapedUtf16(op == "format" ? decimalStyleFormat(kind, f, text) : decimalStyleParse(kind, f, text));
+    catch (DateTimeParseException e)
+        return "!" ~ escapedUtf16(e.msg) ~ "\t" ~ decimal(e.getErrorIndex());
+    catch (DateTimeException e)
+        return "!" ~ escapedUtf16(e.msg);
+}
+
+@("DateTimeFormatter.withDecimalStyle prints and parses localized digits, signs and separators like JDK 21")
+unittest
+{
+    import std.array : join;
+
+    size_t count, failures;
+    string report;
+    foreach (row; rows(import("decimal_style.tsv")))
+    {
+        const expected = row[4 .. $].join("\t");
+        const got = decimalStyleResult(row[0], row[1], row[2], row[3]);
+        if (got != expected)
+        {
+            if (++failures <= 40)
+                report ~= row[0 .. 4].join(" | ") ~ ": " ~ got ~ " != " ~ expected ~ "\n";
+        }
+        ++count;
+    }
+    assert(failures == 0, report);
+    assert(count == 4396);
+}
