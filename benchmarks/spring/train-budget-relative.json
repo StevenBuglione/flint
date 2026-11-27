@@ -1,100 +1,647 @@
 {
   "schema": "flint.train-budget-relative/1",
-  "decision": "coordinator, 2026-11-26 10:40Z (extends 08:45Z): not a re-baseline (raising a flint budget is the owner's). On posidon every gs-rest-service endpoint now measures about +0.4% over its 1b23b27a budget at every commit, the seed commit included (coordination/notes/gs-rest-bisect/summary.md). Until the cause is fixed or the owner re-baselines, the merge train fails a candidate on a gs-rest-service endpoint only if it regresses past main's measured median by more than that endpoint's tolerance. petclinic-rest keeps its absolute budgets. Remove this file with the fix or the re-baseline.",
-  "main": "4f581e3adf44b2bb58b627d06244fde53ebf9c0b",
-  "blocker": "gs-rest-service budget drift on posidon: coordination/notes/gs-rest-bisect/summary.md",
-  "measured": "flint budget --app gs-rest-service --repeat 5 (median) on posidon at main 4f581e3ad, 2026-11-26 10:35-10:43Z",
+  "decision": "coordinator, 2026-11-27 00:17Z (extends 2026-11-26 08:45Z and 10:40Z): not a re-baseline; the absolute budgets in benchmarks/spring/flint/*/budgets.json stay untouched. posidon's instruction counts drifted again with no code change (the reference commit 4f581e3a re-measured +0.774% over its own 10:35Z medians, the same constant as main), so the merge train judges every gs-rest-service and petclinic-rest endpoint against main's measured median: a candidate fails an endpoint only if it regresses past main by more than that endpoint's tolerance. Remove this file when the cause is fixed or the owner re-baselines.",
+  "main": "3cb7b83ae912d3a39383131719bfc51922fd12f7",
+  "blocker": "posidon instruction-count drift: coordination/notes/gs-rest-bisect/summary.md, coordination/notes/main-red-2357Z/",
+  "measured": "flint budget --repeat 5 (median) on posidon at main 3cb7b83ae, 2026-11-26 23:58Z-2026-11-27 00:5xZ",
   "endpoints": {
     "gs-rest-service": {
       "default name": {
-        "main": 22778,
+        "main": 22968,
         "budget": 22645,
         "tolerance": 0.0084
       },
       "name parameter": {
-        "main": 23610,
+        "main": 23801,
         "budget": 23477,
         "tolerance": 0.0083
       },
       "percent-encoded UTF-8 name": {
-        "main": 23935,
+        "main": 24126,
         "budget": 23851,
         "tolerance": 0.0065
       },
       "name with spaces and plus": {
-        "main": 24121,
+        "main": 24312,
         "budget": 23968,
         "tolerance": 0.005
       },
       "empty name takes the default": {
-        "main": 23157,
+        "main": 23368,
         "budget": 23073,
         "tolerance": 0.0089
       },
       "repeated name parameter joins with a comma": {
-        "main": 24009,
+        "main": 24180,
         "budget": 23856,
         "tolerance": 0.0116
       },
       "JSON escaping": {
-        "main": 24741,
+        "main": 24952,
         "budget": 24657,
         "tolerance": 0.0083
       },
       "unknown parameter is ignored": {
-        "main": 23304,
+        "main": 23466,
         "budget": 23142,
         "tolerance": 0.0063
       },
       "Accept application/json": {
-        "main": 22917,
+        "main": 23128,
         "budget": 22804,
         "tolerance": 0.0064
       },
       "Accept application/xml is not acceptable": {
-        "main": 152403,
+        "main": 152442,
         "budget": 151719,
         "tolerance": 0.005
       },
       "HEAD reaches the handler": {
-        "main": 22669,
+        "main": 22860,
         "budget": 22585,
         "tolerance": 0.0065
       },
       "OPTIONS lists the allowed methods": {
-        "main": 45290,
+        "main": 45432,
         "budget": 45184,
         "tolerance": 0.005
       },
       "POST is not allowed": {
-        "main": 115731,
+        "main": 115928,
         "budget": 115561,
         "tolerance": 0.005
       },
       "DELETE is not allowed": {
-        "main": 111346,
+        "main": 111533,
         "budget": 111188,
         "tolerance": 0.005
       },
       "unknown path is a JSON 404": {
-        "main": 21814,
+        "main": 21984,
         "budget": 21674,
         "tolerance": 0.0088
       },
       "trailing slash does not match": {
-        "main": 48381,
+        "main": 48494,
         "budget": 48197,
         "tolerance": 0.005
       },
       "unknown path for a browser is the Whitelabel page": {
-        "main": 92627,
+        "main": 92836,
         "budget": 92492,
         "tolerance": 0.005
       },
       "counter after the errors": {
-        "main": 23665,
+        "main": 23856,
         "budget": 23532,
         "tolerance": 0.0062
+      }
+    },
+    "petclinic-rest": {
+      "root redirects to the Swagger UI": {
+        "main": 40217,
+        "budget": 40091,
+        "tolerance": 0.01
+      },
+      "actuator links": {
+        "main": 73852,
+        "budget": 73332,
+        "tolerance": 0.01
+      },
+      "actuator health": {
+        "main": 97750,
+        "budget": 97353,
+        "tolerance": 0.01
+      },
+      "actuator liveness group": {
+        "main": 98942,
+        "budget": 98013,
+        "tolerance": 0.01
+      },
+      "actuator readiness group": {
+        "main": 98664,
+        "budget": 97975,
+        "tolerance": 0.01
+      },
+      "actuator endpoint that is not exposed": {
+        "main": 99020,
+        "budget": 98255,
+        "tolerance": 0.01
+      },
+      "actuator health with an explicit Accept": {
+        "main": 97792,
+        "budget": 97421,
+        "tolerance": 0.0169
+      },
+      "list owners": {
+        "main": 1658270,
+        "budget": 1658924,
+        "tolerance": 0.01
+      },
+      "owners by last name": {
+        "main": 290235,
+        "budget": 290767,
+        "tolerance": 0.01
+      },
+      "owners by last name prefix": {
+        "main": 290249,
+        "budget": 290988,
+        "tolerance": 0.0125
+      },
+      "owners by an unknown last name": {
+        "main": 79173,
+        "budget": 78066,
+        "tolerance": 0.04
+      },
+      "owner with pets and visits": {
+        "main": 286418,
+        "budget": 286801,
+        "tolerance": 0.0261
+      },
+      "unknown owner": {
+        "main": 201660,
+        "budget": 200438,
+        "tolerance": 0.01
+      },
+      "owner id that is not a number": {
+        "main": 302582,
+        "budget": 302221,
+        "tolerance": 0.01
+      },
+      "owner pet": {
+        "main": 249904,
+        "budget": 250027,
+        "tolerance": 0.0153
+      },
+      "pet of another owner": {
+        "main": 180714,
+        "budget": 181052,
+        "tolerance": 0.0215
+      },
+      "list pets": {
+        "main": 542488,
+        "budget": 541916,
+        "tolerance": 0.0122
+      },
+      "pet": {
+        "main": 329626,
+        "budget": 329972,
+        "tolerance": 0.01
+      },
+      "unknown pet": {
+        "main": 262557,
+        "budget": 262179,
+        "tolerance": 0.0105
+      },
+      "list visits": {
+        "main": 674155,
+        "budget": 673884,
+        "tolerance": 0.01
+      },
+      "visit": {
+        "main": 247828,
+        "budget": 247010,
+        "tolerance": 0.0198
+      },
+      "unknown visit": {
+        "main": 265666,
+        "budget": 265171,
+        "tolerance": 0.01
+      },
+      "list pet types": {
+        "main": 152770,
+        "budget": 152293,
+        "tolerance": 0.0193
+      },
+      "pet type": {
+        "main": 143847,
+        "budget": 143105,
+        "tolerance": 0.01
+      },
+      "unknown pet type": {
+        "main": 269422,
+        "budget": 268668,
+        "tolerance": 0.01
+      },
+      "list specialties": {
+        "main": 143518,
+        "budget": 143416,
+        "tolerance": 0.0195
+      },
+      "specialty": {
+        "main": 144678,
+        "budget": 143722,
+        "tolerance": 0.01
+      },
+      "unknown specialty": {
+        "main": 267198,
+        "budget": 266570,
+        "tolerance": 0.01
+      },
+      "list vets": {
+        "main": 407726,
+        "budget": 407377,
+        "tolerance": 0.01
+      },
+      "vet with specialties": {
+        "main": 224575,
+        "budget": 223606,
+        "tolerance": 0.0131
+      },
+      "unknown vet": {
+        "main": 270748,
+        "budget": 269792,
+        "tolerance": 0.0102
+      },
+      "v2 owners default page": {
+        "main": 1750227,
+        "budget": 1750235,
+        "tolerance": 0.01
+      },
+      "v2 owners page and size": {
+        "main": 606539,
+        "budget": 606206,
+        "tolerance": 0.01
+      },
+      "v2 owners past the end": {
+        "main": 159891,
+        "budget": 159957,
+        "tolerance": 0.01
+      },
+      "v2 owners by last name": {
+        "main": 258773,
+        "budget": 257449,
+        "tolerance": 0.0112
+      },
+      "v2 pets page": {
+        "main": 411002,
+        "budget": 410766,
+        "tolerance": 0.01
+      },
+      "v2 size below the minimum": {
+        "main": 203589,
+        "budget": 203479,
+        "tolerance": 0.01
+      },
+      "create owner": {
+        "main": 225516,
+        "budget": 224994,
+        "tolerance": 0.01
+      },
+      "created owner reads back": {
+        "main": 197547,
+        "budget": 197467,
+        "tolerance": 0.0188
+      },
+      "create owner with UTF-8 names": {
+        "main": 231929,
+        "budget": 230932,
+        "tolerance": 0.0143
+      },
+      "create owner: telephone with letters": {
+        "main": 103356,
+        "budget": 103010,
+        "tolerance": 0.01
+      },
+      "create owner: blank city": {
+        "main": 104416,
+        "budget": 103908,
+        "tolerance": 0.01
+      },
+      "create owner: missing first name": {
+        "main": 99011,
+        "budget": 98681,
+        "tolerance": 0.01
+      },
+      "create owner: first name with digits": {
+        "main": 105933,
+        "budget": 105256,
+        "tolerance": 0.01
+      },
+      "create owner: malformed JSON": {
+        "main": 378765,
+        "budget": 378646,
+        "tolerance": 0.01
+      },
+      "create owner: wrong content type": {
+        "main": 194442,
+        "budget": 194190,
+        "tolerance": 0.01
+      },
+      "update owner": {
+        "main": 369994,
+        "budget": 370528,
+        "tolerance": 0.01
+      },
+      "updated owner reads back": {
+        "main": 196480,
+        "budget": 197421,
+        "tolerance": 0.0193
+      },
+      "update unknown owner": {
+        "main": 328512,
+        "budget": 327614,
+        "tolerance": 0.01
+      },
+      "update owner: last name with four parts": {
+        "main": 171562,
+        "budget": 170595,
+        "tolerance": 0.01
+      },
+      "add pet to owner": {
+        "main": 439192,
+        "budget": 440349,
+        "tolerance": 0.0108
+      },
+      "added pet reads back through the owner": {
+        "main": 259823,
+        "budget": 260402,
+        "tolerance": 0.0151
+      },
+      "add pet to unknown owner": {
+        "main": 249652,
+        "budget": 249718,
+        "tolerance": 0.0161
+      },
+      "add pet: birth date in the future": {
+        "main": 113877,
+        "budget": 113358,
+        "tolerance": 0.01
+      },
+      "add pet: birth date older than 50 years": {
+        "main": 113812,
+        "budget": 113570,
+        "tolerance": 0.012
+      },
+      "add pet: blank name": {
+        "main": 110875,
+        "budget": 110374,
+        "tolerance": 0.01
+      },
+      "add pet: unknown pet type": {
+        "main": 682558,
+        "budget": 683209,
+        "tolerance": 0.01
+      },
+      "update owner pet": {
+        "main": 561439,
+        "budget": 562146,
+        "tolerance": 0.01
+      },
+      "update pet of unknown owner": {
+        "main": 337157,
+        "budget": 336867,
+        "tolerance": 0.01
+      },
+      "add visit through the owner": {
+        "main": 469181,
+        "budget": 468300,
+        "tolerance": 0.01
+      },
+      "owner with the new pet and visit": {
+        "main": 384051,
+        "budget": 384070,
+        "tolerance": 0.0109
+      },
+      "update pet": {
+        "main": 336584,
+        "budget": 336437,
+        "tolerance": 0.01
+      },
+      "updated pet reads back": {
+        "main": 262520,
+        "budget": 261811,
+        "tolerance": 0.011
+      },
+      "update unknown pet": {
+        "main": 336891,
+        "budget": 336062,
+        "tolerance": 0.01
+      },
+      "create visit": {
+        "main": 226756,
+        "budget": 226244,
+        "tolerance": 0.0128
+      },
+      "create visit: whitespace description": {
+        "main": 144358,
+        "budget": 144024,
+        "tolerance": 0.01
+      },
+      "create visit for an unknown pet": {
+        "main": 525061,
+        "budget": 526110,
+        "tolerance": 0.01
+      },
+      "update visit": {
+        "main": 303063,
+        "budget": 304120,
+        "tolerance": 0.01
+      },
+      "updated visit reads back": {
+        "main": 264383,
+        "budget": 263840,
+        "tolerance": 0.0107
+      },
+      "update unknown visit": {
+        "main": 303278,
+        "budget": 303173,
+        "tolerance": 0.0132
+      },
+      "delete visit": {
+        "main": 275546,
+        "budget": 275582,
+        "tolerance": 0.01
+      },
+      "delete unknown visit": {
+        "main": 275522,
+        "budget": 275085,
+        "tolerance": 0.01
+      },
+      "create pet type": {
+        "main": 188512,
+        "budget": 187022,
+        "tolerance": 0.019
+      },
+      "create pet type: name starting with a digit": {
+        "main": 130176,
+        "budget": 129694,
+        "tolerance": 0.01
+      },
+      "update pet type without an id": {
+        "main": 152799,
+        "budget": 152624,
+        "tolerance": 0.01
+      },
+      "update pet type": {
+        "main": 309247,
+        "budget": 309298,
+        "tolerance": 0.01
+      },
+      "updated pet type reads back": {
+        "main": 268960,
+        "budget": 268227,
+        "tolerance": 0.0109
+      },
+      "update unknown pet type": {
+        "main": 309280,
+        "budget": 308464,
+        "tolerance": 0.0119
+      },
+      "delete pet type": {
+        "main": 279167,
+        "budget": 278962,
+        "tolerance": 0.01
+      },
+      "delete pet type in use deletes its pets": {
+        "main": 279269,
+        "budget": 278793,
+        "tolerance": 0.01
+      },
+      "delete unknown pet type": {
+        "main": 279228,
+        "budget": 278915,
+        "tolerance": 0.01
+      },
+      "create specialty": {
+        "main": 199559,
+        "budget": 198292,
+        "tolerance": 0.014
+      },
+      "create specialty: name with digits": {
+        "main": 138547,
+        "budget": 138442,
+        "tolerance": 0.0407
+      },
+      "update specialty": {
+        "main": 312750,
+        "budget": 312590,
+        "tolerance": 0.01
+      },
+      "updated specialty reads back": {
+        "main": 266681,
+        "budget": 266117,
+        "tolerance": 0.0104
+      },
+      "update unknown specialty": {
+        "main": 312768,
+        "budget": 312040,
+        "tolerance": 0.01
+      },
+      "create vet with a specialty": {
+        "main": 327833,
+        "budget": 327023,
+        "tolerance": 0.0197
+      },
+      "create vet: last name too long": {
+        "main": 149465,
+        "budget": 149098,
+        "tolerance": 0.0151
+      },
+      "update vet": {
+        "main": 348414,
+        "budget": 347634,
+        "tolerance": 0.01
+      },
+      "updated vet reads back": {
+        "main": 268514,
+        "budget": 267670,
+        "tolerance": 0.0108
+      },
+      "update unknown vet": {
+        "main": 325136,
+        "budget": 324466,
+        "tolerance": 0.01
+      },
+      "delete vet": {
+        "main": 278945,
+        "budget": 277977,
+        "tolerance": 0.01
+      },
+      "delete unknown vet": {
+        "main": 278832,
+        "budget": 277882,
+        "tolerance": 0.01
+      },
+      "delete specialty": {
+        "main": 276027,
+        "budget": 275168,
+        "tolerance": 0.0143
+      },
+      "delete unknown specialty": {
+        "main": 276195,
+        "budget": 275278,
+        "tolerance": 0.0103
+      },
+      "create user": {
+        "main": 271488,
+        "budget": 270066,
+        "tolerance": 0.0139
+      },
+      "create user: role without the ROLE_ prefix": {
+        "main": 184513,
+        "budget": 184002,
+        "tolerance": 0.01
+      },
+      "create user: missing roles": {
+        "main": 297697,
+        "budget": 296835,
+        "tolerance": 0.01
+      },
+      "delete pet": {
+        "main": 261306,
+        "budget": 261013,
+        "tolerance": 0.0151
+      },
+      "delete unknown pet": {
+        "main": 261320,
+        "budget": 260289,
+        "tolerance": 0.0147
+      },
+      "delete owner": {
+        "main": 281153,
+        "budget": 280021,
+        "tolerance": 0.01
+      },
+      "delete unknown owner": {
+        "main": 281255,
+        "budget": 280178,
+        "tolerance": 0.0101
+      },
+      "owners after the changes": {
+        "main": 4204749,
+        "budget": 4210930,
+        "tolerance": 0.01
+      },
+      "unknown API path": {
+        "main": 103721,
+        "budget": 104340,
+        "tolerance": 0.01
+      },
+      "wrong method": {
+        "main": 169436,
+        "budget": 169195,
+        "tolerance": 0.01
+      },
+      "path outside the context path": {
+        "main": 27760,
+        "budget": 27442,
+        "tolerance": 0.01
+      },
+      "CORS simple request": {
+        "main": 163282,
+        "budget": 162590,
+        "tolerance": 0.01
+      },
+      "CORS preflight": {
+        "main": 92414,
+        "budget": 92089,
+        "tolerance": 0.01
+      },
+      "CORS preflight for a method that is not mapped": {
+        "main": 164910,
+        "budget": 164788,
+        "tolerance": 0.01
       }
     }
   }
