@@ -6,7 +6,6 @@
   "window": "claim",
   "priority": 8,
   "estimate_minutes": 240,
-  "not_before": "2026-11-27T06:00:00Z",
   "requested_by": "the coordinator, 2026-11-26 21:36Z: certified build timing for the compile-scope A/B (plan accepted)",
   "report_to": "the coordinator and sol-jdk-core; coordination/notes/compile-scope-ab/",
   "summary": "Paired build timing of FLINT_DUB_SINGLE_FILE_SCOPE batch / jdk / flint on sol-jdk-core's overlay DUB at 48b96dadc: both Spring apps, DMD dev and LDC release, cold (platform priming through DUB), edit and scratch, three rotated interleaved trials",
@@ -17,9 +16,19 @@
     "kind": "command",
     "steps": [
       {
-        "argv": ["{python}", "/home/olfa/flint-work/coordination/notes/compile-scope-ab/timing.py", "--output", "{out}/timing.json"],
-        "smoke_args": ["--smoke"]
+        "argv": [
+          "{python}",
+          "/home/olfa/flint-work/coordination/notes/compile-scope-ab/timing.py",
+          "--output",
+          "{out}/timing.json"
+        ],
+        "smoke_args": [
+          "--smoke"
+        ]
       }
     ]
-  }
+  },
+  "own_directories": [
+    "/home/olfa/flint-work/proof-harness-scope-ab"
+  ]
 }

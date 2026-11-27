@@ -1580,6 +1580,9 @@ def run(entry, force_busy=False, smoke=False, claim_seconds=0):
     if port_problems:
         raise SystemExit(f"{entry['id']}: " + '; '.join(port_problems))
     OWN_DIRECTORIES[:] = [outdir] + [row['worktree'] for row in built.values() if row.get('worktree')]
+    # A command entry that builds in its own checkout outside the queue's trees names it (2026-11-27: the compile-
+    # scope timing's own compiles in /home/olfa/flint-work/proof-harness-scope-ab counted as foreign, voiding the run).
+    OWN_DIRECTORIES.extend(entry.get('own_directories', []))
     # The signal other sessions watch: while MEASURING exists, a timed run is in progress and compiles would void it.
     # Smoke and forced runs are never evidence, so they do not ask anyone to hold builds.
     locking = not (smoke or force_busy)
