@@ -2258,10 +2258,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.ClassCastException#<init>(String)` | `flint.java.lang.ClassCastException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.IllegalArgumentException` | `flint.java.lang.IllegalArgumentException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.IllegalArgumentException#<init>(String)` | `flint.java.lang.IllegalArgumentException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
-| `java.lang.IllegalArgumentException#<init>(String,Throwable)` | `flint.java.lang.IllegalArgumentException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| `java.lang.IllegalArgumentException#<init>(String,Throwable)` | `flint.java.lang.IllegalArgumentException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.IllegalStateException` | `flint.java.lang.IllegalStateException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.IllegalStateException#<init>(String)` | `flint.java.lang.IllegalStateException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
-| `java.lang.IllegalStateException#<init>(String,Throwable)` | `flint.java.lang.IllegalStateException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| `java.lang.IllegalStateException#<init>(String,Throwable)` | `flint.java.lang.IllegalStateException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.IndexOutOfBoundsException` | `flint.java.lang.IndexOutOfBoundsException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.IndexOutOfBoundsException#<init>(String)` | `flint.java.lang.IndexOutOfBoundsException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.IndexOutOfBoundsException#<init>(int)` | `flint.java.lang.IndexOutOfBoundsException.this` | [R7](api-mapping.md#r7-overloads) | An int argument implicitly widens to the long overload. The index detail matches Java across the int range. |
@@ -2314,8 +2314,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.NumberFormatException#<init>(String)` | `flint.java.lang.NumberFormatException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.RuntimeException` | `flint.java.lang.RuntimeException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.RuntimeException#<init>(String)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
-| `java.lang.RuntimeException#<init>(String,Throwable)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
-| `java.lang.RuntimeException#<init>(String,Throwable,boolean,boolean)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| `java.lang.RuntimeException#<init>(String,Throwable)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.RuntimeException#<init>(String,Throwable,boolean,boolean)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.Short` | `flint.java.lang.short_.Short` | [R1](api-mapping.md#r1-packages-and-names), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Import from flint.java.lang.short_ (short is a D keyword, R19); flint.java.lang does not re-export it until the JDK aggregate exists. A boxed Short is a D short (R5): valueOf and decode return the primitive, and each instance member maps to its primitive equivalent. Parsing follows Integer.parseInt, so Character.digit's Unicode decimal digits and fullwidth Latin letters count. |
 | `java.lang.Short#<init>(String)` | `flint.java.lang.short_.Short.parseShort` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Deprecated for removal since Java 9 (Short.java:378). A boxed Short is the D short, so Short.parseShort(s) gives the value. |
 | `java.lang.Short#<init>(short)` | `flint.java.lang.short_.Short.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Deprecated for removal since Java 9 (Short.java:355). A boxed Short is the D short itself, as Short.valueOf(short) returns it. |
@@ -2338,7 +2338,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.StrictMath` | `flint.java.lang.strictmath.StrictMath` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.lang.strictmath; flint.java.lang does not re-export it until the JDK aggregate exists. NaN results are the canonical quiet NaN (Double.NaN's bits); HotSpot on x86-64 returns the sign-set default NaN for computed paths, which only doubleToRawLongBits can observe. |
 | `java.lang.UnsupportedOperationException` | `flint.java.lang.UnsupportedOperationException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.UnsupportedOperationException#<init>(String)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
-| `java.lang.UnsupportedOperationException#<init>(String,Throwable)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| `java.lang.UnsupportedOperationException#<init>(String,Throwable)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.lang.annotation
 
@@ -2737,7 +2737,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `java.time.format.DateTimeParseException` | `flint.java.time.format.DateTimeParseException` | [R26](api-mapping.md#r26-null-arrays) | A null parsed text counts as empty (R26). Java throws NullPointerException. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
-| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.time.temporal
 
