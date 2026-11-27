@@ -5,7 +5,7 @@ instances is `==` here, and `Charset.init` names no charset.
 +/
 module flint.java.nio.charset;
 
-import flint.java.lang : IllegalArgumentException;
+import flint.java.lang : IllegalArgumentException, stringHashCode;
 
 @safe:
 
@@ -58,28 +58,95 @@ struct Charset
         return compareIgnoreCase(name(), other.name());
     }
 
+    /// Java's `hashCode`: the canonical name's `String.hashCode`.
+    int hashCode() const pure nothrow @nogc
+    {
+        return stringHashCode(name());
+    }
+
+    /// Java's `equals`: two charsets are equal when their canonical names are equal.
+    bool opEquals(const Charset other) const pure nothrow @nogc
+    {
+        return id == other.id;
+    }
+
+    /// The canonical name's hash, matching `hashCode`.
+    size_t toHash() const pure nothrow @nogc
+    {
+        return cast(size_t) stringHashCode(name());
+    }
+
+    /// Java's `canEncode`: whether this charset can encode. True for all six standard charsets.
+    bool canEncode() const pure nothrow @nogc
+    {
+        return id != 0;
+    }
+
+    /// Java's `isRegistered`: whether this charset is in the IANA registry. True for all six standard charsets.
+    bool isRegistered() const pure nothrow @nogc
+    {
+        const canonical = name();
+        if (canonical is null)
+            return false;
+        if (canonical.length >= 2 && (canonical[0] == 'X' || canonical[0] == 'x') && canonical[1] == '-')
+            return false;
+        return true;
+    }
+
+    /// Java 18+'s `defaultCharset`: UTF-8 for the six standard charsets.
+    static Charset defaultCharset() pure nothrow @nogc
+    {
+        return Charset(1);
+    }
+
+    /// Java's `contains`: the standard containment table. Every UTF charset contains all six; US-ASCII only
+    /// itself; ISO-8859-1 itself and US-ASCII.
+    bool contains(const Charset other) const pure nothrow @nogc
+    {
+        switch (id)
+        {
+        case 2:
+            return other.id == 2;
+        case 3:
+            return other.id == 2 || other.id == 3;
+        case 1, 4, 5, 6:
+            return other.id >= 1 && other.id <= 6;
+        default:
+            return false;
+        }
+    }
+
     /++
     The charset named `charsetName` or one of its aliases, ignoring case.
-    Throws: `UnsupportedCharsetException` for a name this port does not know, `IllegalCharsetNameException`
-    for an empty name.
+    Throws: `UnsupportedCharsetException` for a legal name this port does not know, `IllegalCharsetNameException`
+    for a name with an illegal character.
     +/
     static Charset forName(scope const(char)[] charsetName) pure
     {
-        if (charsetName.length == 0)
-            throw new IllegalCharsetNameException(charsetName.idup);
         const found = lookup(charsetName);
-        if (found == 0)
-            throw new UnsupportedCharsetException(charsetName.idup);
-        return Charset(found);
+        if (found != 0)
+            return Charset(found);
+        throw new UnsupportedCharsetException(charsetName.idup);
     }
 
-    /// Whether `forName(charsetName)` would succeed.
-    static bool isSupported(scope const(char)[] charsetName) pure nothrow @nogc
+    /// Java's `forName(String, Charset)`: the named charset, or `fallback` when the name is illegal or unknown.
+    static Charset forName(scope const(char)[] charsetName, Charset fallback) pure
+    {
+        try
+            return forName(charsetName);
+        catch (IllegalCharsetNameException)
+            return fallback;
+        catch (UnsupportedCharsetException)
+            return fallback;
+    }
+
+    /// Whether `forName` would succeed. Throws `IllegalCharsetNameException` for a name with an illegal character.
+    static bool isSupported(scope const(char)[] charsetName) pure
     {
         return lookup(charsetName) != 0;
     }
 
-    private static ubyte lookup(scope const(char)[] charsetName) pure nothrow @nogc
+    private static ubyte lookup(scope const(char)[] charsetName) pure
     {
         foreach (i, ref entry; known)
         {
@@ -89,7 +156,25 @@ struct Charset
                 if (equalsIgnoreCase(alias_, charsetName))
                     return cast(ubyte)(i + 1);
         }
+        checkName(charsetName);
         return 0;
+    }
+
+    /// Java's `checkName`: the first character must be a letter or digit; the rest may also be `- + : _ .`.
+    private static void checkName(scope const(char)[] charsetName) pure
+    {
+        if (charsetName.length == 0)
+            throw new IllegalCharsetNameException(charsetName.idup);
+        foreach (i, c; charsetName)
+        {
+            const alpha = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+            const digit = c >= '0' && c <= '9';
+            if (alpha || digit)
+                continue;
+            if (i > 0 && (c == '-' || c == '+' || c == ':' || c == '_' || c == '.'))
+                continue;
+            throw new IllegalCharsetNameException(charsetName.idup);
+        }
     }
 }
 
