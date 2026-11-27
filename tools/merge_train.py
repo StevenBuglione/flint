@@ -79,6 +79,13 @@ SET_FILES = ('api/jdk-unconfirmed.json', 'api/kind-baseline.json', 'api/dependen
              # The upstream-tests ratchet: sorted per-module lists of deferred classes, shrink-only (sol-jackson,
              # 2026-11-26: two lanes removing adjacent rows conflicted).
              'policy/upstream-tests-baseline.json')
+# Per-package JSON maps keyed by entry, merged as sets wherever they live: the JDK packages' leaf budgets (sol-ai and
+# sol-aop, 2026-11-27 05:43Z: two lanes adding different leaves conflicted in framework/java/leaf-budgets.json).
+SET_NAMES = ('leaf-budgets.json',)
+
+
+def is_set_file(path):
+    return path in SET_FILES or path.rsplit('/', 1)[-1] in SET_NAMES
 # Files the regeneration may also rewrite; staged with the pages so `rebase --continue` does not stop on them (sol-web).
 # Both ratchets shrink on --write.
 REGENERATED_ALSO = ('api/dependency-baseline.json', 'api/kind-baseline.json')
@@ -756,9 +763,9 @@ class Train:
         continue. Returns the last git result (returncode 0 when the rebase completed)."""
         for _ in range(50):
             conflicted = git(['diff', '--name-only', '--diff-filter=U'], self.worktree, check=False).stdout.split()
-            if not conflicted or any(path not in GENERATED_FILES + SET_FILES for path in conflicted):
+            if not conflicted or any(path not in GENERATED_FILES and not is_set_file(path) for path in conflicted):
                 return done
-            for path in (p for p in conflicted if p in SET_FILES):
+            for path in (p for p in conflicted if is_set_file(p)):
                 if not self.merge_set_file(path):
                     return done  # both sides changed one entry incompatibly: a real conflict
             regenerated = subprocess.run(REGENERATE, cwd=self.worktree, capture_output=True, text=True)

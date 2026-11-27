@@ -205,6 +205,28 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(list(json.loads(text)), ['schema', 'note', 'modules'])
         self.assertTrue(text.splitlines()[1].startswith('  "schema"'), text[:80])  # indent 2 kept, not reformatted
 
+    def test_two_lanes_adding_different_leaf_budgets_both_land(self):
+        # sol-ai and sol-aop, 2026-11-27 05:43Z: each added its own leaf to framework/java/leaf-budgets.json.
+        path = 'framework/java/leaf-budgets.json'
+        base = {'flint.java.io.closeable': {'incremental_linked_bytes': 2152, 'template_instances': 241}}
+        (self.work / 'framework' / 'java').mkdir(parents=True, exist_ok=True)
+        (self.work / path).write_text(json.dumps(base, indent=2) + '\n')
+        (self.work / 'tools').mkdir(exist_ok=True)
+        (self.work / 'tools' / 'api_differences.py').write_text('')
+        git(self.work, 'checkout', '-q', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'leaf budgets')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        git(self.work, 'fetch', '-q', 'origin')
+        for role, leaf in (('sol-a', 'flint.java.lang.number'), ('sol-b', 'flint.java.util.uuid')):
+            grown = dict(base, **{leaf: {'incremental_linked_bytes': 100, 'template_instances': 3}})
+            self.lane(role, {path: json.dumps(grown, indent=2) + '\n'})
+        self.hold_slot()
+        result = self.train.run('runner')
+        self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-b'], []))
+        merged = json.loads(git(self.work, 'show', f'origin/main:{path}'))
+        self.assertEqual(set(merged), {'flint.java.io.closeable', 'flint.java.lang.number', 'flint.java.util.uuid'})
+
     def test_json_indent_follows_the_file(self):
         self.assertEqual(merge_train.json_indent('{\n  "a": 1\n}\n'), 2)
         self.assertEqual(merge_train.json_indent('{\n "a": 1\n}\n'), 1)
