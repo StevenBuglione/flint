@@ -49,6 +49,38 @@ version (Windows)
         assert(millisFromFileTime(fileTimeUnixEpoch + 10_000) == 1);
     }
 
+    private extern (Windows) int QueryPerformanceCounter(long* count) nothrow @nogc @system;
+    private extern (Windows) int QueryPerformanceFrequency(long* frequency) nothrow @nogc @system;
+
+    // SAFETY: either call only writes into the local long and never retains its address.
+    private @trusted long queryPerformance(bool frequency) nothrow @nogc
+    {
+        long value;
+        return (frequency ? QueryPerformanceFrequency(&value) : QueryPerformanceCounter(&value)) != 0 ? value : 0;
+    }
+
+    /// Monotonic nanoseconds from an arbitrary origin, or 0 if the performance counter is unavailable.
+    long monotonicNanos() nothrow @nogc
+    {
+        const frequency = queryPerformance(true);
+        return frequency > 0 ? nanosFromCounter(queryPerformance(false), frequency) : 0;
+    }
+
+    // Whole seconds and the remainder separately, so the product overflows only after 292 years of uptime.
+    private long nanosFromCounter(long count, long frequency) pure nothrow @nogc
+    {
+        return count / frequency * 1_000_000_000 + count % frequency * 1_000_000_000 / frequency;
+    }
+
+    unittest
+    {
+        assert(nanosFromCounter(0, 10_000_000) == 0);
+        assert(nanosFromCounter(1, 10_000_000) == 100);
+        assert(nanosFromCounter(10_000_001, 10_000_000) == 1_000_000_100);
+        assert(nanosFromCounter(10_000_000L * 86_400 * 365 * 200, 10_000_000) == 1_000_000_000L * 86_400 * 365 * 200);
+        assert(nanosFromCounter(2, 3) == 666_666_666);
+    }
+
     /// The local zone's current offset from UTC in seconds (east positive), as std.datetime's `LocalTime` reads
     /// it on Windows: the bias, with the daylight bias while daylight time is in effect; 0 when unknown.
     // SAFETY: GetTimeZoneInformation only writes into the local TIME_ZONE_INFORMATION.
@@ -70,17 +102,31 @@ else
     {
         import core.sys.posix.time : timespec;
 
-        // macOS 10.12+ <time.h>: clockid_t is a C enum (int ABI) and CLOCK_REALTIME is 0.
+        // macOS 10.12+ <time.h>: clockid_t is a C enum (int ABI); CLOCK_REALTIME is 0 and CLOCK_MONOTONIC is 6.
         private enum int CLOCK_REALTIME = 0;
+        private enum int CLOCK_MONOTONIC = 6;
         private extern (C) int clock_gettime(int clock, timespec* value) @system nothrow @nogc;
     }
     else
-        import core.sys.posix.time : CLOCK_REALTIME, clock_gettime, timespec;
+        import core.sys.posix.time : CLOCK_MONOTONIC, CLOCK_REALTIME, clock_gettime, timespec;
 
     // SAFETY: clock_gettime writes only to the caller's typed out parameter and never retains its address.
     private @trusted bool readRealtime(out timespec clock) nothrow @nogc
     {
         return clock_gettime(CLOCK_REALTIME, &clock) == 0;
+    }
+
+    // SAFETY: clock_gettime writes only to the caller's typed out parameter and never retains its address.
+    private @trusted bool readMonotonic(out timespec clock) nothrow @nogc
+    {
+        return clock_gettime(CLOCK_MONOTONIC, &clock) == 0;
+    }
+
+    /// Monotonic nanoseconds from an arbitrary origin (CLOCK_MONOTONIC), or 0 if the clock is unavailable.
+    long monotonicNanos() nothrow @nogc
+    {
+        timespec clock;
+        return readMonotonic(clock) ? cast(long) clock.tv_sec * 1_000_000_000 + cast(long) clock.tv_nsec : 0;
     }
 
     /// 100 ns ticks since 1970-01-01T00:00Z, or -1 if the clock is unavailable or reads before the epoch.
@@ -146,6 +192,19 @@ unittest
     assert(before <= now && now <= after);
     // Negative: never the failure value on a working clock, and never decreasing between two reads.
     assert(now != -1 && epochTicks() >= now);
+}
+
+unittest
+{
+    import core.time : MonoTime, ticksToNSecs;
+
+    // Positive: the same clock as druntime's MonoTime, read between two of its reads.
+    const before = ticksToNSecs(MonoTime.currTime.ticks);
+    const now = monotonicNanos();
+    const after = ticksToNSecs(MonoTime.currTime.ticks);
+    assert(before <= now && now <= after);
+    // Negative: never the failure value on a working clock, and never decreasing between two reads.
+    assert(now != 0 && monotonicNanos() >= now);
 }
 
 version (Posix) unittest
