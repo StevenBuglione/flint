@@ -58,6 +58,8 @@ final class Stream(T)
     /// `a`'s elements, then `b`'s.
     static Stream!T concat(Stream!T a, Stream!T b)
     {
+        if (a is null || b is null)
+            throwNullPointerException();
         auto first = a.take(), second = b.take();
         bool onSecond;
         return new Stream!T((out T next) {
