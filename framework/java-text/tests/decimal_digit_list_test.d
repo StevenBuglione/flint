@@ -1,6 +1,6 @@
 module flint.java.text.internal.decimal_digit_list_test;
 
-import flint.java.text.internal.decimaldigitlist : FixedRoundingMode, roundFixed;
+import flint.java.text.internal.decimaldigitlist : FixedRoundingMode, FixedRoundingStatus, roundFixed;
 
 @safe:
 
@@ -28,6 +28,45 @@ unittest
     check("9", -4, 3, false, true, -4, "");
     check("15000", 1, 3, false, true, 1, "15");
     check("", 0, 3, false, true, 0, "");
+}
+
+@("Directed rounding selects by sign and UNNECESSARY reports discarded digits")
+unittest
+{
+    void check(string decimal, bool negative, FixedRoundingMode mode, string expected,
+            FixedRoundingStatus expectedStatus = FixedRoundingStatus.complete)
+    {
+        int point = 1;
+        char[8] storage;
+        storage[0 .. decimal.length] = decimal;
+        FixedRoundingStatus status;
+        const count = roundFixed(storage[0 .. decimal.length], point, 0, false, true, negative, mode, status);
+        assert(point == 1);
+        assert(status == expectedStatus);
+        assert(storage[0 .. count] == expected);
+    }
+
+    check("25", false, FixedRoundingMode.up, "3");
+    check("25", true, FixedRoundingMode.up, "3");
+    check("25", false, FixedRoundingMode.down, "2");
+    check("25", true, FixedRoundingMode.down, "2");
+    check("25", false, FixedRoundingMode.ceiling, "3");
+    check("25", true, FixedRoundingMode.ceiling, "2");
+    check("25", false, FixedRoundingMode.floor, "2");
+    check("25", true, FixedRoundingMode.floor, "3");
+    check("25", false, FixedRoundingMode.unnecessary, "2", FixedRoundingStatus.inexact);
+}
+
+@("UNNECESSARY retains the pre-mode underflow short circuit")
+unittest
+{
+    int point = -2;
+    char[2] digits = "50";
+    FixedRoundingStatus status;
+    const count = roundFixed(digits[], point, 0, false, true, false, FixedRoundingMode.unnecessary, status);
+    assert(count == 0);
+    assert(point == -2);
+    assert(status == FixedRoundingStatus.complete);
 }
 
 @("DigitList half-up and half-down distinguish exact and converted decimal ties")

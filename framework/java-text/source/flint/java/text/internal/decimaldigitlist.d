@@ -48,14 +48,33 @@ package(flint.java.text):
 
 enum FixedRoundingMode : ubyte
 {
+    up,
+    down,
+    ceiling,
+    floor,
     halfEven,
     halfUp,
     halfDown,
+    unnecessary,
+}
+
+enum FixedRoundingStatus : ubyte
+{
+    complete,
+    inexact,
 }
 
 /// Converts finite binary64 values to the fixed-point DigitList representation.
 pure nothrow @nogc bool tryFixedBinaryDecimal(ulong bits, uint maximumFractionDigits,
         ref BinaryDecimal result, FixedRoundingMode mode = FixedRoundingMode.halfEven)
+{
+    FixedRoundingStatus status;
+    return tryFixedBinaryDecimal(bits, maximumFractionDigits, result, mode, status)
+        && status == FixedRoundingStatus.complete;
+}
+
+pure nothrow @nogc bool tryFixedBinaryDecimal(ulong bits, uint maximumFractionDigits,
+        ref BinaryDecimal result, FixedRoundingMode mode, out FixedRoundingStatus status)
 {
     BinaryDecimal converted;
     if (!tryFiniteBinaryDecimal(bits, converted))
@@ -64,7 +83,7 @@ pure nothrow @nogc bool tryFixedBinaryDecimal(ulong bits, uint maximumFractionDi
     if (converted.count == 1 && converted.digits[0] == '0')
         converted.count = 0;
     converted.count = roundFixed(converted.digits[0 .. converted.count], converted.decimalAt,
-            maximumFractionDigits, converted.roundedUp, converted.exact, mode);
+            maximumFractionDigits, converted.roundedUp, converted.exact, converted.negative, mode, status);
     result = converted;
     return true;
 }
@@ -75,6 +94,14 @@ pure nothrow @nogc bool tryFixedBinaryDecimal(ulong bits, uint maximumFractionDi
 pure nothrow @nogc size_t roundFixed(scope char[] digits, ref int decimalAt, uint maximumFractionDigits,
         bool roundedUp, bool exact, FixedRoundingMode mode = FixedRoundingMode.halfEven)
 {
+    FixedRoundingStatus status;
+    return roundFixed(digits, decimalAt, maximumFractionDigits, roundedUp, exact, false, mode, status);
+}
+
+pure nothrow @nogc size_t roundFixed(scope char[] digits, ref int decimalAt, uint maximumFractionDigits,
+        bool roundedUp, bool exact, bool negative, FixedRoundingMode mode, out FixedRoundingStatus status)
+{
+    status = FixedRoundingStatus.complete;
     const retained = cast(long) decimalAt + maximumFractionDigits;
     if (retained < 0)
         return 0;
@@ -85,7 +112,12 @@ pure nothrow @nogc size_t roundFixed(scope char[] digits, ref int decimalAt, uin
         return digits.length;
 
     const keep = cast(size_t) retained;
-    if (!roundsUp(digits, keep, roundedUp, exact, mode))
+    if (mode == FixedRoundingMode.unnecessary)
+    {
+        status = FixedRoundingStatus.inexact;
+        return withoutTrailingZeros(digits[0 .. keep]);
+    }
+    if (!roundsUp(digits, keep, roundedUp, exact, negative, mode))
         return withoutTrailingZeros(digits[0 .. keep]);
 
     foreach_reverse (index; 0 .. keep)
@@ -110,6 +142,25 @@ private size_t withoutTrailingZeros(scope const(char)[] digits) pure nothrow @no
 }
 
 private pure nothrow @nogc bool roundsUp(scope const(char)[] digits, size_t keep, bool roundedUp,
+        bool exact, bool negative, FixedRoundingMode mode)
+{
+    if (mode <= FixedRoundingMode.floor)
+        return directedRoundsUp(negative, mode);
+    if (mode == FixedRoundingMode.unnecessary)
+        return false;
+    return halfRoundsUp(digits, keep, roundedUp, exact, mode);
+}
+
+private pure nothrow @nogc bool directedRoundsUp(bool negative, FixedRoundingMode mode)
+{
+    if (mode == FixedRoundingMode.up)
+        return true;
+    if (mode == FixedRoundingMode.down)
+        return false;
+    return mode == FixedRoundingMode.ceiling ? !negative : negative;
+}
+
+private pure nothrow @nogc bool halfRoundsUp(scope const(char)[] digits, size_t keep, bool roundedUp,
         bool exact, FixedRoundingMode mode)
 {
     const firstDiscarded = digits[keep];
