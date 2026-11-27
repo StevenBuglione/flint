@@ -21,6 +21,11 @@ a hand-ported class is derived, spliced over the hand member and described on DM
 reproduced count is the `r6-accessor` floor, and its divergences are listed per element under
 "accessorDivergences", which only shrinks.
 
+The pure-bean shape (tools/port-spring/bean_types.py) derives whole classes made of fields, trivial accessors and
+mechanical constructors, splices each over the hand class, compares its non-private API on DMD and LDC and its rows,
+and runs the owning package's tests. Its reproduced count is the `bean-class` floor, and its divergences are listed
+per type under "beanDivergences", which only shrinks.
+
 Missing inputs (flint, the native helper, a pinned source cache, a compiler) are errors, never passes. Run it under
 tools/measure_queue.py hold on venus: it compiles.
 """
@@ -42,6 +47,7 @@ sys.path.insert(0, str(ROOT / 'tools'))
 from api_differences import Classifier  # noqa: E402
 sys.path.insert(0, str(ROOT / 'tools' / 'port-spring'))
 import accessors  # noqa: E402
+import bean_types  # noqa: E402
 import beans  # noqa: E402
 
 MARKER, END, BODY, BODY_END = '// port:generated ', '// port:end', '// port:body ', '// port:end-body'
@@ -705,15 +711,37 @@ def accessor_shape(helper, cache, summary, report, scratch):
     return results, failures
 
 
-def compare_accessors(baseline, results):
+def bean_shape(helper, cache, summary, report, scratch, tests):
+    """The pure-bean whole-type shape (tools/port-spring/bean_types.py): derived, derived again in opposite order
+    from the same D base facts, spliced and compared on DMD and LDC, with package tests. Returns {type: result}."""
+    universe = accessors.Universe(cache)
+    items, results, derived, _ = bean_types.compare(universe, helper, scratch, tests=tests)
     failures = []
-    listed = baseline.get('accessorDivergences', {})
+    for item in reversed(items):
+        if item['type'] in derived:
+            again = bean_types.derive(item, universe, *derived[item['type']]['inputs'])
+            if again['text'] != derived[item['type']]['text'] or again['rows'] != derived[item['type']]['rows']:
+                failures.append(f'{item["type"]}: the pure-bean derivation differs between two runs')
+    bean_summary = bean_types.summarise(items, results, {})
+    totals = bean_summary['totals']
+    accepted = totals.get('reproduced', 0) + totals.get('diverged', 0)
+    summary['shapes']['bean-class'] = {'classes': totals.get('classes', 0), 'accepted': accepted,
+                                       'reproduced': totals.get('reproduced', 0),
+                                       'diverged': totals.get('diverged', 0),
+                                       'rate': round(totals.get('reproduced', 0) / accepted, 4) if accepted else 0.0}
+    report['beanTypes'] = {**bean_summary, 'results': dict(sorted(results.items()))}
+    return results, failures
+
+
+def compare_accessors(baseline, results, key='accessorDivergences', what='accessor'):
+    failures = []
+    listed = baseline.get(key, {})
     for element, r in sorted(results.items()):
         if r['result'] == 'diverged' and element not in listed:
-            failures.append(f'{element}: new {r["kind"]} accessor divergence: {r["reason"][:300]}')
+            failures.append(f'{element}: new {r["kind"]} {what} divergence: {r["reason"][:300]}')
     for element in sorted(listed):
         if element in results and results[element]['result'] != 'diverged':
-            failures.append(f'{element}: listed under accessorDivergences but now {results[element]["result"]}; '
+            failures.append(f'{element}: listed under {key} but now {results[element]["result"]}; '
                             'remove it (the list only shrinks)')
     return failures
 
@@ -743,7 +771,20 @@ def compare_baseline(baseline, results, summary):
     return failures
 
 
-def write_baseline(baseline, results, summary, seed, accessor_results=None):
+def per_element_divergences(baseline, key, results, seed):
+    known = baseline.get(key)
+    out = {}
+    for element, r in sorted((results or {}).items()):
+        if r['result'] != 'diverged':
+            continue
+        # A list's first baseline seeds itself; after that a new divergence is refused like any other.
+        if known is not None and element not in known and not seed:
+            raise EnvironmentProblem(f'{element} is a new {key} entry; fix the rule or the port plan')
+        out[element] = (known or {}).get(element) or {'kind': r['kind'], 'reason': 'triage: ' + r['reason'][:300]}
+    return out
+
+
+def write_baseline(baseline, results, summary, seed, accessor_results=None, bean_results=None):
     listed = baseline.get('divergences', {})
     divergences = {}
     for type_id, r in sorted(results.items()):
@@ -761,21 +802,12 @@ def write_baseline(baseline, results, summary, seed, accessor_results=None):
     floors = dict(baseline.get('reproduced', {}))
     for shape, counts in summary['shapes'].items():
         floors[shape] = max(floors.get(shape, 0), counts.get('reproduced', 0))
-    known_accessors = baseline.get('accessorDivergences')
-    accessor_divergences = {}
-    for element, r in sorted((accessor_results or {}).items()):
-        if r['result'] != 'diverged':
-            continue
-        # The first accessor baseline seeds itself; after that a new divergence is refused like any other.
-        if known_accessors is not None and element not in known_accessors and not seed:
-            raise EnvironmentProblem(f'{element} is a new accessor divergence; fix the rule or the port plan')
-        accessor_divergences[element] = (known_accessors or {}).get(element) or \
-            {'kind': r['kind'], 'reason': 'triage: ' + r['reason'][:300]}
     document = {'schema': 'flint.porter-baseline/1',
                 'about': 'Shrink-only list of accepted-but-divergent porter outputs, and the reproduced count per '
                          'shape, which only grows. tools/porter_gate.py; docs/spring/phase2/porter-plan.md.',
                 'reproduced': dict(sorted(floors.items())), 'blocked': blocked, 'divergences': divergences,
-                'accessorDivergences': accessor_divergences}
+                'accessorDivergences': per_element_divergences(baseline, 'accessorDivergences', accessor_results, seed),
+                'beanDivergences': per_element_divergences(baseline, 'beanDivergences', bean_results, seed)}
     BASELINE.write_text(json.dumps(document, indent=1, sort_keys=False) + '\n', encoding='utf-8')
 
 
@@ -801,12 +833,18 @@ def gate(args):
         results = reproduce(jobs, first, flint, helper, cache, not args.no_tests, scratch)
         report['blocked'] = dict(BLOCKED)
         summary = summarise(jobs, results)
-        accessor_results = {}
+        accessor_results, bean_results = {}, {}
         if not args.only:
             accessor_scratch = scratch / 'accessors'
             accessor_scratch.mkdir()
             accessor_results, accessor_failures = accessor_shape(helper, cache, summary, report, accessor_scratch)
             failures += accessor_failures
+            bean_scratch = scratch / 'beans'
+            bean_scratch.mkdir()
+            bean_results, bean_failures = bean_shape(helper, cache, summary, report, bean_scratch,
+                                                     not args.no_tests)
+            failures += bean_failures
+            report['blocked'] = dict(BLOCKED)
         if args.keep:
             shutil.copytree(scratch, args.keep, symlinks=True, dirs_exist_ok=True)
     failures += configuration_properties(helper, cache, summary, report)
@@ -816,12 +854,13 @@ def gate(args):
     if args.write_baseline:
         if args.only or args.no_tests:
             raise EnvironmentProblem('--write-baseline needs the whole corpus with tests')
-        write_baseline(baseline, results, summary, args.seed, accessor_results)
+        write_baseline(baseline, results, summary, args.seed, accessor_results, bean_results)
         baseline = load_json(BASELINE)
     if not args.only:
         if baseline:
             failures += compare_baseline(baseline, results, summary)
             failures += compare_accessors(baseline, accessor_results)
+            failures += compare_accessors(baseline, bean_results, 'beanDivergences', 'pure-bean')
         else:
             failures.append('api/porter-baseline.json is missing; seed it with --write-baseline --seed')
     report['results'] = results
@@ -852,7 +891,7 @@ def main(argv=None):
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=1) + '\n', encoding='utf-8')
     brief = {k: v for k, v in report.items() if k not in ('results', 'rejections', 'configurationProperties',
-                                                          'accessors')}
+                                                          'accessors', 'beanTypes')}
     print(json.dumps(brief, indent=1))
     for failure in failures:
         print('PORTER GATE FAILED:', failure, file=sys.stderr)

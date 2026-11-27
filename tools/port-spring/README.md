@@ -85,6 +85,23 @@ python3 tools/port-spring/accessors.py ... --seed-plan artifacts/porter/accessor
 
 `--seed-plan` records, per type and accessor kind, the attributes every hand accessor of that kind shares, so attributes become lane-owned plan data. A lane's existing entry wins. `test_accessors.py` covers detection, the type and row rules, plan attributes and splicing.
 
+### Pure-bean classes, whole types
+
+`bean_types.py` takes the hand-ported classes whose methods are all trivial accessors and derives the whole D class by fixed rules:
+- the header: `abstract` or `final`, and the superclass and interfaces through their mapped D symbols (Java's `Throwable` and `Exception` are D's own, R8);
+- one private D field per Java instance field, named and typed as the accessors are, with a literal initializer when Java has one. A private `serialVersionUID` is dropped;
+- each constructor whose body is an optional `super(...)` or `this(...)` call over parameters and literals, then assignments of parameters or literals to its own fields. A `Throwable` subclass follows R8's D convention: every constructor also takes `string file = __FILE__, size_t line = __LINE__` and is `pure nothrow`. `this(...)` forwards `file, line`, and `super(...)` uses the landed D base constructor that adds `file, line` to the Java arguments, with a `null` cause where the base takes one. The base's overloads come from its API description;
+- every accessor from `accessors.derive`, with `override` also where Java says `@Override` and the landed D base chain declares the name;
+- the rows: the class `ported`, each constructor `ported` or `adapted` with its parameter types' rules, and each accessor's row.
+
+The gate splices each derived class over the hand class, adding a selective import for any rulebook type the module lacks (`Nullable`, `List`, `Any`). It compares the class's non-private API on DMD and LDC, since R24 leaves private fields to the port, compares the rows and runs the owning package's tests. The reproduced count is the `bean-class` floor, and divergences are listed per type under `"beanDivergences"`. Both move only one way. Classes with nested types, generics, static members, non-private fields or constructor bodies that compute (a message built from parameters, an `Assert` call) are rejected and left to M4. `test_bean_types.py` covers detection, the derived class, R8 constructors, imports and the API filter.
+
+```sh
+python3 tools/port-spring/bean_types.py --helper .flint/port-spring/flint-port-spring --cache "$PWD/.flint/cache/api" \
+  --compare --json artifacts/porter/bean-types.json     # compiles and runs package tests: run under hold
+python3 tools/port-spring/bean_types.py ... --render org.springframework.transaction.InvalidTimeoutException
+```
+
 `tools/port_plan.py --seed` writes `api/port-plan/<project>-<version>.json` from the mapped type rows and the hand ports' D kinds, keeping entries a lane already edited; `--check` validates the plans against the manifests and mapping rows.
 
 ## Verification

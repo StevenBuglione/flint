@@ -54,6 +54,8 @@ invariant ireal is lazy long macro mixin module new nothrow null out override pa
 pure real ref return scope shared short static struct super switch synchronized template this throw true try typeid
 typeof ubyte ucent uint ulong union unittest ushort version void wchar while with'''.split())
 STRUCTURED = ('struct', 'enum', 'uda')
+# R8: Java's Throwable and Exception are D's own classes (bean_types maps superclasses with it).
+D_THROWABLES = {'java.lang.Throwable': 'Throwable', 'java.lang.Exception': 'Exception'}
 # The plan a deferred class gets until a lane writes its entry: an erased, non-final class.
 DEFAULT_PLAN = {'kind': 'class'}
 
@@ -400,7 +402,11 @@ def derive(item, universe, default_plan=None):
         if annotation['name'] not in ('Override', 'Nullable', 'SuppressWarnings'):
             raise Unsupported(f'annotation @{annotation["name"]}')
     prefix = [visibility]
-    if plan['kind'] not in STRUCTURED and overrides(universe, item['job']['type'], signature(method)):
+    # `override` where a Java superclass declares the method, or where Java says @Override and a landed D base
+    # class declares the name (a D base may declare an interface method abstract); `baseMembers` is that D API.
+    java_override = any(a['name'] == 'Override' for a in method['annotations'])
+    if plan['kind'] not in STRUCTURED and (overrides(universe, item['job']['type'], signature(method))
+                                           or (java_override and name in item.get('baseMembers', ()))):
         prefix.append('override')
     if 'final' in method['modifiers'] and plan['kind'] not in ('final class', 'struct'):
         prefix.append('final')

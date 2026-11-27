@@ -3,6 +3,7 @@
  "about": "Shrink-only list of accepted-but-divergent porter outputs, and the reproduced count per shape, which only grows. tools/porter_gate.py; docs/spring/phase2/porter-plan.md.",
  "reproduced": {
   "annotation-r2": 126,
+  "bean-class": 4,
   "configuration-properties-field": 117,
   "constant-holder-r1": 1,
   "enum-constants": 24,
@@ -784,6 +785,20 @@
   "tools.jackson.databind.node.ArrayNode#values()": {
    "kind": "api+body+mapping",
    "reason": "triage: dmd: does not compile: Error: template instance `Collection!JsonNode` template `Collection` is not defined, did you mean Collections? | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Collection!JsonNode` template `Collection` is not defined"
+  }
+ },
+ "beanDivergences": {
+  "java.text.ParseException": {
+   "kind": "api",
+   "reason": "triage: dmd: hand `ParseException.__ctor#0 public pure nothrow @nogc @safe ParseException(string message, int errorOffset, string file = __FILE__, ulong line = cast(ulong)__LINE__) pure nothrow @nogc @safe` / generated `ParseException.__ctor#0 public pure nothrow @safe ParseException(string s, int errorOffs"
+  },
+  "org.springframework.jdbc.core.SqlParameterValue": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `SqlParameterValue.__ctor#1 public @safe SqlParameterValue(int sqlType, string typeName, Any value) @safe` / generated `SqlParameterValue.__ctor#1 public @safe SqlParameterValue(int sqlType, Nullable!string typeName, Any value) @safe` | org.springframework.jdbc.core.SqlParameterValue#<init"
+  },
+  "org.springframework.web.bind.MissingRequestValueException": {
+   "kind": "api+mapping",
+   "reason": "triage: dmd: hand `MissingRequestValueException.__ctor#0 public @safe MissingRequestValueException(string message, bool missingAfterConversion = false) @safe` / generated `MissingRequestValueException.__ctor#0 public @safe MissingRequestValueException(string msg) @safe` | org.springframework.web.bind.Missin"
   }
  }
 }
