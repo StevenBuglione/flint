@@ -1539,7 +1539,6 @@
       "org/springframework/util/function/ThrowingConsumerTests.java",
       "org/springframework/util/function/ThrowingFunctionTests.java",
       "org/springframework/util/function/ThrowingSupplierTests.java",
-      "org/springframework/util/unit/DataSizeTests.java",
       "org/springframework/util/xml/AbstractStaxHandlerTests.java",
       "org/springframework/util/xml/AbstractStaxXMLReaderTests.java",
       "org/springframework/util/xml/DomContentHandlerTests.java",

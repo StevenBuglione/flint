@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,601 | 1,553 | 0 | 4,870 | 29,810 |
+| framework | spring-framework@v7.1.0 | 3,620 | 1,560 | 0 | 4,870 | 29,784 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -4567,6 +4567,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.util.NumberUtils#parseNumber(String,Class)` | `flint.util.NumberUtils.parseNumber` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.NumberUtils#parseNumber(String,Class,NumberFormat)` | `flint.util.NumberUtils.parseNumber` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.ObjectUtils#isCompatibleWithThrowsClause(Throwable,Class...)` | `flint.util.ObjectUtils.isCompatibleWithThrowsClause` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### org.springframework.util.unit
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `org.springframework.util.unit.DataSize` | `flint.util.unit.DataSize` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable value struct (ADR-030 section 5); DataSize.init is zero bytes, and == compares bytes. |
+| `org.springframework.util.unit.DataSize#equals(Object)` | `flint.util.unit.DataSize.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.util.unit.DataSize#of(long,DataUnit)` | `flint.util.unit.DataSize.of` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | A null unit does not compile; Spring throws IllegalArgumentException. |
+| `org.springframework.util.unit.DataSize#parse(CharSequence)` | `flint.util.unit.DataSize.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Takes a string; a null text counts as empty and fails as an invalid data size, where Spring's Assert.notNull throws first. |
+| `org.springframework.util.unit.DataSize#parse(CharSequence,DataUnit)` | `flint.util.unit.DataSize.parse` | [R14](api-mapping.md#r14-strings-and-text), [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Takes a string. A null default unit does not compile; parse(text) gives Spring's bytes default. |
+| `org.springframework.util.unit.DataUnit` | `flint.util.unit.DataUnit` | [R15](api-mapping.md#r15-enums-with-fields) | A D enum in Spring's order: its private per-constant suffix and size stay internal under R15's allowance. |
+| `org.springframework.util.unit.DataUnit#fromSuffix(String)` | `flint.util.unit.fromSuffix` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | A same-module free function called without a receiver. |
 
 #### org.springframework.validation
 
@@ -11043,7 +11055,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.util.comparator | 30 | 0 |
 | org.springframework.util.concurrent | 13 | 0 |
 | org.springframework.util.function | 44 | 0 |
-| org.springframework.util.unit | 26 | 0 |
 | org.springframework.util.xml | 70 | 0 |
 | org.springframework.validation | 139 | 0 |
 | org.springframework.validation.annotation | 4 | 0 |

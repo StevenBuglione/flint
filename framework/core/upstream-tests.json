@@ -919,8 +919,49 @@
       "status": "deferred"
     },
     "org/springframework/util/unit/DataSizeTests.java": {
-      "phase": "2",
-      "status": "deferred"
+      "d": "framework/core/tests/util_data_size_test.d",
+      "methods": {
+        "ported": [
+          "isNegativeWithNegative",
+          "isNegativeWithPositive",
+          "isNegativeWithZero",
+          "ofBytesToBytes",
+          "ofBytesToKilobytes",
+          "ofGigabytesToGigabytes",
+          "ofGigabytesToTerabytes",
+          "ofKilobytesToKilobytes",
+          "ofKilobytesToMegabytes",
+          "ofMegabytesToGigabytes",
+          "ofMegabytesToMegabytes",
+          "ofTerabytesToGigabytes",
+          "ofWithBytesUnit",
+          "ofWithGigabytesUnit",
+          "ofWithKilobytesUnit",
+          "ofWithMegabytesUnit",
+          "ofWithTerabytesUnit",
+          "parseNegativeNumberWithCustomDefaultUnit",
+          "parseNegativeNumberWithDefaultUnitUsesBytes",
+          "parseNegativeNumberWithNullDefaultUnitUsesBytes",
+          "parseWithBytes",
+          "parseWithCustomDefaultUnit",
+          "parseWithDefaultUnitUsesBytes",
+          "parseWithGigabytes",
+          "parseWithKilobytes",
+          "parseWithMegabytes",
+          "parseWithNegativeBytes",
+          "parseWithNegativeGigabytes",
+          "parseWithNegativeKilobytes",
+          "parseWithNegativeMegabytes",
+          "parseWithNegativeTerabytes",
+          "parseWithNullDefaultUnitUsesBytes",
+          "parseWithPositiveBytes",
+          "parseWithTerabytes",
+          "parseWithUnsupportedUnit",
+          "toStringUsesBytes",
+          "toStringWithNegativeBytes"
+        ]
+      },
+      "status": "ported"
     },
     "org/springframework/util/xml/AbstractStaxHandlerTests.java": {
       "phase": "2",
