@@ -47,6 +47,12 @@ class Adler32 : Checksum
         adler = updateAdler32(adler, cast(ubyte) value);
     }
 
+    /// Update with every byte of the array. A null array is empty under R26.
+    override void update(scope const(byte)[] data) nothrow @nogc
+    {
+        adler = updateAdler32(adler, data);
+    }
+
     override long getValue() nothrow @nogc
     {
         return adler;

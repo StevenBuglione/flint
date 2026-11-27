@@ -49,6 +49,12 @@ class CRC32 : Checksum
         crc = updateCrc32(crc, data[]);
     }
 
+    /// Update with every byte of the array. A null array is empty under R26.
+    override void update(scope const(byte)[] data) nothrow @nogc
+    {
+        crc = updateCrc32(crc, data);
+    }
+
     /// Return the unsigned checksum widened to Java's long type.
     override long getValue() nothrow @nogc
     {
