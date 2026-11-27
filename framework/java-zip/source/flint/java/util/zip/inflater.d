@@ -165,12 +165,32 @@ class Inflater
         }
     }
 
+    /// The low 32 bits of the input byte count, as Java's deprecated `getTotalIn`.
+    int getTotalIn()
+    {
+        synchronized (lock)
+        {
+            ensureOpen();
+            return cast(int) bytesRead;
+        }
+    }
+
     long getBytesWritten()
     {
         synchronized (lock)
         {
             ensureOpen();
             return bytesWritten;
+        }
+    }
+
+    /// The low 32 bits of the output byte count, as Java's deprecated `getTotalOut`.
+    int getTotalOut()
+    {
+        synchronized (lock)
+        {
+            ensureOpen();
+            return cast(int) bytesWritten;
         }
     }
 
