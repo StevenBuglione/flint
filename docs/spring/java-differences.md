@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,453 | 415 | 0 | 1,905 | 14,648 |
+| framework | openjdk@21.0.13 | 1,455 | 415 | 0 | 1,905 | 14,646 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -10746,7 +10746,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.random | 67 | 0 |
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
-| java.util.stream | 274 | 0 |
+| java.util.stream | 272 | 0 |
 | java.util.zip | 258 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
@@ -12072,8 +12072,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.stream.Stream#concat(Stream,Stream)` | 2 | Flint dereferences a null input and lacks the composed close lifecycle. Java rejects either null before taking either input and closes both inputs in order when the result is closed. |
 | framework | `java.util.stream.Stream#distinct()` | 2 | Flint merges distinct array slices with equal contents. Java compares arrays by reference identity and keeps distinct equal-content arrays in encounter order (R11). |
 | framework | `java.util.stream.Stream#flatMap(Function)` | 2 | The existing stage dereferences a null mapped stream and lacks closing the mapped stream on short-circuit. Java treats a null result as empty and closes each opened mapped stream. |
-| framework | `java.util.stream.Stream#forEach(Consumer)` | 2 | Flint accepts a null action on an empty stream. Java rejects it (R8). A Java sequential source checks the consumed state before validating the action and becomes consumed even if validation fails. A derived Java stream validates the action first, leaving a fresh stream reusable. |
-| framework | `java.util.stream.Stream#forEachOrdered(Consumer)` | 2 | Flint accepts a null action on an empty stream. Java rejects it (R8). A Java sequential source checks the consumed state before validating the action and becomes consumed even if validation fails. A derived Java stream validates the action first, leaving a fresh stream reusable. |
 | framework | `java.util.stream.Stream#mapToInt(ToIntFunction)` | 2 | Flint returns Stream!int, which offers sum, because IntStream is not ported yet. |
 | framework | `java.util.stream.Stream#mapToLong(ToLongFunction)` | 2 | Flint returns Stream!long, which offers sum, because LongStream is not ported yet. |
 | framework | `java.util.stream.Stream#sorted()` | 2 | Flint compares using the declared element type. Java sorts Comparable values even when they are typed as Object. Flint compares text by UTF-8 bytes, where Java uses UTF-16 code units (R14). The comparison inherits D's null class dispatch limitation (R8), which can fault on a null receiver. Java throws NullPointerException when comparing mixed null input. |

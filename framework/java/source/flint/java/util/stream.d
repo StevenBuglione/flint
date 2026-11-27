@@ -18,10 +18,17 @@ final class Stream(T)
 {
     private bool delegate(out T) @safe pull;
     private bool consumed;
+    private bool derived; // an intermediate stage, not a source: Java checks forEach's action before taking it
 
     private this(bool delegate(out T) @safe pull) pure nothrow @nogc
     {
         this.pull = pull;
+    }
+
+    private this(bool derived, bool delegate(out T) @safe pull) pure nothrow @nogc
+    {
+        this.pull = pull;
+        this.derived = derived;
     }
 
     /// A stream of a copy of `items`.
@@ -94,7 +101,7 @@ final class Stream(T)
         if (predicate is null)
             throwNullPointerException();
         auto source = take();
-        return new Stream!T((out T next) {
+        return new Stream!T(true, (out T next) {
             while (source(next))
                 if (predicate(next))
                     return true;
@@ -108,7 +115,7 @@ final class Stream(T)
         if (mapper is null)
             throwNullPointerException();
         auto source = take();
-        return new Stream!R((out R next) {
+        return new Stream!R(true, (out R next) {
             T element;
             if (!source(element))
                 return false;
@@ -124,7 +131,7 @@ final class Stream(T)
             throwNullPointerException();
         auto source = take();
         bool delegate(out R) @safe inner;
-        return new Stream!R((out R next) {
+        return new Stream!R(true, (out R next) {
             for (;;)
             {
                 if (inner !is null && inner(next))
@@ -157,7 +164,7 @@ final class Stream(T)
         {
             // A mutable array cannot key an associative array (Java's List<Object[]>): compare by value.
             T[] seen;
-            return new Stream!T((out T next) {
+            return new Stream!T(true, (out T next) {
                 while (source(next))
                 {
                     bool duplicate;
@@ -178,7 +185,7 @@ final class Stream(T)
         else
         {
             bool[T] seen;
-            return new Stream!T((out T next) {
+            return new Stream!T(true, (out T next) {
                 while (source(next))
                 {
                     if (next in seen)
@@ -197,7 +204,7 @@ final class Stream(T)
         auto source = take();
         T[] items;
         size_t position;
-        return new Stream!T((out T next) {
+        return new Stream!T(true, (out T next) {
             if (source !is null)
             {
                 auto input = source;
@@ -235,7 +242,7 @@ final class Stream(T)
         if (action is null)
             throwNullPointerException();
         auto source = take();
-        return new Stream!T((out T next) {
+        return new Stream!T(true, (out T next) {
             if (!source(next))
                 return false;
             action(next);
@@ -250,7 +257,7 @@ final class Stream(T)
             throw new IllegalArgumentException(valueOf(maxSize));
         auto source = take();
         long taken;
-        return new Stream!T((out T next) {
+        return new Stream!T(true, (out T next) {
             if (taken >= maxSize || !source(next))
                 return false;
             taken++;
@@ -265,7 +272,7 @@ final class Stream(T)
             throw new IllegalArgumentException(valueOf(n));
         auto source = take();
         long skipped;
-        return new Stream!T((out T next) {
+        return new Stream!T(true, (out T next) {
             while (skipped < n)
             {
                 T ignored;
@@ -289,13 +296,23 @@ final class Stream(T)
         return this;
     }
 
-    /// Call `action` on each element.
+    /// Call `action` on each element. A null `action` throws `NullPointerException`: a derived stage checks it
+    /// first, while a source stream is taken (and spent) before the check, as Java's head pipeline does.
     void forEach(void delegate(T) @safe action)
     {
+        if (action is null)
+            rejectNullAction();
         auto source = take();
         T next;
         while (source(next))
             action(next);
+    }
+
+    pragma(inline, false) private noreturn rejectNullAction()
+    {
+        if (!derived)
+            take();
+        throwNullPointerException();
     }
 
     /// Call `action` on each element, in order.
