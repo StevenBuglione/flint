@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,832 | 575 | 0 | 1,909 | 14,105 |
+| framework | openjdk@21.0.13 | 1,834 | 575 | 0 | 1,909 | 14,103 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -10892,7 +10892,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 133 | 0 |
 | java.net | 701 | 0 |
 | java.net.spi | 0 | 2 |
-| java.nio | 20 | 0 |
+| java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 32 | 0 |
@@ -11988,9 +11988,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.UnknownHostException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.UnknownServiceException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.UnknownServiceException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
-| framework | `java.nio.ByteBuffer#alignedSlice(int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |
-| framework | `java.nio.ByteBuffer#alignmentOffset(int,int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |
-| framework | `java.nio.ByteBuffer#allocateDirect(int)` | 2 | Direct allocation and alignment operations follow the heap cursor slice. |
+| framework | `java.nio.ByteBuffer#allocateDirect(int)` | 2 | Direct (off-heap) allocation follows the heap cursor slice; every Flint ByteBuffer is a heap buffer. |
 | framework | `java.nio.CharBuffer#chars()` | 2 | Returns java.util.stream.IntStream, which Flint does not have yet. |
 | framework | `java.nio.charset.Charset#<init>(String,String[])` | 2 | Flint's Charset is a closed value type over the six standard charsets with a private id, so it has no constructor a subclass can call; user-defined charsets wait until Charset becomes a class. |
 | framework | `java.nio.charset.Charset#aliases()` | 2 | Not in D yet. The alias table exists privately in flint.java.nio.charset; Set<String> needs flint.java.util.Set, which flint.java.nio.charset does not import. |

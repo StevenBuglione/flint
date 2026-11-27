@@ -33,8 +33,9 @@ module flint.java.nio.bytebuffer;
 
 import core.bitop : bswap;
 import flint.engine.aot.any : Any;
-import flint.java.lang : Comparable, IllegalArgumentException, JavaObject, NullPointerException;
-import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkIndex, checkRange;
+import flint.java.lang : Comparable, IllegalArgumentException, JavaObject, NullPointerException,
+    UnsupportedOperationException;
+import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkIndex, checkRange, labelledValue;
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
 import flint.java.nio.byteorder : ByteOrder;
@@ -190,6 +191,32 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
     {
         checkRange(index, length, limit());
         return new ByteBuffer(backing, origin + index, BufferCursor(length, 0, length), readOnly);
+    }
+
+    // A heap buffer's address is the array base offset plus `origin`. HotSpot's 64-bit byte-array base offset is
+    // 16 and the GC keeps arrays 8-byte aligned, so only `origin` matters for the unit sizes a heap buffer allows.
+    final int alignmentOffset(int index, int unitSize) const pure
+    {
+        if (index < 0)
+            throwAlignment(0, index);
+        if (unitSize < 1 || (unitSize & (unitSize - 1)) != 0)
+            throwAlignment(1, unitSize);
+        if (unitSize > 8)
+            throwAlignment(2, unitSize);
+        return cast(int)((cast(long) origin + index) & (unitSize - 1));
+    }
+
+    final ByteBuffer alignedSlice(int unitSize) pure
+    {
+        const pos = position();
+        const lim = limit();
+        const posMod = alignmentOffset(pos, unitSize);
+        const limMod = alignmentOffset(lim, unitSize);
+        int alignedPos = posMod > 0 ? pos + (unitSize - posMod) : pos;
+        int alignedLim = lim - limMod;
+        if (alignedPos > lim || alignedLim < pos)
+            alignedPos = alignedLim = pos;
+        return slice(alignedPos, alignedLim - alignedPos);
     }
 
     override ByteBuffer duplicate() pure
@@ -595,6 +622,15 @@ class ByteBuffer : Buffer, Comparable!ByteBuffer
 pragma(inline, false) private noreturn throwReadOnly() pure
 {
     throw new ReadOnlyBufferException;
+}
+
+pragma(inline, false) private noreturn throwAlignment(int problem, int value) pure
+{
+    if (problem == 0)
+        throw new IllegalArgumentException(labelledValue("Index less than zero: ", value));
+    if (problem == 1)
+        throw new IllegalArgumentException(labelledValue("Unit size not a power of two: ", value));
+    throw new UnsupportedOperationException(labelledValue("Unit size unsupported for non-direct buffers: ", value));
 }
 
 pragma(inline, false) private noreturn throwOverflow() pure

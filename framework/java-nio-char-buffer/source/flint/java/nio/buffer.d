@@ -227,6 +227,15 @@ package(flint.java.nio) string boundMessage(scope string name, int value, scope 
     return text[0 .. used].idup;
 }
 
+// `label` followed by `value` in decimal, as Java's string concatenation renders an int.
+package(flint.java.nio) string labelledValue(scope string label, int value) pure nothrow
+{
+    char[48] text;
+    size_t used;
+    appendField(text[], used, label, value);
+    return text[0 .. used].idup;
+}
+
 private void appendText(scope char[] output, ref size_t length, scope const(char)[] text) pure nothrow @nogc
 {
     output[length .. length + text.length] = text[];
