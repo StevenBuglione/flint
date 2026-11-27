@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,654 | 1,557 | 0 | 4,870 | 29,753 |
+| framework | spring-framework@v7.1.0 | 3,656 | 1,555 | 0 | 4,870 | 29,753 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -4748,8 +4748,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.validation.BindException#getTarget()` | `flint.validation.BindException.getTarget` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.validation.BindException#reject(String,Object[],String)` | `flint.validation.BindException.reject` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.validation.BindException#rejectValue(String,String,Object[],String)` | `flint.validation.BindException.rejectValue` | [R23](api-mapping.md#r23-object-typed-values) |  |
-| `org.springframework.validation.BindingResultUtils#getBindingResult(Map,String)` | `flint.validation.BindingResultUtils.getBindingResult` | [R10](api-mapping.md#r10-streams-and-collections) | The wildcard Map uses the existing erased RawMap view so models with different key and value types are accepted. |
-| `org.springframework.validation.BindingResultUtils#getRequiredBindingResult(Map,String)` | `flint.validation.BindingResultUtils.getRequiredBindingResult` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.validation.DefaultMessageCodesResolver#resolveMessageCodes(String,String,String,Class)` | `flint.validation.DefaultMessageCodesResolver.resolveMessageCodes` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.validation.MessageCodesResolver#resolveMessageCodes(String,String,String,Class)` | `flint.validation.MessageCodesResolver.resolveMessageCodes` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.validation.ObjectError#contains(Class)` | `flint.validation.ObjectError.contains` | [R4](api-mapping.md#r4-classt-parameters) |  |
