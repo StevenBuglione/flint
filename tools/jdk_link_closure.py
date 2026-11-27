@@ -68,13 +68,13 @@ FIRST_OBJECT_ALLOWANCES = {
     ('java-net', 'flint.java.net.urlencoder', 'named-charset'): INTERRUPTED_IO_FIRST_OBJECT,
     ('java-concurrent-sync', 'flint.java.util.concurrent.brokenbarrierexception', 'construct'): {
         'profiles': ('O3', 'Oz'),
-        'module': 'flint.java.util.concurrent.atomic.atomicreference',
-        'member': 'flint.java.util.concurrent.atomic.atomicreference.o',
+        'module': 'flint.java.util.concurrent.atomic.atomicmarkablereference',
+        'member': 'flint.java.util.concurrent.atomic.atomicmarkablereference.o',
         'referrer': 'flint.java.util.concurrent.brokenbarrierexception.o',
         'trigger': '_D6object__T10RTInfoImplVAmA2i84i680ZQzyG2m',
         'sections': {
             '.rodata._D6object__T10RTInfoImplVAmA2i84i680ZQzyG2m': 16,
-            '.data._D5flint4java4util10concurrent6atomic15atomicreference12__ModuleInfoZ': 60,
+            '.data._D5flint4java4util10concurrent6atomic23atomicmarkablereference12__ModuleInfoZ': 68,
             '__minfo': 8,
         },
         'existing_probe': True,
@@ -150,6 +150,12 @@ FIRST_OBJECT_ROWS = {
         allowance.get('existing_probe', False)
     for probe, allowance in FIRST_OBJECT_ALLOWANCES.items() for profile in allowance['profiles']
 }
+# The barrier probe's first archive object was AtomicReference until AtomicMarkableReference sorted ahead of it.
+FIRST_OBJECT_ROWS.update({
+    f'link|java-concurrent-sync|flint.java.util.concurrent.brokenbarrierexception|construct|{profile}|'
+    'undeclared module records flint.java.util.concurrent.atomic.atomicreference': True
+    for profile in ('O3', 'Oz')
+})
 # The original Character generator keeps these tables beside the public functions.
 # New tables belong in data modules so the checker can identify them by module owner.
 CHARACTER_TABLES = {f'flint.java.character.{name}' for name in (

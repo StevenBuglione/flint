@@ -1,7 +1,15 @@
 {
+  "flint.java.util.concurrent.atomic.atomicmarkablereference": {
+    "incremental_linked_bytes": 2197,
+    "template_instances": 60
+  },
   "flint.java.util.concurrent.atomic.atomicreference": {
     "incremental_linked_bytes": 1194,
     "template_instances": 51
+  },
+  "flint.java.util.concurrent.atomic.atomicstampedreference": {
+    "incremental_linked_bytes": 2180,
+    "template_instances": 60
   },
   "flint.java.util.concurrent.brokenbarrierexception": {
     "incremental_linked_bytes": 928,
