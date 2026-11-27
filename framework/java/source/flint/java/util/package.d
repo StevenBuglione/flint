@@ -37,20 +37,44 @@ public import flint.java.util.timezone : SimpleTimeZone, TimeZone;
 /// Thrown when an element is requested and there is none: `Optional.get`, `Iterator.next` at the end.
 class NoSuchElementException : RuntimeException
 {
-    /// `message`, and optionally a `cause`.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// The detail message, with a cause that can still be initialized.
+    this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+    }
+
+    /// The supplied cause is initialized even when it is null.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Selects the cause overload when its argument is a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 }
 
 /// Thrown when a collection changes while it is being iterated.
 class ConcurrentModificationException : RuntimeException
 {
-    /// `message`, and optionally a `cause`.
-    this(string message = null, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// The detail message, with a cause that can still be initialized.
+    this(string message = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+    }
+
+    /// The supplied cause is initialized even when it is null.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Selects the cause overload when its argument is a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 }
 
