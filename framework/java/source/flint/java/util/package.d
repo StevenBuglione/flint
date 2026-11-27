@@ -3389,7 +3389,7 @@ struct Locale
     }
 
     /// The extension payload for an ASCII letter singleton, or absent.
-    Nullable!string getExtension(wchar key) const
+    Nullable!string getExtension()(wchar key) const
     {
         const lower = key | 0x20;
         if (lower < 'a' || lower > 'z')
@@ -3405,7 +3405,7 @@ struct Locale
     }
 
     /// The unmodifiable set of canonical extension singleton keys.
-    Set!wchar getExtensionKeys() const
+    Set!wchar getExtensionKeys()() const
     {
         wchar[] keys;
         for (size_t start; start < extensions.length; start = extensionEnd(start) + 1)
@@ -3414,18 +3414,18 @@ struct Locale
     }
 
     /// The unmodifiable set of canonical Unicode attributes.
-    Set!string getUnicodeLocaleAttributes() const
+    Set!string getUnicodeLocaleAttributes()() const
     {
         return unicodeLocaleItems(false);
     }
 
     /// The unmodifiable set of canonical Unicode keys, including typeless keys.
-    Set!string getUnicodeLocaleKeys() const
+    Set!string getUnicodeLocaleKeys()() const
     {
         return unicodeLocaleItems(true);
     }
 
-    private Set!string unicodeLocaleItems(bool keywords) const
+    private Set!string unicodeLocaleItems()(bool keywords) const
     {
         string[] items;
         string remaining = extensionPayload(cast(char) UNICODE_LOCALE_EXTENSION);
@@ -3442,7 +3442,7 @@ struct Locale
     }
 
     /// The type of a two-character Unicode key. A present typeless key has an empty value.
-    Nullable!string getUnicodeLocaleType(string key) const
+    Nullable!string getUnicodeLocaleType()(string key) const
     {
         if (key.length != 2 || !isAsciiAlphanumeric(key))
             throw new IllegalArgumentException("Ill-formed Unicode locale key: " ~ key);
