@@ -180,7 +180,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 0 | 15,202 |
-| boot | spring-boot@v4.2.0 | 47 | 111 | 0 | 2,133 | 13,312 |
+| boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,601 | 1,553 | 0 | 4,870 | 29,810 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
@@ -732,15 +732,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `org.springframework.boot.actuate.info.Info#equals(Object)` | `flint.boot.actuate.info.Info.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.boot.actuate.info.Info#get(String)` | `flint.boot.actuate.info.Info.get` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.boot.actuate.info.Info#getDetails()` | `flint.boot.actuate.info.Info.getDetails` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.boot.actuate.info.Info#getDetails()` | `flint.boot.actuate.info.Info.getDetails` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.boot.actuate.info.Info#hashCode()` | `flint.boot.actuate.info.Info.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.boot.actuate.info.Info.Builder` | `flint.boot.actuate.info.Info.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `org.springframework.boot.actuate.info.Info.Builder#withDetail(String,Object)` | `flint.boot.actuate.info.Info.Builder.withDetail` | [R11](api-mapping.md#r11-object-identity-and-equality), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.boot.actuate.info.Info.Builder#withDetails(Map)` | `flint.boot.actuate.info.Info.Builder.withDetails` | [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.boot.actuate.info.Info.Builder#withDetails(Map)` | `flint.boot.actuate.info.Info.Builder.withDetails` | [R11](api-mapping.md#r11-object-identity-and-equality), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.boot.actuate.info.InfoContributor` | `flint.boot.actuate.info.InfoContributor` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.boot.actuate.info.InfoEndpoint` | `flint.boot.actuate.info.InfoEndpoint` | [R2](api-mapping.md#r2-annotations) |  |
-| `org.springframework.boot.actuate.info.InfoEndpoint#<init>(List)` | `flint.boot.actuate.info.InfoEndpoint.this` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.boot.actuate.info.InfoEndpoint#info()` | `flint.boot.actuate.info.InfoEndpoint.info` | [R2](api-mapping.md#r2-annotations), [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.boot.actuate.info.InfoEndpoint#<init>(List)` | `flint.boot.actuate.info.InfoEndpoint.this` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) |  |
+| `org.springframework.boot.actuate.info.InfoEndpoint#info()` | `flint.boot.actuate.info.InfoEndpoint.info` | [R2](api-mapping.md#r2-annotations), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.springframework.boot.autoconfigure
 
@@ -772,10 +772,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#find(BeanFactory)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.find` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#get(ConfigurableListableBeanFactory)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.get` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
-| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getExclusions()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getExclusions` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getExclusions()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getExclusions` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getParent()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getParent` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
-| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getUnconditionalClasses()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getUnconditionalClasses` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#recordEvaluationCandidates(List)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.recordEvaluationCandidates` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#getUnconditionalClasses()` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.getUnconditionalClasses` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
+| `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#recordEvaluationCandidates(List)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.recordEvaluationCandidates` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport#recordExclusions(Collection)` | `flint.boot.autoconfigure.condition_runtime.ConditionEvaluationReport.recordExclusions` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage` | `flint.boot.autoconfigure.condition_runtime.ConditionMessage` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.boot.autoconfigure.condition.ConditionMessage#andCondition(Class,Object...)` | `flint.boot.autoconfigure.condition_runtime.ConditionMessage.andCondition` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R4](api-mapping.md#r4-classt-parameters), [R7](api-mapping.md#r7-overloads) |  |
@@ -847,15 +847,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#<init>(Collection,Collection)` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#getConfiguredNames()` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.getConfiguredNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#getMutuallyExclusiveNames()` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.getMutuallyExclusiveNames` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#throwIfMultipleNonNullValuesIn(Consumer)` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.throwIfMultipleNonNullValuesIn` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `org.springframework.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException#throwIfMultipleNonNullValuesIn(Consumer)` | `flint.boot.context.properties.source.MutuallyExclusiveConfigurationPropertiesException.throwIfMultipleNonNullValuesIn` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 
 #### org.springframework.boot.test.util
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.boot.test.util.TestPropertyValues.Pair#addTo(Map)` | `flint.boot.test.util.TestPropertyValues.Pair.addTo` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.boot.test.util.TestPropertyValues.Pair#fromMapEntry(Map.Entry)` | `flint.boot.test.util.TestPropertyValues.Pair.fromMapEntry` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `org.springframework.boot.test.util.TestPropertyValues.Pair#of(String,String)` | `flint.boot.test.util.TestPropertyValues.Pair.of` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 
