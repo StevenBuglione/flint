@@ -11,6 +11,17 @@ import std.json : JSONValue;
 
 @safe:
 
+/++
+The porter's output version. Bump it whenever any shape's emitted source or mapping changes: generated regions and
+mapping rows record it, and `tools/porter_gate.py` regenerates every region at its recorded request.
++/
+enum porterVersion = "port-spring/1";
+
+/// Opens a generated region: version, pinned upstream, Java type id and the region's digest follow.
+enum generatedMarker = "// port:generated ";
+/// Closes a generated region.
+enum generatedEnd = "// port:end";
+
 /// One type requested from the pinned source cache.
 struct SpringPortRequest
 {
@@ -39,6 +50,10 @@ struct SpringPort
     string mapping;
     /// Java's Inherited metadata requires a separate AOT review.
     bool inherited;
+    /// The translation recipe that accepted the declaration, for per-shape corpus reproduction.
+    string shape;
+    /// The porter output version recorded in the region marker and mapping rows.
+    string porter = porterVersion;
 }
 
 /// Translate a single supported public Java declaration.
@@ -117,7 +132,7 @@ private bool portPinned(string root, const ref SpringPortRequest request, const 
             candidate, body, error);
     if (!text.length)
         return false;
-    output = SpringPort(text, fragment, candidate["inherited"].boolean);
+    output = SpringPort(text, fragment, candidate["inherited"].boolean, declarationShape(type.decl));
     return true;
 }
 
@@ -166,6 +181,30 @@ private const(ApiType)* supportedType(ref const Manifest manifest, const ref Ups
     }
     error = id ~ " is not a supported public type in the pinned manifest";
     return null;
+}
+
+/// The recipe name of a supported declaration, as `tools/porter_gate.py` groups the corpus.
+private string declarationShape(const ref TypeDecl decl)
+{
+    import flint_tool.api.constant_holder : supportedConstantHolder;
+    import flint_tool.api.exception_references : supportedException;
+    import std.algorithm.searching : any;
+
+    final switch (decl.kind)
+    {
+    case TypeKind.annotation:
+        return "annotation-r2";
+    case TypeKind.class_:
+        return supportedException(decl)
+            ? "exception-r8" : supportedConstantHolder(decl) ? "constant-holder-r1" : null;
+    case TypeKind.interface_:
+        return "marker-interface-r3";
+    case TypeKind.enum_:
+        return decl.members.any!(member => member.kind == MemberKind.method)
+            ? "enum-method-r20" : "enum-constants";
+    case TypeKind.record:
+        return null;
+    }
 }
 
 private bool supportedDeclaration(const ref TypeDecl decl)
@@ -429,7 +468,7 @@ private string classifiedFragment(const ref Upstream pin, const ref ApiType type
     const annotation = type.decl.kind == TypeKind.annotation;
     const classifier = Classifier(mapping);
     if (!preserveEnumReexport(type.decl, classifier, dType))
-        entries[type.decl.id] = mappingEntry(dType, type.decl.name, dName, annotation);
+        entries[type.decl.id] = typeEntry(dType, type.decl.name, dName, module_, annotation);
     foreach (ref member; type.decl.members)
     {
         const field = member.name in fields;
@@ -509,6 +548,42 @@ private bool preserveEnumReexport(const ref TypeDecl decl, const ref Classifier 
         && entry.status == Status.adapted && entry.rules == ["R1"];
 }
 
+/// The type row: a keyword-escaped module segment (flint.ai.template_) changes its import path under R19.
+private MappingEntry typeEntry(string dType, string javaName, string dName, string module_, bool annotation)
+{
+    import std.algorithm.searching : canFind;
+
+    auto entry = mappingEntry(dType, javaName, dName, annotation);
+    if (keywordEscapedModule(module_) && !entry.rules.canFind("R19"))
+        entry.rules ~= "R19";
+    entry.status = entry.rules.length ? Status.adapted : Status.ported;
+    return entry;
+}
+
+/// Whether a segment of `module_` is a D keyword with R19's trailing underscore.
+private bool keywordEscapedModule(string module_)
+{
+    import std.algorithm.iteration : splitter;
+    import std.algorithm.searching : canFind, endsWith;
+
+    static immutable keywords = [
+        "abstract", "alias", "align", "asm", "assert", "auto", "body", "bool", "break", "byte",
+        "case", "cast", "catch", "char", "class", "const", "continue", "dchar", "debug", "default",
+        "delegate", "deprecated", "do", "double", "else", "enum", "export", "extern", "false",
+        "final", "finally", "float", "for", "foreach", "foreach_reverse", "function", "goto", "if",
+        "immutable", "import", "in", "inout", "int", "interface", "invariant", "is", "lazy",
+        "long", "macro", "mixin", "module", "new", "nothrow", "null", "out", "override", "package",
+        "pragma", "private", "protected", "public", "pure", "real", "ref", "return", "scope",
+        "shared", "short", "static", "struct", "super", "switch", "synchronized", "template",
+        "this", "throw", "true", "try", "typeid", "typeof", "ubyte", "uint", "ulong", "union",
+        "unittest", "ushort", "version", "void", "wchar", "while", "with"
+    ];
+    foreach (part; module_.splitter('.'))
+        if (part.endsWith("_") && keywords.canFind(part[0 .. $ - 1]))
+            return true;
+    return false;
+}
+
 private string classSentinelNote(const ref Member member, string sentinel, out string error)
 {
     import flint_tool.api.annotation_references : manifestDefaults;
@@ -538,7 +613,7 @@ private string replacement(string key, const MappingEntry* current, const ref Ma
         error = "no existing mapping classification for " ~ key;
         return null;
     }
-    const line = quote(key) ~ ":" ~ renderEntry(proposed, note);
+    const line = quote(key) ~ ":" ~ renderEntry(proposed, note, true);
     if (current.status == Status.excluded && current.category == "deferred")
         return line;
     if (current.status == Status.ported || current.status == Status.adapted)
@@ -576,14 +651,15 @@ private MappingEntry mappingEntry(string symbol, string javaName, string dName, 
     return entry;
 }
 
-private string renderEntry(const ref MappingEntry entry, string note = "")
+private string renderEntry(const ref MappingEntry entry, string note = "", bool generated = false)
 {
     const status = "{\"status\":" ~ quote(cast(string) entry.status);
     if (entry.status == Status.excluded)
         return status ~ ",\"category\":" ~ quote(entry.category) ~ ",\"phase\":" ~ quote(entry.phase) ~ "}";
     const rules = entry.rules.length ? ",\"rules\":" ~ JSONValue(entry.rules).toString() : "";
     const explanation = note.length ? ",\"note\":" ~ quote(note) : "";
-    return status ~ rules ~ ",\"d\":" ~ quote(entry.symbol) ~ explanation ~ "}";
+    const provenance = generated ? ",\"generated\":" ~ quote(porterVersion) : "";
+    return status ~ rules ~ ",\"d\":" ~ quote(entry.symbol) ~ explanation ~ provenance ~ "}";
 }
 
 private string checkedSource(const ref Upstream pin, const(Upstream)[] pins,
@@ -598,12 +674,48 @@ private string checkedSource(const ref Upstream pin, const(Upstream)[] pins,
     const imports = candidate["classRef"].boolean ? "import flint.java.classref : ClassRef;\n\n" : "";
     const text = header ~ "\n// " ~ portedMarker ~ pin.project ~ " " ~ pin.version_ ~ ": " ~ file
         ~ "\n// " ~ licenceLine(licence) ~ "\n// " ~ modifiedNotice ~ ".\n\nmodule " ~ module_ ~ ";\n\n"
-        ~ imports ~ "@safe:\n\n" ~ body;
+        ~ imports ~ "@safe:\n\n" ~ generatedRegion(pin.project ~ "@" ~ pin.version_,
+                candidate["package"].str ~ "." ~ candidate["name"].str, body);
     const problems = checkHeader(file, text, pins, matrix, "");
     if (problems.length)
     {
         error = file ~ ": " ~ problems[0].message;
         return null;
+    }
+    return text;
+}
+
+/++
+Wrap `body` in a generated region. The marker records what regenerates it and the SHA-256 of the region's text with
+every `// port:body` region removed, so an edit outside those regions is detected without the pinned sources.
++/
+string generatedRegion(string upstream, string type, string body)
+{
+    import flint_tool.support.files : sha256Hex;
+    import std.string : representation;
+
+    const digest = sha256Hex(regionDigestText(body).representation);
+    return generatedMarker ~ porterVersion ~ " " ~ upstream ~ " " ~ type ~ " sha256:" ~ digest ~ "\n"
+        ~ body ~ generatedEnd ~ "\n";
+}
+
+/// A region's text as its digest covers it: lines inside `// port:body` ... `// port:end-body` drop out.
+string regionDigestText(string body)
+{
+    import std.algorithm.searching : startsWith;
+    import std.string : lineSplitter, strip;
+
+    string text;
+    bool inside;
+    foreach (line; body.lineSplitter)
+    {
+        const trimmed = line.strip;
+        if (trimmed.startsWith("// port:body "))
+            inside = true;
+        else if (trimmed == "// port:end-body")
+            inside = false;
+        else if (!inside)
+            text ~= line ~ "\n";
     }
     return text;
 }
@@ -661,6 +773,28 @@ version (unittest)
     }
 
     private enum candidateFixture = `{"symbol":"FlintHint","members":[{"name":"version","symbol":"version_"}]}`;
+}
+
+@("generated regions digest everything outside port:body regions")
+unittest
+{
+    import std.string : indexOf;
+
+    const region = generatedRegion("example@1", "example.Hint", "struct Hint\n{\n}\n");
+    assert(region.indexOf("// port:generated " ~ porterVersion ~ " example@1 example.Hint sha256:") == 0, region);
+    assert(region[$ - generatedEnd.length - 1 .. $] == generatedEnd ~ "\n", region);
+    const filled = "void f()\n{\n    // port:body example.Hint#f()\n    x();\n    // port:end-body\n}\n";
+    const pending = "void f()\n{\n    // port:body example.Hint#f()\n    // port:end-body\n}\n";
+    assert(regionDigestText(filled) == regionDigestText(pending));
+    assert(regionDigestText(filled) != regionDigestText("void g()\n{\n}\n"));
+}
+
+@("a keyword-escaped module segment cites R19 on the type row")
+unittest
+{
+    assert(keywordEscapedModule("flint.ai.template_"));
+    assert(!keywordEscapedModule("flint.ai.template"));
+    assert(!keywordEscapedModule("flint.ai.chat_"));
 }
 
 @("a rulebook identity rename stays ported")

@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 
 from test_jakarta import ROOT, command, run
+from test_jakarta import proposed as without_provenance
 
 
 PROJECT = "spring-boot"
@@ -84,7 +85,7 @@ def main():
     expected = {ACCESS + "#" + member: tracked[ACCESS + "#" + member]
                 for member in ("NONE", "READ_ONLY", "UNRESTRICTED", "cap(Access)")}
     assert expected[ACCESS + "#cap(Access)"]["rules"] == ["R20"], expected
-    assert json.loads(proposed["mapping"])["elements"] == expected, proposed
+    assert without_provenance(proposed["mapping"]) == expected, proposed
     with tempfile.TemporaryDirectory() as scratch:
         verify_behavior(output["source"], Path(scratch))
     print("Actuator Access preserves Java ordinals, caps like the hand port, and rejects null on DMD and LDC")

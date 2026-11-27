@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from test_jakarta import MODULE, PACKAGE, PROJECT, ROOT, TAG, command, run
+from test_jakarta import MODULE, PACKAGE, PROJECT, ROOT, TAG, command, proposed, run
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
                 rejected[message.split(": ")[-1].strip()] += 1
                 continue
             name = enum["id"].split(".")[-1]
-            members = json.loads(output["mapping"])["elements"]
+            members = proposed(output["mapping"])
             expected = {enum["id"]: {"status": "ported", "d": f"{MODULE}.{name}"}}
             asserts = []
             for ordinal, constant in enumerate(enum["members"]):

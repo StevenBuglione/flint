@@ -929,25 +929,56 @@ static int collect_fields(const JavaFile *annotation, TSNode body, Field *fields
     return 0;
 }
 
+/* The UFCS receiver is named after its enum (Access -> access), as the hand ports name it under R20. */
+static void receiver_name(Slice enum_name, Slice parameter, Text *receiver)
+{
+    char first = enum_name.bytes[0];
+    if (first >= 'A' && first <= 'Z')
+        first = (char)(first - 'A' + 'a');
+    append(receiver, (Slice){&first, 1});
+    append(receiver, (Slice){enum_name.bytes + 1, enum_name.length - 1});
+    if (d_keyword(contents(receiver)))
+        add(receiver, "_");
+    if (equal(contents(receiver), parameter)) {
+        receiver->length = 0;
+        add(receiver, "receiver");
+    }
+}
+
 static void emit_enum_method(Text *output, Slice enum_name, const Field *method)
 {
     Slice name = contents(&method->symbol);
     Slice parameter = method->enum_parameter;
+    Text receiver = {0};
+    receiver_name(enum_name, parameter, &receiver);
+    if (receiver.failed) {
+        output->failed = true;
+        free(receiver.bytes);
+        return;
+    }
+    Slice self = contents(&receiver);
     add(output, "\n");
     append(output, enum_name);
     add(output, " ");
     append(output, name);
     add(output, "(");
     append(output, enum_name);
-    add(output, " receiver, ");
+    add(output, " ");
+    append(output, self);
+    add(output, ", ");
     append(output, enum_name);
     add(output, " ");
     append(output, parameter);
-    add(output, ") pure nothrow @nogc\n{\n    return receiver <= ");
+    add(output, ") pure nothrow @nogc\n{\n    return ");
+    append(output, self);
+    add(output, " <= ");
     append(output, parameter);
-    add(output, " ? receiver : ");
+    add(output, " ? ");
+    append(output, self);
+    add(output, " : ");
     append(output, parameter);
     add(output, ";\n}\n");
+    free(receiver.bytes);
 }
 
 static void json_string(Slice text)

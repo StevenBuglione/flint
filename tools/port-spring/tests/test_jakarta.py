@@ -31,6 +31,14 @@ def compare_fields(body):
     return fields
 
 
+def proposed(fragment):
+    """A fragment's elements without their porter provenance, which every proposed row must carry."""
+    elements = json.loads(fragment)["elements"]
+    for element, entry in elements.items():
+        assert re.fullmatch(r"port-spring/[1-9][0-9]*", entry.get("generated", "")), (element, entry)
+    return {element: {k: v for k, v in entry.items() if k != "generated"} for element, entry in elements.items()}
+
+
 def run(fl, *args):
     return subprocess.run([str(fl), *map(str, args)], cwd=ROOT, capture_output=True, check=False)
 
@@ -165,7 +173,7 @@ def main():
         if name in hand:
             for element, entry in fragment["elements"].items():
                 old = mapping[element]
-                ignored = {"rules", "note"} if element in expected_notes else {"rules"}
+                ignored = {"rules", "note", "generated"} if element in expected_notes else {"rules", "generated"}
                 assert ({key: value for key, value in entry.items() if key not in ignored}
                         == {key: value for key, value in old.items() if key not in ignored}), (element, entry, old)
                 if entry["rules"] != old["rules"]:

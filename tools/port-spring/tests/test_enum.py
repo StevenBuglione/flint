@@ -35,8 +35,8 @@ public enum SpringMode {
             {"name": "SLOW", "symbol": "SLOW"},
             {"name": "cap", "symbol": "cap", "enumParameter": "maxPermitted"},
         ])
-        self.assertIn("FlintMode cap(FlintMode receiver, FlintMode maxPermitted) pure nothrow @nogc", value["body"])
-        self.assertIn("return receiver <= maxPermitted ? receiver : maxPermitted;", value["body"])
+        self.assertIn("FlintMode cap(FlintMode flintMode, FlintMode maxPermitted) pure nothrow @nogc", value["body"])
+        self.assertIn("return flintMode <= maxPermitted ? flintMode : maxPermitted;", value["body"])
         self.assertNotIn("typeof(null)", value["body"])
         self.assertNotIn("IllegalArgumentException", value["body"])
         probe = "module flint.demo;\n@safe:\n" + value["body"] + """
@@ -48,6 +48,17 @@ static assert(!__traits(compiles, FlintMode.FAST.cap(null)));
             path.write_text(probe, encoding="utf-8")
             for compiler in ("dmd", "ldc2"):
                 subprocess.run([compiler, "-preview=dip1000", "-o-", "-c", path], cwd=scratch, check=True)
+
+    def test_ordinal_cap_receiver_avoids_keywords_and_the_parameter(self):
+        scope = self.ORDINAL_CAP.replace("SpringMode", "Scope")
+        result = self.translate(scope)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        self.assertIn("Scope cap(Scope scope_, Scope maxPermitted)", json.loads(result.stdout)["body"])
+        clash = self.ORDINAL_CAP.replace("SpringMode", "MaxPermitted")
+        result = self.translate(clash)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        self.assertIn("MaxPermitted cap(MaxPermitted receiver, MaxPermitted maxPermitted)",
+                      json.loads(result.stdout)["body"])
 
     def test_enum_method_requires_checked_ordinal_behavior(self):
         for declaration in (
