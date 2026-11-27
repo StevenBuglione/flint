@@ -47,6 +47,13 @@ final class CRC32C : Checksum
         crc = (crc >> 8) ^ byteTable[(crc ^ cast(ubyte) value) & 0xff];
     }
 
+    /// Update with every byte of the array. A null array is empty under R26.
+    override void update(scope const(byte)[] data) nothrow @nogc
+    {
+        foreach (value; data)
+            crc = (crc >> 8) ^ byteTable[(crc ^ cast(ubyte) value) & 0xff];
+    }
+
     override long getValue() nothrow @nogc
     {
         return ~crc;
