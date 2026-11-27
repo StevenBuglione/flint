@@ -134,6 +134,17 @@ private Reports analyzeAndReport(Throwable failure, FailureAnalyzer[] analyzers.
     assert(analysis.getCause() is failure);
 }
 
+@("FailureAnalyzedException's description-and-action form sets no cause, as Boot's super(description)") unittest
+{
+    auto root = new IllegalStateException("root cause");
+    auto failure = new FailureAnalyzedException("Bad", "Fix it!");
+    assert(failure.getCause() is null);
+    failure.initCause(root); // Java allows it once; the (message, cause) overloads would have set it already
+    assert(failure.getCause() is root);
+    auto withCause = new FailureAnalyzedException("Bad", "Fix it!", root);
+    assert(withCause.getCause() is root);
+}
+
 private final class DetailedStartupFailure : FailureAnalyzedException
 {
     this()

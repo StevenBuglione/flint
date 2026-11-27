@@ -99,8 +99,17 @@ class FailureAnalyzedException : RuntimeException
 {
     private string action;
 
-    /// A failure whose `message` is the description, with an `action`.
-    this(string message, string action, Throwable cause = null) pure nothrow
+    /// A failure whose `message` is the description, with an `action`. Like Boot's `super(description)`, it sets no
+    /// cause, so a later `initCause` still works.
+    this(string message, string action) pure nothrow
+    {
+        super(message);
+        this.action = action;
+    }
+
+    /// A failure whose `message` is the description, with an `action` and its `cause` (Boot's
+    /// `super(description, cause)`).
+    this(string message, string action, Throwable cause) pure nothrow
     {
         super(message, cause);
         this.action = action;
