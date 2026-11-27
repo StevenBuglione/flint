@@ -32,6 +32,7 @@
 module flint.java.nio.charbuffer;
 
 import flint.engine.aot.any : Any;
+import flint.engine.aot.text : decodeUtf8;
 import flint.java.lang : Comparable, IllegalArgumentException, IndexOutOfBoundsException,
     JavaObject, NullPointerException, UnsupportedOperationException;
 import flint.java.nio.buffer : Buffer, arraySize, boundMessage, checkFromToIndex, checkIndex, checkRange;
@@ -346,6 +347,28 @@ class CharBuffer : Buffer, Comparable!CharBuffer
         return this;
     }
 
+    /// Write UTF-16 code units from UTF-8 input using Java UTF-16 start/end bounds (R14, R26).
+    CharBuffer put(scope const(char)[] source, int start, int end) pure
+    {
+        checkWritableHeap();
+        const total = arraySize(scanOrWriteUtf16(source, size_t.max, size_t.max));
+        const count = cast(int)(cast(uint) end - cast(uint) start);
+        checkRange(start, count, total);
+        checkWritable();
+        if (count > remaining())
+            throwOverflow();
+        if (count != 0)
+            scanOrWriteUtf16(source, start, cast(size_t) start + count);
+        advance(count);
+        return this;
+    }
+
+    /// Write all UTF-16 code units from UTF-8 input (R14, R26).
+    final CharBuffer put(scope const(char)[] source) pure
+    {
+        return put(source, 0, arraySize(scanOrWriteUtf16(source, size_t.max, size_t.max)));
+    }
+
     /// Transfer remaining characters to target. Java's signature declares IOException.
     int read(CharBuffer target) pure
     {
@@ -444,6 +467,34 @@ class CharBuffer : Buffer, Comparable!CharBuffer
         return output;
     }
 
+    private size_t scanOrWriteUtf16(scope const(char)[] source, size_t firstUnit, size_t endUnit) pure nothrow @nogc
+    {
+        pragma(inline, false);
+        int dest = position();
+        size_t unit;
+        for (size_t index = 0; index < source.length && unit < endUnit;)
+        {
+            const scalar = decodeUtf8(source, index);
+            if (scalar <= 0xFFFF)
+            {
+                if (unit >= firstUnit)
+                    store(dest++, cast(wchar) scalar);
+                ++unit;
+            }
+            else
+            {
+                const adjusted = scalar - 0x10000;
+                if (unit >= firstUnit)
+                    store(dest++, cast(wchar)(0xD800 + (adjusted >> 10)));
+                ++unit;
+                if (unit >= firstUnit && unit < endUnit)
+                    store(dest++, cast(wchar)(0xDC00 + (adjusted & 0x3FF)));
+                ++unit;
+            }
+        }
+        return unit;
+    }
+
     private dchar nextScalar(ref int index, int end) const pure nothrow @nogc
     {
         const first = load(index++);
@@ -515,6 +566,7 @@ class CharBuffer : Buffer, Comparable!CharBuffer
 
     private void store(int index, wchar value) pure nothrow @nogc
     {
+        pragma(inline, false);
         const start = cast(size_t)(origin + index) * wchar.sizeof;
         const high = cast(byte)(value >> 8);
         const low = cast(byte) value;

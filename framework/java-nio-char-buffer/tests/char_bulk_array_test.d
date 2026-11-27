@@ -201,3 +201,19 @@ unittest
     assert(buffer.position(2).subSequence(1, 4).toString() == "def");
     assert(buffer.position(4).subSequence(1, 3).toString() == "fg");
 }
+
+@("BasicChar.bulkPutString")
+unittest
+{
+    const expected = bulkSource();
+    string source = "1234567" ~ CharBuffer.wrap(expected[offset .. $].dup).toString();
+    auto buffer = CharBuffer.allocate(capacity);
+    assert(buffer.put(source, offset, offset + capacity) is buffer);
+    assert(buffer.position() == capacity && buffer.array() == expected[offset .. $]);
+
+    buffer.clear();
+    const pos = buffer.position();
+    char[capacity + 1] tooLong = 'a';
+    assertThrown!BufferOverflowException(buffer.put(tooLong[], 0, capacity + 1));
+    assert(buffer.position() == pos);
+}

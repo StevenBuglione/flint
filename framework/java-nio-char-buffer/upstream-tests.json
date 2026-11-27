@@ -23,7 +23,8 @@
           "BasicChar.bulkPutBuffer",
           "BasicChar.test comparison",
           "BasicChar.test character sequence windows",
-          "BasicChar.test text windows"
+          "BasicChar.test text windows",
+          "BasicChar.bulkPutString"
         ],
         "skipped": {
           "main": "Remaining families and cases require direct memory or the character sequence API. R26 also treats null arrays as empty."

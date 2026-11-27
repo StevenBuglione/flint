@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,127 | 332 | 1,871 | 15,091 |
+| framework | openjdk@21.0.13 | 1,127 | 334 | 1,871 | 15,089 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2282,6 +2282,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.CharBuffer#get(int,char[])` | `flint.java.nio.charbuffer.CharBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#get(int,char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.get` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#order()` | `flint.java.nio.charbuffer.CharBuffer.order` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.CharBuffer#put(String)` | `flint.java.nio.charbuffer.CharBuffer.put` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Decodes UTF-8 into UTF-16 code units; null slices act empty under R26. |
+| `java.nio.CharBuffer#put(String,int,int)` | `flint.java.nio.charbuffer.CharBuffer.put` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Indexes UTF-16 code units over UTF-8 input and preserves split surrogate halves; null slices act empty under R26. |
 | `java.nio.CharBuffer#put(char[])` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#put(char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.CharBuffer#put(int,char[])` | `flint.java.nio.charbuffer.CharBuffer.put` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -10516,7 +10518,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.math | 137 | 0 |
 | java.net | 817 | 0 |
 | java.net.spi | 0 | 19 |
-| java.nio | 232 | 0 |
+| java.nio | 230 | 0 |
 | java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 98 | 0 |
@@ -11592,8 +11594,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.CharBuffer#append(CharSequence,int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#append(char)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#chars()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#put(String)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
-| framework | `java.nio.CharBuffer#put(String,int,int)` | 2 | Bulk character transfer and compaction follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence,int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.security.DigestException#<init>()` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
