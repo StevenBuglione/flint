@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,926 | 633 | 0 | 1,915 | 13,947 |
+| framework | openjdk@21.0.13 | 1,967 | 645 | 0 | 1,915 | 13,894 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2976,6 +2976,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `java.util.zip.DataFormatException` | `flint.java.util.zip.dataformatexception.DataFormatException` | [R26](api-mapping.md#r26-null-arrays) | An explicitly empty Java detail message is reported as absent. |
+| `java.util.zip.Deflater#deflate(byte[])` | `flint.java.util.zip.deflater.Deflater.deflate` | [R26](api-mapping.md#r26-null-arrays) | Null and empty D arrays and slices are the empty Java array (R26). |
+| `java.util.zip.Deflater#deflate(byte[],int,int)` | `flint.java.util.zip.deflater.Deflater.deflate` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D slices, so the offset/length form is one call on a slice; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.Deflater#setDictionary(byte[])` | `flint.java.util.zip.deflater.Deflater.setDictionary` | [R26](api-mapping.md#r26-null-arrays) | Null and empty D arrays and slices are the empty Java array (R26). |
+| `java.util.zip.Deflater#setDictionary(byte[],int,int)` | `flint.java.util.zip.deflater.Deflater.setDictionary` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D slices, so the offset/length form is one call on a slice; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.Deflater#setInput(byte[])` | `flint.java.util.zip.deflater.Deflater.setInput` | [R26](api-mapping.md#r26-null-arrays) | Null and empty D arrays and slices are the empty Java array (R26). |
+| `java.util.zip.Deflater#setInput(byte[],int,int)` | `flint.java.util.zip.deflater.Deflater.setInput` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D slices, so the offset/length form is one call on a slice; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.Inflater#inflate(byte[])` | `flint.java.util.zip.inflater.Inflater.inflate` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | Null and empty D arrays and slices are the empty Java array (R26). |
+| `java.util.zip.Inflater#inflate(byte[],int,int)` | `flint.java.util.zip.inflater.Inflater.inflate` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D slices, so the offset/length form is one call on a slice; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.Inflater#setDictionary(byte[])` | `flint.java.util.zip.inflater.Inflater.setDictionary` | [R26](api-mapping.md#r26-null-arrays) | Null and empty D arrays and slices are the empty Java array (R26). |
+| `java.util.zip.Inflater#setDictionary(byte[],int,int)` | `flint.java.util.zip.inflater.Inflater.setDictionary` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D slices, so the offset/length form is one call on a slice; a null slice is empty under R26 (Java throws NullPointerException). |
+| `java.util.zip.Inflater#setInput(byte[])` | `flint.java.util.zip.inflater.Inflater.setInput` | [R26](api-mapping.md#r26-null-arrays) | Null and empty D arrays and slices are the empty Java array (R26). |
+| `java.util.zip.Inflater#setInput(byte[],int,int)` | `flint.java.util.zip.inflater.Inflater.setInput` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D slices, so the offset/length form is one call on a slice; a null slice is empty under R26 (Java throws NullPointerException). |
 
 #### org.aopalliance.aop
 
@@ -10990,7 +11002,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
-| java.util.zip | 238 | 0 |
+| java.util.zip | 185 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
 | javax.crypto.spec | 101 | 0 |
