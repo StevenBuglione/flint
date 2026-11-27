@@ -631,6 +631,8 @@ Speed work introduced these, or exposed them. Check every optimisation against t
 
 - **Expose the formatter zone override through R5.** The nullable getter and clearing overload retain the direct ZoneId call path. On venus against `b968c7a11`, the Java module probe remained byte-identical in both stock LDC release profiles at 129,496 O3 and 122,144 Oz incremental loadable bytes. The DMD module probe measured 4,450 to 4,492 template instances against the existing 7,350 cap.
 
+- **Write a formatter's element table as one array literal.** RFC_1123_DATE_TIME first composed its table from named date and time pieces joined with `~`. On venus (v4.2 toolchain), the enforced DMD leaf `flint.java.io.closeable/close`, which imports the formatter, then counted 246 template instances with five operands and 244 with three, against a cap of 241. One literal keeps it at 239, the same as the parent `a58701241`. With that, the Java module stays at 129,496 incremental linked bytes, and its DMD template count rises from 4,512 to 4,522 against the 7,350 cap. Short named elements (`space`, `colon`) keep dfmt from splitting a call across lines.
+
 ## 6. Checklist for porting a module
 
 Before a ported module lands:

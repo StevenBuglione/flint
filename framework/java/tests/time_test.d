@@ -674,3 +674,50 @@ unittest
     const cleared = local.withZone(Nullable!ZoneId.init);
     assert(collectException!DateTimeParseException(ZonedDateTime.parse(text, cleared)) !is null);
 }
+
+// One RFC_1123_DATE_TIME operation of rfc1123.tsv: the result's toString, or `!` and the exception message (and a
+// parse exception's error index).
+private string rfc1123Result(string kind, string input)
+{
+    import flint.engine.aot.text : decimal;
+
+    const f = DateTimeFormatter.RFC_1123_DATE_TIME;
+    const string delegate() @safe[string] table = [
+        "toString": () => f.toString(),
+        "formatOffsetDateTime": () => f.format(OffsetDateTime.parse(input)),
+        "formatZonedDateTime": () => f.format(ZonedDateTime.parse(input)),
+        "formatLocalDateTime": () => f.format(LocalDateTime.parse(input)),
+        "formatLocalDate": () => f.format(LocalDate.parse(input)),
+        "formatLocalTime": () => f.format(LocalTime.parse(input)),
+        "formatInstant": () => f.format(Instant.parse(input)),
+        "formatInstantWithZone": () => f.withZone(ZoneOffset.UTC.toZoneId())
+            .format(Instant.parse(input)),
+        "parseOffsetDateTime": () => OffsetDateTime.parse(input, f).toString(),
+        "parseZonedDateTime": () => ZonedDateTime.parse(input, f).toString(),
+        "parseLocalDateTime": () => LocalDateTime.parse(input, f).toString(),
+        "parseLocalDate": () => LocalDate.parse(input, f).toString(),
+        "parseLocalTime": () => LocalTime.parse(input, f).toString(),
+    ];
+    try
+        return table[kind]();
+    catch (DateTimeParseException e)
+        return "!" ~ e.msg ~ "\t" ~ decimal(e.getErrorIndex());
+    catch (DateTimeException e)
+        return "!" ~ e.msg;
+}
+
+@("RFC_1123_DATE_TIME formats, parses leniently and resolves SMART like JDK 21 (rfc1123.tsv)")
+unittest
+{
+    import std.array : join;
+
+    size_t count;
+    foreach (row; rows(import("rfc1123.tsv")))
+    {
+        const expected = row[2 .. $].join("\t");
+        const got = rfc1123Result(row[0], row[1]);
+        assert(got == expected, row[0] ~ " '" ~ row[1] ~ "': " ~ got ~ " != " ~ expected);
+        ++count;
+    }
+    assert(count == 629);
+}

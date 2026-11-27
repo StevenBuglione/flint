@@ -110,6 +110,7 @@ struct Fields
     private int offsetSeconds_;
     private string zoneId_;
     private bool zoneIsRegion_;
+    private bool smart_; // ResolverStyle.SMART, as RFC_1123_DATE_TIME resolves; otherwise STRICT
 
     private void set(Field f, long value) pure nothrow @nogc
     {
@@ -300,8 +301,19 @@ struct Fields
     /// Resolves the date fields into a `LocalDate`; throws `DateTimeParseException` when they are missing or invalid.
     LocalDate toLocalDate(scope const(char)[] text, string type = "LocalDate") const
     {
-        import flint.engine.aot.text : decimal;
+        const date = resolvedDate(text, type);
+        crossCheck(text, date);
+        if (!endOfDay())
+            return date;
+        try
+            return date.plusDays(1);
+        catch (DateTimeException e)
+            throw failed(text, e);
+    }
 
+    // The date fields, range-checked; SMART resolution moves an invalid day 29-31 to the end of the month.
+    private LocalDate resolvedDate(scope const(char)[] text, string type) const
+    {
         long year;
         if (has(Field.year))
             year = values_[Field.year];
@@ -312,33 +324,78 @@ struct Fields
         try
         {
             checkRange("Year", year, -999_999_999, 999_999_999);
-            LocalDate date;
             if (has(Field.monthOfYear) && has(Field.dayOfMonth))
             {
                 checkRange("MonthOfYear", values_[Field.monthOfYear], 1, 12);
-                checkRange("DayOfMonth", values_[Field.dayOfMonth], 1, 31);
-                date = LocalDate.of(cast(int) year, cast(int) values_[Field.monthOfYear],
-                        cast(int) values_[Field.dayOfMonth]);
+                checkVariable("DayOfMonth", values_[Field.dayOfMonth], "28/31", 31);
+                const month = cast(int) values_[Field.monthOfYear];
+                int day = cast(int) values_[Field.dayOfMonth];
+                if (smart_ && day > 28)
+                {
+                    const last = LocalDate.of(cast(int) year, month, 1).lengthOfMonth();
+                    day = day > last ? last : day;
+                }
+                return LocalDate.of(cast(int) year, month, day);
             }
-            else if (has(Field.dayOfYear))
+            if (has(Field.dayOfYear))
             {
-                checkRange("DayOfYear", values_[Field.dayOfYear], 1, 366);
-                date = LocalDate.ofYearDay(cast(int) year, cast(int) values_[Field.dayOfYear]);
+                checkVariable("DayOfYear", values_[Field.dayOfYear], "365/366", 366);
+                return LocalDate.ofYearDay(cast(int) year, cast(int) values_[Field.dayOfYear]);
             }
-            else
-                throw unresolved(text, type);
-            if (has(Field.dayOfWeek) && date.getDayOfWeek() + 1 != values_[Field.dayOfWeek])
-            {
-                const derived = decimal(date.getDayOfWeek() + 1), parsed = decimal(values_[Field.dayOfWeek]);
-                throw new DateTimeException("Conflict found: Field DayOfWeek " ~ derived
-                        ~ " differs from DayOfWeek " ~ parsed ~ " derived from " ~ date.toString());
-            }
-            return date;
         }
-        catch (DateTimeParseException e)
-            throw e;
         catch (DateTimeException e)
             throw failed(text, e);
+        throw unresolved(text, type);
+    }
+
+    // Java's range check of a field whose maximum depends on the month or year, such as `1 - 28/31`.
+    private static void checkVariable(string field, long value, string maximums, long largest)
+    {
+        import flint.engine.aot.text : decimal;
+
+        if (value < 1 || value > largest)
+            throw new DateTimeException(
+                    "Invalid value for " ~ field ~ " (valid values 1 - " ~ maximums ~ "): " ~ decimal(value));
+    }
+
+    // Java's cross-check of a parsed day-of-week against the resolved date.
+    private void crossCheck(scope const(char)[] text, LocalDate date) const
+    {
+        import flint.engine.aot.text : decimal;
+
+        if (!has(Field.dayOfWeek) || date.getDayOfWeek() + 1 == values_[Field.dayOfWeek])
+            return;
+        const derived = decimal(date.getDayOfWeek() + 1), parsed = decimal(values_[Field.dayOfWeek]);
+        throw failed(text, new DateTimeException("Conflict found: Field DayOfWeek " ~ derived
+                ~ " differs from DayOfWeek " ~ parsed ~ " derived from " ~ date.toString()));
+    }
+
+    // SMART resolution reads 24:00 as midnight at the end of the day.
+    private bool endOfDay() const pure nothrow @nogc
+    {
+        return smart_ && has(Field.hourOfDay) && values_[Field.hourOfDay] == 24
+            && value(Field.minuteOfHour) == 0 && value(Field.secondOfMinute) == 0 && value(Field.nanoOfSecond) == 0;
+    }
+
+    private long value(Field f) const pure nothrow @nogc
+    {
+        return has(f) ? values_[f] : 0;
+    }
+
+    // Resolves every parsed field, as Java's parse does whatever the queried type: the date, the time, the
+    // day-of-week cross-check, then the offset of a date-time.
+    private void resolveAll(scope const(char)[] text) const
+    {
+        const date = hasDate(), time = hasTime();
+        LocalDate resolved;
+        if (date)
+            resolved = resolvedDate(text, "");
+        if (time)
+            toLocalTime(text);
+        if (date)
+            crossCheck(text, resolved);
+        if (date && time && hasOffset_)
+            toOffset(text);
     }
 
     /// Resolves the time fields into a `LocalTime`; missing minutes, seconds and nanos are zero.
@@ -356,6 +413,8 @@ struct Fields
             }
             else
                 throw unresolved(text, type);
+            if (endOfDay())
+                return LocalTime.of(0, 0);
             checkRange("HourOfDay", hour, 0, 23);
             const minute = has(Field.minuteOfHour) ? values_[Field.minuteOfHour] : 0;
             const second = has(Field.secondOfMinute) ? values_[Field.secondOfMinute] : 0;
@@ -398,6 +457,7 @@ private enum Op : ubyte
     optionalEnd,
     caseInsensitive,
     caseSensitive,
+    lenient,
 }
 
 private struct Element
@@ -495,6 +555,16 @@ private immutable Element[] basicIsoDate = [
     op(Op.caseInsensitive), num(Field.year, 4), num(Field.monthOfYear, 2), num(Field.dayOfMonth,
             2), op(Op.optionalStart), offsetElement("+HHMMss", "Z", true), op(Op.optionalEnd)
 ];
+// RFC 1123 / RFC 822 date-times, parsed leniently: the day-of-week and seconds are optional, and a two-digit year
+// is the year itself.
+private immutable Element space = lit(" "), colon = lit(":");
+private immutable Element[] rfc1123 = [
+    op(Op.caseInsensitive), op(Op.lenient), op(Op.optionalStart), textElement(Field.dayOfWeek, 3),
+    lit(", "), op(Op.optionalEnd), num(Field.dayOfMonth, 1, 2), space,
+    textElement(Field.monthOfYear, 3), space, num(Field.year, 4), space, num(Field.hourOfDay, 2),
+    colon, num(Field.minuteOfHour, 2), op(Op.optionalStart), colon, num(Field.secondOfMinute, 2),
+    op(Op.optionalEnd), space, offsetElement("+HHMM", "GMT", false)
+];
 // What the instant element parses: an ISO local date-time with seconds, and an offset.
 private immutable Element[] instantParse = [op(Op.caseInsensitive)] ~ isoLocalDate ~ [
     lit("T"), num(Field.hourOfDay, 2), lit(":"), num(Field.minuteOfHour, 2), lit(":"),
@@ -521,6 +591,9 @@ private enum describeIsoTime = `ParseCaseSensitive(false)(` ~ describeTime ~ `)[
 private enum describeIsoOrdinalDate = `ParseCaseSensitive(false)Value(Year,4,10,EXCEEDS_PAD)'-'Value(DayOfYear,3)[`
     ~ describeStrictOffset ~ `]`;
 private enum describeIsoInstant = `ParseCaseSensitive(false)Instant()`;
+private enum describeRfc1123 = `ParseCaseSensitive(false)ParseStrict(false)[Text(DayOfWeek)', ']`
+    ~ `Value(DayOfMonth,1,2,NOT_NEGATIVE)' 'Text(MonthOfYear)' 'Value(Year,4)' 'Value(HourOfDay,2)':'`
+    ~ `Value(MinuteOfHour,2)[':'Value(SecondOfMinute,2)]' 'Offset(+HHMM,'GMT')`;
 private enum describeBasicIsoDate = `ParseCaseSensitive(false)Value(Year,4)Value(MonthOfYear,2)Value(DayOfMonth,2)`
     ~ `[ParseStrict(false)Offset(+HHMMss,'Z')ParseStrict(true)]`;
 
@@ -534,6 +607,7 @@ struct DateTimeFormatter
     private string description_;
     private bool hasZone_;
     private ZoneId zone_;
+    private bool smart_;
 
     /// The ISO date formatter that formats or parses a date without an offset, such as '2011-12-03'.
     static immutable DateTimeFormatter ISO_LOCAL_DATE = DateTimeFormatter(isoLocalDate, describeIsoLocalDate);
@@ -565,11 +639,15 @@ struct DateTimeFormatter
     static immutable DateTimeFormatter ISO_INSTANT = DateTimeFormatter(isoInstant, describeIsoInstant);
     /// The ISO date formatter without punctuation, such as '20111203'.
     static immutable DateTimeFormatter BASIC_ISO_DATE = DateTimeFormatter(basicIsoDate, describeBasicIsoDate);
+    /// The RFC 1123 date-time formatter, such as 'Tue, 3 Jun 2008 11:05:30 GMT'. Parsing is lenient and
+    /// resolution SMART; English day and month abbreviations only, and no zone names other than 'GMT'.
+    static immutable DateTimeFormatter RFC_1123_DATE_TIME = DateTimeFormatter(rfc1123, describeRfc1123, true);
 
-    private this(immutable(Element)[] elements, string description) pure nothrow @nogc
+    private this(immutable(Element)[] elements, string description, bool smart = false) pure nothrow @nogc
     {
         elements_ = elements;
         description_ = description;
+        smart_ = smart;
     }
 
     /**
@@ -592,7 +670,7 @@ struct DateTimeFormatter
     /// A copy of this formatter that uses `zone` when printing. Local values keep their date and time fields.
     DateTimeFormatter withZone(ZoneId zone) const pure nothrow @nogc
     {
-        DateTimeFormatter copy = DateTimeFormatter(elements_, description_);
+        DateTimeFormatter copy = DateTimeFormatter(elements_, description_, smart_);
         copy.hasZone_ = true;
         copy.zone_ = zone;
         return copy;
@@ -601,7 +679,7 @@ struct DateTimeFormatter
     /// A copy with the supplied override. An absent zone clears the override.
     DateTimeFormatter withZone(Nullable!ZoneId zone) const pure nothrow @nogc
     {
-        return zone.isNull ? DateTimeFormatter(elements_, description_) : withZone(zone.get());
+        return zone.isNull ? DateTimeFormatter(elements_, description_, smart_) : withZone(zone.get());
     }
 
     /// Formats the fields of a temporal value.
@@ -642,6 +720,7 @@ struct DateTimeFormatter
     Fields parse(scope const(char)[] text) const
     {
         Fields fields;
+        fields.smart_ = smart_;
         auto parser = Parser(text, &fields);
         const end = parser.run(elements_, 0);
         if (end < 0)
@@ -661,6 +740,8 @@ struct DateTimeFormatter
         }
         if (hasZone_ && !fields.zoneId_.length)
             fields.addZone(zone_);
+        if (smart_)
+            fields.resolveAll(text);
         return fields;
     }
 
@@ -1019,11 +1100,21 @@ private string formatOffset(int totalSeconds, string pattern, string noOffsetTex
     auto text = (totalSeconds < 0 ? "-" : "+") ~ padded(hours, 2);
     const separator = shape.colon ? ":" : "";
     const printMinutes = shape.minutes && (!shape.minutesOptional || minutes != 0 || seconds != 0);
+    const printSeconds = printMinutes && shape.seconds && (!shape.secondsOptional || seconds != 0);
     if (printMinutes)
         text ~= separator ~ padded(minutes, 2);
-    if (printMinutes && shape.seconds && (!shape.secondsOptional || seconds != 0))
+    if (printSeconds)
         text ~= separator ~ padded(seconds, 2);
-    return text;
+    // An offset that prints as all zeros, such as +00:00:45 as +HHMM, prints the no-offset text.
+    return zeroDigits(text[1 .. $]) ? noOffsetText : text;
+}
+
+private bool zeroDigits(scope const(char)[] text) pure nothrow @nogc
+{
+    foreach (c; text)
+        if (c != '0' && c != ':')
+            return false;
+    return true;
 }
 
 private struct Parser
@@ -1031,6 +1122,7 @@ private struct Parser
     const(char)[] text;
     Fields* fields; // the caller's: the parser borrows `text`, so the result lives outside it
     bool caseInsensitive;
+    bool lenient;
 
     // Parses the elements from `position`; returns the end position, or `~errorIndex` on failure.
     int run(scope const(Element)[] elements, int position) scope
@@ -1042,12 +1134,13 @@ private struct Parser
             {
                 const end = sectionEnd(elements, i);
                 const saved = *fields;
-                const savedCase = caseInsensitive;
+                const savedCase = caseInsensitive, savedLenient = lenient;
                 const next = run(elements[i + 1 .. end], position);
                 if (next < 0)
                 {
                     *fields = saved;
                     caseInsensitive = savedCase;
+                    lenient = savedLenient;
                 }
                 else
                     position = next;
@@ -1067,6 +1160,8 @@ private struct Parser
             caseInsensitive = true;
         else if (e.op == Op.caseSensitive)
             caseInsensitive = false;
+        else if (e.op == Op.lenient)
+            lenient = true;
         return position;
     }
 
@@ -1117,13 +1212,14 @@ private struct Parser
         return total;
     }
 
-    // The sign at `position`: 0 for none, 1 for '+', -1 for '-', or 2 when the sign style rejects it.
+    // The sign at `position`: 0 for none, 1 for '+', -1 for '-', or 2 when the sign style rejects it. A lenient
+    // parse needs no sign for ALWAYS, and accepts one for NOT_NEGATIVE and NEVER unless the width is fixed.
     int sign(const Element e, int position) scope const pure nothrow @nogc
     {
         const present = position < text.length && (text[position] == '+' || text[position] == '-');
         if (!present)
-            return e.sign == SignStyle.ALWAYS ? 2 : 0;
-        if (e.sign == SignStyle.NOT_NEGATIVE || e.sign == SignStyle.NEVER)
+            return e.sign == SignStyle.ALWAYS && !lenient ? 2 : 0;
+        if ((e.sign == SignStyle.NOT_NEGATIVE || e.sign == SignStyle.NEVER) && !(lenient && e.minWidth != e.maxWidth))
             return 2;
         return text[position] == '-' ? -1 : 1;
     }
@@ -1144,11 +1240,16 @@ private struct Parser
         int available;
         while (pos + available < text.length && digit(text[pos + available]))
             ++available;
-        int take = available - reserved(following);
-        take = take > e.maxWidth ? e.maxWidth : take;
-        if (take < e.minWidth)
+        const reserve = reserved(following);
+        // A lenient parse reads a value that no fixed-width value follows as one to nine digits.
+        const variable = lenient && reserve == 0;
+        const minWidth = variable ? 1 : e.minWidth, maxWidth = variable ? 9 : e.maxWidth;
+        int take = available - reserve;
+        take = take > maxWidth ? maxWidth : take;
+        if (take < minWidth)
             return ~pos;
-        if (e.sign == SignStyle.EXCEEDS_PAD && padSignMismatch(signed && !negative, signed, take, e.minWidth))
+        if (!lenient && e.sign == SignStyle.EXCEEDS_PAD && padSignMismatch(signed && !negative,
+                signed, take, e.minWidth))
             return ~position;
         long value;
         foreach (c; text[pos .. pos + take])
@@ -1220,7 +1321,8 @@ private struct Parser
                 return position + cast(int) candidate.length;
             }
         }
-        return ~position;
+        // A lenient parse falls back to the field's number.
+        return lenient ? parseNumber(num(e.field, 1, 19, SignStyle.NORMAL), null, position) : ~position;
     }
 
     int twoDigits(int position) scope const pure nothrow @nogc
@@ -1239,7 +1341,7 @@ private struct Parser
         if (colon)
             ++pos;
         const v = twoDigits(pos);
-        if (v < 0)
+        if (v < 0 || v > 59)
             return position;
         value = v;
         return pos + 2;
@@ -1256,13 +1358,17 @@ private struct Parser
         if (position >= text.length || (text[position] != '+' && text[position] != '-'))
             return ~position;
         const sign = text[position] == '-' ? -1 : 1;
+        // Java reads each group as two digits up to 59; hours 24 to 59 are then out of range.
         const hours = twoDigits(position + 1);
-        if (hours < 0 || hours > 23)
+        if (hours < 0 || hours > 59)
             return ~position;
         int[2] parts;
         const end = offsetMinutesSeconds(e, position + 3, parts);
-        if (end < 0 || parts[0] > 59 || parts[1] > 59)
+        if (end < 0)
             return ~position;
+        if (hours > 23)
+            throw Fields.failed(text,
+                    new DateTimeException("Value out of range: Hour[0-23], Minute[0-59], Second[0-59]"));
         fields.hasOffset_ = true;
         fields.offsetSeconds_ = sign * (hours * 3600 + parts[0] * 60 + parts[1]);
         return end;
@@ -1273,15 +1379,16 @@ private struct Parser
     int offsetMinutesSeconds(const Element e, int pos, ref int[2] parts) scope const pure nothrow @nogc
     {
         const shape = offsetShape(e.text);
-        if (!shape.minutes && !e.lenient)
+        const lenient = e.lenient || this.lenient;
+        if (!shape.minutes && !lenient)
             return pos;
         const next = offsetGroup(pos, shape.colon, parts[0]);
         if (next == pos)
-            return shape.minutes && !shape.minutesOptional && !e.lenient ? -1 : pos;
-        if (!shape.seconds && !e.lenient)
+            return shape.minutes && !shape.minutesOptional && !lenient ? -1 : pos;
+        if (!shape.seconds && !lenient)
             return next;
         const after = offsetGroup(next, shape.colon, parts[1]);
-        if (after == next && shape.seconds && !shape.secondsOptional && !e.lenient)
+        if (after == next && shape.seconds && !shape.secondsOptional && !lenient)
             return -1;
         return after;
     }
