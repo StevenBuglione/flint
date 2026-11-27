@@ -5,5 +5,62 @@
   "test_packages": [
     ":java-nio-charset"
   ],
-  "classes": {}
+  "classes": {
+    "java/nio/charset/CharsetDecoder/ASCIIDecode.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. An original Flint test decodes 60 60 60 FF with one reused US-ASCII decoder 10,000 times and checks the ASCII prefix and MALFORMED[1] every time; the Temurin oracle replay covers the US-ASCII decoder's results, positions and output.",
+      "covered_by": "framework/java-nio-charset/tests/standard_coders_test.d"
+    },
+    "java/nio/charset/CharsetDecoder/AverageMax.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests check that both coder constructors reject an average above the maximum, with Java 21's messages.",
+      "covered_by": "framework/java-nio-charset/tests/charset_coders_test.d"
+    },
+    "java/nio/charset/CharsetDecoder/CoderMalfunctionErrorTest.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests check that a RuntimeException from decodeLoop, and null buffers (R8), become CoderMalfunctionError.",
+      "covered_by": [
+        "framework/java-nio-charset/tests/charset_coders_test.d",
+        "framework/java-nio-charset/tests/coder_malfunction_error_test.d"
+      ]
+    },
+    "java/nio/charset/CharsetDecoder/EmptyInput.java": {
+      "status": "deferred",
+      "phase": "2",
+      "reason": "blocked on fc-io-charset: CoderResult.throwException and decode(ByteBuffer)/encode(CharBuffer) (coordinator decision, 2026-11-27); whoever lands fc-io-charset turns these green"
+    },
+    "java/nio/charset/CharsetDecoder/NaNinCtor.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests check that the decoder constructor rejects zero, negative, NaN and inverted rates, with Java 21's messages.",
+      "covered_by": "framework/java-nio-charset/tests/charset_coders_test.d"
+    },
+    "java/nio/charset/CharsetDecoder/XcodeOverflow.java": {
+      "status": "deferred",
+      "phase": "2",
+      "reason": "blocked on fc-io-charset: CoderResult.throwException and decode(ByteBuffer)/encode(CharBuffer) (coordinator decision, 2026-11-27); whoever lands fc-io-charset turns these green"
+    },
+    "java/nio/charset/CharsetEncoder/CanEncode.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests check canEncode(char), canEncode(CharSequence) and canEncode(CharBuffer) of all six standard encoders against a Temurin oracle, including that unpaired surrogates are never encodable and that US-ASCII rejects U+00B6.",
+      "covered_by": "framework/java-nio-charset/tests/standard_coders_test.d"
+    },
+    "java/nio/charset/CharsetEncoder/CoderMalfunctionErrorTest.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests check that a RuntimeException from encodeLoop, and null buffers (R8), become CoderMalfunctionError.",
+      "covered_by": [
+        "framework/java-nio-charset/tests/charset_coders_test.d",
+        "framework/java-nio-charset/tests/coder_malfunction_error_test.d"
+      ]
+    },
+    "java/nio/charset/CharsetEncoder/Flush.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests use a test-local shift-state encoder to check that flush can return OVERFLOW repeatedly, completes in a larger buffer, and is then a no-op. ISO-2022-JP is not provided, and the encode(CharBuffer) convenience method waits on CharacterCodingException.",
+      "covered_by": "framework/java-nio-charset/tests/charset_coders_test.d"
+    },
+    "java/nio/charset/CharsetEncoder/NaNinCtor.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests check that the encoder constructor rejects zero, negative, NaN and inverted rates, with Java 21's messages.",
+      "covered_by": "framework/java-nio-charset/tests/charset_coders_test.d"
+    }
+  }
 }

@@ -6,6 +6,9 @@ sourcePaths "source"
 importPaths "source"
 dflags "-preview=dip1000"
 dependency "flint:java" version="*"
+dependency "flint:java-nio" version="*"
+dependency "flint:java-nio-buffers" version="*"
+dependency "flint:java-nio-char-buffer" version="*"
 
 configuration "library" {
     targetType "library"
@@ -14,4 +17,5 @@ configuration "unittest" {
     targetType "library"
     sourcePaths "source" "tests"
     importPaths "source" "tests"
+    stringImportPaths "tests/golden"
 }

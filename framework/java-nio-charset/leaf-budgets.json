@@ -1,4 +1,14 @@
 {
+  "flint.java.nio.charset.charsetdecoder": {
+    "incremental_linked_bytes": 52946,
+    "template_instances": 570,
+    "template_compile": "separate"
+  },
+  "flint.java.nio.charset.charsetencoder": {
+    "incremental_linked_bytes": 66643,
+    "template_instances": 600,
+    "template_compile": "separate"
+  },
   "flint.java.nio.charset.codermalfunctionerror": {
     "incremental_linked_bytes": 8294,
     "template_instances": 489,

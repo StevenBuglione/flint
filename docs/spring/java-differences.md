@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,710 | 495 | 0 | 1,905 | 14,311 |
+| framework | openjdk@21.0.13 | 1,743 | 509 | 0 | 1,905 | 14,264 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2464,6 +2464,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.nio.charset.CharsetDecoder` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Import CharsetDecoder from flint.java.nio.charset.charsetdecoder. An abstract class, as in Java; subclasses override decodeLoop. Charset is a value here, and Charset.init stands for Java's null charset. Java's in and out parameters are in_ and out_ (R19). decode(in, out, eoi) checks for null buffers before calling decodeLoop and throws CoderMalfunctionError caused by NullPointerException (R8), where Java's NullPointerException comes from inside the loop. CodingErrorAction is a value struct, so Java's "Null action" IllegalArgumentException cannot occur. |
+| `java.nio.charset.CharsetDecoder#decode(ByteBuffer,CharBuffer,boolean)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.decode` | [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Null buffers throw CoderMalfunctionError caused by NullPointerException before decodeLoop runs. |
+| `java.nio.charset.CharsetDecoder#decodeLoop(ByteBuffer,CharBuffer)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.decodeLoop` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `java.nio.charset.CharsetDecoder#flush(CharBuffer)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.flush` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `java.nio.charset.CharsetDecoder#replaceWith(String)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.replaceWith` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | The length check counts UTF-16 units. A null string counts as empty, so it throws "Empty replacement" where Java says "Null replacement". |
+| `java.nio.charset.CharsetEncoder` | `flint.java.nio.charset.charsetencoder.CharsetEncoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Import CharsetEncoder from flint.java.nio.charset.charsetencoder. An abstract class, as in Java; subclasses override encodeLoop. Charset is a value here, and Charset.init stands for Java's null charset: as in Java, constructing an encoder for it throws NullPointerException unless isLegalReplacement is overridden. Java's in and out parameters are in_ and out_ (R19). encode(in, out, eoi) checks for null buffers before calling encodeLoop and throws CoderMalfunctionError caused by NullPointerException (R8). CodingErrorAction is a value struct, so Java's "Null action" IllegalArgumentException cannot occur. |
+| `java.nio.charset.CharsetEncoder#<init>(Charset,float,float,byte[])` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.this` | [R26](api-mapping.md#r26-null-arrays) | A null replacement counts as empty, so it throws "Empty replacement" where Java says "Null replacement". |
+| `java.nio.charset.CharsetEncoder#canEncode(CharSequence)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.canEncode` | [R7](api-mapping.md#r7-overloads), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | Two overloads stand in for CharSequence: a UTF-8 string, converted to UTF-16 units, and a CharBuffer, whose position is unchanged. A null string counts as empty and can be encoded; a null CharBuffer throws NullPointerException. |
+| `java.nio.charset.CharsetEncoder#canEncode(char)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.canEncode` | [R14](api-mapping.md#r14-strings-and-text) | Java's char is wchar. |
+| `java.nio.charset.CharsetEncoder#encode(CharBuffer,ByteBuffer,boolean)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.encode` | [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Null buffers throw CoderMalfunctionError caused by NullPointerException before encodeLoop runs. |
+| `java.nio.charset.CharsetEncoder#encodeLoop(CharBuffer,ByteBuffer)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.encodeLoop` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `java.nio.charset.CharsetEncoder#flush(ByteBuffer)` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.flush` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `java.nio.charset.CharsetEncoder#isLegalReplacement(byte[])` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.isLegalReplacement` | [R26](api-mapping.md#r26-null-arrays) | The default decodes the bytes with the charset's standard decoder under REPORT actions, as Java's charset().newDecoder() does. Until Charset becomes a class, only the six standard charsets (US-ASCII, ISO-8859-1, UTF-8, UTF-16, UTF-16BE, UTF-16LE) have decoders. A null array counts as empty and is legal. |
+| `java.nio.charset.CharsetEncoder#replaceWith(byte[])` | `flint.java.nio.charset.charsetencoder.CharsetEncoder.replaceWith` | [R26](api-mapping.md#r26-null-arrays) | A null array counts as empty, so it throws "Empty replacement" where Java says "Null replacement". |
 | `java.nio.charset.CoderMalfunctionError` | `flint.java.nio.charset.codermalfunctionerror.CoderMalfunctionError` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions) | Import CoderMalfunctionError from flint.java.nio.charset.codermalfunctionerror. Java's Error maps to the catchable D Exception base, as AssertionError does, so it is not a RuntimeException. The message is the cause's Java toString, with Flint's D class names. initCause always throws IllegalStateException, as in Java, because the constructor sets the cause. |
 | `java.nio.charset.CoderResult` | `flint.java.nio.charset.coderresult.CoderResult` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) | Import CoderResult from flint.java.nio.charset.coderresult. Represented as an R15 value struct whose value equality over (kind, length) stands in for Java's cached instance identity. The default value is UNDERFLOW. |
 | `java.nio.charset.CoderResult#OVERFLOW` | `flint.java.nio.charset.coderresult.CoderResult.OVERFLOW` | [R15](api-mapping.md#r15-enums-with-fields) |  |
@@ -10800,7 +10814,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio | 24 | 0 |
 | java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
-| java.nio.charset | 84 | 0 |
+| java.nio.charset | 37 | 0 |
 | java.nio.charset.spi | 0 | 4 |
 | java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 137 | 0 |
@@ -11891,6 +11905,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.CharBuffer#chars()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence,int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
+| framework | `java.nio.charset.CharsetDecoder#decode(ByteBuffer)` | 2 | Throws CharacterCodingException (through CoderResult.throwException), which waits on checked IOException initCause (framework-core fc-io-charset). canEncode already runs the same loop privately. |
+| framework | `java.nio.charset.CharsetEncoder#encode(CharBuffer)` | 2 | Throws CharacterCodingException (through CoderResult.throwException), which waits on checked IOException initCause (framework-core fc-io-charset). canEncode already runs the same loop privately. |
 | framework | `java.nio.charset.CoderResult#throwException()` | 2 | Requires CharacterCodingException, MalformedInputException and UnmappableCharacterException, which wait on checked IOException initCause. |
 | framework | `java.nio.file.Path#compareTo(Path)` | 2 | Default-provider ordering and Comparable<Path> inheritance are deferred. |
 | framework | `java.nio.file.Path#equals(Object)` | 2 | Provider-specific path equality is deferred with hashCode. |

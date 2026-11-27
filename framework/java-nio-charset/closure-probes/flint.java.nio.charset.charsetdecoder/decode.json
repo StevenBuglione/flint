@@ -1,0 +1,21 @@
+{
+  "source": "closure/charset_decoder.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.nio.buffer",
+    "flint.java.nio.bufferoverflowexception",
+    "flint.java.nio.bufferunderflowexception",
+    "flint.java.nio.bytebuffer",
+    "flint.java.nio.byteorder",
+    "flint.java.nio.charbuffer",
+    "flint.java.nio.charset",
+    "flint.java.nio.charset.codermalfunctionerror",
+    "flint.java.nio.charset.coderresult",
+    "flint.java.nio.charset.codingerroraction",
+    "flint.java.nio.charset.internal.coders",
+    "flint.java.nio.internal.buffercursor",
+    "flint.java.nio.invalidmarkexception",
+    "flint.java.nio.readonlybufferexception"
+  ],
+  "data": []
+}
