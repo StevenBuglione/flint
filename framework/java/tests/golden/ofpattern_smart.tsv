@@ -1,0 +1,694 @@
+parse	uuuu-MM-dd|2023-06-15	parsed
+parseLocalDate	uuuu-MM-dd|2023-06-15	2023-06-15
+parseLocalTime	uuuu-MM-dd|2023-06-15	!Text '2023-06-15' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|2023-06-15	!Text '2023-06-15' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|2023-06-15	!Text '2023-06-15' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|2023-06-15	!Text '2023-06-15' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|2024-02-29	parsed
+parseLocalDate	uuuu-MM-dd|2024-02-29	2024-02-29
+parseLocalTime	uuuu-MM-dd|2024-02-29	!Text '2024-02-29' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|2024-02-29	!Text '2024-02-29' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|2024-02-29	!Text '2024-02-29' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|2024-02-29	!Text '2024-02-29' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|2023-02-29	parsed
+parseLocalDate	uuuu-MM-dd|2023-02-29	2023-02-28
+parseLocalTime	uuuu-MM-dd|2023-02-29	!Text '2023-02-29' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|2023-02-29	!Text '2023-02-29' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|2023-02-29	!Text '2023-02-29' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|2023-02-29	!Text '2023-02-29' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|2024-02-30	parsed
+parseLocalDate	uuuu-MM-dd|2024-02-30	2024-02-29
+parseLocalTime	uuuu-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|2023-02-31	parsed
+parseLocalDate	uuuu-MM-dd|2023-02-31	2023-02-28
+parseLocalTime	uuuu-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|2023-04-31	parsed
+parseLocalDate	uuuu-MM-dd|2023-04-31	2023-04-30
+parseLocalTime	uuuu-MM-dd|2023-04-31	!Text '2023-04-31' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|2023-04-31	!Text '2023-04-31' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|2023-04-31	!Text '2023-04-31' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|2023-04-31	!Text '2023-04-31' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|2023-04-30	parsed
+parseLocalDate	uuuu-MM-dd|2023-04-30	2023-04-30
+parseLocalTime	uuuu-MM-dd|2023-04-30	!Text '2023-04-30' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|2023-04-30	!Text '2023-04-30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|2023-04-30	!Text '2023-04-30' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|2023-04-30	!Text '2023-04-30' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseLocalDate	uuuu-MM-dd|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseLocalTime	uuuu-MM-dd|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseLocalDateTime	uuuu-MM-dd|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseOffsetDateTime	uuuu-MM-dd|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseZonedDateTime	uuuu-MM-dd|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parse	uuuu-MM-dd|2023-00-10	!Text '2023-00-10' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseLocalDate	uuuu-MM-dd|2023-00-10	!Text '2023-00-10' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseLocalTime	uuuu-MM-dd|2023-00-10	!Text '2023-00-10' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseLocalDateTime	uuuu-MM-dd|2023-00-10	!Text '2023-00-10' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseOffsetDateTime	uuuu-MM-dd|2023-00-10	!Text '2023-00-10' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseZonedDateTime	uuuu-MM-dd|2023-00-10	!Text '2023-00-10' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parse	uuuu-MM-dd|2023-13-01	!Text '2023-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseLocalDate	uuuu-MM-dd|2023-13-01	!Text '2023-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseLocalTime	uuuu-MM-dd|2023-13-01	!Text '2023-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseLocalDateTime	uuuu-MM-dd|2023-13-01	!Text '2023-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseOffsetDateTime	uuuu-MM-dd|2023-13-01	!Text '2023-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseZonedDateTime	uuuu-MM-dd|2023-13-01	!Text '2023-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parse	uuuu-MM-dd|2023-01-00	!Text '2023-01-00' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseLocalDate	uuuu-MM-dd|2023-01-00	!Text '2023-01-00' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseLocalTime	uuuu-MM-dd|2023-01-00	!Text '2023-01-00' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseLocalDateTime	uuuu-MM-dd|2023-01-00	!Text '2023-01-00' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseOffsetDateTime	uuuu-MM-dd|2023-01-00	!Text '2023-01-00' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseZonedDateTime	uuuu-MM-dd|2023-01-00	!Text '2023-01-00' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parse	uuuu-MM-dd|1900-02-29	parsed
+parseLocalDate	uuuu-MM-dd|1900-02-29	1900-02-28
+parseLocalTime	uuuu-MM-dd|1900-02-29	!Text '1900-02-29' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 1900-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|1900-02-29	!Text '1900-02-29' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 1900-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|1900-02-29	!Text '1900-02-29' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 1900-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|1900-02-29	!Text '1900-02-29' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 1900-02-28 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|2000-02-30	parsed
+parseLocalDate	uuuu-MM-dd|2000-02-30	2000-02-29
+parseLocalTime	uuuu-MM-dd|2000-02-30	!Text '2000-02-30' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2000-02-29 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|2000-02-30	!Text '2000-02-30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2000-02-29 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|2000-02-30	!Text '2000-02-30' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2000-02-29 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|2000-02-30	!Text '2000-02-30' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2000-02-29 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|-0001-02-29	parsed
+parseLocalDate	uuuu-MM-dd|-0001-02-29	-0001-02-28
+parseLocalTime	uuuu-MM-dd|-0001-02-29	!Text '-0001-02-29' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -0001-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|-0001-02-29	!Text '-0001-02-29' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -0001-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|-0001-02-29	!Text '-0001-02-29' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -0001-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|-0001-02-29	!Text '-0001-02-29' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to -0001-02-28 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|+999999999-12-31	parsed
+parseLocalDate	uuuu-MM-dd|+999999999-12-31	+999999999-12-31
+parseLocalTime	uuuu-MM-dd|+999999999-12-31	!Text '+999999999-12-31' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd|+999999999-12-31	!Text '+999999999-12-31' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd|+999999999-12-31	!Text '+999999999-12-31' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd|+999999999-12-31	!Text '+999999999-12-31' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDate	uuuu-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalTime	uuuu-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDateTime	uuuu-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseOffsetDateTime	uuuu-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseZonedDateTime	uuuu-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parse	yyyy-MM-dd|2023-02-31	parsed
+parseLocalDate	yyyy-MM-dd|2023-02-31	2023-02-28
+parseLocalTime	yyyy-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	yyyy-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	yyyy-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	yyyy-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parse	yyyy-MM-dd|2024-02-30	parsed
+parseLocalDate	yyyy-MM-dd|2024-02-30	2024-02-29
+parseLocalTime	yyyy-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseLocalDateTime	yyyy-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseOffsetDateTime	yyyy-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseZonedDateTime	yyyy-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parse	yyyy-MM-dd|2023-06-15	parsed
+parseLocalDate	yyyy-MM-dd|2023-06-15	2023-06-15
+parseLocalTime	yyyy-MM-dd|2023-06-15	!Text '2023-06-15' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parseLocalDateTime	yyyy-MM-dd|2023-06-15	!Text '2023-06-15' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parseOffsetDateTime	yyyy-MM-dd|2023-06-15	!Text '2023-06-15' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parseZonedDateTime	yyyy-MM-dd|2023-06-15	!Text '2023-06-15' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parse	yyyy-MM-dd|0000-01-01	!Text '0000-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): 0	0
+parseLocalDate	yyyy-MM-dd|0000-01-01	!Text '0000-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): 0	0
+parseLocalTime	yyyy-MM-dd|0000-01-01	!Text '0000-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): 0	0
+parseLocalDateTime	yyyy-MM-dd|0000-01-01	!Text '0000-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): 0	0
+parseOffsetDateTime	yyyy-MM-dd|0000-01-01	!Text '0000-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): 0	0
+parseZonedDateTime	yyyy-MM-dd|0000-01-01	!Text '0000-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): 0	0
+parse	yyyy-MM-dd|0001-01-01	parsed
+parseLocalDate	yyyy-MM-dd|0001-01-01	0001-01-01
+parseLocalTime	yyyy-MM-dd|0001-01-01	!Text '0001-01-01' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+parseLocalDateTime	yyyy-MM-dd|0001-01-01	!Text '0001-01-01' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	yyyy-MM-dd|0001-01-01	!Text '0001-01-01' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+parseZonedDateTime	yyyy-MM-dd|0001-01-01	!Text '0001-01-01' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+parse	yyyy-MM-dd|-0001-01-01	!Text '-0001-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): -1	0
+parseLocalDate	yyyy-MM-dd|-0001-01-01	!Text '-0001-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): -1	0
+parseLocalTime	yyyy-MM-dd|-0001-01-01	!Text '-0001-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): -1	0
+parseLocalDateTime	yyyy-MM-dd|-0001-01-01	!Text '-0001-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): -1	0
+parseOffsetDateTime	yyyy-MM-dd|-0001-01-01	!Text '-0001-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): -1	0
+parseZonedDateTime	yyyy-MM-dd|-0001-01-01	!Text '-0001-01-01' could not be parsed: Invalid value for YearOfEra (valid values 1 - 999999999/1000000000): -1	0
+parse	yyyy-MM-dd|+999999999-01-01	parsed
+parseLocalDate	yyyy-MM-dd|+999999999-01-01	+999999999-01-01
+parseLocalTime	yyyy-MM-dd|+999999999-01-01	!Text '+999999999-01-01' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to +999999999-01-01 of type java.time.format.Parsed	0
+parseLocalDateTime	yyyy-MM-dd|+999999999-01-01	!Text '+999999999-01-01' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to +999999999-01-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	yyyy-MM-dd|+999999999-01-01	!Text '+999999999-01-01' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to +999999999-01-01 of type java.time.format.Parsed	0
+parseZonedDateTime	yyyy-MM-dd|+999999999-01-01	!Text '+999999999-01-01' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to +999999999-01-01 of type java.time.format.Parsed	0
+parse	yyyy-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDate	yyyy-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalTime	yyyy-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDateTime	yyyy-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseOffsetDateTime	yyyy-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseZonedDateTime	yyyy-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parse	dd/MM/yyyy|31/02/2023	parsed
+parseLocalDate	dd/MM/yyyy|31/02/2023	2023-02-28
+parseLocalTime	dd/MM/yyyy|31/02/2023	!Text '31/02/2023' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	dd/MM/yyyy|31/02/2023	!Text '31/02/2023' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	dd/MM/yyyy|31/02/2023	!Text '31/02/2023' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	dd/MM/yyyy|31/02/2023	!Text '31/02/2023' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parse	dd/MM/yyyy|31/11/2023	parsed
+parseLocalDate	dd/MM/yyyy|31/11/2023	2023-11-30
+parseLocalTime	dd/MM/yyyy|31/11/2023	!Text '31/11/2023' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-11-30 of type java.time.format.Parsed	0
+parseLocalDateTime	dd/MM/yyyy|31/11/2023	!Text '31/11/2023' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-11-30 of type java.time.format.Parsed	0
+parseOffsetDateTime	dd/MM/yyyy|31/11/2023	!Text '31/11/2023' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-11-30 of type java.time.format.Parsed	0
+parseZonedDateTime	dd/MM/yyyy|31/11/2023	!Text '31/11/2023' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-11-30 of type java.time.format.Parsed	0
+parse	dd/MM/yyyy|30/02/2024	parsed
+parseLocalDate	dd/MM/yyyy|30/02/2024	2024-02-29
+parseLocalTime	dd/MM/yyyy|30/02/2024	!Text '30/02/2024' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseLocalDateTime	dd/MM/yyyy|30/02/2024	!Text '30/02/2024' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseOffsetDateTime	dd/MM/yyyy|30/02/2024	!Text '30/02/2024' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parseZonedDateTime	dd/MM/yyyy|30/02/2024	!Text '30/02/2024' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+parse	d MMM uuuu|31 Feb 2023	parsed
+parseLocalDate	d MMM uuuu|31 Feb 2023	2023-02-28
+parseLocalTime	d MMM uuuu|31 Feb 2023	!Text '31 Feb 2023' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	d MMM uuuu|31 Feb 2023	!Text '31 Feb 2023' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	d MMM uuuu|31 Feb 2023	!Text '31 Feb 2023' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	d MMM uuuu|31 Feb 2023	!Text '31 Feb 2023' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parse	d MMMM uuuu|31 September 2023	parsed
+parseLocalDate	d MMMM uuuu|31 September 2023	2023-09-30
+parseLocalTime	d MMMM uuuu|31 September 2023	!Text '31 September 2023' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-09-30 of type java.time.format.Parsed	0
+parseLocalDateTime	d MMMM uuuu|31 September 2023	!Text '31 September 2023' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-09-30 of type java.time.format.Parsed	0
+parseOffsetDateTime	d MMMM uuuu|31 September 2023	!Text '31 September 2023' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-09-30 of type java.time.format.Parsed	0
+parseZonedDateTime	d MMMM uuuu|31 September 2023	!Text '31 September 2023' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-09-30 of type java.time.format.Parsed	0
+parse	uuuu-DDD|2023-365	parsed
+parseLocalDate	uuuu-DDD|2023-365	2023-12-31
+parseLocalTime	uuuu-DDD|2023-365	!Text '2023-365' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-12-31 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-DDD|2023-365	!Text '2023-365' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-12-31 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-DDD|2023-365	!Text '2023-365' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-12-31 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-DDD|2023-365	!Text '2023-365' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-12-31 of type java.time.format.Parsed	0
+parse	uuuu-DDD|2023-366	!Text '2023-366' could not be parsed: Invalid date 'DayOfYear 366' as '2023' is not a leap year	0
+parseLocalDate	uuuu-DDD|2023-366	!Text '2023-366' could not be parsed: Invalid date 'DayOfYear 366' as '2023' is not a leap year	0
+parseLocalTime	uuuu-DDD|2023-366	!Text '2023-366' could not be parsed: Invalid date 'DayOfYear 366' as '2023' is not a leap year	0
+parseLocalDateTime	uuuu-DDD|2023-366	!Text '2023-366' could not be parsed: Invalid date 'DayOfYear 366' as '2023' is not a leap year	0
+parseOffsetDateTime	uuuu-DDD|2023-366	!Text '2023-366' could not be parsed: Invalid date 'DayOfYear 366' as '2023' is not a leap year	0
+parseZonedDateTime	uuuu-DDD|2023-366	!Text '2023-366' could not be parsed: Invalid date 'DayOfYear 366' as '2023' is not a leap year	0
+parse	uuuu-DDD|2024-366	parsed
+parseLocalDate	uuuu-DDD|2024-366	2024-12-31
+parseLocalTime	uuuu-DDD|2024-366	!Text '2024-366' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2024-12-31 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-DDD|2024-366	!Text '2024-366' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-12-31 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-DDD|2024-366	!Text '2024-366' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-12-31 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-DDD|2024-366	!Text '2024-366' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2024-12-31 of type java.time.format.Parsed	0
+parse	uuuu-DDD|2023-000	!Text '2023-000' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 0	0
+parseLocalDate	uuuu-DDD|2023-000	!Text '2023-000' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 0	0
+parseLocalTime	uuuu-DDD|2023-000	!Text '2023-000' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 0	0
+parseLocalDateTime	uuuu-DDD|2023-000	!Text '2023-000' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 0	0
+parseOffsetDateTime	uuuu-DDD|2023-000	!Text '2023-000' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 0	0
+parseZonedDateTime	uuuu-DDD|2023-000	!Text '2023-000' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 0	0
+parse	uuuu-DDD|2023-367	!Text '2023-367' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 367	0
+parseLocalDate	uuuu-DDD|2023-367	!Text '2023-367' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 367	0
+parseLocalTime	uuuu-DDD|2023-367	!Text '2023-367' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 367	0
+parseLocalDateTime	uuuu-DDD|2023-367	!Text '2023-367' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 367	0
+parseOffsetDateTime	uuuu-DDD|2023-367	!Text '2023-367' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 367	0
+parseZonedDateTime	uuuu-DDD|2023-367	!Text '2023-367' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 367	0
+parse	HH:mm|23:59	parsed
+parseLocalDate	HH:mm|23:59	!Text '23:59' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 23:59 of type java.time.format.Parsed	0
+parseLocalTime	HH:mm|23:59	23:59
+parseLocalDateTime	HH:mm|23:59	!Text '23:59' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 23:59 of type java.time.format.Parsed	0
+parseOffsetDateTime	HH:mm|23:59	!Text '23:59' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 23:59 of type java.time.format.Parsed	0
+parseZonedDateTime	HH:mm|23:59	!Text '23:59' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 23:59 of type java.time.format.Parsed	0
+parse	HH:mm|24:00	parsed
+parseLocalDate	HH:mm|24:00	!Text '24:00' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseLocalTime	HH:mm|24:00	00:00
+parseLocalDateTime	HH:mm|24:00	!Text '24:00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseOffsetDateTime	HH:mm|24:00	!Text '24:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	HH:mm|24:00	!Text '24:00' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	HH:mm|24:01	!Text '24:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDate	HH:mm|24:01	!Text '24:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalTime	HH:mm|24:01	!Text '24:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDateTime	HH:mm|24:01	!Text '24:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseOffsetDateTime	HH:mm|24:01	!Text '24:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseZonedDateTime	HH:mm|24:01	!Text '24:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parse	HH:mm|25:00	!Text '25:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 25	0
+parseLocalDate	HH:mm|25:00	!Text '25:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 25	0
+parseLocalTime	HH:mm|25:00	!Text '25:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 25	0
+parseLocalDateTime	HH:mm|25:00	!Text '25:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 25	0
+parseOffsetDateTime	HH:mm|25:00	!Text '25:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 25	0
+parseZonedDateTime	HH:mm|25:00	!Text '25:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 25	0
+parse	HH:mm:ss|24:00:00	parsed
+parseLocalDate	HH:mm:ss|24:00:00	!Text '24:00:00' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseLocalTime	HH:mm:ss|24:00:00	00:00
+parseLocalDateTime	HH:mm:ss|24:00:00	!Text '24:00:00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseOffsetDateTime	HH:mm:ss|24:00:00	!Text '24:00:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	HH:mm:ss|24:00:00	!Text '24:00:00' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	HH:mm:ss|24:00:01	!Text '24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDate	HH:mm:ss|24:00:01	!Text '24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalTime	HH:mm:ss|24:00:01	!Text '24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDateTime	HH:mm:ss|24:00:01	!Text '24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseOffsetDateTime	HH:mm:ss|24:00:01	!Text '24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseZonedDateTime	HH:mm:ss|24:00:01	!Text '24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parse	HH:mm:ss|23:59:60	!Text '23:59:60' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseLocalDate	HH:mm:ss|23:59:60	!Text '23:59:60' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseLocalTime	HH:mm:ss|23:59:60	!Text '23:59:60' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseLocalDateTime	HH:mm:ss|23:59:60	!Text '23:59:60' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseOffsetDateTime	HH:mm:ss|23:59:60	!Text '23:59:60' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseZonedDateTime	HH:mm:ss|23:59:60	!Text '23:59:60' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parse	HH:mm:ss.SSS|24:00:00.000	parsed
+parseLocalDate	HH:mm:ss.SSS|24:00:00.000	!Text '24:00:00.000' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseLocalTime	HH:mm:ss.SSS|24:00:00.000	00:00
+parseLocalDateTime	HH:mm:ss.SSS|24:00:00.000	!Text '24:00:00.000' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseOffsetDateTime	HH:mm:ss.SSS|24:00:00.000	!Text '24:00:00.000' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	HH:mm:ss.SSS|24:00:00.000	!Text '24:00:00.000' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	HH:mm:ss.SSS|24:00:00.001	!Text '24:00:00.001' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDate	HH:mm:ss.SSS|24:00:00.001	!Text '24:00:00.001' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalTime	HH:mm:ss.SSS|24:00:00.001	!Text '24:00:00.001' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDateTime	HH:mm:ss.SSS|24:00:00.001	!Text '24:00:00.001' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseOffsetDateTime	HH:mm:ss.SSS|24:00:00.001	!Text '24:00:00.001' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseZonedDateTime	HH:mm:ss.SSS|24:00:00.001	!Text '24:00:00.001' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parse	HH|24	parsed
+parseLocalDate	HH|24	!Text '24' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseLocalTime	HH|24	00:00
+parseLocalDateTime	HH|24	!Text '24' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseOffsetDateTime	HH|24	!Text '24' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	HH|24	!Text '24' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+parse	HH|23	parsed
+parseLocalDate	HH|23	!Text '23' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 23:00 of type java.time.format.Parsed	0
+parseLocalTime	HH|23	23:00
+parseLocalDateTime	HH|23	!Text '23' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 23:00 of type java.time.format.Parsed	0
+parseOffsetDateTime	HH|23	!Text '23' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 23:00 of type java.time.format.Parsed	0
+parseZonedDateTime	HH|23	!Text '23' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 23:00 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd HH:mm|2023-12-31 24:00	parsed
+parseLocalDate	uuuu-MM-dd HH:mm|2023-12-31 24:00	2024-01-01
+parseLocalTime	uuuu-MM-dd HH:mm|2023-12-31 24:00	00:00
+parseLocalDateTime	uuuu-MM-dd HH:mm|2023-12-31 24:00	2024-01-01T00:00
+parseOffsetDateTime	uuuu-MM-dd HH:mm|2023-12-31 24:00	!Text '2023-12-31 24:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-01-01T00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd HH:mm|2023-12-31 24:00	!Text '2023-12-31 24:00' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2024-01-01T00:00 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd HH:mm|2023-02-31 24:00	parsed
+parseLocalDate	uuuu-MM-dd HH:mm|2023-02-31 24:00	2023-03-01
+parseLocalTime	uuuu-MM-dd HH:mm|2023-02-31 24:00	00:00
+parseLocalDateTime	uuuu-MM-dd HH:mm|2023-02-31 24:00	2023-03-01T00:00
+parseOffsetDateTime	uuuu-MM-dd HH:mm|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-03-01T00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd HH:mm|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-03-01T00:00 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd HH:mm|2024-02-29 24:00	parsed
+parseLocalDate	uuuu-MM-dd HH:mm|2024-02-29 24:00	2024-03-01
+parseLocalTime	uuuu-MM-dd HH:mm|2024-02-29 24:00	00:00
+parseLocalDateTime	uuuu-MM-dd HH:mm|2024-02-29 24:00	2024-03-01T00:00
+parseOffsetDateTime	uuuu-MM-dd HH:mm|2024-02-29 24:00	!Text '2024-02-29 24:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-03-01T00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd HH:mm|2024-02-29 24:00	!Text '2024-02-29 24:00' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2024-03-01T00:00 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd HH:mm|2023-06-15 24:00	parsed
+parseLocalDate	uuuu-MM-dd HH:mm|2023-06-15 24:00	2023-06-16
+parseLocalTime	uuuu-MM-dd HH:mm|2023-06-15 24:00	00:00
+parseLocalDateTime	uuuu-MM-dd HH:mm|2023-06-15 24:00	2023-06-16T00:00
+parseOffsetDateTime	uuuu-MM-dd HH:mm|2023-06-15 24:00	!Text '2023-06-15 24:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-06-16T00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd HH:mm|2023-06-15 24:00	!Text '2023-06-15 24:00' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-06-16T00:00 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd HH:mm|2023-06-15 24:30	!Text '2023-06-15 24:30' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDate	uuuu-MM-dd HH:mm|2023-06-15 24:30	!Text '2023-06-15 24:30' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalTime	uuuu-MM-dd HH:mm|2023-06-15 24:30	!Text '2023-06-15 24:30' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDateTime	uuuu-MM-dd HH:mm|2023-06-15 24:30	!Text '2023-06-15 24:30' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseOffsetDateTime	uuuu-MM-dd HH:mm|2023-06-15 24:30	!Text '2023-06-15 24:30' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseZonedDateTime	uuuu-MM-dd HH:mm|2023-06-15 24:30	!Text '2023-06-15 24:30' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parse	uuuu-MM-dd HH:mm|+999999999-12-31 24:00	!Text '+999999999-12-31 24:00' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDate	uuuu-MM-dd HH:mm|+999999999-12-31 24:00	!Text '+999999999-12-31 24:00' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalTime	uuuu-MM-dd HH:mm|+999999999-12-31 24:00	!Text '+999999999-12-31 24:00' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDateTime	uuuu-MM-dd HH:mm|+999999999-12-31 24:00	!Text '+999999999-12-31 24:00' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseOffsetDateTime	uuuu-MM-dd HH:mm|+999999999-12-31 24:00	!Text '+999999999-12-31 24:00' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseZonedDateTime	uuuu-MM-dd HH:mm|+999999999-12-31 24:00	!Text '+999999999-12-31 24:00' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parse	uuuu-MM-dd HH:mm|2023-06-31 12:00	parsed
+parseLocalDate	uuuu-MM-dd HH:mm|2023-06-31 12:00	2023-06-30
+parseLocalTime	uuuu-MM-dd HH:mm|2023-06-31 12:00	12:00
+parseLocalDateTime	uuuu-MM-dd HH:mm|2023-06-31 12:00	2023-06-30T12:00
+parseOffsetDateTime	uuuu-MM-dd HH:mm|2023-06-31 12:00	!Text '2023-06-31 12:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-06-30T12:00 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd HH:mm|2023-06-31 12:00	!Text '2023-06-31 12:00' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-06-30T12:00 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd'T'HH:mm:ss|2023-12-31T24:00:00	parsed
+parseLocalDate	uuuu-MM-dd'T'HH:mm:ss|2023-12-31T24:00:00	2024-01-01
+parseLocalTime	uuuu-MM-dd'T'HH:mm:ss|2023-12-31T24:00:00	00:00
+parseLocalDateTime	uuuu-MM-dd'T'HH:mm:ss|2023-12-31T24:00:00	2024-01-01T00:00
+parseOffsetDateTime	uuuu-MM-dd'T'HH:mm:ss|2023-12-31T24:00:00	!Text '2023-12-31T24:00:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-01-01T00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd'T'HH:mm:ss|2023-12-31T24:00:00	!Text '2023-12-31T24:00:00' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2024-01-01T00:00 of type java.time.format.Parsed	0
+parse	hh:mm a|00:30 AM	parsed
+parseLocalDate	hh:mm a|00:30 AM	!Text '00:30 AM' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+parseLocalTime	hh:mm a|00:30 AM	00:30
+parseLocalDateTime	hh:mm a|00:30 AM	!Text '00:30 AM' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+parseOffsetDateTime	hh:mm a|00:30 AM	!Text '00:30 AM' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+parseZonedDateTime	hh:mm a|00:30 AM	!Text '00:30 AM' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+parse	hh:mm a|00:30 PM	parsed
+parseLocalDate	hh:mm a|00:30 PM	!Text '00:30 PM' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+parseLocalTime	hh:mm a|00:30 PM	12:30
+parseLocalDateTime	hh:mm a|00:30 PM	!Text '00:30 PM' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+parseOffsetDateTime	hh:mm a|00:30 PM	!Text '00:30 PM' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+parseZonedDateTime	hh:mm a|00:30 PM	!Text '00:30 PM' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+parse	hh:mm a|12:30 AM	parsed
+parseLocalDate	hh:mm a|12:30 AM	!Text '12:30 AM' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+parseLocalTime	hh:mm a|12:30 AM	00:30
+parseLocalDateTime	hh:mm a|12:30 AM	!Text '12:30 AM' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+parseOffsetDateTime	hh:mm a|12:30 AM	!Text '12:30 AM' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+parseZonedDateTime	hh:mm a|12:30 AM	!Text '12:30 AM' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+parse	hh:mm a|12:30 PM	parsed
+parseLocalDate	hh:mm a|12:30 PM	!Text '12:30 PM' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+parseLocalTime	hh:mm a|12:30 PM	12:30
+parseLocalDateTime	hh:mm a|12:30 PM	!Text '12:30 PM' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+parseOffsetDateTime	hh:mm a|12:30 PM	!Text '12:30 PM' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+parseZonedDateTime	hh:mm a|12:30 PM	!Text '12:30 PM' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+parse	hh:mm a|11:30 PM	parsed
+parseLocalDate	hh:mm a|11:30 PM	!Text '11:30 PM' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 23:30 of type java.time.format.Parsed	0
+parseLocalTime	hh:mm a|11:30 PM	23:30
+parseLocalDateTime	hh:mm a|11:30 PM	!Text '11:30 PM' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 23:30 of type java.time.format.Parsed	0
+parseOffsetDateTime	hh:mm a|11:30 PM	!Text '11:30 PM' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 23:30 of type java.time.format.Parsed	0
+parseZonedDateTime	hh:mm a|11:30 PM	!Text '11:30 PM' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 23:30 of type java.time.format.Parsed	0
+parse	hh:mm a|13:30 PM	!Text '13:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 13	0
+parseLocalDate	hh:mm a|13:30 PM	!Text '13:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 13	0
+parseLocalTime	hh:mm a|13:30 PM	!Text '13:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 13	0
+parseLocalDateTime	hh:mm a|13:30 PM	!Text '13:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 13	0
+parseOffsetDateTime	hh:mm a|13:30 PM	!Text '13:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 13	0
+parseZonedDateTime	hh:mm a|13:30 PM	!Text '13:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 13	0
+parse	h:mm a|0:05 AM	parsed
+parseLocalDate	h:mm a|0:05 AM	!Text '0:05 AM' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:05 of type java.time.format.Parsed	0
+parseLocalTime	h:mm a|0:05 AM	00:05
+parseLocalDateTime	h:mm a|0:05 AM	!Text '0:05 AM' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:05 of type java.time.format.Parsed	0
+parseOffsetDateTime	h:mm a|0:05 AM	!Text '0:05 AM' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 00:05 of type java.time.format.Parsed	0
+parseZonedDateTime	h:mm a|0:05 AM	!Text '0:05 AM' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 00:05 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd hh:mm a|2023-02-31 00:15 PM	parsed
+parseLocalDate	uuuu-MM-dd hh:mm a|2023-02-31 00:15 PM	2023-02-28
+parseLocalTime	uuuu-MM-dd hh:mm a|2023-02-31 00:15 PM	12:15
+parseLocalDateTime	uuuu-MM-dd hh:mm a|2023-02-31 00:15 PM	2023-02-28T12:15
+parseOffsetDateTime	uuuu-MM-dd hh:mm a|2023-02-31 00:15 PM	!Text '2023-02-31 00:15 PM' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28T12:15 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd hh:mm a|2023-02-31 00:15 PM	!Text '2023-02-31 00:15 PM' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28T12:15 of type java.time.format.Parsed	0
+parse	EEE uuuu-MM-dd|Tue 2023-02-31	parsed
+parseLocalDate	EEE uuuu-MM-dd|Tue 2023-02-31	2023-02-28
+parseLocalTime	EEE uuuu-MM-dd|Tue 2023-02-31	!Text 'Tue 2023-02-31' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	EEE uuuu-MM-dd|Tue 2023-02-31	!Text 'Tue 2023-02-31' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	EEE uuuu-MM-dd|Tue 2023-02-31	!Text 'Tue 2023-02-31' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	EEE uuuu-MM-dd|Tue 2023-02-31	!Text 'Tue 2023-02-31' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parse	EEE uuuu-MM-dd|Fri 2023-02-31	!Text 'Fri 2023-02-31' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 5 derived from 2023-02-28	0
+parseLocalDate	EEE uuuu-MM-dd|Fri 2023-02-31	!Text 'Fri 2023-02-31' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 5 derived from 2023-02-28	0
+parseLocalTime	EEE uuuu-MM-dd|Fri 2023-02-31	!Text 'Fri 2023-02-31' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 5 derived from 2023-02-28	0
+parseLocalDateTime	EEE uuuu-MM-dd|Fri 2023-02-31	!Text 'Fri 2023-02-31' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 5 derived from 2023-02-28	0
+parseOffsetDateTime	EEE uuuu-MM-dd|Fri 2023-02-31	!Text 'Fri 2023-02-31' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 5 derived from 2023-02-28	0
+parseZonedDateTime	EEE uuuu-MM-dd|Fri 2023-02-31	!Text 'Fri 2023-02-31' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 5 derived from 2023-02-28	0
+parse	EEE uuuu-MM-dd|Thu 2023-06-15	parsed
+parseLocalDate	EEE uuuu-MM-dd|Thu 2023-06-15	2023-06-15
+parseLocalTime	EEE uuuu-MM-dd|Thu 2023-06-15	!Text 'Thu 2023-06-15' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parseLocalDateTime	EEE uuuu-MM-dd|Thu 2023-06-15	!Text 'Thu 2023-06-15' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parseOffsetDateTime	EEE uuuu-MM-dd|Thu 2023-06-15	!Text 'Thu 2023-06-15' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parseZonedDateTime	EEE uuuu-MM-dd|Thu 2023-06-15	!Text 'Thu 2023-06-15' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+parse	EEEE, d MMMM uuuu|Tuesday, 31 February 2023	parsed
+parseLocalDate	EEEE, d MMMM uuuu|Tuesday, 31 February 2023	2023-02-28
+parseLocalTime	EEEE, d MMMM uuuu|Tuesday, 31 February 2023	!Text 'Tuesday, 31 February 2023' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	EEEE, d MMMM uuuu|Tuesday, 31 February 2023	!Text 'Tuesday, 31 February 2023' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	EEEE, d MMMM uuuu|Tuesday, 31 February 2023	!Text 'Tuesday, 31 February 2023' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	EEEE, d MMMM uuuu|Tuesday, 31 February 2023	!Text 'Tuesday, 31 February 2023' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd'T'HH:mmXXX|2023-02-31T10:00+01:00	parsed
+parseLocalDate	uuuu-MM-dd'T'HH:mmXXX|2023-02-31T10:00+01:00	2023-02-28
+parseLocalTime	uuuu-MM-dd'T'HH:mmXXX|2023-02-31T10:00+01:00	10:00
+parseLocalDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-02-31T10:00+01:00	2023-02-28T10:00
+parseOffsetDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-02-31T10:00+01:00	2023-02-28T10:00+01:00
+parseZonedDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-02-31T10:00+01:00	2023-02-28T10:00+01:00
+parse	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00Z	parsed
+parseLocalDate	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00Z	2024-01-01
+parseLocalTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00Z	00:00
+parseLocalDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00Z	2024-01-01T00:00
+parseOffsetDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00Z	2024-01-01T00:00Z
+parseZonedDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00Z	2024-01-01T00:00Z
+parse	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00-05:00	parsed
+parseLocalDate	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00-05:00	2024-01-01
+parseLocalTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00-05:00	00:00
+parseLocalDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00-05:00	2024-01-01T00:00
+parseOffsetDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00-05:00	2024-01-01T00:00-05:00
+parseZonedDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00-05:00	2024-01-01T00:00-05:00
+parse	uuuu-MM-dd'T'HH:mmXXX|2023-06-15T24:01+02:00	!Text '2023-06-15T24:01+02:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDate	uuuu-MM-dd'T'HH:mmXXX|2023-06-15T24:01+02:00	!Text '2023-06-15T24:01+02:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalTime	uuuu-MM-dd'T'HH:mmXXX|2023-06-15T24:01+02:00	!Text '2023-06-15T24:01+02:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-06-15T24:01+02:00	!Text '2023-06-15T24:01+02:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseOffsetDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-06-15T24:01+02:00	!Text '2023-06-15T24:01+02:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseZonedDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-06-15T24:01+02:00	!Text '2023-06-15T24:01+02:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parse	uuuu-MM-dd'T'HH:mmxx|2024-02-30T08:00+0530	parsed
+parseLocalDate	uuuu-MM-dd'T'HH:mmxx|2024-02-30T08:00+0530	2024-02-29
+parseLocalTime	uuuu-MM-dd'T'HH:mmxx|2024-02-30T08:00+0530	08:00
+parseLocalDateTime	uuuu-MM-dd'T'HH:mmxx|2024-02-30T08:00+0530	2024-02-29T08:00
+parseOffsetDateTime	uuuu-MM-dd'T'HH:mmxx|2024-02-30T08:00+0530	2024-02-29T08:00+05:30
+parseZonedDateTime	uuuu-MM-dd'T'HH:mmxx|2024-02-30T08:00+0530	2024-02-29T08:00+05:30
+parse	uuuu-MM-dd'T'HH:mmZ|2023-04-31T08:00-0800	parsed
+parseLocalDate	uuuu-MM-dd'T'HH:mmZ|2023-04-31T08:00-0800	2023-04-30
+parseLocalTime	uuuu-MM-dd'T'HH:mmZ|2023-04-31T08:00-0800	08:00
+parseLocalDateTime	uuuu-MM-dd'T'HH:mmZ|2023-04-31T08:00-0800	2023-04-30T08:00
+parseOffsetDateTime	uuuu-MM-dd'T'HH:mmZ|2023-04-31T08:00-0800	2023-04-30T08:00-08:00
+parseZonedDateTime	uuuu-MM-dd'T'HH:mmZ|2023-04-31T08:00-0800	2023-04-30T08:00-08:00
+parse	uuuu-MM-dd[ HH:mm]|2023-02-31	parsed
+parseLocalDate	uuuu-MM-dd[ HH:mm]|2023-02-31	2023-02-28
+parseLocalTime	uuuu-MM-dd[ HH:mm]|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseLocalDateTime	uuuu-MM-dd[ HH:mm]|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	uuuu-MM-dd[ HH:mm]|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd[ HH:mm]|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd[ HH:mm]|2023-02-31 24:00	parsed
+parseLocalDate	uuuu-MM-dd[ HH:mm]|2023-02-31 24:00	2023-03-01
+parseLocalTime	uuuu-MM-dd[ HH:mm]|2023-02-31 24:00	00:00
+parseLocalDateTime	uuuu-MM-dd[ HH:mm]|2023-02-31 24:00	2023-03-01T00:00
+parseOffsetDateTime	uuuu-MM-dd[ HH:mm]|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-03-01T00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd[ HH:mm]|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2023-03-01T00:00 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.0	parsed
+parseLocalDate	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.0	2024-01-01
+parseLocalTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.0	00:00
+parseLocalDateTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.0	2024-01-01T00:00
+parseOffsetDateTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.0	!Text '2023-12-31 24:00:00.0' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-01-01T00:00 of type java.time.format.Parsed	0
+parseZonedDateTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.0	!Text '2023-12-31 24:00:00.0' could not be parsed: Unable to obtain ZonedDateTime from TemporalAccessor: {},ISO resolved to 2024-01-01T00:00 of type java.time.format.Parsed	0
+parse	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.1	!Text '2023-12-31 24:00:00.1' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDate	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.1	!Text '2023-12-31 24:00:00.1' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.1	!Text '2023-12-31 24:00:00.1' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDateTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.1	!Text '2023-12-31 24:00:00.1' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseOffsetDateTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.1	!Text '2023-12-31 24:00:00.1' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseZonedDateTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.1	!Text '2023-12-31 24:00:00.1' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd|2023-06-15	parsed
+strictParseLocalDate	uuuu-MM-dd|2023-06-15	2023-06-15
+strictParseLocalDateTime	uuuu-MM-dd|2023-06-15	!Text '2023-06-15' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+strictParse	uuuu-MM-dd|2024-02-29	parsed
+strictParseLocalDate	uuuu-MM-dd|2024-02-29	2024-02-29
+strictParseLocalDateTime	uuuu-MM-dd|2024-02-29	!Text '2024-02-29' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+strictParse	uuuu-MM-dd|2023-02-29	!Text '2023-02-29' could not be parsed: Invalid date 'February 29' as '2023' is not a leap year	0
+strictParseLocalDate	uuuu-MM-dd|2023-02-29	!Text '2023-02-29' could not be parsed: Invalid date 'February 29' as '2023' is not a leap year	0
+strictParseLocalDateTime	uuuu-MM-dd|2023-02-29	!Text '2023-02-29' could not be parsed: Invalid date 'February 29' as '2023' is not a leap year	0
+strictParse	uuuu-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Invalid date 'FEBRUARY 30'	0
+strictParseLocalDate	uuuu-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Invalid date 'FEBRUARY 30'	0
+strictParseLocalDateTime	uuuu-MM-dd|2024-02-30	!Text '2024-02-30' could not be parsed: Invalid date 'FEBRUARY 30'	0
+strictParse	uuuu-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	uuuu-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	uuuu-MM-dd|2023-02-31	!Text '2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	uuuu-MM-dd|2023-04-31	!Text '2023-04-31' could not be parsed: Invalid date 'APRIL 31'	0
+strictParseLocalDate	uuuu-MM-dd|2023-04-31	!Text '2023-04-31' could not be parsed: Invalid date 'APRIL 31'	0
+strictParseLocalDateTime	uuuu-MM-dd|2023-04-31	!Text '2023-04-31' could not be parsed: Invalid date 'APRIL 31'	0
+strictParse	uuuu-MM-dd|2023-04-30	parsed
+strictParseLocalDate	uuuu-MM-dd|2023-04-30	2023-04-30
+strictParseLocalDateTime	uuuu-MM-dd|2023-04-30	!Text '2023-04-30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+strictParse	uuuu-MM-dd|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+strictParseLocalDate	uuuu-MM-dd|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+strictParseLocalDateTime	uuuu-MM-dd|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+strictParse	uuuu-MM-dd|2023-00-10	!Text '2023-00-10' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+strictParseLocalDate	uuuu-MM-dd|2023-00-10	!Text '2023-00-10' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+strictParseLocalDateTime	uuuu-MM-dd|2023-00-10	!Text '2023-00-10' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+strictParse	uuuu-MM-dd|2023-13-01	!Text '2023-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+strictParseLocalDate	uuuu-MM-dd|2023-13-01	!Text '2023-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+strictParseLocalDateTime	uuuu-MM-dd|2023-13-01	!Text '2023-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+strictParse	uuuu-MM-dd|2023-01-00	!Text '2023-01-00' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+strictParseLocalDate	uuuu-MM-dd|2023-01-00	!Text '2023-01-00' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+strictParseLocalDateTime	uuuu-MM-dd|2023-01-00	!Text '2023-01-00' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+strictParse	uuuu-MM-dd|1900-02-29	!Text '1900-02-29' could not be parsed: Invalid date 'February 29' as '1900' is not a leap year	0
+strictParseLocalDate	uuuu-MM-dd|1900-02-29	!Text '1900-02-29' could not be parsed: Invalid date 'February 29' as '1900' is not a leap year	0
+strictParseLocalDateTime	uuuu-MM-dd|1900-02-29	!Text '1900-02-29' could not be parsed: Invalid date 'February 29' as '1900' is not a leap year	0
+strictParse	uuuu-MM-dd|2000-02-30	!Text '2000-02-30' could not be parsed: Invalid date 'FEBRUARY 30'	0
+strictParseLocalDate	uuuu-MM-dd|2000-02-30	!Text '2000-02-30' could not be parsed: Invalid date 'FEBRUARY 30'	0
+strictParseLocalDateTime	uuuu-MM-dd|2000-02-30	!Text '2000-02-30' could not be parsed: Invalid date 'FEBRUARY 30'	0
+strictParse	uuuu-MM-dd|-0001-02-29	!Text '-0001-02-29' could not be parsed: Invalid date 'February 29' as '-1' is not a leap year	0
+strictParseLocalDate	uuuu-MM-dd|-0001-02-29	!Text '-0001-02-29' could not be parsed: Invalid date 'February 29' as '-1' is not a leap year	0
+strictParseLocalDateTime	uuuu-MM-dd|-0001-02-29	!Text '-0001-02-29' could not be parsed: Invalid date 'February 29' as '-1' is not a leap year	0
+strictParse	uuuu-MM-dd|+999999999-12-31	parsed
+strictParseLocalDate	uuuu-MM-dd|+999999999-12-31	+999999999-12-31
+strictParseLocalDateTime	uuuu-MM-dd|+999999999-12-31	!Text '+999999999-12-31' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+strictParse	uuuu-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+strictParseLocalDate	uuuu-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+strictParseLocalDateTime	uuuu-MM-dd|+1000000000-01-01	!Text '+1000000000-01-01' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+strictParse	d MMM uuuu|31 Feb 2023	!Text '31 Feb 2023' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	d MMM uuuu|31 Feb 2023	!Text '31 Feb 2023' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	d MMM uuuu|31 Feb 2023	!Text '31 Feb 2023' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	d MMMM uuuu|31 September 2023	!Text '31 September 2023' could not be parsed: Invalid date 'SEPTEMBER 31'	0
+strictParseLocalDate	d MMMM uuuu|31 September 2023	!Text '31 September 2023' could not be parsed: Invalid date 'SEPTEMBER 31'	0
+strictParseLocalDateTime	d MMMM uuuu|31 September 2023	!Text '31 September 2023' could not be parsed: Invalid date 'SEPTEMBER 31'	0
+strictParse	uuuu-DDD|2023-365	parsed
+strictParseLocalDate	uuuu-DDD|2023-365	2023-12-31
+strictParseLocalDateTime	uuuu-DDD|2023-365	!Text '2023-365' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-12-31 of type java.time.format.Parsed	0
+strictParse	uuuu-DDD|2023-366	!Text '2023-366' could not be parsed: Invalid date 'DayOfYear 366' as '2023' is not a leap year	0
+strictParseLocalDate	uuuu-DDD|2023-366	!Text '2023-366' could not be parsed: Invalid date 'DayOfYear 366' as '2023' is not a leap year	0
+strictParseLocalDateTime	uuuu-DDD|2023-366	!Text '2023-366' could not be parsed: Invalid date 'DayOfYear 366' as '2023' is not a leap year	0
+strictParse	uuuu-DDD|2024-366	parsed
+strictParseLocalDate	uuuu-DDD|2024-366	2024-12-31
+strictParseLocalDateTime	uuuu-DDD|2024-366	!Text '2024-366' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-12-31 of type java.time.format.Parsed	0
+strictParse	uuuu-DDD|2023-000	!Text '2023-000' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 0	0
+strictParseLocalDate	uuuu-DDD|2023-000	!Text '2023-000' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 0	0
+strictParseLocalDateTime	uuuu-DDD|2023-000	!Text '2023-000' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 0	0
+strictParse	uuuu-DDD|2023-367	!Text '2023-367' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 367	0
+strictParseLocalDate	uuuu-DDD|2023-367	!Text '2023-367' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 367	0
+strictParseLocalDateTime	uuuu-DDD|2023-367	!Text '2023-367' could not be parsed: Invalid value for DayOfYear (valid values 1 - 365/366): 367	0
+strictParse	HH:mm|23:59	parsed
+strictParseLocalDate	HH:mm|23:59	!Text '23:59' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 23:59 of type java.time.format.Parsed	0
+strictParseLocalDateTime	HH:mm|23:59	!Text '23:59' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 23:59 of type java.time.format.Parsed	0
+strictParse	HH:mm|24:00	!Text '24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	HH:mm|24:00	!Text '24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	HH:mm|24:00	!Text '24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	HH:mm|24:01	!Text '24:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	HH:mm|24:01	!Text '24:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	HH:mm|24:01	!Text '24:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	HH:mm|25:00	!Text '25:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 25	0
+strictParseLocalDate	HH:mm|25:00	!Text '25:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 25	0
+strictParseLocalDateTime	HH:mm|25:00	!Text '25:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 25	0
+strictParse	HH:mm:ss|24:00:00	!Text '24:00:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	HH:mm:ss|24:00:00	!Text '24:00:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	HH:mm:ss|24:00:00	!Text '24:00:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	HH:mm:ss|24:00:01	!Text '24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	HH:mm:ss|24:00:01	!Text '24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	HH:mm:ss|24:00:01	!Text '24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	HH:mm:ss|23:59:60	!Text '23:59:60' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+strictParseLocalDate	HH:mm:ss|23:59:60	!Text '23:59:60' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+strictParseLocalDateTime	HH:mm:ss|23:59:60	!Text '23:59:60' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+strictParse	HH:mm:ss.SSS|24:00:00.000	!Text '24:00:00.000' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	HH:mm:ss.SSS|24:00:00.000	!Text '24:00:00.000' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	HH:mm:ss.SSS|24:00:00.000	!Text '24:00:00.000' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	HH:mm:ss.SSS|24:00:00.001	!Text '24:00:00.001' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	HH:mm:ss.SSS|24:00:00.001	!Text '24:00:00.001' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	HH:mm:ss.SSS|24:00:00.001	!Text '24:00:00.001' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	HH|24	!Text '24' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	HH|24	!Text '24' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	HH|24	!Text '24' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	HH|23	parsed
+strictParseLocalDate	HH|23	!Text '23' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 23:00 of type java.time.format.Parsed	0
+strictParseLocalDateTime	HH|23	!Text '23' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 23:00 of type java.time.format.Parsed	0
+strictParse	uuuu-MM-dd HH:mm|2023-12-31 24:00	!Text '2023-12-31 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd HH:mm|2023-12-31 24:00	!Text '2023-12-31 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd HH:mm|2023-12-31 24:00	!Text '2023-12-31 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd HH:mm|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	uuuu-MM-dd HH:mm|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	uuuu-MM-dd HH:mm|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	uuuu-MM-dd HH:mm|2024-02-29 24:00	!Text '2024-02-29 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd HH:mm|2024-02-29 24:00	!Text '2024-02-29 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd HH:mm|2024-02-29 24:00	!Text '2024-02-29 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd HH:mm|2023-06-15 24:00	!Text '2023-06-15 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd HH:mm|2023-06-15 24:00	!Text '2023-06-15 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd HH:mm|2023-06-15 24:00	!Text '2023-06-15 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd HH:mm|2023-06-15 24:30	!Text '2023-06-15 24:30' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd HH:mm|2023-06-15 24:30	!Text '2023-06-15 24:30' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd HH:mm|2023-06-15 24:30	!Text '2023-06-15 24:30' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd HH:mm|+999999999-12-31 24:00	!Text '+999999999-12-31 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd HH:mm|+999999999-12-31 24:00	!Text '+999999999-12-31 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd HH:mm|+999999999-12-31 24:00	!Text '+999999999-12-31 24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd HH:mm|2023-06-31 12:00	!Text '2023-06-31 12:00' could not be parsed: Invalid date 'JUNE 31'	0
+strictParseLocalDate	uuuu-MM-dd HH:mm|2023-06-31 12:00	!Text '2023-06-31 12:00' could not be parsed: Invalid date 'JUNE 31'	0
+strictParseLocalDateTime	uuuu-MM-dd HH:mm|2023-06-31 12:00	!Text '2023-06-31 12:00' could not be parsed: Invalid date 'JUNE 31'	0
+strictParse	uuuu-MM-dd'T'HH:mm:ss|2023-12-31T24:00:00	!Text '2023-12-31T24:00:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd'T'HH:mm:ss|2023-12-31T24:00:00	!Text '2023-12-31T24:00:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd'T'HH:mm:ss|2023-12-31T24:00:00	!Text '2023-12-31T24:00:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	hh:mm a|00:30 AM	!Text '00:30 AM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 0	0
+strictParseLocalDate	hh:mm a|00:30 AM	!Text '00:30 AM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 0	0
+strictParseLocalDateTime	hh:mm a|00:30 AM	!Text '00:30 AM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 0	0
+strictParse	hh:mm a|00:30 PM	!Text '00:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 0	0
+strictParseLocalDate	hh:mm a|00:30 PM	!Text '00:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 0	0
+strictParseLocalDateTime	hh:mm a|00:30 PM	!Text '00:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 0	0
+strictParse	hh:mm a|12:30 AM	parsed
+strictParseLocalDate	hh:mm a|12:30 AM	!Text '12:30 AM' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+strictParseLocalDateTime	hh:mm a|12:30 AM	!Text '12:30 AM' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:30 of type java.time.format.Parsed	0
+strictParse	hh:mm a|12:30 PM	parsed
+strictParseLocalDate	hh:mm a|12:30 PM	!Text '12:30 PM' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+strictParseLocalDateTime	hh:mm a|12:30 PM	!Text '12:30 PM' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 12:30 of type java.time.format.Parsed	0
+strictParse	hh:mm a|11:30 PM	parsed
+strictParseLocalDate	hh:mm a|11:30 PM	!Text '11:30 PM' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 23:30 of type java.time.format.Parsed	0
+strictParseLocalDateTime	hh:mm a|11:30 PM	!Text '11:30 PM' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 23:30 of type java.time.format.Parsed	0
+strictParse	hh:mm a|13:30 PM	!Text '13:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 13	0
+strictParseLocalDate	hh:mm a|13:30 PM	!Text '13:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 13	0
+strictParseLocalDateTime	hh:mm a|13:30 PM	!Text '13:30 PM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 13	0
+strictParse	h:mm a|0:05 AM	!Text '0:05 AM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 0	0
+strictParseLocalDate	h:mm a|0:05 AM	!Text '0:05 AM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 0	0
+strictParseLocalDateTime	h:mm a|0:05 AM	!Text '0:05 AM' could not be parsed: Invalid value for ClockHourOfAmPm (valid values 1 - 12): 0	0
+strictParse	uuuu-MM-dd hh:mm a|2023-02-31 00:15 PM	!Text '2023-02-31 00:15 PM' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	uuuu-MM-dd hh:mm a|2023-02-31 00:15 PM	!Text '2023-02-31 00:15 PM' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	uuuu-MM-dd hh:mm a|2023-02-31 00:15 PM	!Text '2023-02-31 00:15 PM' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	EEE uuuu-MM-dd|Tue 2023-02-31	!Text 'Tue 2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	EEE uuuu-MM-dd|Tue 2023-02-31	!Text 'Tue 2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	EEE uuuu-MM-dd|Tue 2023-02-31	!Text 'Tue 2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	EEE uuuu-MM-dd|Fri 2023-02-31	!Text 'Fri 2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	EEE uuuu-MM-dd|Fri 2023-02-31	!Text 'Fri 2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	EEE uuuu-MM-dd|Fri 2023-02-31	!Text 'Fri 2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	EEE uuuu-MM-dd|Thu 2023-06-15	parsed
+strictParseLocalDate	EEE uuuu-MM-dd|Thu 2023-06-15	2023-06-15
+strictParseLocalDateTime	EEE uuuu-MM-dd|Thu 2023-06-15	!Text 'Thu 2023-06-15' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-06-15 of type java.time.format.Parsed	0
+strictParse	EEEE, d MMMM uuuu|Tuesday, 31 February 2023	!Text 'Tuesday, 31 February 2023' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	EEEE, d MMMM uuuu|Tuesday, 31 February 2023	!Text 'Tuesday, 31 February 2023' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	EEEE, d MMMM uuuu|Tuesday, 31 February 2023	!Text 'Tuesday, 31 February 2023' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	uuuu-MM-dd'T'HH:mmXXX|2023-02-31T10:00+01:00	!Text '2023-02-31T10:00+01:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	uuuu-MM-dd'T'HH:mmXXX|2023-02-31T10:00+01:00	!Text '2023-02-31T10:00+01:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-02-31T10:00+01:00	!Text '2023-02-31T10:00+01:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00Z	!Text '2023-12-31T24:00Z' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00Z	!Text '2023-12-31T24:00Z' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00Z	!Text '2023-12-31T24:00Z' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00-05:00	!Text '2023-12-31T24:00-05:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00-05:00	!Text '2023-12-31T24:00-05:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-12-31T24:00-05:00	!Text '2023-12-31T24:00-05:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd'T'HH:mmXXX|2023-06-15T24:01+02:00	!Text '2023-06-15T24:01+02:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd'T'HH:mmXXX|2023-06-15T24:01+02:00	!Text '2023-06-15T24:01+02:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd'T'HH:mmXXX|2023-06-15T24:01+02:00	!Text '2023-06-15T24:01+02:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd'T'HH:mmxx|2024-02-30T08:00+0530	!Text '2024-02-30T08:00+0530' could not be parsed: Invalid date 'FEBRUARY 30'	0
+strictParseLocalDate	uuuu-MM-dd'T'HH:mmxx|2024-02-30T08:00+0530	!Text '2024-02-30T08:00+0530' could not be parsed: Invalid date 'FEBRUARY 30'	0
+strictParseLocalDateTime	uuuu-MM-dd'T'HH:mmxx|2024-02-30T08:00+0530	!Text '2024-02-30T08:00+0530' could not be parsed: Invalid date 'FEBRUARY 30'	0
+strictParse	uuuu-MM-dd'T'HH:mmZ|2023-04-31T08:00-0800	!Text '2023-04-31T08:00-0800' could not be parsed: Invalid date 'APRIL 31'	0
+strictParseLocalDate	uuuu-MM-dd'T'HH:mmZ|2023-04-31T08:00-0800	!Text '2023-04-31T08:00-0800' could not be parsed: Invalid date 'APRIL 31'	0
+strictParseLocalDateTime	uuuu-MM-dd'T'HH:mmZ|2023-04-31T08:00-0800	!Text '2023-04-31T08:00-0800' could not be parsed: Invalid date 'APRIL 31'	0
+strictParse	uuuu-MM-dd[ HH:mm]|2023-02-31	!Text '2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	uuuu-MM-dd[ HH:mm]|2023-02-31	!Text '2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	uuuu-MM-dd[ HH:mm]|2023-02-31	!Text '2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	uuuu-MM-dd[ HH:mm]|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDate	uuuu-MM-dd[ HH:mm]|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParseLocalDateTime	uuuu-MM-dd[ HH:mm]|2023-02-31 24:00	!Text '2023-02-31 24:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+strictParse	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.0	!Text '2023-12-31 24:00:00.0' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.0	!Text '2023-12-31 24:00:00.0' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.0	!Text '2023-12-31 24:00:00.0' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParse	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.1	!Text '2023-12-31 24:00:00.1' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDate	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.1	!Text '2023-12-31 24:00:00.1' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+strictParseLocalDateTime	uuuu-MM-dd HH:mm:ss.n|2023-12-31 24:00:00.1	!Text '2023-12-31 24:00:00.1' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+smartParseLocalDate	ISO_LOCAL_DATE|2023-02-31	2023-02-28
+smartParseLocalDateTime	ISO_LOCAL_DATE|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+smartParseLocalTime	ISO_LOCAL_DATE|2023-02-31	!Text '2023-02-31' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-02-28 of type java.time.format.Parsed	0
+isoParseLocalDateTime	ISO_LOCAL_DATE|2023-02-31	!Text '2023-02-31' could not be parsed: Invalid date 'FEBRUARY 31'	0
+smartParseLocalDate	ISO_LOCAL_DATE|2024-02-30	2024-02-29
+smartParseLocalDateTime	ISO_LOCAL_DATE|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+smartParseLocalTime	ISO_LOCAL_DATE|2024-02-30	!Text '2024-02-30' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2024-02-29 of type java.time.format.Parsed	0
+isoParseLocalDateTime	ISO_LOCAL_DATE|2024-02-30	!Text '2024-02-30' could not be parsed: Invalid date 'FEBRUARY 30'	0
+smartParseLocalDate	ISO_LOCAL_DATE|2023-04-31	2023-04-30
+smartParseLocalDateTime	ISO_LOCAL_DATE|2023-04-31	!Text '2023-04-31' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+smartParseLocalTime	ISO_LOCAL_DATE|2023-04-31	!Text '2023-04-31' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-04-30 of type java.time.format.Parsed	0
+isoParseLocalDateTime	ISO_LOCAL_DATE|2023-04-31	!Text '2023-04-31' could not be parsed: Invalid date 'APRIL 31'	0
+smartParseLocalDate	ISO_LOCAL_DATE|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+smartParseLocalDateTime	ISO_LOCAL_DATE|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+smartParseLocalTime	ISO_LOCAL_DATE|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+isoParseLocalDateTime	ISO_LOCAL_DATE|2023-04-32	!Text '2023-04-32' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+smartParseLocalDate	ISO_LOCAL_DATE_TIME|2023-12-31T24:00	2024-01-01
+smartParseLocalDateTime	ISO_LOCAL_DATE_TIME|2023-12-31T24:00	2024-01-01T00:00
+smartParseLocalTime	ISO_LOCAL_DATE_TIME|2023-12-31T24:00	00:00
+isoParseLocalDateTime	ISO_LOCAL_DATE_TIME|2023-12-31T24:00	!Text '2023-12-31T24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+smartParseLocalDate	ISO_LOCAL_DATE_TIME|2023-02-31T24:00:00	2023-03-01
+smartParseLocalDateTime	ISO_LOCAL_DATE_TIME|2023-02-31T24:00:00	2023-03-01T00:00
+smartParseLocalTime	ISO_LOCAL_DATE_TIME|2023-02-31T24:00:00	00:00
+isoParseLocalDateTime	ISO_LOCAL_DATE_TIME|2023-02-31T24:00:00	!Text '2023-02-31T24:00:00' could not be parsed: Invalid date 'FEBRUARY 31'	0
+smartParseLocalDate	ISO_LOCAL_DATE_TIME|2023-06-15T24:00:01	!Text '2023-06-15T24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+smartParseLocalDateTime	ISO_LOCAL_DATE_TIME|2023-06-15T24:00:01	!Text '2023-06-15T24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+smartParseLocalTime	ISO_LOCAL_DATE_TIME|2023-06-15T24:00:01	!Text '2023-06-15T24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+isoParseLocalDateTime	ISO_LOCAL_DATE_TIME|2023-06-15T24:00:01	!Text '2023-06-15T24:00:01' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+smartParseLocalDate	ISO_OFFSET_DATE_TIME|2023-12-31T24:00Z	2024-01-01
+smartParseLocalDateTime	ISO_OFFSET_DATE_TIME|2023-12-31T24:00Z	2024-01-01T00:00
+smartParseLocalTime	ISO_OFFSET_DATE_TIME|2023-12-31T24:00Z	00:00
+isoParseLocalDateTime	ISO_OFFSET_DATE_TIME|2023-12-31T24:00Z	!Text '2023-12-31T24:00Z' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+smartParseLocalDate	ISO_LOCAL_TIME|24:00	!Text '24:00' could not be parsed: Unable to obtain LocalDate from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+smartParseLocalDateTime	ISO_LOCAL_TIME|24:00	!Text '24:00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 00:00 of type java.time.format.Parsed	0
+smartParseLocalTime	ISO_LOCAL_TIME|24:00	00:00
+isoParseLocalDateTime	ISO_LOCAL_TIME|24:00	!Text '24:00' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+getResolverStyle	ofPattern	SMART
+getResolverStyle	ISO_LOCAL_DATE	STRICT
+getResolverStyle	RFC_1123_DATE_TIME	SMART
+getResolverStyle	ofPattern/STRICT	STRICT
+getResolverStyle	ISO_LOCAL_DATE/SMART	SMART
+ofYearDay	2023,365	2023-12-31
+ofYearDay	2023,366	!Invalid date 'DayOfYear 366' as '2023' is not a leap year
+ofYearDay	2024,366	2024-12-31
+ofYearDay	2023,0	!Invalid value for DayOfYear (valid values 1 - 365/366): 0
+ofYearDay	2023,367	!Invalid value for DayOfYear (valid values 1 - 365/366): 367
+ofYearDay	-4,366	-0004-12-31
+ofYearDay	-1,366	!Invalid date 'DayOfYear 366' as '-1' is not a leap year
+ofYearDay	999999999,1	+999999999-01-01
+ofYearDay	-999999999,365	-999999999-12-31
+ofYearDay	1000000000,1	!Invalid value for Year (valid values -999999999 - 999999999): 1000000000
+ofYearDay	1000000000,0	!Invalid value for Year (valid values -999999999 - 999999999): 1000000000

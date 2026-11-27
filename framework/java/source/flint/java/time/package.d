@@ -230,7 +230,14 @@ struct LocalDate
     /// Obtains an instance from a year and day-of-year.
     static LocalDate ofYearDay(int year, int dayOfYear)
     {
-        checkRange("DayOfYear", dayOfYear, 1, isLeap(year) ? 366 : 365);
+        import flint.engine.aot.text : decimal;
+
+        checkRange("Year", year, -999_999_999, 999_999_999);
+        enum range = "Invalid value for DayOfYear (valid values 1 - 365/366): ";
+        if (dayOfYear < 1 || dayOfYear > 366)
+            throw new DateTimeException(range ~ decimal(dayOfYear));
+        if (dayOfYear == 366 && !isLeap(year))
+            throw new DateTimeException("Invalid date 'DayOfYear 366' as '" ~ decimal(year) ~ "' is not a leap year");
         return ofEpochDay(epochDayOf(year, 1, 1) + dayOfYear - 1);
     }
 

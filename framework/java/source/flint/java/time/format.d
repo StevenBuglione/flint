@@ -47,6 +47,18 @@ class DateTimeParseException : DateTimeException
     }
 }
 
+/++
+How a parse resolves its fields into dates and times. Java's `LENIENT`, which moves out-of-range values into the next
+field, is not supported yet.
++/
+enum ResolverStyle
+{
+    /// Every field must be in range, and a year-of-era without an era is not resolved.
+    STRICT,
+    /// Day-of-month 29-31 past the month's end moves to its last day, and 24:00 is midnight of the next day.
+    SMART,
+}
+
 /// Styles of handling signs when printing and parsing numbers.
 enum SignStyle
 {
@@ -110,7 +122,7 @@ struct Fields
     private int offsetSeconds_;
     private string zoneId_;
     private bool zoneIsRegion_;
-    private bool smart_; // ResolverStyle.SMART, as RFC_1123_DATE_TIME resolves; otherwise STRICT
+    private bool smart_; // ResolverStyle.SMART, as ofPattern and RFC_1123_DATE_TIME resolve; otherwise STRICT
 
     private void set(Field f, long value) pure nothrow @nogc
     {
@@ -241,7 +253,7 @@ struct Fields
 
     private bool hasDate() const pure nothrow @nogc
     {
-        return (has(Field.year) || has(Field.yearOfEra)) && ((has(Field.monthOfYear)
+        return (has(Field.year) || (smart_ && has(Field.yearOfEra))) && ((has(Field.monthOfYear)
                 && has(Field.dayOfMonth)) || has(Field.dayOfYear));
     }
 
@@ -317,12 +329,14 @@ struct Fields
         long year;
         if (has(Field.year))
             year = values_[Field.year];
-        else if (has(Field.yearOfEra))
+        else if (smart_ && has(Field.yearOfEra)) // STRICT does not invent an era
             year = values_[Field.yearOfEra];
         else
             throw unresolved(text, type);
         try
         {
+            if (!has(Field.year))
+                checkVariable("YearOfEra", year, "999999999/1000000000", 1_000_000_000);
             checkRange("Year", year, -999_999_999, 999_999_999);
             if (has(Field.monthOfYear) && has(Field.dayOfMonth))
             {
@@ -394,6 +408,8 @@ struct Fields
             toLocalTime(text);
         if (date)
             crossCheck(text, resolved);
+        if (date && time && endOfDay())
+            toLocalDate(text);
         if (date && time && hasOffset_)
             toOffset(text);
     }
@@ -408,7 +424,8 @@ struct Fields
                 hour = values_[Field.hourOfDay];
             else if (has(Field.clockHourOfAmPm) && has(Field.amPmOfDay))
             {
-                checkRange("ClockHourOfAmPm", values_[Field.clockHourOfAmPm], 1, 12);
+                if (!smart_ || values_[Field.clockHourOfAmPm] != 0) // SMART reads clock hour 0 as 12
+                    checkRange("ClockHourOfAmPm", values_[Field.clockHourOfAmPm], 1, 12);
                 hour = values_[Field.clockHourOfAmPm] % 12 + 12 * values_[Field.amPmOfDay];
             }
             else
@@ -658,7 +675,22 @@ struct DateTimeFormatter
     static DateTimeFormatter ofPattern(string pattern)
     {
         auto elements = compilePattern(pattern);
-        return DateTimeFormatter(elements.idup, describeElements(elements));
+        return DateTimeFormatter(elements.idup, describeElements(elements), true);
+    }
+
+    /// How a parse resolves its fields: `SMART` for `ofPattern` and `RFC_1123_DATE_TIME`, `STRICT` for the ISO
+    /// formatters.
+    ResolverStyle getResolverStyle() const pure nothrow @nogc
+    {
+        return smart_ ? ResolverStyle.SMART : ResolverStyle.STRICT;
+    }
+
+    /// A copy of this formatter that resolves parsed fields with `style`.
+    DateTimeFormatter withResolverStyle(ResolverStyle style) const pure nothrow @nogc
+    {
+        DateTimeFormatter copy = this;
+        copy.smart_ = style == ResolverStyle.SMART;
+        return copy;
     }
 
     /// The override zone, or an absent value when the formatter has no override.
@@ -740,8 +772,7 @@ struct DateTimeFormatter
         }
         if (hasZone_ && !fields.zoneId_.length)
             fields.addZone(zone_);
-        if (smart_)
-            fields.resolveAll(text);
+        fields.resolveAll(text);
         return fields;
     }
 

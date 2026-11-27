@@ -25,7 +25,7 @@ public import flint.jackson.databind.cfg : JavaTimeFormat;
 import flint.jackson.databind.exc : InvalidFormatException, MismatchedInputException;
 import flint.java.time : DateTimeException, Duration, Instant, LocalDate, LocalDateTime, LocalTime,
     OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime;
-import flint.java.time.format : DateTimeFormatter, DateTimeParseException;
+import flint.java.time.format : DateTimeFormatter, DateTimeParseException, ResolverStyle;
 
 @safe:
 
@@ -450,6 +450,14 @@ private DateTimeFormatter defaultFormatter(Kind kind) pure nothrow @nogc
     }
 }
 
+// A `@JsonFormat` pattern's reader: SMART, as `ofPattern` resolves, or STRICT under `lenient = FALSE`
+// ([modules-java8#148]).
+private DateTimeFormatter customFormatter(JavaTimeFormat format)
+{
+    const formatter = DateTimeFormatter.ofPattern(format.pattern);
+    return format.lenient == OptBoolean.FALSE ? formatter.withResolverStyle(ResolverStyle.STRICT) : formatter;
+}
+
 private Any readText(MapperConfig config, JsonParser p, Kind kind, string type, JavaTimeFormat format)
 {
     import flint.engine.aot.text : stripWhite;
@@ -459,7 +467,7 @@ private Any readText(MapperConfig config, JsonParser p, Kind kind, string type, 
     if (text.length == 0)
         return Any.init;
     const custom = format.pattern.length != 0;
-    const formatter = custom ? DateTimeFormatter.ofPattern(format.pattern) : defaultFormatter(kind);
+    const formatter = custom ? customFormatter(format) : defaultFormatter(kind);
     try
         return parseText(config, kind, text, formatter, custom);
     catch (DateTimeException e)
