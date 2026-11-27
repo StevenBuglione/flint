@@ -24,4 +24,7 @@ configuration "unittest" {
     targetType "library"
     sourcePaths "source" "tests"
     importPaths "source" "tests"
+    // The tests' std.typecons BlackHole mocks instantiate std.format instances that DMD culls as Phobos's own
+    // (instantiated by its unittests) although libphobos2.a does not hold them: undefined formattedWrite at link.
+    dflags "-allinst" platform="dmd"
 }
