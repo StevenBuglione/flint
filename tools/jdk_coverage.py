@@ -102,7 +102,12 @@ def compile_json(root, out):
     roots = sorted({f.split('/source/')[0] + '/source' for f in listed
                     if not f.startswith(('handoff/', 'examples/', 'benchmarks/', 'starters/'))})
     compiler = root / '.tools' / 'dmd2' / 'linux' / 'bin64' / 'dmd'
-    args = ['-preview=dip1000', '-o-', '-X', f'-Xf={out}'] + ['-I' + r for r in roots] + sources
+    # A java* module that links a pinned C library (java-zip: zlib) requires its FlintNative<Lib> version, which
+    # tools/native_build.py writes into the DUB block; -o- links nothing, so declaring it here only reads declarations.
+    lock = json.loads((root / 'policy' / 'native-lock.json').read_text())
+    versions = ['-version=FlintNative' + ''.join(p[:1].upper() + p[1:] for p in lib['name'].split('-'))
+                for lib in lock['libraries'] if any(c.startswith('java') for c in lib['consumers'])]
+    args = ['-preview=dip1000', '-o-', '-X', f'-Xf={out}'] + versions + ['-I' + r for r in roots] + sources
     with tempfile.NamedTemporaryFile('w', suffix='.rsp', delete=False) as rsp:
         rsp.write('\n'.join(args))
     run = subprocess.run([str(compiler) if compiler.is_file() else 'dmd', '@' + rsp.name], cwd=root,
