@@ -271,6 +271,119 @@ class SkeletonTests(unittest.TestCase):
         with self.assertRaisesRegex(Unsupported, 'a generic type'):
             skeletons.derive(item, self.universe)
 
+    def test_written_bodies_carry_over_and_strip_pending_leaves_the_rest_out(self):
+        increment = 'org.springframework.example.Counter#increment()'
+        filled = {increment: ['this.count += STEP;', '', 'return this.count;']}
+        d = skeletons.derive(self.items['Counter'], self.universe, filled=filled)
+        self.assertIn(f'    int increment()\n    {{\n        // port:body {increment}\n        this.count += STEP;\n\n'
+                      '        return this.count;\n        // port:end-body\n    }', d['text'])
+        self.assertNotIn(increment, d['bodies'])
+        self.assertIn('org.springframework.example.Counter#<init>(String,int)', d['bodies'])
+        # What lands on main: every unwritten body's member is left out and listed, and its row stays deferred.
+        stripped = skeletons.derive(self.items['Counter'], self.universe, filled=filled, strip=True)
+        self.assertEqual(stripped['bodies'], [])
+        self.assertNotIn('assert(0', stripped['text'])
+        self.assertIn(f'// port:body {increment}', stripped['text'])
+        self.assertEqual(stripped['pending']['org.springframework.example.Counter#of(String)'], skeletons.STRIPPED)
+        self.assertNotIn('org.springframework.example.Counter#of(String)', stripped['rows'])
+        self.assertIn('    this(string name)\n', stripped['text'])  # a derived body needs no lane
+        self.assertNotIn('@disable this();', stripped['text'])
+        # R3: an unwritten default leaves the interface too, so implementors don't lose a body they inherit.
+        marker = skeletons.derive(self.items['Marker'], self.universe, strip=True)
+        self.assertNotIn('describe()', marker['text'].split('// port:pending')[0])
+        self.assertNotIn('mixin template Defaults', marker['text'])
+        # Every constructor left out: D's implicit default constructor would be API Java doesn't have.
+        failure = skeletons.derive(self.items['CountFailure'], self.universe, [['int a', 'int b']], strip=True)
+        self.assertIn('    @disable this();', failure['text'])
+
+    def test_written_bodies_and_placeholders_are_read_from_a_module(self):
+        text = ('class A\n{\n    void f()\n    {\n        // port:body x.A#f()\n        g();\n\n        h();\n'
+                '        // port:end-body\n    }\n    void k()\n    {\n        // port:body x.A#k()\n'
+                '        assert(0, "port:body x.A#k()");\n        // port:end-body\n    }\n}\n')
+        filled, open_ = skeletons.written_bodies(text)
+        self.assertEqual(filled, {'x.A#f()': ['g();', '', 'h();']})
+        self.assertEqual(open_, {'x.A#k()'})
+        self.assertEqual(skeletons.placeholders(text), ['x.A#k()'])
+        # Gate (d): no placeholder may land on main.
+        path = skeletons.ROOT / 'tools' / 'port-spring' / 'tests' / f'placeholder_{os.getpid()}.d'
+        try:
+            path.write_text(text, encoding='utf-8')
+            [failure] = skeletons.gate.check_placeholders([path])
+            self.assertIn('x.A#k() still holds its placeholder', failure)
+            path.write_text(text.replace('assert(0, "port:body x.A#k()");', 'g();'), encoding='utf-8')
+            self.assertEqual(skeletons.gate.check_placeholders([path]), [])
+        finally:
+            path.unlink(missing_ok=True)
+
+    def test_regions_carry_a_digest_the_gate_accepts(self):
+        item = {**self.items['Marker'], 'job': {'project': 'example', 'tag': '1'}}
+        region = skeletons.region_of(item, self.marker)
+        self.assertTrue(region.startswith('// port:generated port-skeleton/1 example@1 '
+                                          'org.springframework.example.Marker sha256:'), region)
+        [(line, version, upstream, type_id, digest, body)] = skeletons.gate.regions(region)
+        import hashlib
+        self.assertEqual(hashlib.sha256(skeletons.gate.digest_text(body).encode()).hexdigest(), digest)
+        self.assertEqual((version, upstream, type_id), ('port-skeleton/1', 'example@1',
+                                                        'org.springframework.example.Marker'))
+
+    def test_merging_into_a_hand_module_replaces_appends_and_imports(self):
+        old = ('module flint.example;\n\nimport flint.java.util : List;\n\n@safe:\n\nclass Hand {}\n\n'
+               '// port:generated port-skeleton/1 example@1 x.A sha256:00\nclass A {}\n// port:end\n\nvoid tail() {}\n')
+        new_a = '// port:generated port-skeleton/1 example@1 x.A sha256:11\nclass A { int f; }\n// port:end\n'
+        new_b = '// port:generated port-skeleton/1 example@1 x.B sha256:22\nclass B {}\n// port:end\n'
+        text = skeletons.merged(old, {'x.A': new_a, 'x.B': new_b}, 'import flint.other : C;\n')
+        self.assertEqual(text, 'module flint.example;\n\nimport flint.java.util : List;\nimport flint.other : C;\n\n'
+                         '@safe:\n\nclass Hand {}\n\n' + new_a + '\nvoid tail() {}\n\n' + new_b)
+        self.assertTrue(skeletons.hand_declares(text, 'x.B', 'Hand'))
+        self.assertFalse(skeletons.hand_declares(text, 'x.B', 'B'))  # its own region doesn't count
+
+    def test_mapping_rows_merge_line_by_line(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'mapping.json'
+            path.write_text('{"rulebook":2,\n"elements":{\n'
+                            '"x.A":{"status":"excluded","category":"deferred","phase":"2"},\n'
+                            '"x.A#f()":{"status":"excluded","category":"deferred","phase":"2"},\n'
+                            '"x.H":{"status":"ported","d":"flint.x.H"},\n'
+                            '"x.Z**":{"status":"excluded","category":"deferred","phase":"2"}\n}}\n', encoding='utf-8')
+            refused = skeletons.merge_rows(path, {
+                'x.A': {'status': 'ported', 'd': 'flint.x.A', 'generated': 'port-skeleton/1'},
+                'x.A#g()': {'status': 'ported', 'd': 'flint.x.A.g', 'generated': 'port-skeleton/1'},
+                'x.H': {'status': 'adapted', 'd': 'flint.x.H', 'rules': ['R5'], 'generated': 'port-skeleton/1'},
+                'x.Z#h()': {'status': 'ported', 'd': 'flint.x.Z.h', 'generated': 'port-skeleton/1'}})
+            self.assertEqual(refused, ['x.H'])  # a hand row is never replaced
+            text = path.read_text(encoding='utf-8')
+            self.assertEqual(text.splitlines()[2:8], [
+                '"x.A":{"status":"ported","d":"flint.x.A","generated":"port-skeleton/1"},',
+                '"x.A#f()":{"status":"excluded","category":"deferred","phase":"2"},',
+                '"x.A#g()":{"status":"ported","d":"flint.x.A.g","generated":"port-skeleton/1"},',
+                '"x.H":{"status":"ported","d":"flint.x.H"},',
+                '"x.Z**":{"status":"excluded","category":"deferred","phase":"2"},',
+                '"x.Z#h()":{"status":"ported","d":"flint.x.Z.h","generated":"port-skeleton/1"}'])
+            import json
+            self.assertEqual(len(json.loads(text)['elements']), 6)
+
+    def test_new_modules_sit_beside_their_parent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            index = {'flint.a': [(root, root / 'flint' / 'a' / 'package.d')],
+                     'flint.a.b.c': [(root, root / 'flint' / 'a' / 'b' / 'c.d')],
+                     'flint.d': [(root, root / 'flint' / 'd.d')]}
+            self.assertEqual(skeletons.place_of('flint.a.e', index), (root, root / 'flint' / 'a' / 'e.d', False))
+            self.assertEqual(skeletons.place_of('flint.a.b', index),
+                             (root, root / 'flint' / 'a' / 'b' / 'package.d', False))
+            self.assertEqual(skeletons.place_of('flint.d', index)[2], True)
+            with self.assertRaisesRegex(Unsupported, 'package.d'):
+                skeletons.place_of('flint.d.e', index)
+
+    def test_mechanical_super_calls_must_fit_a_landed_constructor(self):
+        text = 'this(int capacity)\n{\n    super(capacity);\n}'
+        self.assertFalse(skeletons.super_call_fits(text, [[]]))
+        self.assertTrue(skeletons.super_call_fits(text, [['int size'], []]))
+        self.assertTrue(skeletons.super_call_fits(text, [['int size', 'bool grow = true']]))
+        self.assertTrue(skeletons.super_call_fits('this()\n{\n    this.x = 1;\n}', []))
+        self.assertFalse(skeletons.super_call_fits('this()\n{\n    this.x = 1;\n}', [['int size']]))
+        self.assertTrue(skeletons.super_call_fits('this()\n{\n    this(1);\n}', [['int size']]))
+
     def test_skeleton_compiles_and_a_marked_body_fails_loudly(self):
         compilers = [c for c in ('dmd', 'ldc2') if shutil.which(c)]
         if not compilers:

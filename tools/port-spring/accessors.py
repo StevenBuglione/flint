@@ -64,6 +64,11 @@ class Unsupported(Exception):
     pass
 
 
+class StripPending(Unsupported):
+    """Skeleton mode's --strip-pending: a member whose body is still the placeholder stays out, and its row stays
+    deferred."""
+
+
 class Excluded(Unsupported):
     """The accessor's type is excluded from the port, so the accessor is too (the type's category is the reason)."""
 
@@ -105,6 +110,9 @@ class Universe:
         """With `predict` on (yield only): the R1 row a pinned, not yet mapped type will get when it is ported in the
         same batch, its D module taken from the nearest mapped Java package. None otherwise."""
         if not getattr(self, 'predict', False) or type_id not in self.types or self.exclusion(type_id):
+            return None
+        batch = getattr(self, 'batch', None)  # emit mode: only the types generated together get a predicted row
+        if batch is not None and type_id not in batch:
             return None
         if not hasattr(self, '_packages'):
             self._packages = {}

@@ -44,10 +44,12 @@ member is pending. Bodies don't matter for the API comparison, so package tests 
 """
 import argparse
 import collections
+import hashlib
 import json
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -66,6 +68,9 @@ IGNORED = {'Override', 'SuppressWarnings', 'Nullable', 'NonNull', 'Contract', 'S
            'CheckReturnValue', 'FunctionalInterface', 'Deprecated', 'NullMarked', 'NullUnmarked'}
 JAVA_OBJECT = {'equals(Object)': 'bool equals(Object other)', 'hashCode()': 'int hashCode()'}
 CLASS_KINDS = ('class', 'final class', 'abstract class')
+
+
+STRIPPED = 'the body is not written yet (--strip-pending)'
 
 
 def body_region(element, indent='    '):
@@ -159,6 +164,18 @@ class Context:
         self.final_class = 'final' in self.decl['modifiers']
         self.java_interface = self.decl['kind'] == 'interface'
         self.defaults = []  # R3 default method texts for an interface's `mixin template Defaults`
+        self.filled = {}    # element -> the lines a lane wrote in its port:body region (emit mode)
+        self.strip = False  # --strip-pending: leave out every member whose body is still the placeholder
+
+    def body(self, element, indent='    '):
+        """The member's body region: the lane's lines when written, otherwise the placeholder, or StripPending."""
+        written = self.filled.get(element)
+        if written is not None:
+            inner = ''.join(f'{indent}{line}\n' if line else '\n' for line in written)
+            return f'{indent}// port:body {element}\n{inner}{indent}// port:end-body\n'
+        if self.strip:
+            raise accessors.StripPending(STRIPPED)
+        return body_region(element, indent)
 
 
 def derive_method(method, ctx, plan):
@@ -214,9 +231,19 @@ def derive_method(method, ctx, plan):
         return '\n'.join(ddoc(method) + [text + ';']), status(rules), False
     if default and ctx.interface:
         # R3: the interface declares it, and `mixin template Defaults` carries the body for implementors.
-        ctx.defaults.append('\n'.join(ddoc(method, 8) + [f'{text}\n{{\n{body_region(element)}}}']))
-        return '\n'.join(ddoc(method) + [text + ';']), status(rules), True
-    return '\n'.join(ddoc(method) + [f'{text}\n{{\n{body_region(element)}}}']), status(rules), True
+        ctx.defaults.append('\n'.join(ddoc(method, 8) + [f'{text}\n{{\n{ctx.body(element)}}}']))
+        return '\n'.join(ddoc(method) + [text + ';']), status(rules), element not in ctx.filled
+    return '\n'.join(ddoc(method) + [f'{text}\n{{\n{ctx.body(element)}}}']), status(rules), element not in ctx.filled
+
+
+def super_call_fits(text, overloads):
+    """Whether a mechanical constructor's `super(...)` call (an implicit `super()` when it has none) takes as many
+    arguments as one of the landed D base's constructors accepts; `overloads` empty is D's implicit default."""
+    if re.search(r'^\s*this\(.*\);$', text, re.M):
+        return True
+    call = re.search(r'^\s*super\((.*)\);$', text, re.M)
+    count = len(accessors.split_arguments(call.group(1))) if call else 0
+    return any(sum('=' not in p for p in params) <= count <= len(params) for params in overloads or [[]])
 
 
 def derive_constructor(ctor, ctx, names, initialized):
@@ -230,6 +257,8 @@ def derive_constructor(ctor, ctx, names, initialized):
     if not initialized:
         try:
             text, row_status, rules, _ = bean_types.derive_constructor(ctor, ctx.decl, ctx.scope, names, overloads)
+            if not ctx.throwable and ctx.base_overloads is not None and not super_call_fits(text, ctx.base_overloads):
+                raise accessors.Unsupported('no constructor taking these arguments in the D base')
             return '\n'.join(ddoc(ctor) + [unpublic(text)]), (row_status, rules), False, element
         except accessors.Unsupported as problem:
             if not re.search(r'constructor statement|not a parameter or literal|without a body|semicolon|'
@@ -244,7 +273,8 @@ def derive_constructor(ctor, ctx, names, initialized):
     visibility = visibility_of(ctor['modifiers'])
     text = ' '.join(deprecation(ctor) + [v for v in (visibility,) if v != 'public']
                     + [f'this({", ".join(params)}){suffix}'])
-    return '\n'.join(ddoc(ctor) + [f'{text}\n{{\n{body_region(element)}}}']), status(rules), True, element
+    return ('\n'.join(ddoc(ctor) + [f'{text}\n{{\n{ctx.body(element)}}}']), status(rules), element not in ctx.filled,
+            element)
 
 
 def derive_fields(ctx, names):
@@ -309,8 +339,9 @@ def defaults_of(ctx, bases):
     java = accessors.split_arguments(ctx.decl.get('interfaces') or '')
     for name, d_name in zip(java, bases[len(bases) - len(java):]):
         full = ctx.scope.resolve(accessors.strip_annotations(name)[0])
-        if ctx.d_defaults is not None and full in ctx.universe.rows:
-            if ctx.universe.rows[full]['d'] in ctx.d_defaults:
+        row = accessors.mapped_row(ctx.universe, full)  # a batch type's predicted row too (emit mode)
+        if ctx.d_defaults is not None and row is not None:
+            if row['d'] in ctx.d_defaults:
                 found.append(d_name)
             continue  # a landed D interface decides by what it declares
         entry = ctx.universe.types.get(full)
@@ -321,8 +352,11 @@ def defaults_of(ctx, bases):
     return found
 
 
-def derive(item, universe, base_overloads=None, base_members=(), d_defaults=None):
-    """{'text', 'name', 'rows': {element: (status, rules)}, 'pending': {element: reason}, 'bodies': [element]}."""
+def derive(item, universe, base_overloads=None, base_members=(), d_defaults=None, filled=None, strip=False):
+    """{'text', 'name', 'rows': {element: (status, rules)}, 'pending': {element: reason}, 'bodies': [element]}.
+
+    `bodies` lists the elements whose body is still the placeholder. Emit mode passes `filled`, {element: lines} of
+    the bodies lanes wrote, and `strip`, which leaves out every member whose body is not written."""
     decl, scope, type_id = item['class'], item['scope'], item['type']
     interface = decl['kind'] == 'interface'
     plan = universe.plans.get(type_id, item.get('default_plan'))
@@ -346,6 +380,7 @@ def derive(item, universe, base_overloads=None, base_members=(), d_defaults=None
     bases += [bean_types.base_name(i, scope) for i in accessors.split_arguments(decl.get('interfaces') or '')]
     ctx = Context(item, universe, base_overloads, base_members, interface)
     ctx.d_defaults = d_defaults  # D interface symbols declaring `mixin template Defaults`, when known
+    ctx.filled, ctx.strip = filled or {}, strip
     if ctx.throwable and base_overloads is None:
         if accessors.parent_of(universe, type_id) not in accessors.D_THROWABLES:
             raise accessors.Unsupported('a Throwable subclass whose D base constructors are unknown')
@@ -371,6 +406,7 @@ def derive(item, universe, base_overloads=None, base_members=(), d_defaults=None
         computed = True
     for nested in decl['types']:
         pending[f'{type_id}.{nested["name"]}'] = f'a nested {nested["kind"]} (R13)'
+    constructors, stripped = 0, False
     for ctor in decl['constructors']:
         if len(decl['constructors']) == 1 and not ctor['parameters'] and not computed and not interface \
                 and 'public' in ctor['modifiers'] and not ctx.throwable \
@@ -382,15 +418,25 @@ def derive(item, universe, base_overloads=None, base_members=(), d_defaults=None
         except accessors.Unsupported as problem:
             sig = '<init>(' + ','.join(erase_type(p['type']) for p in ctor['parameters']) + ')'
             pending[f'{type_id}#{sig}'] = str(problem)
+            stripped |= isinstance(problem, accessors.StripPending)
             continue
+        constructors += 1
         rows[element] = row
         members.append((ctor['line'], text))
         if open_body:
             bodies.append(element)
     if computed and not decl['constructors'] and not interface:
         element = f'{type_id}#<init>()'
-        members.append((decl['line'], f'this()\n{{\n{body_region(element)}}}'))
-        bodies.append(element)  # Java's field initializers or initializer blocks run in the implicit constructor
+        try:
+            members.append((decl['line'], f'this()\n{{\n{ctx.body(element)}}}'))
+            if element not in ctx.filled:
+                bodies.append(element)  # Java's field initializers or initializer blocks run in the implicit constructor
+        except accessors.StripPending as problem:
+            pending[element] = str(problem)
+            stripped = True
+    if stripped and not constructors and not interface:
+        # Every constructor is left out: D's implicit default constructor would be API Java doesn't have.
+        members.append((decl['line'], '@disable this();'))
     mixins = [f'mixin {name}.Defaults;' for name in defaults_of(ctx, bases)] if not ctx.java_interface else []
     java_object = False
     for method in decl['methods']:
@@ -424,7 +470,7 @@ def derive(item, universe, base_overloads=None, base_members=(), d_defaults=None
                       f'mixin template Defaults()\n{{\n{inner_defaults}\n}}')
     blocks += [f'// port:pending {element}: {reason}' for element, reason in sorted(pending.items())]
     inner = '\n\n'.join(accessors.indented('    ' + b, '    ') for b in blocks)
-    text = '\n'.join(ddoc(decl, 0) + [f'{head}\n{{\n{inner}\n}}'])
+    text = '\n'.join(ddoc(decl, 0) + [f'{head}\n{{\n{inner}\n}}' if inner else f'{head}\n{{\n}}'])
     return {'text': text, 'name': name, 'rows': rows, 'pending': pending, 'bodies': bodies,
             'imports': dict(scope.used)}
 
@@ -540,13 +586,14 @@ def compare(universe, helper, scratch, compilers=None, log=None, only=None):
     return items, types, elements, derived, skipped
 
 
-def base_facts(universe, group, roots, scratch, compiler):
+def base_facts(universe, group, roots, scratch, compiler, overlay=None):
     """({type id: D base constructor parameter lists}, {type id: member names of the D base chain}, {D interface
-    symbols that declare `mixin template Defaults`})."""
+    symbols that declare `mixin template Defaults`}). Emit mode passes the batch's `overlay`, so a base generated
+    in the same batch (a predicted row) is described as it will land."""
     bases = {}
     for item in group:
         parent = accessors.parent_of(universe, item['type'])
-        row = universe.rows.get(parent) if parent else None
+        row = accessors.mapped_row(universe, parent) if parent else None
         if row:
             bases[item['type']] = row['d']
     implemented = set()
@@ -556,12 +603,13 @@ def base_facts(universe, group, roots, scratch, compiler):
                 full = item['scope'].resolve(accessors.strip_annotations(name)[0].split('<')[0])
             except accessors.Unsupported:
                 continue
-            if full in universe.rows:
-                implemented.add(universe.rows[full]['d'])
+            row = accessors.mapped_row(universe, full)
+            if row is not None:
+                implemented.add(row['d'])
     described = {}
     for symbol in sorted(set(bases.values()) | implemented):
         try:
-            described.update(accessors.describe(compiler, None, roots, [symbol], scratch))
+            described.update(accessors.describe(compiler, overlay, roots, [symbol], scratch))
         except ValueError:
             pass
     ancestors = sorted({line.split()[2] for text in described.values() for line in text.splitlines()
@@ -569,7 +617,7 @@ def base_facts(universe, group, roots, scratch, compiler):
                         and not line.split()[2].startswith('object.')} - set(described))
     for symbol in ancestors:
         try:
-            described.update(accessors.describe(compiler, None, roots, [symbol], scratch))
+            described.update(accessors.describe(compiler, overlay, roots, [symbol], scratch))
         except ValueError:
             pass
     overloads, members = {}, {}
@@ -792,10 +840,7 @@ def yield_report(universe, helper):
         totals['types'] += 1
         try:
             item = read(universe, helper, job)
-            plan_kind = 'interface' if item['class']['kind'] == 'interface' else 'class'
-            if 'final' in item['class']['modifiers'] and plan_kind == 'class':
-                plan_kind = 'final class'
-            d = derive({**item, 'default_plan': {'kind': plan_kind}}, universe)
+            d = derive({**item, 'default_plan': default_plan(item)}, universe)
         except accessors.Unsupported as problem:
             rejected[re.sub(r'(base|type|plan kind|annotation @?)\s?\S+', r'\1 X', str(problem))] += 1
             continue
@@ -810,6 +855,462 @@ def yield_report(universe, helper):
     return {'totals': dict(totals), 'rejected': dict(rejected.most_common(25)),
             'pending': dict(pending.most_common(25))}
 
+# ---- emit ---------------------------------------------------------------------------------------------------------
+
+GENERATOR = 'port-skeleton/1'
+PLACEHOLDER = re.compile(r'\s*assert\(0, "port:body [^"]*"\);\s*')
+LICENCE_LINES = {('port-source', 'Apache-2.0'): 'Licensed under the Apache License, Version 2.0',
+                 ('port-source', 'MIT'): 'Licensed under the MIT License'}
+
+
+def licence_line(entry):
+    """flint_tool.api.headers.licenceLine for the uses a skeleton may be generated under: source ports only."""
+    if entry.get('use') == 'port-source-bsd-option':
+        return 'Licensed under the BSD 3-Clause License'
+    if entry.get('use') == 'port-source' and entry.get('licence', '').startswith('BSD-'):
+        return 'Licensed under the BSD'
+    return LICENCE_LINES.get((entry.get('use'), entry.get('licence')))
+
+
+def licence_of(universe, project, tag):
+    """The licence matrix entry a source port of the pin is made under, or accessors.Unsupported."""
+    pin = universe.pins[(project, tag)]
+    if not hasattr(universe, '_matrix'):
+        universe._matrix = {e['name']: e for e in gate.load_json(ROOT / 'policy' / 'upstream-licences.json')['projects']}
+    entry = universe._matrix.get(pin.get('matrix', project))
+    if entry is None:
+        raise accessors.Unsupported(f'{pin.get("matrix", project)} has no entry in policy/upstream-licences.json')
+    if licence_line(entry) is None:
+        raise accessors.Unsupported(f'{entry["name"]} is `{entry.get("use")}` ({entry.get("licence")}): skeletons '
+                                    'are generated only for source ports into packages without a licence of their own')
+    return entry
+
+
+def default_plan(item):
+    """The plan a type without a port plan entry gets: its Java kind."""
+    kind = 'interface' if item['class']['kind'] == 'interface' else 'class'
+    return {'kind': 'final class' if kind == 'class' and 'final' in item['class']['modifiers'] else kind}
+
+
+def written_bodies(text):
+    """({element: lines a lane wrote}, {element of every body still holding its placeholder}) of a D source: each
+    line relative to its marker's indentation."""
+    filled, open_ = {}, set()
+    lines = text.splitlines()
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        if stripped.startswith(gate.BODY):
+            element, indent = stripped[len(gate.BODY):].strip(), lines[i][:len(lines[i]) - len(lines[i].lstrip())]
+            j = i + 1
+            while j < len(lines) and lines[j].strip() != gate.BODY_END:
+                j += 1
+            inner = lines[i + 1:j]
+            if len(inner) == 1 and PLACEHOLDER.fullmatch(inner[0]):
+                open_.add(element)
+            else:
+                filled[element] = [line[len(indent):] if line.startswith(indent) else line.strip() for line in inner]
+            i = j
+        i += 1
+    return filled, open_
+
+
+def placeholders(text):
+    """The elements whose port:body region still holds its `assert(0)` (gate (d): none may land on main)."""
+    return sorted(written_bodies(text)[1])
+
+
+def place_of(module, index):
+    """(root, path, whether it exists) of the file that holds a D module: its declaring file, or a new one in the
+    source root of its nearest declared parent module (`package.d` when the module already has children)."""
+    if module in index:
+        root, path = index[module][0]
+        return root, path, True
+    parts = module.split('.')
+    for cut in range(len(parts) - 1, 0, -1):
+        parent = '.'.join(parts[:cut])
+        if parent in index:
+            root, parent_path = index[parent][0]
+            if parent_path.name != 'package.d':
+                raise accessors.Unsupported(f'{parent} is declared in {parent_path.name}: a module with children '
+                                            'uses package.d (AGENTS.md)')
+            break
+    else:
+        raise accessors.Unsupported(f'no source root declares a parent module of {module}')
+    base = root.joinpath(*parts)
+    children = any(m.startswith(module + '.') for m in index)
+    return root, (base / 'package.d' if children else base.with_suffix('.d')), False
+
+
+def hand_declares(text, type_id, name):
+    """Whether a module declares `name` outside the type's own generated region."""
+    for line, _, _, found, _, body in gate.regions(text):
+        if found == type_id:
+            lines = text.splitlines(keepends=True)
+            text = ''.join(lines[:line - 1] + lines[line + len(body.splitlines()) + 1:])
+    return re.search(rf'\b(?:class|interface|struct|enum|union|alias|template)\s+{re.escape(name)}\b', text) is not None
+
+
+def region_of(item, d):
+    """The type's generated region: marker, skeleton text and end marker (porter_gate's digest rules)."""
+    body = d['text'] + '\n'
+    digest = hashlib.sha256(gate.digest_text(body).encode()).hexdigest()
+    job = item['job']
+    return f'{gate.MARKER}{GENERATOR} {job["project"]}@{job["tag"]} {item["type"]} sha256:{digest}\n{body}{gate.END}\n'
+
+
+def module_header(universe, group):
+    """The new module's licence header: the first Java file's own header, the ported-from marker, the licence line
+    and the modification notice (flint_tool.api.portspring's form, several files)."""
+    jobs = sorted((item['job'] for item in group), key=lambda j: j['type'])
+    project, tag = jobs[0]['project'], jobs[0]['tag']
+    if any((j['project'], j['tag']) != (project, tag) for j in jobs):
+        raise accessors.Unsupported('one module ported from two upstreams')
+    entry = licence_of(universe, project, tag)
+    java = Path(universe.source(project, tag, jobs[0]['type'])[0]).read_text(encoding='utf-8').lstrip()
+    header = java[:java.index('*/') + 2] if java.startswith('/*') else ''.join(
+        line + '\n' for line in java.splitlines() if line.startswith('//'))
+    files = sorted({universe.types[j['type']][2].get('file', '') for j in jobs})
+    directory = files[0].rsplit('/', 1)[0] if all(f.rsplit('/', 1)[0] == files[0].rsplit('/', 1)[0] for f in files) \
+        else None
+    names = [f.rsplit('/', 1)[1] for f in files] if directory else files
+    lines = [f'// {line}' for line in wrap(', '.join(names), 113)]
+    marker = f'// Ported from {project} {tag}: ' + (directory + '/' if directory else '')
+    return (header.rstrip('\n') + '\n' + marker + '\n' + '\n'.join(lines) + '\n'
+            + f'// {licence_line(entry)}\n// Modified by the Flint authors.\n\n')
+
+
+def import_block(module_text, types_text, used):
+    """The selective imports `types_text` needs that `module_text` lacks."""
+    full = with_imports(types_text, module_text, used)
+    return full[:len(full) - len(types_text)]
+
+
+def merged(existing, regions, imports):
+    """An existing module with each type's region replaced, new regions appended and missing imports added."""
+    text = existing
+    for type_id, region in regions.items():
+        lines = text.splitlines(keepends=True)
+        for line, _, _, found, _, body in gate.regions(text):
+            if found == type_id:
+                end = line + len(body.splitlines())  # the index of `// port:end`, counting the marker as line 1
+                text = ''.join(lines[:line - 1]) + region + ''.join(lines[end + 1:])
+                break
+        else:
+            text = text.rstrip('\n') + '\n\n' + region
+    if imports:
+        tops = [m for m in re.finditer(r'^(?:public\s+)?import\s[^;]*;\n', text, re.M)]
+        at = tops[-1].end() if tops else re.search(r'^module\s+[\w.]+\s*;\n', text, re.M).end()
+        text = text[:at] + ('' if tops else '\n') + imports + text[at:]
+    return text
+
+
+def render(universe, items, derived):
+    """{(root, path): module text} for every derived type, grouped by destination file."""
+    files = collections.defaultdict(list)
+    for item in items:
+        if item['type'] in derived:
+            files[item['place']].append(item)
+    out = {}
+    for (root, path), group in sorted(files.items(), key=lambda f: str(f[0][1])):
+        group.sort(key=lambda item: item['type'])
+        regions = {item['type']: region_of(item, derived[item['type']]) for item in group}
+        used = {}
+        for item in group:
+            used.update(derived[item['type']]['imports'])
+        types_text = '\n'.join(regions.values())
+        module = group[0]['module']
+        if path.is_file():
+            existing = path.read_text(encoding='utf-8')
+            out[(root, path)] = merged(existing, regions, import_block(existing, types_text, used))
+            continue
+        java_package = universe.types[group[0]['type']][2].get('package', '')
+        head = module_header(universe, group) + f'/// The Java package `{java_package}`.\nmodule {module};\n\n'
+        imports = import_block(head, types_text, used)
+        out[(root, path)] = head + imports + ('\n' if imports else '') + '@safe:\n\n' + '\n'.join(regions.values())
+    return out
+
+
+def batch_items(universe, helper, type_ids, index):
+    """({type id: item with its destination}, {type id: reason it can't be emitted})."""
+    universe.predict, universe.batch = True, set(type_ids)
+    items, rejected = {}, {}
+    for type_id in sorted(type_ids):
+        try:
+            if type_id not in universe.types:
+                raise accessors.Unsupported('not a type of a pinned manifest')
+            project, tag, manifest_type = universe.types[type_id]
+            licence_of(universe, project, tag)
+            item = read(universe, helper, {'project': project, 'tag': tag, 'type': type_id,
+                                           'kind': manifest_type['kind']})
+            row = accessors.mapped_row(universe, type_id)
+            if row is None:
+                raise accessors.Unsupported('no D module: no enclosing Java package is mapped (R1)')
+            module = row['d'].rsplit('.', 1)[0]
+            root, path, _ = place_of(module, index)
+            package = gate.package_of(path)
+            if package is None:
+                raise accessors.Unsupported(f'no DUB package holds {path}')
+            if path.is_file() and hand_declares(path.read_text(encoding='utf-8'), type_id, row['d'].rsplit('.', 1)[1]):
+                raise accessors.Unsupported(f'{module} already declares {row["d"].rsplit(".", 1)[1]} by hand; map '
+                                            'its rows instead')
+        except accessors.Unsupported as problem:
+            rejected[type_id] = str(problem)
+            continue
+        items[type_id] = {**item, 'default_plan': default_plan(item), 'module': module, 'symbol': row['d'],
+                          'place': (root, path), 'package': package}
+    return items, rejected
+
+
+def emit(universe, helper, type_ids, scratch, filled=None, strip=False, passes=8, log=None):
+    """Skeletons for a batch of Java types, generated together: {'files': {(root, path): text}, 'derived': {type id:
+    skeleton}, 'items', 'rejected': {type id: reason}}.
+
+    The D facts each skeleton depends on (base constructors, the base chain's members, which interfaces declare
+    `Defaults`) are read from the tree with the batch's own output overlaid, again until the output stops changing,
+    so a base generated in the same batch is used as it will land and regenerating from the committed tree gives
+    the same text."""
+    index = gate.module_index(gate.import_roots())
+    items, rejected = batch_items(universe, helper, type_ids, index)
+    if filled is None:  # bodies already written in the destination files carry over
+        filled = {}
+        for path in sorted({item['place'][1] for item in items.values() if item['place'][1].is_file()}):
+            filled.update(written_bodies(path.read_text(encoding='utf-8'))[0])
+    by_package = collections.defaultdict(list)
+    for item in items.values():
+        by_package[item['package']].append(item)
+    overlay = scratch / 'emit-overlay'
+    files, derived, reasons = None, {}, {}
+    for number in range(passes):
+        derived, reasons = {}, {}
+        for package, group in sorted(by_package.items()):
+            roots = gate.import_paths(package)
+            overloads, members, d_defaults = base_facts(universe, group, roots, scratch, gate.COMPILERS[0],
+                                                        overlay if number else None)
+            reachable = {m for m, places in index.items() if any(r in roots for r, _ in places)}
+            reachable |= {i['module'] for i in items.values() if i['place'][0] in roots}
+            for item in group:
+                inputs = (overloads.get(item['type']), members.get(item['type'], ()), d_defaults)
+                try:
+                    d = derive(item, universe, *inputs, filled=filled, strip=strip)
+                    unreachable = sorted({s.rsplit('.', 1)[0] for s in d['imports'].values()} - reachable)
+                    if unreachable:
+                        raise accessors.Unsupported(f':{package} has no DUB dependency declaring '
+                                                    + ', '.join(unreachable))
+                    derived[item['type']] = {**d, 'inputs': inputs}
+                except accessors.Unsupported as problem:
+                    reasons[item['type']] = str(problem)
+        rendered = render(universe, list(items.values()), derived)
+        if log:
+            log(f'pass {number + 1}: {len(derived)} skeletons in {len(rendered)} modules')
+        # A type the batch can't generate gets no predicted row, so its users wait too; one that derives once its
+        # base is overlaid gets it back.
+        changed, universe.batch = universe.batch != set(derived), set(derived)
+        if rendered == files and not changed:
+            break
+        files = rendered
+        if overlay.exists():
+            shutil.rmtree(overlay)
+        for (root, path), text in files.items():
+            write_overlay(overlay, root, path, text)
+    return {'files': files or {}, 'derived': derived, 'items': items, 'rejected': {**rejected, **reasons},
+            'overlay': overlay}
+
+
+def compile_check(result, scratch, compilers=None):
+    """[(module, compiler, first error, {type id: the first error inside its region})] for every emitted module
+    that doesn't compile against its package."""
+    problems = []
+    modules = {}
+    for item in result['items'].values():
+        if item['type'] in result['derived']:
+            modules[item['module']] = (item['package'], item['place'])
+    for module, (package, (root, path)) in sorted(modules.items()):
+        roots = gate.import_paths(package)
+        source = result['overlay'] / path.relative_to(root)
+        for compiler in compilers or gate.COMPILERS:
+            run = subprocess.run([compiler, '-o-', '-d', '-preview=dip1000', f'-I{result["overlay"]}',
+                                  *(f'-I{r}' for r in roots), str(source)], cwd=scratch, capture_output=True,
+                                 text=True, env=gate.compiler_env(), check=False)
+            if run.returncode:
+                spans = [(line, line + len(body.splitlines()), type_id)
+                         for line, _, _, type_id, _, body in gate.regions(source.read_text(encoding='utf-8'))]
+                culprits = {}
+                for n, message in re.findall(rf'^{re.escape(str(source))}\((\d+)[,\d]*\): (Error: .*)$', run.stderr,
+                                             re.M):
+                    for start, end, type_id in spans:
+                        if start < int(n) <= end:
+                            culprits.setdefault(type_id, message.strip())
+                problems.append((module, compiler, accessors.first_error(run.stderr), culprits))
+    return problems
+
+
+def member_symbol(symbol, element):
+    """The D symbol a member row names: `Type.name`, `Type.this` for a constructor."""
+    member = d_member(element)
+    return f'{symbol}.{"this" if member == "__ctor" else member}'
+
+
+def rows_of(universe, result):
+    """{repo: {element: row}}: the type row and every declared element whose body is derived or written, with
+    provenance. Pending members and placeholder bodies keep their deferred rows."""
+    out = collections.defaultdict(dict)
+    for type_id, d in sorted(result['derived'].items()):
+        item = result['items'][type_id]
+        repo = universe.pins[(item['job']['project'], item['job']['tag'])]['repo']
+        for element, (row_status, rules) in sorted(d['rows'].items()):
+            if element in d['bodies']:
+                continue
+            row = {'status': row_status, 'd': item['symbol'] if element == type_id
+                   else member_symbol(item['symbol'], element)}
+            if rules:
+                row['rules'] = rules
+            row['generated'] = GENERATOR
+            out[repo][element] = row
+    return out
+
+
+def merge_rows(path, rows):
+    """Write rows into a mapping.json (one element per line): an existing key's line is replaced, a new key goes
+    after the last line of its type, or at the end. A hand row that is ported or adapted is never replaced; the
+    refused elements are returned."""
+    lines = path.read_text(encoding='utf-8').split('\n')
+    start = next(n for n, line in enumerate(lines) if line.startswith('"elements":'))
+
+    def is_element(n, line):
+        return n > start and line.startswith('"') and '":{' in line
+
+    element_lines = [n for n, line in enumerate(lines) if is_element(n, line)]
+    keys = {json.loads(lines[n].split('":{', 1)[0] + '"'): n for n in element_lines}
+    by_type = collections.defaultdict(list)
+    for key, n in keys.items():
+        by_type[re.split(r'[#*]', key, 1)[0]].append(n)
+    refused, inserts = [], collections.defaultdict(list)
+    for element, row in sorted(rows.items()):
+        text = json.dumps(element) + ':' + json.dumps(row, separators=(',', ':'))
+        if element in keys:
+            old = json.loads('{' + lines[keys[element]].rstrip(',') + '}')[element]
+            if old.get('status') in ('ported', 'adapted') and not old.get('generated'):
+                refused.append(element)
+            else:
+                lines[keys[element]] = text
+            continue
+        anchors = by_type.get(element.split('#', 1)[0])
+        inserts[max(anchors) if anchors else element_lines[-1]].append(text)
+    out = []
+    for n, line in enumerate(lines):
+        out.append(line)
+        out += inserts.get(n, [])
+    last = max(n for n, line in enumerate(out) if is_element(n, line))
+    out = [(line.rstrip(',') + (',' if n < last else '')) if is_element(n, line) else line
+           for n, line in enumerate(out)]
+    path.write_text('\n'.join(out), encoding='utf-8')
+    return refused
+
+
+def emit_types(universe, selectors):
+    """The public top-level classes and interfaces a list of Java packages or type ids names that are deferred or
+    already carry a skeleton (re-emission)."""
+    deferred = {j['type'] for j in deferred_types(universe)}
+    deferred |= {t for t, row in universe.rows.items() if str(row.get('generated', '')).startswith('port-skeleton/')}
+    found = set()
+    for selector in selectors:
+        if selector in universe.types:
+            found.add(selector)
+            continue
+        found |= {t for t in deferred if universe.types[t][2].get('package') == selector
+                  and t == f'{selector}.{t[len(selector) + 1:]}' and '.' not in t[len(selector) + 1:]}
+    return sorted(found)
+
+
+def regenerate(universe, helper, found, scratch):
+    """Gate (a)/(d) for committed skeleton regions: each file's regions derived again from the tree, with the bodies
+    the file holds; a placeholder-free region is derived with --strip-pending. Returns failures."""
+    failures = []
+    by_file = collections.defaultdict(list)
+    for rel, line, version, upstream, type_id, body in found:
+        by_file[rel].append((line, version, type_id, body))
+    for rel, entries in sorted(by_file.items()):
+        text = (ROOT / rel).read_text(encoding='utf-8')
+        filled, open_ = written_bodies(text)
+        type_ids = [type_id for _, _, type_id, _ in entries]
+        result = emit(universe, helper, type_ids, scratch, filled=filled, strip=not open_, passes=1)
+        for line, version, type_id, body in entries:
+            d = result['derived'].get(type_id)
+            if d is None:
+                failures.append(f'{rel}:{line}: {type_id} no longer gets a skeleton: '
+                                + result['rejected'].get(type_id, 'unknown'))
+                continue
+            again = region_of(result['items'][type_id], d)
+            if version != GENERATOR or gate.digest_text(again.split('\n', 1)[1].rsplit(gate.END, 1)[0]) \
+                    != gate.digest_text(body):
+                failures.append(f'{rel}:{line}: regenerating {type_id} with {GENERATOR} differs from the committed '
+                                'region; regenerate it (skeletons.py --emit --in-place) in the same commit as the '
+                                'porter or plan change')
+    return failures
+
+
+def emit_main(args, universe):
+    types = emit_types(universe, args.emit)
+    if not types:
+        print('error: no deferred public class or interface matches', file=sys.stderr)
+        return 2
+    with tempfile.TemporaryDirectory(prefix='flint-skeleton-emit-') as directory:
+        scratch = Path(directory)
+        dropped, places = {}, {}
+        for _ in range(6):
+            result = emit(universe, args.helper, [t for t in types if t not in dropped], scratch,
+                          strip=args.strip_pending, log=lambda m: print(m, file=sys.stderr))
+            places.update((t, i['place']) for t, i in result['items'].items() if t not in places)
+            problems = compile_check(result, scratch)
+            if not problems or not any(found for _, _, _, found in problems):
+                break
+            # A type the errors point into (a stripped member its interface needs, a base constructor D lacks)
+            # stays out of the batch; every other type is generated again without it.
+            for _, compiler, _, found in problems:
+                for type_id, error in found.items():
+                    dropped.setdefault(type_id, f'does not compile ({compiler}): {error}')
+        result['rejected'].update(dropped)
+        kept = sorted(t for t in result['rejected'] if t in places and places[t][1].is_file()
+                      and any(found == t for _, _, _, found, _, _ in
+                              gate.regions(places[t][1].read_text(encoding='utf-8'))))
+        rows = rows_of(universe, result)
+        open_bodies = sorted(e for d in result['derived'].values() for e in d['bodies'])
+        summary = {'types': len(types), 'skeletons': len(result['derived']), 'modules': len(result['files']),
+                   'declared': sum(len(d['rows']) for d in result['derived'].values()),
+                   'openBodies': len(open_bodies), 'rows': sum(len(r) for r in rows.values()),
+                   'pending': sum(len(d['pending']) for d in result['derived'].values()),
+                   'rejected': dict(sorted(result['rejected'].items())),
+                   'compileErrors': [f'{m} ({c}): {e}' for m, c, e, _ in problems],
+                   'keptRegions': kept}
+        print(json.dumps(summary, indent=1))
+        if problems:
+            print('error: the skeletons do not compile; nothing written', file=sys.stderr)
+            return 1
+        if args.in_place:
+            refused = []
+            for (root, path), text in result['files'].items():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text, encoding='utf-8')
+            if not args.strip_pending:
+                print('note: a draft writes no mapping rows; emit with --strip-pending once the bodies are written '
+                      '(only that output lands)', file=sys.stderr)
+            for repo, repo_rows in (rows.items() if args.strip_pending else ()):
+                refused += merge_rows(ROOT / 'api' / repo / 'mapping.json', repo_rows)
+            if refused:
+                print('warning: hand rows left alone: ' + ', '.join(refused), file=sys.stderr)
+        else:
+            out = args.output
+            for (root, path), text in result['files'].items():
+                destination = out / path.relative_to(ROOT)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_text(text, encoding='utf-8')
+            for repo, repo_rows in rows.items():
+                (out / 'api' / repo).mkdir(parents=True, exist_ok=True)
+                (out / 'api' / repo / 'mapping-fragment.json').write_text(
+                    json.dumps({'elements': repo_rows}, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    return 0
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
@@ -819,6 +1320,14 @@ def main(argv=None):
     mode.add_argument('--compare', action='store_true')
     mode.add_argument('--render', metavar='TYPE', help='print the skeleton for one Java type id')
     mode.add_argument('--yield', dest='yield_', action='store_true', help='deferred types the rules can skeleton')
+    mode.add_argument('--emit', action='append', metavar='PACKAGE_OR_TYPE',
+                      help='generate the modules for these Java packages (their deferred public classes and '
+                      'interfaces) or type ids, together; repeatable')
+    parser.add_argument('--output', type=Path, help='with --emit: write the modules and mapping fragments under '
+                        'this new directory, at their repository paths')
+    parser.add_argument('--in-place', action='store_true', help='with --emit: write into the tree and api/*/mapping.json')
+    parser.add_argument('--strip-pending', action='store_true', help='with --emit: leave out every member whose body '
+                        'is not written; its row stays deferred (what lands on main)')
     parser.add_argument('--predict', action='store_true', help='with --yield: name unmapped pinned types by R1, '
                         'as if their skeletons were generated in the same batch')
     parser.add_argument('--json', type=Path)
@@ -826,6 +1335,12 @@ def main(argv=None):
     args = parser.parse_args(argv)
     universe = accessors.Universe(args.cache.resolve())
     universe.predict = args.predict and args.yield_
+    if args.emit:
+        if bool(args.output) == args.in_place:
+            parser.error('--emit needs exactly one of --output DIR and --in-place')
+        if args.output and args.output.exists():
+            parser.error(f'{args.output} exists; the output directory must be new')
+        return emit_main(args, universe)
     if args.render:
         project, tag, manifest_type = universe.types[args.render]
         job = {'project': project, 'tag': tag, 'type': args.render, 'kind': manifest_type['kind']}

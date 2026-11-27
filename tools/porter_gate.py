@@ -10,7 +10,8 @@
       compilers. A divergence fails unless api/porter-baseline.json lists it with a reason, and that list only
       shrinks; the reproduced count per shape only grows;
   (d) generated regions stay generated: each `// port:generated` region's digest must match its text outside the
-      `// port:body` regions.
+      `// port:body` regions, and no `// port:body` region anywhere may still hold its `assert(0)` placeholder: a
+      lane fills the body or emits with --strip-pending before landing (coordinator, 2026-11-27).
 
 The Java Beans shape (tools/port-spring/beans.py) derives boot's `@ConfigurationProperties` spec from the pinned
 sources. Each hand-spec field it reproduces exactly counts toward the `configuration-properties-field` shape, whose
@@ -25,6 +26,9 @@ The pure-bean shape (tools/port-spring/bean_types.py) derives whole classes made
 mechanical constructors, splices each over the hand class, compares its non-private API on DMD and LDC and its rows,
 and runs the owning package's tests. Its reproduced count is the `bean-class` floor, and its divergences are listed
 per type under "beanDivergences", which only shrinks.
+
+Committed skeleton regions (`port-skeleton/N`, skeletons.py --emit) are regenerated from the tree with the bodies
+their file holds, under (a).
 
 Skeleton mode (tools/port-spring/skeletons.py) declares every member of each hand-ported class and interface,
 derives the mechanical bodies and marks the rest, splices the skeleton over the hand type and compares each member's
@@ -130,6 +134,19 @@ def check_digests(files):
     return found, failures
 
 
+def check_placeholders(files):
+    """Every `// port:body` region still holding its placeholder: none may land on main."""
+    failures = []
+    for path in files:
+        text = path.read_text(encoding='utf-8', errors='replace')
+        if BODY.strip() not in text:
+            continue
+        for element in skeletons.placeholders(text):
+            failures.append(f'{path.relative_to(ROOT)}: the port:body region of {element} still holds its '
+                            'placeholder; write the body, or emit with --strip-pending to leave the member out')
+    return failures
+
+
 # ---- the corpus ----
 
 def load_json(path):
@@ -137,7 +154,8 @@ def load_json(path):
 
 
 def corpus(only=None):
-    """Every public top-level type whose exact type row is ported or adapted with a D symbol."""
+    """Every public top-level type whose exact type row is ported or adapted with a D symbol by hand: a row with
+    porter provenance (`generated`) is the porter's own output, not evidence it reproduces a lane."""
     pins = {(u['project'], u['version']): u for u in load_json(ROOT / 'api' / 'upstreams.json')['upstreams']}
     classifiers = {p.parent.name: Classifier(load_json(p)['elements']) for p in (ROOT / 'api').glob('*/mapping.json')}
     jobs = []
@@ -151,7 +169,8 @@ def corpus(only=None):
             if t.get('visibility') != 'public' or t['kind'] == 'record' or (only and t['id'] not in only):
                 continue
             found = classifier.classify(t['id'])
-            if not found or found[0] != t['id'] or found[1]['status'] not in ('ported', 'adapted'):
+            if not found or found[0] != t['id'] or found[1]['status'] not in ('ported', 'adapted') \
+                    or found[1].get('generated'):
                 continue
             symbol = found[1].get('d')
             if not symbol or '.' not in symbol:
@@ -882,6 +901,7 @@ def gate(args):
     flint, helper, cache = args.flint.resolve(), args.helper.resolve(), args.cache.resolve()
     files = tracked_d_files()
     found, failures = check_digests(files)
+    failures += check_placeholders(files)
     report = {'regions': len(found)}
     if args.digests_only:
         return report, failures
@@ -896,7 +916,12 @@ def gate(args):
         index = module_index(import_roots())
         modules = {path: module for module, places in index.items() for _, path in places}
         modules.update({job['type']: job['module'] for job in corpus()})
-        failures += regenerate(flint, helper, cache, found, modules)
+        failures += regenerate(flint, helper, cache, [f for f in found if not f[2].startswith('port-skeleton/')],
+                               modules)
+        skeleton_regions = [f for f in found if f[2].startswith('port-skeleton/')]
+        if skeleton_regions:
+            (scratch / 'regenerate').mkdir()
+            failures += skeletons.regenerate(accessors.Universe(cache), helper, skeleton_regions, scratch / 'regenerate')
         results = reproduce(jobs, first, flint, helper, cache, not args.no_tests, scratch)
         report['blocked'] = dict(BLOCKED)
         summary = summarise(jobs, results)

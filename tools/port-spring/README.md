@@ -135,6 +135,33 @@ python3 tools/port-spring/skeletons.py ... --render org.springframework.transact
 python3 tools/port-spring/skeletons.py ... --yield      # deferred classes and interfaces the rules can declare
 ```
 
+#### Emit mode: modules lanes fill and land
+
+`--emit` generates the D modules for a batch of Java packages (their deferred public classes and interfaces) or type ids, all together:
+
+```sh
+python3 tools/port-spring/skeletons.py ... --emit org.springframework.util --emit org.springframework.core --output .flint/draft
+python3 tools/port-spring/skeletons.py ... --emit org.springframework.util --in-place                  # a draft in the tree
+python3 tools/port-spring/skeletons.py ... --emit org.springframework.util --in-place --strip-pending  # what lands
+```
+
+How a batch is built:
+- **Names.** Each type is named by R1, so a type in the batch can use another before either lands. A type the batch can't generate loses its predicted name, and the types that use it drop out with it.
+- **Destination.** Each type goes into its package's D module. That's an existing module's file (a type it already declares by hand is refused: map its rows instead), or a new file in the source root of the nearest parent module, written as `package.d` when the module has children. A new file carries the first Java file's header, the `Ported from` marker naming every source file, the licence line and the modification notice. Only `port-source` upstreams are accepted.
+- **Regions.** Each type is one `// port:generated port-skeleton/1 <upstream> <type> sha256:<digest>` region. Re-emitting replaces the regions and keeps every body a lane wrote between its `port:body` markers. Missing selective imports go after the module's existing imports.
+- **Dependencies.** A type needing a module its DUB package doesn't depend on is refused.
+- **D facts.** Base constructors, the base chain's members and which interfaces declare `Defaults` are read with the batch's own output overlaid. The derivation repeats until the output stops changing, so regenerating from the committed tree gives the same text.
+- **Compile check.** Every emitted module is compiled against its package on DMD and LDC. A type that compile errors point into is left out and the batch generated again. Nothing is written while an error remains.
+
+Placeholders never land (coordinator, 2026-11-27). A draft holds `assert(0)` placeholders and writes no mapping rows. Once the lane has written the bodies it can, `--strip-pending` leaves out every member whose body is still a placeholder and lists it as `// port:pending <element>: the body is not written yet (--strip-pending)`. That member's row stays deferred, the way hand ports treat unported members:
+- If every constructor of a class is left out, the class gets `@disable this();`, since D's implicit constructor would be API that Java doesn't have.
+- An unwritten R3 default leaves the interface along with its `Defaults` body.
+- A class that no longer compiles because of a stripped member (an interface method it must implement) is left out. Its draft region stays and is reported under `keptRegions` until its bodies are written.
+
+Then `--in-place` writes the rows for every declared element whose body is derived or written. Each row carries `"generated": "port-skeleton/1"`. A hand row that is ported or adapted is never replaced. The gate's corpus skips rows with porter provenance, so generated types never count as reproducing themselves.
+
+The porter gate fails on any `port:body` region that still holds its placeholder, anywhere in the tree (this also runs with `--digests-only`). It regenerates every committed `port-skeleton` region from the tree with the bodies its file holds, and fails on any difference.
+
 `tools/port_plan.py --seed` writes `api/port-plan/<project>-<version>.json` from the mapped type rows and the hand ports' D kinds, keeping entries a lane already edited; `--check` validates the plans against the manifests and mapping rows.
 
 ## Verification
