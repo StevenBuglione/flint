@@ -360,6 +360,27 @@ class QuietWindow(unittest.TestCase):
                 with contextlib.suppress(ProcessLookupError):
                     os.kill(launcher, 9)
 
+    def test_a_child_of_the_merge_train_is_never_frozen(self):
+        """2026-11-27: the train's regeneration (tools/api_differences.py) is a busy project tool under merge_train.py."""
+        import shlex
+        with tempfile.TemporaryDirectory() as directory:
+            d = Path(directory)
+            (d / 'tools').mkdir()
+            (d / 'tools' / 'merge_train.py').write_text(
+                'import subprocess, sys\nsubprocess.run([sys.executable, "-c", "import time\\nend = time.time() + 60\\n'
+                'while time.time() < end: pass"])\n')
+            pidfile = d / 'pid'
+            subprocess.run(['sh', '-c', f'cd {shlex.quote(str(d))} && setsid {shlex.quote(sys.executable)} tools/merge_train.py '
+                                        f'> /dev/null 2>&1 < /dev/null & echo $! > {shlex.quote(str(pidfile))}'], check=True)
+            train = int(pidfile.read_text())
+            try:
+                time.sleep(0.5)
+                child = next(int(p) for p in os.listdir('/proc') if p.isdigit() and measure_queue.live_parent(int(p)) == train)
+                self.assertIn('child of a coordination process', measure_queue.Freezer.protected(child))
+            finally:
+                with contextlib.suppress(ProcessLookupError):
+                    os.killpg(train, 9)
+
     def test_an_idle_python_daemon_is_never_frozen(self):
         with tempfile.TemporaryDirectory() as directory:
             idle = self.detached_tool(directory, busy=False)

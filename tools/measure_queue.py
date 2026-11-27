@@ -429,6 +429,14 @@ class Freezer:
             return 'a descendant of the watcher'
         if coordination_process(pid):
             return 'a coordination process (agentctl, the merge train, the measure queue)'
+        # Their children too: the merge train's regeneration (python3 tools/api_differences.py --write) and git are
+        # short project tools on venus, and freezing them would stall the train for a whole window.
+        chain, seen = live_parent(pid), set()
+        while chain > 1 and chain not in seen:
+            if coordination_process(chain):
+                return 'a child of a coordination process (the merge train or agentctl)'
+            seen.add(chain)
+            chain = live_parent(chain)
         return None
 
     def candidates(self):
