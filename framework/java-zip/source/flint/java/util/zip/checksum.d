@@ -36,6 +36,10 @@ interface Checksum
     /// Update with the low eight bits of the specified value.
     void update(int value);
 
+    /// Update with every byte of the array. A null array is empty under R26 (Java's array form is the
+    /// same call with a whole-array slice in D).
+    void update(scope const(byte)[] data);
+
     /// Return the accumulated checksum.
     long getValue();
 
