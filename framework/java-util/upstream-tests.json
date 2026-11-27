@@ -1757,14 +1757,17 @@
     },
     "java/util/StringTokenizer/FormFeed.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the StringTokenizer specification and Temurin parity.",
       "status": "deferred"
     },
     "java/util/StringTokenizer/ResetPos.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the StringTokenizer specification and Temurin parity.",
       "status": "deferred"
     },
     "java/util/StringTokenizer/Supplementary.java": {
       "phase": "2",
+      "reason": "Upstream jtreg file is GPL-2.0-only without the Classpath Exception. Original Flint tests cover the StringTokenizer specification and Temurin parity.",
       "status": "deferred"
     },
     "java/util/TimeZone/AIXTzMappingTest.java": {
