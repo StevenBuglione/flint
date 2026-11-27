@@ -565,6 +565,11 @@ def main():
         # structural output stays as tests/test_flint_cli.py pins it.
         import definition_of_done
         sys.exit(definition_of_done.main(sys.argv[1:]))
+    argv=sys.argv[1:]
+    if any(argv[i:i+2]==['--gate','porter'] for i in range(len(argv))) or '--gate=porter' in argv:
+        # The mechanical porter's correctness gate (docs/spring/phase2/porter-plan.md) has its own options.
+        import porter_gate
+        sys.exit(porter_gate.main([x for i,x in enumerate(argv) if x!='--gate=porter' and not (x=='--gate' and argv[i+1:i+2]==['porter']) and not (x=='porter' and argv[i-1:i]==['--gate'])]))
     ap=argparse.ArgumentParser();ap.add_argument('--package',action='append',choices=sorted(P));ap.add_argument('--gate',choices=['structural','baseline','all','api','spring'],required=True)
     ap.add_argument('--flint',type=Path,default=ROOT/'.flint'/'bin'/'flint',help='api gate: the flint executable (default: .flint/bin/flint)')
     ap.add_argument('--release',action='store_true',help='api gate: require every element classified, not just the baseline ratchet')
