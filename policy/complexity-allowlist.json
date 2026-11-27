@@ -172,6 +172,15 @@
     "file": "src/java.base/share/classes/java/util/zip/ZipEntry.java",
     "method": "setExtra0"
    }
+  },
+  {
+   "file": "framework/java/source/flint/java/internal/math/floatingdecimal.d",
+   "function": "parseHex",
+   "upstream": {
+    "project": "openjdk",
+    "file": "src/java.base/share/classes/jdk/internal/math/FloatingDecimal.java",
+    "method": "parseHexString"
+   }
   }
  ]
 }
