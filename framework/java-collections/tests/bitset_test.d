@@ -51,6 +51,48 @@ unittest
     assert(digest == 1_829_912_657);
 }
 
+@("xor toggles shared bits and follows Java capacity growth")
+unittest
+{
+    auto bits = BitSet.valueOf([long.min, 1L, 0L]);
+    auto mask = BitSet.valueOf([-1L, 0L, 1L]);
+    assertThrown!NullPointerException(bits.xor(null));
+    assert(bits.size() == 128 && bits.cardinality() == 2);
+    bits.xor(mask);
+    assert(bits.size() == 256 && bits.length() == 129 && bits.cardinality() == 65);
+    assert(bits.toLongArray() == [long.max, 1L, 1L]);
+    assert(mask.size() == 192 && mask.toLongArray() == [-1L, 0L, 1L]);
+    bits.xor(bits);
+    assert(bits.isEmpty() && bits.size() == 256 && bits.length() == 0);
+    bits.xor(new BitSet());
+    assert(bits.isEmpty() && bits.size() == 256);
+}
+
+@("xor agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    auto left = new BitSet();
+    auto right = new BitSet();
+    uint state = 0x2c9f_4e17;
+    uint digest;
+    foreach (step; 0 .. 512)
+    {
+        state = state * 1_664_525 + 1_013_904_223;
+        if ((step & 15) == 0)
+            left.clear();
+        if ((step & 7) == 0)
+            right.clear();
+        left.flip(cast(int)((state >> 13) & 255));
+        right.flip(cast(int)((state >> 19) & 511));
+        left.xor((step & 3) == 0 ? left : right);
+        foreach (value; [left.size(), left.length(), left.cardinality()])
+            digest = 31 * digest + cast(uint) value;
+        foreach (word; left.toLongArray())
+            digest = 31 * digest + cast(uint)(word ^ (word >>> 32));
+    }
+    assert(digest == 459_675_020);
+}
+
 @("valueOf copies signed words and trims trailing zero capacity")
 unittest
 {
