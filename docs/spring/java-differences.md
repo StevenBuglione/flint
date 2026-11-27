@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,181 | 370 | 1,871 | 14,999 |
+| framework | openjdk@21.0.13 | 1,199 | 381 | 1,871 | 14,970 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2648,6 +2648,22 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.function.IntSupplier` | `flint.java.util.function_.intsupplier.IntSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.LongSupplier` | `flint.java.util.function_.longsupplier.LongSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.Supplier` | `flint.java.util.function_.supplier.Supplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+
+#### java.util.random
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.util.random.RandomGenerator#isDeprecated()` | `flint.java.util.random.RandomGenerator.isDeprecated` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator#nextBoolean()` | `flint.java.util.random.RandomGenerator.nextBoolean` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator#nextBytes(byte[])` | `flint.java.util.random.RandomGenerator.nextBytes` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.random.RandomGenerator#nextDouble()` | `flint.java.util.random.RandomGenerator.nextDouble` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator#nextFloat()` | `flint.java.util.random.RandomGenerator.nextFloat` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator#nextInt()` | `flint.java.util.random.RandomGenerator.nextInt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator#copyAndJump(double)` | `flint.java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator.copyAndJump` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator#jump()` | `flint.java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator.jump` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator#leap()` | `flint.java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator.leap` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.JumpableGenerator#copyAndJump()` | `flint.java.util.random.RandomGenerator.JumpableGenerator.copyAndJump` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.LeapableGenerator#copyAndLeap()` | `flint.java.util.random.RandomGenerator.LeapableGenerator.copyAndLeap` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 
 #### java.util.regex
 
@@ -10592,7 +10608,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
 | java.util.jar | 0 | 101 |
-| java.util.random | 96 | 0 |
+| java.util.random | 67 | 0 |
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
