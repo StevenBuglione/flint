@@ -185,7 +185,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 515 | 28 | 1 | 2,751 |
+| framework | jackson-core@3.1.8 | 529 | 28 | 1 | 2,737 |
 | framework | jackson-databind@3.1.8 | 511 | 137 | 5 | 9,814 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,148 | 357 | 1,871 | 15,045 |
+| framework | openjdk@21.0.13 | 1,244 | 419 | 1,871 | 14,887 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 88 | 11,744 |
@@ -216,6 +216,8 @@ These elements keep Spring's signature, but their behaviour is not complete yet;
 | framework | `java.math.BigInteger` | `flint.java.math.BigInteger` | A null byte-array argument counts as empty under R26. Java throws NullPointerException. |
 | framework | `java.math.RoundingMode` | `flint.java.math.roundingmode.RoundingMode` | A null name counts as empty text under R26. Java throws NullPointerException. |
 | framework | `java.nio.ByteBuffer#asCharBuffer()` | `flint.java.nio.bytebuffer.ByteBuffer.asCharBuffer` | Final in Flint because construction is package-internal in both Java and Flint. |
+| framework | `java.nio.file.InvalidPathException` | `flint.java.nio.file.InvalidPathException` | Null input and reason strings count as empty under R26. |
+| framework | `java.nio.file.Path` | `flint.java.nio.file.Path` | Lexical contract. Path inheritance from Comparable<Path>, Iterable<Path> and Watchable is deferred to Phase 2 with compareTo, iterator and register. Provider equality and hashing are also deferred to Phase 2. Null strings and an array of additional parts that is null count as empty under R26. |
 | framework | `java.time.zone.ZoneOffsetTransitionRule.TimeDefinition` | `flint.java.time.zone.zoneoffsettransitionrule.ZoneOffsetTransitionRule.TimeDefinition` | A null name counts as empty (R26). Java throws NullPointerException. |
 | framework | `java.util.DuplicateFormatFlagsException#getMessage()` | `flint.java.util.formatter.DuplicateFormatFlagsException.getMessage` | Inherits RuntimeException.getMessage; the duplicate flag is recorded in the constructor. |
 | framework | `java.util.FormatFlagsConversionMismatchException#getMessage()` | `flint.java.util.formatter.FormatFlagsConversionMismatchException.getMessage` | Inherits RuntimeException.getMessage; the constructor records the diagnostic. |
@@ -2263,6 +2265,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `java.io.ByteArrayInputStream#<init>(byte[])` | `flint.java.io.ByteArrayInputStream.this` | [R26](api-mapping.md#r26-null-arrays) | Uses the caller's backing array as an unsigned byte slice. A null slice counts as an empty array under R26. |
 | `java.io.IOException` | `flint.java.io.IOException` | [R8](api-mapping.md#r8-exceptions) | Uses the D checked-exception hierarchy. The merged constructor represents omitted and explicit null causes identically under R8. The checked family currently lacks initCause. |
+| `java.io.InputStream#read(byte[],int,int)` | `flint.java.io.InputStream.read` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | Java byte arrays use D ubyte slices. A null slice counts as an empty array under R26. |
+| `java.io.InputStream#skip(long)` | `flint.java.io.InputStream.skip` | [R8](api-mapping.md#r8-exceptions) |  |
 | `java.io.InterruptedIOException` | `flint.java.io.interruptedioexception.InterruptedIOException` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptedIOException from flint.java.io.interruptedioexception until the java.io aggregate re-exports it. |
 | `java.io.OutputStream#write(byte[])` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) | Unsigned D slices preserve the byte payload. A null slice counts as an empty array. |
 | `java.io.OutputStream#write(byte[],int,int)` | `flint.java.io.OutputStream.write` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2299,6 +2303,20 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.UnsupportedOperationException#<init>(String)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.UnsupportedOperationException#<init>(String,Throwable)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 
+#### java.lang.annotation
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.lang.annotation.Documented` | `flint.java.lang.annotation.Documented` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Inherited` | `flint.java.lang.annotation.Inherited` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Native` | `flint.java.lang.annotation.Native` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Repeatable` | `flint.java.lang.annotation.Repeatable` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Repeatable#value` | `flint.java.lang.annotation.Repeatable.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
+| `java.lang.annotation.Retention` | `flint.java.lang.annotation.Retention` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Retention#value` | `flint.java.lang.annotation.Retention.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Target` | `flint.java.lang.annotation.Target` | [R2](api-mapping.md#r2-annotations) |  |
+| `java.lang.annotation.Target#value` | `flint.java.lang.annotation.Target.value` | [R2](api-mapping.md#r2-annotations) |  |
+
 #### java.math
 
 | Java | Flint | Rules | Note |
@@ -2307,6 +2325,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.math.BigInteger#<init>(byte[],int,int)` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.math.BigInteger#<init>(int,byte[])` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.math.BigInteger#<init>(int,byte[],int,int)` | `flint.java.math.biginteger.BigInteger.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.math.BigInteger#divideAndRemainder(BigInteger)` | `flint.java.math.biginteger.BigInteger.divideAndRemainder` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.math.BigInteger#equals(Object)` | `flint.java.math.biginteger.BigInteger.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.math.BigInteger#hashCode()` | `flint.java.math.biginteger.BigInteger.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.math.BigInteger#toString()` | `flint.java.math.biginteger.BigInteger.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -2321,6 +2340,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `java.net.URI` | `flint.java.net.URI` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable D struct holds the original URI text and is copied by value. |
 | `java.net.URI#getScheme()` | `flint.java.net.URI.getScheme` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null string denotes an absent scheme. Every present scheme is nonempty. |
+| `java.net.URLDecoder` | `flint.java.net.urldecoder.URLDecoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.urldecoder : URLDecoder. Null string inputs and charset names are treated as empty. |
+| `java.net.URLDecoder#decode(String)` | `flint.java.net.urldecoder.URLDecoder.decode` | [R2](api-mapping.md#r2-annotations), [R26](api-mapping.md#r26-null-arrays), [D-NET-2](api-mapping.md#deviations) | Deprecated. Uses the UTF-8 platform default. |
+| `java.net.URLDecoder#decode(String,Charset)` | `flint.java.net.urldecoder.URLDecoder.decode` | [R26](api-mapping.md#r26-null-arrays), [R5](api-mapping.md#r5-optional-and-nullable-values) | Charset.init represents an absent charset and raises NullPointerException. |
+| `java.net.URLDecoder#decode(String,String)` | `flint.java.net.urldecoder.URLDecoder.decode` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | An empty, illegal or unsupported charset name raises UnsupportedEncodingException. |
+| `java.net.URLEncoder` | `flint.java.net.urlencoder.URLEncoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.urlencoder : URLEncoder. Null string inputs and charset names are treated as empty. |
+| `java.net.URLEncoder#encode(String)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R2](api-mapping.md#r2-annotations), [R26](api-mapping.md#r26-null-arrays), [D-NET-2](api-mapping.md#deviations) | Deprecated. Uses the UTF-8 platform default. |
+| `java.net.URLEncoder#encode(String,Charset)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R26](api-mapping.md#r26-null-arrays), [R5](api-mapping.md#r5-optional-and-nullable-values) | Charset.init represents an absent charset and raises NullPointerException. |
+| `java.net.URLEncoder#encode(String,String)` | `flint.java.net.urlencoder.URLEncoder.encode` | [R26](api-mapping.md#r26-null-arrays), [R8](api-mapping.md#r8-exceptions) | An empty, illegal or unsupported charset name raises UnsupportedEncodingException. |
 
 #### java.nio
 
@@ -2365,14 +2392,44 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.InvalidMarkException` | `flint.java.nio.invalidmarkexception.InvalidMarkException` | [R1](api-mapping.md#r1-packages-and-names) | Import the exception from flint.java.nio.invalidmarkexception. It extends the canonical Java IllegalStateException. |
 | `java.nio.ReadOnlyBufferException` | `flint.java.nio.readonlybufferexception.ReadOnlyBufferException` | [R1](api-mapping.md#r1-packages-and-names) | Import the exception from flint.java.nio.readonlybufferexception. It extends the canonical Java UnsupportedOperationException. |
 
+#### java.nio.channels
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.nio.channels.ByteChannel` | `flint.java.nio.channels.bytechannel.ByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import ByteChannel from flint.java.nio.channels.bytechannel. |
+| `java.nio.channels.Channel` | `flint.java.nio.channels.channel.Channel` | [R1](api-mapping.md#r1-packages-and-names) | Import Channel from flint.java.nio.channels.channel. |
+| `java.nio.channels.CompletionHandler` | `flint.java.nio.channels.completionhandler.CompletionHandler` | [R1](api-mapping.md#r1-packages-and-names) | Import CompletionHandler from flint.java.nio.channels.completionhandler. |
+| `java.nio.channels.GatheringByteChannel` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import GatheringByteChannel from flint.java.nio.channels.gatheringbytechannel. A null ByteBuffer[] slice counts as empty under R26. |
+| `java.nio.channels.GatheringByteChannel#write(ByteBuffer[])` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel.write` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.channels.GatheringByteChannel#write(ByteBuffer[],int,int)` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel.write` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.channels.InterruptibleChannel` | `flint.java.nio.channels.interruptiblechannel.InterruptibleChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptibleChannel from flint.java.nio.channels.interruptiblechannel. |
+| `java.nio.channels.ReadableByteChannel` | `flint.java.nio.channels.readablebytechannel.ReadableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import ReadableByteChannel from flint.java.nio.channels.readablebytechannel. |
+| `java.nio.channels.ScatteringByteChannel` | `flint.java.nio.channels.scatteringbytechannel.ScatteringByteChannel` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import ScatteringByteChannel from flint.java.nio.channels.scatteringbytechannel. A null ByteBuffer[] slice counts as empty under R26. |
+| `java.nio.channels.ScatteringByteChannel#read(ByteBuffer[])` | `flint.java.nio.channels.scatteringbytechannel.ScatteringByteChannel.read` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.channels.ScatteringByteChannel#read(ByteBuffer[],int,int)` | `flint.java.nio.channels.scatteringbytechannel.ScatteringByteChannel.read` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.channels.SeekableByteChannel` | `flint.java.nio.channels.seekablebytechannel.SeekableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import SeekableByteChannel from flint.java.nio.channels.seekablebytechannel. |
+| `java.nio.channels.WritableByteChannel` | `flint.java.nio.channels.writablebytechannel.WritableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import WritableByteChannel from flint.java.nio.channels.writablebytechannel. |
+
 #### java.nio.charset
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.nio.charset.CoderResult` | `flint.java.nio.charset.coderresult.CoderResult` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) | Import CoderResult from flint.java.nio.charset.coderresult. Represented as an R15 value struct whose value equality over (kind, length) stands in for Java's cached instance identity. The default value is UNDERFLOW. |
+| `java.nio.charset.CoderResult#OVERFLOW` | `flint.java.nio.charset.coderresult.CoderResult.OVERFLOW` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.charset.CoderResult#UNDERFLOW` | `flint.java.nio.charset.coderresult.CoderResult.UNDERFLOW` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction` | `flint.java.nio.charset.codingerroraction.CodingErrorAction` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) | Import CodingErrorAction from flint.java.nio.charset.codingerroraction. Uses three distinct private tags so R15 value equality preserves Java's identity semantics. The default value is REPORT. |
 | `java.nio.charset.CodingErrorAction#IGNORE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.IGNORE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction#REPLACE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.REPLACE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction#REPORT` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.REPORT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+
+#### java.nio.file
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.nio.file.InvalidPathException#<init>(String,String)` | `flint.java.nio.file.InvalidPathException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.file.InvalidPathException#<init>(String,String,int)` | `flint.java.nio.file.InvalidPathException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.file.InvalidPathException#getMessage()` | `flint.java.nio.file.InvalidPathException.getMessage` | [D-JDK-3](api-mapping.md#deviations) |  |
+| `java.nio.file.Path#of(String,String...)` | `flint.java.nio.file.Path.of` | [R7](api-mapping.md#r7-overloads), [R26](api-mapping.md#r26-null-arrays) |  |
 
 #### java.sql
 
@@ -2548,12 +2605,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.HashSet#toArray()` | `flint.java.util.HashSet.toArray` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `java.util.HexFormat` | `flint.java.util.hexformat.HexFormat` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.hexformat; flint.java.util does not re-export it until the JDK aggregate exists. Under R26, null text and byte-array slices behave as empty inputs. Java throws NullPointerException. |
 | `java.util.HexFormat#delimiter()` | `flint.java.util.hexformat.HexFormat.delimiter` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.HexFormat#equals(Object)` | `flint.java.util.hexformat.HexFormat.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.HexFormat#formatHex(byte[])` | `flint.java.util.hexformat.HexFormat.formatHex` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#formatHex(byte[],int,int)` | `flint.java.util.hexformat.HexFormat.formatHex` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#fromHexDigits(CharSequence)` | `flint.java.util.hexformat.HexFormat.fromHexDigits` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#fromHexDigits(CharSequence,int,int)` | `flint.java.util.hexformat.HexFormat.fromHexDigits` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#fromHexDigitsToLong(CharSequence)` | `flint.java.util.hexformat.HexFormat.fromHexDigitsToLong` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#fromHexDigitsToLong(CharSequence,int,int)` | `flint.java.util.hexformat.HexFormat.fromHexDigitsToLong` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.HexFormat#hashCode()` | `flint.java.util.hexformat.HexFormat.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.HexFormat#ofDelimiter(String)` | `flint.java.util.hexformat.HexFormat.ofDelimiter` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#parseHex(CharSequence)` | `flint.java.util.hexformat.HexFormat.parseHex` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#parseHex(CharSequence,int,int)` | `flint.java.util.hexformat.HexFormat.parseHex` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R8](api-mapping.md#r8-exceptions), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2565,6 +2624,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.HexFormat#toHexDigits(long)` | `flint.java.util.hexformat.HexFormat.toHexDigits` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#toHexDigits(long,int)` | `flint.java.util.hexformat.HexFormat.toHexDigits` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.util.HexFormat#toHexDigits(short)` | `flint.java.util.hexformat.HexFormat.toHexDigits` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.util.HexFormat#toString()` | `flint.java.util.hexformat.HexFormat.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.HexFormat#withDelimiter(String)` | `flint.java.util.hexformat.HexFormat.withDelimiter` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#withPrefix(String)` | `flint.java.util.hexformat.HexFormat.withPrefix` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.HexFormat#withSuffix(String)` | `flint.java.util.hexformat.HexFormat.withSuffix` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2618,8 +2678,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Properties#getProperty(String,String)` | `flint.java.util.Properties.getProperty` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Properties#load(InputStream)` | `flint.java.util.Properties.load` | [R14](api-mapping.md#r14-strings-and-text) | Decodes ISO-8859-1 and leaves the stream open. An isolated UTF-16 surrogate escape becomes U+FFFD in the D UTF-8 string. |
 | `java.util.Properties#setProperty(String,String)` | `flint.java.util.Properties.setProperty` | [R23](api-mapping.md#r23-object-typed-values), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.Random#nextBytes(byte[])` | `flint.java.util.random.random.Random.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.SplittableRandom#nextBytes(byte[])` | `flint.java.util.splittablerandom.SplittableRandom.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.StringJoiner` | `flint.java.util.stringjoiner.StringJoiner` | [R1](api-mapping.md#r1-packages-and-names) | Import the leaf flint.java.util.stringjoiner. Null separator, framing and empty-value slices count as empty under R26. |
 | `java.util.StringJoiner#<init>(CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.StringJoiner#<init>(CharSequence,CharSequence,CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2627,6 +2689,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.StringJoiner#length()` | `flint.java.util.stringjoiner.StringJoiner.length` | [R14](api-mapping.md#r14-strings-and-text) |  |
 | `java.util.StringJoiner#setEmptyValue(CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.setEmptyValue` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.StringJoiner#toString()` | `flint.java.util.stringjoiner.StringJoiner.toString` | [R11](api-mapping.md#r11-object-identity-and-equality), [R14](api-mapping.md#r14-strings-and-text) |  |
+| `java.util.StringTokenizer` | `flint.java.util.stringtokenizer.StringTokenizer` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import the leaf flint.java.util.stringtokenizer. Positions are UTF-8 offsets and delimiters match whole code points. A null string or delimiter set counts as empty under R26, where Java throws NullPointerException. |
+| `java.util.StringTokenizer#<init>(String)` | `flint.java.util.stringtokenizer.StringTokenizer.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.StringTokenizer#<init>(String,String)` | `flint.java.util.stringtokenizer.StringTokenizer.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.StringTokenizer#<init>(String,String,boolean)` | `flint.java.util.stringtokenizer.StringTokenizer.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.StringTokenizer#nextElement()` | `flint.java.util.stringtokenizer.StringTokenizer.nextElement` | [R23](api-mapping.md#r23-object-typed-values) | Returns the String token as Any. |
+| `java.util.StringTokenizer#nextToken(String)` | `flint.java.util.stringtokenizer.StringTokenizer.nextToken` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.UUID` | `flint.java.util.uuid.UUID` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.util.uuid; flint.java.util does not re-export it until the JDK aggregate exists. |
 | `java.util.UUID#equals(Object)` | `flint.java.util.uuid.UUID.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.util.UUID#hashCode()` | `flint.java.util.uuid.UUID.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -2694,6 +2762,22 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.function.IntSupplier` | `flint.java.util.function_.intsupplier.IntSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.LongSupplier` | `flint.java.util.function_.longsupplier.LongSupplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
 | `java.util.function.Supplier` | `flint.java.util.function_.supplier.Supplier` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R9](api-mapping.md#r9-functional-interfaces) |  |
+
+#### java.util.random
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.util.random.RandomGenerator#isDeprecated()` | `flint.java.util.random.RandomGenerator.isDeprecated` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator#nextBoolean()` | `flint.java.util.random.RandomGenerator.nextBoolean` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator#nextBytes(byte[])` | `flint.java.util.random.RandomGenerator.nextBytes` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.util.random.RandomGenerator#nextDouble()` | `flint.java.util.random.RandomGenerator.nextDouble` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator#nextFloat()` | `flint.java.util.random.RandomGenerator.nextFloat` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator#nextInt()` | `flint.java.util.random.RandomGenerator.nextInt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator#copyAndJump(double)` | `flint.java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator.copyAndJump` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator#jump()` | `flint.java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator.jump` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator#leap()` | `flint.java.util.random.RandomGenerator.ArbitrarilyJumpableGenerator.leap` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.JumpableGenerator#copyAndJump()` | `flint.java.util.random.RandomGenerator.JumpableGenerator.copyAndJump` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.random.RandomGenerator.LeapableGenerator#copyAndLeap()` | `flint.java.util.random.RandomGenerator.LeapableGenerator.copyAndLeap` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 
 #### java.util.regex
 
@@ -10652,19 +10736,19 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 772 | 0 |
-| java.lang | 1,985 | 0 |
-| java.lang.annotation | 43 | 0 |
+| java.io | 770 | 0 |
+| java.lang | 1,983 | 0 |
+| java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
-| java.math | 137 | 0 |
-| java.net | 817 | 0 |
+| java.math | 133 | 0 |
+| java.net | 809 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 229 | 0 |
-| java.nio.channels | 0 | 332 |
+| java.nio.channels | 0 | 306 |
 | java.nio.channels.spi | 0 | 53 |
-| java.nio.charset | 98 | 0 |
+| java.nio.charset | 86 | 0 |
 | java.nio.charset.spi | 0 | 4 |
-| java.nio.file | 285 | 0 |
+| java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 137 | 0 |
 | java.nio.file.spi | 0 | 35 |
 | java.security | 663 | 0 |
@@ -10679,13 +10763,13 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,874 | 0 |
+| java.util | 1,847 | 0 |
 | java.util.concurrent | 1,236 | 0 |
-| java.util.concurrent.atomic | 285 | 0 |
+| java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
 | java.util.jar | 0 | 101 |
-| java.util.random | 96 | 0 |
+| java.util.random | 67 | 0 |
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
@@ -11177,7 +11261,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | tools.jackson.core.filter | 183 | 0 |
 | tools.jackson.core.io | 277 | 0 |
 | tools.jackson.core.io.schubfach | 34 | 0 |
-| tools.jackson.core.json | 467 | 0 |
+| tools.jackson.core.json | 453 | 0 |
 | tools.jackson.core.json.async | 168 | 0 |
 | tools.jackson.core.sym | 147 | 0 |
 | tools.jackson.core.tree | 2 | 0 |
@@ -11546,9 +11630,11 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.ByteArrayInputStream#markSupported()` | 2 | Missing query that always returns true for a byte-array source. |
 | framework | `java.io.ByteArrayInputStream#pos` | 2 | Subclasses do not have the protected current read index. |
 | framework | `java.io.ByteArrayInputStream#read()` | 2 | Sequential unsigned reads and EOF match Java. Synchronization on the stream monitor is pending. |
+| framework | `java.io.ByteArrayInputStream#read(byte[],int,int)` | 2 | Sequential bounds, EOF and aliased buffers are covered. Java acquires the stream monitor. Flint's current implementation lacks that synchronization. Same R26 array semantics as the constructor. |
 | framework | `java.io.ByteArrayInputStream#readAllBytes()` | 2 | Java copies the remaining bytes under the stream monitor and advances to EOF without calling a subclass read override. The inherited Flint implementation calls the virtual bulk read without holding that monitor. |
 | framework | `java.io.ByteArrayInputStream#readNBytes(byte[],int,int)` | 2 | Missing byte-array override that converts EOF from the ranged read into a zero byte count. |
 | framework | `java.io.ByteArrayInputStream#reset()` | 2 | Missing synchronized restoration to the last mark. The initial mark is zero or the ranged constructor offset. |
+| framework | `java.io.ByteArrayInputStream#skip(long)` | 2 | Sequential skips advance the correct number of bytes. Java acquires the stream monitor. Flint's current implementation lacks that synchronization. |
 | framework | `java.io.ByteArrayInputStream#transferTo(OutputStream)` | 2 | Missing transfer of remaining bytes in bounded ranged writes. Java 21 holds the monitor, advances after each successful write, and returns zero at EOF before using the sink. Flint will call the sink outside the monitor so reactor fibers can suspend safely. |
 | framework | `java.io.ByteArrayOutputStream#<init>()` | 2 | Java initializes a protected 32-byte buffer and zero count. The existing facade starts with an empty private slice. |
 | framework | `java.io.ByteArrayOutputStream#<init>(int)` | 2 | The explicit initial capacity constructor is missing, including rejection of negative capacity. |
@@ -11712,6 +11798,23 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.lang.StringBuffer#append(char[],int,int)` | 2 | Requires synchronized append of a checked UTF-16 offset and count (R14), including overflow rejection, and return of the original buffer. |
 | framework | `java.lang.StringBuffer#length()` | 2 | Requires synchronized access to the length in UTF-16 code units (R14), used by format field offsets. |
 | framework | `java.lang.StringBuffer#toString()` | 2 | Requires a synchronized immutable snapshot of the buffer text. |
+| framework | `java.lang.annotation.Annotation` | 2 | Runtime annotation interface waits on the RuntimeClassRef annotationType() and R22 runtime sibling contract. |
+| framework | `java.lang.annotation.Annotation#annotationType()` | 2 | Waits on the Annotation runtime contract (R4 RuntimeClassRef). |
+| framework | `java.lang.annotation.Annotation#equals(Object)` | 2 | Waits on the Annotation runtime contract. |
+| framework | `java.lang.annotation.Annotation#hashCode()` | 2 | Waits on the Annotation runtime contract. |
+| framework | `java.lang.annotation.Annotation#toString()` | 2 | Waits on the Annotation runtime contract. |
+| framework | `java.lang.annotation.AnnotationFormatError` | 2 | Waits on the canonical Java Error hierarchy (R8) and R22 runtime sibling. |
+| framework | `java.lang.annotation.AnnotationFormatError#<init>(String)` | 2 | Waits on AnnotationFormatError. |
+| framework | `java.lang.annotation.AnnotationFormatError#<init>(String,Throwable)` | 2 | Waits on AnnotationFormatError. |
+| framework | `java.lang.annotation.AnnotationFormatError#<init>(Throwable)` | 2 | Waits on AnnotationFormatError. |
+| framework | `java.lang.annotation.AnnotationTypeMismatchException` | 2 | Waits on the MemberDescriptorRef (D-AOT-MEMBER) and RuntimeException leaf contracts. |
+| framework | `java.lang.annotation.AnnotationTypeMismatchException#<init>(Method,String)` | 2 | Waits on AnnotationTypeMismatchException. |
+| framework | `java.lang.annotation.AnnotationTypeMismatchException#element()` | 2 | Waits on AnnotationTypeMismatchException. |
+| framework | `java.lang.annotation.AnnotationTypeMismatchException#foundType()` | 2 | Waits on AnnotationTypeMismatchException. |
+| framework | `java.lang.annotation.IncompleteAnnotationException` | 2 | Waits on the RuntimeClassRef (R4) and RuntimeException leaf contracts. |
+| framework | `java.lang.annotation.IncompleteAnnotationException#<init>(Class,String)` | 2 | Waits on IncompleteAnnotationException. |
+| framework | `java.lang.annotation.IncompleteAnnotationException#annotationType()` | 2 | Waits on IncompleteAnnotationException. |
+| framework | `java.lang.annotation.IncompleteAnnotationException#elementName()` | 2 | Waits on IncompleteAnnotationException. |
 | framework | `java.net.ProtocolException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.ProtocolException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.SocketTimeoutException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
@@ -11737,6 +11840,14 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.CharBuffer#chars()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence,int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
+| framework | `java.nio.charset.CoderResult#throwException()` | 2 | Requires CharacterCodingException, MalformedInputException and UnmappableCharacterException, which wait on checked IOException initCause. |
+| framework | `java.nio.file.Path#compareTo(Path)` | 2 | Default-provider ordering and Comparable<Path> inheritance are deferred. |
+| framework | `java.nio.file.Path#equals(Object)` | 2 | Provider-specific path equality is deferred with hashCode. |
+| framework | `java.nio.file.Path#hashCode()` | 2 | Provider-specific path hashing is deferred with equals. |
+| framework | `java.nio.file.Path#iterator()` | 2 | Name iteration and Iterable<Path> inheritance are deferred. |
+| framework | `java.nio.file.Path#register(WatchService,WatchEvent.Kind...)` | 2 | Filesystem watches and Watchable inheritance are deferred. |
+| framework | `java.nio.file.Path#register(WatchService,WatchEvent.Kind[],WatchEvent.Modifier...)` | 2 | Filesystem watches and Watchable inheritance are deferred. |
+| framework | `java.nio.file.Watchable` | 2 | The filesystem watch service is deferred. |
 | framework | `java.security.DigestException#<init>()` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
 | framework | `java.security.DigestException#<init>(String)` | 2 | The Java constructor leaves the cause open to one later initCause call. The checked Flint exception base lacks that API. |
 | framework | `java.security.DigestException#<init>(String,Throwable)` | 2 | Java initializes the cause even when it is null. The checked Flint exception base carries a D exception chain and still needs Java cause access and initialization. |
@@ -11937,7 +12048,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Optional#map(Function)` | 2 | Java rejects a null mapper even when the Optional is empty. Flint returns the empty value. |
 | framework | `java.util.Optional#of(T)` | 2 | Optional.of must keep empty string and array values present under R26. The current null check rejects zero-length D slices whose storage compares to null. |
 | framework | `java.util.Optional#or(Supplier)` | 2 | Java rejects a null supplier even when a value is present. Flint returns the present value. |
+| framework | `java.util.Random` | 2 | The seeded constructor and core generator methods (setSeed, next, nextBytes, nextInt, nextLong, nextBoolean, nextFloat, nextDouble) are available. The default constructor, bounded draws, nextGaussian, RandomGenerator interface and streams are deferred. |
 | framework | `java.util.Scanner#<init>(Readable)` | 2 | The Readable constructor awaits the interface's cross-package placement. Its method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
+| framework | `java.util.SplittableRandom` | 2 | The seeded constructor, split(), nextInt(), nextLong() and nextBytes(byte[]) are available at flint.java.util.splittablerandom.SplittableRandom. The default constructor, RandomGenerator/SplittableGenerator interfaces and stream methods are deferred. |
 | framework | `java.util.UUID#fromString(String)` | 2 | The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion. |
 | framework | `java.util.UUID#nameUUIDFromBytes(byte[])` | 2 | Version 3 name-based UUIDs await the canonical Java MessageDigest MD5 provider. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
@@ -12115,20 +12228,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `tools.jackson.core.json.JsonReadContext#<init>(JsonReadContext,int,DupDetector,int,int,int)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.JsonReadContext#createRootContext(DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.JsonReadContext#createRootContext(int,int,DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_JAVA_COMMENTS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_LEADING_ZEROS_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_MISSING_VALUES` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_NON_NUMERIC_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_RS_CONTROL_CHAR` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_SINGLE_QUOTES` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_TRAILING_COMMA` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_UNESCAPED_CONTROL_CHARS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_UNQUOTED_PROPERTY_NAMES` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
-| framework | `tools.jackson.core.json.JsonReadFeature#ALLOW_YAML_COMMENTS` | 2 | The constant exists, but UTF8StreamJsonParser does not honour it yet: strict JSON only (third-party-apis is implementing the read features). |
 | framework | `tools.jackson.core.json.JsonWriteContext#<init>(int,JsonWriteContext,DupDetector,Object)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.JsonWriteContext#createRootContext(DupDetector)` | 2 | Flint's read and write contexts use fixed constructors and parameterless factories. The Java overload accepts a DupDetector. |
 | framework | `tools.jackson.core.json.UTF8JsonGenerator#<init>(ObjectWriteContext,IOContext,int,int,OutputStream,SerializableString,CharacterEscapes,PrettyPrinter,int,char)` | 2 | Requires SerializableString and the explicit generator context and output configuration. |
