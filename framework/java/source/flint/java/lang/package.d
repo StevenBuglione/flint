@@ -16,6 +16,8 @@ $(UL
 module flint.java.lang;
 
 public import flint.java.lang.boolean : Boolean;
+public import flint.java.lang.integer : Integer;
+public import flint.java.lang.long_ : Long;
 public import flint.java.lang.javaobject : JavaObject;
 public import flint.java.lang.runnable : Runnable;
 public import flint.java.lang.system : System;
@@ -443,115 +445,6 @@ private string decimal(long value) pure nothrow
         magnitude /= 10;
     }
     return (negative ? "-" : "") ~ buffer[position .. $].idup;
-}
-
-/// Parse a decimal or radix integer with Java's rules: an optional sign, digits only, no whitespace.
-private long parseIntegral(string s, int radix, long min, long max)
-{
-    if (s.length == 0 || radix < 2 || radix > 36)
-        throw NumberFormatException.forInputString(s);
-    size_t i;
-    const negative = s[0] == '-';
-    if (s[0] == '-' || s[0] == '+')
-        i = 1;
-    if (i == s.length)
-        throw NumberFormatException.forInputString(s);
-    // Accumulate negatively so long.min parses, as Java does.
-    long result;
-    const limit = negative ? min : -max;
-    for (; i < s.length; i++)
-    {
-        const digit = digitValue(s[i]);
-        if (digit < 0 || digit >= radix)
-            throw NumberFormatException.forInputString(s);
-        if (result < limit / radix || result * radix < limit + digit)
-            throw NumberFormatException.forInputString(s);
-        result = result * radix - digit;
-    }
-    return negative ? result : -result;
-}
-
-private int digitValue(char c) pure nothrow @nogc
-{
-    if (c >= '0' && c <= '9')
-        return c - '0';
-    if (c >= 'a' && c <= 'z')
-        return c - 'a' + 10;
-    if (c >= 'A' && c <= 'Z')
-        return c - 'A' + 10;
-    return -1;
-}
-
-/// Java's `Integer` statics.
-struct Integer
-{
-    /// The largest `int`.
-    enum int MAX_VALUE = int.max;
-    /// The smallest `int`.
-    enum int MIN_VALUE = int.min;
-
-    /// Parse a signed decimal `int`. Throws `NumberFormatException`.
-    static int parseInt(string s, int radix = 10)
-    {
-        return cast(int) parseIntegral(s, radix, int.min, int.max);
-    }
-
-    /// `parseInt`, as Java's boxing factory.
-    static int valueOf(string s)
-    {
-        return parseInt(s);
-    }
-
-    /// The decimal text of `i`.
-    static string toString(int i) pure nothrow
-    {
-        return decimal(i);
-    }
-
-    /// Java's `Integer.compare`.
-    static int compare(int x, int y) pure nothrow @nogc
-    {
-        return x < y ? -1 : (x == y ? 0 : 1);
-    }
-}
-
-/// Java's `Long` statics.
-struct Long
-{
-    /// The largest `long`.
-    enum long MAX_VALUE = long.max;
-    /// The smallest `long`.
-    enum long MIN_VALUE = long.min;
-
-    /// Parse a signed decimal `long`. Throws `NumberFormatException`.
-    static long parseLong(string s, int radix = 10)
-    {
-        return parseIntegral(s, radix, long.min, long.max);
-    }
-
-    /// `parseLong`, as Java's boxing factory.
-    static long valueOf(string s)
-    {
-        return parseLong(s);
-    }
-
-    /// The decimal text of `l`.
-    static string toString(long l) pure nothrow
-    {
-        return decimal(l);
-    }
-
-    /// Java's `Long.compare`.
-    static int compare(long x, long y) pure nothrow @nogc
-    {
-        return x < y ? -1 : (x == y ? 0 : 1);
-    }
-
-    /// Java's `Long.hashCode(long)`.
-    static int hashCode(long value) pure nothrow @nogc
-    {
-        return cast(int)(value ^ (cast(ulong) value >>> 32));
-    }
 }
 
 /// Java's `Double` statics.
