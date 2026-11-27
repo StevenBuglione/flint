@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,940 | 705 | 0 | 1,921 | 13,855 |
+| framework | openjdk@21.0.13 | 1,947 | 707 | 0 | 1,921 | 13,846 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2633,6 +2633,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `java.nio.charset.Charset` | `flint.java.nio.charset.Charset` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable value struct naming one of the six standard charsets (UTF-8, US-ASCII, ISO-8859-1, UTF-16, UTF-16BE, UTF-16LE). Java's identity comparison of the shared instances is == here, and Charset.init stands for Java's null. It is closed: a CharsetProvider can return only these six. newDecoder, newEncoder, decode and encode wait on a way to reach framework/java-nio-charset's coders, which flint:java cannot import. |
+| `java.nio.charset.Charset#equals(Object)` | `flint.java.nio.charset.Charset.opEquals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.nio.charset.Charset#hashCode()` | `flint.java.nio.charset.Charset.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.nio.charset.CharsetDecoder` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Import CharsetDecoder from flint.java.nio.charset.charsetdecoder. An abstract class, as in Java; subclasses override decodeLoop. Charset is a value here, and Charset.init stands for Java's null charset. Java's in and out parameters are in_ and out_ (R19). decode(in, out, eoi) checks for null buffers before calling decodeLoop and throws CoderMalfunctionError caused by NullPointerException (R8), where Java's NullPointerException comes from inside the loop. CodingErrorAction is a value struct, so Java's "Null action" IllegalArgumentException cannot occur. |
 | `java.nio.charset.CharsetDecoder#decode(ByteBuffer,CharBuffer,boolean)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.decode` | [R8](api-mapping.md#r8-exceptions), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Null buffers throw CoderMalfunctionError caused by NullPointerException before decodeLoop runs. |
 | `java.nio.charset.CharsetDecoder#decodeLoop(ByteBuffer,CharBuffer)` | `flint.java.nio.charset.charsetdecoder.CharsetDecoder.decodeLoop` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
@@ -11032,7 +11034,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
-| java.nio.charset | 32 | 0 |
+| java.nio.charset | 23 | 0 |
 | java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 137 | 0 |
 | java.nio.file.spi | 0 | 35 |
@@ -12149,19 +12151,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.charset.Charset#<init>(String,String[])` | 2 | Flint's Charset is a closed value type over the six standard charsets with a private id, so it has no constructor a subclass can call; user-defined charsets wait until Charset becomes a class. |
 | framework | `java.nio.charset.Charset#aliases()` | 2 | Not in D yet. The alias table exists privately in flint.java.nio.charset; Set<String> needs flint.java.util.Set, which flint.java.nio.charset does not import. |
 | framework | `java.nio.charset.Charset#availableCharsets()` | 2 | Not in D yet. Needs a SortedMap<String, Charset> of the six standard charsets. |
-| framework | `java.nio.charset.Charset#canEncode()` | 2 | Not in D yet. True for all six standard charsets, as in Java. |
-| framework | `java.nio.charset.Charset#contains(Charset)` | 2 | Not in D yet. Java's abstract contains is implemented per charset; the standard containment table is still to port. |
 | framework | `java.nio.charset.Charset#decode(ByteBuffer)` | 2 | Not in D yet. Needs the decoders in framework/java-nio-charset, which flint:java cannot import. |
-| framework | `java.nio.charset.Charset#defaultCharset()` | 2 | Not in D yet. Java 18+ returns UTF-8 unless file.encoding says COMPAT. |
 | framework | `java.nio.charset.Charset#displayName(Locale)` | 2 | Not in D yet. The standard charsets return their canonical name for every locale. |
 | framework | `java.nio.charset.Charset#encode(CharBuffer)` | 2 | Not in D yet. Needs the encoders in framework/java-nio-charset, which flint:java cannot import. |
 | framework | `java.nio.charset.Charset#encode(String)` | 2 | Not in D yet. Needs the encoders in framework/java-nio-charset, which flint:java cannot import. |
-| framework | `java.nio.charset.Charset#equals(Object)` | 2 | No equals method yet. Struct == compares the charset id, which matches Java's name equality for the six standard charsets, but there is no equals(Object) taking a foreign value. |
-| framework | `java.nio.charset.Charset#forName(String)` | 2 | A name with an illegal character (Java allows letters, digits and - + : _ . after the first character) throws UnsupportedCharsetException here; Java throws IllegalCharsetNameException. Empty and unknown names match Java. |
-| framework | `java.nio.charset.Charset#forName(String,Charset)` | 2 | Not in D yet. |
-| framework | `java.nio.charset.Charset#hashCode()` | 2 | No hashCode method yet. Java returns name().hashCode(); the struct hashes its id. |
-| framework | `java.nio.charset.Charset#isRegistered()` | 2 | Not in D yet. True for all six standard charsets, as in Java. |
-| framework | `java.nio.charset.Charset#isSupported(String)` | 2 | An empty name or one with an illegal character returns false here; Java throws IllegalCharsetNameException. |
 | framework | `java.nio.charset.Charset#newDecoder()` | 2 | Charset lives in flint:java and cannot import framework/java-nio-charset's decoders. |
 | framework | `java.nio.charset.Charset#newEncoder()` | 2 | Charset lives in flint:java and cannot import framework/java-nio-charset's encoders. |
 | framework | `java.nio.charset.CharsetDecoder#decode(ByteBuffer)` | 2 | Throws CharacterCodingException (through CoderResult.throwException), which waits on checked IOException initCause (framework-core fc-io-charset). canEncode already runs the same loop privately. |
