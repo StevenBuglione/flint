@@ -29,13 +29,13 @@ bool scanDecimalPattern(scope string pattern, out DecimalPatternBounds bounds) p
 {
     size_t position;
     DecimalPatternBounds split;
-    if (!scanSubpattern(pattern, position, split.positive))
+    if (!scanSubpattern(pattern, position, true, split.positive))
         return false;
     if (position < pattern.length)
     {
         split.hasNegative = true;
         ++position;
-        if (!scanSubpattern(pattern, position, split.negative) || position < pattern.length)
+        if (!scanSubpattern(pattern, position, false, split.negative) || position < pattern.length)
             return false;
     }
     bounds = split;
@@ -49,16 +49,18 @@ struct DecimalDigitSettings
     uint maximumFractionDigits;
     uint groupingSize;
     bool decimalSeparatorAlwaysShown;
+    uint maximumIntegerDigits = int.max;
+    // Zero for fixed-point patterns; Java keeps the exponent width in a signed byte.
+    ubyte minimumExponentDigits;
 }
 
 enum DecimalDigitStatus
 {
     accepted,
     malformed,
-    exponential,
 }
 
-/// Resolve the positive digit span of a nonlocalized fixed-point pattern.
+/// Resolve the positive digit span of a nonlocalized fixed-point or exponent pattern.
 DecimalDigitStatus readDecimalDigits(scope string pattern, out DecimalDigitSettings settings) pure nothrow @nogc
 {
     if (pattern.length > int.max)
@@ -67,6 +69,18 @@ DecimalDigitStatus readDecimalDigits(scope string pattern, out DecimalDigitSetti
     const status = scanDigitShape(pattern, shape);
     if (status != DecimalDigitStatus.accepted)
         return status;
+    byte exponentDigits;
+    if (shape.exponent >= 0)
+    {
+        foreach (token; pattern[shape.exponent + 1 .. $])
+        {
+            if (token != '0')
+                return DecimalDigitStatus.malformed;
+            ++exponentDigits;
+        }
+        if (shape.count < 1 || exponentDigits < 1)
+            return DecimalDigitStatus.malformed;
+    }
 
     const integerDigits = shape.point < 0 ? shape.count : shape.point;
     if (shape.firstRequired < 0)
@@ -81,6 +95,12 @@ DecimalDigitStatus readDecimalDigits(scope string pattern, out DecimalDigitSetti
     settings = DecimalDigitSettings(cast(uint)(integerDigits - shape.firstRequired),
             cast(uint)(shape.requiredEnd - integerDigits), cast(uint)(shape.count - integerDigits),
             width <= byte.max ? cast(uint) width : 0, shape.point == 0 || shape.point == shape.count);
+    if (exponentDigits > 0)
+    {
+        // An exponent pattern's integer span is also its maximum, which sets the engineering repeat.
+        settings.maximumIntegerDigits = cast(uint) integerDigits;
+        settings.minimumExponentDigits = cast(ubyte) exponentDigits;
+    }
     return DecimalDigitStatus.accepted;
 }
 
@@ -101,11 +121,13 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFi
         return DecimalCompileStatus.malformed;
     if (bounds.hasNegative && bounds.positive.digitsStart == bounds.positive.digitsEnd)
         return DecimalCompileStatus.malformed;
+    // Java resumes the positive digit phase at an unquoted suffix digit, so the span is incomplete.
+    if (reentersDigits(text[bounds.positive.digitsEnd .. bounds.positive.end]))
+        return DecimalCompileStatus.splitDigits;
     DecimalDigitSettings digits;
-    const digitStatus = readDecimalDigits(text[bounds.positive.digitsStart .. bounds.positive.digitsEnd], digits);
-    if (digitStatus != DecimalDigitStatus.accepted)
-        return digitStatus == DecimalDigitStatus.exponential ? DecimalCompileStatus.exponential
-            : DecimalCompileStatus.malformed;
+    if (readDecimalDigits(text[bounds.positive.digitsStart .. bounds.positive.digitsEnd], digits)
+            != DecimalDigitStatus.accepted)
+        return DecimalCompileStatus.malformed;
     AffixPair positive;
     auto status = readAffixes(text, bounds.positive, positive);
     if (status != DecimalCompileStatus.accepted)
@@ -118,6 +140,8 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFi
         if (status != DecimalCompileStatus.accepted)
             return status;
     }
+    if (digits.minimumExponentDigits != 0)
+        return DecimalCompileStatus.exponential;
 
     result.minimumIntegerDigits = digits.minimumIntegerDigits;
     result.minimumFractionDigits = digits.minimumFractionDigits;
@@ -135,14 +159,22 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFi
 
 private:
 
-bool scanSubpattern(scope string pattern, ref size_t position, out DecimalSubpatternBounds bounds) pure nothrow @nogc
+bool scanSubpattern(scope string pattern, ref size_t position, bool positive,
+        out DecimalSubpatternBounds bounds) pure nothrow @nogc
 {
     const start = position;
     if (!scanAffix(pattern, position, true))
         return false;
     const digitsStart = position;
     while (position < pattern.length && (numericToken(pattern[position]) || pattern[position] == 'E'))
-        ++position;
+    {
+        if (pattern[position++] != 'E' || !positive)
+            continue;
+        // Java leaves the positive digit phase after the exponent's zeros; the negative one skips on.
+        while (position < pattern.length && pattern[position] == '0')
+            ++position;
+        break;
+    }
     const digitsEnd = position;
     if (!scanAffix(pattern, position, false))
         return false;
@@ -173,6 +205,21 @@ bool scanAffix(scope string pattern, ref size_t position, bool prefix) pure noth
     return true;
 }
 
+bool reentersDigits(scope string suffix) pure nothrow @nogc
+{
+    for (size_t position; position < suffix.length;)
+    {
+        if (suffix[position] == '\'')
+        {
+            if (!scanQuoted(suffix, position))
+                return false;
+        }
+        else if (numericToken(suffix[position++]))
+            return true;
+    }
+    return false;
+}
+
 bool scanQuoted(scope string pattern, ref size_t position) pure nothrow @nogc
 {
     ++position;
@@ -194,11 +241,12 @@ struct DigitShape
     int requiredEnd;
     int point = -1;
     int lastGroup = -1;
+    int exponent = -1;
 }
 
 DecimalDigitStatus scanDigitShape(scope string pattern, out DigitShape shape) pure nothrow @nogc
 {
-    foreach (token; pattern)
+    foreach (index, token; pattern)
     {
         switch (token)
         {
@@ -223,7 +271,8 @@ DecimalDigitStatus scanDigitShape(scope string pattern, out DigitShape shape) pu
             shape.lastGroup = shape.count;
             break;
         case 'E':
-            return DecimalDigitStatus.exponential;
+            shape.exponent = cast(int) index;
+            return DecimalDigitStatus.accepted;
         default:
             return DecimalDigitStatus.malformed;
         }
