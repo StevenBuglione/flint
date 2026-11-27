@@ -93,12 +93,11 @@ enum DecimalCompileStatus
 {
     accepted,
     malformed,
-    exponential,
     currency,
     splitDigits,
 }
 
-/// Compile a nonlocalized fixed-point pattern with the explicit Latin symbol profiles.
+/// Compile a nonlocalized fixed-point or exponent pattern with the explicit Latin symbol profiles.
 DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFixedPattern result) pure nothrow
 {
     DecimalPatternBounds bounds;
@@ -120,10 +119,9 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFi
         if (status != DecimalCompileStatus.accepted)
             return status;
     }
-    if (digits.minimumExponentDigits != 0)
-        return DecimalCompileStatus.exponential;
-
     result.minimumIntegerDigits = digits.minimumIntegerDigits;
+    result.maximumIntegerDigits = digits.maximumIntegerDigits;
+    result.minimumExponentDigits = digits.minimumExponentDigits;
     result.minimumFractionDigits = digits.minimumFractionDigits;
     result.maximumFractionDigits = text.length ? digits.maximumFractionDigits : 3;
     result.groupingSize = text.length ? digits.groupingSize : 3;

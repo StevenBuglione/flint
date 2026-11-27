@@ -65,6 +65,8 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref s
         return true;
     }
 
+    if (pattern.minimumExponentDigits != 0)
+        return tryRenderExponentDouble(bits, pattern, symbols, output, required, mode, status);
     BinaryDecimal converted;
     if (!tryFixedBinaryDecimal(bits, primitiveFractionWidth(pattern.maximumFractionDigits), converted, mode, status))
         return false;
@@ -73,6 +75,24 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref s
 
     const decimalAt = converted.count != 0 ? converted.decimalAt : 0;
     required = renderFixedDigits(converted.digits[0 .. converted.count], decimalAt,
+            converted.negative, pattern, symbols, output);
+    return true;
+}
+
+private pure nothrow @nogc bool tryRenderExponentDouble(ulong bits, ref scope const DecimalFixedPattern pattern,
+        ref scope const DecimalSymbolData symbols,
+        scope char[] output, ref size_t required, FixedRoundingMode mode, ref FixedRoundingStatus status)
+{
+    import flint.java.text.internal.binarydecimal : BinaryDecimal;
+    import flint.java.text.internal.decimaldigitlist : trySignificantBinaryDecimal;
+    import flint.java.text.internal.decimalexponent : renderExponentDigits, significantLimit;
+
+    BinaryDecimal converted;
+    if (!trySignificantBinaryDecimal(bits, significantLimit(pattern), converted, mode, status))
+        return false;
+    if (status == FixedRoundingStatus.inexact)
+        return true;
+    required = renderExponentDigits(converted.digits[0 .. converted.count], converted.decimalAt,
             converted.negative, pattern, symbols, output);
     return true;
 }
@@ -188,7 +208,8 @@ private bool usesGroupedFastPath(ulong bits, ref scope const DecimalFixedPattern
 {
     const magnitudeBits = bits & (ulong.max >> 1);
     // 0x41df... is the binary64 representation of Integer.MAX_VALUE.
-    return magnitudeBits <= 0x41df_ffff_ffc0_0000 && pattern.groupingSize == 3 && pattern.minimumIntegerDigits == 1
+    return magnitudeBits <= 0x41df_ffff_ffc0_0000 && pattern.minimumExponentDigits == 0 && pattern.groupingSize == 3
+        && pattern.minimumIntegerDigits == 1
         && pattern.maximumIntegerDigits >= 10 && pattern.minimumFractionDigits == 0
         && pattern.maximumFractionDigits == 3 && !pattern.decimalSeparatorAlwaysShown;
 }

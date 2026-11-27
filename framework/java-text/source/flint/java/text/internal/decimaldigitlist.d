@@ -40,7 +40,7 @@
 // Modified by the Flint authors.
 module flint.java.text.internal.decimaldigitlist;
 
-import flint.java.text.internal.binarydecimal : BinaryDecimal, tryFiniteBinaryDecimal;
+import flint.java.text.internal.binarydecimal : BinaryDecimal;
 
 @safe:
 
@@ -77,11 +77,8 @@ pure nothrow @nogc bool tryFixedBinaryDecimal(ulong bits, uint maximumFractionDi
         ref BinaryDecimal result, FixedRoundingMode mode, out FixedRoundingStatus status)
 {
     BinaryDecimal converted;
-    if (!tryFiniteBinaryDecimal(bits, converted))
+    if (!tryDigitListDecimal(bits, converted))
         return false;
-    // FloatingDecimal emits one zero digit. DigitList keeps only its separate sign.
-    if (converted.count == 1 && converted.digits[0] == '0')
-        converted.count = 0;
     converted.count = roundFixed(converted.digits[0 .. converted.count], converted.decimalAt,
             maximumFractionDigits, converted.roundedUp, converted.exact, converted.negative, mode, status);
     result = converted;
@@ -110,8 +107,38 @@ pure nothrow @nogc size_t roundFixed(scope char[] digits, ref int decimalAt, uin
         digits = digits[0 .. withoutTrailingZeros(digits)];
     if (cast(ulong) retained >= digits.length)
         return digits.length;
+    return roundAt(digits, decimalAt, cast(size_t) retained, roundedUp, exact, negative, mode, status);
+}
 
-    const keep = cast(size_t) retained;
+/// Converts finite binary64 values to the exponential DigitList representation.
+pure nothrow @nogc bool trySignificantBinaryDecimal(ulong bits, uint maximumDigits,
+        ref BinaryDecimal result, FixedRoundingMode mode, out FixedRoundingStatus status)
+{
+    BinaryDecimal converted;
+    if (!tryDigitListDecimal(bits, converted))
+        return false;
+    converted.count = roundSignificant(converted.digits[0 .. converted.count], converted.decimalAt,
+            maximumDigits, converted.roundedUp, converted.exact, converted.negative, mode, status);
+    result = converted;
+    return true;
+}
+
+/// Rounds to at most `maximumDigits` significant digits, as DigitList does for exponential patterns.
+/// Trailing zeros are always removed. A long keeps every digit at zero maximum digits, so it passes uint.max.
+pure nothrow @nogc size_t roundSignificant(scope char[] digits, ref int decimalAt, uint maximumDigits,
+        bool roundedUp, bool exact, bool negative, FixedRoundingMode mode, out FixedRoundingStatus status)
+{
+    status = FixedRoundingStatus.complete;
+    digits = digits[0 .. withoutTrailingZeros(digits)];
+    if (maximumDigits >= digits.length)
+        return digits.length;
+    return roundAt(digits, decimalAt, maximumDigits, roundedUp, exact, negative, mode, status);
+}
+
+// `keep` is below the digit count. Only a fixed-point call retaining zero digits keeps trailing zeros.
+private pure nothrow @nogc size_t roundAt(scope char[] digits, ref int decimalAt, size_t keep,
+        bool roundedUp, bool exact, bool negative, FixedRoundingMode mode, ref FixedRoundingStatus status)
+{
     if (mode == FixedRoundingMode.unnecessary)
     {
         status = FixedRoundingStatus.inexact;
@@ -131,6 +158,18 @@ pure nothrow @nogc size_t roundFixed(scope char[] digits, ref int decimalAt, uin
     digits[0] = '1';
     ++decimalAt;
     return 1;
+}
+
+private bool tryDigitListDecimal(ulong bits, out BinaryDecimal converted) pure nothrow @nogc
+{
+    import flint.java.text.internal.binarydecimal : tryFiniteBinaryDecimal;
+
+    if (!tryFiniteBinaryDecimal(bits, converted))
+        return false;
+    // FloatingDecimal emits one zero digit. DigitList keeps only its separate sign.
+    if (converted.count == 1 && converted.digits[0] == '0')
+        converted.count = 0;
+    return true;
 }
 
 private size_t withoutTrailingZeros(scope const(char)[] digits) pure nothrow @nogc

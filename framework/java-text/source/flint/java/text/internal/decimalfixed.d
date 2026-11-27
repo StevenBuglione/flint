@@ -26,6 +26,8 @@ struct DecimalFixedPattern
     // A percent pattern adds two decimal places, and a per-mille pattern adds three.
     ubyte scale;
     bool decimalSeparatorAlwaysShown;
+    // Nonzero selects exponential notation; Java keeps the width in a positive signed byte.
+    ubyte minimumExponentDigits;
 
     void setMinimumIntegerDigits(int width) pure nothrow @nogc
     {
@@ -60,6 +62,7 @@ struct DecimalFixedPattern
 /// Returns the required byte count and leaves a short buffer untouched.
 size_t renderDecimalLong(long value, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output) pure nothrow @nogc
+in (pattern.minimumExponentDigits == 0)
 {
     const negative = value < 0;
     ulong magnitude = negative ? -cast(ulong) value : cast(ulong) value;
@@ -72,6 +75,7 @@ size_t renderDecimalLong(long value, ref scope const DecimalFixedPattern pattern
 /// Formats an exact signed long product with the explicit Java multiplier and the pattern's affixes.
 size_t renderDecimalLong(long value, int multiplier, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output) pure nothrow @nogc
+in (pattern.minimumExponentDigits == 0)
 {
     const negativeValue = value < 0;
     const negativeMultiplier = multiplier < 0;
@@ -97,7 +101,7 @@ ulong multiplyUnsignedWord(ulong magnitude, uint factor, out uint upper) pure no
     return lower;
 }
 
-private size_t writeWideUnsignedDigits(ulong lower, uint upper, ref scope char[29] digits) pure nothrow @nogc
+size_t writeWideUnsignedDigits(ulong lower, uint upper, ref scope char[29] digits) pure nothrow @nogc
 {
     size_t end = digits.length;
     while (upper != 0)
