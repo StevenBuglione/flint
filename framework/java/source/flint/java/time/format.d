@@ -458,6 +458,13 @@ private immutable Element[] isoLocalTime = [
 ];
 private immutable Element[] isoLocalDateTime = [op(Op.caseInsensitive)] ~ isoLocalDate ~ [lit("T")] ~ isoLocalTime;
 private immutable Element isoOffset = offsetElement("+HH:MM:ss", "Z", true);
+private immutable Element isoStrictOffset = offsetElement("+HH:MM:ss", "Z", false);
+private immutable Element[] isoOffsetDate = [op(Op.caseInsensitive)] ~ isoLocalDate ~ [
+    isoStrictOffset
+];
+private immutable Element[] isoOffsetTime = [op(Op.caseInsensitive)] ~ isoLocalTime ~ [
+    isoStrictOffset
+];
 private immutable Element[] isoOffsetDateTime = isoLocalDateTime ~ [isoOffset];
 private immutable Element[] isoZonedDateTime = isoOffsetDateTime ~ [
     op(Op.optionalStart), lit("["), op(Op.caseSensitive), op(Op.zoneRegion), lit("]"),
@@ -488,10 +495,13 @@ private immutable Element[] instantParse = [op(Op.caseInsensitive)] ~ isoLocalDa
 private enum describeDate = `Value(Year,4,10,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)`;
 private enum describeTime = `Value(HourOfDay,2)':'Value(MinuteOfHour,2)`
     ~ `[':'Value(SecondOfMinute,2)[Fraction(NanoOfSecond,0,9,DecimalPoint)]]`;
-private enum describeOffset = `ParseStrict(false)Offset(+HH:MM:ss,'Z')ParseStrict(true)`;
+private enum describeStrictOffset = `Offset(+HH:MM:ss,'Z')`;
+private enum describeOffset = `ParseStrict(false)` ~ describeStrictOffset ~ `ParseStrict(true)`;
 private enum describeRegion = `['['ParseCaseSensitive(true)ZoneRegionId()']']`;
 private enum describeIsoLocalDate = describeDate;
 private enum describeIsoLocalTime = describeTime;
+private enum describeIsoOffsetDate = `ParseCaseSensitive(false)(` ~ describeDate ~ `)` ~ describeStrictOffset;
+private enum describeIsoOffsetTime = `ParseCaseSensitive(false)(` ~ describeTime ~ `)` ~ describeStrictOffset;
 private enum describeIsoLocalDateTime = `ParseCaseSensitive(false)(` ~ describeDate ~ `)'T'(` ~ describeTime ~ `)`;
 private enum describeIsoOffsetDateTime = `ParseCaseSensitive(false)(` ~ describeIsoLocalDateTime ~ `)` ~ describeOffset;
 private enum describeIsoZonedDateTime = `(` ~ describeIsoOffsetDateTime ~ `)` ~ describeRegion;
@@ -517,6 +527,10 @@ struct DateTimeFormatter
     static immutable DateTimeFormatter ISO_LOCAL_DATE = DateTimeFormatter(isoLocalDate, describeIsoLocalDate);
     /// The ISO time formatter that formats or parses a time without an offset, such as '10:15' or '10:15:30'.
     static immutable DateTimeFormatter ISO_LOCAL_TIME = DateTimeFormatter(isoLocalTime, describeIsoLocalTime);
+    /// The ISO date formatter with a required offset, such as '2011-12-03+01:00'.
+    static immutable DateTimeFormatter ISO_OFFSET_DATE = DateTimeFormatter(isoOffsetDate, describeIsoOffsetDate);
+    /// The ISO time formatter with a required offset, such as '10:15:30+01:00'.
+    static immutable DateTimeFormatter ISO_OFFSET_TIME = DateTimeFormatter(isoOffsetTime, describeIsoOffsetTime);
     /// The ISO date-time formatter without an offset, such as '2011-12-03T10:15:30'.
     static immutable DateTimeFormatter ISO_LOCAL_DATE_TIME = DateTimeFormatter(isoLocalDateTime,
             describeIsoLocalDateTime);

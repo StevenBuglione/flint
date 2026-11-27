@@ -456,3 +456,44 @@ unittest
         assert(e.msg == "Text 'é😀2026-01-15!' could not be parsed, unparsed text found at index 13", e.msg);
     }
 }
+
+@("ISO offset date and time require minutes and keep optional offset seconds")
+unittest
+{
+    import std.exception : collectException;
+
+    const date = DateTimeFormatter.ISO_OFFSET_DATE;
+    const time = DateTimeFormatter.ISO_OFFSET_TIME;
+    const text = "2000-02-29T10:15:30.125-05:30:15";
+    const value = OffsetDateTime.parse(text);
+    assert(date.format(value) == "2000-02-29-05:30:15");
+    assert(time.format(value) == "10:15:30.125-05:30:15");
+    assert(date.format(OffsetDateTime.parse("+12000-02-29T10:15:30Z")) == "+12000-02-29Z");
+    assert(time.format(OffsetDateTime.parse("2000-02-29T10:15:30Z")) == "10:15:30Z");
+
+    assert(date.toString() == "ParseCaseSensitive(false)(Value(Year,4,10,EXCEEDS_PAD)'-'"
+            ~ "Value(MonthOfYear,2)'-'Value(DayOfMonth,2))Offset(+HH:MM:ss,'Z')");
+    assert(time.toString() == "ParseCaseSensitive(false)(Value(HourOfDay,2)':'Value(MinuteOfHour,2)"
+            ~ "[':'Value(SecondOfMinute,2)[Fraction(NanoOfSecond,0,9,DecimalPoint)]])Offset(+HH:MM:ss,'Z')");
+    assert(LocalDate.parse("2000-02-29z", date) == LocalDate.of(2000, 2, 29));
+    assert(LocalTime.parse("23:59Z", time) == LocalTime.of(23, 59));
+    assert(date.parse("2000-02-29-05:30:15").toOffset(text).getTotalSeconds() == -19_815);
+    assert(time.parse("10:15:30.125+18:00").toOffset(text).getTotalSeconds() == 64_800);
+
+    const extraOffset = date.parse("2000-02-29+19:00");
+    assert(extraOffset.hasOffset());
+    assert(collectException!DateTimeParseException(extraOffset.toOffset("2000-02-29+19:00")) !is null);
+    assert(collectException!DateTimeParseException(LocalDate.parse("1900-02-29Z", date)).getErrorIndex() == 0);
+    assert(collectException!DateTimeParseException(LocalTime.parse("24:00Z", time)).getErrorIndex() == 0);
+
+    foreach (input; ["2000-02-29+01", "2000-02-29+0100", "2000-02-29+02:60", "2000-02-29"])
+    {
+        auto failure = collectException!DateTimeParseException(date.parse(input));
+        assert(failure !is null && failure.getErrorIndex() == 10);
+    }
+    foreach (input; ["10:15:30.125+01", "10:15:30.125+0100", "10:15:30.125"])
+    {
+        auto failure = collectException!DateTimeParseException(time.parse(input));
+        assert(failure !is null && failure.getErrorIndex() == 12);
+    }
+}
