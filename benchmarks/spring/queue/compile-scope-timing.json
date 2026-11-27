@@ -2,7 +2,7 @@
   "schema": "flint.measure-queue/1",
   "id": "compile-scope-timing",
   "created": "2026-11-26",
-  "status": "pending",
+  "status": "blocked",
   "window": "claim",
   "priority": 8,
   "estimate_minutes": 240,
@@ -30,5 +30,6 @@
   },
   "own_directories": [
     "/home/olfa/flint-work/proof-harness-scope-ab"
-  ]
+  ],
+  "blocked_reason": "two complete runs (06:00Z, 06:44Z) agree within about 1% but both read busy: the first from its own compiles (fixed, own_directories), the second from the merge train regeneration on venus; a certified run needs apps-landing paused for its ~35 min (coordinator decision)"
 }
