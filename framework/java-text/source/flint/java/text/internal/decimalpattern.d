@@ -69,18 +69,6 @@ DecimalDigitStatus readDecimalDigits(scope string pattern, out DecimalDigitSetti
     const status = scanDigitShape(pattern, shape);
     if (status != DecimalDigitStatus.accepted)
         return status;
-    byte exponentDigits;
-    if (shape.exponent >= 0)
-    {
-        foreach (token; pattern[shape.exponent + 1 .. $])
-        {
-            if (token != '0')
-                return DecimalDigitStatus.malformed;
-            ++exponentDigits;
-        }
-        if (shape.count < 1 || exponentDigits < 1)
-            return DecimalDigitStatus.malformed;
-    }
 
     const integerDigits = shape.point < 0 ? shape.count : shape.point;
     if (shape.firstRequired < 0)
@@ -92,15 +80,12 @@ DecimalDigitStatus readDecimalDigits(scope string pattern, out DecimalDigitSetti
     if (shape.lastGroup >= 0 && width == 0)
         return DecimalDigitStatus.malformed;
     // Java stores the grouping interval in a signed byte and disables grouping when it overflows.
-    settings = DecimalDigitSettings(cast(uint)(integerDigits - shape.firstRequired),
+    auto resolved = DecimalDigitSettings(cast(uint)(integerDigits - shape.firstRequired),
             cast(uint)(shape.requiredEnd - integerDigits), cast(uint)(shape.count - integerDigits),
             width <= byte.max ? cast(uint) width : 0, shape.point == 0 || shape.point == shape.count);
-    if (exponentDigits > 0)
-    {
-        // An exponent pattern's integer span is also its maximum, which sets the engineering repeat.
-        settings.maximumIntegerDigits = cast(uint) integerDigits;
-        settings.minimumExponentDigits = cast(ubyte) exponentDigits;
-    }
+    if (shape.exponent >= 0 && !readExponent(pattern[shape.exponent + 1 .. $], shape.count, integerDigits, resolved))
+        return DecimalDigitStatus.malformed;
+    settings = resolved;
     return DecimalDigitStatus.accepted;
 }
 
@@ -119,17 +104,12 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFi
     DecimalPatternBounds bounds;
     if (!scanDecimalPattern(text, bounds))
         return DecimalCompileStatus.malformed;
-    if (bounds.hasNegative && bounds.positive.digitsStart == bounds.positive.digitsEnd)
-        return DecimalCompileStatus.malformed;
-    // Java resumes the positive digit phase at an unquoted suffix digit, so the span is incomplete.
-    if (reentersDigits(text[bounds.positive.digitsEnd .. bounds.positive.end]))
-        return DecimalCompileStatus.splitDigits;
     DecimalDigitSettings digits;
-    if (readDecimalDigits(text[bounds.positive.digitsStart .. bounds.positive.digitsEnd], digits)
-            != DecimalDigitStatus.accepted)
-        return DecimalCompileStatus.malformed;
+    auto status = readPositiveDigits(text, bounds, digits);
+    if (status != DecimalCompileStatus.accepted)
+        return status;
     AffixPair positive;
-    auto status = readAffixes(text, bounds.positive, positive);
+    status = readAffixes(text, bounds.positive, positive);
     if (status != DecimalCompileStatus.accepted)
         return status;
     AffixPair negative;
@@ -159,8 +139,40 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFi
 
 private:
 
-bool scanSubpattern(scope string pattern, ref size_t position, bool positive,
-        out DecimalSubpatternBounds bounds) pure nothrow @nogc
+DecimalCompileStatus readPositiveDigits(scope string text, ref const DecimalPatternBounds bounds,
+        out DecimalDigitSettings digits) pure nothrow @nogc
+{
+    if (bounds.hasNegative && bounds.positive.digitsStart == bounds.positive.digitsEnd)
+        return DecimalCompileStatus.malformed;
+    // Java resumes the positive digit phase at an unquoted suffix digit, so the span is incomplete.
+    if (reentersDigits(text[bounds.positive.digitsEnd .. bounds.positive.end]))
+        return DecimalCompileStatus.splitDigits;
+    const span = text[bounds.positive.digitsStart .. bounds.positive.digitsEnd];
+    return readDecimalDigits(span, digits) == DecimalDigitStatus.accepted
+        ? DecimalCompileStatus.accepted : DecimalCompileStatus.malformed;
+}
+
+/// Count the exponent's zeros after at least one digit token, wrapping like Java's byte counter.
+pure nothrow @nogc bool readExponent(scope string zeros, int digitTokens, int integerDigits,
+        ref DecimalDigitSettings settings)
+{
+    byte width;
+    foreach (token; zeros)
+    {
+        if (token != '0')
+            return false;
+        ++width;
+    }
+    if (digitTokens < 1 || width < 1)
+        return false;
+    // An exponent pattern's integer span is also its maximum, which sets the engineering repeat.
+    settings.maximumIntegerDigits = cast(uint) integerDigits;
+    settings.minimumExponentDigits = cast(ubyte) width;
+    return true;
+}
+
+pure nothrow @nogc bool scanSubpattern(scope string pattern, ref size_t position, bool positive,
+        out DecimalSubpatternBounds bounds)
 {
     const start = position;
     if (!scanAffix(pattern, position, true))
