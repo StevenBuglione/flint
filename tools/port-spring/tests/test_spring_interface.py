@@ -8,7 +8,7 @@ import re
 import subprocess
 import tempfile
 
-from test_jakarta import ROOT, command, rejects, run
+from test_jakarta import ROOT, command, proposed, rejects, run
 
 
 PROJECT = "spring-framework"
@@ -87,7 +87,7 @@ def main():
     assert output["source"] == json.loads(current.stdout)["source"]
     assert not json.loads(json.loads(current.stdout)["mapping"])["elements"]
     tracked = json.loads((ROOT / "api/framework/mapping.json").read_text(encoding="utf-8"))["elements"]
-    assert json.loads(output["mapping"])["elements"] == {TYPE: tracked[TYPE]}, output
+    assert proposed(output["mapping"]) == {TYPE: tracked[TYPE]}, output
     rejects(flint, command(PROJECT, TAG, "org.springframework.core.Ordered", helper, cache, MODULE),
             "not a supported public type")
     rejects(flint, (*command(PROJECT, TAG, TYPE, helper, cache, "flint.other"), "--replace-ported"),

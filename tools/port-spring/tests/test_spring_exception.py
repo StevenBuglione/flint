@@ -8,7 +8,7 @@ import re
 import subprocess
 import tempfile
 
-from test_jakarta import ROOT, command, rejects, run
+from test_jakarta import ROOT, command, proposed, rejects, run
 
 
 PROJECT = "spring-framework"
@@ -95,7 +95,7 @@ def main():
     assert not json.loads(json.loads(default.stdout)["mapping"])["elements"]
     tracked = json.loads((ROOT / "api/framework/mapping.json").read_text(encoding="utf-8"))["elements"]
     ids = [TYPE, TYPE + "#<init>(String)"]
-    assert json.loads(output["mapping"])["elements"] == {key: tracked[key] for key in ids}, output
+    assert proposed(output["mapping"]) == {key: tracked[key] for key in ids}, output
     rejects(flint, (*command(PROJECT, TAG, TYPE, helper, cache, "flint.other"), "--replace-ported"),
             "unsupported exception base or destination")
     other = "org.springframework.transaction.CannotCreateTransactionException"
