@@ -182,6 +182,19 @@ class QueueTests(unittest.TestCase):
         self.assertIn({'role': 'apps-landing', 'agent': 'sol-security', 'event': 'queue-skip'},
                       [{k: e[k] for k in ('role', 'agent', 'event')} for e in events if e['event'] == 'queue-skip'])
 
+    def test_a_head_with_a_live_train_submission_never_expires(self):
+        # 2026-11-26 23:56Z: releasing apps-landing after a long train skipped the two submitters that had waited at the
+        # head all along; the merge train claims the slot for them, so they must keep their places.
+        for agent in ('sol-jdk-math-regex-1', 'sol-web-1', 'sol-data'):
+            self.run_cli('queue', 'apps-landing', 'join', '--agent', agent)
+        (self.root / 'train.json').write_text(json.dumps({'submissions': [
+            {'role': 'sol-jdk-math-regex', 'agent': 'sol-jdk-math-regex-1', 'commit': 'a' * 40}]}))
+        self.age(freed=25, head_since=25)
+        shown = self.run_cli('queue', 'apps-landing', 'show')
+        self.assertIn('1. sol-jdk-math-regex-1', shown)  # a submitter at the head stays, however long
+        (self.root / 'train.json').write_text(json.dumps({'submissions': []}))
+        self.assertIn('sol-data is next', self.refused('sol-xyz'))  # without a submission, heads expire as before
+
     def test_skips_cascade_ten_minutes_per_head(self):
         for agent in ('a', 'b', 'c'):
             self.run_cli('queue', 'apps-landing', 'join', '--agent', agent)

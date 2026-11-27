@@ -224,15 +224,23 @@ class Store:
         skipped = []
         deadline = None
         window = self.roles().get(role, {}).get('head_min', QUEUE_HEAD_MIN) * 60
+        # The merge train claims apps-landing for every lane with a live submission, so such a head never expires: the
+        # train held the slot for hours on 2026-11-26 and, on releasing it, skipped the two heads that had waited all
+        # along (sol-jdk-math-regex, sol-web, 23:56Z).
+        submitters = self.train_submitters() if role == 'apps-landing' else set()
         if members and freed is not None and not queue.get('paused'):
             start = max(freed, parse_utc(queue['head_since']) if queue.get('head_since') else 0.0)
-            while members and now >= start + window:
+            while members and now >= start + window and members[0]['agent'] not in submitters:
                 skipped.append(members.pop(0)['agent'])
                 start += window
                 queue['head_since'] = _dt.datetime.fromtimestamp(start, _dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
             deadline = start + window if members else None
         queue['members'] = members
         return queue, skipped, deadline
+
+    def train_submitters(self) -> set:
+        """Agents with a live merge-train submission (train.json, written by tools/merge_train.py)."""
+        return {s.get('agent') for s in self._read_json('train.json', {}).get('submissions', [])}
 
     def _settle_queue(self, role: str, queues: dict, leases: dict) -> dict:
         """Apply skips to the stored queue (call under the lock); returns the role's queue."""
