@@ -28,7 +28,7 @@
     "template_instances": 35
   },
   "flint.java.util.concurrent.atomic.doubleadder": {
-    "incremental_linked_bytes": 24576,
+    "incremental_linked_bytes": 13104,
     "template_instances": 35
   }
 }
