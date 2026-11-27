@@ -228,11 +228,9 @@ class SimpleDateFormat : DateFormat
     /// Throws NullPointerException if the date or calendar is null.
     void set2DigitYearStart(const Date startDate)
     {
-        if (startDate is null)
-            throw new NullPointerException();
+        if (startDate is null || calendar is null)
+            throwNullPointerException();
         defaultCenturyStart = startDate.getTime();
-        if (calendar is null)
-            throw new NullPointerException();
         calendar.setTimeInMillis(defaultCenturyStart);
         defaultCenturyStartYear = calendar.get(Calendar.YEAR);
     }
