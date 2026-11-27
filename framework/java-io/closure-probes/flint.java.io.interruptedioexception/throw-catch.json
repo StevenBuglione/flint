@@ -2,6 +2,8 @@
   "source": "closure/interrupted.d",
   "leaves": [
     "flint.java.io",
+    "flint.java.io.closeable",
+    "flint.java.io.flushable",
     "flint.java.lang"
   ],
   "data": []
