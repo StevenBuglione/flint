@@ -180,7 +180,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 47 | 111 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,615 | 1,539 | 4,870 | 29,810 |
+| framework | spring-framework@v7.1.0 | 3,601 | 1,553 | 4,870 | 29,810 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
@@ -3223,10 +3223,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.beans.factory.annotation.Autowired` | `flint.beans.factory.annotation.Autowired` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.beans.factory.annotation.Autowired#required` | `flint.beans.factory.annotation.Autowired.required` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils` | `flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types) |  |
 | `org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils#qualifiedBeanOfType(BeanFactory,Class,String)` | `flint.beans.factory.annotation_runtime.BeanFactoryAnnotationUtils.qualifiedBeanOfType` | [R22](api-mapping.md#r22-packages-that-mix-annotations-and-runtime-types), [R4](api-mapping.md#r4-classt-parameters) | Uses the generated qualifier values on the bean definition and the described class's merged annotations. The generated values combine definition and factory-method qualifier metadata. |
 | `org.springframework.beans.factory.annotation.Qualifier` | `flint.beans.factory.annotation.Qualifier` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.beans.factory.annotation.Qualifier#value` | `flint.beans.factory.annotation.Qualifier.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.beans.factory.annotation.Value` | `flint.beans.factory.annotation.Value` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.beans.factory.annotation.Value#value` | `flint.beans.factory.annotation.Value.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.beans.factory.config
 
@@ -3417,13 +3420,22 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.context.annotation.AnnotationConfigApplicationContext#<init>(Class...)` | `flint.context.annotation.AnnotationConfigApplicationContext.this` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.context.annotation.AnnotationConfigApplicationContext#register(Class...)` | `flint.context.annotation.AnnotationConfigApplicationContext.register` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.context.annotation.DependsOn` | `flint.context.annotation.DependsOn` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.context.annotation.DependsOn#value` | `flint.context.annotation.DependsOn.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.context.annotation.Description` | `flint.context.annotation.Description` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.context.annotation.Description#value` | `flint.context.annotation.Description.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.context.annotation.Fallback` | `flint.context.annotation.Fallback` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.context.annotation.Import` | `flint.context.annotation.Import` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.context.annotation.Import#value` | `flint.context.annotation.Import.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.context.annotation.Lazy` | `flint.context.annotation.Lazy` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.context.annotation.Lazy#value` | `flint.context.annotation.Lazy.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.context.annotation.Primary` | `flint.context.annotation.Primary` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.context.annotation.PropertySource` | `flint.context.annotation.PropertySource` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.context.annotation.PropertySource#encoding` | `flint.context.annotation.PropertySource.encoding` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.context.annotation.PropertySource#ignoreResourceNotFound` | `flint.context.annotation.PropertySource.ignoreResourceNotFound` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.context.annotation.PropertySource#name` | `flint.context.annotation.PropertySource.name` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.context.annotation.PropertySource#value` | `flint.context.annotation.PropertySource.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.context.annotation.Role` | `flint.context.annotation.Role` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.context.annotation.Role#value` | `flint.context.annotation.Role.value` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.context.event
 
@@ -4371,6 +4383,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.stereotype.Component` | `flint.stereotype.Component` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.stereotype.Component#value` | `flint.stereotype.Component.value` | [R2](api-mapping.md#r2-annotations) |  |
 | `org.springframework.stereotype.Indexed` | `flint.stereotype.Indexed` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### org.springframework.test.json
@@ -4597,6 +4610,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.validation.annotation.Validated` | `flint.validation.annotation.Validated` | [R2](api-mapping.md#r2-annotations) |  |
+| `org.springframework.validation.annotation.Validated#value` | `flint.validation.annotation.Validated.value` | [R2](api-mapping.md#r2-annotations), [R4](api-mapping.md#r4-classt-parameters) |  |
 
 #### org.springframework.validation.beanvalidation
 
