@@ -471,7 +471,8 @@ int compareNatural(T)(T a, T b)
         throw new ClassCastException("class " ~ typeNameOf!T ~ " cannot be cast to class java.lang.Comparable");
 }
 
-/// A stable merge sort (Java's `List.sort` is stable).
+/// A stable merge sort (Java's `List.sort` is stable). When `compare` throws, `items` still holds every element and
+/// equal elements keep their input order, so sorting again gives the same result as an uninterrupted sort.
 void stableSort(T)(T[] items, scope int delegate(T, T) @safe compare)
 {
     if (items.length < 2)
@@ -488,14 +489,13 @@ private void mergeSort(T)(T[] items, T[] buffer, scope int delegate(T, T) @safe 
     {
         foreach (i; 1 .. items.length)
         {
-            auto current = items[i];
-            size_t j = i;
-            while (j > 0 && compare(items[j - 1], current) > 0)
+            // Swap rather than shift, so a throwing compare leaves every element in place.
+            for (size_t j = i; j > 0 && compare(items[j - 1], items[j]) > 0; j--)
             {
+                auto moved = items[j];
                 items[j] = items[j - 1];
-                j--;
+                items[j - 1] = moved;
             }
-            items[j] = current;
         }
         return;
     }
