@@ -283,6 +283,25 @@ class BitSet
             words[index] |= incoming;
     }
 
+    /// Toggles the bits that are set in either bit set but not in both.
+    void xor(BitSet set) pure
+    {
+        if (set is null)
+            rejectNullSet();
+        if (this is set)
+        {
+            clear();
+            return;
+        }
+
+        const count = set.wordsInUse;
+        if (count > wordsInUse)
+            expandTo(cast(uint) count - 1);
+        foreach (index, incoming; set.words[0 .. count])
+            words[index] ^= incoming;
+        recalculateWordsInUse();
+    }
+
     /// Clears the bits that are also set in the supplied mask.
     void andNot(BitSet set) pure
     {
