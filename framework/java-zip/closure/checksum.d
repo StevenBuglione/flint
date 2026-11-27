@@ -14,6 +14,12 @@ private final class ByteSum : Checksum
         sum += cast(ubyte) value;
     }
 
+    override void update(scope const(byte)[] data) nothrow @nogc
+    {
+        foreach (value; data)
+            sum += cast(ubyte) value;
+    }
+
     override long getValue() nothrow @nogc
     {
         return sum;
