@@ -372,6 +372,9 @@ class SkeletonTests(unittest.TestCase):
             self.assertEqual(skeletons.place_of('flint.a.b', index),
                              (root, root / 'flint' / 'a' / 'b' / 'package.d', False))
             self.assertEqual(skeletons.place_of('flint.d', index)[2], True)
+            # A child generated in the same batch makes the new parent a package.d too.
+            self.assertEqual(skeletons.place_of('flint.a.f', index, {'flint.a.f.g'}),
+                             (root, root / 'flint' / 'a' / 'f' / 'package.d', False))
             with self.assertRaisesRegex(Unsupported, 'package.d'):
                 skeletons.place_of('flint.d.e', index)
 

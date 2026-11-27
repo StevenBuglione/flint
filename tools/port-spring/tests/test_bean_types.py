@@ -123,6 +123,12 @@ class BeanTypeTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.scratch.cleanup()
 
+    def test_literals_keep_java_spelling_except_long_suffixes(self):
+        self.assertEqual(bean_types.literal('null', 'x'), 'null')  # not `nulL`
+        self.assertEqual(bean_types.literal('1_000l', 'x'), '1000L')
+        self.assertEqual(bean_types.literal('-5L', 'x'), '-5L')
+        self.assertEqual(bean_types.literal('"a_l"', 'x'), '"a_l"')
+
     def test_only_classes_of_trivial_accessors_are_pure_beans(self):
         self.assertEqual(sorted(self.items), ['Status', 'TimeoutFailure'])
 

@@ -920,9 +920,10 @@ def placeholders(text):
     return sorted(written_bodies(text)[1])
 
 
-def place_of(module, index):
+def place_of(module, index, planned=()):
     """(root, path, whether it exists) of the file that holds a D module: its declaring file, or a new one in the
-    source root of its nearest declared parent module (`package.d` when the module already has children)."""
+    source root of its nearest declared parent module (`package.d` when the module has children, declared or
+    `planned` in the same batch)."""
     if module in index:
         root, path = index[module][0]
         return root, path, True
@@ -938,7 +939,7 @@ def place_of(module, index):
     else:
         raise accessors.Unsupported(f'no source root declares a parent module of {module}')
     base = root.joinpath(*parts)
-    children = any(m.startswith(module + '.') for m in index)
+    children = any(m.startswith(module + '.') for m in [*index, *planned])
     return root, (base / 'package.d' if children else base.with_suffix('.d')), False
 
 
@@ -1035,6 +1036,7 @@ def batch_items(universe, helper, type_ids, index):
     """({type id: item with its destination}, {type id: reason it can't be emitted})."""
     universe.predict, universe.batch = True, set(type_ids)
     items, rejected = {}, {}
+    planned = {row['d'].rsplit('.', 1)[0] for row in map(lambda t: accessors.mapped_row(universe, t), type_ids) if row}
     for type_id in sorted(type_ids):
         try:
             if type_id not in universe.types:
@@ -1047,7 +1049,7 @@ def batch_items(universe, helper, type_ids, index):
             if row is None:
                 raise accessors.Unsupported('no D module: no enclosing Java package is mapped (R1)')
             module = row['d'].rsplit('.', 1)[0]
-            root, path, _ = place_of(module, index)
+            root, path, _ = place_of(module, index, planned)
             package = gate.package_of(path)
             if package is None:
                 raise accessors.Unsupported(f'no DUB package holds {path}')

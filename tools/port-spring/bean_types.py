@@ -176,7 +176,7 @@ def literal(text, where):
     text = text.strip()
     if not LITERAL.fullmatch(text):
         raise accessors.Unsupported(f'{where} is not a parameter or literal: {text[:60]}')
-    return re.sub(r'[lL]$', 'L', text.replace('_', '')) if text[0] != '"' else text
+    return re.sub(r'[lL]$', 'L', text.replace('_', '')) if text[0] in '-0123456789' else text
 
 
 def field_names(decl):
