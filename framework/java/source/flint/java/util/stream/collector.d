@@ -9,7 +9,7 @@ need none of it, so a program that never names `Collector` does not link this mo
 +/
 module flint.java.util.stream.collector;
 
-import flint.java.util : LinkedHashSet, Set;
+import flint.java.util : Set;
 import flint.java.util.function_ : BiConsumer, BinaryOperator, Function, Supplier;
 
 @safe:
@@ -107,20 +107,16 @@ pragma(inline, false) private noreturn throwNullFunction()
     throw new NullPointerException();
 }
 
-/// The unmodifiable set of `characteristics` in declaration order, as Java's `EnumSet` iterates. A template, so the
-/// library itself never instantiates the set (and its enum formatting) for programs that do not call `of`.
+/// The unmodifiable set of `characteristics` in declaration order, as Java's `EnumSet` iterates, over a bit mask (S-149).
+/// A template, so the library itself never instantiates the set (and its enum formatting) for programs that do not
+/// call `of`.
 private Set!Characteristics characteristicSet()(scope Characteristics[] characteristics, bool identityFinish)
 {
-    bool[Characteristics.max + 1] present;
-    present[Characteristics.IDENTITY_FINISH] = identityFinish;
-    foreach (c; characteristics)
-        present[c] = true;
-    auto result = new LinkedHashSet!Characteristics();
-    foreach (i, set; present)
-        if (set)
-            result.add(cast(Characteristics) i);
-    result.freeze();
-    return result;
+    import flint.java.util.internal.enumbitset : EnumBitSet;
+
+    if (identityFinish)
+        return EnumBitSet!Characteristics.of(characteristics ~ Characteristics.IDENTITY_FINISH);
+    return EnumBitSet!Characteristics.of(characteristics);
 }
 
 private final class FunctionCollector(T, A, R) : Collector!(T, A, R)
