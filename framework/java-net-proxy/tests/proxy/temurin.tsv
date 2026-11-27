@@ -1,0 +1,48 @@
+ctor-direct-u	IllegalArgumentException: type DIRECT is not compatible with address Proxy.Example/<unresolved>:3128
+ctor-http-null	IllegalArgumentException: type HTTP is not compatible with address null
+ctor-socks-null	IllegalArgumentException: type SOCKS is not compatible with address null
+ctor-direct-null	IllegalArgumentException: type DIRECT is not compatible with address null
+p0	HTTP	HTTP @ Proxy.Example/<unresolved>:3128	Proxy.Example/<unresolved>:3128
+p1	HTTP	HTTP @ proxy.example/<unresolved>:3128	proxy.example/<unresolved>:3128
+p2	SOCKS	SOCKS @ Proxy.Example/<unresolved>:3128	Proxy.Example/<unresolved>:3128
+p3	HTTP	HTTP @ /10.0.0.1:1080	/10.0.0.1:1080
+p4	SOCKS	SOCKS @ /10.0.0.1:1080	/10.0.0.1:1080
+p5	HTTP	HTTP @ /[0:0:0:0:0:0:0:1]:8080	/[0:0:0:0:0:0:0:1]:8080
+eq	p0	p0	true
+eq	p0	p1	true
+eq	p0	p2	false
+eq	p0	p3	false
+eq	p0	p4	false
+eq	p0	p5	false
+eq	p1	p0	true
+eq	p1	p1	true
+eq	p1	p2	false
+eq	p1	p3	false
+eq	p1	p4	false
+eq	p1	p5	false
+eq	p2	p0	false
+eq	p2	p1	false
+eq	p2	p2	true
+eq	p2	p3	false
+eq	p2	p4	false
+eq	p2	p5	false
+eq	p3	p0	false
+eq	p3	p1	false
+eq	p3	p2	false
+eq	p3	p3	true
+eq	p3	p4	false
+eq	p3	p5	false
+eq	p4	p0	false
+eq	p4	p1	false
+eq	p4	p2	false
+eq	p4	p3	false
+eq	p4	p4	true
+eq	p4	p5	false
+eq	p5	p0	false
+eq	p5	p1	false
+eq	p5	p2	false
+eq	p5	p3	false
+eq	p5	p4	false
+eq	p5	p5	true
+eq-null	false
+eq-addr	false
