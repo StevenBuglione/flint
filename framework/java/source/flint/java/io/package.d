@@ -105,7 +105,7 @@ class UncheckedIOException : RuntimeException
 }
 
 /// Java's `InputStream`: a source of bytes.
-abstract class InputStream
+abstract class InputStream : Closeable
 {
     /// The next byte as 0..255, or -1 at the end.
     abstract int read();
@@ -183,6 +183,29 @@ abstract class InputStream
         }
     }
 
+    /// How many bytes can be read without blocking. The default is zero.
+    int available()
+    {
+        return 0;
+    }
+
+    /// Mark the current position. The default does nothing.
+    void mark(int readLimit)
+    {
+    }
+
+    /// Whether mark and reset are supported. The default is false.
+    bool markSupported()
+    {
+        return false;
+    }
+
+    /// Return to the last mark. The default throws because marks are unsupported.
+    void reset()
+    {
+        throw new IOException("mark/reset not supported");
+    }
+
     /// Release the stream. The default does nothing.
     void close()
     {
@@ -198,7 +221,7 @@ private void checkReadRange(size_t capacity, int offset, int length)
 }
 
 /// Java's `OutputStream`: a sink of bytes.
-abstract class OutputStream
+abstract class OutputStream : Closeable, Flushable
 {
     /// Write one byte (the low 8 bits of `b`).
     abstract void write(int b);
@@ -282,7 +305,7 @@ class ByteArrayOutputStream : OutputStream
 }
 
 /// Java's `Writer`: a sink of characters (UTF-8 text in Flint).
-abstract class Writer
+abstract class Writer : Closeable, Flushable
 {
     /// Write `text`.
     abstract void write(scope const(char)[] text);
@@ -495,7 +518,7 @@ class ByteArrayInputStream : InputStream
     }
 
     /// How many bytes remain.
-    int available() const pure nothrow @nogc
+    override int available() pure nothrow @nogc
     {
         return cast(int)(bytes.length - position);
     }
