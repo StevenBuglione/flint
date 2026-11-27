@@ -375,21 +375,68 @@ def unique_object(pairs):
     return result
 
 
-def baseline_entries(text):
+BASELINE_KEYS = {'schema', 'source_commit', 'violations'}
+GROUP_KEYS = {'decision', 'reason', 'violations'}
+
+
+def baseline_document(text):
+    """The baseline's ungrouped rows, and {row: (group, decision)} for its labelled groups.
+
+    A group (coordinator, 2026-11-27 18:54Z) holds module-record rows admitted together by one decision, such as
+    batch-placement references, so they stay visible as a block and can be dropped as one.
+    """
     document = json.loads(text, object_pairs_hook=unique_object)
-    if (not isinstance(document, dict) or set(document) != {'schema', 'source_commit', 'violations'}
+    keys = set(document) if isinstance(document, dict) else set()
+    if (not BASELINE_KEYS <= keys or keys - BASELINE_KEYS - {'groups'}
             or document['schema'] != BASELINE_SCHEMA or not isinstance(document['source_commit'], str)
             or not re.fullmatch(r'[0-9a-f]{40}', document['source_commit'])):
         raise ValueError(f'invalid {BASELINE_SCHEMA} document')
     rows = document['violations']
     if not isinstance(rows, list) or any(not isinstance(row, str) or not row for row in rows) or rows != sorted(set(rows)):
         raise ValueError('JDK baseline violations must be unique sorted strings')
-    return set(rows)
+    groups = document.get('groups', {})
+    if not isinstance(groups, dict):
+        raise ValueError('JDK baseline groups must be an object')
+    grouped = {}
+    for name, group in groups.items():
+        if not re.fullmatch(r'[a-z][a-z0-9-]*', name) or not isinstance(group, dict) or set(group) != GROUP_KEYS:
+            raise ValueError(f'JDK baseline group {name!r} needs exactly {sorted(GROUP_KEYS)}')
+        decision, reason, members = group['decision'], group['reason'], group['violations']
+        if not isinstance(decision, str) or not re.fullmatch(r'[0-9a-f]{9,40}', decision):
+            raise ValueError(f'JDK baseline group {name}: decision must be a commit id')
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError(f'JDK baseline group {name}: reason must be non-empty')
+        if (not isinstance(members, list) or not members or any(not isinstance(row, str) for row in members)
+                or members != sorted(set(members))):
+            raise ValueError(f'JDK baseline group {name}: violations must be unique sorted strings')
+        for row in members:
+            if not LEGACY_RECORD.fullmatch(row):
+                raise ValueError(f'JDK baseline group {name}: only module-record rows may be grouped: {row}')
+            if row in grouped or row in rows:
+                raise ValueError(f'JDK baseline row is listed twice: {row}')
+            grouped[row] = (name, decision)
+    return set(rows), grouped
+
+
+def baseline_entries(text):
+    rows, grouped = baseline_document(text)
+    return rows | set(grouped)
 
 
 def baseline_at(root):
     path = root / BASELINE
     return baseline_entries(path.read_text()) if path.is_file() else set()
+
+
+def baseline_group_counts(root):
+    """{group: row count}, so the cost each group carries stays visible in the ratchet's report."""
+    path = root / BASELINE
+    if not path.is_file():
+        return {}
+    counts = {}
+    for name, _ in baseline_document(path.read_text())[1].values():
+        counts[name] = counts.get(name, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def committed_text(root, commit, path):
@@ -437,8 +484,12 @@ def may_seed_module_record(root, commit, row, existing_modules):
     return module not in leaves if placement else 'flint.java.lang' in leaves
 
 
+def decision_in_history(root, decision):
+    return git(root, 'merge-base', '--is-ancestor', decision, 'HEAD', check=False).returncode == 0
+
+
 def baseline_growth(root, current):
-    """Reject new debt, except approved module records for exact probes."""
+    """Reject new debt, except approved module records for exact probes and rows of a decided group."""
     if not (root / '.git').exists():
         return []
     if git(root, 'rev-parse', '--is-shallow-repository').stdout.strip() == 'true':
@@ -447,17 +498,26 @@ def baseline_growth(root, current):
     versions = []
     for commit in commits:
         document = committed_text(root, commit, BASELINE)
-        versions.append((commit, baseline_entries(document) if document is not None else set()))
+        rows, grouped = baseline_document(document) if document is not None else (set(), {})
+        versions.append((commit, rows | set(grouped), grouped))
     if not versions:
         return []
-    versions.append((None, current))
+    path = root / BASELINE
+    working = baseline_document(path.read_text())[1] if path.is_file() else {}
+    versions.append((None, current, {row: group for row, group in working.items() if row in current}))
     seed = versions[0][1]
     existing_modules = {match[4] for row in seed if (match := LEGACY_RECORD.fullmatch(row)) and match[1] == 'java'}
     seen, problems = set(seed), []
-    for (_, previous), (commit, entries) in zip(versions, versions[1:]):
+    for (_, previous, _), (commit, entries, grouped) in zip(versions, versions[1:]):
         label = commit[:12] if commit else 'working tree'
         for row in sorted(entries - previous):
-            if row in seen or not may_seed_module_record(root, commit, row, existing_modules):
+            if row in seen:
+                problems.append(f'{BASELINE}: violation added in {label}: {row}')
+            elif row in grouped:
+                name, decision = grouped[row]
+                if not decision_in_history(root, decision):
+                    problems.append(f'{BASELINE}: group {name} cites {decision}, which is not in history: {row}')
+            elif not may_seed_module_record(root, commit, row, existing_modules):
                 problems.append(f'{BASELINE}: violation added in {label}: {row}')
         seen.update(entries)
     return problems
@@ -934,7 +994,7 @@ def main():
         print(error, file=sys.stderr)
         return 2
     print(json.dumps({'probes': report, 'budgets': budgets, 'budget_problems': budget_problems,
-                      'problems': problems}, indent=2))
+                      'baseline_groups': baseline_group_counts(ROOT), 'problems': problems}, indent=2))
     return int(bool(problems))
 
 

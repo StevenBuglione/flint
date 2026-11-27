@@ -184,6 +184,72 @@ class LinkClosureTests(unittest.TestCase):
             self.assertEqual(closure.check_violations({violation}, {violation}), [])
             self.assertEqual(len(closure.check_violations({violation}, {violation}, release=True)), 1)
 
+    def test_baseline_groups_validate_their_rows(self):
+        row = 'link|java-nio-numeric-buffers|flint.java.nio.intbuffer|cursor|O3|undeclared module records flint.java.nio.longbuffer'
+        header = {'schema': closure.BASELINE_SCHEMA, 'source_commit': 'a' * 40, 'violations': []}
+
+        def document(**group):
+            body = {'decision': 'c' * 40, 'reason': 'batch scope', 'violations': [row]}
+            body.update(group)
+            return json.dumps(dict(header, groups={'batch-placement': body}))
+
+        self.assertEqual(closure.baseline_entries(document()), {row})
+        rows, grouped = closure.baseline_document(document())
+        self.assertEqual((rows, grouped), (set(), {row: ('batch-placement', 'c' * 40)}))
+        # Only module-record rows, a commit id, a reason, sorted unique rows and nothing listed twice.
+        with self.assertRaises(ValueError):
+            closure.baseline_entries(document(violations=['import|java|flint.java.lang|std.conv']))
+        with self.assertRaises(ValueError):
+            closure.baseline_entries(document(decision='latest'))
+        with self.assertRaises(ValueError):
+            closure.baseline_entries(document(reason=' '))
+        with self.assertRaises(ValueError):
+            closure.baseline_entries(document(violations=[row, row]))
+        with self.assertRaises(ValueError):
+            closure.baseline_entries(json.dumps(dict(header, violations=[row], groups={
+                'batch-placement': {'decision': 'c' * 40, 'reason': 'batch scope', 'violations': [row]}})))
+        with self.assertRaises(ValueError):
+            closure.baseline_entries(json.dumps(dict(header, groups={'Batch': {}})))
+        with self.assertRaises(ValueError):
+            closure.baseline_entries(json.dumps(dict(header, extra=1)))
+
+    def test_group_rows_need_their_decision_in_history_and_are_counted(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(['git', 'init', '-q', root], check=True)
+            path = root / closure.BASELINE
+            path.parent.mkdir(parents=True)
+            header = {'schema': closure.BASELINE_SCHEMA, 'source_commit': 'a' * 40, 'violations': []}
+
+            def commit(message):
+                closure.git(root, 'add', '.')
+                closure.git(root, '-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '-qm', message)
+                return closure.git(root, 'rev-parse', 'HEAD').stdout.strip()
+
+            path.write_text(json.dumps(header))
+            decision = commit('Seed, and decide on batch placement')
+            first = 'link|java-nio-numeric-buffers|flint.java.nio.intbuffer|cursor|O3|undeclared module records flint.java.nio.longbuffer'
+            second = first.replace('|O3|', '|Oz|')
+
+            def write(decided, rows):
+                path.write_text(json.dumps(dict(header, groups={
+                    'batch-placement': {'decision': decided, 'reason': 'batch scope', 'violations': rows}})))
+
+            write(decision, [first, second])
+            self.assertEqual(closure.baseline_growth(root, {first, second}), [])
+            self.assertEqual(closure.baseline_group_counts(root), {'batch-placement': 2})
+            write('d' * 40, [first])
+            self.assertIn('not in history', closure.baseline_growth(root, {first})[0])
+            write(decision, [first, second])
+            commit('Seed the batch-placement group')
+            self.assertEqual(closure.baseline_growth(root, {first, second}), [])
+            # Dropping the group retires its rows; adding them back is new debt again.
+            path.write_text(json.dumps(header))
+            commit('Drop the group')
+            self.assertEqual(closure.baseline_group_counts(root), {})
+            write(decision, [first])
+            self.assertIn('violation added in working tree', closure.baseline_growth(root, {first})[0])
+
     def test_legacy_module_records_can_seed_a_new_probe_only(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
