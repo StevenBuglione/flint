@@ -931,8 +931,8 @@
     "ldc_cold_seconds": 5.4,
     "ldc_incremental_seconds": 2.7,
     "compiler_peak_rss_bytes": 536870912,
-    "incremental_linked_bytes": 6460,
-    "template_instances": 545
+    "incremental_linked_bytes": 21800,
+    "template_instances": 625
    }
   },
   "java-nio-numeric-buffers": {
