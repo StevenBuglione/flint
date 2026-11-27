@@ -55,6 +55,8 @@ struct DecimalParseOptions
     bool groupingUsed = true;
     bool integerOnly;
     int multiplier = 1;
+    // isParseBigDecimal: finite results stay a DigitList for decimalparsebig.
+    bool parseBigDecimal;
 }
 
 enum DecimalParseKind : ubyte
@@ -64,6 +66,8 @@ enum DecimalParseKind : ubyte
     doubleValue,
     // More significant digits than the caller's buffer holds.
     capacity,
+    // The DigitList fields describe a BigDecimal result; see decimalparsebig.
+    bigDecimal,
 }
 
 /// Offsets are UTF-8 byte offsets into the parsed text.
@@ -101,6 +105,12 @@ DecimalParseResult parseDecimal(scope const(char)[] text, size_t start, ref scop
         return result;
     if (result.kind == DecimalParseKind.capacity)
         return result;
+    // Infinity and a zero multiplier answer a Double before Java consults isParseBigDecimal.
+    if (options.parseBigDecimal && !result.infinite && options.multiplier != 0)
+    {
+        result.kind = DecimalParseKind.bigDecimal;
+        return result;
+    }
     evaluate(options, digits, result);
     return result;
 }
