@@ -5,6 +5,7 @@
   "java.io.UnsupportedEncodingException": "flint.java.io.unsupportedencodingexception",
   "java.lang.Math": "flint.java.lang.math",
   "java.lang.Number": "flint.java.lang.number",
+  "java.lang.StrictMath": "flint.java.lang.strictmath",
   "java.net.ProtocolFamily": "flint.java.net.protocolfamily",
   "java.net.SocketAddress": "flint.java.net.socketaddress",
   "java.net.StandardProtocolFamily": "flint.java.net.standardprotocolfamily",

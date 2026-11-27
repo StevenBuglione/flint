@@ -1196,66 +1196,82 @@
     },
     "java/lang/StrictMath/Atan2Tests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 192,028-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.atan2.",
       "status": "deferred"
     },
     "java/lang/StrictMath/CubeRootTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 171,224-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.cbrt.",
       "status": "deferred"
     },
     "java/lang/StrictMath/ExactArithTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d and framework/java/tests/math_exact_test.d cover StrictMath exact integer arithmetic and overflow exceptions.",
       "status": "deferred"
     },
     "java/lang/StrictMath/ExhaustingTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d and 659,607-call bit-exact differential runs against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath FDLIBM exhaustive special values.",
       "status": "deferred"
     },
     "java/lang/StrictMath/ExpTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 233,155-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.exp.",
       "status": "deferred"
     },
     "java/lang/StrictMath/Expm1Tests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 233,155-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.expm1.",
       "status": "deferred"
     },
     "java/lang/StrictMath/HyperbolicTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 233,155-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.sinh, cosh and tanh.",
       "status": "deferred"
     },
     "java/lang/StrictMath/HypotTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 171,224-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.hypot.",
       "status": "deferred"
     },
     "java/lang/StrictMath/IeeeRemainderTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 171,224-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.IEEEremainder.",
       "status": "deferred"
     },
     "java/lang/StrictMath/InverseTrigTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 192,028-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.asin, acos and atan.",
       "status": "deferred"
     },
     "java/lang/StrictMath/Log10Tests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 233,155-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.log10.",
       "status": "deferred"
     },
     "java/lang/StrictMath/Log1pTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 233,155-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.log1p.",
       "status": "deferred"
     },
     "java/lang/StrictMath/LogTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 233,155-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.log.",
       "status": "deferred"
     },
     "java/lang/StrictMath/PowTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 233,155-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.pow.",
       "status": "deferred"
     },
     "java/lang/StrictMath/SqrtTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 171,224-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.sqrt.",
       "status": "deferred"
     },
     "java/lang/StrictMath/TrigTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/strictmath_test.d, a 63,200-call StrictMath differential run and a 192,028-call FDLIBM differential run against OpenJDK 21.0.13 (DMD/LDC debug/release) cover StrictMath.sin, cos and tan.",
       "status": "deferred"
     },
     "java/lang/String/CaseConvertSameInstance.java": {
