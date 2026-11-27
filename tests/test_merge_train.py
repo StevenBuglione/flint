@@ -813,6 +813,11 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertIn('python3 "$AB/budget_ab.py" --base', script)
         self.assertNotIn('$H python3 tools/budget_ab.py', script)
         self.assertNotIn('@BUDGET_AB@', script)
+        # Each side's own flint CLI (2026-11-27 14:20Z): the base is built by main's generator, then the candidate's
+        # is restored before measuring.
+        checkout = script[script.index('  ab_checkout() {'):script.index('\n  }\n', script.index('  ab_checkout() {'))]
+        self.assertIn('install_toolchains.py --compiler flint', checkout)
+        self.assertLess(script.index('ab_checkout "' + 'b' * 40 + '" base'), script.index('ab_checkout "c" candidate'))
 
     def test_the_load_guard_marks_a_busy_run_not_quiet(self):
         s = merge_train.VERIFY_SCRIPT
