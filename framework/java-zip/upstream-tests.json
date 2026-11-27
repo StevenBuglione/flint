@@ -321,7 +321,8 @@
   "flint_tests": [
     "framework/java-zip/tests/crc32_test.d",
     "framework/java-zip/tests/scalar_checksums_test.d",
-    "framework/java-zip/tests/data_format_exception_test.d"
+    "framework/java-zip/tests/data_format_exception_test.d",
+    "framework/java-zip/tests/zip_error_test.d"
   ],
   "module": "java-zip",
   "schema": "flint.upstream-tests/1",

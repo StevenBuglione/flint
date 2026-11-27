@@ -8612,6 +8612,8 @@
 "java.util.zip.CRC32C#update(byte[],int,int)":{"status":"adapted","d":"flint.java.util.zip.crc32c.CRC32C.update","rules":["R26"],"note":"Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException)."},
 "java.util.zip.Checksum#update(byte[])":{"status":"adapted","d":"flint.java.util.zip.checksum.Checksum.update","rules":["R26"],"note":"Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException)."},
 "java.util.zip.Checksum#update(byte[],int,int)":{"status":"adapted","d":"flint.java.util.zip.checksum.Checksum.update","rules":["R26"],"note":"Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException)."},
+"java.util.zip.ZipError":{"status":"adapted","d":"flint.java.util.zip.ziperror.ZipError","rules":["R8"],"note":"Java's ZipError extends InternalError; R8 maps a Java Error that application code may catch to a catchable D Exception subclass."},
+"java.util.zip.ZipError#<init>(String)":{"status":"ported","d":"flint.java.util.zip.ziperror.ZipError.this"},
 "javax.crypto.**":{"status":"excluded","category":"deferred","phase":"2"},
 "javax.crypto.interfaces.**":{"status":"excluded","category":"deferred","phase":"3"},
 "javax.crypto.spec.**":{"status":"excluded","category":"deferred","phase":"2"},

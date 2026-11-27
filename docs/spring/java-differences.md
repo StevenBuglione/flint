@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,926 | 638 | 0 | 1,915 | 13,942 |
+| framework | openjdk@21.0.13 | 1,927 | 639 | 0 | 1,915 | 13,940 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2984,6 +2984,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.zip.Checksum#update(byte[])` | `flint.java.util.zip.checksum.Checksum.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
 | `java.util.zip.Checksum#update(byte[],int,int)` | `flint.java.util.zip.checksum.Checksum.update` | [R26](api-mapping.md#r26-null-arrays) | Java byte arrays are D byte slices, so the whole-array form is one call; a null slice is empty under R26 (Java throws NullPointerException). |
 | `java.util.zip.DataFormatException` | `flint.java.util.zip.dataformatexception.DataFormatException` | [R26](api-mapping.md#r26-null-arrays) | An explicitly empty Java detail message is reported as absent. |
+| `java.util.zip.ZipError` | `flint.java.util.zip.ziperror.ZipError` | [R8](api-mapping.md#r8-exceptions) | Java's ZipError extends InternalError; R8 maps a Java Error that application code may catch to a catchable D Exception subclass. |
 
 #### org.aopalliance.aop
 
@@ -10998,7 +10999,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
 | java.util.stream | 287 | 0 |
-| java.util.zip | 233 | 0 |
+| java.util.zip | 231 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
 | javax.crypto.spec | 101 | 0 |

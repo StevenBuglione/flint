@@ -7,5 +7,6 @@ public import flint.java.util.zip.crc32 : CRC32;
 public import flint.java.util.zip.crc32c : CRC32C;
 
 public import flint.java.util.zip.dataformatexception : DataFormatException;
+public import flint.java.util.zip.ziperror : ZipError;
 
 @safe:
