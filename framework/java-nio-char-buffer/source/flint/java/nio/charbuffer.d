@@ -351,22 +351,21 @@ class CharBuffer : Buffer, Comparable!CharBuffer
     CharBuffer put(scope const(char)[] source, int start, int end) pure
     {
         checkWritableHeap();
-        const total = arraySize(scanOrWriteUtf16(source, size_t.max, size_t.max));
-        const count = cast(int)(cast(uint) end - cast(uint) start);
-        checkRange(start, count, total);
-        checkWritable();
-        if (count > remaining())
-            throwOverflow();
-        if (count != 0)
-            scanOrWriteUtf16(source, start, cast(size_t) start + count);
-        advance(count);
-        return this;
+        return putUtf8Range(source, start, end, arraySize(scanOrWriteUtf16(source, size_t.max, size_t.max)));
     }
 
     /// Write all UTF-16 code units from UTF-8 input (R14, R26).
     final CharBuffer put(scope const(char)[] source) pure
     {
-        return put(source, 0, arraySize(scanOrWriteUtf16(source, size_t.max, size_t.max)));
+        checkWritableHeap();
+        const total = arraySize(scanOrWriteUtf16(source, size_t.max, size_t.max));
+        return putUtf8Range(source, 0, total, total);
+    }
+
+    /// Append one UTF-16 code unit by relative put.
+    CharBuffer append(wchar value) pure
+    {
+        return put(value);
     }
 
     /// Transfer remaining characters to target. Java's signature declares IOException.
@@ -465,6 +464,19 @@ class CharBuffer : Buffer, Comparable!CharBuffer
             offset += width;
         }
         return output;
+    }
+
+    private CharBuffer putUtf8Range(scope const(char)[] source, int start, int end, int total) pure
+    {
+        const count = cast(int)(cast(uint) end - cast(uint) start);
+        checkRange(start, count, total);
+        checkWritable();
+        if (count > remaining())
+            throwOverflow();
+        if (count != 0)
+            scanOrWriteUtf16(source, start, cast(size_t) start + count);
+        advance(count);
+        return this;
     }
 
     private size_t scanOrWriteUtf16(scope const(char)[] source, size_t firstUnit, size_t endUnit) pure nothrow @nogc
@@ -582,14 +594,14 @@ class CharBuffer : Buffer, Comparable!CharBuffer
         }
     }
 
-    private void checkArray() const pure
+    pragma(inline, false) private void checkArray() const pure
     {
         if (storageKind() != Storage.words)
             throw new UnsupportedOperationException;
         checkWritable();
     }
 
-    private void checkWritableHeap() const pure
+    pragma(inline, false) private void checkWritableHeap() const pure
     {
         // HeapCharBufferR overrides both buffer puts and rejects before any validation.
         if (storageFlags == (Storage.words | readOnlyFlag))

@@ -6020,7 +6020,7 @@
 "java.nio.CharBuffer#allocate(int)":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.allocate"},
 "java.nio.CharBuffer#append(CharSequence)":{"status":"excluded","category":"deferred","phase":"2","reason":"Character sequence, append and read contracts follow the heap array cursor slice."},
 "java.nio.CharBuffer#append(CharSequence,int,int)":{"status":"excluded","category":"deferred","phase":"2","reason":"Character sequence, append and read contracts follow the heap array cursor slice."},
-"java.nio.CharBuffer#append(char)":{"status":"excluded","category":"deferred","phase":"2","reason":"Character sequence, append and read contracts follow the heap array cursor slice."},
+"java.nio.CharBuffer#append(char)":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.append"},
 "java.nio.CharBuffer#array()":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.array"},
 "java.nio.CharBuffer#arrayOffset()":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.arrayOffset"},
 "java.nio.CharBuffer#asReadOnlyBuffer()":{"status":"ported","d":"flint.java.nio.charbuffer.CharBuffer.asReadOnlyBuffer"},
