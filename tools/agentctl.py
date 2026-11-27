@@ -553,6 +553,10 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
     logs = store.root / 'logs' / role
     logs.mkdir(parents=True, exist_ok=True)
     first = brief(store, role, harness).replace('<your-name>', agent)
+    if harness in ('agy', 'copilot'):
+        # A lane worktree may still carry an agentctl.py from before these harnesses existed, which refuses
+        # `--harness agy|copilot`; `other` is accepted by every version, and the agent name records the tool.
+        first = first.replace(f'--harness {harness}`', '--harness other`')
     tick = (f'Continue as role {role} following docs/agents/README.md: check your inbox, continue your state\'s Next '
             f'step, push verified work, and rewrite your hand-off state before you finish (agent name {agent}).')
     if harness == 'codex':
