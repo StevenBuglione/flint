@@ -5802,6 +5802,8 @@
 "java.lang.Math#ceilMod(int,int)":{"d":"flint.java.lang.math.Math.ceilMod","status":"ported"},
 "java.lang.Math#ceilMod(long,int)":{"d":"flint.java.lang.math.Math.ceilMod","status":"ported"},
 "java.lang.Math#ceilMod(long,long)":{"d":"flint.java.lang.math.Math.ceilMod","status":"ported"},
+"java.lang.Math#clamp(double,double,double)":{"d":"flint.java.lang.math.Math.clamp","status":"ported"},
+"java.lang.Math#clamp(float,float,float)":{"d":"flint.java.lang.math.Math.clamp","status":"ported"},
 "java.lang.Math#clamp(long,int,int)":{"d":"flint.java.lang.math.Math.clamp","status":"ported"},
 "java.lang.Math#clamp(long,long,long)":{"d":"flint.java.lang.math.Math.clamp","status":"ported"},
 "java.lang.Math#copySign(double,double)":{"d":"flint.java.lang.math.Math.copySign","status":"ported"},

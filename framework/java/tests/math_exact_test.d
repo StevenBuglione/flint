@@ -147,3 +147,38 @@ unittest
     assert(thrown({ Math.clamp(0L, long.max, long.min); }) == empty ~ "9223372036854775807 > -9223372036854775808");
     assert(thrown({ Math.clamp(0L, -1L, -10L); }) == empty ~ "-1 > -10");
 }
+
+// Java's overload choice for an int or long value. D converts double to float implicitly, so a call that mixes
+// float with double or int is ambiguous and fails to compile (as Math.min and Math.max do); it never picks another overload.
+static assert(is(typeof(Math.clamp(5, 1, 3)) == int) && is(typeof(Math.clamp(5, long.min, long.max)) == long));
+static assert(is(typeof(Math.clamp(1.5f, 0.0f, 2.0f)) == float) && is(typeof(Math.clamp(1.5, 0.0, 2.0)) == double));
+static assert(!__traits(compiles, Math.clamp(1.5f, 0, 2)) && !__traits(compiles, Math.clamp(1.5, 0.0f, 2.0f)));
+
+@("Math floating clamp keeps signed zero and NaN, and throws Java's messages")
+unittest
+{
+    assert(Math.clamp(2.5, 0.0, 1.0) == 1.0 && Math.clamp(-2.5, 0.0, 1.0) == 0.0 && Math.clamp(0.25, 0.0, 1.0) == 0.25);
+    assert(Math.clamp(5.0f, -1.0f, 1.0f) == 1.0f && Math.clamp(double.infinity, 0.0, 1.0) == 1.0);
+    const nan = Math.clamp(double.nan, 0.0, 1.0);
+    assert(nan != nan);
+    const nanF = Math.clamp(float.nan, 0.0f, 1.0f);
+    assert(nanF != nanF);
+    // Equal bounds fall through; -0.0 < +0.0 in min and max.
+    assert(Math.clamp(3.0, 2.0, 2.0) == 2.0);
+    assert(Math.copySign(1.0, Math.clamp(-0.0, -0.0, 0.0)) == -1.0);
+    assert(Math.copySign(1.0, Math.clamp(-0.0, 0.0, 0.0)) == 1.0);
+    assert(Math.copySign(1.0f, Math.clamp(0.0f, -0.0f, -0.0f)) == -1.0f);
+
+    enum bad = "IllegalArgumentException: ";
+    assert(thrown({ Math.clamp(0.0, double.nan, double.nan); }) == bad ~ "min is NaN");
+    assert(thrown({ Math.clamp(0.0, 0.0, double.nan); }) == bad ~ "max is NaN");
+    assert(thrown({ Math.clamp(0.0f, float.nan, 1.0f); }) == bad ~ "min is NaN");
+    assert(thrown({ Math.clamp(0.0f, 1.0f, -float.nan); }) == bad ~ "max is NaN");
+    assert(thrown({ Math.clamp(0.0, 1.0, 0.5); }) == bad ~ "1.0 > 0.5");
+    assert(thrown({ Math.clamp(0.0, 0.0, -0.0); }) == bad ~ "0.0 > -0.0");
+    assert(thrown({ Math.clamp(0.0, double.infinity, 1e-5); }) == bad ~ "Infinity > 1.0E-5");
+    assert(thrown({ Math.clamp(0.0f, 1e10f, 1.0f); }) == bad ~ "1.0E10 > 1.0");
+    assert(thrown({ Math.clamp(0.0f, 0.0f, -0.0f); }) == bad ~ "0.0 > -0.0");
+    assert(thrown({ Math.clamp(0.0f, 0.1f, -float.max); }) == bad ~ "0.1 > -3.4028235E38");
+    assert(thrown({ Math.clamp(0.0, 0.1, -double.min_normal); }) == bad ~ "0.1 > -2.2250738585072014E-308");
+}

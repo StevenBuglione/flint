@@ -621,7 +621,7 @@
     },
     "java/lang/Math/Clamp.java": {
       "phase": "2",
-      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_exact_test.d and a 76,562-call differential run against OpenJDK 21.0.13 (results and exception messages) cover clamp(long, int, int) and clamp(long, long, long); the double and float overloads are not ported yet.",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_exact_test.d and a 76,562-call differential run against OpenJDK 21.0.13 (results and exception messages) cover clamp(long, int, int) and clamp(long, long, long); math_exact_test.d and a 66,304-call differential run (raw result bits and exception messages) cover clamp(double, double, double) and clamp(float, float, float).",
       "status": "deferred"
     },
     "java/lang/Math/CubeRootTests.java": {

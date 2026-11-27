@@ -211,10 +211,34 @@ private noreturn throwClampRange()(long min, long max) pure
     throw new IllegalArgumentException(text[at .. $].idup);
 }
 
+// Java's `IllegalArgumentException(message)` for the floating-point clamp overloads.
+private noreturn throwIllegalArgument()(string message) pure
+{
+    import flint.java.lang : IllegalArgumentException;
+
+    throw new IllegalArgumentException(message);
+}
+
+// Java's `min + " > " + max` for clamp(double, double, double).
+private noreturn throwFloatingClampRange()(double min, double max) pure
+{
+    import flint.serde.java_number : javaDoubleString;
+
+    throwIllegalArgument(javaDoubleString(min) ~ " > " ~ javaDoubleString(max));
+}
+
+// Java's `min + " > " + max` for clamp(float, float, float).
+private noreturn throwFloatingClampRange()(float min, float max) pure
+{
+    import flint.serde.java_number : javaFloatString;
+
+    throwIllegalArgument(javaFloatString(min) ~ " > " ~ javaFloatString(max));
+}
+
 /++
 Java's `java.lang.Math` pure numeric constants, IEEE-754 operations and exact integer arithmetic.
 
-The `*Exact`, `floorDiv`/`floorMod`, `ceilDiv`/`ceilMod` and integral `clamp` members throw Java's
+The `*Exact`, `floorDiv`/`floorMod`, `ceilDiv`/`ceilMod` and `clamp` members throw Java's
 `ArithmeticException` or `IllegalArgumentException`, so they are `pure` but neither `nothrow` nor `@nogc`. They are
 zero-parameter templates, so only a program that calls one links the `flint.java.lang` exception hierarchy. A zero
 divisor throws `ArithmeticException("/ by zero")` as Java's `/` does, and `MIN_VALUE / -1` wraps as in Java instead
@@ -752,6 +776,39 @@ struct Math
     {
         if (min > max)
             throwClampRange(min, max);
+        return Math.min(max, Math.max(value, min));
+    }
+
+    /// `value` clamped to `[min, max]`; throws `IllegalArgumentException` if `min` or `max` is NaN or `min > max`.
+    static double clamp()(double value, double min, double max) pure
+    {
+        // Java's single-branch common path: !(min < max) also catches NaN and the equal-bounds cases.
+        if (!(min < max))
+        {
+            if (min != min)
+                throwIllegalArgument("min is NaN");
+            if (max != max)
+                throwIllegalArgument("max is NaN");
+            // Double.compare(min, max) > 0: min > max, or min is +0.0 and max is -0.0.
+            if (min > max || (doubleToRawLongBits(min) == 0 && doubleToRawLongBits(max) == DOUBLE_SIGN_BIT_MASK))
+                throwFloatingClampRange(min, max);
+        }
+        return Math.min(max, Math.max(value, min));
+    }
+
+    /// `value` clamped to `[min, max]`; throws `IllegalArgumentException` if `min` or `max` is NaN or `min > max`.
+    static float clamp()(float value, float min, float max) pure
+    {
+        if (!(min < max))
+        {
+            if (min != min)
+                throwIllegalArgument("min is NaN");
+            if (max != max)
+                throwIllegalArgument("max is NaN");
+            // Float.compare(min, max) > 0: min > max, or min is +0.0f and max is -0.0f.
+            if (min > max || (floatToRawIntBits(min) == 0 && floatToRawIntBits(max) == FLOAT_SIGN_BIT_MASK))
+                throwFloatingClampRange(min, max);
+        }
         return Math.min(max, Math.max(value, min));
     }
 
