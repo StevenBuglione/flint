@@ -727,3 +727,21 @@ unittest
     });
     assert(e !is null);
 }
+
+@("InvalidMimeTypeException keeps the type and builds Spring's message")
+unittest
+{
+    // Flint: InvalidMimeTypeException(String, @Nullable String) has no direct Spring test.
+    auto withMessage = new InvalidMimeTypeException("audio/", "bad subtype");
+    assert(withMessage.getMimeType() == "audio/");
+    assert(withMessage.msg == `Invalid mime type "audio/": bad subtype`, withMessage.msg);
+    assert(cast(IllegalArgumentException) withMessage !is null);
+
+    auto withoutMessage = new InvalidMimeTypeException("audio/", null);
+    assert(withoutMessage.getMimeType() == "audio/");
+    assert(withoutMessage.msg == `Invalid mime type "audio/"`, withoutMessage.msg);
+
+    const empty = expectThrows!InvalidMimeTypeException(() { MimeTypeUtils.parseMimeType(""); });
+    assert(empty.getMimeType() == "");
+    assert(empty.msg == `Invalid mime type "": 'mimeType' must not be empty`, empty.msg);
+}

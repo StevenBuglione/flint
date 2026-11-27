@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,626 | 1,554 | 0 | 4,870 | 29,784 |
+| framework | spring-framework@v7.1.0 | 3,654 | 1,557 | 0 | 4,870 | 29,753 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -3561,6 +3561,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.core.MethodParameter#getParameterAnnotation(Class)` | `flint.core.MethodParameter.getParameterAnnotation` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.MethodParameter#hasParameterAnnotation(Class)` | `flint.core.MethodParameter.hasParameterAnnotation` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.core.NestedRuntimeException#contains(Class)` | `flint.core.NestedRuntimeException.contains` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.core.SpringVersion#getVersion()` | `flint.core.FlintVersion.getVersion` | [R5](api-mapping.md#r5-optional-and-nullable-values) | D has no JAR manifest to read Implementation-Version from, so this returns the Spring Framework release the module ports, 7.1.0. It is never null, so the return stays a plain string rather than R5's Nullable!string. |
 
 #### org.springframework.core.annotation
 
@@ -4679,7 +4680,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.util.Assert#isInstanceOf(Class,Object,Supplier)` | `flint.util.Assert.isInstanceOf` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.CollectionUtils#findValueOfType(Collection,Class)` | `flint.util.CollectionUtils.findValueOfType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.CollectionUtils#findValueOfType(Collection,Class[])` | `flint.util.CollectionUtils.findValueOfType` | [R4](api-mapping.md#r4-classt-parameters) |  |
+| `org.springframework.util.InvalidMimeTypeException#<init>(String,String)` | `flint.util.InvalidMimeTypeException.this` | [R26](api-mapping.md#r26-null-arrays) | A null D message gives Spring's form for a null message. Any other string, including a non-null empty one, gives the form with a detail. |
 | `org.springframework.util.MimeType` | `flint.util.MimeType` | [R11](api-mapping.md#r11-object-identity-and-equality) | Flint represents this MIME value as a struct with value equality. |
+| `org.springframework.util.MimeTypeUtils#toString(Collection)` | `flint.util.MimeTypeUtils.toString` | [R10](api-mapping.md#r10-streams-and-collections) | Takes a slice of MimeType for the Collection. |
 | `org.springframework.util.NumberUtils#convertNumberToTargetClass(Number,Class)` | `flint.util.NumberUtils.convertNumberToTargetClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.NumberUtils#parseNumber(String,Class)` | `flint.util.NumberUtils.parseNumber` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.NumberUtils#parseNumber(String,Class,NumberFormat)` | `flint.util.NumberUtils.parseNumber` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -10957,7 +10960,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.context.i18n | 19 | 0 |
 | org.springframework.context.index | 14 | 0 |
 | org.springframework.context.support | 207 | 32 |
-| org.springframework.core | 174 | 0 |
+| org.springframework.core | 172 | 0 |
 | org.springframework.core.annotation | 151 | 0 |
 | org.springframework.core.codec | 0 | 147 |
 | org.springframework.core.convert | 60 | 0 |
@@ -11166,7 +11169,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.transaction.support | 17 | 0 |
 | org.springframework.ui | 42 | 0 |
 | org.springframework.ui.freemarker | 38 | 0 |
-| org.springframework.util | 314 | 0 |
+| org.springframework.util | 285 | 0 |
 | org.springframework.util.backoff | 40 | 0 |
 | org.springframework.util.comparator | 30 | 0 |
 | org.springframework.util.concurrent | 13 | 0 |
@@ -12315,6 +12318,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#is(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#reason(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.util.CollectionUtils#contains(Enumeration,Object)` | 2 | Requires java.util.Enumeration support. |
+| framework | `org.springframework.util.MimeTypeUtils#parseMimeTypes(String)` | 2 | Spring splits a list without double quotes at every comma; Flint always treats a backslash as an escape, so a backslash before a comma in an unquoted list keeps the two types together. The fix touches the request-path tokenizer and follows through the merge train. |
+| framework | `org.springframework.util.MimeTypeUtils#sortBySpecificity(List)` | 2 | For more than 50 elements Spring's InvalidMimeTypeException carries the list's toString form, in square brackets; Flint omits the brackets. The fix follows through the merge train. |
+| framework | `org.springframework.util.MimeTypeUtils#tokenize(String)` | 2 | Spring splits a list without double quotes at every comma; Flint always treats a backslash as an escape, so a backslash before a comma in an unquoted list keeps the two types together. The fix touches the request-path tokenizer and follows through the merge train. |
 | framework | `org.springframework.util.StringUtils#toStringArray(Enumeration)` | 2 | Requires java.util.Enumeration support. |
 | framework | `org.thymeleaf.context.AbstractContext` | 2 | Requires a backed insertion-ordered LinkedHashMap.keySet view and verified Locale default handling. |
 | framework | `org.thymeleaf.context.Context` | 2 | Requires a backed insertion-ordered LinkedHashMap.keySet view and verified Locale default handling. |
