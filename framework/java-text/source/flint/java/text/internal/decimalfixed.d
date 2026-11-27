@@ -16,6 +16,10 @@ struct DecimalAffixes
     // Flat words reuse the compiler's existing size_t[] append and comparison instances (B-93).
     const(size_t)[] prefixFields;
     const(size_t)[] suffixFields;
+    // Java's affix patterns (posPrefixPattern and the others), which toPattern quotes back: literals as written,
+    // a quote doubled, and each symbolic token as a quote and the token.
+    string prefixPattern;
+    string suffixPattern;
 }
 
 enum affixFieldWords = 3;
@@ -28,7 +32,7 @@ struct DecimalFixedPattern
     DecimalAffixes positive;
     // The default is the Latin minus. compileFixedDecimalPattern replaces it with the symbols' minus sign, so only
     // a pattern built without compiling (a test fixture) keeps this ASCII prefix.
-    DecimalAffixes negative = DecimalAffixes("-", null, minusSignField[]);
+    DecimalAffixes negative = DecimalAffixes("-", null, minusSignField[], null, "'-");
     uint minimumIntegerDigits = 1;
     uint maximumIntegerDigits = int.max;
     uint minimumFractionDigits;
