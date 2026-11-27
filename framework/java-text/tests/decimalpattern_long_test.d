@@ -61,12 +61,12 @@ unittest
     assert(pattern.minimumExponentDigits == 0 && pattern.maximumIntegerDigits == int.max);
 }
 
-@("DecimalFormat long composition distinguishes malformed and unsupported patterns")
+@("DecimalFormat long composition distinguishes malformed patterns and split digit spans")
 unittest
 {
     DecimalFixedPattern pattern;
     foreach (text; ["0;;", "'a';0", "0%%", "%0‰", "0'x", "0#"])
         assert(compileFixedDecimalPattern(text, pattern) == DecimalCompileStatus.malformed);
-    assert(compileFixedDecimalPattern("¤0", pattern) == DecimalCompileStatus.currency);
+    assert(compileFixedDecimalPattern("¤0", pattern) == DecimalCompileStatus.accepted && pattern.currencyFormat);
     assert(compileFixedDecimalPattern("0x0", pattern) == DecimalCompileStatus.splitDigits);
 }

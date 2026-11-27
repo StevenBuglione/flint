@@ -93,7 +93,7 @@ pure nothrow @nogc size_t renderExponentDigits(scope const(char)[] digits, int d
 {
     const layout = ExponentLayout(digits.length, digits.length == 0 ? 0 : decimalAt, pattern, arbitraryWidths);
     const affixes = negative ? pattern.negative : pattern.positive;
-    const localized = BodySymbols(symbols);
+    const localized = BodySymbols(symbols, pattern.currencyFormat);
     char[10] exponentDigits;
     const exponentStart = writeExponent(layout.exponent, exponentDigits);
     const exponentCount = exponentDigits.length - exponentStart;
