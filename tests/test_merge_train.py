@@ -614,7 +614,23 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(result['failed'], ['sol-b'])
         self.assertIn('ab', [mode for mode, _ in posidon.modes])
 
-    def test_a_red_stack_checks_main_then_bisects_with_flint_budget_alone(self):
+    def test_the_daily_main_budget_runs_once_a_day_and_posts_its_numbers(self):
+        self.store.register('coordinator', 'coordinator', None, None)
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        train = self.stacked(posidon)
+        first = merge_train.daily_main_budget(self.store, train, 'merge-train', lambda line: None, now=1_000_000)
+        self.assertEqual((first['ok'], first['misses']), (True, 0))
+        self.assertEqual(posidon.modes, [('budget', tuple(merge_train.APPS))])
+        self.assertIn('daily absolute flint budget of main', self.store.inbox('coordinator', True, False))
+        again = merge_train.daily_main_budget(self.store, train, 'merge-train', lambda line: None, now=1_000_000 + 3600)
+        self.assertIsNone(again)  # not before 24 h
+        self.assertEqual(len(posidon.modes), 1)
+        self.store.queue('apps-landing', 'join', 'sol-a')
+        self.store.queue('apps-landing', 'pause', 'proof-harness')
+        self.assertIsNone(merge_train.daily_main_budget(self.store, train, 'merge-train', lambda line: None,
+                                                        now=1_000_000 + 25 * 3600))  # never while paused
+
+    def test_a_red_stack_is_judged_and_bisected_interleaved_against_main(self):
         for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e')):
             self.lane(role, {'src/SLOW' if role == 'sol-b' else f'src/{i}.txt': str(i)})
         self.hold_slot()
@@ -623,9 +639,10 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         # Restacked behind the culprit and verified once more in this train (coordinator, 19:27Z).
         self.assertEqual((result['landed'], result['failed']), (['sol-a', 'sol-c', 'sol-d'], ['sol-b']))
         self.assertEqual(result['pending'], ['sol-e'])  # one acceptance verifier: a batch of four
-        both = ('budget', tuple(merge_train.APPS))
-        # The whole stack (red), main (green), then budget-only steps for the app that missed: a,b red, then a green.
-        self.assertEqual(posidon.modes[:4], [both, both, ('budget', ('petclinic-rest',)), ('budget', ('petclinic-rest',))])
+        both, ab = ('budget', tuple(merge_train.APPS)), ('ab', tuple(merge_train.APPS))
+        # The whole stack against the stored numbers (red), then interleaved against main (coordinator, 09:52Z): the
+        # stack (red), then the bisect steps a,b (red) and a (green), all interleaved; no stored-number main check.
+        self.assertEqual(posidon.modes[:4], [both, ab, ab, ab])
         self.assertNotIn('train-screened', (self.store.root / 'events.jsonl').read_text())
         mail = self.store.inbox('sol-b', True, False)
         self.assertIn("petclinic-rest 'list vets' 407,377 -> 412,348 (+1.22%, tolerance 1.00%)", mail)

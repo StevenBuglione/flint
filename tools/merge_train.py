@@ -1120,33 +1120,23 @@ class Train:
                 'pending': [s['role'] for s in self.ordered()], 'verifications': self.verifications}
 
     def _budget_red(self, batch, applied, failed, base, max_train, budget_verifier, verdict):
-        """The stack `applied` (acceptance-green) failed flint budget: bisect it with budget-only steps for the apps that
-        missed, on the budget verifier (log2 of the stack: 3 steps for 8). The first submission whose prefix misses is
-        returned with its misses, the green prefix before it lands, and the rest wait for the next train. If the
-        bisect starts only after main itself passes flint budget on the budget verifier.
-        Coordinator, 2026-11-26 21:3xZ: screening every closure-touching submission alone, one after another on
-        posidon at about 30 minutes each, held a red train for up to four hours. A verifier that could not run blames
-        nobody and lands nothing."""
+        """The stack `applied` (acceptance-green) failed flint budget against the stored numbers: judge it interleaved
+        against main in one session; within tolerance it lands, otherwise it is bisected the same way (log2 of the
+        stack). The first submission whose prefix is over main interleaved is returned, the green prefix before it
+        lands, and the lanes behind it restack. Coordinator, 2026-11-26 21:3xZ (bisect, not serial screens) and
+        2026-11-27 09:52Z (interleaved against main, no stored-number main check). A verifier that could not run
+        blames nobody and lands nothing."""
         if verdict[0] is None:
             return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
-        # Main first (coordinator, 21:27Z): a budget bisect against an unverified base misled us before (gs-rest read
-        # +0.43% with no code change). One posidon run; a red main blames nobody.
-        main_ok, main_log = self.verify(base, budget_verifier, mode='budget', apps=list(APPS))
-        if main_ok is None:
-            return self._resolve(batch, applied, failed, 0, len(applied), (None, main_log), base)
-        if main_ok is False and budget_only_apps(main_log):
-            # Main misses only the stored numbers: that's the session (idle polling shifts per posidon session), not
-            # main. Judge the stack interleaved against main itself (coordinator, 2026-11-27 08:50Z); bisect the
-            # same way if it's over.
-            ab = dict(mode='ab', apps=list(APPS), ab_base=base)
-            ok, log = self.verify(applied[-1][1], budget_verifier, **ab)
-            self.store.event('train-interleaved', role='stack', against='main', ok=ok)
-            if ok is True:
-                return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
-            return self._resolve(batch, applied, failed, 0, len(applied), (ok, log), base, budget_verifier, step=ab)
-        if main_ok is False:
-            return self._main_red(base, main_log, failed)
-        return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
+        # Coordinator, 2026-11-27 09:52Z: no stored-number main check; the stack is judged interleaved against main in
+        # one session (tools/budget_ab.py), which measures main as the verified base the 21:27Z rule asked for, and is
+        # bisected the same way if it's over. Main's own absolute figures are posted every 24 h (daily_main_budget).
+        ab = dict(mode='ab', apps=list(APPS), ab_base=base)
+        ok, log = self.verify(applied[-1][1], budget_verifier, **ab)
+        self.store.event('train-interleaved', role='stack', against='main', ok=ok)
+        if ok is True:
+            return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
+        return self._resolve(batch, applied, failed, 0, len(applied), (ok, log), base, budget_verifier, step=ab)
 
     def push(self, submissions, base, tip, attempts):
         with self.git_lock:
@@ -1287,10 +1277,58 @@ def serve(store, train, agent='merge-train', poll=15, once=False, log=print):
                 finally:
                     store.release(SLOT, agent, 'merge train')
                     train.verifications = 0
+        daily_main_budget(store, train, agent, log)
         if once:
             guard.close()
             return
         time.sleep(poll)
+
+
+DAILY_HOURS = 24
+
+
+def daily_main_budget(store, train, agent, log, now=None):
+    """Coordinator, 2026-11-27 09:52Z: the train judges flint budget interleaved against main, so main's own absolute
+    figures are run and posted every 24 hours, to keep slow cumulative drift in main visible to the owner. Runs between
+    trains while apps-landing is free and not paused (claimed like a train); the log goes to
+    coordination/notes/main-budget-daily/ and the misses to the coordinator."""
+    state_path = store.root / 'train' / 'main-budget-daily.json'
+    state = json.loads(state_path.read_text()) if state_path.is_file() else {}
+    now = time.time() if now is None else now
+    if now - state.get('last', 0) < DAILY_HOURS * 3600 or train.budget_verifier() is None:
+        return None
+    lease = store.leases().get(SLOT)
+    queue, _, _ = store.queue_view(SLOT)
+    if (lease and store.lease_live(lease)) or queue.get('paused'):
+        return None
+    try:
+        store.claim(SLOT, agent, 'other', None, 120)
+    except SystemExit:
+        return None
+    try:
+        base = train._fetch()
+        ok, out = train.verify(base, train.budget_verifier(), mode='budget', apps=list(APPS))
+        notes = store.root / 'notes' / 'main-budget-daily'
+        notes.mkdir(parents=True, exist_ok=True)
+        stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime(now))
+        (notes / f'{stamp}-{base[:8]}.log').write_text(out)
+        misses = budget_misses(out)
+        state = {'last': now, 'main': base, 'ok': ok, 'misses': len(misses), 'log': str(notes / f'{stamp}-{base[:8]}.log')}
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text(json.dumps(state, indent=1) + '\n')
+        store.event('train-daily-main-budget', main=base, ok=ok, misses=len(misses))
+        summary = '; '.join(f"{a} '{e}' {b} -> {x} (+{pct:.2f}%)" for a, e, b, x, pct, _ in misses[:10])
+        if train.mail:
+            train._send('coordinator', f'merge train: daily absolute flint budget of main {base[:12]} on posidon: '
+                        + ('within the absolute budgets' if ok is True else
+                           'no verdict (the verifier could not run)' if ok is None else
+                           f'{len(misses)} endpoint(s) over the absolute budgets: {summary}')
+                        + f'. Log: {state["log"]}')
+        log(f'{agent_utc()} daily main budget: {json.dumps(state)}')
+        return state
+    finally:
+        store.release(SLOT, agent, 'daily main budget')
+        train.verifications = 0
 
 
 def agent_utc():
