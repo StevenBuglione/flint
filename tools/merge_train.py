@@ -613,6 +613,10 @@ class Train:
         self.verifications = 0
         self.base = None  # main at the train's start: the module probes judge candidates against it
         self.restacked = False  # one restack per train after a named culprit (coordinator, 19:27Z)
+        import threading
+        self.git_lock = threading.RLock()  # the worktree's checkouts: an early prefix push may run beside a bisect
+        self.early = None  # (submissions, pushed) when a green prefix landed before the bisect finished
+        self.early_future = None
         self.max_train = MAX_TRAIN
 
     # State.
@@ -661,6 +665,10 @@ class Train:
 
     def build(self, batch, base):
         """Rebase each submission in order onto the train; returns ([(submission, tip)], [(submission, log)])."""
+        with self.git_lock:
+            return self._build(batch, base)
+
+    def _build(self, batch, base):
         git(['checkout', '-q', '--detach', base], self.worktree)
         applied, failed, tip = [], [], base
         for submission in batch:
@@ -840,6 +848,7 @@ class Train:
             raise SystemExit(f'merge_train: {self.worktree} has uncommitted tracked changes; the train needs it clean')
         base = self.base = self._fetch()
         self.restacked, self.max_train = False, max_train
+        self.early, self.early_future = None, None
         budget_verifier = next((v for v in reversed(self.verifiers) if getattr(v, 'budget', False)), None)
         others = [v for v in self.verifiers if not getattr(v, 'budget', False)]
         if budget_verifier is not None and others and getattr(budget_verifier, 'supports_modes', False):
@@ -863,7 +872,10 @@ class Train:
                                    f'verified but could not land (main kept moving under the push). It stays submitted '
                                    f'and you are back at the head of the {SLOT} queue for the next train; nothing to do.')
                 landed = []
-        return self.settle(batch, landed, failed, pushed)
+        result = self.settle(batch, landed, failed, pushed)
+        if outcome.get('landed_early'):
+            result['landed_early'], result['pushed_early'] = outcome['landed_early'], self.early[1]
+        return result
 
     def _stacked(self, batch, base, max_train):
         """Speculative stacking: candidate k is main plus groups 1..k (up to max_train submissions each), one per
@@ -923,7 +935,14 @@ class Train:
                     # green prefix and verified once more in this train (a bisect if that fails, with no second
                     # restack), so no lane loses its turn to one repeat failure.
                     self.restacked = True
-                    keep = [s for s, _ in applied[:good] + behind]
+                    if self.early_future is not None:
+                        self.early_future.result()  # never build while an early push may still be rebuilding
+                    if self.early:
+                        landed_early = {(s['role'], s['commit']) for s in self.early[0]}
+                        keep = [s for s, _ in applied[:good] + behind if (s['role'], s['commit']) not in landed_early]
+                        base = self.early[1]
+                    else:
+                        keep = [s for s, _ in applied[:good] + behind]
                     self.store.event('train-restack', culprit=applied[bad - 1][0]['role'], roles=[s['role'] for s in keep])
                     outcome = self._stacked(keep, base, self.max_train)
                     outcome['failed'] = failed + outcome.get('failed', [])
@@ -969,7 +988,22 @@ class Train:
         first = next((k for k, (ok, _) in enumerate(accepted) if ok is not True), None)
         if first is not None:  # an acceptance failure: bisect inside its group on the verifier that failed it
             good, bad = (ends[first - 1] if first else 0), ends[first]
-            outcome = self._resolve(batch, applied, failed, good, bad, accepted[first], base, others[first])
+            early_pool = None
+            if good:  # coordinator, 2026-11-27 02:26Z: land the green prefix now, beside the bisect
+                early_pool = ThreadPoolExecutor(1)
+                self.early_future = early_pool.submit(self._land_early, applied[:good], base, budget_verifier)
+            try:
+                outcome = self._resolve(batch, applied, failed, good, bad, accepted[first], base, others[first])
+            finally:
+                if early_pool is not None:
+                    self.early_future.result()
+                    early_pool.shutdown()
+            if self.early:  # those lanes are on main and settled already; the rest lands on top of them
+                landed_early = {(s['role'], s['commit']) for s in self.early[0]}
+                outcome['landed'] = [x for x in outcome['landed'] if (x[0]['role'], x[0]['commit']) not in landed_early]
+                outcome['landed_early'] = sorted(s['role'] for s in self.early[0])
+                if not outcome['landed']:
+                    return outcome
             landed = outcome['landed']
             if verdict[0] is True or not landed or 'main_red' in outcome or outcome.get('restacked'):
                 return outcome
@@ -982,6 +1016,23 @@ class Train:
         if verdict[0] is True:
             return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
         return self._budget_red(batch, applied, failed, base, max_train, budget_verifier, verdict)
+
+    def _land_early(self, prefix, base, budget_verifier):
+        """Push an acceptance-green prefix before the bisect behind it finishes (coordinator, 2026-11-27 02:26Z). The
+        prefix's exact tree (main plus those lanes) was acceptance-verified; the whole stack's green budget cannot speak
+        for it (a later lane may have lowered the counts), so posidon budget-checks this exact tree first. push()
+        re-verifies after a rebase if main moved under build-relevant paths. Settled at once, mail included."""
+        ok, _ = self.verify(prefix[-1][1], budget_verifier, mode='budget', apps=list(APPS))
+        self.store.event('train-early-prefix', candidates=len(prefix), budget=ok)
+        if ok is not True:
+            return None
+        pushed = self.push([s for s, _ in prefix], base, prefix[-1][1], 3)
+        if pushed is None:
+            return None
+        self.settle([s for s, _ in prefix], prefix, [], pushed)
+        self.early = ([s for s, _ in prefix], pushed)
+        self.store.event('train-early-landed', roles=[s['role'] for s, _ in prefix], pushed=pushed)
+        return pushed
 
     def _main_red(self, base, log, failed):
         """Main itself fails verification: blame nobody for it. The log is kept (coordination/train/main-red-*.log), and
@@ -1019,6 +1070,10 @@ class Train:
         return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
 
     def push(self, submissions, base, tip, attempts):
+        with self.git_lock:
+            return self._push(submissions, base, tip, attempts)
+
+    def _push(self, submissions, base, tip, attempts):
         """Push the verified train; when main moved, rebase again and push, verifying again only if the new commits
         touch the apps' closure. Returns the pushed commit, or None."""
         closure = self.closure if self.closure is not None else closure_paths(self.worktree)

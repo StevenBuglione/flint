@@ -1379,3 +1379,8 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
   - **The list:** benchmarks/spring/train-budget-relative.json now holds main 3cb7b83a's median of 5 for all 18 gs-rest and all 109 petclinic endpoints. A candidate fails an endpoint only if it regresses past main by more than that endpoint's tolerance.
   - **Ruled out:** an LD_PRELOAD clock-shift test made no difference. The monotonic clock read as 45, 37 or 19 h of uptime gave identical counts, and the wall clock moved back 14 or 20 h stayed within run noise. Counts are bit-exact within a session and shift between sessions; the cause is still open.
   - **The owner** decides, with this evidence, on the budget re-baseline. Remove the list when the cause is fixed or the owner re-baselines.
+- 2026-11-27 02:26Z, coordinator: **the merge train lands a green prefix as soon as it's known** (proof-harness). When acceptance fails in a later group, the groups before it are already acceptance-green, but they used to wait for the bisect behind them (about an hour).
+  - **When it lands:** a prefix lands only as exactly the tree that was verified, main plus those lanes and acceptance-green.
+  - **Its budget:** the whole stack's green flint budget doesn't count for the prefix (a later lane could have lowered the counts), so posidon budget-checks the prefix's own tree first, beside the bisect.
+  - **The push:** it is confirmed with `-> main` and an ancestry check, and re-verified after a rebase if main moved under build-relevant paths. The prefix is settled at once, mail included.
+  - **The rest:** the bisect and any restack land on top of the pushed tip.

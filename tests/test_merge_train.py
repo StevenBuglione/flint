@@ -454,6 +454,25 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertEqual(result['landed'], ['sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e'])
         self.assertEqual(result['failed'], ['sol-f'])
 
+    def test_a_green_prefix_lands_before_the_bisect_behind_it_finishes(self):
+        # Coordinator, 2026-11-27 02:26Z: desktop's group of four is green; neptune's group fails acceptance. The first
+        # four land at once (their exact tree budget-checked on posidon) while neptune bisects the rest.
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e', 'sol-f', 'sol-g', 'sol-h')):
+            self.lane(role, {'src/BAD' if role == 'sol-f' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        desktop, neptune = self.FakeVerifier(self, 'desktop'), self.FakeVerifier(self, 'neptune')
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(desktop, neptune, posidon).run('runner')
+        self.assertEqual(result['landed_early'], ['sol-a', 'sol-b', 'sol-c', 'sol-d'])
+        self.assertEqual(result['failed'], ['sol-f'])
+        self.assertEqual(sorted(result['landed']), ['sol-e', 'sol-g', 'sol-h'])
+        log = self.main_log()
+        self.assertEqual(sorted(line.split(':')[0] for line in log[:-1]),
+                         ['sol-a', 'sol-b', 'sol-c', 'sol-d', 'sol-e', 'sol-g', 'sol-h'])
+        events = [json.loads(line)['event'] for line in (self.store.root / 'events.jsonl').read_text().splitlines()]
+        self.assertLess(events.index('train-early-landed'), events.index('train-restack'))
+        self.assertIn('landed on main', self.store.inbox('sol-a', True, False))
+
     def test_a_restack_that_fails_again_is_bisected_without_a_second_restack(self):
         self.lane('sol-a', {'src/a.txt': 'a'})
         self.lane('sol-b', {'src/BAD': 'b'})
