@@ -91,17 +91,41 @@ class FileNotFoundException : IOException
 /// Wraps an `IOException` where an API may not throw checked exceptions.
 class UncheckedIOException : RuntimeException
 {
+    private IOException ioCause_;
+
     /// `message` and the wrapped `cause`.
-    this(string message, IOException cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    this(string message, IOException cause, string file = __FILE__, size_t line = __LINE__) pure
     {
-        super(message, cause, file, line);
+        ioCause_ = requireIoCause(cause);
+        super(message, ioCause_, file, line);
     }
 
     /// The message is `cause.toString()`.
     this(IOException cause, string file = __FILE__, size_t line = __LINE__)
     {
-        super(cast(Throwable) cause, file, line);
+        ioCause_ = requireIoCause(cause);
+        super(cast(Throwable) ioCause_, file, line);
     }
+
+    /// The checked cause supplied at construction.
+    override inout(IOException) getCause() inout pure nothrow @nogc
+    {
+        return ioCause_;
+    }
+}
+
+private IOException requireIoCause(IOException cause) pure
+{
+    if (cause is null)
+        rejectNullIoArgument();
+    return cause;
+}
+
+pragma(inline, false) private noreturn rejectNullIoArgument() pure
+{
+    import flint.java.lang : NullPointerException;
+
+    throw new NullPointerException;
 }
 
 /// Java's `InputStream`: a source of bytes.
