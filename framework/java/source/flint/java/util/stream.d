@@ -67,6 +67,8 @@ final class Stream(T)
     /// `seed`, `next(seed)`, `next(next(seed))`, ...: an infinite stream; bound it with `limit`.
     static Stream!T iterate(T seed, T delegate(T) @safe next)
     {
+        if (next is null)
+            throwNullPointerException();
         bool started;
         T current = seed;
         return new Stream!T((out T element) {
@@ -89,6 +91,8 @@ final class Stream(T)
     /// The elements matching `predicate`.
     Stream!T filter(bool delegate(T) @safe predicate)
     {
+        if (predicate is null)
+            throwNullPointerException();
         auto source = take();
         return new Stream!T((out T next) {
             while (source(next))
@@ -101,6 +105,8 @@ final class Stream(T)
     /// Each element transformed by `mapper`.
     Stream!R map(R)(R delegate(T) @safe mapper)
     {
+        if (mapper is null)
+            throwNullPointerException();
         auto source = take();
         return new Stream!R((out R next) {
             T element;
@@ -114,6 +120,8 @@ final class Stream(T)
     /// The elements of the stream `mapper` returns for each element, in order.
     Stream!R flatMap(R)(Stream!R delegate(T) @safe mapper)
     {
+        if (mapper is null)
+            throwNullPointerException();
         auto source = take();
         bool delegate(out R) @safe inner;
         return new Stream!R((out R next) {
@@ -224,6 +232,8 @@ final class Stream(T)
     /// Each element, after calling `action` on it as it passes.
     Stream!T peek(void delegate(T) @safe action)
     {
+        if (action is null)
+            throwNullPointerException();
         auto source = take();
         return new Stream!T((out T next) {
             if (!source(next))
@@ -349,6 +359,8 @@ final class Stream(T)
     /// Whether any element matches.
     bool anyMatch(bool delegate(T) @safe predicate)
     {
+        if (predicate is null)
+            throwNullPointerException();
         auto source = take();
         T next;
         while (source(next))
@@ -360,6 +372,8 @@ final class Stream(T)
     /// Whether every element matches (true for an empty stream).
     bool allMatch(bool delegate(T) @safe predicate)
     {
+        if (predicate is null)
+            throwNullPointerException();
         auto source = take();
         T next;
         while (source(next))
@@ -462,6 +476,15 @@ private final class StreamIterator(T) : Iterator!T
 }
 
 private import flint.java.lang : IllegalArgumentException;
+
+// Java's eager `Objects.requireNonNull` on a stage or terminal callback, before the source is taken (R8). One
+// out-of-line cold throw keeps each operation's common path small.
+pragma(inline, false) private noreturn throwNullPointerException()
+{
+    import flint.java.lang : NullPointerException;
+
+    throw new NullPointerException;
+}
 
 /// Java's `Collectors`: the common terminal reductions for `Stream.collect`.
 struct Collectors
