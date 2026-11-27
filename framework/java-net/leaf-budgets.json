@@ -1,4 +1,16 @@
 {
+  "flint.java.net.protocolfamily": {
+    "incremental_linked_bytes": 942,
+    "template_instances": 35
+  },
+  "flint.java.net.socketaddress": {
+    "incremental_linked_bytes": 921,
+    "template_instances": 37
+  },
+  "flint.java.net.standardprotocolfamily": {
+    "incremental_linked_bytes": 115,
+    "template_instances": 14
+  },
   "flint.java.net.urldecoder": {
     "incremental_linked_bytes": 18793,
     "template_instances": 509

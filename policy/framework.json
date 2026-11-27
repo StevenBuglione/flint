@@ -1012,12 +1012,18 @@
     "flint.java.net.internal.formdecode",
     "flint.java.net.internal.formencode",
     "flint.java.net.internal.formutf8",
+    "flint.java.net.protocolfamily",
+    "flint.java.net.socketaddress",
+    "flint.java.net.standardprotocolfamily",
     "flint.java.net.urldecoder"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
    "upstream": "openjdk@21.0.13",
    "java_types": [
+    "java.net.ProtocolFamily",
+    "java.net.SocketAddress",
+    "java.net.StandardProtocolFamily",
     "java.net.URLDecoder",
     "java.net.URLEncoder"
    ],
