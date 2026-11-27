@@ -137,6 +137,52 @@ unittest
     assert(digest == 1_096_939_031);
 }
 
+@("valueOf byte arrays reads little-endian and drops trailing zero bytes")
+unittest
+{
+    byte[] input = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    auto bits = BitSet.valueOf(input);
+    assert(bits.size() == 128 && bits.length() == 68 && bits.cardinality() == 15);
+    assert(bits.toLongArray() == [0x0807_0605_0403_0201L, 9L]);
+    input[] = 0;
+    assert(bits.get(0) && bits.get(64) && bits.get(67));
+
+    byte[] padded = [cast(byte)-1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    auto trimmed = BitSet.valueOf(padded);
+    assert(trimmed.size() == 64 && trimmed.length() == 8 && trimmed.cardinality() == 8);
+    padded[0] = 0;
+    assert(trimmed.get(7));
+
+    foreach (emptyInput; [cast(byte[]) null, new byte[0], new byte[3]])
+    {
+        auto empty = BitSet.valueOf(emptyInput);
+        assert(empty.isEmpty() && empty.size() == 0);
+    }
+}
+
+@("valueOf bytes agrees with the Temurin 21.0.13+9 oracle")
+unittest
+{
+    uint state = 0x6b1e_3f49;
+    uint digest;
+    foreach (step; 0 .. 512)
+    {
+        auto bytes = new byte[step & 15];
+        foreach (index; 0 .. bytes.length)
+        {
+            state = state * 1_664_525 + 1_013_904_223;
+            bytes[index] = cast(byte) state;
+        }
+        auto bits = BitSet.valueOf(bytes);
+        digest = 31 * digest + cast(uint) bits.size();
+        digest = 31 * digest + cast(uint) bits.length();
+        digest = 31 * digest + cast(uint) bits.cardinality();
+        foreach (word; bits.toLongArray())
+            digest = 31 * digest + cast(uint)(word ^ (word >>> 32));
+    }
+    assert(digest == 3_010_527_271);
+}
+
 @("toByteArray copies the minimal little-endian bytes")
 unittest
 {

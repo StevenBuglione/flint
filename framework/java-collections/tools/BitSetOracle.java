@@ -32,6 +32,7 @@ class BitSetOracle {
         System.out.println(Integer.toUnsignedString(longArrayDigest()));
         System.out.println(Integer.toUnsignedString(byteArrayDigest()));
         System.out.println(Integer.toUnsignedString(longImportDigest()));
+        System.out.println(Integer.toUnsignedString(byteImportDigest()));
         System.out.println(Integer.toUnsignedString(equalityDigest()));
         System.out.println(Integer.toUnsignedString(orDigest()));
         System.out.println(Integer.toUnsignedString(xorDigest()));
@@ -240,6 +241,26 @@ class BitSetOracle {
                 words[index] = ((long) state << 32) | (state ^ 0x5ba72df1) & 0xffff_ffffL;
             }
             var bits = BitSet.valueOf(words);
+            digest = 31 * digest + bits.size();
+            digest = 31 * digest + bits.length();
+            digest = 31 * digest + bits.cardinality();
+            for (long word : bits.toLongArray()) {
+                digest = 31 * digest + (int)(word ^ (word >>> 32));
+            }
+        }
+        return digest;
+    }
+
+    private static int byteImportDigest() {
+        int state = 0x6b1e3f49;
+        int digest = 0;
+        for (int step = 0; step < 512; ++step) {
+            byte[] bytes = new byte[step & 15];
+            for (int index = 0; index < bytes.length; ++index) {
+                state = state * 1_664_525 + 1_013_904_223;
+                bytes[index] = (byte) state;
+            }
+            var bits = BitSet.valueOf(bytes);
             digest = 31 * digest + bits.size();
             digest = 31 * digest + bits.length();
             digest = 31 * digest + bits.cardinality();
