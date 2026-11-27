@@ -721,3 +721,117 @@ unittest
     }
     assert(count == 629);
 }
+
+// One operation of ofpattern_smart.tsv: the result's toString, or `!` and the exception message (and a parse
+// exception's error index). A formatter input is `pattern|text` or `CONSTANT|text`.
+private string ofPatternSmartResult(string kind, string input)
+{
+    import flint.engine.aot.text : decimal;
+
+    try
+    {
+        if (kind == "ofYearDay")
+            return ofYearDayResult(input);
+        if (kind == "getResolverStyle")
+            return resolverStyleResult(input);
+        return styledParseResult(kind, input);
+    }
+    catch (DateTimeParseException e)
+        return "!" ~ e.msg ~ "\t" ~ decimal(e.getErrorIndex());
+    catch (DateTimeException e)
+        return "!" ~ e.msg;
+}
+
+// `year,day` through LocalDate.ofYearDay.
+private string ofYearDayResult(string input)
+{
+    import std.conv : to;
+    import std.string : indexOf;
+
+    const comma = input.indexOf(',');
+    return LocalDate.ofYearDay(input[0 .. comma].to!int, input[comma + 1 .. $].to!int).toString();
+}
+
+// The resolver style of `ofPattern`, `ISO_LOCAL_DATE` or `RFC_1123_DATE_TIME`, optionally `/STRICT` or `/SMART`.
+private string resolverStyleResult(string input)
+{
+    import flint.java.time.format : ResolverStyle;
+    import std.algorithm.searching : endsWith, startsWith;
+    import std.conv : to;
+
+    DateTimeFormatter f = DateTimeFormatter.RFC_1123_DATE_TIME;
+    if (input.startsWith("ofPattern"))
+        f = DateTimeFormatter.ofPattern("uuuu");
+    else if (input.startsWith("ISO"))
+        f = DateTimeFormatter.ISO_LOCAL_DATE;
+    if (input.endsWith("/STRICT"))
+        f = f.withResolverStyle(ResolverStyle.STRICT);
+    else if (input.endsWith("/SMART"))
+        f = f.withResolverStyle(ResolverStyle.SMART);
+    return f.getResolverStyle().to!string;
+}
+
+// A parse kind: plain (`parse...`, an ofPattern pattern), `strict...` (the pattern resolved STRICT), `smart...` (an
+// ISO constant resolved SMART) or `iso...` (the ISO constant as it is).
+private string styledParseResult(string kind, string input)
+{
+    import flint.java.time.format : ResolverStyle;
+    import std.algorithm.searching : startsWith;
+    import std.string : indexOf;
+
+    const bar = input.indexOf('|');
+    const name = input[0 .. bar], t = input[bar + 1 .. $];
+    const DateTimeFormatter[string] iso = [
+        "ISO_LOCAL_DATE": DateTimeFormatter.ISO_LOCAL_DATE,
+        "ISO_LOCAL_DATE_TIME": DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+        "ISO_OFFSET_DATE_TIME": DateTimeFormatter.ISO_OFFSET_DATE_TIME,
+        "ISO_LOCAL_TIME": DateTimeFormatter.ISO_LOCAL_TIME,
+    ];
+    const strict = kind.startsWith("strict"), smart = kind.startsWith("smart"), constant = kind.startsWith("iso");
+    DateTimeFormatter f = smart || constant ? iso[name] : DateTimeFormatter.ofPattern(name);
+    if (strict)
+        f = f.withResolverStyle(ResolverStyle.STRICT);
+    else if (smart)
+        f = f.withResolverStyle(ResolverStyle.SMART);
+    const string delegate() @safe[string] table = [
+        "parse": () { f.parse(t); return "parsed"; },
+        "parseLocalDate": () => LocalDate.parse(t, f).toString(),
+        "parseLocalTime": () => LocalTime.parse(t, f).toString(),
+        "parseLocalDateTime": () => LocalDateTime.parse(t, f).toString(),
+        "parseOffsetDateTime": () => OffsetDateTime.parse(t, f).toString(),
+        "parseZonedDateTime": () => ZonedDateTime.parse(t, f).toString(),
+    ];
+    const prefix = strict ? 6 : smart ? 5 : constant ? 3 : 0;
+    return table["p" ~ kind[prefix + 1 .. $]]();
+}
+
+@("ofPattern resolves SMART, withResolverStyle switches styles and ofYearDay checks ranges like JDK 21")
+unittest
+{
+    import std.array : join;
+
+    size_t count;
+    foreach (row; rows(import("ofpattern_smart.tsv")))
+    {
+        const expected = row[2 .. $].join("\t");
+        const got = ofPatternSmartResult(row[0], row[1]);
+        assert(got == expected, row[0] ~ " '" ~ row[1] ~ "': " ~ got ~ " != " ~ expected);
+        ++count;
+    }
+    assert(count == 694);
+}
+
+@("a STRICT year-of-era pattern does not resolve a date without an era, as in JDK 21")
+unittest
+{
+    import flint.java.time.format : ResolverStyle;
+    import std.algorithm.searching : startsWith;
+    import std.exception : collectException;
+
+    const strict = DateTimeFormatter.ofPattern("yyyy-MM-dd").withResolverStyle(ResolverStyle.STRICT);
+    const e = collectException!DateTimeParseException(LocalDate.parse("2019-11-30", strict));
+    assert(e !is null && e.msg.startsWith("Text '2019-11-30' could not be parsed: Unable to obtain LocalDate"));
+    assert(LocalDate.parse("2019-11-30", DateTimeFormatter.ofPattern("yyyy-MM-dd")) == LocalDate.of(2019, 11, 30));
+    assert(LocalDate.parse("2019-11-30", DateTimeFormatter.ofPattern("uuuu-MM-dd")
+            .withResolverStyle(ResolverStyle.STRICT)) == LocalDate.of(2019, 11, 30));
+}

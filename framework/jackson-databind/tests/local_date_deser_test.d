@@ -443,20 +443,15 @@ unittest
     verifyException(e, `"2019-11-31"`);
 }
 
-// LIKELY BUG: @JsonFormat(lenient = FALSE) is not read: `"2019-11-30"` under the strict pattern "yyyy-MM-dd" reads as
-// 2019-11-30; Jackson's STRICT resolver rejects a year-of-era without an era (InvalidFormatException).
-version (FlintJacksonJsonFormatLenient)
+@("LocalDateDeserTest.testStrictCustomFormatForInvalidFormat")
+unittest
 {
-    @("LocalDateDeserTest.testStrictCustomFormatForInvalidFormat")
-    unittest
-    {
-        auto e = assertThrows!InvalidFormatException(() {
-            newMapper().readValue!StrictWrapperWithFormat(`{"value":"2019-11-30"}`);
-        });
-        // 25-Mar-2021, tatu: Really bad exception message we got... but it is what it is
-        verifyException(e, "Cannot deserialize value of type `java.time.LocalDate` from String");
-        verifyException(e, `"2019-11-30"`);
-    }
+    auto e = assertThrows!InvalidFormatException(() {
+        newMapper().readValue!StrictWrapperWithFormat(`{"value":"2019-11-30"}`);
+    });
+    // 25-Mar-2021, tatu: Really bad exception message we got... but it is what it is
+    verifyException(e, "Cannot deserialize value of type `java.time.LocalDate` from String");
+    verifyException(e, `"2019-11-30"`);
 }
 
 // flint.java.time's DateTimeFormatter has no era pattern letter (G): the pattern itself fails to compile.
