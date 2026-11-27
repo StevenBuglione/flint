@@ -220,12 +220,29 @@ final class Stream(T)
         });
     }
 
-    /// The elements ordered by `comparator` (stable).
+    /// The elements ordered by `comparator` (stable), sorted on the first pull. As in Java, the upstream is taken
+    /// before a null `comparator` throws `NullPointerException`.
     Stream!T sorted(Comparator!T comparator)
     {
-        auto items = toArray();
-        stableSort(items, &comparator.compare);
-        return ofArray(items);
+        auto source = take();
+        if (comparator is null)
+            throwNullPointerException();
+        T[] items;
+        size_t position;
+        return new Stream!T(true, (out T next) {
+            if (source !is null)
+            {
+                auto input = source;
+                source = null;
+                auto loaded = drain(input);
+                stableSort(loaded, &comparator.compare);
+                items = loaded;
+            }
+            if (position >= items.length)
+                return false;
+            next = items[position++];
+            return true;
+        });
     }
 
     /// The elements ordered by `compare` (stable).
