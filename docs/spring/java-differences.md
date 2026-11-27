@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,225 | 390 | 1,871 | 14,935 |
+| framework | openjdk@21.0.13 | 1,239 | 392 | 1,871 | 14,919 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2636,7 +2636,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.atomic.AtomicBoolean` | `flint.java.util.concurrent.atomic.atomicboolean.AtomicBoolean` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `java.util.concurrent.atomic.AtomicInteger` | `flint.java.util.concurrent.atomic.atomicinteger.AtomicInteger` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `java.util.concurrent.atomic.AtomicLong` | `flint.java.util.concurrent.atomic.atomiclong.AtomicLong` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
+| `java.util.concurrent.atomic.AtomicMarkableReference` | `flint.java.util.concurrent.atomic.atomicmarkablereference.AtomicMarkableReference` | [R1](api-mapping.md#r1-packages-and-names), [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) | Import from flint.java.util.concurrent.atomic.atomicmarkablereference. The type parameter accepts mutable D class and interface types with nullable references; the reference compares by identity (R11). |
 | `java.util.concurrent.atomic.AtomicReference` | `flint.java.util.concurrent.atomic.atomicreference.AtomicReference` | [R1](api-mapping.md#r1-packages-and-names), [R5](api-mapping.md#r5-optional-and-nullable-values) | Import from flint.java.util.concurrent.atomic.atomicreference. The type parameter accepts mutable D class and interface types with nullable references. |
+| `java.util.concurrent.atomic.AtomicStampedReference` | `flint.java.util.concurrent.atomic.atomicstampedreference.AtomicStampedReference` | [R1](api-mapping.md#r1-packages-and-names), [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) | Import from flint.java.util.concurrent.atomic.atomicstampedreference. The type parameter accepts mutable D class and interface types with nullable references; the reference compares by identity (R11). |
 
 #### java.util.concurrent.locks
 
@@ -10618,7 +10620,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.zone | 14 | 0 |
 | java.util | 1,900 | 0 |
 | java.util.concurrent | 1,236 | 0 |
-| java.util.concurrent.atomic | 275 | 0 |
+| java.util.concurrent.atomic | 259 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
 | java.util.jar | 0 | 101 |
@@ -11906,7 +11908,9 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.UUID#fromString(String)` | 2 | The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion. |
 | framework | `java.util.UUID#nameUUIDFromBytes(byte[])` | 2 | Version 3 name-based UUIDs await the canonical Java MessageDigest MD5 provider. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |
+| framework | `java.util.concurrent.atomic.AtomicMarkableReference#get(boolean[])` | 2 | An empty markHolder throws Java's ArrayIndexOutOfBoundsException, which has no canonical Flint type yet; R26 covers only the null case. |
 | framework | `java.util.concurrent.atomic.AtomicReference#updateAndGet(UnaryOperator)` | 2 | The null callback check needs a separately linkable canonical NullPointerException (R8). The current constructor retains unrelated Java module records and the callback exceeds the AtomicReference leaf budget. |
+| framework | `java.util.concurrent.atomic.AtomicStampedReference#get(int[])` | 2 | An empty stampHolder throws Java's ArrayIndexOutOfBoundsException, which has no canonical Flint type yet; R26 covers only the null case. |
 | framework | `java.util.function.BiConsumer#andThen(BiConsumer)` | 2 | The existing interface exposes accept and lacks Java's overridable composition default (R3). |
 | framework | `java.util.function.BiFunction#andThen(Function)` | 2 | The existing interface exposes apply and has no composition method. Java's default is overridable and rejects a null function before invocation (R3, R8). |
 | framework | `java.util.function.BiPredicate#and(BiPredicate)` | 2 | The existing interface lacks Java's short-circuiting conjunction default (R3). |
