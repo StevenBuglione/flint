@@ -39,6 +39,18 @@
     "incremental_linked_bytes": 1030,
     "template_instances": 37
   },
+  "flint.java.util.function_.intconsumer": {
+    "incremental_linked_bytes": 1030,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.longconsumer": {
+    "incremental_linked_bytes": 1048,
+    "template_instances": 37
+  },
+  "flint.java.util.function_.doubleconsumer": {
+    "incremental_linked_bytes": 1136,
+    "template_instances": 37
+  },
   "flint.java.util.function_.supplier": {
     "incremental_linked_bytes": 968,
     "template_instances": 39
