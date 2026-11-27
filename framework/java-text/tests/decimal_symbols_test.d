@@ -56,7 +56,8 @@ private void expectLong(string patternText, ref const DecimalSymbolData data, in
     else
         required = renderDecimalLong(value, multiplier, pattern, data, output[], &fields);
     assert(output[0 .. required] == expected);
-    assert(fields.spans[] == spans[]);
+    // The currency field (last) stays unrecorded without a currency sign.
+    assert(fields.spans[0 .. spans.length] == spans[] && !fields.spans[$ - 1].recorded);
     if (pattern.minimumExponentDigits != 0)
         return;
     // A buffer one byte short is left untouched and reports the same size.
@@ -87,7 +88,8 @@ unittest
             FixedRoundingMode.halfEven, status, &fields));
     assert(output[0 .. required] == "\u07f8\u00b7\u07f8\u07f8\u1d07\u07f8\u07f8");
     assert(fields.spans[] == [
-        span(0, 2), span(4, 8), none, span(2, 4), span(8, 11), none, span(11, 15), none, none, none
+        span(0, 2), span(4, 8), none, span(2, 4), span(8, 11), none, span(11, 15), none, none, none,
+        none
     ]);
 }
 
@@ -136,6 +138,6 @@ unittest
     assert(output[0 .. required] == "-\u096f,\u096e\u096d\u096c\u00d710^-\u096a");
     assert(fields.spans[] == [
         span(1, 4), span(5, 14), none, span(4, 5), span(14, 19), span(19, 20), span(20, 23),
-        span(0, 1), none, none
+        span(0, 1), none, none, none
     ]);
 }

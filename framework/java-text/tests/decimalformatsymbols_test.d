@@ -1,18 +1,15 @@
-/// Noncurrency symbol fixtures from Temurin 21.0.13+9.
+/// Numeric symbol fixtures from Temurin 21.0.13+9; decimal_currency_test covers the currency fields.
 module flint.java.text.decimalformatsymbols_test;
 
-import flint.java.text.internal.decimalformatsymbols : decimalSymbolData;
+import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData, decimalSymbolData;
 
 @safe:
 
 @("ROOT, English and US share the pinned numeric symbols") unittest
 {
-    static void check() pure nothrow @nogc
+    static void check(const(DecimalSymbolData)* root) pure nothrow @nogc
     {
-        const root = decimalSymbolData("", "", "");
         assert(root !is null);
-        assert(root is decimalSymbolData("en", "", ""));
-        assert(root is decimalSymbolData("en", "US", ""));
         assert(root.zeroDigit == '0' && root.digit == '#');
         assert(root.groupingSeparator == ',' && root.decimalSeparator == '.');
         assert(root.monetaryGroupingSeparator == ',' && root.monetaryDecimalSeparator == '.');
@@ -21,7 +18,9 @@ import flint.java.text.internal.decimalformatsymbols : decimalSymbolData;
         assert(root.infinity == "∞" && root.nan == "NaN" && root.exponentSeparator == "E");
     }
 
-    check();
+    assert(decimalSymbolData("", "", "") is decimalSymbolData("en", "", ""));
+    check(decimalSymbolData("", "", ""));
+    check(decimalSymbolData("en", "US", ""));
 }
 
 @("An unsupported locale has no numeric symbol data") unittest

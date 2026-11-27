@@ -86,7 +86,8 @@ struct DecimalParseResult
     size_t stored;
 }
 
-/// DecimalFormat.parse(String, ParsePosition) for a fixed-point pattern without currency.
+/// DecimalFormat.parse(String, ParsePosition) for a fixed-point or exponent pattern; a currency pattern reads the
+/// monetary separators.
 /// `digits` receives the significant digits, which DigitList grows without bound.
 /// The pattern's affixes are expanded with the same `symbols`, which must pass `bodySymbolsEncodable`.
 DecimalParseResult parseDecimal(scope const(char)[] text, size_t start, ref scope const DecimalFixedPattern pattern,
@@ -158,7 +159,7 @@ bool subparse(scope const(char)[] text, ref scope const DecimalFixedPattern patt
     }
     size_t position = oldStart + (gotPositive ? pattern.positive.prefix.length : pattern.negative.prefix.length);
 
-    if (!subparseNumber(text, position, symbols, options, digits, result))
+    if (!subparseNumber(text, position, symbols, pattern.currencyFormat, options, digits, result))
     {
         result.errorIndex = oldStart;
         return false;
@@ -183,8 +184,9 @@ bool subparse(scope const(char)[] text, ref scope const DecimalFixedPattern patt
     return true;
 }
 
-bool subparseNumber(scope const(char)[] text, ref size_t position, ref scope const DecimalSymbolData symbols,
-        DecimalParseOptions options, scope char[] digits, ref DecimalParseResult result) pure nothrow @nogc
+pure nothrow @nogc bool subparseNumber(scope const(char)[] text, ref size_t position,
+        ref scope const DecimalSymbolData symbols, bool monetary, DecimalParseOptions options,
+        scope char[] digits, ref DecimalParseResult result)
 {
     if (regionMatches(text, position, symbols.infinity))
     {
@@ -194,7 +196,7 @@ bool subparseNumber(scope const(char)[] text, ref size_t position, ref scope con
     }
     ParsedDigits parsed;
     int exponent;
-    if (!scanDigits(text, position, symbols, options, digits, parsed, exponent))
+    if (!scanDigits(text, position, symbols, monetary, options, digits, parsed, exponent))
         return false;
     // Java adds the truncated exponent in 32-bit arithmetic.
     result.decimalAt = cast(int)(cast(uint) parsed.decimalAt + cast(uint) exponent);
@@ -226,9 +228,12 @@ uint unitAt(scope const(char)[] text, size_t position, out size_t width) pure no
     return uint.max;
 }
 
-bool scanDigits(scope const(char)[] text, ref size_t position, ref scope const DecimalSymbolData symbols,
-        DecimalParseOptions options, scope char[] digits, ref ParsedDigits parsed, out int exponent) pure nothrow @nogc
+pure nothrow @nogc bool scanDigits(scope const(char)[] text, ref size_t position,
+        ref scope const DecimalSymbolData symbols, bool monetary, DecimalParseOptions options,
+        scope char[] digits, ref ParsedDigits parsed, out int exponent)
 {
+    const decimal = monetary ? symbols.monetaryDecimalSeparator : symbols.decimalSeparator;
+    const grouping = monetary ? symbols.monetaryGroupingSeparator : symbols.groupingSeparator;
     bool sawDecimal;
     bool sawDigit;
     // Zeros after the last stored digit, which DigitList appends but this buffer leaves implicit.
@@ -246,7 +251,7 @@ bool scanDigits(scope const(char)[] text, ref size_t position, ref scope const D
             appendDigit(digit, sawDecimal, digits, parsed, zeros);
             position += width - 1;
         }
-        else if (unit == symbols.decimalSeparator)
+        else if (unit == decimal)
         {
             if (options.integerOnly || sawDecimal)
                 break;
@@ -254,7 +259,7 @@ bool scanDigits(scope const(char)[] text, ref size_t position, ref scope const D
             sawDecimal = true;
             position += width - 1;
         }
-        else if (unit == symbols.groupingSeparator && options.groupingUsed)
+        else if (unit == grouping && options.groupingUsed)
         {
             if (sawDecimal)
                 break;

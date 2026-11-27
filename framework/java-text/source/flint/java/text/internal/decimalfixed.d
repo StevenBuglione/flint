@@ -37,6 +37,12 @@ struct DecimalFixedPattern
     bool decimalSeparatorAlwaysShown;
     // Nonzero selects exponential notation; Java keeps the width in a positive signed byte.
     ubyte minimumExponentDigits;
+    // isCurrencyFormat: an unquoted currency sign in either subpattern selects the monetary separators.
+    bool currencyFormat;
+    // Java's expandAffix advances one UTF-16 unit past an empty currency symbol, so it reports each later field of
+    // that affix one unit late, possibly past the text. UTF-8 offsets cannot express that: callers that report
+    // fields defer such a pattern, while its text renders normally.
+    bool affixFieldsShifted;
 
     void setMinimumIntegerDigits(int width) pure nothrow @nogc
     {
@@ -80,6 +86,7 @@ enum DecimalField : ubyte
     sign,
     percent,
     perMille,
+    currency,
 }
 
 struct DecimalFieldSpan
@@ -208,7 +215,7 @@ pure nothrow @nogc size_t renderFixedDigits(scope const(char)[] digits, int deci
     integerCount += fallbackZero;
     const groups = integerCount && pattern.groupingSize ? (integerCount - 1) / pattern.groupingSize : 0;
     const decimalPoint = fractionCount != 0 || pattern.decimalSeparatorAlwaysShown;
-    const localized = BodySymbols(symbols);
+    const localized = BodySymbols(symbols, pattern.currencyFormat);
     const integerBytes = localized.runWidth(digits, first, integerCount) + cast(ulong) groups * localized.groupingWidth;
     const fractionBytes = localized.runWidth(digits, decimalAt, fractionCount);
     const decimalBytes = decimalPoint ? localized.decimalWidth : 0;
@@ -259,13 +266,15 @@ struct BodySymbols
     char[3] minus;
     ubyte minusWidth;
 
-    this(ref scope const DecimalSymbolData symbols) pure nothrow @nogc
+    this(ref scope const DecimalSymbolData symbols, bool monetary) pure nothrow @nogc
     {
         foreach (digit; 0 .. 10)
             digitWidths[digit] = cast(ubyte) encodeSymbol(cast(wchar)(symbols.zeroDigit + digit), digits[digit]);
         uniformWidth = digitWidths[0] == digitWidths[9] ? digitWidths[0] : 0;
-        groupingWidth = cast(ubyte) encodeSymbol(symbols.groupingSeparator, grouping);
-        decimalWidth = cast(ubyte) encodeSymbol(symbols.decimalSeparator, decimal);
+        groupingWidth = cast(ubyte) encodeSymbol(monetary ? symbols.monetaryGroupingSeparator
+                : symbols.groupingSeparator, grouping);
+        decimalWidth = cast(ubyte) encodeSymbol(monetary ? symbols.monetaryDecimalSeparator
+                : symbols.decimalSeparator, decimal);
         minusWidth = cast(ubyte) encodeSymbol(symbols.minusSign, minus);
     }
 

@@ -174,14 +174,16 @@ private pure nothrow @nogc size_t renderGroupedFast(ulong bits,
 {
     const magnitude = bits & (signBit - 1);
     const exponent = cast(uint)(magnitude >> 52);
-    const product = binarySignificand(magnitude, exponent) * 1000;
-    // Round directly to integer thousandths to avoid rounding a binary64 intermediate.
+    // A currency pattern keeps two places and a decimal pattern three.
+    const places = pattern.currencyFormat ? 2 : 3;
+    const product = binarySignificand(magnitude, exponent) * (pattern.currencyFormat ? 100 : 1000);
+    // Round directly to integer hundredths or thousandths to avoid rounding a binary64 intermediate.
     const discarded = 1075u - (exponent == 0 ? 1u : exponent);
     const units = roundSignificandRight(product, discarded);
 
     char[20] digits;
     const start = writeUnsignedDigits(units, digits);
-    const decimalAt = units == 0 ? 0 : cast(int)(digits.length - start) - 3;
+    const decimalAt = units == 0 ? 0 : cast(int)(digits.length - start) - places;
     size_t end = digits.length;
     while (end > start && digits[end - 1] == '0')
         --end;
@@ -215,9 +217,12 @@ private pure nothrow @nogc size_t renderSpecial(ulong bits, ref scope const Deci
 private bool usesGroupedFastPath(ulong bits, ref scope const DecimalFixedPattern pattern) pure nothrow @nogc
 {
     const magnitudeBits = bits & (ulong.max >> 1);
+    // Java's fast path fixes the fraction widths: exactly two for a currency pattern, zero to three otherwise.
+    const minimumFraction = pattern.currencyFormat ? 2 : 0;
+    const maximumFraction = pattern.currencyFormat ? 2 : 3;
     // 0x41df... is the binary64 representation of Integer.MAX_VALUE.
-    return magnitudeBits <= 0x41df_ffff_ffc0_0000 && pattern.minimumExponentDigits == 0 && pattern.groupingSize == 3
-        && pattern.minimumIntegerDigits == 1
-        && pattern.maximumIntegerDigits >= 10 && pattern.minimumFractionDigits == 0
-        && pattern.maximumFractionDigits == 3 && !pattern.decimalSeparatorAlwaysShown;
+    return magnitudeBits <= 0x41df_ffff_ffc0_0000 && pattern.minimumExponentDigits == 0
+        && pattern.groupingSize == 3 && pattern.minimumIntegerDigits == 1
+        && pattern.maximumIntegerDigits >= 10 && pattern.minimumFractionDigits == minimumFraction
+        && pattern.maximumFractionDigits == maximumFraction && !pattern.decimalSeparatorAlwaysShown;
 }
