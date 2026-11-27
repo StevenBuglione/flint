@@ -27,7 +27,7 @@
  * Ported from openjdk 21.0.13: the encoders of src/java.base/share/classes/sun/nio/cs/US_ASCII.java,
  * ISO_8859_1.java and UTF_8.java (Copyright (c) 2000, 2021), UnicodeEncoder.java (Copyright (c) 2000, 2010), and
  * UTF_16.java, UTF_16BE.java and UTF_16LE.java (Copyright (c) 2000, 2005).
- * Only the buffer loops are ported; the array loops are their intrinsic-backed fast paths.
+ * The buffer loops are ported; of the array loops, only their leading single-byte run (encodeSingleByteRun).
  * Modified by the Flint authors.
  */
 /** The encoders of the six standard charsets. Not public API. */
@@ -39,7 +39,7 @@ import flint.java.nio.charbuffer : CharBuffer;
 import flint.java.nio.charset : Charset, StandardCharsets;
 import flint.java.nio.charset.charsetencoder : CharsetEncoder;
 import flint.java.nio.charset.coderresult : CoderResult;
-import flint.java.nio.charset.internal.coders : isSurrogate, SurrogateParser;
+import flint.java.nio.charset.internal.coders : encodeSingleByteRun, isSurrogate, SurrogateParser;
 
 @safe:
 
@@ -90,6 +90,7 @@ class SingleByteEncoder : CharsetEncoder
     protected final override CoderResult encodeLoop(CharBuffer src, ByteBuffer dst)
     {
         const roomFirst = maxChar == 0xFF && src.hasArray() && dst.hasArray();
+        encodeSingleByteRun(src, dst, maxChar);
         int mark = src.position();
         scope (exit)
             src.position(mark);
@@ -164,6 +165,7 @@ final class Utf8Encoder : CharsetEncoder
 
     protected override CoderResult encodeLoop(CharBuffer src, ByteBuffer dst)
     {
+        encodeSingleByteRun(src, dst, 0x7F);
         int mark = src.position();
         while (src.hasRemaining())
         {

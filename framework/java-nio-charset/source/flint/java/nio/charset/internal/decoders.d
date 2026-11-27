@@ -28,7 +28,7 @@
  * ISO_8859_1.java and UTF_8.java (Copyright (c) 2000, 2021), UnicodeDecoder.java (Copyright (c) 2000, 2019), and
  * UTF_16.java, UTF_16BE.java and UTF_16LE.java (Copyright (c) 2000, 2005); and the default isLegalReplacement of
  * src/java.base/share/classes/java/nio/charset/Charset-X-Coder.java.template (Copyright (c) 2000, 2023).
- * Only the buffer loops are ported; the array loops are their intrinsic-backed fast paths.
+ * The buffer loops are ported; of the array loops, only their leading single-byte run (decodeSingleByteRun).
  * Modified by the Flint authors.
  */
 /** The decoders of the six standard charsets. Not public API. */
@@ -40,7 +40,8 @@ import flint.java.nio.charbuffer : CharBuffer;
 import flint.java.nio.charset : Charset, StandardCharsets;
 import flint.java.nio.charset.charsetdecoder : CharsetDecoder;
 import flint.java.nio.charset.coderresult : CoderResult;
-import flint.java.nio.charset.internal.coders : isHighSurrogate, isLowSurrogate, isSurrogate, javaFloatToInt;
+import flint.java.nio.charset.internal.coders : decodeSingleByteRun, isHighSurrogate,
+    isLowSurrogate, isSurrogate, javaFloatToInt;
 
 @safe:
 
@@ -96,6 +97,7 @@ final class AsciiDecoder : CharsetDecoder
     protected override CoderResult decodeLoop(ByteBuffer src, CharBuffer dst)
     {
         const roomFirst = src.hasArray() && dst.hasArray();
+        decodeSingleByteRun(src, dst, false);
         int mark = src.position();
         scope (exit)
             src.position(mark);
@@ -125,6 +127,7 @@ final class Latin1Decoder : CharsetDecoder
 
     protected override CoderResult decodeLoop(ByteBuffer src, CharBuffer dst)
     {
+        decodeSingleByteRun(src, dst, true);
         int mark = src.position();
         scope (exit)
             src.position(mark);
@@ -150,6 +153,7 @@ final class Utf8Decoder : CharsetDecoder
 
     protected override CoderResult decodeLoop(ByteBuffer src, CharBuffer dst)
     {
+        decodeSingleByteRun(src, dst, false);
         int mark = src.position();
         const limit = src.limit();
         while (mark < limit)

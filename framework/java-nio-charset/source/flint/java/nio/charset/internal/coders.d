@@ -33,6 +33,7 @@
 module flint.java.nio.charset.internal.coders;
 
 import flint.java.lang : IllegalArgumentException, IllegalStateException;
+import flint.java.nio.bytebuffer : ByteBuffer;
 import flint.java.nio.charbuffer : CharBuffer;
 import flint.java.nio.charset.coderresult : CoderResult;
 
@@ -123,6 +124,53 @@ int grownCapacity(int n) pure nothrow @nogc
     if (minimum <= softMaxArrayLength)
         return softMaxArrayLength;
     return minimum > int.max ? int.max : cast(int) minimum;
+}
+
+/++
+The leading run of the array loops (`JLA.decodeASCII`, `inflateBytesToChars`): when both buffers have an accessible
+array, decodes the bytes of `src` that are ASCII (every byte when `latin1`) while `dst` has room, and advances both
+positions past them. The caller's buffer loop then handles what stopped the run, exactly as if it had read the run
+itself.
++/
+void decodeSingleByteRun(ByteBuffer src, CharBuffer dst, bool latin1) pure
+{
+    if (!src.hasArray() || !dst.hasArray())
+        return;
+    const n = src.remaining() < dst.remaining() ? src.remaining() : dst.remaining();
+    const sp = src.arrayOffset() + src.position();
+    const dp = dst.arrayOffset() + dst.position();
+    const(byte)[] s = src.array()[sp .. sp + n];
+    wchar[] d = dst.array()[dp .. dp + n];
+    size_t i;
+    if (latin1)
+        for (; i < s.length; ++i)
+            d[i] = cast(wchar)(s[i] & 0xFF);
+    else
+        for (; i < s.length && s[i] >= 0; ++i)
+            d[i] = cast(wchar) s[i];
+    src.position(src.position() + cast(int) i);
+    dst.position(dst.position() + cast(int) i);
+}
+
+/++
+The leading run of the array loops (`JLA.encodeASCII`, `StringCoding.implEncodeISOArray`): when both buffers have an
+accessible array, encodes the characters of `src` up to `maxChar` (0x7F or 0xFF) while `dst` has room, and advances
+both positions past them. The caller's buffer loop then handles what stopped the run.
++/
+void encodeSingleByteRun(CharBuffer src, ByteBuffer dst, wchar maxChar) pure
+{
+    if (!src.hasArray() || !dst.hasArray())
+        return;
+    const n = src.remaining() < dst.remaining() ? src.remaining() : dst.remaining();
+    const sp = src.arrayOffset() + src.position();
+    const dp = dst.arrayOffset() + dst.position();
+    const(wchar)[] s = src.array()[sp .. sp + n];
+    byte[] d = dst.array()[dp .. dp + n];
+    size_t i;
+    for (; i < s.length && s[i] <= maxChar; ++i)
+        d[i] = cast(byte) s[i];
+    src.position(src.position() + cast(int) i);
+    dst.position(dst.position() + cast(int) i);
 }
 
 /// Java's `Character.isSurrogate`.
