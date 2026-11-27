@@ -9,9 +9,10 @@ import core.memory : GC;
 import flint.engine.aot.any : Any, AnyTypeException;
 import flint.engine.aot.name : typeNameOf;
 import flint.java.lang : ClassCastException, IllegalStateException, IndexOutOfBoundsException,
-    UnsupportedOperationException;
+    NullPointerException, UnsupportedOperationException;
 import flint.java.util : AbstractList, ArrayList, Collection, Collections, Comparator, HashMap, HashSet,
     ErasedArrayList, Iterator, LinkedHashSet, List, MapEntry, NoSuchElementException, RawCollection, Set;
+import flint.java.util.function_.consumer : Consumer;
 
 @safe:
 
@@ -372,6 +373,30 @@ unittest
         assert(value is stored);
     assert(list.toAnyArray()[0].get!ListReference is stored);
     assert(list.remove(stored) && list.isEmpty());
+}
+
+@("Iterator forEachRemaining visits only the remaining references in order")
+unittest
+{
+    auto first = new ReferenceValue(2);
+    auto second = new ReferenceValue(3);
+    auto iterator = new ArrayList!ListReference([first, second]).iterator();
+    assert(iterator.next() is first);
+
+    ListReference[] visited;
+    iterator.forEachRemaining(Consumer!ListReference.of((ListReference value) { visited ~= value; }));
+    assert(visited.length == 1 && visited[0] is second && !iterator.hasNext());
+}
+
+@("Iterator forEachRemaining rejects null before consuming another element")
+unittest
+{
+    auto iterator = new ArrayList!ListReference([new ReferenceValue(2)]).iterator();
+    expectThrow!NullPointerException(() @safe {
+        iterator.forEachRemaining(null);
+        return 0;
+    });
+    assert(iterator.hasNext());
 }
 
 @("Native interface lists share erased array storage and adjust references at typed boundaries")
