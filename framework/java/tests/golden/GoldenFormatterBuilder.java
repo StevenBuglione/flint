@@ -7,6 +7,7 @@
 //   c:X s:TEXT p:PATTERN   appendLiteral(char), appendLiteral(String), appendPattern
 //   o:PATTERN,TEXT         appendOffset
 //   l:STYLE                appendLocalizedOffset(TextStyle.valueOf(STYLE))
+//   i:N                    appendInstant(N)
 //   a:NAME q:NAME          append, appendOptional of an ISO constant, or of ofPattern(P) for NAME `=P`
 // Ops: `build` (the formatter's toString, or the builder's exception), `format` (a value of the kind, from its
 // toString) and `parse` (into the kind). A result is the toString() or `!` and the exception message (and a parse
@@ -95,6 +96,7 @@ public class GoldenFormatterBuilder {
                 case "p" -> b.appendPattern(arg);
                 case "o" -> b.appendOffset(arg.substring(0, arg.indexOf(',')), arg.substring(arg.indexOf(',') + 1));
                 case "l" -> b.appendLocalizedOffset(TextStyle.valueOf(arg));
+                case "i" -> b.appendInstant(Integer.parseInt(arg));
                 case "a" -> b.append(named(arg));
                 case "q" -> b.appendOptional(named(arg));
                 default -> throw new AssertionError(step);
@@ -125,7 +127,7 @@ public class GoldenFormatterBuilder {
     }
 
     static void row(String op, String recipe, String kind, String in, String out) {
-        if (out.contains("$$Lambda") || (recipe.contains("inst") && out.contains("from TemporalAccessor")))
+        if (out.contains("$$Lambda") || ((recipe.contains("inst") || recipe.contains("i:")) && out.contains("from TemporalAccessor")))
             return;
         lines.add(op + "\t" + esc(recipe) + "\t" + kind + "\t" + esc(in) + "\t" + out);
     }
@@ -176,6 +178,20 @@ public class GoldenFormatterBuilder {
                 out = err(e);
             }
             row("format", recipe, "offset", v, out);
+        }
+    }
+
+    // Format rows of the recipe for extra instant values beyond the samples.
+    static void instants(String recipe, String... values) {
+        DateTimeFormatter f = build(recipe);
+        for (String v : values) {
+            String out;
+            try {
+                out = esc(f.format(Instant.parse(v)));
+            } catch (DateTimeException e) {
+                out = err(e);
+            }
+            row("format", recipe, "instant", v, out);
         }
     }
 
@@ -278,8 +294,21 @@ public class GoldenFormatterBuilder {
         recipe("inst|s:Ab", k("offset", "zoned"), "2024-03-05T10:15:30ZAb", "2024-03-05T10:15:30Zab");
         recipe("ci|inst|cs|s:Ab", k("offset", "zoned"), "2024-03-05T10:15:30zAb", "2024-03-05T10:15:30Zab");
         recipe("s:at |inst", k("zoned"), "at 2024-03-05T10:15:30Z");
+        // appendInstant(int): the fractional digits printed and parsed, and the counts it refuses.
+        for (String digits : new String[] {"-2", "10"})
+            recipe("i:" + digits, none);
+        for (String digits : new String[] {"-1", "0", "1", "3", "6", "9"}) {
+            recipe("i:" + digits, k("offset", "zoned"), "2024-03-05T10:15:30Z", "2024-03-05T10:15:30.Z",
+                    "2024-03-05T10:15:30.5Z", "2024-03-05T10:15:30.123Z", "2024-03-05T10:15:30.123456Z",
+                    "2024-03-05T10:15:30.123456789Z", "2024-03-05T10:15:30.1234567891Z", "2024-03-05t10:15:30.1z",
+                    "2024-03-05T10:15:30.120+01:00", "2024-03-05T10:15Z");
+            instants("i:" + digits, "2024-03-05T10:15:30.000000001Z", "2024-03-05T10:15:30.100Z",
+                    "2024-03-05T10:15:30.123456Z", "2024-03-05T10:15:30.987654321Z", "2024-03-05T10:15:00Z",
+                    "+12345-06-07T08:09:10.5Z", "-0001-12-31T23:59:59.999Z", "1969-12-31T23:59:59.9Z");
+            recipe("ci|i:" + digits + "|s:x", k("offset"), "2024-03-05T10:15:30.000000000zX");
+        }
         // Localized offsets: appendLocalizedOffset and the pattern letters O, OOOO and ZZZZ, with Java's parse rules
-        // (a seconds group, and in SHORT a minutes group, is read only when a character follows it).
+        // (a seconds group, and in SHORT a minutes group, is read only when the whole group fits in the text).
         for (String style : new String[] {"NARROW", "FULL_STANDALONE", "SHORT_STANDALONE", "NARROW_STANDALONE"})
             recipe("l:" + style, none);
         for (String pattern : new String[] {"OO", "OOO", "OOOOO", "ZZZZZZ"})

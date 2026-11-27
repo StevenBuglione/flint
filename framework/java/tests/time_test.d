@@ -1376,6 +1376,9 @@ private void builderStep(ref DateTimeFormatterBuilder b, char step, string arg,
     case 'l':
         b.appendLocalizedOffset(arg.to!TextStyle);
         break;
+    case 'i':
+        b.appendInstant(arg.to!int);
+        break;
     case 'a':
         b.append(named(arg));
         break;
@@ -1456,7 +1459,29 @@ unittest
         ++count;
     }
     assert(failures == 0, report);
-    assert(count == 2070);
+    assert(count == 2449);
+}
+
+@("appendInstant(int) parses exactly its fractional digits, or up to nine for -1")
+unittest
+{
+    import std.exception : collectException;
+
+    // Java resolves only the instant; Flint resolves the parsed local date-time and offset, which give the same
+    // instant here (the golden file leaves out these rows, see GoldenFormatterBuilder.java).
+    static string parsed(int digits, string text)
+    {
+        auto b = DateTimeFormatterBuilder();
+        return OffsetDateTime.parse(text, b.appendInstant(digits).toFormatter()).toString();
+    }
+
+    assert(parsed(3, "2024-03-05T10:15:30.120Z") == "2024-03-05T10:15:30.120Z");
+    assert(parsed(1, "2024-03-05T10:15:30.5+01:00") == "2024-03-05T10:15:30.500+01:00");
+    assert(parsed(9, "2024-03-05T10:15:30.000000001Z") == "2024-03-05T10:15:30.000000001Z");
+    assert(parsed(-1, "2024-03-05T10:15:30Z") == "2024-03-05T10:15:30Z");
+    assert(parsed(-1, "2024-03-05T10:15:30.12345Z") == "2024-03-05T10:15:30.123450Z");
+    auto e = collectException!DateTimeParseException(parsed(3, "2024-03-05T10:15:30.12Z"));
+    assert(e !is null && e.getErrorIndex() == 20);
 }
 
 @("DateTimeFormatterBuilder rejects the single-digit hour offset patterns Flint does not support yet")

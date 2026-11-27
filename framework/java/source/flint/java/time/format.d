@@ -719,7 +719,7 @@ private enum Op : ubyte
     localizedOffset, // `text` is "full" or "short"
     zoneId,
     zoneRegion,
-    instant,
+    instant, // `minWidth` is the fractional digits plus 2: 0 for groups of three as needed, 1 for as many as needed
     // Control elements: everything from here on prints nothing.
     optionalStart, // `lenient` set: an appended formatter, which `text` describes
     optionalEnd,
@@ -1127,6 +1127,22 @@ struct DateTimeFormatterBuilder
         return this;
     }
 
+    /**
+     * Appends an instant in ISO-8601 form, in UTC, with `fractionalDigits` digits of the fraction: -1 for as many as
+     * needed, or exactly 0 to 9. Parsing reads exactly that many, or 0 to 9 for -1. Throws `IllegalArgumentException`
+     * for any other count.
+     */
+    ref DateTimeFormatterBuilder appendInstant(int fractionalDigits) return
+    {
+        if (fractionalDigits < -1 || fractionalDigits > 9)
+            throw new IllegalArgumentException(
+                    "The fractional digits must be from -1 to 9 inclusive but was " ~ indexText(fractionalDigits));
+        auto e = op(Op.instant);
+        e.minWidth = cast(ubyte)(fractionalDigits + 2);
+        elements_ ~= e;
+        return this;
+    }
+
     /// Appends the zone offset, such as '+01:00', or 'Z' for zero: `appendOffset("+HH:MM:ss", "Z")`.
     ref DateTimeFormatterBuilder appendOffsetId() return
     {
@@ -1527,7 +1543,7 @@ private struct Printer
         case Op.zoneRegion:
             return printZone(e.op == Op.zoneRegion);
         default:
-            return printInstant();
+            return printInstant(e);
         }
     }
 
@@ -1668,12 +1684,30 @@ private struct Printer
         return true;
     }
 
-    bool printInstant()
+    // As Java: `appendInstant()` prints the fraction in groups of three as needed, as `Instant.toString`; -1
+    // fractional digits prints as many as needed, and 0 to 9 exactly that many.
+    bool printInstant(const Element e)
     {
         if (!fields.has(Field.instantSeconds))
             return false;
         const nano = fields.has(Field.nanoOfSecond) ? fields.values_[Field.nanoOfSecond] : 0;
-        output ~= Instant.ofEpochSecond(fields.values_[Field.instantSeconds], nano).toString();
+        if (e.minWidth == 0)
+        {
+            output ~= Instant.ofEpochSecond(fields.values_[Field.instantSeconds], nano).toString();
+            return true;
+        }
+        const whole = Instant.ofEpochSecond(fields.values_[Field.instantSeconds]).toString();
+        output ~= whole[0 .. $ - 1]; // without the 'Z'
+        const digits = e.minWidth - 2;
+        if (digits > 0 || (digits < 0 && nano > 0))
+        {
+            const fraction = padded(nano, 9);
+            size_t length = digits < 0 ? 9 : digits;
+            while (digits < 0 && fraction[length - 1] == '0') // a non-zero nano ends the loop
+                --length;
+            output ~= "." ~ fraction[0 .. length];
+        }
+        output ~= "Z";
         return true;
     }
 }
@@ -1850,8 +1884,27 @@ private struct Parser
         case Op.zoneRegion:
             return parseZone(position);
         default:
-            return run(instantParse, position);
+            return parseInstant(e, position);
         }
+    }
+
+    // Java's instant parser: an ISO local date-time with seconds, a fraction of exactly the fractional digits, or 0 to
+    // 9 digits for -1 and `appendInstant()`, and an offset. For 0 digits Java's fraction parser refuses its width, and
+    // the parse fails with that message at index 0.
+    int parseInstant(const Element e, int position) scope
+    {
+        if (e.minWidth < 2)
+            return run(instantParse, position);
+        if (e.minWidth == 2)
+        {
+            const copy = text.idup;
+            throw new DateTimeParseException(
+                    "Text '" ~ copy ~ "' could not be parsed: Maximum width must be from 1 to 9 inclusive but was 0",
+                    copy, 0);
+        }
+        Element[instantParse.length] elements = instantParse;
+        elements[$ - 2] = fraction(e.minWidth - 2, e.minWidth - 2, true);
+        return run(elements[], position);
     }
 
     static bool digit(char c) pure nothrow @nogc
