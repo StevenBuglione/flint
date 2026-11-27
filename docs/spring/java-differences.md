@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,834 | 575 | 0 | 1,909 | 14,103 |
+| framework | openjdk@21.0.13 | 1,844 | 584 | 0 | 1,909 | 14,084 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2339,6 +2339,15 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.net.DatagramPacket` | `flint.java.net.datagrampacket.DatagramPacket` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.datagrampacket : DatagramPacket. Equality and hashing stay by identity, as in Java. |
+| `java.net.DatagramPacket#<init>(byte[],int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
+| `java.net.DatagramPacket#<init>(byte[],int,InetAddress,int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
+| `java.net.DatagramPacket#<init>(byte[],int,SocketAddress)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
+| `java.net.DatagramPacket#<init>(byte[],int,int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
+| `java.net.DatagramPacket#<init>(byte[],int,int,InetAddress,int)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
+| `java.net.DatagramPacket#<init>(byte[],int,int,SocketAddress)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
+| `java.net.DatagramPacket#setData(byte[])` | `flint.java.net.datagrampacket.DatagramPacket.setData` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
+| `java.net.DatagramPacket#setData(byte[],int,int)` | `flint.java.net.datagrampacket.DatagramPacket.setData` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
 | `java.net.Inet4Address` | `flint.java.net.inetaddress.Inet4Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet4Address. Final class without Serializable. |
 | `java.net.Inet4Address#equals(Object)` | `flint.java.net.inetaddress.Inet4Address.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.Inet6Address` | `flint.java.net.inetaddress.Inet6Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet6Address. Final class without Serializable; scoped interfaces are pending. |
@@ -10890,7 +10899,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 701 | 0 |
+| java.net | 682 | 0 |
 | java.net.spi | 0 | 2 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |

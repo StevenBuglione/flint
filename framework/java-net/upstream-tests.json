@@ -105,32 +105,38 @@
       "status": "deferred"
     },
     "java/net/DatagramPacket/CheckBoundaries.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": "framework/java-net-datagram/tests/datagrampacket_test.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Integer.MAX_VALUE + 1 offset/length overflow is verified against the Temurin oracle (ex-overflow, ex-overflow-2, ex-setLength-overflow).",
+      "status": "excluded"
     },
     "java/net/DatagramPacket/Constructor.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": "framework/java-net-datagram/tests/datagrampacket_test.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Constructor bounds, port range, default fields, and R26 null-buffer behavior are covered by the Temurin oracle and original Flint tests.",
+      "status": "excluded"
     },
     "java/net/DatagramPacket/Getters.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": "framework/java-net-datagram/tests/datagrampacket_test.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Default getSocketAddress() returning wildcard 0.0.0.0:0 is covered by the Temurin oracle (ctor-2-sa-anylocal, ctor-2-sa-str).",
+      "status": "excluded"
     },
     "java/net/DatagramPacket/Offset.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": "framework/java-net-datagram/tests/datagrampacket_test.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. setData(byte[]) resetting offset to 0 is covered by the Temurin oracle (setData1-offset, setData1-length).",
+      "status": "excluded"
     },
     "java/net/DatagramPacket/ReuseBuf.java": {
       "phase": "2",
       "status": "deferred"
     },
     "java/net/DatagramPacket/Setters.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": "framework/java-net-datagram/tests/datagrampacket_test.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. setAddress, setData, setLength, setPort, setSocketAddress validation and R26 null-buffer behavior are covered by the Temurin oracle and original Flint tests.",
+      "status": "excluded"
     },
     "java/net/DatagramPacket/Unresolved.java": {
-      "phase": "2",
-      "status": "deferred"
+      "covered_by": "framework/java-net-datagram/tests/datagrampacket_test.d",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Rejecting unresolved InetSocketAddress in constructors and setSocketAddress is covered by the Temurin oracle (ex-sa-unresolved, ex-ctor-sa-unresolved).",
+      "status": "excluded"
     },
     "java/net/DatagramSocket/AddressNotSet.java": {
       "phase": "2",

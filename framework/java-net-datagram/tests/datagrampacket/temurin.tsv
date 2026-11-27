@@ -1,0 +1,77 @@
+ctor-2-same-buf	true
+ctor-2-offset	0
+ctor-2-length	6
+ctor-2-addr-null	true
+ctor-2-port	0
+ctor-2-sa-anylocal	true
+ctor-2-sa-str	0.0.0.0/0.0.0.0:0
+ctor-3-offset	3
+ctor-3-length	5
+ctor-3-addr-null	true
+ctor-3-port	0
+ctor-5-offset	2
+ctor-5-length	4
+ctor-5-addr	10.0.0.1
+ctor-5-port	5353
+ctor-5-sa	/10.0.0.1:5353
+ctor-4-ip-offset	0
+ctor-4-ip-length	7
+ctor-4-ip-addr	2001:db8:0:0:0:0:0:1
+ctor-4-ip-port	65535
+ctor-4-ip-sa	/[2001:db8:0:0:0:0:0:1]:65535
+ctor-5-null-addr	true
+ctor-5-null-port	0
+ctor-4-sa-offset	1
+ctor-4-sa-length	8
+ctor-4-sa-addr	10.0.0.1
+ctor-4-sa-port	8080
+ctor-3-sa-offset	0
+ctor-3-sa-length	10
+ctor-3-sa-addr	127.0.0.1
+ctor-3-sa-port	0
+buf-write-through	42
+identity-neq	false
+setData1-same	true
+setData1-offset	0
+setData1-length	20
+setData3-offset	4
+setData3-length	6
+setLength-ok-len	2
+setLength-ok-off	4
+setLength-max-ok	6
+setLength-zero-ok	0
+setAddress-null	true
+setPort-0	0
+setPort-65535	65535
+setSA-addr	2001:db8:0:0:0:0:0:1
+setSA-port	443
+empty-len	0
+empty-off	0
+empty-setData1-len	0
+ex-neg-len	IllegalArgumentException:Range [0, 0 + -1) out of bounds for length 10
+ex-len-too-big	IllegalArgumentException:Range [0, 0 + 11) out of bounds for length 10
+ex-neg-off	IllegalArgumentException:Range [-1, -1 + 1) out of bounds for length 10
+ex-off-plus-len	IllegalArgumentException:Range [6, 6 + 5) out of bounds for length 10
+ex-overflow	IllegalArgumentException:Range [2147483647, 2147483647 + 1) out of bounds for length 10
+ex-overflow-2	IllegalArgumentException:Range [1, 1 + 2147483647) out of bounds for length 10
+ex-setLength-neg	IllegalArgumentException:Range [4, 4 + -1) out of bounds for length 10
+ex-setLength-too-big	IllegalArgumentException:Range [4, 4 + 7) out of bounds for length 10
+ex-setLength-overflow	IllegalArgumentException:Range [4, 4 + 2147483647) out of bounds for length 10
+ex-port-neg	IllegalArgumentException:Port out of range:-1
+ex-port-neg-666	IllegalArgumentException:Port out of range:-666
+ex-port-65536	IllegalArgumentException:Port out of range:65536
+ex-port-max	IllegalArgumentException:Port out of range:2147483647
+ex-ctor-port-neg	IllegalArgumentException:Port out of range:-1
+ex-ctor-port-high	IllegalArgumentException:Port out of range:65536
+ex-sa-null	IllegalArgumentException:unsupported address type
+ex-sa-custom	IllegalArgumentException:unsupported address type
+ex-sa-unresolved	IllegalArgumentException:unresolved address
+ex-ctor-sa-null	IllegalArgumentException:unsupported address type
+ex-ctor-sa-unresolved	IllegalArgumentException:unresolved address
+ex-order-buf-before-port	IllegalArgumentException:Range [0, 0 + 11) out of bounds for length 10
+ex-order-buf-before-sa	IllegalArgumentException:Range [0, 0 + 11) out of bounds for length 10
+r26-ctor-null-0	NullPointerException:null
+r26-ctor-null-10	NullPointerException:null
+r26-setData1-null	NullPointerException:null packet buffer
+r26-setData3-null-0-0	NullPointerException:null
+r26-setData3-null-0-1	NullPointerException:null
