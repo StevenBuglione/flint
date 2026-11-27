@@ -69,12 +69,24 @@ class RuntimeException : Exception
         super(null);
     }
 
-    /// `message`, and optionally a `cause`.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// `message`, with a cause that can still be initialized.
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, file, line);
+    }
+
+    /// `message` and an initialized `cause`, including an explicit null.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, file, line);
         cause_ = cause;
-        causeSet = cause !is null;
+        causeSet = true;
+    }
+
+    /// Select the cause overload when the caller supplies a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 
     /// Java's `RuntimeException(Throwable cause)`: the message is `cause.toString()`, or null.
@@ -156,10 +168,22 @@ private mixin template JavaExceptionConstructors()
         super();
     }
 
-    /// `message`, and optionally a `cause`.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// `message`, with a cause that can still be initialized.
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+    }
+
+    /// `message` and an initialized `cause`.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Select the cause overload when the caller supplies a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 
     /// The message is `cause.toString()`.
@@ -221,16 +245,28 @@ class IndexOutOfBoundsException : RuntimeException
         super();
     }
 
-    /// `message`, and optionally a `cause`.
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// `message`, with a cause that can still be initialized.
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+    }
+
+    /// `message` and an initialized `cause`.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Select the cause overload when the caller supplies a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 
     /// Java's `IndexOutOfBoundsException(int index)`: "Index out of range: " and the index.
     this(long index, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        super("Index out of range: " ~ decimal(index), null, file, line);
+        super("Index out of range: " ~ decimal(index), file, line);
     }
 }
 
@@ -242,7 +278,7 @@ class NumberFormatException : IllegalArgumentException
     /// Java's message for unparsable input: `For input string: "s"`.
     static NumberFormatException forInputString(string s, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
-        return new NumberFormatException("For input string: \"" ~ s ~ "\"", null, file, line);
+        return new NumberFormatException("For input string: \"" ~ s ~ "\"", file, line);
     }
 }
 

@@ -19,10 +19,22 @@ import flint.java.lang : ArithmeticException, RuntimeException;
 /// Exception used to indicate a problem while calculating a date-time.
 class DateTimeException : RuntimeException
 {
-    ///
-    this(string message, Throwable cause = null, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// The detail message, with a cause that can still be initialized.
+    this(string message, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+    }
+
+    /// The supplied cause is initialized even when it is null.
+    this(string message, Throwable cause, string file = __FILE__, size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
+    }
+
+    /// Selects the cause overload when its argument is a null literal.
+    this(string message, typeof(null), string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, cast(Throwable) null, file, line);
     }
 }
 
