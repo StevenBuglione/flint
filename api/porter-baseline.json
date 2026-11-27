@@ -2,7 +2,8 @@
  "schema": "flint.porter-baseline/1",
  "about": "Shrink-only list of accepted-but-divergent porter outputs, and the reproduced count per shape, which only grows. tools/porter_gate.py; docs/spring/phase2/porter-plan.md.",
  "reproduced": {
-  "annotation-r2": 114,
+  "annotation-r2": 124,
+  "configuration-properties-field": 117,
   "constant-holder-r1": 1,
   "enum-constants": 24,
   "enum-method-r20": 1,
@@ -10,7 +11,6 @@
   "marker-interface-r3": 1
  },
  "blocked": {
-  ":framework-test/ldc2": "printing_result_handler_output_tests.d(115) fails on main under LDC (a write to /dev/null opened 'r' doesn't fail); reported to web-http, 2026-11-27.",
   ":security-core/dmd": "security-crypto BCrypt needs the pinned crypt-blowfish native provider, which the gate's tree doesn't link (2 modules fail on main without it)."
  },
  "divergences": {
@@ -22,49 +22,13 @@
    "kind": "api",
    "reason": "Hand port omits Java's @Deprecated(since=\"3.2\"); R2 makes it D deprecated on the struct, which the porter emits. Fix sent to sol-jpa, 2026-11-27."
   },
-  "org.springframework.beans.factory.annotation.Autowired": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
-  },
   "org.springframework.beans.factory.annotation.Qualifier": {
    "kind": "mapping+api",
    "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27. D API: a Java default of \"\" is D null in the hand port (== equal, `is null` differs); the porter writes \"\" as the other annotations do. Asked the owner, 2026-11-27."
   },
-  "org.springframework.beans.factory.annotation.Value": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
-  },
-  "org.springframework.context.annotation.DependsOn": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
-  },
-  "org.springframework.context.annotation.Description": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
-  },
-  "org.springframework.context.annotation.Import": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
-  },
-  "org.springframework.context.annotation.Lazy": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
-  },
   "org.springframework.context.annotation.PropertySource": {
    "kind": "mapping+api",
    "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27. D API: a Java default of \"\" is D null in the hand port (== equal, `is null` differs); the porter writes \"\" as the other annotations do. Asked the owner, 2026-11-27."
-  },
-  "org.springframework.context.annotation.Role": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
-  },
-  "org.springframework.security.access.prepost.PostAuthorize": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
-  },
-  "org.springframework.security.access.prepost.PreAuthorize": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.stereotype.Component": {
    "kind": "mapping+api",
@@ -77,10 +41,6 @@
   "org.springframework.transaction.annotation.RollbackOn": {
    "kind": "mapping",
    "reason": "Hand mapping rows: #ALL_EXCEPTIONS and #RUNTIME_EXCEPTIONS are still deferred though the D enum declares both. Fix sent to data-access, 2026-11-27."
-  },
-  "org.springframework.validation.annotation.Validated": {
-   "kind": "mapping",
-   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   }
  }
 }
