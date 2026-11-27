@@ -371,6 +371,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-nio-charset": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-nio-file": {
       "repo": "framework",
       "version": "monorepo"

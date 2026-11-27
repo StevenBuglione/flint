@@ -1,0 +1,8 @@
+{
+  "flint.java.nio.charset.coderresult": {
+    "incremental_linked_bytes": 2130,
+    "template_instances": 484,
+    "control": "tools/jdk-closure-controls/runtime-exception.d",
+    "template_compile": "separate"
+  }
+}

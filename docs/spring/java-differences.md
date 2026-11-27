@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,155 | 352 | 1,871 | 15,043 |
+| framework | openjdk@21.0.13 | 1,164 | 355 | 1,871 | 15,031 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2311,6 +2311,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `java.nio.charset.CoderResult` | `flint.java.nio.charset.coderresult.CoderResult` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) | Import CoderResult from flint.java.nio.charset.coderresult. Represented as an R15 value struct whose value equality over (kind, length) stands in for Java's cached instance identity. The default value is UNDERFLOW. |
+| `java.nio.charset.CoderResult#OVERFLOW` | `flint.java.nio.charset.coderresult.CoderResult.OVERFLOW` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+| `java.nio.charset.CoderResult#UNDERFLOW` | `flint.java.nio.charset.coderresult.CoderResult.UNDERFLOW` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction` | `flint.java.nio.charset.codingerroraction.CodingErrorAction` | [R1](api-mapping.md#r1-packages-and-names), [R15](api-mapping.md#r15-enums-with-fields) | Import CodingErrorAction from flint.java.nio.charset.codingerroraction. Uses three distinct private tags so R15 value equality preserves Java's identity semantics. The default value is REPORT. |
 | `java.nio.charset.CodingErrorAction#IGNORE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.IGNORE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction#REPLACE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.REPLACE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
@@ -10546,7 +10549,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio | 229 | 0 |
 | java.nio.channels | 0 | 332 |
 | java.nio.channels.spi | 0 | 53 |
-| java.nio.charset | 98 | 0 |
+| java.nio.charset | 86 | 0 |
 | java.nio.charset.spi | 0 | 4 |
 | java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 137 | 0 |
@@ -11622,6 +11625,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.nio.CharBuffer#chars()` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
 | framework | `java.nio.CharBuffer#wrap(CharSequence,int,int)` | 2 | Character sequence, append and read contracts follow the heap array cursor slice. |
+| framework | `java.nio.charset.CoderResult#throwException()` | 2 | Requires CharacterCodingException, MalformedInputException and UnmappableCharacterException, which wait on checked IOException initCause. |
 | framework | `java.nio.file.Path#compareTo(Path)` | 2 | Default-provider ordering and Comparable<Path> inheritance are deferred. |
 | framework | `java.nio.file.Path#equals(Object)` | 2 | Provider-specific path equality is deferred with hashCode. |
 | framework | `java.nio.file.Path#hashCode()` | 2 | Provider-specific path hashing is deferred with equals. |

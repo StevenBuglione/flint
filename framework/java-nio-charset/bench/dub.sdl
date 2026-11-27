@@ -1,0 +1,6 @@
+name "probe-java-nio-charset"
+targetType "executable"
+targetPath "build"
+dflags "-preview=dip1000"
+dependency "flint:java-nio-charset" path="../../.."
+dependency "flint:java" path="../../.."

@@ -830,6 +830,40 @@
     "template_instances": 560
    }
   },
+  "java-nio-charset": {
+   "directory": "framework/java-nio-charset",
+   "module": "flint.java.nio.charset.coderresult",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-nio-charset/bench",
+    "baseline": "framework/java-nio-charset/bench/baseline",
+    "edit_source": "framework/java-nio-charset/source/flint/java/nio/charset/coderresult.d"
+   },
+   "java_types": [
+    "java.nio.charset.CoderResult"
+   ],
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ],
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "compiler_peak_rss_bytes": 536870912,
+    "incremental_linked_bytes": 2095,
+    "template_instances": 484
+   }
+  },
   "java-nio-file": {
    "directory": "framework/java-nio-file",
    "module": "flint.java.nio.file",
