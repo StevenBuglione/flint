@@ -16,6 +16,7 @@ $(UL
 module flint.java.lang;
 
 public import flint.java.lang.boolean : Boolean;
+public import flint.java.lang.charsequence : CharSequence;
 public import flint.java.lang.error : AssertionError, Error_;
 public import flint.java.lang.illegalmonitorstateexception : IllegalMonitorStateException;
 public import flint.java.lang.integer : Integer;

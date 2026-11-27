@@ -36,6 +36,10 @@
     "incremental_linked_bytes": 150,
     "template_instances": 2
   },
+  "flint.java.lang.charsequence": {
+    "incremental_linked_bytes": 1549,
+    "template_instances": 36
+  },
   "flint.java.lang.number": {
     "incremental_linked_bytes": 1232,
     "template_instances": 35
