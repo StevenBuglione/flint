@@ -1704,6 +1704,31 @@ private final class ErasedListIterator(T) : Iterator!T
     }
 }
 
+private final class UnmodifiableListIterator(T) : Iterator!T
+{
+    private Iterator!T backing;
+
+    this(Iterator!T backing) pure nothrow @nogc
+    {
+        this.backing = backing;
+    }
+
+    bool hasNext()
+    {
+        return backing.hasNext();
+    }
+
+    T next()
+    {
+        return backing.next();
+    }
+
+    void remove()
+    {
+        throw new UnsupportedOperationException();
+    }
+}
+
 /// Java's `ArrayList` over the shared reference storage.
 class ArrayList(T) if (isErasedListElement!T) : ErasedArrayList, List!T
 {
@@ -1853,6 +1878,11 @@ private final class UnmodifiableList(T) if (isErasedListElement!T) : ErasedList,
     override int size()
     {
         return backing.size();
+    }
+
+    override Iterator!T iterator()
+    {
+        return new UnmodifiableListIterator!T(backing.iterator());
     }
 }
 
@@ -3052,6 +3082,11 @@ private final class UnmodifiableList(T) if (!isErasedListElement!T) : AbstractLi
     override int size()
     {
         return backing.size();
+    }
+
+    override Iterator!T iterator()
+    {
+        return new UnmodifiableListIterator!T(backing.iterator());
     }
 
     override bool remove(T o)
