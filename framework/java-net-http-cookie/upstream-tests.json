@@ -1,0 +1,9 @@
+{
+  "schema": "flint.upstream-tests/1",
+  "upstream": "openjdk@21.0.13",
+  "module": "java-net-http-cookie",
+  "test_packages": [
+    ":java-net-http-cookie"
+  ],
+  "classes": {}
+}

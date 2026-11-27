@@ -9,6 +9,7 @@
   "java.lang.Short": "flint.java.lang.short_",
   "java.lang.StrictMath": "flint.java.lang.strictmath",
   "java.net.DatagramPacket": "flint.java.net.datagrampacket",
+  "java.net.HttpCookie": "flint.java.net.httpcookie",
   "java.net.Inet4Address": "flint.java.net.inetaddress",
   "java.net.Inet6Address": "flint.java.net.inetaddress",
   "java.net.InetAddress": "flint.java.net.inetaddress",

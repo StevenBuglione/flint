@@ -379,6 +379,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net-http-cookie": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-net-interface-address": {
       "repo": "framework",
       "version": "monorepo"

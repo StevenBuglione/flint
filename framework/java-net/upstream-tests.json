@@ -275,16 +275,19 @@
       "status": "deferred"
     },
     "java/net/HttpCookie/CookieNegativeMaxAge.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net-http-cookie/tests/httpcookie_test.d"
     },
     "java/net/HttpCookie/ExpiredCookieTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net-http-cookie/tests/httpcookie_test.d"
     },
     "java/net/HttpCookie/IllegalCookieNameTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE behavior.",
+      "covered_by": "framework/java-net-http-cookie/tests/httpcookie_test.d"
     },
     "java/net/HttpURLConnection/HttpResponseCode.java": {
       "phase": "2",

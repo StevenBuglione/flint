@@ -1,0 +1,9 @@
+{
+  "source": "closure/http_cookie.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.lang.javaobject",
+    "flint.java.util"
+  ],
+  "data": []
+}

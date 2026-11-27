@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,921 | 654 | 0 | 1,921 | 13,925 |
+| framework | openjdk@21.0.13 | 1,934 | 673 | 0 | 1,921 | 13,893 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2390,6 +2390,25 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.DatagramPacket#<init>(byte[],int,int,SocketAddress)` | `flint.java.net.datagrampacket.DatagramPacket.this` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
 | `java.net.DatagramPacket#setData(byte[])` | `flint.java.net.datagrampacket.DatagramPacket.setData` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
 | `java.net.DatagramPacket#setData(byte[],int,int)` | `flint.java.net.datagrampacket.DatagramPacket.setData` | [R26](api-mapping.md#r26-null-arrays) | A null buffer counts as empty where Java throws NullPointerException. |
+| `java.net.HttpCookie` | `flint.java.net.httpcookie.HttpCookie` | [R1](api-mapping.md#r1-packages-and-names), [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.httpcookie : HttpCookie. Optional string attributes use R5 Nullable!string to distinguish absent null from empty string. Null name or header string counts as empty under R26 and throws IllegalArgumentException instead of NullPointerException. Implements JavaObject equality/hashing without Cloneable marker interface. |
+| `java.net.HttpCookie#<init>(String,String)` | `flint.java.net.httpcookie.HttpCookie.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Accepts string or Nullable!string value; null name counts as empty under R26. |
+| `java.net.HttpCookie#clone()` | `flint.java.net.httpcookie.HttpCookie.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.net.HttpCookie#domainMatches(String,String)` | `flint.java.net.httpcookie.HttpCookie.domainMatches` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.net.HttpCookie#equals(Object)` | `flint.java.net.httpcookie.HttpCookie.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.net.HttpCookie#getComment()` | `flint.java.net.httpcookie.HttpCookie.getComment` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#getCommentURL()` | `flint.java.net.httpcookie.HttpCookie.getCommentURL` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#getDomain()` | `flint.java.net.httpcookie.HttpCookie.getDomain` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#getPath()` | `flint.java.net.httpcookie.HttpCookie.getPath` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#getPortlist()` | `flint.java.net.httpcookie.HttpCookie.getPortlist` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#getValue()` | `flint.java.net.httpcookie.HttpCookie.getValue` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#hashCode()` | `flint.java.net.httpcookie.HttpCookie.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.net.HttpCookie#parse(String)` | `flint.java.net.httpcookie.HttpCookie.parse` | [R10](api-mapping.md#r10-streams-and-collections), [R26](api-mapping.md#r26-null-arrays) | Returns List!HttpCookie; null header counts as empty under R26. |
+| `java.net.HttpCookie#setComment(String)` | `flint.java.net.httpcookie.HttpCookie.setComment` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#setCommentURL(String)` | `flint.java.net.httpcookie.HttpCookie.setCommentURL` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#setDomain(String)` | `flint.java.net.httpcookie.HttpCookie.setDomain` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#setPath(String)` | `flint.java.net.httpcookie.HttpCookie.setPath` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#setPortlist(String)` | `flint.java.net.httpcookie.HttpCookie.setPortlist` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.HttpCookie#setValue(String)` | `flint.java.net.httpcookie.HttpCookie.setValue` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `java.net.Inet4Address` | `flint.java.net.inetaddress.Inet4Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet4Address. Final class without Serializable. |
 | `java.net.Inet4Address#equals(Object)` | `flint.java.net.inetaddress.Inet4Address.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.Inet6Address` | `flint.java.net.inetaddress.Inet6Address` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.inetaddress : Inet6Address. Final class without Serializable; scoped interfaces are pending. |
@@ -10981,7 +11000,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 633 | 0 |
+| java.net | 601 | 0 |
 | java.net.spi | 0 | 2 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
