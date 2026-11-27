@@ -2,7 +2,7 @@
  "schema": "flint.porter-baseline/1",
  "about": "Shrink-only list of accepted-but-divergent porter outputs, and the reproduced count per shape, which only grows. tools/porter_gate.py; docs/spring/phase2/porter-plan.md.",
  "reproduced": {
-  "annotation-r2": 101,
+  "annotation-r2": 114,
   "constant-holder-r1": 1,
   "enum-constants": 24,
   "enum-method-r20": 1,
@@ -14,113 +14,61 @@
   ":security-core/dmd": "security-crypto BCrypt needs the pinned crypt-blowfish native provider, which the gate's tree doesn't link (2 modules fail on main without it)."
  },
  "divergences": {
-  "jakarta.persistence.Convert": {
-   "kind": "mapping",
-   "reason": "Pending sol-jpa: the type row carries R4, while 14 other Jakarta annotations with Class attributes cite R4 only on the member rows, as the porter does. Asked sol-jpa which convention wins, 2026-11-27."
-  },
-  "jakarta.persistence.ElementCollection": {
-   "kind": "mapping",
-   "reason": "Pending sol-jpa: the type row carries R4, while 14 other Jakarta annotations with Class attributes cite R4 only on the member rows, as the porter does. Asked sol-jpa which convention wins, 2026-11-27."
-  },
-  "jakarta.persistence.EntityListeners": {
-   "kind": "mapping",
-   "reason": "Pending sol-jpa: the type row carries R4, while 14 other Jakarta annotations with Class attributes cite R4 only on the member rows, as the porter does. Asked sol-jpa which convention wins, 2026-11-27."
-  },
-  "jakarta.persistence.IdClass": {
-   "kind": "mapping",
-   "reason": "Pending sol-jpa: the type row carries R4, while 14 other Jakarta annotations with Class attributes cite R4 only on the member rows, as the porter does. Asked sol-jpa which convention wins, 2026-11-27."
-  },
-  "jakarta.persistence.ManyToMany": {
-   "kind": "mapping",
-   "reason": "Pending sol-jpa: the type row carries R4, while 14 other Jakarta annotations with Class attributes cite R4 only on the member rows, as the porter does. Asked sol-jpa which convention wins, 2026-11-27."
-  },
-  "jakarta.persistence.ManyToOne": {
-   "kind": "mapping",
-   "reason": "Pending sol-jpa: the type row carries R4, while 14 other Jakarta annotations with Class attributes cite R4 only on the member rows, as the porter does. Asked sol-jpa which convention wins, 2026-11-27."
-  },
-  "jakarta.persistence.MapKeyClass": {
-   "kind": "mapping",
-   "reason": "Pending sol-jpa: the type row carries R4, while 14 other Jakarta annotations with Class attributes cite R4 only on the member rows, as the porter does. Asked sol-jpa which convention wins, 2026-11-27."
-  },
   "jakarta.persistence.MapKeyTemporal": {
    "kind": "api",
    "reason": "Hand port omits Java's @Deprecated(since=\"3.2\"); R2 makes it D deprecated on the struct, which the porter emits. Fix sent to sol-jpa, 2026-11-27."
-  },
-  "jakarta.persistence.OneToMany": {
-   "kind": "mapping",
-   "reason": "Pending sol-jpa: the type row carries R4, while 14 other Jakarta annotations with Class attributes cite R4 only on the member rows, as the porter does. Asked sol-jpa which convention wins, 2026-11-27."
-  },
-  "jakarta.persistence.OneToOne": {
-   "kind": "mapping",
-   "reason": "Pending sol-jpa: the type row carries R4, while 14 other Jakarta annotations with Class attributes cite R4 only on the member rows, as the porter does. Asked sol-jpa which convention wins, 2026-11-27."
   },
   "jakarta.persistence.Temporal": {
    "kind": "api",
    "reason": "Hand port omits Java's @Deprecated(since=\"3.2\"); R2 makes it D deprecated on the struct, which the porter emits. Fix sent to sol-jpa, 2026-11-27."
   },
-  "jakarta.validation.Valid": {
-   "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
-  },
   "org.springframework.beans.factory.annotation.Autowired": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.beans.factory.annotation.Qualifier": {
    "kind": "mapping+api",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27. D API: a Java default of \"\" is D null in the hand port (== equal, `is null` differs); the porter writes \"\" as the other annotations do. Asked the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27. D API: a Java default of \"\" is D null in the hand port (== equal, `is null` differs); the porter writes \"\" as the other annotations do. Asked the owner, 2026-11-27."
   },
   "org.springframework.beans.factory.annotation.Value": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.context.annotation.DependsOn": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.context.annotation.Description": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
-  },
-  "org.springframework.context.annotation.Fallback": {
-   "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.context.annotation.Import": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.context.annotation.Lazy": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
-  },
-  "org.springframework.context.annotation.Primary": {
-   "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.context.annotation.PropertySource": {
    "kind": "mapping+api",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27. D API: a Java default of \"\" is D null in the hand port (== equal, `is null` differs); the porter writes \"\" as the other annotations do. Asked the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27. D API: a Java default of \"\" is D null in the hand port (== equal, `is null` differs); the porter writes \"\" as the other annotations do. Asked the owner, 2026-11-27."
   },
   "org.springframework.context.annotation.Role": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.security.access.prepost.PostAuthorize": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.security.access.prepost.PreAuthorize": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   },
   "org.springframework.stereotype.Component": {
    "kind": "mapping+api",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27. D API: a Java default of \"\" is D null in the hand port (== equal, `is null` differs); the porter writes \"\" as the other annotations do. Asked the owner, 2026-11-27."
-  },
-  "org.springframework.stereotype.Indexed": {
-   "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27. D API: a Java default of \"\" is D null in the hand port (== equal, `is null` differs); the porter writes \"\" as the other annotations do. Asked the owner, 2026-11-27."
   },
   "org.springframework.test.json.JsonCompareMode": {
    "kind": "mapping",
@@ -132,7 +80,7 @@
   },
   "org.springframework.validation.annotation.Validated": {
    "kind": "mapping",
-   "reason": "Hand mapping row: the annotation type row is ported with no rule; R2 (annotation -> UDA struct) makes it adapted R2, as the other hand-ported annotation rows and test_spring_markers.py expect. Fix sent to the owner, 2026-11-27."
+   "reason": "Hand mapping rows: the type row is adapted R2 since 2026-11-27, but the attribute rows are still ported with no rule; R2 makes them adapted R2 (R4 too when Class-valued), as the Jakarta attribute rows are. Fix sent to the owner, 2026-11-27."
   }
  }
 }
