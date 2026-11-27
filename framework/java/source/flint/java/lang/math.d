@@ -26,7 +26,11 @@
 // Ported from openjdk 21.0.13: src/java.base/share/classes/java/lang/Math.java
 // and src/java.base/share/classes/java/lang/StrictMath.java (floor, ceil, rint).
 // Modified by the Flint authors: pure @safe nothrow @nogc leaf using raw IEEE-754 bit unions
-// and explicit saturating float/double-to-integer bounds for Math.round.
+// and explicit saturating float/double-to-integer bounds for Math.round. The exact integer
+// family throws the Java exceptions, and guards division by zero and MIN_VALUE / -1 explicitly,
+// because both trap (or are undefined) in D where Java defines them. The throwing members are
+// zero-parameter templates that import the exceptions locally, so only code that calls them links
+// the flint.java.lang aggregate; the IEEE-754 core stays a zero-aggregate leaf.
 
 module flint.java.lang.math;
 
@@ -130,8 +134,91 @@ private double floorOrCeil(double a, double negativeBoundary, double positiveBou
     return result;
 }
 
+private noreturn throwArithmetic()(string message) pure
+{
+    import flint.java.lang : ArithmeticException;
+
+    throw new ArithmeticException(message);
+}
+
+// DMD -O -inline folds the unreachable division of an inlined literal zero divisor into a "divide by zero"
+// compile error, so `Math.floorDiv(1, 0)` would not compile. DMD keeps these helpers out of line. Other
+// compilers inline them.
+version (DigitalMars)
+    private enum bool inlineDivision = false;
+else
+    private enum bool inlineDivision = true;
+
+// Java's `x / y`: ArithmeticException on a zero divisor, and MIN_VALUE / -1 wraps to MIN_VALUE.
+private int javaQuotient()(int x, int y) pure
+{
+    pragma(inline, inlineDivision);
+    if (y == 0)
+        throwArithmetic("/ by zero");
+    return y == -1 ? -x : x / y;
+}
+
+private long javaQuotient()(long x, long y) pure
+{
+    pragma(inline, inlineDivision);
+    if (y == 0)
+        throwArithmetic("/ by zero");
+    return y == -1 ? -x : x / y;
+}
+
+// Java's `x % y`: ArithmeticException on a zero divisor, and MIN_VALUE % -1 is 0.
+private int javaRemainder()(int x, int y) pure
+{
+    pragma(inline, inlineDivision);
+    if (y == 0)
+        throwArithmetic("/ by zero");
+    return y == -1 ? 0 : x % y;
+}
+
+private long javaRemainder()(long x, long y) pure
+{
+    pragma(inline, inlineDivision);
+    if (y == 0)
+        throwArithmetic("/ by zero");
+    return y == -1 ? 0 : x % y;
+}
+
+// Java's `min + " > " + max` for the integral clamp overloads.
+private noreturn throwClampRange()(long min, long max) pure
+{
+    import flint.java.lang : IllegalArgumentException;
+
+    char[43] text = void;
+    size_t at = text.length;
+    const long[2] values = [max, min];
+    foreach (i, value; values)
+    {
+        ulong magnitude = value < 0 ? -cast(ulong) value : cast(ulong) value;
+        do
+        {
+            text[--at] = cast(char)('0' + magnitude % 10);
+            magnitude /= 10;
+        }
+        while (magnitude != 0);
+        if (value < 0)
+            text[--at] = '-';
+        if (i == 0)
+        {
+            at -= 3;
+            text[at .. at + 3] = " > ";
+        }
+    }
+    throw new IllegalArgumentException(text[at .. $].idup);
+}
+
 /++
-Java's `java.lang.Math` pure numeric constants and IEEE-754/integer operations (slice 1).
+Java's `java.lang.Math` pure numeric constants, IEEE-754 operations and exact integer arithmetic.
+
+The `*Exact`, `floorDiv`/`floorMod`, `ceilDiv`/`ceilMod` and integral `clamp` members throw Java's
+`ArithmeticException` or `IllegalArgumentException`, so they are `pure` but neither `nothrow` nor `@nogc`. They are
+zero-parameter templates, so only a program that calls one links the `flint.java.lang` exception hierarchy. A zero
+divisor throws `ArithmeticException("/ by zero")` as Java's `/` does, and `MIN_VALUE / -1` wraps as in Java instead
+of trapping.
 
 The members that read IEEE-754 bits (`ceil`, `floor`, `rint`, `round`, `abs(float)`, `abs(double)`, `ulp`,
 `signum`, `copySign`, `getExponent`, `nextAfter`, `nextUp`, `nextDown` and `scalb`) cannot run in CTFE, because D
@@ -229,6 +316,197 @@ struct Math
         return cast(long) a;
     }
 
+    /// `x + y`; throws `ArithmeticException` if the `int` result overflows.
+    static int addExact()(int x, int y) pure
+    {
+        const int r = x + y;
+        if (((x ^ r) & (y ^ r)) < 0)
+            throwArithmetic("integer overflow");
+        return r;
+    }
+
+    /// `x + y`; throws `ArithmeticException` if the `long` result overflows.
+    static long addExact()(long x, long y) pure
+    {
+        const long r = x + y;
+        if (((x ^ r) & (y ^ r)) < 0)
+            throwArithmetic("long overflow");
+        return r;
+    }
+
+    /// `x - y`; throws `ArithmeticException` if the `int` result overflows.
+    static int subtractExact()(int x, int y) pure
+    {
+        const int r = x - y;
+        if (((x ^ y) & (x ^ r)) < 0)
+            throwArithmetic("integer overflow");
+        return r;
+    }
+
+    /// `x - y`; throws `ArithmeticException` if the `long` result overflows.
+    static long subtractExact()(long x, long y) pure
+    {
+        const long r = x - y;
+        if (((x ^ y) & (x ^ r)) < 0)
+            throwArithmetic("long overflow");
+        return r;
+    }
+
+    /// `x * y`; throws `ArithmeticException` if the `int` result overflows.
+    static int multiplyExact()(int x, int y) pure
+    {
+        const long r = cast(long) x * cast(long) y;
+        if (cast(int) r != r)
+            throwArithmetic("integer overflow");
+        return cast(int) r;
+    }
+
+    /// `x * y`; throws `ArithmeticException` if the `long` result overflows.
+    static long multiplyExact()(long x, int y) pure
+    {
+        return multiplyExact(x, cast(long) y);
+    }
+
+    /// `x * y`; throws `ArithmeticException` if the `long` result overflows.
+    static long multiplyExact()(long x, long y) pure
+    {
+        const long r = x * y;
+        const long ax = abs(x);
+        const long ay = abs(y);
+        if (((ax | ay) >>> 31) != 0)
+        {
+            if ((y != 0 && javaQuotient(r, y) != x) || (x == long.min && y == -1))
+                throwArithmetic("long overflow");
+        }
+        return r;
+    }
+
+    /// `x / y` truncated; throws `ArithmeticException` on a zero divisor or for `int.min / -1`.
+    static int divideExact()(int x, int y) pure
+    {
+        const int q = javaQuotient(x, y);
+        if ((x & y & q) >= 0)
+            return q;
+        throwArithmetic("integer overflow");
+    }
+
+    /// `x / y` truncated; throws `ArithmeticException` on a zero divisor or for `long.min / -1`.
+    static long divideExact()(long x, long y) pure
+    {
+        const long q = javaQuotient(x, y);
+        if ((x & y & q) >= 0)
+            return q;
+        throwArithmetic("long overflow");
+    }
+
+    /// Floor of `x / y`; throws `ArithmeticException` on a zero divisor or for `int.min / -1`.
+    static int floorDivExact()(int x, int y) pure
+    {
+        const int q = javaQuotient(x, y);
+        if ((x & y & q) >= 0)
+        {
+            if ((x ^ y) < 0 && q * y != x)
+                return q - 1;
+            return q;
+        }
+        throwArithmetic("integer overflow");
+    }
+
+    /// Floor of `x / y`; throws `ArithmeticException` on a zero divisor or for `long.min / -1`.
+    static long floorDivExact()(long x, long y) pure
+    {
+        const long q = javaQuotient(x, y);
+        if ((x & y & q) >= 0)
+        {
+            if ((x ^ y) < 0 && q * y != x)
+                return q - 1;
+            return q;
+        }
+        throwArithmetic("long overflow");
+    }
+
+    /// Ceiling of `x / y`; throws `ArithmeticException` on a zero divisor or for `int.min / -1`.
+    static int ceilDivExact()(int x, int y) pure
+    {
+        const int q = javaQuotient(x, y);
+        if ((x & y & q) >= 0)
+        {
+            if ((x ^ y) >= 0 && q * y != x)
+                return q + 1;
+            return q;
+        }
+        throwArithmetic("integer overflow");
+    }
+
+    /// Ceiling of `x / y`; throws `ArithmeticException` on a zero divisor or for `long.min / -1`.
+    static long ceilDivExact()(long x, long y) pure
+    {
+        const long q = javaQuotient(x, y);
+        if ((x & y & q) >= 0)
+        {
+            if ((x ^ y) >= 0 && q * y != x)
+                return q + 1;
+            return q;
+        }
+        throwArithmetic("long overflow");
+    }
+
+    /// `a + 1`; throws `ArithmeticException` for `int.max`.
+    static int incrementExact()(int a) pure
+    {
+        if (a == int.max)
+            throwArithmetic("integer overflow");
+        return a + 1;
+    }
+
+    /// `a + 1`; throws `ArithmeticException` for `long.max`.
+    static long incrementExact()(long a) pure
+    {
+        if (a == long.max)
+            throwArithmetic("long overflow");
+        return a + 1L;
+    }
+
+    /// `a - 1`; throws `ArithmeticException` for `int.min`.
+    static int decrementExact()(int a) pure
+    {
+        if (a == int.min)
+            throwArithmetic("integer overflow");
+        return a - 1;
+    }
+
+    /// `a - 1`; throws `ArithmeticException` for `long.min`.
+    static long decrementExact()(long a) pure
+    {
+        if (a == long.min)
+            throwArithmetic("long overflow");
+        return a - 1L;
+    }
+
+    /// `-a`; throws `ArithmeticException` for `int.min`.
+    static int negateExact()(int a) pure
+    {
+        if (a == int.min)
+            throwArithmetic("integer overflow");
+        return -a;
+    }
+
+    /// `-a`; throws `ArithmeticException` for `long.min`.
+    static long negateExact()(long a) pure
+    {
+        if (a == long.min)
+            throwArithmetic("long overflow");
+        return -a;
+    }
+
+    /// `value` as an `int`; throws `ArithmeticException` if it does not fit.
+    static int toIntExact()(long value) pure
+    {
+        if (cast(int) value != value)
+            throwArithmetic("integer overflow");
+        return cast(int) value;
+    }
+
     /// Exact 64-bit product of two 32-bit signed integers.
     static long multiplyFull(int x, int y) pure nothrow @nogc
     {
@@ -261,6 +539,102 @@ struct Math
         return result;
     }
 
+    /// Largest `int` not greater than `x / y`; `int.min / -1` is `int.min`. Throws `ArithmeticException` if `y` is 0.
+    static int floorDiv()(int x, int y) pure
+    {
+        const int q = javaQuotient(x, y);
+        if ((x ^ y) < 0 && q * y != x)
+            return q - 1;
+        return q;
+    }
+
+    /// Largest `long` not greater than `x / y`. Throws `ArithmeticException` if `y` is 0.
+    static long floorDiv()(long x, int y) pure
+    {
+        return floorDiv(x, cast(long) y);
+    }
+
+    /// Largest `long` not greater than `x / y`; `long.min / -1` is `long.min`. Throws `ArithmeticException` if `y` is 0.
+    static long floorDiv()(long x, long y) pure
+    {
+        const long q = javaQuotient(x, y);
+        if ((x ^ y) < 0 && q * y != x)
+            return q - 1;
+        return q;
+    }
+
+    /// `x - floorDiv(x, y) * y`, with the sign of `y`. Throws `ArithmeticException` if `y` is 0.
+    static int floorMod()(int x, int y) pure
+    {
+        const int r = javaRemainder(x, y);
+        if ((x ^ y) < 0 && r != 0)
+            return r + y;
+        return r;
+    }
+
+    /// `x - floorDiv(x, y) * y`, with the sign of `y`. Throws `ArithmeticException` if `y` is 0.
+    static int floorMod()(long x, int y) pure
+    {
+        return cast(int) floorMod(x, cast(long) y);
+    }
+
+    /// `x - floorDiv(x, y) * y`, with the sign of `y`. Throws `ArithmeticException` if `y` is 0.
+    static long floorMod()(long x, long y) pure
+    {
+        const long r = javaRemainder(x, y);
+        if ((x ^ y) < 0 && r != 0)
+            return r + y;
+        return r;
+    }
+
+    /// Smallest `int` not less than `x / y`; `int.min / -1` is `int.min`. Throws `ArithmeticException` if `y` is 0.
+    static int ceilDiv()(int x, int y) pure
+    {
+        const int q = javaQuotient(x, y);
+        if ((x ^ y) >= 0 && q * y != x)
+            return q + 1;
+        return q;
+    }
+
+    /// Smallest `long` not less than `x / y`. Throws `ArithmeticException` if `y` is 0.
+    static long ceilDiv()(long x, int y) pure
+    {
+        return ceilDiv(x, cast(long) y);
+    }
+
+    /// Smallest `long` not less than `x / y`; `long.min / -1` is `long.min`. Throws `ArithmeticException` if `y` is 0.
+    static long ceilDiv()(long x, long y) pure
+    {
+        const long q = javaQuotient(x, y);
+        if ((x ^ y) >= 0 && q * y != x)
+            return q + 1;
+        return q;
+    }
+
+    /// `x - ceilDiv(x, y) * y`, with the opposite sign of `y`. Throws `ArithmeticException` if `y` is 0.
+    static int ceilMod()(int x, int y) pure
+    {
+        const int r = javaRemainder(x, y);
+        if ((x ^ y) >= 0 && r != 0)
+            return r - y;
+        return r;
+    }
+
+    /// `x - ceilDiv(x, y) * y`, with the opposite sign of `y`. Throws `ArithmeticException` if `y` is 0.
+    static int ceilMod()(long x, int y) pure
+    {
+        return cast(int) ceilMod(x, cast(long) y);
+    }
+
+    /// `x - ceilDiv(x, y) * y`, with the opposite sign of `y`. Throws `ArithmeticException` if `y` is 0.
+    static long ceilMod()(long x, long y) pure
+    {
+        const long r = javaRemainder(x, y);
+        if ((x ^ y) >= 0 && r != 0)
+            return r - y;
+        return r;
+    }
+
     /// Absolute value of an `int` (`int.min` returns `int.min`).
     static int abs(int a) pure nothrow @nogc
     {
@@ -271,6 +645,22 @@ struct Math
     static long abs(long a) pure nothrow @nogc
     {
         return a < 0 ? -a : a;
+    }
+
+    /// Absolute value of an `int`; throws `ArithmeticException` for `int.min`.
+    static int absExact()(int a) pure
+    {
+        if (a == int.min)
+            throwArithmetic("Overflow to represent absolute value of Integer.MIN_VALUE");
+        return abs(a);
+    }
+
+    /// Absolute value of a `long`; throws `ArithmeticException` for `long.min`.
+    static long absExact()(long a) pure
+    {
+        if (a == long.min)
+            throwArithmetic("Overflow to represent absolute value of Long.MIN_VALUE");
+        return abs(a);
     }
 
     /// Absolute value of a `float` (clears the sign bit).
@@ -347,6 +737,22 @@ struct Math
         if (a == 0.0 && b == 0.0 && doubleToRawLongBits(b) == DOUBLE_SIGN_BIT_MASK)
             return b;
         return a <= b ? a : b;
+    }
+
+    /// `value` clamped to `[min, max]`; throws `IllegalArgumentException` if `min > max`.
+    static int clamp()(long value, int min, int max) pure
+    {
+        if (min > max)
+            throwClampRange(min, max);
+        return cast(int) Math.min(cast(long) max, Math.max(value, cast(long) min));
+    }
+
+    /// `value` clamped to `[min, max]`; throws `IllegalArgumentException` if `min > max`.
+    static long clamp()(long value, long min, long max) pure
+    {
+        if (min > max)
+            throwClampRange(min, max);
+        return Math.min(max, Math.max(value, min));
     }
 
     /// Size of an ulp (unit in the last place) of `d`.

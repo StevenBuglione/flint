@@ -607,7 +607,7 @@
     },
     "java/lang/Math/AbsTests.java": {
       "phase": "2",
-      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover Math.abs(int|long|float|double); absExact is not ported yet.",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 9,838-call bit-exact differential run against OpenJDK 21.0.13 cover Math.abs(int|long|float|double); framework/java/tests/math_exact_test.d covers absExact.",
       "status": "deferred"
     },
     "java/lang/Math/Atan2Tests.java": {
@@ -621,6 +621,7 @@
     },
     "java/lang/Math/Clamp.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_exact_test.d and a 76,562-call differential run against OpenJDK 21.0.13 (results and exception messages) cover clamp(long, int, int) and clamp(long, long, long); the double and float overloads are not ported yet.",
       "status": "deferred"
     },
     "java/lang/Math/CubeRootTests.java": {
@@ -629,10 +630,12 @@
     },
     "java/lang/Math/DivModTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_exact_test.d and a 76,562-call differential run against OpenJDK 21.0.13 (results and exception messages) cover floorDiv/floorMod/ceilDiv/ceilMod on int, (long, int) and long, including MIN_VALUE / -1 and zero divisors.",
       "status": "deferred"
     },
     "java/lang/Math/ExactArithTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_exact_test.d and a 76,562-call differential run against OpenJDK 21.0.13 (results and exception messages) cover the add/subtract/multiply/divide/floorDiv/ceilDiv/increment/decrement/negate/abs Exact family and toIntExact.",
       "status": "deferred"
     },
     "java/lang/Math/ExpCornerCaseTests.java": {
