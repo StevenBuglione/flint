@@ -1396,3 +1396,12 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
 - 2026-11-27 10:55Z, coordinator: **an interleaved budget A/B that could not run is an infrastructure failure, not a verdict** (proof-harness).
   - **The rule:** when the merge train's A/B (a lane's tie-breaker, or the whole stack against main) could not run, nobody is returned. The lanes stay queued at the head and are retried next train; what is green before them lands. The coordinator is paged, with the logs (coordination/train/interleaved-*.log). Commit ca6e46ff5.
   - **The cause that prompted it:** flint-aot's b7b949bfe was based on a main older than tools/budget_ab.py, so its tie-breaker had no tool to run (10:40Z). The A/B script now runs the scheduler's own copy of the tool (56b36c9ed). flint-aot's entry was put back without a resubmission and lands on the 08:21Z interleaved verdict (coordination/notes/flint-aot-interleaved-ab/).
+- 2026-11-27 16:14Z, coordinator: **the owner approved the v4.3 toolchain cutover that makes per-source compile scope the default** ("Yes, cut over"). This carries out the 07:25Z decision. The DUB patch changes, and so does `dub_patch_sha256`, so the change, the shared `.tools` swap and the verifier receipts all move together.
+  - **The plan:** coordination/notes/compile-scope-ab/cutover-plan.md, run by proof-harness from step 2, with sol-jdk-core's template-counting and closure re-baseline commits (1875c0ce6 on 7fa83718c) stacked on proof-harness/scope-cutover.
+  - **The freeze:** from 16:15Z until proof-harness broadcasts the v4.3 hashes (estimated 3-4 h).
+    - No build-relevant direct main-push; docs and coordination changes are fine.
+    - apps-landing pauses after the train in flight.
+    - Lanes keep working on private branches.
+    - After the swap, every lane rebases and rebuilds its platform modules once.
+  - **Rollback:** step 7. `.tools` and verifiers.json go back to v4.2, and the commit is reverted through main-push.
+  - **Independent of the interleaved budget A/B**, whose fix (7fa83718c) builds each side with its own flint CLI.
