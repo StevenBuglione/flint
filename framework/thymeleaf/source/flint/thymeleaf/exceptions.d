@@ -43,8 +43,6 @@ abstract class TemplateEngineException : RuntimeException
     protected this(string message, Throwable cause)
     {
         super(message, cause);
-        if (cause is null)
-            super.initCause(null);
     }
 }
 
