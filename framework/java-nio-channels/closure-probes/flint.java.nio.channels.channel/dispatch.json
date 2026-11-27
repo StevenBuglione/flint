@@ -1,0 +1,5 @@
+{
+  "source": "closure/channel.d",
+  "leaves": ["flint.java.io.closeable", "flint.java.lang"],
+  "data": []
+}

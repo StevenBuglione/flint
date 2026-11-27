@@ -830,6 +830,57 @@
     "template_instances": 560
    }
   },
+  "java-nio-channels": {
+   "directory": "framework/java-nio-channels",
+   "module": "flint.java.nio.channels.channel",
+   "also": [
+    "flint.java.nio.channels.bytechannel",
+    "flint.java.nio.channels.gatheringbytechannel",
+    "flint.java.nio.channels.interruptiblechannel",
+    "flint.java.nio.channels.readablebytechannel",
+    "flint.java.nio.channels.scatteringbytechannel",
+    "flint.java.nio.channels.seekablebytechannel",
+    "flint.java.nio.channels.writablebytechannel"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "dependencies": [
+    "java",
+    "java-nio-buffers"
+   ],
+   "bench": {
+    "fixture": "framework/java-nio-channels/bench",
+    "baseline": "framework/java-nio-channels/bench/baseline",
+    "edit_source": "framework/java-nio-channels/source/flint/java/nio/channels/channel.d"
+   },
+   "java_types": [
+    "java.nio.channels.ByteChannel",
+    "java.nio.channels.Channel",
+    "java.nio.channels.GatheringByteChannel",
+    "java.nio.channels.InterruptibleChannel",
+    "java.nio.channels.ReadableByteChannel",
+    "java.nio.channels.ScatteringByteChannel",
+    "java.nio.channels.SeekableByteChannel",
+    "java.nio.channels.WritableByteChannel"
+   ],
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ],
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "compiler_peak_rss_bytes": 536870912,
+    "incremental_linked_bytes": 6460,
+    "template_instances": 545
+   }
+  },
   "java-nio-charset": {
    "directory": "framework/java-nio-charset",
    "module": "flint.java.nio.charset.coderresult",

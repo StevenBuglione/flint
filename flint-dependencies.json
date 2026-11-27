@@ -367,6 +367,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-nio-channels": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-nio-char-buffer": {
       "repo": "framework",
       "version": "monorepo"

@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,168 | 357 | 1,871 | 15,025 |
+| framework | openjdk@21.0.13 | 1,179 | 369 | 1,871 | 15,002 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2306,6 +2306,23 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.CharBuffer#wrap(char[],int,int)` | `flint.java.nio.charbuffer.CharBuffer.wrap` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.InvalidMarkException` | `flint.java.nio.invalidmarkexception.InvalidMarkException` | [R1](api-mapping.md#r1-packages-and-names) | Import the exception from flint.java.nio.invalidmarkexception. It extends the canonical Java IllegalStateException. |
 | `java.nio.ReadOnlyBufferException` | `flint.java.nio.readonlybufferexception.ReadOnlyBufferException` | [R1](api-mapping.md#r1-packages-and-names) | Import the exception from flint.java.nio.readonlybufferexception. It extends the canonical Java UnsupportedOperationException. |
+
+#### java.nio.channels
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.nio.channels.ByteChannel` | `flint.java.nio.channels.bytechannel.ByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import ByteChannel from flint.java.nio.channels.bytechannel. |
+| `java.nio.channels.Channel` | `flint.java.nio.channels.channel.Channel` | [R1](api-mapping.md#r1-packages-and-names) | Import Channel from flint.java.nio.channels.channel. |
+| `java.nio.channels.GatheringByteChannel` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import GatheringByteChannel from flint.java.nio.channels.gatheringbytechannel. A null ByteBuffer[] slice counts as empty under R26. |
+| `java.nio.channels.GatheringByteChannel#write(ByteBuffer[])` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel.write` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.channels.GatheringByteChannel#write(ByteBuffer[],int,int)` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel.write` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.channels.InterruptibleChannel` | `flint.java.nio.channels.interruptiblechannel.InterruptibleChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import InterruptibleChannel from flint.java.nio.channels.interruptiblechannel. |
+| `java.nio.channels.ReadableByteChannel` | `flint.java.nio.channels.readablebytechannel.ReadableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import ReadableByteChannel from flint.java.nio.channels.readablebytechannel. |
+| `java.nio.channels.ScatteringByteChannel` | `flint.java.nio.channels.scatteringbytechannel.ScatteringByteChannel` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import ScatteringByteChannel from flint.java.nio.channels.scatteringbytechannel. A null ByteBuffer[] slice counts as empty under R26. |
+| `java.nio.channels.ScatteringByteChannel#read(ByteBuffer[])` | `flint.java.nio.channels.scatteringbytechannel.ScatteringByteChannel.read` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.channels.ScatteringByteChannel#read(ByteBuffer[],int,int)` | `flint.java.nio.channels.scatteringbytechannel.ScatteringByteChannel.read` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.nio.channels.SeekableByteChannel` | `flint.java.nio.channels.seekablebytechannel.SeekableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import SeekableByteChannel from flint.java.nio.channels.seekablebytechannel. |
+| `java.nio.channels.WritableByteChannel` | `flint.java.nio.channels.writablebytechannel.WritableByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import WritableByteChannel from flint.java.nio.channels.writablebytechannel. |
 
 #### java.nio.charset
 
@@ -10549,7 +10566,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.net | 809 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 229 | 0 |
-| java.nio.channels | 0 | 332 |
+| java.nio.channels | 0 | 309 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 86 | 0 |
 | java.nio.charset.spi | 0 | 4 |

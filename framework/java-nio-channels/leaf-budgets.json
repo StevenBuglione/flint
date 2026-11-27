@@ -1,0 +1,34 @@
+{
+  "flint.java.nio.channels.bytechannel": {
+    "incremental_linked_bytes": 3886,
+    "template_instances": 273
+  },
+  "flint.java.nio.channels.channel": {
+    "incremental_linked_bytes": 2302,
+    "template_instances": 241
+  },
+  "flint.java.nio.channels.gatheringbytechannel": {
+    "incremental_linked_bytes": 3305,
+    "template_instances": 273
+  },
+  "flint.java.nio.channels.interruptiblechannel": {
+    "incremental_linked_bytes": 2742,
+    "template_instances": 241
+  },
+  "flint.java.nio.channels.readablebytechannel": {
+    "incremental_linked_bytes": 2777,
+    "template_instances": 273
+  },
+  "flint.java.nio.channels.scatteringbytechannel": {
+    "incremental_linked_bytes": 3305,
+    "template_instances": 273
+  },
+  "flint.java.nio.channels.seekablebytechannel": {
+    "incremental_linked_bytes": 4598,
+    "template_instances": 273
+  },
+  "flint.java.nio.channels.writablebytechannel": {
+    "incremental_linked_bytes": 2777,
+    "template_instances": 273
+  }
+}

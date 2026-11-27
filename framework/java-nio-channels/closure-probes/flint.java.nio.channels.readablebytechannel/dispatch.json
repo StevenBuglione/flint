@@ -1,0 +1,5 @@
+{
+  "source": "closure/readable_byte_channel.d",
+  "leaves": ["flint.java.io.closeable", "flint.java.lang", "flint.java.nio.bytebuffer", "flint.java.nio.channels.channel"],
+  "data": []
+}
