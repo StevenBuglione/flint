@@ -1645,7 +1645,8 @@ class UTF8StreamJsonParser : JsonParser
     // Jackson's _reportInvalidInitial and _reportInvalidOther: "Invalid UTF-8 start byte 0xc3".
     private JacksonException invalidUtf8(string which, ubyte b)
     {
-        return readError("Invalid UTF-8 " ~ which ~ " byte 0x" ~ hexBytes[b * 2 .. b * 2 + 2]);
+        const char[2] hex = [lowerHexDigits[b >> 4], lowerHexDigits[b & 0xF]];
+        return readError(joined("Invalid UTF-8 ", which, " byte 0x", hex[]));
     }
 
     private JacksonException eofInComment()
@@ -1659,9 +1660,8 @@ class UTF8StreamJsonParser : JsonParser
         enum spaceRule = "only regular white space (\\r, \\n, \\t) is allowed between tokens";
         enum rsHint = spaceRule ~ " (consider enabling `JsonReadFeature.ALLOW_RS_CONTROL_CHAR` to allow use of "
             ~ "Record Separators (\\u001E))";
-        string rule = c == 0x1E ? rsHint : spaceRule; // not immutable: that is another concatenation instance
-        // The literal, string, literal, string shape of `unexpected`'s message: no new concatenation instance.
-        return readError("Illegal character ((CTRL-CHAR, code " ~ decimal(c) ~ ")): " ~ rule);
+        return readError(joined("Illegal character ((CTRL-CHAR, code ", decimal(c), ")): ",
+                c == 0x1E ? rsHint : spaceRule));
     }
 
     override JsonToken nextToken()
@@ -1782,11 +1782,11 @@ class UTF8StreamJsonParser : JsonParser
         }
         if (!allows(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES))
             throw unexpected(c, "was expecting double-quote to start property name");
-        if (!unquotedNameChar[c])
+        if (!(nameClass[c] & unquotedName))
             throw unexpected(c, "was expecting either valid name character (for unquoted name) or double-quote (for "
                     ~ "quoted) to start property name");
         immutable start = _inputPtr;
-        while (_inputPtr < _input.length && unquotedNameChar[_input[_inputPtr]])
+        while (_inputPtr < _input.length && (nameClass[_input[_inputPtr]] & unquotedName))
             ++_inputPtr;
         auto text = cast(const(char)[]) _input[start .. _inputPtr];
         checkUtf8(start, _inputPtr);
@@ -1815,13 +1815,7 @@ class UTF8StreamJsonParser : JsonParser
 
     // CharTypes.getInputCodeUtf8JsNames: the bytes an unquoted name may hold. Java identifier parts from 33 up, read
     // as Latin-1 as Jackson's table does, plus '@', '#', '*', '-' and '+'.
-    private static immutable bool[256] unquotedNameChar = () {
-        bool[256] table;
-        foreach (c; 33 .. 256)
-            table[c] = latinIdentifierPart[c];
-        table['@'] = table['#'] = table['*'] = table['-'] = table['+'] = true;
-        return table;
-    }();
+    private enum ubyte identifierPart = 1, unquotedName = 2;
 
     // A string value read by lenientText: decoded once, owned, and kept as the token's text.
     private JsonToken lenientValue(ubyte quote)
@@ -2007,9 +2001,8 @@ class UTF8StreamJsonParser : JsonParser
     // ParserMinimalBase._throwUnquotedSpace.
     private JacksonException unquotedControl(ubyte c, bool isName)
     {
-        string context = isName ? "name" : "string value"; // invalidSpace's operand shape: no new instance
-        return readError("Illegal unquoted character ((CTRL-CHAR, code " ~ decimal(
-                c) ~ ")): has to be escaped using backslash to be included in " ~ context);
+        return readError(joined("Illegal unquoted character ((CTRL-CHAR, code ", decimal(c),
+                ")): has to be escaped using backslash to be included in ", isName ? "name" : "string value"));
     }
 
     private JsonToken readValue(ubyte c)
@@ -2061,10 +2054,8 @@ class UTF8StreamJsonParser : JsonParser
     // (" A\u3456C " reads as 'A\u3456C'); any other byte is an unexpected character.
     private JacksonException invalidValue(ubyte c)
     {
-        import flint.engine.aot.text : decodeUtf8;
-
-        size_t next = _inputPtr;
-        if (javaIdentifierStart(decodeUtf8(cast(const(char)[]) _input, next)))
+        size_t next;
+        if (javaIdentifierStart(codePointAt(_inputPtr, next)))
             return unrecognized(_inputPtr, _inputPtr);
         return unexpected(c, allows(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
                 ? "expected a valid value (JSON String, Number (or 'NaN'/'+INF'/'-INF'), Array, Object or token "
@@ -2127,10 +2118,8 @@ class UTF8StreamJsonParser : JsonParser
     // token reports that byte. `from` is where the token's letters start, after any sign.
     private void matchEnd(size_t from)
     {
-        import flint.engine.aot.text : decodeUtf8;
-
-        size_t next = _inputPtr;
-        if (_input[_inputPtr] >= '0' && javaIdentifierPart(decodeUtf8(cast(const(char)[]) _input, next)))
+        size_t next;
+        if (_input[_inputPtr] >= '0' && javaIdentifierPart(codePointAt(_inputPtr, next)))
             throw unrecognized(_tokenStart, from);
     }
 
@@ -2709,33 +2698,52 @@ class UTF8StreamJsonParser : JsonParser
     {
         import flint.engine.aot.text : decimal;
 
-        // Concatenation, not std.format: format alone instantiated about 4,000 templates in this module.
-        const code = "code " ~ decimal(cast(uint) c);
-        const printable = c >= 0x20 && c < 0x7F;
-        auto description = printable ? "'" ~ cast(char) c ~ "' (" ~ code ~ ")" : "(CTRL-CHAR, " ~ code ~ ")";
         if (whole)
             return readError(comment);
-        if (escape)
-            return readError("Unrecognized character escape " ~ description);
-        if (numeric)
-            return readError("Unexpected character (" ~ description ~ ") in numeric value: " ~ comment);
-        return readError("Unexpected character (" ~ description ~ "): " ~ comment);
+        // Written into the scratch buffer, not concatenated: each `~` site is a template instance and inline code
+        // that every application links (R-184); std.format alone instantiated about 4,000 templates here.
+        const char[1] glyph = [cast(char) c];
+        const printable = c >= 0x20 && c < 0x7F;
+        const code = decimal(cast(uint) c);
+        const(char)[] head = escape ? "Unrecognized character escape " : "Unexpected character (";
+        const(char)[] tail = escape ? "" : numeric ? ") in numeric value: " : "): ";
+        if (printable)
+            return readError(joined(head, "'", glyph[], "' (code ", code, ")", tail, escape ? null : comment));
+        return readError(joined(head, "(CTRL-CHAR, code ", code, ")", tail, escape ? null : comment));
+    }
+
+    // The pieces of an error message, written into the scratch buffer and copied once. None may be a slice of the
+    // scratch buffer itself.
+    pragma(inline, false) private string joined(scope const(char)[][] pieces...)
+    {
+        size_t n;
+        foreach (piece; pieces)
+            putScratch(n, piece);
+        return owned(_scratch[0 .. n]);
+    }
+
+    // The code point at `p` (U+FFFD for malformed UTF-8) and, through `next`, the offset after it: one out-of-line copy
+    // of the decoder for the cold paths.
+    pragma(inline, false) private dchar codePointAt(size_t p, out size_t next) const
+    {
+        import flint.engine.aot.text : decodeUtf8;
+
+        next = p;
+        return decodeUtf8(cast(const(char)[]) _input, next);
     }
 
     // ParserBase._reportInvalidToken: what matched (`start` to `from`), then every Java identifier part after it, up to
     // ErrorReportConfiguration's 256 UTF-16 units and "...", reported at the token's start.
     private JacksonException unrecognized(size_t start, size_t from)
     {
-        import flint.engine.aot.text : decodeUtf8;
-
         enum maxErrorTokenLength = 256;
         size_t end = from;
         size_t units = from - start;
         bool cut;
         while (!cut && end < _input.length)
         {
-            size_t next = end;
-            immutable c = decodeUtf8(cast(const(char)[]) _input, next);
+            size_t next;
+            immutable c = codePointAt(end, next);
             if (!javaIdentifierPart(c))
                 break;
             end = next;
@@ -2743,12 +2751,8 @@ class UTF8StreamJsonParser : JsonParser
             cut = units >= maxErrorTokenLength;
         }
         _inputPtr = start;
-        size_t n;
-        putScratch(n, "Unrecognized token '");
-        putScratch(n, cast(const(char)[]) _input[start .. end]);
-        putScratch(n, cut ? "...': was expecting " : "': was expecting ");
-        putScratch(n, validValues());
-        return readError(owned(_scratch[0 .. n]));
+        return readError(joined("Unrecognized token '", cast(const(char)[]) _input[start .. end],
+                cut ? "...': was expecting " : "': was expecting ", validValues()));
     }
 
     // JsonParserBase._validJsonValueList: NaN and the Infinities are named once ALLOW_NON_NUMERIC_NUMBERS allows them.
@@ -2763,21 +2767,23 @@ class UTF8StreamJsonParser : JsonParser
     // code point above U+00FF counts as a part; only the text of an "Unrecognized token" error can differ.
     private static bool javaIdentifierPart(dchar c) pure nothrow @nogc
     {
-        return c >= 0x100 || latinIdentifierPart[c];
+        return c >= 0x100 || (nameClass[c] & identifierPart);
     }
 
     // Character.isJavaIdentifierStart through U+00FF; above it, false, so such a byte keeps the unexpected-character
     // error.
     private static bool javaIdentifierStart(dchar c) pure nothrow @nogc
     {
-        return c < 0x100 && latinIdentifierPart[c] && !(c >= '0' && c <= '9') && c > 0x1B
+        return c < 0x100 && (nameClass[c] & identifierPart) && !(c >= '0' && c <= '9') && c > 0x1B
             && (c < 0x7F || c > 0x9F) && c != 0xAD;
     }
 
     // Character.isJavaIdentifierPart in Latin-1: letters, digits, '$', '_', the currency signs, ª, µ and º, and the
     // identifier-ignorable controls (U+0000-U+0008, U+000E-U+001B, U+007F-U+009F) and soft hyphen.
-    private static immutable bool[256] latinIdentifierPart = () {
-        bool[256] table;
+    // One table for both: `identifierPart` (above) and `unquotedName`, CharTypes.getInputCodeUtf8JsNames' bytes for an
+    // unquoted name (the identifier parts from 33 up, read as Latin-1, plus '@', '#', '*', '-' and '+').
+    private static immutable ubyte[256] nameClass = () {
+        ubyte[256] table;
         foreach (c; 0 .. 256)
         {
             immutable letter = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
@@ -2785,16 +2791,19 @@ class UTF8StreamJsonParser : JsonParser
             immutable ignorable = c <= 0x08 || (c >= 0x0E && c <= 0x1B) || (c >= 0x7F && c <= 0x9F) || c == 0xAD;
             immutable latin = (c >= 0xA2 && c <= 0xA5) || c == 0xAA || c == 0xB5 || c == 0xBA
                 || (c >= 0xC0 && c != 0xD7 && c != 0xF7);
-            table[c] = ascii || ignorable || latin;
+            if (ascii || ignorable || latin)
+                table[c] = identifierPart | (c >= 33 ? unquotedName : 0);
         }
+        foreach (c; "@#*-+")
+            table[c] |= unquotedName;
         return table;
     }();
 
     // StreamReadConstraints' length limits, built at one site: "Name length (12) exceeds the maximum allowed (10)".
     private JacksonException lengthError(string what, size_t length, long limit, TokenStreamLocation location)
     {
-        return constraintError(what ~ " length (" ~ decimal(
-                cast(long) length) ~ ") exceeds the maximum allowed (" ~ decimal(limit) ~ ")", location);
+        return constraintError(joined(what, " length (", decimal(cast(long) length),
+                ") exceeds the maximum allowed (", decimal(limit), ")"), location);
     }
 
     // The one construction site of the parser's StreamConstraintsException.
@@ -2807,17 +2816,6 @@ class UTF8StreamJsonParser : JsonParser
     {
         return endOfInputError("Unexpected end-of-input within/between " ~ what);
     }
-
-    // "000102...ff": a byte's two lowercase hex digits are a slice of this.
-    private static immutable char[512] hexBytes = () {
-        char[512] digits;
-        foreach (i; 0 .. 256)
-        {
-            digits[i * 2] = lowerHexDigits[i >> 4];
-            digits[i * 2 + 1] = lowerHexDigits[i & 0xF];
-        }
-        return digits;
-    }();
 
     // The one construction site of the parser's end-of-input errors between tokens (each `new` site is a template
     // instance in this module's budget).
