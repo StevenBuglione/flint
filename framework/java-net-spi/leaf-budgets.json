@@ -1,0 +1,10 @@
+{
+  "flint.java.net.spi.inetaddressresolver": {
+    "incremental_linked_bytes": 6974,
+    "template_instances": 1802
+  },
+  "flint.java.net.spi.inetaddressresolverprovider": {
+    "incremental_linked_bytes": 1100,
+    "template_instances": 453
+  }
+}

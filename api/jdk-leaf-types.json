@@ -18,6 +18,8 @@
   "java.net.URLDecoder": "flint.java.net.urldecoder",
   "java.net.URLEncoder": "flint.java.net.urlencoder",
   "java.net.UnknownHostException": "flint.java.net.unknownhostexception",
+  "java.net.spi.InetAddressResolver": "flint.java.net.spi.inetaddressresolver",
+  "java.net.spi.InetAddressResolverProvider": "flint.java.net.spi.inetaddressresolverprovider",
   "java.nio.Buffer": "flint.java.nio.buffer",
   "java.nio.BufferOverflowException": "flint.java.nio.bufferoverflowexception",
   "java.nio.BufferUnderflowException": "flint.java.nio.bufferunderflowexception",

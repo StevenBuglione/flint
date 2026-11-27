@@ -1,0 +1,41 @@
+0	iae	No address type specified
+1	ok	1
+2	ok	2
+3	ok	3
+4	iae	No address type specified
+5	ok	5
+6	iae	Addresses order and type do not match
+7	ok	7
+8	iae	No address type specified
+9	iae	Addresses order and type do not match
+10	ok	10
+11	ok	11
+12	iae	No address type specified
+13	iae	Addresses order cannot be determined
+14	iae	Addresses order cannot be determined
+15	iae	Addresses order cannot be determined
+16	iae	No address type specified
+17	ok	17
+18	ok	18
+19	ok	19
+20	iae	No address type specified
+21	ok	21
+22	iae	Addresses order and type do not match
+23	ok	23
+24	iae	No address type specified
+25	iae	Addresses order and type do not match
+26	ok	26
+27	ok	27
+28	iae	No address type specified
+29	iae	Addresses order cannot be determined
+30	iae	Addresses order cannot be determined
+31	iae	Addresses order cannot be determined
+16	iae	No address type specified
+32	iae	No address type specified
+19	ok	19
+2147483647	iae	Addresses order cannot be determined
+-2147483648	iae	No address type specified
+-1	iae	Addresses order cannot be determined
+-2	iae	Addresses order cannot be determined
+-13	ok	-13
+-9	ok	-9

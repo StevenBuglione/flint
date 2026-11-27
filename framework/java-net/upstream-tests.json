@@ -2729,64 +2729,75 @@
       "status": "deferred"
     },
     "java/net/spi/InetAddressResolverProvider/AddressesCachingTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/AddressesStaleCachingTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/BootstrapResolverUsageTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/BuiltInResolverTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/EmptyResultsStreamTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/InetAddressUsageInGetProviderTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/LookupPolicyMappingTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/LookupPolicyOfTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. LookupPolicy.of is checked against Temurin rows for every 5-bit mask, the sign bit and custom flags, including the test's valid and invalid combinations.",
+      "covered_by": "framework/java-net-spi/tests/spi_test.d"
     },
     "java/net/spi/InetAddressResolverProvider/ProviderGetExceptionTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/ResolutionWithExceptionTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/ResolvePermissionTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "jvm-platform: java.lang.SecurityManager is excluded."
     },
     "java/net/spi/InetAddressResolverProvider/ReverseLookupDelegationTest.java": {
+      "status": "deferred",
       "phase": "2",
-      "status": "deferred"
+      "reason": "InetAddress does not consult an InetAddressResolverProvider until an engine host-name resolver exists (D-JDK-8)."
     },
     "java/net/spi/InetAddressResolverProvider/RuntimePermissionTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "jvm-platform: java.lang.SecurityManager is excluded."
     },
     "java/net/spi/InetAddressResolverProvider/serviceProviderOriginType/classpath/ClasspathProviderTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "jvm-platform: it installs the provider through ServiceLoader from the class path or module path; ServiceLoader is excluded and Flint wires services at build time."
     },
     "java/net/spi/InetAddressResolverProvider/serviceProviderOriginType/module/ModularProviderTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "jvm-platform: it installs the provider through ServiceLoader from the class path or module path; ServiceLoader is excluded and Flint wires services at build time."
     },
     "java/net/spi/URLStreamHandlerProvider/Basic.java": {
       "phase": "2",

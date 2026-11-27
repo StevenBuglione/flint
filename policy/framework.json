@@ -1277,7 +1277,50 @@
     "ldc_incremental_seconds",
     "compiler_peak_rss_bytes"
    ]
+  },  "java-net-spi": {
+   "directory": "framework/java-net-spi",
+   "module": "flint.java.net.spi.inetaddressresolver",
+   "also": [
+    "flint.java.net.spi.inetaddressresolverprovider"
+   ],
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.spi.InetAddressResolver",
+    "java.net.spi.InetAddressResolver.LookupPolicy",
+    "java.net.spi.InetAddressResolverProvider",
+    "java.net.spi.InetAddressResolverProvider.Configuration"
+   ],
+   "dependencies": [
+    "engine-aot",
+    "java",
+    "java-net-address",
+    "java-net-exceptions"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-spi/bench",
+    "baseline": "framework/java-net-spi/bench/baseline",
+    "edit_source": "framework/java-net-spi/source/flint/java/net/spi/inetaddressresolver.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 7027,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 2252
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },
+
   "java-regex": {
    "directory": "framework/java-regex",
    "module": "flint.java.util.regex",
