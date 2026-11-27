@@ -86,11 +86,12 @@ uint significantLimit(ref scope const DecimalFixedPattern pattern) pure nothrow 
 
 /// Writes rounded significant digits in exponential notation with the pattern's affixes.
 /// Returns the required byte count and leaves a short buffer untouched.
+/// `arbitraryWidths` selects DecimalFormat's own widths instead of the primitive 309/340 caps.
 pure nothrow @nogc size_t renderExponentDigits(scope const(char)[] digits, int decimalAt, bool negative,
         ref scope const DecimalFixedPattern pattern, ref scope const DecimalSymbolData symbols,
-        scope char[] output, scope DecimalFieldSpans* fields = null)
+        scope char[] output, scope DecimalFieldSpans* fields = null, bool arbitraryWidths = false)
 {
-    const layout = ExponentLayout(digits.length, digits.length == 0 ? 0 : decimalAt, pattern);
+    const layout = ExponentLayout(digits.length, digits.length == 0 ? 0 : decimalAt, pattern, arbitraryWidths);
     const affixes = negative ? pattern.negative : pattern.positive;
     char[10] exponentDigits;
     const exponentStart = writeExponent(layout.exponent, exponentDigits);
@@ -140,10 +141,11 @@ struct ExponentLayout
     bool decimalPoint;
 
     // Zero digits stand for zero, whose decimal position the caller has normalized to zero.
-    this(size_t count, int decimalAt, ref scope const DecimalFixedPattern pattern) pure nothrow @nogc
+    this(size_t count, int decimalAt, ref scope const DecimalFixedPattern pattern, bool arbitrary) pure nothrow @nogc
     {
-        const repeat = primitiveIntegerWidth(pattern.maximumIntegerDigits);
-        const minimumInteger = primitiveIntegerWidth(pattern.minimumIntegerDigits);
+        const repeat = arbitrary ? pattern.maximumIntegerDigits : primitiveIntegerWidth(pattern.maximumIntegerDigits);
+        const minimumInteger = arbitrary ? pattern.minimumIntegerDigits
+            : primitiveIntegerWidth(pattern.minimumIntegerDigits);
         // A repeating range wider than the minimum gives engineering notation, which ignores the minimum.
         const repeating = repeat > 1 && repeat > minimumInteger;
         if (repeating)
@@ -154,7 +156,9 @@ struct ExponentLayout
             integerDigits = repeating ? 1 : minimumInteger;
         else
             integerDigits = cast(size_t)(decimalAt - exponent);
-        size_t minimumDigits = minimumInteger + primitiveFractionWidth(pattern.minimumFractionDigits);
+        const minimumFraction = arbitrary ? pattern.minimumFractionDigits
+            : primitiveFractionWidth(pattern.minimumFractionDigits);
+        size_t minimumDigits = cast(size_t) minimumInteger + minimumFraction;
         if (minimumDigits < integerDigits)
             minimumDigits = integerDigits;
         totalDigits = count > minimumDigits ? count : minimumDigits;
