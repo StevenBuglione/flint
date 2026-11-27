@@ -937,3 +937,34 @@ unittest
     assert(LocalDate.parse("2019-11-30", DateTimeFormatter.ofPattern("uuuu-MM-dd")
             .withResolverStyle(ResolverStyle.STRICT)) == LocalDate.of(2019, 11, 30));
 }
+
+@("TextStyle pairs each size's normal and stand-alone forms, and FormatStyle keeps Java's order, as in JDK 21")
+unittest
+{
+    import flint.java.time.format : asNormal, asStandalone, FormatStyle, isStandalone, TextStyle;
+    import std.conv : to;
+
+    // JDK 21: ordinal, name, isStandalone(), asStandalone(), asNormal() for each TextStyle.values().
+    static immutable string[5][] expected = [
+        ["0", "FULL", "false", "FULL_STANDALONE", "FULL"],
+        ["1", "FULL_STANDALONE", "true", "FULL_STANDALONE", "FULL"],
+        ["2", "SHORT", "false", "SHORT_STANDALONE", "SHORT"],
+        ["3", "SHORT_STANDALONE", "true", "SHORT_STANDALONE", "SHORT"],
+        ["4", "NARROW", "false", "NARROW_STANDALONE", "NARROW"],
+        ["5", "NARROW_STANDALONE", "true", "NARROW_STANDALONE", "NARROW"],
+    ];
+    size_t count;
+    foreach (style; [__traits(allMembers, TextStyle)])
+    {
+        const s = style.to!TextStyle;
+        const row = expected[count++];
+        assert(row == [
+            (cast(int) s).to!string, s.to!string, s.isStandalone.to!string,
+            s.asStandalone.to!string, s.asNormal.to!string
+        ], style);
+    }
+    assert(count == 6);
+    assert([__traits(allMembers, FormatStyle)] == ["FULL", "LONG", "MEDIUM", "SHORT"]);
+    assert(cast(int) FormatStyle.SHORT == 3);
+    static assert(!__traits(compiles, isStandalone(null)));
+}

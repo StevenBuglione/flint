@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,233 | 414 | 1,871 | 14,903 |
+| framework | openjdk@21.0.13 | 1,245 | 417 | 1,871 | 14,888 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2411,6 +2411,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.format.DateTimeParseException#<init>(String,CharSequence,int,Throwable)` | `flint.java.time.format.DateTimeParseException.this` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | `java.time.format.ResolverStyle` | `flint.java.time.format.ResolverStyle` | [R11](api-mapping.md#r11-object-identity-and-equality) | D enum with STRICT and SMART; LENIENT is deferred. |
+| `java.time.format.TextStyle#asNormal()` | `flint.java.time.format.asNormal` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | A free function called by UFCS: style.asNormal(). |
+| `java.time.format.TextStyle#asStandalone()` | `flint.java.time.format.asStandalone` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | A free function called by UFCS: style.asStandalone(). |
+| `java.time.format.TextStyle#isStandalone()` | `flint.java.time.format.isStandalone` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | A free function called by UFCS: style.isStandalone(). |
 
 #### java.time.temporal
 
@@ -10637,7 +10640,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.text.spi | 0 | 27 |
 | java.time | 684 | 0 |
 | java.time.chrono | 405 | 0 |
-| java.time.format | 116 | 0 |
+| java.time.format | 101 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,877 | 0 |

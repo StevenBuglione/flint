@@ -74,6 +74,79 @@ enum SignStyle
     EXCEEDS_PAD,
 }
 
+/// Styles of a localized date or time formatter, from the most to the least detailed.
+enum FormatStyle
+{
+    /// Full text, the most detail: 'Tuesday, April 12, 1952 AD'.
+    FULL,
+    /// Long text, with lots of detail: 'January 12, 1952'.
+    LONG,
+    /// Medium text, with some detail: 'Jan 12, 1952'.
+    MEDIUM,
+    /// Short text, typically numeric: '12.13.52'.
+    SHORT,
+}
+
+/++
+Sizes of text when printing and parsing. Each size has a normal form, used inside a complete date, and a stand-alone
+form; the two alternate, normal first.
++/
+enum TextStyle
+{
+    /// Full text, typically the full description.
+    FULL,
+    /// Full text for stand-alone use.
+    FULL_STANDALONE,
+    /// Short text, typically an abbreviation.
+    SHORT,
+    /// Short text for stand-alone use.
+    SHORT_STANDALONE,
+    /// Narrow text, typically one letter.
+    NARROW,
+    /// Narrow text for stand-alone use.
+    NARROW_STANDALONE,
+}
+
+/// Whether the style is a stand-alone form.
+bool isStandalone(TextStyle style) pure nothrow @nogc
+{
+    final switch (style)
+    {
+    case TextStyle.FULL, TextStyle.SHORT, TextStyle.NARROW:
+        return false;
+    case TextStyle.FULL_STANDALONE, TextStyle.SHORT_STANDALONE, TextStyle.NARROW_STANDALONE:
+        return true;
+    }
+}
+
+/// The stand-alone form of the same size.
+TextStyle asStandalone(TextStyle style) pure nothrow @nogc
+{
+    final switch (style)
+    {
+    case TextStyle.FULL, TextStyle.FULL_STANDALONE:
+        return TextStyle.FULL_STANDALONE;
+    case TextStyle.SHORT, TextStyle.SHORT_STANDALONE:
+        return TextStyle.SHORT_STANDALONE;
+    case TextStyle.NARROW, TextStyle.NARROW_STANDALONE:
+        return TextStyle.NARROW_STANDALONE;
+    }
+}
+
+/// The normal form of the same size.
+TextStyle asNormal(TextStyle style) pure nothrow @nogc
+{
+    final switch (style)
+    {
+    case TextStyle.FULL, TextStyle.FULL_STANDALONE:
+        return TextStyle.FULL;
+    case TextStyle.SHORT, TextStyle.SHORT_STANDALONE:
+        return TextStyle.SHORT;
+    case TextStyle.NARROW, TextStyle.NARROW_STANDALONE:
+        return TextStyle.NARROW;
+    }
+}
+
 private enum Field : ubyte
 {
     year,
