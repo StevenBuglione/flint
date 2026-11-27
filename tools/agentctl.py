@@ -568,13 +568,20 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
         # agy and copilot run each tick as a fresh headless session from the brief: several lanes share one
         # machine, so resuming "the most recent conversation" could pick up another lane's. The role's hand-off
         # state carries the context between ticks, as it does across harnesses.
+        # A brief with a long unread inbox can exceed the kernel's per-argument limit, so the full brief goes in a
+        # file under the role's log directory and the prompt points at it.
+        brief_file = logs / 'brief-current.md'
+        if not dry_run:
+            brief_file.write_text(first, encoding='utf-8')
+        pointer = (f'Your complete start-up brief for the Flint role {role} (agent name {agent}) is in {brief_file}. '
+                   'Read that whole file first, then follow it exactly.')
         if harness == 'agy':
-            base = ['agy', '--dangerously-skip-permissions', '--add-dir', str(worktree)]
+            base = ['agy', '--dangerously-skip-permissions', '--add-dir', str(worktree), '--add-dir', str(logs)]
             base += ['--model', profile or 'gemini-4-neon-high']
-            commands = [base + ['-p', first]]
+            commands = [base + ['-p', pointer]]
         else:
             base = ['copilot', '--allow-all', '--no-ask-user', '--model', profile or 'auto']
-            commands = [base + ['-p', first]]
+            commands = [base + ['-p', pointer]]
     if dry_run:
         for command in commands:
             print(shlex.join(command[:-1]) + ' <prompt of ' + str(len(command[-1])) + ' chars>')
@@ -582,6 +589,11 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
     index = 0
     while True:
         command = commands[0] if index == 0 else commands[-1]
+        if harness != 'codex' and index:
+            # Each agy/copilot tick is a fresh session, so it gets a fresh brief (current state and unread mail).
+            refreshed = brief(store, role, harness).replace('<your-name>', agent)
+            refreshed = refreshed.replace(f'--harness {harness}`', '--harness other`')
+            (logs / 'brief-current.md').write_text(refreshed, encoding='utf-8')
         stamp = utc_now().replace(':', '')
         with open(logs / f'{stamp}.log', 'w', encoding='utf-8') as out:
             result = subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
