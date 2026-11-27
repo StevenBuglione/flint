@@ -264,6 +264,7 @@ struct Lob
 
 /// This annotation must be specified for persistent fields or properties of type java.util.Date and
 /// java.util.Calendar.
+deprecated("since 3.2: newly-written code should use the date/time types defined in java.time")
 struct Temporal
 {
     /// The type used in mapping `java.util.Date` or `java.util.Calendar`.
@@ -707,6 +708,7 @@ struct MapKeyEnumerated
 }
 
 /// This annotation must be specified for persistent map keys of type java.util.Date and java.util.Calendar.
+deprecated("since 3.2: newly-written code should use the date/time types defined in java.time")
 struct MapKeyTemporal
 {
     /// The type used in mapping `java.util.Date` or `java.util.Calendar`.
