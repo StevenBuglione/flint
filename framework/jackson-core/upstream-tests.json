@@ -421,13 +421,13 @@
       "d": "framework/jackson-core/tests/upstream_test.d",
       "methods": {
         "ported": [
+          "brokenNumber",
+          "invalidToken",
           "simpleBooleans",
           "simpleNumbers",
           "simpleWrites"
         ],
         "skipped": {
-          "brokenNumber": "The blocking parser accepts a colon after the first root number and rejects it on the next advance.",
-          "invalidToken": "The malformed Unicode token is rejected with an unexpected-character diagnostic rather than the pinned unrecognized-token diagnostic.",
           "rootOffsetIssue516Bytes": "A blocking byte buffer has no throttled InputStream refill boundary.",
           "rootOffsetIssue516Chars": "A blocking byte buffer has no throttled character Reader refill boundary."
         }

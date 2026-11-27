@@ -391,6 +391,24 @@ unittest
     p.close();
 }
 
+// Jackson's stream, throttled-stream and reader variants all read through Flint's one byte parser. Jackson's
+// verifyException ignores case; these expectations use the messages' own casing.
+@("TestRootValues.brokenNumber")
+unittest
+{
+    auto p = createParser("14:89:FD:D3:E7:8C");
+    expectFailure(() { p.nextToken(); }, "Unexpected character");
+    p.close();
+}
+
+@("TestRootValues.invalidToken")
+unittest
+{
+    auto p = createParser(" A\u3456C ");
+    expectFailure(() { p.nextToken(); }, "Unrecognized token");
+    p.close();
+}
+
 @("a root number must end at a separator")
 unittest
 {
