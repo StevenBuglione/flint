@@ -2895,6 +2895,7 @@
   "flint_tests": [
     "framework/java-util/tests/hexformat_test.d",
     "framework/java-util/tests/random_seed_test.d",
+    "framework/java-util/tests/splittablerandom_test.d",
     "framework/java-util/tests/uuid_java21_test.d",
     "framework/java-util/tests/uuid_order_test.d",
     "framework/java-util/tests/uuid_test.d"

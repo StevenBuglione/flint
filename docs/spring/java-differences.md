@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,164 | 356 | 1,871 | 15,030 |
+| framework | openjdk@21.0.13 | 1,168 | 357 | 1,871 | 15,025 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2555,6 +2555,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.Random#nextBytes(byte[])` | `flint.java.util.random.random.Random.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.Set#of(E...)` | `flint.java.util.Set.of` | [R7](api-mapping.md#r7-overloads) |  |
 | `java.util.SimpleTimeZone#clone()` | `flint.java.util.SimpleTimeZone.clone` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `java.util.SplittableRandom#nextBytes(byte[])` | `flint.java.util.splittablerandom.SplittableRandom.nextBytes` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.StringJoiner` | `flint.java.util.stringjoiner.StringJoiner` | [R1](api-mapping.md#r1-packages-and-names) | Import the leaf flint.java.util.stringjoiner. Null separator, framing and empty-value slices count as empty under R26. |
 | `java.util.StringJoiner#<init>(CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.StringJoiner#<init>(CharSequence,CharSequence,CharSequence)` | `flint.java.util.stringjoiner.StringJoiner.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -10567,7 +10568,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
-| java.util | 1,909 | 0 |
+| java.util | 1,904 | 0 |
 | java.util.concurrent | 1,236 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
@@ -11836,6 +11837,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.Properties#load(InputStream)` | 2 | The legacy byte-stream overload treats the input as UTF-8. Java Properties.load(InputStream) decodes ISO-8859-1 and leaves the stream open. |
 | framework | `java.util.Random` | 2 | The seeded constructor and core generator methods are available. The default constructor, RandomGenerator interface and other methods are deferred. |
 | framework | `java.util.Scanner#<init>(Readable)` | 2 | The Readable constructor awaits the interface's cross-package placement. Its method takes a java.nio CharBuffer. Revisit after the compile-scope decision on 2026-11-27. |
+| framework | `java.util.SplittableRandom` | 2 | The seeded constructor, split(), nextInt(), nextLong() and nextBytes(byte[]) are available at flint.java.util.splittablerandom.SplittableRandom. The default constructor, RandomGenerator/SplittableGenerator interfaces and stream methods are deferred. |
 | framework | `java.util.UUID#fromString(String)` | 2 | The Java UUID parser, including shortened hexadecimal fields, awaits Character radix conversion. |
 | framework | `java.util.UUID#nameUUIDFromBytes(byte[])` | 2 | Version 3 name-based UUIDs await the canonical Java MessageDigest MD5 provider. |
 | framework | `java.util.concurrent.ExecutionException#<init>(Throwable)` | 2 | The cause is retained, but a custom checked Throwable.toString override is bypassed when deriving the detail. Java invokes that override. |

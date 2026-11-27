@@ -1028,6 +1028,7 @@
    "also": [
     "flint.java.util.hexformat",
     "flint.java.util.random.random",
+    "flint.java.util.splittablerandom",
     "flint.java.util.stringjoiner"
    ],
    "repo": "framework",

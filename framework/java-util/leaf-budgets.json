@@ -7,6 +7,10 @@
     "incremental_linked_bytes": 1338,
     "template_instances": 113
   },
+  "flint.java.util.splittablerandom": {
+    "incremental_linked_bytes": 1188,
+    "template_instances": 35
+  },
   "flint.java.util.stringjoiner": {
     "incremental_linked_bytes": 12087,
     "template_instances": 270
