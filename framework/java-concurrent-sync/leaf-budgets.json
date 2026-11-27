@@ -22,5 +22,13 @@
   "flint.java.util.concurrent.locks.contracts": {
     "incremental_linked_bytes": 2535,
     "template_instances": 490
+  },
+  "flint.java.util.concurrent.atomic.longadder": {
+    "incremental_linked_bytes": 8602,
+    "template_instances": 35
+  },
+  "flint.java.util.concurrent.atomic.doubleadder": {
+    "incremental_linked_bytes": 24576,
+    "template_instances": 35
   }
 }
