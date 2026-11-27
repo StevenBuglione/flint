@@ -596,3 +596,15 @@ unittest
     assertThrown!NoSuchBeanDefinitionException(context.getBean!BeanA());
     assert(context.getBean!BeanB() !is null && context.getBean!BeanC() !is null);
 }
+
+// Flint addition: Java's annotation defaults for @Component's value and @PropertySource's encoding are "", which
+// are not null under `is`.
+@("Component's value and PropertySource's encoding default to the empty string, not null")
+unittest
+{
+    import flint.context.annotation : PropertySource;
+    import flint.stereotype : Component;
+
+    assert(Component.init.value !is null && Component.init.value.length == 0);
+    assert(PropertySource.init.encoding !is null && PropertySource.init.encoding.length == 0);
+}

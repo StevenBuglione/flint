@@ -187,3 +187,10 @@ unittest
             BeanFactoryAnnotationUtils.qualifiedBeanOfType!TestBean(child, "inherited"));
     assert(missing !is null && missing.getNumberOfBeansFound() == 0);
 }
+
+// Flint addition: Java's annotation default for @Qualifier's value is "", which is not null under `is`.
+@("Qualifier's default value is the empty string, not null")
+unittest
+{
+    assert(Qualifier.init.value !is null && Qualifier.init.value.length == 0);
+}

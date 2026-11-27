@@ -190,7 +190,7 @@ struct PropertySource
     /// Whether a missing resource is ignored.
     bool ignoreResourceNotFound;
     /// The resource encoding; UTF-8 when empty.
-    string encoding;
+    string encoding = "";
 }
 
 /++

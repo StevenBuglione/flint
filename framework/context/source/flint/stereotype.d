@@ -44,7 +44,7 @@ struct Indexed
 struct Component
 {
     /// The suggested bean name; empty for the default name.
-    string value;
+    string value = "";
 }
 
 /// A component holding business logic: a specialization of `@Component`.
