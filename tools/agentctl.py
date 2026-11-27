@@ -19,7 +19,7 @@ can move between harnesses without losing context. Nothing here depends on a har
     agentctl.py handoff ROLE --agent NAME [PATH | -]          replace the role's state (the old one is kept)
     agentctl.py brief ROLE [--harness NAME]             a start-up prompt for an agent taking the role
     agentctl.py worktree ROLE                           print (and create if missing) the role's git worktree
-    agentctl.py launch ROLE --harness codex|agy|copilot [--loop MIN] [--profile NAME] [--agent NAME] [--dry-run]
+    agentctl.py launch ROLE --harness codex|agy|copilot|claude [--loop MIN] [--profile NAME] [--agent NAME] [--dry-run]
 
 The shared directory is $FLINT_COORD_DIR, or the `coordination` folder beside the main checkout
 (/home/olfa/flint-work/coordination on venus). Layout:
@@ -60,7 +60,7 @@ DEFAULT_TTL_MIN = 45
 QUEUE_HEAD_MIN = 10
 HARNESSES = ('claude', 'codex', 'agy', 'copilot', 'human', 'other')
 # Harnesses `launch` can run headless. For agy and copilot, --profile names the model.
-LAUNCH_HARNESSES = ('codex', 'agy', 'copilot')
+LAUNCH_HARNESSES = ('codex', 'agy', 'copilot', 'claude')
 PLACEHOLDER_BODIES = frozenset({'noop', 'no-op', 'test', 'ping', 'x', '.'})
 
 
@@ -553,10 +553,10 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
     logs = store.root / 'logs' / role
     logs.mkdir(parents=True, exist_ok=True)
     first = brief(store, role, harness).replace('<your-name>', agent)
-    if harness in ('agy', 'copilot'):
+    if harness in ('agy', 'copilot', 'claude'):
         # A lane worktree may still carry an agentctl.py from before these harnesses existed, which refuses
         # `--harness agy|copilot`; `other` is accepted by every version, and the agent name records the tool.
-        first = first.replace(f'--harness {harness}`', '--harness other`')
+        first = first.replace(f'--harness {harness}`', '--harness other`') if harness != 'claude' else first
     tick = (f'Continue as role {role} following docs/agents/README.md: check your inbox, continue your state\'s Next '
             f'step, push verified work, and rewrite your hand-off state before you finish (agent name {agent}).')
     if harness == 'codex':
@@ -575,7 +575,12 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
             brief_file.write_text(first, encoding='utf-8')
         pointer = (f'Your complete start-up brief for the Flint role {role} (agent name {agent}) is in {brief_file}. '
                    'Read that whole file first, then follow it exactly.')
-        if harness == 'agy':
+        if harness == 'claude':
+            # The owner's fallback once the agy and Copilot allowances run out (2026-11-27): Claude Opus 5.5.
+            base = ['claude', '--dangerously-skip-permissions', '--add-dir', str(worktree), '--add-dir', str(logs)]
+            base += ['--model', profile or 'claude-opus-5-5']
+            commands = [base + ['-p', pointer]]
+        elif harness == 'agy':
             base = ['agy', '--dangerously-skip-permissions', '--add-dir', str(worktree), '--add-dir', str(logs)]
             base += ['--model', profile or 'gemini-4-neon-high']
             commands = [base + ['-p', pointer]]
