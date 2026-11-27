@@ -58,7 +58,7 @@ final class Stream(T)
     }
 
     /// `a`'s elements, then `b`'s.
-    static Stream!T concat(Stream!T a, Stream!T b)
+    static Stream!T concat()(Stream!T a, Stream!T b)
     {
         if (a is null || b is null)
             throwNullPointerException();
@@ -76,7 +76,7 @@ final class Stream(T)
     }
 
     /// `seed`, `next(seed)`, `next(next(seed))`, ...: an infinite stream; bound it with `limit`.
-    static Stream!T iterate(T seed, T delegate(T) @safe next)
+    static Stream!T iterate()(T seed, T delegate(T) @safe next)
     {
         if (next is null)
             throwNullPointerException();
@@ -100,7 +100,7 @@ final class Stream(T)
     }
 
     /// The elements matching `predicate`.
-    Stream!T filter(bool delegate(T) @safe predicate)
+    Stream!T filter()(bool delegate(T) @safe predicate)
     {
         if (predicate is null)
             throwNullPointerException();
@@ -150,19 +150,19 @@ final class Stream(T)
     }
 
     /// Java's `mapToInt`: each element as an `int`.
-    Stream!int mapToInt(int delegate(T) @safe mapper)
+    Stream!int mapToInt()(int delegate(T) @safe mapper)
     {
         return map!int(mapper);
     }
 
     /// Java's `mapToLong`: each element as a `long`.
-    Stream!long mapToLong(long delegate(T) @safe mapper)
+    Stream!long mapToLong()(long delegate(T) @safe mapper)
     {
         return map!long(mapper);
     }
 
     /// The elements without duplicates, keeping the first occurrence.
-    Stream!T distinct()
+    Stream!T distinct()()
     {
         auto source = take();
         static if (!__traits(compiles, { bool[T] probe; probe[T.init] = true; }))
@@ -206,7 +206,7 @@ final class Stream(T)
     /// The elements in natural order (stable), sorted on the first pull. After a failure, a retried pull keeps the
     /// elements already pulled, as Java's sorting sink does: it pulls on after an upstream failure and sorts again
     /// after a comparison failure.
-    Stream!T sorted()
+    Stream!T sorted()()
     {
         auto source = take();
         T[] items;
@@ -228,7 +228,7 @@ final class Stream(T)
 
     /// The elements ordered by `comparator` (stable), sorted on the first pull and retried as `sorted()` is. As in
     /// Java, the upstream is taken before a null `comparator` throws `NullPointerException`.
-    Stream!T sorted(Comparator!T comparator)
+    Stream!T sorted()(Comparator!T comparator)
     {
         auto source = take();
         if (comparator is null)
@@ -252,7 +252,7 @@ final class Stream(T)
 
     /// The elements ordered by `compare` (stable). Unlike the `Comparator` overload, this Flint convenience sorts when
     /// called, so `compare` can be a borrowed `scope` delegate.
-    Stream!T sorted(int delegate(T, T) @safe compare)
+    Stream!T sorted()(int delegate(T, T) @safe compare)
     {
         auto items = toArray();
         stableSort(items, compare);
@@ -260,7 +260,7 @@ final class Stream(T)
     }
 
     /// Each element, after calling `action` on it as it passes.
-    Stream!T peek(void delegate(T) @safe action)
+    Stream!T peek()(void delegate(T) @safe action)
     {
         if (action is null)
             throwNullPointerException();
@@ -274,7 +274,7 @@ final class Stream(T)
     }
 
     /// At most the first `maxSize` elements.
-    Stream!T limit(long maxSize)
+    Stream!T limit()(long maxSize)
     {
         if (maxSize < 0)
             throw new IllegalArgumentException(valueOf(maxSize));
@@ -289,7 +289,7 @@ final class Stream(T)
     }
 
     /// The elements after the first `n`.
-    Stream!T skip(long n)
+    Stream!T skip()(long n)
     {
         if (n < 0)
             throw new IllegalArgumentException(valueOf(n));
@@ -321,7 +321,7 @@ final class Stream(T)
 
     /// Call `action` on each element. A null `action` throws `NullPointerException`: a derived stage checks it
     /// first, while a source stream is taken (and spent) before the check, as Java's head pipeline does.
-    void forEach(void delegate(T) @safe action)
+    void forEach()(void delegate(T) @safe action)
     {
         if (action is null)
             rejectNullAction();
@@ -339,13 +339,13 @@ final class Stream(T)
     }
 
     /// Call `action` on each element, in order.
-    void forEachOrdered(void delegate(T) @safe action)
+    void forEachOrdered()(void delegate(T) @safe action)
     {
         forEach(action);
     }
 
     /// The elements as a new D array.
-    T[] toArray()
+    T[] toArray()()
     {
         return drain(take());
     }
@@ -372,7 +372,7 @@ final class Stream(T)
     }
 
     /// The elements as an unmodifiable list (Java 16's `Stream.toList`).
-    List!T toList()
+    List!T toList()()
     {
         return List!T.of(toArray());
     }
@@ -423,7 +423,7 @@ final class Stream(T)
     }
 
     /// How many elements.
-    long count()
+    long count()()
     {
         auto source = take();
         long n;
@@ -434,7 +434,7 @@ final class Stream(T)
     }
 
     /// The first element, or empty. Throws `NullPointerException` when that element is null.
-    Optional!T findFirst()
+    Optional!T findFirst()()
     {
         auto source = take();
         T next;
@@ -442,13 +442,13 @@ final class Stream(T)
     }
 
     /// Some element (the first: Flint streams are sequential), or empty.
-    Optional!T findAny()
+    Optional!T findAny()()
     {
         return findFirst();
     }
 
     /// Whether any element matches.
-    bool anyMatch(bool delegate(T) @safe predicate)
+    bool anyMatch()(bool delegate(T) @safe predicate)
     {
         if (predicate is null)
             throwNullPointerException();
@@ -461,7 +461,7 @@ final class Stream(T)
     }
 
     /// Whether every element matches (true for an empty stream).
-    bool allMatch(bool delegate(T) @safe predicate)
+    bool allMatch()(bool delegate(T) @safe predicate)
     {
         if (predicate is null)
             throwNullPointerException();
@@ -474,13 +474,13 @@ final class Stream(T)
     }
 
     /// Whether no element matches.
-    bool noneMatch(bool delegate(T) @safe predicate)
+    bool noneMatch()(bool delegate(T) @safe predicate)
     {
         return !anyMatch(predicate);
     }
 
     /// The least element under `comparator`, or empty.
-    Optional!T min(Comparator!T comparator)
+    Optional!T min()(Comparator!T comparator)
     {
         if (comparator is null)
             throwNullPointerException();
@@ -488,7 +488,7 @@ final class Stream(T)
     }
 
     /// The greatest element under `comparator`, or empty.
-    Optional!T max(Comparator!T comparator)
+    Optional!T max()(Comparator!T comparator)
     {
         if (comparator is null)
             throwNullPointerException();
@@ -496,7 +496,7 @@ final class Stream(T)
     }
 
     /// Fold the elements with `accumulator`, starting from `identity`.
-    T reduce(T identity, T delegate(T, T) @safe accumulator)
+    T reduce()(T identity, T delegate(T, T) @safe accumulator)
     {
         if (accumulator is null)
             throwNullPointerException();
@@ -508,7 +508,7 @@ final class Stream(T)
     }
 
     /// Fold the elements with `accumulator`; empty for an empty stream. Throws `NullPointerException` for a null result.
-    Optional!T reduce(T delegate(T, T) @safe accumulator)
+    Optional!T reduce()(T delegate(T, T) @safe accumulator)
     {
         if (accumulator is null)
             throwNullPointerException();
@@ -524,14 +524,14 @@ final class Stream(T)
     static if (__traits(isArithmetic, T))
     {
         /// The sum of the elements (Java's `IntStream.sum`).
-        T sum()
+        T sum()()
         {
             return reduce(cast(T) 0, (T a, T b) => cast(T)(a + b));
         }
     }
 
     /// An iterator over the remaining elements.
-    Iterator!T iterator()
+    Iterator!T iterator()()
     {
         return new StreamIterator!T(take());
     }
