@@ -2,8 +2,8 @@
 /// Binary64 conversion for resolved fixed-point DecimalFormat patterns.
 module flint.java.text.internal.decimalfixedbinary;
 
-import flint.java.text.internal.decimalfixed : DecimalAffixes, DecimalFixedPattern,
-    multiplyUnsignedWord, primitiveFractionWidth, renderFixedDigits, writeUnsignedDigits;
+import flint.java.text.internal.decimalfixed : DecimalAffixes, DecimalField, DecimalFieldSpans,
+    DecimalFixedPattern, multiplyUnsignedWord, primitiveFractionWidth, renderFixedDigits, writeUnsignedDigits;
 import flint.java.text.internal.decimaldigitlist : FixedRoundingMode, FixedRoundingStatus;
 import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData;
 
@@ -42,9 +42,10 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref s
         && status == FixedRoundingStatus.complete;
 }
 
+/// Reporting fields bypasses the grouped fast path, as Java's format with a caller FieldPosition does.
 pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output, out size_t required,
-        FixedRoundingMode mode, out FixedRoundingStatus status)
+        FixedRoundingMode mode, out FixedRoundingStatus status, scope DecimalFieldSpans* fields = null)
 {
     import flint.java.text.internal.binarydecimal : BinaryDecimal;
     import flint.java.text.internal.decimaldigitlist : tryFixedBinaryDecimal;
@@ -53,7 +54,7 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref s
     required = 0;
     if (multiplier != 1)
         bits = scaleBinary(bits, multiplier);
-    else if (mode == FixedRoundingMode.halfEven && usesGroupedFastPath(bits, pattern))
+    else if (fields is null && mode == FixedRoundingMode.halfEven && usesGroupedFastPath(bits, pattern))
     {
         required = renderGroupedFast(bits, pattern, symbols, output);
         return true;
@@ -61,12 +62,12 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref s
 
     if ((bits & (ulong.max >> 1)) >= infinityBits)
     {
-        required = renderSpecial(bits, pattern, symbols, output);
+        required = renderSpecial(bits, pattern, symbols, output, fields);
         return true;
     }
 
     if (pattern.minimumExponentDigits != 0)
-        return tryRenderExponentDouble(bits, pattern, symbols, output, required, mode, status);
+        return tryRenderExponentDouble(bits, pattern, symbols, output, required, mode, status, fields);
     BinaryDecimal converted;
     if (!tryFixedBinaryDecimal(bits, primitiveFractionWidth(pattern.maximumFractionDigits), converted, mode, status))
         return false;
@@ -75,13 +76,14 @@ pure nothrow @nogc bool tryRenderDecimalDouble(ulong bits, int multiplier, ref s
 
     const decimalAt = converted.count != 0 ? converted.decimalAt : 0;
     required = renderFixedDigits(converted.digits[0 .. converted.count], decimalAt,
-            converted.negative, pattern, symbols, output);
+            converted.negative, pattern, symbols, output, fields);
     return true;
 }
 
 private pure nothrow @nogc bool tryRenderExponentDouble(ulong bits, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols,
-        scope char[] output, ref size_t required, FixedRoundingMode mode, ref FixedRoundingStatus status)
+        scope char[] output, ref size_t required, FixedRoundingMode mode,
+        ref FixedRoundingStatus status, scope DecimalFieldSpans* fields)
 {
     import flint.java.text.internal.binarydecimal : BinaryDecimal;
     import flint.java.text.internal.decimaldigitlist : trySignificantBinaryDecimal;
@@ -93,7 +95,7 @@ private pure nothrow @nogc bool tryRenderExponentDouble(ulong bits, ref scope co
     if (status == FixedRoundingStatus.inexact)
         return true;
     required = renderExponentDigits(converted.digits[0 .. converted.count], converted.decimalAt,
-            converted.negative, pattern, symbols, output);
+            converted.negative, pattern, symbols, output, fields);
     return true;
 }
 
@@ -187,7 +189,7 @@ private pure nothrow @nogc size_t renderGroupedFast(ulong bits,
 }
 
 private pure nothrow @nogc size_t renderSpecial(ulong bits, ref scope const DecimalFixedPattern pattern,
-        ref scope const DecimalSymbolData symbols, scope char[] output)
+        ref scope const DecimalSymbolData symbols, scope char[] output, scope DecimalFieldSpans* fields)
 {
     const infinity = (bits & (ulong.max >> 1)) == infinityBits;
     const token = infinity ? symbols.infinity : symbols.nan;
@@ -201,6 +203,9 @@ private pure nothrow @nogc size_t renderSpecial(ulong bits, ref scope const Deci
     output[0 .. tokenStart] = affixes.prefix;
     output[tokenStart .. tokenEnd] = token;
     output[tokenEnd .. cast(size_t) required] = affixes.suffix;
+    // Java reports NaN and infinity as the integer field.
+    if (fields !is null)
+        fields.record(DecimalField.integer, tokenStart, tokenEnd);
     return cast(size_t) required;
 }
 

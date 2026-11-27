@@ -42,8 +42,8 @@
 /// Exponential rendering for resolved DecimalFormat patterns.
 module flint.java.text.internal.decimalexponent;
 
-import flint.java.text.internal.decimalfixed : DecimalFixedPattern, multiplyUnsignedWord,
-    primitiveFractionWidth, writeWideUnsignedDigits;
+import flint.java.text.internal.decimalfixed : DecimalField, DecimalFieldSpans, DecimalFixedPattern,
+    multiplyUnsignedWord, primitiveFractionWidth, writeWideUnsignedDigits;
 import flint.java.text.internal.decimaldigitlist : FixedRoundingMode, FixedRoundingStatus, roundSignificant;
 import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData;
 
@@ -55,7 +55,7 @@ package(flint.java.text):
 /// Returns the required byte count, leaves a short buffer untouched and writes nothing when inexact.
 pure nothrow @nogc size_t renderExponentLong(long value, int multiplier, ref scope const DecimalFixedPattern pattern,
         ref scope const DecimalSymbolData symbols, scope char[] output, FixedRoundingMode mode,
-        out FixedRoundingStatus status)
+        out FixedRoundingStatus status, scope DecimalFieldSpans* fields = null)
 in (pattern.minimumExponentDigits != 0)
 {
     const negativeValue = value < 0;
@@ -75,7 +75,7 @@ in (pattern.minimumExponentDigits != 0)
     const count = roundSignificant(digits[start .. $], decimalAt, limit, false, true, negative, mode, status);
     if (status == FixedRoundingStatus.inexact)
         return 0;
-    return renderExponentDigits(digits[start .. start + count], decimalAt, negative, pattern, symbols, output);
+    return renderExponentDigits(digits[start .. start + count], decimalAt, negative, pattern, symbols, output, fields);
 }
 
 /// The total digit limit for exponential DigitList rounding, after the primitive width caps.
@@ -87,7 +87,8 @@ uint significantLimit(ref scope const DecimalFixedPattern pattern) pure nothrow 
 /// Writes rounded significant digits in exponential notation with the pattern's affixes.
 /// Returns the required byte count and leaves a short buffer untouched.
 pure nothrow @nogc size_t renderExponentDigits(scope const(char)[] digits, int decimalAt, bool negative,
-        ref scope const DecimalFixedPattern pattern, ref scope const DecimalSymbolData symbols, scope char[] output)
+        ref scope const DecimalFixedPattern pattern, ref scope const DecimalSymbolData symbols,
+        scope char[] output, scope DecimalFieldSpans* fields = null)
 {
     const layout = ExponentLayout(digits.length, digits.length == 0 ? 0 : decimalAt, pattern);
     const affixes = negative ? pattern.negative : pattern.positive;
@@ -113,12 +114,16 @@ pure nothrow @nogc size_t renderExponentDigits(scope const(char)[] digits, int d
         output[at++] = cast(char) symbols.decimalSeparator;
     output[at .. at + symbols.exponentSeparator.length] = symbols.exponentSeparator;
     at += symbols.exponentSeparator.length;
+    const signStart = at;
     if (layout.exponent < 0)
         output[at++] = cast(char) symbols.minusSign;
+    const exponentFieldStart = at;
     output[at .. at + padding] = zero;
     at += padding;
     output[at .. at + exponentWidth] = exponentDigits[exponentStart .. $];
     output[at + exponentWidth .. cast(size_t) required] = affixes.suffix;
+    if (fields !is null)
+        recordExponentFields(*fields, layout, affixes.prefix.length, signStart, exponentFieldStart, at + exponentWidth);
     return cast(size_t) required;
 }
 
@@ -155,6 +160,23 @@ struct ExponentLayout
         if (count == 0)
             exponent = 0;
     }
+}
+
+// The integer field ends at the first decimal separator; the exponent field includes its padding zeros.
+void recordExponentFields(ref scope DecimalFieldSpans fields, ref scope const ExponentLayout layout,
+        size_t integerStart, size_t signStart, size_t exponentStart, size_t exponentEnd) pure nothrow @nogc
+{
+    // The layout never has more integer digits than total digits.
+    const integerEnd = integerStart + layout.integerDigits;
+    fields.record(DecimalField.integer, integerStart, integerEnd);
+    if (layout.decimalPoint)
+        fields.record(DecimalField.decimalSeparator, integerEnd, integerEnd + 1);
+    const symbolStart = integerStart + layout.totalDigits + layout.decimalPoint;
+    fields.record(DecimalField.fraction, integerEnd + layout.decimalPoint, symbolStart);
+    fields.record(DecimalField.exponentSymbol, symbolStart, signStart);
+    if (layout.exponent < 0)
+        fields.record(DecimalField.exponentSign, signStart, exponentStart);
+    fields.record(DecimalField.exponent, exponentStart, exponentEnd);
 }
 
 // For a repeat of 3: decimal positions 6,5,4 => 3; 3,2,1 => 0; 0,-1,-2 => -3. Division truncates like Java.

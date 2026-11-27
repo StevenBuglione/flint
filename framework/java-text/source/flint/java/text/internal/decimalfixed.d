@@ -58,6 +58,40 @@ struct DecimalFixedPattern
     }
 }
 
+/// The NumberFormat.Field kinds the renderer reports from the number body.
+enum DecimalField : ubyte
+{
+    integer,
+    fraction,
+    groupingSeparator,
+    decimalSeparator,
+    exponentSymbol,
+    exponentSign,
+    exponent,
+}
+
+struct DecimalFieldSpan
+{
+    size_t begin;
+    size_t end;
+    bool recorded;
+}
+
+/// UTF-8 byte offsets into the rendered output, written only by a render that fits its buffer.
+/// An unrecorded field corresponds to Java's untouched 0:0 FieldPosition.
+struct DecimalFieldSpans
+{
+    DecimalFieldSpan[DecimalField.max + 1] spans;
+
+    // FieldPosition.Delegate keeps the first nonempty span and lets a later call replace an empty one.
+    void record(DecimalField field, size_t begin, size_t end) pure nothrow @nogc
+    {
+        if (spans[field].recorded && spans[field].begin != spans[field].end)
+            return;
+        spans[field] = DecimalFieldSpan(begin, end, true);
+    }
+}
+
 /// Writes using the ASCII numeric symbols of the explicit ROOT and English profiles.
 /// Returns the required byte count and leaves a short buffer untouched.
 size_t renderDecimalLong(long value, ref scope const DecimalFixedPattern pattern,
@@ -73,8 +107,8 @@ in (pattern.minimumExponentDigits == 0)
 }
 
 /// Formats an exact signed long product with the explicit Java multiplier and the pattern's affixes.
-size_t renderDecimalLong(long value, int multiplier, ref scope const DecimalFixedPattern pattern,
-        ref scope const DecimalSymbolData symbols, scope char[] output) pure nothrow @nogc
+pure nothrow @nogc size_t renderDecimalLong(long value, int multiplier, ref scope const DecimalFixedPattern pattern,
+        ref scope const DecimalSymbolData symbols, scope char[] output, scope DecimalFieldSpans* fields = null)
 in (pattern.minimumExponentDigits == 0)
 {
     const negativeValue = value < 0;
@@ -88,7 +122,7 @@ in (pattern.minimumExponentDigits == 0)
     const start = writeWideUnsignedDigits(lower, upper, digits);
     const count = cast(int)(digits.length - start);
     const negative = count != 0 && negativeValue != negativeMultiplier;
-    return renderFixedDigits(digits[start .. $], count, negative, pattern, symbols, output);
+    return renderFixedDigits(digits[start .. $], count, negative, pattern, symbols, output, fields);
 }
 
 // The carry from adding the low 64 bits belongs in the high 32-bit word.
@@ -129,7 +163,8 @@ size_t writeUnsignedDigits(ulong magnitude, scope char[] digits) pure nothrow @n
 }
 
 pure nothrow @nogc size_t renderFixedDigits(scope const(char)[] digits, int decimalAt, bool negative,
-        ref scope const DecimalFixedPattern pattern, ref scope const DecimalSymbolData symbols, scope char[] output)
+        ref scope const DecimalFixedPattern pattern, ref scope const DecimalSymbolData symbols,
+        scope char[] output, scope DecimalFieldSpans* fields = null)
 {
     const affixes = negative ? pattern.negative : pattern.positive;
     const integralDigits = decimalAt > 0 ? cast(size_t) decimalAt : 0;
@@ -158,7 +193,26 @@ pure nothrow @nogc size_t renderFixedDigits(scope const(char)[] digits, int deci
         output[at++] = cast(char) symbols.decimalSeparator;
     writeFraction(digits, decimalAt, cast(char) symbols.zeroDigit, output[at .. at + fractionCount]);
     output[at + fractionCount .. cast(size_t) required] = affixes.suffix;
+    if (fields !is null)
+        recordFixedFields(*fields, prefixEnd, integerCount, groups ? pattern.groupingSize : 0,
+                at - decimalPoint, decimalPoint, fractionCount);
     return cast(size_t) required;
+}
+
+// Java reports the integer digits with their separators, then the decimal separator, then the fraction.
+private pure nothrow @nogc void recordFixedFields(ref scope DecimalFieldSpans fields, size_t integerStart,
+        size_t integerCount, uint groupingSize, size_t integerEnd, bool decimalPoint, size_t fractionCount)
+{
+    if (groupingSize != 0)
+    {
+        const separator = integerStart + (integerCount - 1) % groupingSize + 1;
+        fields.record(DecimalField.groupingSeparator, separator, separator + 1);
+    }
+    fields.record(DecimalField.integer, integerStart, integerEnd);
+    if (decimalPoint)
+        fields.record(DecimalField.decimalSeparator, integerEnd, integerEnd + 1);
+    const fractionStart = integerEnd + decimalPoint;
+    fields.record(DecimalField.fraction, fractionStart, fractionStart + fractionCount);
 }
 
 private void writeFraction(scope const(char)[] digits, int point, char zero, scope char[] output) pure nothrow @nogc
