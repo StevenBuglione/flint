@@ -188,7 +188,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 0 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 529 | 28 | 0 | 1 | 2,737 |
-| framework | jackson-databind@3.1.8 | 511 | 137 | 0 | 5 | 9,814 |
+| framework | jackson-databind@3.1.8 | 517 | 131 | 0 | 5 | 9,814 |
 | framework | jackson-annotations@2.21 | 164 | 0 | 0 | 0 | 377 |
 | framework | slf4j-api@2.0.20 | 281 | 113 | 0 | 1 | 260 |
 | framework | micrometer-core@1.18.0 | 200 | 162 | 0 | 0 | 2,028 |
@@ -5154,8 +5154,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.databind.DeserializationFeature#enabledByDefault()` | `flint.jackson.databind.cfg.enabledByDefault` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `tools.jackson.databind.DeserializationFeature#enabledIn(int)` | `flint.jackson.databind.cfg.enabledIn` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
 | `tools.jackson.databind.DeserializationFeature#getMask()` | `flint.jackson.databind.cfg.getMask` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) |  |
-| `tools.jackson.databind.JsonNode#findValuesAsString(String)` | `flint.jackson.databind.node.JsonNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `tools.jackson.databind.JsonNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.JsonNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.JsonNode#require()` | `flint.jackson.databind.node.JsonNode.require` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requireNonNull()` | `flint.jackson.databind.node.JsonNode.requireNonNull` | [R21](api-mapping.md#r21-type-parameters-that-appear-only-in-the-return-type) |  |
 | `tools.jackson.databind.JsonNode#requiredAt(String)` | `flint.jackson.databind.node.JsonNode.requiredAt` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [D-JACKSON-11](api-mapping.md#deviations) |  |
@@ -5253,7 +5251,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `tools.jackson.databind.node.ArrayNode#equals(Object)` | `flint.jackson.databind.node.ArrayNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
-| `tools.jackson.databind.node.ArrayNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.ArrayNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.node.BigIntegerNode#equals(Object)` | `flint.jackson.databind.node.BigIntegerNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.BooleanNode#equals(Object)` | `flint.jackson.databind.node.BooleanNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.DecimalNode#equals(Object)` | `flint.jackson.databind.node.DecimalNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
@@ -5262,13 +5259,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `tools.jackson.databind.node.IntNode#equals(Object)` | `flint.jackson.databind.node.IntNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.LongNode#equals(Object)` | `flint.jackson.databind.node.LongNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.MissingNode#equals(Object)` | `flint.jackson.databind.node.MissingNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
-| `tools.jackson.databind.node.MissingNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.MissingNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.node.NullNode#equals(Object)` | `flint.jackson.databind.node.NullNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.ObjectNode#equals(Object)` | `flint.jackson.databind.node.ObjectNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
-| `tools.jackson.databind.node.ObjectNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.ObjectNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `tools.jackson.databind.node.ShortNode#equals(Object)` | `flint.jackson.databind.node.ShortNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
 | `tools.jackson.databind.node.StringNode#equals(Object)` | `flint.jackson.databind.node.StringNode.equals` | [R7](api-mapping.md#r7-overloads) |  |
-| `tools.jackson.databind.node.ValueNode#findValuesAsString(String,List)` | `flint.jackson.databind.node.ValueNode.findValuesAsString` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 ### security
 
