@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,411 | 407 | 0 | 1,905 | 14,698 |
+| framework | openjdk@21.0.13 | 1,442 | 412 | 0 | 1,905 | 14,662 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2431,6 +2431,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.MonthDay#equals(Object)` | `flint.java.time.monthday.MonthDay.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.MonthDay#parse(CharSequence)` | `flint.java.time.monthday.MonthDay.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.time.MonthDay#with(Month)` | `flint.java.time.monthday.MonthDay.with_` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `java.time.OffsetDateTime` | `flint.java.time.OffsetDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDateTime and a ZoneOffset. Members without their own row stay deferred: compareTo returns -1/0/1 where Java returns field differences, withOffsetSameInstant goes through the instant where Java adds seconds to the local date-time (the out-of-range message differs), and ofInstant and atZoneSameInstant report an out-of-range result as a Year error where Java reports EpochDay. |
+| `java.time.OffsetDateTime#equals(Object)` | `flint.java.time.OffsetDateTime.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Period` | `flint.java.time.period.Period` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import Period from flint.java.time.period until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.Period#equals(Object)` | `flint.java.time.period.Period.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.Period#parse(CharSequence)` | `flint.java.time.period.Period.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
@@ -2441,6 +2443,9 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.time.YearMonth` | `flint.java.time.yearmonth.YearMonth` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Import YearMonth from flint.java.time.yearmonth until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException. |
 | `java.time.YearMonth#equals(Object)` | `flint.java.time.yearmonth.YearMonth.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.time.YearMonth#parse(CharSequence)` | `flint.java.time.yearmonth.YearMonth.parse` | [R14](api-mapping.md#r14-strings-and-text), [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.time.ZoneId` | `flint.java.time.ZoneId` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of an ID and its fixed offset; ZoneId.init is Z. Region IDs need the time-zone database, so of accepts only offsets and the UTC, GMT and UT prefixes, and systemDefault is UTC; both stay deferred. |
+| `java.time.ZoneOffset` | `flint.java.time.ZoneOffset` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of the total seconds; ZoneOffset.init is UTC. It is not a ZoneId subtype: toZoneId converts it. Members without their own row stay deferred: compareTo returns -1/0/1 where Java returns the difference of the total seconds. |
+| `java.time.ZonedDateTime` | `flint.java.time.ZonedDateTime` | [R11](api-mapping.md#r11-object-identity-and-equality) | Immutable value struct of a LocalDateTime, a ZoneOffset and a ZoneId. Members without their own row stay deferred: the factories wait for region rules (gap and overlap resolution) and the EpochDay range message. |
 
 #### java.time.format
 
@@ -10724,7 +10729,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.sql | 1,005 | 0 |
 | java.text | 535 | 0 |
 | java.text.spi | 0 | 27 |
-| java.time | 587 | 0 |
+| java.time | 551 | 0 |
 | java.time.chrono | 405 | 0 |
 | java.time.format | 130 | 0 |
 | java.time.temporal | 113 | 0 |
