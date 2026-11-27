@@ -2,5 +2,9 @@
   "flint.java.nio.file.invalidpathexception": {
     "incremental_linked_bytes": 9562,
     "template_instances": 505
+  },
+  "flint.java.nio.file.path": {
+    "incremental_linked_bytes": 11990,
+    "template_instances": 266
   }
 }
