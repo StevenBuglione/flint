@@ -1,0 +1,629 @@
+toString	-	ParseCaseSensitive(false)ParseStrict(false)[Text(DayOfWeek)', ']Value(DayOfMonth,1,2,NOT_NEGATIVE)' 'Text(MonthOfYear)' 'Value(Year,4)' 'Value(HourOfDay,2)':'Value(MinuteOfHour,2)[':'Value(SecondOfMinute,2)]' 'Offset(+HHMM,'GMT')
+formatOffsetDateTime	2008-06-03T11:05:30Z	Tue, 3 Jun 2008 11:05:30 GMT
+formatOffsetDateTime	2008-06-13T11:05:30Z	Fri, 13 Jun 2008 11:05:30 GMT
+formatOffsetDateTime	2024-02-29T00:00+01:30	Thu, 29 Feb 2024 00:00:00 +0130
+formatOffsetDateTime	1999-12-31T23:59:59.999999999-05:00	Fri, 31 Dec 1999 23:59:59 -0500
+formatOffsetDateTime	0999-01-01T01:02:03Z	Tue, 1 Jan 0999 01:02:03 GMT
+formatOffsetDateTime	0001-01-01T00:00Z	Mon, 1 Jan 0001 00:00:00 GMT
+formatOffsetDateTime	9999-12-31T23:59:59+18:00	Fri, 31 Dec 9999 23:59:59 +1800
+formatOffsetDateTime	+10000-01-01T00:00Z	!Field Year cannot be printed as the value 10000 exceeds the maximum print width of 4
+formatOffsetDateTime	0000-01-01T00:00Z	Sat, 1 Jan 0000 00:00:00 GMT
+formatOffsetDateTime	-0001-01-01T00:00Z	!Field Year cannot be printed as the value -1 cannot be negative according to the SignStyle
+formatOffsetDateTime	2008-06-03T11:05:30+01:30:45	Tue, 3 Jun 2008 11:05:30 +0130
+formatOffsetDateTime	2008-06-03T11:05:30-01:30:45	Tue, 3 Jun 2008 11:05:30 -0130
+formatOffsetDateTime	2008-06-03T11:05-18:00	Tue, 3 Jun 2008 11:05:00 -1800
+formatOffsetDateTime	2008-06-03T11:05:30+00:00:45	Tue, 3 Jun 2008 11:05:30 GMT
+formatOffsetDateTime	2023-01-02T08:49:37Z	Mon, 2 Jan 2023 08:49:37 GMT
+formatOffsetDateTime	2023-02-03T08:49:37Z	Fri, 3 Feb 2023 08:49:37 GMT
+formatOffsetDateTime	2023-03-04T08:49:37Z	Sat, 4 Mar 2023 08:49:37 GMT
+formatOffsetDateTime	2023-04-05T08:49:37Z	Wed, 5 Apr 2023 08:49:37 GMT
+formatOffsetDateTime	2023-05-06T08:49:37Z	Sat, 6 May 2023 08:49:37 GMT
+formatOffsetDateTime	2023-06-07T08:49:37Z	Wed, 7 Jun 2023 08:49:37 GMT
+formatOffsetDateTime	2023-07-08T08:49:37Z	Sat, 8 Jul 2023 08:49:37 GMT
+formatOffsetDateTime	2023-08-09T08:49:37Z	Wed, 9 Aug 2023 08:49:37 GMT
+formatOffsetDateTime	2023-09-10T08:49:37Z	Sun, 10 Sep 2023 08:49:37 GMT
+formatOffsetDateTime	2023-10-11T08:49:37Z	Wed, 11 Oct 2023 08:49:37 GMT
+formatOffsetDateTime	2023-11-12T08:49:37Z	Sun, 12 Nov 2023 08:49:37 GMT
+formatOffsetDateTime	2023-12-13T08:49:37Z	Wed, 13 Dec 2023 08:49:37 GMT
+formatZonedDateTime	2008-06-03T11:05:30+02:00	Tue, 3 Jun 2008 11:05:30 +0200
+formatZonedDateTime	2008-06-03T11:05:30Z[UTC]	Tue, 3 Jun 2008 11:05:30 GMT
+formatLocalDateTime	2008-06-03T11:05:30	!Unsupported field: OffsetSeconds
+formatLocalDate	2008-06-03	!Unsupported field: HourOfDay
+formatLocalTime	11:05:30	!Unsupported field: DayOfMonth
+formatInstant	2008-06-03T11:05:30Z	!Unsupported field: DayOfMonth
+formatInstantWithZone	2008-06-03T11:05:30Z	Tue, 3 Jun 2008 11:05:30 GMT
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, 03 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 03 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 03 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	Tue, 03 Jun 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	Tue, 03 Jun 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	3 Jun 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	3 Jun 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05 GMT	2008-06-03T11:05Z
+parseZonedDateTime	Tue, 3 Jun 2008 11:05 GMT	2008-06-03T11:05Z
+parseLocalDateTime	Tue, 3 Jun 2008 11:05 GMT	2008-06-03T11:05
+parseLocalDate	Tue, 3 Jun 2008 11:05 GMT	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05 GMT	11:05
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +0200	2008-06-03T11:05:30+02:00
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +0200	2008-06-03T11:05:30+02:00
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +0200	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +0200	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +0200	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 -0530	2008-06-03T11:05:30-05:30
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 -0530	2008-06-03T11:05:30-05:30
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 -0530	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 -0530	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 -0530	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +02:00	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00' could not be parsed, unparsed text found at index 28	28
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +02:00	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00' could not be parsed, unparsed text found at index 28	28
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +02:00	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00' could not be parsed, unparsed text found at index 28	28
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +02:00	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00' could not be parsed, unparsed text found at index 28	28
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +02:00	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00' could not be parsed, unparsed text found at index 28	28
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +02	2008-06-03T11:05:30+02:00
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +02	2008-06-03T11:05:30+02:00
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +02	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +02	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +02	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +020030	2008-06-03T11:05:30+02:00:30
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +020030	2008-06-03T11:05:30+02:00:30
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +020030	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +020030	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +020030	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +02:00:30	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00:30' could not be parsed, unparsed text found at index 28	28
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +02:00:30	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00:30' could not be parsed, unparsed text found at index 28	28
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +02:00:30	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00:30' could not be parsed, unparsed text found at index 28	28
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +02:00:30	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00:30' could not be parsed, unparsed text found at index 28	28
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +02:00:30	!Text 'Tue, 3 Jun 2008 11:05:30 +02:00:30' could not be parsed, unparsed text found at index 28	28
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +2	!Text 'Tue, 3 Jun 2008 11:05:30 +2' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +2	!Text 'Tue, 3 Jun 2008 11:05:30 +2' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +2	!Text 'Tue, 3 Jun 2008 11:05:30 +2' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +2	!Text 'Tue, 3 Jun 2008 11:05:30 +2' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +2	!Text 'Tue, 3 Jun 2008 11:05:30 +2' could not be parsed at index 25	25
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +0260	!Text 'Tue, 3 Jun 2008 11:05:30 +0260' could not be parsed, unparsed text found at index 28	28
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +0260	!Text 'Tue, 3 Jun 2008 11:05:30 +0260' could not be parsed, unparsed text found at index 28	28
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +0260	!Text 'Tue, 3 Jun 2008 11:05:30 +0260' could not be parsed, unparsed text found at index 28	28
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +0260	!Text 'Tue, 3 Jun 2008 11:05:30 +0260' could not be parsed, unparsed text found at index 28	28
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +0260	!Text 'Tue, 3 Jun 2008 11:05:30 +0260' could not be parsed, unparsed text found at index 28	28
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +2400	!Text 'Tue, 3 Jun 2008 11:05:30 +2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +2400	!Text 'Tue, 3 Jun 2008 11:05:30 +2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +2400	!Text 'Tue, 3 Jun 2008 11:05:30 +2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +2400	!Text 'Tue, 3 Jun 2008 11:05:30 +2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +2400	!Text 'Tue, 3 Jun 2008 11:05:30 +2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +0000	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +0000	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +0000	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +0000	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +0000	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 -0000	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 -0000	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 -0000	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 -0000	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 -0000	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 Z	!Text 'Tue, 3 Jun 2008 11:05:30 Z' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 Z	!Text 'Tue, 3 Jun 2008 11:05:30 Z' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 Z	!Text 'Tue, 3 Jun 2008 11:05:30 Z' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 Z	!Text 'Tue, 3 Jun 2008 11:05:30 Z' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 Z	!Text 'Tue, 3 Jun 2008 11:05:30 Z' could not be parsed at index 25	25
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 UT	!Text 'Tue, 3 Jun 2008 11:05:30 UT' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 UT	!Text 'Tue, 3 Jun 2008 11:05:30 UT' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 UT	!Text 'Tue, 3 Jun 2008 11:05:30 UT' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 UT	!Text 'Tue, 3 Jun 2008 11:05:30 UT' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 UT	!Text 'Tue, 3 Jun 2008 11:05:30 UT' could not be parsed at index 25	25
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 UTC	!Text 'Tue, 3 Jun 2008 11:05:30 UTC' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 UTC	!Text 'Tue, 3 Jun 2008 11:05:30 UTC' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 UTC	!Text 'Tue, 3 Jun 2008 11:05:30 UTC' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 UTC	!Text 'Tue, 3 Jun 2008 11:05:30 UTC' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 UTC	!Text 'Tue, 3 Jun 2008 11:05:30 UTC' could not be parsed at index 25	25
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 EST	!Text 'Tue, 3 Jun 2008 11:05:30 EST' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 EST	!Text 'Tue, 3 Jun 2008 11:05:30 EST' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 EST	!Text 'Tue, 3 Jun 2008 11:05:30 EST' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 EST	!Text 'Tue, 3 Jun 2008 11:05:30 EST' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 EST	!Text 'Tue, 3 Jun 2008 11:05:30 EST' could not be parsed at index 25	25
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 gmt	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 gmt	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 gmt	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 gmt	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 gmt	11:05:30
+parseOffsetDateTime	TUE, 3 JUN 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	TUE, 3 JUN 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	TUE, 3 JUN 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	TUE, 3 JUN 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	TUE, 3 JUN 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	tue, 3 jun 2008 11:05:30 gmt	2008-06-03T11:05:30Z
+parseZonedDateTime	tue, 3 jun 2008 11:05:30 gmt	2008-06-03T11:05:30Z
+parseLocalDateTime	tue, 3 jun 2008 11:05:30 gmt	2008-06-03T11:05:30
+parseLocalDate	tue, 3 jun 2008 11:05:30 gmt	2008-06-03
+parseLocalTime	tue, 3 jun 2008 11:05:30 gmt	11:05:30
+parseOffsetDateTime	Wed, 3 Jun 2008 11:05:30 GMT	!Text 'Wed, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseZonedDateTime	Wed, 3 Jun 2008 11:05:30 GMT	!Text 'Wed, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseLocalDateTime	Wed, 3 Jun 2008 11:05:30 GMT	!Text 'Wed, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseLocalDate	Wed, 3 Jun 2008 11:05:30 GMT	!Text 'Wed, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseLocalTime	Wed, 3 Jun 2008 11:05:30 GMT	!Text 'Wed, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseOffsetDateTime	Tuesday, 3 Jun 2008 11:05:30 GMT	!Text 'Tuesday, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseZonedDateTime	Tuesday, 3 Jun 2008 11:05:30 GMT	!Text 'Tuesday, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalDateTime	Tuesday, 3 Jun 2008 11:05:30 GMT	!Text 'Tuesday, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalDate	Tuesday, 3 Jun 2008 11:05:30 GMT	!Text 'Tuesday, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalTime	Tuesday, 3 Jun 2008 11:05:30 GMT	!Text 'Tuesday, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseOffsetDateTime	Tue, 3 June 2008 11:05:30 GMT	!Text 'Tue, 3 June 2008 11:05:30 GMT' could not be parsed at index 10	10
+parseZonedDateTime	Tue, 3 June 2008 11:05:30 GMT	!Text 'Tue, 3 June 2008 11:05:30 GMT' could not be parsed at index 10	10
+parseLocalDateTime	Tue, 3 June 2008 11:05:30 GMT	!Text 'Tue, 3 June 2008 11:05:30 GMT' could not be parsed at index 10	10
+parseLocalDate	Tue, 3 June 2008 11:05:30 GMT	!Text 'Tue, 3 June 2008 11:05:30 GMT' could not be parsed at index 10	10
+parseLocalTime	Tue, 3 June 2008 11:05:30 GMT	!Text 'Tue, 3 June 2008 11:05:30 GMT' could not be parsed at index 10	10
+parseOffsetDateTime	Tue, 3 6 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 6 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 6 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 6 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	Tue, 3 6 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	2, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	2, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	2, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	2, 3 Jun 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	2, 3 Jun 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	3, 3 Jun 2008 11:05:30 GMT	!Text '3, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseZonedDateTime	3, 3 Jun 2008 11:05:30 GMT	!Text '3, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseLocalDateTime	3, 3 Jun 2008 11:05:30 GMT	!Text '3, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseLocalDate	3, 3 Jun 2008 11:05:30 GMT	!Text '3, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseLocalTime	3, 3 Jun 2008 11:05:30 GMT	!Text '3, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 3 derived from 2008-06-03	0
+parseOffsetDateTime	Tue, 3 +6 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 +6 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 +6 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 +6 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	Tue, 3 +6 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, 3 13 2008 11:05:30 GMT	!Text 'Tue, 3 13 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseZonedDateTime	Tue, 3 13 2008 11:05:30 GMT	!Text 'Tue, 3 13 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseLocalDateTime	Tue, 3 13 2008 11:05:30 GMT	!Text 'Tue, 3 13 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseLocalDate	Tue, 3 13 2008 11:05:30 GMT	!Text 'Tue, 3 13 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseLocalTime	Tue, 3 13 2008 11:05:30 GMT	!Text 'Tue, 3 13 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13	0
+parseOffsetDateTime	Tue, 3 Jun 08 11:05:30 GMT	0008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 Jun 08 11:05:30 GMT	0008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 Jun 08 11:05:30 GMT	0008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 08 11:05:30 GMT	0008-06-03
+parseLocalTime	Tue, 3 Jun 08 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 12008 11:05:30 GMT	+12008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 Jun 12008 11:05:30 GMT	+12008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 Jun 12008 11:05:30 GMT	+12008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 12008 11:05:30 GMT	+12008-06-03
+parseLocalTime	Tue, 3 Jun 12008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 123456789 11:05:30 GMT	!Text 'Tue, 3 Jun 123456789 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 2 derived from +123456789-06-03	0
+parseZonedDateTime	Tue, 3 Jun 123456789 11:05:30 GMT	!Text 'Tue, 3 Jun 123456789 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 2 derived from +123456789-06-03	0
+parseLocalDateTime	Tue, 3 Jun 123456789 11:05:30 GMT	!Text 'Tue, 3 Jun 123456789 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 2 derived from +123456789-06-03	0
+parseLocalDate	Tue, 3 Jun 123456789 11:05:30 GMT	!Text 'Tue, 3 Jun 123456789 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 2 derived from +123456789-06-03	0
+parseLocalTime	Tue, 3 Jun 123456789 11:05:30 GMT	!Text 'Tue, 3 Jun 123456789 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 2 derived from +123456789-06-03	0
+parseOffsetDateTime	Tue, 3 Jun 1234567890 11:05:30 GMT	!Text 'Tue, 3 Jun 1234567890 11:05:30 GMT' could not be parsed at index 20	20
+parseZonedDateTime	Tue, 3 Jun 1234567890 11:05:30 GMT	!Text 'Tue, 3 Jun 1234567890 11:05:30 GMT' could not be parsed at index 20	20
+parseLocalDateTime	Tue, 3 Jun 1234567890 11:05:30 GMT	!Text 'Tue, 3 Jun 1234567890 11:05:30 GMT' could not be parsed at index 20	20
+parseLocalDate	Tue, 3 Jun 1234567890 11:05:30 GMT	!Text 'Tue, 3 Jun 1234567890 11:05:30 GMT' could not be parsed at index 20	20
+parseLocalTime	Tue, 3 Jun 1234567890 11:05:30 GMT	!Text 'Tue, 3 Jun 1234567890 11:05:30 GMT' could not be parsed at index 20	20
+parseOffsetDateTime	Tue, 3 Jun 2008 1:5:3 GMT	2008-06-03T01:05:03Z
+parseZonedDateTime	Tue, 3 Jun 2008 1:5:3 GMT	2008-06-03T01:05:03Z
+parseLocalDateTime	Tue, 3 Jun 2008 1:5:3 GMT	2008-06-03T01:05:03
+parseLocalDate	Tue, 3 Jun 2008 1:5:3 GMT	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 1:5:3 GMT	01:05:03
+parseOffsetDateTime	Tue, 3 Jun 2008 011:005:030 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 Jun 2008 011:005:030 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 Jun 2008 011:005:030 GMT	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 011:005:030 GMT	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 011:005:030 GMT	11:05:30
+parseOffsetDateTime	Tue, 003 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 003 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 003 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	Tue, 003 Jun 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	Tue, 003 Jun 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, +3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, +3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, +3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	Tue, +3 Jun 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	Tue, +3 Jun 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, -3 Jun 2008 11:05:30 GMT	!Text 'Tue, -3 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): -3	0
+parseZonedDateTime	Tue, -3 Jun 2008 11:05:30 GMT	!Text 'Tue, -3 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): -3	0
+parseLocalDateTime	Tue, -3 Jun 2008 11:05:30 GMT	!Text 'Tue, -3 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): -3	0
+parseLocalDate	Tue, -3 Jun 2008 11:05:30 GMT	!Text 'Tue, -3 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): -3	0
+parseLocalTime	Tue, -3 Jun 2008 11:05:30 GMT	!Text 'Tue, -3 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): -3	0
+parseOffsetDateTime	Tue, 3 Jun +2008 11:05:30 GMT	!Text 'Tue, 3 Jun +2008 11:05:30 GMT' could not be parsed at index 11	11
+parseZonedDateTime	Tue, 3 Jun +2008 11:05:30 GMT	!Text 'Tue, 3 Jun +2008 11:05:30 GMT' could not be parsed at index 11	11
+parseLocalDateTime	Tue, 3 Jun +2008 11:05:30 GMT	!Text 'Tue, 3 Jun +2008 11:05:30 GMT' could not be parsed at index 11	11
+parseLocalDate	Tue, 3 Jun +2008 11:05:30 GMT	!Text 'Tue, 3 Jun +2008 11:05:30 GMT' could not be parsed at index 11	11
+parseLocalTime	Tue, 3 Jun +2008 11:05:30 GMT	!Text 'Tue, 3 Jun +2008 11:05:30 GMT' could not be parsed at index 11	11
+parseOffsetDateTime	Tue, 3 Jun -2008 11:05:30 GMT	!Text 'Tue, 3 Jun -2008 11:05:30 GMT' could not be parsed at index 11	11
+parseZonedDateTime	Tue, 3 Jun -2008 11:05:30 GMT	!Text 'Tue, 3 Jun -2008 11:05:30 GMT' could not be parsed at index 11	11
+parseLocalDateTime	Tue, 3 Jun -2008 11:05:30 GMT	!Text 'Tue, 3 Jun -2008 11:05:30 GMT' could not be parsed at index 11	11
+parseLocalDate	Tue, 3 Jun -2008 11:05:30 GMT	!Text 'Tue, 3 Jun -2008 11:05:30 GMT' could not be parsed at index 11	11
+parseLocalTime	Tue, 3 Jun -2008 11:05:30 GMT	!Text 'Tue, 3 Jun -2008 11:05:30 GMT' could not be parsed at index 11	11
+parseOffsetDateTime	Tue, 3 Jun 2008 +11:05:30 GMT	!Text 'Tue, 3 Jun 2008 +11:05:30 GMT' could not be parsed at index 16	16
+parseZonedDateTime	Tue, 3 Jun 2008 +11:05:30 GMT	!Text 'Tue, 3 Jun 2008 +11:05:30 GMT' could not be parsed at index 16	16
+parseLocalDateTime	Tue, 3 Jun 2008 +11:05:30 GMT	!Text 'Tue, 3 Jun 2008 +11:05:30 GMT' could not be parsed at index 16	16
+parseLocalDate	Tue, 3 Jun 2008 +11:05:30 GMT	!Text 'Tue, 3 Jun 2008 +11:05:30 GMT' could not be parsed at index 16	16
+parseLocalTime	Tue, 3 Jun 2008 +11:05:30 GMT	!Text 'Tue, 3 Jun 2008 +11:05:30 GMT' could not be parsed at index 16	16
+parseOffsetDateTime	Tue, 31 Jun 2008 11:05:30 GMT	!Text 'Tue, 31 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-30	0
+parseZonedDateTime	Tue, 31 Jun 2008 11:05:30 GMT	!Text 'Tue, 31 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-30	0
+parseLocalDateTime	Tue, 31 Jun 2008 11:05:30 GMT	!Text 'Tue, 31 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-30	0
+parseLocalDate	Tue, 31 Jun 2008 11:05:30 GMT	!Text 'Tue, 31 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-30	0
+parseLocalTime	Tue, 31 Jun 2008 11:05:30 GMT	!Text 'Tue, 31 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-30	0
+parseOffsetDateTime	Tue, 32 Jun 2008 11:05:30 GMT	!Text 'Tue, 32 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseZonedDateTime	Tue, 32 Jun 2008 11:05:30 GMT	!Text 'Tue, 32 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseLocalDateTime	Tue, 32 Jun 2008 11:05:30 GMT	!Text 'Tue, 32 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseLocalDate	Tue, 32 Jun 2008 11:05:30 GMT	!Text 'Tue, 32 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseLocalTime	Tue, 32 Jun 2008 11:05:30 GMT	!Text 'Tue, 32 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 32	0
+parseOffsetDateTime	Tue, 0 Jun 2008 11:05:30 GMT	!Text 'Tue, 0 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseZonedDateTime	Tue, 0 Jun 2008 11:05:30 GMT	!Text 'Tue, 0 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseLocalDateTime	Tue, 0 Jun 2008 11:05:30 GMT	!Text 'Tue, 0 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseLocalDate	Tue, 0 Jun 2008 11:05:30 GMT	!Text 'Tue, 0 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseLocalTime	Tue, 0 Jun 2008 11:05:30 GMT	!Text 'Tue, 0 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 0	0
+parseOffsetDateTime	Tue, 3 Jun 2008 24:05:30 GMT	!Text 'Tue, 3 Jun 2008 24:05:30 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseZonedDateTime	Tue, 3 Jun 2008 24:05:30 GMT	!Text 'Tue, 3 Jun 2008 24:05:30 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDateTime	Tue, 3 Jun 2008 24:05:30 GMT	!Text 'Tue, 3 Jun 2008 24:05:30 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDate	Tue, 3 Jun 2008 24:05:30 GMT	!Text 'Tue, 3 Jun 2008 24:05:30 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalTime	Tue, 3 Jun 2008 24:05:30 GMT	!Text 'Tue, 3 Jun 2008 24:05:30 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseOffsetDateTime	Tue, 3 Jun 2008 11:60:30 GMT	!Text 'Tue, 3 Jun 2008 11:60:30 GMT' could not be parsed: Invalid value for MinuteOfHour (valid values 0 - 59): 60	0
+parseZonedDateTime	Tue, 3 Jun 2008 11:60:30 GMT	!Text 'Tue, 3 Jun 2008 11:60:30 GMT' could not be parsed: Invalid value for MinuteOfHour (valid values 0 - 59): 60	0
+parseLocalDateTime	Tue, 3 Jun 2008 11:60:30 GMT	!Text 'Tue, 3 Jun 2008 11:60:30 GMT' could not be parsed: Invalid value for MinuteOfHour (valid values 0 - 59): 60	0
+parseLocalDate	Tue, 3 Jun 2008 11:60:30 GMT	!Text 'Tue, 3 Jun 2008 11:60:30 GMT' could not be parsed: Invalid value for MinuteOfHour (valid values 0 - 59): 60	0
+parseLocalTime	Tue, 3 Jun 2008 11:60:30 GMT	!Text 'Tue, 3 Jun 2008 11:60:30 GMT' could not be parsed: Invalid value for MinuteOfHour (valid values 0 - 59): 60	0
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:60 GMT	!Text 'Tue, 3 Jun 2008 11:05:60 GMT' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:60 GMT	!Text 'Tue, 3 Jun 2008 11:05:60 GMT' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:60 GMT	!Text 'Tue, 3 Jun 2008 11:05:60 GMT' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseLocalDate	Tue, 3 Jun 2008 11:05:60 GMT	!Text 'Tue, 3 Jun 2008 11:05:60 GMT' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseLocalTime	Tue, 3 Jun 2008 11:05:60 GMT	!Text 'Tue, 3 Jun 2008 11:05:60 GMT' could not be parsed: Invalid value for SecondOfMinute (valid values 0 - 59): 60	0
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30	!Text 'Tue, 3 Jun 2008 11:05:30' could not be parsed at index 24	24
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30	!Text 'Tue, 3 Jun 2008 11:05:30' could not be parsed at index 24	24
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30	!Text 'Tue, 3 Jun 2008 11:05:30' could not be parsed at index 24	24
+parseLocalDate	Tue, 3 Jun 2008 11:05:30	!Text 'Tue, 3 Jun 2008 11:05:30' could not be parsed at index 24	24
+parseLocalTime	Tue, 3 Jun 2008 11:05:30	!Text 'Tue, 3 Jun 2008 11:05:30' could not be parsed at index 24	24
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 GMT 	!Text 'Tue, 3 Jun 2008 11:05:30 GMT ' could not be parsed, unparsed text found at index 28	28
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 GMT 	!Text 'Tue, 3 Jun 2008 11:05:30 GMT ' could not be parsed, unparsed text found at index 28	28
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 GMT 	!Text 'Tue, 3 Jun 2008 11:05:30 GMT ' could not be parsed, unparsed text found at index 28	28
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 GMT 	!Text 'Tue, 3 Jun 2008 11:05:30 GMT ' could not be parsed, unparsed text found at index 28	28
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 GMT 	!Text 'Tue, 3 Jun 2008 11:05:30 GMT ' could not be parsed, unparsed text found at index 28	28
+parseOffsetDateTime	Tue,3 Jun 2008 11:05:30 GMT	!Text 'Tue,3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseZonedDateTime	Tue,3 Jun 2008 11:05:30 GMT	!Text 'Tue,3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalDateTime	Tue,3 Jun 2008 11:05:30 GMT	!Text 'Tue,3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalDate	Tue,3 Jun 2008 11:05:30 GMT	!Text 'Tue,3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalTime	Tue,3 Jun 2008 11:05:30 GMT	!Text 'Tue,3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseOffsetDateTime	Tue, 3  Jun 2008 11:05:30 GMT	!Text 'Tue, 3  Jun 2008 11:05:30 GMT' could not be parsed at index 7	7
+parseZonedDateTime	Tue, 3  Jun 2008 11:05:30 GMT	!Text 'Tue, 3  Jun 2008 11:05:30 GMT' could not be parsed at index 7	7
+parseLocalDateTime	Tue, 3  Jun 2008 11:05:30 GMT	!Text 'Tue, 3  Jun 2008 11:05:30 GMT' could not be parsed at index 7	7
+parseLocalDate	Tue, 3  Jun 2008 11:05:30 GMT	!Text 'Tue, 3  Jun 2008 11:05:30 GMT' could not be parsed at index 7	7
+parseLocalTime	Tue, 3  Jun 2008 11:05:30 GMT	!Text 'Tue, 3  Jun 2008 11:05:30 GMT' could not be parsed at index 7	7
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30.5 GMT	!Text 'Tue, 3 Jun 2008 11:05:30.5 GMT' could not be parsed at index 24	24
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30.5 GMT	!Text 'Tue, 3 Jun 2008 11:05:30.5 GMT' could not be parsed at index 24	24
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30.5 GMT	!Text 'Tue, 3 Jun 2008 11:05:30.5 GMT' could not be parsed at index 24	24
+parseLocalDate	Tue, 3 Jun 2008 11:05:30.5 GMT	!Text 'Tue, 3 Jun 2008 11:05:30.5 GMT' could not be parsed at index 24	24
+parseLocalTime	Tue, 3 Jun 2008 11:05:30.5 GMT	!Text 'Tue, 3 Jun 2008 11:05:30.5 GMT' could not be parsed at index 24	24
+parseOffsetDateTime	Tue 3 Jun 2008 11:05:30 GMT	!Text 'Tue 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseZonedDateTime	Tue 3 Jun 2008 11:05:30 GMT	!Text 'Tue 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalDateTime	Tue 3 Jun 2008 11:05:30 GMT	!Text 'Tue 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalDate	Tue 3 Jun 2008 11:05:30 GMT	!Text 'Tue 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalTime	Tue 3 Jun 2008 11:05:30 GMT	!Text 'Tue 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseOffsetDateTime		!Text '' could not be parsed at index 0	0
+parseZonedDateTime		!Text '' could not be parsed at index 0	0
+parseLocalDateTime		!Text '' could not be parsed at index 0	0
+parseLocalDate		!Text '' could not be parsed at index 0	0
+parseLocalTime		!Text '' could not be parsed at index 0	0
+parseOffsetDateTime	Tue, 	!Text 'Tue, ' could not be parsed at index 5	5
+parseZonedDateTime	Tue, 	!Text 'Tue, ' could not be parsed at index 5	5
+parseLocalDateTime	Tue, 	!Text 'Tue, ' could not be parsed at index 5	5
+parseLocalDate	Tue, 	!Text 'Tue, ' could not be parsed at index 5	5
+parseLocalTime	Tue, 	!Text 'Tue, ' could not be parsed at index 5	5
+parseOffsetDateTime	Fri, 29 Feb 2008 11:05:30 GMT	2008-02-29T11:05:30Z
+parseZonedDateTime	Fri, 29 Feb 2008 11:05:30 GMT	2008-02-29T11:05:30Z
+parseLocalDateTime	Fri, 29 Feb 2008 11:05:30 GMT	2008-02-29T11:05:30
+parseLocalDate	Fri, 29 Feb 2008 11:05:30 GMT	2008-02-29
+parseLocalTime	Fri, 29 Feb 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Sun, 29 Feb 2009 11:05:30 GMT	!Text 'Sun, 29 Feb 2009 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 7 derived from 2009-02-28	0
+parseZonedDateTime	Sun, 29 Feb 2009 11:05:30 GMT	!Text 'Sun, 29 Feb 2009 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 7 derived from 2009-02-28	0
+parseLocalDateTime	Sun, 29 Feb 2009 11:05:30 GMT	!Text 'Sun, 29 Feb 2009 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 7 derived from 2009-02-28	0
+parseLocalDate	Sun, 29 Feb 2009 11:05:30 GMT	!Text 'Sun, 29 Feb 2009 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 7 derived from 2009-02-28	0
+parseLocalTime	Sun, 29 Feb 2009 11:05:30 GMT	!Text 'Sun, 29 Feb 2009 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 6 differs from DayOfWeek 7 derived from 2009-02-28	0
+parseOffsetDateTime	Mon, 29 Feb 2010 11:05:30 GMT	!Text 'Mon, 29 Feb 2010 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 7 differs from DayOfWeek 1 derived from 2010-02-28	0
+parseZonedDateTime	Mon, 29 Feb 2010 11:05:30 GMT	!Text 'Mon, 29 Feb 2010 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 7 differs from DayOfWeek 1 derived from 2010-02-28	0
+parseLocalDateTime	Mon, 29 Feb 2010 11:05:30 GMT	!Text 'Mon, 29 Feb 2010 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 7 differs from DayOfWeek 1 derived from 2010-02-28	0
+parseLocalDate	Mon, 29 Feb 2010 11:05:30 GMT	!Text 'Mon, 29 Feb 2010 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 7 differs from DayOfWeek 1 derived from 2010-02-28	0
+parseLocalTime	Mon, 29 Feb 2010 11:05:30 GMT	!Text 'Mon, 29 Feb 2010 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 7 differs from DayOfWeek 1 derived from 2010-02-28	0
+parseOffsetDateTime	Sat, 1 Jan 0 00:00:00 GMT	0000-01-01T00:00Z
+parseZonedDateTime	Sat, 1 Jan 0 00:00:00 GMT	0000-01-01T00:00Z
+parseLocalDateTime	Sat, 1 Jan 0 00:00:00 GMT	0000-01-01T00:00
+parseLocalDate	Sat, 1 Jan 0 00:00:00 GMT	0000-01-01
+parseLocalTime	Sat, 1 Jan 0 00:00:00 GMT	00:00
+parseOffsetDateTime	Mon, 1 Jan 1 00:00:00 GMT	0001-01-01T00:00Z
+parseZonedDateTime	Mon, 1 Jan 1 00:00:00 GMT	0001-01-01T00:00Z
+parseLocalDateTime	Mon, 1 Jan 1 00:00:00 GMT	0001-01-01T00:00
+parseLocalDate	Mon, 1 Jan 1 00:00:00 GMT	0001-01-01
+parseLocalTime	Mon, 1 Jan 1 00:00:00 GMT	00:00
+parseOffsetDateTime	Fri, 31 Dec 9999 23:59:59 GMT	9999-12-31T23:59:59Z
+parseZonedDateTime	Fri, 31 Dec 9999 23:59:59 GMT	9999-12-31T23:59:59Z
+parseLocalDateTime	Fri, 31 Dec 9999 23:59:59 GMT	9999-12-31T23:59:59
+parseLocalDate	Fri, 31 Dec 9999 23:59:59 GMT	9999-12-31
+parseLocalTime	Fri, 31 Dec 9999 23:59:59 GMT	23:59:59
+parseOffsetDateTime	Sat, 1 Jan 10000 00:00:00 GMT	+10000-01-01T00:00Z
+parseZonedDateTime	Sat, 1 Jan 10000 00:00:00 GMT	+10000-01-01T00:00Z
+parseLocalDateTime	Sat, 1 Jan 10000 00:00:00 GMT	+10000-01-01T00:00
+parseLocalDate	Sat, 1 Jan 10000 00:00:00 GMT	+10000-01-01
+parseLocalTime	Sat, 1 Jan 10000 00:00:00 GMT	00:00
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +1800	2008-06-03T11:05:30+18:00
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +1800	2008-06-03T11:05:30+18:00
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +1800	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +1800	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +1800	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +1801	!Text 'Tue, 3 Jun 2008 11:05:30 +1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +1801	!Text 'Tue, 3 Jun 2008 11:05:30 +1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +1801	!Text 'Tue, 3 Jun 2008 11:05:30 +1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +1801	!Text 'Tue, 3 Jun 2008 11:05:30 +1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +1801	!Text 'Tue, 3 Jun 2008 11:05:30 +1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +0130 GMT	!Text 'Tue, 3 Jun 2008 11:05:30 +0130 GMT' could not be parsed, unparsed text found at index 30	30
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +0130 GMT	!Text 'Tue, 3 Jun 2008 11:05:30 +0130 GMT' could not be parsed, unparsed text found at index 30	30
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +0130 GMT	!Text 'Tue, 3 Jun 2008 11:05:30 +0130 GMT' could not be parsed, unparsed text found at index 30	30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +0130 GMT	!Text 'Tue, 3 Jun 2008 11:05:30 +0130 GMT' could not be parsed, unparsed text found at index 30	30
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +0130 GMT	!Text 'Tue, 3 Jun 2008 11:05:30 +0130 GMT' could not be parsed, unparsed text found at index 30	30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:5 GMT	2008-06-03T11:05Z
+parseZonedDateTime	Tue, 3 Jun 2008 11:5 GMT	2008-06-03T11:05Z
+parseLocalDateTime	Tue, 3 Jun 2008 11:5 GMT	2008-06-03T11:05
+parseLocalDate	Tue, 3 Jun 2008 11:5 GMT	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:5 GMT	11:05
+parseOffsetDateTime	Tue, 3 Jun 2008 11: GMT	!Text 'Tue, 3 Jun 2008 11: GMT' could not be parsed at index 19	19
+parseZonedDateTime	Tue, 3 Jun 2008 11: GMT	!Text 'Tue, 3 Jun 2008 11: GMT' could not be parsed at index 19	19
+parseLocalDateTime	Tue, 3 Jun 2008 11: GMT	!Text 'Tue, 3 Jun 2008 11: GMT' could not be parsed at index 19	19
+parseLocalDate	Tue, 3 Jun 2008 11: GMT	!Text 'Tue, 3 Jun 2008 11: GMT' could not be parsed at index 19	19
+parseLocalTime	Tue, 3 Jun 2008 11: GMT	!Text 'Tue, 3 Jun 2008 11: GMT' could not be parsed at index 19	19
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05: GMT	!Text 'Tue, 3 Jun 2008 11:05: GMT' could not be parsed at index 21	21
+parseZonedDateTime	Tue, 3 Jun 2008 11:05: GMT	!Text 'Tue, 3 Jun 2008 11:05: GMT' could not be parsed at index 21	21
+parseLocalDateTime	Tue, 3 Jun 2008 11:05: GMT	!Text 'Tue, 3 Jun 2008 11:05: GMT' could not be parsed at index 21	21
+parseLocalDate	Tue, 3 Jun 2008 11:05: GMT	!Text 'Tue, 3 Jun 2008 11:05: GMT' could not be parsed at index 21	21
+parseLocalTime	Tue, 3 Jun 2008 11:05: GMT	!Text 'Tue, 3 Jun 2008 11:05: GMT' could not be parsed at index 21	21
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +01:3	!Text 'Tue, 3 Jun 2008 11:05:30 +01:3' could not be parsed, unparsed text found at index 28	28
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +01:3	!Text 'Tue, 3 Jun 2008 11:05:30 +01:3' could not be parsed, unparsed text found at index 28	28
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +01:3	!Text 'Tue, 3 Jun 2008 11:05:30 +01:3' could not be parsed, unparsed text found at index 28	28
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +01:3	!Text 'Tue, 3 Jun 2008 11:05:30 +01:3' could not be parsed, unparsed text found at index 28	28
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +01:3	!Text 'Tue, 3 Jun 2008 11:05:30 +01:3' could not be parsed, unparsed text found at index 28	28
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +013	!Text 'Tue, 3 Jun 2008 11:05:30 +013' could not be parsed, unparsed text found at index 28	28
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +013	!Text 'Tue, 3 Jun 2008 11:05:30 +013' could not be parsed, unparsed text found at index 28	28
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +013	!Text 'Tue, 3 Jun 2008 11:05:30 +013' could not be parsed, unparsed text found at index 28	28
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +013	!Text 'Tue, 3 Jun 2008 11:05:30 +013' could not be parsed, unparsed text found at index 28	28
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +013	!Text 'Tue, 3 Jun 2008 11:05:30 +013' could not be parsed, unparsed text found at index 28	28
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +01300	!Text 'Tue, 3 Jun 2008 11:05:30 +01300' could not be parsed, unparsed text found at index 30	30
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +01300	!Text 'Tue, 3 Jun 2008 11:05:30 +01300' could not be parsed, unparsed text found at index 30	30
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +01300	!Text 'Tue, 3 Jun 2008 11:05:30 +01300' could not be parsed, unparsed text found at index 30	30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +01300	!Text 'Tue, 3 Jun 2008 11:05:30 +01300' could not be parsed, unparsed text found at index 30	30
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +01300	!Text 'Tue, 3 Jun 2008 11:05:30 +01300' could not be parsed, unparsed text found at index 30	30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +0130:00	!Text 'Tue, 3 Jun 2008 11:05:30 +0130:00' could not be parsed, unparsed text found at index 30	30
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +0130:00	!Text 'Tue, 3 Jun 2008 11:05:30 +0130:00' could not be parsed, unparsed text found at index 30	30
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +0130:00	!Text 'Tue, 3 Jun 2008 11:05:30 +0130:00' could not be parsed, unparsed text found at index 30	30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +0130:00	!Text 'Tue, 3 Jun 2008 11:05:30 +0130:00' could not be parsed, unparsed text found at index 30	30
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +0130:00	!Text 'Tue, 3 Jun 2008 11:05:30 +0130:00' could not be parsed, unparsed text found at index 30	30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +a	!Text 'Tue, 3 Jun 2008 11:05:30 +a' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +a	!Text 'Tue, 3 Jun 2008 11:05:30 +a' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +a	!Text 'Tue, 3 Jun 2008 11:05:30 +a' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +a	!Text 'Tue, 3 Jun 2008 11:05:30 +a' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +a	!Text 'Tue, 3 Jun 2008 11:05:30 +a' could not be parsed at index 25	25
+parseOffsetDateTime	Tue, 3 jUN 2008 11:05:30 GmT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 jUN 2008 11:05:30 GmT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 jUN 2008 11:05:30 GmT	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 jUN 2008 11:05:30 GmT	2008-06-03
+parseLocalTime	Tue, 3 jUN 2008 11:05:30 GmT	11:05:30
+parseOffsetDateTime	0, 3 Jun 2008 11:05:30 GMT	!Text '0, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 0 derived from 2008-06-03	0
+parseZonedDateTime	0, 3 Jun 2008 11:05:30 GMT	!Text '0, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 0 derived from 2008-06-03	0
+parseLocalDateTime	0, 3 Jun 2008 11:05:30 GMT	!Text '0, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 0 derived from 2008-06-03	0
+parseLocalDate	0, 3 Jun 2008 11:05:30 GMT	!Text '0, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 0 derived from 2008-06-03	0
+parseLocalTime	0, 3 Jun 2008 11:05:30 GMT	!Text '0, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 0 derived from 2008-06-03	0
+parseOffsetDateTime	8, 3 Jun 2008 11:05:30 GMT	!Text '8, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 8 derived from 2008-06-03	0
+parseZonedDateTime	8, 3 Jun 2008 11:05:30 GMT	!Text '8, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 8 derived from 2008-06-03	0
+parseLocalDateTime	8, 3 Jun 2008 11:05:30 GMT	!Text '8, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 8 derived from 2008-06-03	0
+parseLocalDate	8, 3 Jun 2008 11:05:30 GMT	!Text '8, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 8 derived from 2008-06-03	0
+parseLocalTime	8, 3 Jun 2008 11:05:30 GMT	!Text '8, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek 8 derived from 2008-06-03	0
+parseOffsetDateTime	Tue, 3 0 2008 11:05:30 GMT	!Text 'Tue, 3 0 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseZonedDateTime	Tue, 3 0 2008 11:05:30 GMT	!Text 'Tue, 3 0 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseLocalDateTime	Tue, 3 0 2008 11:05:30 GMT	!Text 'Tue, 3 0 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseLocalDate	Tue, 3 0 2008 11:05:30 GMT	!Text 'Tue, 3 0 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseLocalTime	Tue, 3 0 2008 11:05:30 GMT	!Text 'Tue, 3 0 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 0	0
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 é	!Text 'Tue, 3 Jun 2008 11:05:30 é' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 é	!Text 'Tue, 3 Jun 2008 11:05:30 é' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 é	!Text 'Tue, 3 Jun 2008 11:05:30 é' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 é	!Text 'Tue, 3 Jun 2008 11:05:30 é' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 é	!Text 'Tue, 3 Jun 2008 11:05:30 é' could not be parsed at index 25	25
+parseOffsetDateTime	éue, 3 Jun 2008 11:05:30 GMT	!Text 'éue, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseZonedDateTime	éue, 3 Jun 2008 11:05:30 GMT	!Text 'éue, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalDateTime	éue, 3 Jun 2008 11:05:30 GMT	!Text 'éue, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalDate	éue, 3 Jun 2008 11:05:30 GMT	!Text 'éue, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseLocalTime	éue, 3 Jun 2008 11:05:30 GMT	!Text 'éue, 3 Jun 2008 11:05:30 GMT' could not be parsed at index 0	0
+parseOffsetDateTime	Tue, 3 Jun 2é08 11:05:30 GMT	!Text 'Tue, 3 Jun 2é08 11:05:30 GMT' could not be parsed at index 12	12
+parseZonedDateTime	Tue, 3 Jun 2é08 11:05:30 GMT	!Text 'Tue, 3 Jun 2é08 11:05:30 GMT' could not be parsed at index 12	12
+parseLocalDateTime	Tue, 3 Jun 2é08 11:05:30 GMT	!Text 'Tue, 3 Jun 2é08 11:05:30 GMT' could not be parsed at index 12	12
+parseLocalDate	Tue, 3 Jun 2é08 11:05:30 GMT	!Text 'Tue, 3 Jun 2é08 11:05:30 GMT' could not be parsed at index 12	12
+parseLocalTime	Tue, 3 Jun 2é08 11:05:30 GMT	!Text 'Tue, 3 Jun 2é08 11:05:30 GMT' could not be parsed at index 12	12
+parseOffsetDateTime	Tue, 3 Jun 2008 24:00:00 GMT	2008-06-04T00:00Z
+parseZonedDateTime	Tue, 3 Jun 2008 24:00:00 GMT	2008-06-04T00:00Z
+parseLocalDateTime	Tue, 3 Jun 2008 24:00:00 GMT	2008-06-04T00:00
+parseLocalDate	Tue, 3 Jun 2008 24:00:00 GMT	2008-06-04
+parseLocalTime	Tue, 3 Jun 2008 24:00:00 GMT	00:00
+parseOffsetDateTime	Tue, 3 Jun 2008 24:00 GMT	2008-06-04T00:00Z
+parseZonedDateTime	Tue, 3 Jun 2008 24:00 GMT	2008-06-04T00:00Z
+parseLocalDateTime	Tue, 3 Jun 2008 24:00 GMT	2008-06-04T00:00
+parseLocalDate	Tue, 3 Jun 2008 24:00 GMT	2008-06-04
+parseLocalTime	Tue, 3 Jun 2008 24:00 GMT	00:00
+parseOffsetDateTime	Tue, 3 Jun 2008 24:00:01 GMT	!Text 'Tue, 3 Jun 2008 24:00:01 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseZonedDateTime	Tue, 3 Jun 2008 24:00:01 GMT	!Text 'Tue, 3 Jun 2008 24:00:01 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDateTime	Tue, 3 Jun 2008 24:00:01 GMT	!Text 'Tue, 3 Jun 2008 24:00:01 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalDate	Tue, 3 Jun 2008 24:00:01 GMT	!Text 'Tue, 3 Jun 2008 24:00:01 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseLocalTime	Tue, 3 Jun 2008 24:00:01 GMT	!Text 'Tue, 3 Jun 2008 24:00:01 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 24	0
+parseOffsetDateTime	Wed, 31 Dec 2008 24:00 GMT	2009-01-01T00:00Z
+parseZonedDateTime	Wed, 31 Dec 2008 24:00 GMT	2009-01-01T00:00Z
+parseLocalDateTime	Wed, 31 Dec 2008 24:00 GMT	2009-01-01T00:00
+parseLocalDate	Wed, 31 Dec 2008 24:00 GMT	2009-01-01
+parseLocalTime	Wed, 31 Dec 2008 24:00 GMT	00:00
+parseOffsetDateTime	Wed, 4 Jun 2008 24:00 GMT	2008-06-05T00:00Z
+parseZonedDateTime	Wed, 4 Jun 2008 24:00 GMT	2008-06-05T00:00Z
+parseLocalDateTime	Wed, 4 Jun 2008 24:00 GMT	2008-06-05T00:00
+parseLocalDate	Wed, 4 Jun 2008 24:00 GMT	2008-06-05
+parseLocalTime	Wed, 4 Jun 2008 24:00 GMT	00:00
+parseOffsetDateTime	Thu, 31 Feb 2024 10:00 GMT	2024-02-29T10:00Z
+parseZonedDateTime	Thu, 31 Feb 2024 10:00 GMT	2024-02-29T10:00Z
+parseLocalDateTime	Thu, 31 Feb 2024 10:00 GMT	2024-02-29T10:00
+parseLocalDate	Thu, 31 Feb 2024 10:00 GMT	2024-02-29
+parseLocalTime	Thu, 31 Feb 2024 10:00 GMT	10:00
+parseOffsetDateTime	Tue, 31 Feb 2023 10:00 GMT	2023-02-28T10:00Z
+parseZonedDateTime	Tue, 31 Feb 2023 10:00 GMT	2023-02-28T10:00Z
+parseLocalDateTime	Tue, 31 Feb 2023 10:00 GMT	2023-02-28T10:00
+parseLocalDate	Tue, 31 Feb 2023 10:00 GMT	2023-02-28
+parseLocalTime	Tue, 31 Feb 2023 10:00 GMT	10:00
+parseOffsetDateTime	Wed, 30 Feb 2024 10:00 GMT	!Text 'Wed, 30 Feb 2024 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 4 differs from DayOfWeek 3 derived from 2024-02-29	0
+parseZonedDateTime	Wed, 30 Feb 2024 10:00 GMT	!Text 'Wed, 30 Feb 2024 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 4 differs from DayOfWeek 3 derived from 2024-02-29	0
+parseLocalDateTime	Wed, 30 Feb 2024 10:00 GMT	!Text 'Wed, 30 Feb 2024 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 4 differs from DayOfWeek 3 derived from 2024-02-29	0
+parseLocalDate	Wed, 30 Feb 2024 10:00 GMT	!Text 'Wed, 30 Feb 2024 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 4 differs from DayOfWeek 3 derived from 2024-02-29	0
+parseLocalTime	Wed, 30 Feb 2024 10:00 GMT	!Text 'Wed, 30 Feb 2024 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 4 differs from DayOfWeek 3 derived from 2024-02-29	0
+parseOffsetDateTime	Thu, 31 Apr 2008 10:00 GMT	!Text 'Thu, 31 Apr 2008 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 3 differs from DayOfWeek 4 derived from 2008-04-30	0
+parseZonedDateTime	Thu, 31 Apr 2008 10:00 GMT	!Text 'Thu, 31 Apr 2008 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 3 differs from DayOfWeek 4 derived from 2008-04-30	0
+parseLocalDateTime	Thu, 31 Apr 2008 10:00 GMT	!Text 'Thu, 31 Apr 2008 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 3 differs from DayOfWeek 4 derived from 2008-04-30	0
+parseLocalDate	Thu, 31 Apr 2008 10:00 GMT	!Text 'Thu, 31 Apr 2008 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 3 differs from DayOfWeek 4 derived from 2008-04-30	0
+parseLocalTime	Thu, 31 Apr 2008 10:00 GMT	!Text 'Thu, 31 Apr 2008 10:00 GMT' could not be parsed: Conflict found: Field DayOfWeek 3 differs from DayOfWeek 4 derived from 2008-04-30	0
+parseOffsetDateTime	Wed, 30 Apr 2008 10:00 GMT	2008-04-30T10:00Z
+parseZonedDateTime	Wed, 30 Apr 2008 10:00 GMT	2008-04-30T10:00Z
+parseLocalDateTime	Wed, 30 Apr 2008 10:00 GMT	2008-04-30T10:00
+parseLocalDate	Wed, 30 Apr 2008 10:00 GMT	2008-04-30
+parseLocalTime	Wed, 30 Apr 2008 10:00 GMT	10:00
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +9999	!Text 'Tue, 3 Jun 2008 11:05:30 +9999' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +9999	!Text 'Tue, 3 Jun 2008 11:05:30 +9999' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +9999	!Text 'Tue, 3 Jun 2008 11:05:30 +9999' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +9999	!Text 'Tue, 3 Jun 2008 11:05:30 +9999' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +9999	!Text 'Tue, 3 Jun 2008 11:05:30 +9999' could not be parsed at index 25	25
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +0099	!Text 'Tue, 3 Jun 2008 11:05:30 +0099' could not be parsed, unparsed text found at index 28	28
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +0099	!Text 'Tue, 3 Jun 2008 11:05:30 +0099' could not be parsed, unparsed text found at index 28	28
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +0099	!Text 'Tue, 3 Jun 2008 11:05:30 +0099' could not be parsed, unparsed text found at index 28	28
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +0099	!Text 'Tue, 3 Jun 2008 11:05:30 +0099' could not be parsed, unparsed text found at index 28	28
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +0099	!Text 'Tue, 3 Jun 2008 11:05:30 +0099' could not be parsed, unparsed text found at index 28	28
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +010099	!Text 'Tue, 3 Jun 2008 11:05:30 +010099' could not be parsed, unparsed text found at index 30	30
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +010099	!Text 'Tue, 3 Jun 2008 11:05:30 +010099' could not be parsed, unparsed text found at index 30	30
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +010099	!Text 'Tue, 3 Jun 2008 11:05:30 +010099' could not be parsed, unparsed text found at index 30	30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +010099	!Text 'Tue, 3 Jun 2008 11:05:30 +010099' could not be parsed, unparsed text found at index 30	30
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +010099	!Text 'Tue, 3 Jun 2008 11:05:30 +010099' could not be parsed, unparsed text found at index 30	30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +013060	!Text 'Tue, 3 Jun 2008 11:05:30 +013060' could not be parsed, unparsed text found at index 30	30
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +013060	!Text 'Tue, 3 Jun 2008 11:05:30 +013060' could not be parsed, unparsed text found at index 30	30
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +013060	!Text 'Tue, 3 Jun 2008 11:05:30 +013060' could not be parsed, unparsed text found at index 30	30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +013060	!Text 'Tue, 3 Jun 2008 11:05:30 +013060' could not be parsed, unparsed text found at index 30	30
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +013060	!Text 'Tue, 3 Jun 2008 11:05:30 +013060' could not be parsed, unparsed text found at index 30	30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +0130599	!Text 'Tue, 3 Jun 2008 11:05:30 +0130599' could not be parsed, unparsed text found at index 32	32
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +0130599	!Text 'Tue, 3 Jun 2008 11:05:30 +0130599' could not be parsed, unparsed text found at index 32	32
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +0130599	!Text 'Tue, 3 Jun 2008 11:05:30 +0130599' could not be parsed, unparsed text found at index 32	32
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +0130599	!Text 'Tue, 3 Jun 2008 11:05:30 +0130599' could not be parsed, unparsed text found at index 32	32
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +0130599	!Text 'Tue, 3 Jun 2008 11:05:30 +0130599' could not be parsed, unparsed text found at index 32	32
+parseOffsetDateTime	Tue, 3 06 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 06 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 06 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 06 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	Tue, 3 06 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, 3 0006 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 0006 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 0006 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 0006 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	Tue, 3 0006 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, 3 1234567890 2008 11:05:30 GMT	!Text 'Tue, 3 1234567890 2008 11:05:30 GMT' could not be parsed at index 16	16
+parseZonedDateTime	Tue, 3 1234567890 2008 11:05:30 GMT	!Text 'Tue, 3 1234567890 2008 11:05:30 GMT' could not be parsed at index 16	16
+parseLocalDateTime	Tue, 3 1234567890 2008 11:05:30 GMT	!Text 'Tue, 3 1234567890 2008 11:05:30 GMT' could not be parsed at index 16	16
+parseLocalDate	Tue, 3 1234567890 2008 11:05:30 GMT	!Text 'Tue, 3 1234567890 2008 11:05:30 GMT' could not be parsed at index 16	16
+parseLocalTime	Tue, 3 1234567890 2008 11:05:30 GMT	!Text 'Tue, 3 1234567890 2008 11:05:30 GMT' could not be parsed at index 16	16
+parseOffsetDateTime	Tue, 1234567890 Jun 2008 11:05:30 GMT	!Text 'Tue, 1234567890 Jun 2008 11:05:30 GMT' could not be parsed at index 14	14
+parseZonedDateTime	Tue, 1234567890 Jun 2008 11:05:30 GMT	!Text 'Tue, 1234567890 Jun 2008 11:05:30 GMT' could not be parsed at index 14	14
+parseLocalDateTime	Tue, 1234567890 Jun 2008 11:05:30 GMT	!Text 'Tue, 1234567890 Jun 2008 11:05:30 GMT' could not be parsed at index 14	14
+parseLocalDate	Tue, 1234567890 Jun 2008 11:05:30 GMT	!Text 'Tue, 1234567890 Jun 2008 11:05:30 GMT' could not be parsed at index 14	14
+parseLocalTime	Tue, 1234567890 Jun 2008 11:05:30 GMT	!Text 'Tue, 1234567890 Jun 2008 11:05:30 GMT' could not be parsed at index 14	14
+parseOffsetDateTime	Tue, 123456789 Jun 2008 11:05:30 GMT	!Text 'Tue, 123456789 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 123456789	0
+parseZonedDateTime	Tue, 123456789 Jun 2008 11:05:30 GMT	!Text 'Tue, 123456789 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 123456789	0
+parseLocalDateTime	Tue, 123456789 Jun 2008 11:05:30 GMT	!Text 'Tue, 123456789 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 123456789	0
+parseLocalDate	Tue, 123456789 Jun 2008 11:05:30 GMT	!Text 'Tue, 123456789 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 123456789	0
+parseLocalTime	Tue, 123456789 Jun 2008 11:05:30 GMT	!Text 'Tue, 123456789 Jun 2008 11:05:30 GMT' could not be parsed: Invalid value for DayOfMonth (valid values 1 - 28/31): 123456789	0
+parseOffsetDateTime	+2, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	+2, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	+2, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	+2, 3 Jun 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	+2, 3 Jun 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	-2, 3 Jun 2008 11:05:30 GMT	!Text '-2, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek -2 derived from 2008-06-03	0
+parseZonedDateTime	-2, 3 Jun 2008 11:05:30 GMT	!Text '-2, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek -2 derived from 2008-06-03	0
+parseLocalDateTime	-2, 3 Jun 2008 11:05:30 GMT	!Text '-2, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek -2 derived from 2008-06-03	0
+parseLocalDate	-2, 3 Jun 2008 11:05:30 GMT	!Text '-2, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek -2 derived from 2008-06-03	0
+parseLocalTime	-2, 3 Jun 2008 11:05:30 GMT	!Text '-2, 3 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 2 differs from DayOfWeek -2 derived from 2008-06-03	0
+parseOffsetDateTime	02, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseZonedDateTime	02, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30Z
+parseLocalDateTime	02, 3 Jun 2008 11:05:30 GMT	2008-06-03T11:05:30
+parseLocalDate	02, 3 Jun 2008 11:05:30 GMT	2008-06-03
+parseLocalTime	02, 3 Jun 2008 11:05:30 GMT	11:05:30
+parseOffsetDateTime	Tue, 3 -6 2008 11:05:30 GMT	!Text 'Tue, 3 -6 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): -6	0
+parseZonedDateTime	Tue, 3 -6 2008 11:05:30 GMT	!Text 'Tue, 3 -6 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): -6	0
+parseLocalDateTime	Tue, 3 -6 2008 11:05:30 GMT	!Text 'Tue, 3 -6 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): -6	0
+parseLocalDate	Tue, 3 -6 2008 11:05:30 GMT	!Text 'Tue, 3 -6 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): -6	0
+parseLocalTime	Tue, 3 -6 2008 11:05:30 GMT	!Text 'Tue, 3 -6 2008 11:05:30 GMT' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): -6	0
+parseOffsetDateTime	Tue, 3 Jun  2008 11:05:30 GMT	!Text 'Tue, 3 Jun  2008 11:05:30 GMT' could not be parsed at index 11	11
+parseZonedDateTime	Tue, 3 Jun  2008 11:05:30 GMT	!Text 'Tue, 3 Jun  2008 11:05:30 GMT' could not be parsed at index 11	11
+parseLocalDateTime	Tue, 3 Jun  2008 11:05:30 GMT	!Text 'Tue, 3 Jun  2008 11:05:30 GMT' could not be parsed at index 11	11
+parseLocalDate	Tue, 3 Jun  2008 11:05:30 GMT	!Text 'Tue, 3 Jun  2008 11:05:30 GMT' could not be parsed at index 11	11
+parseLocalTime	Tue, 3 Jun  2008 11:05:30 GMT	!Text 'Tue, 3 Jun  2008 11:05:30 GMT' could not be parsed at index 11	11
+parseOffsetDateTime	Tue, 3 Jun 2008 123456789:05 GMT	!Text 'Tue, 3 Jun 2008 123456789:05 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 123456789	0
+parseZonedDateTime	Tue, 3 Jun 2008 123456789:05 GMT	!Text 'Tue, 3 Jun 2008 123456789:05 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 123456789	0
+parseLocalDateTime	Tue, 3 Jun 2008 123456789:05 GMT	!Text 'Tue, 3 Jun 2008 123456789:05 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 123456789	0
+parseLocalDate	Tue, 3 Jun 2008 123456789:05 GMT	!Text 'Tue, 3 Jun 2008 123456789:05 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 123456789	0
+parseLocalTime	Tue, 3 Jun 2008 123456789:05 GMT	!Text 'Tue, 3 Jun 2008 123456789:05 GMT' could not be parsed: Invalid value for HourOfDay (valid values 0 - 23): 123456789	0
+parseOffsetDateTime	Tue, 3 Jun 2008 1234567890:05 GMT	!Text 'Tue, 3 Jun 2008 1234567890:05 GMT' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 1234567890:05 GMT	!Text 'Tue, 3 Jun 2008 1234567890:05 GMT' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 1234567890:05 GMT	!Text 'Tue, 3 Jun 2008 1234567890:05 GMT' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 1234567890:05 GMT	!Text 'Tue, 3 Jun 2008 1234567890:05 GMT' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 1234567890:05 GMT	!Text 'Tue, 3 Jun 2008 1234567890:05 GMT' could not be parsed at index 25	25
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +-0100	!Text 'Tue, 3 Jun 2008 11:05:30 +-0100' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +-0100	!Text 'Tue, 3 Jun 2008 11:05:30 +-0100' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +-0100	!Text 'Tue, 3 Jun 2008 11:05:30 +-0100' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +-0100	!Text 'Tue, 3 Jun 2008 11:05:30 +-0100' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +-0100	!Text 'Tue, 3 Jun 2008 11:05:30 +-0100' could not be parsed at index 25	25
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 -1800	2008-06-03T11:05:30-18:00
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 -1800	2008-06-03T11:05:30-18:00
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 -1800	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 -1800	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 -1800	11:05:30
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 -1801	!Text 'Tue, 3 Jun 2008 11:05:30 -1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 -1801	!Text 'Tue, 3 Jun 2008 11:05:30 -1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 -1801	!Text 'Tue, 3 Jun 2008 11:05:30 -1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 -1801	!Text 'Tue, 3 Jun 2008 11:05:30 -1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 -1801	!Text 'Tue, 3 Jun 2008 11:05:30 -1801' could not be parsed: Zone offset not in valid range: -18:00 to +18:00	0
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 -2400	!Text 'Tue, 3 Jun 2008 11:05:30 -2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 -2400	!Text 'Tue, 3 Jun 2008 11:05:30 -2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 -2400	!Text 'Tue, 3 Jun 2008 11:05:30 -2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 -2400	!Text 'Tue, 3 Jun 2008 11:05:30 -2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 -2400	!Text 'Tue, 3 Jun 2008 11:05:30 -2400' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 GMT+01	!Text 'Tue, 3 Jun 2008 11:05:30 GMT+01' could not be parsed, unparsed text found at index 28	28
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 GMT+01	!Text 'Tue, 3 Jun 2008 11:05:30 GMT+01' could not be parsed, unparsed text found at index 28	28
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 GMT+01	!Text 'Tue, 3 Jun 2008 11:05:30 GMT+01' could not be parsed, unparsed text found at index 28	28
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 GMT+01	!Text 'Tue, 3 Jun 2008 11:05:30 GMT+01' could not be parsed, unparsed text found at index 28	28
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 GMT+01	!Text 'Tue, 3 Jun 2008 11:05:30 GMT+01' could not be parsed, unparsed text found at index 28	28
+parseOffsetDateTime	Tue, 3 Jun 2008 11:05:30 +0	!Text 'Tue, 3 Jun 2008 11:05:30 +0' could not be parsed at index 25	25
+parseZonedDateTime	Tue, 3 Jun 2008 11:05:30 +0	!Text 'Tue, 3 Jun 2008 11:05:30 +0' could not be parsed at index 25	25
+parseLocalDateTime	Tue, 3 Jun 2008 11:05:30 +0	!Text 'Tue, 3 Jun 2008 11:05:30 +0' could not be parsed at index 25	25
+parseLocalDate	Tue, 3 Jun 2008 11:05:30 +0	!Text 'Tue, 3 Jun 2008 11:05:30 +0' could not be parsed at index 25	25
+parseLocalTime	Tue, 3 Jun 2008 11:05:30 +0	!Text 'Tue, 3 Jun 2008 11:05:30 +0' could not be parsed at index 25	25
+parseOffsetDateTime	Mon, 31 Dec -1 00:00 GMT	!Text 'Mon, 31 Dec -1 00:00 GMT' could not be parsed at index 12	12
+parseZonedDateTime	Mon, 31 Dec -1 00:00 GMT	!Text 'Mon, 31 Dec -1 00:00 GMT' could not be parsed at index 12	12
+parseLocalDateTime	Mon, 31 Dec -1 00:00 GMT	!Text 'Mon, 31 Dec -1 00:00 GMT' could not be parsed at index 12	12
+parseLocalDate	Mon, 31 Dec -1 00:00 GMT	!Text 'Mon, 31 Dec -1 00:00 GMT' could not be parsed at index 12	12
+parseLocalTime	Mon, 31 Dec -1 00:00 GMT	!Text 'Mon, 31 Dec -1 00:00 GMT' could not be parsed at index 12	12
+parseOffsetDateTime	Tue, 3 Jun 2008 00:00:00.000 GMT	!Text 'Tue, 3 Jun 2008 00:00:00.000 GMT' could not be parsed at index 24	24
+parseZonedDateTime	Tue, 3 Jun 2008 00:00:00.000 GMT	!Text 'Tue, 3 Jun 2008 00:00:00.000 GMT' could not be parsed at index 24	24
+parseLocalDateTime	Tue, 3 Jun 2008 00:00:00.000 GMT	!Text 'Tue, 3 Jun 2008 00:00:00.000 GMT' could not be parsed at index 24	24
+parseLocalDate	Tue, 3 Jun 2008 00:00:00.000 GMT	!Text 'Tue, 3 Jun 2008 00:00:00.000 GMT' could not be parsed at index 24	24
+parseLocalTime	Tue, 3 Jun 2008 00:00:00.000 GMT	!Text 'Tue, 3 Jun 2008 00:00:00.000 GMT' could not be parsed at index 24	24
+parseOffsetDateTime	Tue, 3 Jun 2008 11:5:30 GmT	2008-06-03T11:05:30Z
+parseZonedDateTime	Tue, 3 Jun 2008 11:5:30 GmT	2008-06-03T11:05:30Z
+parseLocalDateTime	Tue, 3 Jun 2008 11:5:30 GmT	2008-06-03T11:05:30
+parseLocalDate	Tue, 3 Jun 2008 11:5:30 GmT	2008-06-03
+parseLocalTime	Tue, 3 Jun 2008 11:5:30 GmT	11:05:30
+parseOffsetDateTime	Tue, 9 Jun 2008 11:05:30 GMT	!Text 'Tue, 9 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-09	0
+parseZonedDateTime	Tue, 9 Jun 2008 11:05:30 GMT	!Text 'Tue, 9 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-09	0
+parseLocalDateTime	Tue, 9 Jun 2008 11:05:30 GMT	!Text 'Tue, 9 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-09	0
+parseLocalDate	Tue, 9 Jun 2008 11:05:30 GMT	!Text 'Tue, 9 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-09	0
+parseLocalTime	Tue, 9 Jun 2008 11:05:30 GMT	!Text 'Tue, 9 Jun 2008 11:05:30 GMT' could not be parsed: Conflict found: Field DayOfWeek 1 differs from DayOfWeek 2 derived from 2008-06-09	0
+parseOffsetDateTime	Mon, 9 Jun 2008 11:05:30 GMT	2008-06-09T11:05:30Z
+parseZonedDateTime	Mon, 9 Jun 2008 11:05:30 GMT	2008-06-09T11:05:30Z
+parseLocalDateTime	Mon, 9 Jun 2008 11:05:30 GMT	2008-06-09T11:05:30
+parseLocalDate	Mon, 9 Jun 2008 11:05:30 GMT	2008-06-09
+parseLocalTime	Mon, 9 Jun 2008 11:05:30 GMT	11:05:30
