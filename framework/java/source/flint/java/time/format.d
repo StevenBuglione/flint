@@ -719,6 +719,7 @@ private enum Op : ubyte
     localizedOffset, // `text` is "full" or "short"
     zoneId,
     zoneRegion,
+    zoneOrOffset,
     instant, // `minWidth` is the fractional digits plus 2: 0 for groups of three as needed, 1 for as many as needed
     // Control elements: everything from here on prints nothing.
     optionalStart, // `lenient` set: an appended formatter, which `text` describes
@@ -1203,6 +1204,13 @@ struct DateTimeFormatterBuilder
         return this;
     }
 
+    /// Appends the zone ID when there is one, otherwise the offset: such as 'Europe/Paris', '+02:00' or 'Z'.
+    ref DateTimeFormatterBuilder appendZoneOrOffsetId() return
+    {
+        elements_ ~= op(Op.zoneOrOffset);
+        return this;
+    }
+
     /// Appends a character literal. A lone surrogate prints as U+FFFD (R14).
     ref DateTimeFormatterBuilder appendLiteral(wchar literal) return
     {
@@ -1360,8 +1368,10 @@ private immutable string[Op.max - Op.optionalStart + 1] controlNames = [
     "ParseStrict(true)", "(", ")", ""
 ];
 
-// Op.zoneId, Op.zoneRegion and Op.instant.
-private immutable string[3] zoneInstantNames = ["ZoneId()", "ZoneRegionId()", "Instant()"];
+// Op.zoneId, Op.zoneRegion, Op.zoneOrOffset and Op.instant.
+private immutable string[4] zoneInstantNames = [
+    "ZoneId()", "ZoneRegionId()", "ZoneOrOffsetId()", "Instant()"
+];
 
 private string describeElement(const Element e) pure
 {
@@ -1496,6 +1506,8 @@ private struct Printer
                     return false;
                 if (e.op == Op.zoneId)
                     throw new DateTimeException("Unable to extract ZoneId from temporal " ~ fields.describe());
+                if (e.op == Op.zoneOrOffset)
+                    throw new DateTimeException("Unable to extract Zone from temporal " ~ fields.describe());
                 throw new DateTimeException("Unsupported field: " ~ missingField(e));
             }
         }
@@ -1511,6 +1523,7 @@ private struct Printer
             return "OffsetSeconds";
         case Op.zoneId:
         case Op.zoneRegion:
+        case Op.zoneOrOffset:
             return "ZoneId";
         case Op.instant:
             return "InstantSeconds";
@@ -1523,6 +1536,8 @@ private struct Printer
     {
         if (e.op >= Op.optionalStart)
             return true;
+        if (e.op >= Op.zoneId && e.op < Op.instant)
+            return printZone(e);
         switch (e.op)
         {
         case Op.number:
@@ -1539,9 +1554,6 @@ private struct Printer
         case Op.offset:
         case Op.localizedOffset:
             return printOffset(e);
-        case Op.zoneId:
-        case Op.zoneRegion:
-            return printZone(e.op == Op.zoneRegion);
         default:
             return printInstant(e);
         }
@@ -1555,12 +1567,22 @@ private struct Printer
         return true;
     }
 
-    bool printZone(bool regionOnly)
+    bool printZone(const Element e)
     {
-        if (fields.zoneId_.length == 0 || (regionOnly && !fields.zoneIsRegion_))
-            return false;
-        output ~= fields.zoneId_;
-        return true;
+        if (fields.zoneId_.length != 0)
+        {
+            if (e.op == Op.zoneRegion && !fields.zoneIsRegion_)
+                return false;
+            output ~= fields.zoneId_;
+            return true;
+        }
+        // ZoneOrOffsetId, unlike ZoneId, prints an offset when there is no zone ID.
+        if (e.op == Op.zoneOrOffset && fields.hasOffset_)
+        {
+            output ~= formatOffset(fields.offsetSeconds_, "+HH:MM:ss", "Z");
+            return true;
+        }
+        return false;
     }
 
     bool printNumber(const Element e)
@@ -1865,6 +1887,8 @@ private struct Parser
     {
         if (e.op >= Op.optionalStart)
             return control(e, position);
+        if (e.op >= Op.zoneId && e.op < Op.instant)
+            return parseZone(position);
         switch (e.op)
         {
         case Op.number:
@@ -1880,9 +1904,6 @@ private struct Parser
         case Op.offset:
         case Op.localizedOffset:
             return parseOffset(e, position);
-        case Op.zoneId:
-        case Op.zoneRegion:
-            return parseZone(position);
         default:
             return parseInstant(e, position);
         }
@@ -2319,6 +2340,10 @@ private struct Parser
         catch (DateTimeException)
             return ~position;
         fields.zoneIsRegion_ = !ZoneId.of(fields.zoneId_).isOffset();
+        // A parsed fixed offset is both a zone and an offset, as Java's ZoneOffset is, so resolution can obtain the
+        // offset field from it.
+        if (!fields.zoneIsRegion_)
+            return setOffset(ZoneOffset.of(fields.zoneId_).getTotalSeconds(), position, end);
         return end;
     }
 

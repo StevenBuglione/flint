@@ -3,6 +3,7 @@
 // A recipe is the builder calls, separated by `|`, that both this file and the D test apply:
 //   cs ci strict lenient   parseCaseSensitive, parseCaseInsensitive, parseStrict, parseLenient
 //   inst offid zid zrid    appendInstant, appendOffsetId, appendZoneId, appendZoneRegionId
+//   zo                     appendZoneOrOffsetId
 //   [ ]                    optionalStart, optionalEnd
 //   c:X s:TEXT p:PATTERN   appendLiteral(char), appendLiteral(String), appendPattern
 //   o:PATTERN,TEXT         appendOffset
@@ -89,6 +90,7 @@ public class GoldenFormatterBuilder {
                 case "offid" -> b.appendOffsetId();
                 case "zid" -> b.appendZoneId();
                 case "zrid" -> b.appendZoneRegionId();
+                case "zo" -> b.appendZoneOrOffsetId();
                 case "[" -> b.optionalStart();
                 case "]" -> b.optionalEnd();
                 case "c" -> b.appendLiteral(arg.charAt(0));
@@ -195,6 +197,37 @@ public class GoldenFormatterBuilder {
         }
     }
 
+    // Build and format rows of the recipe for every sample, without parse rows (a bare zone or offset text does not
+    // describe a date-time).
+    static void formatsAll(String recipe) {
+        DateTimeFormatter f = build(recipe);
+        row("build", recipe, "-", "-", esc(f.toString()));
+        for (String[] s : samples) {
+            String out;
+            try {
+                out = esc(f.format((java.time.temporal.TemporalAccessor) value(s[0], s[1])));
+            } catch (DateTimeException e) {
+                out = err(e);
+            }
+            row("format", recipe, s[0], s[1], out);
+        }
+    }
+
+    // Parse rows of the recipe only for the given inputs.
+    static void parses(String recipe, String[] kinds, String... inputs) {
+        DateTimeFormatter f = build(recipe);
+        for (String text : inputs)
+            for (String kind : kinds) {
+                String out;
+                try {
+                    out = esc(String.valueOf(parse(kind, text, f)));
+                } catch (DateTimeException e) {
+                    out = err(e);
+                }
+                row("parse", recipe, kind, text, out);
+            }
+    }
+
     static String[] k(String... kinds) {
         return kinds;
     }
@@ -288,6 +321,14 @@ public class GoldenFormatterBuilder {
                 "2024-03-05T10:15+01:00", "2024-03-05T10:15Z[UTC]", "2024-03-05T10:15+01:00[+01:00]");
         recipe("zid", none);
         recipe("zrid", none);
+        // appendZoneOrOffsetId: the zone ID when there is one, otherwise the offset.
+        formatsAll("zo");
+        formatsAll("p:uuuu-MM-dd'T'HH:mm|zo");
+        parses("p:uuuu-MM-dd'T'HH:mm|zo", k("offset", "zoned"), "2024-03-05T10:15+01:00",
+                "2024-03-05T10:15Z", "2024-03-05T10:15-05:30:15");
+        formatsAll("p:uuuu-MM-dd'T'HH:mm|[|zo|]");
+        parses("p:uuuu-MM-dd'T'HH:mm|[|zo|]", k("dateTime", "offset"), "2024-03-05T10:15",
+                "2024-03-05T10:15+01:00");
         recipe("inst", k("offset", "zoned"), "2024-03-05T10:15:30Z", "2024-03-05t10:15:30z",
                 "2024-03-05T10:15:30.5+01:00", "2024-03-05T10:15Z");
         recipe("ci|inst", k("offset", "zoned"), "2024-03-05t10:15:30z");

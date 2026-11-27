@@ -1481,6 +1481,70 @@ format	zid	instant	2024-03-05T10:15:30Z	!Unable to extract ZoneId from temporal 
 format	zid	instant	2024-03-05T10:15:30.120Z	!Unable to extract ZoneId from temporal 2024-03-05T10:15:30.120Z
 build	zrid	-	-	ZoneRegionId()
 format	zrid	zoned	2024-03-05T10:15:30Z[UTC]	UTC
+build	zo	-	-	ZoneOrOffsetId()
+format	zo	date	2024-03-05	!Unable to extract Zone from temporal 2024-03-05
+format	zo	date	0001-12-31	!Unable to extract Zone from temporal 0001-12-31
+format	zo	date	+12345-06-07	!Unable to extract Zone from temporal +12345-06-07
+format	zo	time	10:15	!Unable to extract Zone from temporal 10:15
+format	zo	time	10:15:30	!Unable to extract Zone from temporal 10:15:30
+format	zo	time	10:15:30.123456789	!Unable to extract Zone from temporal 10:15:30.123456789
+format	zo	time	00:00	!Unable to extract Zone from temporal 00:00
+format	zo	dateTime	2024-03-05T10:15:30	!Unable to extract Zone from temporal 2024-03-05T10:15:30
+format	zo	dateTime	2024-03-05T00:00:00.000001	!Unable to extract Zone from temporal 2024-03-05T00:00:00.000001
+format	zo	offset	2024-03-05T10:15:30+01:00	+01:00
+format	zo	offset	2024-03-05T10:15:30Z	Z
+format	zo	offset	2024-03-05T10:15:30.500-05:30:15	-05:30:15
+format	zo	offset	2024-03-05T10:15:30+00:00:45	+00:00:45
+format	zo	zoned	2024-03-05T10:15:30+02:00	+02:00
+format	zo	zoned	2024-03-05T10:15:30Z[UTC]	UTC
+format	zo	instant	2024-03-05T10:15:30Z	!Unable to extract Zone from temporal 2024-03-05T10:15:30Z
+format	zo	instant	2024-03-05T10:15:30.120Z	!Unable to extract Zone from temporal 2024-03-05T10:15:30.120Z
+build	p:uuuu-MM-dd'T'HH:mm|zo	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)ZoneOrOffsetId()
+format	p:uuuu-MM-dd'T'HH:mm|zo	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|zo	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|zo	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|zo	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|zo	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|zo	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|zo	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|zo	dateTime	2024-03-05T10:15:30	!Unable to extract Zone from temporal 2024-03-05T10:15:30
+format	p:uuuu-MM-dd'T'HH:mm|zo	dateTime	2024-03-05T00:00:00.000001	!Unable to extract Zone from temporal 2024-03-05T00:00:00.000001
+format	p:uuuu-MM-dd'T'HH:mm|zo	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15+01:00
+format	p:uuuu-MM-dd'T'HH:mm|zo	offset	2024-03-05T10:15:30Z	2024-03-05T10:15Z
+format	p:uuuu-MM-dd'T'HH:mm|zo	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15-05:30:15
+format	p:uuuu-MM-dd'T'HH:mm|zo	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15+00:00:45
+format	p:uuuu-MM-dd'T'HH:mm|zo	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15+02:00
+format	p:uuuu-MM-dd'T'HH:mm|zo	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15UTC
+format	p:uuuu-MM-dd'T'HH:mm|zo	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|zo	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mm|zo	offset	2024-03-05T10:15+01:00	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|zo	zoned	2024-03-05T10:15+01:00	2024-03-05T10:15+01:00
+parse	p:uuuu-MM-dd'T'HH:mm|zo	offset	2024-03-05T10:15Z	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|zo	zoned	2024-03-05T10:15Z	2024-03-05T10:15Z
+parse	p:uuuu-MM-dd'T'HH:mm|zo	offset	2024-03-05T10:15-05:30:15	2024-03-05T10:15-05:30:15
+parse	p:uuuu-MM-dd'T'HH:mm|zo	zoned	2024-03-05T10:15-05:30:15	2024-03-05T10:15-05:30:15
+build	p:uuuu-MM-dd'T'HH:mm|[|zo|]	-	-	Value(Year,4,19,EXCEEDS_PAD)'-'Value(MonthOfYear,2)'-'Value(DayOfMonth,2)'T'Value(HourOfDay,2)':'Value(MinuteOfHour,2)[ZoneOrOffsetId()]
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	date	2024-03-05	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	date	0001-12-31	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	date	+12345-06-07	!Unsupported field: HourOfDay
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	time	10:15	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	time	10:15:30	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	time	10:15:30.123456789	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	time	00:00	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	dateTime	2024-03-05T10:15:30	2024-03-05T10:15
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	dateTime	2024-03-05T00:00:00.000001	2024-03-05T00:00
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	offset	2024-03-05T10:15:30+01:00	2024-03-05T10:15+01:00
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	offset	2024-03-05T10:15:30Z	2024-03-05T10:15Z
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	offset	2024-03-05T10:15:30.500-05:30:15	2024-03-05T10:15-05:30:15
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	offset	2024-03-05T10:15:30+00:00:45	2024-03-05T10:15+00:00:45
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	zoned	2024-03-05T10:15:30+02:00	2024-03-05T10:15+02:00
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	zoned	2024-03-05T10:15:30Z[UTC]	2024-03-05T10:15UTC
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	instant	2024-03-05T10:15:30Z	!Unsupported field: Year
+format	p:uuuu-MM-dd'T'HH:mm|[|zo|]	instant	2024-03-05T10:15:30.120Z	!Unsupported field: Year
+parse	p:uuuu-MM-dd'T'HH:mm|[|zo|]	dateTime	2024-03-05T10:15	2024-03-05T10:15
+parse	p:uuuu-MM-dd'T'HH:mm|[|zo|]	offset	2024-03-05T10:15	!Text '2024-03-05T10:15' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-03-05T10:15 of type java.time.format.Parsed	0
+parse	p:uuuu-MM-dd'T'HH:mm|[|zo|]	dateTime	2024-03-05T10:15+01:00	2024-03-05T10:15
+parse	p:uuuu-MM-dd'T'HH:mm|[|zo|]	offset	2024-03-05T10:15+01:00	2024-03-05T10:15+01:00
 build	inst	-	-	Instant()
 format	inst	date	2024-03-05	!Unsupported field: InstantSeconds
 format	inst	date	0001-12-31	!Unsupported field: InstantSeconds

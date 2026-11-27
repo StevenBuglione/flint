@@ -1340,6 +1340,9 @@ private void builderSetting(ref DateTimeFormatterBuilder b, string step)
     case "zrid":
         b.appendZoneRegionId();
         break;
+    case "zo":
+        b.appendZoneOrOffsetId();
+        break;
     case "[":
         b.optionalStart();
         break;
@@ -1459,7 +1462,7 @@ unittest
         ++count;
     }
     assert(failures == 0, report);
-    assert(count == 2449);
+    assert(count == 2513);
 }
 
 @("appendInstant(int) parses exactly its fractional digits, or up to nine for -1")
