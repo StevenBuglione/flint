@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,914 | 640 | 0 | 1,915 | 13,952 |
+| framework | openjdk@21.0.13 | 1,921 | 654 | 0 | 1,921 | 13,925 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2406,6 +2406,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.InetSocketAddress#equals(Object)` | `flint.java.net.inetsocketaddress.InetSocketAddress.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `java.net.InterfaceAddress` | `flint.java.net.interfaceaddress.InterfaceAddress` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.interfaceaddress : InterfaceAddress. Final class with package-private constructors (Java has no public or protected constructor) and mixin JavaObject. |
 | `java.net.InterfaceAddress#equals(Object)` | `flint.java.net.interfaceaddress.InterfaceAddress.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.net.MalformedURLException` | `flint.java.net.malformedurlexception.MalformedURLException` | [R1](api-mapping.md#r1-packages-and-names), [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.malformedurlexception : MalformedURLException. Checked Java IOException subclass mapped to D Exception (D-8) with R26 detail message handling. |
 | `java.net.PasswordAuthentication` | `flint.java.net.passwordauthentication.PasswordAuthentication` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.passwordauthentication : PasswordAuthentication. Equality and hashing stay by identity, as in Java. |
 | `java.net.PasswordAuthentication#<init>(String,char[])` | `flint.java.net.passwordauthentication.PasswordAuthentication.this` | [R26](api-mapping.md#r26-null-arrays) | The password is copied, as in Java. A null password counts as empty where Java throws NullPointerException. |
 | `java.net.ProtocolFamily` | `flint.java.net.protocolfamily.ProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.protocolfamily : ProtocolFamily. |
@@ -2420,6 +2421,19 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.StandardProtocolFamily#UNIX` | `flint.java.net.standardprotocolfamily.StandardProtocolFamily.UNIX` | [R18](api-mapping.md#r18-enums-that-implement-an-interface) |  |
 | `java.net.URI` | `flint.java.net.URI` | [R11](api-mapping.md#r11-object-identity-and-equality) | An immutable D struct holds the original URI text and is copied by value. |
 | `java.net.URI#getScheme()` | `flint.java.net.URI.getScheme` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A null string denotes an absent scheme. Every present scheme is nonempty. |
+| `java.net.URL` | `flint.java.net.url.URL` | [R1](api-mapping.md#r1-packages-and-names), [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality), [R26](api-mapping.md#r26-null-arrays), [D-NET-1](api-mapping.md#deviations) | Leaf import: flint.java.net.url : URL. Parsing-only subset (no I/O or global URLStreamHandlerFactory). Optional components (authority, userInfo, host, query, ref) use R5 Nullable!string; null string slices count as empty under R26; equals, sameFile, and hashCode compare normalized components without DNS resolution (D-NET-1). Implements JavaObject without Serializable. |
+| `java.net.URL#<init>(String)` | `flint.java.net.url.URL.this` | [R26](api-mapping.md#r26-null-arrays) | Null spec slice counts as empty under R26 and throws MalformedURLException. |
+| `java.net.URL#<init>(String,String,String)` | `flint.java.net.url.URL.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Accepts string or Nullable!string host; null protocol or file counts as empty under R26. |
+| `java.net.URL#<init>(String,String,int,String)` | `flint.java.net.url.URL.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R26](api-mapping.md#r26-null-arrays) | Accepts string or Nullable!string host; null protocol or file counts as empty under R26. |
+| `java.net.URL#<init>(URL,String)` | `flint.java.net.url.URL.this` | [R26](api-mapping.md#r26-null-arrays) | Null spec slice counts as empty under R26. |
+| `java.net.URL#equals(Object)` | `flint.java.net.url.URL.equals` | [R11](api-mapping.md#r11-object-identity-and-equality), [D-NET-1](api-mapping.md#deviations) |  |
+| `java.net.URL#getAuthority()` | `flint.java.net.url.URL.getAuthority` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.URL#getHost()` | `flint.java.net.url.URL.getHost` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.URL#getQuery()` | `flint.java.net.url.URL.getQuery` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.URL#getRef()` | `flint.java.net.url.URL.getRef` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.URL#getUserInfo()` | `flint.java.net.url.URL.getUserInfo` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
+| `java.net.URL#hashCode()` | `flint.java.net.url.URL.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality), [D-NET-1](api-mapping.md#deviations) |  |
+| `java.net.URL#sameFile(URL)` | `flint.java.net.url.URL.sameFile` | [D-NET-1](api-mapping.md#deviations) |  |
 | `java.net.URLDecoder` | `flint.java.net.urldecoder.URLDecoder` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R26](api-mapping.md#r26-null-arrays) | Leaf import: flint.java.net.urldecoder : URLDecoder. Null string inputs and charset names are treated as empty. |
 | `java.net.URLDecoder#decode(String)` | `flint.java.net.urldecoder.URLDecoder.decode` | [R2](api-mapping.md#r2-annotations), [R26](api-mapping.md#r26-null-arrays), [D-NET-2](api-mapping.md#deviations) | Deprecated. Uses the UTF-8 platform default. |
 | `java.net.URLDecoder#decode(String,Charset)` | `flint.java.net.urldecoder.URLDecoder.decode` | [R26](api-mapping.md#r26-null-arrays), [R5](api-mapping.md#r5-optional-and-nullable-values) | Charset.init represents an absent charset and raises NullPointerException. |
@@ -7523,6 +7537,12 @@ These Java elements have no Flint counterpart, for the reason the category gives
 | `java.net.SocketPermission` | `jvm-platform` |  |
 | `java.net.SocketPermission#**` (6 elements) | `jvm-platform` |  |
 | `java.net.SocketPermission.**` (0 elements) | `jvm-platform` |  |
+| `java.net.URL#getContent()` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
+| `java.net.URL#getContent(Class[])` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
+| `java.net.URL#openConnection()` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
+| `java.net.URL#openConnection(Proxy)` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
+| `java.net.URL#openStream()` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; network I/O uses Flint engines. |
+| `java.net.URL#setURLStreamHandlerFactory(URLStreamHandlerFactory)` | `jvm-platform` | Parsing-only URL per docs/spring/phase2/jdk-port.md; closed world with no global stream handler factory. |
 | `java.net.URLClassLoader` | `jvm-runtime` |  |
 | `java.net.URLClassLoader#**` (16 elements) | `jvm-runtime` |  |
 | `java.net.URLClassLoader.**` (0 elements) | `jvm-runtime` |  |
@@ -10961,7 +10981,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 660 | 0 |
+| java.net | 633 | 0 |
 | java.net.spi | 0 | 2 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |
@@ -12045,6 +12065,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.InetAddress#isReachable(NetworkInterface,int,int)` | 2 | Requires NetworkInterface and ICMP echo or a TCP probe through the Flint network engines. |
 | framework | `java.net.InetAddress#isReachable(int)` | 2 | Requires ICMP echo or a TCP probe through the Flint network engines. |
 | framework | `java.net.InetSocketAddress#getHostName()` | 2 | Performs a reverse lookup when the address has no host name. Name resolution through the Flint engines (java.net.spi InetAddressResolver) is pending; this leaf builds socket addresses from an InetAddress or an unresolved host name only. getHostString returns the host name without a lookup. |
+| framework | `java.net.MalformedURLException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
+| framework | `java.net.MalformedURLException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.net.ProtocolException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.ProtocolException#<init>(String)` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |
 | framework | `java.net.Proxy#NO_PROXY` | 2 | Java hands out one shared DIRECT Proxy. engine-aot's constantInstance builds a shared object only for classes whose fields are all immutable, and a Proxy keeps the caller's SocketAddress. A fresh object per access would break identity comparisons such as proxy == Proxy.NO_PROXY. |
@@ -12056,6 +12078,10 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.net.URI#equals(Object)` | 2 | Java compares scheme, host and percent escape hex digits case-insensitively. Flint compares the original URI text. |
 | framework | `java.net.URI#hashCode()` | 2 | Requires Java component equality and hashing. Flint hashes the original URI text. |
 | framework | `java.net.URI#toASCIIString()` | 2 | Java applies NFC normalization before percent-encoding non-ASCII text. The current implementation encodes the original UTF-8 bytes. |
+| framework | `java.net.URL#<init>(String,String,int,String,URLStreamHandler)` | 2 | Custom URLStreamHandler is deferred; parsing-only URL uses built-in protocol rules. |
+| framework | `java.net.URL#<init>(URL,String,URLStreamHandler)` | 2 | Custom URLStreamHandler is deferred; parsing-only URL uses built-in protocol rules. |
+| framework | `java.net.URL#of(URI,URLStreamHandler)` | 2 | Custom URLStreamHandler is deferred; parsing-only URL uses built-in protocol rules. |
+| framework | `java.net.URL#toURI()` | 2 | URISyntaxException and full URI(String) constructor are pending. |
 | framework | `java.net.UnknownHostException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.UnknownHostException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.net.UnknownServiceException#<init>()` | 2 | The leaf port is pending. Java permits one later initCause call. The canonical Flint checked hierarchy lacks that API. |

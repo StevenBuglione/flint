@@ -395,6 +395,14 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net-url": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
+    "flint:java-net-url-exception": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-nio": {
       "repo": "framework",
       "version": "monorepo"

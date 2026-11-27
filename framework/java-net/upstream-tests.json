@@ -1154,140 +1154,161 @@
       "status": "deferred"
     },
     "java/net/URL/B4148751.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE parsing behavior.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/B5086147.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE parsing behavior.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/B6529759.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE parsing behavior.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/B8282395.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE parsing behavior.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/Constructor.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE parsing behavior.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/EarlyOrDelayedParsing.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE parsing behavior.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/Equals.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover the Java SE D-NET-1 equality behavior.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/GetContent.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL (docs/spring/phase2/jdk-port.md): URL.getContent I/O is out of scope; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/GetDefaultPort.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover default ports.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/HandlerLoop.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL (docs/spring/phase2/jdk-port.md): global URLStreamHandlerFactory is out of scope; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/HandlersPkgPrefix/HandlersPkgPrefix.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL (docs/spring/phase2/jdk-port.md): dynamic java.protocol.handler.pkgs loading is out of scope; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/HashCode.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover D-NET-1 hashCode behavior.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/JarHandlerPkgPrefix/JarHandlerPkgPrefix.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL (docs/spring/phase2/jdk-port.md): dynamic java.protocol.handler.pkgs loading is out of scope; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/LocaleDependentURLTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover locale-independent ASCII protocol lowercasing.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/NonOverridableHandlerFactory.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL (docs/spring/phase2/jdk-port.md): global URLStreamHandlerFactory is out of scope; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/OpenConnection.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL (docs/spring/phase2/jdk-port.md): URL.openConnection I/O is out of scope; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/OpenStream.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL (docs/spring/phase2/jdk-port.md): URL.openStream I/O is out of scope; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/ParseAuthority.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover authority parsing.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/ParseURL.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover URL parsing.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/PerConnectionProxy.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL (docs/spring/phase2/jdk-port.md): Proxy and URL.openConnection I/O are out of scope; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/Protocol.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover protocol parsing.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/RacyHandler.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL (docs/spring/phase2/jdk-port.md): global URLStreamHandlerFactory is out of scope; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/RelativePath.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover relative path resolution.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/RelativeURL.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover relative URL resolution.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/RelativeURLTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover relative URL resolution.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/RestoreURL.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Java serialization (ObjectInputStream/ObjectOutputStream) is out of scope per docs/spring/phase2/jdk-port.md; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/SpecifyHandler.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "Parsing-only URL uses built-in protocol rules without custom URLStreamHandler; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/Test.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover URL parsing.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/TestIPv6Addresses.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover IPv6 URL literals.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/TestPort.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover URL port parsing.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/TestRFC2732.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover RFC 2732 IPv6 URLs.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URL/URIToURLTest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "URL.of/URI.toURL conversion awaits full URI(String) and URLStreamHandler; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/URLFromURITest.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "URL.of/URI.toURL conversion awaits full URI(String) and URLStreamHandler; pinned jtreg source also lacks the Classpath Exception."
     },
     "java/net/URL/UppercaseScheme.java": {
-      "phase": "2",
-      "status": "deferred"
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests cover uppercase scheme normalization.",
+      "covered_by": "framework/java-net-url/tests/url_test.d"
     },
     "java/net/URLClassLoader/AddURLTest.java": {
       "phase": "2",
