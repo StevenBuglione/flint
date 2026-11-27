@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 2,129 | 765 | 0 | 1,957 | 13,570 |
+| framework | openjdk@21.0.13 | 2,130 | 765 | 0 | 1,957 | 13,569 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -11190,7 +11190,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.metadata | 67 | 0 |
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
-| java.io | 764 | 0 |
+| java.io | 763 | 0 |
 | java.lang | 1,614 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
@@ -12194,9 +12194,8 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.io.StringWriter#write(String,int,int)` | 2 | Missing ranged string write with Java UTF-16 offsets and length. |
 | framework | `java.io.StringWriter#write(char[],int,int)` | 2 | Missing ranged write of Java UTF-16 code units with checked array bounds. |
 | framework | `java.io.StringWriter#write(int)` | 2 | Java writes the low 16 bits as one UTF-16 code unit, including a lone surrogate. The inherited D overload encodes a Unicode code point or substitutes a replacement character. |
-| framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. Java derives the detail from the cause's virtual toString. The current formatter uses the cause's type name and raw detail. |
-| framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The existing constructor accepts a null cause. Java rejects it with NullPointerException. The inherited Java detail accessor still needs R26 empty-string normalization. |
-| framework | `java.io.UncheckedIOException#getCause()` | 2 | The inherited accessor returns Throwable. Java overrides it to return IOException. |
+| framework | `java.io.UncheckedIOException#<init>(IOException)` | 2 | The constructor checks null causes. Java derives the message from the virtual IOException.toString method. The current formatter uses the cause's type and raw detail. |
+| framework | `java.io.UncheckedIOException#<init>(String,IOException)` | 2 | The constructor checks null causes. The inherited Java detail accessor still needs R26 empty-string normalization. |
 | framework | `java.io.UnsupportedEncodingException#<init>()` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API. |
 | framework | `java.io.UnsupportedEncodingException#<init>(String)` | 2 | Java leaves the cause open to one later initCause call. The checked IOException base lacks that API and its R26 detail accessor normalization is pending. |
 | framework | `java.io.Writer` | 2 | The abstract sink implements Closeable and Flushable. Appendable and the UTF-16 string-range write hooks are pending. |
