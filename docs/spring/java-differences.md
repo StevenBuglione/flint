@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,324 | 397 | 0 | 1,871 | 14,829 |
+| framework | openjdk@21.0.13 | 1,324 | 397 | 0 | 1,905 | 14,795 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -7283,6 +7283,23 @@ These Java elements have no Flint counterpart, for the reason the category gives
 | --- | --- | --- |
 | `java.lang.runtime.**` (9 elements) | `jvm-runtime` |  |
 
+#### java.net
+
+| Java | Reason | Note |
+| --- | --- | --- |
+| `java.net.NetPermission` | `jvm-platform` |  |
+| `java.net.NetPermission#**` (2 elements) | `jvm-platform` |  |
+| `java.net.NetPermission.**` (0 elements) | `jvm-platform` |  |
+| `java.net.SocketPermission` | `jvm-platform` |  |
+| `java.net.SocketPermission#**` (6 elements) | `jvm-platform` |  |
+| `java.net.SocketPermission.**` (0 elements) | `jvm-platform` |  |
+| `java.net.URLClassLoader` | `jvm-runtime` |  |
+| `java.net.URLClassLoader#**` (16 elements) | `jvm-runtime` |  |
+| `java.net.URLClassLoader.**` (0 elements) | `jvm-runtime` |  |
+| `java.net.URLPermission` | `jvm-platform` |  |
+| `java.net.URLPermission#**` (6 elements) | `jvm-platform` |  |
+| `java.net.URLPermission.**` (0 elements) | `jvm-platform` |  |
+
 #### java.security
 
 | Java | Reason | Note |
@@ -10714,7 +10731,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 801 | 0 |
+| java.net | 767 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 229 | 0 |
 | java.nio.channels | 0 | 306 |
