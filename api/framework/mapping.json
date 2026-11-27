@@ -6648,6 +6648,7 @@
 "java.time.Month#SEPTEMBER":{"d":"flint.java.time.Month.SEPTEMBER","status":"ported"},
 "java.time.Duration#toMillis()":{"status":"ported","d":"flint.java.time.Duration.toMillis"},
 "java.time.Duration#toNanos()":{"status":"ported","d":"flint.java.time.Duration.toNanos"},
+"java.time.LocalDate#plusDays(long)":{"status":"excluded","category":"deferred","phase":"2","reason":"Adding past the supported range reports the Year range, because LocalDate.ofEpochDay checks the year last. Java checks the EpochDay range first in its slow path and reports EpochDay, so a SMART ISO_WEEK_DATE parse of +999999999-W53-1 gives a different message. Java's day-of-month fast path, which reports Year, is not reproduced separately."},
 "java.time.Period":{"status":"adapted","rules":["R1","R11"],"d":"flint.java.time.period.Period","note":"Import Period from flint.java.time.period until the JDK aggregate re-exports it. Null parse text counts as empty (R26). Java throws NullPointerException."},
 "java.time.Period#ZERO":{"status":"ported","d":"flint.java.time.period.Period.ZERO"},
 "java.time.Period#addTo(Temporal)":{"status":"excluded","category":"deferred","phase":"2"},

@@ -11903,6 +11903,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.text.SimpleDateFormat#format(Date,StringBuffer,FieldPosition)` | 2 | Appending the date to the caller buffer and updating UTF-16 field offsets needs canonical java.lang.StringBuffer and FieldPosition. |
 | framework | `java.text.SimpleDateFormat#parse(String,ParsePosition)` | 2 | Interprets the initial ParsePosition index and reports consumed and error indices in UTF-8 bytes. Java uses UTF-16 code units (R14). Passing a null ParsePosition terminates the process. Java throws NullPointerException (R8). |
 | framework | `java.text.SimpleDateFormat#set2DigitYearStart(Date)` | 2 | Computes the year window in a separate calendar. Java sets the time of the formatter's caller-visible calendar when applying the requested start. |
+| framework | `java.time.LocalDate#plusDays(long)` | 2 | Adding past the supported range reports the Year range, because LocalDate.ofEpochDay checks the year last. Java checks the EpochDay range first in its slow path and reports EpochDay, so a SMART ISO_WEEK_DATE parse of +999999999-W53-1 gives a different message. Java's day-of-month fast path, which reports Year, is not reproduced separately. |
 | framework | `java.time.MonthDay#adjustInto(Temporal)` | 2 | Requires temporal interfaces and dispatch. |
 | framework | `java.time.MonthDay#format(DateTimeFormatter)` | 2 | Requires the formatter contract. |
 | framework | `java.time.MonthDay#from(TemporalAccessor)` | 2 | Requires temporal interfaces and dispatch. |
