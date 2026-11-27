@@ -1,5 +1,6 @@
 module app;
 
+import flint.java.io : IOException;
 import flint.java.io.closeable : Closeable;
 import flint.java.lang : RuntimeException;
 import flint.java.nio.bytebuffer : ByteBuffer;
@@ -7,16 +8,21 @@ import flint.java.nio.channels.acceptpendingexception : AcceptPendingException;
 import flint.java.nio.channels.alreadyboundexception : AlreadyBoundException;
 import flint.java.nio.channels.alreadyconnectedexception : AlreadyConnectedException;
 import flint.java.nio.channels.asynchronouschannel : AsynchronousChannel;
+import flint.java.nio.channels.asynchronouscloseexception : AsynchronousCloseException;
 import flint.java.nio.channels.bytechannel : ByteChannel;
 import flint.java.nio.channels.cancelledkeyexception : CancelledKeyException;
 import flint.java.nio.channels.channel : Channel;
+import flint.java.nio.channels.closedbyinterruptexception : ClosedByInterruptException;
+import flint.java.nio.channels.closedchannelexception : ClosedChannelException;
 import flint.java.nio.channels.closedselectorexception : ClosedSelectorException;
 import flint.java.nio.channels.completionhandler : CompletionHandler;
 import flint.java.nio.channels.connectionpendingexception : ConnectionPendingException;
+import flint.java.nio.channels.filelockinterruptionexception : FileLockInterruptionException;
 import flint.java.nio.channels.gatheringbytechannel : GatheringByteChannel;
 import flint.java.nio.channels.illegalblockingmodeexception : IllegalBlockingModeException;
 import flint.java.nio.channels.illegalchannelgroupexception : IllegalChannelGroupException;
 import flint.java.nio.channels.illegalselectorexception : IllegalSelectorException;
+import flint.java.nio.channels.interruptedbytimeoutexception : InterruptedByTimeoutException;
 import flint.java.nio.channels.interruptiblechannel : InterruptibleChannel;
 import flint.java.nio.channels.noconnectionpendingexception : NoConnectionPendingException;
 import flint.java.nio.channels.nonreadablechannelexception : NonReadableChannelException;
@@ -193,9 +199,32 @@ private int throwChannelException(size_t selector)
         return ex.getMessage() is null ? 1 : 2;
 }
 
+private IOException makeChannelIOException(size_t selector)
+{
+    if (selector == 0)
+        return new ClosedChannelException;
+    if (selector == 1)
+        return new AsynchronousCloseException;
+    if (selector == 2)
+        return new ClosedByInterruptException;
+    if (selector == 3)
+        return new FileLockInterruptionException;
+    return new InterruptedByTimeoutException;
+}
+
+private int throwChannelIOException(size_t selector)
+{
+    try
+        throw makeChannelIOException(selector % 5);
+    catch (IOException ex)
+        return ex.getCause() is null ? 3 : 4;
+}
+
 int main(string[] args)
 {
     const count = args.length;
+    if (count >= 24)
+        return throwChannelIOException(count - 24);
     if (count >= 4)
         return throwChannelException(count - 4);
 

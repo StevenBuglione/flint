@@ -1,0 +1,8 @@
+{
+  "source": "closure/file_lock_interruption_exception.d",
+  "leaves": [
+    "flint.java.io",
+    "flint.java.lang"
+  ],
+  "data": []
+}
