@@ -1246,10 +1246,11 @@ struct ZoneOffset
         return ZoneId(getId(), this);
     }
 
-    /// Compares offsets in descending order, as Java does: a larger offset sorts first.
+    /// Compares offsets in descending order, as Java does: a larger offset sorts first. Returns the difference of the
+    /// total seconds, which cannot overflow within +/-18:00.
     int compareTo(ZoneOffset other) const pure nothrow @nogc
     {
-        return other.totalSeconds_ < totalSeconds_ ? -1 : other.totalSeconds_ > totalSeconds_ ? 1 : 0;
+        return other.totalSeconds_ - totalSeconds_;
     }
 
     /// The ID.
@@ -1624,10 +1625,12 @@ struct OffsetDateTime
         return dateTime_.toEpochSecond(offset_);
     }
 
-    /// The same instant at another offset.
+    /// The same instant at another offset. As in Java, the local date-time moves by the offset difference in seconds.
     OffsetDateTime withOffsetSameInstant(ZoneOffset offset) const
     {
-        return toInstant().atOffset(offset);
+        if (offset == offset_)
+            return this;
+        return OffsetDateTime(dateTime_.plusSeconds(offset.getTotalSeconds() - offset_.getTotalSeconds()), offset);
     }
 
     /// Converts to a `ZonedDateTime` at the same instant in `zone`.

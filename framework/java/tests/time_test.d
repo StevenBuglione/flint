@@ -268,6 +268,19 @@ unittest
     const odt = LocalDateTime.of(2010, 9, 7, 10, 15).atOffset(ZoneOffset.ofHours(2));
     assert(odt.toInstant().toString() == "2010-09-07T08:15:00Z");
     assert(odt.withOffsetSameInstant(ZoneOffset.UTC).toString() == "2010-09-07T08:15Z");
+    // Java adds the offset difference to the local date-time, so plusDays' year-end check reports Year, not EpochDay.
+    // ZoneOffset.compareTo sorts the larger offset first and returns the difference of the total seconds.
+    assert(ZoneOffset.ofHours(1).compareTo(ZoneOffset.UTC) == -3600);
+    assert(ZoneOffset.MIN.compareTo(ZoneOffset.MAX) == 129_600);
+    const edge = OffsetDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC);
+    assert(edge.withOffsetSameInstant(ZoneOffset.UTC) == edge);
+    try
+    {
+        edge.withOffsetSameInstant(ZoneOffset.ofHours(1));
+        assert(false);
+    }
+    catch (DateTimeException e)
+        assert(e.msg == "Invalid value for Year (valid values -999999999 - 999999999): 1000000000", e.msg);
     assert(odt.atZoneSameInstant(ZoneId.of("UTC")).toString() == "2010-09-07T08:15Z[UTC]");
     assert(odt.isBefore(LocalDateTime.of(2010, 9, 7, 9, 15).atOffset(ZoneOffset.UTC)));
 }
