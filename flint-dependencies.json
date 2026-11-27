@@ -367,6 +367,10 @@
       "repo": "framework",
       "version": "monorepo"
     },
+    "flint:java-net-auth": {
+      "repo": "framework",
+      "version": "monorepo"
+    },
     "flint:java-net-datagram": {
       "repo": "framework",
       "version": "monorepo"

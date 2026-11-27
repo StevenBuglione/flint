@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,905 | 630 | 0 | 1,915 | 13,971 |
+| framework | openjdk@21.0.13 | 1,907 | 632 | 0 | 1,915 | 13,967 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2404,6 +2404,8 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.net.InetSocketAddress#<init>(String,int)` | `flint.java.net.inetsocketaddress.InetSocketAddress.this` | [D-JDK-8](api-mapping.md#deviations), [R26](api-mapping.md#r26-null-arrays) | Resolves through InetAddress.getByName, so a host name other than localhost gives an unresolved address until an engine host-name resolver exists. A null host string counts as the empty host (the loopback address), so Java's IllegalArgumentException "hostname can't be null" does not occur. As in Java, new InetSocketAddress(null, port) is ambiguous; cast the null. |
 | `java.net.InetSocketAddress#createUnresolved(String,int)` | `flint.java.net.inetsocketaddress.InetSocketAddress.createUnresolved` | [R26](api-mapping.md#r26-null-arrays) | A null host string counts as the empty host name, so Java's IllegalArgumentException "hostname can't be null" does not occur. |
 | `java.net.InetSocketAddress#equals(Object)` | `flint.java.net.inetsocketaddress.InetSocketAddress.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
+| `java.net.PasswordAuthentication` | `flint.java.net.passwordauthentication.PasswordAuthentication` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.passwordauthentication : PasswordAuthentication. Equality and hashing stay by identity, as in Java. |
+| `java.net.PasswordAuthentication#<init>(String,char[])` | `flint.java.net.passwordauthentication.PasswordAuthentication.this` | [R26](api-mapping.md#r26-null-arrays) | The password is copied, as in Java. A null password counts as empty where Java throws NullPointerException. |
 | `java.net.ProtocolFamily` | `flint.java.net.protocolfamily.ProtocolFamily` | [R1](api-mapping.md#r1-packages-and-names) | Leaf import: flint.java.net.protocolfamily : ProtocolFamily. |
 | `java.net.Proxy` | `flint.java.net.proxy.Proxy` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) | Leaf import: flint.java.net.proxy : Proxy. Implements JavaObject without Serializable. hashCode adds the type's ordinal where Java adds the enum's identity hash, so the number differs from Java's but equal proxies still hash equally. |
 | `java.net.Proxy#<init>(Type,SocketAddress)` | `flint.java.net.proxy.Proxy.this` | [R26](api-mapping.md#r26-null-arrays) | As in Java, a DIRECT type or an address that is not an InetSocketAddress (null included) throws IllegalArgumentException with Java's message. For a caller's own SocketAddress subclass the message shows the D class name, because Object.toString is not @safe in D. |
@@ -10951,7 +10953,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |
-| java.net | 671 | 0 |
+| java.net | 667 | 0 |
 | java.net.spi | 0 | 2 |
 | java.nio | 18 | 0 |
 | java.nio.channels | 0 | 264 |

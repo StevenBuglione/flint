@@ -1237,6 +1237,39 @@
     "ldc_incremental_seconds",
     "compiler_peak_rss_bytes"
    ]
+  },  "java-net-auth": {
+   "directory": "framework/java-net-auth",
+   "module": "flint.java.net.passwordauthentication",
+   "repo": "framework",
+   "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "upstream": "openjdk@21.0.13",
+   "java_types": [
+    "java.net.PasswordAuthentication"
+   ],
+   "dependencies": [
+    "java"
+   ],
+   "bench": {
+    "fixture": "framework/java-net-auth/bench",
+    "baseline": "framework/java-net-auth/bench/baseline",
+    "edit_source": "framework/java-net-auth/source/flint/java/net/passwordauthentication.d"
+   },
+   "budget": {
+    "dmd_cold_seconds": 0.9,
+    "dmd_incremental_seconds": 0.6,
+    "ldc_cold_seconds": 5.4,
+    "ldc_incremental_seconds": 2.7,
+    "incremental_linked_bytes": 537,
+    "compiler_peak_rss_bytes": 536870912,
+    "template_instances": 95
+   },
+   "provisional": [
+    "dmd_cold_seconds",
+    "dmd_incremental_seconds",
+    "ldc_cold_seconds",
+    "ldc_incremental_seconds",
+    "compiler_peak_rss_bytes"
+   ]
   },  "java-net-datagram": {
    "directory": "framework/java-net-datagram",
    "module": "flint.java.net.datagrampacket",

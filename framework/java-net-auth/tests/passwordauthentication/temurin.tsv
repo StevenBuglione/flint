@@ -1,0 +1,13 @@
+user	alice
+password	secret
+copied-not-shared	true
+same-array-each-call	true
+write-through-returned-array	Xecret
+equal-data-equals	false
+self-equals	true
+empty-user	[]
+empty-password-length	0
+utf16-units	4
+utf16-unit-1	d83d
+lone-surrogate-kept	d800
+null-password	NullPointerException
