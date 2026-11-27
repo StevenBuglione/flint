@@ -1,0 +1,952 @@
+toString		ParseCaseSensitive(false)Value(WeekBasedYear,4,10,EXCEEDS_PAD)'-W'Value(WeekOfWeekBasedYear,2)'-'Value(DayOfWeek,1)[Offset(+HH:MM:ss,'Z')]
+getResolverStyle		STRICT
+formatLocalDate	1999-12-28	1999-W52-2
+formatLocalDate	1999-12-29	1999-W52-3
+formatLocalDate	1999-12-30	1999-W52-4
+formatLocalDate	1999-12-31	1999-W52-5
+formatLocalDate	2000-01-01	1999-W52-6
+formatLocalDate	2000-01-02	1999-W52-7
+formatLocalDate	2000-01-03	2000-W01-1
+formatLocalDate	2000-01-04	2000-W01-2
+formatLocalDate	2000-12-28	2000-W52-4
+formatLocalDate	2000-12-29	2000-W52-5
+formatLocalDate	2000-12-30	2000-W52-6
+formatLocalDate	2000-12-31	2000-W52-7
+formatLocalDate	2001-01-01	2001-W01-1
+formatLocalDate	2001-01-02	2001-W01-2
+formatLocalDate	2001-01-03	2001-W01-3
+formatLocalDate	2001-01-04	2001-W01-4
+formatLocalDate	2001-12-28	2001-W52-5
+formatLocalDate	2001-12-29	2001-W52-6
+formatLocalDate	2001-12-30	2001-W52-7
+formatLocalDate	2001-12-31	2002-W01-1
+formatLocalDate	2002-01-01	2002-W01-2
+formatLocalDate	2002-01-02	2002-W01-3
+formatLocalDate	2002-01-03	2002-W01-4
+formatLocalDate	2002-01-04	2002-W01-5
+formatLocalDate	2002-12-28	2002-W52-6
+formatLocalDate	2002-12-29	2002-W52-7
+formatLocalDate	2002-12-30	2003-W01-1
+formatLocalDate	2002-12-31	2003-W01-2
+formatLocalDate	2003-01-01	2003-W01-3
+formatLocalDate	2003-01-02	2003-W01-4
+formatLocalDate	2003-01-03	2003-W01-5
+formatLocalDate	2003-01-04	2003-W01-6
+formatLocalDate	2003-12-28	2003-W52-7
+formatLocalDate	2003-12-29	2004-W01-1
+formatLocalDate	2003-12-30	2004-W01-2
+formatLocalDate	2003-12-31	2004-W01-3
+formatLocalDate	2004-01-01	2004-W01-4
+formatLocalDate	2004-01-02	2004-W01-5
+formatLocalDate	2004-01-03	2004-W01-6
+formatLocalDate	2004-01-04	2004-W01-7
+formatLocalDate	2004-12-28	2004-W53-2
+formatLocalDate	2004-12-29	2004-W53-3
+formatLocalDate	2004-12-30	2004-W53-4
+formatLocalDate	2004-12-31	2004-W53-5
+formatLocalDate	2005-01-01	2004-W53-6
+formatLocalDate	2005-01-02	2004-W53-7
+formatLocalDate	2005-01-03	2005-W01-1
+formatLocalDate	2005-01-04	2005-W01-2
+formatLocalDate	2005-12-28	2005-W52-3
+formatLocalDate	2005-12-29	2005-W52-4
+formatLocalDate	2005-12-30	2005-W52-5
+formatLocalDate	2005-12-31	2005-W52-6
+formatLocalDate	2006-01-01	2005-W52-7
+formatLocalDate	2006-01-02	2006-W01-1
+formatLocalDate	2006-01-03	2006-W01-2
+formatLocalDate	2006-01-04	2006-W01-3
+formatLocalDate	2006-12-28	2006-W52-4
+formatLocalDate	2006-12-29	2006-W52-5
+formatLocalDate	2006-12-30	2006-W52-6
+formatLocalDate	2006-12-31	2006-W52-7
+formatLocalDate	2007-01-01	2007-W01-1
+formatLocalDate	2007-01-02	2007-W01-2
+formatLocalDate	2007-01-03	2007-W01-3
+formatLocalDate	2007-01-04	2007-W01-4
+formatLocalDate	2007-12-28	2007-W52-5
+formatLocalDate	2007-12-29	2007-W52-6
+formatLocalDate	2007-12-30	2007-W52-7
+formatLocalDate	2007-12-31	2008-W01-1
+formatLocalDate	2008-01-01	2008-W01-2
+formatLocalDate	2008-01-02	2008-W01-3
+formatLocalDate	2008-01-03	2008-W01-4
+formatLocalDate	2008-01-04	2008-W01-5
+formatLocalDate	2008-12-28	2008-W52-7
+formatLocalDate	2008-12-29	2009-W01-1
+formatLocalDate	2008-12-30	2009-W01-2
+formatLocalDate	2008-12-31	2009-W01-3
+formatLocalDate	2009-01-01	2009-W01-4
+formatLocalDate	2009-01-02	2009-W01-5
+formatLocalDate	2009-01-03	2009-W01-6
+formatLocalDate	2009-01-04	2009-W01-7
+formatLocalDate	2009-12-28	2009-W53-1
+formatLocalDate	2009-12-29	2009-W53-2
+formatLocalDate	2009-12-30	2009-W53-3
+formatLocalDate	2009-12-31	2009-W53-4
+formatLocalDate	2010-01-01	2009-W53-5
+formatLocalDate	2010-01-02	2009-W53-6
+formatLocalDate	2010-01-03	2009-W53-7
+formatLocalDate	2010-01-04	2010-W01-1
+formatLocalDate	2010-12-28	2010-W52-2
+formatLocalDate	2010-12-29	2010-W52-3
+formatLocalDate	2010-12-30	2010-W52-4
+formatLocalDate	2010-12-31	2010-W52-5
+formatLocalDate	2011-01-01	2010-W52-6
+formatLocalDate	2011-01-02	2010-W52-7
+formatLocalDate	2011-01-03	2011-W01-1
+formatLocalDate	2011-01-04	2011-W01-2
+formatLocalDate	2011-12-28	2011-W52-3
+formatLocalDate	2011-12-29	2011-W52-4
+formatLocalDate	2011-12-30	2011-W52-5
+formatLocalDate	2011-12-31	2011-W52-6
+formatLocalDate	2012-01-01	2011-W52-7
+formatLocalDate	2012-01-02	2012-W01-1
+formatLocalDate	2012-01-03	2012-W01-2
+formatLocalDate	2012-01-04	2012-W01-3
+formatLocalDate	2012-12-28	2012-W52-5
+formatLocalDate	2012-12-29	2012-W52-6
+formatLocalDate	2012-12-30	2012-W52-7
+formatLocalDate	2012-12-31	2013-W01-1
+formatLocalDate	2013-01-01	2013-W01-2
+formatLocalDate	2013-01-02	2013-W01-3
+formatLocalDate	2013-01-03	2013-W01-4
+formatLocalDate	2013-01-04	2013-W01-5
+formatLocalDate	2013-12-28	2013-W52-6
+formatLocalDate	2013-12-29	2013-W52-7
+formatLocalDate	2013-12-30	2014-W01-1
+formatLocalDate	2013-12-31	2014-W01-2
+formatLocalDate	2014-01-01	2014-W01-3
+formatLocalDate	2014-01-02	2014-W01-4
+formatLocalDate	2014-01-03	2014-W01-5
+formatLocalDate	2014-01-04	2014-W01-6
+formatLocalDate	2014-12-28	2014-W52-7
+formatLocalDate	2014-12-29	2015-W01-1
+formatLocalDate	2014-12-30	2015-W01-2
+formatLocalDate	2014-12-31	2015-W01-3
+formatLocalDate	2015-01-01	2015-W01-4
+formatLocalDate	2015-01-02	2015-W01-5
+formatLocalDate	2015-01-03	2015-W01-6
+formatLocalDate	2015-01-04	2015-W01-7
+formatLocalDate	2015-12-28	2015-W53-1
+formatLocalDate	2015-12-29	2015-W53-2
+formatLocalDate	2015-12-30	2015-W53-3
+formatLocalDate	2015-12-31	2015-W53-4
+formatLocalDate	2016-01-01	2015-W53-5
+formatLocalDate	2016-01-02	2015-W53-6
+formatLocalDate	2016-01-03	2015-W53-7
+formatLocalDate	2016-01-04	2016-W01-1
+formatLocalDate	2016-12-28	2016-W52-3
+formatLocalDate	2016-12-29	2016-W52-4
+formatLocalDate	2016-12-30	2016-W52-5
+formatLocalDate	2016-12-31	2016-W52-6
+formatLocalDate	2017-01-01	2016-W52-7
+formatLocalDate	2017-01-02	2017-W01-1
+formatLocalDate	2017-01-03	2017-W01-2
+formatLocalDate	2017-01-04	2017-W01-3
+formatLocalDate	2017-12-28	2017-W52-4
+formatLocalDate	2017-12-29	2017-W52-5
+formatLocalDate	2017-12-30	2017-W52-6
+formatLocalDate	2017-12-31	2017-W52-7
+formatLocalDate	2018-01-01	2018-W01-1
+formatLocalDate	2018-01-02	2018-W01-2
+formatLocalDate	2018-01-03	2018-W01-3
+formatLocalDate	2018-01-04	2018-W01-4
+formatLocalDate	2018-12-28	2018-W52-5
+formatLocalDate	2018-12-29	2018-W52-6
+formatLocalDate	2018-12-30	2018-W52-7
+formatLocalDate	2018-12-31	2019-W01-1
+formatLocalDate	2019-01-01	2019-W01-2
+formatLocalDate	2019-01-02	2019-W01-3
+formatLocalDate	2019-01-03	2019-W01-4
+formatLocalDate	2019-01-04	2019-W01-5
+formatLocalDate	2019-12-28	2019-W52-6
+formatLocalDate	2019-12-29	2019-W52-7
+formatLocalDate	2019-12-30	2020-W01-1
+formatLocalDate	2019-12-31	2020-W01-2
+formatLocalDate	2020-01-01	2020-W01-3
+formatLocalDate	2020-01-02	2020-W01-4
+formatLocalDate	2020-01-03	2020-W01-5
+formatLocalDate	2020-01-04	2020-W01-6
+formatLocalDate	2020-12-28	2020-W53-1
+formatLocalDate	2020-12-29	2020-W53-2
+formatLocalDate	2020-12-30	2020-W53-3
+formatLocalDate	2020-12-31	2020-W53-4
+formatLocalDate	2021-01-01	2020-W53-5
+formatLocalDate	2021-01-02	2020-W53-6
+formatLocalDate	2021-01-03	2020-W53-7
+formatLocalDate	2021-01-04	2021-W01-1
+formatLocalDate	2021-12-28	2021-W52-2
+formatLocalDate	2021-12-29	2021-W52-3
+formatLocalDate	2021-12-30	2021-W52-4
+formatLocalDate	2021-12-31	2021-W52-5
+formatLocalDate	2022-01-01	2021-W52-6
+formatLocalDate	2022-01-02	2021-W52-7
+formatLocalDate	2022-01-03	2022-W01-1
+formatLocalDate	2022-01-04	2022-W01-2
+formatLocalDate	2022-12-28	2022-W52-3
+formatLocalDate	2022-12-29	2022-W52-4
+formatLocalDate	2022-12-30	2022-W52-5
+formatLocalDate	2022-12-31	2022-W52-6
+formatLocalDate	2023-01-01	2022-W52-7
+formatLocalDate	2023-01-02	2023-W01-1
+formatLocalDate	2023-01-03	2023-W01-2
+formatLocalDate	2023-01-04	2023-W01-3
+formatLocalDate	2023-12-28	2023-W52-4
+formatLocalDate	2023-12-29	2023-W52-5
+formatLocalDate	2023-12-30	2023-W52-6
+formatLocalDate	2023-12-31	2023-W52-7
+formatLocalDate	2024-01-01	2024-W01-1
+formatLocalDate	2024-01-02	2024-W01-2
+formatLocalDate	2024-01-03	2024-W01-3
+formatLocalDate	2024-01-04	2024-W01-4
+formatLocalDate	2024-12-28	2024-W52-6
+formatLocalDate	2024-12-29	2024-W52-7
+formatLocalDate	2024-12-30	2025-W01-1
+formatLocalDate	2024-12-31	2025-W01-2
+formatLocalDate	2025-01-01	2025-W01-3
+formatLocalDate	2025-01-02	2025-W01-4
+formatLocalDate	2025-01-03	2025-W01-5
+formatLocalDate	2025-01-04	2025-W01-6
+formatLocalDate	2025-12-28	2025-W52-7
+formatLocalDate	2025-12-29	2026-W01-1
+formatLocalDate	2025-12-30	2026-W01-2
+formatLocalDate	2025-12-31	2026-W01-3
+formatLocalDate	2026-01-01	2026-W01-4
+formatLocalDate	2026-01-02	2026-W01-5
+formatLocalDate	2026-01-03	2026-W01-6
+formatLocalDate	2026-01-04	2026-W01-7
+formatLocalDate	2026-12-28	2026-W53-1
+formatLocalDate	2026-12-29	2026-W53-2
+formatLocalDate	2026-12-30	2026-W53-3
+formatLocalDate	2026-12-31	2026-W53-4
+formatLocalDate	2027-01-01	2026-W53-5
+formatLocalDate	2027-01-02	2026-W53-6
+formatLocalDate	2027-01-03	2026-W53-7
+formatLocalDate	2027-01-04	2027-W01-1
+formatLocalDate	2027-12-28	2027-W52-2
+formatLocalDate	2027-12-29	2027-W52-3
+formatLocalDate	2027-12-30	2027-W52-4
+formatLocalDate	2027-12-31	2027-W52-5
+formatLocalDate	2028-01-01	2027-W52-6
+formatLocalDate	2028-01-02	2027-W52-7
+formatLocalDate	2028-01-03	2028-W01-1
+formatLocalDate	2028-01-04	2028-W01-2
+formatLocalDate	2028-12-28	2028-W52-4
+formatLocalDate	2028-12-29	2028-W52-5
+formatLocalDate	2028-12-30	2028-W52-6
+formatLocalDate	2028-12-31	2028-W52-7
+formatLocalDate	2029-01-01	2029-W01-1
+formatLocalDate	2029-01-02	2029-W01-2
+formatLocalDate	2029-01-03	2029-W01-3
+formatLocalDate	2029-01-04	2029-W01-4
+formatLocalDate	2029-12-28	2029-W52-5
+formatLocalDate	2029-12-29	2029-W52-6
+formatLocalDate	2029-12-30	2029-W52-7
+formatLocalDate	2029-12-31	2030-W01-1
+formatLocalDate	2030-01-01	2030-W01-2
+formatLocalDate	2030-01-02	2030-W01-3
+formatLocalDate	2030-01-03	2030-W01-4
+formatLocalDate	2030-01-04	2030-W01-5
+formatLocalDate	2030-12-28	2030-W52-6
+formatLocalDate	2030-12-29	2030-W52-7
+formatLocalDate	2030-12-30	2031-W01-1
+formatLocalDate	2030-12-31	2031-W01-2
+formatLocalDate	2031-01-01	2031-W01-3
+formatLocalDate	2031-01-02	2031-W01-4
+formatLocalDate	2031-01-03	2031-W01-5
+formatLocalDate	2031-01-04	2031-W01-6
+formatLocalDate	2012-11-30	2012-W48-5
+formatLocalDate	2024-02-29	2024-W09-4
+formatLocalDate	2024-06-15	2024-W24-6
+formatLocalDate	0001-01-01	0001-W01-1
+formatLocalDate	0000-01-01	-0001-W52-6
+formatLocalDate	-0001-12-31	-0001-W52-5
+formatLocalDate	-0001-01-01	-0002-W53-5
+formatLocalDate	1582-10-15	1582-W41-5
+formatLocalDate	9999-12-31	9999-W52-5
+formatLocalDate	+10000-01-01	9999-W52-6
+formatLocalDate	+10000-01-03	+10000-W01-1
+formatLocalDate	+10000-12-31	+10000-W52-7
+formatLocalDate	-10000-01-01	-10001-W52-6
+formatLocalDate	+999999999-12-31	+999999999-W52-5
+formatLocalDate	+999999999-12-27	+999999999-W52-1
+formatLocalDate	+999999999-12-26	+999999999-W51-7
+formatLocalDate	-999999999-01-01	-999999999-W01-1
+formatLocalDate	-999999999-01-04	-999999999-W01-4
+formatLocalDate	-999999999-01-08	-999999999-W02-1
+formatLocalDate	+999999998-12-31	+999999998-W53-4
+formatLocalDateTime	2012-11-30T10:15:30	2012-W48-5
+formatLocalDateTime	2021-01-03T23:59:59.999999999	2020-W53-7
+formatLocalDateTime	-0001-01-01T00:00	-0002-W53-5
+formatOffsetDateTime	2012-11-30T10:15:30+01:00	2012-W48-5+01:00
+formatZonedDateTime	2012-11-30T10:15:30+01:00	2012-W48-5+01:00
+formatOffsetDateTime	2020-12-31T00:00Z	2020-W53-4Z
+formatZonedDateTime	2020-12-31T00:00Z	2020-W53-4Z
+formatOffsetDateTime	2021-01-01T00:00-05:30	2020-W53-5-05:30
+formatZonedDateTime	2021-01-01T00:00-05:30	2020-W53-5-05:30
+formatOffsetDateTime	2026-11-27T12:00:00+18:00	2026-W48-5+18:00
+formatZonedDateTime	2026-11-27T12:00:00+18:00	2026-W48-5+18:00
+formatOffsetDateTime	2026-11-27T12:00:00-18:00	2026-W48-5-18:00
+formatZonedDateTime	2026-11-27T12:00:00-18:00	2026-W48-5-18:00
+formatOffsetDateTime	2026-11-27T12:00:00+01:00:30	2026-W48-5+01:00:30
+formatZonedDateTime	2026-11-27T12:00:00+01:00:30	2026-W48-5+01:00:30
+formatLocalTime	10:15:30	!Unsupported field: WeekBasedYear
+formatInstant	2012-11-30T10:15:30Z	!Unsupported field: WeekBasedYear
+formatInstantWithZone	2012-11-30T23:15:30Z	2012-W48-5Z
+formatInstantWithZone	2020-12-31T23:59:59Z	2020-W53-4Z
+parse	2012-W48-6	parsed
+parseLocalDate	2012-W48-6	2012-12-01
+parseLocalDateTime	2012-W48-6	!Text '2012-W48-6' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-W48-6	!Text '2012-W48-6' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-W48-6	!Text '2012-W48-6' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-W48-6	parsed
+smartparseLocalDate	2012-W48-6	2012-12-01
+smartparseLocalDateTime	2012-W48-6	!Text '2012-W48-6' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-W48-6	!Text '2012-W48-6' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-W48-6	!Text '2012-W48-6' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-w48-6	parsed
+parseLocalDate	2012-w48-6	2012-12-01
+parseLocalDateTime	2012-w48-6	!Text '2012-w48-6' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-w48-6	!Text '2012-w48-6' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-w48-6	!Text '2012-w48-6' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-w48-6	parsed
+smartparseLocalDate	2012-w48-6	2012-12-01
+smartparseLocalDateTime	2012-w48-6	!Text '2012-w48-6' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-w48-6	!Text '2012-w48-6' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-w48-6	!Text '2012-w48-6' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-W48-6Z	parsed
+parseLocalDate	2012-W48-6Z	2012-12-01
+parseLocalDateTime	2012-W48-6Z	!Text '2012-W48-6Z' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-W48-6Z	!Text '2012-W48-6Z' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-W48-6Z	!Text '2012-W48-6Z' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-W48-6Z	parsed
+smartparseLocalDate	2012-W48-6Z	2012-12-01
+smartparseLocalDateTime	2012-W48-6Z	!Text '2012-W48-6Z' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-W48-6Z	!Text '2012-W48-6Z' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-W48-6Z	!Text '2012-W48-6Z' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-W48-6z	parsed
+parseLocalDate	2012-W48-6z	2012-12-01
+parseLocalDateTime	2012-W48-6z	!Text '2012-W48-6z' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-W48-6z	!Text '2012-W48-6z' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-W48-6z	!Text '2012-W48-6z' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-W48-6z	parsed
+smartparseLocalDate	2012-W48-6z	2012-12-01
+smartparseLocalDateTime	2012-W48-6z	!Text '2012-W48-6z' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-W48-6z	!Text '2012-W48-6z' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-W48-6z	!Text '2012-W48-6z' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-W48-6+01:00	parsed
+parseLocalDate	2012-W48-6+01:00	2012-12-01
+parseLocalDateTime	2012-W48-6+01:00	!Text '2012-W48-6+01:00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=3600},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-W48-6+01:00	!Text '2012-W48-6+01:00' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=3600},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-W48-6+01:00	!Text '2012-W48-6+01:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=3600},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-W48-6+01:00	parsed
+smartparseLocalDate	2012-W48-6+01:00	2012-12-01
+smartparseLocalDateTime	2012-W48-6+01:00	!Text '2012-W48-6+01:00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=3600},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-W48-6+01:00	!Text '2012-W48-6+01:00' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=3600},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-W48-6+01:00	!Text '2012-W48-6+01:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=3600},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-W48-6-05:30	parsed
+parseLocalDate	2012-W48-6-05:30	2012-12-01
+parseLocalDateTime	2012-W48-6-05:30	!Text '2012-W48-6-05:30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=-19800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-W48-6-05:30	!Text '2012-W48-6-05:30' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=-19800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-W48-6-05:30	!Text '2012-W48-6-05:30' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=-19800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-W48-6-05:30	parsed
+smartparseLocalDate	2012-W48-6-05:30	2012-12-01
+smartparseLocalDateTime	2012-W48-6-05:30	!Text '2012-W48-6-05:30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=-19800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-W48-6-05:30	!Text '2012-W48-6-05:30' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=-19800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-W48-6-05:30	!Text '2012-W48-6-05:30' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=-19800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-W48-6+01:00:30	parsed
+parseLocalDate	2012-W48-6+01:00:30	2012-12-01
+parseLocalDateTime	2012-W48-6+01:00:30	!Text '2012-W48-6+01:00:30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=3630},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-W48-6+01:00:30	!Text '2012-W48-6+01:00:30' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=3630},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-W48-6+01:00:30	!Text '2012-W48-6+01:00:30' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=3630},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-W48-6+01:00:30	parsed
+smartparseLocalDate	2012-W48-6+01:00:30	2012-12-01
+smartparseLocalDateTime	2012-W48-6+01:00:30	!Text '2012-W48-6+01:00:30' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=3630},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-W48-6+01:00:30	!Text '2012-W48-6+01:00:30' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=3630},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-W48-6+01:00:30	!Text '2012-W48-6+01:00:30' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=3630},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-W48-6+18:00	parsed
+parseLocalDate	2012-W48-6+18:00	2012-12-01
+parseLocalDateTime	2012-W48-6+18:00	!Text '2012-W48-6+18:00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=64800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-W48-6+18:00	!Text '2012-W48-6+18:00' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=64800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-W48-6+18:00	!Text '2012-W48-6+18:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=64800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-W48-6+18:00	parsed
+smartparseLocalDate	2012-W48-6+18:00	2012-12-01
+smartparseLocalDateTime	2012-W48-6+18:00	!Text '2012-W48-6+18:00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=64800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-W48-6+18:00	!Text '2012-W48-6+18:00' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=64800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-W48-6+18:00	!Text '2012-W48-6+18:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=64800},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-W48-6+18:01	parsed
+parseLocalDate	2012-W48-6+18:01	2012-12-01
+parseLocalDateTime	2012-W48-6+18:01	!Text '2012-W48-6+18:01' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=64860},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-W48-6+18:01	!Text '2012-W48-6+18:01' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=64860},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-W48-6+18:01	!Text '2012-W48-6+18:01' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=64860},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-W48-6+18:01	parsed
+smartparseLocalDate	2012-W48-6+18:01	2012-12-01
+smartparseLocalDateTime	2012-W48-6+18:01	!Text '2012-W48-6+18:01' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=64860},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-W48-6+18:01	!Text '2012-W48-6+18:01' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=64860},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-W48-6+18:01	!Text '2012-W48-6+18:01' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=64860},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+parseLocalDate	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+parseLocalDateTime	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+parseLocalTime	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+parseOffsetDateTime	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+smartparse	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDate	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDateTime	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+smartparseLocalTime	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+smartparseOffsetDateTime	2012-W48-6+01	!Text '2012-W48-6+01' could not be parsed, unparsed text found at index 10	10
+parse	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+parseLocalDate	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+parseLocalDateTime	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+parseLocalTime	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+parseOffsetDateTime	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+smartparse	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDate	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDateTime	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+smartparseLocalTime	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+smartparseOffsetDateTime	2012-W48-6+0100	!Text '2012-W48-6+0100' could not be parsed, unparsed text found at index 10	10
+parse	2012-W48-6-00:00	parsed
+parseLocalDate	2012-W48-6-00:00	2012-12-01
+parseLocalDateTime	2012-W48-6-00:00	!Text '2012-W48-6-00:00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseLocalTime	2012-W48-6-00:00	!Text '2012-W48-6-00:00' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2012-W48-6-00:00	!Text '2012-W48-6-00:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparse	2012-W48-6-00:00	parsed
+smartparseLocalDate	2012-W48-6-00:00	2012-12-01
+smartparseLocalDateTime	2012-W48-6-00:00	!Text '2012-W48-6-00:00' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2012-W48-6-00:00	!Text '2012-W48-6-00:00' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2012-W48-6-00:00	!Text '2012-W48-6-00:00' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {OffsetSeconds=0},ISO resolved to 2012-12-01 of type java.time.format.Parsed	0
+parse	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseLocalDate	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseLocalDateTime	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseLocalTime	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parseOffsetDateTime	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+smartparse	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+smartparseLocalDate	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+smartparseLocalDateTime	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+smartparseLocalTime	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+smartparseOffsetDateTime	2012-W48-6+24:00	!Text '2012-W48-6+24:00' could not be parsed: Value out of range: Hour[0-23], Minute[0-59], Second[0-59]	0
+parse	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+parseLocalDate	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+parseLocalDateTime	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+parseLocalTime	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+parseOffsetDateTime	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+smartparse	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDate	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDateTime	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+smartparseLocalTime	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+smartparseOffsetDateTime	2012-W48-6x	!Text '2012-W48-6x' could not be parsed, unparsed text found at index 10	10
+parse	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+parseLocalDate	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+parseLocalDateTime	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+parseLocalTime	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+parseOffsetDateTime	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+smartparse	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDate	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDateTime	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+smartparseLocalTime	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+smartparseOffsetDateTime	2012-W48-6 	!Text '2012-W48-6 ' could not be parsed, unparsed text found at index 10	10
+parse	2004-W53-7	parsed
+parseLocalDate	2004-W53-7	2005-01-02
+parseLocalDateTime	2004-W53-7	!Text '2004-W53-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2005-01-02 of type java.time.format.Parsed	0
+parseLocalTime	2004-W53-7	!Text '2004-W53-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2005-01-02 of type java.time.format.Parsed	0
+parseOffsetDateTime	2004-W53-7	!Text '2004-W53-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2005-01-02 of type java.time.format.Parsed	0
+smartparse	2004-W53-7	parsed
+smartparseLocalDate	2004-W53-7	2005-01-02
+smartparseLocalDateTime	2004-W53-7	!Text '2004-W53-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2005-01-02 of type java.time.format.Parsed	0
+smartparseLocalTime	2004-W53-7	!Text '2004-W53-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2005-01-02 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2004-W53-7	!Text '2004-W53-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2005-01-02 of type java.time.format.Parsed	0
+parse	2009-W53-1	parsed
+parseLocalDate	2009-W53-1	2009-12-28
+parseLocalDateTime	2009-W53-1	!Text '2009-W53-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2009-12-28 of type java.time.format.Parsed	0
+parseLocalTime	2009-W53-1	!Text '2009-W53-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2009-12-28 of type java.time.format.Parsed	0
+parseOffsetDateTime	2009-W53-1	!Text '2009-W53-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2009-12-28 of type java.time.format.Parsed	0
+smartparse	2009-W53-1	parsed
+smartparseLocalDate	2009-W53-1	2009-12-28
+smartparseLocalDateTime	2009-W53-1	!Text '2009-W53-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2009-12-28 of type java.time.format.Parsed	0
+smartparseLocalTime	2009-W53-1	!Text '2009-W53-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2009-12-28 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2009-W53-1	!Text '2009-W53-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2009-12-28 of type java.time.format.Parsed	0
+parse	2015-W53-4	parsed
+parseLocalDate	2015-W53-4	2015-12-31
+parseLocalDateTime	2015-W53-4	!Text '2015-W53-4' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2015-12-31 of type java.time.format.Parsed	0
+parseLocalTime	2015-W53-4	!Text '2015-W53-4' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2015-12-31 of type java.time.format.Parsed	0
+parseOffsetDateTime	2015-W53-4	!Text '2015-W53-4' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2015-12-31 of type java.time.format.Parsed	0
+smartparse	2015-W53-4	parsed
+smartparseLocalDate	2015-W53-4	2015-12-31
+smartparseLocalDateTime	2015-W53-4	!Text '2015-W53-4' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2015-12-31 of type java.time.format.Parsed	0
+smartparseLocalTime	2015-W53-4	!Text '2015-W53-4' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2015-12-31 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2015-W53-4	!Text '2015-W53-4' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2015-12-31 of type java.time.format.Parsed	0
+parse	2020-W53-5	parsed
+parseLocalDate	2020-W53-5	2021-01-01
+parseLocalDateTime	2020-W53-5	!Text '2020-W53-5' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2021-01-01 of type java.time.format.Parsed	0
+parseLocalTime	2020-W53-5	!Text '2020-W53-5' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2021-01-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	2020-W53-5	!Text '2020-W53-5' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2021-01-01 of type java.time.format.Parsed	0
+smartparse	2020-W53-5	parsed
+smartparseLocalDate	2020-W53-5	2021-01-01
+smartparseLocalDateTime	2020-W53-5	!Text '2020-W53-5' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2021-01-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2020-W53-5	!Text '2020-W53-5' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2021-01-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2020-W53-5	!Text '2020-W53-5' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2021-01-01 of type java.time.format.Parsed	0
+parse	2026-W53-4	parsed
+parseLocalDate	2026-W53-4	2026-12-31
+parseLocalDateTime	2026-W53-4	!Text '2026-W53-4' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2026-12-31 of type java.time.format.Parsed	0
+parseLocalTime	2026-W53-4	!Text '2026-W53-4' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2026-12-31 of type java.time.format.Parsed	0
+parseOffsetDateTime	2026-W53-4	!Text '2026-W53-4' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2026-12-31 of type java.time.format.Parsed	0
+smartparse	2026-W53-4	parsed
+smartparseLocalDate	2026-W53-4	2026-12-31
+smartparseLocalDateTime	2026-W53-4	!Text '2026-W53-4' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2026-12-31 of type java.time.format.Parsed	0
+smartparseLocalTime	2026-W53-4	!Text '2026-W53-4' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2026-12-31 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2026-W53-4	!Text '2026-W53-4' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2026-12-31 of type java.time.format.Parsed	0
+parse	2021-W53-1	!Text '2021-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDate	2021-W53-1	!Text '2021-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDateTime	2021-W53-1	!Text '2021-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalTime	2021-W53-1	!Text '2021-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseOffsetDateTime	2021-W53-1	!Text '2021-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+smartparse	2021-W53-1	parsed
+smartparseLocalDate	2021-W53-1	2022-01-03
+smartparseLocalDateTime	2021-W53-1	!Text '2021-W53-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2022-01-03 of type java.time.format.Parsed	0
+smartparseLocalTime	2021-W53-1	!Text '2021-W53-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2022-01-03 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2021-W53-1	!Text '2021-W53-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2022-01-03 of type java.time.format.Parsed	0
+parse	2022-W53-7	!Text '2022-W53-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDate	2022-W53-7	!Text '2022-W53-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDateTime	2022-W53-7	!Text '2022-W53-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalTime	2022-W53-7	!Text '2022-W53-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseOffsetDateTime	2022-W53-7	!Text '2022-W53-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+smartparse	2022-W53-7	parsed
+smartparseLocalDate	2022-W53-7	2023-01-08
+smartparseLocalDateTime	2022-W53-7	!Text '2022-W53-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2023-01-08 of type java.time.format.Parsed	0
+smartparseLocalTime	2022-W53-7	!Text '2022-W53-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2023-01-08 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2022-W53-7	!Text '2022-W53-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2023-01-08 of type java.time.format.Parsed	0
+parse	2023-W53-1	!Text '2023-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDate	2023-W53-1	!Text '2023-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDateTime	2023-W53-1	!Text '2023-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalTime	2023-W53-1	!Text '2023-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseOffsetDateTime	2023-W53-1	!Text '2023-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+smartparse	2023-W53-1	parsed
+smartparseLocalDate	2023-W53-1	2024-01-01
+smartparseLocalDateTime	2023-W53-1	!Text '2023-W53-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-01-01 of type java.time.format.Parsed	0
+smartparseLocalTime	2023-W53-1	!Text '2023-W53-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2024-01-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2023-W53-1	!Text '2023-W53-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-01-01 of type java.time.format.Parsed	0
+parse	2019-W52-7	parsed
+parseLocalDate	2019-W52-7	2019-12-29
+parseLocalDateTime	2019-W52-7	!Text '2019-W52-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2019-12-29 of type java.time.format.Parsed	0
+parseLocalTime	2019-W52-7	!Text '2019-W52-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2019-12-29 of type java.time.format.Parsed	0
+parseOffsetDateTime	2019-W52-7	!Text '2019-W52-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2019-12-29 of type java.time.format.Parsed	0
+smartparse	2019-W52-7	parsed
+smartparseLocalDate	2019-W52-7	2019-12-29
+smartparseLocalDateTime	2019-W52-7	!Text '2019-W52-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2019-12-29 of type java.time.format.Parsed	0
+smartparseLocalTime	2019-W52-7	!Text '2019-W52-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2019-12-29 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2019-W52-7	!Text '2019-W52-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2019-12-29 of type java.time.format.Parsed	0
+parse	2020-W01-1	parsed
+parseLocalDate	2020-W01-1	2019-12-30
+parseLocalDateTime	2020-W01-1	!Text '2020-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2019-12-30 of type java.time.format.Parsed	0
+parseLocalTime	2020-W01-1	!Text '2020-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2019-12-30 of type java.time.format.Parsed	0
+parseOffsetDateTime	2020-W01-1	!Text '2020-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2019-12-30 of type java.time.format.Parsed	0
+smartparse	2020-W01-1	parsed
+smartparseLocalDate	2020-W01-1	2019-12-30
+smartparseLocalDateTime	2020-W01-1	!Text '2020-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2019-12-30 of type java.time.format.Parsed	0
+smartparseLocalTime	2020-W01-1	!Text '2020-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2019-12-30 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2020-W01-1	!Text '2020-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2019-12-30 of type java.time.format.Parsed	0
+parse	2025-W01-1	parsed
+parseLocalDate	2025-W01-1	2024-12-30
+parseLocalDateTime	2025-W01-1	!Text '2025-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-12-30 of type java.time.format.Parsed	0
+parseLocalTime	2025-W01-1	!Text '2025-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2024-12-30 of type java.time.format.Parsed	0
+parseOffsetDateTime	2025-W01-1	!Text '2025-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-12-30 of type java.time.format.Parsed	0
+smartparse	2025-W01-1	parsed
+smartparseLocalDate	2025-W01-1	2024-12-30
+smartparseLocalDateTime	2025-W01-1	!Text '2025-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2024-12-30 of type java.time.format.Parsed	0
+smartparseLocalTime	2025-W01-1	!Text '2025-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2024-12-30 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2025-W01-1	!Text '2025-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2024-12-30 of type java.time.format.Parsed	0
+parse	2008-W01-1	parsed
+parseLocalDate	2008-W01-1	2007-12-31
+parseLocalDateTime	2008-W01-1	!Text '2008-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2007-12-31 of type java.time.format.Parsed	0
+parseLocalTime	2008-W01-1	!Text '2008-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2007-12-31 of type java.time.format.Parsed	0
+parseOffsetDateTime	2008-W01-1	!Text '2008-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2007-12-31 of type java.time.format.Parsed	0
+smartparse	2008-W01-1	parsed
+smartparseLocalDate	2008-W01-1	2007-12-31
+smartparseLocalDateTime	2008-W01-1	!Text '2008-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2007-12-31 of type java.time.format.Parsed	0
+smartparseLocalTime	2008-W01-1	!Text '2008-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2007-12-31 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2008-W01-1	!Text '2008-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2007-12-31 of type java.time.format.Parsed	0
+parse	2010-W52-7	parsed
+parseLocalDate	2010-W52-7	2011-01-02
+parseLocalDateTime	2010-W52-7	!Text '2010-W52-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2011-01-02 of type java.time.format.Parsed	0
+parseLocalTime	2010-W52-7	!Text '2010-W52-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2011-01-02 of type java.time.format.Parsed	0
+parseOffsetDateTime	2010-W52-7	!Text '2010-W52-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2011-01-02 of type java.time.format.Parsed	0
+smartparse	2010-W52-7	parsed
+smartparseLocalDate	2010-W52-7	2011-01-02
+smartparseLocalDateTime	2010-W52-7	!Text '2010-W52-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 2011-01-02 of type java.time.format.Parsed	0
+smartparseLocalTime	2010-W52-7	!Text '2010-W52-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 2011-01-02 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	2010-W52-7	!Text '2010-W52-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 2011-01-02 of type java.time.format.Parsed	0
+parse	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 0	0
+parseLocalDate	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 0	0
+parseLocalDateTime	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 0	0
+parseLocalTime	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 0	0
+parseOffsetDateTime	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 0	0
+smartparse	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 0	0
+smartparseLocalDate	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 0	0
+smartparseLocalDateTime	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 0	0
+smartparseLocalTime	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 0	0
+smartparseOffsetDateTime	2012-W00-1	!Text '2012-W00-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 0	0
+parse	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 54	0
+parseLocalDate	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 54	0
+parseLocalDateTime	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 54	0
+parseLocalTime	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 54	0
+parseOffsetDateTime	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 54	0
+smartparse	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+smartparseLocalDate	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+smartparseLocalDateTime	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+smartparseLocalTime	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+smartparseOffsetDateTime	2012-W54-1	!Text '2012-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+parse	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 99	0
+parseLocalDate	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 99	0
+parseLocalDateTime	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 99	0
+parseLocalTime	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 99	0
+parseOffsetDateTime	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 99	0
+smartparse	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 99	0
+smartparseLocalDate	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 99	0
+smartparseLocalDateTime	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 99	0
+smartparseLocalTime	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 99	0
+smartparseOffsetDateTime	2012-W99-7	!Text '2012-W99-7' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 99	0
+parse	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 53): 54	0
+parseLocalDate	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 53): 54	0
+parseLocalDateTime	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 53): 54	0
+parseLocalTime	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 53): 54	0
+parseOffsetDateTime	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 53): 54	0
+smartparse	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+smartparseLocalDate	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+smartparseLocalDateTime	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+smartparseLocalTime	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+smartparseOffsetDateTime	2015-W54-1	!Text '2015-W54-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52/53): 54	0
+parse	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parseLocalDate	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parseLocalDateTime	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parseLocalTime	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parseOffsetDateTime	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparse	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparseLocalDate	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparseLocalDateTime	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparseLocalTime	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparseOffsetDateTime	2012-W48-0	!Text '2012-W48-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parse	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parseLocalDate	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parseLocalDateTime	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parseLocalTime	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parseOffsetDateTime	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparse	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparseLocalDate	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparseLocalDateTime	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparseLocalTime	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparseOffsetDateTime	2012-W48-8	!Text '2012-W48-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parse	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+parseLocalDate	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+parseLocalDateTime	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+parseLocalTime	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+parseOffsetDateTime	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+smartparse	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+smartparseLocalDate	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+smartparseLocalDateTime	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+smartparseLocalTime	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+smartparseOffsetDateTime	2012-W48-9	!Text '2012-W48-9' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 9	0
+parse	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parseLocalDate	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parseLocalDateTime	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parseLocalTime	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parseOffsetDateTime	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparse	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparseLocalDate	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparseLocalDateTime	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparseLocalTime	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+smartparseOffsetDateTime	2012-W00-0	!Text '2012-W00-0' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 0	0
+parse	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parseLocalDate	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parseLocalDateTime	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parseLocalTime	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parseOffsetDateTime	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparse	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparseLocalDate	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparseLocalDateTime	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparseLocalTime	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+smartparseOffsetDateTime	2012-W54-8	!Text '2012-W54-8' could not be parsed: Invalid value for DayOfWeek (valid values 1 - 7): 8	0
+parse	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+parseLocalDate	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+parseLocalDateTime	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+parseLocalTime	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+parseOffsetDateTime	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+smartparse	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+smartparseLocalDate	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+smartparseLocalDateTime	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+smartparseLocalTime	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+smartparseOffsetDateTime	2012-W4-6	!Text '2012-W4-6' could not be parsed at index 6	6
+parse	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+parseLocalDate	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+parseLocalDateTime	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+parseLocalTime	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+parseOffsetDateTime	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+smartparse	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+smartparseLocalDate	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+smartparseLocalDateTime	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+smartparseLocalTime	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+smartparseOffsetDateTime	2012-W048-6	!Text '2012-W048-6' could not be parsed at index 8	8
+parse	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+parseLocalDate	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+parseLocalDateTime	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+parseLocalTime	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+parseOffsetDateTime	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+smartparse	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDate	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+smartparseLocalDateTime	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+smartparseLocalTime	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+smartparseOffsetDateTime	2012-W48-06	!Text '2012-W48-06' could not be parsed, unparsed text found at index 10	10
+parse	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+parseLocalDate	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+parseLocalDateTime	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+parseLocalTime	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+parseOffsetDateTime	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+smartparse	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+smartparseLocalDate	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+smartparseLocalDateTime	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+smartparseLocalTime	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+smartparseOffsetDateTime	2012-W48	!Text '2012-W48' could not be parsed at index 8	8
+parse	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+parseLocalDate	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+parseLocalDateTime	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+parseLocalTime	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+parseOffsetDateTime	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+smartparse	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+smartparseLocalDate	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+smartparseLocalDateTime	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+smartparseLocalTime	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+smartparseOffsetDateTime	2012-W48-	!Text '2012-W48-' could not be parsed at index 9	9
+parse	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+parseLocalDate	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+parseLocalDateTime	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+parseLocalTime	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+parseOffsetDateTime	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+smartparse	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+smartparseLocalDate	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+smartparseLocalDateTime	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+smartparseLocalTime	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+smartparseOffsetDateTime	2012-48-6	!Text '2012-48-6' could not be parsed at index 4	4
+parse	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+parseLocalDate	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+parseLocalDateTime	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+parseLocalTime	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+parseOffsetDateTime	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+smartparse	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+smartparseLocalDate	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+smartparseLocalDateTime	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+smartparseLocalTime	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+smartparseOffsetDateTime	2012W48-6	!Text '2012W48-6' could not be parsed at index 4	4
+parse	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+parseLocalDate	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+parseLocalDateTime	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+parseLocalTime	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+parseOffsetDateTime	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+smartparse	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+smartparseLocalDate	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+smartparseLocalDateTime	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+smartparseLocalTime	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+smartparseOffsetDateTime	2012-X48-6	!Text '2012-X48-6' could not be parsed at index 4	4
+parse	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+parseLocalDate	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+parseLocalDateTime	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+parseLocalTime	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+parseOffsetDateTime	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+smartparse	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+smartparseLocalDate	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+smartparseLocalDateTime	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+smartparseLocalTime	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+smartparseOffsetDateTime	201-W48-6	!Text '201-W48-6' could not be parsed at index 0	0
+parse	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+parseLocalDate	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+parseLocalDateTime	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+parseLocalTime	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+parseOffsetDateTime	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+smartparse	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+smartparseLocalDate	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+smartparseLocalDateTime	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+smartparseLocalTime	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+smartparseOffsetDateTime	12-W48-6	!Text '12-W48-6' could not be parsed at index 0	0
+parse	0000-W01-1	parsed
+parseLocalDate	0000-W01-1	0000-01-03
+parseLocalDateTime	0000-W01-1	!Text '0000-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 0000-01-03 of type java.time.format.Parsed	0
+parseLocalTime	0000-W01-1	!Text '0000-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 0000-01-03 of type java.time.format.Parsed	0
+parseOffsetDateTime	0000-W01-1	!Text '0000-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 0000-01-03 of type java.time.format.Parsed	0
+smartparse	0000-W01-1	parsed
+smartparseLocalDate	0000-W01-1	0000-01-03
+smartparseLocalDateTime	0000-W01-1	!Text '0000-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 0000-01-03 of type java.time.format.Parsed	0
+smartparseLocalTime	0000-W01-1	!Text '0000-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 0000-01-03 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	0000-W01-1	!Text '0000-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 0000-01-03 of type java.time.format.Parsed	0
+parse	0001-W01-1	parsed
+parseLocalDate	0001-W01-1	0001-01-01
+parseLocalDateTime	0001-W01-1	!Text '0001-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+parseLocalTime	0001-W01-1	!Text '0001-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	0001-W01-1	!Text '0001-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+smartparse	0001-W01-1	parsed
+smartparseLocalDate	0001-W01-1	0001-01-01
+smartparseLocalDateTime	0001-W01-1	!Text '0001-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+smartparseLocalTime	0001-W01-1	!Text '0001-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	0001-W01-1	!Text '0001-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 0001-01-01 of type java.time.format.Parsed	0
+parse	-0001-W52-7	parsed
+parseLocalDate	-0001-W52-7	0000-01-02
+parseLocalDateTime	-0001-W52-7	!Text '-0001-W52-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 0000-01-02 of type java.time.format.Parsed	0
+parseLocalTime	-0001-W52-7	!Text '-0001-W52-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 0000-01-02 of type java.time.format.Parsed	0
+parseOffsetDateTime	-0001-W52-7	!Text '-0001-W52-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 0000-01-02 of type java.time.format.Parsed	0
+smartparse	-0001-W52-7	parsed
+smartparseLocalDate	-0001-W52-7	0000-01-02
+smartparseLocalDateTime	-0001-W52-7	!Text '-0001-W52-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 0000-01-02 of type java.time.format.Parsed	0
+smartparseLocalTime	-0001-W52-7	!Text '-0001-W52-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 0000-01-02 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	-0001-W52-7	!Text '-0001-W52-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 0000-01-02 of type java.time.format.Parsed	0
+parse	-0001-W53-1	!Text '-0001-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDate	-0001-W53-1	!Text '-0001-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDateTime	-0001-W53-1	!Text '-0001-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalTime	-0001-W53-1	!Text '-0001-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseOffsetDateTime	-0001-W53-1	!Text '-0001-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+smartparse	-0001-W53-1	parsed
+smartparseLocalDate	-0001-W53-1	0000-01-03
+smartparseLocalDateTime	-0001-W53-1	!Text '-0001-W53-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to 0000-01-03 of type java.time.format.Parsed	0
+smartparseLocalTime	-0001-W53-1	!Text '-0001-W53-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to 0000-01-03 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	-0001-W53-1	!Text '-0001-W53-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to 0000-01-03 of type java.time.format.Parsed	0
+parse	+10000-W01-1	parsed
+parseLocalDate	+10000-W01-1	+10000-01-03
+parseLocalDateTime	+10000-W01-1	!Text '+10000-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to +10000-01-03 of type java.time.format.Parsed	0
+parseLocalTime	+10000-W01-1	!Text '+10000-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to +10000-01-03 of type java.time.format.Parsed	0
+parseOffsetDateTime	+10000-W01-1	!Text '+10000-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to +10000-01-03 of type java.time.format.Parsed	0
+smartparse	+10000-W01-1	parsed
+smartparseLocalDate	+10000-W01-1	+10000-01-03
+smartparseLocalDateTime	+10000-W01-1	!Text '+10000-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to +10000-01-03 of type java.time.format.Parsed	0
+smartparseLocalTime	+10000-W01-1	!Text '+10000-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to +10000-01-03 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	+10000-W01-1	!Text '+10000-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to +10000-01-03 of type java.time.format.Parsed	0
+parse	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+parseLocalDate	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+parseLocalDateTime	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+parseLocalTime	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+parseOffsetDateTime	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+smartparse	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+smartparseLocalDate	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+smartparseLocalDateTime	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+smartparseLocalTime	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+smartparseOffsetDateTime	10000-W01-1	!Text '10000-W01-1' could not be parsed at index 0	0
+parse	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+parseLocalDate	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+parseLocalDateTime	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+parseLocalTime	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+parseOffsetDateTime	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+smartparse	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+smartparseLocalDate	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+smartparseLocalDateTime	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+smartparseLocalTime	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+smartparseOffsetDateTime	+2012-W48-6	!Text '+2012-W48-6' could not be parsed at index 0	0
+parse	-2012-W48-6	parsed
+parseLocalDate	-2012-W48-6	-2012-12-03
+parseLocalDateTime	-2012-W48-6	!Text '-2012-W48-6' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -2012-12-03 of type java.time.format.Parsed	0
+parseLocalTime	-2012-W48-6	!Text '-2012-W48-6' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -2012-12-03 of type java.time.format.Parsed	0
+parseOffsetDateTime	-2012-W48-6	!Text '-2012-W48-6' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -2012-12-03 of type java.time.format.Parsed	0
+smartparse	-2012-W48-6	parsed
+smartparseLocalDate	-2012-W48-6	-2012-12-03
+smartparseLocalDateTime	-2012-W48-6	!Text '-2012-W48-6' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -2012-12-03 of type java.time.format.Parsed	0
+smartparseLocalTime	-2012-W48-6	!Text '-2012-W48-6' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -2012-12-03 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	-2012-W48-6	!Text '-2012-W48-6' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -2012-12-03 of type java.time.format.Parsed	0
+parse	+999999999-W52-5	parsed
+parseLocalDate	+999999999-W52-5	+999999999-12-31
+parseLocalDateTime	+999999999-W52-5	!Text '+999999999-W52-5' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+parseLocalTime	+999999999-W52-5	!Text '+999999999-W52-5' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+parseOffsetDateTime	+999999999-W52-5	!Text '+999999999-W52-5' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+smartparse	+999999999-W52-5	parsed
+smartparseLocalDate	+999999999-W52-5	+999999999-12-31
+smartparseLocalDateTime	+999999999-W52-5	!Text '+999999999-W52-5' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+smartparseLocalTime	+999999999-W52-5	!Text '+999999999-W52-5' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	+999999999-W52-5	!Text '+999999999-W52-5' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to +999999999-12-31 of type java.time.format.Parsed	0
+parse	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDate	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDateTime	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseLocalTime	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parseOffsetDateTime	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+smartparse	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+smartparseLocalDate	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+smartparseLocalDateTime	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+smartparseLocalTime	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+smartparseOffsetDateTime	+999999999-W52-7	!Text '+999999999-W52-7' could not be parsed: Invalid value for Year (valid values -999999999 - 999999999): 1000000000	0
+parse	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDate	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalDateTime	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseLocalTime	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parseOffsetDateTime	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+parse	-999999999-W01-1	parsed
+parseLocalDate	-999999999-W01-1	-999999999-01-01
+parseLocalDateTime	-999999999-W01-1	!Text '-999999999-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-01 of type java.time.format.Parsed	0
+parseLocalTime	-999999999-W01-1	!Text '-999999999-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -999999999-01-01 of type java.time.format.Parsed	0
+parseOffsetDateTime	-999999999-W01-1	!Text '-999999999-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-01 of type java.time.format.Parsed	0
+smartparse	-999999999-W01-1	parsed
+smartparseLocalDate	-999999999-W01-1	-999999999-01-01
+smartparseLocalDateTime	-999999999-W01-1	!Text '-999999999-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-01 of type java.time.format.Parsed	0
+smartparseLocalTime	-999999999-W01-1	!Text '-999999999-W01-1' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -999999999-01-01 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	-999999999-W01-1	!Text '-999999999-W01-1' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-01 of type java.time.format.Parsed	0
+parse	-999999999-W01-3	parsed
+parseLocalDate	-999999999-W01-3	-999999999-01-03
+parseLocalDateTime	-999999999-W01-3	!Text '-999999999-W01-3' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-03 of type java.time.format.Parsed	0
+parseLocalTime	-999999999-W01-3	!Text '-999999999-W01-3' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -999999999-01-03 of type java.time.format.Parsed	0
+parseOffsetDateTime	-999999999-W01-3	!Text '-999999999-W01-3' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-03 of type java.time.format.Parsed	0
+smartparse	-999999999-W01-3	parsed
+smartparseLocalDate	-999999999-W01-3	-999999999-01-03
+smartparseLocalDateTime	-999999999-W01-3	!Text '-999999999-W01-3' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-03 of type java.time.format.Parsed	0
+smartparseLocalTime	-999999999-W01-3	!Text '-999999999-W01-3' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -999999999-01-03 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	-999999999-W01-3	!Text '-999999999-W01-3' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-03 of type java.time.format.Parsed	0
+parse	-999999999-W01-4	parsed
+parseLocalDate	-999999999-W01-4	-999999999-01-04
+parseLocalDateTime	-999999999-W01-4	!Text '-999999999-W01-4' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-04 of type java.time.format.Parsed	0
+parseLocalTime	-999999999-W01-4	!Text '-999999999-W01-4' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -999999999-01-04 of type java.time.format.Parsed	0
+parseOffsetDateTime	-999999999-W01-4	!Text '-999999999-W01-4' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-04 of type java.time.format.Parsed	0
+smartparse	-999999999-W01-4	parsed
+smartparseLocalDate	-999999999-W01-4	-999999999-01-04
+smartparseLocalDateTime	-999999999-W01-4	!Text '-999999999-W01-4' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-04 of type java.time.format.Parsed	0
+smartparseLocalTime	-999999999-W01-4	!Text '-999999999-W01-4' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -999999999-01-04 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	-999999999-W01-4	!Text '-999999999-W01-4' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-04 of type java.time.format.Parsed	0
+parse	-999999999-W01-7	parsed
+parseLocalDate	-999999999-W01-7	-999999999-01-07
+parseLocalDateTime	-999999999-W01-7	!Text '-999999999-W01-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-07 of type java.time.format.Parsed	0
+parseLocalTime	-999999999-W01-7	!Text '-999999999-W01-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -999999999-01-07 of type java.time.format.Parsed	0
+parseOffsetDateTime	-999999999-W01-7	!Text '-999999999-W01-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-07 of type java.time.format.Parsed	0
+smartparse	-999999999-W01-7	parsed
+smartparseLocalDate	-999999999-W01-7	-999999999-01-07
+smartparseLocalDateTime	-999999999-W01-7	!Text '-999999999-W01-7' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-07 of type java.time.format.Parsed	0
+smartparseLocalTime	-999999999-W01-7	!Text '-999999999-W01-7' could not be parsed: Unable to obtain LocalTime from TemporalAccessor: {},ISO resolved to -999999999-01-07 of type java.time.format.Parsed	0
+smartparseOffsetDateTime	-999999999-W01-7	!Text '-999999999-W01-7' could not be parsed: Unable to obtain OffsetDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-07 of type java.time.format.Parsed	0
+parse	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDate	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+parseLocalDateTime	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+parseLocalTime	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+parseOffsetDateTime	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+smartparse	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+smartparseLocalDate	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+smartparseLocalDateTime	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+smartparseLocalTime	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+smartparseOffsetDateTime	+1000000000-W01-1	!Text '+1000000000-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 1000000000	0
+parse	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+parseLocalDate	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+parseLocalDateTime	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+parseLocalTime	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+parseOffsetDateTime	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+smartparse	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+smartparseLocalDate	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+smartparseLocalDateTime	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+smartparseLocalTime	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+smartparseOffsetDateTime	-1000000000-W52-1	!Text '-1000000000-W52-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): -1000000000	0
+parse	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+parseLocalDate	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+parseLocalDateTime	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+parseLocalTime	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+parseOffsetDateTime	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+smartparse	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+smartparseLocalDate	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+smartparseLocalDateTime	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+smartparseLocalTime	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+smartparseOffsetDateTime	+9999999999-W01-1	!Text '+9999999999-W01-1' could not be parsed: Invalid value for WeekBasedYear (valid values -999999999 - 999999999): 9999999999	0
+parse	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11
+parseLocalDate	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11
+parseLocalDateTime	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11
+parseLocalTime	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11
+parseOffsetDateTime	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11
+smartparse	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11
+smartparseLocalDate	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11
+smartparseLocalDateTime	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11
+smartparseLocalTime	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11
+smartparseOffsetDateTime	+99999999999-W01-1	!Text '+99999999999-W01-1' could not be parsed at index 11	11

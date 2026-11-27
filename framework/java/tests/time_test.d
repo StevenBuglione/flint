@@ -821,6 +821,65 @@ unittest
     assert(count == 694);
 }
 
+// One ISO_WEEK_DATE operation of iso_week_date.tsv: the result's toString, or `!` and the exception message (and a
+// parse exception's error index). A `smart` prefix parses with the formatter resolved SMART.
+private string isoWeekDateResult(string kind, string input)
+{
+    import flint.engine.aot.text : decimal;
+    import flint.java.time.format : ResolverStyle;
+    import std.algorithm.searching : startsWith;
+
+    try
+    {
+        if (!kind.startsWith("smart"))
+            return isoWeekDateOperation(DateTimeFormatter.ISO_WEEK_DATE, kind, input);
+        const smart = DateTimeFormatter.ISO_WEEK_DATE.withResolverStyle(ResolverStyle.SMART);
+        return isoWeekDateOperation(smart, kind[5 .. $], input);
+    }
+    catch (DateTimeParseException e)
+        return "!" ~ e.msg ~ "\t" ~ decimal(e.getErrorIndex());
+    catch (DateTimeException e)
+        return "!" ~ e.msg;
+}
+
+private string isoWeekDateOperation(const DateTimeFormatter f, string kind, string input)
+{
+    import std.conv : to;
+
+    const string delegate() @safe[string] table = [
+        "toString": () => f.toString(), "getResolverStyle": () => f.getResolverStyle().to!string,
+        "formatLocalDate": () => f.format(LocalDate.parse(input)),
+        "formatLocalDateTime": () => f.format(LocalDateTime.parse(input)),
+        "formatOffsetDateTime": () => f.format(OffsetDateTime.parse(input)),
+        "formatZonedDateTime": () => f.format(ZonedDateTime.parse(input)),
+        "formatLocalTime": () => f.format(LocalTime.parse(input)),
+        "formatInstant": () => f.format(Instant.parse(input)),
+        "formatInstantWithZone": () => f.withZone(ZoneOffset.UTC.toZoneId()).format(Instant.parse(input)),
+        "parse": () { f.parse(input); return "parsed"; },
+        "parseLocalDate": () => LocalDate.parse(input, f).toString(),
+        "parseLocalDateTime": () => LocalDateTime.parse(input, f).toString(),
+        "parseLocalTime": () => LocalTime.parse(input, f).toString(),
+        "parseOffsetDateTime": () => OffsetDateTime.parse(input, f).toString(),
+    ];
+    return table[kind]();
+}
+
+@("ISO_WEEK_DATE formats week-based years and resolves weeks STRICT and SMART like JDK 21 (iso_week_date.tsv)")
+unittest
+{
+    import std.array : join;
+
+    size_t count;
+    foreach (row; rows(import("iso_week_date.tsv")))
+    {
+        const expected = row.length > 2 ? row[2 .. $].join("\t") : "";
+        const got = isoWeekDateResult(row[0], row[1]);
+        assert(got == expected, row[0] ~ " '" ~ row[1] ~ "': " ~ got ~ " != " ~ expected);
+        ++count;
+    }
+    assert(count == 952);
+}
+
 @("a STRICT year-of-era pattern does not resolve a date without an era, as in JDK 21")
 unittest
 {
