@@ -79,7 +79,7 @@ class BitSet
         while (count != 0 && bytes[count - 1] == 0)
             --count;
         if (count == 0)
-            return new BitSet(new ulong[0]);
+            return new BitSet(copyWords(null));
 
         auto words = new ulong[(count + 7) >> 3];
         foreach (index; 0 .. count)
