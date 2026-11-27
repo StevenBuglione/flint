@@ -28,7 +28,6 @@
 
 module flint.java.util.stringtokenizer;
 
-import core.exception : onOutOfMemoryError;
 import flint.engine.aot.any : Any;
 import flint.engine.aot.text : decodeUtf8;
 import flint.java.util : NoSuchElementException;
@@ -47,14 +46,16 @@ import flint.java.util.enumeration : Enumeration;
  */
 class StringTokenizer : Enumeration!Any
 {
-    private int currentPosition;
-    private int newPosition = -1;
-    private immutable int maxPosition;
+    private size_t currentPosition;
+    private size_t newPosition = noPosition;
     private immutable string str;
     private string delimiters;
     private immutable bool retDelims;
     private bool delimsChanged;
     private dchar maxDelimCodePoint;
+
+    // newPosition before hasMoreTokens has cached a skipped position.
+    private enum size_t noPosition = size_t.max;
 
     mixin Enumeration!Any.Defaults;
 
@@ -62,7 +63,6 @@ class StringTokenizer : Enumeration!Any
     this(string str, string delim, bool returnDelims)
     {
         this.str = str;
-        maxPosition = javaLength(str.length);
         retDelims = returnDelims;
         setDelimiters(delim);
     }
@@ -84,17 +84,17 @@ class StringTokenizer : Enumeration!Any
     {
         // Remember the skipped position so nextToken does not scan the delimiters again.
         newPosition = skipDelimiters(currentPosition);
-        return newPosition < maxPosition;
+        return newPosition < str.length;
     }
 
     /// The next token. Throws NoSuchElementException when no token remains.
     string nextToken()
     {
-        currentPosition = newPosition >= 0 && !delimsChanged ? newPosition : skipDelimiters(currentPosition);
+        currentPosition = newPosition != noPosition && !delimsChanged ? newPosition : skipDelimiters(currentPosition);
         delimsChanged = false;
-        newPosition = -1;
+        newPosition = noPosition;
 
-        if (currentPosition >= maxPosition)
+        if (currentPosition >= str.length)
             throw new NoSuchElementException();
         const start = currentPosition;
         currentPosition = scanToken(currentPosition);
@@ -125,11 +125,11 @@ class StringTokenizer : Enumeration!Any
     int countTokens()
     {
         int count = 0;
-        int position = currentPosition;
-        while (position < maxPosition)
+        size_t position = currentPosition;
+        while (position < str.length)
         {
             position = skipDelimiters(position);
-            if (position >= maxPosition)
+            if (position >= str.length)
                 break;
             position = scanToken(position);
             count++;
@@ -150,23 +150,23 @@ class StringTokenizer : Enumeration!Any
         maxDelimCodePoint = m;
     }
 
-    private int skipDelimiters(int startPos) const pure nothrow @nogc
+    private size_t skipDelimiters(size_t startPos) const pure nothrow @nogc
     {
         size_t position = startPos;
-        while (!retDelims && position < maxPosition)
+        while (!retDelims && position < str.length)
         {
             size_t next = position;
             if (!isDelimiter(decodeUtf8(str, next)))
                 break;
             position = next;
         }
-        return cast(int) position;
+        return position;
     }
 
-    private int scanToken(int startPos) const pure nothrow @nogc
+    private size_t scanToken(size_t startPos) const pure nothrow @nogc
     {
         size_t position = startPos;
-        while (position < maxPosition)
+        while (position < str.length)
         {
             size_t next = position;
             if (isDelimiter(decodeUtf8(str, next)))
@@ -179,7 +179,7 @@ class StringTokenizer : Enumeration!Any
             if (isDelimiter(decodeUtf8(str, next)))
                 position = next;
         }
-        return cast(int) position;
+        return position;
     }
 
     private bool isDelimiter(dchar c) const pure nothrow @nogc
@@ -193,12 +193,4 @@ class StringTokenizer : Enumeration!Any
         }
         return false;
     }
-}
-
-private int javaLength(size_t length) pure nothrow @nogc
-{
-    // Java positions are int, so no Java string is longer.
-    if (length > int.max)
-        onOutOfMemoryError();
-    return cast(int) length;
 }
