@@ -43,3 +43,38 @@ unittest
     auto e = new ConstraintViolationException("bad", null);
     assert(e.getConstraintViolations().length == 0 && e.msg == "bad");
 }
+
+// Java's constructors decide whether the cause can still be initialized: the message-only forms leave it open, the
+// forms that take a cause (an explicit null included) close it, and initCause then throws IllegalStateException.
+@("ValidationException leaves the cause open only where Java's constructor does")
+unittest
+{
+    import flint.jakarta.validation : ValidationException;
+    import flint.java.lang : IllegalStateException;
+
+    auto root = new Exception("root");
+    auto open = new ValidationException("message");
+    assert(open.getCause() is null);
+    open.initCause(root);
+    assert(open.getCause() is root);
+    auto none = new ValidationException();
+    none.initCause(root);
+    assert(none.getCause() is root);
+    auto violations = new ConstraintViolationException("message", null);
+    violations.initCause(root);
+    assert(violations.getCause() is root);
+
+    static void assertClosed(ValidationException closed)
+    {
+        bool threw;
+        try
+            closed.initCause(new Exception("other"));
+        catch (IllegalStateException)
+            threw = true;
+        assert(threw);
+    }
+
+    assertClosed(new ValidationException("message", null));
+    assertClosed(new ValidationException("message", root));
+    assert(new ValidationException(root).getCause() is root);
+}

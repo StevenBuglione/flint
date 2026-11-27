@@ -24,13 +24,28 @@ class DateTimeParseException : DateTimeException
     private string parsedString_;
     private int errorIndex_;
 
-    ///
-    this(string message, string parsedData, int errorIndex, Throwable cause = null,
-            string file = __FILE__, size_t line = __LINE__) pure nothrow
+    /// Leave the cause open for a later call to `initCause`.
+    this(string message, string parsedData, int errorIndex, string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        super(message, file, line);
+        parsedString_ = parsedData;
+        errorIndex_ = errorIndex;
+    }
+
+    /// Initialize the cause, including when its value is null.
+    this(string message, string parsedData, int errorIndex, Throwable cause, string file = __FILE__,
+            size_t line = __LINE__) pure nothrow
     {
         super(message, cause, file, line);
         parsedString_ = parsedData;
         errorIndex_ = errorIndex;
+    }
+
+    /// Select the cause overload when the caller passes a null literal.
+    this(string message, string parsedData, int errorIndex, typeof(null) cause,
+            string file = __FILE__, size_t line = __LINE__) pure nothrow
+    {
+        this(message, parsedData, errorIndex, cast(Throwable) cause, file, line);
     }
 
     /// The text that was being parsed.
