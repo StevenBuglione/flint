@@ -9,7 +9,7 @@ module flint.java.util.stream;
 
 import flint.java.lang : IllegalStateException, valueOf;
 import flint.java.util : ArrayList, Collection, Comparator, HashMap, Iterator, LinkedHashMap,
-    LinkedHashSet, List, Map, NoSuchElementException, Optional, Set, compareNatural, stableSort;
+    LinkedHashSet, List, Map, NoSuchElementException, Objects, Optional, Set, compareNatural, stableSort;
 
 @safe:
 
@@ -537,11 +537,11 @@ private import flint.java.lang : IllegalArgumentException;
 
 // Java's eager `Objects.requireNonNull` on a stage or terminal callback, before the source is taken (R8). One
 // out-of-line cold throw keeps each operation's common path small.
-pragma(inline, false) private noreturn throwNullPointerException()
+pragma(inline, false) private noreturn throwNullPointerException(string message = null)
 {
     import flint.java.lang : NullPointerException;
 
-    throw new NullPointerException;
+    throw new NullPointerException(message);
 }
 
 /// Java's `Collectors`: the common terminal reductions for `Stream.collect`.
@@ -577,13 +577,15 @@ struct Collectors
         return Counting.init;
     }
 
-    /// A map from `keyMapper`'s result to `valueMapper`'s. A duplicate key throws `IllegalStateException`.
+    /// A map from `keyMapper`'s result to `valueMapper`'s. A duplicate key throws `IllegalStateException`, a null
+    /// value `NullPointerException`.
     static ToMap!(KF, VF) toMap(KF, VF)(KF keyMapper, VF valueMapper)
     {
         return ToMap!(KF, VF)(keyMapper, valueMapper);
     }
 
-    /// The elements grouped into lists by `classifier`'s result, in first-seen order.
+    /// The elements grouped into lists by `classifier`'s result, in first-seen order. A null result throws
+    /// `NullPointerException`.
     static GroupingBy!F groupingBy(F)(F classifier)
     {
         return GroupingBy!F(classifier);
@@ -603,9 +605,12 @@ struct ToList
 /// `Collectors.toUnmodifiableList()`.
 struct ToUnmodifiableList
 {
-    /// Collect `items`.
+    /// Collect `items`. Throws `NullPointerException` for a null element, as Java's does after accumulating them all.
     List!E apply(E)(E[] items)
     {
+        foreach (e; items)
+            if (Objects.isNull(e))
+                throwNullPointerException();
         return List!E.of(items);
     }
 }
@@ -672,6 +677,8 @@ struct ToMap(KF, VF)
         {
             auto key = keyMapper(e);
             auto value = valueMapper(e);
+            if (Objects.isNull(value))
+                throwNullPointerException();
             if (result.containsKey(key))
                 throw duplicateKey(valueOf(key), valueOf(result.get(key)), valueOf(value));
             result.put(key, value);
@@ -700,6 +707,8 @@ struct GroupingBy(F)
         foreach (e; items)
         {
             auto key = classifier(e);
+            if (Objects.isNull(key))
+                throwNullPointerException("element cannot be mapped to a null key");
             auto group = result.get(key);
             if (group is null)
             {
