@@ -90,5 +90,9 @@
   "flint.java.util.enumeration": {
     "incremental_linked_bytes": 8576,
     "template_instances": 258
+  },
+  "flint.java.util.stringtokenizer": {
+    "incremental_linked_bytes": 12721,
+    "template_instances": 266
   }
 }
