@@ -8,9 +8,9 @@ is contributed under the package licence below by owner decision
 reference results produced by executing the public Java SE 21 API.
 The specification and conformance test inventory are pinned to OpenJDK 21.0.13.
 
-Closeable, Flushable, Math, StrictMath, Byte, Short, Integer, Long and their
-shared parsing and formatting core are ported from OpenJDK 21.0.13. Their
-source files retain the upstream copyright and license notices.
+CharSequence, Closeable, Flushable, Math, StrictMath, Byte, Short, Integer, Long
+and their shared parsing and formatting core are ported from OpenJDK 21.0.13.
+Their source files retain the upstream copyright and license notices.
 
 SPDX-License-Identifier: GPL-2.0-only WITH Classpath-exception-2.0
 See LICENSE for the license and Classpath Exception.

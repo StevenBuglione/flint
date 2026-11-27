@@ -16,6 +16,7 @@ $(UL
 module flint.java.lang;
 
 public import flint.java.lang.boolean : Boolean;
+public import flint.java.lang.charsequence : CharSequence;
 public import flint.java.lang.javaobject : JavaObject;
 public import flint.java.lang.runnable : Runnable;
 public import flint.java.lang.system : System;

@@ -35,10 +35,12 @@
     },
     "java/lang/CharSequence/Comparison.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; CharSequence.compare(CharSequence, CharSequence) is deferred pending same-runtime-class Comparable dispatch.",
       "status": "deferred"
     },
     "java/lang/CharSequence/Emptiness.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/char_sequence_test.d cover the CharSequence.isEmpty() default contract against Temurin 21.0.13+9.",
       "status": "deferred"
     },
     "java/lang/Character/Bug4404588.java": {
