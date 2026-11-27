@@ -30,6 +30,7 @@
     },
     "java/lang/Byte/Decode.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/byte_short_test.d and a 66,168-call Byte/Short parse and decode differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/byte-short/) cover Byte.decode, including signs, radix prefixes and range failures.",
       "status": "deferred"
     },
     "java/lang/CharSequence/Comparison.java": {
@@ -1092,10 +1093,12 @@
     },
     "java/lang/Short/ByteSwap.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/byte_short_test.d cover Short.reverseBytes.",
       "status": "deferred"
     },
     "java/lang/Short/Decode.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/byte_short_test.d and a 66,168-call Byte/Short parse and decode differential run against OpenJDK 21.0.13 (DMD/LDC debug/release, receipts .flint/sol-framework/byte-short/) cover Short.decode, including signs, radix prefixes and range failures.",
       "status": "deferred"
     },
     "java/lang/StackTraceElement/ModuleFrames.java": {

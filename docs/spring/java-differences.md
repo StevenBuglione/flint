@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,792 | 523 | 0 | 1,905 | 14,201 |
+| framework | openjdk@21.0.13 | 1,813 | 561 | 0 | 1,909 | 14,138 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2241,6 +2241,25 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.ArithmeticException#<init>(String)` | `flint.java.lang.ArithmeticException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.AssertionError` | `flint.java.lang.AssertionError` | [R8](api-mapping.md#r8-exceptions), [R26](api-mapping.md#r26-null-arrays) | Flint uses the catchable D Exception base. The inherited Java initCause method is unavailable. A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.AssertionError#<init>(String,Throwable)` | `flint.java.lang.AssertionError.this` | [R26](api-mapping.md#r26-null-arrays) |  |
+| `java.lang.Byte` | `flint.java.lang.byte_.Byte` | [R1](api-mapping.md#r1-packages-and-names), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Import from flint.java.lang.byte_ (byte is a D keyword, R19); flint.java.lang does not re-export it until the JDK aggregate exists. A boxed Byte is a D byte (R5): valueOf and decode return the primitive, and each instance member maps to its primitive equivalent. Parsing follows Integer.parseInt, so Character.digit's Unicode decimal digits and fullwidth Latin letters count. |
+| `java.lang.Byte#<init>(String)` | `flint.java.lang.byte_.Byte.parseByte` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Deprecated for removal since Java 9 (Byte.java:373). A boxed Byte is the D byte, so Byte.parseByte(s) gives the value. |
+| `java.lang.Byte#<init>(byte)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Deprecated for removal since Java 9 (Byte.java:350). A boxed Byte is the D byte itself, as Byte.valueOf(byte) returns it. |
+| `java.lang.Byte#byteValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: byteValue() is the value itself. |
+| `java.lang.Byte#compareTo(Byte)` | `flint.java.lang.byte_.Byte.compare` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: compareTo is Byte.compare(x, y). |
+| `java.lang.Byte#decode(String)` | `flint.java.lang.byte_.Byte.decode` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a byte: a boxed Byte is a D byte. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Byte#doubleValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: doubleValue() is the implicit widening of the byte to double. |
+| `java.lang.Byte#equals(Object)` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: equals is == on the two values. |
+| `java.lang.Byte#floatValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: floatValue() is the implicit widening of the byte to float. |
+| `java.lang.Byte#hashCode()` | `flint.java.lang.byte_.Byte.hashCode` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: hashCode() is Byte.hashCode(byte). |
+| `java.lang.Byte#intValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: intValue() is the implicit widening of the byte to int. |
+| `java.lang.Byte#longValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: longValue() is the implicit widening of the byte to long. |
+| `java.lang.Byte#parseByte(String)` | `flint.java.lang.byte_.Byte.parseByte` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Byte#parseByte(String,int)` | `flint.java.lang.byte_.Byte.parseByte` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Byte#shortValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: shortValue() is the implicit widening of the byte to short. |
+| `java.lang.Byte#toString()` | `flint.java.lang.byte_.Byte.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Byte is the D byte: toString() is Byte.toString(byte). |
+| `java.lang.Byte#valueOf(String)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a byte: a boxed Byte is a D byte. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Byte#valueOf(String,int)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a byte: a boxed Byte is a D byte. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Byte#valueOf(byte)` | `flint.java.lang.byte_.Byte.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns the byte itself: a boxed Byte is a D byte. |
 | `java.lang.ClassCastException` | `flint.java.lang.ClassCastException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.ClassCastException#<init>(String)` | `flint.java.lang.ClassCastException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.IllegalArgumentException` | `flint.java.lang.IllegalArgumentException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
@@ -2261,6 +2280,25 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.lang.RuntimeException#<init>(String)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.lang.RuntimeException#<init>(String,Throwable)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
 | `java.lang.RuntimeException#<init>(String,Throwable,boolean,boolean)` | `flint.java.lang.RuntimeException.this` | [R26](api-mapping.md#r26-null-arrays) | An explicit null cause still permits initCause in Flint. Java throws IllegalStateException because the cause has already been initialized. |
+| `java.lang.Short` | `flint.java.lang.short_.Short` | [R1](api-mapping.md#r1-packages-and-names), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) | Import from flint.java.lang.short_ (short is a D keyword, R19); flint.java.lang does not re-export it until the JDK aggregate exists. A boxed Short is a D short (R5): valueOf and decode return the primitive, and each instance member maps to its primitive equivalent. Parsing follows Integer.parseInt, so Character.digit's Unicode decimal digits and fullwidth Latin letters count. |
+| `java.lang.Short#<init>(String)` | `flint.java.lang.short_.Short.parseShort` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Deprecated for removal since Java 9 (Short.java:378). A boxed Short is the D short, so Short.parseShort(s) gives the value. |
+| `java.lang.Short#<init>(short)` | `flint.java.lang.short_.Short.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Deprecated for removal since Java 9 (Short.java:355). A boxed Short is the D short itself, as Short.valueOf(short) returns it. |
+| `java.lang.Short#byteValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: byteValue() is cast(byte) of the value. |
+| `java.lang.Short#compareTo(Short)` | `flint.java.lang.short_.Short.compare` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: compareTo is Short.compare(x, y). |
+| `java.lang.Short#decode(String)` | `flint.java.lang.short_.Short.decode` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a short: a boxed Short is a D short. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Short#doubleValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: doubleValue() is the implicit widening of the short to double. |
+| `java.lang.Short#equals(Object)` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: equals is == on the two values. |
+| `java.lang.Short#floatValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: floatValue() is the implicit widening of the short to float. |
+| `java.lang.Short#hashCode()` | `flint.java.lang.short_.Short.hashCode` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: hashCode() is Short.hashCode(short). |
+| `java.lang.Short#intValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: intValue() is the implicit widening of the short to int. |
+| `java.lang.Short#longValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: longValue() is the implicit widening of the short to long. |
+| `java.lang.Short#parseShort(String)` | `flint.java.lang.short_.Short.parseShort` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Short#parseShort(String,int)` | `flint.java.lang.short_.Short.parseShort` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Short#shortValue()` | `` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: shortValue() is the value itself. |
+| `java.lang.Short#toString()` | `flint.java.lang.short_.Short.toString` | [R5](api-mapping.md#r5-optional-and-nullable-values) | A boxed Short is the D short: toString() is Short.toString(short). |
+| `java.lang.Short#valueOf(String)` | `flint.java.lang.short_.Short.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a short: a boxed Short is a D short. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Short#valueOf(String,int)` | `flint.java.lang.short_.Short.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns a short: a boxed Short is a D short. A D null string is Java's "" here: Java reports "Cannot parse null string" for parse and valueOf and throws NullPointerException for decode, where Flint reports the empty-string NumberFormatException (R5). |
+| `java.lang.Short#valueOf(short)` | `flint.java.lang.short_.Short.valueOf` | [R5](api-mapping.md#r5-optional-and-nullable-values) | Returns the short itself: a boxed Short is a D short. |
 | `java.lang.StrictMath` | `flint.java.lang.strictmath.StrictMath` | [R1](api-mapping.md#r1-packages-and-names) | Import from flint.java.lang.strictmath; flint.java.lang does not re-export it until the JDK aggregate exists. NaN results are the canonical quiet NaN (Double.NaN's bits); HotSpot on x86-64 returns the sign-set default NaN for computed paths, which only doubleToRawLongBits can observe. |
 | `java.lang.UnsupportedOperationException` | `flint.java.lang.UnsupportedOperationException` | [R26](api-mapping.md#r26-null-arrays) | A runtime-empty D detail can be indistinguishable from a null slice and report no detail. Java preserves an explicitly empty String. |
 | `java.lang.UnsupportedOperationException#<init>(String)` | `flint.java.lang.UnsupportedOperationException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -7322,6 +7360,8 @@ These Java elements have no Flint counterpart, for the reason the category gives
 
 | Java | Reason | Note |
 | --- | --- | --- |
+| `java.lang.Byte#TYPE` | `runtime-reflection` | The primitive type's runtime Class object; runtime reflection is out of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.lang.Byte#describeConstable()` | `runtime-reflection` | A java.lang.constant descriptor for the JVM's constant pool and method handles; java.lang.invoke is out of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
 | `java.lang.Class` | `runtime-reflection` |  |
 | `java.lang.Class#**` (81 elements) | `runtime-reflection` |  |
 | `java.lang.Class.**` (0 elements) | `runtime-reflection` |  |
@@ -7343,6 +7383,8 @@ These Java elements have no Flint counterpart, for the reason the category gives
 | `java.lang.SecurityManager` | `jvm-platform` |  |
 | `java.lang.SecurityManager#**` (31 elements) | `jvm-platform` |  |
 | `java.lang.SecurityManager.**` (0 elements) | `jvm-platform` |  |
+| `java.lang.Short#TYPE` | `runtime-reflection` | The primitive type's runtime Class object; runtime reflection is out of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
+| `java.lang.Short#describeConstable()` | `runtime-reflection` | A java.lang.constant descriptor for the JVM's constant pool and method handles; java.lang.invoke is out of the JDK port's scope (docs/spring/phase2/jdk-port.md). |
 | `java.lang.StackWalker` | `jvm-runtime` |  |
 | `java.lang.StackWalker#**` (7 elements) | `jvm-runtime` |  |
 | `java.lang.StackWalker.**` (15 elements) | `jvm-runtime` |  |
@@ -10827,7 +10869,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | jakarta.validation.spi | 16 | 0 |
 | jakarta.validation.valueextraction | 23 | 0 |
 | java.io | 770 | 0 |
-| java.lang | 1,779 | 0 |
+| java.lang | 1,716 | 0 |
 | java.lang.annotation | 17 | 0 |
 | java.lang.ref | 29 | 0 |
 | java.math | 133 | 0 |

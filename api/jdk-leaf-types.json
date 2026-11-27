@@ -3,8 +3,10 @@
  "types": {
   "java.io.InterruptedIOException": "flint.java.io.interruptedioexception",
   "java.io.UnsupportedEncodingException": "flint.java.io.unsupportedencodingexception",
+  "java.lang.Byte": "flint.java.lang.byte_",
   "java.lang.Math": "flint.java.lang.math",
   "java.lang.Number": "flint.java.lang.number",
+  "java.lang.Short": "flint.java.lang.short_",
   "java.lang.StrictMath": "flint.java.lang.strictmath",
   "java.net.Inet4Address": "flint.java.net.inetaddress",
   "java.net.Inet6Address": "flint.java.net.inetaddress",

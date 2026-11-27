@@ -58,5 +58,13 @@
   "flint.java.lang.strictmath": {
     "incremental_linked_bytes": 2271,
     "template_instances": 2
+  },
+  "flint.java.lang.byte_": {
+    "incremental_linked_bytes": 792,
+    "template_instances": 64
+  },
+  "flint.java.lang.short_": {
+    "incremental_linked_bytes": 863,
+    "template_instances": 64
   }
 }
