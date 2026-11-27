@@ -4,6 +4,7 @@ import flint.java.io.closeable : Closeable;
 import flint.java.nio.bytebuffer : ByteBuffer;
 import flint.java.nio.channels.bytechannel : ByteChannel;
 import flint.java.nio.channels.channel : Channel;
+import flint.java.nio.channels.completionhandler : CompletionHandler;
 import flint.java.nio.channels.gatheringbytechannel : GatheringByteChannel;
 import flint.java.nio.channels.interruptiblechannel : InterruptibleChannel;
 import flint.java.nio.channels.readablebytechannel : ReadableByteChannel;
@@ -14,11 +15,22 @@ import flint.java.nio.channels.writablebytechannel : WritableByteChannel;
 @safe:
 
 private final class MemoryChannel : SeekableByteChannel, InterruptibleChannel,
-    ScatteringByteChannel, GatheringByteChannel
+    ScatteringByteChannel, GatheringByteChannel, CompletionHandler!(int, int)
 {
     bool open = true;
     long pos;
     long len = 8;
+    int lastDone;
+
+    override void completed(int result, int attachment)
+    {
+        lastDone = result + attachment;
+    }
+
+    override void failed(Throwable exc, int attachment)
+    {
+        lastDone = exc is null ? attachment : -attachment;
+    }
 
     override bool isOpen()
     {
@@ -113,6 +125,7 @@ int main(string[] args)
     ScatteringByteChannel sch = mem;
     GatheringByteChannel gch = mem;
     SeekableByteChannel sbch = mem;
+    CompletionHandler!(int, int) handler = mem;
     Closeable closeable = ch;
 
     auto buffer = ByteBuffer.allocate(8);
@@ -126,7 +139,8 @@ int main(string[] args)
     total += cast(int) gch.write(list);
     total += cast(int) sch.read(list);
     sbch.position(1).truncate(4);
-    total += cast(int)(sbch.position() + sbch.size() + bch.read(null));
+    handler.completed(total, 1);
+    total += cast(int)(sbch.position() + sbch.size() + bch.read(null)) + mem.lastDone;
     if (args.length > 1)
         ich.close();
     else

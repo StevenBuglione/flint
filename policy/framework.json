@@ -835,6 +835,7 @@
    "module": "flint.java.nio.channels.channel",
    "also": [
     "flint.java.nio.channels.bytechannel",
+    "flint.java.nio.channels.completionhandler",
     "flint.java.nio.channels.gatheringbytechannel",
     "flint.java.nio.channels.interruptiblechannel",
     "flint.java.nio.channels.readablebytechannel",
@@ -857,6 +858,7 @@
    "java_types": [
     "java.nio.channels.ByteChannel",
     "java.nio.channels.Channel",
+    "java.nio.channels.CompletionHandler",
     "java.nio.channels.GatheringByteChannel",
     "java.nio.channels.InterruptibleChannel",
     "java.nio.channels.ReadableByteChannel",

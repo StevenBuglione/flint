@@ -7,6 +7,10 @@
     "incremental_linked_bytes": 2302,
     "template_instances": 241
   },
+  "flint.java.nio.channels.completionhandler": {
+    "incremental_linked_bytes": 2000,
+    "template_instances": 100
+  },
   "flint.java.nio.channels.gatheringbytechannel": {
     "incremental_linked_bytes": 3305,
     "template_instances": 273

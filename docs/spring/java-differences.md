@@ -193,7 +193,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,179 | 369 | 1,871 | 15,002 |
+| framework | openjdk@21.0.13 | 1,181 | 370 | 1,871 | 14,999 |
 | framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
 | security | spring-security@7.2.0 | 554 | 27 | 88 | 11,744 |
@@ -2313,6 +2313,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | --- | --- | --- | --- |
 | `java.nio.channels.ByteChannel` | `flint.java.nio.channels.bytechannel.ByteChannel` | [R1](api-mapping.md#r1-packages-and-names) | Import ByteChannel from flint.java.nio.channels.bytechannel. |
 | `java.nio.channels.Channel` | `flint.java.nio.channels.channel.Channel` | [R1](api-mapping.md#r1-packages-and-names) | Import Channel from flint.java.nio.channels.channel. |
+| `java.nio.channels.CompletionHandler` | `flint.java.nio.channels.completionhandler.CompletionHandler` | [R1](api-mapping.md#r1-packages-and-names) | Import CompletionHandler from flint.java.nio.channels.completionhandler. |
 | `java.nio.channels.GatheringByteChannel` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel` | [R1](api-mapping.md#r1-packages-and-names), [R26](api-mapping.md#r26-null-arrays) | Import GatheringByteChannel from flint.java.nio.channels.gatheringbytechannel. A null ByteBuffer[] slice counts as empty under R26. |
 | `java.nio.channels.GatheringByteChannel#write(ByteBuffer[])` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel.write` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.nio.channels.GatheringByteChannel#write(ByteBuffer[],int,int)` | `flint.java.nio.channels.gatheringbytechannel.GatheringByteChannel.write` | [R26](api-mapping.md#r26-null-arrays) |  |
@@ -10566,7 +10567,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.net | 809 | 0 |
 | java.net.spi | 0 | 19 |
 | java.nio | 229 | 0 |
-| java.nio.channels | 0 | 309 |
+| java.nio.channels | 0 | 306 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 86 | 0 |
 | java.nio.charset.spi | 0 | 4 |

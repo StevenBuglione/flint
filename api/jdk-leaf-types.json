@@ -16,6 +16,7 @@
   "java.nio.ReadOnlyBufferException": "flint.java.nio.readonlybufferexception",
   "java.nio.channels.ByteChannel": "flint.java.nio.channels.bytechannel",
   "java.nio.channels.Channel": "flint.java.nio.channels.channel",
+  "java.nio.channels.CompletionHandler": "flint.java.nio.channels.completionhandler",
   "java.nio.channels.GatheringByteChannel": "flint.java.nio.channels.gatheringbytechannel",
   "java.nio.channels.InterruptibleChannel": "flint.java.nio.channels.interruptiblechannel",
   "java.nio.channels.ReadableByteChannel": "flint.java.nio.channels.readablebytechannel",
