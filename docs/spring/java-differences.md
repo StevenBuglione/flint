@@ -179,7 +179,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 
 | Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 0 | 15,202 |
+| ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,601 | 1,553 | 0 | 4,870 | 29,810 |
@@ -242,17 +242,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,List,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R10](api-mapping.md#r10-streams-and-collections), [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
-| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,String,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,List,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#<init>(MessageType,String,Map)` | `flint.ai.chat.messages.AbstractMessage.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R15](api-mapping.md#r15-enums-with-fields), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#equals(Object)` | `flint.ai.chat.messages.AbstractMessage.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#getMessageType()` | `flint.ai.chat.messages.AbstractMessage.getMessageType` | [R15](api-mapping.md#r15-enums-with-fields) |  |
-| `org.springframework.ai.chat.messages.AbstractMessage#getMetadata()` | `flint.ai.chat.messages.AbstractMessage.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
-| `org.springframework.ai.chat.messages.AbstractMessage#getParts()` | `flint.ai.chat.messages.AbstractMessage.getParts` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#getMetadata()` | `flint.ai.chat.messages.AbstractMessage.getMetadata` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#getText()` | `flint.ai.chat.messages.AbstractMessage.getText` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#hashCode()` | `flint.ai.chat.messages.AbstractMessage.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality), [R15](api-mapping.md#r15-enums-with-fields) | The role contributes its stable ordinal in place of Java enum reference identity. Cross-runtime numeric hashes differ. |
-| `org.springframework.ai.chat.messages.AbstractMessage#legacyParts(String)` | `flint.ai.chat.messages.AbstractMessage.legacyParts` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#legacyParts(String)` | `flint.ai.chat.messages.AbstractMessage.legacyParts` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#messageType` | `flint.ai.chat.messages.AbstractMessage.messageType` | [R15](api-mapping.md#r15-enums-with-fields), [R24](api-mapping.md#r24-final-instance-fields) |  |
-| `org.springframework.ai.chat.messages.AbstractMessage#metadata` | `flint.ai.chat.messages.AbstractMessage.metadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values), [R24](api-mapping.md#r24-final-instance-fields) |  |
+| `org.springframework.ai.chat.messages.AbstractMessage#metadata` | `flint.ai.chat.messages.AbstractMessage.metadata` | [R23](api-mapping.md#r23-object-typed-values), [R24](api-mapping.md#r24-final-instance-fields) |  |
 | `org.springframework.ai.chat.messages.AbstractMessage#textContent` | `flint.ai.chat.messages.AbstractMessage.textContent` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R24](api-mapping.md#r24-final-instance-fields) |  |
 | `org.springframework.ai.chat.messages.AssistantMessage.ToolCall` | `flint.ai.chat.messages.AssistantMessage.ToolCall` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.messages.AssistantMessage.ToolCall#<init>(String,String,String,String)` | `flint.ai.chat.messages.AssistantMessage.ToolCall.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -271,7 +270,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.messages.SystemMessage.Builder` | `flint.ai.chat.messages.SystemMessage.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#<init>()` | `flint.ai.chat.messages.SystemMessage.Builder.init` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#build()` | `flint.ai.chat.messages.SystemMessage.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.chat.messages.SystemMessage.Builder#metadata(Map)` | `flint.ai.chat.messages.SystemMessage.Builder.metadata` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.chat.messages.SystemMessage.Builder#metadata(Map)` | `flint.ai.chat.messages.SystemMessage.Builder.metadata` | [R12](api-mapping.md#r12-builders-and-fluent-apis), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.chat.messages.SystemMessage.Builder#text(String)` | `flint.ai.chat.messages.SystemMessage.Builder.text` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse` | `flint.ai.chat.messages.ToolResponseMessage.ToolResponse` | [R1](api-mapping.md#r1-packages-and-names), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse#<init>(String,String,String)` | `flint.ai.chat.messages.ToolResponseMessage.ToolResponse.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -283,45 +282,32 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.chat.messages.part.MessagePart#attributes()` | `flint.ai.chat.messages.part.MessagePart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.MessagePart#payload()` | `flint.ai.chat.messages.part.MessagePart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.messages.part.MessagePart#withAttributes(Map)` | `flint.ai.chat.messages.part.MessagePart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.OpaquePayload` | `flint.ai.chat.messages.part.OpaquePayload` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.messages.part.ReasoningPart` | `flint.ai.chat.messages.part.ReasoningPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.ReasoningPart#<init>(String,String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ReasoningPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.ReasoningPart#attributes` | `flint.ai.chat.messages.part.ReasoningPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.part.ReasoningPart#<init>(String,String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ReasoningPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
 | `org.springframework.ai.chat.messages.part.ReasoningPart#payload` | `flint.ai.chat.messages.part.ReasoningPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ReasoningPart#summary` | `flint.ai.chat.messages.part.ReasoningPart.summary` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ReasoningPart#text` | `flint.ai.chat.messages.part.ReasoningPart.text` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.messages.part.ReasoningPart#withAttributes(Map)` | `flint.ai.chat.messages.part.ReasoningPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.TextPart` | `flint.ai.chat.messages.part.TextPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.TextPart#<init>(String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.TextPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.TextPart#attributes` | `flint.ai.chat.messages.part.TextPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.part.TextPart#<init>(String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.TextPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
 | `org.springframework.ai.chat.messages.part.TextPart#payload` | `flint.ai.chat.messages.part.TextPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.messages.part.TextPart#withAttributes(Map)` | `flint.ai.chat.messages.part.TextPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.ToolCallPart` | `flint.ai.chat.messages.part.ToolCallPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.ToolCallPart#<init>(ToolCall,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolCallPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.ToolCallPart#attributes` | `flint.ai.chat.messages.part.ToolCallPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.part.ToolCallPart#<init>(ToolCall,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolCallPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
 | `org.springframework.ai.chat.messages.part.ToolCallPart#of(ToolCall)` | `flint.ai.chat.messages.part.ToolCallPart.of` | [R11](api-mapping.md#r11-object-identity-and-equality) | The tool call is a D record value. A null argument is rejected at compile time. |
 | `org.springframework.ai.chat.messages.part.ToolCallPart#payload` | `flint.ai.chat.messages.part.ToolCallPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ToolCallPart#toolCall` | `flint.ai.chat.messages.part.ToolCallPart.toolCall` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.ai.chat.messages.part.ToolCallPart#withAttributes(Map)` | `flint.ai.chat.messages.part.ToolCallPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart` | `flint.ai.chat.messages.part.ToolResultPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.ToolResultPart#<init>(String,String,List,boolean,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolResultPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.ToolResultPart#attributes` | `flint.ai.chat.messages.part.ToolResultPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.chat.messages.part.ToolResultPart#content` | `flint.ai.chat.messages.part.ToolResultPart.content` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.messages.part.ToolResultPart#<init>(String,String,List,boolean,OpaquePayload,Map)` | `flint.ai.chat.messages.part.ToolResultPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#id` | `flint.ai.chat.messages.part.ToolResultPart.id` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#name` | `flint.ai.chat.messages.part.ToolResultPart.name` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#of(ToolResponse)` | `flint.ai.chat.messages.part.ToolResultPart.of` | [R11](api-mapping.md#r11-object-identity-and-equality) | The response is a D record value. A null argument is rejected at compile time. |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#payload` | `flint.ai.chat.messages.part.ToolResultPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.messages.part.ToolResultPart#toToolResponse()` | `flint.ai.chat.messages.part.ToolResultPart.toToolResponse` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.ai.chat.messages.part.ToolResultPart#withAttributes(Map)` | `flint.ai.chat.messages.part.ToolResultPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.UnknownPart` | `flint.ai.chat.messages.part.UnknownPart` | [R11](api-mapping.md#r11-object-identity-and-equality), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
-| `org.springframework.ai.chat.messages.part.UnknownPart#<init>(String,String,String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.UnknownPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
+| `org.springframework.ai.chat.messages.part.UnknownPart#<init>(String,String,String,OpaquePayload,Map)` | `flint.ai.chat.messages.part.UnknownPart.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R16](api-mapping.md#r16-sealed-interfaces-and-the-records-that-implement-them) |  |
 | `org.springframework.ai.chat.messages.part.UnknownPart#SPRING_AI_PROVIDER` | `flint.ai.chat.messages.part.UnknownPart.FLINT_AI_PROVIDER` | [R1](api-mapping.md#r1-packages-and-names) |  |
-| `org.springframework.ai.chat.messages.part.UnknownPart#attributes` | `flint.ai.chat.messages.part.UnknownPart.attributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.chat.messages.part.UnknownPart#payload` | `flint.ai.chat.messages.part.UnknownPart.payload` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.messages.part.UnknownPart#withAttributes(Map)` | `flint.ai.chat.messages.part.UnknownPart.withAttributes` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.ai.chat.metadata
 
@@ -368,17 +354,17 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.chat.prompt.ChatOptions#getMaxTokens()` | `flint.ai.chat.prompt.ChatOptions.getMaxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getModel()` | `flint.ai.chat.prompt.ChatOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getPresencePenalty()` | `flint.ai.chat.prompt.ChatOptions.getPresencePenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.prompt.ChatOptions#getStopSequences()` | `flint.ai.chat.prompt.ChatOptions.getStopSequences` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.prompt.ChatOptions#getStopSequences()` | `flint.ai.chat.prompt.ChatOptions.getStopSequences` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTemperature()` | `flint.ai.chat.prompt.ChatOptions.getTemperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTopK()` | `flint.ai.chat.prompt.ChatOptions.getTopK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.ChatOptions#getTopP()` | `flint.ai.chat.prompt.ChatOptions.getTopP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.prompt.DefaultChatOptions#<init>(String,Double,Integer,Double,List,Double,Integer,Double)` | `flint.ai.chat.prompt.DefaultChatOptions.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptions#<init>(String,Double,Integer,Double,List,Double,Integer,Double)` | `flint.ai.chat.prompt.DefaultChatOptions.this` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#equals(Object)` | `flint.ai.chat.prompt.DefaultChatOptions.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getFrequencyPenalty()` | `flint.ai.chat.prompt.DefaultChatOptions.getFrequencyPenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getMaxTokens()` | `flint.ai.chat.prompt.DefaultChatOptions.getMaxTokens` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getModel()` | `flint.ai.chat.prompt.DefaultChatOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getPresencePenalty()` | `flint.ai.chat.prompt.DefaultChatOptions.getPresencePenalty` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
-| `org.springframework.ai.chat.prompt.DefaultChatOptions#getStopSequences()` | `flint.ai.chat.prompt.DefaultChatOptions.getStopSequences` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.chat.prompt.DefaultChatOptions#getStopSequences()` | `flint.ai.chat.prompt.DefaultChatOptions.getStopSequences` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTemperature()` | `flint.ai.chat.prompt.DefaultChatOptions.getTemperature` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTopK()` | `flint.ai.chat.prompt.DefaultChatOptions.getTopK` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.chat.prompt.DefaultChatOptions#getTopP()` | `flint.ai.chat.prompt.DefaultChatOptions.getTopP` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -388,7 +374,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.content.Content#getMetadata()` | `flint.ai.content.Content.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.content.Content#getText()` | `flint.ai.content.Content.getText` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.content.Media.Format` | `flint.ai.content.Media.Format` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `org.springframework.ai.content.Media.Format#DOC_CSV` | `flint.ai.content.Media.Format.DOC_CSV` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
@@ -413,14 +398,12 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.content.Media.Format#VIDEO_THREE_GP` | `flint.ai.content.Media.Format.VIDEO_THREE_GP` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.content.Media.Format#VIDEO_WEBM` | `flint.ai.content.Media.Format.VIDEO_WEBM` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.content.Media.Format#VIDEO_WMV` | `flint.ai.content.Media.Format.VIDEO_WMV` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.ai.content.MediaContent#getMedia()` | `flint.ai.content.MediaContent.getMedia` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 
 #### org.springframework.ai.converter
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.ai.converter.ListOutputConverter` | `flint.ai.converter.ListOutputConverter` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.converter.ListOutputConverter#convert(String)` | `flint.ai.converter.ListOutputConverter.convert` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.converter.MarkdownCodeBlockCleaner#clean(String)` | `flint.ai.converter.MarkdownCodeBlockCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.ResponseTextCleaner#clean(String)` | `flint.ai.converter.ResponseTextCleaner.clean` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.converter.StructuredOutputConverter#getJsonSchema()` | `flint.ai.converter.StructuredOutputConverter.getJsonSchema` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -431,33 +414,31 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.ai.document.DefaultContentFormatter#builder()` | `flint.ai.document.DefaultContentFormatter.builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.document.DefaultContentFormatter#getExcludedEmbedMetadataKeys()` | `flint.ai.document.DefaultContentFormatter.getExcludedEmbedMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.document.DefaultContentFormatter#getExcludedInferenceMetadataKeys()` | `flint.ai.document.DefaultContentFormatter.getExcludedInferenceMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder` | `flint.ai.document.DefaultContentFormatter.Builder` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#build()` | `flint.ai.document.DefaultContentFormatter.Builder.build` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#from(DefaultContentFormatter)` | `flint.ai.document.DefaultContentFormatter.Builder.from` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedEmbedMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedEmbedMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedEmbedMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedEmbedMetadataKeys` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedEmbedMetadataKeys(String...)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedEmbedMetadataKeys` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedInferenceMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedInferenceMetadataKeys` | [R10](api-mapping.md#r10-streams-and-collections), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
+| `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedInferenceMetadataKeys(List)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedInferenceMetadataKeys` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withExcludedInferenceMetadataKeys(String...)` | `flint.ai.document.DefaultContentFormatter.Builder.withExcludedInferenceMetadataKeys` | [R7](api-mapping.md#r7-overloads), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withMetadataSeparator(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withMetadataSeparator` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withMetadataTemplate(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withMetadataTemplate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.document.DefaultContentFormatter.Builder#withTextTemplate(String)` | `flint.ai.document.DefaultContentFormatter.Builder.withTextTemplate` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.document.Document#<init>(String,String,Map)` | `flint.ai.document.Document.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.document.Document#<init>(String,String,Map)` | `flint.ai.document.Document.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.document.Document#equals(Object)` | `flint.ai.document.Document.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.document.Document#getFormattedContent(ContentFormatter,MetadataMode)` | `flint.ai.document.Document.getFormattedContent` | [R5](api-mapping.md#r5-optional-and-nullable-values) | The Nullable mode overload preserves Java null-mode validation. |
-| `org.springframework.ai.document.Document#getMetadata()` | `flint.ai.document.Document.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.document.Document#getMetadata()` | `flint.ai.document.Document.getMetadata` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.document.Document#getText()` | `flint.ai.document.Document.getText` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.document.Document#hashCode()` | `flint.ai.document.Document.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.document.DocumentMetadata` | `flint.ai.document.DocumentMetadata` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#CONTENT_REF` | `flint.ai.document.DocumentMetadata.CONTENT_REF` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentMetadata#DISTANCE` | `flint.ai.document.DocumentMetadata.DISTANCE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `org.springframework.ai.document.DocumentReader` | `flint.ai.document.DocumentReader` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.document.DocumentReader#read()` | `flint.ai.document.DocumentReader.read` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.document.DocumentReader#read()` | `flint.ai.document.DocumentReader.read` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.ai.document.DocumentTransformer` | `flint.ai.document.DocumentTransformer` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.document.DocumentTransformer#transform(List)` | `flint.ai.document.DocumentTransformer.transform` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.document.DocumentTransformer#transform(List)` | `flint.ai.document.DocumentTransformer.transform` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 | `org.springframework.ai.document.DocumentWriter` | `flint.ai.document.DocumentWriter` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.document.DocumentWriter#write(List)` | `flint.ai.document.DocumentWriter.write` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.document.DocumentWriter#write(List)` | `flint.ai.document.DocumentWriter.write` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
 
 #### org.springframework.ai.document.id
 
@@ -484,8 +465,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.embedding.EmbeddingOptions#getModel()` | `flint.ai.embedding.EmbeddingOptions.getModel` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingOptions.Builder#dimensions(Integer)` | `flint.ai.embedding.EmbeddingOptions.Builder.dimensions` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
 | `org.springframework.ai.embedding.EmbeddingRequest` | `flint.ai.embedding.EmbeddingRequest` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.embedding.EmbeddingRequest#<init>(List,EmbeddingOptions)` | `flint.ai.embedding.EmbeddingRequest.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.ai.embedding.EmbeddingRequest#getInstructions()` | `flint.ai.embedding.EmbeddingRequest.getInstructions` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#<init>(String,ModalityType,MimeType,Object)` | `flint.ai.embedding.EmbeddingResultMetadata.this` | [R5](api-mapping.md#r5-optional-and-nullable-values), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata#getDocumentData()` | `flint.ai.embedding.EmbeddingResultMetadata.getDocumentData` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.embedding.EmbeddingResultMetadata.ModalityUtils#getModalityType(MimeType)` | `flint.ai.embedding.EmbeddingResultMetadata.ModalityUtils.getModalityType` | [R5](api-mapping.md#r5-optional-and-nullable-values) |  |
@@ -494,16 +473,14 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.ai.evaluation.EvaluationRequest#<init>(List,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R7](api-mapping.md#r7-overloads), [R10](api-mapping.md#r10-streams-and-collections) | Use a typed null for the String or List constructor, as the untyped null call is ambiguous. |
-| `org.springframework.ai.evaluation.EvaluationRequest#<init>(String,List,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R10](api-mapping.md#r10-streams-and-collections) |  |
+| `org.springframework.ai.evaluation.EvaluationRequest#<init>(List,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R7](api-mapping.md#r7-overloads) | Use a typed null for the String or List constructor, as the untyped null call is ambiguous. |
 | `org.springframework.ai.evaluation.EvaluationRequest#<init>(String,String)` | `flint.ai.evaluation.EvaluationRequest.this` | [R7](api-mapping.md#r7-overloads) | Use a typed null for the String or List constructor, as the untyped null call is ambiguous. |
 | `org.springframework.ai.evaluation.EvaluationRequest#equals(Object)` | `flint.ai.evaluation.EvaluationRequest.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.ai.evaluation.EvaluationRequest#getDataList()` | `flint.ai.evaluation.EvaluationRequest.getDataList` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.ai.evaluation.EvaluationRequest#hashCode()` | `flint.ai.evaluation.EvaluationRequest.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
-| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,float,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#<init>(boolean,float,String,Map)` | `flint.ai.evaluation.EvaluationResponse.this` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#equals(Object)` | `flint.ai.evaluation.EvaluationResponse.equals` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
-| `org.springframework.ai.evaluation.EvaluationResponse#getMetadata()` | `flint.ai.evaluation.EvaluationResponse.getMetadata` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.evaluation.EvaluationResponse#getMetadata()` | `flint.ai.evaluation.EvaluationResponse.getMetadata` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#hashCode()` | `flint.ai.evaluation.EvaluationResponse.hashCode` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.evaluation.EvaluationResponse#toString()` | `flint.ai.evaluation.EvaluationResponse.toString` | [R11](api-mapping.md#r11-object-identity-and-equality) |  |
 | `org.springframework.ai.evaluation.Evaluator#doGetSupportingData(EvaluationRequest)` | `flint.ai.evaluation.Evaluator.doGetSupportingData` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) |  |
@@ -692,16 +669,16 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfBottomTextLinesToDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfBottomTextLinesToDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopPagesToSkipBeforeDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopPagesToSkipBeforeDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
 | `org.springframework.ai.reader.ExtractedTextFormatter.Builder#withNumberOfTopTextLinesToDelete(int)` | `flint.ai.reader.ExtractedTextFormatter.Builder.withNumberOfTopTextLinesToDelete` | [R12](api-mapping.md#r12-builders-and-fluent-apis) |  |
-| `org.springframework.ai.reader.JsonMetadataGenerator#generate(Map)` | `flint.ai.reader.JsonMetadataGenerator.generate` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.ai.reader.JsonMetadataGenerator#generate(Map)` | `flint.ai.reader.JsonMetadataGenerator.generate` | [R23](api-mapping.md#r23-object-typed-values) |  |
 
 #### org.springframework.ai.template
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
 | `org.springframework.ai.template.NoOpTemplateRenderer` | `flint.ai.template_.NoOpTemplateRenderer` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `org.springframework.ai.template.NoOpTemplateRenderer#apply(String,Map)` | `flint.ai.template_.NoOpTemplateRenderer.apply` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.ai.template.NoOpTemplateRenderer#apply(String,Map)` | `flint.ai.template_.NoOpTemplateRenderer.apply` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.TemplateRenderer` | `flint.ai.template_.TemplateRenderer` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
-| `org.springframework.ai.template.TemplateRenderer#apply(String,Map)` | `flint.ai.template_.TemplateRenderer.apply` | [R10](api-mapping.md#r10-streams-and-collections), [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
+| `org.springframework.ai.template.TemplateRenderer#apply(String,Map)` | `flint.ai.template_.TemplateRenderer.apply` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 | `org.springframework.ai.template.ValidationMode` | `flint.ai.template_.ValidationMode` | [R19](api-mapping.md#r19-java-names-that-are-d-keywords) |  |
 
 #### org.springframework.ai.tokenizer
