@@ -55,6 +55,9 @@ struct MappingEntry
     string category;
     /// Phase of a deferred element.
     string phase;
+    /// Porter provenance, `<porter>/<N>` (`port-spring/3`), on a ported or adapted row the porter wrote; empty on a
+    /// hand-written row (owner decision 894b020c9, docs/spring/phase2/porter-plan.md).
+    string generated;
 }
 
 /// A whole mapping.
@@ -208,6 +211,12 @@ private bool readEntry(string key, const ref imported!"std.json".JSONValue value
     entry.symbol = field("d");
     entry.category = field("category");
     entry.phase = field("phase");
+    entry.generated = field("generated");
+    if ("generated" in value && !validProvenance(entry.generated))
+    {
+        error = key ~ ": `generated` must name the porter and its output version, such as port-spring/3";
+        return false;
+    }
     if ("rules" in value)
         foreach (ref rule; value["rules"].arrayNoRef)
             entry.rules ~= rule.str;
@@ -221,6 +230,11 @@ private bool readEntry(string key, const ref imported!"std.json".JSONValue value
         return checkAdapted(entry, error);
     case "excluded":
         entry.status = Status.excluded;
+        if (entry.generated.length)
+        {
+            error = key ~ ": an excluded element has no porter provenance; `generated` marks a row the porter wrote";
+            return false;
+        }
         return checkExcluded(entry, error);
     default:
         error = key ~ ": `status` must be ported, adapted or excluded";
@@ -326,6 +340,24 @@ bool validRule(string rule)
     if (rule.length < 2 || rule.length > 4 || rule[0] != 'R' || rule[1] == '0')
         return false;
     foreach (c; rule[1 .. $])
+        if (c < '0' || c > '9')
+            return false;
+    return true;
+}
+
+/// Whether `value` is porter provenance: a lower-case porter name, `/`, and a positive output version without a
+/// leading zero (`port-spring/3`, `port-jdk/12`).
+bool validProvenance(string value)
+{
+    import std.string : indexOf;
+
+    const slash = value.indexOf('/');
+    if (slash <= 0 || slash + 1 >= value.length || value[0] < 'a' || value[0] > 'z' || value[slash + 1] == '0')
+        return false;
+    foreach (c; value[0 .. slash])
+        if (!(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-'))
+            return false;
+    foreach (c; value[slash + 1 .. $])
         if (c < '0' || c > '9')
             return false;
     return true;

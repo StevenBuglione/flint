@@ -175,28 +175,30 @@ Flint has no runtime reflection or class loading. Flint AOT generates, at build 
 
 Element counts per upstream, as `flint api coverage` classifies them.
 
-| Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |
-| --- | --- | ---: | ---: | ---: | ---: |
-| ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 15,202 |
-| boot | spring-boot@v4.2.0 | 47 | 111 | 2,133 | 13,312 |
-| data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,601 | 1,553 | 4,870 | 29,810 |
-| framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
-| framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 332 |
-| framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
-| framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
-| framework | jackson-core@3.1.8 | 529 | 28 | 1 | 2,737 |
-| framework | jackson-databind@3.1.8 | 511 | 137 | 5 | 9,814 |
-| framework | jackson-annotations@2.21 | 164 | 0 | 0 | 377 |
-| framework | slf4j-api@2.0.20 | 281 | 113 | 1 | 260 |
-| framework | micrometer-core@1.18.0 | 200 | 162 | 0 | 2,028 |
-| framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 791 |
-| framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 4,289 |
-| framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,221 | 390 | 1,871 | 14,939 |
-| framework | aspectj@1.9.27 | 19 | 77 | 191 | 23 |
-| framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 35 |
-| security | spring-security@7.2.0 | 550 | 31 | 88 | 11,744 |
+Ported and adapted elements are written by hand or, where the row carries `generated`, by a porter (docs/spring/phase2/porter-plan.md); **By porter** counts the latter.
+
+| Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| ai | spring-ai@v2.1.0 | 206 | 388 | 0 | 0 | 15,202 |
+| boot | spring-boot@v4.2.0 | 47 | 111 | 0 | 2,133 | 13,312 |
+| data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
+| framework | spring-framework@v7.1.0 | 3,601 | 1,553 | 0 | 4,870 | 29,810 |
+| framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
+| framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
+| framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
+| framework | jakarta-servlet@6.1.0 | 6 | 270 | 0 | 1 | 551 |
+| framework | jackson-core@3.1.8 | 529 | 28 | 0 | 1 | 2,737 |
+| framework | jackson-databind@3.1.8 | 511 | 137 | 0 | 5 | 9,814 |
+| framework | jackson-annotations@2.21 | 164 | 0 | 0 | 0 | 377 |
+| framework | slf4j-api@2.0.20 | 281 | 113 | 0 | 1 | 260 |
+| framework | micrometer-core@1.18.0 | 200 | 162 | 0 | 0 | 2,028 |
+| framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
+| framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
+| framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
+| framework | openjdk@21.0.13 | 1,221 | 390 | 0 | 1,871 | 14,939 |
+| framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
+| framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
+| security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
 
 ## Known gaps
 

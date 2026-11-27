@@ -82,10 +82,13 @@ class ApiDifferencesTest(unittest.TestCase):
                           'note': "Java's null-argument exceptions are not reproduced"},
             'q.Loader': {'status': 'excluded', 'category': 'jvm-runtime'},
             'p.B#y()': {'status': 'excluded', 'category': 'deferred', 'phase': '2', 'reason': 'waits on NavigableSet'},
-            'p.B#x()': {'status': 'ported', 'd': 'flint.p.B.x', 'note': 'Known gap: only two ids'},
+            'p.B#x()': {'status': 'ported', 'd': 'flint.p.B.x', 'note': 'Known gap: only two ids',
+                        'generated': 'port-spring/1'},
         })
         page, problems = api_differences.render(self.root)
         self.assertEqual(problems, [])
+        # One ported and one adapted element; the porter wrote the ported one.
+        self.assertIn('| r | lib@1.0 | 1 | 1 | 1 | 1 | 5 |', page)
         self.assertIn("| Java's null-argument exceptions are not reproduced |", page)
         self.assertIn('| r | `p.B#y()` | 2 | waits on NavigableSet |', page)
         self.assertIn('| r | `p.B#x()` | `flint.p.B.x` | Known gap: only two ids |', page)

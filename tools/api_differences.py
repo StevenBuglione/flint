@@ -430,6 +430,8 @@ def render(root, problems=None):
                     match, entry = found
                     hits[match] += 1
                     status = entry['status']
+                    if entry.get('generated') and status in ('ported', 'adapted'):
+                        counts[key]['porter'] += 1
                     if status == 'excluded' and entry.get('category') == 'deferred':
                         status = 'deferred'
                         defer[t['package']]['phase ' + str(entry.get('phase', '?'))] += 1
@@ -470,9 +472,13 @@ def render(root, problems=None):
         return '' if literal_prefix(match) == len(match) else f' ({hit} elements)'
 
     out += ['## Summary', '', 'Element counts per upstream, as `flint api coverage` classifies them.', '',
-            '| Repo | Upstream | Ported | Adapted | Excluded | Not yet ported |', '| --- | --- | ---: | ---: | ---: | ---: |']
+            'Ported and adapted elements are written by hand or, where the row carries `generated`, by a porter '
+            '(docs/spring/phase2/porter-plan.md); **By porter** counts the latter.', '',
+            '| Repo | Upstream | Ported | Adapted | By porter | Excluded | Not yet ported |',
+            '| --- | --- | ---: | ---: | ---: | ---: | ---: |']
     for repo, key, c in summary:
-        out.append(f"| {repo} | {key} | {c['ported']:,} | {c['adapted']:,} | {c['excluded']:,} | {c['deferred']:,} |")
+        out.append(f"| {repo} | {key} | {c['ported']:,} | {c['adapted']:,} | {c['porter']:,} | {c['excluded']:,} | "
+                   f"{c['deferred']:,} |")
     if gaps:
         out += ['', '## Known gaps', '',
                 'These elements keep Spring\'s signature, but their behaviour is not complete yet; the note says what '

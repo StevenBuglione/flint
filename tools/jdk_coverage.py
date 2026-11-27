@@ -446,6 +446,7 @@ def coverage(root, manifest, leaf):
             if status in ('ported', 'adapted'):
                 table[package][unit + ' done'] += 1
                 table[package]['unconfirmed'] += element in unconfirmed
+                table[package]['porter'] += bool(match[1].get('generated'))
         table[package]['leaf'] += t['id'] in leaf
     return table
 
@@ -474,20 +475,23 @@ def render_table(table, leaf):
         'member not excluded (deferred counts as in scope). Owners are from '
         '[the lane table](phase2/jdk-port.md#lanes). **Unconfirmed** rows were classified by the tool from the D code '
         'that exists (name, arity and parameter kinds) and wait for the owning lane to confirm them (api/jdk-unconfirmed.json). '
+        '**By porter** counts done elements whose row carries `generated` (docs/spring/phase2/porter-plan.md). '
         '**Leaf only** types exist in D but not at their R1 path: `import flint.java.x : T` fails, so they are '
         'adapted R1 with a note naming the leaf module until the JDK aggregate (sol-jdk-core) re-exports them.',
         '',
         f'Overall: types {total["types done"]}/{total["types"]} ({pct(total["types done"], total["types"])}), '
-        f'members {total["members done"]}/{total["members"]} ({pct(total["members done"], total["members"])}).',
+        f'members {total["members done"]}/{total["members"]} ({pct(total["members done"], total["members"])}); '
+        f'{total["porter"]} of the done elements were written by a porter (`generated`).',
         '',
-        '| Package | Owners | Types done / in scope | Members done / in scope | Members % | Unconfirmed | Leaf only |',
-        '|---|---|---|---|---|---|---|',
+        '| Package | Owners | Types done / in scope | Members done / in scope | Members % | By porter | Unconfirmed | '
+        'Leaf only |',
+        '|---|---|---|---|---|---|---|---|',
     ]
     for package in sorted(scoped, key=lambda p: (not owner_of(p), p)):
         c = scoped[package]
         lines.append(f'| `{package}` | {owner_of(package) or "(none yet)"} | {c["types done"]} / {c["types"]} | '
                      f'{c["members done"]} / {c["members"]} | {pct(c["members done"], c["members"])} | '
-                     f'{c["unconfirmed"] or ""} | {c["leaf"] or ""} |')
+                     f'{c["porter"] or ""} | {c["unconfirmed"] or ""} | {c["leaf"] or ""} |')
     if leaf:
         lines += ['', '## Types that exist only in a leaf module', '',
                   'Each is adapted R1 with a note naming its leaf module until the JDK aggregate re-exports it '

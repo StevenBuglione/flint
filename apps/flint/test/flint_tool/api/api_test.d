@@ -1,6 +1,7 @@
 module flint_tool.api.api_test;
 
-import flint_tool.api.coverage : Classifier, Mapping, Status, coverage, matches, parseMapping, validRule, validSymbol;
+import flint_tool.api.coverage : Classifier, Mapping, Status, coverage, matches, parseMapping,
+    validProvenance, validRule, validSymbol;
 import flint_tool.api.diff : Change, Difference, diffManifests;
 import flint_tool.api.extract : ExtractRequest, extract;
 import flint_tool.api.manifest : Manifest, memberId, parseManifest, renderManifest;
@@ -219,6 +220,15 @@ unittest
     expect(validRule("D-JPA-")).toEqual(false);
     expect(validRule("D--1")).toEqual(false);
     expect(validRule("R0")).toEqual(false);
+    expect(validProvenance("port-spring/3")).toEqual(true);
+    expect(validProvenance("port-jdk/12")).toEqual(true);
+    expect(validProvenance("port-spring/0")).toEqual(false);
+    expect(validProvenance("port-spring/03")).toEqual(false);
+    expect(validProvenance("port-spring/")).toEqual(false);
+    expect(validProvenance("/3")).toEqual(false);
+    expect(validProvenance("Port/3")).toEqual(false);
+    expect(validProvenance("port spring/3")).toEqual(false);
+    expect(validProvenance("port-spring/3a")).toEqual(false);
     expect(validRule("R01")).toEqual(false);
 }
 
@@ -260,6 +270,17 @@ unittest
             false);
     expect(error).toEqual("a.B: `R9a` is not a rulebook rule, such as R4, or a deviation such as D-7");
     expect(parseMapping(`{"elements":{"a.B":{"status":"adapted"}}}`, mapping, error)).toEqual(false);
+    // Porter provenance (docs/spring/phase2/porter-plan.md): well formed, and only on what the porter wrote.
+    expect(parseMapping(`{"elements":{"a.B":{"status":"ported","d":"flint.a.B","generated":"port-spring/3"}}}`,
+            mapping, error)).toEqual(true);
+    expect(mapping.entries[0].generated).toEqual("port-spring/3");
+    expect(parseMapping(`{"elements":{"a.B":{"status":"ported","d":"flint.a.B","generated":"porter"}}}`,
+            mapping, error)).toEqual(false);
+    expect(error).toEqual("a.B: `generated` must name the porter and its output version, such as port-spring/3");
+    expect(parseMapping(`{"elements":{"a.B":{"status":"excluded","category":"deferred","phase":"2",`
+            ~ `"generated":"port-spring/3"}}}`, mapping, error)).toEqual(false);
+    expect(error).toEqual(
+            "a.B: an excluded element has no porter provenance; `generated` marks a row the porter wrote");
     expect(parseMapping(`{"elements":{"a.B":{"status":"excluded","category":"jmx"}}}`, mapping, error)).toEqual(false);
     expect(parseMapping(`{"elements":{"a.B":{"status":"excluded","category":"deferred"}}}`, mapping, error)).toEqual(
             false);
