@@ -22,8 +22,10 @@ import flint.engine.aot.any : Any;
 import flint.engine.aot.descriptor : TypeKind;
 import flint.engine.aot.name : typeNameOf;
 import flint.engine.aot.objects : assumeClass, assumeClasses, asObjects, objectEquals, statelessInstance;
-import flint.java.lang : ClassCastException, IllegalArgumentException, IndexOutOfBoundsException, Iterable,
-    NullPointerException, RuntimeException, UnsupportedOperationException, javaEquals, javaHashCode, valueOf;
+import flint.java.lang : ClassCastException, IllegalArgumentException, IndexOutOfBoundsException,
+    Iterable, NullPointerException,
+    RuntimeException, UnsupportedOperationException, javaEquals, javaHashCode, throwIterableNullAction, valueOf;
+import flint.java.util.function_.consumer : Consumer;
 import flint.java.util.stream : Stream;
 public import flint.java.util.calendar : Calendar, GregorianCalendar;
 public import flint.java.util.date : Date;
@@ -761,12 +763,8 @@ abstract class AbstractCollection(T) : Collection!T
         return result;
     }
 
-    /// Java's `forEach`.
-    void forEach(void delegate(T) @safe action)
-    {
-        for (auto it = iterator(); it.hasNext();)
-            action(it.next());
-    }
+    /// Java's `forEach` defaults.
+    mixin Iterable!T.Defaults;
 
     /// Java's `opApply`.
     int opApply(scope int delegate(T) @safe dg)
@@ -1568,8 +1566,18 @@ private mixin template ErasedListMethods(T, bool mutable)
 
     void forEach(void delegate(T) @safe action)
     {
+        if (action is null)
+            throwIterableNullAction();
         for (int i = 0; i < size(); i++)
             action(get(i));
+    }
+
+    void forEach(Consumer!T action)
+    {
+        if (action is null)
+            throwIterableNullAction();
+        for (int i = 0; i < size(); i++)
+            action.accept(get(i));
     }
 
     int opApply(scope int delegate(T) @safe dg)
@@ -2187,8 +2195,18 @@ class HashSet(T) if (isErasedElement!T) : ErasedHashSet, Set!T
 
     void forEach(void delegate(T) @safe action)
     {
+        if (action is null)
+            throwIterableNullAction();
         for (size_t i = 0; i < items.length; i++)
             action(assumeClass!T(items[i]));
+    }
+
+    void forEach(Consumer!T action)
+    {
+        if (action is null)
+            throwIterableNullAction();
+        for (size_t i = 0; i < items.length; i++)
+            action.accept(assumeClass!T(items[i]));
     }
 
     int opApply(scope int delegate(T) @safe dg)

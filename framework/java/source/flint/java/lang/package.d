@@ -23,6 +23,7 @@ public import flint.java.lang.system : System;
 import flint.engine.aot.objects : objectEquals, objectToHash, objectToString;
 public import flint.java.classref : ClassRef, classOf; // a leaf, so annotation-only clients skip this module
 import flint.java.util : Iterator; // module scope: a template-scoped import breaks -i builds (forward references)
+import flint.java.util.function_.consumer : Consumer;
 import flint.engine.aot.any : Any;
 import flint.java.util.formatter : formatJava;
 
@@ -288,6 +289,12 @@ interface AutoCloseable
     void close();
 }
 
+/// Reject a null action passed to `Iterable.forEach`.
+pragma(inline, false) package(flint.java) noreturn throwIterableNullAction() pure
+{
+    throw new NullPointerException();
+}
+
 /// Java's `Iterable`: a source of an `Iterator`, usable in `foreach`.
 interface Iterable(T)
 {
@@ -295,11 +302,34 @@ interface Iterable(T)
     /// An iterator over the elements.
     Iterator!T iterator();
 
-    /// Call `action` for each element, in iteration order.
+    /// Call `action` for each element, in iteration order (R9 delegate overload).
     void forEach(void delegate(T) @safe action);
+
+    /// Call `action` for each element, in iteration order (`java.lang.Iterable.forEach`).
+    void forEach(Consumer!T action);
 
     /// `foreach (e; iterable)`.
     int opApply(scope int delegate(T) @safe dg);
+
+    /// Default `forEach` implementations over `opApply` (R3).
+    mixin template Defaults(Element = T, alias Action = Consumer!T, alias rejectNull = throwIterableNullAction)
+    {
+        override void forEach(void delegate(Element) @safe action)
+        {
+            if (action is null)
+                rejectNull();
+            foreach (element; this)
+                action(element);
+        }
+
+        override void forEach(Action action)
+        {
+            if (action is null)
+                rejectNull();
+            foreach (element; this)
+                action.accept(element);
+        }
+    }
 }
 
 /// Java's `Comparable`: a natural ordering.

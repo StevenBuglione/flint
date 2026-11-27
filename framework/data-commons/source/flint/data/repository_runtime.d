@@ -161,13 +161,7 @@ private final class RepositoryIterable(T, S) : Iterable!T
         return new RepositoryIterator!(T, S)(source.iterator());
     }
 
-    override void forEach(void delegate(T) @safe action)
-    {
-        if (action is null)
-            throw new NullPointerException("Action must not be null");
-        foreach (value; source)
-            action(asRepositoryType!T(value));
-    }
+    mixin Iterable!T.Defaults;
 
     override int opApply(scope int delegate(T) @safe action)
     {

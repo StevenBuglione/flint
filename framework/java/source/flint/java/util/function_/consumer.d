@@ -15,16 +15,16 @@ interface Consumer(T)
     }
 
     /// First this consumer, then `after`.
-    final Consumer!T andThen(Consumer!T after)
+    Consumer andThen()(Consumer after)
     {
         auto self = this;
-        return of((T t) { self.accept(t); after.accept(t); });
+        return new DelegateConsumer!T((T t) { self.accept(t); after.accept(t); });
     }
 
     /// A `Consumer` calling `dg`.
-    static Consumer!T of(void delegate(T) @safe dg)
+    static Consumer of()(void delegate(T) @safe dg)
     {
-        return new DelegateConsumer!(T)(dg);
+        return new DelegateConsumer!T(dg);
     }
 }
 

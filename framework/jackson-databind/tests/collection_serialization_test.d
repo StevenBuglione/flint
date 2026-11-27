@@ -386,11 +386,7 @@ version (FlintJacksonIterableTypes)
     // Java's default Iterable.forEach, and D's foreach, over iterator().
     private mixin template IterableDefaults(T)
     {
-        void forEach(void delegate(T) @safe action)
-        {
-            for (auto it = iterator(); it.hasNext();)
-                action(it.next());
-        }
+        mixin Iterable!T.Defaults;
 
         int opApply(scope int delegate(T) @safe dg)
         {

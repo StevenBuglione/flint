@@ -346,10 +346,9 @@ abstract class Tags : TagIterable
         return new TagsIterator(entries());
     }
 
-    final override void forEach(void delegate(Tag) @safe action)
+    final
     {
-        foreach (item; entries())
-            action(item);
+        mixin Iterable!Tag.Defaults;
     }
 
     final override int opApply(scope int delegate(Tag) @safe visit)
@@ -847,9 +846,17 @@ private final class TagIterableView(E) : TagIterable
     override void forEach(void delegate(Tag) @safe action)
     {
         if (action is null)
-            source.forEach(null);
+            source.forEach(cast(void delegate(E) @safe) null);
         else
             source.forEach((E tag) => action(tag));
+    }
+
+    override void forEach(Consumer!Tag action)
+    {
+        if (action is null)
+            throw new NullPointerException();
+        foreach (tag; this)
+            action.accept(tag);
     }
 
     override int opApply(scope int delegate(Tag) @safe action)
@@ -2392,9 +2399,7 @@ private final class EmptyMeasurements : MeasurementIterable
         return new MeasurementIterator(null);
     }
 
-    override void forEach(void delegate(Measurement) @safe)
-    {
-    }
+    mixin Iterable!Measurement.Defaults;
 
     override int opApply(scope int delegate(Measurement) @safe)
     {
@@ -2414,10 +2419,7 @@ private final class SingleMeasurement : Measurement, MeasurementIterable
         return new MeasurementIterator(this);
     }
 
-    override void forEach(void delegate(Measurement) @safe action)
-    {
-        action(this);
-    }
+    mixin Iterable!Measurement.Defaults;
 
     override int opApply(scope int delegate(Measurement) @safe visit)
     {
@@ -2486,11 +2488,7 @@ private final class MeterMeasurements : MeasurementIterable
         return new MeasurementIterator(measurements[0], measurements[1], measurements[2]);
     }
 
-    override void forEach(void delegate(Measurement) @safe action)
-    {
-        foreach (sample; measurements[0 .. measurementCount()])
-            action(sample);
-    }
+    mixin Iterable!Measurement.Defaults;
 
     override int opApply(scope int delegate(Measurement) @safe visit)
     {

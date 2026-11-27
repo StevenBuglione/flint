@@ -169,13 +169,7 @@ interface Streamable(T) : Iterable!T, Supplier!(Stream!T)
             return Set!Item.copyOf(stream().collect(Collectors.toSet()));
         }
 
-        override void forEach(void delegate(Item) @safe action)
-        {
-            if (action is null)
-                throw new NullPointerException("Action must not be null");
-            foreach (value; this)
-                action(value);
-        }
+        mixin Iterable!Item.Defaults;
 
         override int opApply(scope int delegate(Item) @safe visitor)
         {

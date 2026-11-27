@@ -1137,10 +1137,7 @@ abstract class Chunk(T) : Slice!T
         return content.iterator();
     }
 
-    override void forEach(void delegate(T) @safe action)
-    {
-        content.forEach(action);
-    }
+    mixin Iterable!T.Defaults;
 
     override int opApply(scope int delegate(T) @safe dg)
     {

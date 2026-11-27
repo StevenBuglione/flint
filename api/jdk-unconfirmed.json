@@ -3,7 +3,6 @@
  "ids": [
   "java.io.InputStream#read(byte[])",
   "java.io.InputStream#readAllBytes()",
-  "java.lang.Iterable",
   "java.math.BigInteger#<init>(int,Random)",
   "java.sql.BatchUpdateException",
   "java.sql.BatchUpdateException#<init>(String,String,int,long[],Throwable)",

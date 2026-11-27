@@ -211,10 +211,7 @@ private final class WindowImpl(T) : Window!T
         return items.iterator();
     }
 
-    override void forEach(void delegate(T) @safe action)
-    {
-        items.forEach(action);
-    }
+    mixin Iterable!T.Defaults;
 
     override int opApply(scope int delegate(T) @safe dg)
     {

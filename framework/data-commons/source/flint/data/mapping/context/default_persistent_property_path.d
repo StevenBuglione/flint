@@ -8,7 +8,7 @@ import flint.core.convert.converter : Converter;
 import flint.data.core : TypeInformation;
 import flint.data.mapping : PersistentProperty, PersistentPropertyPath;
 import flint.data.mapping.model.abstract_persistent_property : AbstractPersistentProperty;
-import flint.java.lang : IllegalArgumentException, IllegalStateException, JavaObject;
+import flint.java.lang : IllegalArgumentException, IllegalStateException, Iterable, JavaObject;
 import flint.java.util : ArrayList, Iterator, List, Objects;
 import flint.util : StringUtils;
 
@@ -172,10 +172,7 @@ package final class DefaultPersistentPropertyPath(P) : PersistentPropertyPath!P,
         return properties.iterator();
     }
 
-    override void forEach(void delegate(P) @safe action)
-    {
-        properties.forEach(action);
-    }
+    mixin Iterable!P.Defaults;
 
     override int opApply(scope int delegate(P) @safe visitor)
     {

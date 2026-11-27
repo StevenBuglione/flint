@@ -486,10 +486,7 @@ class BasicPersistentEntity(T, P) : MutablePersistentEntity!(T, P), EnvironmentC
         return propertyView.iterator();
     }
 
-    override void forEach(void delegate(P) @safe action)
-    {
-        propertyView.forEach(action);
-    }
+    mixin Iterable!P.Defaults;
 
     override int opApply(scope int delegate(P) @safe action)
     {

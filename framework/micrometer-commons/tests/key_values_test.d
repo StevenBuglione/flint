@@ -21,6 +21,7 @@ import core.memory : GC;
 import flint.java.lang : IllegalArgumentException, Iterable, NullPointerException;
 import flint.java.util : Arrays, Collections, Map, MapEntry;
 import flint.java.util.function_ : Function;
+import flint.java.util.function_.consumer : Consumer;
 import flint.micrometer.common : KeyValue, KeyValues;
 import std.exception : assertThrown;
 
@@ -468,5 +469,9 @@ unittest
 @("forEach rejects a null action even when empty")
 unittest
 {
-    assertThrown!NullPointerException(KeyValues.empty().forEach(null));
+    static assert(!__traits(compiles, KeyValues.empty().forEach(null)));
+    void delegate(KeyValue) @safe absentDelegate;
+    Consumer!KeyValue absentConsumer;
+    assertThrown!NullPointerException(KeyValues.empty().forEach(absentDelegate));
+    assertThrown!NullPointerException(KeyValues.empty().forEach(absentConsumer));
 }

@@ -329,12 +329,9 @@ abstract class KeyValues : KeyValueIterable
         return new KeyValuesIterator(entries());
     }
 
-    final override void forEach(void delegate(KeyValue) @safe action)
+    final
     {
-        if (action is null)
-            throw new NullPointerException("action");
-        foreach (item; entries())
-            action(item);
+        mixin Iterable!KeyValue.Defaults;
     }
 
     final override int opApply(scope int delegate(KeyValue) @safe visit)
