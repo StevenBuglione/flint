@@ -11,6 +11,7 @@
   "java.nio.CharBuffer": "flint.java.nio.charbuffer",
   "java.nio.InvalidMarkException": "flint.java.nio.invalidmarkexception",
   "java.nio.ReadOnlyBufferException": "flint.java.nio.readonlybufferexception",
+  "java.nio.charset.CodingErrorAction": "flint.java.nio.charset.codingerroraction",
   "java.time.MonthDay": "flint.java.time.monthday",
   "java.time.Period": "flint.java.time.period",
   "java.time.Year": "flint.java.time.year",

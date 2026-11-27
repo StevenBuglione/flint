@@ -1,10 +1,10 @@
 module app;
 
 import flint.java.lang : RuntimeException;
-import flint.java.nio.byteorder : ByteOrder;
-
 import flint.java.nio.bufferoverflowexception : BufferOverflowException;
 import flint.java.nio.bufferunderflowexception : BufferUnderflowException;
+import flint.java.nio.byteorder : ByteOrder;
+import flint.java.nio.charset.codingerroraction : CodingErrorAction;
 import flint.java.nio.invalidmarkexception : InvalidMarkException;
 import flint.java.nio.readonlybufferexception : ReadOnlyBufferException;
 
@@ -12,6 +12,8 @@ import flint.java.nio.readonlybufferexception : ReadOnlyBufferException;
 
 int main(string[] args)
 {
+    if (args.length >= 8)
+        return codingAction(args.length);
     if (args.length >= 4)
         return bufferException(args.length);
 
@@ -20,6 +22,14 @@ int main(string[] args)
         return cast(int)(ByteOrder.nativeOrder().toString().length);
     auto order = mode == 1 ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
     return cast(int)(order.toString().length);
+}
+
+private int codingAction(size_t argumentCount) pure nothrow @nogc
+{
+    const mode = argumentCount % 3;
+    auto action = mode == 0 ? CodingErrorAction.REPORT : mode == 1 ? CodingErrorAction.IGNORE
+        : CodingErrorAction.REPLACE;
+    return cast(int)(action.toString().length);
 }
 
 private int bufferException(size_t argumentCount)

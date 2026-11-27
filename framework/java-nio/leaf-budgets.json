@@ -16,6 +16,10 @@
     "template_instances": 2,
     "control": "tools/jdk-closure-controls/native-order.d"
   },
+  "flint.java.nio.charset.codingerroraction": {
+    "incremental_linked_bytes": 115,
+    "template_instances": 2
+  },
   "flint.java.nio.invalidmarkexception": {
     "incremental_linked_bytes": 687,
     "template_instances": 480,

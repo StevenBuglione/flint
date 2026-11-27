@@ -712,6 +712,7 @@
    "also": [
     "flint.java.nio.bufferoverflowexception",
     "flint.java.nio.bufferunderflowexception",
+    "flint.java.nio.charset.codingerroraction",
     "flint.java.nio.invalidmarkexception",
     "flint.java.nio.readonlybufferexception"
    ],
@@ -731,7 +732,8 @@
     "java.nio.BufferUnderflowException",
     "java.nio.ByteOrder",
     "java.nio.InvalidMarkException",
-    "java.nio.ReadOnlyBufferException"
+    "java.nio.ReadOnlyBufferException",
+    "java.nio.charset.CodingErrorAction"
    ],
    "provisional": [
     "dmd_cold_seconds",

@@ -6,6 +6,8 @@ import flint.java.lang : IllegalStateException, RuntimeException, UnsupportedOpe
 
 int main(string[] args)
 {
+    if (args.length >= 8)
+        return codingAction(args.length);
     if (args.length >= 4)
         return bufferException(args.length);
 
@@ -18,6 +20,13 @@ int main(string[] args)
     if (mode == 0)
         return cast(int)(nativeName.length);
     string name = mode == 1 ? "BIG_ENDIAN" : "LITTLE_ENDIAN";
+    return cast(int)(name.length);
+}
+
+private int codingAction(size_t argumentCount) pure nothrow @nogc
+{
+    const mode = argumentCount % 3;
+    string name = mode == 0 ? "REPORT" : mode == 1 ? "IGNORE" : "REPLACE";
     return cast(int)(name.length);
 }
 
