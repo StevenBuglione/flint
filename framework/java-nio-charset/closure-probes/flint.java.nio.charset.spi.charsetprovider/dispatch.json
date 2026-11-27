@@ -1,0 +1,9 @@
+{
+  "source": "closure/charset_provider.d",
+  "leaves": [
+    "flint.java.lang",
+    "flint.java.nio.charset",
+    "flint.java.util"
+  ],
+  "data": []
+}

@@ -61,6 +61,11 @@
       "status": "excluded",
       "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception. Original Flint tests check that the encoder constructor rejects zero, negative, NaN and inverted rates, with Java 21's messages.",
       "covered_by": "framework/java-nio-charset/tests/charset_coders_test.d"
+    },
+    "java/nio/charset/spi/CharsetProviderBasicTest.java": {
+      "status": "excluded",
+      "reason": "plain-gpl: The pinned jtreg source has no Classpath Exception and drives SecurityManager/jar-loading subprocesses. Original Flint tests cover abstract CharsetProvider subclassing, charsets() iteration, and charsetForName() canonical/alias/unknown lookup.",
+      "covered_by": "framework/java-nio-charset/tests/charset_provider_test.d"
     }
   }
 }

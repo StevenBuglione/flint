@@ -59,6 +59,7 @@
   "java.nio.charset.CoderMalfunctionError": "flint.java.nio.charset.codermalfunctionerror",
   "java.nio.charset.CoderResult": "flint.java.nio.charset.coderresult",
   "java.nio.charset.CodingErrorAction": "flint.java.nio.charset.codingerroraction",
+  "java.nio.charset.spi.CharsetProvider": "flint.java.nio.charset.spi.charsetprovider",
   "java.time.MonthDay": "flint.java.time.monthday",
   "java.time.Period": "flint.java.time.period",
   "java.time.Year": "flint.java.time.year",

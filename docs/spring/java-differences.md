@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,743 | 509 | 0 | 1,905 | 14,264 |
+| framework | openjdk@21.0.13 | 1,745 | 511 | 0 | 1,905 | 14,260 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2486,6 +2486,13 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.nio.charset.CodingErrorAction#IGNORE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.IGNORE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction#REPLACE` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.REPLACE` | [R15](api-mapping.md#r15-enums-with-fields) |  |
 | `java.nio.charset.CodingErrorAction#REPORT` | `flint.java.nio.charset.codingerroraction.CodingErrorAction.REPORT` | [R15](api-mapping.md#r15-enums-with-fields) |  |
+
+#### java.nio.charset.spi
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `java.nio.charset.spi.CharsetProvider` | `flint.java.nio.charset.spi.charsetprovider.CharsetProvider` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import CharsetProvider from flint.java.nio.charset.spi.charsetprovider. SecurityManager permission check in the constructor is omitted because SecurityManager is excluded. Charset is a value type here, so Charset.init stands for Java's null return from charsetForName. Flint's Charset is a closed value type over the six standard charsets with a private id, so a provider can return only those six; it cannot introduce a new charset the way a Java provider does. |
+| `java.nio.charset.spi.CharsetProvider#charsetForName(String)` | `flint.java.nio.charset.spi.charsetprovider.CharsetProvider.charsetForName` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Returns Charset.init where Java returns null for an unsupported name. |
 
 #### java.nio.file
 
@@ -10815,7 +10822,6 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.nio.channels | 0 | 264 |
 | java.nio.channels.spi | 0 | 53 |
 | java.nio.charset | 37 | 0 |
-| java.nio.charset.spi | 0 | 4 |
 | java.nio.file | 268 | 0 |
 | java.nio.file.attribute | 137 | 0 |
 | java.nio.file.spi | 0 | 35 |

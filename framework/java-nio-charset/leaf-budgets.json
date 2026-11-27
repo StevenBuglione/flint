@@ -20,5 +20,10 @@
     "template_instances": 484,
     "control": "tools/jdk-closure-controls/runtime-exception.d",
     "template_compile": "separate"
+  },
+  "flint.java.nio.charset.spi.charsetprovider": {
+    "incremental_linked_bytes": 12246,
+    "template_instances": 486,
+    "template_compile": "separate"
   }
 }

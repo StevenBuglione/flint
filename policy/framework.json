@@ -1033,7 +1033,8 @@
     "flint.java.nio.charset.codermalfunctionerror",
     "flint.java.nio.charset.internal.coders",
     "flint.java.nio.charset.internal.decoders",
-    "flint.java.nio.charset.internal.encoders"
+    "flint.java.nio.charset.internal.encoders",
+    "flint.java.nio.charset.spi.charsetprovider"
    ],
    "repo": "framework",
    "licence": "GPL-2.0-only WITH Classpath-exception-2.0",
@@ -1053,7 +1054,8 @@
     "java.nio.charset.CharsetDecoder",
     "java.nio.charset.CharsetEncoder",
     "java.nio.charset.CoderMalfunctionError",
-    "java.nio.charset.CoderResult"
+    "java.nio.charset.CoderResult",
+    "java.nio.charset.spi.CharsetProvider"
    ],
    "provisional": [
     "dmd_cold_seconds",
