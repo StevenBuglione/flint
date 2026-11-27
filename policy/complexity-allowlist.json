@@ -163,6 +163,15 @@
     "file": "pgjdbc/src/main/java/org/postgresql/jdbc/TypeInfoCache.java",
     "method": "getDisplaySize"
    }
+  },
+  {
+   "file": "framework/java/source/flint/java/internal/math/floatingdecimal.d",
+   "function": "parseHex",
+   "upstream": {
+    "project": "openjdk",
+    "file": "src/java.base/share/classes/jdk/internal/math/FloatingDecimal.java",
+    "method": "parseHexString"
+   }
   }
  ]
 }
