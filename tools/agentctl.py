@@ -580,7 +580,8 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
             base += ['--model', profile or 'gemini-4-neon-high']
             commands = [base + ['-p', pointer]]
         else:
-            base = ['copilot', '--allow-all', '--no-ask-user', '--model', profile or 'auto']
+            # Copilot's 'auto' picked mai-code-2-flash (0.33x) on 2026-11-27; the owner chose mai-code-2 (1x).
+            base = ['copilot', '--allow-all', '--no-ask-user', '--model', profile or 'mai-code-2', '--reasoning-effort', 'high']
             commands = [base + ['-p', pointer]]
     if dry_run:
         for command in commands:
