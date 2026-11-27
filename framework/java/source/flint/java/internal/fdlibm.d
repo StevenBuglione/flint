@@ -99,12 +99,33 @@ private double powerOfTwoD(int n) pure nothrow @nogc
 private enum double INFINITY = double.infinity;
 private enum double DOUBLE_MIN_NORMAL = 0x1.0p-1022;
 private enum double DOUBLE_MAX_VALUE = double.max;
+private enum double TWO24 = 0x1.0p24;
 private enum double TWO54 = 0x1.0p54;
+private enum double PI_CONST = 3.141592653589793;
 private enum double TWO_TO_THE_DOUBLE_SCALE_UP = 0x1.0p512;
 private enum double TWO_TO_THE_DOUBLE_SCALE_DOWN = 0x1.0p-512;
 private enum int SIGN_BIT = cast(int) 0x8000_0000U;
 private enum int EXP_BITS = 0x7ff0_0000;
 private enum int EXP_SIGNIF_BITS = 0x7fff_ffff;
+
+private double floorD(double a) pure nothrow @nogc
+{
+    const long bits = doubleToRawLongBits(a);
+    const int exp = cast(int)((bits & 0x7FF0_0000_0000_0000L) >> 52) - 1023;
+    if (exp < 0)
+    {
+        if (a == 0.0)
+            return a;
+        return a < 0.0 ? -1.0 : 0.0;
+    }
+    if (exp >= 52)
+        return a;
+    const long fracMask = 0x000F_FFFF_FFFF_FFFFL >> exp;
+    if ((bits & fracMask) == 0)
+        return a;
+    const double trunc = longBitsToDouble(bits & ~fracMask);
+    return a < 0.0 ? trunc - 1.0 : trunc;
+}
 
 private double scalbD(double d, int scaleFactor) pure nothrow @nogc
 {
@@ -1419,4 +1440,822 @@ package(flint.java) double fdTanh(double x) pure nothrow @nogc
         z = 1.0 - tiny;
     }
     return jx >= 0 ? z : -z;
+}
+
+private void kernelRemPio2Invert(ref int[20] iq, int jz, int q0, int ih, ref double z) pure nothrow @nogc
+{
+    int carry = 0;
+    for (int i = 0; i < jz; i++)
+    {
+        const int j = iq[i];
+        if (carry == 0)
+        {
+            if (j != 0)
+            {
+                carry = 1;
+                iq[i] = 0x100_0000 - j;
+            }
+        }
+        else
+        {
+            iq[i] = 0xff_ffff - j;
+        }
+    }
+    if (q0 == 1)
+        iq[jz - 1] &= 0x7f_ffff;
+    else if (q0 == 2)
+        iq[jz - 1] &= 0x3f_ffff;
+    if (ih == 2)
+    {
+        z = 1.0 - z;
+        if (carry != 0)
+            z -= scalbD(1.0, q0);
+    }
+}
+
+private void kernelRemPio2Finish(ref int[20] iq, ref double[20] q, ref double[20] fq, int jz, int jp,
+        int q0, int ih, double z, ref double[2] y) pure nothrow @nogc
+{
+    static immutable double[8] PIo2 = [
+        0x1.921fb4p0, 0x1.4442dp-24, 0x1.846988p-48, 0x1.8cc516p-72, 0x1.01b838p-96,
+        0x1.a25204p-120, 0x1.382228p-145, 0x1.9f31dp-169,
+    ];
+    enum double twon24 = 0x1.0p-24;
+
+    if (z == 0.0)
+    {
+        jz -= 1;
+        q0 -= 24;
+        while (iq[jz] == 0)
+        {
+            jz--;
+            q0 -= 24;
+        }
+    }
+    else
+    {
+        z = scalbD(z, -q0);
+        if (z >= TWO24)
+        {
+            const double fw = cast(double) cast(int)(twon24 * z);
+            iq[jz] = cast(int)(z - TWO24 * fw);
+            jz += 1;
+            q0 += 24;
+            iq[jz] = cast(int) fw;
+        }
+        else
+        {
+            iq[jz] = cast(int) z;
+        }
+    }
+
+    double fw = scalbD(1.0, q0);
+    for (int i = jz; i >= 0; i--)
+    {
+        q[i] = fw * cast(double) iq[i];
+        fw *= twon24;
+    }
+
+    for (int i = jz; i >= 0; i--)
+    {
+        fw = 0.0;
+        for (int k = 0; k <= jp && k <= jz - i; k++)
+            fw += PIo2[k] * q[i + k];
+        fq[jz - i] = fw;
+    }
+
+    // prec == 2: compress fq[] into y[0..2]
+    fw = 0.0;
+    for (int i = jz; i >= 0; i--)
+        fw += fq[i];
+    y[0] = ih == 0 ? fw : -fw;
+    fw = fq[0] - fw;
+    for (int i = 1; i <= jz; i++)
+        fw += fq[i];
+    y[1] = ih == 0 ? fw : -fw;
+}
+
+private int distillQ(ref int[20] iq, ref double[20] q, int jz, int q0, out double z, out int ih) pure nothrow @nogc
+{
+    enum double twon24 = 0x1.0p-24;
+
+    double zVal = q[jz];
+    for (int i = 0, jj = jz; jj > 0; i++, jj--)
+    {
+        const double fw = cast(double) cast(int)(twon24 * zVal);
+        iq[i] = cast(int)(zVal - TWO24 * fw);
+        zVal = q[jj - 1] + fw;
+    }
+
+    zVal = scalbD(zVal, q0);
+    zVal -= 8.0 * floorD(zVal * 0.125);
+    int n = cast(int) zVal;
+    zVal -= cast(double) n;
+    int ihVal = 0;
+    if (q0 > 0)
+    {
+        const int ii = iq[jz - 1] >> (24 - q0);
+        n += ii;
+        iq[jz - 1] -= ii << (24 - q0);
+        ihVal = iq[jz - 1] >> (23 - q0);
+    }
+    else if (q0 == 0)
+    {
+        ihVal = iq[jz - 1] >> 23;
+    }
+    else if (zVal >= 0.5)
+    {
+        ihVal = 2;
+    }
+
+    if (ihVal > 0)
+    {
+        n += 1;
+        kernelRemPio2Invert(iq, jz, q0, ihVal, zVal);
+    }
+    z = zVal;
+    ih = ihVal;
+    return n;
+}
+
+private int kernelRemPio2(const ref double[3] x, ref double[2] y, int e0, int nx, const int[] ipio2) pure nothrow @nogc
+{
+    enum int jk = 4; // init_jk[2]
+    enum int jp = jk;
+
+    int[20] iq = void;
+    double[20] f = void;
+    double[20] fq = void;
+    double[20] q = void;
+
+    const int jx = nx - 1;
+    int jv = (e0 - 3) / 24;
+    if (jv < 0)
+        jv = 0;
+    const int q0 = e0 - 24 * (jv + 1);
+
+    int j = jv - jx;
+    const int m = jx + jk;
+    for (int i = 0; i <= m; i++, j++)
+        f[i] = j < 0 ? 0.0 : cast(double) ipio2[j];
+
+    for (int i = 0; i <= jk; i++)
+    {
+        double fw = 0.0;
+        for (j = 0; j <= jx; j++)
+            fw += x[j] * f[jx + i - j];
+        q[i] = fw;
+    }
+
+    int jz = jk;
+    int n;
+    int ih;
+    double z;
+    while (true)
+    {
+        n = distillQ(iq, q, jz, q0, z, ih);
+
+        if (z != 0.0)
+            break;
+
+        j = 0;
+        for (int i = jz - 1; i >= jk; i--)
+            j |= iq[i];
+        if (j != 0)
+            break;
+
+        int k = 1;
+        while (iq[jk - k] == 0)
+            k++;
+        for (int i = jz + 1; i <= jz + k; i++)
+        {
+            f[jx + i] = cast(double) ipio2[jv + i];
+            double fw = 0.0;
+            for (j = 0; j <= jx; j++)
+                fw += x[j] * f[jx + i - j];
+            q[i] = fw;
+        }
+        jz += k;
+    }
+
+    kernelRemPio2Finish(iq, q, fq, jz, jp, q0, ih, z, y);
+    return n & 7;
+}
+
+private int remPio2NearPi2(double x, int hx, int ix, ref double[2] y) pure nothrow @nogc
+{
+    enum double pio2_1 = 0x1.921fb544p0;
+    enum double pio2_1t = 0x1.0b4611a626331p-34;
+    enum double pio2_2 = 0x1.0b4611a6p-34;
+    enum double pio2_2t = 0x1.3198a2e037073p-69;
+
+    if (hx > 0)
+    {
+        double z = x - pio2_1;
+        if (ix != 0x3ff9_21fb)
+        {
+            y[0] = z - pio2_1t;
+            y[1] = (z - y[0]) - pio2_1t;
+        }
+        else
+        {
+            z -= pio2_2;
+            y[0] = z - pio2_2t;
+            y[1] = (z - y[0]) - pio2_2t;
+        }
+        return 1;
+    }
+
+    double z = x + pio2_1;
+    if (ix != 0x3ff9_21fb)
+    {
+        y[0] = z + pio2_1t;
+        y[1] = (z - y[0]) + pio2_1t;
+    }
+    else
+    {
+        z += pio2_2;
+        y[0] = z + pio2_2t;
+        y[1] = (z - y[0]) + pio2_2t;
+    }
+    return -1;
+}
+
+private int remPio2Medium(double x, int hx, int ix, ref double[2] y) pure nothrow @nogc
+{
+    static immutable int[32] npio2Hw = [
+        0x3FF921FB, 0x400921FB, 0x4012D97C, 0x401921FB, 0x401F6A7A, 0x4022D97C, 0x4025FDBB, 0x402921FB,
+        0x402C463A, 0x402F6A7A, 0x4031475C, 0x4032D97C, 0x40346B9C, 0x4035FDBB, 0x40378FDB, 0x403921FB,
+        0x403AB41B, 0x403C463A, 0x403DD85A, 0x403F6A7A, 0x40407E4C, 0x4041475C, 0x4042106C, 0x4042D97C,
+        0x4043A28C, 0x40446B9C, 0x404534AC, 0x4045FDBB, 0x4046C6CB, 0x40478FDB, 0x404858EB, 0x404921FB,
+    ];
+    enum double invpio2 = 0x1.45f306dc9c883p-1;
+    enum double pio2_1 = 0x1.921fb544p0;
+    enum double pio2_1t = 0x1.0b4611a626331p-34;
+    enum double pio2_2 = 0x1.0b4611a6p-34;
+    enum double pio2_2t = 0x1.3198a2e037073p-69;
+    enum double pio2_3 = 0x1.3198a2ep-69;
+    enum double pio2_3t = 0x1.b839a252049c1p-104;
+
+    double t = absD(x);
+    const int n = cast(int)(t * invpio2 + 0.5);
+    const double fn = cast(double) n;
+    double r = t - fn * pio2_1;
+    double w = fn * pio2_1t;
+    if (n < 32 && ix != npio2Hw[n - 1])
+    {
+        y[0] = r - w;
+    }
+    else
+    {
+        const int j = ix >> 20;
+        y[0] = r - w;
+        int i = j - ((__HI(y[0]) >> 20) & 0x7ff);
+        if (i > 16)
+        {
+            t = r;
+            w = fn * pio2_2;
+            r = t - w;
+            w = fn * pio2_2t - ((t - r) - w);
+            y[0] = r - w;
+            i = j - ((__HI(y[0]) >> 20) & 0x7ff);
+            if (i > 49)
+            {
+                t = r;
+                w = fn * pio2_3;
+                r = t - w;
+                w = fn * pio2_3t - ((t - r) - w);
+                y[0] = r - w;
+            }
+        }
+    }
+    y[1] = (r - y[0]) - w;
+    if (hx < 0)
+    {
+        y[0] = -y[0];
+        y[1] = -y[1];
+        return -n;
+    }
+    return n;
+}
+
+private int ieee754RemPio2(double x, ref double[2] y) pure nothrow @nogc
+{
+    static immutable int[66] twoOverPi = [
+        0xA2F983, 0x6E4E44, 0x1529FC, 0x2757D1, 0xF534DD, 0xC0DB62, 0x95993C, 0x439041, 0xFE5163,
+        0xABDEBB, 0xC561B7, 0x246E3A, 0x424DD2, 0xE00649, 0x2EEA09, 0xD1921C, 0xFE1DEB, 0x1CB129,
+        0xA73EE8, 0x8235F5, 0x2EBB44, 0x84E99C, 0x7026B4, 0x5F7E41, 0x3991D6, 0x398353, 0x39F49C,
+        0x845F8B, 0xBDF928, 0x3B1FF8, 0x97FFDE, 0x05980F, 0xEF2F11, 0x8B5A0A, 0x6D1F6D, 0x367ECF,
+        0x27CB09, 0xB74F46, 0x3F669E, 0x5FEA2D, 0x7527BA, 0xC7EBE5, 0xF17B3D, 0x0739F7, 0x8A5292,
+        0xEA6BFB, 0x5FB11F, 0x8D5D08, 0x560330, 0x46FC7B, 0x6BABF0, 0xCFBC20, 0x9AF436, 0x1DA9E3,
+        0x91615E, 0xE61B08, 0x659985, 0x5F14A0, 0x68408D, 0xFFD880, 0x4D7327, 0x310606, 0x1556CA,
+        0x73A8C9, 0x60E27B, 0xC08C6B,
+    ];
+
+    const int hx = __HI(x);
+    const int ix = hx & EXP_SIGNIF_BITS;
+    if (ix <= 0x3fe9_21fb)
+    {
+        y[0] = x;
+        y[1] = 0.0;
+        return 0;
+    }
+    if (ix < 0x4002_d97c)
+        return remPio2NearPi2(x, hx, ix, y);
+    if (ix <= 0x4139_21fb)
+        return remPio2Medium(x, hx, ix, y);
+    if (ix >= EXP_BITS)
+    {
+        y[0] = double.nan;
+        y[1] = double.nan;
+        return 0;
+    }
+
+    double z = 0.0;
+    z = __LO(z, __LO(x));
+    const int e0 = (ix >> 20) - 1046;
+    z = __HI(z, ix - (e0 << 20));
+    double[3] tx = void;
+    for (int i = 0; i < 2; i++)
+    {
+        tx[i] = cast(double) cast(int) z;
+        z = (z - tx[i]) * TWO24;
+    }
+    tx[2] = z;
+    int nx = 3;
+    while (tx[nx - 1] == 0.0)
+        nx--;
+    const int n = kernelRemPio2(tx, y, e0, nx, twoOverPi[]);
+    if (hx < 0)
+    {
+        y[0] = -y[0];
+        y[1] = -y[1];
+        return -n;
+    }
+    return n;
+}
+
+private double kernelSin(double x, double y, int iy) pure nothrow @nogc
+{
+    enum double S1 = -0x1.5555555555549p-3;
+    enum double S2 = 0x1.111111110f8a6p-7;
+    enum double S3 = -0x1.a01a019c161d5p-13;
+    enum double S4 = 0x1.71de357b1fe7dp-19;
+    enum double S5 = -0x1.ae5e68a2b9cebp-26;
+    enum double S6 = 0x1.5d93a5acfd57cp-33;
+
+    const int ix = __HI(x) & EXP_SIGNIF_BITS;
+    if (ix < 0x3e40_0000)
+        return x;
+    const double z = x * x;
+    const double v = z * x;
+    const double r = S2 + z * (S3 + z * (S4 + z * (S5 + z * S6)));
+    if (iy == 0)
+        return x + v * (S1 + z * r);
+    return x - ((z * (0.5 * y - v * r) - y) - v * S1);
+}
+
+private double kernelCos(double x, double y) pure nothrow @nogc
+{
+    enum double C1 = 0x1.555555555554cp-5;
+    enum double C2 = -0x1.6c16c16c15177p-10;
+    enum double C3 = 0x1.a01a019cb159p-16;
+    enum double C4 = -0x1.27e4f809c52adp-22;
+    enum double C5 = 0x1.1ee9ebdb4b1c4p-29;
+    enum double C6 = -0x1.8fae9be8838d4p-37;
+
+    const int ix = __HI(x) & EXP_SIGNIF_BITS;
+    if (ix < 0x3e40_0000)
+        return 1.0;
+    const double z = x * x;
+    const double r = z * (C1 + z * (C2 + z * (C3 + z * (C4 + z * (C5 + z * C6)))));
+    if (ix < 0x3FD3_3333)
+        return 1.0 - (0.5 * z - (z * r - x * y));
+
+    const double qx = ix > 0x3fe9_0000 ? 0.28125 : __HI_LO(ix - 0x0020_0000, 0);
+    const double hz = 0.5 * z - qx;
+    const double a = 1.0 - qx;
+    return a - (hz - (z * r - x * y));
+}
+
+private double kernelTanTiny(double x, double y, int ix, int iy) pure nothrow @nogc
+{
+    if (((ix | __LO(x)) | (iy + 1)) == 0)
+        return 1.0 / absD(x);
+    if (iy == 1)
+        return x;
+    const double w = x + y;
+    double z = w;
+    z = __LO(z, 0);
+    const double v = y - (z - x);
+    const double a = -1.0 / w;
+    double t = a;
+    t = __LO(t, 0);
+    const double s = 1.0 + t * z;
+    return t + a * (s + t * v);
+}
+
+private double kernelTan(double x, double y, int iy) pure nothrow @nogc
+{
+    enum double pio4 = 0x1.921fb54442d18p-1;
+    enum double pio4lo = 0x1.1a62633145c07p-55;
+    static immutable double[13] T = [
+        0x1.5555555555563p-2, 0x1.111111110fe7ap-3, 0x1.ba1ba1bb341fep-5, 0x1.664f48406d637p-6,
+        0x1.226e3e96e8493p-7, 0x1.d6d22c9560328p-9, 0x1.7dbc8fee08315p-10, 0x1.344d8f2f26501p-11,
+        0x1.026f71a8d1068p-12, 0x1.47e88a03792a6p-14, 0x1.2b80f32f0a7e9p-14,
+        -0x1.375cbdb605373p-16, 0x1.b2a7074bf7ad4p-16,
+    ];
+
+    const int hx = __HI(x);
+    const int ix = hx & EXP_SIGNIF_BITS;
+    if (ix < 0x3e30_0000)
+        return kernelTanTiny(x, y, ix, iy);
+
+    if (ix >= 0x3FE5_9428)
+    {
+        if (hx < 0)
+        {
+            x = -x;
+            y = -y;
+        }
+        const double z0 = pio4 - x;
+        const double w0 = pio4lo - y;
+        x = z0 + w0;
+        y = 0.0;
+    }
+
+    const double z = x * x;
+    const double w = z * z;
+    double r = T[1] + w * (T[3] + w * (T[5] + w * (T[7] + w * (T[9] + w * T[11]))));
+    const double v = z * (T[2] + w * (T[4] + w * (T[6] + w * (T[8] + w * (T[10] + w * T[12])))));
+    const double s = z * x;
+    r = y + z * (s * (r + v) + y);
+    r += T[0] * s;
+    const double ww = x + r;
+    if (ix >= 0x3FE5_9428)
+    {
+        const double vv = cast(double) iy;
+        return cast(double)(1 - ((hx >> 30) & 2)) * (vv - 2.0 * (x - (ww * ww / (ww + vv) - r)));
+    }
+    if (iy == 1)
+        return ww;
+
+    double zz = ww;
+    zz = __LO(zz, 0);
+    const double vv = r - (zz - x);
+    const double a = -1.0 / ww;
+    double t = a;
+    t = __LO(t, 0);
+    const double ss = 1.0 + t * zz;
+    return t + a * (ss + t * vv);
+}
+
+/// Bit-exact FDLIBM sine (`FdLibm.Sin.compute`).
+package(flint.java) double fdSin(double x) pure nothrow @nogc
+{
+    const int ix = __HI(x) & EXP_SIGNIF_BITS;
+    if (ix <= 0x3fe9_21fb)
+        return kernelSin(x, 0.0, 0);
+    if (ix >= EXP_BITS)
+        return double.nan;
+
+    double[2] y = void;
+    const int n = ieee754RemPio2(x, y);
+    switch (n & 3)
+    {
+    case 0:
+        return kernelSin(y[0], y[1], 1);
+    case 1:
+        return kernelCos(y[0], y[1]);
+    case 2:
+        return -kernelSin(y[0], y[1], 1);
+    default:
+        return -kernelCos(y[0], y[1]);
+    }
+}
+
+/// Bit-exact FDLIBM cosine (`FdLibm.Cos.compute`).
+package(flint.java) double fdCos(double x) pure nothrow @nogc
+{
+    const int ix = __HI(x) & EXP_SIGNIF_BITS;
+    if (ix <= 0x3fe9_21fb)
+        return kernelCos(x, 0.0);
+    if (ix >= EXP_BITS)
+        return double.nan;
+
+    double[2] y = void;
+    const int n = ieee754RemPio2(x, y);
+    switch (n & 3)
+    {
+    case 0:
+        return kernelCos(y[0], y[1]);
+    case 1:
+        return -kernelSin(y[0], y[1], 1);
+    case 2:
+        return -kernelCos(y[0], y[1]);
+    default:
+        return kernelSin(y[0], y[1], 1);
+    }
+}
+
+/// Bit-exact FDLIBM tangent (`FdLibm.Tan.compute`).
+package(flint.java) double fdTan(double x) pure nothrow @nogc
+{
+    const int ix = __HI(x) & EXP_SIGNIF_BITS;
+    if (ix <= 0x3fe9_21fb)
+        return kernelTan(x, 0.0, 1);
+    if (ix >= EXP_BITS)
+        return double.nan;
+
+    double[2] y = void;
+    const int n = ieee754RemPio2(x, y);
+    return kernelTan(y[0], y[1], 1 - ((n & 1) << 1));
+}
+
+/// Bit-exact FDLIBM arcsine (`FdLibm.Asin.compute`).
+package(flint.java) double fdAsin(double x) pure nothrow @nogc
+{
+    enum double pio2Hi = 0x1.921fb54442d18p0;
+    enum double pio2Lo = 0x1.1a62633145c07p-54;
+    enum double pio4Hi = 0x1.921fb54442d18p-1;
+    enum double pS0 = 0x1.5555555555555p-3;
+    enum double pS1 = -0x1.4d61203eb6f7dp-2;
+    enum double pS2 = 0x1.9c1550e884455p-3;
+    enum double pS3 = -0x1.48228b5688f3bp-5;
+    enum double pS4 = 0x1.9efe07501b288p-11;
+    enum double pS5 = 0x1.23de10dfdf709p-15;
+    enum double qS1 = -0x1.33a271c8a2d4bp1;
+    enum double qS2 = 0x1.02ae59c598ac8p1;
+    enum double qS3 = -0x1.6066c1b8d0159p-1;
+    enum double qS4 = 0x1.3b8c5b12e9282p-4;
+
+    const int hx = __HI(x);
+    const int ix = hx & EXP_SIGNIF_BITS;
+    if (ix >= 0x3ff0_0000)
+    {
+        if (((ix - 0x3ff0_0000) | __LO(x)) == 0)
+            return x * pio2Hi + x * pio2Lo;
+        return double.nan;
+    }
+    if (ix < 0x3fe0_0000)
+    {
+        if (ix < 0x3e40_0000)
+            return x;
+        const double t = x * x;
+        const double p = t * (pS0 + t * (pS1 + t * (pS2 + t * (pS3 + t * (pS4 + t * pS5)))));
+        const double q = 1.0 + t * (qS1 + t * (qS2 + t * (qS3 + t * qS4)));
+        return x + x * (p / q);
+    }
+
+    const double t = (1.0 - absD(x)) * 0.5;
+    const double p = t * (pS0 + t * (pS1 + t * (pS2 + t * (pS3 + t * (pS4 + t * pS5)))));
+    const double q = 1.0 + t * (qS1 + t * (qS2 + t * (qS3 + t * qS4)));
+    const double s = fdSqrt(t);
+    double res;
+    if (ix >= 0x3FEF_3333)
+    {
+        const double w = p / q;
+        res = pio2Hi - (2.0 * (s + s * w) - pio2Lo);
+    }
+    else
+    {
+        double w = s;
+        w = __LO(w, 0);
+        const double c = (t - w * w) / (s + w);
+        const double r = p / q;
+        const double pp = 2.0 * s * r - (pio2Lo - 2.0 * c);
+        const double qq = pio4Hi - 2.0 * w;
+        res = pio4Hi - (pp - qq);
+    }
+    return hx > 0 ? res : -res;
+}
+
+/// Bit-exact FDLIBM arccosine (`FdLibm.Acos.compute`).
+package(flint.java) double fdAcos(double x) pure nothrow @nogc
+{
+    enum double pio2Hi = 0x1.921fb54442d18p0;
+    enum double pio2Lo = 0x1.1a62633145c07p-54;
+    enum double pS0 = 0x1.5555555555555p-3;
+    enum double pS1 = -0x1.4d61203eb6f7dp-2;
+    enum double pS2 = 0x1.9c1550e884455p-3;
+    enum double pS3 = -0x1.48228b5688f3bp-5;
+    enum double pS4 = 0x1.9efe07501b288p-11;
+    enum double pS5 = 0x1.23de10dfdf709p-15;
+    enum double qS1 = -0x1.33a271c8a2d4bp1;
+    enum double qS2 = 0x1.02ae59c598ac8p1;
+    enum double qS3 = -0x1.6066c1b8d0159p-1;
+    enum double qS4 = 0x1.3b8c5b12e9282p-4;
+
+    const int hx = __HI(x);
+    const int ix = hx & EXP_SIGNIF_BITS;
+    if (ix >= 0x3ff0_0000)
+    {
+        if (((ix - 0x3ff0_0000) | __LO(x)) == 0)
+            return hx > 0 ? 0.0 : PI_CONST + 2.0 * pio2Lo;
+        return double.nan;
+    }
+    if (ix < 0x3fe0_0000)
+    {
+        if (ix <= 0x3c60_0000)
+            return pio2Hi + pio2Lo;
+        const double z = x * x;
+        const double p = z * (pS0 + z * (pS1 + z * (pS2 + z * (pS3 + z * (pS4 + z * pS5)))));
+        const double q = 1.0 + z * (qS1 + z * (qS2 + z * (qS3 + z * qS4)));
+        return pio2Hi - (x - (pio2Lo - x * (p / q)));
+    }
+    if (hx < 0)
+    {
+        const double z = (1.0 + x) * 0.5;
+        const double p = z * (pS0 + z * (pS1 + z * (pS2 + z * (pS3 + z * (pS4 + z * pS5)))));
+        const double q = 1.0 + z * (qS1 + z * (qS2 + z * (qS3 + z * qS4)));
+        const double s = fdSqrt(z);
+        const double w = (p / q) * s - pio2Lo;
+        return PI_CONST - 2.0 * (s + w);
+    }
+
+    const double z = (1.0 - x) * 0.5;
+    const double s = fdSqrt(z);
+    double df = s;
+    df = __LO(df, 0);
+    const double c = (z - df * df) / (s + df);
+    const double p = z * (pS0 + z * (pS1 + z * (pS2 + z * (pS3 + z * (pS4 + z * pS5)))));
+    const double q = 1.0 + z * (qS1 + z * (qS2 + z * (qS3 + z * qS4)));
+    const double w = (p / q) * s + c;
+    return 2.0 * (df + w);
+}
+
+private double atanReduce(double x, int ix, out int id) pure nothrow @nogc
+{
+    x = absD(x);
+    if (ix < 0x3ff3_0000)
+    {
+        if (ix < 0x3fe6_0000)
+        {
+            id = 0;
+            return (2.0 * x - 1.0) / (2.0 + x);
+        }
+        id = 1;
+        return (x - 1.0) / (x + 1.0);
+    }
+    if (ix < 0x4003_8000)
+    {
+        id = 2;
+        return (x - 1.5) / (1.0 + 1.5 * x);
+    }
+    id = 3;
+    return -1.0 / x;
+}
+
+/// Bit-exact FDLIBM arctangent (`FdLibm.Atan.compute`).
+package(flint.java) double fdAtan(double x) pure nothrow @nogc
+{
+    static immutable double[4] atanhi = [
+        0x1.dac670561bb4fp-2, 0x1.921fb54442d18p-1, 0x1.f730bd281f69bp-1, 0x1.921fb54442d18p0,
+    ];
+    static immutable double[4] atanlo = [
+        0x1.a2b7f222f65e2p-56, 0x1.1a62633145c07p-55, 0x1.007887af0cbbdp-56, 0x1.1a62633145c07p-54,
+    ];
+    static immutable double[11] aT = [
+        0x1.555555555550dp-2, -0x1.999999998ebc4p-3, 0x1.24924920083ffp-3, -0x1.c71c6fe231671p-4,
+        0x1.745cdc54c206ep-4, -0x1.3b0f2af749a6dp-4, 0x1.10d66a0d03d51p-4, -0x1.dde2d52defd9ap-5,
+        0x1.97b4b24760debp-5, -0x1.2b4442c6a6c2fp-5, 0x1.0ad3ae322da11p-6,
+    ];
+
+    const int hx = __HI(x);
+    const int ix = hx & EXP_SIGNIF_BITS;
+    if (ix >= 0x4410_0000)
+    {
+        if (ix > EXP_BITS || (ix == EXP_BITS && __LO(x) != 0))
+            return x + x;
+        return hx > 0 ? atanhi[3] + atanlo[3] : -atanhi[3] - atanlo[3];
+    }
+
+    int id;
+    if (ix < 0x3fdc_0000)
+    {
+        if (ix < 0x3e20_0000)
+            return x;
+        id = -1;
+    }
+    else
+    {
+        x = atanReduce(x, ix, id);
+    }
+
+    const double z = x * x;
+    const double w = z * z;
+    const double s1 = z * (aT[0] + w * (aT[2] + w * (aT[4] + w * (aT[6] + w * (aT[8] + w * aT[10])))));
+    const double s2 = w * (aT[1] + w * (aT[3] + w * (aT[5] + w * (aT[7] + w * aT[9]))));
+    if (id < 0)
+        return x - x * (s1 + s2);
+    const double res = atanhi[id] - ((x * (s1 + s2) - atanlo[id]) - x);
+    return hx < 0 ? -res : res;
+}
+
+private double atan2InfX(int m, int iy) pure nothrow @nogc
+{
+    enum double tiny = 1.0e-300;
+    enum double piO4 = 0x1.921fb54442d18p-1;
+
+    if (iy == EXP_BITS)
+    {
+        switch (m)
+        {
+        case 0:
+            return piO4 + tiny;
+        case 1:
+            return -piO4 - tiny;
+        case 2:
+            return 3.0 * piO4 + tiny;
+        default:
+            return -3.0 * piO4 - tiny;
+        }
+    }
+    switch (m)
+    {
+    case 0:
+        return 0.0;
+    case 1:
+        return -0.0;
+    case 2:
+        return PI_CONST + tiny;
+    default:
+        return -PI_CONST - tiny;
+    }
+}
+
+private bool atan2Special(double y, int ix, int lx, int hy, int iy, int ly, int m, out double res) pure nothrow @nogc
+{
+    enum double tiny = 1.0e-300;
+    enum double piO2 = 0x1.921fb54442d18p0;
+
+    if ((iy | ly) == 0)
+    {
+        if (m < 2)
+            res = y;
+        else
+            res = m == 2 ? PI_CONST + tiny : -PI_CONST - tiny;
+        return true;
+    }
+    if ((ix | lx) == 0 || iy == EXP_BITS)
+    {
+        if (ix == EXP_BITS)
+            res = atan2InfX(m, iy);
+        else
+            res = hy < 0 ? -piO2 - tiny : piO2 + tiny;
+        return true;
+    }
+    if (ix == EXP_BITS)
+    {
+        res = atan2InfX(m, iy);
+        return true;
+    }
+    res = 0.0;
+    return false;
+}
+
+/// Bit-exact FDLIBM two-argument arctangent (`FdLibm.Atan2.compute`).
+package(flint.java) double fdAtan2(double y, double x) pure nothrow @nogc
+{
+    enum double piO2 = 0x1.921fb54442d18p0;
+    enum double piLo = 0x1.1a62633145c07p-53;
+
+    if (x != x || y != y)
+        return x + y;
+
+    const int hx = __HI(x);
+    const int ix = hx & EXP_SIGNIF_BITS;
+    const int lx = __LO(x);
+    const int hy = __HI(y);
+    const int iy = hy & EXP_SIGNIF_BITS;
+    const int ly = __LO(y);
+
+    if (((hx - 0x3ff0_0000) | lx) == 0)
+        return fdAtan(y);
+
+    const int m = ((hy >> 31) & 1) | ((hx >> 30) & 2);
+    double special;
+    if (atan2Special(y, ix, lx, hy, iy, ly, m, special))
+        return special;
+
+    const int k = (iy - ix) >> 20;
+    double z;
+    if (k > 60)
+        z = piO2 + 0.5 * piLo;
+    else if (hx < 0 && k < -60)
+        z = 0.0;
+    else
+        z = fdAtan(absD(y / x));
+
+    switch (m)
+    {
+    case 0:
+        return z;
+    case 1:
+        return -z;
+    case 2:
+        return PI_CONST - (z - piLo);
+    default:
+        return (z - piLo) - PI_CONST;
+    }
 }

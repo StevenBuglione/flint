@@ -1354,4 +1354,60 @@ struct Math
 
         return fdTanh(x);
     }
+
+    /// Trigonometric sine of angle `a` in radians (delegates to FDLIBM).
+    static double sin()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdSin;
+
+        return fdSin(a);
+    }
+
+    /// Trigonometric cosine of angle `a` in radians (delegates to FDLIBM).
+    static double cos()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdCos;
+
+        return fdCos(a);
+    }
+
+    /// Trigonometric tangent of angle `a` in radians (delegates to FDLIBM).
+    static double tan()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdTan;
+
+        return fdTan(a);
+    }
+
+    /// Arc sine of `a` in `[-pi/2, pi/2]` (delegates to FDLIBM).
+    static double asin()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdAsin;
+
+        return fdAsin(a);
+    }
+
+    /// Arc cosine of `a` in `[0, pi]` (delegates to FDLIBM).
+    static double acos()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdAcos;
+
+        return fdAcos(a);
+    }
+
+    /// Arc tangent of `a` in `[-pi/2, pi/2]` (delegates to FDLIBM).
+    static double atan()(double a) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdAtan;
+
+        return fdAtan(a);
+    }
+
+    /// Polar angle `theta` in `[-pi, pi]` for rectangular coordinates `(x, y)` (delegates to FDLIBM).
+    static double atan2()(double y, double x) pure nothrow @nogc
+    {
+        import flint.java.internal.fdlibm : fdAtan2;
+
+        return fdAtan2(y, x);
+    }
 }

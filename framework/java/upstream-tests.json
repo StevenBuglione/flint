@@ -612,6 +612,7 @@
     },
     "java/lang/Math/Atan2Tests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 192,028-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.atan2.",
       "status": "deferred"
     },
     "java/lang/Math/CeilAndFloorTests.java": {
@@ -666,6 +667,7 @@
     },
     "java/lang/Math/Ieee754SpecialCaseTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and 596,407-call bit-exact differential runs against OpenJDK 21.0.13 StrictMath cover IEEE-754 special cases across the Math FDLIBM family.",
       "status": "deferred"
     },
     "java/lang/Math/IeeeRecommendedTests.java": {
@@ -680,6 +682,7 @@
     },
     "java/lang/Math/InverseTrigTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 192,028-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.asin, Math.acos and Math.atan.",
       "status": "deferred"
     },
     "java/lang/Math/Log10Tests.java": {
@@ -724,10 +727,12 @@
     },
     "java/lang/Math/SinCosCornerCasesTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 192,028-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.sin and Math.cos corner cases.",
       "status": "deferred"
     },
     "java/lang/Math/SinCosTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 192,028-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.sin and Math.cos.",
       "status": "deferred"
     },
     "java/lang/Math/SqrtTests.java": {
@@ -737,10 +742,12 @@
     },
     "java/lang/Math/TanTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and a 192,028-call bit-exact differential run against OpenJDK 21.0.13 StrictMath (DMD/LDC debug/release) cover Math.tan.",
       "status": "deferred"
     },
     "java/lang/Math/WorstCaseTests.java": {
       "phase": "2",
+      "reason": "plain-gpl: upstream jtreg file lacks the Classpath Exception; original Flint tests in framework/java/tests/math_core_test.d and 596,407-call bit-exact differential runs against OpenJDK 21.0.13 StrictMath cover worst-case FDLIBM arguments and large Payne-Hanek range reduction.",
       "status": "deferred"
     },
     "java/lang/ModuleLayer/BasicLayerTest.java": {

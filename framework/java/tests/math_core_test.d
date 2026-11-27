@@ -476,3 +476,43 @@ private double fdlibmSlice2NoGc() pure nothrow @nogc
     return Math.exp(1.0) + Math.expm1(0.1) + Math.log(2.0) + Math.log10(10.0) + Math.log1p(0.1) + Math.pow(2.0,
             3.0) + Math.sinh(1.0) + Math.cosh(1.0) + Math.tanh(1.0);
 }
+
+@("Math sin, cos, tan, asin, acos, atan and atan2 match Java special cases and large reduction")
+unittest
+{
+    // sin, cos, tan special cases and Payne-Hanek large-argument reduction
+    assert(dbits(Math.sin(0.0)) == 0 && dbits(Math.sin(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.sin(double.infinity), double.nan) && sameDouble(Math.sin(-double.infinity), double.nan));
+    assert(sameDouble(Math.cos(0.0), 1.0) && sameDouble(Math.cos(-0.0), 1.0));
+    assert(sameDouble(Math.cos(double.infinity), double.nan) && sameDouble(Math.cos(double.nan), double.nan));
+    assert(dbits(Math.tan(0.0)) == 0 && dbits(Math.tan(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.tan(double.infinity), double.nan) && sameDouble(Math.tan(double.nan), double.nan));
+    // Large argument > 2^19 * pi/2 exercises KernelRemPio2
+    assert(sameDouble(Math.sin(1e20), fromDbits(0xbfe4_a5e6_05fd_6450UL)));
+    assert(sameDouble(Math.cos(1e20), fromDbits(0x3fe8_7272_0fc6_0d3dUL)));
+
+    // asin, acos, atan
+    assert(dbits(Math.asin(0.0)) == 0 && dbits(Math.asin(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.asin(1.0), Math.PI / 2.0) && sameDouble(Math.asin(-1.0), -Math.PI / 2.0));
+    assert(sameDouble(Math.asin(1.5), double.nan) && sameDouble(Math.asin(-1.5), double.nan));
+    assert(dbits(Math.acos(1.0)) == 0 && sameDouble(Math.acos(-1.0), Math.PI));
+    assert(sameDouble(Math.acos(1.5), double.nan) && sameDouble(Math.acos(double.nan), double.nan));
+    assert(dbits(Math.atan(0.0)) == 0 && dbits(Math.atan(-0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.atan(double.infinity), Math.PI / 2.0));
+    assert(sameDouble(Math.atan(-double.infinity), -Math.PI / 2.0));
+
+    // atan2 quadrants, signed zeros and infinities
+    assert(dbits(Math.atan2(0.0, 0.0)) == 0);
+    assert(dbits(Math.atan2(-0.0, 0.0)) == 0x8000_0000_0000_0000UL);
+    assert(sameDouble(Math.atan2(0.0, -0.0), Math.PI));
+    assert(sameDouble(Math.atan2(-0.0, -0.0), -Math.PI));
+    assert(sameDouble(Math.atan2(double.infinity, double.infinity), Math.PI / 4.0));
+    assert(sameDouble(Math.atan2(-double.infinity, -double.infinity), -3.0 * Math.PI / 4.0));
+    assert(sameDouble(Math.atan2(double.nan, 1.0), double.nan));
+}
+
+private double fdlibmSlice3NoGc() pure nothrow @nogc
+{
+    return Math.sin(1.0) + Math.cos(1.0) + Math.tan(1.0) + Math.asin(0.5) + Math.acos(0.5) + Math.atan(
+            1.0) + Math.atan2(1.0, 2.0);
+}
