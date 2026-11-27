@@ -596,7 +596,10 @@ private Instant readDecimal(scope const(char)[] text, bool seconds) pure nothrow
     }
     if (!seconds)
         return Instant.ofEpochMilli(negative ? -whole : whole);
-    return negative ? Instant.ofEpochSecond(-whole, -nanos) : Instant.ofEpochSecond(whole, nanos);
+    // Unchecked against the instant range: the Duration path reads its seconds through here too.
+    if (!negative)
+        return Instant(whole, cast(int) nanos);
+    return nanos == 0 ? Instant(-whole, 0) : Instant(-whole - 1, cast(int)(1_000_000_000 - nanos));
 }
 
 private Any readNumber(MapperConfig config, JsonParser p, Kind kind, string type, bool integral)

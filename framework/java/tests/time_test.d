@@ -1486,3 +1486,43 @@ unittest
     assert(DateTimeFormatterBuilder().appendPattern("uuuu").appendLiteral('-').toFormatter()
             .format(LocalDate.of(2024, 1, 1)) == "2024-");
 }
+
+@("java.time: Instant and Duration arithmetic overflows as Java's does")
+unittest
+{
+    import std.exception : collectException;
+
+    enum long maxSecond = 31_556_889_864_403_199L, minSecond = -31_557_014_167_219_200L;
+    enum rangeMessage = "Instant exceeds minimum or maximum instant", overflow = "long overflow";
+    enum capacity = "Exceeds capacity of Duration: 9223372036854775808000000000";
+    // Instants stay within -1000000000-01-01T00:00Z .. 1000000000-12-31T23:59:59.999999999Z.
+    assert(Instant.ofEpochSecond(maxSecond, 999_999_999).toString() == "+1000000000-12-31T23:59:59.999999999Z");
+    assert(collectException!DateTimeException(Instant.ofEpochSecond(maxSecond + 1)).msg == rangeMessage);
+    assert(collectException!DateTimeException(Instant.ofEpochSecond(minSecond, -1)).msg == rangeMessage);
+    assert(collectException!ArithmeticException(Instant.ofEpochSecond(long.max, 1_000_000_000)).msg == overflow);
+    const max = Instant.ofEpochSecond(maxSecond, 999_999_999);
+    assert(collectException!DateTimeException(max.plusNanos(1)).msg == rangeMessage);
+    assert(collectException!ArithmeticException(max.plusSeconds(long.max)).msg == overflow);
+    assert(collectException!ArithmeticException(max.minusSeconds(long.min)).msg == overflow);
+    // Java adds a duration's seconds before its nanoseconds, so the first step can leave the range.
+    const nearMin = Instant.ofEpochSecond(minSecond, 5);
+    assert(collectException!DateTimeException(nearMin.plus(Duration.ofNanos(-1))).msg == rangeMessage);
+    assert(nearMin.plusNanos(-1).getNano() == 4);
+    // Milliseconds count from the next second up for a negative instant with a fraction.
+    assert(Instant.ofEpochSecond(-9_223_372_036_854_776L, 192_000_000).toEpochMilli() == long.min);
+    assert(collectException!ArithmeticException(Instant.ofEpochSecond(-9_223_372_036_854_776L,
+            191_999_999).toEpochMilli()).msg == overflow);
+
+    assert(collectException!ArithmeticException(Duration.ofDays(106_751_991_167_301L)).msg == overflow);
+    assert(collectException!ArithmeticException(Duration.ofSeconds(long.min, -1)).msg == overflow);
+    assert(collectException!ArithmeticException(Duration.ofSeconds(long.max).plusMillis(1_000)).msg == overflow);
+    assert(Duration.ofSeconds(long.min).minus(Duration.ofSeconds(long.min)).isZero());
+    assert(collectException!ArithmeticException(Duration.ofSeconds(long.min).negated()).msg == capacity);
+    assert(Duration.ofSeconds(long.min, 1).abs().toString() == "PT2562047788015215H30M7.999999999S");
+    // Duration.parse reports the overflow as Java does.
+    auto failure = collectException!DateTimeParseException(Duration.parse("-PT-9223372036854775808S"));
+    assert(failure.msg == "Text cannot be parsed to a Duration: overflow", failure.msg);
+    assert(failure.getCause().msg == capacity);
+    assert(collectException!DateTimeParseException(Duration.parse("PT-9223372036854775808.5S"))
+            .getCause().msg == overflow);
+}

@@ -16,7 +16,7 @@ produces.
 module flint.java.time.format;
 
 import flint.engine.aot.text : decodeUtf8;
-import flint.java.lang : IllegalArgumentException, IllegalStateException;
+import flint.java.lang : ArithmeticException, IllegalArgumentException, IllegalStateException;
 import flint.java.time : DateTimeException, Duration, Instant, LocalDate, LocalDateTime, LocalTime,
     OffsetDateTime, ZoneId, ZoneOffset, ZonedDateTime, checkRange;
 import std.typecons : Nullable;
@@ -2283,8 +2283,13 @@ Duration parseDuration(string text)
     }
     if (!any)
         throw durationError(text);
-    const result = Duration.ofSeconds(seconds, nanos);
-    return negate ? result.negated() : result;
+    try
+    {
+        const result = Duration.ofSeconds(seconds, nanos);
+        return negate ? result.negated() : result;
+    }
+    catch (ArithmeticException e)
+        throw new DateTimeParseException("Text cannot be parsed to a Duration: overflow", text, 0, e);
 }
 
 private DateTimeParseException durationError(string text) pure nothrow

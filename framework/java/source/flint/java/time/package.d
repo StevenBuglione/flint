@@ -74,6 +74,29 @@ private long floorMod(long a, long b) pure nothrow @nogc
     return a - floorDiv(a, b) * b;
 }
 
+// Java's Math.addExact and Math.multiplyExact.
+private long addExact(long a, long b) pure
+{
+    import core.checkedint : adds;
+
+    bool overflow;
+    const sum = adds(a, b, overflow);
+    if (overflow)
+        throw new ArithmeticException("long overflow");
+    return sum;
+}
+
+private long multiplyExact(long a, long b) pure
+{
+    import core.checkedint : muls;
+
+    bool overflow;
+    const product = muls(a, b, overflow);
+    if (overflow)
+        throw new ArithmeticException("long overflow");
+    return product;
+}
+
 private string pad(long value, int width) pure nothrow
 {
     import flint.engine.aot.text : decimal;
@@ -1345,16 +1368,34 @@ struct Instant
     /// Constant for the 1970-01-01T00:00:00Z epoch instant.
     enum Instant EPOCH = Instant.init;
 
-    private this(long seconds, int nanos) pure nothrow @nogc
+    private enum long minSecond = -31_557_014_167_219_200L;
+    private enum long maxSecond = 31_556_889_864_403_199L;
+
+    // For values already within the instant range, such as zone transitions; the factories check the range.
+    package(flint) this(long seconds, int nanos) pure nothrow @nogc
     {
         seconds_ = seconds;
         nanos_ = nanos;
     }
 
-    /// Obtains an instance using seconds from the epoch and a nanosecond adjustment.
-    static Instant ofEpochSecond(long epochSecond, long nanoAdjustment = 0) pure nothrow @nogc
+    private static Instant create(long seconds, int nanos) pure
     {
-        return Instant(epochSecond + floorDiv(nanoAdjustment, nanosPerSecond),
+        if (seconds < minSecond || seconds > maxSecond)
+            throw new DateTimeException("Instant exceeds minimum or maximum instant");
+        return Instant(seconds, nanos);
+    }
+
+    /// Obtains an instance using seconds from the epoch. Throws `DateTimeException` beyond the instant range.
+    static Instant ofEpochSecond(long epochSecond) pure
+    {
+        return create(epochSecond, 0);
+    }
+
+    /// Obtains an instance using seconds from the epoch and a nanosecond adjustment. Throws `DateTimeException`
+    /// beyond the instant range and `ArithmeticException` when the seconds overflow.
+    static Instant ofEpochSecond(long epochSecond, long nanoAdjustment) pure
+    {
+        return create(addExact(epochSecond, floorDiv(nanoAdjustment, nanosPerSecond)),
                 cast(int) floorMod(nanoAdjustment, nanosPerSecond));
     }
 
@@ -1401,52 +1442,64 @@ struct Instant
         return nanos_;
     }
 
-    /// Milliseconds from the epoch.
-    long toEpochMilli() const pure nothrow @nogc
+    /// Milliseconds from the epoch. Throws `ArithmeticException` when they exceed the signed range.
+    long toEpochMilli() const pure
     {
-        return seconds_ * 1000 + nanos_ / 1_000_000;
+        // A negative instant with a fraction counts from the next second up, so the multiplication can fit.
+        if (seconds_ < 0 && nanos_ > 0)
+            return addExact(multiplyExact(seconds_ + 1, 1000), nanos_ / 1_000_000 - 1000);
+        return addExact(multiplyExact(seconds_, 1000), nanos_ / 1_000_000);
     }
 
-    /// A copy with the given number of seconds added.
-    Instant plusSeconds(long seconds) const pure nothrow @nogc
+    private Instant plusExact(long secondsToAdd, long nanosToAdd) const pure
     {
-        return Instant(seconds_ + seconds, nanos_);
+        if ((secondsToAdd | nanosToAdd) == 0)
+            return this;
+        const epochSecond = addExact(addExact(seconds_, secondsToAdd), nanosToAdd / nanosPerSecond);
+        return ofEpochSecond(epochSecond, nanos_ + nanosToAdd % nanosPerSecond);
     }
 
-    /// A copy with the given number of milliseconds added.
-    Instant plusMillis(long millis) const pure nothrow @nogc
+    /// A copy with the given number of seconds added. Throws `DateTimeException` beyond the instant range.
+    Instant plusSeconds(long seconds) const pure
     {
-        return ofEpochSecond(seconds_, nanos_ + millis * 1_000_000);
+        return plusExact(seconds, 0);
     }
 
-    /// A copy with the given number of nanoseconds added.
-    Instant plusNanos(long nanos) const pure nothrow @nogc
+    /// A copy with the given number of milliseconds added. Throws `DateTimeException` beyond the instant range.
+    Instant plusMillis(long millis) const pure
     {
-        return ofEpochSecond(seconds_ + floorDiv(nanos, nanosPerSecond), nanos_ + floorMod(nanos, nanosPerSecond));
+        return plusExact(millis / 1000, (millis % 1000) * 1_000_000);
     }
 
-    /// A copy with the given duration added.
-    Instant plus(Duration duration) const pure nothrow @nogc
+    /// A copy with the given number of nanoseconds added. Throws `DateTimeException` beyond the instant range.
+    Instant plusNanos(long nanos) const pure
     {
-        return ofEpochSecond(seconds_ + duration.getSeconds(), nanos_ + duration.getNano());
+        return plusExact(0, nanos);
     }
 
-    /// A copy with the given number of seconds subtracted.
-    Instant minusSeconds(long seconds) const pure nothrow @nogc
+    /// A copy with the given duration added, its seconds first and then its nanoseconds, as Java adds it.
+    Instant plus(Duration duration) const pure
     {
-        return plusSeconds(-seconds);
+        const seconds = duration.getSeconds();
+        return (seconds != 0 ? plusSeconds(seconds) : this).plusNanos(duration.getNano());
     }
 
-    /// A copy with the given number of milliseconds subtracted.
-    Instant minusMillis(long millis) const pure nothrow @nogc
+    /// A copy with the given number of seconds subtracted. Throws `DateTimeException` beyond the instant range.
+    Instant minusSeconds(long seconds) const pure
     {
-        return plusMillis(-millis);
+        return seconds == long.min ? plusSeconds(long.max).plusSeconds(1) : plusSeconds(-seconds);
     }
 
-    /// A copy with the given duration subtracted.
-    Instant minus(Duration duration) const pure nothrow @nogc
+    /// A copy with the given number of milliseconds subtracted. Throws `DateTimeException` beyond the instant range.
+    Instant minusMillis(long millis) const pure
     {
-        return ofEpochSecond(seconds_ - duration.getSeconds(), nanos_ - duration.getNano());
+        return millis == long.min ? plusMillis(long.max).plusMillis(1) : plusMillis(-millis);
+    }
+
+    /// A copy with the given duration subtracted, its seconds first and then its nanoseconds, as Java subtracts it.
+    Instant minus(Duration duration) const pure
+    {
+        return minusSeconds(duration.getSeconds()).plusNanos(-duration.getNano());
     }
 
     /// Combines this instant with an offset to create an `OffsetDateTime`.
@@ -1844,28 +1897,35 @@ struct Duration
         nanos_ = nanos;
     }
 
-    /// Obtains a duration of standard 24-hour days.
-    static Duration ofDays(long days) pure nothrow @nogc
+    /// Obtains a duration of standard 24-hour days. Throws `ArithmeticException` when the seconds overflow.
+    static Duration ofDays(long days) pure
     {
-        return Duration(days * secondsPerDay, 0);
+        return Duration(multiplyExact(days, secondsPerDay), 0);
     }
 
-    /// Obtains a duration of hours.
-    static Duration ofHours(long hours) pure nothrow @nogc
+    /// Obtains a duration of hours. Throws `ArithmeticException` when the seconds overflow.
+    static Duration ofHours(long hours) pure
     {
-        return Duration(hours * 3600, 0);
+        return Duration(multiplyExact(hours, 3600), 0);
     }
 
-    /// Obtains a duration of minutes.
-    static Duration ofMinutes(long minutes) pure nothrow @nogc
+    /// Obtains a duration of minutes. Throws `ArithmeticException` when the seconds overflow.
+    static Duration ofMinutes(long minutes) pure
     {
-        return Duration(minutes * 60, 0);
+        return Duration(multiplyExact(minutes, 60), 0);
     }
 
-    /// Obtains a duration of seconds and a nanosecond adjustment.
-    static Duration ofSeconds(long seconds, long nanoAdjustment = 0) pure nothrow @nogc
+    /// Obtains a duration of seconds.
+    static Duration ofSeconds(long seconds) pure nothrow @nogc
     {
-        return Duration(seconds + floorDiv(nanoAdjustment, nanosPerSecond),
+        return Duration(seconds, 0);
+    }
+
+    /// Obtains a duration of seconds and a nanosecond adjustment. Throws `ArithmeticException` when the seconds
+    /// overflow.
+    static Duration ofSeconds(long seconds, long nanoAdjustment) pure
+    {
+        return Duration(addExact(seconds, floorDiv(nanoAdjustment, nanosPerSecond)),
                 cast(int) floorMod(nanoAdjustment, nanosPerSecond));
     }
 
@@ -1884,8 +1944,10 @@ struct Duration
     /// The duration between two instants.
     static Duration between(Instant startInclusive, Instant endExclusive) pure nothrow @nogc
     {
-        return ofSeconds(endExclusive.getEpochSecond() - startInclusive.getEpochSecond(),
-                endExclusive.getNano() - startInclusive.getNano());
+        // Instants span fewer seconds than a long holds, so the difference cannot overflow.
+        const nanos = endExclusive.getNano() - startInclusive.getNano();
+        return Duration(endExclusive.getEpochSecond() - startInclusive.getEpochSecond() + floorDiv(nanos,
+                nanosPerSecond), cast(int) floorMod(nanos, nanosPerSecond));
     }
 
     /// The duration between two local date-times.
@@ -1981,50 +2043,63 @@ struct Duration
         return seconds_ * unitsPerSecond + fraction;
     }
 
-    /// A copy with `other` added.
-    Duration plus(Duration other) const pure nothrow @nogc
+    private Duration plusExact(long secondsToAdd, long nanosToAdd) const pure
     {
-        return ofSeconds(seconds_ + other.seconds_, cast(long) nanos_ + other.nanos_);
+        if ((secondsToAdd | nanosToAdd) == 0)
+            return this;
+        const seconds = addExact(addExact(seconds_, secondsToAdd), nanosToAdd / nanosPerSecond);
+        return ofSeconds(seconds, nanos_ + nanosToAdd % nanosPerSecond);
     }
 
-    /// A copy with `other` subtracted.
-    Duration minus(Duration other) const pure nothrow @nogc
+    /// A copy with `other` added. Throws `ArithmeticException` when the seconds overflow.
+    Duration plus(Duration other) const pure
     {
-        return ofSeconds(seconds_ - other.seconds_, cast(long) nanos_ - other.nanos_);
+        return plusExact(other.seconds_, other.nanos_);
     }
 
-    /// A copy with the given seconds added.
-    Duration plusSeconds(long seconds) const pure nothrow @nogc
+    /// A copy with `other` subtracted. Throws `ArithmeticException` when the seconds overflow.
+    Duration minus(Duration other) const pure
     {
-        return Duration(seconds_ + seconds, nanos_);
+        if (other.seconds_ == long.min)
+            return plusExact(long.max, -cast(long) other.nanos_).plusExact(1, 0);
+        return plusExact(-other.seconds_, -cast(long) other.nanos_);
     }
 
-    /// A copy with the given milliseconds added.
-    Duration plusMillis(long millis) const pure nothrow @nogc
+    /// A copy with the given seconds added. Throws `ArithmeticException` when the seconds overflow.
+    Duration plusSeconds(long seconds) const pure
     {
-        return plus(ofMillis(millis));
+        return plusExact(seconds, 0);
     }
 
-    /// A copy with the given minutes added.
-    Duration plusMinutes(long minutes) const pure nothrow @nogc
+    /// A copy with the given milliseconds added. Throws `ArithmeticException` when the seconds overflow.
+    Duration plusMillis(long millis) const pure
     {
-        return plusSeconds(minutes * 60);
+        return plusExact(millis / 1000, (millis % 1000) * 1_000_000);
     }
 
-    /// A copy with the given hours added.
-    Duration plusHours(long hours) const pure nothrow @nogc
+    /// A copy with the given minutes added. Throws `ArithmeticException` when the seconds overflow.
+    Duration plusMinutes(long minutes) const pure
     {
-        return plusSeconds(hours * 3600);
+        return plusExact(multiplyExact(minutes, 60), 0);
     }
 
-    /// A copy with the length negated.
-    Duration negated() const pure nothrow @nogc
+    /// A copy with the given hours added. Throws `ArithmeticException` when the seconds overflow.
+    Duration plusHours(long hours) const pure
     {
-        return ofSeconds(-seconds_, -cast(long) nanos_);
+        return plusExact(multiplyExact(hours, 3600), 0);
     }
 
-    /// A copy with a positive length.
-    Duration abs() const pure nothrow @nogc
+    /// A copy with the length negated. Throws `ArithmeticException` for the most negative duration.
+    Duration negated() const pure
+    {
+        // Only -2^63 whole seconds has no positive counterpart; Java reports its length in nanoseconds.
+        if (seconds_ == long.min && nanos_ == 0)
+            throw new ArithmeticException("Exceeds capacity of Duration: 9223372036854775808000000000");
+        return nanos_ == 0 ? Duration(-seconds_, 0) : Duration(-seconds_ - 1, cast(int)(nanosPerSecond - nanos_));
+    }
+
+    /// A copy with a positive length. Throws `ArithmeticException` for the most negative duration.
+    Duration abs() const pure
     {
         return isNegative() ? negated() : this;
     }

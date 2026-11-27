@@ -97,7 +97,8 @@ struct ZoneOffsetTransition
 
     Instant getInstant() const pure nothrow @nogc
     {
-        return Instant.ofEpochSecond(toEpochSecond());
+        // A local date-time at an offset is always within the instant range.
+        return Instant(toEpochSecond(), 0);
     }
 
     long toEpochSecond() const pure nothrow @nogc
