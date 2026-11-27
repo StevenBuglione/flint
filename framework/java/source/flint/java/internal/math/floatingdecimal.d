@@ -26,6 +26,9 @@
 // (readJavaFormatString and ASCIIToBinaryBuffer.doubleValue) and FDBigInteger.java (the arithmetic
 // doubleValue uses), with src/java.base/share/classes/java/text/DigitList.java (getDouble).
 // Modified by the Flint authors.
+//
+// Stack footprint: a conversion that reaches the correction loop holds four 160-word big integers
+// (4 x 648 B) beside the 1,100-byte digit scan, about 3.7 KB, which matters on fiber stacks.
 module flint.java.internal.math.floatingdecimal;
 
 @safe:
@@ -39,7 +42,8 @@ enum FloatingDecimalStatus : ubyte
     numberFormat,
     /// A hexadecimal floating-point string, which this port does not parse yet.
     hexUnsupported,
-    /// Longer than a Java string or DigitList can be.
+    /// Input longer than int.max / 4 characters or digits, a limit that keeps the int digit and
+    /// exponent arithmetic from overflowing, or a big-integer operand past its fixed capacity.
     capacity,
 }
 
