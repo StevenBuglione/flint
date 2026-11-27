@@ -581,10 +581,10 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
             base += ['--model', profile or 'claude-opus-5-5']
             commands = [base + ['-p', pointer]]
         elif harness == 'opencode':
-            # The owner's harness for the rest of the port (2026-11-27): opencode with DeepSeek, run headless with
+            # The owner's harness for the rest of the port (2026-11-27): opencode with DeepSeek via OpenRouter, run headless with
             # permissions auto-approved inside the lane's worktree. The API key comes from OPENCODE_ENV_FILE
-            # (default ~/.config/flint-lanes/deepseek.env, KEY=VALUE lines) and is never printed or logged.
-            base = ['opencode', 'run', '--model', profile or 'deepseek/deepseek-v4.1-flash-1017', '--auto',
+            # (default ~/.config/flint-lanes/deepseek.env, KEY=VALUE lines, OPENROUTER_API_KEY) and is never printed or logged.
+            base = ['opencode', 'run', '--model', profile or 'openrouter/deepseek/deepseek-v4.1-flash-1017', '--auto',
                     '--dir', str(worktree)]
             commands = [base + [pointer]]
         elif harness == 'agy':
