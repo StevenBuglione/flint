@@ -132,3 +132,37 @@ unittest
     spent.filter((int) => true);
     assert(run(() { spent.filter((int) => true); }) == Outcome.illegalState);
 }
+
+unittest
+{
+    // TerminalNullOracle and TerminalSupplierOracle: forEach and forEachOrdered on a source stream take it before
+    // rejecting the null action, so it is spent; a derived stage rejects the action first and stays usable.
+    void delegate(int) @safe action;
+    foreach (ordered; [false, true])
+    {
+        void apply(Stream!int stream)
+        {
+            if (ordered)
+                stream.forEachOrdered(action);
+            else
+                stream.forEach(action);
+        }
+
+        auto head = Stream!int.empty();
+        assert(run(() { apply(head); }) == Outcome.nullPointer);
+        assert(run(() { apply(head); }) == Outcome.illegalState);
+
+        int[] seen;
+        auto derived = Stream!int.of(7).map!int((int value) => value * 2);
+        assert(run(() { apply(derived); }) == Outcome.nullPointer);
+        derived.forEachOrdered((int value) { seen ~= value; });
+        assert(seen == [14]);
+        assert(run(() { apply(derived); }) == Outcome.nullPointer);
+    }
+
+    int[] order;
+    Stream!int.of(3, 1, 2).peek((int value) { order ~= value; }).forEach((int value) {
+        order ~= -value;
+    });
+    assert(order == [3, -3, 1, -1, 2, -2]);
+}
