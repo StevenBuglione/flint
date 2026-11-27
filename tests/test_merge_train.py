@@ -574,6 +574,37 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertIn({'role': 'sol-b', 'ok': True}, [{k: e[k] for k in ('role', 'ok')} for e in events
                                                          if e['event'] == 'train-interleaved'])
 
+    def drifted_main(self):
+        """Main itself reads over its stored budget numbers in this session (src/DRIFT), as posidon did on 2026-11-27."""
+        (self.work / 'src' / 'DRIFT').write_text('session')
+        git(self.work, 'checkout', '-q', 'origin/main')
+        git(self.work, 'add', '.')
+        git(self.work, 'commit', '-q', '-m', 'main drifts')
+        git(self.work, 'push', '-q', 'origin', 'HEAD:main')
+        git(self.work, 'fetch', '-q', 'origin')
+
+    def test_a_main_red_only_by_drift_lands_a_stack_that_is_within_tolerance_interleaved(self):
+        self.drifted_main()
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c')):
+            self.lane(role, {f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
+        self.assertNotIn('main_red', result)
+        self.assertEqual(result['landed'], ['sol-a', 'sol-b', 'sol-c'])
+        self.assertIn('ab', [mode for mode, _ in posidon.modes])
+
+    def test_a_main_red_only_by_drift_still_returns_a_real_regression_by_interleaved_bisect(self):
+        self.drifted_main()
+        for i, role in enumerate(('sol-a', 'sol-b', 'sol-c')):
+            self.lane(role, {'src/SLOW' if role == 'sol-b' else f'src/{i}.txt': str(i)})
+        self.hold_slot()
+        posidon = self.ModalVerifier(self, 'posidon', budget=True)
+        result = self.stacked(self.FakeVerifier(self, 'desktop'), posidon).run('runner')
+        self.assertNotIn('main_red', result)
+        self.assertEqual(result['failed'], ['sol-b'])
+        self.assertEqual(sorted(result['landed']), ['sol-a', 'sol-c'])
+
     def test_a_real_regression_is_still_returned_after_the_interleaved_ab(self):
         for i, role in enumerate(('sol-a', 'sol-b', 'sol-c')):
             self.lane(role, {'src/SLOW' if role == 'sol-b' else f'src/{i}.txt': str(i)})

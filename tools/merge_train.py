@@ -934,7 +934,7 @@ class Train:
         good, bad = (ends[first - 1] if first else 0), ends[first]
         return self._resolve(batch, applied, failed, good, bad, results[first], base)
 
-    def _resolve(self, batch, applied, failed, good, bad, verdict, base, verifier=None):
+    def _resolve(self, batch, applied, failed, good, bad, verdict, base, verifier=None, step=None):
         """Bisect applied[good:bad] (applied[:good] is green, the candidate ending at bad red) and settle what lands.
         `verifier` bisects (default: the budget verifier, last); an acceptance failure is bisected on its own verifier."""
         ok, bad_log = verdict
@@ -943,7 +943,10 @@ class Train:
             self.store.event('train-verifier-failed', log=bad_log[-2000:])
         else:
             only = budget_only_apps(bad_log)  # a budget-only failure is bisected with flint budget alone
-            step = dict(mode='budget', apps=only) if only else {}
+            if step is None:
+                step = dict(mode='budget', apps=only) if only else {}
+            elif step.get('mode') == 'ab':
+                only = None  # already judged interleaved: no tie-breaker on top
             middle_log = ''
             while bad - good > 1:
                 middle = (good + bad) // 2
@@ -957,8 +960,11 @@ class Train:
                     bad, bad_log = middle, middle_log
             if bad is None:
                 self.store.event('train-verifier-failed', log=middle_log[-2000:])
-            elif bad == 1 and (main := self.verify(base, verifier, **step))[0] is not True:
-                # Main itself is red: blame nobody; every submission waits for main to be fixed.
+            elif (bad == 1 and (main := self.verify(base, verifier, **step))[0] is not True
+                  and not (main[0] is False and only and budget_only_apps(main[1]))):
+                # Main itself is red: blame nobody; every submission waits for main to be fixed. A main that misses
+                # only flint budget's stored numbers is the session (coordinator, 08:50Z): the first lane is then
+                # judged interleaved against main by the tie-breaker below instead.
                 return self._main_red(base, main[1], failed)
             elif only and self.interleaved_clears(applied, bad, base, only):
                 # Coordinator, 2026-11-27 08:21Z: a lane that failed only flint budget is judged interleaved against
@@ -1128,6 +1134,16 @@ class Train:
         main_ok, main_log = self.verify(base, budget_verifier, mode='budget', apps=list(APPS))
         if main_ok is None:
             return self._resolve(batch, applied, failed, 0, len(applied), (None, main_log), base)
+        if main_ok is False and budget_only_apps(main_log):
+            # Main misses only the stored numbers: that's the session (idle polling shifts per posidon session), not
+            # main. Judge the stack interleaved against main itself (coordinator, 2026-11-27 08:50Z); bisect the
+            # same way if it's over.
+            ab = dict(mode='ab', apps=list(APPS), ab_base=base)
+            ok, log = self.verify(applied[-1][1], budget_verifier, **ab)
+            self.store.event('train-interleaved', role='stack', against='main', ok=ok)
+            if ok is True:
+                return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
+            return self._resolve(batch, applied, failed, 0, len(applied), (ok, log), base, budget_verifier, step=ab)
         if main_ok is False:
             return self._main_red(base, main_log, failed)
         return self._resolve(batch, applied, failed, 0, len(applied), verdict, base)
