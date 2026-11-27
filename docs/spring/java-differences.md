@@ -182,7 +182,7 @@ Element counts per upstream, as `flint api coverage` classifies them.
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 3,383 |
 | framework | spring-framework@v7.1.0 | 3,615 | 1,539 | 4,870 | 29,810 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 21 | 8 |
-| framework | jakarta-validation@3.1.1 | 207 | 3 | 0 | 332 |
+| framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 1 | 897 |
 | framework | jakarta-servlet@6.1.0 | 6 | 270 | 1 | 551 |
 | framework | jackson-core@3.1.8 | 529 | 28 | 1 | 2,737 |
@@ -2184,9 +2184,73 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
+| `jakarta.validation.Valid` | `flint.jakarta.validation.Valid` | [R2](api-mapping.md#r2-annotations) |  |
 | `jakarta.validation.Validator#validate(T,Class...)` | `flint.jakarta.validation.Validator.validate` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.validation.Validator#validateProperty(T,String,Class...)` | `flint.jakarta.validation.Validator.validateProperty` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `jakarta.validation.Validator#validateValue(Class,String,Object,Class...)` | `flint.jakarta.validation.Validator.validateValue` | [R4](api-mapping.md#r4-classt-parameters) |  |
+
+#### jakarta.validation.constraints
+
+| Java | Flint | Rules | Note |
+| --- | --- | --- | --- |
+| `jakarta.validation.constraints.AssertFalse` | `flint.jakarta.validation.constraints.AssertFalse` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.AssertFalse#message` | `flint.jakarta.validation.constraints.AssertFalse.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.AssertTrue` | `flint.jakarta.validation.constraints.AssertTrue` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.AssertTrue#message` | `flint.jakarta.validation.constraints.AssertTrue.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.DecimalMax` | `flint.jakarta.validation.constraints.DecimalMax` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.DecimalMax#inclusive` | `flint.jakarta.validation.constraints.DecimalMax.inclusive` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.DecimalMax#message` | `flint.jakarta.validation.constraints.DecimalMax.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.DecimalMax#value` | `flint.jakarta.validation.constraints.DecimalMax.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.DecimalMin` | `flint.jakarta.validation.constraints.DecimalMin` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.DecimalMin#inclusive` | `flint.jakarta.validation.constraints.DecimalMin.inclusive` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.DecimalMin#message` | `flint.jakarta.validation.constraints.DecimalMin.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.DecimalMin#value` | `flint.jakarta.validation.constraints.DecimalMin.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Digits` | `flint.jakarta.validation.constraints.Digits` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Digits#fraction` | `flint.jakarta.validation.constraints.Digits.fraction` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Digits#integer` | `flint.jakarta.validation.constraints.Digits.integer` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Digits#message` | `flint.jakarta.validation.constraints.Digits.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Email` | `flint.jakarta.validation.constraints.Email` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Email#flags` | `flint.jakarta.validation.constraints.Email.flags` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Email#message` | `flint.jakarta.validation.constraints.Email.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Email#regexp` | `flint.jakarta.validation.constraints.Email.regexp` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Future` | `flint.jakarta.validation.constraints.Future` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Future#message` | `flint.jakarta.validation.constraints.Future.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.FutureOrPresent` | `flint.jakarta.validation.constraints.FutureOrPresent` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.FutureOrPresent#message` | `flint.jakarta.validation.constraints.FutureOrPresent.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Max` | `flint.jakarta.validation.constraints.Max` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Max#message` | `flint.jakarta.validation.constraints.Max.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Max#value` | `flint.jakarta.validation.constraints.Max.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Min` | `flint.jakarta.validation.constraints.Min` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Min#message` | `flint.jakarta.validation.constraints.Min.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Min#value` | `flint.jakarta.validation.constraints.Min.value` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Negative` | `flint.jakarta.validation.constraints.Negative` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Negative#message` | `flint.jakarta.validation.constraints.Negative.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.NegativeOrZero` | `flint.jakarta.validation.constraints.NegativeOrZero` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.NegativeOrZero#message` | `flint.jakarta.validation.constraints.NegativeOrZero.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.NotBlank` | `flint.jakarta.validation.constraints.NotBlank` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.NotBlank#message` | `flint.jakarta.validation.constraints.NotBlank.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.NotEmpty` | `flint.jakarta.validation.constraints.NotEmpty` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.NotEmpty#message` | `flint.jakarta.validation.constraints.NotEmpty.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.NotNull` | `flint.jakarta.validation.constraints.NotNull` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.NotNull#message` | `flint.jakarta.validation.constraints.NotNull.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Null` | `flint.jakarta.validation.constraints.Null` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Null#message` | `flint.jakarta.validation.constraints.Null.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Past` | `flint.jakarta.validation.constraints.Past` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Past#message` | `flint.jakarta.validation.constraints.Past.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.PastOrPresent` | `flint.jakarta.validation.constraints.PastOrPresent` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.PastOrPresent#message` | `flint.jakarta.validation.constraints.PastOrPresent.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Pattern` | `flint.jakarta.validation.constraints.Pattern` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Pattern#flags` | `flint.jakarta.validation.constraints.Pattern.flags` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Pattern#message` | `flint.jakarta.validation.constraints.Pattern.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Pattern#regexp` | `flint.jakarta.validation.constraints.Pattern.regexp` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Positive` | `flint.jakarta.validation.constraints.Positive` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Positive#message` | `flint.jakarta.validation.constraints.Positive.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.PositiveOrZero` | `flint.jakarta.validation.constraints.PositiveOrZero` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.PositiveOrZero#message` | `flint.jakarta.validation.constraints.PositiveOrZero.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Size` | `flint.jakarta.validation.constraints.Size` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Size#max` | `flint.jakarta.validation.constraints.Size.max` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Size#message` | `flint.jakarta.validation.constraints.Size.message` | [R2](api-mapping.md#r2-annotations) |  |
+| `jakarta.validation.constraints.Size#min` | `flint.jakarta.validation.constraints.Size.min` | [R2](api-mapping.md#r2-annotations) |  |
 
 #### java.io
 
