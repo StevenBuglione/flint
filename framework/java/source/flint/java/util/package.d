@@ -24,6 +24,7 @@ import flint.engine.aot.name : typeNameOf;
 import flint.engine.aot.objects : assumeClass, assumeClasses, asObjects, objectEquals, statelessInstance;
 import flint.java.lang : ClassCastException, IllegalArgumentException, IndexOutOfBoundsException, Iterable,
     NullPointerException, RuntimeException, UnsupportedOperationException, javaEquals, javaHashCode, valueOf;
+import flint.java.util.function_.consumer : Consumer;
 import flint.java.util.stream : Stream;
 public import flint.java.util.calendar : Calendar, GregorianCalendar;
 public import flint.java.util.date : Date;
@@ -373,6 +374,14 @@ interface Iterator(T)
     T next();
     /// Remove the element last returned. Throws `UnsupportedOperationException` unless supported.
     void remove();
+    /// Perform `action` on every remaining element, in iterator order.
+    final void forEachRemaining(Consumer!T action)
+    {
+        if (action is null)
+            throw new NullPointerException();
+        while (hasNext())
+            action.accept(next());
+    }
 }
 
 /// Java's `Comparator`: an ordering of `T`.
