@@ -163,6 +163,12 @@ final class HexFormat
         return cast(uint) hashCode();
     }
 
+    /// Render the formatter's case and decorations, escaping CR and LF.
+    override string toString() const pure nothrow
+    {
+        return renderDescription(upper, separator, beforeByte, afterByte);
+    }
+
     /// Render the low nibble.
     wchar toLowHexDigit(int value) const pure nothrow @nogc
     {
@@ -478,4 +484,59 @@ int digitValue(int codePoint) pure nothrow @nogc
         return cast(int) decimal;
     const uint letter = (code | 0x20) - 'a';
     return letter < 6 ? cast(int)(letter + 10) : -1;
+}
+
+pragma(inline, false) char[] renderDescription(bool upper, string delimiter, string prefix, string suffix) pure nothrow
+{
+    enum head = "uppercase: ";
+    enum midDelim = ", delimiter: \"";
+    enum midPrefix = "\", prefix: \"";
+    enum midSuffix = "\", suffix: \"";
+    const flag = upper ? "true" : "false";
+    const size_t total = head.length + flag.length + midDelim.length + escapedLength(
+            delimiter) + midPrefix.length + escapedLength(prefix) + midSuffix.length + escapedLength(suffix) + 1;
+    auto output = new char[total];
+    size_t cursor;
+    cursor = appendLiteral(output, cursor, head);
+    cursor = appendLiteral(output, cursor, flag);
+    cursor = appendLiteral(output, cursor, midDelim);
+    cursor = appendEscaped(output, cursor, delimiter);
+    cursor = appendLiteral(output, cursor, midPrefix);
+    cursor = appendEscaped(output, cursor, prefix);
+    cursor = appendLiteral(output, cursor, midSuffix);
+    cursor = appendEscaped(output, cursor, suffix);
+    output[cursor] = '"';
+    return output;
+}
+
+size_t escapedLength(scope const(char)[] text) pure nothrow @nogc
+{
+    size_t length = text.length;
+    foreach (char ch; text)
+        if (ch == '\n' || ch == '\r')
+            ++length;
+    return length;
+}
+
+size_t appendLiteral(scope char[] output, size_t cursor, scope const(char)[] text) pure nothrow @nogc
+{
+    output[cursor .. cursor + text.length] = text[];
+    return cursor + text.length;
+}
+
+size_t appendEscaped(scope char[] output, size_t cursor, scope const(char)[] text) pure nothrow @nogc
+{
+    foreach (char ch; text)
+    {
+        if (ch == '\n' || ch == '\r')
+        {
+            output[cursor++] = '\\';
+            output[cursor++] = ch == '\n' ? 'n' : 'r';
+        }
+        else
+        {
+            output[cursor++] = ch;
+        }
+    }
+    return cursor;
 }

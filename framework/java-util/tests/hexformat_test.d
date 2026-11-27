@@ -203,3 +203,23 @@ unittest
     values[first] = 42;
     assert(values[second] == 42);
 }
+
+@("HexFormat.toString renders settings and escapes only CR and LF")
+unittest
+{
+    assert(HexFormat.of().toString() == `uppercase: false, delimiter: "", prefix: "", suffix: ""`);
+    assert(HexFormat.of().withUpperCase().toString() == `uppercase: true, delimiter: "", prefix: "", suffix: ""`);
+    assert(HexFormat.ofDelimiter(":").toString() == `uppercase: false, delimiter: ":", prefix: "", suffix: ""`);
+    assert(HexFormat.ofDelimiter("-").withPrefix("0x").withSuffix(";").withUpperCase()
+            .toString() == `uppercase: true, delimiter: "-", prefix: "0x", suffix: ";"`);
+    assert(HexFormat.ofDelimiter("\n").withPrefix("\r").withSuffix("\r\n")
+            .toString() == `uppercase: false, delimiter: "\n", prefix: "\r", suffix: "\r\n"`);
+    assert(HexFormat.ofDelimiter("\"").withPrefix("\\").withSuffix("\t")
+            .toString() == "uppercase: false, delimiter: \"\"\", prefix: \"\\\", suffix: \"\t\"");
+    assert(HexFormat.ofDelimiter("é").withPrefix("😀").withSuffix("a\0b")
+            .toString() == "uppercase: false, delimiter: \"é\", prefix: \"😀\", suffix: \"a\0b\"");
+    const HexFormat readOnly = HexFormat.ofDelimiter("-").withUpperCase();
+    assert(readOnly.toString() == `uppercase: true, delimiter: "-", prefix: "", suffix: ""`);
+    assert(HexFormat.ofDelimiter(null).withPrefix(null).withSuffix(null)
+            .toString() == `uppercase: false, delimiter: "", prefix: "", suffix: ""`);
+}
