@@ -198,20 +198,21 @@ final class Stream(T)
         }
     }
 
-    /// The elements in natural order (stable).
+    /// The elements in natural order (stable), sorted on the first pull. After a failure, a retried pull keeps the
+    /// elements already pulled, as Java's sorting sink does: it pulls on after an upstream failure and sorts again
+    /// after a comparison failure.
     Stream!T sorted()
     {
         auto source = take();
         T[] items;
         size_t position;
+        bool ready;
         return new Stream!T(true, (out T next) {
-            if (source !is null)
+            if (!ready)
             {
-                auto input = source;
-                source = null;
-                auto loaded = drain(input);
-                stableSort(loaded, (T a, T b) => compareNatural(a, b));
-                items = loaded;
+                pullAll(source, items);
+                stableSort(items, (T a, T b) => compareNatural(a, b));
+                ready = true;
             }
             if (position >= items.length)
                 return false;
@@ -220,8 +221,8 @@ final class Stream(T)
         });
     }
 
-    /// The elements ordered by `comparator` (stable), sorted on the first pull. As in Java, the upstream is taken
-    /// before a null `comparator` throws `NullPointerException`.
+    /// The elements ordered by `comparator` (stable), sorted on the first pull and retried as `sorted()` is. As in
+    /// Java, the upstream is taken before a null `comparator` throws `NullPointerException`.
     Stream!T sorted(Comparator!T comparator)
     {
         auto source = take();
@@ -229,14 +230,13 @@ final class Stream(T)
             throwNullPointerException();
         T[] items;
         size_t position;
+        bool ready;
         return new Stream!T(true, (out T next) {
-            if (source !is null)
+            if (!ready)
             {
-                auto input = source;
-                source = null;
-                auto loaded = drain(input);
-                stableSort(loaded, &comparator.compare);
-                items = loaded;
+                pullAll(source, items);
+                stableSort(items, &comparator.compare);
+                ready = true;
             }
             if (position >= items.length)
                 return false;
@@ -245,7 +245,8 @@ final class Stream(T)
         });
     }
 
-    /// The elements ordered by `compare` (stable).
+    /// The elements ordered by `compare` (stable). Unlike the `Comparator` overload, this Flint convenience sorts when
+    /// called, so `compare` can be a borrowed `scope` delegate.
     Stream!T sorted(int delegate(T, T) @safe compare)
     {
         auto items = toArray();
@@ -342,6 +343,18 @@ final class Stream(T)
     T[] toArray()
     {
         return drain(take());
+    }
+
+    /// Append every remaining element of `source` to `items`, then drop `source`. A throwing `source` stays set, with
+    /// the elements pulled so far kept, so a retry pulls on.
+    private static void pullAll(ref bool delegate(out T) @safe source, ref T[] items)
+    {
+        if (source is null)
+            return;
+        T next;
+        while (source(next))
+            items ~= next;
+        source = null;
     }
 
     private static T[] drain(scope bool delegate(out T) @safe source)

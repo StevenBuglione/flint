@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,458 | 418 | 0 | 1,905 | 14,640 |
+| framework | openjdk@21.0.13 | 1,459 | 418 | 0 | 1,905 | 14,639 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -10753,7 +10753,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.util.random | 67 | 0 |
 | java.util.regex | 67 | 0 |
 | java.util.spi | 0 | 43 |
-| java.util.stream | 272 | 0 |
+| java.util.stream | 271 | 0 |
 | java.util.zip | 258 | 0 |
 | javax.crypto | 279 | 0 |
 | javax.crypto.interfaces | 0 | 13 |
@@ -12084,8 +12084,7 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `java.util.stream.Stream#flatMap(Function)` | 2 | The existing stage dereferences a null mapped stream and lacks closing the mapped stream on short-circuit. Java treats a null result as empty and closes each opened mapped stream. |
 | framework | `java.util.stream.Stream#mapToInt(ToIntFunction)` | 2 | Flint returns Stream!int, which offers sum, because IntStream is not ported yet. |
 | framework | `java.util.stream.Stream#mapToLong(ToLongFunction)` | 2 | Flint returns Stream!long, which offers sum, because LongStream is not ported yet. |
-| framework | `java.util.stream.Stream#sorted()` | 2 | Flint compares using the declared element type. Java sorts Comparable values even when they are typed as Object. Flint compares text by UTF-8 bytes, where Java uses UTF-16 code units (R14). The comparison inherits D's null class dispatch limitation (R8), which can fault on a null receiver. Java throws NullPointerException when comparing mixed null input. After a comparison throws, a retried pull through the same iterator returns no elements, where Java sorts again and rethrows. |
-| framework | `java.util.stream.Stream#sorted(Comparator)` | 2 | After the comparator throws, a retried pull through the same iterator returns no elements. Java sorts the buffered elements again and rethrows. |
+| framework | `java.util.stream.Stream#sorted()` | 2 | Flint compares using the declared element type. Java sorts Comparable values even when they are typed as Object. Flint compares text by UTF-8 bytes, where Java uses UTF-16 code units (R14). The comparison inherits D's null class dispatch limitation (R8), which can fault on a null receiver. Java throws NullPointerException when comparing mixed null input. |
 | framework | `java.util.stream.Stream#toArray(IntFunction)` | 2 | Flint has no typed array-generator overload. Java passes the result size to the generator and rejects elements incompatible with the returned array type. |
 | framework | `org.hibernate.validator.HibernateValidator#buildValidatorFactory(ConfigurationState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
 | framework | `org.hibernate.validator.HibernateValidator#createGenericConfiguration(BootstrapState)` | 2 | Flint's provider methods take no BootstrapState or ConfigurationState; the parameterless D methods are Flint's bootstrap, and the SPI state types are deferred. |
