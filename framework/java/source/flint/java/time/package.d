@@ -222,8 +222,9 @@ struct LocalDate
     /// Obtains an instance from the epoch day count, day 0 being 1970-01-01.
     static LocalDate ofEpochDay(long epochDay)
     {
+        // The EpochDay range is exactly -999999999-01-01 to +999999999-12-31, so the year needs no check.
+        checkRange("EpochDay", epochDay, -365_243_219_162L, 365_241_780_471L);
         const civil = civilOf(epochDay);
-        checkRange("Year", civil.year, -999_999_999, 999_999_999);
         return LocalDate(cast(int) civil.year, civil.month, civil.day);
     }
 
@@ -339,13 +340,39 @@ struct LocalDate
     /// A copy with the given number of days added.
     LocalDate plusDays(long days) const
     {
-        return days == 0 ? this : ofEpochDay(toEpochDay() + days);
+        import core.checkedint : adds;
+
+        if (days == 0)
+            return this;
+        // Java's fast path within this month and the next reports a year overflow as Year, not EpochDay.
+        const dom = day_ + days;
+        if (dom > 0 && dom <= 59)
+        {
+            const length = lengthOfMonth();
+            if (dom <= length)
+                return LocalDate(year_, month_, cast(int) dom);
+            if (month_ < 12)
+                return LocalDate(year_, month_ + 1, cast(int)(dom - length));
+            checkRange("Year", year_ + 1L, -999_999_999, 999_999_999);
+            return LocalDate(year_ + 1, 1, cast(int)(dom - length));
+        }
+        bool overflow;
+        const epochDay = adds(toEpochDay(), days, overflow);
+        if (overflow)
+            throw new ArithmeticException("long overflow");
+        return ofEpochDay(epochDay);
     }
 
     /// A copy with the given number of weeks added.
     LocalDate plusWeeks(long weeks) const
     {
-        return plusDays(weeks * 7);
+        import core.checkedint : muls;
+
+        bool overflow;
+        const days = muls(weeks, 7, overflow);
+        if (overflow)
+            throw new ArithmeticException("long overflow");
+        return plusDays(days);
     }
 
     /// A copy with the given number of months added, the day clamped to the end of the month.
@@ -370,13 +397,13 @@ struct LocalDate
     /// A copy with the given number of days subtracted.
     LocalDate minusDays(long days) const
     {
-        return plusDays(-days);
+        return days == long.min ? plusDays(long.max).plusDays(1) : plusDays(-days);
     }
 
     /// A copy with the given number of weeks subtracted.
     LocalDate minusWeeks(long weeks) const
     {
-        return plusWeeks(-weeks);
+        return weeks == long.min ? plusWeeks(long.max).plusWeeks(1) : plusWeeks(-weeks);
     }
 
     /// A copy with the given number of months subtracted.
@@ -951,7 +978,7 @@ struct LocalDateTime
     /// A copy with the given number of days subtracted.
     LocalDateTime minusDays(long days) const
     {
-        return plusDays(-days);
+        return days == long.min ? plusDays(long.max).plusDays(1) : plusDays(-days);
     }
 
     /// A copy with the given number of hours subtracted.

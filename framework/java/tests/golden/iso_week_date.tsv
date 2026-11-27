@@ -870,6 +870,11 @@ parseLocalDate	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: In
 parseLocalDateTime	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
 parseLocalTime	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
 parseOffsetDateTime	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for WeekOfWeekBasedYear (valid values 1 - 52): 53	0
+smartparse	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for EpochDay (valid values -365243219162 - 365241780471): 365241780474	0
+smartparseLocalDate	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for EpochDay (valid values -365243219162 - 365241780471): 365241780474	0
+smartparseLocalDateTime	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for EpochDay (valid values -365243219162 - 365241780471): 365241780474	0
+smartparseLocalTime	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for EpochDay (valid values -365243219162 - 365241780471): 365241780474	0
+smartparseOffsetDateTime	+999999999-W53-1	!Text '+999999999-W53-1' could not be parsed: Invalid value for EpochDay (valid values -365243219162 - 365241780471): 365241780474	0
 parse	-999999999-W01-1	parsed
 parseLocalDate	-999999999-W01-1	-999999999-01-01
 parseLocalDateTime	-999999999-W01-1	!Text '-999999999-W01-1' could not be parsed: Unable to obtain LocalDateTime from TemporalAccessor: {},ISO resolved to -999999999-01-01 of type java.time.format.Parsed	0

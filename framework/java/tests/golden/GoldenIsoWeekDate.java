@@ -85,9 +85,7 @@ public class GoldenIsoWeekDate {
         };
         for (String t : texts) {
             parseRows("", F, t);
-            // SMART rolls week 53 of +999999999 past the last epoch day: Java reports EpochDay from
-            // LocalDate.plusDays, where Flint's LocalDate reports Year (a LocalDate gap, left out).
-            if (!t.equals("+999999999-W53-1")) parseRows("smart", SMART, t);
+            parseRows("smart", SMART, t);
         }
 
         Files.write(Path.of(a[0]), lines);
