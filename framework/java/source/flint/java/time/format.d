@@ -1,7 +1,9 @@
 /++
 Java's `java.time.format`: `DateTimeFormatter`, its ISO constants and `ofPattern`, and `DateTimeParseException`.
 
-Written clean-room from the Java SE 21 API specification of `DateTimeFormatter` and `DateTimeFormatterBuilder`.
+Written from the Java SE 21 API specification of `DateTimeFormatter` and `DateTimeFormatterBuilder`; OpenJDK
+21.0.13's `DateTimeFormatterBuilder.java` and `SignStyle.java` (GPL-2.0-only WITH Classpath-exception-2.0) were
+consulted for the sign and adjacent-width rules. Modified by the Flint authors.
 A formatter is a list of printer-parser elements, as the specification describes: numeric fields with a width and
 sign style, fractions, literals, text, offsets, zone IDs, the instant, and optional sections. English text only;
 `Locale` arguments are not supported yet.
@@ -878,6 +880,7 @@ struct DateTimeFormatter
     private bool hasZone_;
     private ZoneId zone_;
     private bool smart_;
+    private DecimalStyle decimalStyle_;
 
     /// The ISO date formatter that formats or parses a date without an offset, such as '2011-12-03'.
     static immutable DateTimeFormatter ISO_LOCAL_DATE = DateTimeFormatter(isoLocalDate, describeIsoLocalDate);
@@ -957,7 +960,7 @@ struct DateTimeFormatter
     /// A copy of this formatter that uses `zone` when printing. Local values keep their date and time fields.
     DateTimeFormatter withZone(ZoneId zone) const pure nothrow @nogc
     {
-        DateTimeFormatter copy = DateTimeFormatter(elements_, description_, smart_);
+        DateTimeFormatter copy = this;
         copy.hasZone_ = true;
         copy.zone_ = zone;
         return copy;
@@ -966,7 +969,27 @@ struct DateTimeFormatter
     /// A copy with the supplied override. An absent zone clears the override.
     DateTimeFormatter withZone(Nullable!ZoneId zone) const pure nothrow @nogc
     {
-        return zone.isNull ? DateTimeFormatter(elements_, description_, smart_) : withZone(zone.get());
+        if (!zone.isNull)
+            return withZone(zone.get());
+        DateTimeFormatter copy = this;
+        copy.hasZone_ = false;
+        copy.zone_ = ZoneId.init;
+        return copy;
+    }
+
+    /// The symbols numbers print and parse with: `DecimalStyle.STANDARD` unless `withDecimalStyle` replaced them.
+    DecimalStyle getDecimalStyle() const pure nothrow @nogc
+    {
+        return decimalStyle_;
+    }
+
+    /// A copy of this formatter that prints and parses numeric fields and fractions with `decimalStyle`'s zero digit,
+    /// signs and decimal separator. Offsets, the instant's printed form and text fields keep ASCII.
+    DateTimeFormatter withDecimalStyle(DecimalStyle decimalStyle) const pure nothrow @nogc
+    {
+        DateTimeFormatter copy = this;
+        copy.decimalStyle_ = decimalStyle;
+        return copy;
     }
 
     /// Formats the fields of a temporal value.
@@ -980,6 +1003,7 @@ struct DateTimeFormatter
                 fields.addZone(zone_);
         }
         auto printer = Printer(fields);
+        printer.style = decimalStyle_;
         printer.run(elements_);
         return printer.output;
     }
@@ -1009,6 +1033,7 @@ struct DateTimeFormatter
         Fields fields;
         fields.smart_ = smart_;
         auto parser = Parser(text, &fields);
+        parser.style = decimalStyle_;
         const end = parser.run(elements_, 0);
         if (end < 0)
         {
@@ -1138,6 +1163,27 @@ private struct Printer
     Fields fields;
     string output;
     bool caseInsensitive;
+    DecimalStyle style;
+
+    // Appends one symbol of the decimal style; a lone surrogate is written as U+FFFD (R14).
+    void put(wchar unit) pure nothrow
+    {
+        char[3] buffer;
+        const length = encodeUnit(unit, buffer);
+        output ~= length ? buffer[0 .. length] : "\uFFFD";
+    }
+
+    // Appends ASCII digits in the decimal style's digits: each is the zero digit plus its value, as a UTF-16 unit.
+    void putDigits(scope const(char)[] digits) pure nothrow
+    {
+        if (style.zeroDigit_ == '0')
+        {
+            output ~= digits;
+            return;
+        }
+        foreach (c; digits)
+            put(cast(wchar)(style.zeroDigit_ + (c - '0')));
+    }
 
     // Prints the elements; returns false when a field is missing in an optional section.
     bool run(scope const(Element)[] elements, bool optional = false)
@@ -1213,7 +1259,7 @@ private struct Printer
     {
         if (!fields.has(e.field))
             return false;
-        output ~= padded(((fields.values_[e.field] % 100) + 100) % 100, 2);
+        putDigits(padded(((fields.values_[e.field] % 100) + 100) % 100, 2));
         return true;
     }
 
@@ -1244,16 +1290,16 @@ private struct Printer
         {
         case SignStyle.EXCEEDS_PAD:
             if (value < 0)
-                output ~= "-";
+                put(style.negativeSign_);
             else if (e.minWidth < 19 && value >= tenPow(e.minWidth))
-                output ~= "+";
+                put(style.positiveSign_);
             break;
         case SignStyle.ALWAYS:
-            output ~= value < 0 ? "-" : "+";
+            put(value < 0 ? style.negativeSign_ : style.positiveSign_);
             break;
         case SignStyle.NORMAL:
             if (value < 0)
-                output ~= "-";
+                put(style.negativeSign_);
             break;
         case SignStyle.NOT_NEGATIVE:
             if (value < 0)
@@ -1266,7 +1312,7 @@ private struct Printer
         case SignStyle.NEVER:
             break;
         }
-        output ~= digits;
+        putDigits(digits);
         return true;
     }
 
@@ -1280,8 +1326,8 @@ private struct Printer
         if (digits.length == 0)
             return true;
         if (e.lenient)
-            output ~= ".";
-        output ~= digits;
+            put(style.decimalSeparator_);
+        putDigits(digits);
         return true;
     }
 
@@ -1322,6 +1368,28 @@ private struct Printer
         output ~= Instant.ofEpochSecond(fields.values_[Field.instantSeconds], nano).toString();
         return true;
     }
+}
+
+// The UTF-8 form of one UTF-16 unit in `buffer`; returns its length, or 0 for a lone surrogate.
+private size_t encodeUnit(wchar unit, ref char[3] buffer) pure nothrow @nogc
+{
+    if (unit < 0x80)
+    {
+        buffer[0] = cast(char) unit;
+        return 1;
+    }
+    if (unit < 0x800)
+    {
+        buffer[0] = cast(char)(0xC0 | (unit >> 6));
+        buffer[1] = cast(char)(0x80 | (unit & 0x3F));
+        return 2;
+    }
+    if (unit >= 0xD800 && unit <= 0xDFFF)
+        return 0;
+    buffer[0] = cast(char)(0xE0 | (unit >> 12));
+    buffer[1] = cast(char)(0x80 | ((unit >> 6) & 0x3F));
+    buffer[2] = cast(char)(0x80 | (unit & 0x3F));
+    return 3;
 }
 
 private long tenPow(int n) pure nothrow @nogc
@@ -1410,6 +1478,7 @@ private struct Parser
     Fields* fields; // the caller's: the parser borrows `text`, so the result lives outside it
     bool caseInsensitive;
     bool lenient;
+    DecimalStyle style;
 
     // Parses the elements from `position`; returns the end position, or `~errorIndex` on failure.
     int run(scope const(Element)[] elements, int position) scope
@@ -1483,6 +1552,36 @@ private struct Parser
         return c >= '0' && c <= '9';
     }
 
+    // The value of the decimal style's digit at `position`, setting `length` to its UTF-8 length; -1 when the
+    // character there is not one. As Java, a digit is a UTF-16 unit zero to nine above the zero digit.
+    int digitAt(size_t position, out int length) scope const pure nothrow @nogc
+    {
+        if (position >= text.length)
+            return -1;
+        if (style.zeroDigit_ == '0')
+        {
+            length = 1;
+            return digit(text[position]) ? text[position] - '0' : -1;
+        }
+        size_t next = position;
+        const c = decodeUtf8(text, next);
+        length = cast(int)(next - position);
+        const value = cast(int) c - style.zeroDigit_;
+        return c <= 0xFFFF && value >= 0 && value <= 9 ? value : -1;
+    }
+
+    // The UTF-8 length of `unit` when the text at `position` is that symbol, or 0. A lone surrogate never matches
+    // UTF-8 text.
+    int symbolAt(wchar unit, size_t position) scope const pure nothrow @nogc
+    {
+        char[3] buffer;
+        const length = encodeUnit(unit, buffer);
+        const end = position + length;
+        if (length == 0 || end > text.length || text[position .. end] != buffer[0 .. length])
+            return 0;
+        return cast(int) length;
+    }
+
     // Digits reserved for the fixed-width numbers that directly follow (adjacent value parsing).
     static int reserved(scope const(Element)[] following) pure nothrow @nogc
     {
@@ -1499,16 +1598,28 @@ private struct Parser
         return total;
     }
 
-    // The sign at `position`: 0 for none, 1 for '+', -1 for '-', or 2 when the sign style rejects it. A lenient
-    // parse needs no sign for ALWAYS, and accepts one for NOT_NEGATIVE and NEVER unless the width is fixed.
-    int sign(const Element e, int position) scope const pure nothrow @nogc
+    // The decimal style's sign at `position`, setting `length` to its UTF-8 length: 0 for none, 1 for positive,
+    // -1 for negative, or 2 when the sign style rejects it. The positive sign is tried first. A strict parse rejects
+    // a positive sign for NORMAL. A lenient parse needs no sign for ALWAYS, and accepts one for NOT_NEGATIVE and NEVER
+    // unless the width is fixed.
+    int sign(const Element e, int position, out int length) scope const pure nothrow @nogc
     {
-        const present = position < text.length && (text[position] == '+' || text[position] == '-');
-        if (!present)
+        const positive = symbolAt(style.positiveSign_, position);
+        length = positive ? positive : symbolAt(style.negativeSign_, position);
+        if (length == 0)
             return e.sign == SignStyle.ALWAYS && !lenient ? 2 : 0;
         if ((e.sign == SignStyle.NOT_NEGATIVE || e.sign == SignStyle.NEVER) && !(lenient && e.minWidth != e.maxWidth))
             return 2;
-        return text[position] == '-' ? -1 : 1;
+        if (e.sign == SignStyle.NORMAL && positive && !lenient)
+            return 2;
+        return positive ? 1 : -1;
+    }
+
+    // The digits a value takes when `spare` remain after those reserved for the values that follow. With too few
+    // for them, it still takes its minimum width.
+    static int width(int spare, int minWidth, int maxWidth) pure nothrow @nogc
+    {
+        return spare < minWidth ? minWidth : spare > maxWidth ? maxWidth : spare;
     }
 
     // EXCEEDS_PAD parsed strictly: '+' only for more digits than the minimum width, which then need a sign.
@@ -1519,38 +1630,66 @@ private struct Parser
 
     int parseNumber(const Element e, scope const(Element)[] following, int position) scope
     {
-        const signValue = sign(e, position);
+        int signLength;
+        const signValue = sign(e, position, signLength);
         if (signValue == 2)
             return ~position;
         const negative = signValue < 0, signed = signValue != 0;
-        const pos = signed ? position + 1 : position;
-        int available;
-        while (pos + available < text.length && digit(text[pos + available]))
-            ++available;
+        const pos = position + signLength;
+        const available = digitCount(pos);
         const reserve = reserved(following);
         // A lenient parse reads a value that no fixed-width value follows as one to nine digits.
         const variable = lenient && reserve == 0;
         const minWidth = variable ? 1 : e.minWidth, maxWidth = variable ? 9 : e.maxWidth;
-        int take = available - reserve;
-        take = take > maxWidth ? maxWidth : take;
-        if (take < minWidth)
+        if (available < minWidth)
             return ~pos;
+        const take = width(available - reserve, minWidth, maxWidth);
         if (!lenient && e.sign == SignStyle.EXCEEDS_PAD && padSignMismatch(signed && !negative,
                 signed, take, e.minWidth))
             return ~position;
-        long value;
-        foreach (c; text[pos .. pos + take])
-            value = value * 10 + (c - '0');
+        int end = pos;
+        const value = digitsValue(take, end);
+        // A strict parse rejects a negative zero at its sign.
+        if (negative && value == 0 && !lenient)
+            return ~position;
         fields.set(e.field, negative ? -value : value);
-        return pos + take;
+        return end;
+    }
+
+    // The number of the decimal style's digits from `position`.
+    int digitCount(int position) scope const pure nothrow @nogc
+    {
+        int count, length;
+        for (size_t at = position; digitAt(at, length) >= 0; at += length)
+            ++count;
+        return count;
+    }
+
+    // The value of `count` digits from `end`, which moves past them.
+    long digitsValue(int count, ref int end) scope const pure nothrow @nogc
+    {
+        long value;
+        int length;
+        foreach (_; 0 .. count)
+        {
+            value = value * 10 + digitAt(end, length);
+            end += length;
+        }
+        return value;
     }
 
     int parseReducedYear(const Element e, int position) scope
     {
-        if (position + 2 > text.length || !digit(text[position]) || !digit(text[position + 1]))
+        // NOT_NEGATIVE with a fixed width: a sign is rejected, even one that is also a digit.
+        if (symbolAt(style.positiveSign_, position) || symbolAt(style.negativeSign_, position))
             return ~position;
-        fields.set(e.field, 2000 + (text[position] - '0') * 10 + (text[position + 1] - '0'));
-        return position + 2;
+        int first, second;
+        const tens = digitAt(position, first);
+        const units = tens < 0 ? -1 : digitAt(position + first, second);
+        if (units < 0)
+            return ~position;
+        fields.set(e.field, 2000 + tens * 10 + units);
+        return position + first + second;
     }
 
     int parseFraction(const Element e, int position) scope
@@ -1558,21 +1697,23 @@ private struct Parser
         int pos = position;
         if (e.lenient)
         {
-            if (pos >= text.length || text[pos] != '.')
+            const separator = symbolAt(style.decimalSeparator_, pos);
+            if (separator == 0)
                 return e.minWidth > 0 ? ~position : position;
-            ++pos;
+            pos += separator;
         }
-        int count;
+        int count, end = pos, length, d;
         long value;
-        while (count < e.maxWidth && pos + count < text.length && digit(text[pos + count]))
+        while (count < e.maxWidth && (d = digitAt(end, length)) >= 0)
         {
-            value = value * 10 + (text[pos + count] - '0');
+            value = value * 10 + d;
+            end += length;
             ++count;
         }
         if (count < e.minWidth || (e.lenient && count == 0))
             return ~pos;
         fields.set(Field.nanoOfSecond, value * tenPow(9 - count));
-        return pos + count;
+        return end;
     }
 
     bool matches(string expected, int position) scope const pure nothrow @nogc
