@@ -846,9 +846,8 @@ private final class TagIterableView(E) : TagIterable
     override void forEach(void delegate(Tag) @safe action)
     {
         if (action is null)
-            source.forEach(cast(void delegate(E) @safe) null);
-        else
-            source.forEach((E tag) => action(tag));
+            throw new NullPointerException();
+        source.forEach((E tag) => action(tag));
     }
 
     override void forEach(Consumer!Tag action)
