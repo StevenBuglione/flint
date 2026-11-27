@@ -375,10 +375,22 @@ final class Stream(T)
         return List!T.of(toArray());
     }
 
-    /// Collect the elements with a collector from `Collectors`.
+    /// Collect the elements with a collector from `Collectors`. As in Java, the collector supplies its container before
+    /// the first element is pulled, accumulates each element as it is read and finishes after the last. A collector
+    /// offering only `apply(T[])` receives every element at once.
     auto collect(C)(C collector)
     {
-        return collector.apply(toArray());
+        static if (is(typeof(collector.supply!T())))
+        {
+            auto source = take();
+            auto state = collector.supply!T();
+            T next;
+            while (source(next))
+                collector.accumulate(state, next);
+            return collector.finish(state);
+        }
+        else
+            return collector.apply(toArray());
     }
 
     /// How many elements.
@@ -592,36 +604,104 @@ struct Collectors
     }
 }
 
+/++
+The collectors share one static protocol, which `Stream.collect` drives: `supply!E()` makes the container,
+`accumulate(container, element)` adds each element and `finish(container)` returns the result. `apply(items)` runs the
+same three steps over a D array.
++/
+private auto collectArray(C, E)(ref C collector, E[] items)
+{
+    auto state = collector.supply!E();
+    foreach (e; items)
+        collector.accumulate(state, e);
+    return collector.finish(state);
+}
+
 /// `Collectors.toList()`.
 struct ToList
 {
+    /// A new, empty `ArrayList`.
+    ArrayList!E supply(E)()
+    {
+        return new ArrayList!E();
+    }
+
+    /// Add `element`.
+    void accumulate(E)(ArrayList!E list, E element)
+    {
+        list.add(element);
+    }
+
+    /// The list.
+    List!E finish(E)(ArrayList!E list)
+    {
+        return list;
+    }
+
     /// Collect `items`.
     List!E apply(E)(E[] items)
     {
-        return new ArrayList!E(items);
+        return collectArray(this, items);
     }
 }
 
 /// `Collectors.toUnmodifiableList()`.
 struct ToUnmodifiableList
 {
-    /// Collect `items`. Throws `NullPointerException` for a null element, as Java's does after accumulating them all.
-    List!E apply(E)(E[] items)
+    /// No elements yet.
+    E[] supply(E)()
+    {
+        return null;
+    }
+
+    /// Append `element`.
+    void accumulate(E)(ref E[] items, E element)
+    {
+        items ~= element;
+    }
+
+    /// The elements as an unmodifiable list. Throws `NullPointerException` for a null element, as Java's does after
+    /// accumulating them all.
+    List!E finish(E)(ref E[] items)
     {
         foreach (e; items)
             if (Objects.isNull(e))
                 throwNullPointerException();
         return List!E.of(items);
     }
+
+    /// Collect `items`.
+    List!E apply(E)(E[] items)
+    {
+        return collectArray(this, items);
+    }
 }
 
 /// `Collectors.toSet()`.
 struct ToSet
 {
+    /// A new, empty `LinkedHashSet`.
+    LinkedHashSet!E supply(E)()
+    {
+        return new LinkedHashSet!E();
+    }
+
+    /// Add `element`.
+    void accumulate(E)(LinkedHashSet!E set, E element)
+    {
+        set.add(element);
+    }
+
+    /// The set.
+    Set!E finish(E)(LinkedHashSet!E set)
+    {
+        return set;
+    }
+
     /// Collect `items`.
     Set!E apply(E)(E[] items)
     {
-        return new LinkedHashSet!E(items);
+        return collectArray(this, items);
     }
 }
 
@@ -635,27 +715,68 @@ struct Joining
     /// After the last element.
     string suffix;
 
+    /// The text so far, and whether an element was added.
+    static struct State
+    {
+        /// The joined text, without the suffix.
+        string text;
+        /// Whether `text` holds an element.
+        bool any;
+    }
+
+    /// The prefix alone.
+    State supply(E)()
+    {
+        return State(prefix);
+    }
+
+    /// Append `element`, after the delimiter unless it is the first.
+    void accumulate(E)(ref State state, E element)
+    {
+        if (state.any)
+            state.text ~= delimiter;
+        state.text ~= valueOf(element);
+        state.any = true;
+    }
+
+    /// The text with the suffix.
+    string finish(ref State state)
+    {
+        return state.text ~ suffix;
+    }
+
     /// Collect `items`.
     string apply(E)(E[] items)
     {
-        string result = prefix;
-        foreach (i, e; items)
-        {
-            if (i)
-                result ~= delimiter;
-            result ~= valueOf(e);
-        }
-        return result ~ suffix;
+        return collectArray(this, items);
     }
 }
 
 /// `Collectors.counting()`.
 struct Counting
 {
+    /// Zero.
+    long supply(E)()
+    {
+        return 0;
+    }
+
+    /// Count `element`.
+    void accumulate(E)(ref long count, E element)
+    {
+        count++;
+    }
+
+    /// The count.
+    long finish(ref long count)
+    {
+        return count;
+    }
+
     /// Collect `items`.
     long apply(E)(E[] items)
     {
-        return cast(long) items.length;
+        return collectArray(this, items);
     }
 }
 
@@ -667,23 +788,37 @@ struct ToMap(KF, VF)
     /// Computes each value.
     VF valueMapper;
 
-    /// Collect `items`.
-    auto apply(E)(E[] items)
+    /// A new, empty `HashMap`.
+    auto supply(E)()
     {
         alias K = typeof(keyMapper(E.init));
         alias V = typeof(valueMapper(E.init));
-        Map!(K, V) result = new HashMap!(K, V)();
-        foreach (e; items)
-        {
-            auto key = keyMapper(e);
-            auto value = valueMapper(e);
-            if (Objects.isNull(value))
-                throwNullPointerException();
-            if (result.containsKey(key))
-                throw duplicateKey(valueOf(key), valueOf(result.get(key)), valueOf(value));
-            result.put(key, value);
-        }
-        return result;
+        return new HashMap!(K, V)();
+    }
+
+    /// Map `element` to its key and value. A null value throws `NullPointerException`, a key already present
+    /// `IllegalStateException`.
+    void accumulate(K, V, E)(HashMap!(K, V) map, E element)
+    {
+        auto key = keyMapper(element);
+        auto value = valueMapper(element);
+        if (Objects.isNull(value))
+            throwNullPointerException();
+        if (map.containsKey(key))
+            throw duplicateKey(valueOf(key), valueOf(map.get(key)), valueOf(value));
+        map.put(key, value);
+    }
+
+    /// The map.
+    Map!(K, V) finish(K, V)(HashMap!(K, V) map)
+    {
+        return map;
+    }
+
+    /// Collect `items`.
+    auto apply(E)(E[] items)
+    {
+        return collectArray(this, items);
     }
 }
 
@@ -699,25 +834,38 @@ struct GroupingBy(F)
     /// Computes each element's group.
     F classifier;
 
+    /// A new, empty `LinkedHashMap`.
+    auto supply(E)()
+    {
+        alias K = typeof(classifier(E.init));
+        return new LinkedHashMap!(K, List!E)();
+    }
+
+    /// Add `element` to its group. A null group key throws `NullPointerException`.
+    void accumulate(K, E)(LinkedHashMap!(K, List!E) groups, E element)
+    {
+        auto key = classifier(element);
+        if (Objects.isNull(key))
+            throwNullPointerException("element cannot be mapped to a null key");
+        auto group = groups.get(key);
+        if (group is null)
+        {
+            group = new ArrayList!E();
+            groups.put(key, group);
+        }
+        group.add(element);
+    }
+
+    /// The groups.
+    Map!(K, List!E) finish(K, E)(LinkedHashMap!(K, List!E) groups)
+    {
+        return groups;
+    }
+
     /// Collect `items`.
     auto apply(E)(E[] items)
     {
-        alias K = typeof(classifier(E.init));
-        Map!(K, List!E) result = new LinkedHashMap!(K, List!E)();
-        foreach (e; items)
-        {
-            auto key = classifier(e);
-            if (Objects.isNull(key))
-                throwNullPointerException("element cannot be mapped to a null key");
-            auto group = result.get(key);
-            if (group is null)
-            {
-                group = new ArrayList!E();
-                result.put(key, group);
-            }
-            group.add(e);
-        }
-        return result;
+        return collectArray(this, items);
     }
 }
 
