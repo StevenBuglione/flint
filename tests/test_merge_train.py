@@ -781,6 +781,17 @@ for out in ('docs/spring/java-differences.md', 'docs/spring/api-mapping.md'):
         self.assertIn('[ $mrc -eq 1 ] && exit 1', probes)
         self.assertNotIn('exit 3', probes)  # could not run (2): not judged, never a failed verifier
 
+    def test_the_ab_mode_runs_the_schedulers_copy_of_the_ab_tool(self):
+        # A candidate based on a main older than tools/budget_ab.py must still be judged (2026-11-27 10:40Z: flint-aot's
+        # tie-breaker could not run because its checkout lacked the tool).
+        script = merge_train.RemoteVerifier(dict(merge_train.DEFAULT_VERIFIERS[0])).script(
+            'c', 'r', 's', mode='ab', apps=['gs-rest-service'], ab_base='b' * 40)
+        self.assertIn("cat > \"$AB/budget_ab.py\" <<'BUDGETAB'\n", script)
+        self.assertIn('def judge(base_runs, candidate_runs, endpoints, floor):', script)
+        self.assertIn('python3 "$AB/budget_ab.py" --base', script)
+        self.assertNotIn('$H python3 tools/budget_ab.py', script)
+        self.assertNotIn('@BUDGET_AB@', script)
+
     def test_the_load_guard_marks_a_busy_run_not_quiet(self):
         s = merge_train.VERIFY_SCRIPT
         functions = s[s.index('LOAD_MEAN=0.5'):s.index('\n}\n', s.index('load_stop() {')) + 3]

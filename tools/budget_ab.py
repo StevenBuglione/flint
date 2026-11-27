@@ -26,6 +26,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path.cwd() / 'tools'))  # the merge train runs a copy of this file in the candidate's checkout
 import flint_budget  # noqa: E402
 import spring_instr  # noqa: E402
 

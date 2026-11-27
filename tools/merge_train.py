@@ -331,7 +331,12 @@ elif [ "@MODE@" = ab ]; then
   ab_checkout "@AB_BASE@" base && ab_build base || exit 3
   ab_checkout "@COMMIT@" candidate || exit 3
   set -- ; for app in @BUDGET_APPS@; do set -- "$@" --app "$app"; done
-  load_start; $H python3 tools/budget_ab.py --base "$AB/base" --candidate "$AB/candidate" "$@" --repeat 5 > "$FLINT_CACHE.dod.json" 2>&1; rc=$?; load_stop
+  # The scheduler's own copy of the A/B tool, so a candidate based on an older main can still be judged (it measures
+  # with the candidate's tools/flint_budget.py).
+  cat > "$AB/budget_ab.py" <<'BUDGETAB'
+@BUDGET_AB@
+BUDGETAB
+  load_start; $H python3 "$AB/budget_ab.py" --base "$AB/base" --candidate "$AB/candidate" "$@" --repeat 5 > "$FLINT_CACHE.dod.json" 2>&1; rc=$?; load_stop
   cat "$FLINT_CACHE.dod.json"
   [ $rc -eq 2 ] && { echo "the interleaved A/B could not measure: the verifier, not the candidate"; exit 3; }
   exit $rc
@@ -526,7 +531,8 @@ class RemoteVerifier:
                   '@CACHE_ROOT@': e.get('cache_root', '$HOME'), '@RECEIPTS@': receipts,
                   '@DOD_FLAGS@': '' if self.budget else '--no-flint-budget', '@APPS@': ','.join(APPS),
                   '@MODE@': mode, '@BUDGET_APPS@': ' '.join(apps or APPS), '@TIGHT@': json.dumps(tight or {}),
-                  '@COMMIT@': commit, '@REF@': ref, '@STAMP@': stamp, '@BASE@': base or '', '@AB_BASE@': ab_base or ''}
+                  '@COMMIT@': commit, '@REF@': ref, '@STAMP@': stamp, '@BASE@': base or '', '@AB_BASE@': ab_base or '',
+                  '@BUDGET_AB@': (Path(__file__).resolve().parent / 'budget_ab.py').read_text()}
         text = VERIFY_SCRIPT
         start = text.index("<<'PY'\n", text.index('TIGHT\n  apps=')) + len("<<'PY'\n")
         text = text.replace('@CLASSIFIER@', text[start:text.index('\nPY\n', start)])
@@ -1070,6 +1076,14 @@ class Train:
             return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
         return self._budget_red(batch, applied, failed, base, max_train, budget_verifier, verdict)
 
+    def keep_log(self, kind, log):
+        """Write a verifier log to coordination/train/<kind>-<stamp>.log and return its path (the A/B logs are otherwise
+        lost when the run is not a returned lane's)."""
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        path = self.log_dir / f"{kind}-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.log"
+        path.write_text(log or '')
+        return str(path)
+
     def budget_verifier(self):
         """The verifier that runs flint budget and supports modes (posidon), or None."""
         found = next((v for v in reversed(self.verifiers) if getattr(v, 'budget', False)), None)
@@ -1083,7 +1097,7 @@ class Train:
             return False
         prefix = applied[bad - 2][1] if bad > 1 else base
         ok, log = self.verify(applied[bad - 1][1], budget_verifier, mode='ab', apps=apps, ab_base=prefix)
-        self.store.event('train-interleaved', role=applied[bad - 1][0]['role'], ok=ok)
+        self.store.event('train-interleaved', role=applied[bad - 1][0]['role'], ok=ok, log=self.keep_log('interleaved', log))
         return ok is True
 
     def _land_early(self, prefix, base, budget_verifier):
@@ -1133,7 +1147,7 @@ class Train:
         # bisected the same way if it's over. Main's own absolute figures are posted every 24 h (daily_main_budget).
         ab = dict(mode='ab', apps=list(APPS), ab_base=base)
         ok, log = self.verify(applied[-1][1], budget_verifier, **ab)
-        self.store.event('train-interleaved', role='stack', against='main', ok=ok)
+        self.store.event('train-interleaved', role='stack', against='main', ok=ok, log=self.keep_log('interleaved-stack', log))
         if ok is True:
             return {'batch': batch, 'applied': applied, 'failed': failed, 'landed': applied, 'tip': applied[-1][1]}
         return self._resolve(batch, applied, failed, 0, len(applied), (ok, log), base, budget_verifier, step=ab)
