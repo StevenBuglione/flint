@@ -162,6 +162,26 @@ private DecimalCompileStatus localizedStatus(string text, ref const DecimalSymbo
     assert(localizedStatus("0Ex0", symbols) == DecimalCompileStatus.malformed);
 }
 
+private string exponentZeros(size_t count, string tail) pure nothrow
+{
+    string text = "0E";
+    foreach (_; 0 .. count)
+        text ~= '0';
+    return text ~ tail;
+}
+
+@("The exponent's zero count wraps like Java's byte, so 128 to 256 zeros throw at once") unittest
+{
+    const DecimalSymbolData symbols;
+    assert(localizedStatus(exponentZeros(127, "x"), symbols) == DecimalCompileStatus.accepted);
+    foreach (count; [128, 129, 255, 256])
+        foreach (tail; ["", "#", "x"])
+            assert(localizedStatus(exponentZeros(count, tail), symbols) == DecimalCompileStatus.malformed);
+    // 257 zeros wrap to one exponent digit.
+    check(symbols, Row(exponentZeros(257, "x"), "", "x", "-", "x", 1, 0, 0, 1));
+    check(symbols, Row(exponentZeros(257, "x"), "", "x", "-", "x", 1, 0, 0, 1), false);
+}
+
 @("Quotes, doubled quotes and the currency pair survive the rewrite") unittest
 {
     const DecimalSymbolData symbols;

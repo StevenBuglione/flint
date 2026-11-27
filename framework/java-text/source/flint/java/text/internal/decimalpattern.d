@@ -355,7 +355,8 @@ void appendCharacter(ref string text, wchar unit) pure nothrow
 
 // Rewrites a localized pattern as the nonlocalized one that applyPattern(pattern, true) reads it as. The phases,
 // quoting and symbol precedence follow that loop; literals are quoted in runs, so the affix patterns are unchanged.
-// Java's immediate exponent errors are reported here because a later digit re-entry would otherwise defer them.
+// Java's immediate exponent errors are reported here because a later digit re-entry would otherwise defer them;
+// its other immediate errors still defer as split digits when a digit follows.
 pure nothrow DecimalCompileStatus delocalizePattern(scope string text,
         ref scope const DecimalSymbolData symbols, out string result)
 {
@@ -518,13 +519,14 @@ bool digitToken(scope string text, ref size_t position, ref scope const DecimalS
     appendUnit(output, 'E');
     if (negative)
         return true;
-    uint zeros;
+    // Java's minExponentDigits is a byte, so 128 to 256 zeros wrap below one and throw at once.
+    byte zeros;
     for (; matchesUnit(text, position, symbols.zeroDigit); ++zeros)
     {
         appendUnit(output, '0');
         position += symbolWidth(symbols.zeroDigit);
     }
-    if ((state & Delocalize.exponent) || !(state & Delocalize.digits) || zeros == 0)
+    if ((state & Delocalize.exponent) || !(state & Delocalize.digits) || zeros < 1)
         return false;
     state = (state | Delocalize.exponent) & ~Delocalize.digitPhase;
     return true;
