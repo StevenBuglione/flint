@@ -569,7 +569,8 @@
    "also": [
     "flint.java.util.concurrent.cancellationexception",
     "flint.java.util.concurrent.completionexception",
-    "flint.java.util.concurrent.executor"
+    "flint.java.util.concurrent.executor",
+    "flint.java.util.concurrent.future"
    ]
   },
   "java-concurrent-sync": {

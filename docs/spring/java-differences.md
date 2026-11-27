@@ -195,7 +195,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | framework | hibernate-validator@9.1.6.Final | 9 | 0 | 0 | 0 | 791 |
 | framework | thymeleaf@3.1.7.RELEASE | 73 | 90 | 0 | 0 | 4,289 |
 | framework | micrometer-observation@1.18.0 | 47 | 40 | 0 | 0 | 225 |
-| framework | openjdk@21.0.13 | 1,934 | 673 | 0 | 1,921 | 13,893 |
+| framework | openjdk@21.0.13 | 1,936 | 685 | 0 | 1,921 | 13,879 |
 | framework | aspectj@1.9.27 | 19 | 77 | 0 | 191 | 23 |
 | framework | micrometer-commons@1.18.0 | 10 | 16 | 0 | 0 | 35 |
 | security | spring-security@7.2.0 | 550 | 31 | 0 | 88 | 11,744 |
@@ -2943,6 +2943,18 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `java.util.concurrent.ExecutionException#<init>(String,Throwable)` | `flint.java.util.concurrent.executionexception.ExecutionException.this` | [R26](api-mapping.md#r26-null-arrays) |  |
 | `java.util.concurrent.Executor` | `flint.java.util.concurrent.executor.Executor` | [R1](api-mapping.md#r1-packages-and-names) | Import the nominal interface from flint.java.util.concurrent.executor. |
 | `java.util.concurrent.Executor#execute(Runnable)` | `flint.java.util.concurrent.executor.Executor.execute` | [R7](api-mapping.md#r7-overloads), [R9](api-mapping.md#r9-functional-interfaces) | Accepts an owned @safe D delegate in addition to Runnable. Untyped null selects the original Runnable overload. |
+| `java.util.concurrent.Future` | `flint.java.util.concurrent.future.Future` | [R1](api-mapping.md#r1-packages-and-names), [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members) | Import from flint.java.util.concurrent.future until the JDK aggregate is available. |
+| `java.util.concurrent.Future#cancel(boolean)` | `flint.java.util.concurrent.future.Future.cancel` | [R1](api-mapping.md#r1-packages-and-names) |  |
+| `java.util.concurrent.Future#exceptionNow()` | `flint.java.util.concurrent.future.Future.exceptionNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | A final interface method, as Comparator's generic defaults are. |
+| `java.util.concurrent.Future#get()` | `flint.java.util.concurrent.future.Future.get` | [R8](api-mapping.md#r8-exceptions) | D has no throws clause (D-8). InterruptedException is not ported yet, so get on a completed task cannot currently raise it. |
+| `java.util.concurrent.Future#get(long,TimeUnit)` | `flint.java.util.concurrent.future.Future.get` | [R7](api-mapping.md#r7-overloads), [R8](api-mapping.md#r8-exceptions) | Same D name as the no-argument overload; TimeUnit is passed by value. |
+| `java.util.concurrent.Future#resultNow()` | `flint.java.util.concurrent.future.Future.resultNow` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions) | A final interface method, as Comparator's generic defaults are, rather than a mixin template. Messages and cause chain match Java 21. |
+| `java.util.concurrent.Future#state()` | `flint.java.util.concurrent.future.Future.state` | [R3](api-mapping.md#r3-interfaces-abstract-classes-and-static-members), [R8](api-mapping.md#r8-exceptions), [R13](api-mapping.md#r13-nested-and-inner-classes) | A final interface method returning the hoisted FutureState. |
+| `java.util.concurrent.Future.State` | `flint.java.util.concurrent.future.FutureState` | [R13](api-mapping.md#r13-nested-and-inner-classes) | Hoisted to FutureState and exposed through Future.State as an alias. |
+| `java.util.concurrent.Future.State#CANCELLED` | `flint.java.util.concurrent.future.FutureState.CANCELLED` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `java.util.concurrent.Future.State#FAILED` | `flint.java.util.concurrent.future.FutureState.FAILED` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `java.util.concurrent.Future.State#RUNNING` | `flint.java.util.concurrent.future.FutureState.RUNNING` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
+| `java.util.concurrent.Future.State#SUCCESS` | `flint.java.util.concurrent.future.FutureState.SUCCESS` | [R13](api-mapping.md#r13-nested-and-inner-classes) |  |
 | `java.util.concurrent.TimeUnit#convert(Duration)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#convert(long,TimeUnit)` | `flint.java.util.concurrent.convert` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
 | `java.util.concurrent.TimeUnit#toDays(long)` | `flint.java.util.concurrent.toDays` | [R20](api-mapping.md#r20-enums-with-methods-but-no-fields-or-interfaces) | Same-module conversion function called with UFCS. |
@@ -11022,7 +11034,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | java.time.temporal | 113 | 0 |
 | java.time.zone | 14 | 0 |
 | java.util | 1,899 | 0 |
-| java.util.concurrent | 1,228 | 0 |
+| java.util.concurrent | 1,214 | 0 |
 | java.util.concurrent.atomic | 280 | 0 |
 | java.util.concurrent.locks | 197 | 0 |
 | java.util.function | 89 | 0 |
