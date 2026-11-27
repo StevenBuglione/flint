@@ -6038,7 +6038,7 @@ struct MimeTypeUtils
             {
                 if (list[i] == '"')
                     inQuotes = !inQuotes;
-                else if (list[i] == '\\')
+                else if (list[i] == '\\' && !(i + 1 < list.length && list[i + 1] == ',' && !hasQuote(list)))
                     i++;
                 i++;
             }
@@ -6048,6 +6048,16 @@ struct MimeTypeUtils
             if (token.length != 0)
                 return true;
         }
+        return false;
+    }
+
+    /// Whether `list` holds a double quote. Spring tracks escapes only then: a list without one splits at every comma,
+    /// even after a backslash. Asked only when a backslash precedes a comma.
+    private static bool hasQuote(string list) pure nothrow @nogc
+    {
+        foreach (c; list)
+            if (c == '"')
+                return true;
         return false;
     }
 
@@ -6072,9 +6082,10 @@ struct MimeTypeUtils
     {
         if (mimeTypes.length > 50)
         {
-            string joined;
+            string joined = "[";
             foreach (i, ref mimeType; mimeTypes)
                 joined ~= (i == 0 ? "" : ", ") ~ mimeType.toString();
+            joined ~= "]";
             throw new InvalidMimeTypeException(joined, "Too many elements");
         }
         bubbleSort!((ref a, ref b) => a.isLessSpecific(b))(mimeTypes);

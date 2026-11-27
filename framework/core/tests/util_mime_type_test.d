@@ -745,3 +745,24 @@ unittest
     assert(empty.getMimeType() == "");
     assert(empty.msg == `Invalid mime type "": 'mimeType' must not be empty`, empty.msg);
 }
+
+@("an unquoted list splits at every comma, even after a backslash, as Spring's splitByComma does")
+unittest
+{
+    assert(MimeTypeUtils.tokenizeList(`text/plain\,text/html`) == [`text/plain\`, "text/html"]);
+    assert(MimeTypeUtils.countMimeTypes(`text/plain\,text/html`) == 2);
+    // With a double quote anywhere in the list, a backslash escapes the next character, inside quotes or not.
+    assert(MimeTypeUtils.tokenizeList(`a/b;q="x",c/d\,e/f`) == [`a/b;q="x"`, `c/d\,e/f`]);
+}
+
+@("sortBySpecificity rejects more than 50 elements with the list's bracketed form")
+unittest
+{
+    auto many = new MimeType[51];
+    foreach (ref mimeType; many)
+        mimeType = MimeTypeUtils.TEXT_PLAIN;
+    const e = expectThrows!InvalidMimeTypeException(() { MimeTypeUtils.sortBySpecificity(many); });
+    assert(e.getMimeType()[0] == '[' && e.getMimeType()[$ - 1] == ']', e.getMimeType());
+    assert(e.getMimeType()[0 .. 22] == "[text/plain, text/plai", e.getMimeType());
+    assert(messageEndsWith(e, "Too many elements"), e.msg);
+}

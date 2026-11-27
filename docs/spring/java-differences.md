@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,654 | 1,557 | 0 | 4,870 | 29,753 |
+| framework | spring-framework@v7.1.0 | 3,654 | 1,560 | 0 | 4,870 | 29,750 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -4682,7 +4682,10 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.util.CollectionUtils#findValueOfType(Collection,Class[])` | `flint.util.CollectionUtils.findValueOfType` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.InvalidMimeTypeException#<init>(String,String)` | `flint.util.InvalidMimeTypeException.this` | [R26](api-mapping.md#r26-null-arrays) | A null D message gives Spring's form for a null message. Any other string, including a non-null empty one, gives the form with a detail. |
 | `org.springframework.util.MimeType` | `flint.util.MimeType` | [R11](api-mapping.md#r11-object-identity-and-equality) | Flint represents this MIME value as a struct with value equality. |
+| `org.springframework.util.MimeTypeUtils#parseMimeTypes(String)` | `flint.util.MimeTypeUtils.parseMimeTypes` | [R10](api-mapping.md#r10-streams-and-collections) | Returns a MimeType[] for the List; an empty list is a null slice (R26). |
+| `org.springframework.util.MimeTypeUtils#sortBySpecificity(List)` | `flint.util.MimeTypeUtils.sortBySpecificity` | [R10](api-mapping.md#r10-streams-and-collections) | Sorts a slice of MimeType values in place for the List. |
 | `org.springframework.util.MimeTypeUtils#toString(Collection)` | `flint.util.MimeTypeUtils.toString` | [R10](api-mapping.md#r10-streams-and-collections) | Takes a slice of MimeType for the Collection. |
+| `org.springframework.util.MimeTypeUtils#tokenize(String)` | `flint.util.MimeTypeUtils.tokenize` | [R10](api-mapping.md#r10-streams-and-collections) | Returns a string[] for the List; an empty list is a null slice (R26). |
 | `org.springframework.util.NumberUtils#convertNumberToTargetClass(Number,Class)` | `flint.util.NumberUtils.convertNumberToTargetClass` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.NumberUtils#parseNumber(String,Class)` | `flint.util.NumberUtils.parseNumber` | [R4](api-mapping.md#r4-classt-parameters) |  |
 | `org.springframework.util.NumberUtils#parseNumber(String,Class,NumberFormat)` | `flint.util.NumberUtils.parseNumber` | [R4](api-mapping.md#r4-classt-parameters) |  |
@@ -11169,7 +11172,7 @@ Deferred elements, counted per Java package. Each is planned for the phase shown
 | org.springframework.transaction.support | 17 | 0 |
 | org.springframework.ui | 42 | 0 |
 | org.springframework.ui.freemarker | 38 | 0 |
-| org.springframework.util | 285 | 0 |
+| org.springframework.util | 282 | 0 |
 | org.springframework.util.backoff | 40 | 0 |
 | org.springframework.util.comparator | 30 | 0 |
 | org.springframework.util.concurrent | 13 | 0 |
@@ -12318,9 +12321,6 @@ Most deferred elements simply wait for their lane. These record why, or what the
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#is(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.test.web.servlet.result.StatusResultMatchers#reason(Matcher)` | 2 | Requires a Flint port of Hamcrest Matcher |
 | framework | `org.springframework.util.CollectionUtils#contains(Enumeration,Object)` | 2 | Requires java.util.Enumeration support. |
-| framework | `org.springframework.util.MimeTypeUtils#parseMimeTypes(String)` | 2 | Spring splits a list without double quotes at every comma; Flint always treats a backslash as an escape, so a backslash before a comma in an unquoted list keeps the two types together. The fix touches the request-path tokenizer and follows through the merge train. |
-| framework | `org.springframework.util.MimeTypeUtils#sortBySpecificity(List)` | 2 | For more than 50 elements Spring's InvalidMimeTypeException carries the list's toString form, in square brackets; Flint omits the brackets. The fix follows through the merge train. |
-| framework | `org.springframework.util.MimeTypeUtils#tokenize(String)` | 2 | Spring splits a list without double quotes at every comma; Flint always treats a backslash as an escape, so a backslash before a comma in an unquoted list keeps the two types together. The fix touches the request-path tokenizer and follows through the merge train. |
 | framework | `org.springframework.util.StringUtils#toStringArray(Enumeration)` | 2 | Requires java.util.Enumeration support. |
 | framework | `org.thymeleaf.context.AbstractContext` | 2 | Requires a backed insertion-ordered LinkedHashMap.keySet view and verified Locale default handling. |
 | framework | `org.thymeleaf.context.Context` | 2 | Requires a backed insertion-ordered LinkedHashMap.keySet view and verified Locale default handling. |
