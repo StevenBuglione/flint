@@ -261,7 +261,7 @@ string floatToString(float value) pure nothrow
     return javaFloatString(value);
 }
 
-private string decimal(long value) pure nothrow
+package(flint) string decimal(long value) pure nothrow
 {
     if (value == 0)
         return "0";
