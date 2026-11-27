@@ -92,6 +92,15 @@ package(flint.java) string isoYear(long year) pure nothrow
     return pad(year, 4);
 }
 
+// Java prints the DayOfMonth range with its smallest month length: "1 - 28/31".
+package(flint.java) void checkDayOfMonth(long value)
+{
+    import flint.engine.aot.text : decimal;
+
+    if (value < 1 || value > 31)
+        throw new DateTimeException("Invalid value for DayOfMonth (valid values 1 - 28/31): " ~ decimal(value));
+}
+
 package(flint.java) void checkRange(string field, long value, long low, long high)
 {
     import flint.engine.aot.text : decimal;
@@ -203,7 +212,7 @@ struct LocalDate
 
         checkRange("Year", year, -999_999_999, 999_999_999);
         checkRange("MonthOfYear", month, 1, 12);
-        checkRange("DayOfMonth", dayOfMonth, 1, 31);
+        checkDayOfMonth(dayOfMonth);
         if (dayOfMonth > monthLength(year, month))
         {
             const leap = "Invalid date 'February 29' as '" ~ decimal(year) ~ "' is not a leap year";
@@ -391,7 +400,13 @@ struct LocalDate
     /// A copy with the given number of years added, February 29 clamped to February 28.
     LocalDate plusYears(long years) const
     {
-        return plusMonths(years * 12);
+        if (years == 0)
+            return this;
+        // As Java: the sum may wrap, and the wrapped value is the one reported.
+        const year = cast(long)(cast(ulong) year_ + cast(ulong) years);
+        checkRange("Year", year, -999_999_999, 999_999_999);
+        const day = day_ < monthLength(year, month_) ? day_ : monthLength(year, month_);
+        return LocalDate(cast(int) year, month_, day);
     }
 
     /// A copy with the given number of days subtracted.
@@ -409,13 +424,13 @@ struct LocalDate
     /// A copy with the given number of months subtracted.
     LocalDate minusMonths(long months) const
     {
-        return plusMonths(-months);
+        return months == long.min ? plusMonths(long.max).plusMonths(1) : plusMonths(-months);
     }
 
     /// A copy with the given number of years subtracted.
     LocalDate minusYears(long years) const
     {
-        return plusYears(-years);
+        return years == long.min ? plusYears(long.max).plusYears(1) : plusYears(-years);
     }
 
     /// A copy with the year altered, February 29 clamped.
@@ -918,6 +933,23 @@ struct LocalDateTime
         return Instant(toEpochSecond(offset), time_.getNano());
     }
 
+    // Adds `amount` units of `nanosPerUnit` (a divisor of a day), negated when `subtract`, without overflow: whole days
+    // go to the date, and only the remainder below a day touches the time.
+    private LocalDateTime plusUnits(long amount, long nanosPerUnit, bool subtract) const
+    {
+        const unitsPerDay = nanosPerDay / nanosPerUnit;
+        long days = amount / unitsPerDay;
+        long nanos = amount % unitsPerDay * nanosPerUnit;
+        if (subtract)
+        {
+            days = -days;
+            nanos = -nanos;
+        }
+        const total = time_.toNanoOfDay() + nanos;
+        return LocalDateTime(date_.plusDays(days + floorDiv(total, nanosPerDay)),
+                LocalTime.ofNanoOfDay(floorMod(total, nanosPerDay)));
+    }
+
     private LocalDateTime plusNanosTotal(long nanos) const
     {
         const total = time_.toNanoOfDay() + floorMod(nanos, nanosPerDay);
@@ -952,21 +984,19 @@ struct LocalDateTime
     /// A copy with the given number of hours added.
     LocalDateTime plusHours(long hours) const
     {
-        return plusSeconds(hours * 3600);
+        return plusUnits(hours, 3600 * nanosPerSecond, false);
     }
 
     /// A copy with the given number of minutes added.
     LocalDateTime plusMinutes(long minutes) const
     {
-        return plusSeconds(minutes * 60);
+        return plusUnits(minutes, 60 * nanosPerSecond, false);
     }
 
     /// A copy with the given number of seconds added.
     LocalDateTime plusSeconds(long seconds) const
     {
-        const local = time_.toSecondOfDay() + seconds;
-        return LocalDateTime(date_.plusDays(floorDiv(local, secondsPerDay)),
-                LocalTime.ofNanoOfDay(floorMod(local, secondsPerDay) * nanosPerSecond + time_.getNano()));
+        return plusUnits(seconds, nanosPerSecond, false);
     }
 
     /// A copy with the given number of nanoseconds added.
@@ -984,19 +1014,19 @@ struct LocalDateTime
     /// A copy with the given number of hours subtracted.
     LocalDateTime minusHours(long hours) const
     {
-        return plusHours(-hours);
+        return plusUnits(hours, 3600 * nanosPerSecond, true);
     }
 
     /// A copy with the given number of minutes subtracted.
     LocalDateTime minusMinutes(long minutes) const
     {
-        return plusMinutes(-minutes);
+        return plusUnits(minutes, 60 * nanosPerSecond, true);
     }
 
     /// A copy with the given number of seconds subtracted.
     LocalDateTime minusSeconds(long seconds) const
     {
-        return plusSeconds(-seconds);
+        return plusUnits(seconds, nanosPerSecond, true);
     }
 
     /// Combines this date-time with an offset to create an `OffsetDateTime`.

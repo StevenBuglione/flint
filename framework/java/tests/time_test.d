@@ -880,35 +880,60 @@ unittest
     assert(count == 957);
 }
 
+// The LocalDateTime operations of epoch_day.tsv, applied to `input` at 10:15:30.
+private string dateTimeStep(string kind, string input, long arg)
+{
+    const value = LocalDate.parse(input).atTime(10, 15, 30);
+    const string delegate() @safe[string] table = [
+        "dateTimePlusDays": () => value.plusDays(arg).toString(),
+        "dateTimeMinusDays": () => value.minusDays(arg).toString(),
+        "dateTimePlusWeeks": () => value.plusWeeks(arg).toString(),
+        "dateTimePlusHours": () => value.plusHours(arg).toString(),
+        "dateTimeMinusHours": () => value.minusHours(arg).toString(),
+        "dateTimePlusMinutes": () => value.plusMinutes(arg).toString(),
+        "dateTimeMinusMinutes": () => value.minusMinutes(arg).toString(),
+        "dateTimePlusSeconds": () => value.plusSeconds(arg).toString(),
+        "dateTimeMinusSeconds": () => value.minusSeconds(arg).toString(),
+    ];
+    return table[kind]();
+}
+
+// The LocalDate and epoch operations of epoch_day.tsv.
+private string dateStep(string kind, string input, long arg)
+{
+    LocalDate date() => LocalDate.parse(input);
+
+    const string delegate() @safe[string] table = [
+        "ofEpochDay": () => LocalDate.ofEpochDay(arg).toString(),
+        "plusDays": () => date().plusDays(arg).toString(),
+        "minusDays": () => date().minusDays(arg).toString(),
+        "plusWeeks": () => date().plusWeeks(arg).toString(),
+        "minusWeeks": () => date().minusWeeks(arg).toString(),
+        "plusMonths": () => date().plusMonths(arg).toString(),
+        "minusMonths": () => date().minusMonths(arg).toString(),
+        "plusYears": () => date().plusYears(arg).toString(),
+        "minusYears": () => date().minusYears(arg).toString(),
+        "withDayOfMonth": () => date().withDayOfMonth(cast(int) arg).toString(),
+        "ofEpochSecondUTC": () => LocalDateTime.ofEpochSecond(arg, 0, ZoneOffset.UTC).toString(),
+        "ofEpochSecondPlus2": () => LocalDateTime.ofEpochSecond(arg, 0, ZoneOffset.ofHours(2)).toString(),
+    ];
+    return table[kind]();
+}
+
 // One operation of epoch_day.tsv: the result's toString, or `!`, the exception's class name, `: ` and its message.
 private string epochDayResult(string kind, string input, long arg)
 {
-    LocalDateTime dateTime() => LocalDate.parse(input).atTime(10, 15, 30);
+    import std.algorithm.searching : startsWith;
 
     try
-    {
-        const string delegate() @safe[string] table = [
-            "ofEpochDay": () => LocalDate.ofEpochDay(arg).toString(),
-            "plusDays": () => LocalDate.parse(input).plusDays(arg).toString(),
-            "minusDays": () => LocalDate.parse(input).minusDays(arg).toString(),
-            "plusWeeks": () => LocalDate.parse(input).plusWeeks(arg).toString(),
-            "minusWeeks": () => LocalDate.parse(input).minusWeeks(arg).toString(),
-            "dateTimePlusDays": () => dateTime().plusDays(arg).toString(),
-            "dateTimeMinusDays": () => dateTime().minusDays(arg).toString(),
-            "dateTimePlusWeeks": () => dateTime().plusWeeks(arg).toString(),
-            "ofEpochSecondUTC": () => LocalDateTime.ofEpochSecond(arg, 0, ZoneOffset.UTC)
-                .toString(),
-            "ofEpochSecondPlus2": () => LocalDateTime.ofEpochSecond(arg, 0, ZoneOffset.ofHours(2)).toString(),
-        ];
-        return table[kind]();
-    }
+        return kind.startsWith("dateTime") ? dateTimeStep(kind, input, arg) : dateStep(kind, input, arg);
     catch (DateTimeException e)
         return "!DateTimeException: " ~ e.msg;
     catch (ArithmeticException e)
         return "!ArithmeticException: " ~ e.msg;
 }
 
-@("LocalDate epoch-day and day and week arithmetic report EpochDay, Year and overflow like JDK 21 (epoch_day.tsv)")
+@("LocalDate and LocalDateTime arithmetic report EpochDay, Year, DayOfMonth and overflow like JDK 21 (epoch_day.tsv)")
 unittest
 {
     import std.conv : to;
@@ -920,7 +945,7 @@ unittest
         assert(got == row[3], row[0] ~ " '" ~ row[1] ~ "' " ~ row[2] ~ ": " ~ got ~ " != " ~ row[3]);
         ++count;
     }
-    assert(count == 3243);
+    assert(count == 7555);
 }
 
 @("a STRICT year-of-era pattern does not resolve a date without an era, as in JDK 21")

@@ -1,6 +1,7 @@
 // Writes the golden file that framework/java/tests/time_test.d compares: LocalDate.ofEpochDay and LocalDate's day and
-// week arithmetic around every month length, the year boundary, the EpochDay range and long overflow, and the
-// LocalDateTime methods that reach them. Each line is `kind<TAB>input<TAB>argument<TAB>result`, the result being
+// week arithmetic around every month length, the year boundary, the EpochDay range and long overflow, month and
+// year arithmetic and the DayOfMonth range, and the LocalDateTime methods that reach them, including time
+// arithmetic split into whole days. Each line is `kind<TAB>input<TAB>argument<TAB>result`, the result being
 // the toString() or `!`, the exception's simple class name, `: ` and its message.
 //   javac GoldenEpochDay.java && java GoldenEpochDay epoch_day.tsv
 import java.nio.file.Files;
@@ -37,6 +38,10 @@ public class GoldenEpochDay {
         long[] weeks = {0, 1, -1, 4, -4, 5, 52, -52, 53, 104348, -104348, 52177397034L, -52177397034L,
             104354965948L, -104354965948L, Long.MAX_VALUE / 7, Long.MIN_VALUE / 7, Long.MAX_VALUE / 7 + 1,
             Long.MIN_VALUE / 7 - 1, Long.MAX_VALUE, Long.MIN_VALUE};
+        long[] months = {0, 1, -1, 11, -13, 12, 24, 1_999_999_998L, -1_999_999_998L, 23_999_999_987L,
+            -23_999_999_987L, Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE - 1, Long.MIN_VALUE + 1};
+        long[] times = {0, 1, -1, 13, -14, 23, 24, 59, 60, 1439, 1440, 3599, 86_399, 86_400, -86_401,
+            maxDay * 86400, minDay * 86400, Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE - 1, Long.MIN_VALUE + 1};
         for (String t : dates) {
             LocalDate date = LocalDate.parse(t);
             for (long d : deltas) {
@@ -47,7 +52,23 @@ public class GoldenEpochDay {
                 row("plusWeeks", t, w, () -> date.plusWeeks(w));
                 row("minusWeeks", t, w, () -> date.minusWeeks(w));
             }
+            for (long m : months) {
+                row("plusMonths", t, m, () -> date.plusMonths(m));
+                row("minusMonths", t, m, () -> date.minusMonths(m));
+                row("plusYears", t, m, () -> date.plusYears(m));
+                row("minusYears", t, m, () -> date.minusYears(m));
+            }
+            for (long d : new long[] {0, 1, 28, 29, 30, 31, 32, -1, Integer.MIN_VALUE, Integer.MAX_VALUE})
+                row("withDayOfMonth", t, d, () -> date.withDayOfMonth((int) d));
             LocalDateTime dateTime = date.atTime(10, 15, 30);
+            for (long n : times) {
+                row("dateTimePlusHours", t, n, () -> dateTime.plusHours(n));
+                row("dateTimeMinusHours", t, n, () -> dateTime.minusHours(n));
+                row("dateTimePlusMinutes", t, n, () -> dateTime.plusMinutes(n));
+                row("dateTimeMinusMinutes", t, n, () -> dateTime.minusMinutes(n));
+                row("dateTimePlusSeconds", t, n, () -> dateTime.plusSeconds(n));
+                row("dateTimeMinusSeconds", t, n, () -> dateTime.minusSeconds(n));
+            }
             for (long d : new long[] {1, -1, 31, 59, -60, maxDay, Long.MAX_VALUE, Long.MIN_VALUE}) {
                 row("dateTimePlusDays", t, d, () -> dateTime.plusDays(d));
                 row("dateTimeMinusDays", t, d, () -> dateTime.minusDays(d));
