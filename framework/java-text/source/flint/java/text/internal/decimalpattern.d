@@ -2,8 +2,8 @@
 /// Lexical ranges in a nonlocalized DecimalFormat pattern.
 module flint.java.text.internal.decimalpattern;
 
-import flint.java.text.internal.decimalfixed : affixFieldWords, DecimalAffixes, DecimalField,
-    DecimalFixedPattern, minusSignField;
+import flint.java.text.internal.decimalfixed : affixFieldWords, DecimalAffixes, DecimalField, DecimalFixedPattern;
+import flint.java.text.internal.decimalformatsymbols : DecimalSymbolData, encodeSymbol;
 
 @safe:
 
@@ -101,6 +101,15 @@ enum DecimalCompileStatus
 /// Compile a nonlocalized fixed-point or exponent pattern with the explicit Latin symbol profiles.
 DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFixedPattern result) pure nothrow
 {
+    const DecimalSymbolData latin;
+    return compileFixedDecimalPattern(text, latin, result);
+}
+
+/// Compile a nonlocalized pattern, expanding its minus, percent and per-mille tokens with `symbols`
+/// as DecimalFormat.expandAffixes does. `bodySymbolsEncodable` must accept the symbols.
+DecimalCompileStatus compileFixedDecimalPattern(scope string text,
+        ref scope const DecimalSymbolData symbols, out DecimalFixedPattern result) pure nothrow
+{
     DecimalPatternBounds bounds;
     if (!scanDecimalPattern(text, bounds))
         return DecimalCompileStatus.malformed;
@@ -109,14 +118,14 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFi
     if (status != DecimalCompileStatus.accepted)
         return status;
     AffixPair positive;
-    status = readAffixes(text, bounds.positive, positive);
+    status = readAffixes(text, bounds.positive, symbols, positive);
     if (status != DecimalCompileStatus.accepted)
         return status;
     AffixPair negative;
     const explicitNegative = bounds.hasNegative && bounds.negative.start != bounds.negative.end;
     if (explicitNegative)
     {
-        status = readAffixes(text, bounds.negative, negative);
+        status = readAffixes(text, bounds.negative, symbols, negative);
         if (status != DecimalCompileStatus.accepted)
             return status;
     }
@@ -134,8 +143,14 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFi
         result.negative = DecimalAffixes(negative.prefix.text, negative.suffix.text,
                 negative.prefix.fields, negative.suffix.fields);
     else
-        result.negative = DecimalAffixes("-" ~ positive.prefix.text, positive.suffix.text,
-                signedFields(positive.prefix.fields), positive.suffix.fields);
+    {
+        // Java's implicit negative prefix pattern is the symbolic minus sign followed by the positive prefix.
+        DecodedAffix minus;
+        appendSymbol(minus, AffixOperator.minus, symbols.minusSign);
+        minus.text ~= positive.prefix.text;
+        result.negative = DecimalAffixes(minus.text, positive.suffix.text,
+                signedFields(minus.fields, positive.prefix.fields), positive.suffix.fields);
+    }
     return DecimalCompileStatus.accepted;
 }
 
@@ -317,14 +332,33 @@ struct DecodedAffix
 }
 
 // The implicit negative prefix puts the symbolic minus sign ahead of the positive prefix tokens.
-size_t[] signedFields(scope const(size_t)[] fields) pure nothrow
+size_t[] signedFields(scope const(size_t)[] minus, scope const(size_t)[] fields) pure nothrow
 {
     size_t[] result;
-    foreach (word; minusSignField)
+    foreach (word; minus)
         appendWord(result, word);
+    const width = minus[2];
     foreach (i, word; fields)
-        appendWord(result, i % affixFieldWords == 0 ? word : word + "-".length);
+        appendWord(result, i % affixFieldWords == 0 ? word : word + width);
     return result;
+}
+
+// Records one symbolic token at the end of the affix and appends the symbol's UTF-8 form.
+void appendSymbol(ref DecodedAffix affix, AffixOperator operation, wchar symbol) pure nothrow
+{
+    char[3] encoded;
+    const width = encodeSymbol(symbol, encoded);
+    appendWord(affix.fields, affixField(operation));
+    appendWord(affix.fields, affix.text.length);
+    appendWord(affix.fields, affix.text.length + width);
+    foreach (unit; encoded[0 .. width])
+        appendUnit(affix.text, unit);
+}
+
+// One append site keeps the template count at the single string instance (B-93).
+void appendUnit(ref string text, char unit) pure nothrow
+{
+    text ~= unit;
 }
 
 // One append site keeps the template count at the single size_t[] instance (B-93).
@@ -347,12 +381,13 @@ bool sameAffixes(ref scope const AffixPair positive, ref scope const AffixPair n
         && positive.prefix.fields == negative.prefix.fields && positive.suffix.fields == negative.suffix.fields;
 }
 
-DecimalCompileStatus readAffixes(scope string text, DecimalSubpatternBounds bounds, out AffixPair result) pure nothrow
+DecimalCompileStatus readAffixes(scope string text, DecimalSubpatternBounds bounds,
+        ref scope const DecimalSymbolData symbols, out AffixPair result) pure nothrow
 {
-    const prefixStatus = decodeAffix(text[bounds.start .. bounds.digitsStart], result.scale, result.prefix);
+    const prefixStatus = decodeAffix(text[bounds.start .. bounds.digitsStart], symbols, result.scale, result.prefix);
     if (prefixStatus != DecimalCompileStatus.accepted)
         return prefixStatus;
-    return decodeAffix(text[bounds.digitsEnd .. bounds.end], result.scale, result.suffix);
+    return decodeAffix(text[bounds.digitsEnd .. bounds.end], symbols, result.scale, result.suffix);
 }
 
 enum AffixOperator
@@ -397,7 +432,15 @@ DecimalField affixField(AffixOperator operation) pure nothrow @nogc
     }
 }
 
-DecimalCompileStatus decodeAffix(scope string raw, ref ubyte scale, out DecodedAffix result) pure nothrow
+wchar affixSymbol(AffixOperator operation, ref scope const DecimalSymbolData symbols) pure nothrow @nogc
+{
+    if (operation == AffixOperator.percent)
+        return symbols.percent;
+    return operation == AffixOperator.perMille ? symbols.perMill : symbols.minusSign;
+}
+
+DecimalCompileStatus decodeAffix(scope string raw, ref scope const DecimalSymbolData symbols,
+        ref ubyte scale, out DecodedAffix result) pure nothrow
 {
     bool quoted;
     for (size_t position; position < raw.length;)
@@ -408,7 +451,7 @@ DecimalCompileStatus decodeAffix(scope string raw, ref ubyte scale, out DecodedA
             ++position;
             if (position < raw.length && raw[position] == '\'')
             {
-                result.text ~= '\'';
+                appendUnit(result.text, '\'');
                 ++position;
             }
             else
@@ -427,13 +470,10 @@ DecimalCompileStatus decodeAffix(scope string raw, ref ubyte scale, out DecodedA
                 return DecimalCompileStatus.malformed;
             scale = operation == AffixOperator.percent ? 2 : 3;
         }
-        if (operation != AffixOperator.literal)
-        {
-            appendWord(result.fields, affixField(operation));
-            appendWord(result.fields, result.text.length);
-            appendWord(result.fields, result.text.length + width);
-        }
-        result.text ~= raw[position .. position + width];
+        if (operation == AffixOperator.literal)
+            result.text ~= raw[position .. position + width];
+        else
+            appendSymbol(result, operation, affixSymbol(operation, symbols));
         position += width;
     }
     return DecimalCompileStatus.accepted;
