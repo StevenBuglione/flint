@@ -342,12 +342,12 @@ final class Stream(T)
         return n;
     }
 
-    /// The first element, or empty.
+    /// The first element, or empty. Throws `NullPointerException` when that element is null.
     Optional!T findFirst()
     {
         auto source = take();
         T next;
-        return source(next) ? Optional!T.ofNullable(next) : Optional!T.empty();
+        return source(next) ? Optional!T.of(next) : Optional!T.empty();
     }
 
     /// Some element (the first: Flint streams are sequential), or empty.
@@ -391,18 +391,24 @@ final class Stream(T)
     /// The least element under `comparator`, or empty.
     Optional!T min(Comparator!T comparator)
     {
+        if (comparator is null)
+            throwNullPointerException();
         return reduce((T a, T b) => comparator.compare(a, b) <= 0 ? a : b);
     }
 
     /// The greatest element under `comparator`, or empty.
     Optional!T max(Comparator!T comparator)
     {
+        if (comparator is null)
+            throwNullPointerException();
         return reduce((T a, T b) => comparator.compare(a, b) >= 0 ? a : b);
     }
 
     /// Fold the elements with `accumulator`, starting from `identity`.
     T reduce(T identity, T delegate(T, T) @safe accumulator)
     {
+        if (accumulator is null)
+            throwNullPointerException();
         auto source = take();
         T result = identity, next;
         while (source(next))
@@ -410,16 +416,18 @@ final class Stream(T)
         return result;
     }
 
-    /// Fold the elements with `accumulator`; empty for an empty stream.
+    /// Fold the elements with `accumulator`; empty for an empty stream. Throws `NullPointerException` for a null result.
     Optional!T reduce(T delegate(T, T) @safe accumulator)
     {
+        if (accumulator is null)
+            throwNullPointerException();
         auto source = take();
         T result, next;
         if (!source(result))
             return Optional!T.empty();
         while (source(next))
             result = accumulator(result, next);
-        return Optional!T.ofNullable(result);
+        return Optional!T.of(result);
     }
 
     static if (__traits(isArithmetic, T))
