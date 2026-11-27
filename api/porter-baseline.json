@@ -9,7 +9,7 @@
   "enum-method-r20": 1,
   "exception-r8": 1,
   "marker-interface-r3": 1,
-  "r6-accessor": 386
+  "r6-accessor": 393
  },
  "blocked": {
   ":security-core/dmd": "security-crypto BCrypt needs the pinned crypt-blowfish native provider, which the gate's tree doesn't link (2 modules fail on main without it)."
@@ -485,10 +485,6 @@
    "kind": "api+body+mapping",
    "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
   },
-  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#getLabels()": {
-   "kind": "mapping",
-   "reason": "triage: row: hand ported [], porter adapted ['R10']"
-  },
   "org.springframework.transaction.interceptor.DefaultTransactionAttribute#getQualifier()": {
    "kind": "api+body+mapping",
    "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
@@ -501,10 +497,6 @@
    "kind": "api+body+mapping",
    "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
   },
-  "org.springframework.transaction.interceptor.DefaultTransactionAttribute#setLabels(Collection)": {
-   "kind": "mapping",
-   "reason": "triage: row: hand ported [], porter adapted ['R10']"
-  },
   "org.springframework.transaction.interceptor.DefaultTransactionAttribute#setQualifier(String)": {
    "kind": "api+body+mapping",
    "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
@@ -513,10 +505,6 @@
    "kind": "api+body+mapping",
    "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
   },
-  "org.springframework.transaction.interceptor.RuleBasedTransactionAttribute#setRollbackRules(List)": {
-   "kind": "mapping",
-   "reason": "triage: row: hand ported [], porter adapted ['R10']"
-  },
   "org.springframework.transaction.interceptor.TransactionAspectSupport#getTransactionManagerBeanName()": {
    "kind": "api+body+mapping",
    "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
@@ -524,14 +512,6 @@
   "org.springframework.transaction.interceptor.TransactionAspectSupport#setTransactionManagerBeanName(String)": {
    "kind": "api+body+mapping",
    "reason": "triage: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | the derived body does not compile against the hand class: dmd: does not compile: Error: template instance `Nullable!string` template `Nullable` is not defined | row: hand ported [], porter adapted "
-  },
-  "org.springframework.transaction.support.AbstractPlatformTransactionManager#getTransactionExecutionListeners()": {
-   "kind": "mapping",
-   "reason": "triage: row: hand ported [], porter adapted ['R10']"
-  },
-  "org.springframework.transaction.support.AbstractPlatformTransactionManager#setTransactionExecutionListeners(Collection)": {
-   "kind": "mapping",
-   "reason": "triage: row: hand ported [], porter adapted ['R10']"
   },
   "org.springframework.transaction.support.AbstractTransactionStatus#getSavepoint()": {
    "kind": "api+body+mapping",
@@ -564,10 +544,6 @@
   "org.springframework.transaction.support.SimpleTransactionStatus#isNewTransaction()": {
    "kind": "api+body",
    "reason": "triage: dmd: does not compile: Error: cannot implicitly override base class method `flint.transaction.support.AbstractTransactionStatus.isNewTransaction` with `flint.transaction.support.SimpleTransactionStatus.isNewTransaction`; add `override` attribute | the derived body does not compile against the hand c"
-  },
-  "org.springframework.util.PlaceholderResolutionException#getValues()": {
-   "kind": "mapping",
-   "reason": "triage: row: hand ported [], porter adapted ['R10']"
   },
   "org.springframework.validation.BeanPropertyBindingResult#getTarget()": {
    "kind": "api+mapping",

@@ -6,8 +6,8 @@ field `f` of its own class; a trivial setter is a one-argument instance method w
 parameter `p`. For each one this module derives, by fixed rules and without reading the hand port:
 
   - the D declaration: the Java name (R19 for D keywords), its visibility, `override` for `@Override`, `final` for a
-    Java `final` method, the D type through the mapping rows and the rulebook (R5 nullable values, R10 collections,
-    R23 `Object`), and the function attributes the type's port plan records for its accessors (`"accessors"`:
+    Java `final` method, the D type through the mapping rows and the rulebook (R5 nullable values, R23 `Object`; the
+    ported JDK collections `List!T`, `Set!T` and `Map!(K, V)` are a ported dependency and cite no rule, R10), and the function attributes the type's port plan records for its accessors (`"accessors"`:
     `{"getter": [...], "setter": [...]}`, none by default);
   - the body, reading or assigning the field under its Java name;
   - the mapping row: `ported`, or `adapted` with the rules the type mapping applied.
@@ -17,7 +17,9 @@ corpus of porter_gate.corpus()). Each derived member replaces the hand member in
 it, and tools/port-spring/gate/porter_describe.d prints the type's API on DMD and on LDC. The element is reproduced
 when its member lines are identical on both compilers and the derived row matches the hand row. A body that does not
 compile against the hand class (a renamed field, a converted type) is compared with a `assert(0)` body, so the API
-still counts, and is reported as a body divergence. `--yield` counts the deferred trivial accessors the rules derive.
+still counts, and is reported as a body divergence. `--yield` counts the deferred trivial accessors the rules derive;
+an accessor whose type is an excluded type (ClassLoader, `jvm-runtime`) is counted as excluded, citing the type's
+exclusion, not as blocked.
 
     python3 tools/port-spring/accessors.py --helper .flint/port-spring/flint-port-spring \\
         --cache "$PWD/.flint/cache/api" --compare [--json artifacts/porter/accessors.json]
@@ -60,6 +62,10 @@ class Unsupported(Exception):
     pass
 
 
+class Excluded(Unsupported):
+    """The accessor's type is excluded from the port, so the accessor is too (the type's category is the reason)."""
+
+
 def d_name(name):
     name = name.replace('$', '_')
     return name + '_' if name in D_KEYWORDS else name
@@ -92,6 +98,14 @@ class Universe:
                 if '#' not in key and row.get('status') in ('ported', 'adapted') and '.' in row.get('d', ''):
                     self.rows.setdefault(key, row)
         self._index = {}
+
+    def exclusion(self, type_id):
+        """The category of the row that excludes a type outright (not one merely deferred), or None."""
+        for classifier in self.classifiers.values():
+            found = classifier.classify(type_id)
+            if found and found[1].get('status') == 'excluded' and found[1].get('category') not in (None, 'deferred'):
+                return found[1]['category']
+        return None
 
     def row(self, project, tag, element):
         repo = self.pins[(project, tag)]['repo']
@@ -224,12 +238,10 @@ def d_type(java, nullable, scope, rules, element=False):
     if full in COLLECTIONS:
         if len(arguments) != 1:
             raise Unsupported(f'raw {base}')
-        rules.add('R10')
         return f'{COLLECTIONS[full]}!({d_type(arguments[0], False, scope, rules, element=True)})'
     if full == 'java.util.Map':
         if len(arguments) != 2:
             raise Unsupported('raw Map')
-        rules.add('R10')
         key = d_type(arguments[0], False, scope, rules, element=True)
         value = d_type(arguments[1], False, scope, rules, element=True)
         return f'Map!({key}, {value})'
@@ -244,6 +256,9 @@ def d_type(java, nullable, scope, rules, element=False):
         raise Unsupported(f'generic type {base}<...>')
     row = scope.universe.rows.get(full)
     if row is None:
+        category = scope.universe.exclusion(full)
+        if category:
+            raise Excluded(f'type {full} is excluded ({category})')
         raise Unsupported(f'type {full} is not mapped to a D symbol')
     plan = scope.universe.plans.get(full, {})
     if plan.get('storage') not in (None, 'erased'):
@@ -732,7 +747,7 @@ def yield_report(universe, helper):
     """The deferred trivial accessors of every pinned class, and how many the rules derive."""
     items, skipped = corpus(universe, helper, statuses=('excluded',), jobs=deferred_jobs(universe))
     totals = collections.Counter()
-    reasons = collections.Counter()
+    reasons, excluded = collections.Counter(), collections.Counter()
     for item in items:
         if item['row'].get('category') != 'deferred':
             continue
@@ -740,9 +755,13 @@ def yield_report(universe, helper):
         try:
             derive(item, universe, DEFAULT_PLAN)
             totals['derived'] += 1
+        except Excluded as problem:
+            totals['excluded'] += 1
+            excluded[str(problem)] += 1
         except Unsupported as problem:
             reasons[re.sub(r'(type(?! variable)|generic type|annotation|parameter annotation) \S+', r'\1 X', str(problem))] += 1
-    return {'totals': dict(totals), 'reasons': dict(reasons.most_common(25)), 'typesNotRead': sum(skipped.values())}
+    return {'totals': dict(totals), 'reasons': dict(reasons.most_common(25)), 'excluded': dict(excluded.most_common()),
+            'typesNotRead': sum(skipped.values())}
 
 
 def seed_plan(report):

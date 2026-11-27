@@ -521,7 +521,7 @@
 "org.springframework.data.mapping.model.MappingInstantiationException#<init>(List,Exception)":{"status":"adapted","d":"flint.data.mapping.model.MappingInstantiationException.this","rules":["R10","R23"]},
 "org.springframework.data.mapping.model.MappingInstantiationException#getEntityType()":{"status":"adapted","d":"flint.data.mapping.model.MappingInstantiationException.getEntityType","rules":["R4","D-DATA-25"]},
 "org.springframework.data.mapping.model.MappingInstantiationException#getEntityCreator()":{"status":"adapted","d":"flint.data.mapping.model.MappingInstantiationException.getEntityCreator","rules":["D-DATA-21","D-DATA-25"]},
-"org.springframework.data.mapping.model.MappingInstantiationException#getConstructorArguments()":{"status":"adapted","d":"flint.data.mapping.model.MappingInstantiationException.getConstructorArguments","rules":["R10","R23"]},
+"org.springframework.data.mapping.model.MappingInstantiationException#getConstructorArguments()":{"status":"adapted","d":"flint.data.mapping.model.MappingInstantiationException.getConstructorArguments","rules":["R23"]},
 "org.springframework.data.mapping.model.ParameterValueProvider":{"status":"adapted","d":"flint.data.mapping.model.ParameterValueProvider","rules":["D-DATA-24"]},
 "org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(Parameter)":{"status":"adapted","d":"flint.data.mapping.model.ParameterValueProvider.getParameterValue","rules":["R23","D-DATA-24"]},
 "org.springframework.data.mapping.model.ParameterValueProvider#getDefaultValue(Class)":{"status":"adapted","d":"flint.data.mapping.model.ParameterValueProvider.getDefaultValue","rules":["R4","R23"]},

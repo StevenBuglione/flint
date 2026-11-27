@@ -29,6 +29,7 @@ public class Holder extends Base {
     private Target target;
     private String version;
     private Holder config;
+    private ClassLoader loader;
     private static String shared;
 
     public @Nullable String getName() { return this.name; }
@@ -42,6 +43,7 @@ public class Holder extends Base {
     public Target getTarget() { return this.target; }
     public String version() { return this.version; }
     public Holder config() { return this.config; }
+    public ClassLoader getLoader() { return this.loader; }
     public String getShared() { return shared; }
     public int getDouble() { return this.count * 2; }
     public void setTags(String... tags) { this.tags = List.of(tags); }
@@ -57,7 +59,7 @@ class FakeUniverse:
         holder = {'id': 'org.springframework.example.Holder', 'package': 'org.springframework.example',
                   'kind': 'class', 'extends': ['Base'], 'members': []}
         self.types = {t['id']: ('example', '1', t) for t in (base, holder)}
-        for name in ('java.lang.String', 'java.lang.Object', 'java.lang.Integer', 'java.util.List', 'java.util.Map',
+        for name in ('java.lang.String', 'java.lang.Object', 'java.lang.ClassLoader', 'java.lang.Integer', 'java.util.List', 'java.util.Map',
                      'org.springframework.other.Target'):
             self.types[name] = ('example', '1', {'id': name, 'kind': 'class'})
         self.rows = {'org.springframework.other.Target': {'status': 'ported', 'd': 'flint.other.Target'},
@@ -68,6 +70,9 @@ class FakeUniverse:
         self.by_simple = collections.defaultdict(list)
         for type_id in self.types:
             self.by_simple[type_id.rsplit('.', 1)[-1]].append(type_id)
+
+    def exclusion(self, type_id):
+        return {'java.lang.ClassLoader': 'jvm-runtime'}.get(type_id)
 
 
 class AccessorTests(unittest.TestCase):
@@ -89,8 +94,8 @@ class AccessorTests(unittest.TestCase):
         return accessors.derive(self.items[name], self.universe)
 
     def test_detects_only_trivial_instance_accessors(self):
-        self.assertEqual(sorted(self.items), ['config', 'getAttributes', 'getCount', 'getName', 'getTags',
-                                              'getTarget', 'getValue', 'setCount', 'setName', 'version'])
+        self.assertEqual(sorted(self.items), ['config', 'getAttributes', 'getCount', 'getLoader', 'getName',
+                                              'getTags', 'getTarget', 'getValue', 'setCount', 'setName', 'version'])
 
     def test_nullable_string_takes_r5_and_plan_attributes(self):
         getter = self.derive('getName')
@@ -105,10 +110,14 @@ class AccessorTests(unittest.TestCase):
         self.assertTrue(self.derive('setCount')['text'].startswith('public final void setCount(int count)'))
         tags = self.derive('getTags')
         self.assertIn('List!(string) getTags()', tags['text'])
-        self.assertEqual(tags['rules'], ['R10'])
+        self.assertEqual((tags['status'], tags['rules']), ('ported', []))  # the ported JDK List cites no R10
         attributes = self.derive('getAttributes')
         self.assertIn('Map!(string, Any) getAttributes()', attributes['text'])
-        self.assertEqual(attributes['rules'], ['R10', 'R23'])
+        self.assertEqual(attributes['rules'], ['R23'])
+
+    def test_an_excluded_type_excludes_the_accessor(self):
+        with self.assertRaisesRegex(accessors.Excluded, r'java\.lang\.ClassLoader is excluded \(jvm-runtime\)'):
+            self.derive('getLoader')
 
     def test_override_follows_the_superclass_and_object_is_any(self):
         value = self.derive('getValue')

@@ -182,7 +182,7 @@ Ported and adapted elements are written by hand or, where the row carries `gener
 | ai | spring-ai@v2.1.0 | 229 | 365 | 0 | 0 | 15,202 |
 | boot | spring-boot@v4.2.0 | 50 | 108 | 0 | 2,133 | 13,312 |
 | data-commons | spring-data-commons@4.2.0 | 293 | 306 | 0 | 0 | 3,383 |
-| framework | spring-framework@v7.1.0 | 3,624 | 1,556 | 0 | 4,870 | 29,784 |
+| framework | spring-framework@v7.1.0 | 3,626 | 1,554 | 0 | 4,870 | 29,784 |
 | framework | jakarta-annotation@3.0.0 | 22 | 1 | 0 | 21 | 8 |
 | framework | jakarta-validation@3.1.1 | 148 | 62 | 0 | 0 | 332 |
 | framework | jakarta-persistence@3.2.0 | 112 | 414 | 0 | 1 | 897 |
@@ -1093,7 +1093,7 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 | `org.springframework.data.mapping.model.EntityInstantiators#getInstantiatorFor(PersistentEntity)` | `flint.data.mapping.model.EntityInstantiators.getInstantiatorFor` | [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#<init>(List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#<init>(PersistentEntity,List,Exception)` | `flint.data.mapping.model.MappingInstantiationException.this` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values), [D-DATA-25](api-mapping.md#deviations) |  |
-| `org.springframework.data.mapping.model.MappingInstantiationException#getConstructorArguments()` | `flint.data.mapping.model.MappingInstantiationException.getConstructorArguments` | [R10](api-mapping.md#r10-streams-and-collections), [R23](api-mapping.md#r23-object-typed-values) |  |
+| `org.springframework.data.mapping.model.MappingInstantiationException#getConstructorArguments()` | `flint.data.mapping.model.MappingInstantiationException.getConstructorArguments` | [R23](api-mapping.md#r23-object-typed-values) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#getEntityCreator()` | `flint.data.mapping.model.MappingInstantiationException.getEntityCreator` | [D-DATA-21](api-mapping.md#deviations), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MappingInstantiationException#getEntityType()` | `flint.data.mapping.model.MappingInstantiationException.getEntityType` | [R4](api-mapping.md#r4-classt-parameters), [D-DATA-25](api-mapping.md#deviations) |  |
 | `org.springframework.data.mapping.model.MutablePersistentEntity#setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory)` | `flint.data.mapping.model.MutablePersistentEntity.setPersistentPropertyAccessorFactory` | [D-DATA-17](api-mapping.md#deviations) |  |
@@ -4165,8 +4165,6 @@ Each element below keeps its Spring meaning but changes shape in D, by the rule 
 
 | Java | Flint | Rules | Note |
 | --- | --- | --- | --- |
-| `org.springframework.jdbc.core.metadata.GenericTableMetaDataProvider#getTableParameterMetaData()` | `flint.jdbc.core.metadata.GenericTableMetaDataProvider.getTableParameterMetaData` | [R10](api-mapping.md#r10-streams-and-collections) |  |
-| `org.springframework.jdbc.core.metadata.TableMetaDataContext#getTableColumns()` | `flint.jdbc.core.metadata.TableMetaDataContext.getTableColumns` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.jdbc.core.metadata.TableMetaDataContext#matchInParameterValuesWithInsertColumns(Map)` | `flint.jdbc.core.metadata.TableMetaDataContext.matchInParameterValuesWithInsertColumns` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.jdbc.core.metadata.TableMetaDataContext#matchInParameterValuesWithInsertColumns(SqlParameterSource)` | `flint.jdbc.core.metadata.TableMetaDataContext.matchInParameterValuesWithInsertColumns` | [R10](api-mapping.md#r10-streams-and-collections) |  |
 | `org.springframework.jdbc.core.metadata.TableMetaDataContext#processMetaData(DataSource,List,String[])` | `flint.jdbc.core.metadata.TableMetaDataContext.processMetaData` | [R10](api-mapping.md#r10-streams-and-collections) |  |

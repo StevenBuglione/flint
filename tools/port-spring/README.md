@@ -68,7 +68,7 @@ python3 tools/measure_queue.py hold -- python3 tools/gates.py --gate porter \
 `accessors.py` handles trivial Java getters (`return this.f;`) and setters (`this.f = p;`) of instance fields. It derives each D member by fixed rules, without reading the hand port:
 - the Java name (R19 for D keywords) and visibility;
 - `override` when a superclass in the pinned manifests declares the same method, and `final` for a Java `final` method;
-- the D type through the mapping rows: R5 for nullable strings, boxed values and `Optional`; R10 for `List`, `Set`, `Collection` and `Map`; R23 for `Object`;
+- the D type through the mapping rows: R5 for nullable strings, boxed values and `Optional`; R23 for `Object`. `List`, `Set`, `Collection` and `Map` become the ported JDK types `List!T` and friends, a ported dependency with no rule (R10). An accessor over an excluded type (such as `ClassLoader`, `jvm-runtime`) is excluded with it, citing the type's exclusion;
 - the function attributes recorded in the type's port plan under `"accessors": {"getter": [...], "setter": [...]}`, none when absent;
 - a body over the field's Java name, or `name_` when the field would collide with a method name;
 - the mapping row: `ported`, or `adapted` with the rules applied.
