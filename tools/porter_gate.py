@@ -12,6 +12,10 @@
   (d) generated regions stay generated: each `// port:generated` region's digest must match its text outside the
       `// port:body` regions.
 
+The Java Beans shape (tools/port-spring/beans.py) derives boot's `@ConfigurationProperties` spec from the pinned
+sources. Each hand-spec field it reproduces exactly counts toward the `configuration-properties-field` shape, whose
+floor only grows; the derivation runs twice, in opposite class orders, and must agree.
+
 Missing inputs (flint, the native helper, a pinned source cache, a compiler) are errors, never passes. Run it under
 tools/measure_queue.py hold on venus: it compiles.
 """
@@ -31,6 +35,8 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 from api_differences import Classifier  # noqa: E402
+sys.path.insert(0, str(ROOT / 'tools' / 'port-spring'))
+import beans  # noqa: E402
 
 MARKER, END, BODY, BODY_END = '// port:generated ', '// port:end', '// port:body ', '// port:end-body'
 BASELINE = ROOT / 'api' / 'porter-baseline.json'
@@ -649,6 +655,22 @@ def summarise(jobs, results):
             'rejections': {k: dict(v.most_common()) for k, v in sorted(rejections.items())}}
 
 
+def configuration_properties(helper, cache, summary, report):
+    """The Java Beans shape against boot's hand spec: (a) twice in opposite orders, and (b) per field."""
+    first = beans.compare(str(helper), str(cache))
+    second = beans.compare(str(helper), str(cache), reverse=True)
+    failures = []
+    if json.dumps(first, sort_keys=True) != json.dumps(second, sort_keys=True):
+        failures.append('configuration properties: the derivation differs between two runs')
+    totals = first['totals']
+    hand = totals['fields'] + totals['unsupported'] + totals['handOnly']
+    summary['shapes']['configuration-properties-field'] = {
+        'accepted': hand, 'reproduced': totals['exact'], 'diverged': totals['fields'] - totals['exact'],
+        'rate': round(totals['exact'] / hand, 4) if hand else 0.0}
+    report['configurationProperties'] = first
+    return failures
+
+
 def compare_baseline(baseline, results, summary):
     failures = []
     listed = baseline.get('divergences', {})
@@ -723,6 +745,7 @@ def gate(args):
         if args.keep:
             shutil.copytree(scratch, args.keep, symlinks=True, dirs_exist_ok=True)
     summary = summarise(jobs, results)
+    failures += configuration_properties(helper, cache, summary, report)
     report.update(summary)
     report['tests'] = not args.no_tests
     baseline = load_json(BASELINE) if BASELINE.is_file() else {}
@@ -763,7 +786,7 @@ def main(argv=None):
     report['failures'] = failures
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=1) + '\n', encoding='utf-8')
-    brief = {k: v for k, v in report.items() if k not in ('results', 'rejections')}
+    brief = {k: v for k, v in report.items() if k not in ('results', 'rejections', 'configurationProperties')}
     print(json.dumps(brief, indent=1))
     for failure in failures:
         print('PORTER GATE FAILED:', failure, file=sys.stderr)

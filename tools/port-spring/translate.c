@@ -1489,6 +1489,239 @@ cleanup:
     return status;
 }
 
+// --describe: the declaration tree as JSON, with every expression and type as its source text. The porter's
+// Python shapes (tools/port-spring/beans.py) read it; nothing here decides a translation.
+static void describe_type(const JavaFile *java, TSNode declaration);
+
+static void describe_javadoc(const JavaFile *java, TSNode declaration)
+{
+    TSNode previous = ts_node_prev_named_sibling(declaration);
+    Slice text = node_text(java, previous);
+    fputs(",\"javadoc\":", stdout);
+    if (kind(previous, "block_comment") && starts_with(text, "/**"))
+        json_string(text);
+    else
+        fputs("null", stdout);
+}
+
+static void describe_annotation(const JavaFile *java, TSNode annotation)
+{
+    fputs("{\"name\":", stdout);
+    json_string(node_text(java, member(annotation, "name")));
+    fputs(",\"arguments\":", stdout);
+    TSNode arguments = member(annotation, "arguments");
+    if (ts_node_is_null(arguments))
+        fputs("null", stdout);
+    else
+        json_string(node_text(java, arguments));
+    putchar('}');
+}
+
+// "modifiers": the keywords in source order; "annotations": every annotation among them.
+static void describe_modifiers(const JavaFile *java, TSNode owner)
+{
+    TSNode modifiers = child_of_kind(owner, "modifiers");
+    uint32_t count = ts_node_is_null(modifiers) ? 0 : ts_node_child_count(modifiers);
+    fputs(",\"modifiers\":[", stdout);
+    bool first = true;
+    for (uint32_t index = 0; index < count; ++index) {
+        TSNode child = ts_node_child(modifiers, index);
+        if (ts_node_is_named(child))
+            continue;
+        if (!first)
+            putchar(',');
+        json_string(node_text(java, child));
+        first = false;
+    }
+    fputs("],\"annotations\":[", stdout);
+    first = true;
+    for (uint32_t index = 0; index < count; ++index) {
+        TSNode child = ts_node_child(modifiers, index);
+        if (!kind(child, "annotation") && !kind(child, "marker_annotation"))
+            continue;
+        if (!first)
+            putchar(',');
+        describe_annotation(java, child);
+        first = false;
+    }
+    putchar(']');
+}
+
+static void describe_text(const char *key, const JavaFile *java, TSNode node)
+{
+    printf(",\"%s\":", key);
+    if (ts_node_is_null(node))
+        fputs("null", stdout);
+    else
+        json_string(node_text(java, node));
+}
+
+static void describe_parameters(const JavaFile *java, TSNode parameters)
+{
+    fputs(",\"parameters\":[", stdout);
+    bool first = true;
+    for (uint32_t index = 0; index < ts_node_named_child_count(parameters); ++index) {
+        TSNode parameter = ts_node_named_child(parameters, index);
+        if (!kind(parameter, "formal_parameter") && !kind(parameter, "spread_parameter"))
+            continue;
+        fputs(first ? "{\"name\":" : ",{\"name\":", stdout);
+        TSNode name = member(parameter, "name");
+        if (ts_node_is_null(name))
+            name = member(child_of_kind(parameter, "variable_declarator"), "name");
+        json_string(node_text(java, name));
+        describe_text("type", java, member(parameter, "type"));
+        printf(",\"variadic\":%s", kind(parameter, "spread_parameter") ? "true" : "false");
+        describe_modifiers(java, parameter);
+        putchar('}');
+        first = false;
+    }
+    putchar(']');
+}
+
+static void describe_field(const JavaFile *java, TSNode field)
+{
+    fputs("{\"line\":", stdout);
+    printf("%" PRIu32, ts_node_start_point(field).row + 1);
+    describe_modifiers(java, field);
+    describe_text("type", java, member(field, "type"));
+    describe_javadoc(java, field);
+    fputs(",\"declarators\":[", stdout);
+    bool first = true;
+    for (uint32_t index = 0; index < ts_node_named_child_count(field); ++index) {
+        TSNode declarator = ts_node_named_child(field, index);
+        if (!kind(declarator, "variable_declarator"))
+            continue;
+        fputs(first ? "{\"name\":" : ",{\"name\":", stdout);
+        json_string(node_text(java, member(declarator, "name")));
+        describe_text("dimensions", java, member(declarator, "dimensions"));
+        describe_text("value", java, member(declarator, "value"));
+        putchar('}');
+        first = false;
+    }
+    fputs("]}", stdout);
+}
+
+static void describe_callable(const JavaFile *java, TSNode callable)
+{
+    fputs("{\"name\":", stdout);
+    json_string(node_text(java, member(callable, "name")));
+    printf(",\"line\":%" PRIu32, ts_node_start_point(callable).row + 1);
+    describe_modifiers(java, callable);
+    describe_javadoc(java, callable);
+    describe_text("typeParameters", java, member(callable, "type_parameters"));
+    describe_text("type", java, member(callable, "type"));
+    describe_text("dimensions", java, member(callable, "dimensions"));
+    describe_parameters(java, member(callable, "parameters"));
+    describe_text("throws", java, child_of_kind(callable, "throws"));
+    describe_text("body", java, member(callable, "body"));
+    putchar('}');
+}
+
+static void describe_members(const JavaFile *java, TSNode body)
+{
+    static const char *const sections[] = {"fields", "constructors", "methods", "types", "initializers"};
+    for (size_t section = 0; section < sizeof sections / sizeof *sections; ++section) {
+        printf(",\"%s\":[", sections[section]);
+        bool first = true;
+        uint32_t count = ts_node_is_null(body) ? 0 : ts_node_named_child_count(body);
+        for (uint32_t index = 0; index < count; ++index) {
+            TSNode child = ts_node_named_child(body, index);
+            bool wanted;
+            switch (section) {
+            case 0: wanted = kind(child, "field_declaration") || kind(child, "constant_declaration"); break;
+            case 1:
+                wanted = kind(child, "constructor_declaration") || kind(child, "compact_constructor_declaration");
+                break;
+            case 2:
+                wanted = kind(child, "method_declaration") || kind(child, "annotation_type_element_declaration");
+                break;
+            case 3:
+                wanted = kind(child, "class_declaration") || kind(child, "interface_declaration") ||
+                    kind(child, "enum_declaration") || kind(child, "record_declaration") ||
+                    kind(child, "annotation_type_declaration");
+                break;
+            default: wanted = kind(child, "static_initializer") || kind(child, "block"); break;
+            }
+            if (!wanted)
+                continue;
+            if (!first)
+                putchar(',');
+            first = false;
+            if (section == 0)
+                describe_field(java, child);
+            else if (section == 3)
+                describe_type(java, child);
+            else if (section == 4)
+                json_string(node_text(java, child));
+            else
+                describe_callable(java, child);
+        }
+        putchar(']');
+    }
+}
+
+static void describe_type(const JavaFile *java, TSNode declaration)
+{
+    const char *type = ts_node_type(declaration);
+    const char *declaration_kind = !strcmp(type, "enum_declaration") ? "enum"
+        : !strcmp(type, "interface_declaration") ? "interface"
+        : !strcmp(type, "record_declaration") ? "record"
+        : !strcmp(type, "annotation_type_declaration") ? "annotation" : "class";
+    fputs("{\"kind\":", stdout);
+    json_string(literal(declaration_kind));
+    fputs(",\"name\":", stdout);
+    json_string(node_text(java, member(declaration, "name")));
+    printf(",\"line\":%" PRIu32, ts_node_start_point(declaration).row + 1);
+    describe_modifiers(java, declaration);
+    describe_javadoc(java, declaration);
+    describe_text("typeParameters", java, member(declaration, "type_parameters"));
+    describe_text("superclass", java, code_child(member(declaration, "superclass"), 0));
+    TSNode interfaces = member(declaration, "interfaces");
+    if (ts_node_is_null(interfaces))
+        interfaces = child_of_kind(declaration, "extends_interfaces");
+    describe_text("interfaces", java, code_child(interfaces, 0));
+    describe_text("permits", java, member(declaration, "permits"));
+    TSNode parameters = member(declaration, "parameters");
+    if (!ts_node_is_null(parameters))
+        describe_parameters(java, parameters);
+    TSNode body = member(declaration, "body");
+    fputs(",\"constants\":[", stdout);
+    bool first = true;
+    for (uint32_t index = 0; kind(body, "enum_body") && index < ts_node_named_child_count(body); ++index) {
+        TSNode constant = ts_node_named_child(body, index);
+        if (!kind(constant, "enum_constant"))
+            continue;
+        fputs(first ? "{\"name\":" : ",{\"name\":", stdout);
+        json_string(node_text(java, member(constant, "name")));
+        describe_modifiers(java, constant);
+        describe_javadoc(java, constant);
+        describe_text("arguments", java, member(constant, "arguments"));
+        describe_text("body", java, member(constant, "body"));
+        putchar('}');
+        first = false;
+    }
+    putchar(']');
+    if (kind(body, "enum_body"))
+        body = child_of_kind(body, "enum_body_declarations");
+    describe_members(java, body);
+    putchar('}');
+}
+
+static int describe(JavaFile *java)
+{
+    if (ts_node_has_error(java->root))
+        return diagnostic(java, java->root, "Java syntax error");
+    if (!package_and_declaration(java))
+        return diagnostic(java, java->root, "expected a package and one public annotation, enum, class or interface");
+    fputs("{\"package\":", stdout);
+    json_string(java->package);
+    emit_imports(java);
+    fputs(",\"type\":", stdout);
+    describe_type(java, java->declaration);
+    puts("}");
+    return fflush(stdout) == EOF ? diagnostic(java, java->root, "cannot write output") : 0;
+}
+
 static char *read_source(const char *path, uint32_t *size)
 {
     FILE *file = fopen(path, "rb");
@@ -1513,8 +1746,9 @@ static char *read_source(const char *path, uint32_t *size)
 int main(int argc, char **argv)
 {
     bool scope_only = argc == 3 && !strcmp(argv[1], "--annotation-scope");
-    if (argc != 2 && !scope_only) {
-        fputs("usage: flint-port-spring [--annotation-scope] <Java file>\n", stderr);
+    bool describe_only = argc == 3 && !strcmp(argv[1], "--describe");
+    if (argc != 2 && !scope_only && !describe_only) {
+        fputs("usage: flint-port-spring [--annotation-scope | --describe] <Java file>\n", stderr);
         return 1;
     }
     const char *path = argv[argc - 1];
@@ -1531,7 +1765,7 @@ int main(int argc, char **argv)
     int status = 1;
     if (tree) {
         JavaFile annotation = {.source = source, .path = path, .root = ts_tree_root_node(tree)};
-        status = translate(&annotation, scope_only);
+        status = describe_only ? describe(&annotation) : translate(&annotation, scope_only);
         ts_tree_delete(tree);
     } else {
         fputs("cannot parse with the pinned Java grammar\n", stderr);
