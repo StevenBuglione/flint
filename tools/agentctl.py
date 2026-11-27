@@ -19,7 +19,7 @@ can move between harnesses without losing context. Nothing here depends on a har
     agentctl.py handoff ROLE --agent NAME [PATH | -]          replace the role's state (the old one is kept)
     agentctl.py brief ROLE [--harness NAME]             a start-up prompt for an agent taking the role
     agentctl.py worktree ROLE                           print (and create if missing) the role's git worktree
-    agentctl.py launch ROLE --harness codex|agy|copilot|claude [--loop MIN] [--profile NAME] [--agent NAME] [--dry-run]
+    agentctl.py launch ROLE --harness codex|agy|copilot|claude|opencode [--loop MIN] [--profile NAME] [--agent NAME] [--dry-run]
 
 The shared directory is $FLINT_COORD_DIR, or the `coordination` folder beside the main checkout
 (/home/olfa/flint-work/coordination on venus). Layout:
@@ -58,9 +58,9 @@ from pathlib import Path
 
 DEFAULT_TTL_MIN = 45
 QUEUE_HEAD_MIN = 10
-HARNESSES = ('claude', 'codex', 'agy', 'copilot', 'human', 'other')
+HARNESSES = ('claude', 'codex', 'agy', 'copilot', 'opencode', 'human', 'other')
 # Harnesses `launch` can run headless. For agy and copilot, --profile names the model.
-LAUNCH_HARNESSES = ('codex', 'agy', 'copilot', 'claude')
+LAUNCH_HARNESSES = ('codex', 'agy', 'copilot', 'claude', 'opencode')
 PLACEHOLDER_BODIES = frozenset({'noop', 'no-op', 'test', 'ping', 'x', '.'})
 
 
@@ -553,7 +553,7 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
     logs = store.root / 'logs' / role
     logs.mkdir(parents=True, exist_ok=True)
     first = brief(store, role, harness).replace('<your-name>', agent)
-    if harness in ('agy', 'copilot', 'claude'):
+    if harness in ('agy', 'copilot', 'claude', 'opencode'):
         # A lane worktree may still carry an agentctl.py from before these harnesses existed, which refuses
         # `--harness agy|copilot`; `other` is accepted by every version, and the agent name records the tool.
         first = first.replace(f'--harness {harness}`', '--harness other`') if harness != 'claude' else first
@@ -580,6 +580,13 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
             base = ['claude', '--dangerously-skip-permissions', '--add-dir', str(worktree), '--add-dir', str(logs)]
             base += ['--model', profile or 'claude-opus-5-5']
             commands = [base + ['-p', pointer]]
+        elif harness == 'opencode':
+            # The owner's harness for the rest of the port (2026-11-27): opencode with DeepSeek, run headless with
+            # permissions auto-approved inside the lane's worktree. The API key comes from OPENCODE_ENV_FILE
+            # (default ~/.config/flint-lanes/deepseek.env, KEY=VALUE lines) and is never printed or logged.
+            base = ['opencode', 'run', '--model', profile or 'deepseek/deepseek-v4.1-flash-1017', '--auto',
+                    '--dir', str(worktree)]
+            commands = [base + [pointer]]
         elif harness == 'agy':
             base = ['agy', '--dangerously-skip-permissions', '--add-dir', str(worktree), '--add-dir', str(logs)]
             base += ['--model', profile or 'gemini-4-neon-high']
@@ -603,12 +610,31 @@ def launch(store: Store, role: str, harness: str, agent: str, loop_min: int | No
         stamp = utc_now().replace(':', '')
         with open(logs / f'{stamp}.log', 'w', encoding='utf-8') as out:
             result = subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
-                                    cwd=worktree, check=False)
+                                    cwd=worktree, check=False, env=harness_env(harness))
         store.event('launch', role=role, harness=harness, agent=agent, exit=result.returncode, log=f'{stamp}.log')
         index += 1
         if not loop_min:
             return result.returncode
         time.sleep(loop_min * 60)
+
+
+def harness_env(harness: str) -> dict[str, str] | None:
+    """The environment a launched harness runs in: the current one, plus opencode's provider key file."""
+    if harness != 'opencode':
+        return None
+    env = dict(os.environ)
+    path = Path(os.environ.get('OPENCODE_ENV_FILE', '~/.config/flint-lanes/deepseek.env')).expanduser()
+    try:
+        lines = path.read_text(encoding='utf-8').splitlines()
+    except OSError:
+        raise SystemExit(f'agentctl: opencode needs its API key file {path} (KEY=VALUE lines)')
+    for line in lines:
+        line = line.strip()
+        if line and not line.startswith('#') and '=' in line:
+            key, value = line.split('=', 1)
+            if value.strip():
+                env[key.strip()] = value.strip()
+    return env
 
 
 def main(argv: list[str] | None = None) -> int:
