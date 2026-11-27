@@ -2,7 +2,8 @@
 /// Lexical ranges in a nonlocalized DecimalFormat pattern.
 module flint.java.text.internal.decimalpattern;
 
-import flint.java.text.internal.decimalfixed : DecimalAffixes, DecimalFixedPattern;
+import flint.java.text.internal.decimalfixed : affixFieldWords, DecimalAffixes, DecimalField,
+    DecimalFixedPattern, minusSignField;
 
 @safe:
 
@@ -127,11 +128,14 @@ DecimalCompileStatus compileFixedDecimalPattern(scope string text, out DecimalFi
     result.groupingSize = text.length ? digits.groupingSize : 3;
     result.decimalSeparatorAlwaysShown = digits.decimalSeparatorAlwaysShown;
     result.scale = positive.scale;
-    result.positive = DecimalAffixes(positive.prefix.text, positive.suffix.text);
+    result.positive = DecimalAffixes(positive.prefix.text, positive.suffix.text,
+            positive.prefix.fields, positive.suffix.fields);
     if (explicitNegative && !sameAffixes(positive, negative))
-        result.negative = DecimalAffixes(negative.prefix.text, negative.suffix.text);
+        result.negative = DecimalAffixes(negative.prefix.text, negative.suffix.text,
+                negative.prefix.fields, negative.suffix.fields);
     else
-        result.negative = DecimalAffixes("-" ~ positive.prefix.text, positive.suffix.text);
+        result.negative = DecimalAffixes("-" ~ positive.prefix.text, positive.suffix.text,
+                signedFields(positive.prefix.fields), positive.suffix.fields);
     return DecimalCompileStatus.accepted;
 }
 
@@ -308,8 +312,25 @@ void defaultRequiredDigit(ref DigitShape shape) pure nothrow @nogc
 struct DecodedAffix
 {
     string text;
-    // Rendered offsets that came from symbolic pattern tokens, including unquoted minus signs.
-    size_t[] operators;
+    // Rendered (DecimalField, begin, end) triples of symbolic pattern tokens, including unquoted minus signs.
+    size_t[] fields;
+}
+
+// The implicit negative prefix puts the symbolic minus sign ahead of the positive prefix tokens.
+size_t[] signedFields(scope const(size_t)[] fields) pure nothrow
+{
+    size_t[] result;
+    foreach (word; minusSignField)
+        appendWord(result, word);
+    foreach (i, word; fields)
+        appendWord(result, i % affixFieldWords == 0 ? word : word + "-".length);
+    return result;
+}
+
+// One append site keeps the template count at the single size_t[] instance (B-93).
+void appendWord(ref size_t[] words, size_t word) pure nothrow
+{
+    words ~= word;
 }
 
 struct AffixPair
@@ -323,8 +344,7 @@ bool sameAffixes(ref scope const AffixPair positive, ref scope const AffixPair n
 {
     return positive.prefix.text == negative.prefix.text
         && positive.suffix.text == negative.suffix.text
-        && positive.prefix.operators == negative.prefix.operators
-        && positive.suffix.operators == negative.suffix.operators;
+        && positive.prefix.fields == negative.prefix.fields && positive.suffix.fields == negative.suffix.fields;
 }
 
 DecimalCompileStatus readAffixes(scope string text, DecimalSubpatternBounds bounds, out AffixPair result) pure nothrow
@@ -364,6 +384,19 @@ AffixOperator affixOperator(scope string text) pure nothrow @nogc
     }
 }
 
+DecimalField affixField(AffixOperator operation) pure nothrow @nogc
+{
+    switch (operation)
+    {
+    case AffixOperator.percent:
+        return DecimalField.percent;
+    case AffixOperator.perMille:
+        return DecimalField.perMille;
+    default:
+        return DecimalField.sign;
+    }
+}
+
 DecimalCompileStatus decodeAffix(scope string raw, ref ubyte scale, out DecodedAffix result) pure nothrow
 {
     bool quoted;
@@ -395,7 +428,11 @@ DecimalCompileStatus decodeAffix(scope string raw, ref ubyte scale, out DecodedA
             scale = operation == AffixOperator.percent ? 2 : 3;
         }
         if (operation != AffixOperator.literal)
-            result.operators ~= result.text.length;
+        {
+            appendWord(result.fields, affixField(operation));
+            appendWord(result.fields, result.text.length);
+            appendWord(result.fields, result.text.length + width);
+        }
         result.text ~= raw[position .. position + width];
         position += width;
     }

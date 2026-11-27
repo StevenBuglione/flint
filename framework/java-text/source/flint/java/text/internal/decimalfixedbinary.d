@@ -205,7 +205,10 @@ private pure nothrow @nogc size_t renderSpecial(ulong bits, ref scope const Deci
     output[tokenEnd .. cast(size_t) required] = affixes.suffix;
     // Java reports NaN and infinity as the integer field.
     if (fields !is null)
+    {
         fields.record(DecimalField.integer, tokenStart, tokenEnd);
+        fields.recordAffixes(affixes, tokenEnd);
+    }
     return cast(size_t) required;
 }
 
