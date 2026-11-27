@@ -1405,3 +1405,19 @@ Decided by the project owner on 2026-11-23, answering the items parked below. Th
     - After the swap, every lane rebases and rebuilds its platform modules once.
   - **Rollback:** step 7. `.tools` and verifiers.json go back to v4.2, and the commit is reverted through main-push.
   - **Independent of the interleaved budget A/B**, whose fix (7fa83718c) builds each side with its own flint CLI.
+- 2026-11-27 17:35Z, coordinator: **porting becomes mechanical first: the porter, its correctness gate and a performance lint** (owner: "reduce the manual work required down to a science so that we can complete this work significantly faster and reducing the amount of AI credits … and then we would have some sort of verifiable gate that proves that our porter is actually correct with the performance gates also"). Plan: docs/spring/phase2/porter-plan.md.
+  - **The case:** about 62% of the 48,406 deferred Phase 2 Spring and third-party elements are mechanical shapes: getters, setters, type declarations, trivial constructors, fields and R11 methods. The current translator handles only a few shapes, so lanes hand-write all of them.
+  - **The gate** (`gates.py --gate porter`, required, shrink-only baseline):
+    - determinism;
+    - reproduction of the hand-ported corpus, API-identical, with the hand port's tests run against the generated module on DMD and LDC;
+    - a Temurin differential oracle for every generated body;
+    - no edits to generated regions;
+    - generated output no larger than the hand port and within its caps, the allocation and closure gates, and `flint check --perf` lint rules taken from the playbook.
+  - **The lanes:** once a shape is supported and its gates are green, lanes run the porter first for it. Hand-porting a supported shape needs a written reason.
+  - **Owners:**
+    - sol-translator: the porter, port plans and gates (a)–(e);
+    - m7-flint-cli: `flint check --perf`;
+    - framework-core with proof-harness: the first lint rules;
+    - api-coverage: provenance in the mappings;
+    - proof-harness: daily metrics (generated share, reproduction rate, elements per lane-hour as the credit proxy).
+  - **sol-translator's JDK exception drafts** fold into milestone 2/3 (exception families), not a separate track.
